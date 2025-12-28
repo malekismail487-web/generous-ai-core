@@ -82,7 +82,7 @@ const Index = () => {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-foreground">Turbo AI</span>
+            <span className="font-semibold text-foreground">Study Bright AI</span>
           </div>
           {messages.length > 0 && (
             <Button
@@ -122,7 +122,7 @@ const Index = () => {
         <div className="max-w-3xl mx-auto px-4 py-4">
           <ChatInput onSend={sendMessage} disabled={isLoading} />
           <p className="text-xs text-muted-foreground text-center mt-3">
-            Turbo AI is free to use. Responses may not always be accurate.
+            Study Bright AI is free to use. Responses may not always be accurate.
           </p>
         </div>
       </footer>

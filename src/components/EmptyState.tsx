@@ -21,10 +21,10 @@ export function EmptyState({ onSuggestionClick }: EmptyStateProps) {
       </div>
       
       <h1 className="text-3xl font-bold mb-2">
-        <span className="gradient-text">Turbo AI</span>
+        <span className="gradient-text">Study Bright AI</span>
       </h1>
       <p className="text-muted-foreground mb-8 max-w-md">
-        Your free, intelligent AI assistant. Ask me anything!
+        Your free, intelligent AI learning assistant. Ask me anything!
       </p>
 
       <div className="grid gap-3 w-full max-w-md">
