@@ -41,7 +41,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask Turbo anything..."
+          placeholder="Ask Study Bright anything..."
           disabled={disabled}
           rows={1}
           className="flex-1 resize-none bg-transparent border-0 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 px-3 py-2.5 text-sm min-h-[44px] max-h-[200px]"
