@@ -4,15 +4,53 @@ import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { EmptyState } from "@/components/EmptyState";
+import { Sidebar } from "@/components/Sidebar";
+import { NoteEditor } from "@/components/NoteEditor";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useConversations } from "@/hooks/useConversations";
+import { useNotes } from "@/hooks/useNotes";
+import { Navigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 const Index = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [activeTab, setActiveTab] = useState<'chat' | 'notes'>('chat');
   const [isLoading, setIsLoading] = useState(false);
+  const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
+  
+  const {
+    conversations,
+    currentConversation,
+    messages,
+    createConversation,
+    addMessage,
+    deleteConversation,
+    selectConversation,
+    clearCurrentConversation,
+    setMessages,
+  } = useConversations();
+  
+  const {
+    notes,
+    currentNote,
+    createNote,
+    updateNote,
+    deleteNote,
+    selectNote,
+    clearCurrentNote,
+  } = useNotes();
+
+  // Sync messages from DB to local state for display
+  useEffect(() => {
+    setLocalMessages(messages.map(m => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+    })));
+  }, [messages]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -20,23 +58,45 @@ const Index = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, scrollToBottom]);
+  }, [localMessages, scrollToBottom]);
 
   const sendMessage = async (content: string) => {
+    let conversationId = currentConversation?.id;
+    
+    // Create a new conversation if none exists
+    if (!conversationId) {
+      const newConv = await createConversation();
+      if (!newConv) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to create conversation",
+        });
+        return;
+      }
+      conversationId = newConv.id;
+    }
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: "user",
       content,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    // Add to local state immediately
+    setLocalMessages((prev) => [...prev, userMessage]);
+    
+    // Save to database
+    await addMessage("user", content, conversationId);
+    
     setIsLoading(true);
 
     let assistantContent = "";
+    const assistantId = crypto.randomUUID();
 
     const updateAssistant = (chunk: string) => {
       assistantContent += chunk;
-      setMessages((prev) => {
+      setLocalMessages((prev) => {
         const lastMessage = prev[prev.length - 1];
         if (lastMessage?.role === "assistant") {
           return prev.map((m, i) =>
@@ -46,7 +106,7 @@ const Index = () => {
         return [
           ...prev,
           {
-            id: crypto.randomUUID(),
+            id: assistantId,
             role: "assistant",
             content: assistantContent,
           },
@@ -55,9 +115,13 @@ const Index = () => {
     };
 
     await streamChat({
-      messages: [...messages, userMessage],
+      messages: [...localMessages, userMessage],
       onDelta: updateAssistant,
-      onDone: () => setIsLoading(false),
+      onDone: async () => {
+        setIsLoading(false);
+        // Save assistant message to database
+        await addMessage("assistant", assistantContent, conversationId);
+      },
       onError: (error) => {
         setIsLoading(false);
         toast({
@@ -69,63 +133,86 @@ const Index = () => {
     });
   };
 
-  const clearChat = () => {
-    setMessages([]);
+  const handleNewChat = () => {
+    clearCurrentConversation();
+    setLocalMessages([]);
   };
 
+  const handleNewNote = async () => {
+    await createNote();
+  };
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <header className="flex-shrink-0 border-b border-border/50 glass-effect">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-semibold text-foreground">Study Bright AI</span>
-          </div>
-          {messages.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearChat}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Trash2 size={16} className="mr-2" />
-              Clear
-            </Button>
-          )}
-        </div>
-      </header>
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        conversations={conversations}
+        notes={notes}
+        currentConversationId={currentConversation?.id}
+        currentNoteId={currentNote?.id}
+        onSelectConversation={selectConversation}
+        onSelectNote={selectNote}
+        onNewChat={handleNewChat}
+        onNewNote={handleNewNote}
+        onDeleteConversation={deleteConversation}
+        onDeleteNote={deleteNote}
+      />
 
-      {/* Messages */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-4 py-6">
-          {messages.length === 0 ? (
-            <EmptyState onSuggestionClick={sendMessage} />
-          ) : (
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <ChatMessage key={message.id} message={message} />
-              ))}
-              {isLoading && messages[messages.length - 1]?.role === "user" && (
-                <TypingIndicator />
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
-        </div>
-      </main>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {activeTab === 'chat' ? (
+          <>
+            {/* Messages */}
+            <main className="flex-1 overflow-y-auto">
+              <div className="max-w-3xl mx-auto px-4 py-6">
+                {localMessages.length === 0 ? (
+                  <EmptyState onSuggestionClick={sendMessage} />
+                ) : (
+                  <div className="space-y-4">
+                    {localMessages.map((message) => (
+                      <ChatMessage key={message.id} message={message} />
+                    ))}
+                    {isLoading && localMessages[localMessages.length - 1]?.role === "user" && (
+                      <TypingIndicator />
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+              </div>
+            </main>
 
-      {/* Input */}
-      <footer className="flex-shrink-0 border-t border-border/50 glass-effect">
-        <div className="max-w-3xl mx-auto px-4 py-4">
-          <ChatInput onSend={sendMessage} disabled={isLoading} />
-          <p className="text-xs text-muted-foreground text-center mt-3">
-            Study Bright AI is free to use. Responses may not always be accurate.
-          </p>
-        </div>
-      </footer>
+            {/* Input */}
+            <footer className="flex-shrink-0 border-t border-border/50 glass-effect">
+              <div className="max-w-3xl mx-auto px-4 py-4">
+                <ChatInput onSend={sendMessage} disabled={isLoading} />
+                <p className="text-xs text-muted-foreground text-center mt-3">
+                  Study Bright AI is free to use. Responses may not always be accurate.
+                </p>
+              </div>
+            </footer>
+          </>
+        ) : (
+          <NoteEditor
+            note={currentNote}
+            onUpdate={updateNote}
+            onCreateNote={createNote}
+          />
+        )}
+      </div>
     </div>
   );
 };
