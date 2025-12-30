@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Message, streamChat } from "@/lib/chat";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { EmptyState } from "@/components/EmptyState";
-import { Sidebar, TabType } from "@/components/Sidebar";
+import { BottomNav, TabType } from "@/components/BottomNav";
 import { NoteEditor } from "@/components/NoteEditor";
 import { PracticeSection } from "@/components/PracticeSection";
 import { PracticeQuiz } from "@/components/PracticeQuiz";
@@ -54,6 +54,36 @@ const Index = () => {
     clearCurrentNote,
   } = useNotes();
 
+  // Build learning context from all conversations for practice
+  const learningContext = useMemo(() => {
+    // Get messages from all conversations to build context
+    const allTopics: string[] = [];
+    
+    // Use current conversation messages
+    messages.forEach(m => {
+      if (m.role === 'user') {
+        allTopics.push(m.content);
+      }
+    });
+
+    // Also include note content
+    notes.forEach(note => {
+      if (note.content) {
+        allTopics.push(note.content);
+      }
+    });
+
+    if (allTopics.length === 0) {
+      return '';
+    }
+
+    // Summarize topics (limit to prevent token overflow)
+    const context = allTopics.slice(-20).join('\n\n');
+    return context.slice(0, 3000);
+  }, [messages, notes]);
+
+  const hasLearningHistory = learningContext.length > 50;
+
   // Sync messages from DB to local state for display
   useEffect(() => {
     setLocalMessages(messages.map(m => ({
@@ -74,7 +104,6 @@ const Index = () => {
   const sendMessage = async (content: string) => {
     let conversationId = currentConversation?.id;
     
-    // Create a new conversation if none exists
     if (!conversationId) {
       const newConv = await createConversation();
       if (!newConv) {
@@ -94,12 +123,8 @@ const Index = () => {
       content,
     };
 
-    // Add to local state immediately
     setLocalMessages((prev) => [...prev, userMessage]);
-    
-    // Save to database
     await addMessage("user", content, conversationId);
-    
     setIsLoading(true);
 
     let assistantContent = "";
@@ -130,7 +155,6 @@ const Index = () => {
       onDelta: updateAssistant,
       onDone: async () => {
         setIsLoading(false);
-        // Save assistant message to database
         await addMessage("assistant", assistantContent, conversationId);
       },
       onError: (error) => {
@@ -161,7 +185,6 @@ const Index = () => {
     setActivePractice(null);
   };
 
-  // Reset practice when tab changes
   useEffect(() => {
     if (activeTab !== 'examination' && activeTab !== 'sat') {
       setActivePractice(null);
@@ -185,14 +208,13 @@ const Index = () => {
     switch (activeTab) {
       case 'chat':
         return (
-          <>
-            {/* Messages */}
+          <div className="flex flex-col h-full pt-14 pb-20">
             <main className="flex-1 overflow-y-auto">
-              <div className="max-w-3xl mx-auto px-4 py-6">
+              <div className="max-w-2xl mx-auto px-4 py-4">
                 {localMessages.length === 0 ? (
                   <EmptyState onSuggestionClick={sendMessage} />
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {localMessages.map((message) => (
                       <ChatMessage key={message.id} message={message} />
                     ))}
@@ -205,25 +227,23 @@ const Index = () => {
               </div>
             </main>
 
-            {/* Input */}
-            <footer className="flex-shrink-0 border-t border-border/30 glass-effect">
-              <div className="max-w-3xl mx-auto px-4 py-4">
+            <footer className="fixed bottom-16 left-0 right-0 glass-effect-strong border-t border-border/30 z-40">
+              <div className="max-w-2xl mx-auto px-4 py-3">
                 <ChatInput onSend={sendMessage} disabled={isLoading} />
-                <p className="text-xs text-muted-foreground text-center mt-3">
-                  Study Bright AI is free to use. Responses may not always be accurate.
-                </p>
               </div>
             </footer>
-          </>
+          </div>
         );
 
       case 'notes':
         return (
-          <NoteEditor
-            note={currentNote}
-            onUpdate={updateNote}
-            onCreateNote={createNote}
-          />
+          <div className="pt-14 pb-20 h-full">
+            <NoteEditor
+              note={currentNote}
+              onUpdate={updateNote}
+              onCreateNote={createNote}
+            />
+          </div>
         );
 
       case 'examination':
@@ -234,6 +254,7 @@ const Index = () => {
               difficulty={activePractice.difficulty}
               type={activePractice.type}
               onBack={handleBackFromPractice}
+              learningContext={learningContext}
             />
           );
         }
@@ -241,6 +262,7 @@ const Index = () => {
           <PracticeSection
             type={activeTab}
             onStartPractice={handleStartPractice}
+            hasLearningHistory={hasLearningHistory}
           />
         );
 
@@ -250,12 +272,10 @@ const Index = () => {
   };
 
   return (
-    <div className="flex h-screen bg-background relative">
-      {/* Ambient background */}
+    <div className="h-screen bg-background relative overflow-hidden">
       <div className="ambient-glow" />
       
-      {/* Sidebar */}
-      <Sidebar
+      <BottomNav
         activeTab={activeTab}
         onTabChange={setActiveTab}
         conversations={conversations}
@@ -270,8 +290,7 @@ const Index = () => {
         onDeleteNote={deleteNote}
       />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden relative z-10">
+      <div className="h-full relative z-10">
         {renderMainContent()}
       </div>
     </div>

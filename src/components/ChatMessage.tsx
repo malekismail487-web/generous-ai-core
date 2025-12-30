@@ -10,17 +10,16 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
   return (
     <div
-      className={`flex gap-3 animate-fade-in ${isUser ? "flex-row-reverse" : ""}`}
-      style={{ animationDelay: "0ms" }}
+      className={`flex gap-2.5 animate-fade-in ${isUser ? "flex-row-reverse" : ""}`}
     >
       <div
-        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+        className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${
           isUser
             ? "bg-primary/20 text-primary"
             : "bg-accent/20 text-accent"
         }`}
       >
-        {isUser ? <User size={16} /> : <Sparkles size={16} />}
+        {isUser ? <User size={14} /> : <Sparkles size={14} />}
       </div>
       <div
         className={`message-bubble ${
