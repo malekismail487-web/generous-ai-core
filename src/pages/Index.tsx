@@ -4,8 +4,10 @@ import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { EmptyState } from "@/components/EmptyState";
-import { Sidebar } from "@/components/Sidebar";
+import { Sidebar, TabType } from "@/components/Sidebar";
 import { NoteEditor } from "@/components/NoteEditor";
+import { PracticeSection } from "@/components/PracticeSection";
+import { PracticeQuiz } from "@/components/PracticeQuiz";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
@@ -13,8 +15,17 @@ import { useNotes } from "@/hooks/useNotes";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
+type Difficulty = 'beginner' | 'intermediate' | 'hard';
+type PracticeType = 'examination' | 'sat';
+
+interface ActivePractice {
+  difficulty: Difficulty;
+  type: PracticeType;
+}
+
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'chat' | 'notes'>('chat');
+  const [activeTab, setActiveTab] = useState<TabType>('chat');
+  const [activePractice, setActivePractice] = useState<ActivePractice | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -142,9 +153,25 @@ const Index = () => {
     await createNote();
   };
 
+  const handleStartPractice = (difficulty: Difficulty, type: PracticeType) => {
+    setActivePractice({ difficulty, type });
+  };
+
+  const handleBackFromPractice = () => {
+    setActivePractice(null);
+  };
+
+  // Reset practice when tab changes
+  useEffect(() => {
+    if (activeTab !== 'examination' && activeTab !== 'sat') {
+      setActivePractice(null);
+    }
+  }, [activeTab]);
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="ambient-glow" />
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -154,27 +181,10 @@ const Index = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <Sidebar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        conversations={conversations}
-        notes={notes}
-        currentConversationId={currentConversation?.id}
-        currentNoteId={currentNote?.id}
-        onSelectConversation={selectConversation}
-        onSelectNote={selectNote}
-        onNewChat={handleNewChat}
-        onNewNote={handleNewNote}
-        onDeleteConversation={deleteConversation}
-        onDeleteNote={deleteNote}
-      />
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {activeTab === 'chat' ? (
+  const renderMainContent = () => {
+    switch (activeTab) {
+      case 'chat':
+        return (
           <>
             {/* Messages */}
             <main className="flex-1 overflow-y-auto">
@@ -196,7 +206,7 @@ const Index = () => {
             </main>
 
             {/* Input */}
-            <footer className="flex-shrink-0 border-t border-border/50 glass-effect">
+            <footer className="flex-shrink-0 border-t border-border/30 glass-effect">
               <div className="max-w-3xl mx-auto px-4 py-4">
                 <ChatInput onSend={sendMessage} disabled={isLoading} />
                 <p className="text-xs text-muted-foreground text-center mt-3">
@@ -205,13 +215,64 @@ const Index = () => {
               </div>
             </footer>
           </>
-        ) : (
+        );
+
+      case 'notes':
+        return (
           <NoteEditor
             note={currentNote}
             onUpdate={updateNote}
             onCreateNote={createNote}
           />
-        )}
+        );
+
+      case 'examination':
+      case 'sat':
+        if (activePractice) {
+          return (
+            <PracticeQuiz
+              difficulty={activePractice.difficulty}
+              type={activePractice.type}
+              onBack={handleBackFromPractice}
+            />
+          );
+        }
+        return (
+          <PracticeSection
+            type={activeTab}
+            onStartPractice={handleStartPractice}
+          />
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-background relative">
+      {/* Ambient background */}
+      <div className="ambient-glow" />
+      
+      {/* Sidebar */}
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        conversations={conversations}
+        notes={notes}
+        currentConversationId={currentConversation?.id}
+        currentNoteId={currentNote?.id}
+        onSelectConversation={selectConversation}
+        onSelectNote={selectNote}
+        onNewChat={handleNewChat}
+        onNewNote={handleNewNote}
+        onDeleteConversation={deleteConversation}
+        onDeleteNote={deleteNote}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden relative z-10">
+        {renderMainContent()}
       </div>
     </div>
   );
