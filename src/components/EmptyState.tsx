@@ -1,9 +1,10 @@
-import { Sparkles, BookOpen, Brain, Lightbulb } from "lucide-react";
+import { Sparkles, BookOpen, Brain, Lightbulb, Layers, GraduationCap } from "lucide-react";
 
 const suggestions = [
-  { icon: BookOpen, text: "Teach me about photosynthesis" },
+  { icon: BookOpen, text: "Teach me about photosynthesis for Grade 8" },
   { icon: Brain, text: "Explain how memory works" },
-  { icon: Lightbulb, text: "Help me understand calculus" },
+  { icon: Lightbulb, text: "Help me understand quadratic equations" },
+  { icon: GraduationCap, text: "Give me SAT math practice tips" },
 ];
 
 interface EmptyStateProps {
@@ -26,7 +27,7 @@ export function EmptyState({ onSuggestionClick }: EmptyStateProps) {
         <span className="gradient-text">Study Bright AI</span>
       </h1>
       <p className="text-muted-foreground text-sm mb-6 max-w-xs">
-        Learn anything, then test yourself in the Exam or SAT tabs
+        Your personal study partner for KG1 through Grade 12
       </p>
 
       <div className="w-full max-w-sm space-y-2">
