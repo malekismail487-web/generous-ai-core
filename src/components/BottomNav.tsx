@@ -1,4 +1,4 @@
-import { MessageSquare, FileText, BookOpen, GraduationCap, Menu, X, Plus, Trash2, LogOut, Sparkles } from 'lucide-react';
+import { MessageSquare, FileText, BookOpen, GraduationCap, Menu, Plus, Trash2, LogOut, Sparkles, Layers, FlipHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -8,7 +8,7 @@ import { Note } from '@/hooks/useNotes';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
-export type TabType = 'chat' | 'notes' | 'examination' | 'sat';
+export type TabType = 'chat' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -27,9 +27,11 @@ interface BottomNavProps {
 
 const tabs = [
   { id: 'chat' as const, icon: MessageSquare, label: 'Chat' },
-  { id: 'notes' as const, icon: FileText, label: 'Notes' },
+  { id: 'subjects' as const, icon: Layers, label: 'Subjects' },
   { id: 'examination' as const, icon: BookOpen, label: 'Exam' },
   { id: 'sat' as const, icon: GraduationCap, label: 'SAT' },
+  { id: 'flashcards' as const, icon: FlipHorizontal, label: 'Cards' },
+  { id: 'notes' as const, icon: FileText, label: 'Notes' },
 ];
 
 export function BottomNav({
@@ -179,9 +181,9 @@ export function BottomNav({
                       </div>
                     )}
 
-                    {(activeTab === 'examination' || activeTab === 'sat') && (
+                    {!showList && (
                       <div className="p-4 text-center text-muted-foreground">
-                        <p className="text-sm">Practice sessions are based on your chat history</p>
+                        <p className="text-sm">Select a tab to get started</p>
                       </div>
                     )}
                   </ScrollArea>
@@ -207,7 +209,7 @@ export function BottomNav({
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 glass-effect-strong border-t border-border/30 pb-safe">
-        <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
+        <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -217,18 +219,18 @@ export function BottomNav({
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 w-16 h-full transition-all duration-200",
+                  "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all duration-200",
                   isActive ? "text-primary" : "text-muted-foreground"
                 )}
               >
                 <div className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200",
+                  "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200",
                   isActive && "bg-primary/20"
                 )}>
-                  <Icon size={20} className={cn(isActive && "scale-110")} />
+                  <Icon size={18} className={cn(isActive && "scale-110")} />
                 </div>
                 <span className={cn(
-                  "text-[10px] font-medium transition-all",
+                  "text-[9px] font-medium transition-all",
                   isActive && "text-primary"
                 )}>
                   {tab.label}
