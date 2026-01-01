@@ -12,6 +12,7 @@ const subjects = [
   { id: 'mathematics', name: 'Mathematics', emoji: '📐' },
   { id: 'english', name: 'English', emoji: '📚' },
   { id: 'social_studies', name: 'Social Studies', emoji: '🌍' },
+  { id: 'technology', name: 'Technology', emoji: '💻' },
 ];
 
 const grades = [
@@ -110,7 +111,7 @@ Make cards appropriate for ${selectedGrade} students. Focus on key terms, formul
           <div className="space-y-4">
             <div className="glass-effect rounded-xl p-4">
               <h3 className="font-semibold text-sm mb-3">Select Subject</h3>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {subjects.map((subject) => (
                   <button
                     key={subject.id}
