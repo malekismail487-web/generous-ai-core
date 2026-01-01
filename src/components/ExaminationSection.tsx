@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ArrowLeft, CheckCircle2, XCircle, Loader2, RotateCcw, Trophy, BookOpen, ChevronDown } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Loader2, RotateCcw, Trophy, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +21,7 @@ const subjects = [
   { id: 'mathematics', name: 'Mathematics', emoji: '📐' },
   { id: 'english', name: 'English', emoji: '📚' },
   { id: 'social_studies', name: 'Social Studies', emoji: '🌍' },
+  { id: 'technology', name: 'Technology', emoji: '💻' },
 ];
 
 const grades = [
@@ -171,7 +172,7 @@ Make it appropriate for ${selectedGrade} level. Be educational and accurate.`;
             {/* Subject Selection */}
             <div className="glass-effect rounded-xl p-4">
               <h3 className="font-semibold text-sm mb-3">Select Subject</h3>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {subjects.map((subject) => (
                   <button
                     key={subject.id}
