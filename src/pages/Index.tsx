@@ -5,11 +5,11 @@ import { ChatInput } from "@/components/ChatInput";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { EmptyState } from "@/components/EmptyState";
 import { BottomNav, TabType } from "@/components/BottomNav";
-import { NoteEditor } from "@/components/NoteEditor";
 import { SubjectsSection } from "@/components/SubjectsSection";
 import { FlashcardsSection } from "@/components/FlashcardsSection";
 import { ExaminationSection } from "@/components/ExaminationSection";
 import { SATSection } from "@/components/SATSection";
+import { NotesSection } from "@/components/NotesSection";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
@@ -17,14 +17,8 @@ import { useNotes } from "@/hooks/useNotes";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
-interface LearningContext {
-  subject?: string;
-  grade?: string;
-}
-
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('chat');
-  const [learningContext, setLearningContext] = useState<LearningContext>({});
   const [isLoading, setIsLoading] = useState(false);
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -117,15 +111,9 @@ const Index = () => {
       });
     };
 
-    // Build context-aware message
-    let contextPrefix = '';
-    if (learningContext.subject && learningContext.grade) {
-      contextPrefix = `[Context: Teaching ${learningContext.subject} at ${learningContext.grade} level]\n\n`;
-    }
-
     const messagesWithContext = [
       ...localMessages.map(m => ({ ...m, content: m.content })),
-      { ...userMessage, content: contextPrefix + userMessage.content }
+      userMessage
     ];
 
     await streamChat({
@@ -149,26 +137,10 @@ const Index = () => {
   const handleNewChat = () => {
     clearCurrentConversation();
     setLocalMessages([]);
-    setLearningContext({});
   };
 
   const handleNewNote = async () => {
     await createNote();
-  };
-
-  const handleSelectSubject = (subject: string, grade: string) => {
-    setLearningContext({ subject, grade });
-    setActiveTab('chat');
-    // Send initial message to start the lecture
-    const initialMessage = `I want to learn about ${subject} at ${grade} level. Please provide a comprehensive lecture that includes:
-1. Clear explanation of key concepts
-2. Important definitions
-3. Examples appropriate for my grade level
-4. Common mistakes to avoid
-5. A summary for revision
-
-Start with an overview and then go into detail.`;
-    setTimeout(() => sendMessage(initialMessage), 100);
   };
 
   if (authLoading) {
@@ -189,13 +161,6 @@ Start with an overview and then go into detail.`;
       case 'chat':
         return (
           <div className="flex flex-col h-full pt-14 pb-20">
-            {learningContext.subject && (
-              <div className="px-4 py-2 bg-primary/10 border-b border-primary/20">
-                <p className="text-xs text-primary font-medium text-center">
-                  📚 Learning: {learningContext.subject} • {learningContext.grade}
-                </p>
-              </div>
-            )}
             <main className="flex-1 overflow-y-auto">
               <div className="max-w-2xl mx-auto px-4 py-4">
                 {localMessages.length === 0 ? (
@@ -223,18 +188,10 @@ Start with an overview and then go into detail.`;
         );
 
       case 'subjects':
-        return <SubjectsSection onSelectSubject={handleSelectSubject} />;
+        return <SubjectsSection />;
 
       case 'notes':
-        return (
-          <div className="pt-14 pb-20 h-full">
-            <NoteEditor
-              note={currentNote}
-              onUpdate={updateNote}
-              onCreateNote={createNote}
-            />
-          </div>
-        );
+        return <NotesSection />;
 
       case 'flashcards':
         return <FlashcardsSection />;
