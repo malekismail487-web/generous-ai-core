@@ -38,6 +38,39 @@ export type Database = {
         }
         Relationships: []
       }
+      materials: {
+        Row: {
+          content: string
+          created_at: string
+          grade: string
+          id: string
+          subject: string
+          topic: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          grade: string
+          id?: string
+          subject: string
+          topic: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          grade?: string
+          id?: string
+          subject?: string
+          topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string

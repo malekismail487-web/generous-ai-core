@@ -1,9 +1,12 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { ArrowLeft, CheckCircle2, XCircle, Loader2, Trophy, BookOpen, GraduationCap, Clock } from 'lucide-react';
+import { useState, useCallback, useMemo } from 'react';
+import { ArrowLeft, CheckCircle2, XCircle, Loader2, Trophy, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useMaterials } from '@/hooks/useMaterials';
+import { MathRenderer } from '@/components/MathRenderer';
+import { useAuth } from '@/hooks/useAuth';
 
 type ExamType = 'subjects' | 'sat';
 
@@ -40,10 +43,11 @@ const satDifficulties = [
   { id: 'beginner', name: 'Beginner', questions: 20, color: 'from-emerald-500 to-teal-500' },
   { id: 'intermediate', name: 'Intermediate', questions: 50, color: 'from-amber-500 to-orange-500' },
   { id: 'expert', name: 'Expert', questions: 65, color: 'from-rose-500 to-pink-500' },
-  { id: 'full_sat', name: 'Full SAT Exam', questions: 140, color: 'from-violet-500 to-purple-600' },
+  { id: 'full_sat', name: 'Full SAT Exam', questions: 140, color: 'from-violet-500 to-purple-600', 
+    description: 'Reading/Writing: 2 modules (35+35) + Math: 2 modules (35+35)' },
 ];
 
-type ViewState = 'type' | 'subjects' | 'config' | 'exam' | 'results';
+type ViewState = 'type' | 'subjects' | 'grade' | 'config' | 'exam' | 'results';
 
 interface ExamState {
   questions: Question[];
@@ -58,33 +62,91 @@ export function ExaminationSection() {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
-  const [topicInput, setTopicInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [examState, setExamState] = useState<ExamState | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { getMaterialsBySubjectAndGrade, getMaterialsBySubject } = useMaterials();
+
+  // Get saved materials for the selected subject and grade
+  const savedMaterials = useMemo(() => {
+    if (!selectedSubject) return [];
+    if (selectedGrade) {
+      return getMaterialsBySubjectAndGrade(selectedSubject, selectedGrade);
+    }
+    return getMaterialsBySubject(selectedSubject);
+  }, [selectedSubject, selectedGrade, getMaterialsBySubjectAndGrade, getMaterialsBySubject]);
+
+  // Check if there are any saved materials
+  const hasSavedMaterials = savedMaterials.length > 0;
+
+  // Build context from saved materials for exam generation
+  const materialContext = useMemo(() => {
+    if (!hasSavedMaterials) return '';
+    return savedMaterials.map(m => `Topic: ${m.topic}\n${m.content}`).join('\n\n---\n\n');
+  }, [savedMaterials, hasSavedMaterials]);
 
   const generateQuestions = useCallback(async (count: number) => {
+    if (!hasSavedMaterials && examType === 'subjects') {
+      toast({ 
+        variant: 'destructive', 
+        title: 'No saved materials', 
+        description: 'You need to study some materials first before taking an exam.' 
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     const subject = examType === 'subjects' 
       ? subjects.find(s => s.id === selectedSubject)?.name 
       : 'SAT';
     
-    const prompt = `Generate ${count} ${subject} exam questions${topicInput ? ` about "${topicInput}"` : ''}${selectedGrade ? ` for ${selectedGrade} students` : ''}.
+    let prompt: string;
+    
+    if (examType === 'subjects' && hasSavedMaterials) {
+      prompt = `Based ONLY on the following study materials, generate ${count} ${subject} exam questions for ${selectedGrade} students.
+
+STUDY MATERIALS TO BASE QUESTIONS ON:
+${materialContext}
 
 Difficulty: ${selectedDifficulty}
+
+IMPORTANT RULES:
+1. Questions MUST be based ONLY on the content in the study materials above
+2. Do NOT include any topics or concepts not covered in the materials
+3. Include questions about definitions, formulas, concepts, and examples from the materials
+4. For ALL mathematical expressions, use LaTeX notation: \\( inline \\) or \\[ display \\]
 
 Return ONLY valid JSON array:
 [
   {
-    "question": "Question text",
+    "question": "Question text with LaTeX if needed",
     "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
     "correctIndex": 0,
-    "explanation": "Step-by-step explanation"
+    "explanation": "Step-by-step explanation with LaTeX for math"
   }
-]
+]`;
+    } else {
+      // SAT exam - doesn't require saved materials
+      prompt = `Generate ${count} SAT-style exam questions.
 
-Make questions appropriate and educational.`;
+Difficulty: ${selectedDifficulty}
+
+IMPORTANT: For ALL mathematical expressions, use LaTeX notation:
+- Inline: \\( expression \\)
+- Display: \\[ expression \\]
+
+Return ONLY valid JSON array:
+[
+  {
+    "question": "Question text with LaTeX if needed",
+    "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
+    "correctIndex": 0,
+    "explanation": "Step-by-step explanation with LaTeX for math"
+  }
+]`;
+    }
 
     const messages: Message[] = [{ id: '1', role: 'user', content: prompt }];
     let response = '';
@@ -119,7 +181,7 @@ Make questions appropriate and educational.`;
     } catch {
       setIsLoading(false);
     }
-  }, [examType, selectedSubject, selectedGrade, selectedDifficulty, topicInput, toast]);
+  }, [examType, selectedSubject, selectedGrade, selectedDifficulty, hasSavedMaterials, materialContext, toast]);
 
   const handleExamTypeSelect = (type: ExamType) => {
     setExamType(type);
@@ -128,6 +190,11 @@ Make questions appropriate and educational.`;
 
   const handleSubjectClick = (subjectId: string) => {
     setSelectedSubject(subjectId);
+    setViewState('grade');
+  };
+
+  const handleGradeSelect = (grade: string) => {
+    setSelectedGrade(grade);
     setViewState('config');
   };
 
@@ -169,7 +236,6 @@ Make questions appropriate and educational.`;
     setSelectedSubject(null);
     setSelectedGrade(null);
     setSelectedDifficulty(null);
-    setTopicInput('');
     setExamState(null);
   };
 
@@ -228,7 +294,7 @@ Make questions appropriate and educational.`;
         <div className="flex-1 overflow-y-auto p-4">
           <div className="max-w-lg mx-auto">
             <div className="glass-effect rounded-2xl p-5 mb-5">
-              <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">{currentQ.question}</p>
+              <MathRenderer content={currentQ.question} className="text-sm font-medium leading-relaxed" />
             </div>
 
             <div className="space-y-2 mb-5">
@@ -259,7 +325,7 @@ Make questions appropriate and educational.`;
                     )}>
                       {showCorrect ? <CheckCircle2 size={14} /> : showWrong ? <XCircle size={14} /> : String.fromCharCode(65 + index)}
                     </span>
-                    <span className="flex-1">{option}</span>
+                    <MathRenderer content={option} className="flex-1" />
                   </button>
                 );
               })}
@@ -280,7 +346,7 @@ Make questions appropriate and educational.`;
                     <p className="font-medium text-sm">
                       {currentAnswer === currentQ.correctIndex ? 'Correct!' : 'Not quite right'}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{currentQ.explanation}</p>
+                    <MathRenderer content={currentQ.explanation} className="text-xs text-muted-foreground mt-0.5" />
                   </div>
                 </div>
               </div>
@@ -313,7 +379,7 @@ Make questions appropriate and educational.`;
     );
   }
 
-  // CONFIG VIEW - Select grade, topic, difficulty
+  // CONFIG VIEW - Select difficulty and start exam
   if (viewState === 'config') {
     const difficulties = examType === 'subjects' ? subjectDifficulties : satDifficulties;
     const subject = examType === 'subjects' ? subjects.find(s => s.id === selectedSubject) : null;
@@ -322,7 +388,7 @@ Make questions appropriate and educational.`;
       <div className="flex-1 overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
-            <Button variant="ghost" size="sm" onClick={() => setViewState(examType === 'subjects' ? 'subjects' : 'type')}>
+            <Button variant="ghost" size="sm" onClick={() => setViewState(examType === 'subjects' ? 'grade' : 'type')}>
               <ArrowLeft size={16} className="mr-1" />
               Back
             </Button>
@@ -335,63 +401,119 @@ Make questions appropriate and educational.`;
             <h1 className="text-2xl font-bold mb-2">
               {examType === 'subjects' ? `${subject?.name} Exam` : 'SAT Exam'}
             </h1>
+            {selectedGrade && (
+              <p className="text-sm text-muted-foreground">{selectedGrade}</p>
+            )}
           </div>
 
-          {examType === 'subjects' && !selectedGrade && (
-            <div className="glass-effect rounded-2xl p-5 mb-4 animate-fade-in">
-              <h3 className="font-semibold mb-4 text-center">Select Your Grade Level</h3>
-              <div className="grid grid-cols-4 gap-2">
-                {grades.map((grade) => (
-                  <button
-                    key={grade}
-                    onClick={() => setSelectedGrade(grade)}
-                    className="px-3 py-2 rounded-lg text-xs font-medium transition-all bg-secondary/50 text-muted-foreground hover:bg-secondary"
-                  >
-                    {grade}
-                  </button>
-                ))}
-              </div>
+          {/* Show saved materials info for subjects */}
+          {examType === 'subjects' && (
+            <div className={cn(
+              "glass-effect rounded-2xl p-4 mb-4 animate-fade-in",
+              !hasSavedMaterials && "border-amber-500/50"
+            )}>
+              {hasSavedMaterials ? (
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-sm">Ready to create exam</p>
+                    <p className="text-xs text-muted-foreground">
+                      {savedMaterials.length} material(s) available: {savedMaterials.map(m => m.topic).join(', ')}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-sm text-amber-500">No saved material available</p>
+                    <p className="text-xs text-muted-foreground">
+                      Go to Subjects tab first and study some materials before taking an exam.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {(examType === 'sat' || selectedGrade) && (
-            <>
-              <div className="glass-effect rounded-2xl p-5 mb-4 animate-fade-in">
-                <h3 className="font-semibold mb-3 text-center">Topic (Optional)</h3>
-                <input
-                  type="text"
-                  value={topicInput}
-                  onChange={(e) => setTopicInput(e.target.value)}
-                  placeholder="e.g., Photosynthesis, Algebra..."
-                  className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
+          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+            <h3 className="font-semibold mb-3 text-center">Select Difficulty</h3>
+            <div className="space-y-2 overflow-y-auto max-h-[50vh]">
+              {difficulties.map((diff) => (
+                <button
+                  key={diff.id}
+                  onClick={() => handleStartExam(diff.id)}
+                  disabled={examType === 'subjects' && !hasSavedMaterials}
+                  className={cn(
+                    "w-full p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all flex items-center gap-3",
+                    examType === 'subjects' && !hasSavedMaterials && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <div className={cn(
+                    "w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br text-white text-sm font-bold",
+                    diff.color
+                  )}>
+                    {diff.questions}
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="font-medium text-sm">{diff.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {diff.questions} questions
+                      {'description' in diff && ` - ${diff.description}`}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-              <div className="glass-effect rounded-2xl p-5 animate-fade-in">
-                <h3 className="font-semibold mb-3 text-center">Select Difficulty</h3>
-                <div className="space-y-2">
-                  {difficulties.map((diff) => (
-                    <button
-                      key={diff.id}
-                      onClick={() => handleStartExam(diff.id)}
-                      className="w-full p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all flex items-center gap-3"
-                    >
-                      <div className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br text-white text-sm font-bold",
-                        diff.color
-                      )}>
-                        {diff.questions}
-                      </div>
-                      <div className="text-left flex-1">
-                        <p className="font-medium text-sm">{diff.name}</p>
-                        <p className="text-xs text-muted-foreground">{diff.questions} questions</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+  // GRADE VIEW - Select grade for subjects
+  if (viewState === 'grade' && examType === 'subjects') {
+    const subject = subjects.find(s => s.id === selectedSubject);
+    
+    return (
+      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Button variant="ghost" size="sm" onClick={() => setViewState('subjects')}>
+              <ArrowLeft size={16} className="mr-1" />
+              Back
+            </Button>
+          </div>
+
+          <div className="text-center mb-8 animate-fade-in">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-primary to-accent">
+              {subject?.emoji}
+            </div>
+            <h1 className="text-2xl font-bold mb-2">{subject?.name} Exam</h1>
+          </div>
+
+          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+            <h3 className="font-semibold mb-4 text-center">Select Your Grade Level</h3>
+            <div className="grid grid-cols-4 gap-2 overflow-y-auto max-h-[50vh]">
+              {grades.map((grade) => {
+                const materialCount = getMaterialsBySubjectAndGrade(selectedSubject!, grade).length;
+                return (
+                  <button
+                    key={grade}
+                    onClick={() => handleGradeSelect(grade)}
+                    className="px-3 py-2 rounded-lg text-xs font-medium transition-all bg-secondary/50 text-muted-foreground hover:bg-secondary flex flex-col items-center gap-1"
+                  >
+                    <span>{grade}</span>
+                    {materialCount > 0 ? (
+                      <span className="text-[10px] text-emerald-500">{materialCount} materials</span>
+                    ) : (
+                      <span className="text-[10px] text-amber-500">no materials</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -414,21 +536,31 @@ Make questions appropriate and educational.`;
             <p className="text-muted-foreground text-sm">Choose a subject for your exam</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {subjects.map((subj, index) => (
-              <button
-                key={subj.id}
-                onClick={() => handleSubjectClick(subj.id)}
-                className={cn(
-                  "glass-effect rounded-xl p-4 text-left transition-all duration-200 animate-fade-in",
-                  "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-3"
-                )}
-                style={{ animationDelay: `${index * 30}ms` }}
-              >
-                <span className="text-xl">{subj.emoji}</span>
-                <span className="font-medium text-sm">{subj.name}</span>
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-3 overflow-y-auto">
+            {subjects.map((subj, index) => {
+              const materialCount = getMaterialsBySubject(subj.id).length;
+              return (
+                <button
+                  key={subj.id}
+                  onClick={() => handleSubjectClick(subj.id)}
+                  className={cn(
+                    "glass-effect rounded-xl p-4 text-left transition-all duration-200 animate-fade-in",
+                    "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-3"
+                  )}
+                  style={{ animationDelay: `${index * 30}ms` }}
+                >
+                  <span className="text-xl">{subj.emoji}</span>
+                  <div>
+                    <span className="font-medium text-sm block">{subj.name}</span>
+                    {materialCount > 0 ? (
+                      <span className="text-[10px] text-emerald-500">{materialCount} materials saved</span>
+                    ) : (
+                      <span className="text-[10px] text-amber-500">no materials yet</span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -441,39 +573,42 @@ Make questions appropriate and educational.`;
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="text-center mb-8 animate-fade-in">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-primary to-accent">
-            <BookOpen className="w-7 h-7 text-primary-foreground" />
+            <Trophy className="w-7 h-7 text-primary-foreground" />
           </div>
           <h1 className="text-2xl font-bold mb-2 gradient-text">Examination</h1>
-          <p className="text-muted-foreground text-sm">Click to select exam type</p>
+          <p className="text-muted-foreground text-sm">Choose your exam type</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3">
+        <div className="space-y-3">
           <button
             onClick={() => handleExamTypeSelect('subjects')}
-            className="glass-effect rounded-xl p-5 text-left transition-all duration-200 animate-fade-in hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
+            className="w-full glass-effect rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
-              <BookOpen size={24} />
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-xl">
+              📚
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Subjects</h3>
-              <p className="text-xs text-muted-foreground">Biology, Physics, Math, and more</p>
-              <p className="text-xs text-primary mt-1">Beginner (10) • Intermediate (20) • Expert (30)</p>
+              <h3 className="font-semibold">Subject Exams</h3>
+              <p className="text-xs text-muted-foreground">
+                Biology, Physics, Chemistry, Math, English, Social Studies, Technology
+              </p>
+              <p className="text-xs text-primary mt-1">Beginner: 10 | Intermediate: 20 | Expert: 30 questions</p>
             </div>
           </button>
 
           <button
             onClick={() => handleExamTypeSelect('sat')}
-            className="glass-effect rounded-xl p-5 text-left transition-all duration-200 animate-fade-in hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
-            style={{ animationDelay: '50ms' }}
+            className="w-full glass-effect rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white">
-              <GraduationCap size={24} />
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white text-xl">
+              📝
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">SAT</h3>
-              <p className="text-xs text-muted-foreground">Full SAT exam practice</p>
-              <p className="text-xs text-primary mt-1">Beginner (20) • Intermediate (50) • Expert (65) • Full SAT (140)</p>
+              <h3 className="font-semibold">SAT Exam</h3>
+              <p className="text-xs text-muted-foreground">
+                College admission standardized test
+              </p>
+              <p className="text-xs text-primary mt-1">Beginner: 20 | Intermediate: 50 | Expert: 65 | Full SAT: 140 questions</p>
             </div>
           </button>
         </div>

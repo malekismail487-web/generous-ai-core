@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react';
-import { ArrowLeft, ArrowRight, Loader2, FileText, Save } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { MathRenderer } from '@/components/MathRenderer';
 
 const subjects = [
   { id: 'biology', name: 'Biology', emoji: '🧬' },
@@ -24,7 +25,7 @@ const grades = [
   'Grade 10', 'Grade 11', 'Grade 12'
 ];
 
-type ViewState = 'subjects' | 'input' | 'notes';
+type ViewState = 'subjects' | 'grade' | 'input' | 'notes';
 
 export function NotesSection() {
   const [viewState, setViewState] = useState<ViewState>('subjects');
@@ -50,6 +51,11 @@ Create well-organized notes that include:
 3. Important concepts with bullet points
 4. Formulas or rules (if applicable)
 5. Quick summary
+
+IMPORTANT: For ALL mathematical expressions, use LaTeX notation:
+- Inline: \\( expression \\) or $expression$
+- Display: \\[ expression \\] or $$expression$$
+- Always include plain-text fallback after complex formulas
 
 Format the notes clearly for easy studying. Be concise but comprehensive.`;
 
@@ -80,11 +86,12 @@ Format the notes clearly for easy studying. Be concise but comprehensive.`;
   const handleSubjectClick = (subjectId: string) => {
     setSelectedSubject(subjectId);
     setSelectedGrade(null);
-    setViewState('input');
+    setViewState('grade');
   };
 
   const handleGradeSelect = (grade: string) => {
     setSelectedGrade(grade);
+    setViewState('input');
   };
 
   const handleTopicSubmit = () => {
@@ -99,6 +106,11 @@ Format the notes clearly for easy studying. Be concise but comprehensive.`;
     setSelectedGrade(null);
     setTopicInput('');
     setNotesContent('');
+  };
+
+  const handleBackToGrades = () => {
+    setSelectedGrade(null);
+    setViewState('grade');
   };
 
   const handleNewNotes = () => {
@@ -146,12 +158,8 @@ Format the notes clearly for easy studying. Be concise but comprehensive.`;
             </div>
           </div>
 
-          <div className="glass-effect rounded-2xl p-5">
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                {notesContent}
-              </div>
-            </div>
+          <div className="glass-effect rounded-2xl p-5 overflow-y-auto max-h-[60vh]">
+            <MathRenderer content={notesContent} className="whitespace-pre-wrap text-sm leading-relaxed" />
           </div>
         </div>
       </div>
@@ -159,7 +167,57 @@ Format the notes clearly for easy studying. Be concise but comprehensive.`;
   }
 
   // INPUT VIEW
-  if (viewState === 'input' && selectedSubject) {
+  if (viewState === 'input' && selectedSubject && selectedGrade) {
+    return (
+      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
+              <ArrowLeft size={16} className="mr-1" />
+              Back
+            </Button>
+          </div>
+
+          <div className="text-center mb-8 animate-fade-in">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-primary to-accent">
+              {subject?.emoji}
+            </div>
+            <h1 className="text-2xl font-bold mb-2">{subject?.name} Notes</h1>
+            <p className="text-sm text-muted-foreground">{selectedGrade}</p>
+          </div>
+
+          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+            <h3 className="font-semibold mb-2 text-center text-lg">
+              What topic do you want notes for?
+            </h3>
+            
+            <input
+              type="text"
+              value={topicInput}
+              onChange={(e) => setTopicInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleTopicSubmit()}
+              placeholder="e.g., Photosynthesis, Linear equations, World War II..."
+              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
+              autoFocus
+            />
+
+            <Button
+              size="sm"
+              onClick={handleTopicSubmit}
+              disabled={!topicInput.trim()}
+              className="w-full gap-2"
+            >
+              Generate Notes
+              <ArrowRight size={16} />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // GRADE VIEW
+  if (viewState === 'grade' && selectedSubject) {
     return (
       <div className="flex-1 overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
@@ -177,67 +235,20 @@ Format the notes clearly for easy studying. Be concise but comprehensive.`;
             <h1 className="text-2xl font-bold mb-2">{subject?.name} Notes</h1>
           </div>
 
-          {!selectedGrade && (
-            <div className="glass-effect rounded-2xl p-5 mb-4 animate-fade-in">
-              <h3 className="font-semibold mb-4 text-center">Select Your Grade Level</h3>
-              <div className="grid grid-cols-4 gap-2">
-                {grades.map((grade) => (
-                  <button
-                    key={grade}
-                    onClick={() => handleGradeSelect(grade)}
-                    className={cn(
-                      "px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                      selectedGrade === grade
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
-                    )}
-                  >
-                    {grade}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {selectedGrade && (
-            <div className="glass-effect rounded-2xl p-5 animate-fade-in">
-              <h3 className="font-semibold mb-2 text-center text-lg">
-                What topic do you want notes for?
-              </h3>
-              <p className="text-sm text-muted-foreground text-center mb-4">
-                Grade: {selectedGrade}
-              </p>
-              
-              <input
-                type="text"
-                value={topicInput}
-                onChange={(e) => setTopicInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleTopicSubmit()}
-                placeholder="e.g., Photosynthesis, Linear equations, World War II..."
-                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
-                autoFocus
-              />
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedGrade(null)}
+          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+            <h3 className="font-semibold mb-4 text-center">Select Your Grade Level</h3>
+            <div className="grid grid-cols-4 gap-2 overflow-y-auto max-h-[50vh]">
+              {grades.map((grade) => (
+                <button
+                  key={grade}
+                  onClick={() => handleGradeSelect(grade)}
+                  className="px-3 py-2 rounded-lg text-xs font-medium transition-all bg-secondary/50 text-muted-foreground hover:bg-secondary"
                 >
-                  Change Grade
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleTopicSubmit}
-                  disabled={!topicInput.trim()}
-                  className="flex-1 gap-2"
-                >
-                  Generate Notes
-                  <ArrowRight size={16} />
-                </Button>
-              </div>
+                  {grade}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
         </div>
       </div>
     );
@@ -255,7 +266,7 @@ Format the notes clearly for easy studying. Be concise but comprehensive.`;
           <p className="text-muted-foreground text-sm">Click a subject or SAT section</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 overflow-y-auto">
           {subjects.map((subj, index) => (
             <button
               key={subj.id}
