@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { MathRenderer } from '@/components/MathRenderer';
 
 const subjects = [
   { id: 'biology', name: 'Biology', emoji: '🧬' },
@@ -29,7 +30,7 @@ interface Flashcard {
   back: string;
 }
 
-type ViewState = 'subjects' | 'input' | 'cards';
+type ViewState = 'subjects' | 'grade' | 'input' | 'cards';
 
 export function FlashcardsSection() {
   const [viewState, setViewState] = useState<ViewState>('subjects');
@@ -56,6 +57,10 @@ Return ONLY valid JSON array, no other text:
   {"front": "Question or term", "back": "Answer or definition"},
   ...
 ]
+
+IMPORTANT: For ALL mathematical expressions, use LaTeX notation:
+- Inline: \\( expression \\) or $expression$
+- Display: \\[ expression \\] or $$expression$$
 
 Flashcards must:
 - Be short and concise
@@ -98,11 +103,12 @@ Flashcards must:
   const handleSubjectClick = (subjectId: string) => {
     setSelectedSubject(subjectId);
     setSelectedGrade(null);
-    setViewState('input');
+    setViewState('grade');
   };
 
   const handleGradeSelect = (grade: string) => {
     setSelectedGrade(grade);
+    setViewState('input');
   };
 
   const handleTopicSubmit = () => {
@@ -119,6 +125,11 @@ Flashcards must:
     setFlashcards([]);
     setCurrentIndex(0);
     setIsFlipped(false);
+  };
+
+  const handleBackToGrades = () => {
+    setSelectedGrade(null);
+    setViewState('grade');
   };
 
   const nextCard = () => {
@@ -150,7 +161,7 @@ Flashcards must:
     const currentCard = flashcards[currentIndex];
 
     return (
-      <div className="flex-1 flex flex-col items-center justify-center pt-16 pb-20 px-4">
+      <div className="flex-1 flex flex-col items-center justify-center pt-16 pb-20 px-4 overflow-y-auto">
         <div className="w-full max-w-sm">
           <div className="flex items-center justify-between mb-4">
             <Button variant="ghost" size="sm" onClick={handleBackToSubjects}>
@@ -167,6 +178,7 @@ Flashcards must:
                 setViewState('input');
                 setFlashcards([]);
                 setCurrentIndex(0);
+                setTopicInput('');
               }}
               className="text-xs"
             >
@@ -186,22 +198,22 @@ Flashcards must:
           >
             <div className={cn(
               "absolute inset-0 glass-effect rounded-2xl p-6 flex flex-col items-center justify-center text-center backface-hidden",
-              "bg-gradient-to-br from-primary/5 to-accent/5"
+              "bg-gradient-to-br from-primary/5 to-accent/5 overflow-y-auto"
             )}>
               <span className="text-xs text-primary mb-2">Question</span>
-              <p className="text-lg font-medium">{currentCard?.front}</p>
+              <MathRenderer content={currentCard?.front} className="text-lg font-medium" />
               <span className="text-xs text-muted-foreground mt-4">Tap to flip</span>
             </div>
 
             <div 
               className={cn(
-                "absolute inset-0 glass-effect rounded-2xl p-6 flex flex-col items-center justify-center text-center",
+                "absolute inset-0 glass-effect rounded-2xl p-6 flex flex-col items-center justify-center text-center overflow-y-auto",
                 "bg-gradient-to-br from-accent/10 to-primary/10"
               )}
               style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden' }}
             >
               <span className="text-xs text-accent mb-2">Answer</span>
-              <p className="text-lg font-medium">{currentCard?.back}</p>
+              <MathRenderer content={currentCard?.back} className="text-lg font-medium" />
               <span className="text-xs text-muted-foreground mt-4">Tap to flip back</span>
             </div>
           </div>
@@ -220,7 +232,57 @@ Flashcards must:
   }
 
   // INPUT VIEW
-  if (viewState === 'input' && selectedSubject) {
+  if (viewState === 'input' && selectedSubject && selectedGrade) {
+    return (
+      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
+              <ArrowLeft size={16} className="mr-1" />
+              Back
+            </Button>
+          </div>
+
+          <div className="text-center mb-8 animate-fade-in">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-amber-500 to-orange-600">
+              {subject?.emoji}
+            </div>
+            <h1 className="text-2xl font-bold mb-2">{subject?.name} Flashcards</h1>
+            <p className="text-sm text-muted-foreground">{selectedGrade}</p>
+          </div>
+
+          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+            <h3 className="font-semibold mb-2 text-center text-lg">
+              What topic do you want flashcards for?
+            </h3>
+            
+            <input
+              type="text"
+              value={topicInput}
+              onChange={(e) => setTopicInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleTopicSubmit()}
+              placeholder="e.g., Cell structure, Vocabulary, Chemical formulas..."
+              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
+              autoFocus
+            />
+
+            <Button
+              size="sm"
+              onClick={handleTopicSubmit}
+              disabled={!topicInput.trim()}
+              className="w-full gap-2"
+            >
+              Generate Flashcards
+              <ArrowRight size={16} />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // GRADE VIEW
+  if (viewState === 'grade' && selectedSubject) {
     return (
       <div className="flex-1 overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
@@ -238,67 +300,20 @@ Flashcards must:
             <h1 className="text-2xl font-bold mb-2">{subject?.name} Flashcards</h1>
           </div>
 
-          {!selectedGrade && (
-            <div className="glass-effect rounded-2xl p-5 mb-4 animate-fade-in">
-              <h3 className="font-semibold mb-4 text-center">Select Your Grade Level</h3>
-              <div className="grid grid-cols-4 gap-2">
-                {grades.map((grade) => (
-                  <button
-                    key={grade}
-                    onClick={() => handleGradeSelect(grade)}
-                    className={cn(
-                      "px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                      selectedGrade === grade
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
-                    )}
-                  >
-                    {grade}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {selectedGrade && (
-            <div className="glass-effect rounded-2xl p-5 animate-fade-in">
-              <h3 className="font-semibold mb-2 text-center text-lg">
-                What topic do you want flashcards for?
-              </h3>
-              <p className="text-sm text-muted-foreground text-center mb-4">
-                Grade: {selectedGrade}
-              </p>
-              
-              <input
-                type="text"
-                value={topicInput}
-                onChange={(e) => setTopicInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleTopicSubmit()}
-                placeholder="e.g., Cell structure, Vocabulary, Chemical formulas..."
-                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
-                autoFocus
-              />
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedGrade(null)}
+          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+            <h3 className="font-semibold mb-4 text-center">Select Your Grade Level</h3>
+            <div className="grid grid-cols-4 gap-2 overflow-y-auto max-h-[50vh]">
+              {grades.map((grade) => (
+                <button
+                  key={grade}
+                  onClick={() => handleGradeSelect(grade)}
+                  className="px-3 py-2 rounded-lg text-xs font-medium transition-all bg-secondary/50 text-muted-foreground hover:bg-secondary"
                 >
-                  Change Grade
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleTopicSubmit}
-                  disabled={!topicInput.trim()}
-                  className="flex-1 gap-2"
-                >
-                  Generate Flashcards
-                  <ArrowRight size={16} />
-                </Button>
-              </div>
+                  {grade}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
         </div>
       </div>
     );
@@ -316,7 +331,7 @@ Flashcards must:
           <p className="text-muted-foreground text-sm">Click a subject or SAT section</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 overflow-y-auto">
           {subjects.map((subj, index) => (
             <button
               key={subj.id}

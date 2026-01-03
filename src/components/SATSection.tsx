@@ -1,39 +1,46 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { ArrowLeft, ArrowRight, Loader2, Plus, X, CheckCircle2, XCircle, Trophy, Clock, Flag, GraduationCap } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useMaterials, Material } from '@/hooks/useMaterials';
+import { MathRenderer } from '@/components/MathRenderer';
+import { useAuth } from '@/hooks/useAuth';
 
 const satSections = [
-  { id: 'math', name: 'SAT Math', emoji: '🔢', color: 'from-blue-500 to-cyan-600' },
-  { id: 'reading', name: 'SAT Reading', emoji: '📖', color: 'from-emerald-500 to-green-600' },
-  { id: 'writing', name: 'SAT Writing and Language', emoji: '✍️', color: 'from-violet-500 to-purple-600' },
+  { id: 'sat_math', name: 'SAT Math', emoji: '🔢', color: 'from-blue-500 to-cyan-600' },
+  { id: 'sat_reading', name: 'SAT Reading', emoji: '📖', color: 'from-emerald-500 to-green-600' },
+  { id: 'sat_writing', name: 'SAT Writing and Language', emoji: '✍️', color: 'from-violet-500 to-purple-600' },
 ];
 
 const satGrades = ['Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
 
-interface MaterialTab {
-  id: string;
-  name: string;
-  content: string;
-}
-
-type ViewState = 'sections' | 'input' | 'lecture';
+type ViewState = 'sections' | 'grade' | 'input' | 'lecture';
 
 export function SATSection() {
   const [viewState, setViewState] = useState<ViewState>('sections');
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
   const [materialInput, setMaterialInput] = useState('');
-  const [materialTabs, setMaterialTabs] = useState<MaterialTab[]>([]);
-  const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [activeMaterial, setActiveMaterial] = useState<Material | null>(null);
   const [lectureContent, setLectureContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { 
+    getMaterialsBySubjectAndGrade, 
+    createMaterial, 
+    deleteMaterial 
+  } = useMaterials();
+
+  // Get saved materials for current section/grade
+  const savedMaterials = selectedSection && selectedGrade 
+    ? getMaterialsBySubjectAndGrade(selectedSection, selectedGrade)
+    : [];
 
   const generateLecture = useCallback(async (topic: string) => {
-    if (!selectedSection || !selectedGrade) return;
+    if (!selectedSection || !selectedGrade || !user) return;
     
     setIsLoading(true);
     setLectureContent('');
@@ -50,6 +57,11 @@ Generate SAT-style material that includes:
 4. Common mistakes to avoid
 5. Quick review summary
 
+IMPORTANT: For ALL mathematical expressions, use LaTeX notation:
+- Inline: \\( expression \\) or $expression$
+- Display: \\[ expression \\] or $$expression$$
+- Always include plain-text fallback after complex formulas
+
 Stay strictly within SAT ${section?.name} scope. Match official SAT format and style.`;
 
     const messages: Message[] = [{ id: '1', role: 'user', content: prompt }];
@@ -62,15 +74,13 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
           response += chunk;
           setLectureContent(response);
         },
-        onDone: () => {
+        onDone: async () => {
+          // Save to database
+          const newMaterial = await createMaterial(selectedSection, selectedGrade, topic, response);
+          if (newMaterial) {
+            setActiveMaterial(newMaterial);
+          }
           setIsLoading(false);
-          const newTab: MaterialTab = {
-            id: `${Date.now()}`,
-            name: topic,
-            content: response,
-          };
-          setMaterialTabs(prev => [...prev, newTab]);
-          setActiveTabId(newTab.id);
         },
         onError: (error) => {
           setIsLoading(false);
@@ -80,18 +90,27 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
     } catch {
       setIsLoading(false);
     }
-  }, [selectedSection, selectedGrade, toast]);
+  }, [selectedSection, selectedGrade, user, createMaterial, toast]);
 
   const handleSectionClick = (sectionId: string) => {
     setSelectedSection(sectionId);
     setSelectedGrade(null);
-    setMaterialTabs([]);
-    setActiveTabId(null);
-    setViewState('input');
+    setActiveMaterial(null);
+    setLectureContent('');
+    setViewState('grade');
   };
 
   const handleGradeSelect = (grade: string) => {
     setSelectedGrade(grade);
+    // Check if there are saved materials for this section/grade
+    const materials = getMaterialsBySubjectAndGrade(selectedSection!, grade);
+    if (materials.length > 0) {
+      setActiveMaterial(materials[0]);
+      setLectureContent(materials[0].content);
+      setViewState('lecture');
+    } else {
+      setViewState('input');
+    }
   };
 
   const handleMaterialSubmit = () => {
@@ -107,22 +126,25 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
     setViewState('input');
   };
 
-  const handleTabClick = (tab: MaterialTab) => {
-    setActiveTabId(tab.id);
-    setLectureContent(tab.content);
+  const handleMaterialClick = (material: Material) => {
+    setActiveMaterial(material);
+    setLectureContent(material.content);
   };
 
-  const handleRemoveTab = (tabId: string) => {
-    setMaterialTabs(prev => prev.filter(t => t.id !== tabId));
-    if (activeTabId === tabId) {
-      const remaining = materialTabs.filter(t => t.id !== tabId);
-      if (remaining.length > 0) {
-        setActiveTabId(remaining[remaining.length - 1].id);
-        setLectureContent(remaining[remaining.length - 1].content);
-      } else {
-        setActiveTabId(null);
-        setViewState('input');
+  const handleDeleteMaterial = async (materialId: string) => {
+    const success = await deleteMaterial(materialId);
+    if (success) {
+      if (activeMaterial?.id === materialId) {
+        const remaining = savedMaterials.filter(m => m.id !== materialId);
+        if (remaining.length > 0) {
+          setActiveMaterial(remaining[0]);
+          setLectureContent(remaining[0].content);
+        } else {
+          setActiveMaterial(null);
+          setViewState('input');
+        }
       }
+      toast({ title: 'Material deleted' });
     }
   };
 
@@ -130,20 +152,26 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
     setViewState('sections');
     setSelectedSection(null);
     setSelectedGrade(null);
-    setMaterialTabs([]);
-    setActiveTabId(null);
+    setActiveMaterial(null);
     setLectureContent('');
+  };
+
+  const handleBackToGrades = () => {
+    setSelectedGrade(null);
+    setActiveMaterial(null);
+    setLectureContent('');
+    setViewState('grade');
   };
 
   const section = satSections.find(s => s.id === selectedSection);
 
   // LECTURE VIEW
-  if (viewState === 'lecture' && selectedSection) {
+  if (viewState === 'lecture' && selectedSection && selectedGrade) {
     return (
       <div className="flex-1 overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-4">
-            <Button variant="ghost" size="sm" onClick={handleBackToSections}>
+            <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
               <ArrowLeft size={16} className="mr-1" />
               Back
             </Button>
@@ -159,28 +187,29 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
             </div>
           </div>
 
-          <div className="glass-effect rounded-xl p-3 mb-4">
+          {/* Material Tabs */}
+          <div className="glass-effect rounded-xl p-3 mb-4 overflow-x-auto">
             <div className="flex flex-wrap gap-2">
-              {materialTabs.map((tab) => (
+              {savedMaterials.map((material) => (
                 <div
-                  key={tab.id}
+                  key={material.id}
                   className={cn(
                     "group relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer",
-                    activeTabId === tab.id
+                    activeMaterial?.id === material.id
                       ? "bg-primary text-primary-foreground"
                       : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
                   )}
-                  onClick={() => handleTabClick(tab)}
+                  onClick={() => handleMaterialClick(material)}
                 >
-                  <span className="truncate max-w-[120px]">{tab.name}</span>
+                  <span className="truncate max-w-[120px]">{material.topic}</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleRemoveTab(tab.id);
+                      handleDeleteMaterial(material.id);
                     }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <X size={12} />
+                    <Trash2 size={12} />
                   </button>
                 </div>
               ))}
@@ -195,18 +224,15 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
             </div>
           </div>
 
-          <div className="glass-effect rounded-2xl p-5">
+          {/* Lecture Content with Math Rendering */}
+          <div className="glass-effect rounded-2xl p-5 overflow-y-auto max-h-[60vh]">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 <span className="ml-2 text-sm text-muted-foreground">Generating SAT material...</span>
               </div>
             ) : (
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                  {lectureContent}
-                </div>
-              </div>
+              <MathRenderer content={lectureContent} className="whitespace-pre-wrap text-sm leading-relaxed" />
             )}
           </div>
         </div>
@@ -215,7 +241,75 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
   }
 
   // INPUT VIEW
-  if (viewState === 'input' && selectedSection) {
+  if (viewState === 'input' && selectedSection && selectedGrade) {
+    return (
+      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
+              <ArrowLeft size={16} className="mr-1" />
+              Back
+            </Button>
+          </div>
+
+          <div className="text-center mb-8 animate-fade-in">
+            <div className={cn(
+              "inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br",
+              section?.color
+            )}>
+              {section?.emoji}
+            </div>
+            <h1 className="text-2xl font-bold mb-2">{section?.name}</h1>
+            <p className="text-sm text-muted-foreground">{selectedGrade}</p>
+          </div>
+
+          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+            <h3 className="font-semibold mb-2 text-center text-lg">
+              What are you currently studying or having problems with in this SAT section?
+            </h3>
+            
+            <input
+              type="text"
+              value={materialInput}
+              onChange={(e) => setMaterialInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleMaterialSubmit()}
+              placeholder="e.g., Reading comprehension, Algebra word problems, Grammar rules..."
+              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
+              autoFocus
+            />
+
+            <div className="flex gap-2">
+              {savedMaterials.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setActiveMaterial(savedMaterials[0]);
+                    setLectureContent(savedMaterials[0].content);
+                    setViewState('lecture');
+                  }}
+                >
+                  View Saved Materials
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={handleMaterialSubmit}
+                disabled={!materialInput.trim()}
+                className="flex-1 gap-2"
+              >
+                Generate Material
+                <ArrowRight size={16} />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // GRADE VIEW
+  if (viewState === 'grade' && selectedSection) {
     return (
       <div className="flex-1 overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
@@ -236,68 +330,27 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
             <h1 className="text-2xl font-bold mb-2">{section?.name}</h1>
           </div>
 
-          {!selectedGrade && (
-            <div className="glass-effect rounded-2xl p-5 mb-4 animate-fade-in">
-              <h3 className="font-semibold mb-4 text-center">Select Your Grade Level</h3>
-              <p className="text-xs text-muted-foreground text-center mb-4">SAT prep is available for Grades 8-12</p>
-              <div className="grid grid-cols-5 gap-2">
-                {satGrades.map((grade) => (
+          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+            <h3 className="font-semibold mb-4 text-center">Select Your Grade Level</h3>
+            <p className="text-xs text-muted-foreground text-center mb-4">SAT prep is available for Grades 8-12</p>
+            <div className="grid grid-cols-5 gap-2 overflow-y-auto">
+              {satGrades.map((grade) => {
+                const materialCount = getMaterialsBySubjectAndGrade(selectedSection, grade).length;
+                return (
                   <button
                     key={grade}
                     onClick={() => handleGradeSelect(grade)}
-                    className={cn(
-                      "px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                      selectedGrade === grade
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
-                    )}
+                    className="px-3 py-2 rounded-lg text-xs font-medium transition-all bg-secondary/50 text-muted-foreground hover:bg-secondary flex flex-col items-center gap-1"
                   >
-                    {grade.replace('Grade ', 'G')}
+                    <span>{grade.replace('Grade ', 'G')}</span>
+                    {materialCount > 0 && (
+                      <span className="text-[10px] text-primary">{materialCount} saved</span>
+                    )}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          )}
-
-          {selectedGrade && (
-            <div className="glass-effect rounded-2xl p-5 animate-fade-in">
-              <h3 className="font-semibold mb-2 text-center text-lg">
-                What are you currently studying or having problems with in this SAT section?
-              </h3>
-              <p className="text-sm text-muted-foreground text-center mb-4">
-                Grade: {selectedGrade}
-              </p>
-              
-              <input
-                type="text"
-                value={materialInput}
-                onChange={(e) => setMaterialInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleMaterialSubmit()}
-                placeholder="e.g., Reading comprehension, Algebra word problems, Grammar rules..."
-                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
-                autoFocus
-              />
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedGrade(null)}
-                >
-                  Change Grade
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleMaterialSubmit}
-                  disabled={!materialInput.trim()}
-                  className="flex-1 gap-2"
-                >
-                  Generate Material
-                  <ArrowRight size={16} />
-                </Button>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     );
@@ -315,7 +368,7 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
           <p className="text-muted-foreground text-sm">Click any section to start studying</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-3 overflow-y-auto">
           {satSections.map((sect, index) => (
             <button
               key={sect.id}
