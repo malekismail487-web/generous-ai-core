@@ -208,7 +208,7 @@ const Index = () => {
   };
 
   return (
-    <div className="h-screen bg-background relative overflow-hidden">
+    <div className="h-screen bg-background relative flex flex-col overflow-hidden">
       <div className="ambient-glow" />
       
       <BottomNav
@@ -226,7 +226,7 @@ const Index = () => {
         onDeleteNote={deleteNote}
       />
 
-      <div className="h-full relative z-10">
+      <div className="flex-1 relative z-10 overflow-hidden">
         {renderMainContent()}
       </div>
     </div>
