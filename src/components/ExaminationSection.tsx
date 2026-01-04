@@ -86,12 +86,36 @@ export function ExaminationSection() {
     return savedMaterials.map(m => `Topic: ${m.topic}\n${m.content}`).join('\n\n---\n\n');
   }, [savedMaterials, hasSavedMaterials]);
 
+  // Get SAT materials for beginner/intermediate/expert levels
+  const satMaterials = useMemo(() => {
+    const satSubjects = ['sat_math', 'sat_reading', 'sat_writing'];
+    return satSubjects.flatMap(subject => getMaterialsBySubject(subject));
+  }, [getMaterialsBySubject]);
+
+  const hasSatMaterials = satMaterials.length > 0;
+
+  const satMaterialContext = useMemo(() => {
+    if (!hasSatMaterials) return '';
+    return satMaterials.map(m => `Topic: ${m.topic}\n${m.content}`).join('\n\n---\n\n');
+  }, [satMaterials, hasSatMaterials]);
+
   const generateQuestions = useCallback(async (count: number) => {
+    // For subject exams, require saved materials
     if (!hasSavedMaterials && examType === 'subjects') {
       toast({ 
         variant: 'destructive', 
         title: 'No saved materials', 
         description: 'You need to study some materials first before taking an exam.' 
+      });
+      return;
+    }
+
+    // For SAT beginner/intermediate/expert, require SAT materials
+    if (examType === 'sat' && selectedDifficulty !== 'full_sat' && !hasSatMaterials) {
+      toast({ 
+        variant: 'destructive', 
+        title: 'No SAT materials saved', 
+        description: 'Go to SAT Practice tab first and study some materials before taking Beginner/Intermediate/Expert exams.' 
       });
       return;
     }
@@ -116,7 +140,16 @@ IMPORTANT RULES:
 1. Questions MUST be based ONLY on the content in the study materials above
 2. Do NOT include any topics or concepts not covered in the materials
 3. Include questions about definitions, formulas, concepts, and examples from the materials
-4. For ALL mathematical expressions, use LaTeX notation: \\( inline \\) or \\[ display \\]
+
+ABSOLUTE MATH RENDERING SPECIFICATION (LaTeX Only):
+- All math must use LaTeX notation exclusively
+- Inline math: \\( expression \\)
+- Display math: $$ expression $$
+- Use \\frac{a}{b} for fractions, \\sqrt{x} for roots, x^{n} for exponents
+- Use \\sin, \\cos, \\tan, \\log, \\ln for functions
+- Use \\leq, \\geq, \\neq for comparisons
+- Use \\cdot for multiplication
+- Never use plaintext math like sqrt, ^, or /
 
 Return ONLY valid JSON array:
 [
@@ -127,23 +160,130 @@ Return ONLY valid JSON array:
     "explanation": "Step-by-step explanation with LaTeX for math"
   }
 ]`;
-    } else {
-      // SAT exam - doesn't require saved materials
-      prompt = `Generate ${count} SAT-style exam questions.
+    } else if (examType === 'sat' && selectedDifficulty !== 'full_sat') {
+      // SAT Beginner/Intermediate/Expert - uses saved SAT materials
+      const difficultyDesc = selectedDifficulty === 'beginner' ? 'easier, foundational' :
+                            selectedDifficulty === 'intermediate' ? 'medium difficulty' : 'challenging, advanced';
+      
+      prompt = `Based ONLY on the following saved SAT study materials, generate ${count} SAT-style exam questions.
 
-Difficulty: ${selectedDifficulty}
+SAVED SAT MATERIALS:
+${satMaterialContext}
 
-IMPORTANT: For ALL mathematical expressions, use LaTeX notation:
-- Inline: \\( expression \\)
-- Display: \\[ expression \\]
+Difficulty Level: ${selectedDifficulty} (${difficultyDesc} questions)
+
+RULES:
+1. Questions MUST be based on the saved materials above
+2. Include both Math and English/Reading questions proportionally
+3. ${selectedDifficulty === 'beginner' ? 'Focus on basic concepts and straightforward applications' : 
+     selectedDifficulty === 'intermediate' ? 'Include moderate complexity with some multi-step problems' :
+     'Include challenging multi-step problems requiring deep understanding'}
+
+ABSOLUTE MATH RENDERING SPECIFICATION (LaTeX Only):
+- All math must use LaTeX notation exclusively
+- Inline math: \\( expression \\)
+- Display math: $$ expression $$
+- Fractions: \\frac{a}{b}, NOT a/b
+- Roots: \\sqrt{x}, \\sqrt[n]{x}
+- Exponents: x^{n}, x^{2}
+- Functions: \\sin(x), \\cos(x), \\tan(x), \\log(x), \\ln(x)
+- Comparisons: \\leq, \\geq, \\neq
+- Multiplication: \\cdot
+- Summation: \\sum_{i=1}^{n}
+- Integrals: \\int_{a}^{b}
 
 Return ONLY valid JSON array:
 [
   {
-    "question": "Question text with LaTeX if needed",
+    "question": "Question text with LaTeX",
     "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
     "correctIndex": 0,
-    "explanation": "Step-by-step explanation with LaTeX for math"
+    "explanation": "Step-by-step explanation with LaTeX"
+  }
+]`;
+    } else {
+      // Full SAT Exam - covers ALL topics comprehensively
+      prompt = `Generate a comprehensive Full SAT Practice Exam with ${count} questions covering ALL official SAT topics.
+
+STRUCTURE (distribute questions proportionally):
+- Reading & Writing: ~50% of questions
+- Math (No Calculator + Calculator): ~50% of questions
+
+===== SAT MATH TOPICS (Must Include All) =====
+
+1. HEART OF ALGEBRA:
+- Linear equations in one variable
+- Linear inequalities in one variable
+- Systems of linear equations (substitution, elimination)
+- Word problems using linear equations or systems
+- Linear functions: slope, intercepts, function notation, rate of change
+- Absolute value equations: \\( |x - a| = b \\)
+- Interpreting linear graphs and tables
+
+2. PROBLEM SOLVING AND DATA ANALYSIS:
+- Ratios, rates, proportions
+- Percentages, percent change, discount, tax, interest
+- Unit conversions (metric ↔ customary)
+- Mean, median, mode, range, weighted averages
+- Probability: simple, independent/dependent events
+- Combinations and permutations
+- Data interpretation: tables, bar graphs, line graphs, scatterplots
+- Trend analysis, slope interpretation
+
+3. PASSPORT TO ADVANCED MATH:
+- Quadratic equations: factoring, quadratic formula \\( x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a} \\)
+- Graphing quadratics: vertex, intercepts, axis of symmetry
+- Nonlinear equations: cubic, radical
+- Functions: evaluation, composition, inverse, domain/range
+- Factoring, simplifying, expanding expressions
+- Rational expressions and equations
+- Exponents: \\( x^{-n} = \\frac{1}{x^n} \\), \\( x^{\\frac{m}{n}} = \\sqrt[n]{x^m} \\)
+
+4. ADDITIONAL TOPICS IN MATH:
+- Geometry: lines, angles, triangles, circles, polygons, area, volume
+- Right triangle trigonometry: \\( \\sin\\theta, \\cos\\theta, \\tan\\theta \\)
+- Coordinate geometry: distance \\( d = \\sqrt{(x_2-x_1)^2 + (y_2-y_1)^2} \\), midpoint, slope
+- Complex numbers: \\( i^2 = -1 \\), operations, conjugates
+- Arithmetic and geometric sequences
+
+===== SAT ENGLISH TOPICS (Must Include All) =====
+
+1. READING COMPREHENSION:
+- Words in context
+- Main idea, theme, purpose
+- Supporting details and evidence
+- Inference questions
+- Command of Evidence
+- Charts/Graphs in passages
+
+2. WRITING AND LANGUAGE:
+- Sentence structure, punctuation, grammar
+- Subject-verb agreement, pronoun agreement, verb tense
+- Sentence revision: clarity, conciseness
+- Paragraph revision: flow, transitions, organization
+- Tone, style, improving passages
+- Expression of ideas
+
+ABSOLUTE MATH RENDERING SPECIFICATION:
+- ALL math in LaTeX only
+- Inline: \\( expression \\)
+- Display: $$ expression $$
+- Fractions: \\frac{numerator}{denominator}
+- Square root: \\sqrt{x}, nth root: \\sqrt[n]{x}
+- Exponents: x^{n}
+- Trigonometry: \\sin, \\cos, \\tan
+- Logarithms: \\log, \\ln
+- Inequalities: \\leq, \\geq, \\neq
+- Summation: \\sum_{i=1}^{n}
+- Absolute value: |x|
+
+Return ONLY valid JSON array with questions from ALL topics above:
+[
+  {
+    "question": "Question with proper LaTeX for all math",
+    "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
+    "correctIndex": 0,
+    "explanation": "Detailed step-by-step solution with LaTeX"
   }
 ]`;
     }
@@ -181,7 +321,7 @@ Return ONLY valid JSON array:
     } catch {
       setIsLoading(false);
     }
-  }, [examType, selectedSubject, selectedGrade, selectedDifficulty, hasSavedMaterials, materialContext, toast]);
+  }, [examType, selectedSubject, selectedGrade, selectedDifficulty, hasSavedMaterials, materialContext, hasSatMaterials, satMaterialContext, toast]);
 
   const handleExamTypeSelect = (type: ExamType) => {
     setExamType(type);
@@ -200,6 +340,17 @@ Return ONLY valid JSON array:
 
   const handleStartExam = (difficultyId: string) => {
     setSelectedDifficulty(difficultyId);
+    
+    // Check SAT materials for non-full SAT exams
+    if (examType === 'sat' && difficultyId !== 'full_sat' && !hasSatMaterials) {
+      toast({ 
+        variant: 'destructive', 
+        title: 'No SAT materials saved', 
+        description: 'Go to SAT Practice tab first and study some materials before taking Beginner/Intermediate/Expert exams.' 
+      });
+      return;
+    }
+    
     const difficulties = examType === 'subjects' ? subjectDifficulties : satDifficulties;
     const diff = difficulties.find(d => d.id === difficultyId);
     if (diff) {
@@ -436,34 +587,68 @@ Return ONLY valid JSON array:
             </div>
           )}
 
+          {/* Show SAT materials info for SAT exams */}
+          {examType === 'sat' && (
+            <div className={cn(
+              "glass-effect rounded-2xl p-4 mb-4 animate-fade-in",
+              !hasSatMaterials && "border-amber-500/50"
+            )}>
+              {hasSatMaterials ? (
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-sm">SAT materials available</p>
+                    <p className="text-xs text-muted-foreground">
+                      {satMaterials.length} SAT material(s) saved. Beginner/Intermediate/Expert use these materials.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-sm text-amber-500">No SAT materials saved</p>
+                    <p className="text-xs text-muted-foreground">
+                      Beginner/Intermediate/Expert require saved SAT materials. Full SAT covers all topics.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="glass-effect rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-3 text-center">Select Difficulty</h3>
             <div className="space-y-2 overflow-y-auto max-h-[50vh]">
-              {difficulties.map((diff) => (
-                <button
-                  key={diff.id}
-                  onClick={() => handleStartExam(diff.id)}
-                  disabled={examType === 'subjects' && !hasSavedMaterials}
-                  className={cn(
-                    "w-full p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all flex items-center gap-3",
-                    examType === 'subjects' && !hasSavedMaterials && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  <div className={cn(
-                    "w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br text-white text-sm font-bold",
-                    diff.color
-                  )}>
-                    {diff.questions}
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="font-medium text-sm">{diff.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {diff.questions} questions
-                      {'description' in diff && ` - ${diff.description}`}
-                    </p>
-                  </div>
-                </button>
-              ))}
+              {difficulties.map((diff) => {
+                const isDisabled = (examType === 'subjects' && !hasSavedMaterials) ||
+                                   (examType === 'sat' && diff.id !== 'full_sat' && !hasSatMaterials);
+                return (
+                  <button
+                    key={diff.id}
+                    onClick={() => handleStartExam(diff.id)}
+                    disabled={isDisabled}
+                    className={cn(
+                      "w-full p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all flex items-center gap-3",
+                      isDisabled && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br text-white text-sm font-bold",
+                      diff.color
+                    )}>
+                      {diff.questions}
+                    </div>
+                    <div className="text-left flex-1">
+                      <p className="font-medium text-sm">{diff.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {diff.questions} questions
+                        {'description' in diff && ` - ${diff.description}`}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
