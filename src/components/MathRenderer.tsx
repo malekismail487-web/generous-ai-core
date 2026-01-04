@@ -13,17 +13,33 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
     
     let result = content;
     
-    // Process display math first: \[ ... \]
+    // Process display math first: $$ ... $$ (must be processed before single $)
+    result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
+      try {
+        const html = katex.renderToString(math.trim(), {
+          displayMode: true,
+          throwOnError: false,
+          output: 'html',
+          strict: false,
+        });
+        return `<div class="my-4 overflow-x-auto flex justify-center">${html}</div>`;
+      } catch {
+        return `<div class="my-4 font-mono text-sm text-muted-foreground text-center">${math}</div>`;
+      }
+    });
+    
+    // Process display math: \[ ... \]
     result = result.replace(/\\\[([\s\S]*?)\\\]/g, (_, math) => {
       try {
         const html = katex.renderToString(math.trim(), {
           displayMode: true,
           throwOnError: false,
           output: 'html',
+          strict: false,
         });
-        return `<div class="my-4 overflow-x-auto">${html}</div>`;
+        return `<div class="my-4 overflow-x-auto flex justify-center">${html}</div>`;
       } catch {
-        return `<div class="my-4 font-mono text-sm text-muted-foreground">${math}</div>`;
+        return `<div class="my-4 font-mono text-sm text-muted-foreground text-center">${math}</div>`;
       }
     });
     
@@ -34,38 +50,27 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
           displayMode: false,
           throwOnError: false,
           output: 'html',
+          strict: false,
         });
-        return html;
+        return `<span class="inline-math">${html}</span>`;
       } catch {
         return `<code class="font-mono text-sm">${math}</code>`;
       }
     });
     
-    // Also process $...$ for inline math (common markdown style)
-    result = result.replace(/\$([^\$\n]+?)\$/g, (_, math) => {
+    // Process inline math: $...$ (single dollar signs, not double)
+    // Use negative lookbehind/lookahead to avoid matching $$
+    result = result.replace(/(?<!\$)\$([^\$\n]+?)\$(?!\$)/g, (_, math) => {
       try {
         const html = katex.renderToString(math.trim(), {
           displayMode: false,
           throwOnError: false,
           output: 'html',
+          strict: false,
         });
-        return html;
+        return `<span class="inline-math">${html}</span>`;
       } catch {
         return `<code class="font-mono text-sm">${math}</code>`;
-      }
-    });
-    
-    // Process $$...$$ for display math (common markdown style)
-    result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
-      try {
-        const html = katex.renderToString(math.trim(), {
-          displayMode: true,
-          throwOnError: false,
-          output: 'html',
-        });
-        return `<div class="my-4 overflow-x-auto">${html}</div>`;
-      } catch {
-        return `<div class="my-4 font-mono text-sm text-muted-foreground">${math}</div>`;
       }
     });
     
