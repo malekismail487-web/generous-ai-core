@@ -297,19 +297,46 @@ Return ONLY valid JSON array with questions from ALL topics above:
         onDelta: (chunk) => { response += chunk; },
         onDone: () => {
           try {
-            const jsonMatch = response.match(/\[[\s\S]*\]/);
-            if (jsonMatch) {
-              const questions = JSON.parse(jsonMatch[0]);
-              setExamState({
-                questions,
-                answers: new Array(questions.length).fill(null),
-                currentIndex: 0,
-                showExplanation: false,
-              });
-              setViewState('exam');
+            // Try to find JSON array in the response - handle markdown code blocks too
+            let jsonString = response;
+            
+            // Remove markdown code blocks if present
+            const codeBlockMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (codeBlockMatch) {
+              jsonString = codeBlockMatch[1];
             }
-          } catch {
-            toast({ variant: 'destructive', title: 'Error generating questions' });
+            
+            // Find the JSON array
+            const jsonMatch = jsonString.match(/\[[\s\S]*\]/);
+            if (jsonMatch) {
+              // Clean up the JSON string - fix common issues
+              let cleanJson = jsonMatch[0]
+                .replace(/,\s*]/g, ']') // Remove trailing commas
+                .replace(/,\s*}/g, '}'); // Remove trailing commas in objects
+              
+              const questions = JSON.parse(cleanJson);
+              
+              if (Array.isArray(questions) && questions.length > 0) {
+                setExamState({
+                  questions,
+                  answers: new Array(questions.length).fill(null),
+                  currentIndex: 0,
+                  showExplanation: false,
+                });
+                setViewState('exam');
+              } else {
+                throw new Error('No questions generated');
+              }
+            } else {
+              throw new Error('Could not parse questions');
+            }
+          } catch (parseError) {
+            console.error('JSON parse error:', parseError, 'Response:', response.substring(0, 500));
+            toast({ 
+              variant: 'destructive', 
+              title: 'Error generating questions',
+              description: 'Please try again. The AI response was not in the expected format.'
+            });
           }
           setIsLoading(false);
         },
@@ -318,8 +345,10 @@ Return ONLY valid JSON array with questions from ALL topics above:
           toast({ variant: 'destructive', title: 'Error', description: error.message });
         },
       });
-    } catch {
+    } catch (err) {
+      console.error('Stream error:', err);
       setIsLoading(false);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to generate questions' });
     }
   }, [examType, selectedSubject, selectedGrade, selectedDifficulty, hasSavedMaterials, materialContext, hasSatMaterials, satMaterialContext, toast]);
 
