@@ -419,7 +419,7 @@ Return ONLY valid JSON array with questions from ALL topics above:
     const currentAnswer = examState.answers[examState.currentIndex];
 
     return (
-      <div className="flex-1 flex flex-col overflow-hidden pt-14 pb-16">
+      <div className="flex-1 flex flex-col overflow-hidden pt-14 pb-24">
         <div className="flex items-center justify-between p-3 border-b border-border/30">
           <Button variant="ghost" size="sm" onClick={handleReset}>
             <ArrowLeft size={14} className="mr-1" />
@@ -483,7 +483,7 @@ Return ONLY valid JSON array with questions from ALL topics above:
             </div>
 
             {examState.showExplanation && (
-              <div className="glass-effect rounded-2xl p-4 animate-fade-in">
+              <div className="glass-effect rounded-2xl p-4 mb-4 animate-fade-in">
                 <div className="flex items-start gap-2.5">
                   <div className={cn(
                     "w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0",
@@ -502,18 +502,16 @@ Return ONLY valid JSON array with questions from ALL topics above:
                 </div>
               </div>
             )}
+
+            {examState.showExplanation && (
+              <div className="flex justify-center pb-4">
+                <Button size="lg" onClick={handleNext} className="w-full max-w-xs">
+                  {examState.currentIndex + 1 >= examState.questions.length ? 'See Results' : 'Next Question'}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
-
-        {examState.showExplanation && (
-          <div className="p-3 border-t border-border/30">
-            <div className="max-w-lg mx-auto flex justify-end">
-              <Button size="sm" onClick={handleNext}>
-                {examState.currentIndex + 1 >= examState.questions.length ? 'See Results' : 'Next'}
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
