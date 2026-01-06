@@ -18,45 +18,50 @@ export default function Auth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
-  const { signIn, signUp, user, loading } = useAuth();
+  const { signIn, signUp, user, authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Redirect rules:
+  // - if authLoading is true → do nothing
+  // - if authLoading is false and user exists → navigate to Home
+  // - if authLoading is false and user is null → stay on Auth
   useEffect(() => {
-    if (user && !loading) {
-      navigate('/');
+    if (authLoading) return;
+    if (user) {
+      navigate('/', { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [authLoading, user, navigate]);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
-    
+
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
       newErrors.email = emailResult.error.errors[0].message;
     }
-    
+
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       newErrors.password = passwordResult.error.errors[0].message;
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
-      const { error } = isLogin 
+      const { error } = isLogin
         ? await signIn(email, password)
         : await signUp(email, password);
-      
+
       if (error) {
         let message = error.message;
         if (message.includes('User already registered')) {
@@ -70,21 +75,28 @@ export default function Auth() {
           description: message,
         });
         setIsSubmitting(false);
-      } else if (!isLogin) {
+        return;
+      }
+
+      // Successful signup: switch back to sign-in.
+      // Successful sign-in: session is persisted automatically and global auth state updates via the auth listener.
+      if (!isLogin) {
         toast({
           title: 'Account created!',
           description: 'You can now sign in with your credentials.',
         });
         setIsLogin(true);
         setIsSubmitting(false);
+        return;
       }
-      // Don't set isSubmitting to false on successful login - let the redirect happen
-    } catch (err) {
+
+      // For sign-in success, keep submitting state until redirect happens.
+    } catch {
       setIsSubmitting(false);
     }
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

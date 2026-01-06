@@ -1,4 +1,5 @@
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
@@ -7,9 +8,18 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, loading } = useAuth();
+  const { user, authLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  if (loading) {
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      navigate('/auth', { replace: true, state: { from: location.pathname } });
+    }
+  }, [authLoading, user, navigate, location.pathname]);
+
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="ambient-glow" />
@@ -18,9 +28,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
+  if (!user) return null;
 
   return <>{children}</>;
 }
