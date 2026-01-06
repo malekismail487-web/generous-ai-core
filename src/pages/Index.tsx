@@ -11,11 +11,8 @@ import { ExaminationSection } from "@/components/ExaminationSection";
 import { SATSection } from "@/components/SATSection";
 import { NotesSection } from "@/components/NotesSection";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
 import { useNotes } from "@/hooks/useNotes";
-import { Navigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('chat');
@@ -23,7 +20,6 @@ const Index = () => {
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth();
   
   const {
     conversations,
@@ -143,18 +139,7 @@ const Index = () => {
     await createNote();
   };
 
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="ambient-glow" />
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
+  // Auth is now handled by ProtectedRoute wrapper
 
   const renderMainContent = () => {
     switch (activeTab) {
