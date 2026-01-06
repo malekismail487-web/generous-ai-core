@@ -69,14 +69,17 @@ export default function Auth() {
           title: isLogin ? 'Sign in failed' : 'Sign up failed',
           description: message,
         });
+        setIsSubmitting(false);
       } else if (!isLogin) {
         toast({
           title: 'Account created!',
           description: 'You can now sign in with your credentials.',
         });
         setIsLogin(true);
+        setIsSubmitting(false);
       }
-    } finally {
+      // Don't set isSubmitting to false on successful login - let the redirect happen
+    } catch (err) {
       setIsSubmitting(false);
     }
   };
