@@ -12,26 +12,27 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Redirect if user is not logged in, but only after auth state resolves
+  // Redirect to /auth if user is not logged in, but only after auth state resolves
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth", { replace: true, state: { from: location } });
     }
   }, [loading, user, navigate, location]);
 
-  // Show loader while auth state is loading
+  // Show loader while auth state is resolving
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="ambient-glow" />
-        <Loader2 className="w-8 h-8 animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // If user is not logged in, render nothing (redirect will happen via useEffect)
+  // If user is not logged in, render nothing (redirect handled in useEffect)
   if (!user) return null;
 
-  // User is logged in, render protected content
+  // User is logged in, render the protected content
   return <>{children}</>;
 }
+
