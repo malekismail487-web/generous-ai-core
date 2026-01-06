@@ -385,19 +385,19 @@ Use age-appropriate language for ${selectedGrade}.`;
           <p className="text-muted-foreground text-sm">Click any subject to start learning</p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-3 overflow-y-auto">
           {subjects.map((subj, index) => (
             <button
               key={subj.id}
               onClick={() => handleSubjectClick(subj.id)}
               className={cn(
-                "glass-effect rounded-2xl p-5 text-center transition-all duration-200 animate-fade-in group flex flex-col items-center",
-                "hover:scale-[1.03] hover:shadow-xl active:scale-[0.98]"
+                "glass-effect rounded-xl p-4 text-left transition-all duration-200 animate-fade-in group",
+                "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
               )}
-              style={{ animationDelay: `${index * 60}ms` }}
+              style={{ animationDelay: `${index * 50}ms` }}
             >
               <div className={cn(
-                "w-14 h-14 rounded-2xl flex items-center justify-center mb-3 bg-gradient-to-br text-white text-2xl shadow-lg",
+                "w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-gradient-to-br text-white text-lg",
                 subj.color
               )}>
                 {subj.emoji}

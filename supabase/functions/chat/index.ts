@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `You are Lumina, an educational AI integrated into a structured study app. You are accessed through a single floating AI button available on every tab.
+const SYSTEM_PROMPT = `You are Study Bright, an educational AI integrated into a structured study app. You are accessed through a single floating AI button available on every tab.
 
 ## Core Behavior Rules
 - Help students learn, not cheat
