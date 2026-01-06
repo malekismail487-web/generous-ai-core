@@ -5,10 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  authLoading: boolean;
-  /** kept for backwards compatibility */
   loading: boolean;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -19,40 +16,26 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-    let resolvedOnce = false;
-
-    const resolve = (nextSession: Session | null) => {
-      if (!mounted) return;
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
-
-      if (!resolvedOnce) {
-        resolvedOnce = true;
-        setAuthLoading(false);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
-    };
-
-    // Set up auth state listener FIRST (prevents missing events)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      // sync-only updates here
-      resolve(nextSession);
-    });
+    );
 
     // THEN check for existing session
-    supabase.auth
-      .getSession()
-      .then(({ data: { session: existingSession } }) => resolve(existingSession));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string) => {
@@ -61,8 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        emailRedirectTo: redirectUrl,
-      },
+        emailRedirectTo: redirectUrl
+      }
     });
     return { error: error ? new Error(error.message) : null };
   };
@@ -80,18 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        authLoading,
-        loading: authLoading,
-        setUser,
-        signUp,
-        signIn,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

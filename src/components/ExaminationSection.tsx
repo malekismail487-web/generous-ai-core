@@ -297,46 +297,19 @@ Return ONLY valid JSON array with questions from ALL topics above:
         onDelta: (chunk) => { response += chunk; },
         onDone: () => {
           try {
-            // Try to find JSON array in the response - handle markdown code blocks too
-            let jsonString = response;
-            
-            // Remove markdown code blocks if present
-            const codeBlockMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
-            if (codeBlockMatch) {
-              jsonString = codeBlockMatch[1];
-            }
-            
-            // Find the JSON array
-            const jsonMatch = jsonString.match(/\[[\s\S]*\]/);
+            const jsonMatch = response.match(/\[[\s\S]*\]/);
             if (jsonMatch) {
-              // Clean up the JSON string - fix common issues
-              let cleanJson = jsonMatch[0]
-                .replace(/,\s*]/g, ']') // Remove trailing commas
-                .replace(/,\s*}/g, '}'); // Remove trailing commas in objects
-              
-              const questions = JSON.parse(cleanJson);
-              
-              if (Array.isArray(questions) && questions.length > 0) {
-                setExamState({
-                  questions,
-                  answers: new Array(questions.length).fill(null),
-                  currentIndex: 0,
-                  showExplanation: false,
-                });
-                setViewState('exam');
-              } else {
-                throw new Error('No questions generated');
-              }
-            } else {
-              throw new Error('Could not parse questions');
+              const questions = JSON.parse(jsonMatch[0]);
+              setExamState({
+                questions,
+                answers: new Array(questions.length).fill(null),
+                currentIndex: 0,
+                showExplanation: false,
+              });
+              setViewState('exam');
             }
-          } catch (parseError) {
-            console.error('JSON parse error:', parseError, 'Response:', response.substring(0, 500));
-            toast({ 
-              variant: 'destructive', 
-              title: 'Error generating questions',
-              description: 'Please try again. The AI response was not in the expected format.'
-            });
+          } catch {
+            toast({ variant: 'destructive', title: 'Error generating questions' });
           }
           setIsLoading(false);
         },
@@ -345,10 +318,8 @@ Return ONLY valid JSON array with questions from ALL topics above:
           toast({ variant: 'destructive', title: 'Error', description: error.message });
         },
       });
-    } catch (err) {
-      console.error('Stream error:', err);
+    } catch {
       setIsLoading(false);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to generate questions' });
     }
   }, [examType, selectedSubject, selectedGrade, selectedDifficulty, hasSavedMaterials, materialContext, hasSatMaterials, satMaterialContext, toast]);
 
@@ -448,7 +419,7 @@ Return ONLY valid JSON array with questions from ALL topics above:
     const currentAnswer = examState.answers[examState.currentIndex];
 
     return (
-      <div className="flex-1 flex flex-col overflow-hidden pt-14 pb-24">
+      <div className="flex-1 flex flex-col overflow-hidden pt-14 pb-16">
         <div className="flex items-center justify-between p-3 border-b border-border/30">
           <Button variant="ghost" size="sm" onClick={handleReset}>
             <ArrowLeft size={14} className="mr-1" />
@@ -512,7 +483,7 @@ Return ONLY valid JSON array with questions from ALL topics above:
             </div>
 
             {examState.showExplanation && (
-              <div className="glass-effect rounded-2xl p-4 mb-4 animate-fade-in">
+              <div className="glass-effect rounded-2xl p-4 animate-fade-in">
                 <div className="flex items-start gap-2.5">
                   <div className={cn(
                     "w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0",
@@ -531,16 +502,18 @@ Return ONLY valid JSON array with questions from ALL topics above:
                 </div>
               </div>
             )}
-
-            {examState.showExplanation && (
-              <div className="flex justify-center pb-4">
-                <Button size="lg" onClick={handleNext} className="w-full max-w-xs">
-                  {examState.currentIndex + 1 >= examState.questions.length ? 'See Results' : 'Next Question'}
-                </Button>
-              </div>
-            )}
           </div>
         </div>
+
+        {examState.showExplanation && (
+          <div className="p-3 border-t border-border/30">
+            <div className="max-w-lg mx-auto flex justify-end">
+              <Button size="sm" onClick={handleNext}>
+                {examState.currentIndex + 1 >= examState.questions.length ? 'See Results' : 'Next'}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
