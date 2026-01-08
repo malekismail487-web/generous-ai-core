@@ -8,24 +8,233 @@ import { useMaterials } from '@/hooks/useMaterials';
 import { MathRenderer } from '@/components/MathRenderer';
 import { useAuth } from '@/hooks/useAuth';
 
-type ExamType = 'subjects' | 'sat';
+// ============================================
+// ENUMS (IMMUTABLE)
+// ============================================
 
-interface Question {
-  question: string;
-  options: string[];
-  correctIndex: number;
-  explanation: string;
+enum ExamMenuType {
+  SUBJECT = "SUBJECT",
+  SAT = "SAT"
 }
 
+enum SubjectType {
+  BIOLOGY = "BIOLOGY",
+  TECHNOLOGY = "TECHNOLOGY",
+  ENGLISH = "ENGLISH",
+  MATHEMATICS = "MATHEMATICS",
+  CHEMISTRY = "CHEMISTRY",
+  PHYSICS = "PHYSICS"
+}
+
+enum SubjectDifficulty {
+  SUBJECT_BEGINNER = "SUBJECT_BEGINNER",
+  SUBJECT_INTERMEDIATE = "SUBJECT_INTERMEDIATE",
+  SUBJECT_EXPERT = "SUBJECT_EXPERT"
+}
+
+enum SATDifficulty {
+  SAT_BEGINNER = "SAT_BEGINNER",
+  SAT_INTERMEDIATE = "SAT_INTERMEDIATE",
+  SAT_EXPERT = "SAT_EXPERT",
+  SAT_FULL = "SAT_FULL"
+}
+
+// ============================================
+// QUESTION COUNT MAPS (HARD CODED)
+// ============================================
+
+const SUBJECT_DIFFICULTY_COUNTS: Record<SubjectDifficulty, number> = {
+  [SubjectDifficulty.SUBJECT_BEGINNER]: 10,
+  [SubjectDifficulty.SUBJECT_INTERMEDIATE]: 20,
+  [SubjectDifficulty.SUBJECT_EXPERT]: 30
+};
+
+const SAT_DIFFICULTY_COUNTS: Record<SATDifficulty, number> = {
+  [SATDifficulty.SAT_BEGINNER]: 20,
+  [SATDifficulty.SAT_INTERMEDIATE]: 30,
+  [SATDifficulty.SAT_EXPERT]: 60,
+  [SATDifficulty.SAT_FULL]: 140
+};
+
+// ============================================
+// RESOLUTION FUNCTION (FAIL-CLOSED)
+// ============================================
+
+function resolveQuestionCount(menu: ExamMenuType, difficulty: string): number {
+  if (menu === ExamMenuType.SUBJECT) {
+    if (!(difficulty in SUBJECT_DIFFICULTY_COUNTS)) {
+      throw new Error(`Invalid subject difficulty: ${difficulty}`);
+    }
+    return SUBJECT_DIFFICULTY_COUNTS[difficulty as SubjectDifficulty];
+  }
+  
+  if (!(difficulty in SAT_DIFFICULTY_COUNTS)) {
+    throw new Error(`Invalid SAT difficulty: ${difficulty}`);
+  }
+  return SAT_DIFFICULTY_COUNTS[difficulty as SATDifficulty];
+}
+
+// ============================================
+// JSON SCHEMA TYPES
+// ============================================
+
+interface QuestionJSON {
+  id: number;
+  type: "multiple_choice";
+  question: string;
+  options: [string, string, string, string];
+  correct_answer: string;
+}
+
+interface ExamJSON {
+  exam_title: string;
+  grade_level: string;
+  subject: string;
+  total_questions: number;
+  questions: QuestionJSON[];
+}
+
+// ============================================
+// VALIDATION (STRICT)
+// ============================================
+
+function validateQuestion(q: unknown, index: number): q is QuestionJSON {
+  if (!q || typeof q !== 'object') return false;
+  const question = q as Record<string, unknown>;
+  
+  if (typeof question.id !== 'number' || question.id !== index + 1) return false;
+  if (question.type !== 'multiple_choice') return false;
+  if (typeof question.question !== 'string' || question.question.length === 0) return false;
+  if (!Array.isArray(question.options) || question.options.length !== 4) return false;
+  if (!question.options.every((o: unknown) => typeof o === 'string' && o.length > 0)) return false;
+  if (typeof question.correct_answer !== 'string' || !question.options.includes(question.correct_answer)) return false;
+  
+  return true;
+}
+
+function validateExamJSON(data: unknown): ExamJSON | null {
+  if (!data || typeof data !== 'object') return null;
+  const exam = data as Record<string, unknown>;
+  
+  if (typeof exam.exam_title !== 'string' || exam.exam_title.length === 0) return null;
+  if (typeof exam.grade_level !== 'string' || exam.grade_level.length === 0) return null;
+  if (typeof exam.subject !== 'string' || exam.subject.length === 0) return null;
+  if (typeof exam.total_questions !== 'number' || exam.total_questions <= 0) return null;
+  if (!Array.isArray(exam.questions)) return null;
+  if (exam.total_questions !== exam.questions.length) return null;
+  
+  for (let i = 0; i < exam.questions.length; i++) {
+    if (!validateQuestion(exam.questions[i], i)) return null;
+  }
+  
+  return exam as unknown as ExamJSON;
+}
+
+// Legacy format conversion for backward compatibility
+function convertLegacyFormat(questions: unknown[]): ExamJSON | null {
+  try {
+    const converted: QuestionJSON[] = questions.map((q: unknown, index: number) => {
+      const legacy = q as Record<string, unknown>;
+      const options = legacy.options as string[];
+      const correctIndex = legacy.correctIndex as number;
+      
+      return {
+        id: index + 1,
+        type: "multiple_choice" as const,
+        question: legacy.question as string,
+        options: options as [string, string, string, string],
+        correct_answer: options[correctIndex]
+      };
+    });
+    
+    return {
+      exam_title: "Generated Exam",
+      grade_level: "Various",
+      subject: "Mixed",
+      total_questions: converted.length,
+      questions: converted
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ============================================
+// EXAM STATE (IMMUTABLE SHAPE)
+// ============================================
+
+interface ExamState {
+  exam: ExamJSON;
+  currentQuestionId: number;
+  answered: boolean;
+  completed: boolean;
+  selectedAnswer: string | null;
+  answers: Record<number, string>;
+}
+
+function createInitialExamState(exam: ExamJSON): ExamState {
+  return {
+    exam,
+    currentQuestionId: 1,
+    answered: false,
+    completed: false,
+    selectedAnswer: null,
+    answers: {}
+  };
+}
+
+// ============================================
+// RENDER GUARD
+// ============================================
+
+function getCurrentQuestion(state: ExamState): QuestionJSON | null {
+  if (state.currentQuestionId < 1 || state.currentQuestionId > state.exam.total_questions) {
+    return null;
+  }
+  return state.exam.questions.find(q => q.id === state.currentQuestionId) || null;
+}
+
+// ============================================
+// NEXT QUESTION BUTTON LOGIC (MANDATORY)
+// ============================================
+
+function shouldRenderNextButton(state: ExamState): boolean {
+  return state.answered && !state.completed;
+}
+
+function onNextQuestion(state: ExamState): ExamState {
+  if (state.currentQuestionId === state.exam.total_questions) {
+    return { ...state, completed: true };
+  }
+  return {
+    ...state,
+    currentQuestionId: state.currentQuestionId + 1,
+    answered: false,
+    selectedAnswer: null
+  };
+}
+
+// ============================================
+// SUBJECT & DIFFICULTY DEFINITIONS
+// ============================================
+
 const subjects = [
-  { id: 'biology', name: 'Biology', emoji: '🧬' },
-  { id: 'physics', name: 'Physics', emoji: '⚛️' },
-  { id: 'chemistry', name: 'Chemistry', emoji: '🧪' },
-  { id: 'mathematics', name: 'Mathematics', emoji: '📐' },
-  { id: 'english', name: 'English', emoji: '📚' },
-  { id: 'social_studies', name: 'Social Studies', emoji: '🌍' },
-  { id: 'technology', name: 'Technology', emoji: '💻' },
+  { id: SubjectType.BIOLOGY, name: 'Biology', emoji: '🧬' },
+  { id: SubjectType.TECHNOLOGY, name: 'Technology', emoji: '💻' },
+  { id: SubjectType.ENGLISH, name: 'English', emoji: '📚' },
+  { id: SubjectType.MATHEMATICS, name: 'Mathematics', emoji: '📐' },
+  { id: SubjectType.CHEMISTRY, name: 'Chemistry', emoji: '🧪' },
+  { id: SubjectType.PHYSICS, name: 'Physics', emoji: '⚛️' },
 ];
+
+const subjectIdMap: Record<SubjectType, string> = {
+  [SubjectType.BIOLOGY]: 'biology',
+  [SubjectType.TECHNOLOGY]: 'technology',
+  [SubjectType.ENGLISH]: 'english',
+  [SubjectType.MATHEMATICS]: 'mathematics',
+  [SubjectType.CHEMISTRY]: 'chemistry',
+  [SubjectType.PHYSICS]: 'physics',
+};
 
 const grades = [
   'KG1', 'KG2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
@@ -34,32 +243,25 @@ const grades = [
 ];
 
 const subjectDifficulties = [
-  { id: 'beginner', name: 'Beginner', questions: 10, color: 'from-emerald-500 to-teal-500' },
-  { id: 'intermediate', name: 'Intermediate', questions: 20, color: 'from-amber-500 to-orange-500' },
-  { id: 'expert', name: 'Expert', questions: 30, color: 'from-rose-500 to-pink-500' },
+  { id: SubjectDifficulty.SUBJECT_BEGINNER, name: 'Beginner', questions: 10, color: 'from-emerald-500 to-teal-500' },
+  { id: SubjectDifficulty.SUBJECT_INTERMEDIATE, name: 'Intermediate', questions: 20, color: 'from-amber-500 to-orange-500' },
+  { id: SubjectDifficulty.SUBJECT_EXPERT, name: 'Expert', questions: 30, color: 'from-rose-500 to-pink-500' },
 ];
 
 const satDifficulties = [
-  { id: 'beginner', name: 'Beginner', questions: 20, color: 'from-emerald-500 to-teal-500' },
-  { id: 'intermediate', name: 'Intermediate', questions: 50, color: 'from-amber-500 to-orange-500' },
-  { id: 'expert', name: 'Expert', questions: 65, color: 'from-rose-500 to-pink-500' },
-  { id: 'full_sat', name: 'Full SAT Exam', questions: 140, color: 'from-violet-500 to-purple-600', 
-    description: 'Reading/Writing: 2 modules (35+35) + Math: 2 modules (35+35)' },
+  { id: SATDifficulty.SAT_BEGINNER, name: 'Beginner', questions: 20, color: 'from-emerald-500 to-teal-500' },
+  { id: SATDifficulty.SAT_INTERMEDIATE, name: 'Intermediate', questions: 30, color: 'from-amber-500 to-orange-500' },
+  { id: SATDifficulty.SAT_EXPERT, name: 'Expert', questions: 60, color: 'from-rose-500 to-pink-500' },
+  { id: SATDifficulty.SAT_FULL, name: 'Full SAT Exam', questions: 140, color: 'from-violet-500 to-purple-600', 
+    description: 'Reading/Writing: 70 + Math: 70 questions' },
 ];
 
 type ViewState = 'type' | 'subjects' | 'grade' | 'config' | 'exam' | 'results';
 
-interface ExamState {
-  questions: Question[];
-  answers: (number | null)[];
-  currentIndex: number;
-  showExplanation: boolean;
-}
-
 export function ExaminationSection() {
   const [viewState, setViewState] = useState<ViewState>('type');
-  const [examType, setExamType] = useState<ExamType | null>(null);
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [examMenuType, setExamMenuType] = useState<ExamMenuType | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<SubjectType | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,16 +273,15 @@ export function ExaminationSection() {
   // Get saved materials for the selected subject and grade
   const savedMaterials = useMemo(() => {
     if (!selectedSubject) return [];
+    const subjectId = subjectIdMap[selectedSubject];
     if (selectedGrade) {
-      return getMaterialsBySubjectAndGrade(selectedSubject, selectedGrade);
+      return getMaterialsBySubjectAndGrade(subjectId, selectedGrade);
     }
-    return getMaterialsBySubject(selectedSubject);
+    return getMaterialsBySubject(subjectId);
   }, [selectedSubject, selectedGrade, getMaterialsBySubjectAndGrade, getMaterialsBySubject]);
 
-  // Check if there are any saved materials
   const hasSavedMaterials = savedMaterials.length > 0;
 
-  // Build context from saved materials for exam generation
   const materialContext = useMemo(() => {
     if (!hasSavedMaterials) return '';
     return savedMaterials.map(m => `Topic: ${m.topic}\n${m.content}`).join('\n\n---\n\n');
@@ -99,9 +300,9 @@ export function ExaminationSection() {
     return satMaterials.map(m => `Topic: ${m.topic}\n${m.content}`).join('\n\n---\n\n');
   }, [satMaterials, hasSatMaterials]);
 
-  const generateQuestions = useCallback(async (count: number) => {
+  const generateQuestions = useCallback(async (count: number, difficulty: string) => {
     // For subject exams, require saved materials
-    if (!hasSavedMaterials && examType === 'subjects') {
+    if (!hasSavedMaterials && examMenuType === ExamMenuType.SUBJECT) {
       toast({ 
         variant: 'destructive', 
         title: 'No saved materials', 
@@ -111,7 +312,7 @@ export function ExaminationSection() {
     }
 
     // For SAT beginner/intermediate/expert, require SAT materials
-    if (examType === 'sat' && selectedDifficulty !== 'full_sat' && !hasSatMaterials) {
+    if (examMenuType === ExamMenuType.SAT && difficulty !== SATDifficulty.SAT_FULL && !hasSatMaterials) {
       toast({ 
         variant: 'destructive', 
         title: 'No SAT materials saved', 
@@ -122,170 +323,147 @@ export function ExaminationSection() {
 
     setIsLoading(true);
 
-    const subject = examType === 'subjects' 
+    const subjectName = examMenuType === ExamMenuType.SUBJECT && selectedSubject
       ? subjects.find(s => s.id === selectedSubject)?.name 
       : 'SAT';
     
     let prompt: string;
     
-    if (examType === 'subjects' && hasSavedMaterials) {
-      prompt = `Based ONLY on the following study materials, generate ${count} ${subject} exam questions for ${selectedGrade} students.
+    if (examMenuType === ExamMenuType.SUBJECT && hasSavedMaterials) {
+      prompt = `Based ONLY on the following study materials, generate EXACTLY ${count} ${subjectName} exam questions for ${selectedGrade} students.
 
 STUDY MATERIALS TO BASE QUESTIONS ON:
 ${materialContext}
 
-Difficulty: ${selectedDifficulty}
+Difficulty: ${difficulty}
 
 IMPORTANT RULES:
 1. Questions MUST be based ONLY on the content in the study materials above
 2. Do NOT include any topics or concepts not covered in the materials
-3. Include questions about definitions, formulas, concepts, and examples from the materials
+3. CONTENT CONSTRAINT: ${subjectName} topics ONLY - no other subjects
 
 ABSOLUTE MATH RENDERING SPECIFICATION (LaTeX Only):
 - All math must use LaTeX notation exclusively
 - Inline math: \\( expression \\)
 - Display math: $$ expression $$
-- Use \\frac{a}{b} for fractions, \\sqrt{x} for roots, x^{n} for exponents
-- Use \\sin, \\cos, \\tan, \\log, \\ln for functions
-- Use \\leq, \\geq, \\neq for comparisons
-- Use \\cdot for multiplication
-- Never use plaintext math like sqrt, ^, or /
 
-Return ONLY valid JSON array:
-[
-  {
-    "question": "Question text with LaTeX if needed",
-    "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
-    "correctIndex": 0,
-    "explanation": "Step-by-step explanation with LaTeX for math"
-  }
-]`;
-    } else if (examType === 'sat' && selectedDifficulty !== 'full_sat') {
-      // SAT Beginner/Intermediate/Expert - uses saved SAT materials
-      const difficultyDesc = selectedDifficulty === 'beginner' ? 'easier, foundational' :
-                            selectedDifficulty === 'intermediate' ? 'medium difficulty' : 'challenging, advanced';
+You MUST return a valid JSON object with this EXACT structure:
+{
+  "exam_title": "${subjectName} ${difficulty.replace('SUBJECT_', '')} Exam",
+  "grade_level": "${selectedGrade}",
+  "subject": "${subjectName}",
+  "total_questions": ${count},
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Question text with LaTeX if needed",
+      "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
+      "correct_answer": "A) Option"
+    }
+  ]
+}
+
+CRITICAL RULES:
+- IDs must be sequential starting at 1
+- Exactly 4 options per question
+- correct_answer MUST match one of the options exactly
+- total_questions MUST equal ${count}
+- questions array MUST have exactly ${count} items`;
+    } else if (examMenuType === ExamMenuType.SAT && difficulty !== SATDifficulty.SAT_FULL) {
+      const difficultyDesc = difficulty === SATDifficulty.SAT_BEGINNER ? 'easier, foundational' :
+                            difficulty === SATDifficulty.SAT_INTERMEDIATE ? 'medium difficulty' : 'challenging, advanced';
       
-      prompt = `Based ONLY on the following saved SAT study materials, generate ${count} SAT-style exam questions.
+      prompt = `Based ONLY on the following saved SAT study materials, generate EXACTLY ${count} SAT-style exam questions.
 
 SAVED SAT MATERIALS:
 ${satMaterialContext}
 
-Difficulty Level: ${selectedDifficulty} (${difficultyDesc} questions)
-
-RULES:
-1. Questions MUST be based on the saved materials above
-2. Include both Math and English/Reading questions proportionally
-3. ${selectedDifficulty === 'beginner' ? 'Focus on basic concepts and straightforward applications' : 
-     selectedDifficulty === 'intermediate' ? 'Include moderate complexity with some multi-step problems' :
-     'Include challenging multi-step problems requiring deep understanding'}
+Difficulty Level: ${difficulty} (${difficultyDesc} questions)
 
 ABSOLUTE MATH RENDERING SPECIFICATION (LaTeX Only):
 - All math must use LaTeX notation exclusively
 - Inline math: \\( expression \\)
 - Display math: $$ expression $$
-- Fractions: \\frac{a}{b}, NOT a/b
-- Roots: \\sqrt{x}, \\sqrt[n]{x}
-- Exponents: x^{n}, x^{2}
-- Functions: \\sin(x), \\cos(x), \\tan(x), \\log(x), \\ln(x)
-- Comparisons: \\leq, \\geq, \\neq
-- Multiplication: \\cdot
-- Summation: \\sum_{i=1}^{n}
-- Integrals: \\int_{a}^{b}
 
-Return ONLY valid JSON array:
-[
-  {
-    "question": "Question text with LaTeX",
-    "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
-    "correctIndex": 0,
-    "explanation": "Step-by-step explanation with LaTeX"
-  }
-]`;
+You MUST return a valid JSON object with this EXACT structure:
+{
+  "exam_title": "SAT ${difficulty.replace('SAT_', '')} Exam",
+  "grade_level": "High School",
+  "subject": "SAT",
+  "total_questions": ${count},
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Question text",
+      "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
+      "correct_answer": "A) Option"
+    }
+  ]
+}
+
+CRITICAL RULES:
+- IDs must be sequential starting at 1
+- Exactly 4 options per question
+- correct_answer MUST match one of the options exactly
+- total_questions MUST equal ${count}
+- questions array MUST have exactly ${count} items`;
     } else {
       // Full SAT Exam - covers ALL topics comprehensively
-      prompt = `Generate a comprehensive Full SAT Practice Exam with ${count} questions covering ALL official SAT topics.
+      prompt = `Generate a comprehensive Full SAT Practice Exam with EXACTLY ${count} questions covering ALL official SAT topics.
 
-STRUCTURE (distribute questions proportionally):
-- Reading & Writing: ~50% of questions
-- Math (No Calculator + Calculator): ~50% of questions
+STRUCTURE:
+- Reading & Writing: ~70 questions
+- Math: ~70 questions
 
 ===== SAT MATH TOPICS (Must Include All) =====
 
 1. HEART OF ALGEBRA:
-- Linear equations in one variable
-- Linear inequalities in one variable
-- Systems of linear equations (substitution, elimination)
-- Word problems using linear equations or systems
-- Linear functions: slope, intercepts, function notation, rate of change
-- Absolute value equations: \\( |x - a| = b \\)
-- Interpreting linear graphs and tables
+- Linear equations, inequalities, systems
+- Linear functions, slope, intercepts
 
 2. PROBLEM SOLVING AND DATA ANALYSIS:
-- Ratios, rates, proportions
-- Percentages, percent change, discount, tax, interest
-- Unit conversions (metric ↔ customary)
-- Mean, median, mode, range, weighted averages
-- Probability: simple, independent/dependent events
-- Combinations and permutations
-- Data interpretation: tables, bar graphs, line graphs, scatterplots
-- Trend analysis, slope interpretation
+- Ratios, rates, percentages
+- Statistics: mean, median, mode
+- Probability, data interpretation
 
 3. PASSPORT TO ADVANCED MATH:
-- Quadratic equations: factoring, quadratic formula \\( x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a} \\)
-- Graphing quadratics: vertex, intercepts, axis of symmetry
-- Nonlinear equations: cubic, radical
-- Functions: evaluation, composition, inverse, domain/range
-- Factoring, simplifying, expanding expressions
-- Rational expressions and equations
-- Exponents: \\( x^{-n} = \\frac{1}{x^n} \\), \\( x^{\\frac{m}{n}} = \\sqrt[n]{x^m} \\)
+- Quadratic equations: \\( x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a} \\)
+- Functions, rational expressions, exponents
 
-4. ADDITIONAL TOPICS IN MATH:
-- Geometry: lines, angles, triangles, circles, polygons, area, volume
-- Right triangle trigonometry: \\( \\sin\\theta, \\cos\\theta, \\tan\\theta \\)
-- Coordinate geometry: distance \\( d = \\sqrt{(x_2-x_1)^2 + (y_2-y_1)^2} \\), midpoint, slope
-- Complex numbers: \\( i^2 = -1 \\), operations, conjugates
-- Arithmetic and geometric sequences
+4. ADDITIONAL TOPICS:
+- Geometry, trigonometry
+- Complex numbers: \\( i^2 = -1 \\)
 
-===== SAT ENGLISH TOPICS (Must Include All) =====
+===== SAT ENGLISH TOPICS =====
 
-1. READING COMPREHENSION:
-- Words in context
-- Main idea, theme, purpose
-- Supporting details and evidence
-- Inference questions
-- Command of Evidence
-- Charts/Graphs in passages
+1. READING: Words in context, main idea, evidence
+2. WRITING: Grammar, sentence structure, transitions
 
-2. WRITING AND LANGUAGE:
-- Sentence structure, punctuation, grammar
-- Subject-verb agreement, pronoun agreement, verb tense
-- Sentence revision: clarity, conciseness
-- Paragraph revision: flow, transitions, organization
-- Tone, style, improving passages
-- Expression of ideas
+You MUST return a valid JSON object with this EXACT structure:
+{
+  "exam_title": "Full SAT Exam",
+  "grade_level": "High School",
+  "subject": "SAT",
+  "total_questions": ${count},
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Question text",
+      "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
+      "correct_answer": "A) Option"
+    }
+  ]
+}
 
-ABSOLUTE MATH RENDERING SPECIFICATION:
-- ALL math in LaTeX only
-- Inline: \\( expression \\)
-- Display: $$ expression $$
-- Fractions: \\frac{numerator}{denominator}
-- Square root: \\sqrt{x}, nth root: \\sqrt[n]{x}
-- Exponents: x^{n}
-- Trigonometry: \\sin, \\cos, \\tan
-- Logarithms: \\log, \\ln
-- Inequalities: \\leq, \\geq, \\neq
-- Summation: \\sum_{i=1}^{n}
-- Absolute value: |x|
-
-Return ONLY valid JSON array with questions from ALL topics above:
-[
-  {
-    "question": "Question with proper LaTeX for all math",
-    "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
-    "correctIndex": 0,
-    "explanation": "Detailed step-by-step solution with LaTeX"
-  }
-]`;
+CRITICAL RULES:
+- IDs must be sequential starting at 1 through ${count}
+- Exactly 4 options per question
+- correct_answer MUST match one of the options exactly
+- total_questions MUST equal ${count}
+- questions array MUST have exactly ${count} items`;
     }
 
     const messages: Message[] = [{ id: '1', role: 'user', content: prompt }];
@@ -297,17 +475,33 @@ Return ONLY valid JSON array with questions from ALL topics above:
         onDelta: (chunk) => { response += chunk; },
         onDone: () => {
           try {
-            const jsonMatch = response.match(/\[[\s\S]*\]/);
+            // Try to parse as new JSON format
+            let jsonMatch = response.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
-              const questions = JSON.parse(jsonMatch[0]);
-              setExamState({
-                questions,
-                answers: new Array(questions.length).fill(null),
-                currentIndex: 0,
-                showExplanation: false,
-              });
-              setViewState('exam');
+              const parsed = JSON.parse(jsonMatch[0]);
+              const validatedExam = validateExamJSON(parsed);
+              if (validatedExam) {
+                setExamState(createInitialExamState(validatedExam));
+                setViewState('exam');
+                setIsLoading(false);
+                return;
+              }
             }
+            
+            // Fallback: try legacy array format
+            const arrayMatch = response.match(/\[[\s\S]*\]/);
+            if (arrayMatch) {
+              const questions = JSON.parse(arrayMatch[0]);
+              const converted = convertLegacyFormat(questions);
+              if (converted) {
+                setExamState(createInitialExamState(converted));
+                setViewState('exam');
+                setIsLoading(false);
+                return;
+              }
+            }
+            
+            toast({ variant: 'destructive', title: 'Error', description: 'Invalid exam format received' });
           } catch {
             toast({ variant: 'destructive', title: 'Error generating questions' });
           }
@@ -321,14 +515,14 @@ Return ONLY valid JSON array with questions from ALL topics above:
     } catch {
       setIsLoading(false);
     }
-  }, [examType, selectedSubject, selectedGrade, selectedDifficulty, hasSavedMaterials, materialContext, hasSatMaterials, satMaterialContext, toast]);
+  }, [examMenuType, selectedSubject, selectedGrade, hasSavedMaterials, materialContext, hasSatMaterials, satMaterialContext, toast]);
 
-  const handleExamTypeSelect = (type: ExamType) => {
-    setExamType(type);
-    setViewState(type === 'subjects' ? 'subjects' : 'config');
+  const handleExamTypeSelect = (type: ExamMenuType) => {
+    setExamMenuType(type);
+    setViewState(type === ExamMenuType.SUBJECT ? 'subjects' : 'config');
   };
 
-  const handleSubjectClick = (subjectId: string) => {
+  const handleSubjectClick = (subjectId: SubjectType) => {
     setSelectedSubject(subjectId);
     setViewState('grade');
   };
@@ -342,7 +536,7 @@ Return ONLY valid JSON array with questions from ALL topics above:
     setSelectedDifficulty(difficultyId);
     
     // Check SAT materials for non-full SAT exams
-    if (examType === 'sat' && difficultyId !== 'full_sat' && !hasSatMaterials) {
+    if (examMenuType === ExamMenuType.SAT && difficultyId !== SATDifficulty.SAT_FULL && !hasSatMaterials) {
       toast({ 
         variant: 'destructive', 
         title: 'No SAT materials saved', 
@@ -351,50 +545,61 @@ Return ONLY valid JSON array with questions from ALL topics above:
       return;
     }
     
-    const difficulties = examType === 'subjects' ? subjectDifficulties : satDifficulties;
-    const diff = difficulties.find(d => d.id === difficultyId);
-    if (diff) {
-      generateQuestions(diff.questions);
+    try {
+      const count = resolveQuestionCount(examMenuType!, difficultyId);
+      generateQuestions(count, difficultyId);
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: String(error) });
     }
   };
 
-  const handleAnswer = (index: number) => {
-    if (!examState || examState.showExplanation) return;
+  const handleAnswer = (answer: string) => {
+    if (!examState || examState.answered) return;
     setExamState(prev => {
       if (!prev) return prev;
-      const newAnswers = [...prev.answers];
-      newAnswers[prev.currentIndex] = index;
-      return { ...prev, answers: newAnswers, showExplanation: true };
+      const newAnswers = { ...prev.answers, [prev.currentQuestionId]: answer };
+      return { ...prev, answers: newAnswers, selectedAnswer: answer, answered: true };
     });
   };
 
   const handleNext = () => {
     if (!examState) return;
-    if (examState.currentIndex + 1 >= examState.questions.length) {
-      setViewState('results');
-    } else {
-      setExamState(prev => prev ? {
-        ...prev,
-        currentIndex: prev.currentIndex + 1,
-        showExplanation: false,
-      } : prev);
-    }
+    setExamState(prev => {
+      if (!prev) return prev;
+      const nextState = onNextQuestion(prev);
+      if (nextState.completed) {
+        setViewState('results');
+      }
+      return nextState;
+    });
   };
 
   const handleReset = () => {
     setViewState('type');
-    setExamType(null);
+    setExamMenuType(null);
     setSelectedSubject(null);
     setSelectedGrade(null);
     setSelectedDifficulty(null);
     setExamState(null);
   };
 
+  // Calculate results
+  const calculateResults = () => {
+    if (!examState) return { correct: 0, total: 0, percentage: 0 };
+    let correct = 0;
+    examState.exam.questions.forEach(q => {
+      if (examState.answers[q.id] === q.correct_answer) {
+        correct++;
+      }
+    });
+    const total = examState.exam.total_questions;
+    const percentage = Math.round((correct / total) * 100);
+    return { correct, total, percentage };
+  };
+
   // RESULTS VIEW
   if (viewState === 'results' && examState) {
-    const correct = examState.answers.filter((a, i) => a === examState.questions[i].correctIndex).length;
-    const total = examState.questions.length;
-    const percentage = Math.round((correct / total) * 100);
+    const { correct, total, percentage } = calculateResults();
 
     return (
       <div className="flex-1 flex items-center justify-center p-4 pt-16 pb-20">
@@ -415,8 +620,23 @@ Return ONLY valid JSON array with questions from ALL topics above:
 
   // EXAM VIEW
   if (viewState === 'exam' && examState) {
-    const currentQ = examState.questions[examState.currentIndex];
-    const currentAnswer = examState.answers[examState.currentIndex];
+    const currentQ = getCurrentQuestion(examState);
+    
+    // FAIL-CLOSED: If question not found, abort
+    if (!currentQ) {
+      return (
+        <div className="flex-1 flex items-center justify-center p-4 pt-16 pb-20">
+          <div className="text-center">
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-bold mb-2">Error</h2>
+            <p className="text-muted-foreground mb-4">Invalid question ID: {examState.currentQuestionId}</p>
+            <Button onClick={handleReset}>Return to Menu</Button>
+          </div>
+        </div>
+      );
+    }
+
+    const isCorrect = examState.selectedAnswer === currentQ.correct_answer;
 
     return (
       <div className="flex-1 flex flex-col overflow-hidden pt-14 pb-16">
@@ -427,10 +647,13 @@ Return ONLY valid JSON array with questions from ALL topics above:
           </Button>
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground">
-              {examState.currentIndex + 1}/{examState.questions.length}
+              {examState.currentQuestionId}/{examState.exam.total_questions}
             </span>
             <div className="px-2.5 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium">
-              Score: {examState.answers.filter((a, i) => a === examState.questions[i]?.correctIndex).length}
+              Score: {Object.entries(examState.answers).filter(([id, ans]) => {
+                const q = examState.exam.questions.find(q => q.id === parseInt(id));
+                return q && ans === q.correct_answer;
+              }).length}
             </div>
           </div>
         </div>
@@ -438,7 +661,7 @@ Return ONLY valid JSON array with questions from ALL topics above:
         <div className="h-1 bg-secondary">
           <div 
             className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
-            style={{ width: `${((examState.currentIndex + 1) / examState.questions.length) * 100}%` }}
+            style={{ width: `${(examState.currentQuestionId / examState.exam.total_questions) * 100}%` }}
           />
         </div>
 
@@ -450,23 +673,23 @@ Return ONLY valid JSON array with questions from ALL topics above:
 
             <div className="space-y-2 mb-5">
               {currentQ.options.map((option, index) => {
-                const isSelected = currentAnswer === index;
-                const isCorrect = index === currentQ.correctIndex;
-                const showCorrect = examState.showExplanation && isCorrect;
-                const showWrong = examState.showExplanation && isSelected && !isCorrect;
+                const isSelected = examState.selectedAnswer === option;
+                const isCorrectOption = option === currentQ.correct_answer;
+                const showCorrect = examState.answered && isCorrectOption;
+                const showWrong = examState.answered && isSelected && !isCorrectOption;
 
                 return (
                   <button
                     key={index}
-                    onClick={() => handleAnswer(index)}
-                    disabled={examState.showExplanation}
+                    onClick={() => handleAnswer(option)}
+                    disabled={examState.answered}
                     className={cn(
                       "w-full p-3.5 rounded-xl text-left transition-all duration-200 border",
                       "flex items-center gap-3 text-sm",
-                      !examState.showExplanation && "hover:bg-secondary/50 hover:border-primary/50 bg-card/50 border-border/50",
+                      !examState.answered && "hover:bg-secondary/50 hover:border-primary/50 bg-card/50 border-border/50",
                       showCorrect && "bg-emerald-500/20 border-emerald-500",
                       showWrong && "bg-destructive/20 border-destructive",
-                      isSelected && !examState.showExplanation && "border-primary bg-primary/10"
+                      isSelected && !examState.answered && "border-primary bg-primary/10"
                     )}
                   >
                     <span className={cn(
@@ -482,22 +705,24 @@ Return ONLY valid JSON array with questions from ALL topics above:
               })}
             </div>
 
-            {examState.showExplanation && (
+            {examState.answered && (
               <div className="glass-effect rounded-2xl p-4 animate-fade-in">
                 <div className="flex items-start gap-2.5">
                   <div className={cn(
                     "w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0",
-                    currentAnswer === currentQ.correctIndex 
+                    isCorrect 
                       ? "bg-emerald-500/20 text-emerald-500" 
                       : "bg-amber-500/20 text-amber-500"
                   )}>
-                    {currentAnswer === currentQ.correctIndex ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
+                    {isCorrect ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
                   </div>
                   <div>
                     <p className="font-medium text-sm">
-                      {currentAnswer === currentQ.correctIndex ? 'Correct!' : 'Not quite right'}
+                      {isCorrect ? 'Correct!' : 'Not quite right'}
                     </p>
-                    <MathRenderer content={currentQ.explanation} className="text-xs text-muted-foreground mt-0.5" />
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      The correct answer is: {currentQ.correct_answer}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -505,11 +730,12 @@ Return ONLY valid JSON array with questions from ALL topics above:
           </div>
         </div>
 
-        {examState.showExplanation && (
+        {/* NEXT QUESTION BUTTON (MANDATORY) */}
+        {shouldRenderNextButton(examState) && (
           <div className="p-3 border-t border-border/30">
             <div className="max-w-lg mx-auto flex justify-end">
               <Button size="sm" onClick={handleNext}>
-                {examState.currentIndex + 1 >= examState.questions.length ? 'See Results' : 'Next'}
+                {examState.currentQuestionId >= examState.exam.total_questions ? 'See Results' : 'Next Question'}
               </Button>
             </div>
           </div>
@@ -532,14 +758,16 @@ Return ONLY valid JSON array with questions from ALL topics above:
 
   // CONFIG VIEW - Select difficulty and start exam
   if (viewState === 'config') {
-    const difficulties = examType === 'subjects' ? subjectDifficulties : satDifficulties;
-    const subject = examType === 'subjects' ? subjects.find(s => s.id === selectedSubject) : null;
+    const difficulties = examMenuType === ExamMenuType.SUBJECT ? subjectDifficulties : satDifficulties;
+    const subject = examMenuType === ExamMenuType.SUBJECT && selectedSubject
+      ? subjects.find(s => s.id === selectedSubject) 
+      : null;
 
     return (
       <div className="flex-1 overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
-            <Button variant="ghost" size="sm" onClick={() => setViewState(examType === 'subjects' ? 'grade' : 'type')}>
+            <Button variant="ghost" size="sm" onClick={() => setViewState(examMenuType === ExamMenuType.SUBJECT ? 'grade' : 'type')}>
               <ArrowLeft size={16} className="mr-1" />
               Back
             </Button>
@@ -547,10 +775,10 @@ Return ONLY valid JSON array with questions from ALL topics above:
 
           <div className="text-center mb-8 animate-fade-in">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-primary to-accent">
-              {examType === 'subjects' ? subject?.emoji : '📝'}
+              {examMenuType === ExamMenuType.SUBJECT ? subject?.emoji : '📝'}
             </div>
             <h1 className="text-2xl font-bold mb-2">
-              {examType === 'subjects' ? `${subject?.name} Exam` : 'SAT Exam'}
+              {examMenuType === ExamMenuType.SUBJECT ? `${subject?.name} Exam` : 'SAT Exam'}
             </h1>
             {selectedGrade && (
               <p className="text-sm text-muted-foreground">{selectedGrade}</p>
@@ -558,7 +786,7 @@ Return ONLY valid JSON array with questions from ALL topics above:
           </div>
 
           {/* Show saved materials info for subjects */}
-          {examType === 'subjects' && (
+          {examMenuType === ExamMenuType.SUBJECT && (
             <div className={cn(
               "glass-effect rounded-2xl p-4 mb-4 animate-fade-in",
               !hasSavedMaterials && "border-amber-500/50"
@@ -588,7 +816,7 @@ Return ONLY valid JSON array with questions from ALL topics above:
           )}
 
           {/* Show SAT materials info for SAT exams */}
-          {examType === 'sat' && (
+          {examMenuType === ExamMenuType.SAT && (
             <div className={cn(
               "glass-effect rounded-2xl p-4 mb-4 animate-fade-in",
               !hasSatMaterials && "border-amber-500/50"
@@ -621,8 +849,8 @@ Return ONLY valid JSON array with questions from ALL topics above:
             <h3 className="font-semibold mb-3 text-center">Select Difficulty</h3>
             <div className="space-y-2 overflow-y-auto max-h-[50vh]">
               {difficulties.map((diff) => {
-                const isDisabled = (examType === 'subjects' && !hasSavedMaterials) ||
-                                   (examType === 'sat' && diff.id !== 'full_sat' && !hasSatMaterials);
+                const isDisabled = (examMenuType === ExamMenuType.SUBJECT && !hasSavedMaterials) ||
+                                   (examMenuType === ExamMenuType.SAT && diff.id !== SATDifficulty.SAT_FULL && !hasSatMaterials);
                 return (
                   <button
                     key={diff.id}
@@ -657,8 +885,9 @@ Return ONLY valid JSON array with questions from ALL topics above:
   }
 
   // GRADE VIEW - Select grade for subjects
-  if (viewState === 'grade' && examType === 'subjects') {
+  if (viewState === 'grade' && examMenuType === ExamMenuType.SUBJECT && selectedSubject) {
     const subject = subjects.find(s => s.id === selectedSubject);
+    const subjectId = subjectIdMap[selectedSubject];
     
     return (
       <div className="flex-1 overflow-y-auto pt-16 pb-20">
@@ -681,7 +910,7 @@ Return ONLY valid JSON array with questions from ALL topics above:
             <h3 className="font-semibold mb-4 text-center">Select Your Grade Level</h3>
             <div className="grid grid-cols-4 gap-2 overflow-y-auto max-h-[50vh]">
               {grades.map((grade) => {
-                const materialCount = getMaterialsBySubjectAndGrade(selectedSubject!, grade).length;
+                const materialCount = getMaterialsBySubjectAndGrade(subjectId, grade).length;
                 return (
                   <button
                     key={grade}
@@ -723,7 +952,7 @@ Return ONLY valid JSON array with questions from ALL topics above:
 
           <div className="grid grid-cols-2 gap-3 overflow-y-auto">
             {subjects.map((subj, index) => {
-              const materialCount = getMaterialsBySubject(subj.id).length;
+              const materialCount = getMaterialsBySubject(subjectIdMap[subj.id]).length;
               return (
                 <button
                   key={subj.id}
@@ -766,7 +995,7 @@ Return ONLY valid JSON array with questions from ALL topics above:
 
         <div className="space-y-3">
           <button
-            onClick={() => handleExamTypeSelect('subjects')}
+            onClick={() => handleExamTypeSelect(ExamMenuType.SUBJECT)}
             className="w-full glass-effect rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
           >
             <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-xl">
@@ -775,14 +1004,14 @@ Return ONLY valid JSON array with questions from ALL topics above:
             <div>
               <h3 className="font-semibold">Subject Exams</h3>
               <p className="text-xs text-muted-foreground">
-                Biology, Physics, Chemistry, Math, English, Social Studies, Technology
+                Biology, Technology, English, Mathematics, Chemistry, Physics
               </p>
               <p className="text-xs text-primary mt-1">Beginner: 10 | Intermediate: 20 | Expert: 30 questions</p>
             </div>
           </button>
 
           <button
-            onClick={() => handleExamTypeSelect('sat')}
+            onClick={() => handleExamTypeSelect(ExamMenuType.SAT)}
             className="w-full glass-effect rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
           >
             <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white text-xl">
@@ -793,7 +1022,7 @@ Return ONLY valid JSON array with questions from ALL topics above:
               <p className="text-xs text-muted-foreground">
                 College admission standardized test
               </p>
-              <p className="text-xs text-primary mt-1">Beginner: 20 | Intermediate: 50 | Expert: 65 | Full SAT: 140 questions</p>
+              <p className="text-xs text-primary mt-1">Beginner: 20 | Intermediate: 30 | Expert: 60 | Full SAT: 140 questions</p>
             </div>
           </button>
         </div>
