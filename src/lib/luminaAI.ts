@@ -73,6 +73,20 @@ export async function mathChat(userMessage: string): Promise<{ text: string; lat
     return { text: response.text, latex: renderLatex(response.mathOutput || "") };
 }
 
+// ----- Generate Lecture -----
+export async function generateLecture(topic: string, level: "beginner" | "intermediate" | "advanced"): Promise<string> {
+    const prompt = `Generate a detailed ${level}-level lecture on: ${topic}`;
+    const response = await sendToGPT5({ message: prompt, mode: "general" });
+    return response.text;
+}
+
+// ----- Summarize Lecture -----
+export async function summarizeLecture(content: string): Promise<string> {
+    const prompt = `Summarize the following lecture content concisely:\n${content}`;
+    const response = await sendToGPT5({ message: prompt, mode: "general" });
+    return response.text;
+}
+
 // ----- Usage Example -----
 // Uncomment to test
 /*
