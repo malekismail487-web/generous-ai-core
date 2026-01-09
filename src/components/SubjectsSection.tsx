@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Loader2, Plus, X, Sparkles, Trash2 } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { ArrowLeft, ArrowRight, Loader2, Plus, Sparkles, Trash2, Bot, BookOpen, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
@@ -24,9 +24,11 @@ const grades = [
   'Grade 10', 'Grade 11', 'Grade 12'
 ];
 
+type MenuType = 'main' | 'ai' | 'course';
 type ViewState = 'subjects' | 'grade' | 'input' | 'lecture';
 
 export function SubjectsSection() {
+  const [menuType, setMenuType] = useState<MenuType>('main');
   const [viewState, setViewState] = useState<ViewState>('subjects');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
@@ -34,6 +36,11 @@ export function SubjectsSection() {
   const [activeMaterial, setActiveMaterial] = useState<Material | null>(null);
   const [lectureContent, setLectureContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Course materials state
+  const [courseTitle, setCourseTitle] = useState('');
+  const [courseContent, setCourseContent] = useState('');
+  
   const { toast } = useToast();
   const { user } = useAuth();
   const { 
@@ -174,6 +181,37 @@ Use age-appropriate language for ${selectedGrade}.`;
     setActiveMaterial(null);
     setLectureContent('');
     setViewState('grade');
+  };
+
+  const handleBackToMainMenu = () => {
+    setMenuType('main');
+    setViewState('subjects');
+    setSelectedSubject(null);
+    setSelectedGrade(null);
+    setActiveMaterial(null);
+    setLectureContent('');
+    setCourseTitle('');
+    setCourseContent('');
+  };
+
+  const handleUploadCourseMaterial = async () => {
+    if (!courseTitle.trim() || !courseContent.trim() || !selectedSubject || !selectedGrade || !user) return;
+    
+    setIsLoading(true);
+    try {
+      const newMaterial = await createMaterial(selectedSubject, selectedGrade, `[Course] ${courseTitle}`, courseContent);
+      if (newMaterial) {
+        setActiveMaterial(newMaterial);
+        setLectureContent(newMaterial.content);
+        setCourseTitle('');
+        setCourseContent('');
+        setViewState('lecture');
+        toast({ title: 'Course material uploaded successfully!' });
+      }
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error uploading material' });
+    }
+    setIsLoading(false);
   };
 
   const subject = subjects.find(s => s.id === selectedSubject);
@@ -373,40 +411,187 @@ Use age-appropriate language for ${selectedGrade}.`;
     );
   }
 
-  // SUBJECTS VIEW - Main subject selection
-  return (
-    <div className="flex-1 overflow-y-auto pt-16 pb-20">
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-primary to-accent">
-            <Sparkles className="w-7 h-7 text-primary-foreground" />
+  // MAIN MENU - Choose between AI and Course Materials
+  if (menuType === 'main') {
+    return (
+      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="text-center mb-8 animate-fade-in">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-primary to-accent">
+              <Sparkles className="w-7 h-7 text-primary-foreground" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2 gradient-text">Subjects</h1>
+            <p className="text-muted-foreground text-sm">Choose how you want to learn</p>
           </div>
-          <h1 className="text-2xl font-bold mb-2 gradient-text">Choose a Subject</h1>
-          <p className="text-muted-foreground text-sm">Click any subject to start learning</p>
-        </div>
 
-        <div className="grid grid-cols-2 gap-3 overflow-y-auto">
-          {subjects.map((subj, index) => (
+          <div className="grid grid-cols-1 gap-4">
+            {/* AI Lectures Menu */}
             <button
-              key={subj.id}
-              onClick={() => handleSubjectClick(subj.id)}
-              className={cn(
-                "glass-effect rounded-xl p-4 text-left transition-all duration-200 animate-fade-in group",
-                "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
-              )}
-              style={{ animationDelay: `${index * 50}ms` }}
+              onClick={() => setMenuType('ai')}
+              className="glass-effect rounded-2xl p-6 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
             >
-              <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-gradient-to-br text-white text-lg",
-                subj.color
-              )}>
-                {subj.emoji}
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white">
+                  <Bot className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-foreground">AI Lectures</h3>
+                  <p className="text-sm text-muted-foreground">Generate personalized lectures with AI</p>
+                </div>
+                <ArrowRight className="ml-auto text-muted-foreground group-hover:text-foreground transition-colors" />
               </div>
-              <h3 className="font-semibold text-foreground text-sm">{subj.name}</h3>
             </button>
-          ))}
+
+            {/* Course Materials Menu */}
+            <button
+              onClick={() => setMenuType('course')}
+              className="glass-effect rounded-2xl p-6 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+              style={{ animationDelay: '50ms' }}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+                  <BookOpen className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-foreground">Course Materials</h3>
+                  <p className="text-sm text-muted-foreground">Teacher-uploaded materials & resources</p>
+                </div>
+                <ArrowRight className="ml-auto text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // COURSE MATERIALS - Input view for uploading
+  if (menuType === 'course' && viewState === 'input' && selectedSubject && selectedGrade) {
+    return (
+      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
+              <ArrowLeft size={16} className="mr-1" />
+              Back
+            </Button>
+          </div>
+
+          <div className="text-center mb-8 animate-fade-in">
+            <div className={cn(
+              "inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br",
+              subject?.color
+            )}>
+              {subject?.emoji}
+            </div>
+            <h1 className="text-2xl font-bold mb-2">{subject?.name}</h1>
+            <p className="text-sm text-muted-foreground">{selectedGrade} • Course Materials</p>
+          </div>
+
+          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+            <div className="flex items-center gap-2 mb-4">
+              <Upload size={18} className="text-primary" />
+              <h3 className="font-semibold">Upload Course Material</h3>
+            </div>
+            
+            <input
+              type="text"
+              value={courseTitle}
+              onChange={(e) => setCourseTitle(e.target.value)}
+              placeholder="Material title (e.g., Chapter 3: Photosynthesis)"
+              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-3"
+            />
+            
+            <textarea
+              value={courseContent}
+              onChange={(e) => setCourseContent(e.target.value)}
+              placeholder="Paste or type the course content here..."
+              rows={8}
+              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4 resize-none"
+            />
+
+            <div className="flex gap-2">
+              {savedMaterials.filter(m => m.topic.startsWith('[Course]')).length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const courseMats = savedMaterials.filter(m => m.topic.startsWith('[Course]'));
+                    setActiveMaterial(courseMats[0]);
+                    setLectureContent(courseMats[0].content);
+                    setViewState('lecture');
+                  }}
+                >
+                  View Uploaded Materials
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={handleUploadCourseMaterial}
+                disabled={!courseTitle.trim() || !courseContent.trim() || isLoading}
+                className="flex-1 gap-2"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload size={16} />}
+                Upload Material
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // SUBJECTS VIEW - Subject selection (for both AI and Course modes)
+  if (viewState === 'subjects') {
+    return (
+      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Button variant="ghost" size="sm" onClick={handleBackToMainMenu}>
+              <ArrowLeft size={16} className="mr-1" />
+              Back
+            </Button>
+          </div>
+
+          <div className="text-center mb-8 animate-fade-in">
+            <div className={cn(
+              "inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br",
+              menuType === 'ai' ? 'from-violet-500 to-purple-600' : 'from-emerald-500 to-teal-600'
+            )}>
+              {menuType === 'ai' ? <Bot className="w-7 h-7 text-white" /> : <BookOpen className="w-7 h-7 text-white" />}
+            </div>
+            <h1 className="text-2xl font-bold mb-2 gradient-text">
+              {menuType === 'ai' ? 'AI Lectures' : 'Course Materials'}
+            </h1>
+            <p className="text-muted-foreground text-sm">Choose a subject</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 overflow-y-auto">
+            {subjects.map((subj, index) => (
+              <button
+                key={subj.id}
+                onClick={() => handleSubjectClick(subj.id)}
+                className={cn(
+                  "glass-effect rounded-xl p-4 text-left transition-all duration-200 animate-fade-in group",
+                  "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+                )}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-gradient-to-br text-white text-lg",
+                  subj.color
+                )}>
+                  {subj.emoji}
+                </div>
+                <h3 className="font-semibold text-foreground text-sm">{subj.name}</h3>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback - shouldn't reach here
+  return null;
 }
