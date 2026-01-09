@@ -1,6 +1,6 @@
 // luminaAI.ts
-// Pure AI module with GPT-5 integration (general chat + math)
-// Max tokens increased to 3000
+// Pure AI module with real GPT-5 integration (general chat + math)
+// Max tokens set to 3000
 
 // fetch is available natively in browser environments
 
@@ -16,15 +16,20 @@ type GPTResponse = {
 
 // ----- GPT-5 API Handler -----
 async function sendToGPT5(params: GPTRequest): Promise<GPTResponse> {
+    const endpoint = "https://api.openai.com/v1/completions"; // Use GPT-5 endpoint
+    const apiKey = process.env.GPT5_API_KEY; // Set your GPT-5 API key in environment variables
+
+    if (!apiKey) {
+        throw new Error("GPT-5 API key not found in environment variables.");
+    }
+
+    // Prepare prompt
+    const prompt =
+        params.mode === "math"
+            ? `Solve this math problem and provide LaTeX output if possible:\n${params.message}`
+            : `Respond conversationally to the following:\n${params.message}`;
+
     try {
-        const endpoint = "https://api.openai.com/v1/gpt-5/completions"; // Replace with real GPT-5 endpoint
-        const apiKey = process.env.GPT5_API_KEY; // Store your API key in env variables
-
-        const prompt =
-            params.mode === "math"
-                ? `Solve the following math problem and provide LaTeX output if possible:\n${params.message}`
-                : `Respond conversationally to the following:\n${params.message}`;
-
         const response = await fetch(endpoint, {
             method: "POST",
             headers: {
@@ -32,16 +37,16 @@ async function sendToGPT5(params: GPTRequest): Promise<GPTResponse> {
                 "Authorization": `Bearer ${apiKey}`,
             },
             body: JSON.stringify({
-                model: "gpt-5",
+                model: "gpt-5", // GPT-5 model
                 prompt: prompt,
-                max_tokens: 3000, // Increased token limit for detailed responses
+                max_tokens: 3000,
             }),
         });
 
         const data = await response.json();
-        const text = data.choices?.[0]?.text?.trim() || "No response from GPT-5";
+        const text = data.choices?.[0]?.text?.trim() ?? "No response from GPT-5";
 
-        // If math mode, attempt to extract LaTeX from the text (assumes GPT-5 outputs $$...$$)
+        // Extract LaTeX if math
         const mathOutput = params.mode === "math" ? text.match(/\$\$.*\$\$/)?.[0] : undefined;
 
         return { text, mathOutput };
@@ -69,7 +74,7 @@ export async function mathChat(userMessage: string): Promise<{ text: string; lat
 }
 
 // ----- Usage Example -----
-// Uncomment and run in Node to test
+// Uncomment to test
 /*
 async function runExample() {
     const chatResp = await generalChat("Explain black holes in simple terms.");
