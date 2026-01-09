@@ -2,7 +2,7 @@
 // Pure AI module with GPT-5 integration (general chat + math)
 // Max tokens increased to 3000
 
-import fetch from "node-fetch"; // Use only in Node environment, remove if browser
+// fetch is available natively in browser environments
 
 type GPTRequest = {
     message: string;
