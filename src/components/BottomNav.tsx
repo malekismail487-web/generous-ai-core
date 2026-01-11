@@ -1,4 +1,4 @@
-import { MessageSquare, FileText, BookOpen, GraduationCap, Menu, Plus, Trash2, LogOut, Sparkles, Layers, FlipHorizontal } from 'lucide-react';
+import { MessageSquare, FileText, BookOpen, GraduationCap, Menu, Plus, Trash2, LogOut, Sparkles, Layers, FlipHorizontal, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -8,7 +8,7 @@ import { Note } from '@/hooks/useNotes';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
-export type TabType = 'chat' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat';
+export type TabType = 'chat' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'profile';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -29,9 +29,9 @@ const tabs = [
   { id: 'chat' as const, icon: MessageSquare, label: 'Chat' },
   { id: 'subjects' as const, icon: Layers, label: 'Subjects' },
   { id: 'examination' as const, icon: BookOpen, label: 'Exam' },
-  { id: 'sat' as const, icon: GraduationCap, label: 'SAT' },
   { id: 'flashcards' as const, icon: FlipHorizontal, label: 'Cards' },
   { id: 'notes' as const, icon: FileText, label: 'Notes' },
+  { id: 'profile' as const, icon: User, label: 'Profile' },
 ];
 
 export function BottomNav({
