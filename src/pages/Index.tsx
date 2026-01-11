@@ -10,6 +10,7 @@ import { FlashcardsSection } from "@/components/FlashcardsSection";
 import { ExaminationSection } from "@/components/ExaminationSection";
 import { SATSection } from "@/components/SATSection";
 import { NotesSection } from "@/components/NotesSection";
+import { ProfileSection } from "@/components/ProfileSection";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
@@ -201,6 +202,9 @@ const Index = () => {
 
       case 'sat':
         return <SATSection />;
+
+      case 'profile':
+        return <ProfileSection />;
 
       default:
         return null;
