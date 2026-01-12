@@ -11,10 +11,13 @@ import { ExaminationSection } from "@/components/ExaminationSection";
 import { SATSection } from "@/components/SATSection";
 import { NotesSection } from "@/components/NotesSection";
 import { ProfileSection } from "@/components/ProfileSection";
+import { SchoolRegistration } from "@/components/SchoolRegistration";
+import { PendingApproval } from "@/components/PendingApproval";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
 import { useNotes } from "@/hooks/useNotes";
+import { useSchool } from "@/hooks/useSchool";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
@@ -25,6 +28,7 @@ const Index = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const { profile, hasProfile, isApproved, isPending, isRejected, loading: schoolLoading } = useSchool();
   
   const {
     conversations,
@@ -144,7 +148,8 @@ const Index = () => {
     await createNote();
   };
 
-  if (authLoading) {
+  // Loading states
+  if (authLoading || schoolLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="ambient-glow" />
@@ -153,8 +158,19 @@ const Index = () => {
     );
   }
 
+  // Not authenticated
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // No profile - show registration
+  if (!hasProfile) {
+    return <SchoolRegistration />;
+  }
+
+  // Pending approval
+  if (isPending || isRejected) {
+    return <PendingApproval />;
   }
 
   const renderMainContent = () => {
