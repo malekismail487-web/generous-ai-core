@@ -44,6 +44,7 @@ export type Database = {
           created_at: string
           file_url: string | null
           id: string
+          school_id: string | null
           subject: string
           title: string
           updated_at: string
@@ -54,6 +55,7 @@ export type Database = {
           created_at?: string
           file_url?: string | null
           id?: string
+          school_id?: string | null
           subject: string
           title: string
           updated_at?: string
@@ -64,12 +66,21 @@ export type Database = {
           created_at?: string
           file_url?: string | null
           id?: string
+          school_id?: string | null
           subject?: string
           title?: string
           updated_at?: string
           uploaded_by?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "course_materials_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       material_comments: {
         Row: {
@@ -227,6 +238,109 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          department: string | null
+          full_name: string
+          grade_level: string | null
+          id: string
+          school_id: string | null
+          status: string
+          student_teacher_id: string | null
+          updated_at: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          full_name: string
+          grade_level?: string | null
+          id: string
+          school_id?: string | null
+          status?: string
+          student_teacher_id?: string | null
+          updated_at?: string
+          user_type: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          full_name?: string
+          grade_level?: string | null
+          id?: string
+          school_id?: string | null
+          status?: string
+          student_teacher_id?: string | null
+          updated_at?: string
+          user_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_admins: {
+        Row: {
+          created_at: string
+          id: string
+          school_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          school_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          school_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_admins_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schools: {
+        Row: {
+          address: string | null
+          code: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       teacher_requests: {
         Row: {
           admin_notes: string | null
@@ -285,6 +399,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_school_admin: {
+        Args: { _school_id: string; _user_id: string }
         Returns: boolean
       }
     }
