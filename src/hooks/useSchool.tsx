@@ -9,6 +9,7 @@ export type School = {
   code: string;
   address: string | null;
   created_at: string;
+  is_test_data?: boolean;
 };
 
 export type Profile = {
@@ -21,6 +22,7 @@ export type Profile = {
   user_type: 'student' | 'teacher';
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
+  is_test_data?: boolean;
 };
 
 export function useSchool() {

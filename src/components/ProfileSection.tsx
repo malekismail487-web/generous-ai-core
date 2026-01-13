@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School } from 'lucide-react';
+import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Key, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -12,9 +12,23 @@ type ViewState = 'main' | 'school-admin' | 'super-admin';
 
 export function ProfileSection() {
   const [viewState, setViewState] = useState<ViewState>('main');
+  const [showAdminCodeInput, setShowAdminCodeInput] = useState(false);
+  const [adminCode, setAdminCode] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
   const { user, signOut } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, isHardcodedAdmin, verifyAdminCode } = useUserRole();
   const { profile, school, isSchoolAdmin, loading } = useSchool();
+
+  const handleVerifyAdminCode = async () => {
+    if (!adminCode.trim()) return;
+    setIsVerifying(true);
+    const success = await verifyAdminCode(adminCode.trim());
+    setIsVerifying(false);
+    if (success) {
+      setShowAdminCodeInput(false);
+      setAdminCode('');
+    }
+  };
 
   if (viewState === 'school-admin') {
     return <SchoolAdminPanel onBack={() => setViewState('main')} />;
@@ -51,6 +65,11 @@ export function ProfileSection() {
           <h1 className="text-2xl font-bold mb-1">{profile?.full_name || 'Profile'}</h1>
           {user && (
             <p className="text-sm text-muted-foreground">{user.email}</p>
+          )}
+          {isHardcodedAdmin && (
+            <span className="inline-flex items-center gap-1 mt-2 px-2 py-1 bg-amber-500/20 text-amber-600 text-xs font-medium rounded-full">
+              <Shield size={12} /> Developer Admin
+            </span>
           )}
         </div>
 
@@ -99,6 +118,65 @@ export function ProfileSection() {
             )}
           </div>
         </div>
+
+        {/* Admin Code Recovery - Only show if not already admin */}
+        {!isAdmin && (
+          <div className="glass-effect rounded-2xl p-5 mb-4">
+            {!showAdminCodeInput ? (
+              <button
+                onClick={() => setShowAdminCodeInput(true)}
+                className="w-full flex items-center gap-3 text-left"
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-slate-600 to-slate-700 text-white">
+                  <Key className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Admin Access Code</h3>
+                  <p className="text-sm text-muted-foreground">Enter code to regain admin access</p>
+                </div>
+                <ChevronRight className="text-muted-foreground" />
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Key size={16} /> Enter Admin Access Code
+                </h3>
+                <input
+                  type="password"
+                  value={adminCode}
+                  onChange={(e) => setAdminCode(e.target.value)}
+                  placeholder="Enter your admin access code"
+                  className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  onKeyDown={(e) => e.key === 'Enter' && handleVerifyAdminCode()}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setShowAdminCodeInput(false);
+                      setAdminCode('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 gap-2"
+                    onClick={handleVerifyAdminCode}
+                    disabled={!adminCode.trim() || isVerifying}
+                  >
+                    {isVerifying ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Key size={16} />
+                    )}
+                    Verify
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* School Admin Panel */}
         {isSchoolAdmin && (

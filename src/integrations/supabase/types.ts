@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_access_codes: {
+        Row: {
+          code_hash: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string
@@ -81,6 +111,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hardcoded_admins: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: []
       }
       material_comments: {
         Row: {
@@ -245,6 +296,7 @@ export type Database = {
           full_name: string
           grade_level: string | null
           id: string
+          is_test_data: boolean | null
           school_id: string | null
           status: string
           student_teacher_id: string | null
@@ -257,6 +309,7 @@ export type Database = {
           full_name: string
           grade_level?: string | null
           id: string
+          is_test_data?: boolean | null
           school_id?: string | null
           status?: string
           student_teacher_id?: string | null
@@ -269,6 +322,7 @@ export type Database = {
           full_name?: string
           grade_level?: string | null
           id?: string
+          is_test_data?: boolean | null
           school_id?: string | null
           status?: string
           student_teacher_id?: string | null
@@ -320,6 +374,7 @@ export type Database = {
           code: string
           created_at: string
           id: string
+          is_test_data: boolean | null
           name: string
           updated_at: string
         }
@@ -328,6 +383,7 @@ export type Database = {
           code: string
           created_at?: string
           id?: string
+          is_test_data?: boolean | null
           name: string
           updated_at?: string
         }
@@ -336,6 +392,7 @@ export type Database = {
           code?: string
           created_at?: string
           id?: string
+          is_test_data?: boolean | null
           name?: string
           updated_at?: string
         }
@@ -394,6 +451,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      grant_admin_via_code: {
+        Args: { input_code: string; target_user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -401,8 +462,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_hardcoded_admin: { Args: { check_email: string }; Returns: boolean }
       is_school_admin: {
         Args: { _school_id: string; _user_id: string }
+        Returns: boolean
+      }
+      verify_admin_access_code: {
+        Args: { input_code: string }
         Returns: boolean
       }
     }
