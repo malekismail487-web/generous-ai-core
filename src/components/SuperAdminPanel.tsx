@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Building2, Plus, Trash2, Loader2, Users, Copy, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Building2, Plus, Trash2, Loader2, Users, Copy, CheckCircle, FlaskConical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSuperAdmin } from '@/hooks/useSchoolAdmin';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -181,13 +181,28 @@ export function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
         ) : (
           <div className="space-y-3">
             {schools.map((school) => (
-              <div key={school.id} className="glass-effect rounded-xl p-4 group">
+              <div key={school.id} className={cn(
+                "glass-effect rounded-xl p-4 group",
+                school.is_test_data && "border border-amber-500/30 bg-amber-500/5"
+              )}>
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary to-accent text-white shrink-0">
-                    <Building2 size={18} />
+                  <div className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0",
+                    school.is_test_data 
+                      ? "bg-gradient-to-br from-amber-500 to-orange-600"
+                      : "bg-gradient-to-br from-primary to-accent"
+                  )}>
+                    {school.is_test_data ? <FlaskConical size={18} /> : <Building2 size={18} />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold">{school.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">{school.name}</h3>
+                      {school.is_test_data && (
+                        <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-600 rounded-full font-medium">
+                          Test Data
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 mt-1">
                       <code className="text-xs bg-secondary/50 px-2 py-1 rounded font-mono">
                         {school.code}

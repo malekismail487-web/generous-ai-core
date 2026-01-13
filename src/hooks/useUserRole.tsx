@@ -15,24 +15,43 @@ export type TeacherRequest = {
   updated_at: string;
 };
 
+// Hardcoded super admin email - cannot be removed via UI
+const HARDCODED_ADMIN_EMAIL = 'malekismail487@gmail.com';
+
 export function useUserRole() {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [teacherRequest, setTeacherRequest] = useState<TeacherRequest | null>(null);
+  const [isHardcodedAdmin, setIsHardcodedAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Check if current user is the hardcoded admin
+  const checkHardcodedAdmin = useCallback(() => {
+    if (user?.email) {
+      const isHardcoded = user.email.toLowerCase() === HARDCODED_ADMIN_EMAIL.toLowerCase();
+      setIsHardcodedAdmin(isHardcoded);
+      return isHardcoded;
+    }
+    return false;
+  }, [user?.email]);
+
   const isTeacher = roles.includes('teacher');
-  const isAdmin = roles.includes('admin');
+  // isAdmin is true if user has admin role OR is hardcoded admin
+  const isAdmin = roles.includes('admin') || isHardcodedAdmin;
   const isStudent = !isTeacher && !isAdmin;
 
   // Fetch user roles
   const fetchRoles = useCallback(async () => {
     if (!user) {
       setRoles([]);
+      setIsHardcodedAdmin(false);
       setLoading(false);
       return;
     }
+
+    // Check hardcoded admin status first
+    checkHardcodedAdmin();
 
     const { data, error } = await supabase
       .from('user_roles')
@@ -45,7 +64,39 @@ export function useUserRole() {
       setRoles((data || []).map(r => r.role as AppRole));
     }
     setLoading(false);
-  }, [user]);
+  }, [user, checkHardcodedAdmin]);
+
+  // Verify admin access code and grant admin role
+  const verifyAdminCode = useCallback(async (code: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { data, error } = await supabase.rpc('grant_admin_via_code', {
+        input_code: code,
+        target_user_id: user.id
+      });
+
+      if (error) {
+        console.error('Error verifying admin code:', error);
+        toast({ variant: 'destructive', title: 'Invalid access code' });
+        return false;
+      }
+
+      if (data === true) {
+        toast({ title: 'Admin access granted!' });
+        // Refresh roles
+        await fetchRoles();
+        return true;
+      } else {
+        toast({ variant: 'destructive', title: 'Invalid access code' });
+        return false;
+      }
+    } catch (err) {
+      console.error('Error verifying admin code:', err);
+      toast({ variant: 'destructive', title: 'Error verifying code' });
+      return false;
+    }
+  }, [user, toast, fetchRoles]);
 
   // Fetch existing teacher request
   const fetchTeacherRequest = useCallback(async () => {
@@ -104,9 +155,11 @@ export function useUserRole() {
     isTeacher,
     isAdmin,
     isStudent,
+    isHardcodedAdmin,
     teacherRequest,
     loading,
     requestTeacherAccess,
+    verifyAdminCode,
     refresh: () => {
       fetchRoles();
       fetchTeacherRequest();
