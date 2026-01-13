@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +11,9 @@ import { z } from 'zod';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
+
+// Hardcoded admin email - uses admin key as password
+const HARDCODED_ADMIN_EMAIL = 'malekismail487@gmail.com';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -45,6 +49,18 @@ export default function Auth() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Check if the password is the admin access code
+  const verifyAdminCode = async (code: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.rpc('verify_admin_access_code', {
+        input_code: code
+      });
+      return data === true && !error;
+    } catch {
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -53,6 +69,49 @@ export default function Auth() {
     setIsSubmitting(true);
     
     try {
+      const isHardcodedAdmin = email.toLowerCase() === HARDCODED_ADMIN_EMAIL.toLowerCase();
+      
+      // If this is the hardcoded admin email, check if password is the admin key
+      if (isHardcodedAdmin && isLogin) {
+        const isAdminKey = await verifyAdminCode(password);
+        
+        if (isAdminKey) {
+          // Try to sign in with the admin key as password
+          const { error } = await signIn(email, password);
+          
+          if (error) {
+            // If login fails, the account might not exist or has different password
+            // Try to create the account with this password
+            const { error: signUpError } = await signUp(email, password);
+            
+            if (signUpError && !signUpError.message.includes('User already registered')) {
+              toast({
+                variant: 'destructive',
+                title: 'Admin setup failed',
+                description: signUpError.message,
+              });
+            } else if (signUpError?.message.includes('User already registered')) {
+              // Account exists with different password - inform user
+              toast({
+                variant: 'destructive',
+                title: 'Password mismatch',
+                description: 'Admin account exists with a different password. Use the original password or use admin recovery in Profile.',
+              });
+            } else {
+              toast({
+                title: 'Admin account created!',
+                description: 'You can now sign in with your admin credentials.',
+              });
+              // Try signing in again
+              await signIn(email, password);
+            }
+          }
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
+      // Normal authentication flow
       const { error } = isLogin 
         ? await signIn(email, password)
         : await signUp(email, password);
