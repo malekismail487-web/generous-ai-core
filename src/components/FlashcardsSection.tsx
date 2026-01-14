@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react';
-import { ArrowLeft, ArrowRight, Loader2, ChevronLeft, ChevronRight, RotateCcw, BookOpen } from 'lucide-react';
+import { useState, useCallback, useMemo } from 'react';
+import { ArrowLeft, ArrowRight, Loader2, ChevronLeft, ChevronRight, RotateCcw, BookOpen, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { MathRenderer } from '@/components/MathRenderer';
+import { useMaterials } from '@/hooks/useMaterials';
 
 const subjects = [
   { id: 'biology', name: 'Biology', emoji: '🧬' },
@@ -14,6 +15,7 @@ const subjects = [
   { id: 'english', name: 'English', emoji: '📚' },
   { id: 'social_studies', name: 'Social Studies', emoji: '🌍' },
   { id: 'technology', name: 'Technology', emoji: '💻' },
+  { id: 'arabic', name: 'اللغة العربية', emoji: '🕌' },
   { id: 'sat_math', name: 'SAT Math', emoji: '🔢' },
   { id: 'sat_reading', name: 'SAT Reading', emoji: '📖' },
   { id: 'sat_writing', name: 'SAT Writing', emoji: '✍️' },
@@ -30,7 +32,7 @@ interface Flashcard {
   back: string;
 }
 
-type ViewState = 'subjects' | 'grade' | 'input' | 'cards';
+type ViewState = 'subjects' | 'grade' | 'input' | 'cards' | 'materials';
 
 export function FlashcardsSection() {
   const [viewState, setViewState] = useState<ViewState>('subjects');
@@ -41,16 +43,51 @@ export function FlashcardsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [useFromMaterials, setUseFromMaterials] = useState(false);
   const { toast } = useToast();
+  const { getMaterialsBySubjectAndGrade } = useMaterials();
 
-  const generateFlashcards = useCallback(async (topic: string) => {
+  // Get saved materials for selected subject and grade
+  const savedMaterials = useMemo(() => {
+    if (!selectedSubject || !selectedGrade) return [];
+    return getMaterialsBySubjectAndGrade(selectedSubject, selectedGrade);
+  }, [selectedSubject, selectedGrade, getMaterialsBySubjectAndGrade]);
+
+  const hasSavedMaterials = savedMaterials.length > 0;
+
+  const generateFlashcards = useCallback(async (topic: string, fromMaterials: boolean = false) => {
     if (!selectedSubject || !selectedGrade) return;
     
     setIsLoading(true);
     setFlashcards([]);
 
     const subject = subjects.find(s => s.id === selectedSubject);
-    const prompt = `Generate 10 educational flashcards for ${subject?.name} at ${selectedGrade} level about "${topic}".
+    const isArabic = selectedSubject === 'arabic';
+    
+    let materialContext = '';
+    if (fromMaterials && hasSavedMaterials) {
+      materialContext = savedMaterials.map(m => `Topic: ${m.topic}\n${m.content}`).join('\n\n---\n\n');
+    }
+    
+    const prompt = isArabic 
+      ? `قم بإنشاء 10 بطاقات تعليمية للغة العربية لطلاب ${selectedGrade} عن "${topic}".
+
+${fromMaterials && materialContext ? `استخدم المواد التالية كمرجع:\n${materialContext}\n\n` : ''}
+
+أعد مصفوفة JSON فقط بدون أي نص آخر:
+[
+  {"front": "السؤال أو المصطلح", "back": "الإجابة أو التعريف"},
+  ...
+]
+
+يجب أن تكون البطاقات:
+- قصيرة ومختصرة
+- فكرة واحدة لكل بطاقة
+- تركز على المصطلحات والقواعد الأساسية
+- مناسبة لطلاب ${selectedGrade}`
+      : `Generate 10 educational flashcards for ${subject?.name} at ${selectedGrade} level about "${topic}".
+
+${fromMaterials && materialContext ? `BASE THE FLASHCARDS ON THESE SAVED MATERIALS:\n${materialContext}\n\n` : ''}
 
 Return ONLY valid JSON array, no other text:
 [
@@ -98,7 +135,7 @@ Flashcards must:
     } catch {
       setIsLoading(false);
     }
-  }, [selectedSubject, selectedGrade, toast]);
+  }, [selectedSubject, selectedGrade, hasSavedMaterials, savedMaterials, toast]);
 
   const handleSubjectClick = (subjectId: string) => {
     setSelectedSubject(subjectId);
@@ -108,12 +145,25 @@ Flashcards must:
 
   const handleGradeSelect = (grade: string) => {
     setSelectedGrade(grade);
-    setViewState('input');
+    // Check for saved materials
+    const materials = getMaterialsBySubjectAndGrade(selectedSubject!, grade);
+    if (materials.length > 0) {
+      setViewState('materials');
+    } else {
+      setViewState('input');
+    }
   };
 
   const handleTopicSubmit = () => {
     if (topicInput.trim() && selectedGrade) {
-      generateFlashcards(topicInput.trim());
+      generateFlashcards(topicInput.trim(), useFromMaterials);
+    }
+  };
+
+  const handleGenerateFromMaterials = () => {
+    if (hasSavedMaterials) {
+      const topics = savedMaterials.map(m => m.topic).join(', ');
+      generateFlashcards(topics, true);
     }
   };
 
@@ -125,6 +175,7 @@ Flashcards must:
     setFlashcards([]);
     setCurrentIndex(0);
     setIsFlipped(false);
+    setUseFromMaterials(false);
   };
 
   const handleBackToGrades = () => {
@@ -225,6 +276,64 @@ Flashcards must:
             <Button variant="ghost" size="icon" onClick={nextCard}>
               <ChevronRight size={20} />
             </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // MATERIALS VIEW - Choose to generate from saved materials
+  if (viewState === 'materials' && selectedSubject && selectedGrade) {
+    return (
+      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
+              <ArrowLeft size={16} className="mr-1" />
+              Back
+            </Button>
+          </div>
+
+          <div className="text-center mb-8 animate-fade-in">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-amber-500 to-orange-600">
+              {subject?.emoji}
+            </div>
+            <h1 className="text-2xl font-bold mb-2">{subject?.name} Flashcards</h1>
+            <p className="text-sm text-muted-foreground">{selectedGrade}</p>
+          </div>
+
+          <div className="space-y-3 animate-fade-in">
+            {/* Generate from saved materials */}
+            <button
+              onClick={handleGenerateFromMaterials}
+              className="w-full glass-effect rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+                <Sparkles size={24} />
+              </div>
+              <div>
+                <h3 className="font-semibold">From Saved Materials</h3>
+                <p className="text-xs text-muted-foreground">
+                  Generate flashcards from your {savedMaterials.length} saved material(s)
+                </p>
+              </div>
+            </button>
+
+            {/* Custom topic */}
+            <button
+              onClick={() => setViewState('input')}
+              className="w-full glass-effect rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white">
+                <BookOpen size={24} />
+              </div>
+              <div>
+                <h3 className="font-semibold">Custom Topic</h3>
+                <p className="text-xs text-muted-foreground">
+                  Enter a specific topic for flashcard generation
+                </p>
+              </div>
+            </button>
           </div>
         </div>
       </div>

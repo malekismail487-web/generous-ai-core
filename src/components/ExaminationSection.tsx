@@ -23,7 +23,8 @@ enum SubjectType {
   ENGLISH = "ENGLISH",
   MATHEMATICS = "MATHEMATICS",
   CHEMISTRY = "CHEMISTRY",
-  PHYSICS = "PHYSICS"
+  PHYSICS = "PHYSICS",
+  ARABIC = "ARABIC"
 }
 
 enum SubjectDifficulty {
@@ -225,6 +226,7 @@ const subjects = [
   { id: SubjectType.MATHEMATICS, name: 'Mathematics', emoji: '📐' },
   { id: SubjectType.CHEMISTRY, name: 'Chemistry', emoji: '🧪' },
   { id: SubjectType.PHYSICS, name: 'Physics', emoji: '⚛️' },
+  { id: SubjectType.ARABIC, name: 'اللغة العربية', emoji: '🕌' },
 ];
 
 const subjectIdMap: Record<SubjectType, string> = {
@@ -234,6 +236,7 @@ const subjectIdMap: Record<SubjectType, string> = {
   [SubjectType.MATHEMATICS]: 'mathematics',
   [SubjectType.CHEMISTRY]: 'chemistry',
   [SubjectType.PHYSICS]: 'physics',
+  [SubjectType.ARABIC]: 'arabic',
 };
 
 const grades = [

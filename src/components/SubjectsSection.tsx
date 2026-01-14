@@ -16,6 +16,7 @@ const subjects = [
   { id: 'english', name: 'English', emoji: '📚', color: 'from-rose-500 to-pink-600' },
   { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-teal-500 to-emerald-600' },
   { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-indigo-500 to-blue-600' },
+  { id: 'arabic', name: 'اللغة العربية', emoji: '🕌', color: 'from-amber-500 to-yellow-600' },
 ];
 
 const grades = [
@@ -58,7 +59,23 @@ export function SubjectsSection() {
     setLectureContent('');
 
     const subject = subjects.find(s => s.id === selectedSubject);
-    const prompt = `You are teaching ${subject?.name} to a ${selectedGrade} student.
+    const isArabic = selectedSubject === 'arabic';
+    
+    const prompt = isArabic 
+      ? `أنت معلم للغة العربية لطالب في الصف ${selectedGrade}.
+    
+الطالب يريد تعلم: "${topic}"
+
+قم بإنشاء درس شامل يتضمن:
+1. شرح واضح للتعريفات أولاً
+2. شرح خطوة بخطوة للمفاهيم
+3. أمثلة مناسبة لمستوى ${selectedGrade}
+4. الأخطاء الشائعة التي يجب تجنبها
+5. ملخص قصير للمراجعة
+
+مهم جداً: اكتب الدرس بالكامل باللغة العربية فقط.
+استخدم لغة مناسبة لعمر الطالب.`
+      : `You are teaching ${subject?.name} to a ${selectedGrade} student.
     
 The student wants to learn about: "${topic}"
 
