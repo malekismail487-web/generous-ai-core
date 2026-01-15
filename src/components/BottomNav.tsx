@@ -1,4 +1,4 @@
-import { MessageSquare, FileText, BookOpen, GraduationCap, Menu, Plus, Trash2, LogOut, Sparkles, Layers, FlipHorizontal, User } from 'lucide-react';
+import { MessageSquare, FileText, BookOpen, Menu, Plus, Trash2, LogOut, Sparkles, Layers, FlipHorizontal, User, Users, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -8,7 +8,7 @@ import { Note } from '@/hooks/useNotes';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
-export type TabType = 'chat' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'profile';
+export type TabType = 'chat' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'profile' | 'schoolchat' | 'assignments';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -23,15 +23,20 @@ interface BottomNavProps {
   onNewNote: () => void;
   onDeleteConversation: (id: string) => void;
   onDeleteNote: (id: string) => void;
+  hasSchool?: boolean;
 }
 
 const tabs = [
   { id: 'chat' as const, icon: MessageSquare, label: 'Chat' },
-  { id: 'subjects' as const, icon: Layers, label: 'Subjects' },
+  { id: 'subjects' as const, icon: Layers, label: 'Learn' },
   { id: 'examination' as const, icon: BookOpen, label: 'Exam' },
   { id: 'flashcards' as const, icon: FlipHorizontal, label: 'Cards' },
-  { id: 'notes' as const, icon: FileText, label: 'Notes' },
   { id: 'profile' as const, icon: User, label: 'Profile' },
+];
+
+const schoolTabs = [
+  { id: 'schoolchat' as const, icon: Users, label: 'Group' },
+  { id: 'assignments' as const, icon: ClipboardList, label: 'Tasks' },
 ];
 
 export function BottomNav({
@@ -47,11 +52,15 @@ export function BottomNav({
   onNewNote,
   onDeleteConversation,
   onDeleteNote,
+  hasSchool,
 }: BottomNavProps) {
   const { signOut, user } = useAuth();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const showList = activeTab === 'chat' || activeTab === 'notes';
+  
+  // Combine tabs - show school tabs only if user has a school
+  const allTabs = hasSchool ? [...tabs.slice(0, 3), ...schoolTabs, ...tabs.slice(3)] : tabs;
 
   return (
     <>
@@ -210,7 +219,7 @@ export function BottomNav({
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 glass-effect-strong border-t border-border/30 pb-safe">
         <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
-          {tabs.map((tab) => {
+          {allTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
 
