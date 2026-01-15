@@ -15,9 +15,6 @@ export type TeacherRequest = {
   updated_at: string;
 };
 
-// Hardcoded super admin email - cannot be removed via UI
-const HARDCODED_ADMIN_EMAIL = 'malekismail487@gmail.com';
-
 export function useUserRole() {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [teacherRequest, setTeacherRequest] = useState<TeacherRequest | null>(null);
@@ -26,14 +23,30 @@ export function useUserRole() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Check if current user is the hardcoded admin
-  const checkHardcodedAdmin = useCallback(() => {
-    if (user?.email) {
-      const isHardcoded = user.email.toLowerCase() === HARDCODED_ADMIN_EMAIL.toLowerCase();
-      setIsHardcodedAdmin(isHardcoded);
-      return isHardcoded;
+  // Check if current user is a hardcoded admin via database function
+  const checkHardcodedAdmin = useCallback(async () => {
+    if (!user?.email) {
+      setIsHardcodedAdmin(false);
+      return false;
     }
-    return false;
+    
+    try {
+      const { data, error } = await supabase.rpc('is_hardcoded_admin', {
+        check_email: user.email
+      });
+      
+      if (error) {
+        console.error('Error checking hardcoded admin:', error);
+        setIsHardcodedAdmin(false);
+        return false;
+      }
+      
+      setIsHardcodedAdmin(data === true);
+      return data === true;
+    } catch {
+      setIsHardcodedAdmin(false);
+      return false;
+    }
   }, [user?.email]);
 
   const isTeacher = roles.includes('teacher');
@@ -51,7 +64,7 @@ export function useUserRole() {
     }
 
     // Check hardcoded admin status first
-    checkHardcodedAdmin();
+    await checkHardcodedAdmin();
 
     const { data, error } = await supabase
       .from('user_roles')

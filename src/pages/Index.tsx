@@ -13,11 +13,15 @@ import { NotesSection } from "@/components/NotesSection";
 import { ProfileSection } from "@/components/ProfileSection";
 import { SchoolRegistration } from "@/components/SchoolRegistration";
 import { PendingApproval } from "@/components/PendingApproval";
+import { SchoolChatSection } from "@/components/SchoolChatSection";
+import { AssignmentsSection } from "@/components/AssignmentsSection";
+import { BannerAd } from "@/components/BannerAd";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
 import { useNotes } from "@/hooks/useNotes";
 import { useSchool } from "@/hooks/useSchool";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
@@ -28,7 +32,8 @@ const Index = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const { profile, hasProfile, isApproved, isPending, isRejected, loading: schoolLoading } = useSchool();
+  const { profile, hasProfile, isApproved, isPending, isRejected, loading: schoolLoading, school } = useSchool();
+  const { isAdmin, isHardcodedAdmin, loading: roleLoading } = useUserRole();
   
   const {
     conversations,
@@ -149,7 +154,7 @@ const Index = () => {
   };
 
   // Loading states
-  if (authLoading || schoolLoading) {
+  if (authLoading || schoolLoading || roleLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="ambient-glow" />
@@ -163,13 +168,16 @@ const Index = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // No profile - show registration
-  if (!hasProfile) {
+  // Super admins bypass school registration and approval
+  const isSuperAdmin = isAdmin || isHardcodedAdmin;
+  
+  // No profile - show registration (unless super admin)
+  if (!hasProfile && !isSuperAdmin) {
     return <SchoolRegistration />;
   }
 
-  // Pending approval
-  if (isPending || isRejected) {
+  // Pending approval (unless super admin)
+  if ((isPending || isRejected) && !isSuperAdmin) {
     return <PendingApproval />;
   }
 
@@ -178,6 +186,11 @@ const Index = () => {
       case 'chat':
         return (
           <div className="flex flex-col h-full pt-14 pb-20">
+            {/* Banner Ad at top of chat */}
+            <div className="px-4 pt-2">
+              <BannerAd location="home" />
+            </div>
+            
             <main className="flex-1 overflow-y-auto">
               <div className="max-w-2xl mx-auto px-4 py-4">
                 {localMessages.length === 0 ? (
@@ -222,6 +235,12 @@ const Index = () => {
       case 'profile':
         return <ProfileSection />;
 
+      case 'schoolchat':
+        return <SchoolChatSection />;
+
+      case 'assignments':
+        return <AssignmentsSection />;
+
       default:
         return null;
     }
@@ -244,6 +263,7 @@ const Index = () => {
         onNewNote={handleNewNote}
         onDeleteConversation={deleteConversation}
         onDeleteNote={deleteNote}
+        hasSchool={!!school}
       />
 
       <div className="flex-1 relative z-10 overflow-hidden">

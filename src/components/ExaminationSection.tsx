@@ -79,13 +79,31 @@ function resolveQuestionCount(menu: ExamMenuType, difficulty: string): number {
 // JSON SCHEMA TYPES
 // ============================================
 
-interface QuestionJSON {
+// Question types: multiple_choice, fill_in_blank, typed_answer
+
+interface BaseQuestion {
   id: number;
-  type: "multiple_choice";
   question: string;
-  options: [string, string, string, string];
   correct_answer: string;
 }
+
+interface MultipleChoiceQuestion extends BaseQuestion {
+  type: "multiple_choice";
+  options: [string, string, string, string];
+}
+
+interface FillInBlankQuestion extends BaseQuestion {
+  type: "fill_in_blank";
+  acceptable_answers?: string[]; // Alternative acceptable answers
+}
+
+interface TypedAnswerQuestion extends BaseQuestion {
+  type: "typed_answer";
+  acceptable_answers?: string[]; // Alternative acceptable answers
+  keywords?: string[]; // Keywords that must appear in the answer
+}
+
+type QuestionJSON = MultipleChoiceQuestion | FillInBlankQuestion | TypedAnswerQuestion;
 
 interface ExamJSON {
   exam_title: string;
@@ -104,11 +122,24 @@ function validateQuestion(q: unknown, index: number): q is QuestionJSON {
   const question = q as Record<string, unknown>;
   
   if (typeof question.id !== 'number' || question.id !== index + 1) return false;
-  if (question.type !== 'multiple_choice') return false;
   if (typeof question.question !== 'string' || question.question.length === 0) return false;
-  if (!Array.isArray(question.options) || question.options.length !== 4) return false;
-  if (!question.options.every((o: unknown) => typeof o === 'string' && o.length > 0)) return false;
-  if (typeof question.correct_answer !== 'string' || !question.options.includes(question.correct_answer)) return false;
+  if (typeof question.correct_answer !== 'string' || question.correct_answer.length === 0) return false;
+  
+  // Validate based on question type
+  if (question.type === 'multiple_choice') {
+    if (!Array.isArray(question.options) || question.options.length !== 4) return false;
+    if (!question.options.every((o: unknown) => typeof o === 'string' && o.length > 0)) return false;
+    if (!question.options.includes(question.correct_answer)) return false;
+  } else if (question.type === 'fill_in_blank' || question.type === 'typed_answer') {
+    // These types are valid with just question and correct_answer
+  } else {
+    // Default to multiple_choice for backward compatibility
+    if (Array.isArray(question.options) && question.options.length === 4) {
+      // Treat as multiple choice even if type is missing
+      return true;
+    }
+    return false;
+  }
   
   return true;
 }
@@ -185,14 +216,52 @@ function createInitialExamState(exam: ExamJSON): ExamState {
 }
 
 // ============================================
-// RENDER GUARD
+// RENDER GUARD & TYPE GUARDS
 // ============================================
+
+function isMultipleChoice(q: QuestionJSON): q is MultipleChoiceQuestion {
+  return q.type === 'multiple_choice' || (!q.type && 'options' in q);
+}
+
+function isFillInBlank(q: QuestionJSON): q is FillInBlankQuestion {
+  return q.type === 'fill_in_blank';
+}
+
+function isTypedAnswer(q: QuestionJSON): q is TypedAnswerQuestion {
+  return q.type === 'typed_answer';
+}
 
 function getCurrentQuestion(state: ExamState): QuestionJSON | null {
   if (state.currentQuestionId < 1 || state.currentQuestionId > state.exam.total_questions) {
     return null;
   }
   return state.exam.questions.find(q => q.id === state.currentQuestionId) || null;
+}
+
+// Check if typed answer is correct (partial matching)
+function checkTypedAnswer(userAnswer: string, question: TypedAnswerQuestion | FillInBlankQuestion): boolean {
+  const normalizedUser = userAnswer.toLowerCase().trim();
+  const normalizedCorrect = question.correct_answer.toLowerCase().trim();
+  
+  // Exact match
+  if (normalizedUser === normalizedCorrect) return true;
+  
+  // Check acceptable alternatives
+  if (question.acceptable_answers) {
+    for (const alt of question.acceptable_answers) {
+      if (normalizedUser === alt.toLowerCase().trim()) return true;
+    }
+  }
+  
+  // For typed answers, check if all keywords are present
+  if ('keywords' in question && question.keywords) {
+    const hasAllKeywords = question.keywords.every(keyword => 
+      normalizedUser.includes(keyword.toLowerCase())
+    );
+    if (hasAllKeywords) return true;
+  }
+  
+  return false;
 }
 
 // ============================================
@@ -639,7 +708,16 @@ CRITICAL RULES:
       );
     }
 
-    const isCorrect = examState.selectedAnswer === currentQ.correct_answer;
+    // Check correctness based on question type
+    const getIsCorrect = () => {
+      if (!examState.selectedAnswer) return false;
+      if (isMultipleChoice(currentQ)) {
+        return examState.selectedAnswer === currentQ.correct_answer;
+      }
+      return checkTypedAnswer(examState.selectedAnswer, currentQ as FillInBlankQuestion | TypedAnswerQuestion);
+    };
+    
+    const isCorrect = getIsCorrect();
 
     return (
       <div className="flex-1 flex flex-col overflow-hidden pt-14 pb-16">
@@ -655,7 +733,9 @@ CRITICAL RULES:
             <div className="px-2.5 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium">
               Score: {Object.entries(examState.answers).filter(([id, ans]) => {
                 const q = examState.exam.questions.find(q => q.id === parseInt(id));
-                return q && ans === q.correct_answer;
+                if (!q) return false;
+                if (isMultipleChoice(q)) return ans === q.correct_answer;
+                return checkTypedAnswer(ans, q as FillInBlankQuestion | TypedAnswerQuestion);
               }).length}
             </div>
           </div>
@@ -671,42 +751,114 @@ CRITICAL RULES:
         <div className="flex-1 overflow-y-auto p-4">
           <div className="max-w-lg mx-auto">
             <div className="glass-effect rounded-2xl p-5 mb-5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className={cn(
+                  "text-[10px] px-2 py-0.5 rounded-full font-medium",
+                  isMultipleChoice(currentQ) && "bg-blue-500/20 text-blue-500",
+                  isFillInBlank(currentQ) && "bg-amber-500/20 text-amber-500",
+                  isTypedAnswer(currentQ) && "bg-violet-500/20 text-violet-500"
+                )}>
+                  {isMultipleChoice(currentQ) ? 'Multiple Choice' : isFillInBlank(currentQ) ? 'Fill in Blank' : 'Written Answer'}
+                </span>
+              </div>
               <MathRenderer content={currentQ.question} className="text-sm font-medium leading-relaxed" />
             </div>
 
-            <div className="space-y-2 mb-5">
-              {currentQ.options.map((option, index) => {
-                const isSelected = examState.selectedAnswer === option;
-                const isCorrectOption = option === currentQ.correct_answer;
-                const showCorrect = examState.answered && isCorrectOption;
-                const showWrong = examState.answered && isSelected && !isCorrectOption;
+            {/* MULTIPLE CHOICE OPTIONS */}
+            {isMultipleChoice(currentQ) && (
+              <div className="space-y-2 mb-5">
+                {currentQ.options.map((option, index) => {
+                  const isSelected = examState.selectedAnswer === option;
+                  const isCorrectOption = option === currentQ.correct_answer;
+                  const showCorrect = examState.answered && isCorrectOption;
+                  const showWrong = examState.answered && isSelected && !isCorrectOption;
 
-                return (
-                  <button
-                    key={index}
-                    onClick={() => handleAnswer(option)}
-                    disabled={examState.answered}
-                    className={cn(
-                      "w-full p-3.5 rounded-xl text-left transition-all duration-200 border",
-                      "flex items-center gap-3 text-sm",
-                      !examState.answered && "hover:bg-secondary/50 hover:border-primary/50 bg-card/50 border-border/50",
-                      showCorrect && "bg-emerald-500/20 border-emerald-500",
-                      showWrong && "bg-destructive/20 border-destructive",
-                      isSelected && !examState.answered && "border-primary bg-primary/10"
-                    )}
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => handleAnswer(option)}
+                      disabled={examState.answered}
+                      className={cn(
+                        "w-full p-3.5 rounded-xl text-left transition-all duration-200 border",
+                        "flex items-center gap-3 text-sm",
+                        !examState.answered && "hover:bg-secondary/50 hover:border-primary/50 bg-card/50 border-border/50",
+                        showCorrect && "bg-emerald-500/20 border-emerald-500",
+                        showWrong && "bg-destructive/20 border-destructive",
+                        isSelected && !examState.answered && "border-primary bg-primary/10"
+                      )}
+                    >
+                      <span className={cn(
+                        "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-medium flex-shrink-0 bg-secondary text-secondary-foreground",
+                        showCorrect && "bg-emerald-500 text-white",
+                        showWrong && "bg-destructive text-white"
+                      )}>
+                        {showCorrect ? <CheckCircle2 size={14} /> : showWrong ? <XCircle size={14} /> : String.fromCharCode(65 + index)}
+                      </span>
+                      <MathRenderer content={option} className="flex-1" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* FILL IN BLANK INPUT */}
+            {isFillInBlank(currentQ) && (
+              <div className="mb-5">
+                <input
+                  type="text"
+                  placeholder="Type your answer here..."
+                  value={examState.selectedAnswer || ''}
+                  onChange={(e) => !examState.answered && setExamState(prev => prev ? { ...prev, selectedAnswer: e.target.value } : prev)}
+                  disabled={examState.answered}
+                  className={cn(
+                    "w-full p-4 rounded-xl text-sm border transition-all",
+                    "bg-card/50 border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50",
+                    examState.answered && isCorrect && "bg-emerald-500/20 border-emerald-500",
+                    examState.answered && !isCorrect && "bg-destructive/20 border-destructive"
+                  )}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && examState.selectedAnswer && !examState.answered) {
+                      handleAnswer(examState.selectedAnswer);
+                    }
+                  }}
+                />
+                {!examState.answered && examState.selectedAnswer && (
+                  <Button 
+                    onClick={() => handleAnswer(examState.selectedAnswer!)} 
+                    className="mt-3 w-full"
                   >
-                    <span className={cn(
-                      "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-medium flex-shrink-0 bg-secondary text-secondary-foreground",
-                      showCorrect && "bg-emerald-500 text-white",
-                      showWrong && "bg-destructive text-white"
-                    )}>
-                      {showCorrect ? <CheckCircle2 size={14} /> : showWrong ? <XCircle size={14} /> : String.fromCharCode(65 + index)}
-                    </span>
-                    <MathRenderer content={option} className="flex-1" />
-                  </button>
-                );
-              })}
-            </div>
+                    Submit Answer
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* TYPED ANSWER TEXTAREA */}
+            {isTypedAnswer(currentQ) && (
+              <div className="mb-5">
+                <textarea
+                  placeholder="Write your answer here..."
+                  value={examState.selectedAnswer || ''}
+                  onChange={(e) => !examState.answered && setExamState(prev => prev ? { ...prev, selectedAnswer: e.target.value } : prev)}
+                  disabled={examState.answered}
+                  rows={4}
+                  className={cn(
+                    "w-full p-4 rounded-xl text-sm border transition-all resize-none",
+                    "bg-card/50 border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50",
+                    examState.answered && isCorrect && "bg-emerald-500/20 border-emerald-500",
+                    examState.answered && !isCorrect && "bg-destructive/20 border-destructive"
+                  )}
+                />
+                {!examState.answered && examState.selectedAnswer && (
+                  <Button 
+                    onClick={() => handleAnswer(examState.selectedAnswer!)} 
+                    className="mt-3 w-full"
+                  >
+                    Submit Answer
+                  </Button>
+                )}
+              </div>
+            )}
 
             {examState.answered && (
               <div className="glass-effect rounded-2xl p-4 animate-fade-in">
