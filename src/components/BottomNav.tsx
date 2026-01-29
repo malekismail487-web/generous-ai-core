@@ -37,7 +37,6 @@ const tabs = [
 ];
   
 const schoolTabs = [
-  { id: 'schoolchat' as const, icon: Users, label: 'Group' },
   { id: 'assignments' as const, icon: ClipboardList, label: 'Tasks' },
 ];
 
