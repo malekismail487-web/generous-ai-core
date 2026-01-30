@@ -32,8 +32,8 @@ const tabs = [
   { id: 'examination' as const, icon: BookOpen, label: 'Exam' },
   { id: 'flashcards' as const, icon: FlipHorizontal, label: 'Cards' },
   { id: 'profile' as const, icon: User, label: 'Profile' },
-  { id: 'sat' as const, icon: null, label: 'SAT' },
-  { id: 'notes' as const, icon: clipboard, label: 'Notes'},
+  { id: 'sat' as const, icon: GraduationCap, label: 'SAT' },
+  { id: 'notes' as const, icon: Clipboard, label: 'Notes'},
 ];
   
 const schoolTabs = [
