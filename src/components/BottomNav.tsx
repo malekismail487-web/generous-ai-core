@@ -1,4 +1,4 @@
-import { MessageSquare, FileText, BookOpen, Menu, Plus, Trash2, LogOut, Sparkles, Layers, FlipHorizontal, User, Users, ClipboardList } from 'lucide-react';
+import { MessageSquare, FileText, BookOpen, Menu, Plus, Trash2, LogOut, Sparkles, Layers, FlipHorizontal, User, Users, ClipboardList, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -33,7 +33,7 @@ const tabs = [
   { id: 'flashcards' as const, icon: FlipHorizontal, label: 'Cards' },
   { id: 'profile' as const, icon: User, label: 'Profile' },
   { id: 'sat' as const, icon: GraduationCap, label: 'SAT' },
-  { id: 'notes' as const, icon: Clipboard, label: 'Notes'},
+  { id: 'notes' as const, icon: ClipboardList, label: 'Notes'},
 ];
   
 const schoolTabs = [
