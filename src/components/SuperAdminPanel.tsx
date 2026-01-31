@@ -71,7 +71,7 @@ export function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
   };
 
   const handleDelete = async (schoolId: string, schoolName: string) => {
-    if (confirm(Delete "${schoolName}"? This will remove all users and data from this school.)) {
+    if (confirm(`Delete "${schoolName}"? This will remove all users and data from this school.`)) {
       await deleteSchool(schoolId);
     }
   };
