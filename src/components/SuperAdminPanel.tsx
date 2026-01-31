@@ -5,29 +5,8 @@ import { useSuperAdmin } from '@/hooks/useSchoolAdmin';
 import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
- import React from 'react';
-import { useUser } from '../hooks/useUser'; // Example hook that gets logged-in user
-import SuperAdminDashboard from '../components/SuperAdminDashboard';
-import Unauthorized from '../components/Unauthorized';
-import Loading from '../components/Loading';
 
-// List of super admins (you can expand later)
-const SUPER_ADMINS = ['malekismail487@gmail.com'];
-
-export default function SuperAdminGuard() {
-  const { user, loading } = useUser();
-
-  // Show loading while checking authentication
-  if (loading) return <Loading />;
-
-  // Not logged in
-  if (!user) return <Unauthorized message="You must log in to access this page." />;
-
-  // Check if user is super admin
-  if (SUPER_ADMINS.includes(user.email)) {
-    return <SuperAdminDashboard />;
- …
-[6:35 PM, 1/31/2026] ~𝓜 𝓪 𝓵 𝓮 𝓴 ~: export const SCHOOL_CODES: Record<string, { name: string; id: string }> = {
+export const SCHOOL_CODES: Record<string, { name: string; id: string }> = {
   'QMM0.01': { name: 'Qimam EL Hayat International Schools', id: 'qimam-el-hayat' },
   'LUMI100': { name: 'LUMI', id: 'lumi' },
   'TEST999': { name: 'Test School', id: 'test-school' },
