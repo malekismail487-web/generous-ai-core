@@ -7,6 +7,10 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import SuperAdminPanel from "./pages/SuperAdminPanel";
+import SchoolAdminDashboard from "./pages/SchoolAdminDashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
+import StudentDashboard from "./pages/StudentDashboard";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +24,10 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/super-admin" element={<SuperAdminPanel />} />
+            <Route path="/school-admin" element={<SchoolAdminDashboard />} />
+            <Route path="/teacher" element={<TeacherDashboard />} />
+            <Route path="/student" element={<StudentDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
