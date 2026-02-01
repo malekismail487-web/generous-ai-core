@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSchool } from '@/hooks/useSchool';
 import { SchoolAdminPanel } from '@/components/SchoolAdminPanel';
-import { SuperAdminPanel } from '@/components/SuperAdminPanel';
+import SuperAdminPanel from '@/components/SuperAdminPanel';
 import { cn } from '@/lib/utils';
 
 type ViewState = 'main' | 'school-admin' | 'super-admin';

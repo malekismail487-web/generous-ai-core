@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { ArrowLeft, RefreshCw, Building2, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
 
@@ -7,19 +9,22 @@ type School = {
   id: string;
   name: string;
   code: string;
-  short_id: string | null;
-  status: 'active' | 'suspended';
-  activation_code: string | null;
-  code_used: boolean;
+  address: string | null;
+  created_at: string;
+  updated_at: string;
+  is_test_data: boolean | null;
 };
 
-export default function SuperAdminPanel() {
+interface SuperAdminPanelProps {
+  onBack?: () => void;
+}
+
+export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
 
-  // 🔒 HARD-CODED EMAIL CHECK
   useEffect(() => {
     const checkEmail = async () => {
       const { data, error } = await supabase.auth.getUser();
@@ -53,49 +58,18 @@ export default function SuperAdminPanel() {
     setLoading(false);
   };
 
-  const toggleSchoolStatus = async (school: School) => {
-    const newStatus = school.status === 'active' ? 'suspended' : 'active';
+  const deleteSchool = async (schoolId: string) => {
+    if (!confirm('Are you sure you want to delete this school?')) return;
 
-    // Optimistically update state
-    setSchools((prev) =>
-      prev.map((s) => (s.id === school.id ? { ...s, status: newStatus } : s))
-    );
-
-    // Update Supabase in the background
     const { error } = await supabase
       .from('schools')
-      .update({ status: newStatus })
-      .eq('id', school.id);
-
-    if (error) {
-      // Revert state if error occurs
-      setSchools((prev) =>
-        prev.map((s) => (s.id === school.id ? { ...s, status: school.status } : s))
-      );
-      setError(error.message);
-    }
-  };
-
-  const regenerateActivationCode = async (schoolId: string) => {
-    const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-    // Optimistically update state
-    setSchools((prev) =>
-      prev.map((s) =>
-        s.id === schoolId ? { ...s, activation_code: newCode, code_used: false } : s
-      )
-    );
-
-    // Update Supabase in the background
-    const { error } = await supabase
-      .from('schools')
-      .update({ activation_code: newCode, code_used: false })
+      .delete()
       .eq('id', schoolId);
 
     if (error) {
-      // Revert state if error occurs
-      fetchSchools(); // fallback: refetch the data
       setError(error.message);
+    } else {
+      setSchools((prev) => prev.filter((s) => s.id !== schoolId));
     }
   };
 
@@ -106,70 +80,112 @@ export default function SuperAdminPanel() {
   }, [authorized]);
 
   if (authorized === null) {
-    return <div className="p-6">Checking access…</div>;
-  }
-
-  if (!authorized) {
     return (
-      <div className="p-6 text-red-600 font-semibold">
-        Access denied. Super admin only.
+      <div className="flex-1 flex items-center justify-center pt-16 pb-20">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (loading) {
-    return <div className="p-6">Loading schools…</div>;
-  }
-
-  if (error) {
-    return <div className="p-6 text-red-600">{error}</div>;
+  if (!authorized) {
+    return (
+      <div className="flex-1 pt-16 pb-20 px-4">
+        <div className="max-w-2xl mx-auto">
+          {onBack && (
+            <Button variant="ghost" onClick={onBack} className="mb-4 gap-2">
+              <ArrowLeft size={16} /> Back
+            </Button>
+          )}
+          <div className="glass-effect rounded-2xl p-6 text-center">
+            <p className="text-destructive font-semibold">
+              Access denied. Super admin only.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Super Admin Panel</h1>
-
-      <div className="space-y-4">
-        {schools.map((school) => (
-          <div
-            key={school.id}
-            className="border rounded-lg p-4 flex flex-col gap-2"
-          >
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="font-semibold">{school.name}</h2>
-                <p className="text-sm text-gray-500">
-                  Code: {school.code} • Status: {school.status}
-                </p>
-              </div>
-
-              <button
-                onClick={() => toggleSchoolStatus(school)}
-                className="px-3 py-1 text-sm border rounded"
-              >
-                {school.status === 'active' ? 'Suspend' : 'Activate'}
-              </button>
-            </div>
-
-            <div className="flex items-center gap-4 text-sm">
-              <span>
-                Activation Code:{' '}
-                <strong>{school.activation_code ?? '—'}</strong>
-              </span>
-
-              <span>
-                Used: {school.code_used ? 'Yes' : 'No'}
-              </span>
-
-              <button
-                onClick={() => regenerateActivationCode(school.id)}
-                className="text-blue-600 underline"
-              >
-                Regenerate Code
-              </button>
+    <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            {onBack && (
+              <Button variant="ghost" size="icon" onClick={onBack}>
+                <ArrowLeft size={20} />
+              </Button>
+            )}
+            <div>
+              <h1 className="text-2xl font-bold">Super Admin Panel</h1>
+              <p className="text-sm text-muted-foreground">Manage all schools</p>
             </div>
           </div>
-        ))}
+          <Button variant="outline" size="icon" onClick={fetchSchools} disabled={loading}>
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          </Button>
+        </div>
+
+        {error && (
+          <div className="glass-effect rounded-2xl p-4 mb-4 bg-destructive/10 text-destructive">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : schools.length === 0 ? (
+          <div className="glass-effect rounded-2xl p-8 text-center">
+            <Building2 className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="font-semibold mb-2">No Schools Yet</h3>
+            <p className="text-sm text-muted-foreground">
+              Schools will appear here once they are registered.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {schools.map((school) => (
+              <div
+                key={school.id}
+                className="glass-effect rounded-2xl p-5 hover:shadow-lg transition-all"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary to-accent text-primary-foreground">
+                      <Building2 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-lg">{school.name}</h2>
+                      <p className="text-sm text-muted-foreground">
+                        Code: <span className="font-mono">{school.code}</span>
+                      </p>
+                      {school.address && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {school.address}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Created: {new Date(school.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => deleteSchool(school.id)}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
