@@ -9,7 +9,6 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import SuperAdmin from "./pages/SuperAdmin";
 import ActivateSchool from "./pages/ActivateSchool";
-import JoinWithCode from "./pages/JoinWithCode";
 import SchoolAdminDashboard from "./pages/SchoolAdminDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
@@ -28,7 +27,6 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/super-admin" element={<SuperAdmin />} />
             <Route path="/activate-school" element={<ActivateSchool />} />
-            <Route path="/join" element={<JoinWithCode />} />
             <Route path="/admin" element={<SchoolAdminDashboard />} />
             <Route path="/teacher" element={<TeacherDashboard />} />
             <Route path="/student" element={<StudentDashboard />} />

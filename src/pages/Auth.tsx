@@ -6,21 +6,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Mail, Lock, Loader2 } from 'lucide-react';
+import { Sparkles, Mail, Lock, Loader2, KeyRound, Users } from 'lucide-react';
 import { z } from 'zod';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
+const codeSchema = z.string().min(6, 'Invite code must be at least 6 characters');
 
 // Hardcoded admin email - uses admin key as password
 const HARDCODED_ADMIN_EMAIL = 'malekismail487@gmail.com';
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+  const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; code?: string; name?: string }>({});
+  const [authMode, setAuthMode] = useState<'login' | 'join'>('login');
   
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
@@ -32,7 +36,7 @@ export default function Auth() {
     }
   }, [user, loading, navigate]);
 
-  const validateForm = () => {
+  const validateLoginForm = () => {
     const newErrors: { email?: string; password?: string } = {};
     
     const emailResult = emailSchema.safeParse(email);
@@ -43,6 +47,27 @@ export default function Auth() {
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       newErrors.password = passwordResult.error.errors[0].message;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateJoinForm = () => {
+    const newErrors: { email?: string; code?: string; name?: string } = {};
+    
+    const emailResult = emailSchema.safeParse(email);
+    if (!emailResult.success) {
+      newErrors.email = emailResult.error.errors[0].message;
+    }
+
+    if (!name.trim()) {
+      newErrors.name = 'Full name is required';
+    }
+    
+    const codeResult = codeSchema.safeParse(inviteCode);
+    if (!codeResult.success) {
+      newErrors.code = codeResult.error.errors[0].message;
     }
     
     setErrors(newErrors);
@@ -61,10 +86,10 @@ export default function Auth() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!validateLoginForm()) return;
     
     setIsSubmitting(true);
     
@@ -72,7 +97,7 @@ export default function Auth() {
       const isHardcodedAdmin = email.toLowerCase() === HARDCODED_ADMIN_EMAIL.toLowerCase();
       
       // If this is the hardcoded admin email, check if password is the admin key
-      if (isHardcodedAdmin && isLogin) {
+      if (isHardcodedAdmin) {
         const isAdminKey = await verifyAdminCode(password);
         
         if (isAdminKey) {
@@ -81,7 +106,6 @@ export default function Auth() {
           
           if (error) {
             // If login fails, the account might not exist or has different password
-            // Try to create the account with this password
             const { error: signUpError } = await signUp(email, password);
             
             if (signUpError && !signUpError.message.includes('User already registered')) {
@@ -91,18 +115,16 @@ export default function Auth() {
                 description: signUpError.message,
               });
             } else if (signUpError?.message.includes('User already registered')) {
-              // Account exists with different password - inform user
               toast({
                 variant: 'destructive',
                 title: 'Password mismatch',
-                description: 'Admin account exists with a different password. Use the original password or use admin recovery in Profile.',
+                description: 'Admin account exists with a different password.',
               });
             } else {
               toast({
                 title: 'Admin account created!',
                 description: 'You can now sign in with your admin credentials.',
               });
-              // Try signing in again
               await signIn(email, password);
             }
           }
@@ -111,30 +133,75 @@ export default function Auth() {
         }
       }
       
-      // Normal authentication flow
-      const { error } = isLogin 
-        ? await signIn(email, password)
-        : await signUp(email, password);
+      // Normal login flow
+      const { error } = await signIn(email, password);
       
       if (error) {
         let message = error.message;
-        if (message.includes('User already registered')) {
-          message = 'This email is already registered. Please sign in instead.';
-        } else if (message.includes('Invalid login credentials')) {
+        if (message.includes('Invalid login credentials')) {
           message = 'Invalid email or password. Please try again.';
         }
         toast({
           variant: 'destructive',
-          title: isLogin ? 'Sign in failed' : 'Sign up failed',
+          title: 'Sign in failed',
           description: message,
         });
-      } else if (!isLogin) {
-        toast({
-          title: 'Account created!',
-          description: 'You can now sign in with your credentials.',
-        });
-        setIsLogin(true);
       }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleJoinWithCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateJoinForm()) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Call the signup_with_invite_code function
+      const { data, error } = await supabase.rpc('signup_with_invite_code', {
+        p_email: email.trim().toLowerCase(),
+        p_full_name: name.trim(),
+        p_invite_code: inviteCode.trim().toUpperCase()
+      });
+
+      if (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.message,
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const result = data as { success: boolean; error?: string; message?: string };
+      
+      if (!result.success) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: result.error || 'Failed to submit request',
+        });
+      } else {
+        toast({
+          title: 'Request Submitted!',
+          description: 'Your request has been sent to the school administrator for approval.',
+        });
+        // Clear form
+        setEmail('');
+        setName('');
+        setInviteCode('');
+        setAuthMode('login');
+      }
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'An unexpected error occurred',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -159,75 +226,177 @@ export default function Auth() {
           <h1 className="text-2xl font-bold">
             <span className="gradient-text">Study Bright AI</span>
           </h1>
-          <p className="text-muted-foreground mt-2">
-            {isLogin ? 'Welcome back!' : 'Create your account'}
-          </p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="glass-effect rounded-2xl p-6 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email}</p>
-            )}
-          </div>
+        <Tabs value={authMode} onValueChange={(v) => { setAuthMode(v as 'login' | 'join'); setErrors({}); }}>
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="login" className="gap-2">
+              <Lock className="w-4 h-4" />
+              Sign In
+            </TabsTrigger>
+            <TabsTrigger value="join" className="gap-2">
+              <Users className="w-4 h-4" />
+              Join School
+            </TabsTrigger>
+          </TabsList>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password}</p>
-            )}
-          </div>
+          {/* Login Tab */}
+          <TabsContent value="login">
+            <form onSubmit={handleLogin} className="glass-effect rounded-2xl p-6 space-y-4">
+              <p className="text-center text-muted-foreground mb-4">
+                Sign in to your account
+              </p>
+              
+              <div className="space-y-2">
+                <Label htmlFor="login-email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
+              </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            ) : null}
-            {isLogin ? 'Sign In' : 'Sign Up'}
-          </Button>
-        </form>
+              <div className="space-y-2">
+                <Label htmlFor="login-password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="login-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
+              </div>
 
-        {/* Toggle */}
-        <p className="text-center mt-4 text-sm text-muted-foreground">
-          {isLogin ? "Don't have an account? " : 'Already have an account? '}
-          <button
-            type="button"
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setErrors({});
-            }}
-            className="text-primary hover:underline font-medium"
-          >
-            {isLogin ? 'Sign up' : 'Sign in'}
-          </button>
-        </p>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Sign In
+              </Button>
+
+              <p className="text-center text-xs text-muted-foreground mt-4">
+                Are you a school administrator?{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate('/activate-school')}
+                  className="text-primary hover:underline"
+                >
+                  Activate your school
+                </button>
+              </p>
+            </form>
+          </TabsContent>
+
+          {/* Join School Tab */}
+          <TabsContent value="join">
+            <form onSubmit={handleJoinWithCode} className="glass-effect rounded-2xl p-6 space-y-4">
+              <p className="text-center text-muted-foreground mb-4">
+                Join your school with an invite code
+              </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="join-name">Full Name</Label>
+                <Input
+                  id="join-name"
+                  type="text"
+                  placeholder="Your full name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                {errors.name && (
+                  <p className="text-sm text-destructive">{errors.name}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="join-email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="join-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="join-code">Invite Code</Label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="join-code"
+                    type="text"
+                    placeholder="Enter your invite code"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                    className="pl-10 tracking-wider uppercase"
+                    maxLength={10}
+                  />
+                </div>
+                {errors.code && (
+                  <p className="text-sm text-destructive">{errors.code}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  This code is provided by your school administrator
+                </p>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Submit Request
+              </Button>
+
+              <div className="text-center text-xs text-muted-foreground mt-4 space-y-2">
+                <p>
+                  After submitting, wait for your school admin to approve your request.
+                </p>
+                <p>
+                  Are you a school administrator?{' '}
+                  <button
+                    type="button"
+                    onClick={() => navigate('/activate-school')}
+                    className="text-primary hover:underline"
+                  >
+                    Activate your school
+                  </button>
+                </p>
+              </div>
+            </form>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

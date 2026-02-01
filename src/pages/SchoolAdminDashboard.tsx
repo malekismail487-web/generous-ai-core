@@ -291,39 +291,23 @@ export default function SchoolAdminDashboard() {
   const acceptInviteRequest = async (request: InviteRequest, grade?: string) => {
     if (!school) return;
     
-    const inviteCode = request.invite_codes as unknown as InviteCode;
-    const userId = (request as unknown as { user_id?: string }).user_id;
-    
-    // Create profile for the user
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        id: userId || crypto.randomUUID(),
-        school_id: school.id,
-        full_name: request.name,
-        user_type: inviteCode.role,
-        status: 'approved',
-        is_active: true,
-        grade_level: grade || null
-      });
+    // Use the RPC function for proper approval
+    const { data, error } = await supabase.rpc('approve_invite_request', {
+      p_request_id: request.id,
+      p_grade: grade || null
+    });
 
-    if (profileError) {
-      toast({ variant: 'destructive', title: 'Error accepting request' });
-      console.error(profileError);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error accepting request', description: error.message });
+      console.error(error);
       return;
     }
 
-    // Mark code as used
-    await supabase
-      .from('invite_codes')
-      .update({ used: true, used_by: userId })
-      .eq('id', request.code_id);
-
-    // Update request status
-    await supabase
-      .from('invite_requests')
-      .update({ status: 'accepted', grade: grade || null })
-      .eq('id', request.id);
+    const result = data as { success: boolean; error?: string };
+    if (!result.success) {
+      toast({ variant: 'destructive', title: result.error || 'Failed to accept request' });
+      return;
+    }
 
     toast({ title: 'User accepted!' });
     fetchInviteRequests();
@@ -334,10 +318,9 @@ export default function SchoolAdminDashboard() {
   };
 
   const denyInviteRequest = async (requestId: string) => {
-    const { error } = await supabase
-      .from('invite_requests')
-      .update({ status: 'denied' })
-      .eq('id', requestId);
+    const { data, error } = await supabase.rpc('deny_invite_request', {
+      p_request_id: requestId
+    });
 
     if (error) {
       toast({ variant: 'destructive', title: 'Error denying request' });
@@ -724,25 +707,43 @@ export default function SchoolAdminDashboard() {
             <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Enter Student Grade</DialogTitle>
+                  <DialogTitle>Assign Student Grade</DialogTitle>
                   <DialogDescription>
-                    Please enter the grade level for {selectedRequest?.name}
+                    Select the grade level for {selectedRequest?.name}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
                   <Label htmlFor="grade">Grade Level</Label>
-                  <Input
-                    id="grade"
-                    value={studentGrade}
-                    onChange={(e) => setStudentGrade(e.target.value)}
-                    placeholder="e.g., Grade 10, 11th, Senior"
-                  />
+                  <Select value={studentGrade} onValueChange={setStudentGrade}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select grade level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="KG1">KG1 (Kindergarten 1)</SelectItem>
+                      <SelectItem value="KG2">KG2 (Kindergarten 2)</SelectItem>
+                      <SelectItem value="Grade 1">Grade 1</SelectItem>
+                      <SelectItem value="Grade 2">Grade 2</SelectItem>
+                      <SelectItem value="Grade 3">Grade 3</SelectItem>
+                      <SelectItem value="Grade 4">Grade 4</SelectItem>
+                      <SelectItem value="Grade 5">Grade 5</SelectItem>
+                      <SelectItem value="Grade 6">Grade 6</SelectItem>
+                      <SelectItem value="Grade 7">Grade 7</SelectItem>
+                      <SelectItem value="Grade 8">Grade 8</SelectItem>
+                      <SelectItem value="Grade 9">Grade 9</SelectItem>
+                      <SelectItem value="Grade 10">Grade 10</SelectItem>
+                      <SelectItem value="Grade 11">Grade 11</SelectItem>
+                      <SelectItem value="Grade 12">Grade 12</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setGradeModalOpen(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={() => selectedRequest && acceptInviteRequest(selectedRequest, studentGrade)}>
+                  <Button 
+                    onClick={() => selectedRequest && acceptInviteRequest(selectedRequest, studentGrade)}
+                    disabled={!studentGrade}
+                  >
                     Accept Student
                   </Button>
                 </DialogFooter>
