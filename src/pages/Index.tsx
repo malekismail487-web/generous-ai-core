@@ -11,8 +11,6 @@ import { ExaminationSection } from "@/components/ExaminationSection";
 import { SATSection } from "@/components/SATSection";
 import { NotesSection } from "@/components/NotesSection";
 import { ProfileSection } from "@/components/ProfileSection";
-import { SchoolRegistration } from "@/components/SchoolRegistration";
-import { PendingApproval } from "@/components/PendingApproval";
 import { SchoolChatSection } from "@/components/SchoolChatSection";
 import { AssignmentsSection } from "@/components/AssignmentsSection";
 import { BannerAd } from "@/components/BannerAd";
@@ -20,10 +18,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
 import { useNotes } from "@/hooks/useNotes";
-import { useSchool } from "@/hooks/useSchool";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+
+const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('chat');
@@ -32,8 +31,16 @@ const Index = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const { profile, hasProfile, isApproved, isPending, isRejected, loading: schoolLoading, school } = useSchool();
-  const { isAdmin, isHardcodedAdmin, loading: roleLoading } = useUserRole();
+  const { 
+    profile, 
+    school, 
+    loading: roleLoading, 
+    isSuperAdmin, 
+    isSchoolAdmin, 
+    isTeacher, 
+    isStudent,
+    hasProfile
+  } = useRoleGuard();
   
   const {
     conversations,
@@ -57,9 +64,9 @@ const Index = () => {
 
   // Sync messages from DB to local state for display
   useEffect(() => {
-    setLocalMessages(messages.map(m => ({
+    setLocalMessages(messages.map((m) => ({
       id: m.id,
-      role: m.role,
+      role: m.role as "user" | "assistant",
       content: m.content,
     })));
   }, [messages]);
@@ -154,7 +161,7 @@ const Index = () => {
   };
 
   // Loading states
-  if (authLoading || schoolLoading || roleLoading) {
+  if (authLoading || roleLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="ambient-glow" />
@@ -168,17 +175,26 @@ const Index = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Super admins bypass school registration and approval
-  const isSuperAdmin = isAdmin || isHardcodedAdmin;
-  
-  // No profile - show registration (unless super admin)
-  if (!hasProfile && !isSuperAdmin) {
-    return <SchoolRegistration />;
+  // Role-based redirects
+  if (isSuperAdmin) {
+    return <Navigate to="/super-admin" replace />;
   }
-
-  // Pending approval (unless super admin)
-  if ((isPending || isRejected) && !isSuperAdmin) {
-    return <PendingApproval />;
+  
+  if (isSchoolAdmin && profile?.is_active) {
+    return <Navigate to="/admin" replace />;
+  }
+  
+  if (isTeacher && profile?.is_active) {
+    return <Navigate to="/teacher" replace />;
+  }
+  
+  if (isStudent && profile?.is_active) {
+    return <Navigate to="/student" replace />;
+  }
+  
+  // No profile - redirect to join or activate
+  if (!hasProfile) {
+    return <Navigate to="/activate-school" replace />;
   }
 
   const renderMainContent = () => {
