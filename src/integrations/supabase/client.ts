@@ -2,16 +2,41 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_URL = "https://ivzltzehosalijmkgzhb.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2emx0emVob3NhbGlqbWtnemhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5MTM1NzAsImV4cCI6MjA4MjQ4OTU3MH0.bYt53y0eBB9wZFafhTcxTOgSYr8-F7xQzTlPJktCRYE";
+
+// Validate environment variables
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  console.error('⚠️ Missing Supabase environment variables');
+  console.error('Required: VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY');
+  console.error('Please set these in your Lovable environment variables');
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+export const supabase = createClient<Database>(
+  SUPABASE_URL, 
+  SUPABASE_PUBLISHABLE_KEY, 
+  {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    }
   }
-});
+);
+
+// Helper function to check if Supabase is properly configured
+export const isSupabaseConfigured = () => {
+  return !!(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
+};
+
+// Helper function to get configuration status
+export const getSupabaseStatus = () => {
+  return {
+    url: SUPABASE_URL ? '✓ Configured' : '✗ Missing',
+    key: SUPABASE_PUBLISHABLE_KEY ? '✓ Configured' : '✗ Missing',
+    configured: isSupabaseConfigured()
+  };
+};
