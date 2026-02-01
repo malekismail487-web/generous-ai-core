@@ -969,6 +969,7 @@ export type Database = {
         Row: {
           created_at: string
           department: string | null
+          email: string | null
           full_name: string
           grade_level: string | null
           id: string
@@ -983,6 +984,7 @@ export type Database = {
         Insert: {
           created_at?: string
           department?: string | null
+          email?: string | null
           full_name: string
           grade_level?: string | null
           id: string
@@ -997,6 +999,7 @@ export type Database = {
         Update: {
           created_at?: string
           department?: string | null
+          email?: string | null
           full_name?: string
           grade_level?: string | null
           id?: string
@@ -1381,6 +1384,10 @@ export type Database = {
         Args: { activation_code_input: string; user_uuid: string }
         Returns: Json
       }
+      approve_invite_request: {
+        Args: { p_grade?: string; p_request_id: string }
+        Returns: Json
+      }
       create_school_with_code: {
         Args: {
           activation_code_input: string
@@ -1390,6 +1397,7 @@ export type Database = {
         }
         Returns: Json
       }
+      deny_invite_request: { Args: { p_request_id: string }; Returns: Json }
       get_user_school_id: { Args: { user_uuid: string }; Returns: string }
       grant_admin_via_code: {
         Args: { input_code: string; target_user_id: string }
@@ -1413,6 +1421,10 @@ export type Database = {
       }
       is_student: { Args: { user_uuid: string }; Returns: boolean }
       is_teacher: { Args: { user_uuid: string }; Returns: boolean }
+      signup_with_invite_code: {
+        Args: { p_email: string; p_full_name: string; p_invite_code: string }
+        Returns: Json
+      }
       verify_admin_access_code: {
         Args: { input_code: string }
         Returns: boolean
