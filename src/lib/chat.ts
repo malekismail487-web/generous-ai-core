@@ -4,7 +4,17 @@ export type Message = {
   content: string;
 };
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+// Construct the chat URL with validation
+const getSupabaseUrl = () => {
+  const baseUrl = "https://ivzltzehosalijmkgzhb.supabase.co";
+  if (!baseUrl) {
+    console.error('VITE_SUPABASE_URL is not defined');
+    return null;
+  }
+  return ${baseUrl}/functions/v1/chat;
+};
+
+const CHAT_URL = getSupabaseUrl();
 
 export async function streamChat({
   messages,
@@ -18,11 +28,28 @@ export async function streamChat({
   onError: (error: Error) => void;
 }) {
   try {
+    // Validate environment variables
+    if (!CHAT_URL) {
+      throw new Error('Supabase URL is not configured. Please check your environment variables.');
+    }
+
+    const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2emx0emVob3NhbGlqbWtnemhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5MTM1NzAsImV4cCI6MjA4MjQ4OTU3MH0.bYt53y0eBB9wZFafhTcxTOgSYr8-F7xQzTlPJktCRYE";
+    if (!apiKey) {
+      throw new Error('Supabase API key is not configured. Please check your environment variables.');
+    }
+
+    // Validate messages
+    if (!messages || messages.length === 0) {
+      throw new Error('No messages provided');
+    }
+
+    console.log('Sending chat request to:', CHAT_URL);
+
     const response = await fetch(CHAT_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: Bearer ${apiKey},
       },
       body: JSON.stringify({
         messages: messages.map((m) => ({ role: m.role, content: m.content })),
@@ -30,12 +57,18 @@ export async function streamChat({
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Request failed with status ${response.status}`);
+      let errorMessage = Request failed with status ${response.status};
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      } catch {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
 
     if (!response.body) {
-      throw new Error("No response body");
+      throw new Error("No response body received from server");
     }
 
     const reader = response.body.getReader();
@@ -67,14 +100,13 @@ export async function streamChat({
           const parsed = JSON.parse(jsonStr);
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) onDelta(content);
-        } catch {
+        } catch (parseError) {
           textBuffer = line + "\n" + textBuffer;
           break;
         }
       }
     }
 
-    // Final flush
     if (textBuffer.trim()) {
       for (let raw of textBuffer.split("\n")) {
         if (!raw) continue;
@@ -88,13 +120,22 @@ export async function streamChat({
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) onDelta(content);
         } catch {
-          /* ignore */
+          /* ignore parse errors in final flush */
         }
       }
     }
 
     onDone();
   } catch (error) {
-    onError(error instanceof Error ? error : new Error("Unknown error"));
+    console.error('Chat stream error:', error);
+    onError(error instanceof Error ? error : new Error(String(error)));
   }
 }
+
+// Helper function to check if chat service is available
+export const isChatServiceConfigured = () => {
+  return !!(
+    "https://ivzltzehosalijmkgzhb.supabase.co" &&
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2emx0emVob3NhbGlqbWtnemhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5MTM1NzAsImV4cCI6MjA4MjQ4OTU3MH0.bYt53y0eBB9wZFafhTcxTOgSYr8-F7xQzTlPJktCRYE"
+  );
+};
