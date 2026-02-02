@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Plus, Calendar, BookOpen, Check, Clock, 
   FileText, Send, Trash2, ChevronDown, ChevronUp,
@@ -13,10 +14,13 @@ import { AssignmentCreator } from './AssignmentCreator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 type ViewState = 'list' | 'choose-creation' | 'create-manual' | 'create-ai' | 'detail' | 'submit';
 
 export function AssignmentsSection() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [viewState, setViewState] = useState<ViewState>('list');
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -34,6 +38,11 @@ export function AssignmentsSection() {
   
   const { isTeacher } = useUserRole();
 
+  const hasQuizQuestions = useMemo(() => {
+    if (!selectedAssignment) return false;
+    return Array.isArray(selectedAssignment.questions_json) && selectedAssignment.questions_json.length > 0;
+  }, [selectedAssignment]);
+
   const handleSubmitAssignment = async () => {
     if (!selectedAssignment || !submissionContent.trim()) return;
     
@@ -43,6 +52,21 @@ export function AssignmentsSection() {
   };
 
   const openAssignment = (assignment: Assignment) => {
+    // Student flow: assignments are quizzes (like Examination). Always open the quiz-taker page.
+    if (!isTeacher) {
+      const hasQuestions = Array.isArray(assignment.questions_json) && assignment.questions_json.length > 0;
+      if (!hasQuestions) {
+        toast({
+          variant: 'destructive',
+          title: 'No questions available',
+          description: 'This assignment has no questions yet.'
+        });
+        return;
+      }
+      navigate(`/student/assignments/${assignment.id}`);
+      return;
+    }
+
     setSelectedAssignment(assignment);
     const submission = getSubmission(assignment.id);
     if (submission) {
@@ -183,8 +207,30 @@ export function AssignmentsSection() {
     );
   }
 
-  // DETAIL/SUBMIT VIEW
+  // DETAIL/SUBMIT VIEW (Teachers only)
   if ((viewState === 'detail' || viewState === 'submit') && selectedAssignment) {
+    // Safety: if a student somehow reaches this legacy view, redirect to the quiz.
+    if (!isTeacher) {
+      if (hasQuizQuestions) {
+        return <Navigate to={`/student/assignments/${selectedAssignment.id}`} replace />;
+      }
+      return (
+        <div className="flex-1 overflow-y-auto pt-16 pb-20">
+          <div className="max-w-2xl mx-auto px-4 py-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Button variant="ghost" size="sm" onClick={() => setViewState('list')}>
+                <ArrowLeft size={16} className="mr-1" />
+                Back
+              </Button>
+            </div>
+            <div className="glass-effect rounded-2xl p-6 text-center">
+              <p className="text-sm text-muted-foreground">This assignment has no questions yet.</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     const submission = getSubmission(selectedAssignment.id);
     const isPastDue = selectedAssignment.due_date && new Date(selectedAssignment.due_date) < new Date();
 
@@ -238,7 +284,7 @@ export function AssignmentsSection() {
             )}
           </div>
 
-          {/* Submission Status */}
+           {/* Submission Status (legacy text submission system) */}
           {submission ? (
             <div className="glass-effect rounded-2xl p-5 animate-fade-in">
               <div className="flex items-center gap-2 text-primary mb-3">
@@ -280,7 +326,7 @@ export function AssignmentsSection() {
                 </div>
               )}
             </div>
-          ) : (
+           ) : (
             <div className="glass-effect rounded-2xl p-5 animate-fade-in">
               <h3 className="font-semibold mb-3">Your Submission</h3>
               <Textarea
@@ -402,11 +448,12 @@ export function AssignmentsSection() {
                       )}
                       
                       <div className="flex items-center gap-2">
-                        <Button 
-                          size="sm" 
-                          onClick={() => openAssignment(assignment)}
-                        >
-                          {submitted ? 'View Submission' : 'Open Assignment'}
+                        <Button size="sm" onClick={() => openAssignment(assignment)}>
+                          {isTeacher
+                            ? submitted
+                              ? 'View Submission'
+                              : 'Open Assignment'
+                            : 'Start Quiz'}
                         </Button>
                         
                         {isTeacher && (
