@@ -32,6 +32,12 @@ interface CourseMaterial {
   file_url: string | null;
   grade_level: string | null;
   created_at: string;
+  uploaded_by: string;
+}
+
+interface TeacherProfile {
+  id: string;
+  full_name: string;
 }
 
 interface Assignment {
@@ -77,6 +83,7 @@ export default function StudentDashboard() {
 
   // State
   const [materials, setMaterials] = useState<CourseMaterial[]>([]);
+  const [teacherProfiles, setTeacherProfiles] = useState<Record<string, TeacherProfile>>({});
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -90,34 +97,55 @@ export default function StudentDashboard() {
     if (!school || !profile) return;
     setLoadingData(true);
 
-    // Fetch course materials - filtered by student's grade
-    let materialsQuery = supabase
+    // Fetch course materials - all materials from school, filter by grade level in code
+    const { data: materialsData } = await supabase
       .from('course_materials')
       .select('*')
       .eq('school_id', school.id)
       .order('created_at', { ascending: false });
 
-    // Filter by grade level if student has one
+    // Filter by grade level for students
+    let filteredMaterials = (materialsData || []) as CourseMaterial[];
     if (profile.grade_level) {
-      materialsQuery = materialsQuery.or(`grade_level.eq.${profile.grade_level},grade_level.eq.All`);
+      filteredMaterials = filteredMaterials.filter(m => {
+        const materialGrade = m.grade_level;
+        return !materialGrade || materialGrade === 'All' || materialGrade === profile.grade_level;
+      });
+    }
+    setMaterials(filteredMaterials);
+
+    // Fetch teacher profiles for the materials
+    const teacherIds = [...new Set(filteredMaterials.map(m => m.uploaded_by).filter((id): id is string => Boolean(id)))];
+    if (teacherIds.length > 0) {
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', teacherIds);
+      
+      if (profilesData) {
+        const profilesMap: Record<string, TeacherProfile> = {};
+        profilesData.forEach(p => {
+          profilesMap[p.id] = { id: p.id, full_name: p.full_name };
+        });
+        setTeacherProfiles(profilesMap);
+      }
     }
 
-    const { data: materialsData } = await materialsQuery;
-    setMaterials((materialsData || []) as CourseMaterial[]);
-
-    // Fetch assignments - filtered by student's grade
-    let assignmentsQuery = supabase
+    // Fetch assignments - all from school, filter by grade level in code
+    const { data: assignmentsData } = await supabase
       .from('assignments')
       .select('*')
       .eq('school_id', school.id)
       .order('due_date', { ascending: true });
 
+    // Filter by grade level for students
+    let filteredAssignments = (assignmentsData || []) as Assignment[];
     if (profile.grade_level) {
-      assignmentsQuery = assignmentsQuery.or(`grade_level.eq.${profile.grade_level},grade_level.eq.All`);
+      filteredAssignments = filteredAssignments.filter(a => {
+        return !a.grade_level || a.grade_level === 'All' || a.grade_level === profile.grade_level;
+      });
     }
-
-    const { data: assignmentsData } = await assignmentsQuery;
-    setAssignments((assignmentsData || []) as Assignment[]);
+    setAssignments(filteredAssignments);
 
     // Fetch my submissions
     const { data: submissionsData } = await supabase
@@ -285,7 +313,7 @@ export default function StudentDashboard() {
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : (
-              <StudentMaterials materials={materials} />
+              <StudentMaterials materials={materials} teacherProfiles={teacherProfiles} />
             )}
           </TabsContent>
 
