@@ -22,6 +22,8 @@ interface School {
   name: string;
 }
 
+const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
+
 export default function PendingApprovalPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -35,22 +37,28 @@ export default function PendingApprovalPage() {
       return;
     }
 
-    // First try to find profile by user ID
+    // First try to find profile by user ID (this is the authoritative profile)
     let { data: profileData } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .maybeSingle();
 
-    // If not found by ID, try by email
+    // If not found by ID, try by email - but prefer approved/active profiles
     if (!profileData && user.email) {
-      const { data: emailProfile } = await supabase
+      const { data: emailProfiles } = await supabase
         .from('profiles')
         .select('*')
         .eq('email', user.email.toLowerCase())
-        .maybeSingle();
+        .order('is_active', { ascending: false })
+        .order('status', { ascending: true }); // 'approved' comes before 'pending' alphabetically
       
-      profileData = emailProfile;
+      // Take the first one (prioritizes active/approved)
+      if (emailProfiles && emailProfiles.length > 0) {
+        // Prefer approved profiles over pending ones
+        const approvedProfile = emailProfiles.find(p => p.status === 'approved' && p.is_active);
+        profileData = approvedProfile || emailProfiles[0];
+      }
     }
 
     if (profileData) {
@@ -115,6 +123,11 @@ export default function PendingApprovalPage() {
   // Not authenticated - go to auth
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Super admin should never be on pending approval page
+  if (user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+    return <Navigate to="/super-admin" replace />;
   }
 
   // Rejected state

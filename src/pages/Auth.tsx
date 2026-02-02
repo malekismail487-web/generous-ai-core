@@ -34,6 +34,12 @@ export default function Auth() {
   useEffect(() => {
     const checkUserAndRedirect = async () => {
       if (user && !loading) {
+        // IMPORTANT: Super admin should always go to super-admin page, never pending approval
+        if (user.email?.toLowerCase() === HARDCODED_ADMIN_EMAIL.toLowerCase()) {
+          navigate('/super-admin');
+          return;
+        }
+
         // Check if user has a pending/rejected profile
         const { data: profile } = await supabase
           .from('profiles')
@@ -57,6 +63,7 @@ export default function Auth() {
             navigate('/');
           }
         } else {
+          // No profile - go to main app (or activate school for new admins)
           navigate('/');
         }
       }
