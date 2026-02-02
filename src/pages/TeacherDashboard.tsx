@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,14 +11,13 @@ import {
   GraduationCap,
   ClipboardList,
   BarChart3,
-  Calendar,
   Megaphone,
   Plus,
   Trash2,
-  Edit,
-  Users,
-  Award,
-  Eye
+  Eye,
+  Upload,
+  File,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,33 +42,54 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface Subject {
-  id: string;
-  name: string;
-  description: string | null;
-}
+// Hardcoded subjects list - same as used elsewhere in the app
+const SUBJECTS = [
+  { id: 'biology', name: 'Biology', emoji: '🧬' },
+  { id: 'physics', name: 'Physics', emoji: '⚛️' },
+  { id: 'mathematics', name: 'Mathematics', emoji: '📐' },
+  { id: 'chemistry', name: 'Chemistry', emoji: '🧪' },
+  { id: 'english', name: 'English', emoji: '📚' },
+  { id: 'social_studies', name: 'Social Studies', emoji: '🌍' },
+  { id: 'technology', name: 'Technology', emoji: '💻' },
+  { id: 'arabic', name: 'Arabic', emoji: '🕌' },
+];
 
-interface LessonPlan {
+// Grade levels from KG to Grade 12
+const GRADES = [
+  'All', 'KG1', 'KG2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
+  'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9',
+  'Grade 10', 'Grade 11', 'Grade 12'
+];
+
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg',
+  'image/png',
+  'image/gif'
+];
+
+const FILE_TYPE_LABELS: Record<string, string> = {
+  'application/pdf': 'PDF',
+  'application/vnd.ms-powerpoint': 'PowerPoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PowerPoint',
+  'application/msword': 'Word',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word',
+};
+
+interface CourseMaterial {
   id: string;
   title: string;
-  description: string | null;
-  subject_id: string;
-  is_published: boolean;
-  is_shareable: boolean;
-  objectives: string | null;
-  notes: string | null;
-  publish_date: string | null;
+  subject: string;
+  content: string | null;
+  file_url: string | null;
+  grade_level: string | null;
   created_at: string;
 }
 
@@ -77,7 +97,8 @@ interface Assignment {
   id: string;
   title: string;
   description: string | null;
-  subject_id: string | null;
+  subject: string;
+  grade_level: string;
   due_date: string | null;
   points: number;
   created_at: string;
@@ -102,36 +123,36 @@ interface Announcement {
 
 export default function TeacherDashboard() {
   const { isTeacher, school, profile, loading } = useRoleGuard();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [lessonPlans, setLessonPlans] = useState<LessonPlan[]>([]);
+  const [courseMaterials, setCourseMaterials] = useState<CourseMaterial[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
-  // Form states
-  const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
+  // Dialog states
+  const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [gradingDialogOpen, setGradingDialogOpen] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 
-  // Lesson Plan form
-  const [newLessonTitle, setNewLessonTitle] = useState('');
-  const [newLessonDescription, setNewLessonDescription] = useState('');
-  const [newLessonSubject, setNewLessonSubject] = useState('');
-  const [newLessonObjectives, setNewLessonObjectives] = useState('');
-  const [newLessonNotes, setNewLessonNotes] = useState('');
-  const [newLessonPublished, setNewLessonPublished] = useState(false);
-  const [newLessonShareable, setNewLessonShareable] = useState(false);
+  // Course Material form
+  const [newMaterialTitle, setNewMaterialTitle] = useState('');
+  const [newMaterialSubject, setNewMaterialSubject] = useState('biology');
+  const [newMaterialContent, setNewMaterialContent] = useState('');
+  const [newMaterialGradeLevel, setNewMaterialGradeLevel] = useState('All');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Assignment form
   const [newAssignmentTitle, setNewAssignmentTitle] = useState('');
   const [newAssignmentDescription, setNewAssignmentDescription] = useState('');
-  const [newAssignmentSubject, setNewAssignmentSubject] = useState('');
+  const [newAssignmentSubject, setNewAssignmentSubject] = useState('biology');
+  const [newAssignmentGradeLevel, setNewAssignmentGradeLevel] = useState('All');
   const [newAssignmentDueDate, setNewAssignmentDueDate] = useState('');
   const [newAssignmentPoints, setNewAssignmentPoints] = useState('100');
 
@@ -143,20 +164,13 @@ export default function TeacherDashboard() {
     if (!school || !profile) return;
     setLoadingData(true);
 
-    // Fetch subjects
-    const { data: subjectsData } = await supabase
-      .from('subjects')
+    // Fetch course materials
+    const { data: materialsData } = await supabase
+      .from('course_materials')
       .select('*')
-      .eq('school_id', school.id);
-    setSubjects((subjectsData || []) as Subject[]);
-
-    // Fetch lesson plans
-    const { data: lessonsData } = await supabase
-      .from('lesson_plans')
-      .select('*')
-      .eq('teacher_id', profile.id)
+      .eq('uploaded_by', profile.id)
       .order('created_at', { ascending: false });
-    setLessonPlans((lessonsData || []) as LessonPlan[]);
+    setCourseMaterials((materialsData || []) as CourseMaterial[]);
 
     // Fetch assignments
     const { data: assignmentsData } = await supabase
@@ -193,81 +207,118 @@ export default function TeacherDashboard() {
     }
   }, [isTeacher, school, profile, fetchData]);
 
-  const createLessonPlan = async () => {
-    if (!school || !profile || !newLessonTitle || !newLessonSubject) {
-      toast({ variant: 'destructive', title: 'Please fill required fields' });
+  // File handling
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      toast({ variant: 'destructive', title: 'Invalid file type', description: 'Please upload PDF, Word, or PowerPoint files.' });
       return;
     }
 
+    if (file.size > 50 * 1024 * 1024) {
+      toast({ variant: 'destructive', title: 'File too large', description: 'Maximum file size is 50MB.' });
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const uploadFile = async (): Promise<string | null> => {
+    if (!selectedFile || !user) return null;
+
+    setIsUploading(true);
+
+    const fileExt = selectedFile.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from('course-materials')
+      .upload(fileName, selectedFile, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    setIsUploading(false);
+
+    if (error) {
+      console.error('Upload error:', error);
+      toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('course-materials')
+      .getPublicUrl(data.path);
+
+    return publicUrl;
+  };
+
+  // Course Material CRUD
+  const createCourseMaterial = async () => {
+    if (!school || !profile || !newMaterialTitle.trim()) {
+      toast({ variant: 'destructive', title: 'Please enter a title' });
+      return;
+    }
+
+    let fileUrl: string | null = null;
+    if (selectedFile) {
+      fileUrl = await uploadFile();
+      if (!fileUrl && selectedFile) {
+        return; // Upload failed
+      }
+    }
+
     const { error } = await supabase
-      .from('lesson_plans')
+      .from('course_materials')
       .insert({
-        teacher_id: profile.id,
+        uploaded_by: profile.id,
         school_id: school.id,
-        subject_id: newLessonSubject,
-        title: newLessonTitle,
-        description: newLessonDescription || null,
-        objectives: newLessonObjectives || null,
-        notes: newLessonNotes || null,
-        is_published: newLessonPublished,
-        is_shareable: newLessonShareable,
-        publish_date: newLessonPublished ? new Date().toISOString() : null
+        subject: newMaterialSubject,
+        title: newMaterialTitle.trim(),
+        content: newMaterialContent.trim() || null,
+        file_url: fileUrl,
+        grade_level: newMaterialGradeLevel
       });
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error creating lesson plan' });
+      toast({ variant: 'destructive', title: 'Error uploading material' });
       console.error(error);
     } else {
-      toast({ title: 'Lesson plan created!' });
-      resetLessonForm();
-      setLessonDialogOpen(false);
+      toast({ title: 'Course material uploaded!' });
+      resetMaterialForm();
+      setMaterialDialogOpen(false);
       fetchData();
     }
   };
 
-  const resetLessonForm = () => {
-    setNewLessonTitle('');
-    setNewLessonDescription('');
-    setNewLessonSubject('');
-    setNewLessonObjectives('');
-    setNewLessonNotes('');
-    setNewLessonPublished(false);
-    setNewLessonShareable(false);
+  const resetMaterialForm = () => {
+    setNewMaterialTitle('');
+    setNewMaterialSubject('biology');
+    setNewMaterialContent('');
+    setNewMaterialGradeLevel('All');
+    setSelectedFile(null);
   };
 
-  const deleteLessonPlan = async (lessonId: string) => {
+  const deleteCourseMaterial = async (materialId: string) => {
     const { error } = await supabase
-      .from('lesson_plans')
+      .from('course_materials')
       .delete()
-      .eq('id', lessonId);
+      .eq('id', materialId);
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error deleting lesson plan' });
+      toast({ variant: 'destructive', title: 'Error deleting material' });
     } else {
-      toast({ title: 'Lesson plan deleted' });
+      toast({ title: 'Material deleted' });
       fetchData();
     }
   };
 
-  const toggleLessonPublished = async (lessonId: string, currentStatus: boolean) => {
-    const { error } = await supabase
-      .from('lesson_plans')
-      .update({ 
-        is_published: !currentStatus,
-        publish_date: !currentStatus ? new Date().toISOString() : null
-      })
-      .eq('id', lessonId);
-
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error updating lesson plan' });
-    } else {
-      fetchData();
-    }
-  };
-
+  // Assignment CRUD
   const createAssignment = async () => {
-    if (!school || !profile || !newAssignmentTitle) {
-      toast({ variant: 'destructive', title: 'Please fill required fields' });
+    if (!school || !profile || !newAssignmentTitle.trim()) {
+      toast({ variant: 'destructive', title: 'Please enter a title' });
       return;
     }
 
@@ -276,13 +327,12 @@ export default function TeacherDashboard() {
       .insert({
         teacher_id: profile.id,
         school_id: school.id,
-        subject_id: newAssignmentSubject || null,
-        subject: newAssignmentSubject ? subjects.find(s => s.id === newAssignmentSubject)?.name || 'General' : 'General',
-        title: newAssignmentTitle,
-        description: newAssignmentDescription || null,
+        subject: newAssignmentSubject,
+        title: newAssignmentTitle.trim(),
+        description: newAssignmentDescription.trim() || null,
         due_date: newAssignmentDueDate || null,
         points: parseInt(newAssignmentPoints) || 100,
-        grade_level: profile.grade_level || 'All'
+        grade_level: newAssignmentGradeLevel
       });
 
     if (error) {
@@ -299,7 +349,8 @@ export default function TeacherDashboard() {
   const resetAssignmentForm = () => {
     setNewAssignmentTitle('');
     setNewAssignmentDescription('');
-    setNewAssignmentSubject('');
+    setNewAssignmentSubject('biology');
+    setNewAssignmentGradeLevel('All');
     setNewAssignmentDueDate('');
     setNewAssignmentPoints('100');
   };
@@ -318,6 +369,7 @@ export default function TeacherDashboard() {
     }
   };
 
+  // Grading
   const gradeSubmission = async () => {
     if (!selectedSubmission || !profile) return;
 
@@ -343,9 +395,8 @@ export default function TeacherDashboard() {
     }
   };
 
-  const getSubjectName = (subjectId: string | null) => {
-    if (!subjectId) return 'General';
-    return subjects.find(s => s.id === subjectId)?.name || 'Unknown';
+  const getSubjectInfo = (subjectId: string) => {
+    return SUBJECTS.find(s => s.id === subjectId) || { id: subjectId, name: subjectId, emoji: '📄' };
   };
 
   if (loading) {
@@ -390,10 +441,10 @@ export default function TeacherDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Lesson Plans</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground">Course Materials</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{lessonPlans.length}</p>
+              <p className="text-2xl font-bold">{courseMaterials.length}</p>
             </CardContent>
           </Card>
           <Card>
@@ -424,11 +475,11 @@ export default function TeacherDashboard() {
           </Card>
         </div>
 
-        <Tabs defaultValue="lessons" className="space-y-6">
+        <Tabs defaultValue="materials" className="space-y-6">
           <TabsList className="grid grid-cols-5 w-full max-w-2xl">
-            <TabsTrigger value="lessons" className="gap-2">
-              <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Lessons</span>
+            <TabsTrigger value="materials" className="gap-2">
+              <Upload className="w-4 h-4" />
+              <span className="hidden sm:inline">Materials</span>
             </TabsTrigger>
             <TabsTrigger value="assignments" className="gap-2">
               <ClipboardList className="w-4 h-4" />
@@ -453,101 +504,133 @@ export default function TeacherDashboard() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Lesson Plans Tab */}
-          <TabsContent value="lessons" className="space-y-4">
+          {/* Course Materials Tab */}
+          <TabsContent value="materials" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Lesson Plans</h2>
-              <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
+              <h2 className="text-lg font-semibold">Course Materials</h2>
+              <Dialog open={materialDialogOpen} onOpenChange={setMaterialDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="gap-2">
-                    <Plus className="w-4 h-4" />
-                    Add Lesson Plan
+                    <Upload className="w-4 h-4" />
+                    Upload Material
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-lg">
                   <DialogHeader>
-                    <DialogTitle>Create Lesson Plan</DialogTitle>
+                    <DialogTitle>Upload Course Material</DialogTitle>
                     <DialogDescription>
-                      Add a new lesson plan for your students
+                      Upload a file or add content for your students
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
                     <div className="space-y-2">
-                      <Label htmlFor="lesson-title">Title *</Label>
+                      <Label htmlFor="material-title">Title *</Label>
                       <Input
-                        id="lesson-title"
-                        value={newLessonTitle}
-                        onChange={(e) => setNewLessonTitle(e.target.value)}
-                        placeholder="Lesson title"
+                        id="material-title"
+                        value={newMaterialTitle}
+                        onChange={(e) => setNewMaterialTitle(e.target.value)}
+                        placeholder="e.g., Chapter 3: Photosynthesis"
                       />
                     </div>
+                    
                     <div className="space-y-2">
-                      <Label htmlFor="lesson-subject">Subject *</Label>
-                      <Select value={newLessonSubject} onValueChange={setNewLessonSubject}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select subject" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {subjects.map((subject) => (
-                            <SelectItem key={subject.id} value={subject.id}>
-                              {subject.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="material-subject">Subject *</Label>
+                      <select
+                        id="material-subject"
+                        value={newMaterialSubject}
+                        onChange={(e) => setNewMaterialSubject(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-secondary/50 border border-border text-sm"
+                      >
+                        {SUBJECTS.map((subj) => (
+                          <option key={subj.id} value={subj.id}>
+                            {subj.emoji} {subj.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="lesson-description">Description</Label>
+                      <Label htmlFor="material-grade">Grade Level *</Label>
+                      <select
+                        id="material-grade"
+                        value={newMaterialGradeLevel}
+                        onChange={(e) => setNewMaterialGradeLevel(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-secondary/50 border border-border text-sm"
+                      >
+                        {GRADES.map((grade) => (
+                          <option key={grade} value={grade}>
+                            {grade === 'All' ? '📋 All Grades' : `🎓 ${grade}`}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-muted-foreground">
+                        Only students in this grade will see this material
+                      </p>
+                    </div>
+
+                    {/* File Upload */}
+                    <div className="space-y-2">
+                      <Label>Upload File (PDF, Word, PowerPoint)</Label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        onChange={handleFileSelect}
+                        accept=".pdf,.doc,.docx,.ppt,.pptx"
+                        className="hidden"
+                      />
+                      
+                      {selectedFile ? (
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border/50">
+                          <File size={20} className="text-primary" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                              {FILE_TYPE_LABELS[selectedFile.type] && ` • ${FILE_TYPE_LABELS[selectedFile.type]}`}
+                            </p>
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => setSelectedFile(null)}>
+                            <X size={16} />
+                          </Button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full p-6 rounded-xl border-2 border-dashed border-border/50 hover:border-primary/50 transition-colors text-center"
+                        >
+                          <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">Click to upload</p>
+                          <p className="text-xs text-muted-foreground mt-1">PDF, Word, PowerPoint up to 50MB</p>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="material-content">Additional Notes (optional)</Label>
                       <Textarea
-                        id="lesson-description"
-                        value={newLessonDescription}
-                        onChange={(e) => setNewLessonDescription(e.target.value)}
-                        placeholder="Lesson description"
+                        id="material-content"
+                        value={newMaterialContent}
+                        onChange={(e) => setNewMaterialContent(e.target.value)}
+                        placeholder="Add any notes or instructions..."
                         rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lesson-objectives">Objectives</Label>
-                      <Textarea
-                        id="lesson-objectives"
-                        value={newLessonObjectives}
-                        onChange={(e) => setNewLessonObjectives(e.target.value)}
-                        placeholder="Learning objectives"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lesson-notes">Notes for Students</Label>
-                      <Textarea
-                        id="lesson-notes"
-                        value={newLessonNotes}
-                        onChange={(e) => setNewLessonNotes(e.target.value)}
-                        placeholder="Notes visible to students"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="lesson-published">Publish immediately</Label>
-                      <Switch
-                        id="lesson-published"
-                        checked={newLessonPublished}
-                        onCheckedChange={setNewLessonPublished}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="lesson-shareable">Allow other teachers to copy</Label>
-                      <Switch
-                        id="lesson-shareable"
-                        checked={newLessonShareable}
-                        onCheckedChange={setNewLessonShareable}
                       />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setLessonDialogOpen(false)}>
+                    <Button variant="outline" onClick={() => { setMaterialDialogOpen(false); resetMaterialForm(); }}>
                       Cancel
                     </Button>
-                    <Button onClick={createLessonPlan}>Create Lesson Plan</Button>
+                    <Button onClick={createCourseMaterial} disabled={isUploading || !newMaterialTitle.trim()}>
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          Uploading...
+                        </>
+                      ) : (
+                        'Upload Material'
+                      )}
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -557,56 +640,66 @@ export default function TeacherDashboard() {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : lessonPlans.length === 0 ? (
+            ) : courseMaterials.length === 0 ? (
               <div className="glass-effect rounded-xl p-8 text-center">
                 <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="font-semibold mb-2">No Lesson Plans Yet</h3>
-                <p className="text-sm text-muted-foreground">Create your first lesson plan to get started</p>
+                <h3 className="font-semibold mb-2">No Course Materials Yet</h3>
+                <p className="text-sm text-muted-foreground">Upload your first file or content to get started</p>
               </div>
             ) : (
               <div className="grid gap-4">
-                {lessonPlans.map((lesson) => (
-                  <div key={lesson.id} className="glass-effect rounded-xl p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{lesson.title}</h3>
-                          {lesson.is_published ? (
-                            <Badge className="bg-green-500">Published</Badge>
-                          ) : (
-                            <Badge variant="secondary">Draft</Badge>
-                          )}
-                          {lesson.is_shareable && (
-                            <Badge variant="outline">Shareable</Badge>
+                {courseMaterials.map((material) => {
+                  const subjectInfo = getSubjectInfo(material.subject);
+                  return (
+                    <div key={material.id} className="glass-effect rounded-xl p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-lg">{subjectInfo.emoji}</span>
+                            <h3 className="font-semibold">{material.title}</h3>
+                            <Badge variant="outline">{subjectInfo.name}</Badge>
+                            {material.grade_level && (
+                              <Badge variant="secondary" className="gap-1">
+                                <GraduationCap className="w-3 h-3" />
+                                {material.grade_level}
+                              </Badge>
+                            )}
+                            {material.file_url && (
+                              <Badge className="bg-primary/20 text-primary">Has File</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Created {new Date(material.created_at).toLocaleDateString()}
+                          </p>
+                          {material.content && (
+                            <p className="mt-2 text-sm line-clamp-2">{material.content}</p>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {getSubjectName(lesson.subject_id)} • Created {new Date(lesson.created_at).toLocaleDateString()}
-                        </p>
-                        {lesson.description && (
-                          <p className="mt-2 text-sm">{lesson.description}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => toggleLessonPublished(lesson.id, lesson.is_published)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteLessonPlan(lesson.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          {material.file_url && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              asChild
+                            >
+                              <a href={material.file_url} target="_blank" rel="noopener noreferrer">
+                                <Eye className="w-4 h-4" />
+                              </a>
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteCourseMaterial(material.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </TabsContent>
@@ -639,21 +732,42 @@ export default function TeacherDashboard() {
                         placeholder="Assignment title"
                       />
                     </div>
+                    
                     <div className="space-y-2">
-                      <Label htmlFor="assignment-subject">Subject</Label>
-                      <Select value={newAssignmentSubject} onValueChange={setNewAssignmentSubject}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select subject" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {subjects.map((subject) => (
-                            <SelectItem key={subject.id} value={subject.id}>
-                              {subject.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="assignment-subject">Subject *</Label>
+                      <select
+                        id="assignment-subject"
+                        value={newAssignmentSubject}
+                        onChange={(e) => setNewAssignmentSubject(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-secondary/50 border border-border text-sm"
+                      >
+                        {SUBJECTS.map((subj) => (
+                          <option key={subj.id} value={subj.id}>
+                            {subj.emoji} {subj.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="assignment-grade">Grade Level *</Label>
+                      <select
+                        id="assignment-grade"
+                        value={newAssignmentGradeLevel}
+                        onChange={(e) => setNewAssignmentGradeLevel(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-secondary/50 border border-border text-sm"
+                      >
+                        {GRADES.map((grade) => (
+                          <option key={grade} value={grade}>
+                            {grade === 'All' ? '📋 All Grades' : `🎓 ${grade}`}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-muted-foreground">
+                        Only students in this grade will see this assignment
+                      </p>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="assignment-description">Description</Label>
                       <Textarea
@@ -686,10 +800,12 @@ export default function TeacherDashboard() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setAssignmentDialogOpen(false)}>
+                    <Button variant="outline" onClick={() => { setAssignmentDialogOpen(false); resetAssignmentForm(); }}>
                       Cancel
                     </Button>
-                    <Button onClick={createAssignment}>Create Assignment</Button>
+                    <Button onClick={createAssignment} disabled={!newAssignmentTitle.trim()}>
+                      Create Assignment
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -701,6 +817,7 @@ export default function TeacherDashboard() {
                   <TableRow>
                     <TableHead>Title</TableHead>
                     <TableHead>Subject</TableHead>
+                    <TableHead>Grade</TableHead>
                     <TableHead>Due Date</TableHead>
                     <TableHead>Points</TableHead>
                     <TableHead>Submissions</TableHead>
@@ -710,7 +827,7 @@ export default function TeacherDashboard() {
                 <TableBody>
                   {assignments.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         No assignments yet
                       </TableCell>
                     </TableRow>
@@ -718,10 +835,18 @@ export default function TeacherDashboard() {
                     assignments.map((assignment) => {
                       const submissionCount = submissions.filter(s => s.assignment_id === assignment.id).length;
                       const isOverdue = assignment.due_date && new Date(assignment.due_date) < new Date();
+                      const subjectInfo = getSubjectInfo(assignment.subject);
                       return (
                         <TableRow key={assignment.id}>
                           <TableCell className="font-medium">{assignment.title}</TableCell>
-                          <TableCell>{getSubjectName(assignment.subject_id)}</TableCell>
+                          <TableCell>
+                            <span className="flex items-center gap-1">
+                              {subjectInfo.emoji} {subjectInfo.name}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{assignment.grade_level}</Badge>
+                          </TableCell>
                           <TableCell>
                             {assignment.due_date ? (
                               <span className={isOverdue ? 'text-destructive' : ''}>
@@ -890,7 +1015,7 @@ export default function TeacherDashboard() {
                       ? Math.round(
                           submissions
                             .filter(s => s.grade !== null)
-                            .reduce((sum, s) => sum + (s.grade || 0), 0) /
+                            .reduce((acc, s) => acc + (s.grade || 0), 0) /
                           submissions.filter(s => s.grade !== null).length
                         )
                       : 'N/A'}
@@ -903,29 +1028,47 @@ export default function TeacherDashboard() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Published Content</CardTitle>
+                  <CardTitle className="text-sm">Materials by Subject</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">
-                    {lessonPlans.filter(l => l.is_published).length}
+                  <div className="space-y-2">
+                    {SUBJECTS.map(subj => {
+                      const count = courseMaterials.filter(m => m.subject === subj.id).length;
+                      if (count === 0) return null;
+                      return (
+                        <div key={subj.id} className="flex items-center justify-between text-sm">
+                          <span>{subj.emoji} {subj.name}</span>
+                          <Badge variant="outline">{count}</Badge>
+                        </div>
+                      );
+                    })}
+                    {courseMaterials.length === 0 && (
+                      <p className="text-sm text-muted-foreground">No materials uploaded yet</p>
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    of {lessonPlans.length} lesson plans are published
-                  </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Pending Tasks</CardTitle>
+                  <CardTitle className="text-sm">Assignments by Subject</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-amber-500">
-                    {submissions.filter(s => s.grade === null).length}
+                  <div className="space-y-2">
+                    {SUBJECTS.map(subj => {
+                      const count = assignments.filter(a => a.subject === subj.id).length;
+                      if (count === 0) return null;
+                      return (
+                        <div key={subj.id} className="flex items-center justify-between text-sm">
+                          <span>{subj.emoji} {subj.name}</span>
+                          <Badge variant="outline">{count}</Badge>
+                        </div>
+                      );
+                    })}
+                    {assignments.length === 0 && (
+                      <p className="text-sm text-muted-foreground">No assignments created yet</p>
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    submissions awaiting grading
-                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -939,19 +1082,17 @@ export default function TeacherDashboard() {
               <div className="glass-effect rounded-xl p-8 text-center">
                 <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="font-semibold mb-2">No Announcements</h3>
-                <p className="text-sm text-muted-foreground">
-                  Announcements from your school admin will appear here
-                </p>
+                <p className="text-sm text-muted-foreground">School announcements will appear here</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid gap-4">
                 {announcements.map((announcement) => (
                   <div key={announcement.id} className="glass-effect rounded-xl p-4">
                     <h3 className="font-semibold">{announcement.title}</h3>
                     <p className="text-sm text-muted-foreground mb-2">
-                      {new Date(announcement.created_at).toLocaleString()}
+                      {new Date(announcement.created_at).toLocaleDateString()}
                     </p>
-                    <p className="text-muted-foreground whitespace-pre-wrap">{announcement.body}</p>
+                    <p className="text-sm">{announcement.body}</p>
                   </div>
                 ))}
               </div>
