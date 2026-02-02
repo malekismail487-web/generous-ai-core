@@ -208,6 +208,7 @@ export type Database = {
           grade_level: string
           id: string
           points: number | null
+          questions_json: Json | null
           school_id: string
           subject: string
           subject_id: string | null
@@ -223,6 +224,7 @@ export type Database = {
           grade_level: string
           id?: string
           points?: number | null
+          questions_json?: Json | null
           school_id: string
           subject: string
           subject_id?: string | null
@@ -238,6 +240,7 @@ export type Database = {
           grade_level?: string
           id?: string
           points?: number | null
+          questions_json?: Json | null
           school_id?: string
           subject?: string
           subject_id?: string | null

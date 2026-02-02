@@ -4,24 +4,13 @@ import {
   FileText, Send, Trash2, ChevronDown, ChevronUp 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAssignments, Assignment } from '@/hooks/useAssignments';
 import { useUserRole } from '@/hooks/useUserRole';
 import { BannerAd } from './BannerAd';
+import { AssignmentCreator } from './AssignmentCreator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-
-const subjects = [
-  'Biology', 'Physics', 'Mathematics', 'Chemistry', 
-  'English', 'Social Studies', 'Technology', 'Arabic'
-];
-
-const grades = [
-  'KG1', 'KG2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
-  'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9',
-  'Grade 10', 'Grade 11', 'Grade 12'
-];
 
 type ViewState = 'list' | 'create' | 'detail' | 'submit';
 
@@ -29,46 +18,19 @@ export function AssignmentsSection() {
   const [viewState, setViewState] = useState<ViewState>('list');
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  
-  // Form states
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [subject, setSubject] = useState('');
-  const [gradeLevel, setGradeLevel] = useState('');
-  const [dueDate, setDueDate] = useState('');
   const [submissionContent, setSubmissionContent] = useState('');
 
   const {
     assignments,
     loading,
-    createAssignment,
     submitAssignment,
     deleteAssignment,
     isSubmitted,
     getSubmission,
+    refresh,
   } = useAssignments();
   
   const { isTeacher } = useUserRole();
-
-  const handleCreateAssignment = async () => {
-    if (!title.trim() || !subject || !gradeLevel) return;
-    
-    await createAssignment(
-      title,
-      description || null,
-      subject,
-      gradeLevel,
-      dueDate || null
-    );
-    
-    // Reset form
-    setTitle('');
-    setDescription('');
-    setSubject('');
-    setGradeLevel('');
-    setDueDate('');
-    setViewState('list');
-  };
 
   const handleSubmitAssignment = async () => {
     if (!selectedAssignment || !submissionContent.trim()) return;
@@ -95,92 +57,16 @@ export function AssignmentsSection() {
     );
   }
 
-  // CREATE VIEW (Teachers)
+  // CREATE VIEW (Teachers) - Uses new AssignmentCreator component
   if (viewState === 'create' && isTeacher) {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Button variant="ghost" size="sm" onClick={() => setViewState('list')}>
-              <ArrowLeft size={16} className="mr-1" />
-              Back
-            </Button>
-          </div>
-
-          <div className="text-center mb-8 animate-fade-in">
-            <h1 className="text-2xl font-bold mb-2">Create Assignment</h1>
-            <p className="text-muted-foreground text-sm">Fill in the details below</p>
-          </div>
-
-          <div className="glass-effect rounded-2xl p-5 space-y-4 animate-fade-in">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Title *</label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Assignment title"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-1 block">Description</label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the assignment..."
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Subject *</label>
-                <select
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-secondary/50 border border-border text-sm"
-                >
-                  <option value="">Select subject</option>
-                  {subjects.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-1 block">Grade Level *</label>
-                <select
-                  value={gradeLevel}
-                  onChange={(e) => setGradeLevel(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-secondary/50 border border-border text-sm"
-                >
-                  <option value="">Select grade</option>
-                  {grades.map((g) => (
-                    <option key={g} value={g}>{g}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-1 block">Due Date</label>
-              <Input
-                type="datetime-local"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
-            </div>
-
-            <Button 
-              onClick={handleCreateAssignment} 
-              disabled={!title.trim() || !subject || !gradeLevel}
-              className="w-full"
-            >
-              Create Assignment
-            </Button>
-          </div>
-        </div>
-      </div>
+      <AssignmentCreator 
+        onBack={() => setViewState('list')} 
+        onSuccess={() => {
+          setViewState('list');
+          refresh();
+        }} 
+      />
     );
   }
 
@@ -239,7 +125,7 @@ export function AssignmentsSection() {
           {/* Submission Status */}
           {submission ? (
             <div className="glass-effect rounded-2xl p-5 animate-fade-in">
-              <div className="flex items-center gap-2 text-emerald-500 mb-3">
+              <div className="flex items-center gap-2 text-primary mb-3">
                 <Check size={18} />
                 <span className="font-medium">Submitted</span>
               </div>
@@ -358,11 +244,11 @@ export function AssignmentsSection() {
                     className="w-full p-4 flex items-center gap-3 text-left"
                   >
                     <div className={cn(
-                      "w-10 h-10 rounded-lg flex items-center justify-center text-white",
+                      "w-10 h-10 rounded-lg flex items-center justify-center text-primary-foreground",
                       submitted 
-                        ? "bg-gradient-to-br from-emerald-500 to-teal-500"
+                        ? "bg-gradient-to-br from-primary to-accent"
                         : isPastDue
-                          ? "bg-gradient-to-br from-rose-500 to-pink-500"
+                          ? "bg-destructive"
                           : "bg-gradient-to-br from-primary to-accent"
                     )}>
                       {submitted ? <Check size={20} /> : <FileText size={20} />}

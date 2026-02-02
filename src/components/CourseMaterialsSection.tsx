@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Upload, Trash2, Edit2, Eye, EyeOff, MessageCircle, Send, BookOpen, FileText, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Upload, Trash2, Edit2, Eye, EyeOff, MessageCircle, Send, BookOpen, FileText, Loader2, File, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCourseMaterials, CourseMaterial, MaterialComment } from '@/hooks/useCourseMaterials';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const subjects = [
   { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-emerald-500 to-green-600' },
@@ -14,6 +16,25 @@ const subjects = [
   { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-teal-500 to-emerald-600' },
   { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-indigo-500 to-blue-600' },
 ];
+
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg',
+  'image/png',
+  'image/gif'
+];
+
+const FILE_TYPE_LABELS: Record<string, string> = {
+  'application/pdf': 'PDF',
+  'application/vnd.ms-powerpoint': 'PowerPoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PowerPoint',
+  'application/msword': 'Word',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word',
+};
 
 type ViewState = 'list' | 'detail' | 'upload' | 'edit';
 
@@ -35,8 +56,15 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
   const [formContent, setFormContent] = useState('');
   const [formFileUrl, setFormFileUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // File upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { user } = useAuth();
+  const { toast } = useToast();
   const {
     materials,
     isTeacher,
@@ -238,20 +266,92 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
     );
   }
 
+  // File upload handler
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      toast({ variant: 'destructive', title: 'Invalid file type', description: 'Please upload PDF, Word, or PowerPoint files.' });
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast({ variant: 'destructive', title: 'File too large', description: 'Maximum file size is 50MB.' });
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const uploadFile = async (): Promise<string | null> => {
+    if (!selectedFile || !user) return null;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    const fileExt = selectedFile.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from('course-materials')
+      .upload(fileName, selectedFile, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    setIsUploading(false);
+    setUploadProgress(100);
+
+    if (error) {
+      console.error('Upload error:', error);
+      toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('course-materials')
+      .getPublicUrl(data.path);
+
+    return publicUrl;
+  };
+
+  const handleSubmitUploadWithFile = async () => {
+    if (!formSubject || !formTitle.trim()) return;
+    
+    setIsSubmitting(true);
+    
+    let fileUrl = formFileUrl;
+    if (selectedFile) {
+      const uploadedUrl = await uploadFile();
+      if (uploadedUrl) {
+        fileUrl = uploadedUrl;
+      }
+    }
+    
+    const result = await uploadMaterial(formSubject, formTitle, formContent, fileUrl);
+    setIsSubmitting(false);
+    
+    if (result) {
+      setSelectedFile(null);
+      setViewState('list');
+    }
+  };
+
   // UPLOAD/EDIT VIEW
   if (viewState === 'upload' || viewState === 'edit') {
     return (
       <div className="flex-1 overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
-            <Button variant="ghost" size="sm" onClick={() => setViewState('list')}>
+            <Button variant="ghost" size="sm" onClick={() => { setViewState('list'); setSelectedFile(null); }}>
               <ArrowLeft size={16} className="mr-1" />
               Back
             </Button>
           </div>
 
           <div className="text-center mb-8 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-gradient-to-br from-primary to-accent text-primary-foreground">
               {viewState === 'upload' ? <Upload className="w-7 h-7" /> : <Edit2 className="w-7 h-7" />}
             </div>
             <h1 className="text-2xl font-bold mb-2">
@@ -288,43 +388,96 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
               />
             </div>
 
-            {/* File URL (optional) */}
-            <div>
-              <label className="block text-sm font-medium mb-2">File URL (optional)</label>
-              <input
-                type="url"
-                value={formFileUrl}
-                onChange={(e) => setFormFileUrl(e.target.value)}
-                placeholder="https://... (link to PDF, document, etc.)"
-                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
+            {/* File Upload */}
+            {viewState === 'upload' && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Upload File (PDF, Word, PowerPoint)</label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileSelect}
+                  accept=".pdf,.doc,.docx,.ppt,.pptx"
+                  className="hidden"
+                />
+                
+                {selectedFile ? (
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border/50">
+                    <File size={20} className="text-primary" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                        {FILE_TYPE_LABELS[selectedFile.type] && ` • ${FILE_TYPE_LABELS[selectedFile.type]}`}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => setSelectedFile(null)}>
+                      <X size={16} />
+                    </Button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full p-6 rounded-xl border-2 border-dashed border-border/50 hover:border-primary/50 transition-colors text-center"
+                  >
+                    <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Click to upload or drag and drop</p>
+                    <p className="text-xs text-muted-foreground mt-1">PDF, Word, PowerPoint up to 50MB</p>
+                  </button>
+                )}
+                
+                {isUploading && (
+                  <div className="mt-2">
+                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* File URL (optional - as alternative) */}
+            {!selectedFile && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Or paste a file URL</label>
+                <input
+                  type="url"
+                  value={formFileUrl}
+                  onChange={(e) => setFormFileUrl(e.target.value)}
+                  placeholder="https://... (link to PDF, document, etc.)"
+                  className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            )}
 
             {/* Content */}
             <div>
-              <label className="block text-sm font-medium mb-2">Content</label>
+              <label className="block text-sm font-medium mb-2">Content (optional notes)</label>
               <textarea
                 value={formContent}
                 onChange={(e) => setFormContent(e.target.value)}
-                placeholder="Paste or type the course content here..."
-                rows={10}
+                placeholder="Add any additional notes or content here..."
+                rows={6}
                 className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
               />
             </div>
 
             <Button
               className="w-full gap-2"
-              onClick={viewState === 'upload' ? handleSubmitUpload : handleSubmitEdit}
-              disabled={isSubmitting || !formTitle.trim()}
+              onClick={viewState === 'upload' ? handleSubmitUploadWithFile : handleSubmitEdit}
+              disabled={isSubmitting || isUploading || !formTitle.trim()}
             >
-              {isSubmitting ? (
+              {isSubmitting || isUploading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : viewState === 'upload' ? (
                 <Upload size={16} />
               ) : (
                 <Edit2 size={16} />
               )}
-              {viewState === 'upload' ? 'Upload Material' : 'Save Changes'}
+              {isUploading ? 'Uploading...' : viewState === 'upload' ? 'Upload Material' : 'Save Changes'}
             </Button>
           </div>
         </div>
@@ -350,7 +503,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
         </div>
 
         <div className="text-center mb-6 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-gradient-to-br from-primary to-accent text-primary-foreground">
             <BookOpen className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold mb-2 gradient-text">Course Materials</h1>
