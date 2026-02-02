@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Upload, Trash2, Edit2, Eye, EyeOff, MessageCircle, Send, BookOpen, FileText, Loader2, File, X } from 'lucide-react';
+import { ArrowLeft, Upload, Trash2, Edit2, Eye, EyeOff, MessageCircle, Send, BookOpen, FileText, Loader2, File, X, Plus, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCourseMaterials, CourseMaterial, MaterialComment } from '@/hooks/useCourseMaterials';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 const subjects = [
   { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-emerald-500 to-green-600' },
@@ -15,6 +16,13 @@ const subjects = [
   { id: 'english', name: 'English', emoji: '📚', color: 'from-rose-500 to-pink-600' },
   { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-teal-500 to-emerald-600' },
   { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-indigo-500 to-blue-600' },
+  { id: 'arabic', name: 'Arabic', emoji: '🕌', color: 'from-amber-500 to-yellow-600' },
+];
+
+const grades = [
+  'All', 'KG1', 'KG2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
+  'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9',
+  'Grade 10', 'Grade 11', 'Grade 12'
 ];
 
 const ALLOWED_FILE_TYPES = [
@@ -55,6 +63,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
   const [formTitle, setFormTitle] = useState('');
   const [formContent, setFormContent] = useState('');
   const [formFileUrl, setFormFileUrl] = useState('');
+  const [formGradeLevel, setFormGradeLevel] = useState('All');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // File upload state
@@ -99,6 +108,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
     setFormTitle('');
     setFormContent('');
     setFormFileUrl('');
+    setFormGradeLevel('All');
     setViewState('upload');
   };
 
@@ -108,42 +118,8 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
     setFormTitle(material.title);
     setFormContent(material.content || '');
     setFormFileUrl(material.file_url || '');
+    setFormGradeLevel(material.grade_level || 'All');
     setViewState('edit');
-  };
-
-  const handleSubmitUpload = async () => {
-    if (!formSubject || !formTitle.trim()) return;
-    
-    setIsSubmitting(true);
-    const result = await uploadMaterial(formSubject, formTitle, formContent, formFileUrl);
-    setIsSubmitting(false);
-    
-    if (result) {
-      setViewState('list');
-    }
-  };
-
-  const handleSubmitEdit = async () => {
-    if (!selectedMaterial || !formTitle.trim()) return;
-    
-    setIsSubmitting(true);
-    const result = await updateMaterial(selectedMaterial.id, formTitle, formContent, formFileUrl);
-    setIsSubmitting(false);
-    
-    if (result) {
-      setViewState('list');
-      setSelectedMaterial(null);
-    }
-  };
-
-  const handleDelete = async (materialId: string) => {
-    if (confirm('Are you sure you want to delete this material?')) {
-      await deleteMaterial(materialId);
-      if (selectedMaterial?.id === materialId) {
-        setSelectedMaterial(null);
-        setViewState('list');
-      }
-    }
   };
 
   const handleSubmitComment = async () => {
@@ -156,6 +132,16 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
     if (result) {
       setComments(prev => [...prev, result]);
       setNewComment('');
+    }
+  };
+
+  const handleDelete = async (materialId: string) => {
+    if (confirm('Are you sure you want to delete this material?')) {
+      await deleteMaterial(materialId);
+      if (selectedMaterial?.id === materialId) {
+        setSelectedMaterial(null);
+        setViewState('list');
+      }
     }
   };
 
@@ -198,10 +184,16 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
               )}>
                 {subjectInfo.emoji}
               </div>
-              <div>
+              <div className="flex-1">
                 <span className="text-xs text-muted-foreground">{subjectInfo.name}</span>
                 <h1 className="font-bold text-lg">{selectedMaterial.title}</h1>
               </div>
+              {selectedMaterial.grade_level && (
+                <Badge variant="outline" className="gap-1">
+                  <GraduationCap size={12} />
+                  {selectedMaterial.grade_level}
+                </Badge>
+              )}
             </div>
             
             {selectedMaterial.file_url && (
@@ -329,12 +321,25 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
       }
     }
     
-    const result = await uploadMaterial(formSubject, formTitle, formContent, fileUrl);
+    const result = await uploadMaterial(formSubject, formTitle, formContent, formGradeLevel, fileUrl);
     setIsSubmitting(false);
     
     if (result) {
       setSelectedFile(null);
       setViewState('list');
+    }
+  };
+
+  const handleSubmitEdit = async () => {
+    if (!selectedMaterial || !formTitle.trim()) return;
+    
+    setIsSubmitting(true);
+    const result = await updateMaterial(selectedMaterial.id, formTitle, formContent, formGradeLevel, formFileUrl);
+    setIsSubmitting(false);
+    
+    if (result) {
+      setViewState('list');
+      setSelectedMaterial(null);
     }
   };
 
@@ -362,7 +367,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
           <div className="glass-effect rounded-2xl p-5 animate-fade-in space-y-4">
             {/* Subject Selection */}
             <div>
-              <label className="block text-sm font-medium mb-2">Subject</label>
+              <label className="block text-sm font-medium mb-2">Subject *</label>
               <select
                 value={formSubject}
                 onChange={(e) => setFormSubject(e.target.value)}
@@ -376,9 +381,28 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
               </select>
             </div>
 
+            {/* Grade Level Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Grade Level *</label>
+              <select
+                value={formGradeLevel}
+                onChange={(e) => setFormGradeLevel(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                {grades.map((grade) => (
+                  <option key={grade} value={grade}>
+                    {grade === 'All' ? '📋 All Grades' : `🎓 ${grade}`}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Only students in the selected grade level will see this material
+              </p>
+            </div>
+
             {/* Title */}
             <div>
-              <label className="block text-sm font-medium mb-2">Title</label>
+              <label className="block text-sm font-medium mb-2">Title *</label>
               <input
                 type="text"
                 value={formTitle}
@@ -489,19 +513,6 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
   return (
     <div className="flex-1 overflow-y-auto pt-16 pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="sm" onClick={onBack}>
-            <ArrowLeft size={16} className="mr-1" />
-            Back
-          </Button>
-          {isTeacher && (
-            <Button size="sm" className="ml-auto gap-2" onClick={handleUploadClick}>
-              <Upload size={16} />
-              Upload
-            </Button>
-          )}
-        </div>
-
         <div className="text-center mb-6 animate-fade-in">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-gradient-to-br from-primary to-accent text-primary-foreground">
             <BookOpen className="w-7 h-7" />
@@ -511,6 +522,14 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
             {isTeacher ? 'Upload and manage materials for your students' : 'Browse materials uploaded by your teachers'}
           </p>
         </div>
+
+        {/* Teacher Upload Button */}
+        {isTeacher && (
+          <Button onClick={handleUploadClick} className="w-full mb-4 gap-2">
+            <Plus size={18} />
+            Upload New Material
+          </Button>
+        )}
 
         {/* Subject Filter */}
         <div className="glass-effect rounded-xl p-3 mb-4 overflow-x-auto">
@@ -578,9 +597,17 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-sm truncate">{material.title}</h3>
-                      <p className="text-xs text-muted-foreground">
-                        {subjectInfo.name} • {new Date(material.created_at).toLocaleDateString()}
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{subjectInfo.name}</span>
+                        {material.grade_level && material.grade_level !== 'All' && (
+                          <>
+                            <span>•</span>
+                            <span className="text-primary">{material.grade_level}</span>
+                          </>
+                        )}
+                        <span>•</span>
+                        <span>{new Date(material.created_at).toLocaleDateString()}</span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {isViewed ? (

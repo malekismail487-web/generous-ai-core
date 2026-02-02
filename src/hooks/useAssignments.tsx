@@ -16,6 +16,8 @@ export interface Assignment {
   due_date: string | null;
   created_at: string;
   updated_at: string;
+  points?: number;
+  questions_json?: any;
 }
 
 export interface AssignmentSubmission {
@@ -35,11 +37,11 @@ export function useAssignments() {
   const [mySubmissions, setMySubmissions] = useState<AssignmentSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { school } = useSchool();
+  const { school, profile } = useSchool();
   const { isTeacher } = useUserRole();
   const { toast } = useToast();
 
-  // Fetch assignments for the school
+  // Fetch assignments for the school, filtered by grade level for students
   const fetchAssignments = useCallback(async () => {
     if (!user || !school) {
       setAssignments([]);
@@ -47,19 +49,31 @@ export function useAssignments() {
       return;
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('assignments')
       .select('*')
       .eq('school_id', school.id)
       .order('due_date', { ascending: true });
 
+    const { data, error } = await query;
+
     if (error) {
       console.error('Error fetching assignments:', error);
+      setAssignments([]);
     } else {
-      setAssignments(data || []);
+      let filteredAssignments = data || [];
+      
+      // For students, filter by their grade level
+      if (!isTeacher && profile?.grade_level) {
+        filteredAssignments = filteredAssignments.filter((a: any) => {
+          return !a.grade_level || a.grade_level === 'All' || a.grade_level === profile.grade_level;
+        });
+      }
+      
+      setAssignments(filteredAssignments as Assignment[]);
     }
     setLoading(false);
-  }, [user, school]);
+  }, [user, school, profile, isTeacher]);
 
   // Fetch user's submissions
   const fetchMySubmissions = useCallback(async () => {
