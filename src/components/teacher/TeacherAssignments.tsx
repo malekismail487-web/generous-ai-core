@@ -13,18 +13,7 @@ import {
   Filter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -34,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { AssignmentQuestionBuilder } from './AssignmentQuestionBuilder';
 
 // Hardcoded subjects list
 const SUBJECTS = [
@@ -62,6 +52,7 @@ interface Assignment {
   due_date: string | null;
   points: number;
   created_at: string;
+  questions_json?: any;
 }
 
 interface Submission {
@@ -91,64 +82,12 @@ export function TeacherAssignments({
 }: TeacherAssignmentsProps) {
   const { toast } = useToast();
   
-  // Dialog state
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
+  // View state - 'list' or 'create'
+  const [view, setView] = useState<'list' | 'create'>('list');
   
   // Filter state
   const [filterSubject, setFilterSubject] = useState<string>('all');
   const [filterGrade, setFilterGrade] = useState<string>('all');
-  
-  // Form state
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [subject, setSubject] = useState('biology');
-  const [gradeLevel, setGradeLevel] = useState('All');
-  const [dueDate, setDueDate] = useState('');
-  const [points, setPoints] = useState('100');
-
-  const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setSubject('biology');
-    setGradeLevel('All');
-    setDueDate('');
-    setPoints('100');
-  };
-
-  const createAssignment = async () => {
-    if (!title.trim()) {
-      toast({ variant: 'destructive', title: 'Please enter a title' });
-      return;
-    }
-
-    setCreating(true);
-
-    const { error } = await supabase
-      .from('assignments')
-      .insert({
-        teacher_id: authUserId,
-        school_id: schoolId,
-        subject: subject,
-        title: title.trim(),
-        description: description.trim() || null,
-        due_date: dueDate || null,
-        points: parseInt(points) || 100,
-        grade_level: gradeLevel
-      });
-
-    setCreating(false);
-
-    if (error) {
-      console.error('Assignment creation error:', error);
-      toast({ variant: 'destructive', title: 'Error creating assignment', description: error.message });
-    } else {
-      toast({ title: 'Assignment created successfully!' });
-      resetForm();
-      setDialogOpen(false);
-      onRefresh();
-    }
-  };
 
   const deleteAssignment = async (assignmentId: string) => {
     const { error } = await supabase
@@ -174,6 +113,13 @@ export function TeacherAssignments({
     return { total: assignmentSubmissions.length, graded };
   };
 
+  const getQuestionCount = (assignment: Assignment) => {
+    if (Array.isArray(assignment.questions_json)) {
+      return assignment.questions_json.length;
+    }
+    return 0;
+  };
+
   const isOverdue = (dueDate: string | null) => {
     if (!dueDate) return false;
     return new Date(dueDate) < new Date();
@@ -186,6 +132,21 @@ export function TeacherAssignments({
     return true;
   });
 
+  // Show question builder when creating
+  if (view === 'create') {
+    return (
+      <AssignmentQuestionBuilder
+        schoolId={schoolId}
+        authUserId={authUserId}
+        onBack={() => setView('list')}
+        onSuccess={() => {
+          setView('list');
+          onRefresh();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header with Create Button and Filters */}
@@ -196,7 +157,7 @@ export function TeacherAssignments({
             Create and manage assignments for your students
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2">
+        <Button onClick={() => setView('create')} className="gap-2">
           <Plus className="w-4 h-4" />
           Create Assignment
         </Button>
@@ -245,7 +206,7 @@ export function TeacherAssignments({
               : "No assignments match your current filters"}
           </p>
           {assignments.length === 0 && (
-            <Button onClick={() => setDialogOpen(true)}>
+            <Button onClick={() => setView('create')}>
               <Plus className="w-4 h-4 mr-2" />
               Create First Assignment
             </Button>
@@ -257,6 +218,7 @@ export function TeacherAssignments({
             const subjectInfo = getSubjectInfo(assignment.subject);
             const stats = getSubmissionStats(assignment.id);
             const overdue = isOverdue(assignment.due_date);
+            const questionCount = getQuestionCount(assignment);
 
             return (
               <Card 
@@ -302,6 +264,12 @@ export function TeacherAssignments({
                       <BookOpen className="w-3 h-3" />
                       {assignment.points} pts
                     </Badge>
+                    {questionCount > 0 && (
+                      <Badge variant="secondary" className="gap-1">
+                        <FileText className="w-3 h-3" />
+                        {questionCount} Q
+                      </Badge>
+                    )}
                   </div>
 
                   {/* Due date */}
@@ -337,106 +305,6 @@ export function TeacherAssignments({
           })}
         </div>
       )}
-
-      {/* Create Assignment Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Create New Assignment</DialogTitle>
-            <DialogDescription>
-              Create an assignment for your students. All fields marked with * are required.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter assignment title"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the assignment..."
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Subject *</Label>
-                <Select value={subject} onValueChange={setSubject}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SUBJECTS.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.emoji} {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Grade Level *</Label>
-                <Select value={gradeLevel} onValueChange={setGradeLevel}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GRADES.map((g) => (
-                      <SelectItem key={g} value={g}>{g}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="dueDate">Due Date</Label>
-                <Input
-                  id="dueDate"
-                  type="datetime-local"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="points">Points</Label>
-                <Input
-                  id="points"
-                  type="number"
-                  value={points}
-                  onChange={(e) => setPoints(e.target.value)}
-                  placeholder="100"
-                  min="0"
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={createAssignment} disabled={creating || !title.trim()}>
-              {creating ? 'Creating...' : 'Create Assignment'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
