@@ -113,7 +113,7 @@ export default function Auth() {
   };
 
   const validateJoinForm = () => {
-    const newErrors: { email?: string; code?: string; name?: string } = {};
+    const newErrors: { email?: string; code?: string; name?: string; password?: string; confirmPassword?: string } = {};
     
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -127,6 +127,15 @@ export default function Auth() {
     const codeResult = codeSchema.safeParse(inviteCode);
     if (!codeResult.success) {
       newErrors.code = codeResult.error.errors[0].message;
+    }
+
+    const passwordResult = passwordSchema.safeParse(password);
+    if (!passwordResult.success) {
+      newErrors.password = passwordResult.error.errors[0].message;
+    }
+
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
     }
     
     setErrors(newErrors);
@@ -252,7 +261,7 @@ export default function Auth() {
     setIsSubmitting(true);
     
     try {
-      // Call the signup_with_invite_code function
+      // First, validate the invite code and create the request
       const { data, error } = await supabase.rpc('signup_with_invite_code', {
         p_email: email.trim().toLowerCase(),
         p_full_name: name.trim(),
@@ -277,15 +286,45 @@ export default function Auth() {
           title: 'Error',
           description: result.error || 'Failed to submit request',
         });
-      } else {
-        toast({
-          title: 'Request Submitted!',
-          description: 'Your request has been sent for approval. Once approved, sign up with the same email to access your account.',
-        });
-        clearForm();
-        // Switch to signup tab to encourage creating an account
-        setAuthMode('signup');
+        setIsSubmitting(false);
+        return;
       }
+
+      // Request created successfully, now create the auth account
+      const { error: signUpError } = await signUp(email.trim().toLowerCase(), password);
+      
+      if (signUpError) {
+        // If user already exists, try to sign them in
+        if (signUpError.message.includes('User already registered')) {
+          const { error: signInError } = await signIn(email.trim().toLowerCase(), password);
+          if (signInError) {
+            toast({
+              variant: 'destructive',
+              title: 'Account exists',
+              description: 'Please sign in with your existing password.',
+            });
+            setAuthMode('login');
+            setIsSubmitting(false);
+            return;
+          }
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Account creation failed',
+            description: signUpError.message,
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      toast({
+        title: 'Request Submitted!',
+        description: 'Your request is pending approval from your school administrator.',
+      });
+      
+      // Navigate to pending approval page
+      navigate('/pending-approval');
     } catch (err) {
       toast({
         variant: 'destructive',
@@ -526,6 +565,42 @@ export default function Auth() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="join-password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="join-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="join-confirm-password">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="join-confirm-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="join-code">Invite Code</Label>
                 <div className="relative">
                   <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -555,16 +630,10 @@ export default function Auth() {
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
-                Submit Request
+                Join School
               </Button>
 
               <div className="text-center text-xs text-muted-foreground mt-4 space-y-2">
-                <p className="font-medium text-foreground/80">
-                  After submitting, wait for your school admin to approve your request.
-                </p>
-                <p>
-                  Once approved, <strong>create an account</strong> using "Sign Up" with the same email to access your school.
-                </p>
                 <p>
                   Are you a school administrator?{' '}
                   <button
