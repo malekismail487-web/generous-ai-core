@@ -36,12 +36,12 @@ export function PendingApproval() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 bg-gradient-to-br from-amber-500 to-orange-600 animate-pulse">
           <Clock className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-2xl font-bold mb-2">Awaiting Approval</h1>
+        <h1 className="text-2xl font-bold mb-2">Pending Approval</h1>
         <p className="text-muted-foreground mb-2">
-          Your registration for <strong>{school?.name}</strong> is being reviewed.
+          Your request to join <strong>{school?.name || 'your school'}</strong> has been submitted.
         </p>
         <p className="text-sm text-muted-foreground mb-6">
-          A school administrator will approve your account shortly.
+          Your school administrator has been notified and will review your request shortly.
         </p>
 
         <div className="glass-effect rounded-2xl p-5 mb-6 text-left">
