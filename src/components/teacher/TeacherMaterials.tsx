@@ -78,7 +78,8 @@ interface CourseMaterial {
 interface TeacherMaterialsProps {
   materials: CourseMaterial[];
   schoolId: string;
-  userId: string;
+  userId: string;       // profile.id - used for database inserts (uploaded_by)
+  authUserId: string;   // auth user id - used for storage path
   onRefresh: () => void;
 }
 
@@ -86,6 +87,7 @@ export function TeacherMaterials({
   materials,
   schoolId,
   userId,
+  authUserId,
   onRefresh
 }: TeacherMaterialsProps) {
   const { toast } = useToast();
@@ -143,7 +145,8 @@ export function TeacherMaterials({
     if (!selectedFile) return null;
 
     const fileExt = selectedFile.name.split('.').pop();
-    const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    // Use authUserId for path so it matches storage RLS (auth.uid())
+    const fileName = `${authUserId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
     const { data, error } = await supabase.storage
       .from('course-materials')
