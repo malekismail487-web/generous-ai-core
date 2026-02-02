@@ -165,7 +165,7 @@ export default function TeacherDashboard() {
     );
   }
 
-  if (!isTeacher || !school || !profile?.is_active) {
+  if (!user || !isTeacher || !school || !profile?.is_active) {
     return <Navigate to="/" replace />;
   }
 
