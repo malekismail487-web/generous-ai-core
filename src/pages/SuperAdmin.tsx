@@ -16,7 +16,9 @@ import {
   FlaskConical,
   GraduationCap,
   Users,
-  UserCog
+  UserCog,
+  Check,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +60,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+type TestingRole = 'none' | 'student' | 'teacher' | 'school_admin';
+
 export default function SuperAdmin() {
   const navigate = useNavigate();
   const { isSuperAdmin, loading } = useRoleGuard();
@@ -66,6 +70,7 @@ export default function SuperAdmin() {
   const [schools, setSchools] = useState<School[]>([]);
   const [loadingSchools, setLoadingSchools] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [testingRole, setTestingRole] = useState<TestingRole>('none');
   
   // Create school form state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -237,6 +242,306 @@ export default function SuperAdmin() {
     );
   }
 
+  // Render testing mode UI
+  if (testingRole !== 'none') {
+    const roleLabels = {
+      student: 'Student',
+      teacher: 'Teacher',
+      school_admin: 'School Administrator'
+    };
+
+    const roleIcons = {
+      student: GraduationCap,
+      teacher: Users,
+      school_admin: UserCog
+    };
+
+    const RoleIcon = roleIcons[testingRole];
+
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Testing Mode Banner */}
+        <div className="fixed top-0 left-0 right-0 z-50 bg-amber-500 text-amber-950">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FlaskConical className="w-5 h-5" />
+              <span className="font-medium">
+                Testing Mode: Viewing as {roleLabels[testingRole]}
+              </span>
+            </div>
+            <Button 
+              variant="secondary" 
+              size="sm"
+              onClick={() => setTestingRole('none')}
+              className="gap-2"
+            >
+              <ShieldAlert className="w-4 h-4" />
+              Done Testing
+            </Button>
+          </div>
+        </div>
+
+        {/* Mock Dashboard Content */}
+        <div className="pt-16">
+          <header className="glass-effect-strong border-b border-border/30 sticky top-12 z-40">
+            <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                  <RoleIcon className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">{roleLabels[testingRole]} Dashboard</h1>
+                  <p className="text-xs text-muted-foreground">Preview Mode</p>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-7xl mx-auto px-4 py-6">
+            {testingRole === 'student' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="glass-effect rounded-xl p-4">
+                    <p className="text-sm text-muted-foreground">My Subjects</p>
+                    <p className="text-2xl font-bold">6</p>
+                  </div>
+                  <div className="glass-effect rounded-xl p-4">
+                    <p className="text-sm text-muted-foreground">Pending Assignments</p>
+                    <p className="text-2xl font-bold text-amber-500">3</p>
+                  </div>
+                  <div className="glass-effect rounded-xl p-4">
+                    <p className="text-sm text-muted-foreground">Completed</p>
+                    <p className="text-2xl font-bold text-green-500">12</p>
+                  </div>
+                </div>
+                
+                <div className="glass-effect rounded-xl p-6">
+                  <h2 className="text-lg font-semibold mb-4">📚 My Subjects</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {['Mathematics', 'English', 'Science', 'History', 'Geography', 'Art'].map((subject) => (
+                      <div key={subject} className="p-4 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                        <p className="font-medium">{subject}</p>
+                        <p className="text-xs text-muted-foreground">View materials</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="glass-effect rounded-xl p-6">
+                  <h2 className="text-lg font-semibold mb-4">📝 Recent Assignments</h2>
+                  <div className="space-y-3">
+                    {[
+                      { title: 'Math Quiz Chapter 5', due: 'Tomorrow', status: 'pending' },
+                      { title: 'English Essay', due: 'In 3 days', status: 'pending' },
+                      { title: 'Science Lab Report', due: 'Completed', status: 'done' }
+                    ].map((assignment, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                        <div>
+                          <p className="font-medium">{assignment.title}</p>
+                          <p className="text-sm text-muted-foreground">{assignment.due}</p>
+                        </div>
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          assignment.status === 'done' ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'
+                        }`}>
+                          {assignment.status === 'done' ? 'Completed' : 'Pending'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {testingRole === 'teacher' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="glass-effect rounded-xl p-4">
+                    <p className="text-sm text-muted-foreground">My Classes</p>
+                    <p className="text-2xl font-bold">4</p>
+                  </div>
+                  <div className="glass-effect rounded-xl p-4">
+                    <p className="text-sm text-muted-foreground">Total Students</p>
+                    <p className="text-2xl font-bold">87</p>
+                  </div>
+                  <div className="glass-effect rounded-xl p-4">
+                    <p className="text-sm text-muted-foreground">Active Assignments</p>
+                    <p className="text-2xl font-bold text-primary">5</p>
+                  </div>
+                  <div className="glass-effect rounded-xl p-4">
+                    <p className="text-sm text-muted-foreground">To Grade</p>
+                    <p className="text-2xl font-bold text-amber-500">12</p>
+                  </div>
+                </div>
+
+                <div className="glass-effect rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">📚 My Subjects</h2>
+                    <Button size="sm" className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Create Assignment
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {['Grade 9 Math', 'Grade 10 Math', 'Grade 11 Algebra', 'Grade 12 Calculus'].map((subject) => (
+                      <div key={subject} className="p-4 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                        <p className="font-medium">{subject}</p>
+                        <p className="text-xs text-muted-foreground">24 students</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="glass-effect rounded-xl p-6">
+                  <h2 className="text-lg font-semibold mb-4">📋 Submissions to Grade</h2>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Assignment</TableHead>
+                        <TableHead>Submitted</TableHead>
+                        <TableHead>Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[
+                        { student: 'John Doe', assignment: 'Math Quiz', date: '2 hours ago' },
+                        { student: 'Jane Smith', assignment: 'Math Quiz', date: '3 hours ago' },
+                        { student: 'Mike Johnson', assignment: 'Algebra Test', date: 'Yesterday' }
+                      ].map((submission, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="font-medium">{submission.student}</TableCell>
+                          <TableCell>{submission.assignment}</TableCell>
+                          <TableCell className="text-muted-foreground">{submission.date}</TableCell>
+                          <TableCell>
+                            <Button size="sm" variant="outline">Grade</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+
+            {testingRole === 'school_admin' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="glass-effect rounded-xl p-4">
+                    <p className="text-sm text-muted-foreground">Total Teachers</p>
+                    <p className="text-2xl font-bold">15</p>
+                  </div>
+                  <div className="glass-effect rounded-xl p-4">
+                    <p className="text-sm text-muted-foreground">Total Students</p>
+                    <p className="text-2xl font-bold">342</p>
+                  </div>
+                  <div className="glass-effect rounded-xl p-4">
+                    <p className="text-sm text-muted-foreground">Pending Requests</p>
+                    <p className="text-2xl font-bold text-amber-500">4</p>
+                  </div>
+                  <div className="glass-effect rounded-xl p-4">
+                    <p className="text-sm text-muted-foreground">Active Codes</p>
+                    <p className="text-2xl font-bold text-primary">8</p>
+                  </div>
+                </div>
+
+                <div className="glass-effect rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">⏳ Pending Requests</h2>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Requested</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[
+                        { name: 'Sarah Wilson', email: 'sarah@email.com', role: 'Teacher', date: 'Today' },
+                        { name: 'Tom Brown', email: 'tom@email.com', role: 'Student', date: 'Today' },
+                        { name: 'Emily Davis', email: 'emily@email.com', role: 'Student', date: 'Yesterday' }
+                      ].map((request, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="font-medium">{request.name}</TableCell>
+                          <TableCell>{request.email}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              request.role === 'Teacher' ? 'bg-blue-500/10 text-blue-500' : 'bg-green-500/10 text-green-500'
+                            }`}>
+                              {request.role}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{request.date}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" className="gap-1">
+                                <Check className="w-3 h-3" />
+                                Approve
+                              </Button>
+                              <Button size="sm" variant="outline" className="gap-1 text-destructive">
+                                <X className="w-3 h-3" />
+                                Deny
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <div className="glass-effect rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">🔑 Invite Codes</h2>
+                    <Button size="sm" className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Generate Code
+                    </Button>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Code</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Created</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[
+                        { code: 'TEACH001', role: 'Teacher', status: 'Available' },
+                        { code: 'STU2024A', role: 'Student', status: 'Used' },
+                        { code: 'STU2024B', role: 'Student', status: 'Available' }
+                      ].map((code, i) => (
+                        <TableRow key={i}>
+                          <TableCell>
+                            <code className="bg-muted px-2 py-1 rounded text-xs">{code.code}</code>
+                          </TableCell>
+                          <TableCell>{code.role}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              code.status === 'Available' ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'
+                            }`}>
+                              {code.status}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">Today</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -260,15 +565,15 @@ export default function SuperAdmin() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate('/student')} className="gap-2">
+                <DropdownMenuItem onClick={() => setTestingRole('student')} className="gap-2">
                   <GraduationCap className="w-4 h-4" />
                   Test as Student
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/teacher')} className="gap-2">
+                <DropdownMenuItem onClick={() => setTestingRole('teacher')} className="gap-2">
                   <Users className="w-4 h-4" />
                   Test as Teacher
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/admin')} className="gap-2">
+                <DropdownMenuItem onClick={() => setTestingRole('school_admin')} className="gap-2">
                   <UserCog className="w-4 h-4" />
                   Test as School Admin
                 </DropdownMenuItem>
@@ -499,9 +804,9 @@ export default function SuperAdmin() {
                                   <li>All user profiles</li>
                                   <li>All lesson plans</li>
                                   <li>All assignments and submissions</li>
-                                  <li>All grades and report cards</li>
-                                  <li>All activity logs</li>
+                                  <li>All course materials</li>
                                 </ul>
+                                <br />
                                 This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
@@ -509,9 +814,9 @@ export default function SuperAdmin() {
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => deleteSchool(school.id)}
-                                className="bg-destructive hover:bg-destructive/90"
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
-                                Delete School
+                                Delete Permanently
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
