@@ -19,12 +19,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Function to link profile if user was approved via invite code
+    const linkProfileIfNeeded = async (user: User) => {
+      if (!user?.email) return;
+      
+      try {
+        await supabase.rpc('link_profile_after_signup', {
+          p_user_id: user.id,
+          p_email: user.email
+        });
+      } catch (error) {
+        console.log('Profile link check completed');
+      }
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // On sign in or sign up, try to link profile
+        if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
+          // Use setTimeout to avoid blocking the auth flow
+          setTimeout(() => linkProfileIfNeeded(session.user), 100);
+        }
       }
     );
 
