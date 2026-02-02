@@ -64,10 +64,12 @@ serve(async (req) => {
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Verify caller is an active school admin and get their school_id
+    // Verify caller is an active school admin and get their school_id.
+    // IMPORTANT: do not trust client-side state; verify server-side.
+    // We derive school admin status from the school_admins mapping table.
     const { data: profile, error: profileError } = await admin
       .from("profiles")
-      .select("id,school_id,user_type,is_active")
+      .select("id,is_active")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -79,7 +81,28 @@ serve(async (req) => {
       });
     }
 
-    if (!profile?.school_id || profile.user_type !== "school_admin" || !profile.is_active) {
+    if (!profile?.id || !profile.is_active) {
+      return new Response(JSON.stringify({ error: "Not authorized" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: schoolAdminRow, error: schoolAdminError } = await admin
+      .from("school_admins")
+      .select("school_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (schoolAdminError) {
+      console.error("invite-codes: school_admins lookup error", schoolAdminError);
+      return new Response(JSON.stringify({ error: schoolAdminError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!schoolAdminRow?.school_id) {
       return new Response(JSON.stringify({ error: "Not authorized" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -96,7 +119,7 @@ serve(async (req) => {
       const { data, error } = await admin
         .from("invite_codes")
         .insert({
-          school_id: profile.school_id,
+          school_id: schoolAdminRow.school_id,
           code,
           role,
           expires_at: expiresAt.toISOString(),
