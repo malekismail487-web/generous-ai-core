@@ -1,29 +1,15 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import {
   Calendar,
-  Clock,
   CheckCircle2,
   AlertCircle,
-  Send,
   BookOpen,
   Filter,
   FileText,
   Award,
-  Loader2
+  PlayCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
@@ -34,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import { AssignmentQuizTaker } from './AssignmentQuizTaker';
 
 const SUBJECTS = [
   { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-green-500 to-emerald-600' },
@@ -56,6 +43,7 @@ interface Assignment {
   due_date: string | null;
   points: number;
   created_at: string;
+  questions_json?: any;
 }
 
 interface Submission {
@@ -80,13 +68,9 @@ export function StudentAssignments({
   profileId,
   onRefresh
 }: StudentAssignmentsProps) {
-  const { toast } = useToast();
-
-  // Dialog state
-  const [dialogOpen, setDialogOpen] = useState(false);
+  // View state
+  const [view, setView] = useState<'list' | 'quiz'>('list');
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
-  const [submissionContent, setSubmissionContent] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   // Filter state
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -97,11 +81,8 @@ export function StudentAssignments({
   };
 
   const getSubjectInfo = (assignment: Assignment) => {
-    // Try to match by subject field first
     const bySubject = SUBJECTS.find(s => s.id === assignment.subject);
     if (bySubject) return bySubject;
-    
-    // Fallback
     return { id: 'general', name: assignment.subject || 'General', emoji: '📄', color: 'from-gray-500 to-gray-600' };
   };
 
@@ -114,7 +95,7 @@ export function StudentAssignments({
     const submission = getSubmission(assignment.id);
     const overdue = isOverdue(assignment.due_date);
     
-    if (submission?.grade !== null) return 'graded';
+    if (submission?.grade !== null && submission?.grade !== undefined) return 'graded';
     if (submission) return 'submitted';
     if (overdue) return 'overdue';
     return 'pending';
@@ -128,49 +109,8 @@ export function StudentAssignments({
     return diff;
   };
 
-  const submitAssignment = async () => {
-    if (!selectedAssignment) return;
-
-    setSubmitting(true);
-
-    const existingSubmission = getSubmission(selectedAssignment.id);
-
-    if (existingSubmission) {
-      const { error } = await supabase
-        .from('submissions')
-        .update({
-          content: submissionContent,
-          submitted_at: new Date().toISOString()
-        })
-        .eq('id', existingSubmission.id);
-
-      if (error) {
-        toast({ variant: 'destructive', title: 'Error updating submission' });
-      } else {
-        toast({ title: 'Submission updated!' });
-      }
-    } else {
-      const { error } = await supabase
-        .from('submissions')
-        .insert({
-          assignment_id: selectedAssignment.id,
-          student_id: profileId,
-          content: submissionContent
-        });
-
-      if (error) {
-        toast({ variant: 'destructive', title: 'Error submitting assignment' });
-        console.error(error);
-      } else {
-        toast({ title: 'Assignment submitted!' });
-      }
-    }
-
-    setSubmitting(false);
-    setDialogOpen(false);
-    setSelectedAssignment(null);
-    setSubmissionContent('');
-    onRefresh();
+  const hasQuestions = (assignment: Assignment) => {
+    return Array.isArray(assignment.questions_json) && assignment.questions_json.length > 0;
   };
 
   // Filter assignments
@@ -192,15 +132,36 @@ export function StudentAssignments({
       }, 0) / gradedCount)
     : null;
 
+  // Quiz view
+  if (view === 'quiz' && selectedAssignment) {
+    const existingSubmission = getSubmission(selectedAssignment.id);
+    return (
+      <AssignmentQuizTaker
+        assignment={selectedAssignment}
+        profileId={profileId}
+        existingSubmission={existingSubmission}
+        onBack={() => {
+          setView('list');
+          setSelectedAssignment(null);
+        }}
+        onSuccess={() => {
+          setView('list');
+          setSelectedAssignment(null);
+          onRefresh();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Progress Overview - Classera Style */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5">
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-blue-500" />
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalAssignments}</p>
@@ -210,11 +171,11 @@ export function StudentAssignments({
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5">
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{submittedCount}</p>
@@ -224,11 +185,11 @@ export function StudentAssignments({
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5">
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                <Award className="w-5 h-5 text-amber-500" />
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Award className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{gradedCount}</p>
@@ -238,11 +199,11 @@ export function StudentAssignments({
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5">
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-purple-500" />
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{averageGrade ?? '--'}%</p>
@@ -280,7 +241,7 @@ export function StudentAssignments({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="pending">Not Started</SelectItem>
             <SelectItem value="submitted">Submitted</SelectItem>
             <SelectItem value="graded">Graded</SelectItem>
             <SelectItem value="overdue">Overdue</SelectItem>
@@ -301,7 +262,7 @@ export function StudentAssignments({
         </Select>
       </div>
 
-      {/* Assignments Grid - Classera Card Style */}
+      {/* Assignments Grid */}
       {filteredAssignments.length === 0 ? (
         <div className="glass-effect rounded-xl p-12 text-center">
           <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
@@ -319,6 +280,8 @@ export function StudentAssignments({
             const status = getStatus(assignment);
             const submission = getSubmission(assignment.id);
             const daysRemaining = getDaysRemaining(assignment.due_date);
+            const hasQ = hasQuestions(assignment);
+            const questionCount = hasQ ? (assignment.questions_json as any[]).length : 0;
 
             return (
               <Card 
@@ -340,7 +303,7 @@ export function StudentAssignments({
                     </div>
                     {/* Status Badge */}
                     {status === 'graded' && (
-                      <Badge className="bg-green-500 gap-1">
+                      <Badge className="bg-primary gap-1">
                         <CheckCircle2 className="w-3 h-3" />
                         {submission?.grade}/{assignment.points}
                       </Badge>
@@ -359,7 +322,6 @@ export function StudentAssignments({
                     )}
                     {status === 'pending' && daysRemaining !== null && daysRemaining <= 3 && daysRemaining > 0 && (
                       <Badge variant="outline" className="gap-1 text-amber-500 border-amber-500">
-                        <Clock className="w-3 h-3" />
                         {daysRemaining}d left
                       </Badge>
                     )}
@@ -382,6 +344,12 @@ export function StudentAssignments({
                       <Award className="w-3 h-3" />
                       <span>{assignment.points} points</span>
                     </div>
+                    {hasQ && (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <FileText className="w-3 h-3" />
+                        <span>{questionCount} questions</span>
+                      </div>
+                    )}
                     {assignment.due_date && (
                       <div className={`flex items-center gap-1 ${status === 'overdue' ? 'text-destructive' : 'text-muted-foreground'}`}>
                         <Calendar className="w-3 h-3" />
@@ -392,8 +360,8 @@ export function StudentAssignments({
 
                   {/* Grade/Feedback for graded assignments */}
                   {status === 'graded' && submission?.feedback && (
-                    <div className="p-3 bg-green-500/10 rounded-lg">
-                      <p className="text-xs font-medium text-green-600 mb-1">Teacher Feedback:</p>
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <p className="text-xs font-medium text-primary mb-1">Teacher Feedback:</p>
                       <p className="text-sm line-clamp-2">{submission.feedback}</p>
                     </div>
                   )}
@@ -401,22 +369,32 @@ export function StudentAssignments({
                   {/* Action Button */}
                   <div className="pt-3 border-t">
                     {status === 'graded' ? (
-                      <Button variant="outline" className="w-full" disabled>
-                        <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
-                        Completed
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => {
+                          setSelectedAssignment(assignment);
+                          setView('quiz');
+                        }}
+                      >
+                        <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
+                        View Results
                       </Button>
-                    ) : (
+                    ) : hasQ ? (
                       <Button
                         variant={status === 'overdue' ? 'destructive' : 'default'}
                         className="w-full"
                         onClick={() => {
                           setSelectedAssignment(assignment);
-                          setSubmissionContent(submission?.content || '');
-                          setDialogOpen(true);
+                          setView('quiz');
                         }}
                       >
-                        <Send className="w-4 h-4 mr-2" />
-                        {submission ? 'Edit Submission' : 'Submit Work'}
+                        <PlayCircle className="w-4 h-4 mr-2" />
+                        {submission ? 'Continue Quiz' : 'Start Quiz'}
+                      </Button>
+                    ) : (
+                      <Button variant="outline" className="w-full" disabled>
+                        No questions available
                       </Button>
                     )}
                   </div>
@@ -426,71 +404,6 @@ export function StudentAssignments({
           })}
         </div>
       )}
-
-      {/* Submission Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{selectedAssignment?.title}</DialogTitle>
-            <DialogDescription>
-              {selectedAssignment?.description || 'Submit your work for this assignment'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* Assignment Info */}
-            <div className="grid grid-cols-2 gap-4 p-3 bg-muted rounded-lg">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-primary">{selectedAssignment?.points}</p>
-                <p className="text-xs text-muted-foreground">Points</p>
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium">
-                  {selectedAssignment?.due_date 
-                    ? new Date(selectedAssignment.due_date).toLocaleDateString()
-                    : 'No deadline'
-                  }
-                </p>
-                <p className="text-xs text-muted-foreground">Due Date</p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="answer">Your Answer</Label>
-              <Textarea
-                id="answer"
-                value={submissionContent}
-                onChange={(e) => setSubmissionContent(e.target.value)}
-                placeholder="Type your answer here..."
-                rows={8}
-                className="resize-none"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={submitAssignment} 
-              disabled={submitting || !submissionContent.trim()}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4 mr-2" />
-                  Submit
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
