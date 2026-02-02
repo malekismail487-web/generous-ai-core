@@ -1427,9 +1427,10 @@ export type Database = {
       }
       is_student: { Args: { user_uuid: string }; Returns: boolean }
       is_teacher: { Args: { user_uuid: string }; Returns: boolean }
-      link_profile_after_signup:
-        | { Args: { p_email: string; p_user_id: string }; Returns: Json }
-        | { Args: { p_email: string; p_user_id: string }; Returns: Json }
+      link_profile_after_signup: {
+        Args: { p_email: string; p_user_id: string }
+        Returns: Json
+      }
       signup_with_invite_code: {
         Args: { p_email: string; p_full_name: string; p_invite_code: string }
         Returns: Json
