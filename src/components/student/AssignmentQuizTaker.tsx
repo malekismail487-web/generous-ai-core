@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { ArrowLeft, CheckCircle2, XCircle, Send } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Send, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 interface Question {
   id: string;
@@ -71,6 +70,7 @@ export function AssignmentQuizTaker({
   const [finalScore, setFinalScore] = useState<number | null>(existingSubmission?.grade ?? null);
 
   const handleAnswerChange = (questionId: string, answer: 'A' | 'B' | 'C' | 'D') => {
+    if (isSubmitted) return;
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
   };
 
@@ -172,6 +172,7 @@ export function AssignmentQuizTaker({
   // Show results after submission
   if (isSubmitted && results) {
     const correctCount = results.filter(r => r.isCorrect).length;
+    const percentage = Math.round((correctCount / questions.length) * 100);
     
     return (
       <div className="space-y-6">
@@ -185,72 +186,104 @@ export function AssignmentQuizTaker({
           </div>
         </div>
 
-        {/* Score Summary */}
-        <Card className="bg-gradient-to-r from-primary/10 to-primary/5">
-          <CardContent className="p-6 text-center">
-            <p className="text-4xl font-bold text-primary mb-2">
-              {finalScore}/{assignment.points}
-            </p>
-            <p className="text-muted-foreground">
-              {correctCount} out of {questions.length} correct
-            </p>
-            <Progress 
-              value={(correctCount / questions.length) * 100} 
-              className="mt-4 h-3" 
-            />
-          </CardContent>
-        </Card>
+        {/* Score Summary - Examination Style */}
+        <div className="glass-effect rounded-2xl p-8 text-center">
+          <div className={cn(
+            "w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center",
+            percentage >= 70 ? "bg-emerald-500/20" : percentage >= 50 ? "bg-amber-500/20" : "bg-destructive/20"
+          )}>
+            <Trophy className={cn(
+              "w-10 h-10",
+              percentage >= 70 ? "text-emerald-500" : percentage >= 50 ? "text-amber-500" : "text-destructive"
+            )} />
+          </div>
+          <p className="text-5xl font-bold mb-2">
+            {finalScore}/{assignment.points}
+          </p>
+          <p className="text-lg text-muted-foreground mb-4">
+            {correctCount} out of {questions.length} correct ({percentage}%)
+          </p>
+          <Progress 
+            value={percentage} 
+            className="h-3 max-w-sm mx-auto" 
+          />
+          <p className="text-sm text-muted-foreground mt-4">
+            {percentage >= 70 ? "Great job! 🎉" : percentage >= 50 ? "Good effort! Keep practicing." : "Keep studying and try again!"}
+          </p>
+        </div>
 
         {/* Results Breakdown */}
-        <div className="space-y-4">
-          <h3 className="font-semibold">Question Results:</h3>
-          {results.map((result, index) => (
-            <Card 
-              key={result.questionId}
-              className={result.isCorrect ? 'border-primary/50 bg-primary/5' : 'border-destructive/50 bg-destructive/5'}
-            >
-              <CardContent className="p-4">
+        <div className="space-y-3">
+          <h3 className="font-semibold text-lg">Question Results:</h3>
+          {results.map((result, index) => {
+            const question = questions[index];
+            const getOptionText = (key: string) => {
+              switch(key) {
+                case 'A': return question.optionA;
+                case 'B': return question.optionB;
+                case 'C': return question.optionC;
+                case 'D': return question.optionD;
+                default: return '';
+              }
+            };
+
+            return (
+              <div 
+                key={result.questionId}
+                className={cn(
+                  "glass-effect rounded-xl p-4 border",
+                  result.isCorrect ? "border-emerald-500/50 bg-emerald-500/5" : "border-destructive/50 bg-destructive/5"
+                )}
+              >
                 <div className="flex items-start gap-3">
-                  {result.isCorrect ? (
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-destructive mt-1 flex-shrink-0" />
-                  )}
-                  <div className="flex-1">
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
+                    result.isCorrect ? "bg-emerald-500 text-white" : "bg-destructive text-white"
+                  )}>
+                    {result.isCorrect ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline">Q{index + 1}</Badge>
+                      <Badge variant="outline" className="text-xs">Q{index + 1}</Badge>
                       <span className="font-medium">{result.questionTitle}</span>
                     </div>
                     <div className="text-sm space-y-1">
-                      <p>
-                        <span className="text-muted-foreground">Your answer: </span>
-                        <span className={result.isCorrect ? 'text-primary font-medium' : 'text-destructive font-medium'}>
-                          {result.selectedAnswer || 'Not answered'}
+                      <p className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Your answer:</span>
+                        <span className={cn(
+                          "font-medium",
+                          result.isCorrect ? "text-emerald-600" : "text-destructive"
+                        )}>
+                          {result.selectedAnswer ? `${result.selectedAnswer}. ${getOptionText(result.selectedAnswer)}` : 'Not answered'}
                         </span>
                       </p>
                       {!result.isCorrect && (
-                        <p>
-                          <span className="text-muted-foreground">Correct answer: </span>
-                          <span className="text-primary font-medium">{result.correctAnswer}</span>
+                        <p className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Correct answer:</span>
+                          <span className="text-emerald-600 font-medium">
+                            {result.correctAnswer}. {getOptionText(result.correctAnswer)}
+                          </span>
                         </p>
                       )}
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
-        <Button onClick={onBack} className="w-full">
+        <Button onClick={onBack} size="lg" className="w-full">
           Back to Assignments
         </Button>
       </div>
     );
   }
 
-  // Previously submitted - show grade
+  // Previously submitted - show grade only
   if (existingSubmission?.grade !== null && existingSubmission?.grade !== undefined) {
+    const percentage = Math.round((existingSubmission.grade / assignment.points) * 100);
+    
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -263,32 +296,39 @@ export function AssignmentQuizTaker({
           </div>
         </div>
 
-        <Card className="bg-gradient-to-r from-primary/10 to-primary/5">
-          <CardContent className="p-8 text-center">
-            <CheckCircle2 className="w-16 h-16 text-primary mx-auto mb-4" />
-            <p className="text-3xl font-bold text-primary mb-2">
-              {existingSubmission.grade}/{assignment.points}
-            </p>
-            <p className="text-muted-foreground">You have already completed this quiz</p>
-            {existingSubmission.feedback && (
-              <div className="mt-4 p-3 bg-muted rounded-lg text-left">
-                <p className="text-sm font-medium mb-1">Teacher Feedback:</p>
-                <p className="text-sm text-muted-foreground">{existingSubmission.feedback}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="glass-effect rounded-2xl p-8 text-center">
+          <div className={cn(
+            "w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center",
+            percentage >= 70 ? "bg-emerald-500/20" : percentage >= 50 ? "bg-amber-500/20" : "bg-destructive/20"
+          )}>
+            <CheckCircle2 className={cn(
+              "w-10 h-10",
+              percentage >= 70 ? "text-emerald-500" : percentage >= 50 ? "text-amber-500" : "text-destructive"
+            )} />
+          </div>
+          <p className="text-4xl font-bold mb-2">
+            {existingSubmission.grade}/{assignment.points}
+          </p>
+          <p className="text-muted-foreground">You have already completed this quiz</p>
+          {existingSubmission.feedback && (
+            <div className="mt-6 p-4 bg-muted rounded-xl text-left max-w-md mx-auto">
+              <p className="text-sm font-medium mb-1">Teacher Feedback:</p>
+              <p className="text-sm text-muted-foreground">{existingSubmission.feedback}</p>
+            </div>
+          )}
+        </div>
 
-        <Button onClick={onBack} className="w-full">
+        <Button onClick={onBack} size="lg" className="w-full">
           Back to Assignments
         </Button>
       </div>
     );
   }
 
-  // Quiz taking view
+  // Quiz taking view - Examination style with all questions visible
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={onBack}>
@@ -301,84 +341,105 @@ export function AssignmentQuizTaker({
             </p>
           </div>
         </div>
+        <div className="px-3 py-1.5 rounded-full bg-primary/20 text-primary text-sm font-medium">
+          {answeredCount}/{questions.length}
+        </div>
       </div>
 
       {/* Progress Bar */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Progress</span>
-            <span className="text-sm text-muted-foreground">
-              {answeredCount}/{questions.length} answered
-            </span>
-          </div>
-          <Progress value={progressPercent} className="h-2" />
-        </CardContent>
-      </Card>
+      <div className="glass-effect rounded-xl p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium">Progress</span>
+          <span className="text-sm text-muted-foreground">
+            {answeredCount}/{questions.length} answered
+          </span>
+        </div>
+        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </div>
 
-      {/* Questions */}
-      <div className="space-y-4">
+      {/* Questions - Multiple Choice Only */}
+      <div className="space-y-6">
         {questions.map((question, index) => (
-          <Card key={question.id}>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Badge variant="outline">Q{index + 1}</Badge>
-                {question.questionTitle}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                value={answers[question.id] || ''}
-                onValueChange={(val) => handleAnswerChange(question.id, val as 'A' | 'B' | 'C' | 'D')}
-                className="space-y-3"
-              >
-                {[
-                  { key: 'A', value: question.optionA },
-                  { key: 'B', value: question.optionB },
-                  { key: 'C', value: question.optionC },
-                  { key: 'D', value: question.optionD },
-                ].map(option => (
-                  <div 
+          <div key={question.id} className="glass-effect rounded-2xl p-5">
+            {/* Question Header */}
+            <div className="flex items-center gap-2 mb-4">
+              <Badge className="bg-primary/20 text-primary border-0">
+                Question {index + 1}
+              </Badge>
+              {answers[question.id] && (
+                <Badge variant="outline" className="text-emerald-500 border-emerald-500/50">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  Answered
+                </Badge>
+              )}
+            </div>
+            
+            {/* Question Text */}
+            <p className="text-base font-medium mb-4">{question.questionTitle}</p>
+
+            {/* Multiple Choice Options - Examination Style */}
+            <div className="space-y-2">
+              {[
+                { key: 'A' as const, value: question.optionA },
+                { key: 'B' as const, value: question.optionB },
+                { key: 'C' as const, value: question.optionC },
+                { key: 'D' as const, value: question.optionD },
+              ].map(option => {
+                const isSelected = answers[question.id] === option.key;
+                
+                return (
+                  <button
                     key={option.key}
-                    className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
-                      answers[question.id] === option.key 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                    onClick={() => handleAnswerChange(question.id, option.key as 'A' | 'B' | 'C' | 'D')}
+                    onClick={() => handleAnswerChange(question.id, option.key)}
+                    className={cn(
+                      "w-full p-4 rounded-xl text-left transition-all duration-200 border",
+                      "flex items-center gap-3 text-sm",
+                      "hover:bg-secondary/50 hover:border-primary/50",
+                      isSelected 
+                        ? "border-primary bg-primary/10" 
+                        : "bg-card/50 border-border/50"
+                    )}
                   >
-                    <RadioGroupItem value={option.key} id={`${question.id}-${option.key}`} />
-                    <Label 
-                      htmlFor={`${question.id}-${option.key}`} 
-                      className="flex-1 cursor-pointer font-normal"
-                    >
-                      <span className="font-medium mr-2">{option.key}.</span>
-                      {option.value}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </CardContent>
-          </Card>
+                    <span className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium flex-shrink-0",
+                      isSelected 
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-secondary text-secondary-foreground"
+                    )}>
+                      {option.key}
+                    </span>
+                    <span className="flex-1">{option.value}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         ))}
       </div>
 
       {/* Submit Button */}
-      <Button 
-        onClick={submitQuiz} 
-        disabled={isSubmitting || answeredCount < questions.length}
-        size="lg"
-        className="w-full gap-2"
-      >
-        <Send className="w-5 h-5" />
-        {isSubmitting ? 'Submitting...' : 'Submit Assignment'}
-      </Button>
+      <div className="sticky bottom-4">
+        <Button 
+          onClick={submitQuiz} 
+          disabled={isSubmitting || answeredCount < questions.length}
+          size="lg"
+          className="w-full gap-2 shadow-lg"
+        >
+          <Send className="w-5 h-5" />
+          {isSubmitting ? 'Submitting...' : 'Submit Assignment'}
+        </Button>
 
-      {answeredCount < questions.length && (
-        <p className="text-center text-sm text-muted-foreground">
-          Please answer all questions before submitting
-        </p>
-      )}
+        {answeredCount < questions.length && (
+          <p className="text-center text-sm text-muted-foreground mt-3">
+            Answer all {questions.length - answeredCount} remaining question(s) to submit
+          </p>
+        )}
+      </div>
     </div>
   );
 }
