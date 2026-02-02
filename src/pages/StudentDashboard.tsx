@@ -8,64 +8,42 @@ import {
   LogOut,
   BookOpen,
   FileText,
-  Calendar,
   Megaphone,
   Clock,
-  CheckCircle2,
   AlertCircle,
-  Send,
   Star,
   Settings,
   Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { StudentAssignments } from '@/components/student/StudentAssignments';
+import { StudentMaterials } from '@/components/student/StudentMaterials';
 
-interface Subject {
-  id: string;
-  name: string;
-  description: string | null;
-}
-
-interface LessonPlan {
+interface CourseMaterial {
   id: string;
   title: string;
-  description: string | null;
-  subject_id: string;
-  objectives: string | null;
-  notes: string | null;
-  publish_date: string | null;
+  subject: string;
+  content: string | null;
+  file_url: string | null;
+  grade_level: string | null;
+  created_at: string;
 }
 
 interface Assignment {
   id: string;
   title: string;
   description: string | null;
+  subject: string;
   subject_id: string | null;
+  grade_level: string;
   due_date: string | null;
   points: number;
+  created_at: string;
 }
 
 interface Submission {
@@ -98,23 +76,12 @@ export default function StudentDashboard() {
   const { toast } = useToast();
 
   // State
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [lessonPlans, setLessonPlans] = useState<LessonPlan[]>([]);
+  const [materials, setMaterials] = useState<CourseMaterial[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [awards, setAwards] = useState<Award[]>([]);
   const [loadingData, setLoadingData] = useState(true);
-
-  // Assignment submission state
-  const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
-  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
-  const [submissionContent, setSubmissionContent] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  // Lesson view state
-  const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
-  const [selectedLesson, setSelectedLesson] = useState<LessonPlan | null>(null);
 
   // Settings state
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -123,28 +90,33 @@ export default function StudentDashboard() {
     if (!school || !profile) return;
     setLoadingData(true);
 
-    // Fetch subjects
-    const { data: subjectsData } = await supabase
-      .from('subjects')
-      .select('*')
-      .eq('school_id', school.id);
-    setSubjects((subjectsData || []) as Subject[]);
-
-    // Fetch published lesson plans
-    const { data: lessonsData } = await supabase
-      .from('lesson_plans')
+    // Fetch course materials - filtered by student's grade
+    let materialsQuery = supabase
+      .from('course_materials')
       .select('*')
       .eq('school_id', school.id)
-      .eq('is_published', true)
-      .order('publish_date', { ascending: false });
-    setLessonPlans((lessonsData || []) as LessonPlan[]);
+      .order('created_at', { ascending: false });
 
-    // Fetch assignments
-    const { data: assignmentsData } = await supabase
+    // Filter by grade level if student has one
+    if (profile.grade_level) {
+      materialsQuery = materialsQuery.or(`grade_level.eq.${profile.grade_level},grade_level.eq.All`);
+    }
+
+    const { data: materialsData } = await materialsQuery;
+    setMaterials((materialsData || []) as CourseMaterial[]);
+
+    // Fetch assignments - filtered by student's grade
+    let assignmentsQuery = supabase
       .from('assignments')
       .select('*')
       .eq('school_id', school.id)
       .order('due_date', { ascending: true });
+
+    if (profile.grade_level) {
+      assignmentsQuery = assignmentsQuery.or(`grade_level.eq.${profile.grade_level},grade_level.eq.All`);
+    }
+
+    const { data: assignmentsData } = await assignmentsQuery;
     setAssignments((assignmentsData || []) as Assignment[]);
 
     // Fetch my submissions
@@ -179,63 +151,6 @@ export default function StudentDashboard() {
     }
   }, [isStudent, school, profile, fetchData]);
 
-  const submitAssignment = async () => {
-    if (!selectedAssignment || !profile) return;
-
-    setSubmitting(true);
-
-    // Check if already submitted
-    const existingSubmission = submissions.find(s => s.assignment_id === selectedAssignment.id);
-
-    if (existingSubmission) {
-      // Update existing submission
-      const { error } = await supabase
-        .from('submissions')
-        .update({
-          content: submissionContent,
-          submitted_at: new Date().toISOString()
-        })
-        .eq('id', existingSubmission.id);
-
-      if (error) {
-        toast({ variant: 'destructive', title: 'Error updating submission' });
-      } else {
-        toast({ title: 'Submission updated!' });
-      }
-    } else {
-      // Create new submission
-      const { error } = await supabase
-        .from('submissions')
-        .insert({
-          assignment_id: selectedAssignment.id,
-          student_id: profile.id,
-          content: submissionContent
-        });
-
-      if (error) {
-        toast({ variant: 'destructive', title: 'Error submitting assignment' });
-        console.error(error);
-      } else {
-        toast({ title: 'Assignment submitted!' });
-      }
-    }
-
-    setSubmitting(false);
-    setSubmissionDialogOpen(false);
-    setSelectedAssignment(null);
-    setSubmissionContent('');
-    fetchData();
-  };
-
-  const getSubjectName = (subjectId: string | null) => {
-    if (!subjectId) return 'General';
-    return subjects.find(s => s.id === subjectId)?.name || 'Unknown';
-  };
-
-  const getSubmission = (assignmentId: string) => {
-    return submissions.find(s => s.assignment_id === assignmentId);
-  };
-
   const getUpcomingDeadlines = () => {
     const now = new Date();
     return assignments
@@ -248,16 +163,9 @@ export default function StudentDashboard() {
     return assignments.filter(a => {
       if (!a.due_date) return false;
       const dueDate = new Date(a.due_date);
-      const submission = getSubmission(a.id);
+      const submission = submissions.find(s => s.assignment_id === a.id);
       return dueDate < now && !submission;
     });
-  };
-
-  const calculateAverageGrade = () => {
-    const gradedSubmissions = submissions.filter(s => s.grade !== null);
-    if (gradedSubmissions.length === 0) return null;
-    const total = gradedSubmissions.reduce((sum, s) => sum + (s.grade || 0), 0);
-    return Math.round(total / gradedSubmissions.length);
   };
 
   if (loading) {
@@ -274,7 +182,6 @@ export default function StudentDashboard() {
 
   const upcomingDeadlines = getUpcomingDeadlines();
   const overdueAssignments = getOverdueAssignments();
-  const averageGrade = calculateAverageGrade();
 
   return (
     <div className="min-h-screen bg-background">
@@ -319,8 +226,8 @@ export default function StudentDashboard() {
             </div>
             <div className="flex gap-4">
               <div className="text-center">
-                <p className="text-3xl font-bold text-primary">{averageGrade ?? '--'}</p>
-                <p className="text-xs text-muted-foreground">Average Grade</p>
+                <p className="text-3xl font-bold text-primary">{materials.length}</p>
+                <p className="text-xs text-muted-foreground">Materials</p>
               </div>
               <div className="text-center">
                 <p className="text-3xl font-bold text-green-500">{submissions.length}</p>
@@ -342,42 +249,6 @@ export default function StudentDashboard() {
               </span>
             </div>
           )}
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Subjects</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{subjects.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Materials</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{lessonPlans.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Assignments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{assignments.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Announcements</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{announcements.length}</p>
-            </CardContent>
-          </Card>
         </div>
 
         <Tabs defaultValue="materials" className="space-y-6">
@@ -407,217 +278,31 @@ export default function StudentDashboard() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Materials Tab */}
+          {/* Materials Tab - Using new Classera-style component */}
           <TabsContent value="materials" className="space-y-4">
-            <h2 className="text-lg font-semibold">Course Materials</h2>
-
             {loadingData ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : lessonPlans.length === 0 ? (
-              <div className="glass-effect rounded-xl p-8 text-center">
-                <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="font-semibold mb-2">No Materials Yet</h3>
-                <p className="text-sm text-muted-foreground">
-                  Your teachers haven't published any materials yet
-                </p>
-              </div>
             ) : (
-              <div className="grid gap-4">
-                {lessonPlans.map((lesson) => (
-                  <div key={lesson.id} className="glass-effect rounded-xl p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{lesson.title}</h3>
-                          <Badge variant="outline">{getSubjectName(lesson.subject_id)}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Published {lesson.publish_date 
-                            ? new Date(lesson.publish_date).toLocaleDateString()
-                            : 'Recently'}
-                        </p>
-                        {lesson.description && (
-                          <p className="mt-2 text-sm line-clamp-2">{lesson.description}</p>
-                        )}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedLesson(lesson);
-                          setLessonDialogOpen(true);
-                        }}
-                      >
-                        View
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <StudentMaterials materials={materials} />
             )}
-
-            {/* Lesson View Dialog */}
-            <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>{selectedLesson?.title}</DialogTitle>
-                  <DialogDescription>
-                    {getSubjectName(selectedLesson?.subject_id || null)}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  {selectedLesson?.description && (
-                    <div>
-                      <h4 className="font-medium mb-2">Description</h4>
-                      <p className="text-muted-foreground">{selectedLesson.description}</p>
-                    </div>
-                  )}
-                  {selectedLesson?.objectives && (
-                    <div>
-                      <h4 className="font-medium mb-2">Learning Objectives</h4>
-                      <p className="text-muted-foreground whitespace-pre-wrap">{selectedLesson.objectives}</p>
-                    </div>
-                  )}
-                  {selectedLesson?.notes && (
-                    <div>
-                      <h4 className="font-medium mb-2">Notes</h4>
-                      <p className="text-muted-foreground whitespace-pre-wrap">{selectedLesson.notes}</p>
-                    </div>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
           </TabsContent>
 
-          {/* Assignments Tab */}
+          {/* Assignments Tab - Using new Classera-style component */}
           <TabsContent value="assignments" className="space-y-4">
-            <h2 className="text-lg font-semibold">Assignments</h2>
-
-            <div className="glass-effect rounded-xl overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Assignment</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Points</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {assignments.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        No assignments yet
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    assignments.map((assignment) => {
-                      const submission = getSubmission(assignment.id);
-                      const isOverdue = assignment.due_date && new Date(assignment.due_date) < new Date();
-                      const isGraded = submission?.grade !== null;
-
-                      return (
-                        <TableRow key={assignment.id}>
-                          <TableCell className="font-medium">{assignment.title}</TableCell>
-                          <TableCell>{getSubjectName(assignment.subject_id)}</TableCell>
-                          <TableCell>
-                            {assignment.due_date ? (
-                              <span className={isOverdue && !submission ? 'text-destructive' : ''}>
-                                {new Date(assignment.due_date).toLocaleDateString()}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">No due date</span>
-                            )}
-                          </TableCell>
-                          <TableCell>{assignment.points}</TableCell>
-                          <TableCell>
-                            {isGraded ? (
-                              <Badge className="bg-green-500">
-                                Graded: {submission.grade}/{assignment.points}
-                              </Badge>
-                            ) : submission ? (
-                              <Badge variant="secondary">Submitted</Badge>
-                            ) : isOverdue ? (
-                              <Badge variant="destructive">Overdue</Badge>
-                            ) : (
-                              <Badge variant="outline">Pending</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {!isGraded && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedAssignment(assignment);
-                                  setSubmissionContent(submission?.content || '');
-                                  setSubmissionDialogOpen(true);
-                                }}
-                              >
-                                {submission ? 'Edit' : 'Submit'}
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Submission Dialog */}
-            <Dialog open={submissionDialogOpen} onOpenChange={setSubmissionDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{selectedAssignment?.title}</DialogTitle>
-                  <DialogDescription>
-                    {selectedAssignment?.description || 'Submit your work below'}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Points</span>
-                    <span className="font-medium">{selectedAssignment?.points}</span>
-                  </div>
-                  {selectedAssignment?.due_date && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Due Date</span>
-                      <span className="font-medium">
-                        {new Date(selectedAssignment.due_date).toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <Label htmlFor="submission">Your Answer</Label>
-                    <Textarea
-                      id="submission"
-                      value={submissionContent}
-                      onChange={(e) => setSubmissionContent(e.target.value)}
-                      placeholder="Type your answer here..."
-                      rows={6}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setSubmissionDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={submitAssignment} disabled={submitting || !submissionContent.trim()}>
-                    {submitting ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Send className="w-4 h-4 mr-2" />
-                    )}
-                    Submit
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            {loadingData ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <StudentAssignments
+                assignments={assignments}
+                submissions={submissions}
+                profileId={profile.id}
+                onRefresh={fetchData}
+              />
+            )}
           </TabsContent>
 
           {/* Grades Tab */}
@@ -625,49 +310,49 @@ export default function StudentDashboard() {
             <h2 className="text-lg font-semibold">My Grades</h2>
 
             <div className="glass-effect rounded-xl overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Assignment</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead>Grade</TableHead>
-                    <TableHead>Feedback</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <table className="w-full">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="text-left p-4 font-medium">Assignment</th>
+                    <th className="text-left p-4 font-medium">Submitted</th>
+                    <th className="text-left p-4 font-medium">Grade</th>
+                    <th className="text-left p-4 font-medium">Feedback</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {submissions.filter(s => s.grade !== null).length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    <tr>
+                      <td colSpan={4} className="text-center py-8 text-muted-foreground">
                         No grades yet
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ) : (
                     submissions
                       .filter(s => s.grade !== null)
                       .map((submission) => {
                         const assignment = assignments.find(a => a.id === submission.assignment_id);
                         return (
-                          <TableRow key={submission.id}>
-                            <TableCell className="font-medium">
+                          <tr key={submission.id} className="border-t border-border/50">
+                            <td className="p-4 font-medium">
                               {assignment?.title || 'Unknown'}
-                            </TableCell>
-                            <TableCell>
+                            </td>
+                            <td className="p-4 text-muted-foreground">
                               {new Date(submission.submitted_at).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
+                            </td>
+                            <td className="p-4">
                               <Badge className="bg-green-500">
                                 {submission.grade}/{assignment?.points || 100}
                               </Badge>
-                            </TableCell>
-                            <TableCell className="max-w-xs truncate">
+                            </td>
+                            <td className="p-4 text-muted-foreground max-w-xs truncate">
                               {submission.feedback || '-'}
-                            </TableCell>
-                          </TableRow>
+                            </td>
+                          </tr>
                         );
                       })
                   )}
-                </TableBody>
-              </Table>
+                </tbody>
+              </table>
             </div>
 
             {/* Awards Section */}
