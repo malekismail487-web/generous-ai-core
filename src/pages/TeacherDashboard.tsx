@@ -269,6 +269,7 @@ export default function TeacherDashboard() {
                 materials={courseMaterials}
                 schoolId={school.id}
                 userId={profile.id}
+                authUserId={user?.id || profile.id}
                 onRefresh={fetchData}
               />
             )}
