@@ -246,32 +246,29 @@ export default function SchoolAdminDashboard() {
     if (!school || !profile) return;
     setCreatingCode(true);
 
-    // Generate random 8 character code
-    const code = Array.from({ length: 8 }, () => 
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.charAt(Math.floor(Math.random() * 36))
-    ).join('');
-
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24);
-
-    const { error } = await supabase
-      .from('invite_codes')
-      .insert({
-        school_id: school.id,
-        code,
-        role: newCodeRole,
-        expires_at: expiresAt.toISOString(),
-        created_by: profile.id
+    try {
+      const { data, error } = await supabase.functions.invoke('invite-codes', {
+        body: {
+          role: newCodeRole,
+        },
       });
 
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error creating invite code' });
-      console.error(error);
-    } else {
+      if (error) {
+        toast({ variant: 'destructive', title: 'Error creating invite code', description: error.message });
+        return;
+      }
+
+      const result = data as { success?: boolean; error?: string };
+      if (!result?.success) {
+        toast({ variant: 'destructive', title: 'Error creating invite code', description: result?.error || 'Failed' });
+        return;
+      }
+
       toast({ title: 'Invite code created!' });
       fetchInviteCodes();
+    } finally {
+      setCreatingCode(false);
     }
-    setCreatingCode(false);
   };
 
   const revokeInviteCode = async (codeId: string) => {
