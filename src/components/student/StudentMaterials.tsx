@@ -235,8 +235,7 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
                       {material.file_url && (
                         <a
                           href={material.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          download
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -301,8 +300,7 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
                         {material.file_url && (
                           <a
                             href={material.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            download
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -373,8 +371,7 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
                     </div>
                     <a
                       href={selectedMaterial.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      download
                     >
                       <Button className="gap-2">
                         <Download className="w-4 h-4" />
