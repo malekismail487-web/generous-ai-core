@@ -188,9 +188,7 @@ const Index = () => {
     return <Navigate to="/teacher" replace />;
   }
   
-  if (isStudent && profile?.is_active) {
-    return <Navigate to="/student" replace />;
-  }
+  // Students stay on Index.tsx - they use the main app with AI chat, lessons, exams, flashcards, notes, SAT
   
   // No profile - redirect to join or activate
   if (!hasProfile) {
