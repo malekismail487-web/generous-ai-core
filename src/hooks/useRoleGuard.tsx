@@ -15,6 +15,7 @@ export interface UserProfile {
   is_active: boolean;
   grade_level: string | null;
   department: string | null;
+  student_teacher_id: string | null;
 }
 
 export interface School {
