@@ -188,12 +188,17 @@ const Index = () => {
     return <Navigate to="/teacher" replace />;
   }
   
-  // Students stay on Index.tsx - they use the main app with AI chat, lessons, exams, flashcards, notes, SAT
-  
   // No profile - redirect to join or activate
   if (!hasProfile) {
     return <Navigate to="/activate-school" replace />;
   }
+
+  // Pending or rejected users go to pending approval page
+  if (profile?.status === 'pending' || profile?.status === 'rejected') {
+    return <Navigate to="/pending-approval" replace />;
+  }
+  
+  // Students stay on Index.tsx - they use the main app with AI chat, lessons, exams, flashcards, notes, SAT
 
   const renderMainContent = () => {
     switch (activeTab) {

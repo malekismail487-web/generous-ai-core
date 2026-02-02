@@ -32,9 +32,37 @@ export default function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user && !loading) {
-      navigate('/');
-    }
+    const checkUserAndRedirect = async () => {
+      if (user && !loading) {
+        // Check if user has a pending/rejected profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('status, is_active, user_type')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (profile) {
+          if (profile.status === 'pending' || profile.status === 'rejected') {
+            navigate('/pending-approval');
+          } else if (profile.status === 'approved' && profile.is_active) {
+            // Redirect based on user type
+            if (profile.user_type === 'school_admin') {
+              navigate('/admin');
+            } else if (profile.user_type === 'teacher') {
+              navigate('/teacher');
+            } else {
+              navigate('/');
+            }
+          } else {
+            navigate('/');
+          }
+        } else {
+          navigate('/');
+        }
+      }
+    };
+    
+    checkUserAndRedirect();
   }, [user, loading, navigate]);
 
   const clearForm = () => {

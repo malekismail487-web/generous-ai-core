@@ -12,6 +12,7 @@ import ActivateSchool from "./pages/ActivateSchool";
 import SchoolAdminDashboard from "./pages/SchoolAdminDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
+import PendingApprovalPage from "./pages/PendingApprovalPage";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/admin" element={<SchoolAdminDashboard />} />
             <Route path="/teacher" element={<TeacherDashboard />} />
             <Route path="/student" element={<StudentDashboard />} />
+            <Route path="/pending-approval" element={<PendingApprovalPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
