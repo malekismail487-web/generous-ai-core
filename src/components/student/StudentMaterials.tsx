@@ -47,13 +47,20 @@ interface CourseMaterial {
   file_url: string | null;
   grade_level: string | null;
   created_at: string;
+  uploaded_by?: string;
+}
+
+interface TeacherProfile {
+  id: string;
+  full_name: string;
 }
 
 interface StudentMaterialsProps {
   materials: CourseMaterial[];
+  teacherProfiles?: Record<string, TeacherProfile>;
 }
 
-export function StudentMaterials({ materials }: StudentMaterialsProps) {
+export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMaterialsProps) {
   // Filter state
   const [filterSubject, setFilterSubject] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,6 +68,11 @@ export function StudentMaterials({ materials }: StudentMaterialsProps) {
   // View state
   const [selectedMaterial, setSelectedMaterial] = useState<CourseMaterial | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+
+  const getTeacherName = (uploadedBy: string | undefined) => {
+    if (!uploadedBy) return 'Teacher';
+    return teacherProfiles[uploadedBy]?.full_name || 'Teacher';
+  };
 
   const getSubjectInfo = (subjectId: string) => {
     return SUBJECTS.find(s => s.id === subjectId) || { 
@@ -208,9 +220,14 @@ export function StudentMaterials({ materials }: StudentMaterialsProps) {
                   )}
 
                   <div className="flex items-center justify-between pt-3 border-t">
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(material.created_at).toLocaleDateString()}
-                    </p>
+                    <div className="flex flex-col">
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(material.created_at).toLocaleDateString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        by {getTeacherName(material.uploaded_by)}
+                      </p>
+                    </div>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8">
                         <Eye className="w-4 h-4" />
@@ -368,10 +385,15 @@ export function StudentMaterials({ materials }: StudentMaterialsProps) {
                 </div>
               )}
 
-              {/* Timestamp */}
-              <p className="text-xs text-muted-foreground text-center pt-4 border-t">
-                Uploaded on {new Date(selectedMaterial.created_at).toLocaleString()}
-              </p>
+              {/* Timestamp and Teacher */}
+              <div className="text-center pt-4 border-t">
+                <p className="text-xs text-muted-foreground">
+                  Uploaded on {new Date(selectedMaterial.created_at).toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  by {getTeacherName(selectedMaterial.uploaded_by)}
+                </p>
+              </div>
             </div>
           )}
         </DialogContent>
