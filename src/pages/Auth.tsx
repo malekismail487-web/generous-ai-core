@@ -40,12 +40,31 @@ export default function Auth() {
           return;
         }
 
-        // Check if user has a pending/rejected profile
-        const { data: profile } = await supabase
+        // Check if user has a profile - first by ID, then by email
+        let profile = null;
+        
+        const { data: idProfile } = await supabase
           .from('profiles')
           .select('status, is_active, user_type')
           .eq('id', user.id)
           .maybeSingle();
+        
+        profile = idProfile;
+        
+        // If not found by ID, try by email
+        if (!profile && user.email) {
+          const { data: emailProfiles } = await supabase
+            .from('profiles')
+            .select('status, is_active, user_type')
+            .eq('email', user.email.toLowerCase())
+            .order('is_active', { ascending: false });
+          
+          if (emailProfiles && emailProfiles.length > 0) {
+            // Prefer approved/active profiles
+            const approvedProfile = emailProfiles.find(p => p.status === 'approved' && p.is_active);
+            profile = approvedProfile || emailProfiles[0];
+          }
+        }
         
         if (profile) {
           if (profile.status === 'pending' || profile.status === 'rejected') {

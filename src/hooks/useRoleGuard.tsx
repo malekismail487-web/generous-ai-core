@@ -56,17 +56,34 @@ export function useRoleGuard() {
       return;
     }
 
-    // Fetch profile
-    const { data: profileData, error: profileError } = await supabase
+    // Fetch profile - try by ID first, then by email
+    let profileData = null;
+    
+    const { data: idProfileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .maybeSingle();
 
     if (profileError) {
-      console.error('Error fetching profile:', profileError);
-      setLoading(false);
-      return;
+      console.error('Error fetching profile by ID:', profileError);
+    }
+
+    profileData = idProfileData;
+
+    // If not found by ID, try by email (for users whose profile was created before auth signup)
+    if (!profileData && user.email) {
+      const { data: emailProfiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', user.email.toLowerCase())
+        .order('is_active', { ascending: false });
+      
+      if (emailProfiles && emailProfiles.length > 0) {
+        // Prefer approved/active profiles
+        const approvedProfile = emailProfiles.find(p => p.status === 'approved' && p.is_active);
+        profileData = approvedProfile || emailProfiles[0];
+      }
     }
 
     if (!profileData) {
