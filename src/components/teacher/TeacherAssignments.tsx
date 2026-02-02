@@ -78,7 +78,7 @@ interface TeacherAssignmentsProps {
   assignments: Assignment[];
   submissions: Submission[];
   schoolId: string;
-  profileId: string;
+  authUserId: string;
   onRefresh: () => void;
 }
 
@@ -86,7 +86,7 @@ export function TeacherAssignments({
   assignments,
   submissions,
   schoolId,
-  profileId,
+  authUserId,
   onRefresh
 }: TeacherAssignmentsProps) {
   const { toast } = useToast();
@@ -127,7 +127,7 @@ export function TeacherAssignments({
     const { error } = await supabase
       .from('assignments')
       .insert({
-        teacher_id: profileId,
+        teacher_id: authUserId,
         school_id: schoolId,
         subject: subject,
         title: title.trim(),

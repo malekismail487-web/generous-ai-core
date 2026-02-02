@@ -79,14 +79,18 @@ export default function TeacherDashboard() {
   const [feedbackValue, setFeedbackValue] = useState('');
 
   const fetchData = useCallback(async () => {
-    if (!school || !profile) return;
+    if (!school || !profile || !user) return;
     setLoadingData(true);
+
+    // IMPORTANT: For all ownership fields, the backend expects the authenticated user id (auth.uid()),
+    // not the profile id. Profile ids can differ in this app.
+    const authUserId = user.id;
 
     // Fetch course materials
     const { data: materialsData } = await supabase
       .from('course_materials')
       .select('*')
-      .eq('uploaded_by', profile.id)
+      .eq('uploaded_by', authUserId)
       .order('created_at', { ascending: false });
     setCourseMaterials((materialsData || []) as CourseMaterial[]);
 
@@ -94,7 +98,7 @@ export default function TeacherDashboard() {
     const { data: assignmentsData } = await supabase
       .from('assignments')
       .select('*')
-      .eq('teacher_id', profile.id)
+      .eq('teacher_id', authUserId)
       .order('created_at', { ascending: false });
     setAssignments((assignmentsData || []) as Assignment[]);
 
@@ -119,7 +123,7 @@ export default function TeacherDashboard() {
     setAnnouncements((announcementsData || []) as Announcement[]);
 
     setLoadingData(false);
-  }, [school, profile]);
+  }, [school, profile, user]);
 
   useEffect(() => {
     if (isTeacher && school && profile) {
@@ -129,7 +133,7 @@ export default function TeacherDashboard() {
 
   // Grading
   const gradeSubmission = async () => {
-    if (!selectedSubmission || !profile) return;
+    if (!selectedSubmission || !user) return;
 
     const { error } = await supabase
       .from('submissions')
@@ -137,7 +141,7 @@ export default function TeacherDashboard() {
         grade: parseInt(gradeValue) || null,
         feedback: feedbackValue || null,
         graded_at: new Date().toISOString(),
-        graded_by: profile.id
+        graded_by: user.id
       })
       .eq('id', selectedSubmission.id);
 
@@ -268,8 +272,7 @@ export default function TeacherDashboard() {
               <TeacherMaterials
                 materials={courseMaterials}
                 schoolId={school.id}
-                userId={profile.id}
-                authUserId={user?.id || profile.id}
+                authUserId={user.id}
                 onRefresh={fetchData}
               />
             )}
@@ -286,7 +289,7 @@ export default function TeacherDashboard() {
                 assignments={assignments}
                 submissions={submissions}
                 schoolId={school.id}
-                profileId={profile.id}
+                authUserId={user.id}
                 onRefresh={fetchData}
               />
             )}

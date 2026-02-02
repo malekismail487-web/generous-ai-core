@@ -78,15 +78,13 @@ interface CourseMaterial {
 interface TeacherMaterialsProps {
   materials: CourseMaterial[];
   schoolId: string;
-  userId: string;       // profile.id - used for database inserts (uploaded_by)
-  authUserId: string;   // auth user id - used for storage path
+  authUserId: string; // authenticated user id (auth.uid()) - used for both db ownership + storage path
   onRefresh: () => void;
 }
 
 export function TeacherMaterials({
   materials,
   schoolId,
-  userId,
   authUserId,
   onRefresh
 }: TeacherMaterialsProps) {
@@ -188,7 +186,7 @@ export function TeacherMaterials({
     const { error } = await supabase
       .from('course_materials')
       .insert({
-        uploaded_by: userId,
+        uploaded_by: authUserId,
         school_id: schoolId,
         subject: subject,
         title: title.trim(),
