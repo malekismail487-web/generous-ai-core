@@ -284,7 +284,7 @@ export default function StudentAssignmentResults() {
           )}
 
           <Button onClick={() => navigate('/student')} size="lg" className="w-full">
-            Back to Assignments
+            Back to App
           </Button>
         </div>
       </main>
