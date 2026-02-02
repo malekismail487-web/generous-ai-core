@@ -479,6 +479,7 @@ export type Database = {
           content: string | null
           created_at: string
           file_url: string | null
+          grade_level: string | null
           id: string
           school_id: string | null
           subject: string
@@ -490,6 +491,7 @@ export type Database = {
           content?: string | null
           created_at?: string
           file_url?: string | null
+          grade_level?: string | null
           id?: string
           school_id?: string | null
           subject: string
@@ -501,6 +503,7 @@ export type Database = {
           content?: string | null
           created_at?: string
           file_url?: string | null
+          grade_level?: string | null
           id?: string
           school_id?: string | null
           subject?: string

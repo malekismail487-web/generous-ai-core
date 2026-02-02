@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { 
   ArrowLeft, Plus, Calendar, BookOpen, Check, Clock, 
-  FileText, Send, Trash2, ChevronDown, ChevronUp 
+  FileText, Send, Trash2, ChevronDown, ChevronUp,
+  Wand2, Edit3, GraduationCap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,8 +12,9 @@ import { BannerAd } from './BannerAd';
 import { AssignmentCreator } from './AssignmentCreator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
-type ViewState = 'list' | 'create' | 'detail' | 'submit';
+type ViewState = 'list' | 'choose-creation' | 'create-manual' | 'create-ai' | 'detail' | 'submit';
 
 export function AssignmentsSection() {
   const [viewState, setViewState] = useState<ViewState>('list');
@@ -57,16 +59,127 @@ export function AssignmentsSection() {
     );
   }
 
-  // CREATE VIEW (Teachers) - Uses new AssignmentCreator component
-  if (viewState === 'create' && isTeacher) {
+  // CHOOSE CREATION METHOD (Teachers) - New flow
+  if (viewState === 'choose-creation' && isTeacher) {
+    return (
+      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Button variant="ghost" size="sm" onClick={() => setViewState('list')}>
+              <ArrowLeft size={16} className="mr-1" />
+              Back
+            </Button>
+          </div>
+
+          <div className="text-center mb-8 animate-fade-in">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-gradient-to-br from-primary to-accent text-primary-foreground">
+              <Plus className="w-7 h-7" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Create Assignment</h1>
+            <p className="text-muted-foreground text-sm">
+              Choose how you'd like to create your assignment
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {/* Manual Creation Option */}
+            <button
+              onClick={() => setViewState('create-manual')}
+              className="w-full glass-effect rounded-2xl p-6 text-left hover:shadow-lg transition-all group"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shrink-0">
+                  <Edit3 className="w-6 h-6" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
+                    Create Manually
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Design your own questions with Short Answer, Multiple Choice, and Essay formats.
+                    Full control over every question and answer option.
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* AI Creation Option */}
+            <button
+              onClick={() => setViewState('create-ai')}
+              className="w-full glass-effect rounded-2xl p-6 text-left hover:shadow-lg transition-all group"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white shrink-0">
+                  <Wand2 className="w-6 h-6" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
+                    Use Lumina AI
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Let Lumina generate questions for you based on a topic or learning objectives.
+                    Review and customize before publishing.
+                  </p>
+                  <Badge variant="secondary" className="mt-2">
+                    ✨ Coming Soon
+                  </Badge>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // MANUAL CREATE VIEW (Teachers) - Uses AssignmentCreator component
+  if (viewState === 'create-manual' && isTeacher) {
     return (
       <AssignmentCreator 
-        onBack={() => setViewState('list')} 
+        onBack={() => setViewState('choose-creation')} 
         onSuccess={() => {
           setViewState('list');
           refresh();
         }} 
       />
+    );
+  }
+
+  // AI CREATE VIEW (Teachers) - Placeholder for now
+  if (viewState === 'create-ai' && isTeacher) {
+    return (
+      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Button variant="ghost" size="sm" onClick={() => setViewState('choose-creation')}>
+              <ArrowLeft size={16} className="mr-1" />
+              Back
+            </Button>
+          </div>
+
+          <div className="text-center mb-8 animate-fade-in">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-gradient-to-br from-purple-500 to-pink-600 text-white">
+              <Wand2 className="w-7 h-7" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Lumina AI Assignment Generator</h1>
+            <p className="text-muted-foreground text-sm">
+              This feature is coming soon!
+            </p>
+          </div>
+
+          <div className="glass-effect rounded-2xl p-8 text-center">
+            <Wand2 className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="font-semibold mb-2">AI-Powered Assignment Creation</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Soon you'll be able to describe your lesson objectives and let Lumina AI 
+              generate tailored questions, quizzes, and assignments for your students.
+            </p>
+            <Button variant="outline" onClick={() => setViewState('create-manual')}>
+              Create Manually Instead
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -96,10 +209,13 @@ export function AssignmentsSection() {
               </div>
               <div className="flex-1">
                 <h1 className="text-xl font-bold">{selectedAssignment.title}</h1>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 flex-wrap">
                   <span>{selectedAssignment.subject}</span>
                   <span>•</span>
-                  <span>{selectedAssignment.grade_level}</span>
+                  <Badge variant="outline" className="gap-1 text-xs">
+                    <GraduationCap size={10} />
+                    {selectedAssignment.grade_level}
+                  </Badge>
                 </div>
               </div>
             </div>
@@ -214,7 +330,7 @@ export function AssignmentsSection() {
         {/* Teacher: Create Button */}
         {isTeacher && (
           <Button 
-            onClick={() => setViewState('create')} 
+            onClick={() => setViewState('choose-creation')} 
             className="w-full mb-4 gap-2"
           >
             <Plus size={18} />
@@ -259,7 +375,7 @@ export function AssignmentsSection() {
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{assignment.subject}</span>
                         <span>•</span>
-                        <span>{assignment.grade_level}</span>
+                        <span className="text-primary">{assignment.grade_level}</span>
                       </div>
                     </div>
                     
