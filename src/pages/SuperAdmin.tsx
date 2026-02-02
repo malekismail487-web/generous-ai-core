@@ -20,6 +20,7 @@ import {
   Check,
   X
 } from 'lucide-react';
+import { StudentAppPreview } from '@/components/StudentAppPreview';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -242,7 +243,7 @@ export default function SuperAdmin() {
     );
   }
 
-  // Render testing mode UI
+  // Render testing mode UI - navigate to actual dashboards with a banner
   if (testingRole !== 'none') {
     const roleLabels = {
       student: 'Student',
@@ -250,23 +251,57 @@ export default function SuperAdmin() {
       school_admin: 'School Administrator'
     };
 
+    // For student testing, show the actual student app (Index.tsx components)
+    if (testingRole === 'student') {
+      // Import and render the actual student experience
+      return (
+        <div className="min-h-screen bg-background">
+          {/* Testing Mode Banner */}
+          <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-amber-950">
+            <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FlaskConical className="w-5 h-5" />
+                <span className="font-medium text-sm">
+                  🧪 Testing as {roleLabels[testingRole]} - This is what students see (AI Chat, Subjects, Flashcards, Notes, SAT)
+                </span>
+              </div>
+              <Button 
+                variant="secondary" 
+                size="sm"
+                onClick={() => setTestingRole('none')}
+                className="gap-2"
+              >
+                <ShieldAlert className="w-4 h-4" />
+                Done Testing
+              </Button>
+            </div>
+          </div>
+          
+          {/* Render actual student app preview */}
+          <div className="pt-10">
+            <StudentAppPreview />
+          </div>
+        </div>
+      );
+    }
+
+    // Teacher and School Admin testing modes with mock dashboards
     const roleIcons = {
-      student: GraduationCap,
       teacher: Users,
       school_admin: UserCog
     };
 
-    const RoleIcon = roleIcons[testingRole];
+    const RoleIcon = roleIcons[testingRole as 'teacher' | 'school_admin'];
 
     return (
       <div className="min-h-screen bg-background">
         {/* Testing Mode Banner */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-amber-500 text-amber-950">
-          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-amber-950">
+          <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <FlaskConical className="w-5 h-5" />
-              <span className="font-medium">
-                Testing Mode: Viewing as {roleLabels[testingRole]}
+              <span className="font-medium text-sm">
+                🧪 Testing as {testingRole === 'teacher' ? 'Teacher' : 'School Administrator'}
               </span>
             </div>
             <Button 
@@ -281,16 +316,17 @@ export default function SuperAdmin() {
           </div>
         </div>
 
-        {/* Mock Dashboard Content */}
-        <div className="pt-16">
-          <header className="glass-effect-strong border-b border-border/30 sticky top-12 z-40">
+        <div className="pt-12">
+          <header className="glass-effect-strong border-b border-border/30 sticky top-10 z-40">
             <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                   <RoleIcon className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold">{roleLabels[testingRole]} Dashboard</h1>
+                  <h1 className="text-xl font-bold">
+                    {testingRole === 'teacher' ? 'Teacher' : 'School Administrator'} Dashboard
+                  </h1>
                   <p className="text-xs text-muted-foreground">Preview Mode</p>
                 </div>
               </div>
@@ -298,60 +334,6 @@ export default function SuperAdmin() {
           </header>
 
           <main className="max-w-7xl mx-auto px-4 py-6">
-            {testingRole === 'student' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="glass-effect rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">My Subjects</p>
-                    <p className="text-2xl font-bold">6</p>
-                  </div>
-                  <div className="glass-effect rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">Pending Assignments</p>
-                    <p className="text-2xl font-bold text-amber-500">3</p>
-                  </div>
-                  <div className="glass-effect rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">Completed</p>
-                    <p className="text-2xl font-bold text-green-500">12</p>
-                  </div>
-                </div>
-                
-                <div className="glass-effect rounded-xl p-6">
-                  <h2 className="text-lg font-semibold mb-4">📚 My Subjects</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {['Mathematics', 'English', 'Science', 'History', 'Geography', 'Art'].map((subject) => (
-                      <div key={subject} className="p-4 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-                        <p className="font-medium">{subject}</p>
-                        <p className="text-xs text-muted-foreground">View materials</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="glass-effect rounded-xl p-6">
-                  <h2 className="text-lg font-semibold mb-4">📝 Recent Assignments</h2>
-                  <div className="space-y-3">
-                    {[
-                      { title: 'Math Quiz Chapter 5', due: 'Tomorrow', status: 'pending' },
-                      { title: 'English Essay', due: 'In 3 days', status: 'pending' },
-                      { title: 'Science Lab Report', due: 'Completed', status: 'done' }
-                    ].map((assignment, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                        <div>
-                          <p className="font-medium">{assignment.title}</p>
-                          <p className="text-sm text-muted-foreground">{assignment.due}</p>
-                        </div>
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          assignment.status === 'done' ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'
-                        }`}>
-                          {assignment.status === 'done' ? 'Completed' : 'Pending'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {testingRole === 'teacher' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -369,7 +351,7 @@ export default function SuperAdmin() {
                   </div>
                   <div className="glass-effect rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">To Grade</p>
-                    <p className="text-2xl font-bold text-amber-500">12</p>
+                    <p className="text-2xl font-bold text-warning">12</p>
                   </div>
                 </div>
 
@@ -436,7 +418,7 @@ export default function SuperAdmin() {
                   </div>
                   <div className="glass-effect rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">Pending Requests</p>
-                    <p className="text-2xl font-bold text-amber-500">4</p>
+                    <p className="text-2xl font-bold text-warning">4</p>
                   </div>
                   <div className="glass-effect rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">Active Codes</p>
@@ -469,7 +451,7 @@ export default function SuperAdmin() {
                           <TableCell>{request.email}</TableCell>
                           <TableCell>
                             <span className={`px-2 py-1 rounded text-xs ${
-                              request.role === 'Teacher' ? 'bg-blue-500/10 text-blue-500' : 'bg-green-500/10 text-green-500'
+                              request.role === 'Teacher' ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent-foreground'
                             }`}>
                               {request.role}
                             </span>
@@ -523,7 +505,7 @@ export default function SuperAdmin() {
                           <TableCell>{code.role}</TableCell>
                           <TableCell>
                             <span className={`px-2 py-1 rounded text-xs ${
-                              code.status === 'Available' ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'
+                              code.status === 'Available' ? 'bg-accent/10 text-accent-foreground' : 'bg-muted text-muted-foreground'
                             }`}>
                               {code.status}
                             </span>
