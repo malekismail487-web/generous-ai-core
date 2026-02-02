@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Mail, Lock, Loader2, KeyRound, Users } from 'lucide-react';
+import { Sparkles, Mail, Lock, Loader2, KeyRound, Users, UserPlus } from 'lucide-react';
 import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -20,11 +20,12 @@ const HARDCODED_ADMIN_EMAIL = 'malekismail487@gmail.com';
 export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; code?: string; name?: string }>({});
-  const [authMode, setAuthMode] = useState<'login' | 'join'>('login');
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; code?: string; name?: string }>({});
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'join'>('login');
   
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
@@ -35,6 +36,15 @@ export default function Auth() {
       navigate('/');
     }
   }, [user, loading, navigate]);
+
+  const clearForm = () => {
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setInviteCode('');
+    setName('');
+    setErrors({});
+  };
 
   const validateLoginForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -47,6 +57,27 @@ export default function Auth() {
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       newErrors.password = passwordResult.error.errors[0].message;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateSignUpForm = () => {
+    const newErrors: { email?: string; password?: string; confirmPassword?: string } = {};
+    
+    const emailResult = emailSchema.safeParse(email);
+    if (!emailResult.success) {
+      newErrors.email = emailResult.error.errors[0].message;
+    }
+    
+    const passwordResult = passwordSchema.safeParse(password);
+    if (!passwordResult.success) {
+      newErrors.password = passwordResult.error.errors[0].message;
+    }
+    
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
     }
     
     setErrors(newErrors);
@@ -152,6 +183,39 @@ export default function Auth() {
     }
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateSignUpForm()) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      const { error } = await signUp(email, password);
+      
+      if (error) {
+        let message = error.message;
+        if (message.includes('User already registered')) {
+          message = 'An account with this email already exists. Please sign in.';
+        }
+        toast({
+          variant: 'destructive',
+          title: 'Sign up failed',
+          description: message,
+        });
+      } else {
+        toast({
+          title: 'Account created!',
+          description: 'Please check your email to verify your account.',
+        });
+        clearForm();
+        setAuthMode('login');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleJoinWithCode = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -190,10 +254,7 @@ export default function Auth() {
           title: 'Request Submitted!',
           description: 'Your request has been sent to the school administrator for approval.',
         });
-        // Clear form
-        setEmail('');
-        setName('');
-        setInviteCode('');
+        clearForm();
         setAuthMode('login');
       }
     } catch (err) {
@@ -228,11 +289,15 @@ export default function Auth() {
           </h1>
         </div>
 
-        <Tabs value={authMode} onValueChange={(v) => { setAuthMode(v as 'login' | 'join'); setErrors({}); }}>
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+        <Tabs value={authMode} onValueChange={(v) => { setAuthMode(v as 'login' | 'signup' | 'join'); setErrors({}); }}>
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="login" className="gap-2">
               <Lock className="w-4 h-4" />
               Sign In
+            </TabsTrigger>
+            <TabsTrigger value="signup" className="gap-2">
+              <UserPlus className="w-4 h-4" />
+              Sign Up
             </TabsTrigger>
             <TabsTrigger value="join" className="gap-2">
               <Users className="w-4 h-4" />
@@ -295,13 +360,98 @@ export default function Auth() {
               </Button>
 
               <p className="text-center text-xs text-muted-foreground mt-4">
-                Are you a school administrator?{' '}
+                Don't have an account?{' '}
                 <button
                   type="button"
-                  onClick={() => navigate('/activate-school')}
+                  onClick={() => { setAuthMode('signup'); clearForm(); }}
                   className="text-primary hover:underline"
                 >
-                  Activate your school
+                  Sign up
+                </button>
+              </p>
+            </form>
+          </TabsContent>
+
+          {/* Sign Up Tab */}
+          <TabsContent value="signup">
+            <form onSubmit={handleSignUp} className="glass-effect rounded-2xl p-6 space-y-4">
+              <p className="text-center text-muted-foreground mb-4">
+                Create a new account
+              </p>
+              
+              <div className="space-y-2">
+                <Label htmlFor="signup-email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="signup-confirm-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Create Account
+              </Button>
+
+              <p className="text-center text-xs text-muted-foreground mt-4">
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('login'); clearForm(); }}
+                  className="text-primary hover:underline"
+                >
+                  Sign in
                 </button>
               </p>
             </form>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard, School } from '@/hooks/useRoleGuard';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { 
   Building2, 
   Loader2, 
@@ -12,7 +12,11 @@ import {
   Plus,
   ShieldAlert,
   LogOut,
-  Copy
+  Copy,
+  FlaskConical,
+  GraduationCap,
+  Users,
+  UserCog
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,8 +51,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function SuperAdmin() {
+  const navigate = useNavigate();
   const { isSuperAdmin, loading } = useRoleGuard();
   const { signOut } = useAuth();
   const { toast } = useToast();
@@ -241,6 +252,28 @@ export default function SuperAdmin() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <FlaskConical className="w-4 h-4" />
+                  Testing
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate('/student')} className="gap-2">
+                  <GraduationCap className="w-4 h-4" />
+                  Test as Student
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/teacher')} className="gap-2">
+                  <Users className="w-4 h-4" />
+                  Test as Teacher
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/admin')} className="gap-2">
+                  <UserCog className="w-4 h-4" />
+                  Test as School Admin
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="outline" size="icon" onClick={fetchSchools} disabled={loadingSchools}>
               <RefreshCw className={`w-4 h-4 ${loadingSchools ? 'animate-spin' : ''}`} />
             </Button>
