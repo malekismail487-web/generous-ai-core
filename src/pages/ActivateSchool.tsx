@@ -38,46 +38,35 @@ export default function ActivateSchool() {
     setActivating(true);
 
     try {
-      // First, find the school by name and verify the activation code
-      const { data: schoolData, error: schoolError } = await supabase
-        .from('schools')
-        .select('*')
-        .ilike('name', schoolName.trim())
-        .eq('activation_code', code.trim().toUpperCase())
-        .eq('code_used', false)
-        .maybeSingle();
-
-      if (schoolError || !schoolData) {
-        toast({ 
-          variant: 'destructive', 
-          title: 'Invalid credentials',
-          description: 'School name and activation code do not match or the code has already been used.'
-        });
-        setActivating(false);
-        return;
-      }
-
-      // Use the RPC function to activate the school
-      const { data, error } = await supabase.rpc('activate_school_with_code', {
-        activation_code_input: code.trim().toUpperCase(),
-        user_uuid: user.id
+      const { data, error } = await supabase.functions.invoke('activate-school', {
+        body: {
+          schoolName: schoolName.trim(),
+          activationCode: code.trim().toUpperCase(),
+        },
       });
 
       if (error) {
-        toast({ variant: 'destructive', title: 'Activation failed', description: error.message });
-        setActivating(false);
+        toast({
+          variant: 'destructive',
+          title: 'Activation failed',
+          description: error.message,
+        });
         return;
       }
 
-      const result = data as { success: boolean; error?: string; school_name?: string };
-
-      if (result.success) {
-        setSuccess({ schoolName: result.school_name || schoolData.name });
-        toast({ title: 'School activated successfully!' });
-        await refresh();
-      } else {
-        toast({ variant: 'destructive', title: result.error || 'Failed to activate school' });
+      const result = data as { success?: boolean; error?: string; school_name?: string };
+      if (!result?.success) {
+        toast({
+          variant: 'destructive',
+          title: 'Activation failed',
+          description: result?.error || 'Failed to activate school',
+        });
+        return;
       }
+
+      setSuccess({ schoolName: result.school_name || schoolName.trim() });
+      toast({ title: 'School activated successfully!' });
+      await refresh();
     } catch (err) {
       toast({ variant: 'destructive', title: 'An error occurred during activation' });
     } finally {
