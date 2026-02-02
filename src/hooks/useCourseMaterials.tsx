@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useToast } from '@/hooks/use-toast';
 
 export type CourseMaterial = {
@@ -12,6 +13,8 @@ export type CourseMaterial = {
   uploaded_by: string;
   created_at: string;
   updated_at: string;
+  school_id: string | null;
+  grade_level?: string;
 };
 
 export type MaterialView = {
@@ -32,43 +35,48 @@ export type MaterialComment = {
 export function useCourseMaterials() {
   const [materials, setMaterials] = useState<CourseMaterial[]>([]);
   const [views, setViews] = useState<MaterialView[]>([]);
-  const [isTeacher, setIsTeacher] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { profile, school, isTeacher } = useRoleGuard();
   const { toast } = useToast();
 
-  // Check if user is a teacher
-  const checkRole = useCallback(async () => {
-    if (!user) {
-      setIsTeacher(false);
+  // Load course materials filtered by school and grade level
+  const loadMaterials = useCallback(async () => {
+    if (!school) {
+      setMaterials([]);
+      setLoading(false);
       return;
     }
 
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'teacher')
-      .maybeSingle();
-
-    setIsTeacher(!!data && !error);
-  }, [user]);
-
-  // Load all course materials
-  const loadMaterials = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    
+    let query = supabase
       .from('course_materials')
       .select('*')
+      .eq('school_id', school.id)
       .order('created_at', { ascending: false });
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error loading materials:', error);
+      setMaterials([]);
     } else {
-      setMaterials(data || []);
+      // Filter by grade level for students
+      let filteredMaterials = data || [];
+      
+      if (!isTeacher && profile?.grade_level) {
+        // Students only see materials for their grade level or 'All' grades
+        filteredMaterials = filteredMaterials.filter((m: any) => {
+          const materialGrade = m.grade_level;
+          return !materialGrade || materialGrade === 'All' || materialGrade === profile.grade_level;
+        });
+      }
+      
+      setMaterials(filteredMaterials as CourseMaterial[]);
     }
     setLoading(false);
-  }, []);
+  }, [school, profile, isTeacher]);
 
   // Load user's material views
   const loadViews = useCallback(async () => {
@@ -85,10 +93,9 @@ export function useCourseMaterials() {
   }, [user]);
 
   useEffect(() => {
-    checkRole();
     loadMaterials();
     loadViews();
-  }, [checkRole, loadMaterials, loadViews]);
+  }, [loadMaterials, loadViews]);
 
   // Get materials by subject
   const getMaterialsBySubject = useCallback((subject: string) => {
@@ -122,14 +129,15 @@ export function useCourseMaterials() {
     }
   }, [user, isMaterialViewed]);
 
-  // Upload new material (teachers only)
+  // Upload new material (teachers only) - now with grade level
   const uploadMaterial = useCallback(async (
     subject: string,
     title: string,
     content: string,
+    gradeLevel: string,
     fileUrl?: string
   ) => {
-    if (!user || !isTeacher) {
+    if (!user || !isTeacher || !school) {
       toast({ variant: 'destructive', title: 'Only teachers can upload materials' });
       return null;
     }
@@ -141,26 +149,30 @@ export function useCourseMaterials() {
         title,
         content,
         file_url: fileUrl || null,
-        uploaded_by: user.id
-      })
+        uploaded_by: user.id,
+        school_id: school.id,
+        grade_level: gradeLevel
+      } as any)
       .select()
       .single();
 
     if (error) {
+      console.error('Error uploading material:', error);
       toast({ variant: 'destructive', title: 'Error uploading material' });
       return null;
     }
 
-    setMaterials(prev => [data, ...prev]);
+    setMaterials(prev => [data as CourseMaterial, ...prev]);
     toast({ title: 'Material uploaded successfully!' });
     return data;
-  }, [user, isTeacher, toast]);
+  }, [user, isTeacher, school, toast]);
 
   // Update material (teachers only, own materials)
   const updateMaterial = useCallback(async (
     materialId: string,
     title: string,
     content: string,
+    gradeLevel: string,
     fileUrl?: string
   ) => {
     if (!user || !isTeacher) return null;
@@ -170,8 +182,9 @@ export function useCourseMaterials() {
       .update({
         title,
         content,
-        file_url: fileUrl || null
-      })
+        file_url: fileUrl || null,
+        grade_level: gradeLevel
+      } as any)
       .eq('id', materialId)
       .eq('uploaded_by', user.id)
       .select()
@@ -182,7 +195,7 @@ export function useCourseMaterials() {
       return null;
     }
 
-    setMaterials(prev => prev.map(m => m.id === materialId ? data : m));
+    setMaterials(prev => prev.map(m => m.id === materialId ? data as CourseMaterial : m));
     toast({ title: 'Material updated!' });
     return data;
   }, [user, isTeacher, toast]);
