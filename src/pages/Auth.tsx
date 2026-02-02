@@ -252,10 +252,11 @@ export default function Auth() {
       } else {
         toast({
           title: 'Request Submitted!',
-          description: 'Your request has been sent to the school administrator for approval.',
+          description: 'Your request has been sent for approval. Once approved, sign up with the same email to access your account.',
         });
         clearForm();
-        setAuthMode('login');
+        // Switch to signup tab to encourage creating an account
+        setAuthMode('signup');
       }
     } catch (err) {
       toast({
@@ -530,8 +531,11 @@ export default function Auth() {
               </Button>
 
               <div className="text-center text-xs text-muted-foreground mt-4 space-y-2">
-                <p>
+                <p className="font-medium text-foreground/80">
                   After submitting, wait for your school admin to approve your request.
+                </p>
+                <p>
+                  Once approved, <strong>create an account</strong> using "Sign Up" with the same email to access your school.
                 </p>
                 <p>
                   Are you a school administrator?{' '}
