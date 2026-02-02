@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, CheckCircle2, XCircle, Send, Trophy } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, CheckCircle2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +58,7 @@ export function AssignmentQuizTaker({
   onSuccess
 }: AssignmentQuizTakerProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const questions: Question[] = (assignment.questions_json as Question[]) || [];
   
@@ -65,32 +67,9 @@ export function AssignmentQuizTaker({
   
   // Quiz state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(!!existingSubmission?.grade);
-  const [results, setResults] = useState<QuizResult[] | null>(null);
-  const [finalScore, setFinalScore] = useState<number | null>(existingSubmission?.grade ?? null);
 
   const handleAnswerChange = (questionId: string, answer: 'A' | 'B' | 'C' | 'D') => {
-    if (isSubmitted) return;
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
-  };
-
-  const calculateScore = (): { results: QuizResult[]; score: number } => {
-    const quizResults: QuizResult[] = questions.map(q => {
-      const selectedAnswer = answers[q.id] || '';
-      const isCorrect = selectedAnswer === q.correctAnswer;
-      return {
-        questionId: q.id,
-        questionTitle: q.questionTitle,
-        selectedAnswer,
-        correctAnswer: q.correctAnswer,
-        isCorrect
-      };
-    });
-
-    const correctCount = quizResults.filter(r => r.isCorrect).length;
-    const score = Math.round((correctCount / questions.length) * assignment.points);
-
-    return { results: quizResults, score };
   };
 
   const submitQuiz = async () => {
@@ -107,7 +86,21 @@ export function AssignmentQuizTaker({
 
     setIsSubmitting(true);
 
-    const { results: quizResults, score } = calculateScore();
+    // Calculate results
+    const quizResults: QuizResult[] = questions.map(q => {
+      const selectedAnswer = answers[q.id] || '';
+      const isCorrect = selectedAnswer === q.correctAnswer;
+      return {
+        questionId: q.id,
+        questionTitle: q.questionTitle,
+        selectedAnswer,
+        correctAnswer: q.correctAnswer,
+        isCorrect
+      };
+    });
+
+    const correctCount = quizResults.filter(r => r.isCorrect).length;
+    const score = Math.round((correctCount / questions.length) * assignment.points);
 
     // Save to database
     const submissionData = {
@@ -139,10 +132,9 @@ export function AssignmentQuizTaker({
       console.error('Error submitting quiz:', error);
       toast({ variant: 'destructive', title: 'Error submitting quiz' });
     } else {
-      setResults(quizResults);
-      setFinalScore(score);
-      setIsSubmitted(true);
       toast({ title: 'Quiz submitted and graded!' });
+      // Redirect to results page
+      navigate(`/student/assignments/${assignment.id}/results`);
     }
   };
 
@@ -165,162 +157,6 @@ export function AssignmentQuizTaker({
             <Button onClick={onBack} className="mt-4">Go Back</Button>
           </CardContent>
         </Card>
-      </div>
-    );
-  }
-
-  // Show results after submission
-  if (isSubmitted && results) {
-    const correctCount = results.filter(r => r.isCorrect).length;
-    const percentage = Math.round((correctCount / questions.length) * 100);
-    
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h2 className="text-xl font-bold">{assignment.title}</h2>
-            <p className="text-sm text-muted-foreground">Quiz Results</p>
-          </div>
-        </div>
-
-        {/* Score Summary - Examination Style */}
-        <div className="glass-effect rounded-2xl p-8 text-center">
-          <div className={cn(
-            "w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center",
-            percentage >= 70 ? "bg-emerald-500/20" : percentage >= 50 ? "bg-amber-500/20" : "bg-destructive/20"
-          )}>
-            <Trophy className={cn(
-              "w-10 h-10",
-              percentage >= 70 ? "text-emerald-500" : percentage >= 50 ? "text-amber-500" : "text-destructive"
-            )} />
-          </div>
-          <p className="text-5xl font-bold mb-2">
-            {finalScore}/{assignment.points}
-          </p>
-          <p className="text-lg text-muted-foreground mb-4">
-            {correctCount} out of {questions.length} correct ({percentage}%)
-          </p>
-          <Progress 
-            value={percentage} 
-            className="h-3 max-w-sm mx-auto" 
-          />
-          <p className="text-sm text-muted-foreground mt-4">
-            {percentage >= 70 ? "Great job! 🎉" : percentage >= 50 ? "Good effort! Keep practicing." : "Keep studying and try again!"}
-          </p>
-        </div>
-
-        {/* Results Breakdown */}
-        <div className="space-y-3">
-          <h3 className="font-semibold text-lg">Question Results:</h3>
-          {results.map((result, index) => {
-            const question = questions[index];
-            const getOptionText = (key: string) => {
-              switch(key) {
-                case 'A': return question.optionA;
-                case 'B': return question.optionB;
-                case 'C': return question.optionC;
-                case 'D': return question.optionD;
-                default: return '';
-              }
-            };
-
-            return (
-              <div 
-                key={result.questionId}
-                className={cn(
-                  "glass-effect rounded-xl p-4 border",
-                  result.isCorrect ? "border-emerald-500/50 bg-emerald-500/5" : "border-destructive/50 bg-destructive/5"
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
-                    result.isCorrect ? "bg-emerald-500 text-white" : "bg-destructive text-white"
-                  )}>
-                    {result.isCorrect ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline" className="text-xs">Q{index + 1}</Badge>
-                      <span className="font-medium">{result.questionTitle}</span>
-                    </div>
-                    <div className="text-sm space-y-1">
-                      <p className="flex items-center gap-2">
-                        <span className="text-muted-foreground">Your answer:</span>
-                        <span className={cn(
-                          "font-medium",
-                          result.isCorrect ? "text-emerald-600" : "text-destructive"
-                        )}>
-                          {result.selectedAnswer ? `${result.selectedAnswer}. ${getOptionText(result.selectedAnswer)}` : 'Not answered'}
-                        </span>
-                      </p>
-                      {!result.isCorrect && (
-                        <p className="flex items-center gap-2">
-                          <span className="text-muted-foreground">Correct answer:</span>
-                          <span className="text-emerald-600 font-medium">
-                            {result.correctAnswer}. {getOptionText(result.correctAnswer)}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <Button onClick={onBack} size="lg" className="w-full">
-          Back to Assignments
-        </Button>
-      </div>
-    );
-  }
-
-  // Previously submitted - show grade only
-  if (existingSubmission?.grade !== null && existingSubmission?.grade !== undefined) {
-    const percentage = Math.round((existingSubmission.grade / assignment.points) * 100);
-    
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h2 className="text-xl font-bold">{assignment.title}</h2>
-            <p className="text-sm text-muted-foreground">Already Completed</p>
-          </div>
-        </div>
-
-        <div className="glass-effect rounded-2xl p-8 text-center">
-          <div className={cn(
-            "w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center",
-            percentage >= 70 ? "bg-emerald-500/20" : percentage >= 50 ? "bg-amber-500/20" : "bg-destructive/20"
-          )}>
-            <CheckCircle2 className={cn(
-              "w-10 h-10",
-              percentage >= 70 ? "text-emerald-500" : percentage >= 50 ? "text-amber-500" : "text-destructive"
-            )} />
-          </div>
-          <p className="text-4xl font-bold mb-2">
-            {existingSubmission.grade}/{assignment.points}
-          </p>
-          <p className="text-muted-foreground">You have already completed this quiz</p>
-          {existingSubmission.feedback && (
-            <div className="mt-6 p-4 bg-muted rounded-xl text-left max-w-md mx-auto">
-              <p className="text-sm font-medium mb-1">Teacher Feedback:</p>
-              <p className="text-sm text-muted-foreground">{existingSubmission.feedback}</p>
-            </div>
-          )}
-        </div>
-
-        <Button onClick={onBack} size="lg" className="w-full">
-          Back to Assignments
-        </Button>
       </div>
     );
   }

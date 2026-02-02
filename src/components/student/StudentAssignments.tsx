@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Calendar,
   CheckCircle2,
@@ -20,7 +21,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { AssignmentQuizTaker } from './AssignmentQuizTaker';
 
 const SUBJECTS = [
   { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-green-500 to-emerald-600' },
@@ -68,9 +68,7 @@ export function StudentAssignments({
   profileId,
   onRefresh
 }: StudentAssignmentsProps) {
-  // View state
-  const [view, setView] = useState<'list' | 'quiz'>('list');
-  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const navigate = useNavigate();
 
   // Filter state
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -131,27 +129,6 @@ export function StudentAssignments({
         return acc + ((s.grade || 0) / (assignment?.points || 100)) * 100;
       }, 0) / gradedCount)
     : null;
-
-  // Quiz view
-  if (view === 'quiz' && selectedAssignment) {
-    const existingSubmission = getSubmission(selectedAssignment.id);
-    return (
-      <AssignmentQuizTaker
-        assignment={selectedAssignment}
-        profileId={profileId}
-        existingSubmission={existingSubmission}
-        onBack={() => {
-          setView('list');
-          setSelectedAssignment(null);
-        }}
-        onSuccess={() => {
-          setView('list');
-          setSelectedAssignment(null);
-          onRefresh();
-        }}
-      />
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -373,8 +350,7 @@ export function StudentAssignments({
                         variant="outline" 
                         className="w-full"
                         onClick={() => {
-                          setSelectedAssignment(assignment);
-                          setView('quiz');
+                          navigate(`/student/assignments/${assignment.id}/results`);
                         }}
                       >
                         <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
@@ -385,8 +361,7 @@ export function StudentAssignments({
                         variant={status === 'overdue' ? 'destructive' : 'default'}
                         className="w-full"
                         onClick={() => {
-                          setSelectedAssignment(assignment);
-                          setView('quiz');
+                          navigate(`/student/assignments/${assignment.id}`);
                         }}
                       >
                         <PlayCircle className="w-4 h-4 mr-2" />
