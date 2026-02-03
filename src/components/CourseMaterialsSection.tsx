@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Upload, Trash2, Edit2, Eye, EyeOff, MessageCircle, Send, BookOpen, FileText, Loader2, File, X, Plus, GraduationCap } from 'lucide-react';
+import { ArrowLeft, Upload, Trash2, Edit2, Eye, EyeOff, MessageCircle, Send, BookOpen, FileText, Loader2, File, X, Plus, GraduationCap, Download, ExternalLink, ZoomIn, ZoomOut, Video, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCourseMaterials, CourseMaterial, MaterialComment } from '@/hooks/useCourseMaterials';
 import { cn } from '@/lib/utils';
@@ -149,6 +149,151 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
     return subjects.find(s => s.id === subjectId) || { name: subjectId, emoji: '📄', color: 'from-gray-500 to-gray-600' };
   };
 
+  // Helper to get file type
+  const getFileType = (fileUrl: string | null): 'pdf' | 'image' | 'video' | 'document' | 'presentation' | 'unknown' => {
+    if (!fileUrl) return 'unknown';
+    const url = fileUrl.toLowerCase();
+    if (url.includes('.pdf')) return 'pdf';
+    if (url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) return 'image';
+    if (url.match(/\.(mp4|webm|ogg|mov)$/i)) return 'video';
+    if (url.match(/\.(doc|docx)$/i)) return 'document';
+    if (url.match(/\.(ppt|pptx)$/i)) return 'presentation';
+    return 'unknown';
+  };
+
+  // Render embedded content based on file type
+  const renderEmbeddedContent = (fileUrl: string, title: string) => {
+    const fileType = getFileType(fileUrl);
+    
+    const handleDownload = () => {
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = title;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    const handleOpenExternal = () => {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    };
+
+    switch (fileType) {
+      case 'pdf':
+        return (
+          <div className="space-y-3">
+            <div className="w-full h-[50vh] bg-muted rounded-lg overflow-hidden">
+              <iframe
+                src={`${fileUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+                className="w-full h-full border-0"
+                title={title}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleOpenExternal} className="gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Open in New Tab
+              </Button>
+              <Button size="sm" onClick={handleDownload} className="gap-2">
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
+            </div>
+          </div>
+        );
+
+      case 'image':
+        return (
+          <div className="space-y-3">
+            <div className="w-full max-h-[50vh] bg-muted/50 rounded-lg overflow-hidden flex items-center justify-center p-4">
+              <img
+                src={fileUrl}
+                alt={title}
+                className="max-w-full max-h-[45vh] object-contain rounded"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleOpenExternal} className="gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Open in New Tab
+              </Button>
+              <Button size="sm" onClick={handleDownload} className="gap-2">
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
+            </div>
+          </div>
+        );
+
+      case 'video':
+        return (
+          <div className="space-y-3">
+            <div className="w-full bg-black rounded-lg overflow-hidden">
+              <video
+                src={fileUrl}
+                controls
+                className="w-full max-h-[50vh]"
+              >
+                Your browser does not support video playback.
+              </video>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleDownload} className="gap-2">
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
+            </div>
+          </div>
+        );
+
+      case 'document':
+      case 'presentation':
+        // Try Google Docs Viewer for Word/PowerPoint
+        return (
+          <div className="space-y-3">
+            <div className="w-full h-[50vh] bg-muted rounded-lg overflow-hidden">
+              <iframe
+                src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
+                className="w-full h-full border-0"
+                title={title}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleOpenExternal} className="gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Open in New Tab
+              </Button>
+              <Button size="sm" onClick={handleDownload} className="gap-2">
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
+            </div>
+          </div>
+        );
+
+      default:
+        return (
+          <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/50 rounded-lg">
+            <FileText className="w-12 h-12 text-muted-foreground mb-3" />
+            <p className="text-sm text-muted-foreground mb-4">
+              This file cannot be previewed in the browser.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleOpenExternal} className="gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Open in New Tab
+              </Button>
+              <Button size="sm" onClick={handleDownload} className="gap-2">
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
+            </div>
+          </div>
+        );
+    }
+  };
+
   // DETAIL VIEW - View single material with comments
   if (viewState === 'detail' && selectedMaterial) {
     const subjectInfo = getSubjectInfo(selectedMaterial.subject);
@@ -196,16 +341,11 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
               )}
             </div>
             
+            {/* Embedded File Viewer */}
             {selectedMaterial.file_url && (
-              <a 
-                href={selectedMaterial.file_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-sm hover:bg-primary/20 transition-colors mb-4"
-              >
-                <FileText size={16} />
-                Open File
-              </a>
+              <div className="mb-4">
+                {renderEmbeddedContent(selectedMaterial.file_url, selectedMaterial.title)}
+              </div>
             )}
             
             {selectedMaterial.content && (
