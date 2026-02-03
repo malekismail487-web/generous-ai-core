@@ -4,11 +4,13 @@ import {
   File,
   FileText,
   Image,
+  Video,
   Download,
   Eye,
   Filter,
   FolderOpen,
-  Search
+  Search,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,12 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { MaterialViewer } from '@/components/MaterialViewer';
 
 const SUBJECTS = [
   { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-green-500 to-emerald-600' },
@@ -65,9 +62,9 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
   const [filterSubject, setFilterSubject] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // View state
+  // View state - now uses in-app viewer
   const [selectedMaterial, setSelectedMaterial] = useState<CourseMaterial | null>(null);
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   const getTeacherName = (uploadedBy: string | undefined) => {
     if (!uploadedBy) return 'Teacher';
@@ -85,20 +82,44 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
 
   const getFileIcon = (fileUrl: string | null) => {
     if (!fileUrl) return <FileText className="w-5 h-5" />;
-    if (fileUrl.includes('.pdf')) return <File className="w-5 h-5 text-red-500" />;
-    if (fileUrl.includes('.ppt') || fileUrl.includes('.pptx')) return <File className="w-5 h-5 text-orange-500" />;
-    if (fileUrl.includes('.doc') || fileUrl.includes('.docx')) return <File className="w-5 h-5 text-blue-500" />;
-    if (fileUrl.match(/\.(jpg|jpeg|png|gif)$/i)) return <Image className="w-5 h-5 text-green-500" />;
+    const url = fileUrl.toLowerCase();
+    if (url.includes('.pdf')) return <File className="w-5 h-5 text-destructive" />;
+    if (url.includes('.ppt') || url.includes('.pptx')) return <File className="w-5 h-5 text-warning" />;
+    if (url.includes('.doc') || url.includes('.docx')) return <File className="w-5 h-5 text-primary" />;
+    if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return <Image className="w-5 h-5 text-accent" />;
+    if (url.match(/\.(mp4|webm|ogg|mov)$/i)) return <Video className="w-5 h-5 text-secondary-foreground" />;
     return <File className="w-5 h-5" />;
   };
 
   const getFileType = (fileUrl: string | null) => {
     if (!fileUrl) return 'Note';
-    if (fileUrl.includes('.pdf')) return 'PDF';
-    if (fileUrl.includes('.ppt') || fileUrl.includes('.pptx')) return 'PowerPoint';
-    if (fileUrl.includes('.doc') || fileUrl.includes('.docx')) return 'Word';
-    if (fileUrl.match(/\.(jpg|jpeg|png|gif)$/i)) return 'Image';
+    const url = fileUrl.toLowerCase();
+    if (url.includes('.pdf')) return 'PDF';
+    if (url.includes('.ppt') || url.includes('.pptx')) return 'PowerPoint';
+    if (url.includes('.doc') || url.includes('.docx')) return 'Word';
+    if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return 'Image';
+    if (url.match(/\.(mp4|webm|ogg|mov)$/i)) return 'Video';
     return 'File';
+  };
+
+  // Open material in the in-app viewer
+  const handleOpenMaterial = (material: CourseMaterial) => {
+    setSelectedMaterial(material);
+    setViewerOpen(true);
+  };
+
+  // Explicit download (user choice)
+  const handleDownload = (e: React.MouseEvent, material: CourseMaterial) => {
+    e.stopPropagation();
+    if (!material.file_url) return;
+    
+    const link = document.createElement('a');
+    link.href = material.file_url;
+    link.download = material.title;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Filter materials
@@ -188,10 +209,7 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
               <Card 
                 key={material.id} 
                 className="group hover:shadow-lg transition-all cursor-pointer"
-                onClick={() => {
-                  setSelectedMaterial(material);
-                  setViewDialogOpen(true);
-                }}
+                onClick={() => handleOpenMaterial(material)}
               >
                 <CardHeader className="pb-3">
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${subjectInfo.color} flex items-center justify-center text-white text-xl`}>
@@ -229,19 +247,28 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
                       </p>
                     </div>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenMaterial(material);
+                        }}
+                        title="View in app"
+                      >
                         <Eye className="w-4 h-4" />
                       </Button>
                       {material.file_url && (
-                        <a
-                          href={material.file_url}
-                          download
-                          onClick={(e) => e.stopPropagation()}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => handleDownload(e, material)}
+                          title="Download"
                         >
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </a>
+                          <Download className="w-4 h-4" />
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -276,10 +303,7 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
                     <div
                       key={material.id}
                       className="group flex items-center gap-3 p-4 bg-card border rounded-xl hover:shadow-md transition-all cursor-pointer"
-                      onClick={() => {
-                        setSelectedMaterial(material);
-                        setViewDialogOpen(true);
-                      }}
+                      onClick={() => handleOpenMaterial(material)}
                     >
                       <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                         {getFileIcon(material.file_url)}
@@ -297,16 +321,28 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
                         </div>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenMaterial(material);
+                          }}
+                          title="View in app"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
                         {material.file_url && (
-                          <a
-                            href={material.file_url}
-                            download
-                            onClick={(e) => e.stopPropagation()}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => handleDownload(e, material)}
+                            title="Download"
                           >
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <Download className="w-4 h-4" />
-                            </Button>
-                          </a>
+                            <Download className="w-4 h-4" />
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -318,83 +354,14 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
         </div>
       )}
 
-      {/* Material View Dialog */}
-      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              {selectedMaterial && (
-                <>
-                  <span className="text-2xl">{getSubjectInfo(selectedMaterial.subject).emoji}</span>
-                  {selectedMaterial.title}
-                </>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          
-          {selectedMaterial && (
-            <div className="space-y-4 py-4">
-              {/* Meta Info */}
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">{getSubjectInfo(selectedMaterial.subject).name}</Badge>
-                {selectedMaterial.grade_level && selectedMaterial.grade_level !== 'All' && (
-                  <Badge variant="secondary">{selectedMaterial.grade_level}</Badge>
-                )}
-                <Badge variant="secondary" className="gap-1">
-                  {getFileIcon(selectedMaterial.file_url)}
-                  {getFileType(selectedMaterial.file_url)}
-                </Badge>
-              </div>
-
-              {/* Content */}
-              {selectedMaterial.content && (
-                <div className="prose prose-sm max-w-none">
-                  <h4 className="font-medium mb-2">Notes</h4>
-                  <p className="text-muted-foreground whitespace-pre-wrap">
-                    {selectedMaterial.content}
-                  </p>
-                </div>
-              )}
-
-              {/* File Preview/Download */}
-              {selectedMaterial.file_url && (
-                <div className="p-4 bg-muted rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {getFileIcon(selectedMaterial.file_url)}
-                      <div>
-                        <p className="font-medium text-sm">Attached File</p>
-                        <p className="text-xs text-muted-foreground">
-                          {getFileType(selectedMaterial.file_url)} Document
-                        </p>
-                      </div>
-                    </div>
-                    <a
-                      href={selectedMaterial.file_url}
-                      download
-                    >
-                      <Button className="gap-2">
-                        <Download className="w-4 h-4" />
-                        Download
-                      </Button>
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {/* Timestamp and Teacher */}
-              <div className="text-center pt-4 border-t">
-                <p className="text-xs text-muted-foreground">
-                  Uploaded on {new Date(selectedMaterial.created_at).toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  by {getTeacherName(selectedMaterial.uploaded_by)}
-                </p>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* In-App Material Viewer Dialog */}
+      <MaterialViewer
+        open={viewerOpen}
+        onOpenChange={setViewerOpen}
+        material={selectedMaterial}
+        subjectInfo={selectedMaterial ? getSubjectInfo(selectedMaterial.subject) : undefined}
+        teacherName={selectedMaterial ? getTeacherName(selectedMaterial.uploaded_by) : undefined}
+      />
     </div>
   );
 }
