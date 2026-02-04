@@ -10,7 +10,8 @@ import {
   CheckCircle2,
   AlertCircle,
   BookOpen,
-  Filter
+  Filter,
+  Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AssignmentQuestionBuilder } from './AssignmentQuestionBuilder';
+import { AssignmentViewers } from './AssignmentViewers';
 
 // Hardcoded subjects list
 const SUBJECTS = [
@@ -287,11 +289,17 @@ export function TeacherAssignments({
                     </div>
                   )}
 
-                  {/* Submission stats */}
+                  {/* Submission stats and Views */}
                   <div className="pt-3 border-t flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>{stats.total} submitted</span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>{stats.total} submitted</span>
+                      </div>
+                      <AssignmentViewers 
+                        assignmentId={assignment.id} 
+                        assignmentTitle={assignment.title} 
+                      />
                     </div>
                     {stats.total > 0 && (
                       <Badge variant={stats.graded === stats.total ? 'default' : 'secondary'}>

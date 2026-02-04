@@ -63,6 +63,14 @@ export default function StudentAssignmentTake() {
 
       setAssignment(assignmentData as Assignment);
 
+      // Record that the student viewed this assignment
+      await supabase
+        .from('assignment_views')
+        .upsert(
+          { assignment_id: assignmentId, user_id: studentId },
+          { onConflict: 'assignment_id,user_id' }
+        );
+
       const { data: submissionData } = await supabase
         .from('submissions')
         .select('*')
