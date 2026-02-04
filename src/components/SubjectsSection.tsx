@@ -231,8 +231,8 @@ Use age-appropriate language for ${selectedGrade}.`;
           </div>
 
           {/* Material Tabs */}
-          <div className="glass-effect rounded-xl p-3 mb-4 overflow-x-auto">
-            <div className="flex flex-wrap gap-2">
+          <div className="glass-effect rounded-xl p-3 mb-4">
+            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
               {savedMaterials.map((material) => (
                 <div
                   key={material.id}
@@ -267,15 +267,17 @@ Use age-appropriate language for ${selectedGrade}.`;
             </div>
           </div>
 
-          {/* Lecture Content with Math Rendering */}
-          <div className="glass-effect rounded-2xl p-5 overflow-y-auto max-h-[60vh]">
+          {/* Lecture Content with Math Rendering - properly scrollable */}
+          <div className="glass-effect rounded-2xl p-5">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 <span className="ml-2 text-sm text-muted-foreground">Generating lecture...</span>
               </div>
             ) : (
-              <MathRenderer content={lectureContent} className="whitespace-pre-wrap text-sm leading-relaxed" />
+              <div className="prose prose-sm max-w-none">
+                <MathRenderer content={lectureContent} className="whitespace-pre-wrap text-sm leading-relaxed" />
+              </div>
             )}
           </div>
         </div>
