@@ -466,7 +466,7 @@ Use age-appropriate language for ${selectedGrade}.`;
   // SUBJECTS VIEW - Subject selection (for both AI and Course modes)
   if (viewState === 'subjects') {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBackToMainMenu}>
@@ -475,37 +475,38 @@ Use age-appropriate language for ${selectedGrade}.`;
             </Button>
           </div>
 
-          <div className="text-center mb-8 animate-fade-in">
+          <div className="text-center mb-6 animate-fade-in">
             <div className={cn(
-              "inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br",
+              "inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 glow-effect bg-gradient-to-br",
               menuType === 'ai' ? 'from-violet-500 to-purple-600' : 'from-emerald-500 to-teal-600'
             )}>
-              {menuType === 'ai' ? <Bot className="w-7 h-7 text-white" /> : <BookOpen className="w-7 h-7 text-white" />}
+              {menuType === 'ai' ? <Bot className="w-6 h-6 text-white" /> : <BookOpen className="w-6 h-6 text-white" />}
             </div>
-            <h1 className="text-2xl font-bold mb-2 gradient-text">
+            <h1 className="text-xl font-bold mb-1 gradient-text">
               {menuType === 'ai' ? 'AI Lectures' : 'Course Materials'}
             </h1>
-            <p className="text-muted-foreground text-sm">Choose a subject</p>
+            <p className="text-muted-foreground text-xs">Choose a subject</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 overflow-y-auto">
+          {/* Responsive Grid - 2 cols on mobile, 3 cols on tablet, 4 cols on desktop */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {subjects.map((subj, index) => (
               <button
                 key={subj.id}
                 onClick={() => handleSubjectClick(subj.id)}
                 className={cn(
-                  "glass-effect rounded-xl p-4 text-left transition-all duration-200 animate-fade-in group",
+                  "glass-effect rounded-xl p-3 text-center transition-all duration-200 animate-fade-in group",
                   "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
                 )}
-                style={{ animationDelay: `${index * 50}ms` }}
+                style={{ animationDelay: `${index * 30}ms` }}
               >
                 <div className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-gradient-to-br text-white text-lg",
+                  "w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2 bg-gradient-to-br text-white text-lg",
                   subj.color
                 )}>
                   {subj.emoji}
                 </div>
-                <h3 className="font-semibold text-foreground text-sm">{subj.name}</h3>
+                <h3 className="font-semibold text-foreground text-xs">{subj.name}</h3>
               </button>
             ))}
           </div>
