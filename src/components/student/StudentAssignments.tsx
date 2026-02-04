@@ -131,7 +131,7 @@ export function StudentAssignments({
     : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
       {/* Progress Overview - Classera Style */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5">

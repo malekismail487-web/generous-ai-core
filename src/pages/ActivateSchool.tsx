@@ -217,7 +217,11 @@ export default function ActivateSchool() {
           <Button
             variant="ghost"
             className="w-full"
-            onClick={() => navigate('/auth')}
+            onClick={() => {
+              // Set flag so Auth page knows not to redirect back
+              sessionStorage.setItem('fromActivateSchool', 'true');
+              navigate('/auth');
+            }}
           >
             ← Back to Sign In
           </Button>
