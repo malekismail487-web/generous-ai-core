@@ -399,27 +399,40 @@ export function ExaminationSection() {
       ? subjects.find(s => s.id === selectedSubject)?.name 
       : 'SAT';
     
+    // Truncate material context if too long (keep most relevant parts)
+    const truncateMaterials = (context: string, maxLength: number = 8000) => {
+      if (context.length <= maxLength) return context;
+      // Take first portion to preserve important content
+      return context.substring(0, maxLength) + '\n\n[Additional materials truncated for brevity...]';
+    };
+
+    const truncatedMaterialContext = truncateMaterials(materialContext);
+    const truncatedSatContext = truncateMaterials(satMaterialContext);
+    
     let prompt: string;
     
     if (examMenuType === ExamMenuType.SUBJECT && hasSavedMaterials) {
-      prompt = `Based ONLY on the following study materials, generate EXACTLY ${count} ${subjectName} exam questions for ${selectedGrade} students.
+      prompt = `You are an expert exam generator. Generate EXACTLY ${count} multiple-choice questions based on the study materials below.
 
-STUDY MATERIALS TO BASE QUESTIONS ON:
-${materialContext}
+STUDY MATERIALS:
+${truncatedMaterialContext}
 
-Difficulty: ${difficulty}
+EXAM DETAILS:
+- Subject: ${subjectName}
+- Grade Level: ${selectedGrade}
+- Difficulty: ${difficulty.replace('SUBJECT_', '')}
+- Total Questions Required: EXACTLY ${count}
 
-IMPORTANT RULES:
-1. Questions MUST be based ONLY on the content in the study materials above
-2. Do NOT include any topics or concepts not covered in the materials
-3. CONTENT CONSTRAINT: ${subjectName} topics ONLY - no other subjects
+CRITICAL REQUIREMENTS:
+1. Generate EXACTLY ${count} questions - not fewer, not more
+2. Each question MUST be derived from the study materials content
+3. Questions should test understanding, not just memorization
+4. Vary question difficulty within the ${difficulty.replace('SUBJECT_', '')} level
+5. Cover different topics from the materials evenly
 
-ABSOLUTE MATH RENDERING SPECIFICATION (LaTeX Only):
-- All math must use LaTeX notation exclusively
-- Inline math: \\( expression \\)
-- Display math: $$ expression $$
+For MATH content, use LaTeX: \\( inline \\) or $$ display $$
 
-You MUST return a valid JSON object with this EXACT structure:
+RESPOND WITH ONLY THIS JSON (no other text):
 {
   "exam_title": "${subjectName} ${difficulty.replace('SUBJECT_', '')} Exam",
   "grade_level": "${selectedGrade}",
@@ -429,36 +442,50 @@ You MUST return a valid JSON object with this EXACT structure:
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "Question text with LaTeX if needed",
-      "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
-      "correct_answer": "A) Option"
+      "question": "Question text here",
+      "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
+      "correct_answer": "A) First option"
+    },
+    {
+      "id": 2,
+      "type": "multiple_choice",
+      "question": "Next question...",
+      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+      "correct_answer": "B) ..."
     }
   ]
 }
 
-CRITICAL RULES:
-- IDs must be sequential starting at 1
-- Exactly 4 options per question
-- correct_answer MUST match one of the options exactly
-- total_questions MUST equal ${count}
-- questions array MUST have exactly ${count} items`;
+VALIDATION RULES:
+- "id" must be sequential: 1, 2, 3... up to ${count}
+- "options" must have EXACTLY 4 items
+- "correct_answer" must EXACTLY match one option
+- Array must have EXACTLY ${count} questions
+
+START GENERATING ALL ${count} QUESTIONS NOW:`;
     } else if (examMenuType === ExamMenuType.SAT && difficulty !== SATDifficulty.SAT_FULL) {
       const difficultyDesc = difficulty === SATDifficulty.SAT_BEGINNER ? 'easier, foundational' :
                             difficulty === SATDifficulty.SAT_INTERMEDIATE ? 'medium difficulty' : 'challenging, advanced';
       
-      prompt = `Based ONLY on the following saved SAT study materials, generate EXACTLY ${count} SAT-style exam questions.
+      prompt = `You are an expert SAT exam generator. Generate EXACTLY ${count} SAT-style multiple-choice questions based on the study materials below.
 
 SAVED SAT MATERIALS:
-${satMaterialContext}
+${truncatedSatContext}
 
-Difficulty Level: ${difficulty} (${difficultyDesc} questions)
+EXAM DETAILS:
+- Exam Type: SAT Practice
+- Difficulty: ${difficulty.replace('SAT_', '')} (${difficultyDesc})
+- Total Questions Required: EXACTLY ${count}
 
-ABSOLUTE MATH RENDERING SPECIFICATION (LaTeX Only):
-- All math must use LaTeX notation exclusively
-- Inline math: \\( expression \\)
-- Display math: $$ expression $$
+CRITICAL REQUIREMENTS:
+1. Generate EXACTLY ${count} questions - not fewer, not more
+2. Questions MUST be based on the saved SAT materials
+3. Follow official SAT question formats
+4. Mix Reading/Writing and Math questions appropriately
 
-You MUST return a valid JSON object with this EXACT structure:
+For MATH content, use LaTeX: \\( inline \\) or $$ display $$
+
+RESPOND WITH ONLY THIS JSON (no other text):
 {
   "exam_title": "SAT ${difficulty.replace('SAT_', '')} Exam",
   "grade_level": "High School",
@@ -468,52 +495,42 @@ You MUST return a valid JSON object with this EXACT structure:
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "Question text",
-      "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
-      "correct_answer": "A) Option"
+      "question": "Question text here",
+      "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
+      "correct_answer": "A) First option"
     }
   ]
 }
 
-CRITICAL RULES:
-- IDs must be sequential starting at 1
-- Exactly 4 options per question
-- correct_answer MUST match one of the options exactly
-- total_questions MUST equal ${count}
-- questions array MUST have exactly ${count} items`;
-    } else {
-      // Full SAT Exam - covers ALL topics comprehensively
-      prompt = `Generate a comprehensive Full SAT Practice Exam with EXACTLY ${count} questions covering ALL official SAT topics.
+VALIDATION RULES:
+- "id" must be sequential: 1, 2, 3... up to ${count}
+- "options" must have EXACTLY 4 items
+- "correct_answer" must EXACTLY match one option
+- Array must have EXACTLY ${count} questions
 
-STRUCTURE:
+START GENERATING ALL ${count} QUESTIONS NOW:`;
+    } else {
+      // Full SAT Exam
+      prompt = `You are an expert SAT exam generator. Generate a COMPLETE Full SAT Practice Exam with EXACTLY ${count} multiple-choice questions.
+
+EXAM STRUCTURE:
 - Reading & Writing: ~70 questions
 - Math: ~70 questions
+- Total: EXACTLY ${count} questions
 
-===== SAT MATH TOPICS (Must Include All) =====
+SAT MATH TOPICS TO COVER:
+1. Heart of Algebra: Linear equations, inequalities, systems
+2. Problem Solving: Ratios, percentages, statistics, probability
+3. Advanced Math: Quadratics, functions, polynomials
+4. Additional: Geometry, trigonometry, complex numbers
 
-1. HEART OF ALGEBRA:
-- Linear equations, inequalities, systems
-- Linear functions, slope, intercepts
+SAT ENGLISH TOPICS TO COVER:
+1. Reading: Comprehension, vocabulary in context, evidence
+2. Writing: Grammar, sentence structure, transitions
 
-2. PROBLEM SOLVING AND DATA ANALYSIS:
-- Ratios, rates, percentages
-- Statistics: mean, median, mode
-- Probability, data interpretation
+For MATH content, use LaTeX: \\( inline \\) or $$ display $$
 
-3. PASSPORT TO ADVANCED MATH:
-- Quadratic equations: \\( x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a} \\)
-- Functions, rational expressions, exponents
-
-4. ADDITIONAL TOPICS:
-- Geometry, trigonometry
-- Complex numbers: \\( i^2 = -1 \\)
-
-===== SAT ENGLISH TOPICS =====
-
-1. READING: Words in context, main idea, evidence
-2. WRITING: Grammar, sentence structure, transitions
-
-You MUST return a valid JSON object with this EXACT structure:
+RESPOND WITH ONLY THIS JSON (no other text):
 {
   "exam_title": "Full SAT Exam",
   "grade_level": "High School",
@@ -530,12 +547,9 @@ You MUST return a valid JSON object with this EXACT structure:
   ]
 }
 
-CRITICAL RULES:
-- IDs must be sequential starting at 1 through ${count}
-- Exactly 4 options per question
-- correct_answer MUST match one of the options exactly
-- total_questions MUST equal ${count}
-- questions array MUST have exactly ${count} items`;
+CRITICAL: Generate ALL ${count} questions. Do not stop early. Continue until question ${count} is complete.
+
+START GENERATING NOW:`;
     }
 
     const messages: Message[] = [{ id: '1', role: 'user', content: prompt }];
@@ -551,12 +565,40 @@ CRITICAL RULES:
             let jsonMatch = response.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
               const parsed = JSON.parse(jsonMatch[0]);
-              const validatedExam = validateExamJSON(parsed);
-              if (validatedExam) {
-                setExamState(createInitialExamState(validatedExam));
-                setViewState('exam');
-                setIsLoading(false);
-                return;
+              
+              // Relax validation - accept if we have at least 80% of requested questions
+              const minAcceptable = Math.floor(count * 0.8);
+              
+              if (parsed.questions && Array.isArray(parsed.questions)) {
+                // Fix any validation issues
+                const fixedQuestions = parsed.questions.slice(0, count).map((q: Record<string, unknown>, idx: number) => ({
+                  ...q,
+                  id: idx + 1,
+                  type: q.type || 'multiple_choice'
+                }));
+                
+                if (fixedQuestions.length >= minAcceptable) {
+                  const fixedExam: ExamJSON = {
+                    exam_title: parsed.exam_title || `${subjectName} Exam`,
+                    grade_level: parsed.grade_level || selectedGrade || 'Various',
+                    subject: parsed.subject || subjectName || 'Mixed',
+                    total_questions: fixedQuestions.length,
+                    questions: fixedQuestions
+                  };
+                  
+                  setExamState(createInitialExamState(fixedExam));
+                  setViewState('exam');
+                  
+                  if (fixedQuestions.length < count) {
+                    toast({
+                      title: 'Partial Success',
+                      description: `Generated ${fixedQuestions.length} of ${count} questions. Proceeding with available questions.`
+                    });
+                  }
+                  
+                  setIsLoading(false);
+                  return;
+                }
               }
             }
             
@@ -573,9 +615,9 @@ CRITICAL RULES:
               }
             }
             
-            toast({ variant: 'destructive', title: 'Error', description: 'Invalid exam format received' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not generate enough questions. Please try again.' });
           } catch {
-            toast({ variant: 'destructive', title: 'Error generating questions' });
+            toast({ variant: 'destructive', title: 'Error generating questions', description: 'Please try again.' });
           }
           setIsLoading(false);
         },
