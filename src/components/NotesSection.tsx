@@ -136,7 +136,7 @@ Format the notes clearly for easy studying. Be concise but comprehensive.`;
   // NOTES VIEW
   if (viewState === 'notes' && notesContent) {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-4">
             <Button variant="ghost" size="sm" onClick={handleBackToSubjects}>
@@ -169,7 +169,7 @@ Format the notes clearly for easy studying. Be concise but comprehensive.`;
   // INPUT VIEW
   if (viewState === 'input' && selectedSubject && selectedGrade) {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
@@ -219,7 +219,7 @@ Format the notes clearly for easy studying. Be concise but comprehensive.`;
   // GRADE VIEW
   if (viewState === 'grade' && selectedSubject) {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBackToSubjects}>
@@ -256,7 +256,7 @@ Format the notes clearly for easy studying. Be concise but comprehensive.`;
 
   // SUBJECTS VIEW
   return (
-    <div className="flex-1 overflow-y-auto pt-16 pb-20">
+    <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="text-center mb-8 animate-fade-in">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-primary to-accent">

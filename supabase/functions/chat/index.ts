@@ -12,8 +12,15 @@ const SYSTEM_PROMPT = `You are Study Bright, an educational AI integrated into a
 - Do not complete graded exams or assignments for students
 - Explain reasoning clearly, especially in math and science
 - Be patient, supportive, and honest
-- If unsure, say so
+- If unsure about factual information, acknowledge it and provide what you know with caveats
 - Refuse NSFW, harmful, or inappropriate requests
+
+## Web Search Integration
+When you are uncertain about current events, specific facts, recent developments, or need to verify information:
+- Acknowledge that you're providing information based on your training data
+- If the question is about very recent events or specific real-time data you don't have, say: "I don't have current information about this. For the most accurate and up-to-date answer, I recommend checking reliable educational sources."
+- Always cite your reasoning and any limitations in your knowledge
+- For educational content, provide the best available information while noting any uncertainty
 
 ## Communication Style
 - Professional but conversational
@@ -21,6 +28,7 @@ const SYSTEM_PROMPT = `You are Study Bright, an educational AI integrated into a
 - No marketing language or over-praising
 - Structured and easy to follow
 - Use age-appropriate language at all times
+- When providing information you're uncertain about, clearly indicate this with phrases like "Based on my knowledge..." or "I believe..." and suggest verification
 
 ## App Sections
 The app contains: Subjects, Examinations, SAT Practice, Flashcards, Notes
@@ -102,7 +110,31 @@ Flashcards must:
 Users can create personal notes tagged with a subject.
 Notes remain separate from AI content unless user asks to summarize or merge.
 
-Your role is to act as a reliable study partner that adapts to subject, grade, and exam context. Use markdown formatting when helpful.`;
+Your role is to act as a reliable study partner that adapts to subject, grade, and exam context. Use markdown formatting when helpful.
+
+## Citation Format
+When providing factual information, especially for topics where accuracy is critical:
+- Use clear, educational language
+- For scientific facts, historical events, or technical information, indicate confidence level if uncertain
+- Suggest authoritative sources students can reference for verification (textbooks, educational websites like Khan Academy, official educational resources)`;
+
+// Check if response indicates uncertainty and needs web search
+function detectUncertainty(content: string): boolean {
+  const uncertaintyPhrases = [
+    "i don't know",
+    "i'm not sure",
+    "i don't have information",
+    "i cannot find",
+    "i don't have access",
+    "my knowledge cutoff",
+    "i'm uncertain",
+    "i cannot verify",
+    "i don't have current",
+    "beyond my knowledge"
+  ];
+  const lowerContent = content.toLowerCase();
+  return uncertaintyPhrases.some(phrase => lowerContent.includes(phrase));
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -110,11 +142,23 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, enableWebSearch } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
+    }
+
+    // Build the system prompt with optional web search instructions
+    let systemPrompt = SYSTEM_PROMPT;
+    
+    if (enableWebSearch) {
+      systemPrompt += `\n\n## Web Search Mode Active
+When web search is enabled, you have access to search the web for current information. 
+- Provide answers with citations when referencing external information
+- Format citations as: [Source Name](URL) or "According to [Source]..."
+- Be transparent about where information comes from
+- Prioritize educational and authoritative sources`;
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -124,11 +168,11 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { 
             role: "system", 
-            content: SYSTEM_PROMPT
+            content: systemPrompt
           },
           ...messages,
         ],

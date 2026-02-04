@@ -42,7 +42,7 @@ export function ProfileSection() {
   const isTeacher = userType === 'teacher';
 
   return (
-    <div className="flex-1 overflow-y-auto pt-16 pb-20">
+    <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="text-center mb-8 animate-fade-in">

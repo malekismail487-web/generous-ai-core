@@ -95,7 +95,7 @@ export function SchoolChatSection({ onBack }: SchoolChatSectionProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col pt-14 pb-16 overflow-hidden">
+    <div className="flex-1 h-[calc(100vh-120px)] flex flex-col pt-14 pb-16 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 p-3 border-b border-border/30">
         {onBack && (
