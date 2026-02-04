@@ -199,6 +199,35 @@ export type Database = {
           },
         ]
       }
+      assignment_views: {
+        Row: {
+          assignment_id: string
+          id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          assignment_id: string
+          id?: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          assignment_id?: string
+          id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_views_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignments: {
         Row: {
           class_id: string | null
