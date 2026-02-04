@@ -212,7 +212,7 @@ Flashcards must:
     const currentCard = flashcards[currentIndex];
 
     return (
-      <div className="flex-1 flex flex-col items-center justify-center pt-16 pb-20 px-4 overflow-y-auto">
+      <div className="flex-1 h-[calc(100vh-120px)] flex flex-col items-center justify-center pt-16 pb-20 px-4 overflow-y-auto">
         <div className="w-full max-w-sm">
           <div className="flex items-center justify-between mb-4">
             <Button variant="ghost" size="sm" onClick={handleBackToSubjects}>
@@ -285,7 +285,7 @@ Flashcards must:
   // MATERIALS VIEW - Choose to generate from saved materials
   if (viewState === 'materials' && selectedSubject && selectedGrade) {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
@@ -343,7 +343,7 @@ Flashcards must:
   // INPUT VIEW
   if (viewState === 'input' && selectedSubject && selectedGrade) {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
@@ -393,7 +393,7 @@ Flashcards must:
   // GRADE VIEW
   if (viewState === 'grade' && selectedSubject) {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBackToSubjects}>
@@ -430,7 +430,7 @@ Flashcards must:
 
   // SUBJECTS VIEW
   return (
-    <div className="flex-1 overflow-y-auto pt-16 pb-20">
+    <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="text-center mb-8 animate-fade-in">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-amber-500 to-orange-600">

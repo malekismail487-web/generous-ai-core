@@ -86,7 +86,7 @@ export function AssignmentsSection() {
   // CHOOSE CREATION METHOD (Teachers) - New flow
   if (viewState === 'choose-creation' && isTeacher) {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={() => setViewState('list')}>
@@ -172,7 +172,7 @@ export function AssignmentsSection() {
   // AI CREATE VIEW (Teachers) - Placeholder for now
   if (viewState === 'create-ai' && isTeacher) {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={() => setViewState('choose-creation')}>
@@ -235,7 +235,7 @@ export function AssignmentsSection() {
     const isPastDue = selectedAssignment.due_date && new Date(selectedAssignment.due_date) < new Date();
 
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={() => {
@@ -358,7 +358,7 @@ export function AssignmentsSection() {
 
   // LIST VIEW
   return (
-    <div className="flex-1 overflow-y-auto pt-16 pb-20">
+    <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Banner Ad */}
         <BannerAd location="assignments" className="mb-4" />

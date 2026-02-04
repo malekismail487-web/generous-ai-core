@@ -720,7 +720,7 @@ CRITICAL RULES:
     const isCorrect = getIsCorrect();
 
     return (
-      <div className="flex-1 flex flex-col overflow-hidden pt-14 pb-16">
+      <div className="flex-1 h-[calc(100vh-120px)] flex flex-col overflow-hidden pt-14 pb-16">
         <div className="flex items-center justify-between p-3 border-b border-border/30">
           <Button variant="ghost" size="sm" onClick={handleReset}>
             <ArrowLeft size={14} className="mr-1" />

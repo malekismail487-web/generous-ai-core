@@ -168,7 +168,7 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
   // LECTURE VIEW
   if (viewState === 'lecture' && selectedSection && selectedGrade) {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-4">
             <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
@@ -243,7 +243,7 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
   // INPUT VIEW
   if (viewState === 'input' && selectedSection && selectedGrade) {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
@@ -311,7 +311,7 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
   // GRADE VIEW
   if (viewState === 'grade' && selectedSection) {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBackToSections}>
@@ -358,7 +358,7 @@ Stay strictly within SAT ${section?.name} scope. Match official SAT format and s
 
   // SECTIONS VIEW
   return (
-    <div className="flex-1 overflow-y-auto pt-16 pb-20">
+    <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="text-center mb-8 animate-fade-in">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-primary to-accent">
