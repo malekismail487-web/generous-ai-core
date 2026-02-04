@@ -467,27 +467,31 @@ START GENERATING ALL ${count} QUESTIONS NOW:`;
       const difficultyDesc = difficulty === SATDifficulty.SAT_BEGINNER ? 'easier, foundational' :
                             difficulty === SATDifficulty.SAT_INTERMEDIATE ? 'medium difficulty' : 'challenging, advanced';
       
-      prompt = `You are an expert SAT exam generator. Generate EXACTLY ${count} SAT-style multiple-choice questions based on the study materials below.
+      prompt = `You are an expert SAT exam generator. Generate EXACTLY ${count} SAT-style multiple-choice questions based on the saved SAT study materials below.
 
-SAVED SAT MATERIALS:
+SAVED SAT STUDY MATERIALS (from SAT Practice tab):
 ${truncatedSatContext}
 
 EXAM DETAILS:
-- Exam Type: SAT Practice
+- Exam Type: SAT Practice Exam
 - Difficulty: ${difficulty.replace('SAT_', '')} (${difficultyDesc})
 - Total Questions Required: EXACTLY ${count}
 
 CRITICAL REQUIREMENTS:
 1. Generate EXACTLY ${count} questions - not fewer, not more
-2. Questions MUST be based on the saved SAT materials
-3. Follow official SAT question formats
-4. Mix Reading/Writing and Math questions appropriately
+2. Each question MUST be derived from the SAT study materials content above
+3. Questions should test understanding of the studied SAT topics
+4. Follow official SAT question formats and style
+5. For Math topics: include algebra, geometry, data analysis as covered in materials
+6. For Reading/Writing topics: include comprehension, vocabulary, grammar as covered
+7. Vary question difficulty within the ${difficulty.replace('SAT_', '')} level
+8. Cover different topics from the saved materials evenly
 
 For MATH content, use LaTeX: \\( inline \\) or $$ display $$
 
 RESPOND WITH ONLY THIS JSON (no other text):
 {
-  "exam_title": "SAT ${difficulty.replace('SAT_', '')} Exam",
+  "exam_title": "SAT ${difficulty.replace('SAT_', '')} Practice Exam",
   "grade_level": "High School",
   "subject": "SAT",
   "total_questions": ${count},
@@ -498,6 +502,13 @@ RESPOND WITH ONLY THIS JSON (no other text):
       "question": "Question text here",
       "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
       "correct_answer": "A) First option"
+    },
+    {
+      "id": 2,
+      "type": "multiple_choice",
+      "question": "Next question...",
+      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+      "correct_answer": "B) ..."
     }
   ]
 }
