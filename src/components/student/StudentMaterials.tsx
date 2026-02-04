@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import {
-  BookOpen,
   File,
   FileText,
   Image,
@@ -10,7 +9,6 @@ import {
   Filter,
   FolderOpen,
   Search,
-  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { MaterialViewer } from '@/components/MaterialViewer';
+import { MaterialsSkeleton } from './MaterialsSkeleton';
 
 const SUBJECTS = [
   { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-green-500 to-emerald-600' },
@@ -55,9 +54,42 @@ interface TeacherProfile {
 interface StudentMaterialsProps {
   materials: CourseMaterial[];
   teacherProfiles?: Record<string, TeacherProfile>;
+  loading?: boolean;
 }
 
-export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMaterialsProps) {
+// Memoized helper functions outside component
+const getSubjectInfo = (subjectId: string) => {
+  return SUBJECTS.find(s => s.id === subjectId) || { 
+    id: subjectId, 
+    name: subjectId, 
+    emoji: '📄', 
+    color: 'from-gray-500 to-gray-600' 
+  };
+};
+
+const getFileIcon = (fileUrl: string | null) => {
+  if (!fileUrl) return <FileText className="w-5 h-5" />;
+  const url = fileUrl.toLowerCase();
+  if (url.includes('.pdf')) return <File className="w-5 h-5 text-destructive" />;
+  if (url.includes('.ppt') || url.includes('.pptx')) return <File className="w-5 h-5 text-warning" />;
+  if (url.includes('.doc') || url.includes('.docx')) return <File className="w-5 h-5 text-primary" />;
+  if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return <Image className="w-5 h-5 text-accent" />;
+  if (url.match(/\.(mp4|webm|ogg|mov)$/i)) return <Video className="w-5 h-5 text-secondary-foreground" />;
+  return <File className="w-5 h-5" />;
+};
+
+const getFileType = (fileUrl: string | null) => {
+  if (!fileUrl) return 'Note';
+  const url = fileUrl.toLowerCase();
+  if (url.includes('.pdf')) return 'PDF';
+  if (url.includes('.ppt') || url.includes('.pptx')) return 'PowerPoint';
+  if (url.includes('.doc') || url.includes('.docx')) return 'Word';
+  if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return 'Image';
+  if (url.match(/\.(mp4|webm|ogg|mov)$/i)) return 'Video';
+  return 'File';
+};
+
+function StudentMaterialsComponent({ materials, teacherProfiles = {}, loading = false }: StudentMaterialsProps) {
   // Filter state
   const [filterSubject, setFilterSubject] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -66,50 +98,20 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
   const [selectedMaterial, setSelectedMaterial] = useState<CourseMaterial | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
 
-  const getTeacherName = (uploadedBy: string | undefined) => {
+  // Memoized teacher name lookup
+  const getTeacherName = useCallback((uploadedBy: string | undefined) => {
     if (!uploadedBy) return 'Teacher';
     return teacherProfiles[uploadedBy]?.full_name || 'Teacher';
-  };
-
-  const getSubjectInfo = (subjectId: string) => {
-    return SUBJECTS.find(s => s.id === subjectId) || { 
-      id: subjectId, 
-      name: subjectId, 
-      emoji: '📄', 
-      color: 'from-gray-500 to-gray-600' 
-    };
-  };
-
-  const getFileIcon = (fileUrl: string | null) => {
-    if (!fileUrl) return <FileText className="w-5 h-5" />;
-    const url = fileUrl.toLowerCase();
-    if (url.includes('.pdf')) return <File className="w-5 h-5 text-destructive" />;
-    if (url.includes('.ppt') || url.includes('.pptx')) return <File className="w-5 h-5 text-warning" />;
-    if (url.includes('.doc') || url.includes('.docx')) return <File className="w-5 h-5 text-primary" />;
-    if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return <Image className="w-5 h-5 text-accent" />;
-    if (url.match(/\.(mp4|webm|ogg|mov)$/i)) return <Video className="w-5 h-5 text-secondary-foreground" />;
-    return <File className="w-5 h-5" />;
-  };
-
-  const getFileType = (fileUrl: string | null) => {
-    if (!fileUrl) return 'Note';
-    const url = fileUrl.toLowerCase();
-    if (url.includes('.pdf')) return 'PDF';
-    if (url.includes('.ppt') || url.includes('.pptx')) return 'PowerPoint';
-    if (url.includes('.doc') || url.includes('.docx')) return 'Word';
-    if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return 'Image';
-    if (url.match(/\.(mp4|webm|ogg|mov)$/i)) return 'Video';
-    return 'File';
-  };
+  }, [teacherProfiles]);
 
   // Open material in the in-app viewer
-  const handleOpenMaterial = (material: CourseMaterial) => {
+  const handleOpenMaterial = useCallback((material: CourseMaterial) => {
     setSelectedMaterial(material);
     setViewerOpen(true);
-  };
+  }, []);
 
   // Explicit download (user choice)
-  const handleDownload = (e: React.MouseEvent, material: CourseMaterial) => {
+  const handleDownload = useCallback((e: React.MouseEvent, material: CourseMaterial) => {
     e.stopPropagation();
     if (!material.file_url) return;
     
@@ -120,20 +122,29 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+  }, []);
 
-  // Filter materials
-  const filteredMaterials = materials.filter(m => {
-    if (filterSubject !== 'all' && m.subject !== filterSubject) return false;
-    if (searchQuery && !m.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
-  });
+  // Memoized filtered materials
+  const filteredMaterials = useMemo(() => {
+    return materials.filter(m => {
+      if (filterSubject !== 'all' && m.subject !== filterSubject) return false;
+      if (searchQuery && !m.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      return true;
+    });
+  }, [materials, filterSubject, searchQuery]);
 
-  // Count materials per subject
-  const subjectCounts = SUBJECTS.reduce((acc, subject) => {
-    acc[subject.id] = materials.filter(m => m.subject === subject.id).length;
-    return acc;
-  }, {} as Record<string, number>);
+  // Memoized subject counts
+  const subjectCounts = useMemo(() => {
+    return SUBJECTS.reduce((acc, subject) => {
+      acc[subject.id] = materials.filter(m => m.subject === subject.id).length;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [materials]);
+
+  // Show skeleton while loading
+  if (loading) {
+    return <MaterialsSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
@@ -365,3 +376,6 @@ export function StudentMaterials({ materials, teacherProfiles = {} }: StudentMat
     </div>
   );
 }
+
+// Export memoized component for better performance
+export const StudentMaterials = memo(StudentMaterialsComponent);
