@@ -147,7 +147,7 @@ function StudentMaterialsComponent({ materials, teacherProfiles = {}, loading = 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
       {/* Subject Cards - Classera Style Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {SUBJECTS.filter(s => subjectCounts[s.id] > 0).slice(0, 4).map((subject) => (

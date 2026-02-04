@@ -33,6 +33,13 @@ export default function Auth() {
 
   useEffect(() => {
     const checkUserAndRedirect = async () => {
+      // Don't redirect if we came from activate-school (user wants to sign in to activate)
+      const fromActivateSchool = sessionStorage.getItem('fromActivateSchool');
+      if (fromActivateSchool) {
+        sessionStorage.removeItem('fromActivateSchool');
+        return; // Stay on auth page
+      }
+
       if (user && !loading) {
         // IMPORTANT: Super admin should always go to super-admin page, never pending approval
         if (user.email?.toLowerCase() === HARDCODED_ADMIN_EMAIL.toLowerCase()) {
