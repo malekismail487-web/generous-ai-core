@@ -41,9 +41,15 @@ export default function Auth() {
       }
 
       if (user && !loading) {
-        // IMPORTANT: Super admin should always go to super-admin page, never pending approval
+        // IMPORTANT: Super admin should go to verification page first, then super-admin panel
         if (user.email?.toLowerCase() === HARDCODED_ADMIN_EMAIL.toLowerCase()) {
-          navigate('/super-admin');
+          // Check if already verified in this session
+          const isVerified = sessionStorage.getItem('superAdminVerified');
+          if (isVerified === 'true') {
+            navigate('/super-admin');
+          } else {
+            navigate('/super-admin-verify');
+          }
           return;
         }
 

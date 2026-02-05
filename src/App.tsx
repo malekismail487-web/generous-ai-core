@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import SuperAdmin from "./pages/SuperAdmin";
+import SuperAdminVerify from "./pages/SuperAdminVerify";
 import ActivateSchool from "./pages/ActivateSchool";
 import SchoolAdminDashboard from "./pages/SchoolAdminDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/super-admin" element={<SuperAdmin />} />
+            <Route path="/super-admin-verify" element={<SuperAdminVerify />} />
             <Route path="/activate-school" element={<ActivateSchool />} />
             <Route path="/admin" element={<SchoolAdminDashboard />} />
             <Route path="/teacher" element={<TeacherDashboard />} />
