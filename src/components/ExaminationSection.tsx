@@ -411,10 +411,15 @@ export function ExaminationSection() {
     
     let prompt: string;
     
+    // Count materials to ensure balanced distribution
+    const materialCount = savedMaterials.length;
+    const questionsPerMaterial = materialCount > 0 ? Math.floor(count / materialCount) : count;
+    const extraQuestions = materialCount > 0 ? count % materialCount : 0;
+    
     if (examMenuType === ExamMenuType.SUBJECT && hasSavedMaterials) {
-      prompt = `You are an expert exam generator. Generate EXACTLY ${count} multiple-choice questions based on the study materials below.
+      prompt = `You are an expert exam generator. Generate EXACTLY ${count} multiple-choice questions based on ALL the study materials below.
 
-STUDY MATERIALS:
+STUDY MATERIALS (${materialCount} different topics/materials):
 ${truncatedMaterialContext}
 
 EXAM DETAILS:
@@ -422,13 +427,17 @@ EXAM DETAILS:
 - Grade Level: ${selectedGrade}
 - Difficulty: ${difficulty.replace('SUBJECT_', '')}
 - Total Questions Required: EXACTLY ${count}
+- Number of Materials/Topics: ${materialCount}
 
 CRITICAL REQUIREMENTS:
 1. Generate EXACTLY ${count} questions - not fewer, not more
-2. Each question MUST be derived from the study materials content
-3. Questions should test understanding, not just memorization
-4. Vary question difficulty within the ${difficulty.replace('SUBJECT_', '')} level
-5. Cover different topics from the materials evenly
+2. DISTRIBUTE QUESTIONS EVENLY across ALL ${materialCount} materials/topics:
+   - Generate approximately ${questionsPerMaterial} questions from EACH material${extraQuestions > 0 ? ` (with ${extraQuestions} extra questions from any materials)` : ''}
+   - Every material listed above MUST have questions generated from it
+   - Do NOT focus on just one material - cover ALL of them
+3. Each question MUST be derived from the study materials content
+4. Questions should test understanding, not just memorization
+5. Vary question difficulty within the ${difficulty.replace('SUBJECT_', '')} level
 
 For MATH content, use LaTeX: \\( inline \\) or $$ display $$
 
@@ -461,6 +470,7 @@ VALIDATION RULES:
 - "options" must have EXACTLY 4 items
 - "correct_answer" must EXACTLY match one option
 - Array must have EXACTLY ${count} questions
+- Questions MUST come from ALL ${materialCount} different materials
 
 START GENERATING ALL ${count} QUESTIONS NOW:`;
     } else if (examMenuType === ExamMenuType.SAT && difficulty !== SATDifficulty.SAT_FULL) {
