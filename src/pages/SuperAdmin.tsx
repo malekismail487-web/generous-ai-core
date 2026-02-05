@@ -72,6 +72,7 @@ export default function SuperAdmin() {
   const [loadingSchools, setLoadingSchools] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [testingRole, setTestingRole] = useState<TestingRole>('none');
+  const [isVerified, setIsVerified] = useState<boolean | null>(null);
   
   // Create school form state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -80,6 +81,23 @@ export default function SuperAdmin() {
   const [newActivationCode, setNewActivationCode] = useState('');
   const [newSchoolAddress, setNewSchoolAddress] = useState('');
   const [creating, setCreating] = useState(false);
+
+  // Check if super admin is verified
+  useEffect(() => {
+    const checkVerification = () => {
+      const verified = sessionStorage.getItem('superAdminVerified');
+      if (verified === 'true') {
+        setIsVerified(true);
+      } else {
+        setIsVerified(false);
+        navigate('/super-admin-verify');
+      }
+    };
+
+    if (!loading && isSuperAdmin) {
+      checkVerification();
+    }
+  }, [loading, isSuperAdmin, navigate]);
 
   const fetchSchools = useCallback(async () => {
     setLoadingSchools(true);
@@ -98,10 +116,17 @@ export default function SuperAdmin() {
   }, [toast]);
 
   useEffect(() => {
-    if (isSuperAdmin) {
+    if (isSuperAdmin && isVerified) {
       fetchSchools();
     }
-  }, [isSuperAdmin, fetchSchools]);
+  }, [isSuperAdmin, isVerified, fetchSchools]);
+
+  // Handle sign out and clear verification
+  const handleSignOut = async () => {
+    sessionStorage.removeItem('superAdminVerified');
+    await signOut();
+    navigate('/auth');
+  };
 
   const suspendSchool = async (schoolId: string) => {
     setActionLoading(schoolId);
@@ -218,7 +243,16 @@ export default function SuperAdmin() {
     toast({ title: 'Code copied to clipboard' });
   };
 
-  if (loading) {
+  if (loading || isVerified === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isVerified) {
+    // Will redirect via useEffect, show loading
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -564,7 +598,7 @@ export default function SuperAdmin() {
             <Button variant="outline" size="icon" onClick={fetchSchools} disabled={loadingSchools}>
               <RefreshCw className={`w-4 h-4 ${loadingSchools ? 'animate-spin' : ''}`} />
             </Button>
-            <Button variant="outline" size="icon" onClick={signOut}>
+            <Button variant="outline" size="icon" onClick={handleSignOut}>
               <LogOut className="w-4 h-4" />
             </Button>
           </div>

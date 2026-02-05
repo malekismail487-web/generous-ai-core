@@ -1295,6 +1295,39 @@ export type Database = {
           },
         ]
       }
+      super_admin_verification: {
+        Row: {
+          attempts: number
+          created_at: string | null
+          email: string
+          id: string
+          is_high_alert: boolean | null
+          last_attempt_at: string | null
+          locked_until: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string | null
+          email: string
+          id?: string
+          is_high_alert?: boolean | null
+          last_attempt_at?: string | null
+          locked_until?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_high_alert?: boolean | null
+          last_attempt_at?: string | null
+          locked_until?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       teacher_requests: {
         Row: {
           admin_notes: string | null
@@ -1423,6 +1456,10 @@ export type Database = {
         Args: { p_grade?: string; p_request_id: string }
         Returns: Json
       }
+      check_super_admin_lock_status: {
+        Args: { p_email: string }
+        Returns: Json
+      }
       create_school_with_code: {
         Args: {
           activation_code_input: string
@@ -1467,6 +1504,10 @@ export type Database = {
       verify_admin_access_code: {
         Args: { input_code: string }
         Returns: boolean
+      }
+      verify_super_admin_code: {
+        Args: { p_code: string; p_email: string }
+        Returns: Json
       }
     }
     Enums: {
