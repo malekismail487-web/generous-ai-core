@@ -21,7 +21,8 @@ import {
   Trash2,
   Building2,
   Key,
-  Shield
+  Shield,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,6 +66,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { ReportCardCreator } from '@/components/admin/ReportCardCreator';
 
 interface InviteCode {
   id: string;
@@ -515,7 +517,7 @@ export default function SchoolAdminDashboard() {
         )}
 
         <Tabs defaultValue="codes" className="space-y-6">
-          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+          <TabsList className="grid grid-cols-6 w-full max-w-3xl">
             <TabsTrigger value="codes" className="gap-2">
               <Key className="w-4 h-4" />
               <span className="hidden sm:inline">Codes</span>
@@ -530,6 +532,10 @@ export default function SchoolAdminDashboard() {
             <TabsTrigger value="users" className="gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="report-cards" className="gap-2">
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">Reports</span>
             </TabsTrigger>
             <TabsTrigger value="announcements" className="gap-2">
               <Megaphone className="w-4 h-4" />
@@ -948,6 +954,11 @@ export default function SchoolAdminDashboard() {
                 ))
               )}
             </div>
+          </TabsContent>
+
+          {/* Report Cards Tab */}
+          <TabsContent value="report-cards" className="space-y-4">
+            <ReportCardCreator schoolId={school.id} adminId={profile.id} />
           </TabsContent>
 
           {/* Activity Logs Tab */}

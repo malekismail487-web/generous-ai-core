@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select';
 import { AssignmentQuestionBuilder } from './AssignmentQuestionBuilder';
 import { AssignmentViewers } from './AssignmentViewers';
+import { AssignmentSubmitters } from './AssignmentSubmitters';
 
 // Hardcoded subjects list
 const SUBJECTS = [
@@ -37,6 +38,9 @@ const SUBJECTS = [
   { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'bg-teal-500' },
   { id: 'technology', name: 'Technology', emoji: '💻', color: 'bg-indigo-500' },
   { id: 'arabic', name: 'Arabic', emoji: '🕌', color: 'bg-amber-500' },
+  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️', color: 'bg-green-600' },
+  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️', color: 'bg-amber-600' },
+  { id: 'art_design', name: 'Art and Design', emoji: '🎨', color: 'bg-pink-500' },
 ];
 
 const GRADES = [
@@ -291,11 +295,12 @@ export function TeacherAssignments({
 
                   {/* Submission stats and Views */}
                   <div className="pt-3 border-t flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>{stats.total} submitted</span>
-                      </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <AssignmentSubmitters 
+                        assignmentId={assignment.id} 
+                        assignmentTitle={assignment.title}
+                        totalPoints={assignment.points}
+                      />
                       <AssignmentViewers 
                         assignmentId={assignment.id} 
                         assignmentTitle={assignment.title} 
