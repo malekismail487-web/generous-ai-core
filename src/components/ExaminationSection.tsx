@@ -24,7 +24,10 @@ enum SubjectType {
   MATHEMATICS = "MATHEMATICS",
   CHEMISTRY = "CHEMISTRY",
   PHYSICS = "PHYSICS",
-  ARABIC = "ARABIC"
+  ARABIC = "ARABIC",
+  ISLAMIC_STUDIES = "ISLAMIC_STUDIES",
+  KSA_HISTORY = "KSA_HISTORY",
+  ART_DESIGN = "ART_DESIGN"
 }
 
 enum SubjectDifficulty {
@@ -296,6 +299,9 @@ const subjects = [
   { id: SubjectType.CHEMISTRY, name: 'Chemistry', emoji: '🧪' },
   { id: SubjectType.PHYSICS, name: 'Physics', emoji: '⚛️' },
   { id: SubjectType.ARABIC, name: 'اللغة العربية', emoji: '🕌' },
+  { id: SubjectType.ISLAMIC_STUDIES, name: 'Islamic Studies', emoji: '☪️' },
+  { id: SubjectType.KSA_HISTORY, name: 'KSA History', emoji: '🏛️' },
+  { id: SubjectType.ART_DESIGN, name: 'Art and Design', emoji: '🎨' },
 ];
 
 const subjectIdMap: Record<SubjectType, string> = {
@@ -306,6 +312,9 @@ const subjectIdMap: Record<SubjectType, string> = {
   [SubjectType.CHEMISTRY]: 'chemistry',
   [SubjectType.PHYSICS]: 'physics',
   [SubjectType.ARABIC]: 'arabic',
+  [SubjectType.ISLAMIC_STUDIES]: 'islamic_studies',
+  [SubjectType.KSA_HISTORY]: 'ksa_history',
+  [SubjectType.ART_DESIGN]: 'art_design',
 };
 
 const grades = [

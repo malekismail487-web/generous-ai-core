@@ -25,6 +25,9 @@ const SUBJECTS = [
   { id: 'social_studies', name: 'Social Studies', emoji: '🌍' },
   { id: 'technology', name: 'Technology', emoji: '💻' },
   { id: 'arabic', name: 'Arabic', emoji: '🕌' },
+  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️' },
+  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️' },
+  { id: 'art_design', name: 'Art and Design', emoji: '🎨' },
 ];
 
 const GRADES = [

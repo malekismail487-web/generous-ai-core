@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { StudentAssignments } from '@/components/student/StudentAssignments';
-import { StudentMaterials } from '@/components/student/StudentMaterials';
+import { StudentReportCards } from '@/components/student/StudentReportCards';
 
 interface CourseMaterial {
   id: string;
@@ -279,18 +279,18 @@ export default function StudentDashboard() {
           )}
         </div>
 
-        <Tabs defaultValue="materials" className="space-y-6">
+        <Tabs defaultValue="assignments" className="space-y-6">
           <TabsList className="grid grid-cols-5 w-full max-w-2xl">
-            <TabsTrigger value="materials" className="gap-2">
-              <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Materials</span>
-            </TabsTrigger>
             <TabsTrigger value="assignments" className="gap-2">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">Work</span>
               {overdueAssignments.length > 0 && (
                 <Badge variant="destructive" className="ml-1">{overdueAssignments.length}</Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="report-cards" className="gap-2">
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Reports</span>
             </TabsTrigger>
             <TabsTrigger value="grades" className="gap-2">
               <Star className="w-4 h-4" />
@@ -306,14 +306,14 @@ export default function StudentDashboard() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Materials Tab - Using new Classera-style component */}
-          <TabsContent value="materials" className="space-y-4">
+          {/* Report Cards Tab */}
+          <TabsContent value="report-cards" className="space-y-4">
             {loadingData ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : (
-              <StudentMaterials materials={materials} teacherProfiles={teacherProfiles} />
+              <StudentReportCards studentId={profile.id} />
             )}
           </TabsContent>
 
