@@ -13,7 +13,7 @@ import { NotesSection } from "@/components/NotesSection";
 import { ProfileSection } from "@/components/ProfileSection";
 import { SchoolChatSection } from "@/components/SchoolChatSection";
 import { AssignmentsSection } from "@/components/AssignmentsSection";
-import { CourseMaterialsSection } from "@/components/CourseMaterialsSection";
+import { StudentReportCards } from "@/components/student/StudentReportCards";
 import { BannerAd } from "@/components/BannerAd";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -261,8 +261,8 @@ const Index = () => {
       case 'assignments':
         return <AssignmentsSection />;
 
-      case 'materials':
-        return <CourseMaterialsSection onBack={() => setActiveTab('chat')} />;
+      case 'reports':
+        return profile ? <StudentReportCards studentId={profile.id} /> : null;
 
       default:
         return null;

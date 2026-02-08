@@ -1,4 +1,4 @@
-import { MessageSquare, FileText, BookOpen, Menu, Plus, Trash2, LogOut, Sparkles, Layers, FlipHorizontal, User, Users, ClipboardList, GraduationCap, FolderOpen } from 'lucide-react';
+import { MessageSquare, FileText, BookOpen, Menu, Plus, Trash2, LogOut, Sparkles, Layers, FlipHorizontal, User, ClipboardList, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { UserProfileBadge } from './UserProfileBadge';
 
-export type TabType = 'chat' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'profile' | 'schoolchat' | 'assignments' | 'materials';
+export type TabType = 'chat' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'profile' | 'schoolchat' | 'assignments' | 'reports';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -39,7 +39,7 @@ const tabs = [
   
 const schoolTabs = [
   { id: 'assignments' as const, icon: ClipboardList, label: 'Tasks' },
-  { id: 'materials' as const, icon: FolderOpen, label: 'Materials' },
+  { id: 'reports' as const, icon: FileText, label: 'Reports' },
 ];
 
 export function BottomNav({
