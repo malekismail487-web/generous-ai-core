@@ -1061,6 +1061,7 @@ export type Database = {
           average: number | null
           comments: string | null
           created_at: string
+          file_url: string | null
           id: string
           school_id: string
           scores_json: Json
@@ -1073,6 +1074,7 @@ export type Database = {
           average?: number | null
           comments?: string | null
           created_at?: string
+          file_url?: string | null
           id?: string
           school_id: string
           scores_json?: Json
@@ -1085,6 +1087,7 @@ export type Database = {
           average?: number | null
           comments?: string | null
           created_at?: string
+          file_url?: string | null
           id?: string
           school_id?: string
           scores_json?: Json
