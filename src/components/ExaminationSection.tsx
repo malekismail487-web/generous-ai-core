@@ -27,7 +27,8 @@ enum SubjectType {
   ARABIC = "ARABIC",
   ISLAMIC_STUDIES = "ISLAMIC_STUDIES",
   KSA_HISTORY = "KSA_HISTORY",
-  ART_DESIGN = "ART_DESIGN"
+  ART_DESIGN = "ART_DESIGN",
+  ENTREPRENEURSHIP = "ENTREPRENEURSHIP"
 }
 
 enum SubjectDifficulty {
@@ -302,6 +303,7 @@ const subjects = [
   { id: SubjectType.ISLAMIC_STUDIES, name: 'Islamic Studies', emoji: '☪️' },
   { id: SubjectType.KSA_HISTORY, name: 'KSA History', emoji: '🏛️' },
   { id: SubjectType.ART_DESIGN, name: 'Art and Design', emoji: '🎨' },
+  { id: SubjectType.ENTREPRENEURSHIP, name: 'Entrepreneurship', emoji: '💼' },
 ];
 
 const subjectIdMap: Record<SubjectType, string> = {
@@ -315,6 +317,7 @@ const subjectIdMap: Record<SubjectType, string> = {
   [SubjectType.ISLAMIC_STUDIES]: 'islamic_studies',
   [SubjectType.KSA_HISTORY]: 'ksa_history',
   [SubjectType.ART_DESIGN]: 'art_design',
+  [SubjectType.ENTREPRENEURSHIP]: 'entrepreneurship',
 };
 
 const grades = [
