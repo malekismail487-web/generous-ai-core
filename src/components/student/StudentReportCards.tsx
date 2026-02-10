@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface SubjectScore {
   subject: string;
@@ -201,7 +202,8 @@ export function StudentReportCards({ studentId }: StudentReportCardsProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <ScrollArea className="h-[calc(100vh-200px)]">
+    <div className="space-y-6 pb-24">
       <h2 className="text-lg font-semibold flex items-center gap-2">
         <FileText className="w-5 h-5" />
         My Report Cards
@@ -348,5 +350,6 @@ export function StudentReportCards({ studentId }: StudentReportCardsProps) {
         </DialogContent>
       </Dialog>
     </div>
+    </ScrollArea>
   );
 }
