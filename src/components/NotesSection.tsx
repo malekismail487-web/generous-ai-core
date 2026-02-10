@@ -18,6 +18,7 @@ const subjects = [
   { id: 'islamic_studies', name: 'Islamic Studies', emoji: '🕋' },
   { id: 'ksa_history', name: 'KSA History', emoji: '🏛️' },
   { id: 'art_and_design', name: 'Art and Design', emoji: '🎨' },
+  { id: 'entrepreneurship', name: 'Entrepreneurship', emoji: '💼' },
   { id: 'sat_math', name: 'SAT Math', emoji: '🔢' },
   { id: 'sat_reading', name: 'SAT Reading', emoji: '📖' },
   { id: 'sat_writing', name: 'SAT Writing', emoji: '✍️' },

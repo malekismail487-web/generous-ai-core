@@ -20,6 +20,7 @@ const subjects = [
   { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️', color: 'from-green-600 to-emerald-700' },
   { id: 'ksa_history', name: 'KSA History', emoji: '🏛️', color: 'from-amber-600 to-orange-700' },
   { id: 'art_design', name: 'Art and Design', emoji: '🎨', color: 'from-pink-500 to-rose-600' },
+  { id: 'entrepreneurship', name: 'Entrepreneurship', emoji: '💼', color: 'from-cyan-500 to-sky-600' },
 ];
 
 const grades = [

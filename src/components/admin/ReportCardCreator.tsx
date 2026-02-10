@@ -36,7 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const SUBJECTS = [
   'Mathematics', 'English', 'Arabic', 'Physics', 'Chemistry', 'Biology',
-  'Social Studies', 'Technology', 'Islamic Studies', 'KSA History', 'Art and Design'
+  'Social Studies', 'Technology', 'Islamic Studies', 'KSA History', 'Art and Design', 'Entrepreneurship'
 ];
 
 const TERMS = ['Term 1', 'Term 2', 'Term 3', 'Final'];
@@ -69,6 +69,28 @@ interface ReportCardCreatorProps {
   adminId: string;
 }
 
+// GPA calculation helper
+function calculateGPA(scores: SubjectScore[]): string {
+  if (scores.length === 0) return '0.00';
+  const gradePoints = scores.map(s => {
+    const pct = s.maxScore > 0 ? (s.score / s.maxScore) * 100 : 0;
+    if (pct >= 93) return 4.0;
+    if (pct >= 90) return 3.7;
+    if (pct >= 87) return 3.3;
+    if (pct >= 83) return 3.0;
+    if (pct >= 80) return 2.7;
+    if (pct >= 77) return 2.3;
+    if (pct >= 73) return 2.0;
+    if (pct >= 70) return 1.7;
+    if (pct >= 67) return 1.3;
+    if (pct >= 63) return 1.0;
+    if (pct >= 60) return 0.7;
+    return 0.0;
+  });
+  const avg = gradePoints.reduce((a, b) => a + b, 0) / gradePoints.length;
+  return avg.toFixed(2);
+}
+
 export function ReportCardCreator({ schoolId, adminId }: ReportCardCreatorProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [reportCards, setReportCards] = useState<ReportCard[]>([]);
@@ -82,9 +104,10 @@ export function ReportCardCreator({ schoolId, adminId }: ReportCardCreatorProps)
   );
   const [comments, setComments] = useState('');
   const [saving, setSaving] = useState(false);
-  const [creationMode, setCreationMode] = useState<'manual' | 'file'>('manual');
+  const [creationMode, setCreationMode] = useState<'manual' | 'file' | 'gpa'>('manual');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [gpaValue, setGpaValue] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -131,6 +154,7 @@ export function ReportCardCreator({ schoolId, adminId }: ReportCardCreatorProps)
     setComments('');
     setCreationMode('manual');
     setSelectedFile(null);
+    setGpaValue('');
     setOpen(true);
   };
 
@@ -199,8 +223,12 @@ export function ReportCardCreator({ schoolId, adminId }: ReportCardCreatorProps)
         setSaving(false);
         return;
       }
-    } else {
+    } else if (creationMode === 'gpa' || creationMode === 'manual') {
       average = calculateAverage();
+      if (creationMode === 'gpa') {
+        const gpa = calculateGPA(scores);
+        setComments(prev => prev ? `${prev}\n\nGPA: ${gpa}` : `GPA: ${gpa}`);
+      }
     }
 
     // Check if report card already exists for this student/term
@@ -315,6 +343,7 @@ export function ReportCardCreator({ schoolId, adminId }: ReportCardCreatorProps)
   }
 
   return (
+    <div className="h-[calc(100vh-200px)] overflow-y-auto pb-24">
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -420,8 +449,8 @@ export function ReportCardCreator({ schoolId, adminId }: ReportCardCreatorProps)
             </DialogTitle>
           </DialogHeader>
 
-          <Tabs value={creationMode} onValueChange={(v) => setCreationMode(v as 'manual' | 'file')}>
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs value={creationMode} onValueChange={(v) => setCreationMode(v as 'manual' | 'file' | 'gpa')}>
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="manual" className="gap-2">
                 <FileText className="w-4 h-4" />
                 Manual Entry
@@ -429,6 +458,10 @@ export function ReportCardCreator({ schoolId, adminId }: ReportCardCreatorProps)
               <TabsTrigger value="file" className="gap-2">
                 <Upload className="w-4 h-4" />
                 Upload File
+              </TabsTrigger>
+              <TabsTrigger value="gpa" className="gap-2">
+                <GraduationCap className="w-4 h-4" />
+                Create GPA
               </TabsTrigger>
             </TabsList>
 
@@ -539,6 +572,27 @@ export function ReportCardCreator({ schoolId, adminId }: ReportCardCreatorProps)
                 </div>
               </div>
             </TabsContent>
+
+            <TabsContent value="gpa">
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Enter the student's subject scores above in the Manual Entry tab first, then switch here to calculate and save their GPA.
+                </p>
+                
+                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                  <span className="font-semibold">Calculated GPA</span>
+                  <Badge className="text-lg px-3 py-1">{calculateGPA(scores)}</Badge>
+                </div>
+
+                <div className="p-4 bg-muted/50 rounded-lg text-xs text-muted-foreground space-y-1">
+                  <p className="font-semibold text-sm text-foreground mb-2">GPA Scale</p>
+                  <p>93-100% → 4.0 | 90-92% → 3.7 | 87-89% → 3.3</p>
+                  <p>83-86% → 3.0 | 80-82% → 2.7 | 77-79% → 2.3</p>
+                  <p>73-76% → 2.0 | 70-72% → 1.7 | 67-69% → 1.3</p>
+                  <p>63-66% → 1.0 | 60-62% → 0.7 | Below 60% → 0.0</p>
+                </div>
+              </div>
+            </TabsContent>
           </Tabs>
 
           <div className="flex gap-2 pt-4">
@@ -560,6 +614,7 @@ export function ReportCardCreator({ schoolId, adminId }: ReportCardCreatorProps)
           </div>
         </DialogContent>
       </Dialog>
+    </div>
     </div>
   );
 }
