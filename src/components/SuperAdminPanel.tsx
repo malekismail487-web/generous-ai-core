@@ -59,12 +59,10 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
   };
 
   const deleteSchool = async (schoolId: string) => {
-    if (!confirm('Are you sure you want to delete this school?')) return;
+    if (!confirm('Are you sure you want to delete this school? This will permanently remove all associated data (students, teachers, assignments, etc.).')) return;
 
     const { error } = await supabase
-      .from('schools')
-      .delete()
-      .eq('id', schoolId);
+      .rpc('delete_school_cascade', { school_uuid: schoolId });
 
     if (error) {
       setError(error.message);

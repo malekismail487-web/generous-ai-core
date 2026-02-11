@@ -1479,6 +1479,10 @@ export type Database = {
         }
         Returns: Json
       }
+      delete_school_cascade: {
+        Args: { school_uuid: string }
+        Returns: undefined
+      }
       deny_invite_request: { Args: { p_request_id: string }; Returns: Json }
       get_user_school_id: { Args: { user_uuid: string }; Returns: string }
       grant_admin_via_code: {
