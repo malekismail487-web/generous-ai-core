@@ -1166,7 +1166,7 @@ START GENERATING NOW:`;
   // SUBJECTS VIEW
   if (viewState === 'subjects') {
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-24">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={() => setViewState('type')}>
@@ -1180,7 +1180,7 @@ START GENERATING NOW:`;
             <p className="text-muted-foreground text-sm">Choose a subject for your exam</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 overflow-y-auto">
+          <div className="grid grid-cols-2 gap-3">
             {subjects.map((subj, index) => {
               const materialCount = getMaterialsBySubject(subjectIdMap[subj.id]).length;
               return (
