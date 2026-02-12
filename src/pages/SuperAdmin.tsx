@@ -184,15 +184,11 @@ export default function SuperAdmin() {
   const deleteSchool = async (schoolId: string) => {
     setActionLoading(schoolId);
     
-    // The CASCADE will handle related data deletion
-    const { error } = await supabase
-      .from('schools')
-      .delete()
-      .eq('id', schoolId);
+    const { error } = await supabase.rpc('delete_school_cascade', { school_uuid: schoolId });
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error deleting school' });
-      console.error(error);
+      toast({ variant: 'destructive', title: 'Error deleting school', description: error.message });
+      console.error('Delete school error:', error);
     } else {
       toast({ title: 'School deleted successfully' });
       fetchSchools();
