@@ -18,7 +18,6 @@ export default function ActivateSchool() {
   const [schoolName, setSchoolName] = useState('');
   const [code, setCode] = useState('');
   const [activating, setActivating] = useState(false);
-  const [success, setSuccess] = useState<{ schoolName: string } | null>(null);
 
   const handleActivate = async () => {
     if (!schoolName.trim()) {
@@ -64,9 +63,9 @@ export default function ActivateSchool() {
         return;
       }
 
-      setSuccess({ schoolName: result.school_name || schoolName.trim() });
       toast({ title: 'School activated successfully!' });
       await refresh();
+      navigate('/admin');
     } catch (err) {
       toast({ variant: 'destructive', title: 'An error occurred during activation' });
     } finally {
@@ -125,28 +124,8 @@ export default function ActivateSchool() {
     return <Navigate to="/" replace />;
   }
 
-  if (success) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background p-4">
-        <div className="ambient-glow" />
-        <div className="glass-effect rounded-2xl p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="w-8 h-8 text-green-500" />
-          </div>
-          <h1 className="text-2xl font-bold mb-2">School Activated!</h1>
-          <p className="text-muted-foreground mb-2">
-            You are now the administrator of
-          </p>
-          <p className="text-xl font-semibold text-primary mb-6">
-            {success.schoolName}
-          </p>
-          <Button onClick={() => navigate('/admin')} className="w-full">
-            Go to Admin Dashboard
-          </Button>
-        </div>
-      </div>
-    );
-  }
+
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
