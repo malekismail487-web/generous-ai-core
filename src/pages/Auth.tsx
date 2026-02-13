@@ -95,9 +95,8 @@ export default function Auth() {
             navigate('/');
           }
         } else {
-          // No profile found - stay on auth page so user can join a school or activate one
-          // Don't redirect to avoid loops
-          return;
+          // No profile - go to main app (or activate school for new admins)
+          navigate('/');
         }
       }
     };

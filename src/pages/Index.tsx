@@ -189,9 +189,9 @@ const Index = () => {
     return <Navigate to="/teacher" replace />;
   }
   
-  // No profile - redirect to auth page to sign up with invite code
+  // No profile - redirect to join or activate
   if (!hasProfile) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/activate-school" replace />;
   }
 
   // Pending or rejected users go to pending approval page
