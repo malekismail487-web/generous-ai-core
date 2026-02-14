@@ -11,6 +11,8 @@ import {
   GraduationCap,
   MessageCircle,
   Flame,
+  Calendar,
+  Settings,
 } from 'lucide-react';
 
 export type GridAction =
@@ -22,7 +24,9 @@ export type GridAction =
   | 'sat'
   | 'assignments'
   | 'reports'
-  | 'schoolchat';
+  | 'schoolchat'
+  | 'weeklyplan'
+  | 'settings';
 
 interface StudentHomeGridProps {
   onNavigate: (action: GridAction) => void;
@@ -30,15 +34,17 @@ interface StudentHomeGridProps {
 }
 
 const gridItems: { id: GridAction; icon: typeof MessageSquare; label: string; color: string; borderColor: string; schoolOnly?: boolean }[] = [
-  { id: 'chat', icon: MessageSquare, label: 'AI Tutor', color: 'from-blue-500 to-blue-600', borderColor: 'border-blue-500' },
   { id: 'subjects', icon: Layers, label: 'Subjects', color: 'from-emerald-500 to-emerald-600', borderColor: 'border-emerald-500' },
+  { id: 'sat', icon: GraduationCap, label: 'SAT Prep', color: 'from-purple-500 to-purple-600', borderColor: 'border-purple-500' },
   { id: 'examination', icon: BookOpen, label: 'Exams', color: 'from-green-500 to-green-600', borderColor: 'border-green-500' },
+  { id: 'assignments', icon: FileText, label: 'Assignments', color: 'from-orange-500 to-orange-600', borderColor: 'border-orange-500', schoolOnly: true },
   { id: 'flashcards', icon: FlipHorizontal, label: 'Flashcards', color: 'from-amber-500 to-amber-600', borderColor: 'border-amber-500' },
   { id: 'notes', icon: ClipboardList, label: 'Notes', color: 'from-cyan-500 to-cyan-600', borderColor: 'border-cyan-500' },
-  { id: 'sat', icon: GraduationCap, label: 'SAT Prep', color: 'from-purple-500 to-purple-600', borderColor: 'border-purple-500' },
-  { id: 'assignments', icon: FileText, label: 'Assignments', color: 'from-orange-500 to-orange-600', borderColor: 'border-orange-500', schoolOnly: true },
   { id: 'reports', icon: FileText, label: 'Report Cards', color: 'from-rose-500 to-rose-600', borderColor: 'border-rose-500', schoolOnly: true },
+  { id: 'weeklyplan', icon: Calendar, label: 'Weekly Plan', color: 'from-indigo-500 to-indigo-600', borderColor: 'border-indigo-500', schoolOnly: true },
   { id: 'schoolchat', icon: MessageCircle, label: 'School Chat', color: 'from-teal-500 to-teal-600', borderColor: 'border-teal-500', schoolOnly: true },
+  { id: 'chat', icon: MessageSquare, label: 'AI Tutor', color: 'from-blue-500 to-blue-600', borderColor: 'border-blue-500' },
+  { id: 'settings', icon: Settings, label: 'Settings', color: 'from-gray-500 to-gray-600', borderColor: 'border-gray-500' },
 ];
 
 export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps) {

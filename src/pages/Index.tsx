@@ -133,7 +133,13 @@ const Index = () => {
   };
 
   const handleGridNavigate = (action: GridAction) => {
-    setActiveTab(action as TabType);
+    if (action === 'settings') {
+      setActiveTab('profile');
+    } else if (action === 'weeklyplan') {
+      setActiveTab('weeklyplan');
+    } else {
+      setActiveTab(action as TabType);
+    }
   };
 
   // Loading states
