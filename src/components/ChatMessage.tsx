@@ -8,53 +8,53 @@ interface ChatMessageProps {
 }
 
 function useTypewriter(content: string, isStreaming: boolean) {
-  const [displayed, setDisplayed] = useState("");
-  const prevLenRef = useRef(0);
-  const queueRef = useRef<string[]>([]);
-  const rafRef = useRef<number | null>(null);
+  const [displayed, setDisplayed] = useState(isStreaming ? "" : content);
+  const prevContentRef = useRef(content);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const targetRef = useRef(content);
 
-  // When not streaming (history or stream ended), show full content
+  // For non-streaming messages or when streaming ends, show full content immediately
   useEffect(() => {
     if (!isStreaming) {
-      setDisplayed(content);
-      prevLenRef.current = content.length;
-      queueRef.current = [];
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
+      setDisplayed(content);
+      targetRef.current = content;
+      prevContentRef.current = content;
     }
   }, [isStreaming, content]);
 
-  // When streaming and new content arrives, queue it
+  // During streaming, animate new content character by character
   useEffect(() => {
     if (!isStreaming) return;
 
-    if (content.length > prevLenRef.current) {
-      const newChars = content.slice(prevLenRef.current);
-      const words = newChars.split(/(?<=\s)/);
-      queueRef.current.push(...words);
-      prevLenRef.current = content.length;
-    }
+    targetRef.current = content;
 
-    const flush = () => {
-      if (queueRef.current.length === 0) {
-        rafRef.current = null;
-        return;
-      }
-      const batch = queueRef.current.splice(0, 2).join("");
-      setDisplayed((prev) => prev + batch);
-      rafRef.current = requestAnimationFrame(flush);
-    };
+    if (intervalRef.current) return; // Already animating
 
-    if (queueRef.current.length > 0 && !rafRef.current) {
-      rafRef.current = requestAnimationFrame(flush);
-    }
+    intervalRef.current = setInterval(() => {
+      setDisplayed((prev) => {
+        const target = targetRef.current;
+        if (prev.length >= target.length) {
+          // Caught up, stop interval
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          return prev;
+        }
+        // Reveal 3-5 characters at a time for fast but visible effect
+        const charsToAdd = Math.min(4, target.length - prev.length);
+        return target.slice(0, prev.length + charsToAdd);
+      });
+    }, 18); // ~55fps, very smooth
 
     return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
   }, [content, isStreaming]);
