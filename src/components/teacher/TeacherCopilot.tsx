@@ -23,17 +23,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const SUBJECTS = [
-  { id: 'biology', name: 'Biology', emoji: '🧬' },
-  { id: 'physics', name: 'Physics', emoji: '⚛️' },
-  { id: 'mathematics', name: 'Mathematics', emoji: '📐' },
-  { id: 'chemistry', name: 'Chemistry', emoji: '🧪' },
-  { id: 'english', name: 'English', emoji: '📚' },
-  { id: 'social_studies', name: 'Social Studies', emoji: '🌍' },
-  { id: 'technology', name: 'Technology', emoji: '💻' },
-  { id: 'arabic', name: 'Arabic', emoji: '🕌' },
-  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️' },
-  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️' },
-  { id: 'art_design', name: 'Art and Design', emoji: '🎨' },
+  'Biology', 'Physics', 'Mathematics', 'Chemistry',
+  'English', 'Social Studies', 'Technology', 'Arabic',
+  'Islamic Studies', 'KSA History', 'Art and Design',
 ];
 
 const GRADES = [
@@ -67,11 +59,12 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>('configure');
 
-  // Config state
-  const [subject, setSubject] = useState('biology');
-  const [topic, setTopic] = useState('');
+  // Config state — mirrors the manual AssignmentCreator
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [subject, setSubject] = useState('');
   const [questionCount, setQuestionCount] = useState<number>(5);
-  const [gradeLevel, setGradeLevel] = useState('All');
+  const [gradeLevel, setGradeLevel] = useState('');
   const [dueDate, setDueDate] = useState('');
 
   // Generated state
@@ -80,23 +73,29 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
 
   const reset = () => {
     setStep('configure');
-    setSubject('biology');
-    setTopic('');
+    setTitle('');
+    setDescription('');
+    setSubject('');
     setQuestionCount(5);
-    setGradeLevel('All');
+    setGradeLevel('');
     setDueDate('');
     setGeneratedTitle('');
     setQuestions([]);
   };
 
   const handleGenerate = async () => {
+    if (!title.trim() || !subject || !gradeLevel) {
+      toast({ variant: 'destructive', title: 'Please fill in title, subject, and grade level' });
+      return;
+    }
     setStep('generating');
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-assignment', {
         body: {
-          subject: SUBJECTS.find(s => s.id === subject)?.name || subject,
-          topic: topic.trim() || undefined,
+          title: title.trim(),
+          description: description.trim() || undefined,
+          subject,
           questionCount,
           gradeLevel,
         },
@@ -105,7 +104,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setGeneratedTitle(data.title || `${SUBJECTS.find(s => s.id === subject)?.name} Quiz`);
+      setGeneratedTitle(title.trim());
       setQuestions(
         (data.questions || []).map((q: any) => ({
           ...q,
@@ -186,28 +185,50 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
         {step === 'configure' && (
           <div className="space-y-5 pt-2">
             <div className="space-y-2">
-              <Label>Subject *</Label>
-              <Select value={subject} onValueChange={setSubject}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SUBJECTS.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.emoji} {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Assignment Title *</Label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Photosynthesis Quiz, Quadratic Equations Test..."
+              />
             </div>
 
             <div className="space-y-2">
-              <Label>Topic (optional)</Label>
+              <Label>Description (optional)</Label>
               <Input
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g. Photosynthesis, Quadratic Equations..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Additional instructions or context..."
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Subject *</Label>
+                <Select value={subject} onValueChange={setSubject}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUBJECTS.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Grade Level *</Label>
+                <Select value={gradeLevel} onValueChange={setGradeLevel}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select grade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GRADES.map((g) => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -227,31 +248,21 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Grade Level *</Label>
-                <Select value={gradeLevel} onValueChange={setGradeLevel}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GRADES.map((g) => (
-                      <SelectItem key={g} value={g}>{g}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Due Date (optional)</Label>
-                <Input
-                  type="datetime-local"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label>Due Date (optional)</Label>
+              <Input
+                type="datetime-local"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
             </div>
 
-            <Button onClick={handleGenerate} className="w-full gap-2" size="lg">
+            <Button
+              onClick={handleGenerate}
+              className="w-full gap-2"
+              size="lg"
+              disabled={!title.trim() || !subject || !gradeLevel}
+            >
               <Sparkles className="w-4 h-4" />
               Generate {questionCount} Questions with AI
             </Button>
