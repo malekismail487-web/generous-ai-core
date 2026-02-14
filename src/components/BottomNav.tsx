@@ -16,7 +16,6 @@ const bottomTabs = [
 ];
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
-  // Only highlight Home, Weekly Plan, Profile in the bottom bar
   const activeBottomTab = ['home', 'weeklyplan', 'profile'].includes(activeTab) ? activeTab : 'home';
 
   return (
@@ -31,18 +30,21 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all duration-200",
-                isActive ? "text-primary" : "text-muted-foreground"
+                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all duration-300",
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className={cn(
-                "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200",
-                isActive && "bg-primary/20"
+                "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300",
+                isActive && "bg-primary/15 shadow-sm"
               )}>
-                <Icon size={18} className={cn(isActive && "scale-110")} />
+                <Icon size={18} className={cn(
+                  "transition-transform duration-300",
+                  isActive && "scale-110"
+                )} />
               </div>
               <span className={cn(
-                "text-[10px] font-medium transition-all",
+                "text-[10px] font-semibold transition-all",
                 isActive && "text-primary"
               )}>
                 {tab.label}
