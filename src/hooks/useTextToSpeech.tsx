@@ -1,9 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 
 export function useTextToSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const { language } = useThemeLanguage();
 
   const isSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
@@ -45,11 +47,15 @@ export function useTextToSpeech() {
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
 
-    // Try to pick a good voice
+    const isArabic = language === 'ar';
+    utterance.lang = isArabic ? 'ar-SA' : 'en-US';
+
+    // Try to pick a good voice for the current language
     const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(v =>
-      v.name.includes('Google') && v.lang.startsWith('en')
-    ) || voices.find(v => v.lang.startsWith('en'));
+    const preferred = isArabic
+      ? voices.find(v => v.lang.startsWith('ar'))
+      : (voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
+         || voices.find(v => v.lang.startsWith('en')));
     if (preferred) utterance.voice = preferred;
 
     utterance.onstart = () => {
