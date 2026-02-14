@@ -1335,6 +1335,75 @@ export type Database = {
           },
         ]
       }
+      super_admin_attack_attempts: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          device_fingerprint: string
+          id: string
+          is_high_alert: boolean | null
+          locked_until: string | null
+          permanently_blocked: boolean | null
+          updated_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          device_fingerprint: string
+          id?: string
+          is_high_alert?: boolean | null
+          locked_until?: string | null
+          permanently_blocked?: boolean | null
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          device_fingerprint?: string
+          id?: string
+          is_high_alert?: boolean | null
+          locked_until?: string | null
+          permanently_blocked?: boolean | null
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      super_admin_attack_logs: {
+        Row: {
+          attempt_count: number | null
+          created_at: string | null
+          device_fingerprint: string
+          id: string
+          resolved_action: string | null
+          resolved_at: string | null
+          status: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          attempt_count?: number | null
+          created_at?: string | null
+          device_fingerprint: string
+          id?: string
+          resolved_action?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          attempt_count?: number | null
+          created_at?: string | null
+          device_fingerprint?: string
+          id?: string
+          resolved_action?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       super_admin_verification: {
         Row: {
           attempts: number
@@ -1550,7 +1619,7 @@ export type Database = {
         Returns: Json
       }
       check_super_admin_lock_status: {
-        Args: { p_email: string }
+        Args: { p_device_fingerprint?: string; p_email: string }
         Returns: Json
       }
       create_school_with_code: {
@@ -1603,7 +1672,12 @@ export type Database = {
         Returns: boolean
       }
       verify_super_admin_code: {
-        Args: { p_code: string; p_email: string }
+        Args: {
+          p_code: string
+          p_device_fingerprint?: string
+          p_email: string
+          p_user_agent?: string
+        }
         Returns: Json
       }
     }
