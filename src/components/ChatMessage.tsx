@@ -1,6 +1,7 @@
 import { Message } from "@/lib/chat";
 import { User, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { MathRenderer } from "@/components/MathRenderer";
 
 interface ChatMessageProps {
   message: Message;
@@ -87,8 +88,12 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
           isUser ? "message-user" : "message-assistant"
         }`}
       >
-        <div className="text-sm leading-relaxed whitespace-pre-wrap">
-          {isUser ? message.content : displayedContent}
+        <div className="text-sm leading-relaxed">
+          {isUser ? (
+            <span className="whitespace-pre-wrap">{message.content}</span>
+          ) : (
+            <MathRenderer content={displayedContent} className="text-sm" />
+          )}
           {isStreaming && !isUser && (
             <span className="inline-block w-1.5 h-4 ml-0.5 bg-current animate-pulse rounded-sm align-text-bottom" />
           )}
