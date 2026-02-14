@@ -12,9 +12,9 @@ import {
   GraduationCap,
   Flame,
   Calendar,
+  Settings,
   Sparkles,
   Podcast,
-  Menu,
 } from 'lucide-react';
 
 export type GridAction =
@@ -28,7 +28,7 @@ export type GridAction =
   | 'reports'
   | 'weeklyplan'
   | 'podcasts'
-  | 'profile';
+  | 'settings';
 
 interface StudentHomeGridProps {
   onNavigate: (action: GridAction) => void;
@@ -51,6 +51,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
     { id: 'weeklyplan', icon: Calendar, label: t('Weekly Plan', 'الخطة الأسبوعية'), color: 'from-indigo-500 to-blue-600', iconBg: 'bg-indigo-500/15 border-indigo-500/30', schoolOnly: true },
     { id: 'chat', icon: MessageSquare, label: t('AI Tutor', 'المعلم الذكي'), color: 'from-primary to-accent', iconBg: 'bg-primary/15 border-primary/30' },
     { id: 'podcasts', icon: Podcast, label: t('AI Podcasts', 'بودكاست AI'), color: 'from-fuchsia-500 to-pink-600', iconBg: 'bg-fuchsia-500/15 border-fuchsia-500/30' },
+    { id: 'settings', icon: Settings, label: t('Settings', 'الإعدادات'), color: 'from-slate-500 to-gray-600', iconBg: 'bg-slate-500/15 border-slate-500/30' },
   ];
 
   const visibleItems = gridItems.filter(item => !item.schoolOnly || hasSchool);
@@ -67,21 +68,13 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
           </div>
 
           <div className="flex items-center justify-between mb-5 relative z-10">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => onNavigate('profile' as GridAction)}
-                className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-white/25 transition-colors"
-              >
-                <Menu className="w-5 h-5 text-white" />
-              </button>
-              <div>
+            <div>
               <h1 className="text-2xl font-extrabold text-white tracking-tight">
                 {t(`Hello ${firstName} 👋`, `مرحباً ${firstName} 👋`)}
               </h1>
               <p className="text-white/70 text-sm mt-1">
                 {t('Ready to learn something new today?', 'مستعد لتعلم شيء جديد اليوم؟')}
               </p>
-              </div>
             </div>
             <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-2xl px-3.5 py-2.5 border border-white/10">
               <Flame className="w-5 h-5 text-amber-400" />
