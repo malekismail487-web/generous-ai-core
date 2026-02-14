@@ -89,8 +89,12 @@ export function StudentAppPreview() {
                   <EmptyState onSuggestionClick={sendMessage} />
                 ) : (
                   <div className="space-y-3">
-                    {messages.map((message) => (
-                      <ChatMessage key={message.id} message={message} />
+                    {messages.map((message, idx) => (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                        isStreaming={isLoading && message.role === "assistant" && idx === messages.length - 1}
+                      />
                     ))}
                     {isLoading && messages[messages.length - 1]?.role === "user" && (
                       <TypingIndicator />
