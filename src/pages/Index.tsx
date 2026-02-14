@@ -260,8 +260,8 @@ const Index = () => {
     <div className="h-screen bg-background relative flex flex-col overflow-hidden">
       <AnimatedBackground />
       
-      {/* Top bar - only show on sub-pages for back navigation */}
-      {isSubPage && (
+      {/* Top bar */}
+      {isSubPage ? (
         <header className="fixed top-0 left-0 right-0 z-50 h-14 glass-effect-strong border-b border-border/30">
           <div className="flex items-center h-full px-4 gap-3">
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setActiveTab('home')}>
@@ -286,7 +286,22 @@ const Index = () => {
             </div>
           </div>
         </header>
-      )}
+      ) : activeTab === 'home' ? (
+        <header className="fixed top-0 left-0 right-0 z-50 h-14 glass-effect-strong border-b border-border/30">
+          <div className="flex items-center justify-between h-full px-4">
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setActiveTab('profile')}>
+              <Menu size={20} />
+            </Button>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
+                <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
+              </div>
+              <span className="font-bold text-foreground text-sm">{t('Study Bright', 'Study Bright')}</span>
+            </div>
+            <div className="w-9" />
+          </div>
+        </header>
+      ) : null}
 
       <BottomNav
         activeTab={activeTab}
