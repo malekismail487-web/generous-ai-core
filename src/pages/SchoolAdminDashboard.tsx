@@ -22,8 +22,10 @@ import {
   Building2,
   Key,
   Shield,
-  FileText
+  FileText,
+  Calendar
 } from 'lucide-react';
+import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -517,7 +519,7 @@ export default function SchoolAdminDashboard() {
         )}
 
         <Tabs defaultValue="codes" className="space-y-6">
-          <TabsList className="grid grid-cols-6 w-full max-w-3xl">
+          <TabsList className="grid grid-cols-7 w-full max-w-4xl">
             <TabsTrigger value="codes" className="gap-2">
               <Key className="w-4 h-4" />
               <span className="hidden sm:inline">Codes</span>
@@ -532,6 +534,10 @@ export default function SchoolAdminDashboard() {
             <TabsTrigger value="users" className="gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="weekly-plans" className="gap-2">
+              <Calendar className="w-4 h-4" />
+              <span className="hidden sm:inline">Weekly</span>
             </TabsTrigger>
             <TabsTrigger value="report-cards" className="gap-2">
               <FileText className="w-4 h-4" />
@@ -959,6 +965,11 @@ export default function SchoolAdminDashboard() {
           {/* Report Cards Tab */}
           <TabsContent value="report-cards" className="space-y-4">
             <ReportCardCreator schoolId={school.id} adminId={profile.id} />
+          </TabsContent>
+
+          {/* Weekly Plans Tab */}
+          <TabsContent value="weekly-plans" className="space-y-4">
+            <WeeklyPlanBuilder />
           </TabsContent>
 
           {/* Activity Logs Tab */}

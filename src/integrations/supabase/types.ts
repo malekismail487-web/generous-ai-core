@@ -550,6 +550,36 @@ export type Database = {
           },
         ]
       }
+      daily_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_active_date: string
+          max_streak: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_active_date?: string
+          max_streak?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_active_date?: string
+          max_streak?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exam_submissions: {
         Row: {
           answers_json: Json
@@ -1446,6 +1476,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "user_strikes_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_plans: {
+        Row: {
+          content_json: Json | null
+          created_at: string
+          created_by: string
+          file_name: string | null
+          file_url: string | null
+          grade_level: string
+          id: string
+          plan_type: string
+          school_id: string
+          title: string
+          updated_at: string
+          week_start: string
+        }
+        Insert: {
+          content_json?: Json | null
+          created_at?: string
+          created_by: string
+          file_name?: string | null
+          file_url?: string | null
+          grade_level?: string
+          id?: string
+          plan_type?: string
+          school_id: string
+          title: string
+          updated_at?: string
+          week_start: string
+        }
+        Update: {
+          content_json?: Json | null
+          created_at?: string
+          created_by?: string
+          file_name?: string | null
+          file_url?: string | null
+          grade_level?: string
+          id?: string
+          plan_type?: string
+          school_id?: string
+          title?: string
+          updated_at?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_plans_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
