@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Message, streamChat } from "@/lib/chat";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
@@ -224,14 +225,7 @@ const Index = () => {
 
   return (
     <div className="h-screen bg-background relative flex flex-col overflow-hidden">
-      <div className="ambient-glow" />
-      <div className="ambient-shapes">
-        <div className="shape" />
-        <div className="shape" />
-        <div className="shape" />
-        <div className="shape" />
-        <div className="shape" />
-      </div>
+      <AnimatedBackground />
       
       {/* Top bar - only show on sub-pages for back navigation */}
       {isSubPage && (
