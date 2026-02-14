@@ -11,36 +11,40 @@ function useTypewriter(content: string, isStreaming: boolean) {
   const [displayed, setDisplayed] = useState("");
   const prevLenRef = useRef(0);
   const queueRef = useRef<string[]>([]);
-  const rafRef = useRef<number>(0);
-  const idxRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
 
+  // When not streaming (history or stream ended), show full content
   useEffect(() => {
     if (!isStreaming) {
-      // Not streaming — show full content immediately (for history messages)
       setDisplayed(content);
       prevLenRef.current = content.length;
-      idxRef.current = content.length;
-      return;
+      queueRef.current = [];
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     }
+  }, [isStreaming, content]);
 
-    // When new content arrives, queue the new characters
+  // When streaming and new content arrives, queue it
+  useEffect(() => {
+    if (!isStreaming) return;
+
     if (content.length > prevLenRef.current) {
       const newChars = content.slice(prevLenRef.current);
-      // Push word-sized chunks for natural feel
       const words = newChars.split(/(?<=\s)/);
       queueRef.current.push(...words);
       prevLenRef.current = content.length;
     }
 
     const flush = () => {
-      if (queueRef.current.length === 0) return;
-      // Pop 1-2 words per frame for a fast but visible effect
+      if (queueRef.current.length === 0) {
+        rafRef.current = null;
+        return;
+      }
       const batch = queueRef.current.splice(0, 2).join("");
       setDisplayed((prev) => prev + batch);
-
-      if (queueRef.current.length > 0) {
-        rafRef.current = requestAnimationFrame(flush);
-      }
+      rafRef.current = requestAnimationFrame(flush);
     };
 
     if (queueRef.current.length > 0 && !rafRef.current) {
@@ -50,18 +54,10 @@ function useTypewriter(content: string, isStreaming: boolean) {
     return () => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
-        rafRef.current = 0;
+        rafRef.current = null;
       }
     };
   }, [content, isStreaming]);
-
-  // When streaming ends, flush any remaining queue instantly
-  useEffect(() => {
-    if (!isStreaming && queueRef.current.length > 0) {
-      setDisplayed(content);
-      queueRef.current = [];
-    }
-  }, [isStreaming, content]);
 
   return displayed;
 }
