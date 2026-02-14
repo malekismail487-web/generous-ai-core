@@ -4,80 +4,53 @@ import { Button } from '@/components/ui/button';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 
 const INACTIVITY_TIMEOUT = 30_000; // 30 seconds
+const MUSIC_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-ambient-music`;
 
-/**
- * Generates a calm ambient drone using the Web Audio API.
- * Returns a cleanup function that stops everything.
- */
-function startAmbientMusic(audioCtxRef: React.MutableRefObject<AudioContext | null>): () => void {
-  const ctx = new AudioContext();
-  audioCtxRef.current = ctx;
+// Cache the audio blob so we only generate once per session
+let cachedAudioUrl: string | null = null;
+let fetchingMusic = false;
+const fetchQueue: Array<(url: string) => void> = [];
 
-  const masterGain = ctx.createGain();
-  masterGain.gain.setValueAtTime(0, ctx.currentTime);
-  masterGain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 2);
-  masterGain.connect(ctx.destination);
+async function getAmbientMusicUrl(): Promise<string> {
+  if (cachedAudioUrl) return cachedAudioUrl;
 
-  // Pad layer 1 — deep warm tone
-  const osc1 = ctx.createOscillator();
-  osc1.type = 'sine';
-  osc1.frequency.setValueAtTime(174.61, ctx.currentTime); // F3
-  const g1 = ctx.createGain();
-  g1.gain.setValueAtTime(0.4, ctx.currentTime);
-  osc1.connect(g1).connect(masterGain);
-  osc1.start();
+  if (fetchingMusic) {
+    return new Promise<string>((resolve) => fetchQueue.push(resolve));
+  }
 
-  // Pad layer 2 — gentle fifth
-  const osc2 = ctx.createOscillator();
-  osc2.type = 'sine';
-  osc2.frequency.setValueAtTime(261.63, ctx.currentTime); // C4
-  const g2 = ctx.createGain();
-  g2.gain.setValueAtTime(0.25, ctx.currentTime);
-  osc2.connect(g2).connect(masterGain);
-  osc2.start();
+  fetchingMusic = true;
+  try {
+    const response = await fetch(MUSIC_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({}),
+    });
 
-  // Pad layer 3 — shimmery high
-  const osc3 = ctx.createOscillator();
-  osc3.type = 'triangle';
-  osc3.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-  const g3 = ctx.createGain();
-  g3.gain.setValueAtTime(0.08, ctx.currentTime);
-  osc3.connect(g3).connect(masterGain);
-  osc3.start();
+    if (!response.ok) throw new Error("Failed to generate music");
 
-  // Subtle LFO to modulate pitch gently
-  const lfo = ctx.createOscillator();
-  lfo.type = 'sine';
-  lfo.frequency.setValueAtTime(0.1, ctx.currentTime);
-  const lfoGain = ctx.createGain();
-  lfoGain.gain.setValueAtTime(2, ctx.currentTime);
-  lfo.connect(lfoGain);
-  lfoGain.connect(osc1.frequency);
-  lfoGain.connect(osc2.frequency);
-  lfo.start();
-
-  return () => {
-    masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
-    setTimeout(() => {
-      [osc1, osc2, osc3, lfo].forEach(o => { try { o.stop(); } catch {} });
-      ctx.close();
-      audioCtxRef.current = null;
-    }, 1100);
-  };
+    const blob = await response.blob();
+    cachedAudioUrl = URL.createObjectURL(blob);
+    fetchQueue.forEach(cb => cb(cachedAudioUrl!));
+    fetchQueue.length = 0;
+    return cachedAudioUrl;
+  } finally {
+    fetchingMusic = false;
+  }
 }
 
 export function InactivityOverlay() {
   const [isInactive, setIsInactive] = useState(false);
   const [visible, setVisible] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const stopMusicRef = useRef<(() => void) | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { t } = useThemeLanguage();
 
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-
-    // If currently inactive, dismiss overlay
     if (isInactive) return;
 
     timerRef.current = setTimeout(() => {
@@ -97,26 +70,53 @@ export function InactivityOverlay() {
     };
   }, [resetTimer]);
 
-  // When inactive state triggers, show overlay and start music
+  // When inactive, show overlay and play music
   useEffect(() => {
-    if (isInactive) {
-      // Small delay for the CSS transition to work
-      requestAnimationFrame(() => setVisible(true));
-      stopMusicRef.current = startAmbientMusic(audioCtxRef);
-    }
+    if (!isInactive) return;
+
+    requestAnimationFrame(() => setVisible(true));
+
+    // Start music
+    getAmbientMusicUrl()
+      .then((url) => {
+        const audio = new Audio(url);
+        audio.loop = true;
+        audio.volume = 0;
+        audioRef.current = audio;
+        audio.play().catch(() => {});
+        // Fade in volume
+        let vol = 0;
+        const fadeIn = setInterval(() => {
+          vol = Math.min(vol + 0.01, 0.4);
+          audio.volume = vol;
+          if (vol >= 0.4) clearInterval(fadeIn);
+        }, 50);
+      })
+      .catch(() => {
+        // Silently fail — overlay still works without music
+      });
   }, [isInactive]);
 
   const handleBackToApp = useCallback(() => {
     setVisible(false);
-    // Stop music
-    if (stopMusicRef.current) {
-      stopMusicRef.current();
-      stopMusicRef.current = null;
+
+    // Fade out music
+    const audio = audioRef.current;
+    if (audio) {
+      let vol = audio.volume;
+      const fadeOut = setInterval(() => {
+        vol = Math.max(vol - 0.02, 0);
+        audio.volume = vol;
+        if (vol <= 0) {
+          clearInterval(fadeOut);
+          audio.pause();
+          audioRef.current = null;
+        }
+      }, 30);
     }
-    // Wait for fade-out before removing
+
     setTimeout(() => {
       setIsInactive(false);
-      // Restart the inactivity timer
     }, 500);
   }, []);
 
