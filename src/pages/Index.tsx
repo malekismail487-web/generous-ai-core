@@ -13,6 +13,7 @@ import { ExaminationSection } from "@/components/ExaminationSection";
 import { SATSection } from "@/components/SATSection";
 import { NotesSection } from "@/components/NotesSection";
 import { ProfileSection } from "@/components/ProfileSection";
+import { PodcastsSection } from "@/components/PodcastsSection";
 
 import { AssignmentsSection } from "@/components/AssignmentsSection";
 import { StudentReportCards } from "@/components/student/StudentReportCards";
@@ -254,6 +255,8 @@ const Index = () => {
         return <SATSection />;
       case 'profile':
         return <ProfileSection />;
+      case 'podcasts':
+        return <PodcastsSection />;
       case 'assignments':
         return <AssignmentsSection />;
       case 'reports':
@@ -287,6 +290,7 @@ const Index = () => {
                   : activeTab === 'examination' ? t('Exams', 'الاختبارات')
                   : activeTab === 'assignments' ? t('Assignments', 'الواجبات')
                   : activeTab === 'reports' ? t('Report Cards', 'كشوف الدرجات')
+                  : activeTab === 'podcasts' ? t('AI Podcasts', 'بودكاست AI')
                   : activeTab}
               </span>
             </div>
