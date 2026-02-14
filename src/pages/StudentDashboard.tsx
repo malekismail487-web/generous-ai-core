@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/hooks/useAuth';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr, getGradeName } from '@/lib/translations';
 import { Navigate } from 'react-router-dom';
 import {
   Loader2,
@@ -80,6 +82,8 @@ export default function StudentDashboard() {
   const { isStudent, school, profile, loading } = useRoleGuard();
   const { signOut } = useAuth();
   const { toast } = useToast();
+  const { language } = useThemeLanguage();
+  const tl = (key: Parameters<typeof tr>[0]) => tr(key, language);
 
   // State
   const [materials, setMaterials] = useState<CourseMaterial[]>([]);
@@ -89,8 +93,6 @@ export default function StudentDashboard() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [awards, setAwards] = useState<Award[]>([]);
   const [loadingData, setLoadingData] = useState(true);
-
-  // Settings state
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -221,13 +223,13 @@ export default function StudentDashboard() {
               <BookOpen className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Welcome, {profile.full_name}!</h1>
+              <h1 className="text-xl font-bold">{tl('welcome')}, {profile.full_name}!</h1>
               <p className="text-xs text-muted-foreground">{school.name}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {profile.grade_level && (
-              <Badge variant="outline">{profile.grade_level}</Badge>
+              <Badge variant="outline">{getGradeName(profile.grade_level, language)}</Badge>
             )}
             <Button variant="outline" size="icon" onClick={signOut}>
               <LogOut className="w-4 h-4" />
@@ -237,16 +239,16 @@ export default function StudentDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {/* Welcome Section with Countdown */}
+        {/* Welcome Section */}
         <div className="glass-effect rounded-xl p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Your Dashboard</h2>
+              <h2 className="text-2xl font-bold mb-2">{tl('yourDashboard')}</h2>
               {upcomingDeadlines.length > 0 && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="w-4 h-4" />
                   <span>
-                    Next deadline: <strong>{upcomingDeadlines[0].title}</strong> on{' '}
+                    {tl('nextDeadline')} <strong>{upcomingDeadlines[0].title}</strong> {tl('on')}{' '}
                     {new Date(upcomingDeadlines[0].due_date!).toLocaleDateString()}
                   </span>
                 </div>
@@ -255,25 +257,24 @@ export default function StudentDashboard() {
             <div className="flex gap-4">
               <div className="text-center">
                 <p className="text-3xl font-bold text-primary">{materials.length}</p>
-                <p className="text-xs text-muted-foreground">Materials</p>
+                <p className="text-xs text-muted-foreground">{tl('materials')}</p>
               </div>
               <div className="text-center">
                 <p className="text-3xl font-bold text-green-500">{submissions.length}</p>
-                <p className="text-xs text-muted-foreground">Submitted</p>
+                <p className="text-xs text-muted-foreground">{tl('submitted')}</p>
               </div>
               <div className="text-center">
                 <p className="text-3xl font-bold text-amber-500">{awards.length}</p>
-                <p className="text-xs text-muted-foreground">Awards</p>
+                <p className="text-xs text-muted-foreground">{tl('myAwards')}</p>
               </div>
             </div>
           </div>
 
-          {/* Overdue Warning */}
           {overdueAssignments.length > 0 && (
             <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-destructive" />
               <span className="text-destructive font-medium">
-                You have {overdueAssignments.length} overdue assignment{overdueAssignments.length > 1 ? 's' : ''}!
+                {tl('youHave')} {overdueAssignments.length} {overdueAssignments.length > 1 ? tl('overdueWarningPlural') : tl('overdueWarning')}!
               </span>
             </div>
           )}
@@ -283,26 +284,26 @@ export default function StudentDashboard() {
           <TabsList className="grid grid-cols-5 w-full max-w-2xl">
             <TabsTrigger value="assignments" className="gap-2">
               <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">Work</span>
+              <span className="hidden sm:inline">{tl('work')}</span>
               {overdueAssignments.length > 0 && (
                 <Badge variant="destructive" className="ml-1">{overdueAssignments.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="report-cards" className="gap-2">
               <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Reports</span>
+              <span className="hidden sm:inline">{tl('reports')}</span>
             </TabsTrigger>
             <TabsTrigger value="grades" className="gap-2">
               <Star className="w-4 h-4" />
-              <span className="hidden sm:inline">Grades</span>
+              <span className="hidden sm:inline">{tl('grades')}</span>
             </TabsTrigger>
             <TabsTrigger value="announcements" className="gap-2">
               <Megaphone className="w-4 h-4" />
-              <span className="hidden sm:inline">News</span>
+              <span className="hidden sm:inline">{tl('news')}</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Settings</span>
+              <span className="hidden sm:inline">{tl('settings')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -335,23 +336,23 @@ export default function StudentDashboard() {
 
           {/* Grades Tab */}
           <TabsContent value="grades" className="space-y-4">
-            <h2 className="text-lg font-semibold">My Grades</h2>
+            <h2 className="text-lg font-semibold">{tl('myGrades')}</h2>
 
             <div className="glass-effect rounded-xl overflow-hidden">
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="text-left p-4 font-medium">Assignment</th>
-                    <th className="text-left p-4 font-medium">Submitted</th>
-                    <th className="text-left p-4 font-medium">Grade</th>
-                    <th className="text-left p-4 font-medium">Feedback</th>
+                    <th className="text-left p-4 font-medium">{tl('assignment')}</th>
+                    <th className="text-left p-4 font-medium">{tl('submitted')}</th>
+                    <th className="text-left p-4 font-medium">{tl('grade')}</th>
+                    <th className="text-left p-4 font-medium">{tl('feedback')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {submissions.filter(s => s.grade !== null).length === 0 ? (
                     <tr>
                       <td colSpan={4} className="text-center py-8 text-muted-foreground">
-                        No grades yet
+                        {tl('noGradesYet')}
                       </td>
                     </tr>
                   ) : (
@@ -361,9 +362,7 @@ export default function StudentDashboard() {
                         const assignment = assignments.find(a => a.id === submission.assignment_id);
                         return (
                           <tr key={submission.id} className="border-t border-border/50">
-                            <td className="p-4 font-medium">
-                              {assignment?.title || 'Unknown'}
-                            </td>
+                            <td className="p-4 font-medium">{assignment?.title || 'Unknown'}</td>
                             <td className="p-4 text-muted-foreground">
                               {new Date(submission.submitted_at).toLocaleDateString()}
                             </td>
@@ -383,10 +382,9 @@ export default function StudentDashboard() {
               </table>
             </div>
 
-            {/* Awards Section */}
             {awards.length > 0 && (
               <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-4">My Awards</h3>
+                <h3 className="text-lg font-semibold mb-4">{tl('myAwards')}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {awards.map((award) => (
                     <div key={award.id} className="glass-effect rounded-xl p-4 text-center">
@@ -404,15 +402,13 @@ export default function StudentDashboard() {
 
           {/* Announcements Tab */}
           <TabsContent value="announcements" className="space-y-4">
-            <h2 className="text-lg font-semibold">Announcements</h2>
+            <h2 className="text-lg font-semibold">{tl('announcementsLabel')}</h2>
 
             {announcements.length === 0 ? (
               <div className="glass-effect rounded-xl p-8 text-center">
                 <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="font-semibold mb-2">No Announcements</h3>
-                <p className="text-sm text-muted-foreground">
-                  School announcements will appear here
-                </p>
+                <h3 className="font-semibold mb-2">{tl('noAnnouncements')}</h3>
+                <p className="text-sm text-muted-foreground">{tl('schoolAnnouncementsWillAppear')}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -431,17 +427,15 @@ export default function StudentDashboard() {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">
-            <h2 className="text-lg font-semibold">Settings</h2>
+            <h2 className="text-lg font-semibold">{tl('settings')}</h2>
 
             <div className="glass-effect rounded-xl p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Bell className="w-5 h-5 text-muted-foreground" />
                   <div>
-                    <p className="font-medium">Notifications</p>
-                    <p className="text-sm text-muted-foreground">
-                      Receive notifications for new assignments and grades
-                    </p>
+                    <p className="font-medium">{tl('notifications')}</p>
+                    <p className="text-sm text-muted-foreground">{tl('notificationsDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -451,18 +445,18 @@ export default function StudentDashboard() {
               </div>
 
               <div className="border-t pt-6">
-                <h3 className="font-medium mb-4">Profile Information</h3>
+                <h3 className="font-medium mb-4">{tl('profileInformation')}</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Name</span>
+                    <span className="text-muted-foreground">{tl('name')}</span>
                     <span>{profile.full_name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Grade</span>
-                    <span>{profile.grade_level || 'Not set'}</span>
+                    <span className="text-muted-foreground">{tl('grade')}</span>
+                    <span>{profile.grade_level ? getGradeName(profile.grade_level, language) : tl('notSet')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">School</span>
+                    <span className="text-muted-foreground">{tl('school')}</span>
                     <span>{school.name}</span>
                   </div>
                 </div>
