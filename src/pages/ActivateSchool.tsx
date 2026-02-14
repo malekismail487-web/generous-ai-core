@@ -64,8 +64,8 @@ export default function ActivateSchool() {
       }
 
       toast({ title: 'School activated successfully!' });
-      await refresh();
-      navigate('/admin');
+      // Force full page reload so the admin dashboard fetches fresh profile/school data
+      window.location.href = '/admin';
     } catch (err) {
       toast({ variant: 'destructive', title: 'An error occurred during activation' });
     } finally {
