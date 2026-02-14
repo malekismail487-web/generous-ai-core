@@ -100,7 +100,6 @@ export default {
           from: { opacity: "0", transform: "scale(0.95)" },
           to: { opacity: "1", transform: "scale(1)" },
         },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
