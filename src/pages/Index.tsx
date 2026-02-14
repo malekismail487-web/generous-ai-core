@@ -11,7 +11,7 @@ import { ExaminationSection } from "@/components/ExaminationSection";
 import { SATSection } from "@/components/SATSection";
 import { NotesSection } from "@/components/NotesSection";
 import { ProfileSection } from "@/components/ProfileSection";
-import { SchoolChatSection } from "@/components/SchoolChatSection";
+
 import { AssignmentsSection } from "@/components/AssignmentsSection";
 import { StudentReportCards } from "@/components/student/StudentReportCards";
 import { StudentHomeGrid, GridAction } from "@/components/StudentHomeGrid";
@@ -213,8 +213,6 @@ const Index = () => {
         return <SATSection />;
       case 'profile':
         return <ProfileSection />;
-      case 'schoolchat':
-        return <SchoolChatSection />;
       case 'assignments':
         return <AssignmentsSection />;
       case 'reports':
@@ -240,7 +238,7 @@ const Index = () => {
                 <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
               </div>
               <span className="font-bold text-foreground text-sm capitalize">
-                {activeTab === 'sat' ? 'SAT Prep' : activeTab === 'schoolchat' ? 'School Chat' : activeTab}
+                {activeTab === 'sat' ? 'SAT Prep' : activeTab}
               </span>
             </div>
           </div>
