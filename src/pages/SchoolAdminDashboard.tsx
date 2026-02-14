@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard, UserProfile } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/hooks/useAuth';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr, getGradeName } from '@/lib/translations';
 import { Navigate } from 'react-router-dom';
 import {
   Loader2,
@@ -109,6 +111,8 @@ export default function SchoolAdminDashboard() {
   const { isSchoolAdmin, school, profile, loading } = useRoleGuard();
   const { signOut } = useAuth();
   const { toast } = useToast();
+  const { language } = useThemeLanguage();
+  const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
 
   // Users state
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -258,17 +262,17 @@ export default function SchoolAdminDashboard() {
       });
 
       if (error) {
-        toast({ variant: 'destructive', title: 'Error creating invite code', description: error.message });
+        toast({ variant: 'destructive', title: t('error'), description: error.message });
         return;
       }
 
       const result = data as { success?: boolean; error?: string };
       if (!result?.success) {
-        toast({ variant: 'destructive', title: 'Error creating invite code', description: result?.error || 'Failed' });
+        toast({ variant: 'destructive', title: t('error'), description: result?.error || 'Failed' });
         return;
       }
 
-      toast({ title: 'Invite code created!' });
+      toast({ title: t('success') });
       fetchInviteCodes();
     } finally {
       setCreatingCode(false);
@@ -282,9 +286,9 @@ export default function SchoolAdminDashboard() {
       .eq('id', codeId);
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error revoking code' });
+      toast({ variant: 'destructive', title: t('error') });
     } else {
-      toast({ title: 'Code revoked' });
+      toast({ title: t('success') });
       fetchInviteCodes();
     }
   };
@@ -299,18 +303,18 @@ export default function SchoolAdminDashboard() {
     });
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error accepting request', description: error.message });
+      toast({ variant: 'destructive', title: t('error'), description: error.message });
       console.error(error);
       return;
     }
 
     const result = data as { success: boolean; error?: string };
     if (!result.success) {
-      toast({ variant: 'destructive', title: result.error || 'Failed to accept request' });
+      toast({ variant: 'destructive', title: result.error || 'Failed' });
       return;
     }
 
-    toast({ title: 'User accepted!' });
+    toast({ title: t('success') });
     fetchInviteRequests();
     fetchUsers();
     setGradeModalOpen(false);
@@ -324,9 +328,9 @@ export default function SchoolAdminDashboard() {
     });
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error denying request' });
+      toast({ variant: 'destructive', title: t('error') });
     } else {
-      toast({ title: 'Request denied' });
+      toast({ title: t('success') });
       fetchInviteRequests();
     }
   };
@@ -338,9 +342,9 @@ export default function SchoolAdminDashboard() {
       .eq('id', userId);
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error suspending user' });
+      toast({ variant: 'destructive', title: t('error') });
     } else {
-      toast({ title: 'User suspended' });
+      toast({ title: t('success') });
       fetchUsers();
     }
   };
@@ -352,9 +356,9 @@ export default function SchoolAdminDashboard() {
       .eq('id', userId);
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error activating user' });
+      toast({ variant: 'destructive', title: t('error') });
     } else {
-      toast({ title: 'User activated' });
+      toast({ title: t('success') });
       fetchUsers();
     }
   };
@@ -366,16 +370,16 @@ export default function SchoolAdminDashboard() {
       .eq('id', userId);
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error deleting user' });
+      toast({ variant: 'destructive', title: t('error') });
     } else {
-      toast({ title: 'User deleted' });
+      toast({ title: t('success') });
       fetchUsers();
     }
   };
 
   const createAnnouncement = async () => {
     if (!school || !profile || !newAnnouncementTitle || !newAnnouncementBody) {
-      toast({ variant: 'destructive', title: 'Please fill all fields' });
+      toast({ variant: 'destructive', title: t('error') });
       return;
     }
 
@@ -390,9 +394,9 @@ export default function SchoolAdminDashboard() {
       });
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error creating announcement' });
+      toast({ variant: 'destructive', title: t('error') });
     } else {
-      toast({ title: 'Announcement posted!' });
+      toast({ title: t('success') });
       setNewAnnouncementTitle('');
       setNewAnnouncementBody('');
       fetchAnnouncements();
@@ -407,21 +411,21 @@ export default function SchoolAdminDashboard() {
       .eq('id', announcementId);
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error deleting announcement' });
+      toast({ variant: 'destructive', title: t('error') });
     } else {
-      toast({ title: 'Announcement deleted' });
+      toast({ title: t('success') });
       fetchAnnouncements();
     }
   };
 
   const exportUsersCSV = () => {
     const csvContent = [
-      ['Name', 'Role', 'Grade', 'Status'].join(','),
+      [t('name'), t('role'), t('grade'), t('status')].join(','),
       ...filteredUsers.map(u => [
         u.full_name,
         u.user_type,
         u.grade_level || '',
-        u.is_active ? 'Active' : 'Suspended'
+        u.is_active ? t('active') : t('suspended')
       ].join(','))
     ].join('\n');
 
@@ -472,7 +476,7 @@ export default function SchoolAdminDashboard() {
             </div>
             <div>
               <h1 className="text-xl font-bold">{school.name}</h1>
-              <p className="text-xs text-muted-foreground">School Admin Dashboard</p>
+              <p className="text-xs text-muted-foreground">{t('schoolAdminDashboard')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -487,21 +491,21 @@ export default function SchoolAdminDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="glass-effect rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">Total Users</p>
+            <p className="text-sm text-muted-foreground">{t('totalUsers')}</p>
             <p className="text-2xl font-bold">{users.length}</p>
           </div>
           <div className="glass-effect rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">Pending Requests</p>
+            <p className="text-sm text-muted-foreground">{t('pendingRequests')}</p>
             <p className="text-2xl font-bold text-amber-500">{inviteRequests.length}</p>
           </div>
           <div className="glass-effect rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">Active Codes</p>
+            <p className="text-sm text-muted-foreground">{t('activeCodes')}</p>
             <p className="text-2xl font-bold text-green-500">
               {inviteCodes.filter(c => !c.used && new Date(c.expires_at) > new Date()).length}
             </p>
           </div>
           <div className="glass-effect rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">Announcements</p>
+            <p className="text-sm text-muted-foreground">{t('announcementsLabel')}</p>
             <p className="text-2xl font-bold">{announcements.length}</p>
           </div>
         </div>
@@ -512,7 +516,7 @@ export default function SchoolAdminDashboard() {
             <div className="flex items-center gap-2 text-amber-500">
               <Clock className="w-5 h-5" />
               <span className="font-medium">
-                {pendingCounts.students} student{pendingCounts.students !== 1 ? 's' : ''}, {pendingCounts.teachers} teacher{pendingCounts.teachers !== 1 ? 's' : ''} pending approval
+                {pendingCounts.students} {t('student')}{pendingCounts.students !== 1 ? (language === 'ar' ? '' : 's') : ''}, {pendingCounts.teachers} {t('teacher')}{pendingCounts.teachers !== 1 ? (language === 'ar' ? '' : 's') : ''} {t('pendingApprovalCount')}
               </span>
             </div>
           </div>
@@ -522,54 +526,54 @@ export default function SchoolAdminDashboard() {
           <TabsList className="grid grid-cols-7 w-full max-w-4xl">
             <TabsTrigger value="codes" className="gap-2">
               <Key className="w-4 h-4" />
-              <span className="hidden sm:inline">Codes</span>
+              <span className="hidden sm:inline">{t('codes')}</span>
             </TabsTrigger>
             <TabsTrigger value="pending" className="gap-2">
               <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline">Pending</span>
+              <span className="hidden sm:inline">{t('pending')}</span>
               {inviteRequests.length > 0 && (
                 <Badge variant="destructive" className="ml-1">{inviteRequests.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-2">
               <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Users</span>
+              <span className="hidden sm:inline">{t('users')}</span>
             </TabsTrigger>
             <TabsTrigger value="weekly-plans" className="gap-2">
               <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">Weekly</span>
+              <span className="hidden sm:inline">{t('weekly')}</span>
             </TabsTrigger>
             <TabsTrigger value="report-cards" className="gap-2">
               <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">Reports</span>
+              <span className="hidden sm:inline">{t('reports')}</span>
             </TabsTrigger>
             <TabsTrigger value="announcements" className="gap-2">
               <Megaphone className="w-4 h-4" />
-              <span className="hidden sm:inline">Announce</span>
+              <span className="hidden sm:inline">{t('announce')}</span>
             </TabsTrigger>
             <TabsTrigger value="logs" className="gap-2">
               <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline">Logs</span>
+              <span className="hidden sm:inline">{t('logs')}</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Invite Codes Tab */}
           <TabsContent value="codes" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Invite Codes</h2>
+              <h2 className="text-lg font-semibold">{t('inviteCodes')}</h2>
               <div className="flex items-center gap-2">
                 <Select value={newCodeRole} onValueChange={(v) => setNewCodeRole(v as 'teacher' | 'student')}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="teacher">Teacher</SelectItem>
+                    <SelectItem value="student">{t('student')}</SelectItem>
+                    <SelectItem value="teacher">{t('teacher')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button onClick={generateInviteCode} disabled={creatingCode} className="gap-2">
                   {creatingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                  Generate Code
+                  {t('generateCode')}
                 </Button>
               </div>
             </div>
@@ -578,18 +582,18 @@ export default function SchoolAdminDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Expires</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('code')}</TableHead>
+                    <TableHead>{t('role')}</TableHead>
+                    <TableHead>{t('status')}</TableHead>
+                    <TableHead>{t('expires')}</TableHead>
+                    <TableHead className="text-right">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {inviteCodes.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        No invite codes yet. Generate one to get started.
+                        {t('noInviteCodesYet')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -600,14 +604,14 @@ export default function SchoolAdminDashboard() {
                           <TableCell>
                             <code className="bg-muted px-2 py-1 rounded font-mono">{code.code}</code>
                           </TableCell>
-                          <TableCell className="capitalize">{code.role}</TableCell>
+                          <TableCell className="capitalize">{code.role === 'student' ? t('student') : t('teacher')}</TableCell>
                           <TableCell>
                             {code.used ? (
-                              <Badge variant="secondary">Used</Badge>
+                              <Badge variant="secondary">{t('used')}</Badge>
                             ) : isExpired ? (
-                              <Badge variant="destructive">Expired</Badge>
+                              <Badge variant="destructive">{t('expired')}</Badge>
                             ) : (
-                              <Badge variant="default" className="bg-green-500">Active</Badge>
+                              <Badge variant="default" className="bg-green-500">{t('active')}</Badge>
                             )}
                           </TableCell>
                           <TableCell className="text-muted-foreground">
@@ -615,12 +619,8 @@ export default function SchoolAdminDashboard() {
                           </TableCell>
                           <TableCell className="text-right">
                             {!code.used && !isExpired && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => revokeInviteCode(code.id)}
-                              >
-                                Revoke
+                              <Button variant="outline" size="sm" onClick={() => revokeInviteCode(code.id)}>
+                                {t('revoke')}
                               </Button>
                             )}
                           </TableCell>
@@ -636,7 +636,7 @@ export default function SchoolAdminDashboard() {
           {/* Pending Requests Tab */}
           <TabsContent value="pending" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Pending Requests</h2>
+              <h2 className="text-lg font-semibold">{t('pendingRequests')}</h2>
               <Button variant="outline" size="icon" onClick={fetchInviteRequests} disabled={loadingRequests}>
                 <RefreshCw className={`w-4 h-4 ${loadingRequests ? 'animate-spin' : ''}`} />
               </Button>
@@ -646,19 +646,19 @@ export default function SchoolAdminDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Requested</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('name')}</TableHead>
+                    <TableHead>{t('email')}</TableHead>
+                    <TableHead>{t('role')}</TableHead>
+                    <TableHead>{t('code')}</TableHead>
+                    <TableHead>{t('requested')}</TableHead>
+                    <TableHead className="text-right">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {inviteRequests.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        No pending requests
+                        {t('noPendingRequests')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -668,7 +668,7 @@ export default function SchoolAdminDashboard() {
                         <TableRow key={request.id}>
                           <TableCell className="font-medium">{request.name}</TableCell>
                           <TableCell>{request.email}</TableCell>
-                          <TableCell className="capitalize">{inviteCode?.role}</TableCell>
+                          <TableCell className="capitalize">{inviteCode?.role === 'student' ? t('student') : t('teacher')}</TableCell>
                           <TableCell>
                             <code className="bg-muted px-2 py-1 rounded text-xs">{inviteCode?.code}</code>
                           </TableCell>
@@ -691,7 +691,7 @@ export default function SchoolAdminDashboard() {
                                 }}
                               >
                                 <Check className="w-4 h-4" />
-                                Accept
+                                {t('accept')}
                               </Button>
                               <Button
                                 variant="outline"
@@ -700,7 +700,7 @@ export default function SchoolAdminDashboard() {
                                 onClick={() => denyInviteRequest(request.id)}
                               >
                                 <X className="w-4 h-4" />
-                                Deny
+                                {t('deny')}
                               </Button>
                             </div>
                           </TableCell>
@@ -716,44 +716,33 @@ export default function SchoolAdminDashboard() {
             <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Assign Student Grade</DialogTitle>
+                  <DialogTitle>{t('assignStudentGrade')}</DialogTitle>
                   <DialogDescription>
-                    Select the grade level for {selectedRequest?.name}
+                    {t('selectGradeFor')} {selectedRequest?.name}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
-                  <Label htmlFor="grade">Grade Level</Label>
+                  <Label htmlFor="grade">{t('gradeLevel')}</Label>
                   <Select value={studentGrade} onValueChange={setStudentGrade}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select grade level" />
+                      <SelectValue placeholder={t('selectGradeLabel')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="KG1">KG1 (Kindergarten 1)</SelectItem>
-                      <SelectItem value="KG2">KG2 (Kindergarten 2)</SelectItem>
-                      <SelectItem value="Grade 1">Grade 1</SelectItem>
-                      <SelectItem value="Grade 2">Grade 2</SelectItem>
-                      <SelectItem value="Grade 3">Grade 3</SelectItem>
-                      <SelectItem value="Grade 4">Grade 4</SelectItem>
-                      <SelectItem value="Grade 5">Grade 5</SelectItem>
-                      <SelectItem value="Grade 6">Grade 6</SelectItem>
-                      <SelectItem value="Grade 7">Grade 7</SelectItem>
-                      <SelectItem value="Grade 8">Grade 8</SelectItem>
-                      <SelectItem value="Grade 9">Grade 9</SelectItem>
-                      <SelectItem value="Grade 10">Grade 10</SelectItem>
-                      <SelectItem value="Grade 11">Grade 11</SelectItem>
-                      <SelectItem value="Grade 12">Grade 12</SelectItem>
+                      {['KG1', 'KG2', ...Array.from({length: 12}, (_, i) => `Grade ${i+1}`)].map(g => (
+                        <SelectItem key={g} value={g}>{getGradeName(g, language)}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setGradeModalOpen(false)}>
-                    Cancel
+                    {t('cancel')}
                   </Button>
                   <Button 
                     onClick={() => selectedRequest && acceptInviteRequest(selectedRequest, studentGrade)}
                     disabled={!studentGrade}
                   >
-                    Accept Student
+                    {t('acceptStudent')}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -763,12 +752,12 @@ export default function SchoolAdminDashboard() {
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <h2 className="text-lg font-semibold">Users</h2>
+              <h2 className="text-lg font-semibold">{t('users')}</h2>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search users..."
+                    placeholder={t('searchUsers')}
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                     className="pl-9 w-40"
@@ -776,23 +765,23 @@ export default function SchoolAdminDashboard() {
                 </div>
                 <Select value={userRoleFilter} onValueChange={setUserRoleFilter}>
                   <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Role" />
+                    <SelectValue placeholder={t('role')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="school_admin">Admin</SelectItem>
-                    <SelectItem value="teacher">Teacher</SelectItem>
-                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="all">{t('allRoles')}</SelectItem>
+                    <SelectItem value="school_admin">{t('admin')}</SelectItem>
+                    <SelectItem value="teacher">{t('teacher')}</SelectItem>
+                    <SelectItem value="student">{t('student')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={userStatusFilter} onValueChange={setUserStatusFilter}>
                   <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder={t('status')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="all">{t('allStatus')}</SelectItem>
+                    <SelectItem value="active">{t('active')}</SelectItem>
+                    <SelectItem value="suspended">{t('suspended')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button variant="outline" size="icon" onClick={exportUsersCSV}>
@@ -805,81 +794,69 @@ export default function SchoolAdminDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Grade</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('name')}</TableHead>
+                    <TableHead>{t('role')}</TableHead>
+                    <TableHead>{t('grade')}</TableHead>
+                    <TableHead>{t('status')}</TableHead>
+                    <TableHead className="text-right">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        No users found
+                        {t('noUsersFound')}
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.full_name}</TableCell>
-                        <TableCell className="capitalize">{user.user_type.replace('_', ' ')}</TableCell>
-                        <TableCell>{user.grade_level || '-'}</TableCell>
+                        <TableCell className="capitalize">
+                          {user.user_type === 'student' ? t('student') : user.user_type === 'teacher' ? t('teacher') : t('schoolAdmin')}
+                        </TableCell>
+                        <TableCell>{user.grade_level ? getGradeName(user.grade_level, language) : '-'}</TableCell>
                         <TableCell>
                           {user.is_active ? (
-                            <Badge variant="default" className="bg-green-500">Active</Badge>
+                            <Badge variant="default" className="bg-green-500">{t('active')}</Badge>
                           ) : (
-                            <Badge variant="destructive">Suspended</Badge>
+                            <Badge variant="destructive">{t('suspended')}</Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
                           {user.id !== profile?.id && (
                             <div className="flex items-center justify-end gap-2">
                               {user.is_active ? (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => suspendUser(user.id)}
-                                  className="gap-1"
-                                >
+                                <Button variant="outline" size="sm" onClick={() => suspendUser(user.id)} className="gap-1">
                                   <Ban className="w-4 h-4" />
-                                  Suspend
+                                  {t('suspend')}
                                 </Button>
                               ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => activateUser(user.id)}
-                                  className="gap-1"
-                                >
+                                <Button variant="outline" size="sm" onClick={() => activateUser(user.id)} className="gap-1">
                                   <Play className="w-4 h-4" />
-                                  Activate
+                                  {t('activate')}
                                 </Button>
                               )}
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-1 text-destructive hover:text-destructive"
-                                  >
+                                  <Button variant="outline" size="sm" className="gap-1 text-destructive hover:text-destructive">
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete User?</AlertDialogTitle>
+                                    <AlertDialogTitle>{t('deleteUser')}</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      This will permanently delete {user.full_name} and all their data.
+                                      {t('deleteUserDesc')} {user.full_name} {t('andAllData')}
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                                     <AlertDialogAction
                                       onClick={() => deleteUser(user.id)}
                                       className="bg-destructive hover:bg-destructive/90"
                                     >
-                                      Delete
+                                      {t('delete')}
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -897,26 +874,26 @@ export default function SchoolAdminDashboard() {
 
           {/* Announcements Tab */}
           <TabsContent value="announcements" className="space-y-4">
-            <h2 className="text-lg font-semibold">Announcements</h2>
+            <h2 className="text-lg font-semibold">{t('announcementsLabel')}</h2>
 
             {/* Create Announcement Form */}
             <div className="glass-effect rounded-xl p-4 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="announcement-title">Title</Label>
+                <Label htmlFor="announcement-title">{t('title')}</Label>
                 <Input
                   id="announcement-title"
                   value={newAnnouncementTitle}
                   onChange={(e) => setNewAnnouncementTitle(e.target.value)}
-                  placeholder="Announcement title"
+                  placeholder={t('announcementTitle')}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="announcement-body">Message</Label>
+                <Label htmlFor="announcement-body">{t('message')}</Label>
                 <Textarea
                   id="announcement-body"
                   value={newAnnouncementBody}
                   onChange={(e) => setNewAnnouncementBody(e.target.value)}
-                  placeholder="Write your announcement..."
+                  placeholder={t('writeAnnouncement')}
                   rows={4}
                 />
               </div>
@@ -925,7 +902,7 @@ export default function SchoolAdminDashboard() {
                 disabled={creatingAnnouncement || !newAnnouncementTitle || !newAnnouncementBody}
               >
                 {creatingAnnouncement ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Megaphone className="w-4 h-4 mr-2" />}
-                Post Announcement
+                {t('postAnnouncement')}
               </Button>
             </div>
 
@@ -934,7 +911,7 @@ export default function SchoolAdminDashboard() {
               {announcements.length === 0 ? (
                 <div className="glass-effect rounded-xl p-8 text-center">
                   <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">No announcements yet</p>
+                  <p className="text-muted-foreground">{t('noAnnouncementsYet')}</p>
                 </div>
               ) : (
                 announcements.map((announcement) => (
@@ -975,7 +952,7 @@ export default function SchoolAdminDashboard() {
           {/* Activity Logs Tab */}
           <TabsContent value="logs" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Activity Logs</h2>
+              <h2 className="text-lg font-semibold">{t('activityLogs')}</h2>
               <Button variant="outline" size="icon" onClick={fetchActivityLogs} disabled={loadingLogs}>
                 <RefreshCw className={`w-4 h-4 ${loadingLogs ? 'animate-spin' : ''}`} />
               </Button>
@@ -985,16 +962,16 @@ export default function SchoolAdminDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Details</TableHead>
-                    <TableHead>Time</TableHead>
+                    <TableHead>{t('action')}</TableHead>
+                    <TableHead>{t('details')}</TableHead>
+                    <TableHead>{t('time')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {activityLogs.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                        No activity logs yet
+                        {t('noActivityLogs')}
                       </TableCell>
                     </TableRow>
                   ) : (

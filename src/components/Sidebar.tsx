@@ -14,6 +14,8 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr } from '@/lib/translations';
 import { Conversation } from '@/hooks/useConversations';
 import { Note } from '@/hooks/useNotes';
 import { cn } from '@/lib/utils';
@@ -35,13 +37,6 @@ interface SidebarProps {
   onDeleteNote: (id: string) => void;
 }
 
-const tabs = [
-  { id: 'chat' as const, icon: MessageSquare, label: 'Chat' },
-  { id: 'notes' as const, icon: FileText, label: 'Notes' },
-  { id: 'examination' as const, icon: BookOpen, label: 'Exam' },
-  { id: 'sat' as const, icon: GraduationCap, label: 'SAT' },
-];
-
 export function Sidebar({
   activeTab,
   onTabChange,
@@ -57,7 +52,16 @@ export function Sidebar({
   onDeleteNote,
 }: SidebarProps) {
   const { signOut, user } = useAuth();
+  const { language } = useThemeLanguage();
+  const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
   const [collapsed, setCollapsed] = useState(false);
+
+  const tabs = [
+    { id: 'chat' as const, icon: MessageSquare, label: t('chat') },
+    { id: 'notes' as const, icon: FileText, label: t('notes') },
+    { id: 'examination' as const, icon: BookOpen, label: t('exam') },
+    { id: 'sat' as const, icon: GraduationCap, label: t('sat') },
+  ];
 
   const showList = activeTab === 'chat' || activeTab === 'notes';
   const showNewButton = activeTab === 'chat' || activeTab === 'notes';
@@ -78,7 +82,7 @@ export function Sidebar({
             </div>
             <div>
               <span className="font-bold text-sidebar-foreground">Study Bright</span>
-              <span className="block text-xs text-muted-foreground">AI Learning</span>
+              <span className="block text-xs text-muted-foreground">{t('aiLearning')}</span>
             </div>
           </div>
         )}
@@ -93,14 +97,10 @@ export function Sidebar({
       </div>
 
       {/* Tab Navigation */}
-      <div className={cn(
-        "p-2 space-y-1",
-        collapsed ? "px-1" : "px-2"
-      )}>
+      <div className={cn("p-2 space-y-1", collapsed ? "px-1" : "px-2")}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
-          
           return (
             <Button
               key={tab.id}
@@ -123,7 +123,6 @@ export function Sidebar({
         })}
       </div>
 
-      {/* Divider */}
       <div className="mx-3 border-t border-sidebar-border/50" />
 
       {/* New Button */}
@@ -140,7 +139,7 @@ export function Sidebar({
             )}
           >
             <Plus size={16} className={collapsed ? "" : "mr-2"} />
-            {!collapsed && <span>New {activeTab === 'chat' ? 'Chat' : 'Note'}</span>}
+            {!collapsed && <span>{activeTab === 'chat' ? t('newChatLabel') : t('newNote')}</span>}
           </Button>
         </div>
       )}
@@ -151,11 +150,8 @@ export function Sidebar({
           {activeTab === 'chat' ? (
             <div className="space-y-1 py-2">
               {conversations.length === 0 ? (
-                <p className={cn(
-                  "text-xs text-muted-foreground text-center py-4",
-                  collapsed && "hidden"
-                )}>
-                  No conversations yet
+                <p className={cn("text-xs text-muted-foreground text-center py-4", collapsed && "hidden")}>
+                  {t('noConversationsYet')}
                 </p>
               ) : (
                 conversations.map((conv) => (
@@ -177,10 +173,7 @@ export function Sidebar({
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteConversation(conv.id);
-                          }}
+                          onClick={(e) => { e.stopPropagation(); onDeleteConversation(conv.id); }}
                         >
                           <Trash2 size={12} />
                         </Button>
@@ -193,11 +186,8 @@ export function Sidebar({
           ) : activeTab === 'notes' ? (
             <div className="space-y-1 py-2">
               {notes.length === 0 ? (
-                <p className={cn(
-                  "text-xs text-muted-foreground text-center py-4",
-                  collapsed && "hidden"
-                )}>
-                  No notes yet
+                <p className={cn("text-xs text-muted-foreground text-center py-4", collapsed && "hidden")}>
+                  {t('noNotesYet')}
                 </p>
               ) : (
                 notes.map((note) => (
@@ -219,10 +209,7 @@ export function Sidebar({
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteNote(note.id);
-                          }}
+                          onClick={(e) => { e.stopPropagation(); onDeleteNote(note.id); }}
                         >
                           <Trash2 size={12} />
                         </Button>
@@ -236,12 +223,11 @@ export function Sidebar({
         </ScrollArea>
       )}
 
-      {/* Practice section placeholder when on exam/sat tabs */}
       {!showList && (
         <div className="flex-1 flex items-center justify-center p-4">
           {!collapsed && (
             <p className="text-xs text-muted-foreground text-center">
-              Select a difficulty level to start practicing
+              {t('selectDifficultyToStart')}
             </p>
           )}
         </div>
@@ -264,7 +250,7 @@ export function Sidebar({
           )}
         >
           <LogOut size={16} className={collapsed ? "" : "mr-2"} />
-          {!collapsed && <span>Sign Out</span>}
+          {!collapsed && <span>{t('signOut')}</span>}
         </Button>
       </div>
     </div>

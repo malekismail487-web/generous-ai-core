@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { School, GraduationCap, User, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSchool, School as SchoolType } from '@/hooks/useSchool';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr, getGradeName } from '@/lib/translations';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
 
@@ -38,18 +40,18 @@ export function SchoolRegistration() {
   const [error, setError] = useState('');
 
   const { validateSchoolCode, createProfile } = useSchool();
+  const { language } = useThemeLanguage();
+  const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
 
   const handleValidateCode = async () => {
     setError('');
     setIsValidating(true);
-    
     const school = await validateSchoolCode(schoolCode.trim());
-    
     if (school) {
       setValidatedSchool(school);
       setStep('type');
     } else {
-      setError('Invalid school code. Please check and try again.');
+      setError(language === 'ar' ? 'رمز المدرسة غير صحيح. يرجى المحاولة مرة أخرى.' : 'Invalid school code. Please check and try again.');
     }
     setIsValidating(false);
   };
@@ -61,36 +63,17 @@ export function SchoolRegistration() {
 
   const handleSubmit = async () => {
     setError('');
-    
-    // Validate
-    const result = registrationSchema.safeParse({
-      schoolCode,
-      fullName,
-      studentTeacherId,
-      gradeLevel,
-      department
-    });
-
+    const result = registrationSchema.safeParse({ schoolCode, fullName, studentTeacherId, gradeLevel, department });
     if (!result.success) {
       setError(result.error.errors[0].message);
       return;
     }
-
     if (!userType) return;
-
     setIsSubmitting(true);
-    const profile = await createProfile(
-      schoolCode,
-      fullName,
-      userType,
-      studentTeacherId || undefined,
-      gradeLevel || undefined,
-      department || undefined
-    );
+    const profile = await createProfile(schoolCode, fullName, userType, studentTeacherId || undefined, gradeLevel || undefined, department || undefined);
     setIsSubmitting(false);
-
     if (!profile) {
-      setError('Failed to submit registration. Please try again.');
+      setError(language === 'ar' ? 'فشل إرسال التسجيل. يرجى المحاولة مرة أخرى.' : 'Failed to submit registration. Please try again.');
     }
   };
 
@@ -104,8 +87,8 @@ export function SchoolRegistration() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 bg-gradient-to-br from-primary to-accent">
               <School className="w-8 h-8 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">Join Your School</h1>
-            <p className="text-muted-foreground">Enter your school's unique code to get started</p>
+            <h1 className="text-2xl font-bold mb-2">{t('joinYourSchool')}</h1>
+            <p className="text-muted-foreground">{t('enterSchoolCode')}</p>
           </div>
 
           <div className="glass-effect rounded-2xl p-6 animate-fade-in">
@@ -113,7 +96,7 @@ export function SchoolRegistration() {
               type="text"
               value={schoolCode}
               onChange={(e) => setSchoolCode(e.target.value.toUpperCase())}
-              placeholder="Enter school code"
+              placeholder={t('enterCode')}
               className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-center text-lg font-mono tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
               maxLength={20}
             />
@@ -130,12 +113,8 @@ export function SchoolRegistration() {
               onClick={handleValidateCode}
               disabled={!schoolCode.trim() || isValidating}
             >
-              {isValidating ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <CheckCircle size={16} />
-              )}
-              Verify Code
+              {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle size={16} />}
+              {t('verifyCode')}
             </Button>
           </div>
         </div>
@@ -154,7 +133,7 @@ export function SchoolRegistration() {
               <CheckCircle className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold mb-2">{validatedSchool?.name}</h1>
-            <p className="text-muted-foreground">Are you a student or teacher?</p>
+            <p className="text-muted-foreground">{t('areYouStudentOrTeacher')}</p>
           </div>
 
           <div className="space-y-3 animate-fade-in">
@@ -167,8 +146,8 @@ export function SchoolRegistration() {
                   <GraduationCap className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">Student</h3>
-                  <p className="text-sm text-muted-foreground">I'm here to learn</p>
+                  <h3 className="font-bold text-lg">{t('imStudent')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('imHereToLearn')}</p>
                 </div>
               </div>
             </button>
@@ -182,8 +161,8 @@ export function SchoolRegistration() {
                   <User className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">Teacher</h3>
-                  <p className="text-sm text-muted-foreground">I'm here to teach</p>
+                  <h3 className="font-bold text-lg">{t('imTeacher')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('imHereToTeach')}</p>
                 </div>
               </div>
             </button>
@@ -192,12 +171,9 @@ export function SchoolRegistration() {
           <Button
             variant="ghost"
             className="w-full mt-4"
-            onClick={() => {
-              setStep('code');
-              setValidatedSchool(null);
-            }}
+            onClick={() => { setStep('code'); setValidatedSchool(null); }}
           >
-            ← Use different school code
+            {t('useDifferentCode')}
           </Button>
         </div>
       </div>
@@ -216,24 +192,20 @@ export function SchoolRegistration() {
               ? "bg-gradient-to-br from-blue-500 to-cyan-600" 
               : "bg-gradient-to-br from-violet-500 to-purple-600"
           )}>
-            {userType === 'student' ? (
-              <GraduationCap className="w-8 h-8 text-white" />
-            ) : (
-              <User className="w-8 h-8 text-white" />
-            )}
+            {userType === 'student' ? <GraduationCap className="w-8 h-8 text-white" /> : <User className="w-8 h-8 text-white" />}
           </div>
-          <h1 className="text-2xl font-bold mb-1">Complete Your Profile</h1>
+          <h1 className="text-2xl font-bold mb-1">{t('completeProfile')}</h1>
           <p className="text-sm text-muted-foreground">{validatedSchool?.name}</p>
         </div>
 
         <div className="glass-effect rounded-2xl p-6 animate-fade-in space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Full Name *</label>
+            <label className="block text-sm font-medium mb-2">{t('fullName')} *</label>
             <input
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Enter your full name"
+              placeholder={language === 'ar' ? 'أدخل اسمك الكامل' : 'Enter your full name'}
               className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               maxLength={100}
             />
@@ -241,13 +213,13 @@ export function SchoolRegistration() {
 
           <div>
             <label className="block text-sm font-medium mb-2">
-              {userType === 'student' ? 'Student ID' : 'Teacher ID'} (optional)
+              {userType === 'student' ? t('studentId') : t('teacherId')} ({t('optional')})
             </label>
             <input
               type="text"
               value={studentTeacherId}
               onChange={(e) => setStudentTeacherId(e.target.value)}
-              placeholder="Enter your school ID"
+              placeholder={language === 'ar' ? 'أدخل رقمك المدرسي' : 'Enter your school ID'}
               className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               maxLength={50}
             />
@@ -255,15 +227,15 @@ export function SchoolRegistration() {
 
           {userType === 'student' && (
             <div>
-              <label className="block text-sm font-medium mb-2">Grade Level</label>
+              <label className="block text-sm font-medium mb-2">{t('gradeLevel')}</label>
               <select
                 value={gradeLevel}
                 onChange={(e) => setGradeLevel(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
-                <option value="">Select grade</option>
+                <option value="">{t('selectGradeLabel')}</option>
                 {grades.map((grade) => (
-                  <option key={grade} value={grade}>{grade}</option>
+                  <option key={grade} value={grade}>{getGradeName(grade, language)}</option>
                 ))}
               </select>
             </div>
@@ -271,13 +243,13 @@ export function SchoolRegistration() {
 
           {userType === 'teacher' && (
             <div>
-              <label className="block text-sm font-medium mb-2">Department</label>
+              <label className="block text-sm font-medium mb-2">{t('department')}</label>
               <select
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
-                <option value="">Select department</option>
+                <option value="">{t('selectDepartment')}</option>
                 {departments.map((dept) => (
                   <option key={dept} value={dept}>{dept}</option>
                 ))}
@@ -297,21 +269,13 @@ export function SchoolRegistration() {
             onClick={handleSubmit}
             disabled={!fullName.trim() || isSubmitting}
           >
-            {isSubmitting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <CheckCircle size={16} />
-            )}
-            Submit Registration
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle size={16} />}
+            {t('submitRegistration')}
           </Button>
         </div>
 
-        <Button
-          variant="ghost"
-          className="w-full mt-4"
-          onClick={() => setStep('type')}
-        >
-          ← Go back
+        <Button variant="ghost" className="w-full mt-4" onClick={() => setStep('type')}>
+          {t('goBack')}
         </Button>
       </div>
     </div>
