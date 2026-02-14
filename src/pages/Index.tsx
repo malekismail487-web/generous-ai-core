@@ -225,6 +225,13 @@ const Index = () => {
   return (
     <div className="h-screen bg-background relative flex flex-col overflow-hidden">
       <div className="ambient-glow" />
+      <div className="ambient-shapes">
+        <div className="shape" />
+        <div className="shape" />
+        <div className="shape" />
+        <div className="shape" />
+        <div className="shape" />
+      </div>
       
       {/* Top bar - only show on sub-pages for back navigation */}
       {isSubPage && (
