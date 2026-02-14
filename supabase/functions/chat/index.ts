@@ -164,7 +164,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, enableWebSearch, language } = await req.json();
+    const { messages, enableWebSearch, language, backgroundContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -187,6 +187,22 @@ When web search is enabled, you have access to search the web for current inform
 - Format citations as: [Source Name](URL) or "According to [Source]..."
 - Be transparent about where information comes from
 - Prioritize educational and authoritative sources`;
+    }
+
+    // Inject background conversation context
+    if (backgroundContext && Array.isArray(backgroundContext) && backgroundContext.length > 0) {
+      let contextBlock = `\n\n## Previous Conversation Memory
+You have memory of the student's previous conversations. Use this context naturally when the student references past topics, questions, or discussions. Do not mention these unless relevant.
+
+`;
+      for (const conv of backgroundContext) {
+        contextBlock += `### Past Chat: "${conv.title}"\n`;
+        for (const msg of conv.messages) {
+          contextBlock += `- ${msg.role === 'user' ? 'Student' : 'You'}: ${msg.content}\n`;
+        }
+        contextBlock += '\n';
+      }
+      systemPrompt += contextBlock;
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

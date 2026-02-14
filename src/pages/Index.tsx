@@ -60,6 +60,7 @@ const Index = () => {
     deleteConversation,
     selectConversation,
     clearCurrentConversation,
+    fetchBackgroundContext,
   } = useConversations();
   
   const {
@@ -120,9 +121,13 @@ const Index = () => {
 
     const messagesWithContext = [...localMessages.map(m => ({ ...m, content: m.content })), userMessage];
 
+    // Fetch background context from past conversations
+    const bgContext = await fetchBackgroundContext(conversationId);
+
     await streamChat({
       messages: messagesWithContext,
       language,
+      backgroundContext: bgContext,
       onDelta: updateAssistant,
       onDone: async () => {
         setIsLoading(false);
