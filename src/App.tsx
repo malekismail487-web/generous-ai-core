@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeLanguageProvider } from "@/hooks/useThemeLanguage";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import LanguageSelect from "./pages/LanguageSelect";
 import NotFound from "./pages/NotFound";
 import SuperAdmin from "./pages/SuperAdmin";
 import SuperAdminVerify from "./pages/SuperAdminVerify";
@@ -31,6 +32,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/language" element={<LanguageSelect />} />
               <Route path="/super-admin" element={<SuperAdmin />} />
               <Route path="/super-admin-verify" element={<SuperAdminVerify />} />
               <Route path="/activate-school" element={<ActivateSchool />} />

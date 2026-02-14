@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSchool } from '@/hooks/useSchool';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr } from '@/lib/translations';
 import { SchoolAdminPanel } from '@/components/SchoolAdminPanel';
 import SuperAdminPanel from '@/components/SuperAdminPanel';
 import { cn } from '@/lib/utils';
@@ -20,6 +21,7 @@ export function ProfileSection() {
   const { isAdmin, isHardcodedAdmin, verifyAdminCode } = useUserRole();
   const { profile, school, isSchoolAdmin, loading } = useSchool();
   const { theme, language, setTheme, setLanguage, t } = useThemeLanguage();
+  const tl = (key: Parameters<typeof tr>[0]) => tr(key, language);
 
   const handleVerifyAdminCode = async () => {
     if (!adminCode.trim()) return;
@@ -64,7 +66,7 @@ export function ProfileSection() {
               <GraduationCap className="w-8 h-8 text-white" />
             )}
           </div>
-          <h1 className="text-2xl font-bold mb-1">{profile?.full_name || 'Profile'}</h1>
+          <h1 className="text-2xl font-bold mb-1">{profile?.full_name || tl('profile')}</h1>
           {user && (
             <p className="text-sm text-muted-foreground">{user.email}</p>
           )}
@@ -84,7 +86,7 @@ export function ProfileSection() {
               </div>
               <div>
                 <h3 className="font-semibold">{school.name}</h3>
-                <p className="text-xs text-muted-foreground">School Code: {school.code}</p>
+                <p className="text-xs text-muted-foreground">{tl('schoolCode')}: {school.code}</p>
               </div>
             </div>
           </div>
@@ -92,10 +94,10 @@ export function ProfileSection() {
 
         {/* Role & Details */}
         <div className="glass-effect rounded-2xl p-5 mb-4">
-          <h3 className="font-semibold mb-3">Your Details</h3>
+          <h3 className="font-semibold mb-3">{tl('yourDetails')}</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Role</span>
+              <span className="text-muted-foreground">{tl('role')}</span>
               <span className="capitalize">
                 {isAdmin ? 'Super Admin' : isSchoolAdmin ? 'School Admin' : profile?.user_type || 'Student'}
               </span>
@@ -108,13 +110,13 @@ export function ProfileSection() {
             )}
             {profile?.grade_level && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Grade</span>
+                <span className="text-muted-foreground">{tl('grade')}</span>
                 <span>{profile.grade_level}</span>
               </div>
             )}
             {profile?.department && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Department</span>
+                <span className="text-muted-foreground">{tl('department')}</span>
                 <span>{profile.department}</span>
               </div>
             )}
@@ -133,8 +135,8 @@ export function ProfileSection() {
                   <Key className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">Admin Access Code</h3>
-                  <p className="text-sm text-muted-foreground">Enter code to regain admin access</p>
+                  <h3 className="font-semibold">{tl('adminAccessCode')}</h3>
+                  <p className="text-sm text-muted-foreground">{tl('enterAdminCode')}</p>
                 </div>
                 <ChevronRight className="text-muted-foreground" />
               </button>
@@ -147,7 +149,7 @@ export function ProfileSection() {
                   type="password"
                   value={adminCode}
                   onChange={(e) => setAdminCode(e.target.value)}
-                  placeholder="Enter your admin access code"
+                  placeholder={language === 'ar' ? 'أدخل رمز المسؤول' : 'Enter your admin access code'}
                   className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                   onKeyDown={(e) => e.key === 'Enter' && handleVerifyAdminCode()}
                 />
@@ -160,7 +162,7 @@ export function ProfileSection() {
                       setAdminCode('');
                     }}
                   >
-                    Cancel
+                    {tl('cancel')}
                   </Button>
                   <Button
                     className="flex-1 gap-2"
@@ -172,7 +174,7 @@ export function ProfileSection() {
                     ) : (
                       <Key size={16} />
                     )}
-                    Verify
+                    {tl('verify')}
                   </Button>
                 </div>
               </div>
@@ -191,8 +193,8 @@ export function ProfileSection() {
                 <Users className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold">School Admin</h3>
-                <p className="text-sm text-muted-foreground">Manage user registrations</p>
+                <h3 className="font-semibold">{tl('schoolAdmin')}</h3>
+                <p className="text-sm text-muted-foreground">{tl('manageRegistrations')}</p>
               </div>
               <ChevronRight className="text-muted-foreground group-hover:text-foreground transition-colors" />
             </div>
@@ -210,8 +212,8 @@ export function ProfileSection() {
                 <Building2 className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold">Manage Schools</h3>
-                <p className="text-sm text-muted-foreground">Create and manage schools</p>
+                <h3 className="font-semibold">{tl('manageSchools')}</h3>
+                <p className="text-sm text-muted-foreground">{tl('createManageSchools')}</p>
               </div>
               <ChevronRight className="text-muted-foreground group-hover:text-foreground transition-colors" />
             </div>
