@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, RefreshCw, Building2, Loader2 } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Building2, Loader2, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import AttackLogsPanel from '@/components/AttackLogsPanel';
 
 const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
 
@@ -24,6 +25,7 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const [activeTab, setActiveTab] = useState<'schools' | 'security'>('schools');
 
   useEffect(() => {
     const checkEmail = async () => {
@@ -120,9 +122,27 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
               <p className="text-sm text-muted-foreground">Manage all schools</p>
             </div>
           </div>
-          <Button variant="outline" size="icon" onClick={fetchSchools} disabled={loading}>
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={activeTab === 'schools' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('schools')}
+            >
+              <Building2 size={14} className="mr-1" /> Schools
+            </Button>
+            <Button
+              variant={activeTab === 'security' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('security')}
+            >
+              <Shield size={14} className="mr-1" /> Security
+            </Button>
+            {activeTab === 'schools' && (
+              <Button variant="outline" size="icon" onClick={fetchSchools} disabled={loading}>
+                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              </Button>
+            )}
+          </div>
         </div>
 
         {error && (
@@ -131,7 +151,9 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
           </div>
         )}
 
-        {loading ? (
+        {activeTab === 'security' ? (
+          <AttackLogsPanel />
+        ) : loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
