@@ -141,9 +141,7 @@ const Index = () => {
   };
 
   const handleGridNavigate = (action: GridAction) => {
-    if (action === 'settings') {
-      setActiveTab('profile');
-    } else if (action === 'weeklyplan') {
+    if (action === 'weeklyplan') {
       setActiveTab('weeklyplan');
     } else {
       setActiveTab(action as TabType);
