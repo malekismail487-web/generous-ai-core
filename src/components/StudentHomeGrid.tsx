@@ -12,7 +12,6 @@ import {
   GraduationCap,
   Flame,
   Calendar,
-  Settings,
   Sparkles,
   Podcast,
 } from 'lucide-react';
@@ -51,7 +50,6 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
     { id: 'weeklyplan', icon: Calendar, label: t('Weekly Plan', 'الخطة الأسبوعية'), color: 'from-indigo-500 to-blue-600', iconBg: 'bg-indigo-500/15 border-indigo-500/30', schoolOnly: true },
     { id: 'chat', icon: MessageSquare, label: t('AI Tutor', 'المعلم الذكي'), color: 'from-primary to-accent', iconBg: 'bg-primary/15 border-primary/30' },
     { id: 'podcasts', icon: Podcast, label: t('AI Podcasts', 'بودكاست AI'), color: 'from-fuchsia-500 to-pink-600', iconBg: 'bg-fuchsia-500/15 border-fuchsia-500/30' },
-    { id: 'settings', icon: Settings, label: t('Settings', 'الإعدادات'), color: 'from-slate-500 to-gray-600', iconBg: 'bg-slate-500/15 border-slate-500/30' },
   ];
 
   const visibleItems = gridItems.filter(item => !item.schoolOnly || hasSchool);
