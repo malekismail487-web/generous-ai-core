@@ -119,7 +119,7 @@ export default function ActivateSchool() {
     } else if (profile.user_type === 'teacher') {
       return <Navigate to="/teacher" replace />;
     } else if (profile.user_type === 'student') {
-      return <Navigate to="/student" replace />;
+      return <Navigate to="/" replace />;
     }
     return <Navigate to="/" replace />;
   }

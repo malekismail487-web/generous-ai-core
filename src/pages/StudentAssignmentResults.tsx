@@ -112,7 +112,7 @@ export default function StudentAssignmentResults() {
       <div className="min-h-screen bg-background">
         <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
           <p className="text-sm text-muted-foreground">Assignment not found.</p>
-          <Button onClick={() => navigate('/student')}>Back to Dashboard</Button>
+          <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
         </div>
       </div>
     );
@@ -125,7 +125,7 @@ export default function StudentAssignmentResults() {
           <p className="text-sm text-muted-foreground">
             This assignment isn't available for your grade.
           </p>
-          <Button onClick={() => navigate('/student')}>Back to Dashboard</Button>
+          <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
         </div>
       </div>
     );
