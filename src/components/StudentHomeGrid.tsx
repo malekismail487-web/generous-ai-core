@@ -14,6 +14,7 @@ import {
   Calendar,
   Settings,
   Sparkles,
+  Podcast,
 } from 'lucide-react';
 
 export type GridAction =
@@ -26,6 +27,7 @@ export type GridAction =
   | 'assignments'
   | 'reports'
   | 'weeklyplan'
+  | 'podcasts'
   | 'settings';
 
 interface StudentHomeGridProps {
@@ -48,6 +50,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
     { id: 'reports', icon: FileText, label: t('Report Cards', 'كشوف الدرجات'), color: 'from-rose-500 to-pink-600', iconBg: 'bg-rose-500/15 border-rose-500/30', schoolOnly: true },
     { id: 'weeklyplan', icon: Calendar, label: t('Weekly Plan', 'الخطة الأسبوعية'), color: 'from-indigo-500 to-blue-600', iconBg: 'bg-indigo-500/15 border-indigo-500/30', schoolOnly: true },
     { id: 'chat', icon: MessageSquare, label: t('AI Tutor', 'المعلم الذكي'), color: 'from-primary to-accent', iconBg: 'bg-primary/15 border-primary/30' },
+    { id: 'podcasts', icon: Podcast, label: t('AI Podcasts', 'بودكاست AI'), color: 'from-fuchsia-500 to-pink-600', iconBg: 'bg-fuchsia-500/15 border-fuchsia-500/30' },
     { id: 'settings', icon: Settings, label: t('Settings', 'الإعدادات'), color: 'from-slate-500 to-gray-600', iconBg: 'bg-slate-500/15 border-slate-500/30' },
   ];
 
