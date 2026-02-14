@@ -3,6 +3,8 @@ import { MessageSquare, Trash2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
+import { ar } from "date-fns/locale";
+import { useThemeLanguage } from "@/hooks/useThemeLanguage";
 
 interface ChatHistoryDrawerProps {
   open: boolean;
@@ -23,17 +25,17 @@ export function ChatHistoryDrawer({
   onDelete,
   onNewChat,
 }: ChatHistoryDrawerProps) {
+  const { t, language } = useThemeLanguage();
+
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-[60] flex">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       
-      {/* Drawer */}
       <div className="relative w-72 max-w-[80vw] h-full bg-background border-r border-border/30 animate-slide-in-right flex flex-col" style={{ animationDirection: 'reverse', transform: 'translateX(0)' }}>
         <div className="flex items-center justify-between p-4 border-b border-border/30">
-          <h2 className="font-semibold text-foreground text-sm">Chat History</h2>
+          <h2 className="font-semibold text-foreground text-sm">{t('Chat History', 'سجل المحادثات')}</h2>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
             <X size={16} />
           </Button>
@@ -46,14 +48,14 @@ export function ChatHistoryDrawer({
             onClick={() => { onNewChat(); onClose(); }}
           >
             <Plus size={14} />
-            New Chat
+            {t('New Chat', 'محادثة جديدة')}
           </Button>
         </div>
 
         <ScrollArea className="flex-1">
           <div className="px-3 pb-4 space-y-1">
             {conversations.length === 0 ? (
-              <p className="text-muted-foreground text-xs text-center py-8">No conversations yet</p>
+              <p className="text-muted-foreground text-xs text-center py-8">{t('No conversations yet', 'لا توجد محادثات بعد')}</p>
             ) : (
               conversations.map((conv) => (
                 <div
@@ -69,7 +71,10 @@ export function ChatHistoryDrawer({
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium truncate">{conv.title}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(conv.updated_at), { 
+                        addSuffix: true,
+                        locale: language === 'ar' ? ar : undefined 
+                      })}
                     </p>
                   </div>
                   <Button

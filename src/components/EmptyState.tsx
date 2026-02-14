@@ -1,17 +1,20 @@
-import { Sparkles, BookOpen, Brain, Lightbulb, Layers, GraduationCap } from "lucide-react";
-
-const suggestions = [
-  { icon: BookOpen, text: "Teach me about photosynthesis for Grade 8" },
-  { icon: Brain, text: "Explain how memory works" },
-  { icon: Lightbulb, text: "Help me understand quadratic equations" },
-  { icon: GraduationCap, text: "Give me SAT math practice tips" },
-];
+import { Sparkles, BookOpen, Brain, Lightbulb, GraduationCap } from "lucide-react";
+import { useThemeLanguage } from "@/hooks/useThemeLanguage";
 
 interface EmptyStateProps {
   onSuggestionClick: (text: string) => void;
 }
 
 export function EmptyState({ onSuggestionClick }: EmptyStateProps) {
+  const { t } = useThemeLanguage();
+
+  const suggestions = [
+    { icon: BookOpen, text: t("Teach me about photosynthesis for Grade 8", "علّمني عن التمثيل الضوئي للصف الثامن") },
+    { icon: Brain, text: t("Explain how memory works", "اشرح لي كيف تعمل الذاكرة") },
+    { icon: Lightbulb, text: t("Help me understand quadratic equations", "ساعدني في فهم المعادلات التربيعية") },
+    { icon: GraduationCap, text: t("Give me SAT math practice tips", "أعطني نصائح للتدرب على رياضيات SAT") },
+  ];
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 animate-fade-in">
       <div className="relative mb-5">
@@ -24,10 +27,10 @@ export function EmptyState({ onSuggestionClick }: EmptyStateProps) {
       </div>
       
       <h1 className="text-2xl font-bold mb-2">
-        <span className="gradient-text">Study Bright AI</span>
+        <span className="gradient-text">{t('Study Bright AI', 'ستدي برايت AI')}</span>
       </h1>
       <p className="text-muted-foreground text-sm mb-6 max-w-xs">
-        Your personal study partner for KG1 through Grade 12
+        {t('Your personal study partner for KG1 through Grade 12', 'شريكك الدراسي الشخصي من الروضة إلى الصف الثاني عشر')}
       </p>
 
       <div className="w-full max-w-sm space-y-2">

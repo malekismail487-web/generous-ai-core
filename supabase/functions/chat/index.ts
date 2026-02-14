@@ -164,7 +164,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, enableWebSearch } = await req.json();
+    const { messages, enableWebSearch, language } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -173,6 +173,12 @@ serve(async (req) => {
 
     // Build the system prompt with optional web search instructions
     let systemPrompt = SYSTEM_PROMPT;
+
+    // Add language instruction
+    if (language === 'ar') {
+      systemPrompt += `\n\n## Language Instruction
+CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations, examples, definitions, summaries, and instructions must be in Arabic. Use Arabic numerals when appropriate. Mathematical formulas and scientific terms can remain in their standard notation but all surrounding text must be in Arabic. Do not mix English into your responses unless the user explicitly asks in English.`;
+    }
     
     if (enableWebSearch) {
       systemPrompt += `\n\n## Web Search Mode Active
