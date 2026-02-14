@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Key, Loader2 } from 'lucide-react';
+import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Key, Loader2, Sun, Moon, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSchool } from '@/hooks/useSchool';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { SchoolAdminPanel } from '@/components/SchoolAdminPanel';
 import SuperAdminPanel from '@/components/SuperAdminPanel';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,7 @@ export function ProfileSection() {
   const { user, signOut } = useAuth();
   const { isAdmin, isHardcodedAdmin, verifyAdminCode } = useUserRole();
   const { profile, school, isSchoolAdmin, loading } = useSchool();
+  const { theme, language, setTheme, setLanguage, t } = useThemeLanguage();
 
   const handleVerifyAdminCode = async () => {
     if (!adminCode.trim()) return;
@@ -216,6 +218,72 @@ export function ProfileSection() {
           </button>
         )}
 
+        {/* Appearance */}
+        <div className="glass-effect rounded-2xl p-5 mb-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+            {t('Appearance', 'المظهر')}
+          </h3>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setTheme('light')}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all border",
+                theme === 'light'
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30"
+              )}
+            >
+              <Sun size={16} />
+              {t('Light', 'فاتح')}
+            </button>
+            <button
+              onClick={() => setTheme('dark')}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all border",
+                theme === 'dark'
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30"
+              )}
+            >
+              <Moon size={16} />
+              {t('Dark', 'داكن')}
+            </button>
+          </div>
+        </div>
+
+        {/* Language */}
+        <div className="glass-effect rounded-2xl p-5 mb-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <Globe size={16} />
+            {t('Language', 'اللغة')}
+          </h3>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setLanguage('en')}
+              className={cn(
+                "flex-1 py-3 rounded-xl text-sm font-medium transition-all border",
+                language === 'en'
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30"
+              )}
+            >
+              English
+            </button>
+            <button
+              onClick={() => setLanguage('ar')}
+              className={cn(
+                "flex-1 py-3 rounded-xl text-sm font-medium transition-all border font-arabic",
+                language === 'ar'
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30"
+              )}
+            >
+              العربية
+            </button>
+          </div>
+        </div>
+
         {/* Sign Out */}
         <Button
           variant="outline"
@@ -223,7 +291,7 @@ export function ProfileSection() {
           onClick={() => signOut()}
         >
           <LogOut size={16} />
-          Sign Out
+          {t('Sign Out', 'تسجيل الخروج')}
         </Button>
       </div>
     </div>
