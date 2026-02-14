@@ -55,6 +55,24 @@ export function WeeklyPlanSection() {
     );
   }
 
+  const materialViewerElement = (
+    <MaterialViewer
+      open={viewerOpen}
+      onOpenChange={setViewerOpen}
+      material={viewerPlan ? {
+        id: viewerPlan.id,
+        title: viewerPlan.title,
+        subject: 'Weekly Plan',
+        content: null,
+        file_url: viewerPlan.file_url,
+        grade_level: viewerPlan.grade_level,
+        created_at: viewerPlan.created_at,
+      } : null}
+      subjectInfo={{ name: 'Weekly Plan', emoji: '📅', color: 'from-blue-500 to-blue-600' }}
+      teacherName="School Admin"
+    />
+  );
+
   if (selectedPlan) {
     return (
       <div className="min-h-0 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-24">
@@ -109,6 +127,7 @@ export function WeeklyPlanSection() {
             </div>
           )}
         </div>
+        {materialViewerElement}
       </div>
     );
   }
@@ -154,22 +173,7 @@ export function WeeklyPlanSection() {
           </div>
         )}
       </div>
-
-      <MaterialViewer
-        open={viewerOpen}
-        onOpenChange={setViewerOpen}
-        material={viewerPlan ? {
-          id: viewerPlan.id,
-          title: viewerPlan.title,
-          subject: 'Weekly Plan',
-          content: null,
-          file_url: viewerPlan.file_url,
-          grade_level: viewerPlan.grade_level,
-          created_at: viewerPlan.created_at,
-        } : null}
-        subjectInfo={{ name: 'Weekly Plan', emoji: '📅', color: 'from-blue-500 to-blue-600' }}
-        teacherName="School Admin"
-      />
+      {materialViewerElement}
     </div>
   );
 }
