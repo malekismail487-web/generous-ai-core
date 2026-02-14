@@ -88,6 +88,8 @@ export default function Auth() {
               navigate('/admin');
             } else if (profile.user_type === 'teacher') {
               navigate('/teacher');
+            } else if (profile.user_type === 'student') {
+              navigate('/student');
             } else {
               navigate('/');
             }
