@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TeacherAssignments } from '@/components/teacher/TeacherAssignments';
 import { TeacherMaterials } from '@/components/teacher/TeacherMaterials';
+import { TeacherCopilot } from '@/components/teacher/TeacherCopilot';
 
 interface CourseMaterial {
   id: string;
@@ -189,6 +190,11 @@ export default function TeacherDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <TeacherCopilot
+              schoolId={school.id}
+              authUserId={user.id}
+              onSuccess={fetchData}
+            />
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {profile.full_name}
             </span>
