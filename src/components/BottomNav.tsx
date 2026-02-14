@@ -10,8 +10,8 @@ interface BottomNavProps {
 }
 
 const bottomTabs = [
-  { id: 'home' as const, icon: Home, label: 'Home' },
   { id: 'weeklyplan' as const, icon: Calendar, label: 'Weekly Plan' },
+  { id: 'home' as const, icon: Home, label: 'Home' },
   { id: 'profile' as const, icon: User, label: 'Profile' },
 ];
 
