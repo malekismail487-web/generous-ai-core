@@ -77,10 +77,10 @@ export function WeeklyPlanSection() {
                 setViewerPlan(selectedPlan);
                 setViewerOpen(true);
               }}
-              className="flex items-center gap-2 p-4 glass-effect rounded-xl mb-4 text-primary hover:underline w-full text-left"
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors w-full"
             >
               <FileText className="w-5 h-5" />
-              <span>{selectedPlan.file_name || 'View Plan File'}</span>
+              <span>Open Material</span>
             </button>
           )}
 
