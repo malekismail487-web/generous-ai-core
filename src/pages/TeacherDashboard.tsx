@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/hooks/useAuth';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr } from '@/lib/translations';
 import { Navigate } from 'react-router-dom';
 import {
   Loader2,
