@@ -64,9 +64,8 @@ export function PodcastsSection() {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          fileContent: content.slice(0, 30000), // limit content size
+          fileContent: content.slice(0, 30000),
           fileName: file.name,
-          language,
         }),
       });
 
