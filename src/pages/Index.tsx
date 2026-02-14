@@ -27,7 +27,7 @@ import { useNotes } from "@/hooks/useNotes";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { useThemeLanguage } from "@/hooks/useThemeLanguage";
 import { Navigate } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Menu, History, Volume2, VolumeX } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Menu, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
@@ -35,7 +35,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [voiceMode, setVoiceMode] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -188,15 +188,6 @@ const Index = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={`h-8 w-8 ${voiceMode ? 'text-primary bg-primary/10' : ''}`}
-                  onClick={() => setVoiceMode(!voiceMode)}
-                  title={voiceMode ? 'Disable voice mode' : 'Enable voice mode'}
-                >
-                  {voiceMode ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
                   className="h-8 w-8"
                   onClick={() => setHistoryOpen(true)}
                 >
@@ -215,7 +206,6 @@ const Index = () => {
                         key={message.id}
                         message={message}
                         isStreaming={isLoading && message.role === "assistant" && idx === localMessages.length - 1}
-                        voiceMode={voiceMode}
                       />
                     ))}
                     {isLoading && localMessages[localMessages.length - 1]?.role === "user" && (
