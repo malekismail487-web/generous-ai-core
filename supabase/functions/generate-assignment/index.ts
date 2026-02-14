@@ -11,29 +11,31 @@ serve(async (req) => {
   }
 
   try {
-    const { subject, topic, questionCount, gradeLevel } = await req.json();
+    const { title, description, subject, questionCount, gradeLevel } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    if (!subject || !questionCount) {
-      throw new Error("subject and questionCount are required");
+    if (!title || !subject || !questionCount) {
+      throw new Error("title, subject, and questionCount are required");
     }
 
-    const systemPrompt = `You are an expert educational content creator. Generate multiple-choice quiz questions for students.
+    const systemPrompt = `You are an expert educational content creator. Generate multiple-choice quiz questions based on the assignment title and subject provided by the teacher.
 
 Rules:
+- The questions MUST be directly related to the assignment title: "${title}"
+- Questions must be for the subject: ${subject}
 - Questions must be grade-appropriate for ${gradeLevel || 'general'} level
 - Each question must have exactly 4 options (A, B, C, D)
 - Exactly one option must be correct
 - Questions should test understanding, not just memorization
 - Vary difficulty within the set
 - Questions should be clear, unambiguous, and educational
-- If a topic is provided, focus questions on that topic within the subject`;
+${description ? `- Additional context from the teacher: "${description}"` : ''}`;
 
-    const userPrompt = `Generate exactly ${questionCount} multiple-choice questions for the subject "${subject}"${topic ? ` on the topic "${topic}"` : ''} at the ${gradeLevel || 'general'} level.`;
+    const userPrompt = `The teacher created an assignment titled "${title}" for the subject "${subject}" at the ${gradeLevel || 'general'} level. Generate exactly ${questionCount} multiple-choice questions that are specifically about "${title}".${description ? ` The teacher also provided this description: "${description}"` : ''}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
