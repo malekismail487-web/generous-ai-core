@@ -1,82 +1,71 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 
 export function useTextToSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const urlRef = useRef<string | null>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  const isSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+
+  // Cancel on unmount
+  useEffect(() => {
+    return () => {
+      if (isSupported) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [isSupported]);
 
   const stop = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current = null;
-    }
-    if (urlRef.current) {
-      URL.revokeObjectURL(urlRef.current);
-      urlRef.current = null;
+    if (isSupported) {
+      window.speechSynthesis.cancel();
     }
     setIsSpeaking(false);
     setIsLoading(false);
-  }, []);
+  }, [isSupported]);
 
-  const speak = useCallback(async (text: string) => {
+  const speak = useCallback((text: string) => {
+    if (!isSupported || !text.trim()) return;
+
     stop();
 
-    if (!text.trim()) return;
+    // Clean markdown/latex for speech
+    const cleanText = text
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/```[\s\S]*?```/g, 'code block omitted')
+      .replace(/`(.*?)`/g, '$1')
+      .replace(/#{1,6}\s/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/\$\$[\s\S]*?\$\$/g, 'math formula')
+      .replace(/\$[^$]+\$/g, 'math formula')
+      .trim();
 
-    setIsLoading(true);
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
 
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ text }),
-        }
-      );
+    // Try to pick a good voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v =>
+      v.name.includes('Google') && v.lang.startsWith('en')
+    ) || voices.find(v => v.lang.startsWith('en'));
+    if (preferred) utterance.voice = preferred;
 
-      if (!response.ok) {
-        throw new Error(`TTS request failed: ${response.status}`);
-      }
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      urlRef.current = audioUrl;
-
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-
-      audio.onplay = () => {
-        setIsSpeaking(true);
-        setIsLoading(false);
-      };
-
-      audio.onended = () => {
-        setIsSpeaking(false);
-        if (urlRef.current) {
-          URL.revokeObjectURL(urlRef.current);
-          urlRef.current = null;
-        }
-      };
-
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        setIsLoading(false);
-      };
-
-      await audio.play();
-    } catch (error) {
-      console.error('TTS error:', error);
+    utterance.onstart = () => {
+      setIsSpeaking(true);
       setIsLoading(false);
+    };
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => {
       setIsSpeaking(false);
-    }
-  }, [stop]);
+      setIsLoading(false);
+    };
 
-  return { speak, stop, isSpeaking, isLoading };
+    utteranceRef.current = utterance;
+    setIsLoading(true);
+    window.speechSynthesis.speak(utterance);
+  }, [isSupported, stop]);
+
+  return { speak, stop, isSpeaking, isLoading, isSupported };
 }
