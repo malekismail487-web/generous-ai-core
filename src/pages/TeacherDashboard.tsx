@@ -64,6 +64,7 @@ export default function TeacherDashboard() {
   const { isTeacher, school, profile, loading } = useRoleGuard();
   const { signOut, user } = useAuth();
   const { toast } = useToast();
+  const { language } = useThemeLanguage();
 
   // State
   const [courseMaterials, setCourseMaterials] = useState<CourseMaterial[]>([]);
@@ -181,7 +182,7 @@ export default function TeacherDashboard() {
               <GraduationCap className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Teacher Dashboard</h1>
+              <h1 className="text-xl font-bold">{tr('teacherDashboard', language)}</h1>
               <p className="text-xs text-muted-foreground">{school.name}</p>
             </div>
           </div>
@@ -201,7 +202,7 @@ export default function TeacherDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Course Materials</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground">{tr('courseMaterials', language)}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{courseMaterials.length}</p>
@@ -209,7 +210,7 @@ export default function TeacherDashboard() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Assignments</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground">{tr('assignments', language)}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{assignments.length}</p>
@@ -217,7 +218,7 @@ export default function TeacherDashboard() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Pending Grading</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground">{tr('pendingGrading', language)}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold text-amber-500">{pendingGrading}</p>
@@ -225,7 +226,7 @@ export default function TeacherDashboard() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Announcements</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground">{tr('announcementsLabel', language)}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{announcements.length}</p>
@@ -237,15 +238,15 @@ export default function TeacherDashboard() {
           <TabsList className="grid grid-cols-5 w-full max-w-2xl">
             <TabsTrigger value="materials" className="gap-2">
               <Upload className="w-4 h-4" />
-              <span className="hidden sm:inline">Materials</span>
+              <span className="hidden sm:inline">{tr('materials', language)}</span>
             </TabsTrigger>
             <TabsTrigger value="assignments" className="gap-2">
               <ClipboardList className="w-4 h-4" />
-              <span className="hidden sm:inline">Assign</span>
+              <span className="hidden sm:inline">{tr('assign', language)}</span>
             </TabsTrigger>
             <TabsTrigger value="grading" className="gap-2">
               <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">Grade</span>
+              <span className="hidden sm:inline">{tr('gradeVerb', language)}</span>
               {pendingGrading > 0 && (
                 <Badge variant="destructive" className="ml-1">
                   {pendingGrading}
@@ -254,11 +255,11 @@ export default function TeacherDashboard() {
             </TabsTrigger>
             <TabsTrigger value="insights" className="gap-2">
               <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Insights</span>
+              <span className="hidden sm:inline">{tr('insights', language)}</span>
             </TabsTrigger>
             <TabsTrigger value="announcements" className="gap-2">
               <Megaphone className="w-4 h-4" />
-              <span className="hidden sm:inline">News</span>
+              <span className="hidden sm:inline">{tr('news', language)}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -297,14 +298,14 @@ export default function TeacherDashboard() {
 
           {/* Grading Tab */}
           <TabsContent value="grading" className="space-y-4">
-            <h2 className="text-lg font-semibold">Grade Submissions</h2>
+            <h2 className="text-lg font-semibold">{tr('gradeSubmissions', language)}</h2>
 
             {submissions.filter(s => s.grade === null).length === 0 ? (
               <div className="glass-effect rounded-xl p-8 text-center">
                 <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="font-semibold mb-2">All Caught Up!</h3>
+                <h3 className="font-semibold mb-2">{tr('allCaughtUp', language)}</h3>
                 <p className="text-sm text-muted-foreground">
-                  No submissions waiting to be graded
+                  {tr('noSubmissionsWaiting', language)}
                 </p>
               </div>
             ) : (
@@ -312,10 +313,10 @@ export default function TeacherDashboard() {
                 <table className="w-full">
                   <thead className="bg-muted/50">
                     <tr>
-                      <th className="text-left p-4 font-medium">Assignment</th>
-                      <th className="text-left p-4 font-medium">Student</th>
-                      <th className="text-left p-4 font-medium">Submitted</th>
-                      <th className="text-right p-4 font-medium">Action</th>
+                      <th className="text-left p-4 font-medium">{tr('assignment', language)}</th>
+                      <th className="text-left p-4 font-medium">{tr('studentLabel', language)}</th>
+                      <th className="text-left p-4 font-medium">{tr('submittedAt', language)}</th>
+                      <th className="text-right p-4 font-medium">{tr('action', language)}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -350,12 +351,12 @@ export default function TeacherDashboard() {
 
           {/* Insights Tab */}
           <TabsContent value="insights" className="space-y-4">
-            <h2 className="text-lg font-semibold">Insights & Analytics</h2>
+            <h2 className="text-lg font-semibold">{tr('insights', language)}</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Submission Rate</CardTitle>
+                  <CardTitle className="text-base">{tr('submissionRate', language)}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-6">
@@ -366,7 +367,7 @@ export default function TeacherDashboard() {
                       }%
                     </p>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Average submission rate across assignments
+                      {tr('avgSubmissionRate', language)}
                     </p>
                   </div>
                 </CardContent>
@@ -374,7 +375,7 @@ export default function TeacherDashboard() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Grading Progress</CardTitle>
+                  <CardTitle className="text-base">{tr('gradingProgress', language)}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-6">
@@ -395,14 +396,14 @@ export default function TeacherDashboard() {
 
           {/* Announcements Tab */}
           <TabsContent value="announcements" className="space-y-4">
-            <h2 className="text-lg font-semibold">School Announcements</h2>
+            <h2 className="text-lg font-semibold">{tr('schoolAnnouncements', language)}</h2>
 
             {announcements.length === 0 ? (
               <div className="glass-effect rounded-xl p-8 text-center">
                 <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="font-semibold mb-2">No Announcements</h3>
+                <h3 className="font-semibold mb-2">{tr('noAnnouncements', language)}</h3>
                 <p className="text-sm text-muted-foreground">
-                  School announcements will appear here
+                  {tr('announcementsWillAppear', language)}
                 </p>
               </div>
             ) : (
@@ -426,34 +427,34 @@ export default function TeacherDashboard() {
       {gradingDialogOpen && selectedSubmission && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-background rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">Grade Submission</h2>
+            <h2 className="text-xl font-bold mb-4">{tr('gradeSubmission', language)}</h2>
             
             <div className="space-y-4">
               <div>
-                <h4 className="font-medium mb-2">Student's Answer:</h4>
+                <h4 className="font-medium mb-2">{tr('studentAnswer', language)}</h4>
                 <div className="p-4 bg-muted rounded-lg whitespace-pre-wrap text-sm">
-                  {selectedSubmission.content || 'No content submitted'}
+                  {selectedSubmission.content || tr('noContentSubmitted', language)}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Grade</label>
+                <label className="text-sm font-medium">{tr('grade', language)}</label>
                 <input
                   type="number"
                   value={gradeValue}
                   onChange={(e) => setGradeValue(e.target.value)}
-                  placeholder="Enter grade"
+                  placeholder={tr('enterGrade', language)}
                   className="w-full px-3 py-2 rounded-lg border bg-background"
                   min="0"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Feedback</label>
+                <label className="text-sm font-medium">{tr('feedback', language)}</label>
                 <textarea
                   value={feedbackValue}
                   onChange={(e) => setFeedbackValue(e.target.value)}
-                  placeholder="Enter feedback for the student..."
+                  placeholder={tr('enterFeedback', language)}
                   className="w-full px-3 py-2 rounded-lg border bg-background"
                   rows={4}
                 />
@@ -470,10 +471,10 @@ export default function TeacherDashboard() {
                     setFeedbackValue('');
                   }}
                 >
-                  Cancel
+                  {tr('cancel', language)}
                 </Button>
                 <Button className="flex-1" onClick={gradeSubmission}>
-                  Save Grade
+                  {tr('saveGrade', language)}
                 </Button>
               </div>
             </div>
