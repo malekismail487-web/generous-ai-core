@@ -1404,6 +1404,27 @@ export type Database = {
         }
         Relationships: []
       }
+      super_admin_codes: {
+        Row: {
+          active: boolean | null
+          code_hash: string
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          active?: boolean | null
+          code_hash: string
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          active?: boolean | null
+          code_hash?: string
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       super_admin_verification: {
         Row: {
           attempts: number

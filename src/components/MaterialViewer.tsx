@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 import {
   Dialog,
   DialogContent,
@@ -112,19 +113,19 @@ export function MaterialViewer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [imageZoom, setImageZoom] = useState(1);
   const [viewerError, setViewerError] = useState(false);
+  const { signedUrl } = useSignedUrl(material?.file_url);
 
   if (!material) return null;
 
   const fileType = getFileType(material.file_url);
   const filename = getOriginalFilename(material.file_url, material.title);
   const canEmbed = fileType === 'pdf' || fileType === 'image' || fileType === 'video';
+  const effectiveUrl = signedUrl || material.file_url;
 
   const handleDownload = () => {
-    if (!material.file_url) return;
-    
-    // Create a temporary anchor to trigger download with proper filename
+    if (!effectiveUrl) return;
     const link = document.createElement('a');
-    link.href = material.file_url;
+    link.href = effectiveUrl;
     link.download = filename;
     link.target = '_blank';
     document.body.appendChild(link);
@@ -133,8 +134,8 @@ export function MaterialViewer({
   };
 
   const handleOpenExternal = () => {
-    if (material.file_url) {
-      window.open(material.file_url, '_blank', 'noopener,noreferrer');
+    if (effectiveUrl) {
+      window.open(effectiveUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -149,7 +150,7 @@ export function MaterialViewer({
   };
 
   const renderEmbeddedViewer = () => {
-    if (!material.file_url) return null;
+    if (!effectiveUrl) return null;
 
     // If viewer previously failed, show fallback
     if (viewerError) {
@@ -182,7 +183,7 @@ export function MaterialViewer({
             isFullscreen ? "h-[85vh]" : "h-[60vh]"
           )}>
             <iframe
-              src={`${material.file_url}#toolbar=1&navpanes=1&scrollbar=1`}
+              src={`${effectiveUrl}#toolbar=1&navpanes=1&scrollbar=1`}
               className="w-full h-full border-0"
               title={material.title}
               onError={() => setViewerError(true)}
@@ -223,7 +224,7 @@ export function MaterialViewer({
             
             <div className="overflow-auto w-full h-full flex items-center justify-center p-4">
               <img
-                src={material.file_url}
+                src={effectiveUrl}
                 alt={material.title}
                 className="max-w-full max-h-full object-contain transition-transform"
                 style={{ transform: `scale(${imageZoom})` }}
@@ -240,7 +241,7 @@ export function MaterialViewer({
             isFullscreen ? "h-[85vh]" : "h-[60vh]"
           )}>
             <video
-              src={material.file_url}
+              src={effectiveUrl}
               controls
               className="w-full h-full"
               onError={() => setViewerError(true)}
@@ -259,7 +260,7 @@ export function MaterialViewer({
             isFullscreen ? "h-[85vh]" : "h-[60vh]"
           )}>
             <iframe
-              src={`https://docs.google.com/viewer?url=${encodeURIComponent(material.file_url)}&embedded=true`}
+              src={`https://docs.google.com/viewer?url=${encodeURIComponent(effectiveUrl)}&embedded=true`}
               className="w-full h-full border-0"
               title={material.title}
               onError={() => setViewerError(true)}
