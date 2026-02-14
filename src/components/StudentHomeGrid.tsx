@@ -9,7 +9,6 @@ import {
   ClipboardList,
   FileText,
   GraduationCap,
-  MessageCircle,
   Flame,
   Calendar,
   Settings,
@@ -24,7 +23,6 @@ export type GridAction =
   | 'sat'
   | 'assignments'
   | 'reports'
-  | 'schoolchat'
   | 'weeklyplan'
   | 'settings';
 
@@ -42,7 +40,7 @@ const gridItems: { id: GridAction; icon: typeof MessageSquare; label: string; co
   { id: 'notes', icon: ClipboardList, label: 'Notes', color: 'from-cyan-500 to-cyan-600', borderColor: 'border-cyan-500' },
   { id: 'reports', icon: FileText, label: 'Report Cards', color: 'from-rose-500 to-rose-600', borderColor: 'border-rose-500', schoolOnly: true },
   { id: 'weeklyplan', icon: Calendar, label: 'Weekly Plan', color: 'from-indigo-500 to-indigo-600', borderColor: 'border-indigo-500', schoolOnly: true },
-  { id: 'schoolchat', icon: MessageCircle, label: 'School Chat', color: 'from-teal-500 to-teal-600', borderColor: 'border-teal-500', schoolOnly: true },
+  
   { id: 'chat', icon: MessageSquare, label: 'AI Tutor', color: 'from-blue-500 to-blue-600', borderColor: 'border-blue-500' },
   { id: 'settings', icon: Settings, label: 'Settings', color: 'from-gray-500 to-gray-600', borderColor: 'border-gray-500' },
 ];

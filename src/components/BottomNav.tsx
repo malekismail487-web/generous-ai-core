@@ -1,7 +1,7 @@
 import { Home, Calendar, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type TabType = 'home' | 'weeklyplan' | 'profile' | 'chat' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'schoolchat' | 'assignments' | 'reports';
+export type TabType = 'home' | 'weeklyplan' | 'profile' | 'chat' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'assignments' | 'reports';
 
 interface BottomNavProps {
   activeTab: TabType;
