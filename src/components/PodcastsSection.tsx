@@ -7,6 +7,7 @@ import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import mammoth from 'mammoth';
 
 const EXPLAIN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/explain-file`;
 
@@ -20,6 +21,31 @@ export function PodcastsSection() {
   const { toast } = useToast();
 
   const readFileContent = useCallback(async (f: File): Promise<string> => {
+    const ext = f.name.split('.').pop()?.toLowerCase() || '';
+
+    // DOCX: extract text using mammoth
+    if (ext === 'docx') {
+      const arrayBuffer = await f.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      return result.value;
+    }
+
+    // PDF: extract text using pdfjs-dist
+    if (ext === 'pdf') {
+      const pdfjsLib = await import('pdfjs-dist');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs`;
+      const arrayBuffer = await f.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pages: string[] = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        pages.push(textContent.items.map((item: any) => item.str).join(' '));
+      }
+      return pages.join('\n\n');
+    }
+
+    // Plain text files
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => resolve(e.target?.result as string);
@@ -140,7 +166,7 @@ export function PodcastsSection() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".txt,.md,.csv,.json,.js,.ts,.py,.html,.css,.pdf,.doc,.docx"
+        accept=".txt,.md,.csv,.json,.js,.ts,.py,.html,.css,.pdf,.docx"
         onChange={handleFileSelect}
         className="hidden"
       />
