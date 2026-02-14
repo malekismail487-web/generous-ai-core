@@ -3,6 +3,7 @@ import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Message, streamChat } from "@/lib/chat";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
+import { ChatHistoryDrawer } from "@/components/ChatHistoryDrawer";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { EmptyState } from "@/components/EmptyState";
 import { BottomNav, TabType } from "@/components/BottomNav";
@@ -24,13 +25,14 @@ import { useConversations } from "@/hooks/useConversations";
 import { useNotes } from "@/hooks/useNotes";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { Navigate } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Menu } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Menu, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isLoading, setIsLoading] = useState(false);
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -173,11 +175,20 @@ const Index = () => {
 
       case 'chat':
         return (
-          <div className="flex flex-col h-full pt-14 pb-20">
-            <div className="px-4 pt-2">
+          <div className="flex flex-col h-full pt-14">
+            {/* History button */}
+            <div className="flex items-center justify-between px-4 pt-2">
               <BannerAd location="home" />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 ml-2 flex-shrink-0"
+                onClick={() => setHistoryOpen(true)}
+              >
+                <History size={16} />
+              </Button>
             </div>
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto pb-36">
               <div className="max-w-2xl mx-auto px-4 py-4">
                 {localMessages.length === 0 ? (
                   <EmptyState onSuggestionClick={sendMessage} />
@@ -203,6 +214,15 @@ const Index = () => {
                 <ChatInput onSend={sendMessage} disabled={isLoading} />
               </div>
             </footer>
+            <ChatHistoryDrawer
+              open={historyOpen}
+              onClose={() => setHistoryOpen(false)}
+              conversations={conversations}
+              currentId={currentConversation?.id}
+              onSelect={(conv) => { selectConversation(conv); }}
+              onDelete={deleteConversation}
+              onNewChat={handleNewChat}
+            />
           </div>
         );
 
