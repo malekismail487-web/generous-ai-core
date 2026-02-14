@@ -136,16 +136,6 @@ export function StudentAppPreview() {
       <BottomNav
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        conversations={[]}
-        notes={[]}
-        currentConversationId={undefined}
-        currentNoteId={undefined}
-        onSelectConversation={() => {}}
-        onSelectNote={() => {}}
-        onNewChat={() => setMessages([])}
-        onNewNote={() => {}}
-        onDeleteConversation={() => {}}
-        onDeleteNote={() => {}}
         hasSchool={true}
       />
 

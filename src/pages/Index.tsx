@@ -14,6 +14,8 @@ import { ProfileSection } from "@/components/ProfileSection";
 import { SchoolChatSection } from "@/components/SchoolChatSection";
 import { AssignmentsSection } from "@/components/AssignmentsSection";
 import { StudentReportCards } from "@/components/student/StudentReportCards";
+import { StudentHomeGrid, GridAction } from "@/components/StudentHomeGrid";
+import { WeeklyPlanSection } from "@/components/WeeklyPlanSection";
 import { BannerAd } from "@/components/BannerAd";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,12 +23,11 @@ import { useConversations } from "@/hooks/useConversations";
 import { useNotes } from "@/hooks/useNotes";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { Navigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
-
-const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
+import { Loader2, ArrowLeft, Sparkles, Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('chat');
+  const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isLoading, setIsLoading] = useState(false);
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -63,7 +64,6 @@ const Index = () => {
     selectNote,
   } = useNotes();
 
-  // Sync messages from DB to local state for display
   useEffect(() => {
     setLocalMessages(messages.map((m) => ({
       id: m.id,
@@ -86,22 +86,13 @@ const Index = () => {
     if (!conversationId) {
       const newConv = await createConversation();
       if (!newConv) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to create conversation",
-        });
+        toast({ variant: "destructive", title: "Error", description: "Failed to create conversation" });
         return;
       }
       conversationId = newConv.id;
     }
 
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content,
-    };
-
+    const userMessage: Message = { id: crypto.randomUUID(), role: "user", content };
     setLocalMessages((prev) => [...prev, userMessage]);
     await addMessage("user", content, conversationId);
     setIsLoading(true);
@@ -114,25 +105,13 @@ const Index = () => {
       setLocalMessages((prev) => {
         const lastMessage = prev[prev.length - 1];
         if (lastMessage?.role === "assistant") {
-          return prev.map((m, i) =>
-            i === prev.length - 1 ? { ...m, content: assistantContent } : m
-          );
+          return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
         }
-        return [
-          ...prev,
-          {
-            id: assistantId,
-            role: "assistant",
-            content: assistantContent,
-          },
-        ];
+        return [...prev, { id: assistantId, role: "assistant", content: assistantContent }];
       });
     };
 
-    const messagesWithContext = [
-      ...localMessages.map(m => ({ ...m, content: m.content })),
-      userMessage
-    ];
+    const messagesWithContext = [...localMessages.map(m => ({ ...m, content: m.content })), userMessage];
 
     await streamChat({
       messages: messagesWithContext,
@@ -143,11 +122,7 @@ const Index = () => {
       },
       onError: (error) => {
         setIsLoading(false);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message || "Something went wrong. Please try again.",
-        });
+        toast({ variant: "destructive", title: "Error", description: error.message || "Something went wrong." });
       },
     });
   };
@@ -157,8 +132,8 @@ const Index = () => {
     setLocalMessages([]);
   };
 
-  const handleNewNote = async () => {
-    await createNote();
+  const handleGridNavigate = (action: GridAction) => {
+    setActiveTab(action as TabType);
   };
 
   // Loading states
@@ -171,46 +146,30 @@ const Index = () => {
     );
   }
 
-  // Not authenticated
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
+  if (!user) return <Navigate to="/auth" replace />;
+  if (isSuperAdmin) return <Navigate to="/super-admin" replace />;
+  if (isSchoolAdmin && profile?.is_active) return <Navigate to="/admin" replace />;
+  if (isTeacher && profile?.is_active) return <Navigate to="/teacher" replace />;
+  if (!hasProfile) return <Navigate to="/activate-school" replace />;
+  if (profile?.status === 'pending' || profile?.status === 'rejected') return <Navigate to="/pending-approval" replace />;
 
-  // Role-based redirects
-  if (isSuperAdmin) {
-    return <Navigate to="/super-admin" replace />;
-  }
-  
-  if (isSchoolAdmin && profile?.is_active) {
-    return <Navigate to="/admin" replace />;
-  }
-  
-  if (isTeacher && profile?.is_active) {
-    return <Navigate to="/teacher" replace />;
-  }
-  
-  // No profile - redirect to join or activate
-  if (!hasProfile) {
-    return <Navigate to="/activate-school" replace />;
-  }
-
-  // Pending or rejected users go to pending approval page
-  if (profile?.status === 'pending' || profile?.status === 'rejected') {
-    return <Navigate to="/pending-approval" replace />;
-  }
-  
-  // Students stay on Index.tsx - they use the main app with AI chat, lessons, exams, flashcards, notes, SAT
+  // Sub-page header with back button
+  const isSubPage = !['home', 'weeklyplan', 'profile'].includes(activeTab);
 
   const renderMainContent = () => {
     switch (activeTab) {
+      case 'home':
+        return <StudentHomeGrid onNavigate={handleGridNavigate} hasSchool={!!school} />;
+
+      case 'weeklyplan':
+        return <WeeklyPlanSection />;
+
       case 'chat':
         return (
           <div className="flex flex-col h-full pt-14 pb-20">
-            {/* Banner Ad at top of chat */}
             <div className="px-4 pt-2">
               <BannerAd location="home" />
             </div>
-            
             <main className="flex-1 overflow-y-auto">
               <div className="max-w-2xl mx-auto px-4 py-4">
                 {localMessages.length === 0 ? (
@@ -228,7 +187,6 @@ const Index = () => {
                 )}
               </div>
             </main>
-
             <footer className="fixed bottom-16 left-0 right-0 glass-effect-strong border-t border-border/30 z-40">
               <div className="max-w-2xl mx-auto px-4 py-3">
                 <ChatInput onSend={sendMessage} disabled={isLoading} />
@@ -239,31 +197,22 @@ const Index = () => {
 
       case 'subjects':
         return <SubjectsSection />;
-
       case 'notes':
         return <NotesSection />;
-
       case 'flashcards':
         return <FlashcardsSection />;
-
       case 'examination':
         return <ExaminationSection />;
-
       case 'sat':
         return <SATSection />;
-
       case 'profile':
         return <ProfileSection />;
-
       case 'schoolchat':
         return <SchoolChatSection />;
-
       case 'assignments':
         return <AssignmentsSection />;
-
       case 'reports':
         return profile ? <StudentReportCards studentId={profile.id} /> : null;
-
       default:
         return null;
     }
@@ -273,19 +222,28 @@ const Index = () => {
     <div className="h-screen bg-background relative flex flex-col overflow-hidden">
       <div className="ambient-glow" />
       
+      {/* Top bar - only show on sub-pages for back navigation */}
+      {isSubPage && (
+        <header className="fixed top-0 left-0 right-0 z-50 h-14 glass-effect-strong border-b border-border/30">
+          <div className="flex items-center h-full px-4 gap-3">
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setActiveTab('home')}>
+              <ArrowLeft size={20} />
+            </Button>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
+                <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
+              </div>
+              <span className="font-bold text-foreground text-sm capitalize">
+                {activeTab === 'sat' ? 'SAT Prep' : activeTab === 'schoolchat' ? 'School Chat' : activeTab}
+              </span>
+            </div>
+          </div>
+        </header>
+      )}
+
       <BottomNav
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        conversations={conversations}
-        notes={notes}
-        currentConversationId={currentConversation?.id}
-        currentNoteId={currentNote?.id}
-        onSelectConversation={selectConversation}
-        onSelectNote={selectNote}
-        onNewChat={handleNewChat}
-        onNewNote={handleNewNote}
-        onDeleteConversation={deleteConversation}
-        onDeleteNote={deleteNote}
         hasSchool={!!school}
       />
 
