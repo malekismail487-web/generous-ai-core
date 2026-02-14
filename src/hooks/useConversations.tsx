@@ -161,6 +161,49 @@ export function useConversations() {
     fetchConversations();
   }, [fetchConversations]);
 
+  // Fetch recent messages from past conversations for AI context
+  const fetchBackgroundContext = useCallback(async (excludeConversationId?: string) => {
+    if (!user) return [];
+    
+    // Get the 5 most recent conversations (excluding current)
+    let query = supabase
+      .from('conversations')
+      .select('id, title')
+      .order('updated_at', { ascending: false })
+      .limit(5);
+    
+    if (excludeConversationId) {
+      query = query.neq('id', excludeConversationId);
+    }
+    
+    const { data: recentConvs } = await query;
+    if (!recentConvs || recentConvs.length === 0) return [];
+    
+    // Fetch last 4 messages from each conversation
+    const summaries: { title: string; messages: { role: string; content: string }[] }[] = [];
+    
+    for (const conv of recentConvs) {
+      const { data: msgs } = await supabase
+        .from('messages')
+        .select('role, content')
+        .eq('conversation_id', conv.id)
+        .order('created_at', { ascending: false })
+        .limit(4);
+      
+      if (msgs && msgs.length > 0) {
+        summaries.push({
+          title: conv.title,
+          messages: msgs.reverse().map(m => ({
+            role: m.role,
+            content: m.content.length > 300 ? m.content.slice(0, 300) + '...' : m.content,
+          })),
+        });
+      }
+    }
+    
+    return summaries;
+  }, [user]);
+
   return {
     conversations,
     currentConversation,
@@ -174,5 +217,6 @@ export function useConversations() {
     clearCurrentConversation,
     fetchMessages,
     setMessages,
+    fetchBackgroundContext,
   };
 }
