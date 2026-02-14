@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { Loader2, Calendar, FileText, Download } from 'lucide-react';
-import { format, startOfWeek, addWeeks } from 'date-fns';
+import { format } from 'date-fns';
+import { MaterialViewer } from '@/components/MaterialViewer';
 
 interface WeeklyPlan {
   id: string;
@@ -21,6 +22,8 @@ export function WeeklyPlanSection() {
   const [plans, setPlans] = useState<WeeklyPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<WeeklyPlan | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerPlan, setViewerPlan] = useState<WeeklyPlan | null>(null);
 
   const fetchPlans = useCallback(async () => {
     if (!school) return;
@@ -69,15 +72,16 @@ export function WeeklyPlanSection() {
           </p>
 
           {selectedPlan.plan_type === 'file' && selectedPlan.file_url && (
-            <a
-              href={selectedPlan.file_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 p-4 glass-effect rounded-xl mb-4 text-primary hover:underline"
+            <button
+              onClick={() => {
+                setViewerPlan(selectedPlan);
+                setViewerOpen(true);
+              }}
+              className="flex items-center gap-2 p-4 glass-effect rounded-xl mb-4 text-primary hover:underline w-full text-left"
             >
-              <Download className="w-5 h-5" />
-              <span>{selectedPlan.file_name || 'Download Plan'}</span>
-            </a>
+              <FileText className="w-5 h-5" />
+              <span>{selectedPlan.file_name || 'View Plan File'}</span>
+            </button>
           )}
 
           {selectedPlan.plan_type === 'manual' && selectedPlan.content_json && (
@@ -150,6 +154,22 @@ export function WeeklyPlanSection() {
           </div>
         )}
       </div>
+
+      <MaterialViewer
+        open={viewerOpen}
+        onOpenChange={setViewerOpen}
+        material={viewerPlan ? {
+          id: viewerPlan.id,
+          title: viewerPlan.title,
+          subject: 'Weekly Plan',
+          content: null,
+          file_url: viewerPlan.file_url,
+          grade_level: viewerPlan.grade_level,
+          created_at: viewerPlan.created_at,
+        } : null}
+        subjectInfo={{ name: 'Weekly Plan', emoji: '📅', color: 'from-blue-500 to-blue-600' }}
+        teacherName="School Admin"
+      />
     </div>
   );
 }
