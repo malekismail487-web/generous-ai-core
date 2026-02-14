@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr } from '@/lib/translations';
 import { Sparkles, Mail, Lock, Loader2, KeyRound, Users, UserPlus } from 'lucide-react';
 import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,6 +32,16 @@ export default function Auth() {
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { language } = useThemeLanguage();
+  const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
+
+  // Redirect to language selection if not chosen yet
+  useEffect(() => {
+    const hasSelected = localStorage.getItem('language-selected');
+    if (!hasSelected && !user) {
+      navigate('/language', { replace: true });
+    }
+  }, [navigate, user]);
 
   useEffect(() => {
     const checkUserAndRedirect = async () => {
@@ -402,15 +414,15 @@ export default function Auth() {
           <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="login" className="gap-2">
               <Lock className="w-4 h-4" />
-              Sign In
+              {t('signIn')}
             </TabsTrigger>
             <TabsTrigger value="signup" className="gap-2">
               <UserPlus className="w-4 h-4" />
-              Sign Up
+              {t('signUp')}
             </TabsTrigger>
             <TabsTrigger value="join" className="gap-2">
               <Users className="w-4 h-4" />
-              Join School
+              {t('joinSchool')}
             </TabsTrigger>
           </TabsList>
 
@@ -418,11 +430,11 @@ export default function Auth() {
           <TabsContent value="login">
             <form onSubmit={handleLogin} className="glass-effect rounded-2xl p-6 space-y-4">
               <p className="text-center text-muted-foreground mb-4">
-                Sign in to your account
+                {t('signInToAccount')}
               </p>
               
               <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
+                <Label htmlFor="login-email">{t('email')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -440,7 +452,7 @@ export default function Auth() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="login-password">Password</Label>
+                <Label htmlFor="login-password">{t('password')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -465,17 +477,17 @@ export default function Auth() {
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
-                Sign In
+                {t('signIn')}
               </Button>
 
               <p className="text-center text-xs text-muted-foreground mt-4">
-                Don't have an account?{' '}
+                {t('dontHaveAccount')}{' '}
                 <button
                   type="button"
                   onClick={() => { setAuthMode('signup'); clearForm(); }}
                   className="text-primary hover:underline"
                 >
-                  Sign up
+                  {t('signUp')}
                 </button>
               </p>
             </form>
@@ -485,11 +497,11 @@ export default function Auth() {
           <TabsContent value="signup">
             <form onSubmit={handleSignUp} className="glass-effect rounded-2xl p-6 space-y-4">
               <p className="text-center text-muted-foreground mb-4">
-                Create a new account
+                {t('createAccount')}
               </p>
               
               <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
+                <Label htmlFor="signup-email">{t('email')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -507,7 +519,7 @@ export default function Auth() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
+                <Label htmlFor="signup-password">{t('password')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -525,7 +537,7 @@ export default function Auth() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                <Label htmlFor="signup-confirm-password">{t('confirmPassword')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -550,17 +562,17 @@ export default function Auth() {
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
-                Create Account
+                {t('signUp')}
               </Button>
 
               <p className="text-center text-xs text-muted-foreground mt-4">
-                Already have an account?{' '}
+                {t('alreadyHaveAccount')}{' '}
                 <button
                   type="button"
                   onClick={() => { setAuthMode('login'); clearForm(); }}
                   className="text-primary hover:underline"
                 >
-                  Sign in
+                  {t('signIn')}
                 </button>
               </p>
             </form>
@@ -570,15 +582,15 @@ export default function Auth() {
           <TabsContent value="join">
             <form onSubmit={handleJoinWithCode} className="glass-effect rounded-2xl p-6 space-y-4">
               <p className="text-center text-muted-foreground mb-4">
-                Join your school with an invite code
+                {t('joinSchoolDesc')}
               </p>
 
               <div className="space-y-2">
-                <Label htmlFor="join-name">Full Name</Label>
+                <Label htmlFor="join-name">{t('fullName')}</Label>
                 <Input
                   id="join-name"
                   type="text"
-                  placeholder="Your full name"
+                  placeholder={language === 'ar' ? 'الاسم الكامل' : 'Your full name'}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -588,7 +600,7 @@ export default function Auth() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="join-email">Email</Label>
+                <Label htmlFor="join-email">{t('email')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -606,7 +618,7 @@ export default function Auth() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="join-password">Password</Label>
+                <Label htmlFor="join-password">{t('password')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -624,7 +636,7 @@ export default function Auth() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="join-confirm-password">Confirm Password</Label>
+                <Label htmlFor="join-confirm-password">{t('confirmPassword')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -642,13 +654,13 @@ export default function Auth() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="join-code">Invite Code</Label>
+                <Label htmlFor="join-code">{t('inviteCode')}</Label>
                 <div className="relative">
                   <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="join-code"
                     type="text"
-                    placeholder="Enter your invite code"
+                    placeholder={language === 'ar' ? 'أدخل رمز الدعوة' : 'Enter your invite code'}
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                     className="pl-10 tracking-wider uppercase"
@@ -659,7 +671,7 @@ export default function Auth() {
                   <p className="text-sm text-destructive">{errors.code}</p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  This code is provided by your school administrator
+                  {language === 'ar' ? 'هذا الرمز يقدمه مسؤول المدرسة' : 'This code is provided by your school administrator'}
                 </p>
               </div>
 
@@ -671,18 +683,18 @@ export default function Auth() {
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
-                Join School
+                {t('joinSchool')}
               </Button>
 
               <div className="text-center text-xs text-muted-foreground mt-4 space-y-2">
                 <p>
-                  Are you a school administrator?{' '}
+                  {language === 'ar' ? 'هل أنت مسؤول مدرسة؟' : 'Are you a school administrator?'}{' '}
                   <button
                     type="button"
                     onClick={() => navigate('/activate-school')}
                     className="text-primary hover:underline"
                   >
-                    Activate your school
+                    {language === 'ar' ? 'فعّل مدرستك' : 'Activate your school'}
                   </button>
                 </p>
               </div>

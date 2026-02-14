@@ -8,6 +8,8 @@ import { useMaterials, Material } from '@/hooks/useMaterials';
 import { MathRenderer } from '@/components/MathRenderer';
 import { useAuth } from '@/hooks/useAuth';
 import { CourseMaterialsSection } from '@/components/CourseMaterialsSection';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 const subjects = [
   { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-emerald-500 to-green-600' },
   { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-blue-500 to-cyan-600' },
@@ -44,6 +46,8 @@ export function SubjectsSection() {
   
   const { toast } = useToast();
   const { user } = useAuth();
+  const { language } = useThemeLanguage();
+  const tl = (key: Parameters<typeof tr>[0]) => tr(key, language);
   const { 
     getMaterialsBySubjectAndGrade, 
     createMaterial, 
@@ -220,7 +224,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           <div className="flex items-center gap-3 mb-4">
             <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
               <ArrowLeft size={16} className="mr-1" />
-              Back
+              {tl('back')}
             </Button>
             <div className={cn(
               "w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br",
@@ -229,8 +233,8 @@ Use age-appropriate language for ${selectedGrade}.`;
               {subject?.emoji}
             </div>
             <div>
-              <h1 className="font-bold text-sm">{subject?.name}</h1>
-              <p className="text-xs text-muted-foreground">{selectedGrade}</p>
+              <h1 className="font-bold text-sm">{getSubjectName(selectedSubject!, language)}</h1>
+              <p className="text-xs text-muted-foreground">{getGradeName(selectedGrade!, language)}</p>
             </div>
           </div>
 
@@ -266,7 +270,7 @@ Use age-appropriate language for ${selectedGrade}.`;
                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs bg-primary/10 text-primary hover:bg-primary/20 transition-all border border-dashed border-primary/30"
               >
                 <Plus size={12} />
-                New Material
+                {tl('newMaterial')}
               </button>
             </div>
           </div>
@@ -276,7 +280,7 @@ Use age-appropriate language for ${selectedGrade}.`;
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <span className="ml-2 text-sm text-muted-foreground">Generating lecture...</span>
+                <span className="ml-2 text-sm text-muted-foreground">{tl('generatingLecture')}</span>
               </div>
             ) : (
               <div className="prose prose-sm max-w-none">
@@ -298,7 +302,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
               <ArrowLeft size={16} className="mr-1" />
-              Back
+              {tl('back')}
             </Button>
           </div>
 
@@ -309,14 +313,14 @@ Use age-appropriate language for ${selectedGrade}.`;
             )}>
               {subject?.emoji}
             </div>
-            <h1 className="text-2xl font-bold mb-2">{subject?.name}</h1>
-            <p className="text-sm text-muted-foreground">{selectedGrade}</p>
+            <h1 className="text-2xl font-bold mb-2">{getSubjectName(selectedSubject!, language)}</h1>
+            <p className="text-sm text-muted-foreground">{getGradeName(selectedGrade!, language)}</p>
           </div>
 
           {/* Topic Input */}
           <div className="glass-effect rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-2 text-center text-lg">
-              What are you taking or having problems with in this subject?
+              {tl('whatTopic')}
             </h3>
             
             <input
@@ -324,7 +328,7 @@ Use age-appropriate language for ${selectedGrade}.`;
               value={materialInput}
               onChange={(e) => setMaterialInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleMaterialSubmit()}
-              placeholder="e.g., Cell respiration, Newton's laws, Quadratic equations..."
+              placeholder={tl('topicPlaceholder')}
               className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
               autoFocus
             />
@@ -340,7 +344,7 @@ Use age-appropriate language for ${selectedGrade}.`;
                     setViewState('lecture');
                   }}
                 >
-                  View Saved Materials
+                  {tl('viewSavedMaterials')}
                 </Button>
               )}
               <Button
@@ -349,7 +353,7 @@ Use age-appropriate language for ${selectedGrade}.`;
                 disabled={!materialInput.trim()}
                 className="flex-1 gap-2"
               >
-                Generate Lecture
+                {tl('generateLecture')}
                 <ArrowRight size={16} />
               </Button>
             </div>
@@ -368,7 +372,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBackToSubjects}>
               <ArrowLeft size={16} className="mr-1" />
-              Back
+              {tl('back')}
             </Button>
           </div>
 
@@ -379,12 +383,12 @@ Use age-appropriate language for ${selectedGrade}.`;
             )}>
               {subject?.emoji}
             </div>
-            <h1 className="text-2xl font-bold mb-2">{subject?.name}</h1>
+            <h1 className="text-2xl font-bold mb-2">{getSubjectName(selectedSubject!, language)}</h1>
           </div>
 
           {/* Grade Selection */}
           <div className="glass-effect rounded-2xl p-5 animate-fade-in">
-            <h3 className="font-semibold mb-4 text-center">Select Your Grade Level</h3>
+            <h3 className="font-semibold mb-4 text-center">{tl('selectGrade')}</h3>
             <div className="grid grid-cols-4 gap-2 overflow-y-auto max-h-[50vh]">
               {grades.map((grade) => {
                 const materialCount = getMaterialsBySubjectAndGrade(selectedSubject, grade).length;
@@ -394,9 +398,9 @@ Use age-appropriate language for ${selectedGrade}.`;
                     onClick={() => handleGradeSelect(grade)}
                     className="px-3 py-2 rounded-lg text-xs font-medium transition-all bg-secondary/50 text-muted-foreground hover:bg-secondary flex flex-col items-center gap-1"
                   >
-                    <span>{grade}</span>
+                    <span>{getGradeName(grade, language)}</span>
                     {materialCount > 0 && (
-                      <span className="text-[10px] text-primary">{materialCount} saved</span>
+                      <span className="text-[10px] text-primary">{materialCount} {tl('saved')}</span>
                     )}
                   </button>
                 );
@@ -417,8 +421,8 @@ Use age-appropriate language for ${selectedGrade}.`;
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-primary to-accent">
               <Sparkles className="w-7 h-7 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold mb-2 gradient-text">Subjects</h1>
-            <p className="text-muted-foreground text-sm">Choose how you want to learn</p>
+            <h1 className="text-2xl font-bold mb-2 gradient-text">{tl('subjects')}</h1>
+            <p className="text-muted-foreground text-sm">{tl('chooseHowToLearn')}</p>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
@@ -432,8 +436,8 @@ Use age-appropriate language for ${selectedGrade}.`;
                   <Bot className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-foreground">AI Lectures</h3>
-                  <p className="text-sm text-muted-foreground">Generate personalized lectures with AI</p>
+                  <h3 className="font-bold text-lg text-foreground">{tl('aiLectures')}</h3>
+                  <p className="text-sm text-muted-foreground">{tl('aiLecturesDesc')}</p>
                 </div>
                 <ArrowRight className="ml-auto text-muted-foreground group-hover:text-foreground transition-colors" />
               </div>
@@ -475,7 +479,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBackToMainMenu}>
               <ArrowLeft size={16} className="mr-1" />
-              Back
+              {tl('back')}
             </Button>
           </div>
 
@@ -487,9 +491,9 @@ Use age-appropriate language for ${selectedGrade}.`;
               {menuType === 'ai' ? <Bot className="w-6 h-6 text-white" /> : <BookOpen className="w-6 h-6 text-white" />}
             </div>
             <h1 className="text-xl font-bold mb-1 gradient-text">
-              {menuType === 'ai' ? 'AI Lectures' : 'Course Materials'}
+              {menuType === 'ai' ? tl('aiLectures') : tl('courseMaterials')}
             </h1>
-            <p className="text-muted-foreground text-xs">Choose a subject</p>
+            <p className="text-muted-foreground text-xs">{language === 'ar' ? 'اختر مادة' : 'Choose a subject'}</p>
           </div>
 
           {/* Responsive Grid - 2 cols on mobile, 3 cols on tablet, 4 cols on desktop */}
@@ -510,7 +514,7 @@ Use age-appropriate language for ${selectedGrade}.`;
                 )}>
                   {subj.emoji}
                 </div>
-                <h3 className="font-semibold text-foreground text-xs">{subj.name}</h3>
+                <h3 className="font-semibold text-foreground text-xs">{getSubjectName(subj.id, language)}</h3>
               </button>
             ))}
           </div>
