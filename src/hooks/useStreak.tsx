@@ -10,12 +10,21 @@ export function useStreak() {
   const [maxStreak, setMaxStreak] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  const getLocalDateString = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  };
+
+  const getLocalDate = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+
   const updateStreak = useCallback(async () => {
     if (!user) return;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
 
-    // Fetch existing streak
     const { data: existing } = await supabase
       .from('daily_streaks')
       .select('*')
@@ -23,7 +32,6 @@ export function useStreak() {
       .maybeSingle();
 
     if (!existing) {
-      // First time - create streak
       const { data } = await supabase
         .from('daily_streaks')
         .insert({ user_id: user.id, current_streak: 1, max_streak: 1, last_active_date: today })
@@ -35,22 +43,22 @@ export function useStreak() {
       }
     } else {
       const lastActive = existing.last_active_date;
-      
+
       if (lastActive === today) {
-        // Already active today
         setCurrentStreak(Math.min(existing.current_streak, MAX_STREAK));
         setMaxStreak(Math.min(existing.max_streak, MAX_STREAK));
       } else {
-        const lastDate = new Date(lastActive);
-        const todayDate = new Date(today);
-        const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+        const lastDate = getLocalDate(lastActive);
+        const todayDate = getLocalDate(today);
+        const diffMs = todayDate.getTime() - lastDate.getTime();
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
         let newStreak: number;
         if (diffDays === 1) {
-          // Consecutive day
+          // User logged in the very next calendar day — streak continues
           newStreak = Math.min(existing.current_streak + 1, MAX_STREAK);
         } else {
-          // Missed a day - reset
+          // Missed 24+ hours past midnight — reset to 1
           newStreak = 1;
         }
 
