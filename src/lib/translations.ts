@@ -410,7 +410,6 @@ export const translations = {
   completionProgress: { en: 'Completion Progress', ar: 'تقدم الإنجاز' },
   completed: { en: 'completed', ar: 'مكتمل' },
   filters: { en: 'Filters', ar: 'تصفية' },
-  allStatus: { en: 'All Status', ar: 'جميع الحالات' },
   notStarted: { en: 'Not Started', ar: 'لم يبدأ' },
   overdue: { en: 'Overdue', ar: 'متأخر' },
   noAssignmentsFound: { en: 'No Assignments Found', ar: 'لم يتم العثور على واجبات' },
@@ -437,6 +436,24 @@ export const translations = {
   createGPA: { en: 'Create GPA', ar: 'حساب المعدل' },
   term: { en: 'Term', ar: 'الفصل الدراسي' },
   subjectScores: { en: 'Subject Scores', ar: 'درجات المواد' },
+
+  // Missing keys for PendingApproval
+  yourRequestSubmitted: { en: 'Your request to join', ar: 'طلب انضمامك إلى' },
+  hasBeenSubmitted: { en: 'has been submitted.', ar: 'تم إرساله.' },
+  adminWillReview: { en: 'Your school administrator has been notified and will review your request shortly.', ar: 'تم إخطار مدير المدرسة وسيراجع طلبك قريباً.' },
+  type: { en: 'Type', ar: 'النوع' },
+  id: { en: 'ID', ar: 'الرقم التعريفي' },
+
+  // Missing keys for UserProfileBadge
+  school: { en: 'School', ar: 'المدرسة' },
+  gradeLevel: { en: 'Grade Level', ar: 'المرحلة الدراسية' },
+  idNumber: { en: 'ID Number', ar: 'رقم الهوية' },
+
+  // Missing keys for TeacherDashboard
+  teacherDashboard: { en: 'Teacher Dashboard', ar: 'لوحة تحكم المعلم' },
+  gradeSubmission: { en: 'Grade Submission', ar: 'تصحيح الإجابة' },
+  noContentSubmitted: { en: 'No content submitted', ar: 'لم يتم تقديم محتوى' },
+  feedback: { en: 'Feedback', ar: 'الملاحظات' },
   
   // Generic
   yes: { en: 'Yes', ar: 'نعم' },
