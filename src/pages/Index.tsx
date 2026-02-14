@@ -183,8 +183,12 @@ const Index = () => {
                   <EmptyState onSuggestionClick={sendMessage} />
                 ) : (
                   <div className="space-y-3">
-                    {localMessages.map((message) => (
-                      <ChatMessage key={message.id} message={message} />
+                    {localMessages.map((message, idx) => (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                        isStreaming={isLoading && message.role === "assistant" && idx === localMessages.length - 1}
+                      />
                     ))}
                     {isLoading && localMessages[localMessages.length - 1]?.role === "user" && (
                       <TypingIndicator />
