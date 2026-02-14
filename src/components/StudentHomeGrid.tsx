@@ -1,5 +1,6 @@
 import { useStreak } from '@/hooks/useStreak';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { Progress } from '@/components/ui/progress';
 import {
   MessageSquare,
@@ -32,41 +33,45 @@ interface StudentHomeGridProps {
   hasSchool: boolean;
 }
 
-const gridItems: { id: GridAction; icon: typeof MessageSquare; label: string; color: string; iconBg: string; schoolOnly?: boolean }[] = [
-  { id: 'subjects', icon: Layers, label: 'Subjects', color: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-500/15 border-emerald-500/30' },
-  { id: 'sat', icon: GraduationCap, label: 'SAT Prep', color: 'from-violet-500 to-purple-600', iconBg: 'bg-violet-500/15 border-violet-500/30' },
-  { id: 'examination', icon: BookOpen, label: 'Exams', color: 'from-sky-500 to-blue-600', iconBg: 'bg-sky-500/15 border-sky-500/30' },
-  { id: 'assignments', icon: FileText, label: 'Assignments', color: 'from-orange-500 to-amber-600', iconBg: 'bg-orange-500/15 border-orange-500/30', schoolOnly: true },
-  { id: 'flashcards', icon: FlipHorizontal, label: 'Flashcards', color: 'from-amber-500 to-yellow-600', iconBg: 'bg-amber-500/15 border-amber-500/30' },
-  { id: 'notes', icon: ClipboardList, label: 'Notes', color: 'from-cyan-500 to-teal-600', iconBg: 'bg-cyan-500/15 border-cyan-500/30' },
-  { id: 'reports', icon: FileText, label: 'Report Cards', color: 'from-rose-500 to-pink-600', iconBg: 'bg-rose-500/15 border-rose-500/30', schoolOnly: true },
-  { id: 'weeklyplan', icon: Calendar, label: 'Weekly Plan', color: 'from-indigo-500 to-blue-600', iconBg: 'bg-indigo-500/15 border-indigo-500/30', schoolOnly: true },
-  { id: 'chat', icon: MessageSquare, label: 'AI Tutor', color: 'from-primary to-accent', iconBg: 'bg-primary/15 border-primary/30' },
-  { id: 'settings', icon: Settings, label: 'Settings', color: 'from-slate-500 to-gray-600', iconBg: 'bg-slate-500/15 border-slate-500/30' },
-];
-
 export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps) {
   const { currentStreak, streakPercentage, MAX_STREAK, loading: streakLoading } = useStreak();
   const { profile } = useRoleGuard();
+  const { t } = useThemeLanguage();
+
+  const gridItems: { id: GridAction; icon: typeof MessageSquare; label: string; color: string; iconBg: string; schoolOnly?: boolean }[] = [
+    { id: 'subjects', icon: Layers, label: t('Subjects', 'المواد'), color: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-500/15 border-emerald-500/30' },
+    { id: 'sat', icon: GraduationCap, label: t('SAT Prep', 'تحضير SAT'), color: 'from-violet-500 to-purple-600', iconBg: 'bg-violet-500/15 border-violet-500/30' },
+    { id: 'examination', icon: BookOpen, label: t('Exams', 'الاختبارات'), color: 'from-sky-500 to-blue-600', iconBg: 'bg-sky-500/15 border-sky-500/30' },
+    { id: 'assignments', icon: FileText, label: t('Assignments', 'الواجبات'), color: 'from-orange-500 to-amber-600', iconBg: 'bg-orange-500/15 border-orange-500/30', schoolOnly: true },
+    { id: 'flashcards', icon: FlipHorizontal, label: t('Flashcards', 'البطاقات التعليمية'), color: 'from-amber-500 to-yellow-600', iconBg: 'bg-amber-500/15 border-amber-500/30' },
+    { id: 'notes', icon: ClipboardList, label: t('Notes', 'الملاحظات'), color: 'from-cyan-500 to-teal-600', iconBg: 'bg-cyan-500/15 border-cyan-500/30' },
+    { id: 'reports', icon: FileText, label: t('Report Cards', 'كشوف الدرجات'), color: 'from-rose-500 to-pink-600', iconBg: 'bg-rose-500/15 border-rose-500/30', schoolOnly: true },
+    { id: 'weeklyplan', icon: Calendar, label: t('Weekly Plan', 'الخطة الأسبوعية'), color: 'from-indigo-500 to-blue-600', iconBg: 'bg-indigo-500/15 border-indigo-500/30', schoolOnly: true },
+    { id: 'chat', icon: MessageSquare, label: t('AI Tutor', 'المعلم الذكي'), color: 'from-primary to-accent', iconBg: 'bg-primary/15 border-primary/30' },
+    { id: 'settings', icon: Settings, label: t('Settings', 'الإعدادات'), color: 'from-slate-500 to-gray-600', iconBg: 'bg-slate-500/15 border-slate-500/30' },
+  ];
 
   const visibleItems = gridItems.filter(item => !item.schoolOnly || hasSchool);
 
-  const firstName = profile?.full_name?.split(' ')[0] || 'Student';
+  const firstName = profile?.full_name?.split(' ')[0] || t('Student', 'طالب');
 
   return (
     <div className="min-h-0 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-24">
-      {/* Hero greeting — uses gradient-hero token */}
+      {/* Hero greeting */}
       <div className="mx-3 mb-6 rounded-3xl overflow-hidden" style={{ background: 'var(--gradient-hero)' }}>
         <div className="px-5 pt-5 pb-6 relative">
-          {/* Decorative sparkle */}
           <div className="absolute top-4 right-4 opacity-20">
             <Sparkles className="w-20 h-20 text-primary-foreground" />
           </div>
 
           <div className="flex items-center justify-between mb-5 relative z-10">
             <div>
-              <h1 className="text-2xl font-extrabold text-white tracking-tight">Hello {firstName} 👋</h1>
-              <p className="text-white/70 text-sm mt-1">Ready to learn something new today?</p>
+              <h1 className="text-2xl font-extrabold text-white tracking-tight">
+                {t(`Hello ${firstName} 👋`, `مرحباً ${firstName} 👋`)}
+              </h1>
+              <p className="text-white/70 text-sm mt-1">
+                {t('Ready to learn something new today?', 'مستعد لتعلم شيء جديد اليوم؟')}
+              </p>
             </div>
             <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-2xl px-3.5 py-2.5 border border-white/10">
               <Flame className="w-5 h-5 text-amber-400" />
@@ -74,11 +79,10 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
             </div>
           </div>
 
-          {/* Streak progress bar */}
           <div className="space-y-2 relative z-10">
             <div className="flex justify-between text-xs text-white/70">
-              <span>Daily Streak</span>
-              <span>{currentStreak} / {MAX_STREAK} days</span>
+              <span>{t('Daily Streak', 'السلسلة اليومية')}</span>
+              <span>{currentStreak} / {MAX_STREAK} {t('days', 'يوم')}</span>
             </div>
             <div className="w-full bg-white/10 backdrop-blur-sm rounded-full h-3.5 overflow-hidden border border-white/5">
               <div
@@ -90,8 +94,8 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
               />
             </div>
             <div className="flex justify-between text-[10px] text-white/50">
-              <span>Start</span>
-              <span>Diamond</span>
+              <span>{t('Start', 'البداية')}</span>
+              <span>{t('Diamond', 'الماسي')}</span>
             </div>
           </div>
         </div>

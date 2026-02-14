@@ -8,11 +8,13 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
 export async function streamChat({
   messages,
+  language,
   onDelta,
   onDone,
   onError,
 }: {
   messages: Message[];
+  language?: string;
   onDelta: (deltaText: string) => void;
   onDone: () => void;
   onError: (error: Error) => void;
@@ -26,6 +28,7 @@ export async function streamChat({
       },
       body: JSON.stringify({
         messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        language: language || 'en',
       }),
     });
 

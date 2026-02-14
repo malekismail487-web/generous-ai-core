@@ -24,6 +24,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
 import { useNotes } from "@/hooks/useNotes";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
+import { useThemeLanguage } from "@/hooks/useThemeLanguage";
 import { Navigate } from "react-router-dom";
 import { Loader2, ArrowLeft, Sparkles, Menu, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,8 @@ const Index = () => {
     isStudent,
     hasProfile
   } = useRoleGuard();
-  
+  const { t, language } = useThemeLanguage();
+
   const {
     conversations,
     currentConversation,
@@ -118,6 +120,7 @@ const Index = () => {
 
     await streamChat({
       messages: messagesWithContext,
+      language,
       onDelta: updateAssistant,
       onDone: async () => {
         setIsLoading(false);
@@ -263,7 +266,15 @@ const Index = () => {
                 <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
               </div>
               <span className="font-bold text-foreground text-sm capitalize">
-                {activeTab === 'sat' ? 'SAT Prep' : activeTab}
+                {activeTab === 'sat' ? t('SAT Prep', 'تحضير SAT') 
+                  : activeTab === 'chat' ? t('AI Tutor', 'المعلم الذكي')
+                  : activeTab === 'subjects' ? t('Subjects', 'المواد')
+                  : activeTab === 'notes' ? t('Notes', 'الملاحظات')
+                  : activeTab === 'flashcards' ? t('Flashcards', 'البطاقات التعليمية')
+                  : activeTab === 'examination' ? t('Exams', 'الاختبارات')
+                  : activeTab === 'assignments' ? t('Assignments', 'الواجبات')
+                  : activeTab === 'reports' ? t('Report Cards', 'كشوف الدرجات')
+                  : activeTab}
               </span>
             </div>
           </div>

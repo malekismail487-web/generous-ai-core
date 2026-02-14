@@ -1,5 +1,6 @@
 import { Home, Calendar, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 
 export type TabType = 'home' | 'weeklyplan' | 'profile' | 'chat' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'assignments' | 'reports';
 
@@ -9,14 +10,15 @@ interface BottomNavProps {
   hasSchool?: boolean;
 }
 
-const bottomTabs = [
-  { id: 'weeklyplan' as const, icon: Calendar, label: 'Weekly Plan' },
-  { id: 'home' as const, icon: Home, label: 'Home' },
-  { id: 'profile' as const, icon: User, label: 'Profile' },
-];
-
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+  const { t } = useThemeLanguage();
   const activeBottomTab = ['home', 'weeklyplan', 'profile'].includes(activeTab) ? activeTab : 'home';
+
+  const bottomTabs = [
+    { id: 'weeklyplan' as const, icon: Calendar, label: t('Weekly Plan', 'الخطة الأسبوعية') },
+    { id: 'home' as const, icon: Home, label: t('Home', 'الرئيسية') },
+    { id: 'profile' as const, icon: User, label: t('Profile', 'الملف الشخصي') },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 glass-effect-strong border-t border-border/30 pb-safe">
