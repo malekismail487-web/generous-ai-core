@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, Podcast, Volume2, VolumeX, Loader2, FileText, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -6,6 +6,8 @@ import { MathRenderer } from '@/components/MathRenderer';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import mammoth from 'mammoth';
 
@@ -15,10 +17,22 @@ export function PodcastsSection() {
   const [file, setFile] = useState<File | null>(null);
   const [explanation, setExplanation] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [podcastCount, setPodcastCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { speak, stop, isSpeaking, isLoading: ttsLoading } = useTextToSpeech();
   const { t, language } = useThemeLanguage();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Fetch podcast count on mount
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('podcast_generations')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .then(({ count }) => setPodcastCount(count ?? 0));
+  }, [user]);
 
   const readFileContent = useCallback(async (f: File): Promise<string> => {
     const ext = f.name.split('.').pop()?.toLowerCase() || '';
@@ -136,6 +150,14 @@ export function PodcastsSection() {
       }
 
       setIsProcessing(false);
+
+      // Track the podcast generation
+      if (user && file) {
+        supabase
+          .from('podcast_generations')
+          .insert({ user_id: user.id, file_name: file.name })
+          .then(() => setPodcastCount(prev => prev + 1));
+      }
     } catch (error) {
       setIsProcessing(false);
       toast({
@@ -182,6 +204,14 @@ export function PodcastsSection() {
             <h2 className="text-xl font-bold mb-2">
               {t('AI Podcasts', 'بودكاست الذكاء الاصطناعي')}
             </h2>
+            {podcastCount > 0 && (
+              <div className="flex items-center gap-1.5 mb-3 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-semibold text-primary">
+                  {podcastCount} {t('podcasts created', 'بودكاست تم إنشاؤه')}
+                </span>
+              </div>
+            )}
             <p className="text-muted-foreground text-sm mb-6 max-w-xs">
               {t(
                 'Upload any file and the AI will explain it to you — read or listen!',
