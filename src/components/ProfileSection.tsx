@@ -123,64 +123,7 @@ export function ProfileSection() {
           </div>
         </div>
 
-        {/* Admin Code Recovery - Only show if not already admin */}
-        {!isAdmin && (
-          <div className="glass-effect rounded-2xl p-5 mb-4">
-            {!showAdminCodeInput ? (
-              <button
-                onClick={() => setShowAdminCodeInput(true)}
-                className="w-full flex items-center gap-3 text-left"
-              >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-slate-600 to-slate-700 text-white">
-                  <Key className="w-5 h-5" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">{tl('adminAccessCode')}</h3>
-                  <p className="text-sm text-muted-foreground">{tl('enterAdminCode')}</p>
-                </div>
-                <ChevronRight className="text-muted-foreground" />
-              </button>
-            ) : (
-              <div className="space-y-3">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <Key size={16} /> Enter Admin Access Code
-                </h3>
-                <input
-                  type="password"
-                  value={adminCode}
-                  onChange={(e) => setAdminCode(e.target.value)}
-                  placeholder={language === 'ar' ? 'أدخل رمز المسؤول' : 'Enter your admin access code'}
-                  className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  onKeyDown={(e) => e.key === 'Enter' && handleVerifyAdminCode()}
-                />
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => {
-                      setShowAdminCodeInput(false);
-                      setAdminCode('');
-                    }}
-                  >
-                    {tl('cancel')}
-                  </Button>
-                  <Button
-                    className="flex-1 gap-2"
-                    onClick={handleVerifyAdminCode}
-                    disabled={!adminCode.trim() || isVerifying}
-                  >
-                    {isVerifying ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Key size={16} />
-                    )}
-                    {tl('verify')}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Admin Code Recovery removed - no longer shown to students */}
 
         {/* School Admin Panel */}
         {isSchoolAdmin && (

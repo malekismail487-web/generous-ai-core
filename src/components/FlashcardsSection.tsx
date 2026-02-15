@@ -199,16 +199,42 @@ export function FlashcardsSection() {
             </Button>
           </div>
 
-          <div onClick={() => setIsFlipped(!isFlipped)} className={cn("relative w-full aspect-[3/4] cursor-pointer perspective-1000", "transition-transform duration-500", isFlipped && "rotate-y-180")} style={{ transformStyle: 'preserve-3d' }}>
-            <div className={cn("absolute inset-0 glass-effect rounded-2xl p-6 flex flex-col items-center justify-center text-center backface-hidden", "bg-gradient-to-br from-primary/5 to-accent/5 overflow-y-auto")}>
-              <span className="text-xs text-primary mb-2">{tr('question', language)}</span>
-              <MathRenderer content={currentCard?.front} className="text-lg font-medium" />
-              <span className="text-xs text-muted-foreground mt-4">{tr('tapToFlip', language)}</span>
-            </div>
-            <div className={cn("absolute inset-0 glass-effect rounded-2xl p-6 flex flex-col items-center justify-center text-center overflow-y-auto", "bg-gradient-to-br from-accent/10 to-primary/10")} style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden' }}>
-              <span className="text-xs text-accent mb-2">{tr('answer', language)}</span>
-              <MathRenderer content={currentCard?.back} className="text-lg font-medium" />
-              <span className="text-xs text-muted-foreground mt-4">{tr('tapToFlipBack', language)}</span>
+          <div
+            onClick={() => setIsFlipped(!isFlipped)}
+            className="relative w-full aspect-[3/4] cursor-pointer"
+            style={{ perspective: '1000px' }}
+          >
+            <div
+              className="relative w-full h-full transition-transform duration-500"
+              style={{
+                transformStyle: 'preserve-3d',
+                transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+              }}
+            >
+              {/* Front */}
+              <div
+                className={cn(
+                  "absolute inset-0 glass-effect rounded-2xl p-6 flex flex-col items-center justify-center text-center",
+                  "bg-gradient-to-br from-primary/5 to-accent/5 overflow-y-auto"
+                )}
+                style={{ backfaceVisibility: 'hidden' }}
+              >
+                <span className="text-xs text-primary mb-2">{tr('question', language)}</span>
+                <MathRenderer content={currentCard?.front} className="text-lg font-medium" />
+                <span className="text-xs text-muted-foreground mt-4">{tr('tapToFlip', language)}</span>
+              </div>
+              {/* Back */}
+              <div
+                className={cn(
+                  "absolute inset-0 glass-effect rounded-2xl p-6 flex flex-col items-center justify-center text-center overflow-y-auto",
+                  "bg-gradient-to-br from-accent/10 to-primary/10"
+                )}
+                style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+              >
+                <span className="text-xs text-accent mb-2">{tr('answer', language)}</span>
+                <MathRenderer content={currentCard?.back} className="text-lg font-medium" />
+                <span className="text-xs text-muted-foreground mt-4">{tr('tapToFlipBack', language)}</span>
+              </div>
             </div>
           </div>
 

@@ -14,7 +14,9 @@ import {
   ClipboardList,
   BarChart3,
   Megaphone,
-  Upload
+  Upload,
+  Settings,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -67,7 +69,7 @@ export default function TeacherDashboard() {
   const { isTeacher, school, profile, loading } = useRoleGuard();
   const { signOut, user } = useAuth();
   const { toast } = useToast();
-  const { language } = useThemeLanguage();
+  const { language, setLanguage } = useThemeLanguage();
 
   // State
   const [courseMaterials, setCourseMaterials] = useState<CourseMaterial[]>([]);
@@ -243,7 +245,7 @@ export default function TeacherDashboard() {
         </div>
 
         <Tabs defaultValue="materials" className="space-y-6">
-          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+          <TabsList className="grid grid-cols-6 w-full max-w-3xl">
             <TabsTrigger value="materials" className="gap-2">
               <Upload className="w-4 h-4" />
               <span className="hidden sm:inline">{tr('materials', language)}</span>
@@ -268,6 +270,10 @@ export default function TeacherDashboard() {
             <TabsTrigger value="announcements" className="gap-2">
               <Megaphone className="w-4 h-4" />
               <span className="hidden sm:inline">{tr('news', language)}</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">{tr('settings', language)}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -427,6 +433,42 @@ export default function TeacherDashboard() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-4">
+            <h2 className="text-lg font-semibold">{tr('settings', language)}</h2>
+
+            <div className="glass-effect rounded-xl p-6 space-y-6 max-w-lg">
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  {language === 'ar' ? 'اللغة' : 'Language'}
+                </h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setLanguage('en')}
+                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all border ${
+                      language === 'en'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30'
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    onClick={() => setLanguage('ar')}
+                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all border ${
+                      language === 'ar'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30'
+                    }`}
+                  >
+                    العربية
+                  </button>
+                </div>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
