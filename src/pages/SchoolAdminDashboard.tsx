@@ -25,7 +25,9 @@ import {
   Key,
   Shield,
   FileText,
-  Calendar
+  Calendar,
+  Settings,
+  Globe
 } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { Button } from '@/components/ui/button';
@@ -111,7 +113,7 @@ export default function SchoolAdminDashboard() {
   const { isSchoolAdmin, school, profile, loading } = useRoleGuard();
   const { signOut } = useAuth();
   const { toast } = useToast();
-  const { language } = useThemeLanguage();
+  const { language, setLanguage } = useThemeLanguage();
   const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
 
   // Users state
@@ -523,7 +525,7 @@ export default function SchoolAdminDashboard() {
         )}
 
         <Tabs defaultValue="codes" className="space-y-6">
-          <TabsList className="grid grid-cols-7 w-full max-w-4xl">
+          <TabsList className="grid grid-cols-8 w-full max-w-5xl">
             <TabsTrigger value="codes" className="gap-2">
               <Key className="w-4 h-4" />
               <span className="hidden sm:inline">{t('codes')}</span>
@@ -554,6 +556,10 @@ export default function SchoolAdminDashboard() {
             <TabsTrigger value="logs" className="gap-2">
               <Clock className="w-4 h-4" />
               <span className="hidden sm:inline">{t('logs')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('settings')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -989,6 +995,42 @@ export default function SchoolAdminDashboard() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-4">
+            <h2 className="text-lg font-semibold">{t('settings')}</h2>
+
+            <div className="glass-effect rounded-xl p-6 space-y-6 max-w-lg">
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  {language === 'ar' ? 'اللغة' : 'Language'}
+                </h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setLanguage('en')}
+                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all border ${
+                      language === 'en'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30'
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    onClick={() => setLanguage('ar')}
+                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all border ${
+                      language === 'ar'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30'
+                    }`}
+                  >
+                    العربية
+                  </button>
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>

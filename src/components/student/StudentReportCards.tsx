@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 interface SubjectScore {
   subject: string;
   score: number;
@@ -114,6 +114,10 @@ export function StudentReportCards({ studentId }: StudentReportCardsProps) {
     link.click();
     document.body.removeChild(link);
   };
+
+  // Use signed URL for the selected report's file
+  const { signedUrl: activeSignedUrl } = useSignedUrl(selectedReport?.file_url);
+  const effectiveFileUrl = activeSignedUrl || selectedReport?.file_url;
 
   const renderFileViewer = (fileUrl: string) => {
     if (viewerError) {
@@ -334,13 +338,13 @@ export function StudentReportCards({ studentId }: StudentReportCardsProps) {
           </DialogHeader>
 
           <div className="flex-1 overflow-auto p-4">
-            {selectedReport?.file_url && renderFileViewer(selectedReport.file_url)}
+            {effectiveFileUrl && renderFileViewer(effectiveFileUrl)}
           </div>
 
           <div className="p-4 pt-3 border-t shrink-0 bg-muted/30">
             <div className="flex items-center justify-end gap-2">
-              {selectedReport?.file_url && (
-                <Button size="sm" onClick={() => handleDownload(selectedReport.file_url!)} className="gap-2">
+              {effectiveFileUrl && (
+                <Button size="sm" onClick={() => handleDownload(effectiveFileUrl)} className="gap-2">
                   <Download className="w-4 h-4" />
                   Download
                 </Button>
