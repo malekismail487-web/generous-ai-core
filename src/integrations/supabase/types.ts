@@ -1032,18 +1032,21 @@ export type Database = {
       }
       podcast_generations: {
         Row: {
+          content: string | null
           created_at: string
           file_name: string
           id: string
           user_id: string
         }
         Insert: {
+          content?: string | null
           created_at?: string
           file_name: string
           id?: string
           user_id: string
         }
         Update: {
+          content?: string | null
           created_at?: string
           file_name?: string
           id?: string
