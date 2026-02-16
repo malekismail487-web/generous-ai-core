@@ -15,19 +15,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 
 const SUBJECTS = [
-  { id: 'biology', name: 'Biology', emoji: '🧬' },
-  { id: 'physics', name: 'Physics', emoji: '⚛️' },
-  { id: 'mathematics', name: 'Mathematics', emoji: '📐' },
-  { id: 'chemistry', name: 'Chemistry', emoji: '🧪' },
-  { id: 'english', name: 'English', emoji: '📚' },
-  { id: 'social_studies', name: 'Social Studies', emoji: '🌍' },
-  { id: 'technology', name: 'Technology', emoji: '💻' },
-  { id: 'arabic', name: 'Arabic', emoji: '🕌' },
-  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️' },
-  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️' },
-  { id: 'art_design', name: 'Art and Design', emoji: '🎨' },
+  { id: 'biology', emoji: '🧬' },
+  { id: 'physics', emoji: '⚛️' },
+  { id: 'mathematics', emoji: '📐' },
+  { id: 'chemistry', emoji: '🧪' },
+  { id: 'english', emoji: '📚' },
+  { id: 'social_studies', emoji: '🌍' },
+  { id: 'technology', emoji: '💻' },
+  { id: 'arabic', emoji: '🕌' },
+  { id: 'islamic_studies', emoji: '☪️' },
+  { id: 'ksa_history', emoji: '🏛️' },
+  { id: 'art_design', emoji: '🎨' },
 ];
 
 const GRADES = [
@@ -60,25 +62,20 @@ export function AssignmentQuestionBuilder({
   onSuccess
 }: AssignmentQuestionBuilderProps) {
   const { toast } = useToast();
+  const { language } = useThemeLanguage();
+  const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
   
-  // Assignment metadata
   const [assignmentTitle, setAssignmentTitle] = useState('');
   const [subject, setSubject] = useState('biology');
   const [gradeLevel, setGradeLevel] = useState('All');
   const [dueDate, setDueDate] = useState('');
-  
-  // Questions list
   const [questions, setQuestions] = useState<Question[]>([]);
-  
-  // Current question being created
   const [questionTitle, setQuestionTitle] = useState('');
   const [optionA, setOptionA] = useState('');
   const [optionB, setOptionB] = useState('');
   const [optionC, setOptionC] = useState('');
   const [optionD, setOptionD] = useState('');
   const [correctAnswer, setCorrectAnswer] = useState<'A' | 'B' | 'C' | 'D' | ''>('');
-  
-  // UI state
   const [isCreating, setIsCreating] = useState(false);
   const [showMetadataForm, setShowMetadataForm] = useState(true);
 
@@ -93,15 +90,15 @@ export function AssignmentQuestionBuilder({
 
   const saveQuestion = () => {
     if (!questionTitle.trim()) {
-      toast({ variant: 'destructive', title: 'Please enter a question title' });
+      toast({ variant: 'destructive', title: t('pleaseEnterQuestionTitle') });
       return;
     }
     if (!optionA.trim() || !optionB.trim() || !optionC.trim() || !optionD.trim()) {
-      toast({ variant: 'destructive', title: 'Please fill in all four choices' });
+      toast({ variant: 'destructive', title: t('pleaseFillAllChoices') });
       return;
     }
     if (!correctAnswer) {
-      toast({ variant: 'destructive', title: 'Please select the correct answer' });
+      toast({ variant: 'destructive', title: t('pleaseSelectCorrect') });
       return;
     }
 
@@ -117,21 +114,21 @@ export function AssignmentQuestionBuilder({
 
     setQuestions([...questions, newQuestion]);
     resetQuestionForm();
-    toast({ title: 'Question saved! Add another or create the assignment.' });
+    toast({ title: t('questionSaved') });
   };
 
   const removeQuestion = (questionId: string) => {
     setQuestions(questions.filter(q => q.id !== questionId));
-    toast({ title: 'Question removed' });
+    toast({ title: t('questionRemoved') });
   };
 
   const createAssignment = async () => {
     if (!assignmentTitle.trim()) {
-      toast({ variant: 'destructive', title: 'Please enter an assignment title' });
+      toast({ variant: 'destructive', title: t('pleaseEnterTitle') });
       return;
     }
     if (questions.length === 0) {
-      toast({ variant: 'destructive', title: 'Please add at least one question' });
+      toast({ variant: 'destructive', title: t('pleaseAddQuestion') });
       return;
     }
 
@@ -145,7 +142,7 @@ export function AssignmentQuestionBuilder({
       subject: subject,
       grade_level: gradeLevel,
       due_date: dueDate || null,
-      points: questions.length * 10, // 10 points per question
+      points: questions.length * 10,
       questions_json: questions as any
     };
 
@@ -157,16 +154,16 @@ export function AssignmentQuestionBuilder({
 
     if (error) {
       console.error('Error creating assignment:', error);
-      toast({ variant: 'destructive', title: 'Error creating assignment', description: error.message });
+      toast({ variant: 'destructive', title: t('error'), description: error.message });
     } else {
-      toast({ title: 'Assignment created successfully!' });
+      toast({ title: t('assignmentCreatedSuccess') });
       onSuccess();
     }
   };
 
   const proceedToQuestions = () => {
     if (!assignmentTitle.trim()) {
-      toast({ variant: 'destructive', title: 'Please enter an assignment title' });
+      toast({ variant: 'destructive', title: t('pleaseEnterTitle') });
       return;
     }
     setShowMetadataForm(false);
@@ -181,29 +178,29 @@ export function AssignmentQuestionBuilder({
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h2 className="text-xl font-bold">Create Assignment</h2>
-            <p className="text-sm text-muted-foreground">Step 1: Enter assignment details</p>
+            <h2 className="text-xl font-bold">{t('createAssignmentTitle')}</h2>
+            <p className="text-sm text-muted-foreground">{t('step1Details')}</p>
           </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Assignment Details</CardTitle>
+            <CardTitle>{t('assignmentDetails')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Assignment Title *</Label>
+              <Label htmlFor="title">{t('assignmentTitleRequired')}</Label>
               <Input
                 id="title"
                 value={assignmentTitle}
                 onChange={(e) => setAssignmentTitle(e.target.value)}
-                placeholder="Enter assignment title"
+                placeholder={t('enterAssignmentTitle')}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Subject *</Label>
+                <Label>{t('subjectRequired')}</Label>
                 <Select value={subject} onValueChange={setSubject}>
                   <SelectTrigger>
                     <SelectValue />
@@ -211,7 +208,7 @@ export function AssignmentQuestionBuilder({
                   <SelectContent>
                     {SUBJECTS.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.emoji} {s.name}
+                        {s.emoji} {getSubjectName(s.id, language)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -219,14 +216,14 @@ export function AssignmentQuestionBuilder({
               </div>
 
               <div className="space-y-2">
-                <Label>Grade Level *</Label>
+                <Label>{t('gradeLevelRequired')}</Label>
                 <Select value={gradeLevel} onValueChange={setGradeLevel}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {GRADES.map((g) => (
-                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                      <SelectItem key={g} value={g}>{getGradeName(g, language)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -234,7 +231,7 @@ export function AssignmentQuestionBuilder({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date (Optional)</Label>
+              <Label htmlFor="dueDate">{t('dueDateOptionalLabel')}</Label>
               <Input
                 id="dueDate"
                 type="datetime-local"
@@ -248,7 +245,7 @@ export function AssignmentQuestionBuilder({
               className="w-full"
               disabled={!assignmentTitle.trim()}
             >
-              Continue to Add Questions
+              {t('continueToAddQuestions')}
             </Button>
           </CardContent>
         </Card>
@@ -267,14 +264,14 @@ export function AssignmentQuestionBuilder({
           <div>
             <h2 className="text-xl font-bold">{assignmentTitle}</h2>
             <p className="text-sm text-muted-foreground">
-              {questions.length} question(s) added • {questions.length * 10} total points
+              {questions.length} {t('questionsAdded')} • {questions.length * 10} {t('totalPointsLabel')}
             </p>
           </div>
         </div>
         {questions.length > 0 && (
           <Button onClick={createAssignment} disabled={isCreating} className="gap-2">
             <CheckCircle2 className="w-4 h-4" />
-            {isCreating ? 'Creating...' : 'Create Assignment'}
+            {isCreating ? t('creatingBtn') : t('createAssignmentBtn')}
           </Button>
         )}
       </div>
@@ -282,7 +279,7 @@ export function AssignmentQuestionBuilder({
       {/* Saved Questions List */}
       {questions.length > 0 && (
         <div className="space-y-3">
-          <h3 className="font-semibold text-sm text-muted-foreground">Saved Questions:</h3>
+          <h3 className="font-semibold text-sm text-muted-foreground">{t('savedQuestionsLabel')}</h3>
           <div className="grid gap-3">
             {questions.map((q, index) => (
               <Card key={q.id} className="bg-muted/50">
@@ -297,7 +294,7 @@ export function AssignmentQuestionBuilder({
                       <p>B: {q.optionB}</p>
                       <p>C: {q.optionC}</p>
                       <p>D: {q.optionD}</p>
-                      <p className="text-green-600 font-medium">Correct: {q.correctAnswer}</p>
+                      <p className="text-green-600 font-medium">{t('correctLabel')} {q.correctAnswer}</p>
                     </div>
                   </div>
                   <Button
@@ -320,61 +317,41 @@ export function AssignmentQuestionBuilder({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5" />
-            {questions.length === 0 ? 'Add First Question' : 'Add Another Question'}
+            {questions.length === 0 ? t('addFirstQuestionLabel') : t('addAnotherQuestionLabel')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="questionTitle">Question Title *</Label>
+            <Label htmlFor="questionTitle">{t('questionTitleRequired')}</Label>
             <Input
               id="questionTitle"
               value={questionTitle}
               onChange={(e) => setQuestionTitle(e.target.value)}
-              placeholder="Enter the question..."
+              placeholder={t('enterTheQuestion')}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="optionA">Choice A *</Label>
-              <Input
-                id="optionA"
-                value={optionA}
-                onChange={(e) => setOptionA(e.target.value)}
-                placeholder="Enter choice A"
-              />
+              <Label htmlFor="optionA">{t('choiceARequired')}</Label>
+              <Input id="optionA" value={optionA} onChange={(e) => setOptionA(e.target.value)} placeholder={t('enterChoiceA')} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="optionB">Choice B *</Label>
-              <Input
-                id="optionB"
-                value={optionB}
-                onChange={(e) => setOptionB(e.target.value)}
-                placeholder="Enter choice B"
-              />
+              <Label htmlFor="optionB">{t('choiceBRequired')}</Label>
+              <Input id="optionB" value={optionB} onChange={(e) => setOptionB(e.target.value)} placeholder={t('enterChoiceB')} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="optionC">Choice C *</Label>
-              <Input
-                id="optionC"
-                value={optionC}
-                onChange={(e) => setOptionC(e.target.value)}
-                placeholder="Enter choice C"
-              />
+              <Label htmlFor="optionC">{t('choiceCRequired')}</Label>
+              <Input id="optionC" value={optionC} onChange={(e) => setOptionC(e.target.value)} placeholder={t('enterChoiceC')} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="optionD">Choice D *</Label>
-              <Input
-                id="optionD"
-                value={optionD}
-                onChange={(e) => setOptionD(e.target.value)}
-                placeholder="Enter choice D"
-              />
+              <Label htmlFor="optionD">{t('choiceDRequired')}</Label>
+              <Input id="optionD" value={optionD} onChange={(e) => setOptionD(e.target.value)} placeholder={t('enterChoiceD')} />
             </div>
           </div>
 
           <div className="space-y-3">
-            <Label>Please select the correct answer for this question *</Label>
+            <Label>{t('selectCorrectAnswerLabel')}</Label>
             <RadioGroup
               value={correctAnswer}
               onValueChange={(val) => setCorrectAnswer(val as 'A' | 'B' | 'C' | 'D')}
@@ -398,13 +375,12 @@ export function AssignmentQuestionBuilder({
               disabled={!questionTitle.trim() || !optionA.trim() || !optionB.trim() || !optionC.trim() || !optionD.trim() || !correctAnswer}
             >
               <Save className="w-4 h-4" />
-              Save Question
+              {t('saveQuestionBtn')}
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Create Assignment Button (alternative placement) */}
       {questions.length > 0 && (
         <div className="flex justify-center">
           <Button 
@@ -414,7 +390,7 @@ export function AssignmentQuestionBuilder({
             className="gap-2"
           >
             <CheckCircle2 className="w-5 h-5" />
-            {isCreating ? 'Creating Assignment...' : `Create Assignment with ${questions.length} Question(s)`}
+            {isCreating ? t('creatingAssignment') : `${t('createAssignmentWithCount')} ${questions.length} ${t('questionWord')}`}
           </Button>
         </div>
       )}

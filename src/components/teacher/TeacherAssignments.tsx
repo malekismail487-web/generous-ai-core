@@ -27,20 +27,21 @@ import {
 import { AssignmentQuestionBuilder } from './AssignmentQuestionBuilder';
 import { AssignmentViewers } from './AssignmentViewers';
 import { AssignmentSubmitters } from './AssignmentSubmitters';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 
-// Hardcoded subjects list
 const SUBJECTS = [
-  { id: 'biology', name: 'Biology', emoji: '🧬', color: 'bg-green-500' },
-  { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'bg-blue-500' },
-  { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'bg-purple-500' },
-  { id: 'chemistry', name: 'Chemistry', emoji: '🧪', color: 'bg-orange-500' },
-  { id: 'english', name: 'English', emoji: '📚', color: 'bg-red-500' },
-  { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'bg-teal-500' },
-  { id: 'technology', name: 'Technology', emoji: '💻', color: 'bg-indigo-500' },
-  { id: 'arabic', name: 'Arabic', emoji: '🕌', color: 'bg-amber-500' },
-  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️', color: 'bg-green-600' },
-  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️', color: 'bg-amber-600' },
-  { id: 'art_design', name: 'Art and Design', emoji: '🎨', color: 'bg-pink-500' },
+  { id: 'biology', emoji: '🧬', color: 'bg-green-500' },
+  { id: 'physics', emoji: '⚛️', color: 'bg-blue-500' },
+  { id: 'mathematics', emoji: '📐', color: 'bg-purple-500' },
+  { id: 'chemistry', emoji: '🧪', color: 'bg-orange-500' },
+  { id: 'english', emoji: '📚', color: 'bg-red-500' },
+  { id: 'social_studies', emoji: '🌍', color: 'bg-teal-500' },
+  { id: 'technology', emoji: '💻', color: 'bg-indigo-500' },
+  { id: 'arabic', emoji: '🕌', color: 'bg-amber-500' },
+  { id: 'islamic_studies', emoji: '☪️', color: 'bg-green-600' },
+  { id: 'ksa_history', emoji: '🏛️', color: 'bg-amber-600' },
+  { id: 'art_design', emoji: '🎨', color: 'bg-pink-500' },
 ];
 
 const GRADES = [
@@ -87,11 +88,10 @@ export function TeacherAssignments({
   onRefresh
 }: TeacherAssignmentsProps) {
   const { toast } = useToast();
+  const { language } = useThemeLanguage();
+  const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
   
-  // View state - 'list' or 'create'
   const [view, setView] = useState<'list' | 'create'>('list');
-  
-  // Filter state
   const [filterSubject, setFilterSubject] = useState<string>('all');
   const [filterGrade, setFilterGrade] = useState<string>('all');
 
@@ -102,15 +102,15 @@ export function TeacherAssignments({
       .eq('id', assignmentId);
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error deleting assignment' });
+      toast({ variant: 'destructive', title: t('error') });
     } else {
-      toast({ title: 'Assignment deleted' });
+      toast({ title: t('success') });
       onRefresh();
     }
   };
 
   const getSubjectInfo = (subjectId: string) => {
-    return SUBJECTS.find(s => s.id === subjectId) || { id: subjectId, name: subjectId, emoji: '📄', color: 'bg-gray-500' };
+    return SUBJECTS.find(s => s.id === subjectId) || { id: subjectId, emoji: '📄', color: 'bg-gray-500' };
   };
 
   const getSubmissionStats = (assignmentId: string) => {
@@ -131,14 +131,12 @@ export function TeacherAssignments({
     return new Date(dueDate) < new Date();
   };
 
-  // Filter assignments
   const filteredAssignments = assignments.filter(a => {
     if (filterSubject !== 'all' && a.subject !== filterSubject) return false;
     if (filterGrade !== 'all' && a.grade_level !== filterGrade) return false;
     return true;
   });
 
-  // Show question builder when creating
   if (view === 'create') {
     return (
       <AssignmentQuestionBuilder
@@ -155,66 +153,65 @@ export function TeacherAssignments({
 
   return (
     <div className="space-y-6">
-      {/* Header with Create Button and Filters */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold">Assignments</h2>
+          <h2 className="text-xl font-bold">{t('teacherAssignments')}</h2>
           <p className="text-sm text-muted-foreground">
-            Create and manage assignments for your students
+            {t('createAndManageAssignments')}
           </p>
         </div>
         <Button onClick={() => setView('create')} className="gap-2">
           <Plus className="w-4 h-4" />
-          Create Assignment
+          {t('createAssignmentBtn')}
         </Button>
       </div>
 
-      {/* Filters - Classera Style */}
+      {/* Filters */}
       <div className="flex flex-wrap gap-3 p-4 bg-muted/50 rounded-xl">
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Filters:</span>
+          <span className="text-sm font-medium">{t('filtersLabel')}</span>
         </div>
         <Select value={filterSubject} onValueChange={setFilterSubject}>
           <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="All Subjects" />
+            <SelectValue placeholder={t('allSubjects')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Subjects</SelectItem>
+            <SelectItem value="all">{t('allSubjects')}</SelectItem>
             {SUBJECTS.map((s) => (
               <SelectItem key={s.id} value={s.id}>
-                {s.emoji} {s.name}
+                {s.emoji} {getSubjectName(s.id, language)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={filterGrade} onValueChange={setFilterGrade}>
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="All Grades" />
+            <SelectValue placeholder={t('allGrades')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Grades</SelectItem>
+            <SelectItem value="all">{t('allGrades')}</SelectItem>
             {GRADES.map((g) => (
-              <SelectItem key={g} value={g}>{g}</SelectItem>
+              <SelectItem key={g} value={g}>{getGradeName(g, language)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Assignments Grid - Classera Card Style */}
+      {/* Assignments Grid */}
       {filteredAssignments.length === 0 ? (
         <div className="glass-effect rounded-xl p-12 text-center">
           <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-          <h3 className="text-lg font-semibold mb-2">No Assignments Found</h3>
+          <h3 className="text-lg font-semibold mb-2">{t('noAssignmentsFoundTitle')}</h3>
           <p className="text-muted-foreground mb-4">
             {assignments.length === 0 
-              ? "Start by creating your first assignment"
-              : "No assignments match your current filters"}
+              ? t('startByCreatingFirst')
+              : t('noAssignmentsMatchFilters')}
           </p>
           {assignments.length === 0 && (
             <Button onClick={() => setView('create')}>
               <Plus className="w-4 h-4 mr-2" />
-              Create First Assignment
+              {t('createFirstAssignment')}
             </Button>
           )}
         </div>
@@ -237,7 +234,7 @@ export function TeacherAssignments({
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{subjectInfo.emoji}</span>
                       <Badge variant="outline" className="text-xs">
-                        {subjectInfo.name}
+                        {getSubjectName(assignment.subject, language)}
                       </Badge>
                     </div>
                     <Button
@@ -260,25 +257,23 @@ export function TeacherAssignments({
                     </p>
                   )}
                   
-                  {/* Meta info */}
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary" className="gap-1">
                       <Users className="w-3 h-3" />
-                      {assignment.grade_level}
+                      {getGradeName(assignment.grade_level, language)}
                     </Badge>
                     <Badge variant="secondary" className="gap-1">
                       <BookOpen className="w-3 h-3" />
-                      {assignment.points} pts
+                      {assignment.points} {t('ptsLabel')}
                     </Badge>
                     {questionCount > 0 && (
                       <Badge variant="secondary" className="gap-1">
                         <FileText className="w-3 h-3" />
-                        {questionCount} Q
+                        {questionCount} {t('qLabel')}
                       </Badge>
                     )}
                   </div>
 
-                  {/* Due date */}
                   {assignment.due_date && (
                     <div className={`flex items-center gap-2 text-sm ${overdue ? 'text-destructive' : 'text-muted-foreground'}`}>
                       {overdue ? (
@@ -287,13 +282,12 @@ export function TeacherAssignments({
                         <Calendar className="w-4 h-4" />
                       )}
                       <span>
-                        {overdue ? 'Overdue: ' : 'Due: '}
+                        {overdue ? t('overdueLabel') : t('dueLabel')}
                         {new Date(assignment.due_date).toLocaleDateString()}
                       </span>
                     </div>
                   )}
 
-                  {/* Submission stats and Views */}
                   <div className="pt-3 border-t flex items-center justify-between">
                     <div className="flex items-center gap-2 flex-wrap">
                       <AssignmentSubmitters 
@@ -308,7 +302,7 @@ export function TeacherAssignments({
                     </div>
                     {stats.total > 0 && (
                       <Badge variant={stats.graded === stats.total ? 'default' : 'secondary'}>
-                        {stats.graded}/{stats.total} graded
+                        {stats.graded}/{stats.total} {t('gradedCount')}
                       </Badge>
                     )}
                   </div>

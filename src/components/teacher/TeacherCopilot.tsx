@@ -21,11 +21,13 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 
 const SUBJECTS = [
-  'Biology', 'Physics', 'Mathematics', 'Chemistry',
-  'English', 'Social Studies', 'Technology', 'Arabic',
-  'Islamic Studies', 'KSA History', 'Art and Design',
+  'biology', 'physics', 'mathematics', 'chemistry',
+  'english', 'social_studies', 'technology', 'arabic',
+  'islamic_studies', 'ksa_history', 'art_design',
 ];
 
 const GRADES = [
@@ -56,10 +58,11 @@ interface TeacherCopilotProps {
 
 export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopilotProps) {
   const { toast } = useToast();
+  const { language } = useThemeLanguage();
+  const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>('configure');
 
-  // Config state — mirrors the manual AssignmentCreator
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [subject, setSubject] = useState('');
@@ -67,7 +70,6 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
   const [gradeLevel, setGradeLevel] = useState('');
   const [dueDate, setDueDate] = useState('');
 
-  // Generated state
   const [generatedTitle, setGeneratedTitle] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
 
@@ -85,7 +87,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
 
   const handleGenerate = async () => {
     if (!title.trim() || !subject || !gradeLevel) {
-      toast({ variant: 'destructive', title: 'Please fill in title, subject, and grade level' });
+      toast({ variant: 'destructive', title: t('fillTitleSubjectGrade') });
       return;
     }
     setStep('generating');
@@ -95,7 +97,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
         body: {
           title: title.trim(),
           description: description.trim() || undefined,
-          subject,
+          subject: getSubjectName(subject, 'en'),
           questionCount,
           gradeLevel,
         },
@@ -116,8 +118,8 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
       console.error('Generate error:', err);
       toast({
         variant: 'destructive',
-        title: 'Generation Failed',
-        description: err.message || 'Could not generate questions. Try again.',
+        title: t('generationFailed'),
+        description: err.message || t('couldNotGenerate'),
       });
       setStep('configure');
     }
@@ -129,7 +131,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
 
   const handlePublish = async () => {
     if (questions.length === 0) {
-      toast({ variant: 'destructive', title: 'No questions to publish' });
+      toast({ variant: 'destructive', title: t('noQuestionToPublish') });
       return;
     }
 
@@ -153,12 +155,12 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
 
     if (error) {
       console.error('Publish error:', error);
-      toast({ variant: 'destructive', title: 'Failed to publish assignment' });
+      toast({ variant: 'destructive', title: t('error') });
       setStep('preview');
       return;
     }
 
-    toast({ title: 'Assignment published successfully!' });
+    toast({ title: t('assignmentPublished') });
     reset();
     setOpen(false);
     onSuccess();
@@ -169,7 +171,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
       <DialogTrigger asChild>
         <Button className="gap-2 bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-xl transition-shadow">
           <Bot className="w-4 h-4" />
-          <span className="hidden sm:inline">Copilot</span>
+          <span className="hidden sm:inline">{t('copilotLabel')}</span>
           <Sparkles className="w-3 h-3" />
         </Button>
       </DialogTrigger>
@@ -177,7 +179,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bot className="w-5 h-5 text-primary" />
-            AI Copilot — Assignment Generator
+            {t('aiCopilotTitle')}
           </DialogTitle>
         </DialogHeader>
 
@@ -185,46 +187,46 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
         {step === 'configure' && (
           <div className="space-y-5 pt-2">
             <div className="space-y-2">
-              <Label>Assignment Title *</Label>
+              <Label>{t('assignmentTitleRequired')}</Label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Photosynthesis Quiz, Quadratic Equations Test..."
+                placeholder={language === 'ar' ? 'مثال: اختبار التمثيل الضوئي، المعادلات التربيعية...' : 'e.g. Photosynthesis Quiz, Quadratic Equations Test...'}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Description (optional)</Label>
+              <Label>{t('descriptionOptional')}</Label>
               <Input
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Additional instructions or context..."
+                placeholder={t('additionalInstructions')}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Subject *</Label>
+                <Label>{t('subjectRequired')}</Label>
                 <Select value={subject} onValueChange={setSubject}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select subject" />
+                    <SelectValue placeholder={t('selectSubjectLabel')} />
                   </SelectTrigger>
                   <SelectContent>
                     {SUBJECTS.map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                      <SelectItem key={s} value={s}>{getSubjectName(s, language)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Grade Level *</Label>
+                <Label>{t('gradeLevelRequired')}</Label>
                 <Select value={gradeLevel} onValueChange={setGradeLevel}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select grade" />
+                    <SelectValue placeholder={t('selectGradePlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {GRADES.map((g) => (
-                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                      <SelectItem key={g} value={g}>{getGradeName(g, language)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -232,7 +234,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
             </div>
 
             <div className="space-y-2">
-              <Label>Number of Questions *</Label>
+              <Label>{t('numberOfQuestions')}</Label>
               <div className="grid grid-cols-4 gap-2">
                 {QUESTION_COUNTS.map((count) => (
                   <Button
@@ -242,14 +244,14 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
                     onClick={() => setQuestionCount(count)}
                     className="text-sm"
                   >
-                    {count} Qs
+                    {count} {t('qsLabel')}
                   </Button>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Due Date (optional)</Label>
+              <Label>{t('dueDateOptionalLabel')}</Label>
               <Input
                 type="datetime-local"
                 value={dueDate}
@@ -264,7 +266,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
               disabled={!title.trim() || !subject || !gradeLevel}
             >
               <Sparkles className="w-4 h-4" />
-              Generate {questionCount} Questions with AI
+              {t('generateWithAI')} {questionCount} {t('questionsWithAI')}
             </Button>
           </div>
         )}
@@ -276,8 +278,8 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
               <Sparkles className="w-5 h-5 text-accent absolute -top-1 -right-1 animate-pulse" />
             </div>
-            <p className="text-muted-foreground text-sm">AI is crafting your questions...</p>
-            <p className="text-xs text-muted-foreground/60">This may take a few seconds</p>
+            <p className="text-muted-foreground text-sm">{t('aiCraftingQuestions')}</p>
+            <p className="text-xs text-muted-foreground/60">{t('mayTakeFewSeconds')}</p>
           </div>
         )}
 
@@ -285,20 +287,19 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
         {step === 'preview' && (
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label>Assignment Title</Label>
+              <Label>{t('assignmentTitleLabel')}</Label>
               <Input
                 value={generatedTitle}
                 onChange={(e) => setGeneratedTitle(e.target.value)}
-                placeholder="Assignment title"
               />
             </div>
 
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                {questions.length} question(s) • {questions.length * 10} points • {gradeLevel}
+                {questions.length} {t('questionsAdded')} • {questions.length * 10} {t('pointsLabel')} • {getGradeName(gradeLevel, language)}
               </p>
               <Button variant="outline" size="sm" onClick={() => setStep('configure')}>
-                Regenerate
+                {t('regenerate')}
               </Button>
             </div>
 
@@ -340,7 +341,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
 
             <div className="flex gap-3 pt-2">
               <Button variant="outline" onClick={() => { reset(); }} className="flex-1">
-                Cancel
+                {t('cancel')}
               </Button>
               <Button
                 onClick={handlePublish}
@@ -348,7 +349,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
                 disabled={questions.length === 0}
               >
                 <CheckCircle2 className="w-4 h-4" />
-                Publish Assignment
+                {t('publishAssignment')}
               </Button>
             </div>
           </div>
@@ -358,7 +359,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
         {step === 'publishing' && (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-primary" />
-            <p className="text-muted-foreground text-sm">Publishing assignment...</p>
+            <p className="text-muted-foreground text-sm">{t('publishingAssignment')}</p>
           </div>
         )}
       </DialogContent>
