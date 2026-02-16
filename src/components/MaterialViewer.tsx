@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSignedUrl } from '@/hooks/useSignedUrl';
 import {
   Dialog,
@@ -114,48 +114,13 @@ export function MaterialViewer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [imageZoom, setImageZoom] = useState(1);
   const [viewerError, setViewerError] = useState(false);
-  const [docHtml, setDocHtml] = useState<string | null>(null);
-  const [docLoading, setDocLoading] = useState(false);
   const { signedUrl, loading: signedUrlLoading } = useSignedUrl(material?.file_url);
-
-  const fileType = getFileType(material?.file_url ?? null);
-  const isDocType = fileType === 'document' || fileType === 'presentation';
-
-  // Convert Word docs to HTML using mammoth when a signed URL is available
-  useEffect(() => {
-    if (!material?.file_url) return;
-    const ft = getFileType(material.file_url);
-    if (ft !== 'document') { setDocHtml(null); return; }
-
-    const url = signedUrl || material.file_url;
-    if (!url || signedUrlLoading) return;
-
-    let cancelled = false;
-    setDocLoading(true);
-    setDocHtml(null);
-
-    (async () => {
-      try {
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('fetch failed');
-        const buf = await resp.arrayBuffer();
-        const mammoth = await import('mammoth');
-        const result = await mammoth.convertToHtml({ arrayBuffer: buf });
-        if (!cancelled) setDocHtml(result.value);
-      } catch {
-        if (!cancelled) setViewerError(true);
-      } finally {
-        if (!cancelled) setDocLoading(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [material?.file_url, signedUrl, signedUrlLoading]);
 
   if (!material) return null;
 
+  const fileType = getFileType(material.file_url);
   const filename = getOriginalFilename(material.file_url, material.title);
-  const canEmbed = fileType === 'pdf' || fileType === 'image' || fileType === 'video' || isDocType;
+  const canEmbed = fileType === 'pdf' || fileType === 'image' || fileType === 'video';
   const effectiveUrl = signedUrl || material.file_url;
   const isLoadingUrl = material.file_url?.includes('/storage/v1/object/public/') && signedUrlLoading;
 
@@ -179,7 +144,6 @@ export function MaterialViewer({
   const resetViewer = () => {
     setImageZoom(1);
     setViewerError(false);
-    setDocHtml(null);
   };
 
   const handleClose = () => {
@@ -304,64 +268,31 @@ export function MaterialViewer({
 
       case 'document':
       case 'presentation':
-        // Render Word docs as HTML via mammoth (private bucket can't use Google Viewer)
-        if (docLoading) {
-          return (
-            <div className={cn(
-              "w-full flex flex-col items-center justify-center bg-muted/50 rounded-lg",
-              isFullscreen ? "h-[85vh]" : "h-[60vh]"
-            )}>
-              <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-              <p className="text-sm text-muted-foreground">Converting document…</p>
-            </div>
-          );
-        }
-        if (docHtml) {
-          return (
-            <div className={cn(
-              "w-full bg-card rounded-lg overflow-auto p-6",
-              isFullscreen ? "h-[85vh]" : "h-[60vh]"
-            )}>
-              <div
-                className="prose prose-sm max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: docHtml }}
-              />
-            </div>
-          );
-        }
-        // Fallback: download
-        return (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileText className="w-16 h-16 text-muted-foreground mb-4" />
-            <h3 className="font-medium mb-2">Unable to preview this document</h3>
-            <p className="text-sm text-muted-foreground mb-4">Please download the file to view it.</p>
-            <Button onClick={handleDownload} className="gap-2">
-              <Download className="w-4 h-4" />
-              Download File
-            </Button>
-          </div>
-        );
-
       default:
+        // Word/PPT/unknown files: show file info card with download + open actions
         return (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileText className="w-16 h-16 text-muted-foreground mb-4" />
-            <h3 className="font-medium mb-2">Preview not available</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              This file type cannot be previewed in the browser.
-            </p>
-            <div className="flex gap-2">
-              <Button onClick={handleDownload} className="gap-2">
-                <Download className="w-4 h-4" />
-                Download File
-              </Button>
+          <div className={cn(
+            "w-full flex flex-col items-center justify-center bg-muted/50 rounded-lg py-16",
+            isFullscreen ? "h-[85vh]" : "h-auto"
+          )}>
+            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              {getFileIcon(fileType)}
+            </div>
+            <h3 className="font-semibold text-lg mb-1">{filename}</h3>
+            <p className="text-sm text-muted-foreground mb-6">{getFileTypeName(fileType)}</p>
+            <div className="flex gap-3">
               <Button variant="outline" onClick={handleOpenExternal} className="gap-2">
                 <ExternalLink className="w-4 h-4" />
                 Open in New Tab
               </Button>
+              <Button onClick={handleDownload} className="gap-2">
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
             </div>
           </div>
         );
+
     }
   };
 
