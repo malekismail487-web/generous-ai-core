@@ -149,18 +149,15 @@ export function MaterialViewer({
     onOpenChange(false);
   };
 
-  const renderEmbeddedViewer = () => {
+  const renderFileViewer = () => {
     if (!effectiveUrl) return null;
 
-    // If viewer previously failed, show fallback
     if (viewerError) {
       return (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <FileText className="w-16 h-16 text-muted-foreground mb-4" />
           <h3 className="font-medium mb-2">Unable to preview this file</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            This file format cannot be displayed in the browser.
-          </p>
+          <p className="text-sm text-muted-foreground mb-4">This file format cannot be displayed in the browser.</p>
           <div className="flex gap-2">
             <Button onClick={handleDownload} className="gap-2">
               <Download className="w-4 h-4" />
@@ -178,10 +175,7 @@ export function MaterialViewer({
     switch (fileType) {
       case 'pdf':
         return (
-          <div className={cn(
-            "w-full bg-muted rounded-lg overflow-hidden",
-            isFullscreen ? "h-[85vh]" : "h-[60vh]"
-          )}>
+          <div className={cn("w-full bg-muted rounded-lg overflow-hidden", isFullscreen ? "h-[85vh]" : "h-[60vh]")}>
             <iframe
               src={`${effectiveUrl}#toolbar=1&navpanes=1&scrollbar=1`}
               className="w-full h-full border-0"
@@ -190,102 +184,41 @@ export function MaterialViewer({
             />
           </div>
         );
-
       case 'image':
         return (
-          <div className={cn(
-            "w-full flex items-center justify-center bg-muted/50 rounded-lg overflow-hidden relative",
-            isFullscreen ? "h-[85vh]" : "h-[60vh]"
-          )}>
-            {/* Zoom Controls */}
+          <div className={cn("w-full flex items-center justify-center bg-muted/50 rounded-lg overflow-hidden relative", isFullscreen ? "h-[85vh]" : "h-[60vh]")}>
             <div className="absolute top-2 right-2 z-10 flex gap-1 bg-background/80 backdrop-blur-sm rounded-lg p-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setImageZoom(z => Math.max(0.5, z - 0.25))}
-                disabled={imageZoom <= 0.5}
-              >
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setImageZoom(z => Math.max(0.5, z - 0.25))} disabled={imageZoom <= 0.5}>
                 <ZoomOut className="w-4 h-4" />
               </Button>
-              <span className="flex items-center px-2 text-xs font-medium">
-                {Math.round(imageZoom * 100)}%
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setImageZoom(z => Math.min(3, z + 0.25))}
-                disabled={imageZoom >= 3}
-              >
+              <span className="flex items-center px-2 text-xs font-medium">{Math.round(imageZoom * 100)}%</span>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setImageZoom(z => Math.min(3, z + 0.25))} disabled={imageZoom >= 3}>
                 <ZoomIn className="w-4 h-4" />
               </Button>
             </div>
-            
             <div className="overflow-auto w-full h-full flex items-center justify-center p-4">
-              <img
-                src={effectiveUrl}
-                alt={material.title}
-                className="max-w-full max-h-full object-contain transition-transform"
-                style={{ transform: `scale(${imageZoom})` }}
-                onError={() => setViewerError(true)}
-              />
+              <img src={effectiveUrl} alt={material.title} className="max-w-full max-h-full object-contain transition-transform" style={{ transform: `scale(${imageZoom})` }} onError={() => setViewerError(true)} />
             </div>
           </div>
         );
-
       case 'video':
         return (
-          <div className={cn(
-            "w-full bg-black rounded-lg overflow-hidden",
-            isFullscreen ? "h-[85vh]" : "h-[60vh]"
-          )}>
-            <video
-              src={effectiveUrl}
-              controls
-              className="w-full h-full"
-              onError={() => setViewerError(true)}
-            >
+          <div className={cn("w-full bg-black rounded-lg overflow-hidden", isFullscreen ? "h-[85vh]" : "h-[60vh]")}>
+            <video src={effectiveUrl} controls className="w-full h-full" onError={() => setViewerError(true)}>
               Your browser does not support video playback.
             </video>
           </div>
         );
-
-      case 'document':
-      case 'presentation':
-        // For Word/PowerPoint, try Google Docs Viewer as embedded fallback
+      default:
+        // For Word, PowerPoint, and all other file types — use Google Docs Viewer
         return (
-          <div className={cn(
-            "w-full bg-muted rounded-lg overflow-hidden",
-            isFullscreen ? "h-[85vh]" : "h-[60vh]"
-          )}>
+          <div className={cn("w-full bg-muted rounded-lg overflow-hidden", isFullscreen ? "h-[85vh]" : "h-[60vh]")}>
             <iframe
               src={`https://docs.google.com/viewer?url=${encodeURIComponent(effectiveUrl)}&embedded=true`}
               className="w-full h-full border-0"
               title={material.title}
               onError={() => setViewerError(true)}
             />
-          </div>
-        );
-
-      default:
-        return (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileText className="w-16 h-16 text-muted-foreground mb-4" />
-            <h3 className="font-medium mb-2">Preview not available</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              This file type cannot be previewed in the browser.
-            </p>
-            <div className="flex gap-2">
-              <Button onClick={handleDownload} className="gap-2">
-                <Download className="w-4 h-4" />
-                Download File
-              </Button>
-              <Button variant="outline" onClick={handleOpenExternal} className="gap-2">
-                <ExternalLink className="w-4 h-4" />
-                Open in New Tab
-              </Button>
-            </div>
           </div>
         );
     }
@@ -359,27 +292,10 @@ export function MaterialViewer({
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-4">
-          {/* File Preview */}
-          {material.file_url && renderEmbeddedViewer()}
-
-          {/* Text Content */}
-          {material.content && (
-            <div className={cn(
-              "prose prose-sm max-w-none",
-              material.file_url && "mt-4 pt-4 border-t"
-            )}>
-              <h4 className="font-medium mb-2 text-foreground">Notes</h4>
-              <p className="text-muted-foreground whitespace-pre-wrap">
-                {material.content}
-              </p>
-            </div>
-          )}
-
-          {/* No content fallback */}
-          {!material.file_url && !material.content && (
+          {material.file_url ? renderFileViewer() : (
             <div className="text-center py-12">
               <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">No content available</p>
+              <p className="text-muted-foreground">No file available</p>
             </div>
           )}
         </div>
