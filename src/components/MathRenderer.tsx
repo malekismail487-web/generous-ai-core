@@ -59,8 +59,9 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
     });
     
     // Process inline math: $...$ (single dollar signs, not double)
-    // Use negative lookbehind/lookahead to avoid matching $$
-    result = result.replace(/(?<!\$)\$([^\$\n]+?)\$(?!\$)/g, (_, math) => {
+    // Avoid lookbehind for Safari compatibility
+    result = result.replace(/(?:^|[^\$])\$([^\$\n]+?)\$(?!\$)/g, (match, math) => {
+      const prefix = match.charAt(0) === '$' ? '' : match.charAt(0);
       try {
         const html = katex.renderToString(math.trim(), {
           displayMode: false,
@@ -68,9 +69,9 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
           output: 'html',
           strict: false,
         });
-        return `<span class="inline-math">${html}</span>`;
+        return `${prefix}<span class="inline-math">${html}</span>`;
       } catch {
-        return `<code class="font-mono text-sm">${math}</code>`;
+        return `${prefix}<code class="font-mono text-sm">${math}</code>`;
       }
     });
     
