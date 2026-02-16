@@ -20,7 +20,6 @@ import {
   Minimize2,
   ZoomIn,
   ZoomOut,
-  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -114,7 +113,7 @@ export function MaterialViewer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [imageZoom, setImageZoom] = useState(1);
   const [viewerError, setViewerError] = useState(false);
-  const { signedUrl, loading: signedUrlLoading } = useSignedUrl(material?.file_url);
+  const { signedUrl } = useSignedUrl(material?.file_url);
 
   if (!material) return null;
 
@@ -122,7 +121,6 @@ export function MaterialViewer({
   const filename = getOriginalFilename(material.file_url, material.title);
   const canEmbed = fileType === 'pdf' || fileType === 'image' || fileType === 'video';
   const effectiveUrl = signedUrl || material.file_url;
-  const isLoadingUrl = material.file_url?.includes('/storage/v1/object/public/') && signedUrlLoading;
 
   const handleDownload = () => {
     if (!effectiveUrl) return;
@@ -153,19 +151,6 @@ export function MaterialViewer({
 
   const renderEmbeddedViewer = () => {
     if (!effectiveUrl) return null;
-
-    // Show loading while signed URL is being generated
-    if (isLoadingUrl) {
-      return (
-        <div className={cn(
-          "w-full flex flex-col items-center justify-center bg-muted/50 rounded-lg",
-          isFullscreen ? "h-[85vh]" : "h-[60vh]"
-        )}>
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3" />
-          <p className="text-sm text-muted-foreground">Loading preview…</p>
-        </div>
-      );
-    }
 
     // If viewer previously failed, show fallback
     if (viewerError) {
@@ -268,31 +253,41 @@ export function MaterialViewer({
 
       case 'document':
       case 'presentation':
-      default:
-        // Word/PPT/unknown files: show file info card with download + open actions
+        // For Word/PowerPoint, try Google Docs Viewer as embedded fallback
         return (
           <div className={cn(
-            "w-full flex flex-col items-center justify-center bg-muted/50 rounded-lg py-16",
-            isFullscreen ? "h-[85vh]" : "h-auto"
+            "w-full bg-muted rounded-lg overflow-hidden",
+            isFullscreen ? "h-[85vh]" : "h-[60vh]"
           )}>
-            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-              {getFileIcon(fileType)}
-            </div>
-            <h3 className="font-semibold text-lg mb-1">{filename}</h3>
-            <p className="text-sm text-muted-foreground mb-6">{getFileTypeName(fileType)}</p>
-            <div className="flex gap-3">
+            <iframe
+              src={`https://docs.google.com/viewer?url=${encodeURIComponent(effectiveUrl)}&embedded=true`}
+              className="w-full h-full border-0"
+              title={material.title}
+              onError={() => setViewerError(true)}
+            />
+          </div>
+        );
+
+      default:
+        return (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <FileText className="w-16 h-16 text-muted-foreground mb-4" />
+            <h3 className="font-medium mb-2">Preview not available</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              This file type cannot be previewed in the browser.
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={handleDownload} className="gap-2">
+                <Download className="w-4 h-4" />
+                Download File
+              </Button>
               <Button variant="outline" onClick={handleOpenExternal} className="gap-2">
                 <ExternalLink className="w-4 h-4" />
                 Open in New Tab
               </Button>
-              <Button onClick={handleDownload} className="gap-2">
-                <Download className="w-4 h-4" />
-                Download
-              </Button>
             </div>
           </div>
         );
-
     }
   };
 

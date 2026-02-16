@@ -61,7 +61,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
   return (
     <div className="min-h-0 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-24">
       {/* Hero greeting */}
-      <div className="mx-3 mb-6 rounded-3xl overflow-hidden opacity-0 animate-[slideUpFade_0.6s_ease-out_forwards]" style={{ background: 'var(--gradient-hero)' }}>
+      <div className="mx-3 mb-6 rounded-3xl overflow-hidden" style={{ background: 'var(--gradient-hero)' }}>
         <div className="px-5 pt-5 pb-6 relative">
           <div className="absolute top-4 right-4 opacity-20">
             <Sparkles className="w-20 h-20 text-primary-foreground" />
@@ -106,14 +106,13 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
 
       {/* Grid of features */}
       <div className="px-4 grid grid-cols-2 gap-3">
-        {visibleItems.map((item, index) => {
+        {visibleItems.map((item) => {
           const Icon = item.icon;
           return (
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className="group flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-lg transition-all duration-300 active:scale-[0.97] opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards]"
-              style={{ animationDelay: `${index * 60 + 200}ms` }}
+              className="group flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-lg transition-all duration-300 active:scale-[0.97]"
             >
               <div className={`w-14 h-14 rounded-2xl border ${item.iconBg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
                 <Icon className="w-6 h-6 text-foreground" />

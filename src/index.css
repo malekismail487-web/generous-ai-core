@@ -396,14 +396,3 @@
     transform: translate(-30px, 40px) rotate(288deg) scale(0.95);
   }
 }
-
-@keyframes slideUpFade {
-  0% {
-    opacity: 0;
-    transform: translateY(24px) scale(0.96);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
