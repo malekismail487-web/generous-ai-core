@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr, getGradeName } from '@/lib/translations';
 
 interface Submitter {
   student_id: string;
@@ -30,6 +32,8 @@ export function AssignmentSubmitters({ assignmentId, assignmentTitle, totalPoint
   const [submitters, setSubmitters] = useState<Submitter[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const { language } = useThemeLanguage();
+  const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
 
   useEffect(() => {
     if (!open) return;
@@ -37,7 +41,6 @@ export function AssignmentSubmitters({ assignmentId, assignmentTitle, totalPoint
     const fetchSubmitters = async () => {
       setLoading(true);
       
-      // Fetch submissions for this assignment
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('submissions')
         .select('student_id, submitted_at, grade')
@@ -49,7 +52,6 @@ export function AssignmentSubmitters({ assignmentId, assignmentTitle, totalPoint
         return;
       }
 
-      // Fetch profile names for these students
       const studentIds = submissionsData.map(s => s.student_id);
       
       if (studentIds.length === 0) {
@@ -71,7 +73,7 @@ export function AssignmentSubmitters({ assignmentId, assignmentTitle, totalPoint
         student_id: s.student_id,
         submitted_at: s.submitted_at,
         grade: s.grade,
-        full_name: profileMap.get(s.student_id)?.full_name || 'Unknown Student',
+        full_name: profileMap.get(s.student_id)?.full_name || t('studentWord'),
         grade_level: profileMap.get(s.student_id)?.grade_level || null,
       }));
 
@@ -94,33 +96,33 @@ export function AssignmentSubmitters({ assignmentId, assignmentTitle, totalPoint
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
           <CheckCircle2 className="w-3.5 h-3.5" />
-          Solvers
+          {t('solvers')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <CheckCircle2 className="w-4 h-4" />
-            Students Who Solved
+            {t('studentsWhoSolvedTitle')}
           </DialogTitle>
           <p className="text-sm text-muted-foreground line-clamp-1">{assignmentTitle}</p>
         </DialogHeader>
 
         {loading ? (
           <div className="py-8 text-center text-muted-foreground text-sm">
-            Loading submitters...
+            {t('loadingSubmitters')}
           </div>
         ) : submitters.length === 0 ? (
           <div className="py-8 text-center">
             <CheckCircle2 className="w-10 h-10 mx-auto mb-3 text-muted-foreground/50" />
-            <p className="text-muted-foreground text-sm">No students have solved this assignment yet</p>
+            <p className="text-muted-foreground text-sm">{t('noStudentsSolved')}</p>
           </div>
         ) : (
           <ScrollArea className="max-h-[400px]">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-                <span>{submitters.length} student{submitters.length !== 1 ? 's' : ''} solved</span>
-                <span>{gradedCount}/{submitters.length} graded</span>
+                <span>{submitters.length} {t('solvedLabel')}</span>
+                <span>{gradedCount}/{submitters.length} {t('gradedCount')}</span>
               </div>
               {submitters.map((submitter) => (
                 <div
@@ -136,7 +138,7 @@ export function AssignmentSubmitters({ assignmentId, assignmentTitle, totalPoint
                       <div className="flex items-center gap-2">
                         {submitter.grade_level && (
                           <Badge variant="outline" className="text-[10px]">
-                            {submitter.grade_level}
+                            {getGradeName(submitter.grade_level, language)}
                           </Badge>
                         )}
                         {submitter.grade !== null && (

@@ -35,17 +35,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 
 // Hardcoded subjects list
 const SUBJECTS = [
-  { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-green-500 to-emerald-600' },
-  { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-blue-500 to-cyan-600' },
-  { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'from-purple-500 to-violet-600' },
-  { id: 'chemistry', name: 'Chemistry', emoji: '🧪', color: 'from-orange-500 to-amber-600' },
-  { id: 'english', name: 'English', emoji: '📚', color: 'from-red-500 to-rose-600' },
-  { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-teal-500 to-cyan-600' },
-  { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-indigo-500 to-blue-600' },
-  { id: 'arabic', name: 'Arabic', emoji: '🕌', color: 'from-amber-500 to-yellow-600' },
+  { id: 'biology', emoji: '🧬', color: 'from-green-500 to-emerald-600' },
+  { id: 'physics', emoji: '⚛️', color: 'from-blue-500 to-cyan-600' },
+  { id: 'mathematics', emoji: '📐', color: 'from-purple-500 to-violet-600' },
+  { id: 'chemistry', emoji: '🧪', color: 'from-orange-500 to-amber-600' },
+  { id: 'english', emoji: '📚', color: 'from-red-500 to-rose-600' },
+  { id: 'social_studies', emoji: '🌍', color: 'from-teal-500 to-cyan-600' },
+  { id: 'technology', emoji: '💻', color: 'from-indigo-500 to-blue-600' },
+  { id: 'arabic', emoji: '🕌', color: 'from-amber-500 to-yellow-600' },
 ];
 
 const GRADES = [
@@ -78,7 +80,7 @@ interface CourseMaterial {
 interface TeacherMaterialsProps {
   materials: CourseMaterial[];
   schoolId: string;
-  authUserId: string; // authenticated user id (auth.uid()) - used for both db ownership + storage path
+  authUserId: string;
   onRefresh: () => void;
 }
 
@@ -89,6 +91,8 @@ export function TeacherMaterials({
   onRefresh
 }: TeacherMaterialsProps) {
   const { toast } = useToast();
+  const { language } = useThemeLanguage();
+  const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Dialog state
@@ -121,8 +125,8 @@ export function TeacherMaterials({
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
       toast({ 
         variant: 'destructive', 
-        title: 'Invalid file type', 
-        description: 'Please upload PDF, Word, PowerPoint, or image files.' 
+        title: t('invalidFileType'), 
+        description: t('invalidFileTypeDesc') 
       });
       return;
     }
@@ -130,8 +134,8 @@ export function TeacherMaterials({
     if (file.size > 50 * 1024 * 1024) {
       toast({ 
         variant: 'destructive', 
-        title: 'File too large', 
-        description: 'Maximum file size is 50MB.' 
+        title: t('fileTooLarge'), 
+        description: t('fileTooLargeDesc') 
       });
       return;
     }
@@ -143,7 +147,6 @@ export function TeacherMaterials({
     if (!selectedFile) return null;
 
     const fileExt = selectedFile.name.split('.').pop();
-    // Use authUserId for path so it matches storage RLS (auth.uid())
     const fileName = `${authUserId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
     const { data, error } = await supabase.storage
@@ -155,7 +158,7 @@ export function TeacherMaterials({
 
     if (error) {
       console.error('Upload error:', error);
-      toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
+      toast({ variant: 'destructive', title: t('error'), description: error.message });
       return null;
     }
 
@@ -168,7 +171,7 @@ export function TeacherMaterials({
 
   const createMaterial = async () => {
     if (!title.trim()) {
-      toast({ variant: 'destructive', title: 'Please enter a title' });
+      toast({ variant: 'destructive', title: t('pleaseEnterTitle') });
       return;
     }
 
@@ -199,9 +202,9 @@ export function TeacherMaterials({
 
     if (error) {
       console.error('Material creation error:', error);
-      toast({ variant: 'destructive', title: 'Error uploading material', description: error.message });
+      toast({ variant: 'destructive', title: t('error'), description: error.message });
     } else {
-      toast({ title: 'Course material uploaded successfully!' });
+      toast({ title: t('materialUploadedSuccess') });
       resetForm();
       setDialogOpen(false);
       onRefresh();
@@ -215,9 +218,9 @@ export function TeacherMaterials({
       .eq('id', materialId);
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error deleting material' });
+      toast({ variant: 'destructive', title: t('error') });
     } else {
-      toast({ title: 'Material deleted' });
+      toast({ title: t('materialDeleted') });
       onRefresh();
     }
   };
@@ -225,7 +228,6 @@ export function TeacherMaterials({
   const getSubjectInfo = (subjectId: string) => {
     return SUBJECTS.find(s => s.id === subjectId) || { 
       id: subjectId, 
-      name: subjectId, 
       emoji: '📄', 
       color: 'from-gray-500 to-gray-600' 
     };
@@ -247,11 +249,11 @@ export function TeacherMaterials({
     return true;
   });
 
-  // Group materials by subject for Classera-style display
-  const groupedBySubject = SUBJECTS.reduce((acc, subject) => {
-    const subjectMaterials = filteredMaterials.filter(m => m.subject === subject.id);
+  // Group materials by subject
+  const groupedBySubject = SUBJECTS.reduce((acc, subj) => {
+    const subjectMaterials = filteredMaterials.filter(m => m.subject === subj.id);
     if (subjectMaterials.length > 0 || filterSubject === 'all') {
-      acc[subject.id] = subjectMaterials;
+      acc[subj.id] = subjectMaterials;
     }
     return acc;
   }, {} as Record<string, CourseMaterial[]>);
@@ -261,14 +263,14 @@ export function TeacherMaterials({
       {/* Header with Upload Button */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold">Course Materials</h2>
+          <h2 className="text-xl font-bold">{t('teacherCourseMaterials')}</h2>
           <p className="text-sm text-muted-foreground">
-            Upload and manage learning materials for your students
+            {t('uploadAndManageMaterials')}
           </p>
         </div>
         <Button onClick={() => setDialogOpen(true)} className="gap-2">
           <Upload className="w-4 h-4" />
-          Upload Material
+          {t('uploadMaterialBtn')}
         </Button>
       </div>
 
@@ -276,48 +278,48 @@ export function TeacherMaterials({
       <div className="flex flex-wrap gap-3 p-4 bg-muted/50 rounded-xl">
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Filters:</span>
+          <span className="text-sm font-medium">{t('filtersLabel')}</span>
         </div>
         <Select value={filterSubject} onValueChange={setFilterSubject}>
           <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="All Subjects" />
+            <SelectValue placeholder={t('allSubjects')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Subjects</SelectItem>
+            <SelectItem value="all">{t('allSubjects')}</SelectItem>
             {SUBJECTS.map((s) => (
               <SelectItem key={s.id} value={s.id}>
-                {s.emoji} {s.name}
+                {s.emoji} {getSubjectName(s.id, language)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={filterGrade} onValueChange={setFilterGrade}>
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="All Grades" />
+            <SelectValue placeholder={t('allGrades')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Grades</SelectItem>
+            <SelectItem value="all">{t('allGrades')}</SelectItem>
             {GRADES.map((g) => (
-              <SelectItem key={g} value={g}>{g}</SelectItem>
+              <SelectItem key={g} value={g}>{getGradeName(g, language)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Materials by Subject - Classera Style */}
+      {/* Materials by Subject */}
       {filteredMaterials.length === 0 ? (
         <div className="glass-effect rounded-xl p-12 text-center">
           <FolderOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-          <h3 className="text-lg font-semibold mb-2">No Materials Found</h3>
+          <h3 className="text-lg font-semibold mb-2">{t('noMaterialsFound')}</h3>
           <p className="text-muted-foreground mb-4">
             {materials.length === 0 
-              ? "Start by uploading your first course material"
-              : "No materials match your current filters"}
+              ? t('startByUploadingFirst')
+              : t('noMaterialsMatchFilters')}
           </p>
           {materials.length === 0 && (
             <Button onClick={() => setDialogOpen(true)}>
               <Upload className="w-4 h-4 mr-2" />
-              Upload First Material
+              {t('uploadFirstMaterialBtn')}
             </Button>
           )}
         </div>
@@ -348,9 +350,9 @@ export function TeacherMaterials({
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">{subjectInfo.name}</Badge>
+                    <Badge variant="outline">{getSubjectName(material.subject, language)}</Badge>
                     {material.grade_level && (
-                      <Badge variant="secondary">{material.grade_level}</Badge>
+                      <Badge variant="secondary">{getGradeName(material.grade_level, language)}</Badge>
                     )}
                   </div>
                   
@@ -368,13 +370,13 @@ export function TeacherMaterials({
                       className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
                     >
                       {getFileIcon(material.file_url)}
-                      <span>View File</span>
+                      <span>{t('viewFileLabel')}</span>
                       <Download className="w-3 h-3" />
                     </a>
                   )}
 
                   <p className="text-xs text-muted-foreground pt-2 border-t">
-                    Uploaded {new Date(material.created_at).toLocaleDateString()}
+                    {t('uploadedOn')} {new Date(material.created_at).toLocaleDateString()}
                   </p>
                 </CardContent>
               </Card>
@@ -382,7 +384,7 @@ export function TeacherMaterials({
           })}
         </div>
       ) : (
-        // Grouped by subject view (Classera-style folders)
+        // Grouped by subject view
         <div className="space-y-6">
           {SUBJECTS.map((subjectInfo) => {
             const subjectMaterials = groupedBySubject[subjectInfo.id] || [];
@@ -395,9 +397,9 @@ export function TeacherMaterials({
                     {subjectInfo.emoji}
                   </div>
                   <div>
-                    <h3 className="font-semibold">{subjectInfo.name}</h3>
+                    <h3 className="font-semibold">{getSubjectName(subjectInfo.id, language)}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {subjectMaterials.length} material{subjectMaterials.length !== 1 ? 's' : ''}
+                      {subjectMaterials.length} {subjectMaterials.length !== 1 ? t('materialsCount') : t('materialCount')}
                     </p>
                   </div>
                 </div>
@@ -415,7 +417,7 @@ export function TeacherMaterials({
                         <p className="font-medium text-sm truncate">{material.title}</p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           {material.grade_level && (
-                            <span>{material.grade_level}</span>
+                            <span>{getGradeName(material.grade_level, language)}</span>
                           )}
                           <span>•</span>
                           <span>{new Date(material.created_at).toLocaleDateString()}</span>
@@ -455,26 +457,26 @@ export function TeacherMaterials({
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Upload Course Material</DialogTitle>
+            <DialogTitle>{t('uploadCourseMaterial')}</DialogTitle>
             <DialogDescription>
-              Upload a file or add content for your students to access.
+              {t('uploadFileOrContent')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="materialTitle">Title *</Label>
+              <Label htmlFor="materialTitle">{t('titleRequired')}</Label>
               <Input
                 id="materialTitle"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter material title"
+                placeholder={t('enterMaterialTitlePlaceholder')}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Subject *</Label>
+                <Label>{t('subjectRequired')}</Label>
                 <Select value={subject} onValueChange={setSubject}>
                   <SelectTrigger>
                     <SelectValue />
@@ -482,7 +484,7 @@ export function TeacherMaterials({
                   <SelectContent>
                     {SUBJECTS.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.emoji} {s.name}
+                        {s.emoji} {getSubjectName(s.id, language)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -490,14 +492,14 @@ export function TeacherMaterials({
               </div>
 
               <div className="space-y-2">
-                <Label>Grade Level *</Label>
+                <Label>{t('gradeLevelRequired')}</Label>
                 <Select value={gradeLevel} onValueChange={setGradeLevel}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {GRADES.map((g) => (
-                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                      <SelectItem key={g} value={g}>{getGradeName(g, language)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -506,7 +508,7 @@ export function TeacherMaterials({
 
             {/* File Upload */}
             <div className="space-y-2">
-              <Label>Upload File</Label>
+              <Label>{t('uploadFileLabel')}</Label>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -537,21 +539,21 @@ export function TeacherMaterials({
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm font-medium">Click to upload</p>
+                  <p className="text-sm font-medium">{t('clickToUpload')}</p>
                   <p className="text-xs text-muted-foreground">
-                    PDF, Word, PowerPoint, or Images (max 50MB)
+                    {t('fileTypesAllowed')}
                   </p>
                 </div>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="materialContent">Additional Notes</Label>
+              <Label htmlFor="materialContent">{t('additionalNotes')}</Label>
               <Textarea
                 id="materialContent"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Add any notes or description..."
+                placeholder={t('addNotesPlaceholder')}
                 rows={3}
               />
             </div>
@@ -559,10 +561,10 @@ export function TeacherMaterials({
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button onClick={createMaterial} disabled={uploading || !title.trim()}>
-              {uploading ? 'Uploading...' : 'Upload Material'}
+              {uploading ? t('uploadingBtn') : t('uploadMaterialBtn')}
             </Button>
           </DialogFooter>
         </DialogContent>

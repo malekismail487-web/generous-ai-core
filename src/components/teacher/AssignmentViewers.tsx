@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye, User, Clock, X } from 'lucide-react';
+import { Eye, User, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { tr, getGradeName } from '@/lib/translations';
 
 interface Viewer {
   user_id: string;
@@ -28,6 +30,8 @@ export function AssignmentViewers({ assignmentId, assignmentTitle }: AssignmentV
   const [viewers, setViewers] = useState<Viewer[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const { language } = useThemeLanguage();
+  const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
 
   useEffect(() => {
     if (!open) return;
@@ -35,7 +39,6 @@ export function AssignmentViewers({ assignmentId, assignmentTitle }: AssignmentV
     const fetchViewers = async () => {
       setLoading(true);
       
-      // Fetch assignment views
       const { data: viewsData, error: viewsError } = await supabase
         .from('assignment_views')
         .select('user_id, viewed_at')
@@ -47,7 +50,6 @@ export function AssignmentViewers({ assignmentId, assignmentTitle }: AssignmentV
         return;
       }
 
-      // Fetch profile names for these users
       const userIds = viewsData.map(v => v.user_id);
       
       if (userIds.length === 0) {
@@ -68,7 +70,7 @@ export function AssignmentViewers({ assignmentId, assignmentTitle }: AssignmentV
       const viewersWithNames: Viewer[] = viewsData.map(v => ({
         user_id: v.user_id,
         viewed_at: v.viewed_at,
-        full_name: profileMap.get(v.user_id)?.full_name || 'Unknown Student',
+        full_name: profileMap.get(v.user_id)?.full_name || t('studentWord'),
         grade_level: profileMap.get(v.user_id)?.grade_level || null,
       }));
 
@@ -89,32 +91,32 @@ export function AssignmentViewers({ assignmentId, assignmentTitle }: AssignmentV
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
           <Eye className="w-3.5 h-3.5" />
-          Views
+          {t('views')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <Eye className="w-4 h-4" />
-            Students Who Viewed
+            {t('studentsWhoViewedTitle')}
           </DialogTitle>
           <p className="text-sm text-muted-foreground line-clamp-1">{assignmentTitle}</p>
         </DialogHeader>
 
         {loading ? (
           <div className="py-8 text-center text-muted-foreground text-sm">
-            Loading viewers...
+            {t('loadingViewers')}
           </div>
         ) : viewers.length === 0 ? (
           <div className="py-8 text-center">
             <Eye className="w-10 h-10 mx-auto mb-3 text-muted-foreground/50" />
-            <p className="text-muted-foreground text-sm">No students have viewed this assignment yet</p>
+            <p className="text-muted-foreground text-sm">{t('noStudentsViewed')}</p>
           </div>
         ) : (
           <ScrollArea className="max-h-[400px]">
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground mb-3">
-                {viewers.length} student{viewers.length !== 1 ? 's' : ''} viewed this assignment
+                {viewers.length} {t('viewedThisAssignment')}
               </p>
               {viewers.map((viewer) => (
                 <div
@@ -129,7 +131,7 @@ export function AssignmentViewers({ assignmentId, assignmentTitle }: AssignmentV
                       <p className="font-medium text-sm">{viewer.full_name}</p>
                       {viewer.grade_level && (
                         <Badge variant="outline" className="text-[10px] mt-0.5">
-                          {viewer.grade_level}
+                          {getGradeName(viewer.grade_level, language)}
                         </Badge>
                       )}
                     </div>
