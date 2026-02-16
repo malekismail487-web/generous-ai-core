@@ -113,7 +113,7 @@ export function MaterialViewer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [imageZoom, setImageZoom] = useState(1);
   const [viewerError, setViewerError] = useState(false);
-  const { signedUrl } = useSignedUrl(material?.file_url);
+  const { signedUrl, loading: signedUrlLoading } = useSignedUrl(material?.file_url);
 
   if (!material) return null;
 
@@ -121,6 +121,7 @@ export function MaterialViewer({
   const filename = getOriginalFilename(material.file_url, material.title);
   const canEmbed = fileType === 'pdf' || fileType === 'image' || fileType === 'video';
   const effectiveUrl = signedUrl || material.file_url;
+  const isLoadingUrl = material.file_url?.includes('/storage/v1/object/public/') && signedUrlLoading;
 
   const handleDownload = () => {
     if (!effectiveUrl) return;
@@ -151,6 +152,19 @@ export function MaterialViewer({
 
   const renderEmbeddedViewer = () => {
     if (!effectiveUrl) return null;
+
+    // Show loading while signed URL is being generated
+    if (isLoadingUrl) {
+      return (
+        <div className={cn(
+          "w-full flex flex-col items-center justify-center bg-muted/50 rounded-lg",
+          isFullscreen ? "h-[85vh]" : "h-[60vh]"
+        )}>
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3" />
+          <p className="text-sm text-muted-foreground">Loading preview…</p>
+        </div>
+      );
+    }
 
     // If viewer previously failed, show fallback
     if (viewerError) {
