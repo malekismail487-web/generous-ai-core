@@ -1,6 +1,7 @@
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import { Sparkles, Globe } from 'lucide-react';
+import { Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import logoImg from '@/assets/studybright-logo.png';
 
 export default function LanguageSelect() {
   const { setLanguage } = useThemeLanguage();
@@ -17,9 +18,7 @@ export default function LanguageSelect() {
       <div className="w-full max-w-sm animate-fade-in">
         {/* Logo */}
         <div className="flex flex-col items-center mb-10">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-5 glow-effect">
-            <Sparkles className="w-10 h-10 text-primary-foreground" />
-          </div>
+          <img src={logoImg} alt="Study Bright AI" className="w-24 h-24 rounded-3xl mb-5 shadow-lg" />
           <h1 className="text-3xl font-bold">
             <span className="gradient-text">Study Bright AI</span>
           </h1>

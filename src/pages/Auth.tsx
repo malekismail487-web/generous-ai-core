@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr } from '@/lib/translations';
-import { Sparkles, Mail, Lock, Loader2, KeyRound, Users, UserPlus } from 'lucide-react';
+import { Mail, Lock, Loader2, KeyRound, Users, UserPlus } from 'lucide-react';
+import logoImg from '@/assets/studybright-logo.png';
 import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -402,9 +403,7 @@ export default function Auth() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-4 glow-effect">
-            <Sparkles className="w-8 h-8 text-primary-foreground" />
-          </div>
+          <img src={logoImg} alt="Study Bright AI" className="w-20 h-20 rounded-2xl mb-4 shadow-lg" />
           <h1 className="text-2xl font-bold">
             <span className="gradient-text">Study Bright AI</span>
           </h1>
