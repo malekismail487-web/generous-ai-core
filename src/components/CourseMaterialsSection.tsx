@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { MaterialViewer } from '@/components/MaterialViewer';
 
 const subjects = [
   { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-emerald-500 to-green-600' },
@@ -61,6 +62,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
   const [comments, setComments] = useState<MaterialComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [materialViewerOpen, setMaterialViewerOpen] = useState(false);
   
   // Form state for upload/edit
   const [formSubject, setFormSubject] = useState('');
@@ -165,139 +167,6 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
     return 'unknown';
   };
 
-  // Render embedded content based on file type
-  const renderEmbeddedContent = (fileUrl: string, title: string) => {
-    const fileType = getFileType(fileUrl);
-    
-    const handleDownload = () => {
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = title;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    };
-
-    const handleOpenExternal = () => {
-      window.open(fileUrl, '_blank', 'noopener,noreferrer');
-    };
-
-    switch (fileType) {
-      case 'pdf':
-        return (
-          <div className="space-y-3">
-            <div className="w-full h-[50vh] bg-muted rounded-lg overflow-hidden">
-              <iframe
-                src={`${fileUrl}#toolbar=1&navpanes=1&scrollbar=1`}
-                className="w-full h-full border-0"
-                title={title}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleOpenExternal} className="gap-2">
-                <ExternalLink className="w-4 h-4" />
-                Open in New Tab
-              </Button>
-              <Button size="sm" onClick={handleDownload} className="gap-2">
-                <Download className="w-4 h-4" />
-                Download
-              </Button>
-            </div>
-          </div>
-        );
-
-      case 'image':
-        return (
-          <div className="space-y-3">
-            <div className="w-full max-h-[50vh] bg-muted/50 rounded-lg overflow-hidden flex items-center justify-center p-4">
-              <img
-                src={fileUrl}
-                alt={title}
-                className="max-w-full max-h-[45vh] object-contain rounded"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleOpenExternal} className="gap-2">
-                <ExternalLink className="w-4 h-4" />
-                Open in New Tab
-              </Button>
-              <Button size="sm" onClick={handleDownload} className="gap-2">
-                <Download className="w-4 h-4" />
-                Download
-              </Button>
-            </div>
-          </div>
-        );
-
-      case 'video':
-        return (
-          <div className="space-y-3">
-            <div className="w-full bg-black rounded-lg overflow-hidden">
-              <video
-                src={fileUrl}
-                controls
-                className="w-full max-h-[50vh]"
-              >
-                Your browser does not support video playback.
-              </video>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={handleDownload} className="gap-2">
-                <Download className="w-4 h-4" />
-                Download
-              </Button>
-            </div>
-          </div>
-        );
-
-      case 'document':
-      case 'presentation':
-        // Try Google Docs Viewer for Word/PowerPoint
-        return (
-          <div className="space-y-3">
-            <div className="w-full h-[50vh] bg-muted rounded-lg overflow-hidden">
-              <iframe
-                src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
-                className="w-full h-full border-0"
-                title={title}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleOpenExternal} className="gap-2">
-                <ExternalLink className="w-4 h-4" />
-                Open in New Tab
-              </Button>
-              <Button size="sm" onClick={handleDownload} className="gap-2">
-                <Download className="w-4 h-4" />
-                Download
-              </Button>
-            </div>
-          </div>
-        );
-
-      default:
-        return (
-          <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/50 rounded-lg">
-            <FileText className="w-12 h-12 text-muted-foreground mb-3" />
-            <p className="text-sm text-muted-foreground mb-4">
-              This file cannot be previewed in the browser.
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleOpenExternal} className="gap-2">
-                <ExternalLink className="w-4 h-4" />
-                Open in New Tab
-              </Button>
-              <Button size="sm" onClick={handleDownload} className="gap-2">
-                <Download className="w-4 h-4" />
-                Download
-              </Button>
-            </div>
-          </div>
-        );
-    }
-  };
-
   // DETAIL VIEW - View single material with comments
   if (viewState === 'detail' && selectedMaterial) {
     const subjectInfo = getSubjectInfo(selectedMaterial.subject);
@@ -345,11 +214,15 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
               )}
             </div>
             
-            {/* Embedded File Viewer */}
+            {/* Open in Material Viewer button */}
             {selectedMaterial.file_url && (
-              <div className="mb-4">
-                {renderEmbeddedContent(selectedMaterial.file_url, selectedMaterial.title)}
-              </div>
+              <button
+                onClick={() => setMaterialViewerOpen(true)}
+                className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors w-full mb-4"
+              >
+                <Eye className="w-5 h-5" />
+                <span>Open Material</span>
+              </button>
             )}
             
             {selectedMaterial.content && (
@@ -398,6 +271,23 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
             )}
           </div>
         </div>
+
+        {/* MaterialViewer Dialog - same as Report Cards & Weekly Plans */}
+        <MaterialViewer
+          open={materialViewerOpen}
+          onOpenChange={setMaterialViewerOpen}
+          material={selectedMaterial ? {
+            id: selectedMaterial.id,
+            title: selectedMaterial.title,
+            subject: selectedMaterial.subject,
+            content: selectedMaterial.content,
+            file_url: selectedMaterial.file_url,
+            grade_level: selectedMaterial.grade_level || null,
+            created_at: selectedMaterial.created_at,
+            uploaded_by: selectedMaterial.uploaded_by,
+          } : null}
+          subjectInfo={subjectInfo}
+        />
       </div>
     );
   }
