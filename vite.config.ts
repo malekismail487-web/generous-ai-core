@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   build: {
-    target: "esnext",
+    target: ["es2020", "edge88", "firefox78", "chrome87", "safari14"],
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
