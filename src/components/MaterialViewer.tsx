@@ -52,12 +52,22 @@ function getFileType(fileUrl: string | null): FileType {
   const url = fileUrl.toLowerCase();
   
   if (url.includes('.pdf')) return 'pdf';
-  if (url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) return 'image';
-  if (url.match(/\.(mp4|webm|ogg|mov)$/i)) return 'video';
-  if (url.match(/\.(doc|docx)$/i)) return 'document';
-  if (url.match(/\.(ppt|pptx)$/i)) return 'presentation';
+  if (url.match(/\.(jpg|jpeg|png|gif|webp|svg)/i)) return 'image';
+  if (url.match(/\.(mp4|webm|ogg|mov)/i)) return 'video';
+  if (url.match(/\.(doc|docx)/i)) return 'document';
+  if (url.match(/\.(ppt|pptx)/i)) return 'presentation';
   
   return 'unknown';
+}
+
+/** Build a Google Docs Viewer URL for embedding Word/PPT inline */
+function getGoogleViewerUrl(fileUrl: string): string {
+  return `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+}
+
+/** Build a Microsoft Office Online viewer URL as secondary fallback */
+function getOfficeViewerUrl(fileUrl: string): string {
+  return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
 }
 
 function getFileTypeName(type: FileType): string {
@@ -114,13 +124,14 @@ export function MaterialViewer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [imageZoom, setImageZoom] = useState(1);
   const [viewerError, setViewerError] = useState(false);
+  const [docViewerFailed, setDocViewerFailed] = useState(false);
   const { signedUrl, loading: signedUrlLoading } = useSignedUrl(material?.file_url);
 
   if (!material) return null;
 
   const fileType = getFileType(material.file_url);
   const filename = getOriginalFilename(material.file_url, material.title);
-  const canEmbed = fileType === 'pdf' || fileType === 'image' || fileType === 'video';
+  const canEmbed = fileType === 'pdf' || fileType === 'image' || fileType === 'video' || fileType === 'document' || fileType === 'presentation';
   const effectiveUrl = signedUrl || material.file_url;
   const isLoadingUrl = material.file_url?.includes('/storage/v1/object/public/') && signedUrlLoading;
 
@@ -144,6 +155,7 @@ export function MaterialViewer({
   const resetViewer = () => {
     setImageZoom(1);
     setViewerError(false);
+    setDocViewerFailed(false);
   };
 
   const handleClose = () => {
@@ -268,8 +280,67 @@ export function MaterialViewer({
 
       case 'document':
       case 'presentation':
+        // Classera-style: embed Word/PPT inline using Google Docs Viewer
+        if (!docViewerFailed) {
+          const googleViewerSrc = getGoogleViewerUrl(effectiveUrl);
+          return (
+            <div className={cn(
+              "w-full bg-muted rounded-lg overflow-hidden relative",
+              isFullscreen ? "h-[85vh]" : "h-[60vh]"
+            )}>
+              {/* Loading overlay while iframe loads */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/80 z-0">
+                <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+                <p className="text-sm text-muted-foreground">Loading document preview…</p>
+              </div>
+              <iframe
+                src={googleViewerSrc}
+                className="w-full h-full border-0 relative z-10"
+                title={material.title}
+                sandbox="allow-scripts allow-same-origin allow-popups"
+                onError={() => setDocViewerFailed(true)}
+              />
+              {/* Fallback link if viewer takes too long */}
+              <div className="absolute bottom-3 right-3 z-20">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="gap-2 shadow-md"
+                  onClick={() => setDocViewerFailed(true)}
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Can't see it?
+                </Button>
+              </div>
+            </div>
+          );
+        }
+        // Fallback: file info card with download + open actions
+        return (
+          <div className={cn(
+            "w-full flex flex-col items-center justify-center bg-muted/50 rounded-lg py-16",
+            isFullscreen ? "h-[85vh]" : "h-auto"
+          )}>
+            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              {getFileIcon(fileType)}
+            </div>
+            <h3 className="font-semibold text-lg mb-1">{filename}</h3>
+            <p className="text-sm text-muted-foreground mb-6">{getFileTypeName(fileType)}</p>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={handleOpenExternal} className="gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Open in New Tab
+              </Button>
+              <Button onClick={handleDownload} className="gap-2">
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
+            </div>
+          </div>
+        );
+
       default:
-        // Word/PPT/unknown files: show file info card with download + open actions
+        // Unknown files: download/open only
         return (
           <div className={cn(
             "w-full flex flex-col items-center justify-center bg-muted/50 rounded-lg py-16",
