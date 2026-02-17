@@ -390,8 +390,8 @@ export function MaterialViewer({
       <DialogContent className={cn(
         "p-0 gap-0 overflow-hidden flex flex-col [&>button.absolute]:hidden",
         isFullscreen 
-          ? "fixed inset-0 m-auto max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh]" 
-          : "fixed inset-0 m-auto max-w-4xl w-[calc(100%-2rem)] max-h-[90vh]"
+          ? "max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh]" 
+          : "max-w-4xl w-[calc(100%-2rem)] max-h-[90vh]"
       )}>
         {/* Header */}
         <DialogHeader className="p-4 pb-3 border-b shrink-0">
