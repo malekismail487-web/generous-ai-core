@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn, generateId } from '@/lib/utils';
 
 interface Question {
   id: string;
@@ -49,7 +49,7 @@ export function AssignmentCreator({ onBack, onSuccess }: AssignmentCreatorProps)
 
   const addQuestion = (type: Question['type']) => {
     const newQuestion: Question = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       question: '',
       type,
       points: 10,

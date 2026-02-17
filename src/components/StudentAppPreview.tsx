@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Message, streamChat } from "@/lib/chat";
+import { generateId } from "@/lib/utils";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { TypingIndicator } from "@/components/TypingIndicator";
@@ -30,7 +31,7 @@ export function StudentAppPreview() {
 
   const sendMessage = async (content: string) => {
     const userMessage: Message = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       role: "user",
       content,
     };
@@ -39,7 +40,7 @@ export function StudentAppPreview() {
     setIsLoading(true);
 
     let assistantContent = "";
-    const assistantId = crypto.randomUUID();
+    const assistantId = generateId();
 
     const updateAssistant = (chunk: string) => {
       assistantContent += chunk;
