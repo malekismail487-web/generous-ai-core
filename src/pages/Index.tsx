@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Message, streamChat } from "@/lib/chat";
+import { generateId } from "@/lib/utils";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { ChatHistoryDrawer } from "@/components/ChatHistoryDrawer";
@@ -100,13 +101,13 @@ const Index = () => {
       conversationId = newConv.id;
     }
 
-    const userMessage: Message = { id: crypto.randomUUID(), role: "user", content };
+    const userMessage: Message = { id: generateId(), role: "user", content };
     setLocalMessages((prev) => [...prev, userMessage]);
     await addMessage("user", content, conversationId);
     setIsLoading(true);
 
     let assistantContent = "";
-    const assistantId = crypto.randomUUID();
+    const assistantId = generateId();
 
     const updateAssistant = (chunk: string) => {
       assistantContent += chunk;

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { generateId } from '@/lib/utils';
 import { Bot, Sparkles, Loader2, CheckCircle2, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -110,7 +111,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
       setQuestions(
         (data.questions || []).map((q: any) => ({
           ...q,
-          id: crypto.randomUUID(),
+          id: generateId(),
         }))
       );
       setStep('preview');

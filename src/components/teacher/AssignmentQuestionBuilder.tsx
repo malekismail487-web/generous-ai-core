@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { generateId } from '@/lib/utils';
 import { ArrowLeft, Plus, Save, CheckCircle2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -103,7 +104,7 @@ export function AssignmentQuestionBuilder({
     }
 
     const newQuestion: Question = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       questionTitle: questionTitle.trim(),
       optionA: optionA.trim(),
       optionB: optionB.trim(),
