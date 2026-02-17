@@ -994,7 +994,7 @@ START GENERATING NOW:`;
       : null;
 
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-24">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={() => setViewState(examMenuType === ExamMenuType.SUBJECT ? 'grade' : 'type')}>
@@ -1077,7 +1077,7 @@ START GENERATING NOW:`;
 
           <div className="glass-effect rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-3 text-center">Select Difficulty</h3>
-            <div className="space-y-2 overflow-y-auto max-h-[50vh]">
+            <div className="space-y-2">
               {difficulties.map((diff) => {
                 const isDisabled = (examMenuType === ExamMenuType.SUBJECT && !hasSavedMaterials) ||
                                    (examMenuType === ExamMenuType.SAT && diff.id !== SATDifficulty.SAT_FULL && !hasSatMaterials);
@@ -1120,7 +1120,7 @@ START GENERATING NOW:`;
     const subjectId = subjectIdMap[selectedSubject];
     
     return (
-      <div className="flex-1 overflow-y-auto pt-16 pb-20">
+      <div className="h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-24">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={() => setViewState('subjects')}>
@@ -1138,7 +1138,7 @@ START GENERATING NOW:`;
 
           <div className="glass-effect rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-4 text-center">Select Your Grade Level</h3>
-            <div className="grid grid-cols-4 gap-2 overflow-y-auto max-h-[50vh]">
+            <div className="grid grid-cols-4 gap-2">
               {grades.map((grade) => {
                 const materialCount = getMaterialsBySubjectAndGrade(subjectId, grade).length;
                 return (
@@ -1213,7 +1213,7 @@ START GENERATING NOW:`;
 
   // TYPE VIEW - Choose between Subjects or SAT
   return (
-    <div className="flex-1 overflow-y-auto pt-16 pb-20">
+    <div className="h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-24">
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="text-center mb-8 animate-fade-in">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-primary to-accent">
