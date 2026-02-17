@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 
 interface Particle {
   x: number;
@@ -13,12 +14,14 @@ interface Particle {
 }
 
 export function AnimatedBackground() {
+  const { isLiteMode } = useThemeLanguage();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animFrameRef = useRef<number>(0);
   const isDarkRef = useRef(true);
 
   useEffect(() => {
+    if (isLiteMode) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -139,7 +142,9 @@ export function AnimatedBackground() {
       window.removeEventListener('resize', resize);
       observer.disconnect();
     };
-  }, []);
+  }, [isLiteMode]);
+
+  if (isLiteMode) return null;
 
   return (
     <canvas

@@ -2,12 +2,16 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 type Theme = 'dark' | 'light';
 type Language = 'en' | 'ar';
+type BuildMode = 'new' | 'old';
 
 interface ThemeLanguageContextType {
   theme: Theme;
   language: Language;
+  buildMode: BuildMode;
+  isLiteMode: boolean;
   setTheme: (theme: Theme) => void;
   setLanguage: (language: Language) => void;
+  setBuildMode: (mode: BuildMode) => void;
   t: (en: string, ar: string) => string;
 }
 
@@ -24,6 +28,11 @@ export function ThemeLanguageProvider({ children }: { children: ReactNode }) {
     return (saved === 'en' || saved === 'ar') ? saved : 'en';
   });
 
+  const [buildMode, setBuildModeState] = useState<BuildMode>(() => {
+    const saved = localStorage.getItem('app-build-mode');
+    return (saved === 'new' || saved === 'old') ? saved : 'new';
+  });
+
   const setTheme = (t: Theme) => {
     setThemeState(t);
     localStorage.setItem('app-theme', t);
@@ -34,7 +43,14 @@ export function ThemeLanguageProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('app-language', l);
   };
 
+  const setBuildMode = (mode: BuildMode) => {
+    setBuildModeState(mode);
+    localStorage.setItem('app-build-mode', mode);
+  };
+
   const t = (en: string, ar: string) => language === 'ar' ? ar : en;
+
+  const isLiteMode = buildMode === 'old';
 
   useEffect(() => {
     const root = document.documentElement;
@@ -52,8 +68,18 @@ export function ThemeLanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = language;
   }, [language]);
 
+  // Add/remove lite-mode class for CSS-level animation disabling
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isLiteMode) {
+      root.classList.add('lite-mode');
+    } else {
+      root.classList.remove('lite-mode');
+    }
+  }, [isLiteMode]);
+
   return (
-    <ThemeLanguageContext.Provider value={{ theme, language, setTheme, setLanguage, t }}>
+    <ThemeLanguageContext.Provider value={{ theme, language, buildMode, isLiteMode, setTheme, setLanguage, setBuildMode, t }}>
       {children}
     </ThemeLanguageContext.Provider>
   );
