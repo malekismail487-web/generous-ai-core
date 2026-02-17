@@ -97,15 +97,20 @@ function getOriginalFilename(fileUrl: string | null, title: string): string {
   
   // Try to extract original filename from URL
   try {
-    const url = new URL(fileUrl);
-    const pathname = url.pathname;
-    const segments = pathname.split('/');
+    // Use simple string parsing instead of URL constructor for older browser compatibility
+    const questionIndex = fileUrl.indexOf('?');
+    const cleanUrl = questionIndex >= 0 ? fileUrl.substring(0, questionIndex) : fileUrl;
+    const segments = cleanUrl.split('/');
     const lastSegment = segments[segments.length - 1];
     
+    if (!lastSegment) return title;
+    
     // If the filename looks like a generated one (UUID-like), use title instead
-    if (lastSegment.match(/^[a-f0-9-]+\.[a-z]+$/i)) {
-      const ext = lastSegment.split('.').pop();
-      return `${title}.${ext}`;
+    const uuidPattern = /^[a-f0-9-]+\.[a-z]+$/i;
+    if (uuidPattern.test(lastSegment)) {
+      const dotIndex = lastSegment.lastIndexOf('.');
+      const ext = dotIndex >= 0 ? lastSegment.substring(dotIndex + 1) : '';
+      return ext ? title + '.' + ext : title;
     }
     
     return decodeURIComponent(lastSegment);
@@ -214,6 +219,19 @@ export function MaterialViewer({
               className="w-full h-full border-0"
               title={material.title}
               onError={() => setViewerError(true)}
+              onLoad={(e) => {
+                // Detect if PDF failed to load in older browsers
+                try {
+                  const iframe = e.target as HTMLIFrameElement;
+                  // Some older browsers load a blank page instead of the PDF
+                  if (iframe.contentDocument && iframe.contentDocument.body && 
+                      iframe.contentDocument.body.innerHTML === '') {
+                    setViewerError(true);
+                  }
+                } catch {
+                  // Cross-origin - PDF loaded in browser's native viewer, which is fine
+                }
+              }}
             />
           </div>
         );
@@ -372,8 +390,8 @@ export function MaterialViewer({
       <DialogContent className={cn(
         "p-0 gap-0 overflow-hidden flex flex-col [&>button.absolute]:hidden",
         isFullscreen 
-          ? "max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]" 
-          : "max-w-4xl w-[calc(100%-2rem)] max-h-[90vh] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]"
+          ? "fixed inset-0 m-auto max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh]" 
+          : "fixed inset-0 m-auto max-w-4xl w-[calc(100%-2rem)] max-h-[90vh]"
       )}>
         {/* Header */}
         <DialogHeader className="p-4 pb-3 border-b shrink-0">
