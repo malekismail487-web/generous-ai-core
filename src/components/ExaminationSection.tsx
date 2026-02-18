@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { ArrowLeft, CheckCircle2, XCircle, Loader2, Trophy, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useMaterials } from '@/hooks/useMaterials';
@@ -366,12 +365,7 @@ export function ExaminationSection() {
 
   const hasSavedMaterials = savedMaterials.length > 0;
 
-  const materialContext = useMemo(() => {
-    if (!hasSavedMaterials) return '';
-    return savedMaterials.map(m => `Topic: ${m.topic}\n${m.content}`).join('\n\n---\n\n');
-  }, [savedMaterials, hasSavedMaterials]);
-
-  // Get SAT materials for beginner/intermediate/expert levels
+  // Get SAT materials
   const satMaterials = useMemo(() => {
     const satSubjects = ['sat_math', 'sat_reading', 'sat_writing'];
     return satSubjects.flatMap(subject => getMaterialsBySubject(subject));
@@ -379,290 +373,82 @@ export function ExaminationSection() {
 
   const hasSatMaterials = satMaterials.length > 0;
 
-  const satMaterialContext = useMemo(() => {
-    if (!hasSatMaterials) return '';
-    return satMaterials.map(m => `Topic: ${m.topic}\n${m.content}`).join('\n\n---\n\n');
-  }, [satMaterials, hasSatMaterials]);
-
   const generateQuestions = useCallback(async (count: number, difficulty: string) => {
-    // For subject exams, require saved materials
-    if (!hasSavedMaterials && examMenuType === ExamMenuType.SUBJECT) {
-      toast({ 
-        variant: 'destructive', 
-        title: 'No saved materials', 
-        description: 'You need to study some materials first before taking an exam.' 
-      });
-      return;
-    }
-
-    // For SAT beginner/intermediate/expert, require SAT materials
-    if (examMenuType === ExamMenuType.SAT && difficulty !== SATDifficulty.SAT_FULL && !hasSatMaterials) {
-      toast({ 
-        variant: 'destructive', 
-        title: 'No SAT materials saved', 
-        description: 'Go to SAT Practice tab first and study some materials before taking Beginner/Intermediate/Expert exams.' 
-      });
-      return;
-    }
-
     setIsLoading(true);
 
     const subjectName = examMenuType === ExamMenuType.SUBJECT && selectedSubject
-      ? subjects.find(s => s.id === selectedSubject)?.name 
+      ? subjects.find(s => s.id === selectedSubject)?.name
       : 'SAT';
-    
-    // Truncate material context if too long (keep most relevant parts)
-    const truncateMaterials = (context: string, maxLength: number = 8000) => {
-      if (context.length <= maxLength) return context;
-      // Take first portion to preserve important content
-      return context.substring(0, maxLength) + '\n\n[Additional materials truncated for brevity...]';
-    };
 
-    const truncatedMaterialContext = truncateMaterials(materialContext);
-    const truncatedSatContext = truncateMaterials(satMaterialContext);
-    
-    let prompt: string;
-    
-    // Count materials to ensure balanced distribution
-    const materialCount = savedMaterials.length;
-    const questionsPerMaterial = materialCount > 0 ? Math.floor(count / materialCount) : count;
-    const extraQuestions = materialCount > 0 ? count % materialCount : 0;
-    
-    if (examMenuType === ExamMenuType.SUBJECT && hasSavedMaterials) {
-      prompt = `You are an expert exam generator. Generate EXACTLY ${count} multiple-choice questions based on ALL the study materials below.
+    const isFullSAT = difficulty === SATDifficulty.SAT_FULL;
+    const isSAT = examMenuType === ExamMenuType.SAT;
 
-STUDY MATERIALS (${materialCount} different topics/materials):
-${truncatedMaterialContext}
-
-EXAM DETAILS:
-- Subject: ${subjectName}
-- Grade Level: ${selectedGrade}
-- Difficulty: ${difficulty.replace('SUBJECT_', '')}
-- Total Questions Required: EXACTLY ${count}
-- Number of Materials/Topics: ${materialCount}
-
-CRITICAL REQUIREMENTS:
-1. Generate EXACTLY ${count} questions - not fewer, not more
-2. DISTRIBUTE QUESTIONS EVENLY across ALL ${materialCount} materials/topics:
-   - Generate approximately ${questionsPerMaterial} questions from EACH material${extraQuestions > 0 ? ` (with ${extraQuestions} extra questions from any materials)` : ''}
-   - Every material listed above MUST have questions generated from it
-   - Do NOT focus on just one material - cover ALL of them
-3. Each question MUST be derived from the study materials content
-4. Questions should test understanding, not just memorization
-5. Vary question difficulty within the ${difficulty.replace('SUBJECT_', '')} level
-
-For MATH content, use LaTeX: \\( inline \\) or $$ display $$
-
-RESPOND WITH ONLY THIS JSON (no other text):
-{
-  "exam_title": "${subjectName} ${difficulty.replace('SUBJECT_', '')} Exam",
-  "grade_level": "${selectedGrade}",
-  "subject": "${subjectName}",
-  "total_questions": ${count},
-  "questions": [
-    {
-      "id": 1,
-      "type": "multiple_choice",
-      "question": "Question text here",
-      "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
-      "correct_answer": "A) First option"
-    },
-    {
-      "id": 2,
-      "type": "multiple_choice",
-      "question": "Next question...",
-      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
-      "correct_answer": "B) ..."
-    }
-  ]
-}
-
-VALIDATION RULES:
-- "id" must be sequential: 1, 2, 3... up to ${count}
-- "options" must have EXACTLY 4 items
-- "correct_answer" must EXACTLY match one option
-- Array must have EXACTLY ${count} questions
-- Questions MUST come from ALL ${materialCount} different materials
-
-START GENERATING ALL ${count} QUESTIONS NOW:`;
-    } else if (examMenuType === ExamMenuType.SAT && difficulty !== SATDifficulty.SAT_FULL) {
-      const difficultyDesc = difficulty === SATDifficulty.SAT_BEGINNER ? 'easier, foundational' :
-                            difficulty === SATDifficulty.SAT_INTERMEDIATE ? 'medium difficulty' : 'challenging, advanced';
-      
-      prompt = `You are an expert SAT exam generator. Generate EXACTLY ${count} SAT-style multiple-choice questions based on the saved SAT study materials below.
-
-SAVED SAT STUDY MATERIALS (from SAT Practice tab):
-${truncatedSatContext}
-
-EXAM DETAILS:
-- Exam Type: SAT Practice Exam
-- Difficulty: ${difficulty.replace('SAT_', '')} (${difficultyDesc})
-- Total Questions Required: EXACTLY ${count}
-
-CRITICAL REQUIREMENTS:
-1. Generate EXACTLY ${count} questions - not fewer, not more
-2. Each question MUST be derived from the SAT study materials content above
-3. Questions should test understanding of the studied SAT topics
-4. Follow official SAT question formats and style
-5. For Math topics: include algebra, geometry, data analysis as covered in materials
-6. For Reading/Writing topics: include comprehension, vocabulary, grammar as covered
-7. Vary question difficulty within the ${difficulty.replace('SAT_', '')} level
-8. Cover different topics from the saved materials evenly
-
-For MATH content, use LaTeX: \\( inline \\) or $$ display $$
-
-RESPOND WITH ONLY THIS JSON (no other text):
-{
-  "exam_title": "SAT ${difficulty.replace('SAT_', '')} Practice Exam",
-  "grade_level": "High School",
-  "subject": "SAT",
-  "total_questions": ${count},
-  "questions": [
-    {
-      "id": 1,
-      "type": "multiple_choice",
-      "question": "Question text here",
-      "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
-      "correct_answer": "A) First option"
-    },
-    {
-      "id": 2,
-      "type": "multiple_choice",
-      "question": "Next question...",
-      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
-      "correct_answer": "B) ..."
-    }
-  ]
-}
-
-VALIDATION RULES:
-- "id" must be sequential: 1, 2, 3... up to ${count}
-- "options" must have EXACTLY 4 items
-- "correct_answer" must EXACTLY match one option
-- Array must have EXACTLY ${count} questions
-
-START GENERATING ALL ${count} QUESTIONS NOW:`;
-    } else {
-      // Full SAT Exam
-      prompt = `You are an expert SAT exam generator. Generate a COMPLETE Full SAT Practice Exam with EXACTLY ${count} multiple-choice questions.
-
-EXAM STRUCTURE:
-- Reading & Writing: ~70 questions
-- Math: ~70 questions
-- Total: EXACTLY ${count} questions
-
-SAT MATH TOPICS TO COVER:
-1. Heart of Algebra: Linear equations, inequalities, systems
-2. Problem Solving: Ratios, percentages, statistics, probability
-3. Advanced Math: Quadratics, functions, polynomials
-4. Additional: Geometry, trigonometry, complex numbers
-
-SAT ENGLISH TOPICS TO COVER:
-1. Reading: Comprehension, vocabulary in context, evidence
-2. Writing: Grammar, sentence structure, transitions
-
-For MATH content, use LaTeX: \\( inline \\) or $$ display $$
-
-RESPOND WITH ONLY THIS JSON (no other text):
-{
-  "exam_title": "Full SAT Exam",
-  "grade_level": "High School",
-  "subject": "SAT",
-  "total_questions": ${count},
-  "questions": [
-    {
-      "id": 1,
-      "type": "multiple_choice",
-      "question": "Question text",
-      "options": ["A) Option", "B) Option", "C) Option", "D) Option"],
-      "correct_answer": "A) Option"
-    }
-  ]
-}
-
-CRITICAL: Generate ALL ${count} questions. Do not stop early. Continue until question ${count} is complete.
-
-START GENERATING NOW:`;
-    }
-
-    const messages: Message[] = [{ id: '1', role: 'user', content: prompt }];
-    let response = '';
+    // Pick materials to send
+    const materialsToSend = isSAT
+      ? (isFullSAT ? [] : satMaterials.map(m => ({ topic: m.topic, content: m.content })))
+      : savedMaterials.map(m => ({ topic: m.topic, content: m.content }));
 
     try {
-      await streamChat({
-        messages,
-        onDelta: (chunk) => { response += chunk; },
-        onDone: () => {
-          try {
-            // Try to parse as new JSON format
-            let jsonMatch = response.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-              const parsed = JSON.parse(jsonMatch[0]);
-              
-              // Relax validation - accept if we have at least 80% of requested questions
-              const minAcceptable = Math.floor(count * 0.8);
-              
-              if (parsed.questions && Array.isArray(parsed.questions)) {
-                // Fix any validation issues
-                const fixedQuestions = parsed.questions.slice(0, count).map((q: Record<string, unknown>, idx: number) => ({
-                  ...q,
-                  id: idx + 1,
-                  type: q.type || 'multiple_choice'
-                }));
-                
-                if (fixedQuestions.length >= minAcceptable) {
-                  const fixedExam: ExamJSON = {
-                    exam_title: parsed.exam_title || `${subjectName} Exam`,
-                    grade_level: parsed.grade_level || selectedGrade || 'Various',
-                    subject: parsed.subject || subjectName || 'Mixed',
-                    total_questions: fixedQuestions.length,
-                    questions: fixedQuestions
-                  };
-                  
-                  setExamState(createInitialExamState(fixedExam));
-                  setViewState('exam');
-                  
-                  if (fixedQuestions.length < count) {
-                    toast({
-                      title: 'Partial Success',
-                      description: `Generated ${fixedQuestions.length} of ${count} questions. Proceeding with available questions.`
-                    });
-                  }
-                  
-                  setIsLoading(false);
-                  return;
-                }
-              }
-            }
-            
-            // Fallback: try legacy array format
-            const arrayMatch = response.match(/\[[\s\S]*\]/);
-            if (arrayMatch) {
-              const questions = JSON.parse(arrayMatch[0]);
-              const converted = convertLegacyFormat(questions);
-              if (converted) {
-                setExamState(createInitialExamState(converted));
-                setViewState('exam');
-                setIsLoading(false);
-                return;
-              }
-            }
-            
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not generate enough questions. Please try again.' });
-          } catch {
-            toast({ variant: 'destructive', title: 'Error generating questions', description: 'Please try again.' });
-          }
-          setIsLoading(false);
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-exam`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        onError: (error) => {
-          setIsLoading(false);
-          toast({ variant: 'destructive', title: 'Error', description: error.message });
-        },
+        body: JSON.stringify({
+          subject: subjectName,
+          grade: selectedGrade,
+          difficulty: difficulty.replace('SUBJECT_', '').replace('SAT_', ''),
+          count,
+          materials: materialsToSend,
+          examType: isFullSAT ? 'SAT_FULL' : undefined,
+        }),
       });
-    } catch {
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Request failed: ${res.status}`);
+      }
+
+      const parsed = await res.json();
+
+      if (!parsed.questions || !Array.isArray(parsed.questions) || parsed.questions.length === 0) {
+        throw new Error('AI did not return valid questions. Please try again.');
+      }
+
+      const minAcceptable = Math.floor(count * 0.8);
+      if (parsed.questions.length < minAcceptable) {
+        throw new Error(`Only ${parsed.questions.length} of ${count} questions generated. Please try again.`);
+      }
+
+      const fixedExam: ExamJSON = {
+        exam_title: parsed.exam_title || `${subjectName} Exam`,
+        grade_level: parsed.grade_level || selectedGrade || 'General',
+        subject: parsed.subject || subjectName || 'Mixed',
+        total_questions: parsed.questions.length,
+        questions: parsed.questions,
+      };
+
+      if (parsed.questions.length < count) {
+        toast({
+          title: 'Partial Success',
+          description: `Generated ${parsed.questions.length} of ${count} questions.`,
+        });
+      }
+
+      setExamState(createInitialExamState(fixedExam));
+      setViewState('exam');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error generating exam',
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
+    } finally {
       setIsLoading(false);
     }
-  }, [examMenuType, selectedSubject, selectedGrade, hasSavedMaterials, materialContext, hasSatMaterials, satMaterialContext, toast]);
+  }, [examMenuType, selectedSubject, selectedGrade, savedMaterials, satMaterials, toast]);
 
   const handleExamTypeSelect = (type: ExamMenuType) => {
     setExamMenuType(type);
