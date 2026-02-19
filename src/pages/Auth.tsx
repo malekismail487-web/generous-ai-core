@@ -95,16 +95,13 @@ export default function Auth() {
           if (profile.status === 'pending' || profile.status === 'rejected') {
             navigate('/pending-approval');
           } else if (profile.status === 'approved' && profile.is_active) {
-            // Redirect based on user type
-            if (profile.user_type === 'school_admin') {
-              navigate('/admin');
-            } else if (profile.user_type === 'teacher') {
-              navigate('/teacher');
-            } else if (profile.user_type === 'student') {
-              navigate('/student');
-            } else {
-              navigate('/');
-            }
+            // Redirect to API key setup first, then to destination
+            let dest = '/';
+            if (profile.user_type === 'school_admin') dest = '/admin';
+            else if (profile.user_type === 'teacher') dest = '/teacher';
+            else if (profile.user_type === 'student') dest = '/';
+            sessionStorage.setItem('apiKeySetupReturn', dest);
+            navigate('/setup-api-key');
           } else {
             navigate('/');
           }

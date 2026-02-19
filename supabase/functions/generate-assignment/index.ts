@@ -1,9 +1,31 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+async function getUserApiKey(authHeader: string | null): Promise<string | null> {
+  if (!authHeader) return null;
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user } } = await supabase.auth.getUser(token);
+    if (!user) return null;
+    const { data } = await supabase
+      .from("user_api_keys")
+      .select("groq_api_key")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    return data?.groq_api_key || null;
+  } catch {
+    return null;
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,15 +34,20 @@ serve(async (req) => {
 
   try {
     const { title, description, subject, questionCount, gradeLevel } = await req.json();
-    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+    
+    const userKey = await getUserApiKey(req.headers.get("authorization"));
+    const GROQ_API_KEY = userKey || Deno.env.get("GROQ_API_KEY");
 
     if (!GROQ_API_KEY) {
-      throw new Error("GROQ_API_KEY is not configured");
+      throw new Error("No AI API key configured. Please add your Groq API key.");
     }
 
     if (!title || !subject || !questionCount) {
       throw new Error("title, subject, and questionCount are required");
     }
+
+    const randomSeed = Math.floor(Math.random() * 99999);
+    const variationHint = `Seed: ${randomSeed}. Make this UNIQUE — vary which subtopics, question styles, and angles you cover. Do not repeat patterns from previous generations.`;
 
     const systemPrompt = `You are an expert educational content creator. Generate multiple-choice quiz questions based on the assignment title and subject provided by the teacher.
 
@@ -33,9 +60,10 @@ Rules:
 - Questions should test understanding, not just memorization
 - Vary difficulty within the set
 - Questions should be clear, unambiguous, and educational
+- ${variationHint}
 ${description ? `- Additional context from the teacher: "${description}"` : ''}`;
 
-    const userPrompt = `The teacher created an assignment titled "${title}" for the subject "${subject}" at the ${gradeLevel || 'general'} level. Generate exactly ${questionCount} multiple-choice questions that are specifically about "${title}".${description ? ` The teacher also provided this description: "${description}"` : ''}`;
+    const userPrompt = `The teacher created an assignment titled "${title}" for the subject "${subject}" at the ${gradeLevel || 'general'} level. Generate exactly ${questionCount} multiple-choice questions that are specifically about "${title}". ${variationHint}${description ? ` The teacher also provided this description: "${description}"` : ''}`;
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -58,10 +86,7 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
               parameters: {
                 type: "object",
                 properties: {
-                  title: {
-                    type: "string",
-                    description: "A suitable title for the assignment"
-                  },
+                  title: { type: "string", description: "A suitable title for the assignment" },
                   questions: {
                     type: "array",
                     items: {
@@ -72,11 +97,7 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
                         optionB: { type: "string", description: "Option B text" },
                         optionC: { type: "string", description: "Option C text" },
                         optionD: { type: "string", description: "Option D text" },
-                        correctAnswer: {
-                          type: "string",
-                          enum: ["A", "B", "C", "D"],
-                          description: "The correct answer letter"
-                        },
+                        correctAnswer: { type: "string", enum: ["A", "B", "C", "D"], description: "The correct answer letter" },
                       },
                       required: ["questionTitle", "optionA", "optionB", "optionC", "optionD", "correctAnswer"],
                       additionalProperties: false,
@@ -90,6 +111,7 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
           },
         ],
         tool_choice: { type: "function", function: { name: "create_assignment_questions" } },
+        temperature: 0.85 + Math.random() * 0.1,
       }),
     });
 
@@ -100,20 +122,12 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Usage limit reached. Please add credits." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
       throw new Error("Failed to generate questions");
     }
 
     const data = await response.json();
-    
-    // Extract the tool call result
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall || toolCall.function.name !== "create_assignment_questions") {
       throw new Error("AI did not return structured questions");

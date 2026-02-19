@@ -1,9 +1,31 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+async function getUserApiKey(authHeader: string | null): Promise<string | null> {
+  if (!authHeader) return null;
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user } } = await supabase.auth.getUser(token);
+    if (!user) return null;
+    const { data } = await supabase
+      .from("user_api_keys")
+      .select("groq_api_key")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    return data?.groq_api_key || null;
+  } catch {
+    return null;
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,15 +34,21 @@ serve(async (req) => {
 
   try {
     const { subject, grade, difficulty, count, materials, examType } = await req.json();
-    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+    
+    const userKey = await getUserApiKey(req.headers.get("authorization"));
+    const GROQ_API_KEY = userKey || Deno.env.get("GROQ_API_KEY");
 
     if (!GROQ_API_KEY) {
-      throw new Error("GROQ_API_KEY is not configured");
+      throw new Error("No AI API key configured. Please add your Groq API key in the settings.");
     }
 
     if (!count || count <= 0) {
       throw new Error("count is required and must be positive");
     }
+
+    // Add randomness seed to ensure different results each time
+    const randomSeed = Math.floor(Math.random() * 10000);
+    const shuffleInstruction = `Variation seed: ${randomSeed}. Generate FRESH, UNIQUE questions different from any previous generation. Randomize question order and vary topics covered.`;
 
     // Build material context
     const materialContext = materials && materials.length > 0
@@ -33,10 +61,11 @@ serve(async (req) => {
     let userPrompt: string;
 
     if (examType === 'SAT_FULL') {
-      systemPrompt = `You are an expert SAT exam generator. You ONLY output valid JSON exam objects. You never add explanations, markdown, or extra text outside the JSON.`;
+      systemPrompt = `You are an expert SAT exam generator. You ONLY output valid JSON exam objects. You never add explanations, markdown, or extra text outside the JSON. ${shuffleInstruction}`;
       userPrompt = `Generate a complete Full SAT Practice Exam with EXACTLY ${count} multiple-choice questions.
 Structure: ~70 Reading/Writing + ~70 Math questions.
 Cover: Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar, Vocabulary.
+${shuffleInstruction}
 
 RESPOND WITH ONLY THIS JSON (no extra text, no markdown, no backticks):
 {
@@ -62,6 +91,7 @@ Rules:
 
       systemPrompt = `You are an expert exam generator. You ONLY output valid JSON exam objects. You never add explanations, markdown, or extra text outside the JSON.`;
       userPrompt = `Generate EXACTLY ${count} multiple-choice exam questions based on the saved study materials below.
+${shuffleInstruction}
 
 STUDY MATERIALS (${materialCount} topics):
 ${materialContext}
@@ -79,6 +109,7 @@ Rules:
 4. 4 options per question (A, B, C, D format)
 5. correct_answer must EXACTLY match one option
 6. Use LaTeX for math: \\( ... \\) inline, $$ ... $$ display
+7. Generate FRESH questions — do not repeat previous exams
 
 RESPOND WITH ONLY THIS JSON (no extra text, no markdown, no backticks):
 {
@@ -94,9 +125,9 @@ RESPOND WITH ONLY THIS JSON (no extra text, no markdown, no backticks):
 
 id must be sequential 1 to ${count}. Generate ALL ${count} questions now.`;
     } else {
-      // No materials - generate general knowledge exam
       systemPrompt = `You are an expert exam generator. You ONLY output valid JSON exam objects. You never add explanations, markdown, or extra text outside the JSON.`;
       userPrompt = `Generate EXACTLY ${count} multiple-choice exam questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty.
+${shuffleInstruction}
 
 RESPOND WITH ONLY THIS JSON (no extra text, no markdown, no backticks):
 {
@@ -125,7 +156,7 @@ id must be sequential 1 to ${count}. Use LaTeX for math. Generate ALL ${count} q
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.3,
+        temperature: 0.8 + Math.random() * 0.2,
         max_tokens: 8000,
       }),
     });
@@ -149,13 +180,10 @@ id must be sequential 1 to ${count}. Use LaTeX for math. Generate ALL ${count} q
       throw new Error("No response from AI");
     }
 
-    // Parse the JSON from the response
     let parsed;
     try {
-      // Try direct parse first
       parsed = JSON.parse(content.trim());
     } catch {
-      // Try extracting JSON object
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         parsed = JSON.parse(jsonMatch[0]);
@@ -168,7 +196,6 @@ id must be sequential 1 to ${count}. Use LaTeX for math. Generate ALL ${count} q
       throw new Error("Invalid exam structure returned");
     }
 
-    // Fix and validate questions
     const fixedQuestions = parsed.questions.map((q: Record<string, unknown>, idx: number) => ({
       ...q,
       id: idx + 1,

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ArrowLeft, ArrowRight, Loader2, Plus, Sparkles, Trash2, Bot, BookOpen } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Plus, Sparkles, Trash2, Bot, BookOpen, Download, Image as ImageIcon, FileText, Presentation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +10,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { CourseMaterialsSection } from '@/components/CourseMaterialsSection';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
+import { exportAsPDF, exportAsDOCX, exportAsPPTX } from '@/lib/lectureExport';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 const subjects = [
   { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-emerald-500 to-green-600' },
   { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-blue-500 to-cyan-600' },
@@ -43,6 +50,9 @@ export function SubjectsSection() {
   const [activeMaterial, setActiveMaterial] = useState<Material | null>(null);
   const [lectureContent, setLectureContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [lectureImages, setLectureImages] = useState<string[]>([]);
+  const [isGeneratingImages, setIsGeneratingImages] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -60,11 +70,51 @@ export function SubjectsSection() {
     ? getMaterialsBySubjectAndGrade(selectedSubject, selectedGrade)
     : [];
 
+  const generateImages = useCallback(async (topic: string, subjectName: string) => {
+    setIsGeneratingImages(true);
+    setLectureImages([]);
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const LOVABLE_API_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      // Use Lovable AI gateway for image generation
+      const imagePrompts = [
+        `Educational diagram illustrating "${topic}" for ${subjectName} students. Clean, clear, labeled diagram on white background. Ultra high resolution.`,
+        `Visual concept art showing "${topic}" in the context of ${subjectName}. Educational infographic style. Ultra high resolution.`
+      ];
+      const images: string[] = [];
+      for (const imgPrompt of imagePrompts) {
+        const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [{ role: 'user', content: imgPrompt }],
+            modalities: ['image', 'text'],
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const imgUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+          if (imgUrl) images.push(imgUrl);
+        }
+      }
+      setLectureImages(images);
+    } catch (err) {
+      console.warn('Image generation failed:', err);
+    } finally {
+      setIsGeneratingImages(false);
+    }
+  }, []);
+
   const generateLecture = useCallback(async (topic: string) => {
     if (!selectedSubject || !selectedGrade || !user) return;
     
     setIsLoading(true);
     setLectureContent('');
+    setLectureImages([]);
 
     const subject = subjects.find(s => s.id === selectedSubject);
     const isArabic = selectedSubject === 'arabic';
@@ -98,7 +148,6 @@ IMPORTANT: For ALL mathematical expressions, use LaTeX notation:
 - Inline math: \\( expression \\) or $expression$
 - Display math: \\[ expression \\] or $$expression$$
 - Always include plain-text fallback after complex formulas
-- Examples: \\( \\frac{a+b}{c} \\), \\( \\sqrt{x^2 + y^2} \\), \\( \\sum_{i=1}^n i \\)
 
 Stay strictly within ${subject?.name}. Do not mix with other subjects.
 Use age-appropriate language for ${selectedGrade}.`;
@@ -114,12 +163,13 @@ Use age-appropriate language for ${selectedGrade}.`;
           setLectureContent(response);
         },
         onDone: async () => {
-          // Save to database
           const newMaterial = await createMaterial(selectedSubject, selectedGrade, topic, response);
           if (newMaterial) {
             setActiveMaterial(newMaterial);
           }
           setIsLoading(false);
+          // Generate images after lecture is done
+          generateImages(topic, subject?.name || selectedSubject);
         },
         onError: (error) => {
           setIsLoading(false);
@@ -129,7 +179,24 @@ Use age-appropriate language for ${selectedGrade}.`;
     } catch {
       setIsLoading(false);
     }
-  }, [selectedSubject, selectedGrade, user, createMaterial, toast]);
+  }, [selectedSubject, selectedGrade, user, createMaterial, toast, generateImages]);
+
+  const handleExport = useCallback(async (format: 'pdf' | 'docx' | 'pptx') => {
+    const title = activeMaterial?.topic || 'Lecture';
+    const content = lectureContent;
+    if (!content) return;
+    setIsExporting(true);
+    try {
+      if (format === 'pdf') await exportAsPDF(title, content);
+      else if (format === 'docx') await exportAsDOCX(title, content);
+      else await exportAsPPTX(title, content);
+      toast({ title: 'Exported!', description: `Lecture saved as ${format.toUpperCase()}` });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: err.message });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [activeMaterial, lectureContent, toast]);
 
   const handleSubjectClick = (subjectId: string) => {
     setSelectedSubject(subjectId);
@@ -232,10 +299,35 @@ Use age-appropriate language for ${selectedGrade}.`;
             )}>
               {subject?.emoji}
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className="font-bold text-sm">{getSubjectName(selectedSubject!, language)}</h1>
               <p className="text-xs text-muted-foreground">{getGradeName(selectedGrade!, language)}</p>
             </div>
+            {/* Export button */}
+            {!isLoading && lectureContent && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs" disabled={isExporting}>
+                    {isExporting ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+                    Convert
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                    <FileText className="w-4 h-4 mr-2 text-red-500" />
+                    Export as PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('docx')}>
+                    <FileText className="w-4 h-4 mr-2 text-blue-500" />
+                    Export as DOCX (Word)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('pptx')}>
+                    <Presentation className="w-4 h-4 mr-2 text-orange-500" />
+                    Export as PPTX (PowerPoint)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
           {/* Material Tabs */}
@@ -275,7 +367,7 @@ Use age-appropriate language for ${selectedGrade}.`;
             </div>
           </div>
 
-          {/* Lecture Content with Math Rendering - properly scrollable */}
+          {/* Lecture Content with Math Rendering */}
           <div className="glass-effect rounded-2xl p-5">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -288,9 +380,39 @@ Use age-appropriate language for ${selectedGrade}.`;
               </div>
             )}
           </div>
+
+          {/* Lecture Images */}
+          {!isLoading && (isGeneratingImages || lectureImages.length > 0) && (
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <ImageIcon className="w-4 h-4" />
+                <span>Visual Illustrations</span>
+                {isGeneratingImages && <Loader2 className="w-3 h-3 animate-spin" />}
+              </div>
+              {isGeneratingImages && lectureImages.length === 0 && (
+                <div className="flex items-center gap-2 px-4 py-6 glass-effect rounded-xl justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  <span className="text-sm text-muted-foreground">Generating lecture illustrations...</span>
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {lectureImages.map((img, idx) => (
+                  <div key={idx} className="glass-effect rounded-xl overflow-hidden">
+                    <img
+                      src={img}
+                      alt={`Lecture illustration ${idx + 1}`}
+                      className="w-full h-48 object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
+
   }
 
   // INPUT VIEW - User enters material/topic
