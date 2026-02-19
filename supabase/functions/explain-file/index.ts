@@ -1,9 +1,31 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+async function getUserApiKey(authHeader: string | null): Promise<string | null> {
+  if (!authHeader) return null;
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user } } = await supabase.auth.getUser(token);
+    if (!user) return null;
+    const { data } = await supabase
+      .from("user_api_keys")
+      .select("groq_api_key")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    return data?.groq_api_key || null;
+  } catch {
+    return null;
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,10 +34,12 @@ serve(async (req) => {
 
   try {
     const { fileContent, fileName } = await req.json();
-    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+    
+    const userKey = await getUserApiKey(req.headers.get("authorization"));
+    const GROQ_API_KEY = userKey || Deno.env.get("GROQ_API_KEY");
 
     if (!GROQ_API_KEY) {
-      throw new Error("GROQ_API_KEY is not configured");
+      throw new Error("No AI API key configured. Please add your Groq API key.");
     }
 
     if (!fileContent) {
@@ -24,6 +48,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const randomSeed = Math.floor(Math.random() * 99999);
 
     const systemPrompt = `You are Study Bright, an expert educational AI tutor. The user has uploaded a study file. Your job is to:
 
@@ -49,7 +75,8 @@ Deliver a complete, structured educational lecture explaining everything in the 
 - Use markdown formatting for structure
 - For math/science, show step-by-step reasoning with LaTeX notation
 - Do NOT skip any section of the file
-- Do NOT say "I can't read the file" — the content is provided to you directly`;
+- Do NOT say "I can't read the file" — the content is provided to you directly
+- Session ID: ${randomSeed} — Generate a fresh, unique explanation each time`;
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -66,6 +93,7 @@ Deliver a complete, structured educational lecture explaining everything in the 
             content: `File: "${fileName}"\n\nContent:\n${fileContent}`,
           },
         ],
+        temperature: 0.7 + Math.random() * 0.2,
         stream: true,
       }),
     });
@@ -74,12 +102,6 @@ Deliver a complete, structured educational lecture explaining everything in the 
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again." }), {
           status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Usage limit reached." }), {
-          status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
