@@ -2,21 +2,112 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { useConversations } from '@/hooks/useConversations';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
 import { TypingIndicator } from '@/components/TypingIndicator';
-import { Brain, Sparkles, TrendingUp, Loader2 } from 'lucide-react';
+import { Brain, TrendingUp, History, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 type Msg = { id: string; role: 'user' | 'assistant'; content: string };
 
 const THINKING_STYLES = [
-  { id: 'visual', label: '🎨 Visual', desc: 'I learn best with diagrams and images' },
-  { id: 'logical', label: '🧮 Logical', desc: 'I like step-by-step reasoning' },
-  { id: 'verbal', label: '📝 Verbal', desc: 'I prefer reading and writing' },
-  { id: 'practical', label: '🔧 Practical', desc: 'I learn by doing examples' },
+  {
+    id: 'visual',
+    label: '🎨 Visual',
+    desc: 'Diagrams, images & visual links',
+    systemExtra: `THINKING STYLE: VISUAL LEARNER
+- You MUST include relevant image links from the web for EVERY explanation. Use markdown images: ![description](url)
+- Use sources like Wikipedia Commons, Unsplash, or direct educational image URLs
+- Format: Include at least 1-2 image links or diagram URLs per response
+- Use ASCII art diagrams, tables, and spatial layouts when images aren't available
+- Organize information visually with headers, bullet points, and structured layouts
+- Include links to visual resources: YouTube videos, interactive simulations, infographics
+- Example format: "Here's a visual: ![Photosynthesis diagram](https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Photosynthesis_en.svg/800px-Photosynthesis_en.svg.png)"
+- Always search your knowledge for the most relevant, educational image URLs`,
+  },
+  {
+    id: 'logical',
+    label: '🧮 Logical',
+    desc: 'Step-by-step structured reasoning',
+    systemExtra: `THINKING STYLE: LOGICAL/ANALYTICAL LEARNER
+- Use numbered steps for EVERY explanation
+- Show cause → effect chains explicitly
+- Use "If...then..." reasoning patterns
+- Include logical proofs and structured arguments
+- Present information in systematic order: Definition → Properties → Examples → Applications
+- Use flowcharts in text form: Step 1 → Step 2 → Step 3
+- Always explain WHY each step follows from the previous one
+- Include practice problems that test logical reasoning`,
+  },
+  {
+    id: 'verbal',
+    label: '📝 Verbal',
+    desc: 'Rich explanations & storytelling',
+    systemExtra: `THINKING STYLE: VERBAL/LINGUISTIC LEARNER
+- Use rich, narrative explanations with storytelling
+- Include analogies, metaphors, and real-world comparisons
+- Tell the "story" behind concepts — who discovered it, why it matters
+- Use mnemonics and memory tricks with words
+- Explain concepts as if telling a fascinating story
+- Include relevant quotes from scientists/thinkers
+- Use word origins (etymology) to help remember terms
+- Write engaging, readable paragraphs that flow naturally`,
+  },
+  {
+    id: 'practical',
+    label: '🔧 Practical',
+    desc: 'Hands-on examples & exercises',
+    systemExtra: `THINKING STYLE: KINESTHETIC/PRACTICAL LEARNER
+- Start EVERY explanation with a concrete, real-world example
+- Include hands-on exercises and "try this yourself" activities
+- Connect every concept to something the student can DO or BUILD
+- Provide practice problems immediately after explaining
+- Use "experiment" framing: "Try this: take a piece of paper and..."
+- Include real-world applications: "This is used in cooking when..."
+- Give step-by-step DIY activities that demonstrate the concept
+- Always end with a practical challenge or mini-project`,
+  },
 ];
+
+// Local storage key for Study Buddy conversation memory
+const MEMORY_KEY = 'study-buddy-memory';
+const STYLE_KEY = 'study-buddy-style';
+
+interface ConversationMemory {
+  messages: Msg[];
+  thinkingStyle: string | null;
+  lastUpdated: string;
+}
+
+function loadMemory(): ConversationMemory | null {
+  try {
+    const raw = localStorage.getItem(MEMORY_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function saveMemory(messages: Msg[], thinkingStyle: string | null) {
+  const memory: ConversationMemory = {
+    messages: messages.slice(-50), // Keep last 50 messages
+    thinkingStyle,
+    lastUpdated: new Date().toISOString(),
+  };
+  localStorage.setItem(MEMORY_KEY, JSON.stringify(memory));
+}
+
+function loadSavedStyle(): string | null {
+  return localStorage.getItem(STYLE_KEY);
+}
+
+function saveStyle(style: string) {
+  localStorage.setItem(STYLE_KEY, style);
+}
 
 export function StudyBuddy() {
   const { user } = useAuth();
@@ -28,31 +119,84 @@ export function StudyBuddy() {
   const [showStylePicker, setShowStylePicker] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Load saved memory and style on mount
+  useEffect(() => {
+    const savedStyle = loadSavedStyle();
+    if (savedStyle) {
+      setThinkingStyle(savedStyle);
+    }
+    const memory = loadMemory();
+    if (memory && memory.messages.length > 0) {
+      setMessages(memory.messages);
+      setShowStylePicker(false);
+      if (memory.thinkingStyle) {
+        setThinkingStyle(memory.thinkingStyle);
+      }
+    }
+  }, []);
+
+  // Save memory whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveMemory(messages, thinkingStyle);
+    }
+  }, [messages, thinkingStyle]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Build a rich system prompt from the student's learning data
+  // Handle thinking style selection — actually starts a conversation
+  const handleStyleSelect = (styleId: string) => {
+    setThinkingStyle(styleId);
+    saveStyle(styleId);
+    const style = THINKING_STYLES.find(s => s.id === styleId);
+    toast.success(t(
+      `${style?.label} mode activated! Your AI tutor will now teach in this style.`,
+      `تم تفعيل وضع ${style?.label}! سيقوم معلمك بالتدريس بهذا الأسلوب.`
+    ));
+    // Send an intro message from the AI
+    const introMsg = t(
+      `Great choice! I'll teach you using a **${style?.label.replace(/^..\s/, '')}** approach. ${
+        styleId === 'visual' ? "I'll include images, diagrams, and visual links in every explanation." :
+        styleId === 'logical' ? "I'll break everything down into clear, numbered logical steps." :
+        styleId === 'verbal' ? "I'll use rich storytelling, analogies, and engaging narratives." :
+        "I'll give you hands-on examples and practical exercises you can try right away."
+      } Ask me anything!`,
+      `اختيار رائع! سأعلمك باستخدام أسلوب **${style?.label.replace(/^..\s/, '')}**. اسألني أي شيء!`
+    );
+    setMessages([{ id: crypto.randomUUID(), role: 'assistant', content: introMsg }]);
+    setShowStylePicker(false);
+  };
+
+  const handleClearMemory = () => {
+    setMessages([]);
+    localStorage.removeItem(MEMORY_KEY);
+    setShowStylePicker(true);
+    toast.success(t('Conversation cleared!', 'تم مسح المحادثة!'));
+  };
+
   const buildSystemPrompt = useCallback(() => {
     const levelPrompt = getLevelPrompt();
-    
+
     const subjectBreakdown = profiles.length > 0
-      ? profiles.map(p => 
+      ? profiles.map(p =>
           `- ${p.subject}: ${p.difficulty_level} level (${p.recent_accuracy}% accuracy, ${p.total_questions_answered} questions answered)`
         ).join('\n')
       : 'No learning data yet.';
 
-    const styleInstructions = thinkingStyle
-      ? {
-          visual: 'Use visual descriptions, diagrams (ASCII art), tables, and spatial metaphors. Organize information visually.',
-          logical: 'Use numbered steps, logical chains, cause-effect reasoning, and structured proofs. Be systematic.',
-          verbal: 'Use rich explanations, storytelling, analogies, and narrative structure. Make it readable and engaging.',
-          practical: 'Use concrete examples, hands-on exercises, real-world applications, and practice problems immediately.',
-        }[thinkingStyle] || ''
+    const styleConfig = THINKING_STYLES.find(s => s.id === thinkingStyle);
+    const styleInstructions = styleConfig?.systemExtra || '';
+
+    const langInstruction = language === 'ar'
+      ? 'CRITICAL: You MUST respond entirely in Arabic. Use Arabic for all explanations. Keep LaTeX math notation in standard format.'
       : '';
 
-    const langInstruction = language === 'ar' 
-      ? 'CRITICAL: You MUST respond entirely in Arabic. Use Arabic for all explanations. Keep LaTeX math notation in standard format.'
+    // Build conversation memory summary from previous messages
+    const memoryContext = messages.length > 0
+      ? `\n\nCONVERSATION HISTORY CONTEXT:\nYou have been chatting with this student. Here are previous topics discussed: ${
+          messages.filter(m => m.role === 'user').slice(-10).map(m => m.content).join('; ')
+        }. Use this to provide continuity and reference past discussions naturally.`
       : '';
 
     return `You are Study Buddy — a brilliant, adaptive AI tutor that personalizes learning to each student's unique thinking style and level.
@@ -62,7 +206,7 @@ ${levelPrompt}
 STUDENT'S LEARNING PROFILE:
 ${subjectBreakdown}
 
-${styleInstructions ? `THINKING STYLE PREFERENCE: ${styleInstructions}` : ''}
+${styleInstructions}
 
 YOUR APPROACH:
 1. ADAPT your explanations to match the student's proven level per subject
@@ -73,11 +217,13 @@ YOUR APPROACH:
 6. Ask probing questions that develop critical thinking
 7. Celebrate progress and gently address weak areas
 8. If they ask about a weak subject, use their strong subject as a bridge
+9. REMEMBER past conversations — reference what you've discussed before
+${memoryContext}
 
 ${langInstruction}
 
 Be warm, encouraging, and intellectually stimulating. You're not just answering questions — you're developing a thinker.`;
-  }, [getLevelPrompt, profiles, thinkingStyle, language]);
+  }, [getLevelPrompt, profiles, thinkingStyle, language, messages]);
 
   const sendMessage = async (content: string) => {
     if (!user) return;
@@ -140,8 +286,8 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
               assistantContent += delta;
               setMessages(prev => {
                 const last = prev[prev.length - 1];
-                if (last?.role === 'assistant') {
-                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
+                if (last?.role === 'assistant' && last.id === assistantId) {
+                  return prev.map((m) => m.id === assistantId ? { ...m, content: assistantContent } : m);
                 }
                 return [...prev, { id: assistantId, role: 'assistant', content: assistantContent }];
               });
@@ -154,19 +300,21 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
       setMessages(prev => [...prev, {
         id: assistantId,
         role: 'assistant',
-        content: t('Sorry, I had trouble connecting. Please try again!', 'عذرًا، واجهت مشكلة في الاتصال. حاول مرة أخرى!'),
+        content: t('Sorry, I had trouble connecting. Please check your API key in Profile settings and try again!', 'عذرًا، واجهت مشكلة في الاتصال. تحقق من مفتاح API في إعدادات الملف الشخصي وحاول مرة أخرى!'),
       }]);
     }
 
     setIsLoading(false);
   };
 
+  const activeStyle = THINKING_STYLES.find(s => s.id === thinkingStyle);
+
   return (
     <div className="flex flex-col h-full pt-14">
       <main className="flex-1 overflow-y-auto pb-36">
         <div className="max-w-2xl mx-auto px-4 py-4">
           {/* Study Buddy Header */}
-          {messages.length === 0 && (
+          {messages.length === 0 && showStylePicker && (
             <div className="text-center py-6 animate-fade-in">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-500 to-purple-600 mb-4 shadow-lg">
                 <Brain className="w-10 h-10 text-white" />
@@ -187,35 +335,31 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
                 </span>
               </div>
 
-              {/* Thinking Style Picker */}
-              {showStylePicker && (
-                <div className="mt-6 space-y-3">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {t('How do you like to learn?', 'كيف تحب أن تتعلم؟')}
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto">
-                    {THINKING_STYLES.map((style) => (
-                      <button
-                        key={style.id}
-                        onClick={() => setThinkingStyle(style.id)}
-                        className={cn(
-                          "p-3 rounded-xl border text-left transition-all text-sm",
-                          thinkingStyle === style.id
-                            ? "border-primary bg-primary/10 shadow-sm"
-                            : "border-border/50 hover:border-primary/40"
-                        )}
-                      >
-                        <span className="font-medium">{style.label}</span>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{style.desc}</p>
-                      </button>
-                    ))}
-                  </div>
+              {/* Thinking Style Picker — these buttons START the session */}
+              <div className="mt-6 space-y-3">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {t('Choose your learning style to begin:', 'اختر أسلوب التعلم للبدء:')}
+                </p>
+                <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto">
+                  {THINKING_STYLES.map((style) => (
+                    <button
+                      key={style.id}
+                      onClick={() => handleStyleSelect(style.id)}
+                      className={cn(
+                        "p-3 rounded-xl border text-left transition-all text-sm hover:scale-[1.02] active:scale-95",
+                        "border-border/50 hover:border-primary/60 hover:bg-primary/5 hover:shadow-md"
+                      )}
+                    >
+                      <span className="font-medium">{style.label}</span>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{style.desc}</p>
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
 
               {/* Quick Prompts */}
               <div className="mt-6 space-y-2 max-w-md mx-auto">
-                <p className="text-xs text-muted-foreground">{t('Try asking:', 'جرب أن تسأل:')}</p>
+                <p className="text-xs text-muted-foreground">{t('Or just ask anything:', 'أو اسأل أي شيء:')}</p>
                 <div className="flex flex-wrap gap-2 justify-center">
                   {[
                     t("Help me understand fractions", "ساعدني في فهم الكسور"),
@@ -225,7 +369,10 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
                   ].map((prompt, i) => (
                     <button
                       key={i}
-                      onClick={() => sendMessage(prompt)}
+                      onClick={() => {
+                        if (!thinkingStyle) setThinkingStyle('logical');
+                        sendMessage(prompt);
+                      }}
                       className="px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50 text-xs hover:border-primary/40 transition-all"
                     >
                       {prompt}
@@ -236,19 +383,57 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
             </div>
           )}
 
-          {/* Messages */}
+          {/* Active session header with style badge + controls */}
           {messages.length > 0 && (
-            <div className="space-y-3">
-              {messages.map((msg, idx) => (
-                <ChatMessage
-                  key={msg.id}
-                  message={msg}
-                  isStreaming={isLoading && msg.role === 'assistant' && idx === messages.length - 1}
-                />
-              ))}
-              {isLoading && messages[messages.length - 1]?.role === 'user' && <TypingIndicator />}
-              <div ref={messagesEndRef} />
-            </div>
+            <>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <div className="flex items-center gap-2">
+                  {activeStyle && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-medium text-primary">
+                      {activeStyle.label} Mode
+                    </span>
+                  )}
+                  <span className="text-xs text-muted-foreground capitalize">
+                    {t(`Level: ${currentLevel}`, `المستوى: ${currentLevel}`)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {/* Change style button */}
+                  <button
+                    onClick={() => {
+                      setShowStylePicker(true);
+                      setMessages([]);
+                      localStorage.removeItem(MEMORY_KEY);
+                    }}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+                    title={t('Change learning style', 'تغيير أسلوب التعلم')}
+                  >
+                    <ArrowLeft size={16} />
+                  </button>
+                  {/* Clear memory button */}
+                  <button
+                    onClick={handleClearMemory}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+                    title={t('Clear conversation', 'مسح المحادثة')}
+                  >
+                    <History size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="space-y-3">
+                {messages.map((msg, idx) => (
+                  <ChatMessage
+                    key={msg.id}
+                    message={msg}
+                    isStreaming={isLoading && msg.role === 'assistant' && idx === messages.length - 1}
+                  />
+                ))}
+                {isLoading && messages[messages.length - 1]?.role === 'user' && <TypingIndicator />}
+                <div ref={messagesEndRef} />
+              </div>
+            </>
           )}
         </div>
       </main>

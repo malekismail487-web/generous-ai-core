@@ -67,7 +67,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, enableWebSearch, language, backgroundContext, adaptiveLevel } = await req.json();
+    const { messages, enableWebSearch, language, backgroundContext, adaptiveLevel, systemPrompt: customSystemPrompt } = await req.json();
     
     const userKey = await getUserApiKey(req.headers.get("authorization"));
     const GROQ_API_KEY = userKey || Deno.env.get("GROQ_API_KEY");
@@ -76,10 +76,11 @@ serve(async (req) => {
       throw new Error("No AI API key configured. Please add your Groq API key in settings.");
     }
 
-    let systemPrompt = SYSTEM_PROMPT;
+    // Use custom system prompt if provided (e.g. from Study Buddy), otherwise default
+    let systemPrompt = customSystemPrompt || SYSTEM_PROMPT;
 
-    // Adaptive learning level
-    if (adaptiveLevel) {
+    // Only apply adaptive level if no custom prompt (custom prompt already includes it)
+    if (!customSystemPrompt && adaptiveLevel) {
       const levelGuides: Record<string, string> = {
         beginner: `\n\n## Student Level: BEGINNER\nThis student is at a beginner level. Use simple vocabulary, short sentences, basic examples, and explain concepts step-by-step from the ground up. Avoid jargon. Use analogies and real-world comparisons. Be extra patient and encouraging.`,
         intermediate: `\n\n## Student Level: INTERMEDIATE\nThis student is at an intermediate level. Use standard academic language, provide moderate detail, include some technical terms with brief explanations, and offer practical examples.`,
