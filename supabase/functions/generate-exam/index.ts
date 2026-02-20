@@ -27,33 +27,30 @@ async function getUserApiKey(authHeader: string | null): Promise<string | null> 
   }
 }
 
-function buildPrompts(subject: string, grade: string, difficulty: string, count: number, materialContext: string | null, materialCount: number, examType: string) {
-  const randomSeed = Math.floor(Math.random() * 10000);
-  const variation = `Seed: ${randomSeed}. Generate FRESH, UNIQUE questions. Vary topics and angles.`;
-
-  let systemPrompt: string;
-  let userPrompt: string;
-
-  if (examType === 'SAT_FULL') {
-    systemPrompt = `You are an expert SAT exam generator. ${variation}`;
-    userPrompt = `Generate a Full SAT Practice Exam with EXACTLY ${count} multiple-choice questions. Cover: Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar, Vocabulary. For math, write expressions in plain text (e.g. "x^2 + 3x - 5 = 0", "sqrt(16)", "x/y"). Do NOT use LaTeX backslash notation.`;
-  } else if (materialContext) {
-    const qPerTopic = materialCount > 0 ? Math.floor(count / materialCount) : count;
-    systemPrompt = `You are an expert exam generator. ${variation}`;
-    userPrompt = `Generate EXACTLY ${count} multiple-choice questions based on these study materials:\n\n${materialContext}\n\nSubject: ${subject}, Grade: ${grade || 'General'}, Difficulty: ${difficulty}. Distribute ~${qPerTopic} questions per topic. Every topic must have at least 1 question. For math, write in plain text (e.g. "x^2", "sqrt(x)"). Do NOT use LaTeX.`;
-  } else {
-    systemPrompt = `You are an expert exam generator. ${variation}`;
-    userPrompt = `Generate EXACTLY ${count} multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. For math, write in plain text (e.g. "x^2", "sqrt(x)"). Do NOT use LaTeX.`;
-  }
-
-  return { systemPrompt, userPrompt };
+// Randomly pick question style instructions to force variety
+function getVarietyInstructions(): string {
+  const styles = [
+    "Focus on application and real-world scenarios.",
+    "Emphasize conceptual understanding and 'why' questions.",
+    "Include tricky distractor options that test deep understanding.",
+    "Mix easy recall questions with challenging analysis questions.",
+    "Focus on problem-solving and computation.",
+    "Include questions that require comparing and contrasting concepts.",
+    "Ask questions about common misconceptions and exceptions.",
+    "Focus on definitions, terminology, and precise language.",
+    "Include multi-step reasoning questions.",
+    "Ask about cause-and-effect relationships.",
+  ];
+  // Pick 3 random styles
+  const shuffled = styles.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 3).join(" ");
 }
 
 const examTool = {
   type: "function" as const,
   function: {
     name: "create_exam",
-    description: "Create a structured exam with multiple-choice questions",
+    description: "Create a structured exam with multiple-choice questions. Use LaTeX notation for math: \\\\( ... \\\\) for inline math, $$ ... $$ for display math.",
     parameters: {
       type: "object",
       properties: {
@@ -65,12 +62,12 @@ const examTool = {
           items: {
             type: "object",
             properties: {
-              question: { type: "string", description: "The question text" },
-              option_a: { type: "string", description: "Option A" },
-              option_b: { type: "string", description: "Option B" },
-              option_c: { type: "string", description: "Option C" },
-              option_d: { type: "string", description: "Option D" },
-              correct_answer: { type: "string", enum: ["A", "B", "C", "D"], description: "Correct answer letter" },
+              question: { type: "string", description: "The question text. Use LaTeX for math expressions." },
+              option_a: { type: "string", description: "Option A text" },
+              option_b: { type: "string", description: "Option B text" },
+              option_c: { type: "string", description: "Option C text" },
+              option_d: { type: "string", description: "Option D text" },
+              correct_answer: { type: "string", enum: ["A", "B", "C", "D"], description: "The correct answer letter" },
             },
             required: ["question", "option_a", "option_b", "option_c", "option_d", "correct_answer"],
             additionalProperties: false,
@@ -101,12 +98,37 @@ serve(async (req) => {
       throw new Error("count is required and must be positive");
     }
 
+    // Strong randomization to ensure different questions every time
+    const seed = Math.floor(Math.random() * 100000);
+    const timestamp = Date.now();
+    const varietyInstructions = getVarietyInstructions();
+    const dynamicDirective = `CRITICAL: This is generation #${seed}-${timestamp}. You MUST generate completely NEW and DIFFERENT questions from any previous generation. ${varietyInstructions} Shuffle the order of topics you cover. Vary which aspects of each topic you test. Never repeat the same question patterns.`;
+
     const materialContext = materials && materials.length > 0
       ? materials.map((m: { topic: string; content: string }) => `Topic: ${m.topic}\n${m.content}`).join('\n\n---\n\n').substring(0, 10000)
       : null;
     const materialCount = materials?.length || 0;
 
-    const { systemPrompt, userPrompt } = buildPrompts(subject, grade, difficulty, count, materialContext, materialCount, examType);
+    let systemPrompt: string;
+    let userPrompt: string;
+
+    if (examType === 'SAT_FULL') {
+      systemPrompt = `You are an expert SAT exam generator. Use LaTeX notation for all math: \\( ... \\) for inline, $$ ... $$ for display. ${dynamicDirective}`;
+      userPrompt = `Generate a Full SAT Practice Exam with EXACTLY ${count} questions. Cover: Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar, Vocabulary. Structure: roughly half Reading/Writing, half Math. Each question must have exactly 4 options. Use LaTeX for all mathematical expressions.`;
+    } else if (materialContext) {
+      const qPerTopic = materialCount > 0 ? Math.floor(count / materialCount) : count;
+      systemPrompt = `You are an expert exam generator. Use LaTeX notation for math: \\( ... \\) for inline, $$ ... $$ for display. ${dynamicDirective}`;
+      userPrompt = `Generate EXACTLY ${count} multiple-choice questions based on these study materials:
+
+${materialContext}
+
+Subject: ${subject}, Grade: ${grade || 'General'}, Difficulty: ${difficulty}.
+Distribute ~${qPerTopic} questions per topic. Every topic must have at least 1 question. 
+IMPORTANT: Generate COMPLETELY DIFFERENT questions than any previous exam. Explore different angles, sub-topics, and difficulty variations within each topic. Use LaTeX for mathematical notation.`;
+    } else {
+      systemPrompt = `You are an expert exam generator. Use LaTeX notation for math: \\( ... \\) for inline, $$ ... $$ for display. ${dynamicDirective}`;
+      userPrompt = `Generate EXACTLY ${count} multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover DIVERSE sub-topics within ${subject}. Use LaTeX for all mathematical expressions. Make each question unique and different from typical exam questions.`;
+    }
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -122,7 +144,7 @@ serve(async (req) => {
         ],
         tools: [examTool],
         tool_choice: { type: "function", function: { name: "create_exam" } },
-        temperature: 0.8 + Math.random() * 0.2,
+        temperature: 0.9 + Math.random() * 0.1,
         max_tokens: 8000,
       }),
     });
