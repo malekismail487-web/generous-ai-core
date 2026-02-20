@@ -117,38 +117,53 @@ export function StudyBuddy() {
   const [showStylePicker, setShowStylePicker] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch real educational images from Wikipedia (same approach as lectures)
-  // Fetch relevant educational images from Wikipedia
+  // Fetch relevant educational images from Wikipedia using multiple targeted searches
   const fetchWikipediaImages = useCallback(async (query: string): Promise<{ src: string; alt?: string }[]> => {
     try {
-      // Extract key educational terms for better search
       const keywords = query.replace(/[?!.,]/g, '').trim();
-      const encoded = encodeURIComponent(keywords);
-      const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrlimit=12&prop=pageimages|description&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
-      const res = await fetch(url);
-      if (!res.ok) return [];
-      const data = await res.json();
-      const pages = data.query?.pages;
-      if (!pages) return [];
+      
+      // Build multiple search variants for better relevance
+      const searchVariants = [
+        `${keywords} biology diagram`,
+        `${keywords} science education`,
+        keywords,
+      ];
 
-      // Filter: skip irrelevant pages (no thumbnail, SVGs, or pages about people/software/communities)
-      const irrelevantPatterns = /community|forum|software|band|album|film|movie|tv series|video game|disambiguation/i;
+      const irrelevantPatterns = /community|forum|software|band|album|film|movie|tv series|video game|disambiguation|logo|icon|screenshot|code|terminal|computer|programming|website|online|internet|chat|social media|CERN|particle/i;
       const imgs: { src: string; alt?: string }[] = [];
+      const seenUrls = new Set<string>();
 
-      // Sort pages by search relevance (index)
-      const sorted = Object.values(pages).sort((a: any, b: any) => (a.index || 0) - (b.index || 0));
-
-      for (const page of sorted as any[]) {
-        const thumb = page.thumbnail?.source;
-        const title = page.title || '';
-        if (!thumb) continue;
-        if (thumb.endsWith('.svg')) continue;
-        // Skip tiny images (likely icons)
-        if (page.thumbnail?.width < 100 || page.thumbnail?.height < 80) continue;
-        // Skip irrelevant pages
-        if (irrelevantPatterns.test(title) || irrelevantPatterns.test(page.description || '')) continue;
-        imgs.push({ src: thumb, alt: title });
+      for (const searchTerm of searchVariants) {
         if (imgs.length >= 3) break;
+        const encoded = encodeURIComponent(searchTerm);
+        const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrlimit=8&prop=pageimages|description|categories&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const data = await res.json();
+        const pages = data.query?.pages;
+        if (!pages) continue;
+
+        const sorted = Object.values(pages).sort((a: any, b: any) => (a.index || 0) - (b.index || 0));
+
+        for (const page of sorted as any[]) {
+          if (imgs.length >= 3) break;
+          const thumb = page.thumbnail?.source;
+          const title = page.title || '';
+          const desc = page.description || '';
+          if (!thumb || seenUrls.has(thumb)) continue;
+          if (thumb.endsWith('.svg')) continue;
+          if (page.thumbnail?.width < 150 || page.thumbnail?.height < 100) continue;
+          // Strict irrelevant filtering
+          if (irrelevantPatterns.test(title) || irrelevantPatterns.test(desc)) continue;
+          // Check if the page title has ANY keyword overlap with the query
+          const queryWords = keywords.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+          const titleLower = title.toLowerCase() + ' ' + desc.toLowerCase();
+          const hasRelevance = queryWords.some(w => titleLower.includes(w));
+          if (!hasRelevance && imgs.length === 0) continue; // First image must be relevant
+          
+          seenUrls.add(thumb);
+          imgs.push({ src: thumb, alt: title });
+        }
       }
       return imgs;
     } catch {
