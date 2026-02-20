@@ -15,6 +15,8 @@ import {
   Settings,
   Sparkles,
   Podcast,
+  Brain,
+  Target,
 } from 'lucide-react';
 
 export type GridAction =
@@ -28,6 +30,8 @@ export type GridAction =
   | 'reports'
   | 'weeklyplan'
   | 'podcasts'
+  | 'studybuddy'
+  | 'goals'
   | 'settings';
 
 interface StudentHomeGridProps {
@@ -41,6 +45,8 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
   const { t } = useThemeLanguage();
 
   const gridItems: { id: GridAction; icon: typeof MessageSquare; label: string; color: string; iconBg: string; schoolOnly?: boolean }[] = [
+    { id: 'studybuddy', icon: Brain, label: t('Study Buddy', 'رفيق الدراسة'), color: 'from-violet-500 to-purple-600', iconBg: 'bg-violet-500/15 border-violet-500/30' },
+    { id: 'goals', icon: Target, label: t('My Goals', 'أهدافي'), color: 'from-emerald-500 to-green-600', iconBg: 'bg-emerald-500/15 border-emerald-500/30' },
     { id: 'subjects', icon: Layers, label: t('Subjects', 'المواد'), color: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-500/15 border-emerald-500/30' },
     { id: 'sat', icon: GraduationCap, label: t('SAT Prep', 'تحضير SAT'), color: 'from-violet-500 to-purple-600', iconBg: 'bg-violet-500/15 border-violet-500/30' },
     { id: 'examination', icon: BookOpen, label: t('Exams', 'الاختبارات'), color: 'from-sky-500 to-blue-600', iconBg: 'bg-sky-500/15 border-sky-500/30' },
@@ -50,7 +56,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
     { id: 'reports', icon: FileText, label: t('Report Cards', 'كشوف الدرجات'), color: 'from-rose-500 to-pink-600', iconBg: 'bg-rose-500/15 border-rose-500/30', schoolOnly: true },
     { id: 'weeklyplan', icon: Calendar, label: t('Weekly Plan', 'الخطة الأسبوعية'), color: 'from-indigo-500 to-blue-600', iconBg: 'bg-indigo-500/15 border-indigo-500/30', schoolOnly: true },
     { id: 'chat', icon: MessageSquare, label: t('AI Tutor', 'المعلم الذكي'), color: 'from-primary to-accent', iconBg: 'bg-primary/15 border-primary/30' },
-    { id: 'podcasts', icon: Podcast, label: t('AI Podcasts', 'بودكاست AI'), color: 'from-fuchsia-500 to-pink-600', iconBg: 'bg-fuchsia-500/15 border-fuchsia-500/30' },
+    { id: 'podcasts', icon: Podcast, label: t('AI Podcasts', 'بودكاست AI'), color: 'from-fuchsia-500/15 to-pink-600', iconBg: 'bg-fuchsia-500/15 border-fuchsia-500/30' },
     { id: 'settings', icon: Settings, label: t('Settings', 'الإعدادات'), color: 'from-slate-500 to-gray-600', iconBg: 'bg-slate-500/15 border-slate-500/30' },
   ];
 

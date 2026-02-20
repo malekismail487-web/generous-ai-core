@@ -1316,6 +1316,48 @@ export type Database = {
           },
         ]
       }
+      student_goals: {
+        Row: {
+          completed: boolean
+          created_at: string
+          current_count: number
+          goal_type: string
+          id: string
+          subject: string | null
+          target_count: number
+          title: string
+          updated_at: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          current_count?: number
+          goal_type?: string
+          id?: string
+          subject?: string | null
+          target_count?: number
+          title: string
+          updated_at?: string
+          user_id: string
+          week_start?: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          current_count?: number
+          goal_type?: string
+          id?: string
+          subject?: string | null
+          target_count?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       student_learning_profiles: {
         Row: {
           correct_answers: number
