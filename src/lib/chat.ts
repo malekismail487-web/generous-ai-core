@@ -1,3 +1,5 @@
+import { supabase } from '@/integrations/supabase/client';
+
 export type Message = {
   id: string;
   role: "user" | "assistant";
@@ -22,11 +24,15 @@ export async function streamChat({
   onError: (error: Error) => void;
 }) {
   try {
+    // Use user's session token so edge functions can identify the user and use their personal API key
+    const { data: { session } } = await supabase.auth.getSession();
+    const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
     const response = await fetch(CHAT_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${authToken}`,
       },
       body: JSON.stringify({
         messages: messages.map((m) => ({ role: m.role, content: m.content })),
