@@ -19,12 +19,24 @@ const GOAL_TEMPLATES = [
   { titleEn: 'Read {n} study materials', titleAr: 'اقرأ {n} مواد دراسية', type: 'materials', min: 2, max: 10 },
 ];
 
-function generateRandomGoals(language: string): { title: string; target: number; type: string }[] {
-  const shuffled = [...GOAL_TEMPLATES].sort(() => Math.random() - 0.5);
+function seededRandom(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function generateRandomGoals(language: string, forceShuffle = false): { title: string; target: number; type: string }[] {
+  const today = new Date();
+  const daySeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  const rand = forceShuffle ? Math.random : seededRandom(daySeed);
+  
+  const shuffled = [...GOAL_TEMPLATES].sort(() => rand() - 0.5);
   const picked = shuffled.slice(0, 3);
   
   return picked.map(template => {
-    const n = Math.floor(Math.random() * (template.max - template.min + 1)) + template.min;
+    const n = Math.floor(rand() * (template.max - template.min + 1)) + template.min;
     const title = language === 'ar'
       ? template.titleAr.replace('{n}', String(n))
       : template.titleEn.replace('{n}', String(n));
@@ -56,7 +68,7 @@ export function GoalTracker() {
   };
 
   const refreshSuggestions = () => {
-    setSuggestedGoals(generateRandomGoals(language));
+    setSuggestedGoals(generateRandomGoals(language, true));
   };
 
   if (loading) {
