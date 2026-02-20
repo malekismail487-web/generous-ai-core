@@ -27,6 +27,62 @@ async function getUserApiKey(authHeader: string | null): Promise<string | null> 
   }
 }
 
+function buildPrompts(subject: string, grade: string, difficulty: string, count: number, materialContext: string | null, materialCount: number, examType: string) {
+  const randomSeed = Math.floor(Math.random() * 10000);
+  const variation = `Seed: ${randomSeed}. Generate FRESH, UNIQUE questions. Vary topics and angles.`;
+
+  let systemPrompt: string;
+  let userPrompt: string;
+
+  if (examType === 'SAT_FULL') {
+    systemPrompt = `You are an expert SAT exam generator. ${variation}`;
+    userPrompt = `Generate a Full SAT Practice Exam with EXACTLY ${count} multiple-choice questions. Cover: Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar, Vocabulary. For math, write expressions in plain text (e.g. "x^2 + 3x - 5 = 0", "sqrt(16)", "x/y"). Do NOT use LaTeX backslash notation.`;
+  } else if (materialContext) {
+    const qPerTopic = materialCount > 0 ? Math.floor(count / materialCount) : count;
+    systemPrompt = `You are an expert exam generator. ${variation}`;
+    userPrompt = `Generate EXACTLY ${count} multiple-choice questions based on these study materials:\n\n${materialContext}\n\nSubject: ${subject}, Grade: ${grade || 'General'}, Difficulty: ${difficulty}. Distribute ~${qPerTopic} questions per topic. Every topic must have at least 1 question. For math, write in plain text (e.g. "x^2", "sqrt(x)"). Do NOT use LaTeX.`;
+  } else {
+    systemPrompt = `You are an expert exam generator. ${variation}`;
+    userPrompt = `Generate EXACTLY ${count} multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. For math, write in plain text (e.g. "x^2", "sqrt(x)"). Do NOT use LaTeX.`;
+  }
+
+  return { systemPrompt, userPrompt };
+}
+
+const examTool = {
+  type: "function" as const,
+  function: {
+    name: "create_exam",
+    description: "Create a structured exam with multiple-choice questions",
+    parameters: {
+      type: "object",
+      properties: {
+        exam_title: { type: "string", description: "Title of the exam" },
+        grade_level: { type: "string", description: "Grade level" },
+        subject: { type: "string", description: "Subject name" },
+        questions: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              question: { type: "string", description: "The question text" },
+              option_a: { type: "string", description: "Option A" },
+              option_b: { type: "string", description: "Option B" },
+              option_c: { type: "string", description: "Option C" },
+              option_d: { type: "string", description: "Option D" },
+              correct_answer: { type: "string", enum: ["A", "B", "C", "D"], description: "Correct answer letter" },
+            },
+            required: ["question", "option_a", "option_b", "option_c", "option_d", "correct_answer"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["exam_title", "grade_level", "subject", "questions"],
+      additionalProperties: false,
+    },
+  },
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -34,115 +90,23 @@ serve(async (req) => {
 
   try {
     const { subject, grade, difficulty, count, materials, examType } = await req.json();
-    
+
     const userKey = await getUserApiKey(req.headers.get("authorization"));
     const GROQ_API_KEY = userKey || Deno.env.get("GROQ_API_KEY");
 
     if (!GROQ_API_KEY) {
       throw new Error("No AI API key configured. Please add your Groq API key in the settings.");
     }
-
     if (!count || count <= 0) {
       throw new Error("count is required and must be positive");
     }
 
-    // Add randomness seed to ensure different results each time
-    const randomSeed = Math.floor(Math.random() * 10000);
-    const shuffleInstruction = `Variation seed: ${randomSeed}. Generate FRESH, UNIQUE questions different from any previous generation. Randomize question order and vary topics covered.`;
-
-    // Build material context
     const materialContext = materials && materials.length > 0
       ? materials.map((m: { topic: string; content: string }) => `Topic: ${m.topic}\n${m.content}`).join('\n\n---\n\n').substring(0, 10000)
       : null;
-
     const materialCount = materials?.length || 0;
 
-    let systemPrompt: string;
-    let userPrompt: string;
-
-    if (examType === 'SAT_FULL') {
-      systemPrompt = `You are an expert SAT exam generator. You ONLY output valid JSON exam objects. You never add explanations, markdown, or extra text outside the JSON. ${shuffleInstruction}`;
-      userPrompt = `Generate a complete Full SAT Practice Exam with EXACTLY ${count} multiple-choice questions.
-Structure: ~70 Reading/Writing + ~70 Math questions.
-Cover: Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar, Vocabulary.
-${shuffleInstruction}
-
-RESPOND WITH ONLY THIS JSON (no extra text, no markdown, no backticks):
-{
-  "exam_title": "Full SAT Practice Exam",
-  "grade_level": "High School",
-  "subject": "SAT",
-  "total_questions": ${count},
-  "questions": [
-    {"id": 1, "type": "multiple_choice", "question": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct_answer": "A) ..."},
-    {"id": 2, "type": "multiple_choice", "question": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct_answer": "B) ..."}
-  ]
-}
-
-Rules:
-- id must be sequential 1 to ${count}
-- options must have EXACTLY 4 items
-- correct_answer must EXACTLY match one option
-- questions array must have EXACTLY ${count} items
-- Use LaTeX for math: \\( ... \\) inline, $$ ... $$ display`;
-    } else if (materialContext) {
-      const questionsPerMaterial = materialCount > 0 ? Math.floor(count / materialCount) : count;
-      const extra = materialCount > 0 ? count % materialCount : 0;
-
-      systemPrompt = `You are an expert exam generator. You ONLY output valid JSON exam objects. You never add explanations, markdown, or extra text outside the JSON.`;
-      userPrompt = `Generate EXACTLY ${count} multiple-choice exam questions based on the saved study materials below.
-${shuffleInstruction}
-
-STUDY MATERIALS (${materialCount} topics):
-${materialContext}
-
-Exam Details:
-- Subject: ${subject}
-- Grade: ${grade || 'General'}
-- Difficulty: ${difficulty}
-- Total Questions: EXACTLY ${count}
-
-Rules:
-1. Distribute questions EVENLY: ~${questionsPerMaterial} per topic${extra > 0 ? ` (+${extra} extra from any topic)` : ''}
-2. Every topic MUST have at least 1 question
-3. Questions MUST come from the materials above
-4. 4 options per question (A, B, C, D format)
-5. correct_answer must EXACTLY match one option
-6. Use LaTeX for math: \\( ... \\) inline, $$ ... $$ display
-7. Generate FRESH questions — do not repeat previous exams
-
-RESPOND WITH ONLY THIS JSON (no extra text, no markdown, no backticks):
-{
-  "exam_title": "${subject} ${difficulty} Exam",
-  "grade_level": "${grade || 'General'}",
-  "subject": "${subject}",
-  "total_questions": ${count},
-  "questions": [
-    {"id": 1, "type": "multiple_choice", "question": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct_answer": "A) ..."},
-    {"id": 2, "type": "multiple_choice", "question": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct_answer": "B) ..."}
-  ]
-}
-
-id must be sequential 1 to ${count}. Generate ALL ${count} questions now.`;
-    } else {
-      systemPrompt = `You are an expert exam generator. You ONLY output valid JSON exam objects. You never add explanations, markdown, or extra text outside the JSON.`;
-      userPrompt = `Generate EXACTLY ${count} multiple-choice exam questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty.
-${shuffleInstruction}
-
-RESPOND WITH ONLY THIS JSON (no extra text, no markdown, no backticks):
-{
-  "exam_title": "${subject} ${difficulty} Exam",
-  "grade_level": "${grade || 'General'}",
-  "subject": "${subject}",
-  "total_questions": ${count},
-  "questions": [
-    {"id": 1, "type": "multiple_choice", "question": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct_answer": "A) ..."},
-    {"id": 2, "type": "multiple_choice", "question": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct_answer": "B) ..."}
-  ]
-}
-
-id must be sequential 1 to ${count}. Use LaTeX for math. Generate ALL ${count} questions now.`;
-    }
+    const { systemPrompt, userPrompt } = buildPrompts(subject, grade, difficulty, count, materialContext, materialCount, examType);
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -156,6 +120,8 @@ id must be sequential 1 to ${count}. Use LaTeX for math. Generate ALL ${count} q
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
+        tools: [examTool],
+        tool_choice: { type: "function", function: { name: "create_exam" } },
         temperature: 0.8 + Math.random() * 0.2,
         max_tokens: 8000,
       }),
@@ -174,50 +140,29 @@ id must be sequential 1 to ${count}. Use LaTeX for math. Generate ALL ${count} q
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
 
-    if (!content) {
-      throw new Error("No response from AI");
+    if (!toolCall || toolCall.function.name !== "create_exam") {
+      throw new Error("AI did not return structured exam data");
     }
 
-    let parsed;
-    const sanitize = (s: string) => {
-      // Fix bad LaTeX escapes that break JSON: replace single backslashes not followed by valid JSON escape chars
-      return s.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
-    };
-    try {
-      parsed = JSON.parse(content.trim());
-    } catch {
-      try {
-        parsed = JSON.parse(sanitize(content.trim()));
-      } catch {
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try {
-            parsed = JSON.parse(jsonMatch[0]);
-          } catch {
-            parsed = JSON.parse(sanitize(jsonMatch[0]));
-          }
-        } else {
-          throw new Error("AI did not return valid JSON");
-        }
-      }
-    }
+    const raw = JSON.parse(toolCall.function.arguments);
 
-    if (!parsed.questions || !Array.isArray(parsed.questions)) {
-      throw new Error("Invalid exam structure returned");
-    }
-
-    const fixedQuestions = parsed.questions.map((q: Record<string, unknown>, idx: number) => ({
-      ...q,
+    // Convert tool-call format to the expected frontend format
+    const questions = (raw.questions || []).map((q: Record<string, string>, idx: number) => ({
       id: idx + 1,
-      type: q.type || "multiple_choice",
+      type: "multiple_choice",
+      question: q.question,
+      options: [`A) ${q.option_a}`, `B) ${q.option_b}`, `C) ${q.option_c}`, `D) ${q.option_d}`],
+      correct_answer: `${q.correct_answer}) ${q[`option_${q.correct_answer.toLowerCase()}`]}`,
     }));
 
     const result = {
-      ...parsed,
-      total_questions: fixedQuestions.length,
-      questions: fixedQuestions,
+      exam_title: raw.exam_title || `${subject} ${difficulty} Exam`,
+      grade_level: raw.grade_level || grade || "General",
+      subject: raw.subject || subject,
+      total_questions: questions.length,
+      questions,
     };
 
     return new Response(JSON.stringify(result), {
