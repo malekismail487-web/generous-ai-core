@@ -2,7 +2,7 @@ import { Home, Calendar, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 
-export type TabType = 'home' | 'weeklyplan' | 'profile' | 'chat' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'assignments' | 'reports' | 'podcasts' | 'studybuddy' | 'goals';
+export type TabType = 'home' | 'weeklyplan' | 'profile' | 'chat' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'assignments' | 'reports' | 'podcasts' | 'studybuddy' | 'goals' | 'leaderboard' | 'focustimer';
 
 interface BottomNavProps {
   activeTab: TabType;
