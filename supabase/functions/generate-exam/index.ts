@@ -130,24 +130,36 @@ IMPORTANT: Generate COMPLETELY DIFFERENT questions than any previous exam. Explo
       userPrompt = `Generate EXACTLY ${count} multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover DIVERSE sub-topics within ${subject}. Use LaTeX for all mathematical expressions. Make each question unique and different from typical exam questions.`;
     }
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [examTool],
-        tool_choice: { type: "function", function: { name: "create_exam" } },
-        temperature: 0.9 + Math.random() * 0.1,
-        max_tokens: 8000,
-      }),
+    const requestBody = JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [examTool],
+      tool_choice: { type: "function", function: { name: "create_exam" } },
+      temperature: 0.9 + Math.random() * 0.1,
+      max_tokens: 8000,
     });
+
+    const fetchHeaders = {
+      Authorization: `Bearer ${GROQ_API_KEY}`,
+      "Content-Type": "application/json",
+    };
+
+    // Retry with exponential backoff for rate limits
+    let response: Response | null = null;
+    const maxRetries = 3;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: fetchHeaders,
+        body: requestBody,
+      });
+      if (response.status !== 429 || attempt === maxRetries) break;
+      const waitMs = Math.min(2000 * Math.pow(2, attempt), 15000);
+      await new Promise(r => setTimeout(r, waitMs));
+    }
 
     let raw: Record<string, unknown>;
 
