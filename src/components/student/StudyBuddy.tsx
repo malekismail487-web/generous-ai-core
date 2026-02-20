@@ -11,7 +11,7 @@ import { Brain, TrendingUp, History, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-type Msg = { id: string; role: 'user' | 'assistant'; content: string };
+type Msg = { id: string; role: 'user' | 'assistant'; content: string; images?: { src: string; alt?: string }[] };
 
 const THINKING_STYLES = [
   {
@@ -19,14 +19,13 @@ const THINKING_STYLES = [
     label: '🎨 Visual',
     desc: 'Diagrams, images & visual links',
     systemExtra: `THINKING STYLE: VISUAL LEARNER
-- You MUST include relevant image links from the web for EVERY explanation. Use markdown images: ![description](url)
-- Use sources like Wikipedia Commons, Unsplash, or direct educational image URLs
-- Format: Include at least 1-2 image links or diagram URLs per response
-- Use ASCII art diagrams, tables, and spatial layouts when images aren't available
-- Organize information visually with headers, bullet points, and structured layouts
-- Include links to visual resources: YouTube videos, interactive simulations, infographics
-- Example format: "Here's a visual: ![Photosynthesis diagram](https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Photosynthesis_en.svg/800px-Photosynthesis_en.svg.png)"
-- Always search your knowledge for the most relevant, educational image URLs`,
+- Use ASCII art diagrams, tables, and spatial layouts to explain concepts visually
+- Organize information visually with clear headers, bullet points, and structured layouts
+- Describe what diagrams or images would look like in detail
+- Include links to YouTube educational videos when relevant (use full URLs like https://youtube.com/...)
+- Use tables to compare and contrast concepts
+- Include links to interactive simulations or educational websites when relevant
+- Structure your response with clear visual hierarchy using markdown headers and lists`,
   },
   {
     id: 'logical',
@@ -118,6 +117,30 @@ export function StudyBuddy() {
   const [thinkingStyle, setThinkingStyle] = useState<string | null>(null);
   const [showStylePicker, setShowStylePicker] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Fetch real educational images from Wikipedia (same approach as lectures)
+  const fetchWikipediaImages = useCallback(async (query: string): Promise<{ src: string; alt?: string }[]> => {
+    try {
+      const encoded = encodeURIComponent(query);
+      const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrlimit=8&prop=pageimages&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
+      const res = await fetch(url);
+      if (!res.ok) return [];
+      const data = await res.json();
+      const pages = data.query?.pages;
+      if (!pages) return [];
+      const imgs: { src: string; alt?: string }[] = [];
+      for (const page of Object.values(pages) as any[]) {
+        const thumb = page.thumbnail?.source;
+        if (thumb && !thumb.endsWith('.svg')) {
+          imgs.push({ src: thumb, alt: page.title || 'Educational image' });
+        }
+        if (imgs.length >= 3) break;
+      }
+      return imgs;
+    } catch {
+      return [];
+    }
+  }, []);
 
   // Load saved memory and style on mount
   useEffect(() => {
@@ -293,6 +316,17 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
               });
             }
           } catch { /* partial json */ }
+        }
+      }
+
+      // After streaming is done, fetch real images from Wikipedia for visual mode
+      if (thinkingStyle === 'visual' && assistantContent) {
+        const searchQuery = content; // Use the user's question as search query
+        const imgs = await fetchWikipediaImages(searchQuery);
+        if (imgs.length > 0) {
+          setMessages(prev =>
+            prev.map(m => m.id === assistantId ? { ...m, images: imgs } : m)
+          );
         }
       }
     } catch (e) {

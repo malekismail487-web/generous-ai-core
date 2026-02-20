@@ -1,10 +1,14 @@
-import { Message } from "@/lib/chat";
 import { User, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { MathRenderer } from "@/components/MathRenderer";
 
 interface ChatMessageProps {
-  message: Message;
+  message: {
+    id: string;
+    role: "user" | "assistant";
+    content: string;
+    images?: { src: string; alt?: string }[];
+  };
   isStreaming?: boolean;
 }
 
@@ -86,7 +90,11 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
         <span className="text-xs font-medium text-accent">Study Bright</span>
       </div>
       <div className="pl-8">
-        <MathRenderer content={displayedContent} className="text-sm leading-relaxed" />
+        <MathRenderer
+          content={displayedContent}
+          className="text-sm leading-relaxed"
+          images={!isStreaming ? message.images : undefined}
+        />
         {isStreaming && (
           <span className="inline-block w-1.5 h-4 ml-0.5 bg-current animate-pulse rounded-sm align-text-bottom" />
         )}
