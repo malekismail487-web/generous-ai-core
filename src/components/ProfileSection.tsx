@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Key, Loader2, Sun, Moon, Globe } from 'lucide-react';
+import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Key, Loader2, Sun, Moon, Globe, ExternalLink, Trash2, Pencil, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSchool } from '@/hooks/useSchool';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { useUserApiKey } from '@/hooks/useUserApiKey';
+import { useToast } from '@/hooks/use-toast';
 import { tr } from '@/lib/translations';
+import { supabase } from '@/integrations/supabase/client';
 import { SchoolAdminPanel } from '@/components/SchoolAdminPanel';
 import SuperAdminPanel from '@/components/SuperAdminPanel';
 import { cn } from '@/lib/utils';
@@ -17,11 +21,46 @@ export function ProfileSection() {
   const [showAdminCodeInput, setShowAdminCodeInput] = useState(false);
   const [adminCode, setAdminCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [editingKey, setEditingKey] = useState(false);
+  const [newApiKey, setNewApiKey] = useState('');
+  const [savingKey, setSavingKey] = useState(false);
+  const [showKey, setShowKey] = useState(false);
   const { user, signOut } = useAuth();
   const { isAdmin, isHardcodedAdmin, verifyAdminCode } = useUserRole();
   const { profile, school, isSchoolAdmin, loading } = useSchool();
   const { theme, language, setTheme, setLanguage, t } = useThemeLanguage();
+  const { apiKey: savedApiKey, loading: keyLoading, refetch: refetchKey } = useUserApiKey();
+  const { toast } = useToast();
   const tl = (key: Parameters<typeof tr>[0]) => tr(key, language);
+
+  const handleSaveApiKey = async () => {
+    if (!user || !newApiKey.trim()) return;
+    if (!newApiKey.trim().startsWith('gsk_')) {
+      toast({ variant: 'destructive', title: 'Invalid Key', description: 'Groq API keys start with "gsk_"' });
+      return;
+    }
+    setSavingKey(true);
+    const { error } = await supabase
+      .from('user_api_keys')
+      .upsert({ user_id: user.id, groq_api_key: newApiKey.trim() }, { onConflict: 'user_id' });
+    if (!error) {
+      toast({ title: '✅ API Key Saved!' });
+      setEditingKey(false);
+      setNewApiKey('');
+      refetchKey();
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
+    setSavingKey(false);
+  };
+
+  const handleDeleteApiKey = async () => {
+    if (!user) return;
+    await supabase.from('user_api_keys').delete().eq('user_id', user.id);
+    refetchKey();
+    setEditingKey(false);
+    toast({ title: 'API Key Removed', description: 'The system key will be used instead.' });
+  };
 
   const handleVerifyAdminCode = async () => {
     if (!adminCode.trim()) return;
@@ -227,6 +266,79 @@ export function ProfileSection() {
               العربية
             </button>
           </div>
+        </div>
+
+        {/* AI API Key */}
+        <div className="glass-effect rounded-2xl p-5 mb-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <Key size={16} />
+            {t('AI API Key', 'مفتاح API للذكاء الاصطناعي')}
+          </h3>
+          {keyLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {t('Loading...', 'جار التحميل...')}
+            </div>
+          ) : editingKey ? (
+            <div className="space-y-3">
+              <Input
+                type="password"
+                placeholder="gsk_..."
+                value={newApiKey}
+                onChange={(e) => setNewApiKey(e.target.value)}
+                className="font-mono text-sm"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => { setEditingKey(false); setNewApiKey(''); }} className="flex-1">
+                  {t('Cancel', 'إلغاء')}
+                </Button>
+                <Button size="sm" onClick={handleSaveApiKey} disabled={!newApiKey.trim() || savingKey} className="flex-1">
+                  {savingKey ? <Loader2 className="w-4 h-4 animate-spin" /> : t('Save Key', 'حفظ المفتاح')}
+                </Button>
+              </div>
+            </div>
+          ) : savedApiKey ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-2">
+                <Key size={14} className="text-muted-foreground shrink-0" />
+                <span className="font-mono text-sm flex-1 truncate">
+                  {showKey ? savedApiKey : `gsk_${'•'.repeat(20)}`}
+                </span>
+                <button onClick={() => setShowKey(!showKey)} className="text-muted-foreground hover:text-foreground">
+                  {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => { setEditingKey(true); setNewApiKey(''); }} className="flex-1 gap-1">
+                  <Pencil size={12} />
+                  {t('Change', 'تغيير')}
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleDeleteApiKey} className="flex-1 gap-1 text-destructive hover:text-destructive">
+                  <Trash2 size={12} />
+                  {t('Remove', 'إزالة')}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                {t('No personal key set. The system key will be used.', 'لم يتم تعيين مفتاح شخصي. سيتم استخدام مفتاح النظام.')}
+              </p>
+              <Button size="sm" variant="outline" onClick={() => setEditingKey(true)} className="gap-1">
+                <Key size={12} />
+                {t('Add API Key', 'إضافة مفتاح API')}
+              </Button>
+            </div>
+          )}
+          <a
+            href="https://console.groq.com/keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline mt-3"
+          >
+            <ExternalLink size={12} />
+            {t('Get a free Groq API key →', 'احصل على مفتاح Groq API مجاني ←')}
+          </a>
         </div>
 
         {/* Sign Out */}

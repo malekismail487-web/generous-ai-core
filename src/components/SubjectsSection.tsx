@@ -41,7 +41,7 @@ const grades = [
 type MenuType = 'main' | 'ai' | 'course';
 type ViewState = 'subjects' | 'grade' | 'input' | 'lecture';
 
-export function SubjectsSection() {
+export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {}) {
   const [menuType, setMenuType] = useState<MenuType>('main');
   const [viewState, setViewState] = useState<ViewState>('subjects');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
@@ -65,45 +65,40 @@ export function SubjectsSection() {
     loading: materialsLoading 
   } = useMaterials();
 
+  const containerClass = embedded
+    ? "flex-1 min-h-0 overflow-y-auto py-4"
+    : "flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20";
+
   // Get saved materials for current subject/grade
   const savedMaterials = selectedSubject && selectedGrade 
     ? getMaterialsBySubjectAndGrade(selectedSubject, selectedGrade)
     : [];
 
-  const generateImages = useCallback(async (topic: string, subjectName: string) => {
+  const fetchLectureImages = useCallback(async (topic: string, subjectName: string) => {
     setIsGeneratingImages(true);
     setLectureImages([]);
     try {
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-      const LOVABLE_API_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      // Use Lovable AI gateway for image generation
-      const imagePrompts = [
-        `Educational diagram illustrating "${topic}" for ${subjectName} students. Clean, clear, labeled diagram on white background. Ultra high resolution.`,
-        `Visual concept art showing "${topic}" in the context of ${subjectName}. Educational infographic style. Ultra high resolution.`
-      ];
-      const images: string[] = [];
-      for (const imgPrompt of imagePrompts) {
-        const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [{ role: 'user', content: imgPrompt }],
-            modalities: ['image', 'text'],
-          }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const imgUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-          if (imgUrl) images.push(imgUrl);
+      // Fetch real educational images from Wikipedia
+      const query = encodeURIComponent(`${topic} ${subjectName}`);
+      const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${query}&gsrlimit=8&prop=pageimages&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const pages = data.query?.pages;
+        if (pages) {
+          const imgs: string[] = [];
+          for (const page of Object.values(pages) as any[]) {
+            const thumb = page.thumbnail?.source;
+            if (thumb && !thumb.endsWith('.svg')) {
+              imgs.push(thumb);
+            }
+            if (imgs.length >= 3) break;
+          }
+          setLectureImages(imgs);
         }
       }
-      setLectureImages(images);
     } catch (err) {
-      console.warn('Image generation failed:', err);
+      console.warn('Image fetch failed:', err);
     } finally {
       setIsGeneratingImages(false);
     }
@@ -168,8 +163,8 @@ Use age-appropriate language for ${selectedGrade}.`;
             setActiveMaterial(newMaterial);
           }
           setIsLoading(false);
-          // Generate images after lecture is done
-          generateImages(topic, subject?.name || selectedSubject);
+          // Fetch related images from Wikipedia after lecture is done
+          fetchLectureImages(topic, subject?.name || selectedSubject);
         },
         onError: (error) => {
           setIsLoading(false);
@@ -179,7 +174,7 @@ Use age-appropriate language for ${selectedGrade}.`;
     } catch {
       setIsLoading(false);
     }
-  }, [selectedSubject, selectedGrade, user, createMaterial, toast, generateImages]);
+  }, [selectedSubject, selectedGrade, user, createMaterial, toast, fetchLectureImages]);
 
   const handleExport = useCallback(async (format: 'pdf' | 'docx' | 'pptx') => {
     const title = activeMaterial?.topic || 'Lecture';
@@ -189,14 +184,14 @@ Use age-appropriate language for ${selectedGrade}.`;
     try {
       if (format === 'pdf') await exportAsPDF(title, content);
       else if (format === 'docx') await exportAsDOCX(title, content);
-      else await exportAsPPTX(title, content);
+      else await exportAsPPTX(title, content, lectureImages);
       toast({ title: 'Exported!', description: `Lecture saved as ${format.toUpperCase()}` });
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Export Failed', description: err.message });
     } finally {
       setIsExporting(false);
     }
-  }, [activeMaterial, lectureContent, toast]);
+  }, [activeMaterial, lectureContent, lectureImages, toast]);
 
   const handleSubjectClick = (subjectId: string) => {
     setSelectedSubject(subjectId);
@@ -285,7 +280,7 @@ Use age-appropriate language for ${selectedGrade}.`;
   // LECTURE VIEW - Shows lecture content and material tabs
   if (viewState === 'lecture' && selectedSubject && selectedGrade) {
     return (
-      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
+      <div className={containerClass}>
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="flex items-center gap-3 mb-4">
@@ -386,7 +381,7 @@ Use age-appropriate language for ${selectedGrade}.`;
             <div className="mt-4 space-y-3">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <ImageIcon className="w-4 h-4" />
-                <span>Visual Illustrations</span>
+                <span>Related Images</span>
                 {isGeneratingImages && <Loader2 className="w-3 h-3 animate-spin" />}
               </div>
               {isGeneratingImages && lectureImages.length === 0 && (
@@ -418,7 +413,7 @@ Use age-appropriate language for ${selectedGrade}.`;
   // INPUT VIEW - User enters material/topic
   if (viewState === 'input' && selectedSubject && selectedGrade) {
     return (
-      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
+      <div className={containerClass}>
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
@@ -488,7 +483,7 @@ Use age-appropriate language for ${selectedGrade}.`;
   // GRADE SELECTION VIEW
   if (viewState === 'grade' && selectedSubject) {
     return (
-      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
+      <div className={containerClass}>
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
@@ -537,7 +532,7 @@ Use age-appropriate language for ${selectedGrade}.`;
   // MAIN MENU - Choose between AI and Course Materials
   if (menuType === 'main') {
     return (
-      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
+      <div className={containerClass}>
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="text-center mb-8 animate-fade-in">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-primary to-accent">
@@ -596,7 +591,7 @@ Use age-appropriate language for ${selectedGrade}.`;
   // SUBJECTS VIEW - Subject selection (for both AI and Course modes)
   if (viewState === 'subjects') {
     return (
-      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
+      <div className={containerClass}>
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="sm" onClick={handleBackToMainMenu}>
