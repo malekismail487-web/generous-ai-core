@@ -117,26 +117,31 @@ export function StudyBuddy() {
   const [showStylePicker, setShowStylePicker] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch relevant educational images from Wikipedia using multiple targeted searches
+  // Fetch relevant educational images from Wikipedia using direct topic search
   const fetchWikipediaImages = useCallback(async (query: string): Promise<{ src: string; alt?: string }[]> => {
     try {
       const keywords = query.replace(/[?!.,]/g, '').trim();
       
-      // Build multiple search variants for better relevance
+      // Extract core topic words, removing filler words
+      const fillerWords = new Set(['please', 'show', 'me', 'the', 'and', 'explain', 'it', 'to', 'bring', 'photos', 'for', 'about', 'tell', 'teach', 'help', 'understand', 'what', 'is', 'are', 'how', 'does', 'can', 'you', 'i', 'a', 'an', 'of', 'in', 'on', 'with']);
+      const coreWords = keywords.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !fillerWords.has(w));
+      const coreTopic = coreWords.join(' ') || keywords;
+
+      // Search directly for the topic — no generic suffixes
       const searchVariants = [
-        `${keywords} biology diagram`,
-        `${keywords} science education`,
-        keywords,
+        coreTopic,
+        `${coreTopic} biology`,
+        `${coreTopic} botany`,
       ];
 
-      const irrelevantPatterns = /community|forum|software|band|album|film|movie|tv series|video game|disambiguation|logo|icon|screenshot|code|terminal|computer|programming|website|online|internet|chat|social media|CERN|particle/i;
+      const irrelevantPatterns = /community|forum|software|band|album|film|movie|tv series|video game|disambiguation|logo|icon|screenshot|code|terminal|computer|programming|website|online|internet|chat|social media|CERN|particle|nuclear|energy source|power plant|electricity|debate|policy|politic/i;
       const imgs: { src: string; alt?: string }[] = [];
       const seenUrls = new Set<string>();
 
       for (const searchTerm of searchVariants) {
         if (imgs.length >= 3) break;
         const encoded = encodeURIComponent(searchTerm);
-        const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrlimit=8&prop=pageimages|description|categories&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
+        const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrlimit=10&prop=pageimages|description|categories&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
         const res = await fetch(url);
         if (!res.ok) continue;
         const data = await res.json();
@@ -153,13 +158,11 @@ export function StudyBuddy() {
           if (!thumb || seenUrls.has(thumb)) continue;
           if (thumb.endsWith('.svg')) continue;
           if (page.thumbnail?.width < 150 || page.thumbnail?.height < 100) continue;
-          // Strict irrelevant filtering
           if (irrelevantPatterns.test(title) || irrelevantPatterns.test(desc)) continue;
-          // Check if the page title has ANY keyword overlap with the query
-          const queryWords = keywords.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+          // Every image must have keyword overlap with the core topic
           const titleLower = title.toLowerCase() + ' ' + desc.toLowerCase();
-          const hasRelevance = queryWords.some(w => titleLower.includes(w));
-          if (!hasRelevance && imgs.length === 0) continue; // First image must be relevant
+          const hasRelevance = coreWords.some(w => titleLower.includes(w));
+          if (!hasRelevance) continue;
           
           seenUrls.add(thumb);
           imgs.push({ src: thumb, alt: title });
