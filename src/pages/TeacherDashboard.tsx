@@ -28,6 +28,7 @@ import { TeacherAssignments } from '@/components/teacher/TeacherAssignments';
 import { TeacherMaterials } from '@/components/teacher/TeacherMaterials';
 import { TeacherCopilot } from '@/components/teacher/TeacherCopilot';
 import { SubjectsSection } from '@/components/SubjectsSection';
+import { StudentInsights } from '@/components/teacher/StudentInsights';
 
 interface CourseMaterial {
   id: string;
@@ -374,49 +375,9 @@ export default function TeacherDashboard() {
             )}
           </TabsContent>
 
-          {/* Insights Tab */}
+          {/* Insights Tab - Student Learning Analytics */}
           <TabsContent value="insights" className="space-y-4">
-            <h2 className="text-lg font-semibold">{tr('insights', language)}</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">{tr('submissionRate', language)}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-6">
-                    <p className="text-4xl font-bold text-primary">
-                      {assignments.length > 0 
-                        ? Math.round((submissions.length / assignments.length) * 100)
-                        : 0
-                      }%
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {tr('avgSubmissionRate', language)}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">{tr('gradingProgress', language)}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-6">
-                    <p className="text-4xl font-bold text-green-500">
-                      {submissions.length > 0
-                        ? Math.round((submissions.filter(s => s.grade !== null).length / submissions.length) * 100)
-                        : 100
-                      }%
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {submissions.filter(s => s.grade !== null).length} of {submissions.length} graded
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <StudentInsights schoolId={school.id} />
           </TabsContent>
 
           {/* Announcements Tab */}

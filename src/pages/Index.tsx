@@ -18,6 +18,8 @@ import { PodcastsSection } from "@/components/PodcastsSection";
 
 import { AssignmentsSection } from "@/components/AssignmentsSection";
 import { StudentReportCards } from "@/components/student/StudentReportCards";
+import { StudyBuddy } from "@/components/student/StudyBuddy";
+import { GoalTracker } from "@/components/student/GoalTracker";
 import { StudentHomeGrid, GridAction } from "@/components/StudentHomeGrid";
 import { WeeklyPlanSection } from "@/components/WeeklyPlanSection";
 import { BannerAd } from "@/components/BannerAd";
@@ -260,6 +262,10 @@ const Index = () => {
         return <AssignmentsSection />;
       case 'reports':
         return profile ? <StudentReportCards studentId={profile.id} /> : null;
+      case 'studybuddy':
+        return <StudyBuddy />;
+      case 'goals':
+        return <GoalTracker />;
       default:
         return null;
     }
@@ -283,6 +289,8 @@ const Index = () => {
               <span className="font-bold text-foreground text-sm capitalize">
                 {activeTab === 'sat' ? t('SAT Prep', 'تحضير SAT') 
                   : activeTab === 'chat' ? t('AI Tutor', 'المعلم الذكي')
+                  : activeTab === 'studybuddy' ? t('Study Buddy', 'رفيق الدراسة')
+                  : activeTab === 'goals' ? t('My Goals', 'أهدافي')
                   : activeTab === 'subjects' ? t('Subjects', 'المواد')
                   : activeTab === 'notes' ? t('Notes', 'الملاحظات')
                   : activeTab === 'flashcards' ? t('Flashcards', 'البطاقات التعليمية')
