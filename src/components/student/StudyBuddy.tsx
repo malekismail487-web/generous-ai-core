@@ -22,10 +22,9 @@ const THINKING_STYLES = [
 - Use ASCII art diagrams, tables, and spatial layouts to explain concepts visually
 - Organize information visually with clear headers, bullet points, and structured layouts
 - Describe what diagrams or images would look like in detail
-- Include links to YouTube educational videos when relevant (use full URLs like https://youtube.com/...)
 - Use tables to compare and contrast concepts
-- Include links to interactive simulations or educational websites when relevant
-- Structure your response with clear visual hierarchy using markdown headers and lists`,
+- Structure your response with clear visual hierarchy using markdown headers and lists
+- Real educational images will be automatically provided below your response — do NOT generate image URLs yourself`,
   },
   {
     id: 'logical',
@@ -245,6 +244,12 @@ ${memoryContext}
 
 ${langInstruction}
 
+CRITICAL RULES:
+- NEVER generate image URLs, image links, or markdown images (![alt](url)). Real educational images are automatically provided below your response.
+- NEVER generate YouTube links or video URLs — they will be broken and lead to "page not found". Only mention video topics the student can search for themselves (e.g. "Search YouTube for 'photosynthesis animation'").
+- NEVER include any URLs or links unless you are 100% certain they are real, permanent, and accessible. If unsure, do NOT include a link.
+- When referencing external resources, say "Search for [topic] on [platform]" instead of providing a URL.
+
 Be warm, encouraging, and intellectually stimulating. You're not just answering questions — you're developing a thinker.`;
   }, [getLevelPrompt, profiles, thinkingStyle, language, messages]);
 
@@ -319,9 +324,9 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
         }
       }
 
-      // After streaming is done, fetch real images from Wikipedia for visual mode
-      if (thinkingStyle === 'visual' && assistantContent) {
-        const searchQuery = content; // Use the user's question as search query
+      // After streaming is done, always fetch real images from Wikipedia
+      if (assistantContent) {
+        const searchQuery = content;
         const imgs = await fetchWikipediaImages(searchQuery);
         if (imgs.length > 0) {
           setMessages(prev =>

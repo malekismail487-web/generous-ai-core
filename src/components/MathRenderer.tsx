@@ -87,25 +87,28 @@ export function MathRenderer({ content, className = '', images }: MathRendererPr
         </div>
       )}
 
-      {/* Real images gallery (e.g. from Wikipedia API) */}
+      {/* Real images gallery (from Wikipedia API — like AI lectures) */}
       {images && images.length > 0 && (
-        <div className="flex flex-col gap-3 mt-3">
-          {images.map((img, idx) => (
-            <div key={idx} className="rounded-xl overflow-hidden border border-border/30 bg-card/50">
-              <img
-                src={img.src}
-                alt={img.alt || 'Educational image'}
-                className="w-full max-h-80 object-contain bg-black/5"
-                loading="lazy"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-              {img.alt && (
-                <p className="text-xs text-muted-foreground px-3 py-1.5 text-center">{img.alt}</p>
-              )}
-            </div>
-          ))}
+        <div className="mt-4 space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">📸 Visual References</p>
+          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin">
+            {images.map((img, idx) => (
+              <div key={idx} className="flex-shrink-0 w-64 snap-center rounded-xl overflow-hidden border border-border/30 bg-card/50 shadow-sm">
+                <img
+                  src={img.src}
+                  alt={img.alt || 'Educational image'}
+                  className="w-full h-44 object-cover bg-muted/20"
+                  loading="lazy"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+                  }}
+                />
+                {img.alt && (
+                  <p className="text-[11px] text-muted-foreground px-2.5 py-1.5 text-center truncate">{img.alt}</p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
