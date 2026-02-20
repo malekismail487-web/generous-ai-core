@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -19,9 +19,12 @@ export function useStudentGoals() {
   const [goals, setGoals] = useState<StudentGoal[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const hasFetchedOnce = useRef(false);
+
   const fetchGoals = useCallback(async () => {
     if (!user) return;
-    setLoading(true);
+    // Only show loading spinner on first fetch, not on refetch
+    if (!hasFetchedOnce.current) setLoading(true);
 
     // Get current week start (Sunday)
     const now = new Date();
@@ -40,6 +43,7 @@ export function useStudentGoals() {
 
     setGoals((data || []) as StudentGoal[]);
     setLoading(false);
+    hasFetchedOnce.current = true;
   }, [user]);
 
   useEffect(() => {

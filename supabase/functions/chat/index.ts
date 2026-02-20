@@ -112,7 +112,7 @@ Provide answers with citations when referencing external information.`;
     }
 
     let response: Response | null = null;
-    const maxRetries = 3;
+    const maxRetries = 5;
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -132,7 +132,8 @@ Provide answers with citations when referencing external information.`;
       });
 
       if (response.status !== 429 || attempt === maxRetries - 1) break;
-      const waitMs = Math.pow(2, attempt) * 2000;
+      const waitMs = Math.pow(2, attempt) * 3000;
+      console.log(`Rate limited, retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
       await new Promise((r) => setTimeout(r, waitMs));
     }
 
