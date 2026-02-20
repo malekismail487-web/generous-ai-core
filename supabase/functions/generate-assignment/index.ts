@@ -33,7 +33,7 @@ serve(async (req) => {
   }
 
   try {
-    const { title, description, subject, questionCount, gradeLevel } = await req.json();
+    const { title, description, subject, questionCount, gradeLevel, adaptiveLevel } = await req.json();
     
     const userKey = await getUserApiKey(req.headers.get("authorization"));
     const GROQ_API_KEY = userKey || Deno.env.get("GROQ_API_KEY");
@@ -61,6 +61,7 @@ Rules:
 - Vary difficulty within the set
 - Questions should be clear, unambiguous, and educational
 - ${variationHint}
+${adaptiveLevel ? `- ADAPTIVE LEVEL: Student is "${adaptiveLevel}". ${adaptiveLevel === 'beginner' ? 'Generate simpler questions with clear language and foundational concepts.' : adaptiveLevel === 'advanced' ? 'Generate challenging questions testing deeper understanding and multi-step reasoning.' : 'Generate moderate difficulty questions mixing recall and application.'}` : ''}
 ${description ? `- Additional context from the teacher: "${description}"` : ''}`;
 
     const userPrompt = `The teacher created an assignment titled "${title}" for the subject "${subject}" at the ${gradeLevel || 'general'} level. Generate exactly ${questionCount} multiple-choice questions that are specifically about "${title}". ${variationHint}${description ? ` The teacher also provided this description: "${description}"` : ''}`;

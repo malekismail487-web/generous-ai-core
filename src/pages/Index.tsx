@@ -27,6 +27,7 @@ import { useConversations } from "@/hooks/useConversations";
 import { useNotes } from "@/hooks/useNotes";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { useThemeLanguage } from "@/hooks/useThemeLanguage";
+import { useAdaptiveLevel } from "@/hooks/useAdaptiveLevel";
 import { Navigate } from "react-router-dom";
 import { Loader2, ArrowLeft, Sparkles, Menu, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ const Index = () => {
     hasProfile
   } = useRoleGuard();
   const { t, language } = useThemeLanguage();
+  const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
 
   const {
     conversations,
@@ -129,6 +131,7 @@ const Index = () => {
       messages: messagesWithContext,
       language,
       backgroundContext: bgContext,
+      adaptiveLevel,
       onDelta: updateAssistant,
       onDone: async () => {
         setIsLoading(false);

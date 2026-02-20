@@ -7,6 +7,7 @@ import { useMaterials } from '@/hooks/useMaterials';
 import { MathRenderer } from '@/components/MathRenderer';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 
 // ============================================
 // ENUMS (IMMUTABLE)
@@ -353,6 +354,7 @@ export function ExaminationSection() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { getMaterialsBySubjectAndGrade, getMaterialsBySubject } = useMaterials();
+  const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
 
   // Get saved materials for the selected subject and grade
   const savedMaterials = useMemo(() => {
@@ -407,6 +409,7 @@ export function ExaminationSection() {
           count,
           materials: materialsToSend,
           examType: isFullSAT ? 'SAT_FULL' : undefined,
+          adaptiveLevel,
         }),
       });
 
@@ -490,8 +493,26 @@ export function ExaminationSection() {
     }
   };
 
+  const { recordAnswer } = useAdaptiveLevel();
+
   const handleAnswer = (answer: string) => {
     if (!examState || examState.answered) return;
+    
+    const currentQ = examState.exam.questions[examState.currentQuestionId];
+    const isCorrect = answer === currentQ.correct_answer;
+    const subjectName = examState.exam.subject || selectedSubject || 'general';
+    
+    // Record answer for adaptive learning
+    recordAnswer({
+      subject: subjectName,
+      questionText: currentQ.question,
+      studentAnswer: answer,
+      correctAnswer: currentQ.correct_answer,
+      isCorrect,
+      difficulty: selectedDifficulty?.replace('SUBJECT_', '').replace('SAT_', '') || 'medium',
+      source: 'exam',
+    });
+    
     setExamState(prev => {
       if (!prev) return prev;
       const newAnswers = { ...prev.answers, [prev.currentQuestionId]: answer };
