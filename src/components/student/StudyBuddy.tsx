@@ -118,21 +118,36 @@ export function StudyBuddy() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch real educational images from Wikipedia (same approach as lectures)
+  // Fetch relevant educational images from Wikipedia
   const fetchWikipediaImages = useCallback(async (query: string): Promise<{ src: string; alt?: string }[]> => {
     try {
-      const encoded = encodeURIComponent(query);
-      const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrlimit=8&prop=pageimages&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
+      // Extract key educational terms for better search
+      const keywords = query.replace(/[?!.,]/g, '').trim();
+      const encoded = encodeURIComponent(keywords);
+      const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrlimit=12&prop=pageimages|description&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
       const res = await fetch(url);
       if (!res.ok) return [];
       const data = await res.json();
       const pages = data.query?.pages;
       if (!pages) return [];
+
+      // Filter: skip irrelevant pages (no thumbnail, SVGs, or pages about people/software/communities)
+      const irrelevantPatterns = /community|forum|software|band|album|film|movie|tv series|video game|disambiguation/i;
       const imgs: { src: string; alt?: string }[] = [];
-      for (const page of Object.values(pages) as any[]) {
+
+      // Sort pages by search relevance (index)
+      const sorted = Object.values(pages).sort((a: any, b: any) => (a.index || 0) - (b.index || 0));
+
+      for (const page of sorted as any[]) {
         const thumb = page.thumbnail?.source;
-        if (thumb && !thumb.endsWith('.svg')) {
-          imgs.push({ src: thumb, alt: page.title || 'Educational image' });
-        }
+        const title = page.title || '';
+        if (!thumb) continue;
+        if (thumb.endsWith('.svg')) continue;
+        // Skip tiny images (likely icons)
+        if (page.thumbnail?.width < 100 || page.thumbnail?.height < 80) continue;
+        // Skip irrelevant pages
+        if (irrelevantPatterns.test(title) || irrelevantPatterns.test(page.description || '')) continue;
+        imgs.push({ src: thumb, alt: title });
         if (imgs.length >= 3) break;
       }
       return imgs;
