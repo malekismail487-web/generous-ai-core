@@ -1,37 +1,62 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStudentGoals, StudentGoal } from '@/hooks/useStudentGoals';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import { Target, Plus, Trash2, CheckCircle2, Circle, Loader2, Trophy } from 'lucide-react';
+import { Target, Trash2, CheckCircle2, Circle, Loader2, Trophy, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
-const PRESET_GOALS = [
-  { title: 'Complete 5 quizzes', target: 5, type: 'quizzes' },
-  { title: 'Study 3 subjects', target: 3, type: 'subjects' },
-  { title: 'Review 10 flashcards', target: 10, type: 'flashcards' },
-  { title: 'Take 2 exams', target: 2, type: 'exams' },
-  { title: 'Write 3 notes', target: 3, type: 'notes' },
+const GOAL_TEMPLATES = [
+  { titleEn: 'Complete {n} exams', titleAr: 'أكمل {n} اختبارات', type: 'exams', min: 1, max: 5 },
+  { titleEn: 'Listen to {n} podcasts', titleAr: 'استمع إلى {n} بودكاست', type: 'podcasts', min: 2, max: 8 },
+  { titleEn: 'Review {n} flashcard sets', titleAr: 'راجع {n} مجموعات بطاقات', type: 'flashcards', min: 3, max: 15 },
+  { titleEn: 'Complete {n} quizzes', titleAr: 'أكمل {n} اختبارات قصيرة', type: 'quizzes', min: 2, max: 10 },
+  { titleEn: 'Write {n} notes', titleAr: 'اكتب {n} ملاحظات', type: 'notes', min: 1, max: 5 },
+  { titleEn: 'Study {n} subjects', titleAr: 'ادرس {n} مواد', type: 'subjects', min: 1, max: 4 },
+  { titleEn: 'Use AI Tutor {n} times', titleAr: 'استخدم المعلم الذكي {n} مرات', type: 'tutor', min: 2, max: 8 },
+  { titleEn: 'Complete {n} assignments', titleAr: 'أكمل {n} واجبات', type: 'assignments', min: 1, max: 5 },
+  { titleEn: 'Focus for {n} Pomodoro sessions', titleAr: 'ركّز لمدة {n} جلسات بومودورو', type: 'focus', min: 2, max: 8 },
+  { titleEn: 'Read {n} study materials', titleAr: 'اقرأ {n} مواد دراسية', type: 'materials', min: 2, max: 10 },
 ];
+
+function generateRandomGoals(language: string): { title: string; target: number; type: string }[] {
+  const shuffled = [...GOAL_TEMPLATES].sort(() => Math.random() - 0.5);
+  const picked = shuffled.slice(0, 3);
+  
+  return picked.map(template => {
+    const n = Math.floor(Math.random() * (template.max - template.min + 1)) + template.min;
+    const title = language === 'ar'
+      ? template.titleAr.replace('{n}', String(n))
+      : template.titleEn.replace('{n}', String(n));
+    return { title, target: n, type: template.type };
+  });
+}
 
 export function GoalTracker() {
   const { goals, loading, addGoal, incrementGoal, deleteGoal, completedCount, totalCount, overallProgress } = useStudentGoals();
-  const { t } = useThemeLanguage();
-  const [showAdd, setShowAdd] = useState(false);
-  const [customTitle, setCustomTitle] = useState('');
-  const [customTarget, setCustomTarget] = useState(5);
+  const { t, language } = useThemeLanguage();
+  const [suggestedGoals, setSuggestedGoals] = useState<{ title: string; target: number; type: string }[]>([]);
 
-  const handleAddPreset = async (preset: typeof PRESET_GOALS[0]) => {
-    await addGoal(preset.title, preset.target, preset.type);
+  useEffect(() => {
+    if (!loading && goals.length === 0) {
+      setSuggestedGoals(generateRandomGoals(language));
+    }
+  }, [loading, goals.length, language]);
+
+  const handleAddSuggested = async (goal: { title: string; target: number; type: string }) => {
+    await addGoal(goal.title, goal.target, goal.type);
+    setSuggestedGoals(prev => prev.filter(g => g.type !== goal.type));
   };
 
-  const handleAddCustom = async () => {
-    if (!customTitle.trim()) return;
-    await addGoal(customTitle.trim(), customTarget);
-    setCustomTitle('');
-    setCustomTarget(5);
-    setShowAdd(false);
+  const handleAddAll = async () => {
+    for (const goal of suggestedGoals) {
+      await addGoal(goal.title, goal.target, goal.type);
+    }
+    setSuggestedGoals([]);
+  };
+
+  const refreshSuggestions = () => {
+    setSuggestedGoals(generateRandomGoals(language));
   };
 
   if (loading) {
@@ -76,66 +101,76 @@ export function GoalTracker() {
           </div>
         )}
 
-        {/* Add Goal */}
-        {!showAdd ? (
-          <div className="space-y-3">
-            <Button
-              variant="outline"
-              className="w-full gap-2 border-dashed"
-              onClick={() => setShowAdd(true)}
-            >
-              <Plus size={16} />
-              {t('Add Custom Goal', 'إضافة هدف مخصص')}
-            </Button>
+        {/* Suggested Goals - show when no goals exist */}
+        {goals.length === 0 && suggestedGoals.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-muted-foreground">
+                {t('Suggested goals for this week:', 'أهداف مقترحة لهذا الأسبوع:')}
+              </p>
+              <Button variant="ghost" size="sm" onClick={refreshSuggestions} className="gap-1.5">
+                <RefreshCw size={14} />
+                {t('Shuffle', 'تبديل')}
+              </Button>
+            </div>
 
-            {goals.length === 0 && (
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground text-center mb-3">
-                  {t('Or pick a preset goal:', 'أو اختر هدفًا جاهزًا:')}
-                </p>
-                <div className="grid grid-cols-1 gap-2">
-                  {PRESET_GOALS.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleAddPreset(preset)}
-                      className="glass-effect rounded-xl p-3 text-left hover:border-primary/40 transition-all flex items-center gap-3 border border-border/50"
-                    >
-                      <Target size={16} className="text-primary shrink-0" />
-                      <span className="text-sm font-medium">{preset.title}</span>
-                      <span className="text-xs text-muted-foreground ml-auto">×{preset.target}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="space-y-2">
+              {suggestedGoals.map((goal, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleAddSuggested(goal)}
+                  className="w-full glass-effect rounded-xl p-4 text-left hover:border-primary/40 transition-all flex items-center gap-3 border border-border/50"
+                >
+                  <Target size={18} className="text-primary shrink-0" />
+                  <span className="text-sm font-medium flex-1">{goal.title}</span>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-lg">
+                    {t('+ Add', '+ إضافة')}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <Button onClick={handleAddAll} className="w-full gap-2">
+              <Target size={16} />
+              {t('Add All 3 Goals', 'إضافة كل الأهداف الثلاثة')}
+            </Button>
           </div>
-        ) : (
-          <div className="glass-effect rounded-2xl p-5 space-y-4">
-            <h3 className="font-semibold">{t('New Goal', 'هدف جديد')}</h3>
-            <Input
-              placeholder={t('e.g., Read 20 pages', 'مثال: قراءة 20 صفحة')}
-              value={customTitle}
-              onChange={(e) => setCustomTitle(e.target.value)}
-            />
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">{t('Target:', 'الهدف:')}</span>
-              <Input
-                type="number"
-                min={1}
-                max={100}
-                value={customTarget}
-                onChange={(e) => setCustomTarget(parseInt(e.target.value) || 1)}
-                className="w-20"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowAdd(false)} className="flex-1">
-                {t('Cancel', 'إلغاء')}
-              </Button>
-              <Button onClick={handleAddCustom} disabled={!customTitle.trim()} className="flex-1">
-                {t('Add Goal', 'إضافة')}
-              </Button>
-            </div>
+        )}
+
+        {/* Show new suggestions when goals exist */}
+        {goals.length > 0 && goals.length < 5 && (
+          <Button
+            variant="outline"
+            className="w-full gap-2 border-dashed"
+            onClick={() => {
+              const newGoals = generateRandomGoals(language);
+              const existingTypes = goals.map(g => g.goal_type);
+              const filtered = newGoals.filter(g => !existingTypes.includes(g.type));
+              if (filtered.length > 0) {
+                setSuggestedGoals(filtered.slice(0, 1));
+              }
+            }}
+          >
+            <RefreshCw size={14} />
+            {t('Suggest Another Goal', 'اقترح هدفًا آخر')}
+          </Button>
+        )}
+
+        {suggestedGoals.length > 0 && goals.length > 0 && (
+          <div className="space-y-2">
+            {suggestedGoals.map((goal, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleAddSuggested(goal)}
+                className="w-full glass-effect rounded-xl p-4 text-left hover:border-primary/40 transition-all flex items-center gap-3 border border-border/50"
+              >
+                <Target size={18} className="text-primary shrink-0" />
+                <span className="text-sm font-medium flex-1">{goal.title}</span>
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-lg">
+                  {t('+ Add', '+ إضافة')}
+                </span>
+              </button>
+            ))}
           </div>
         )}
       </div>
