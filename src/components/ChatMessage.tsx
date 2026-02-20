@@ -61,26 +61,35 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
   const isUser = message.role === "user";
   const displayedContent = useTypewriter(message.content, isStreaming && !isUser);
 
-  return (
-    <div className={`flex gap-2.5 animate-fade-in ${isUser ? "flex-row-reverse" : ""}`}>
-      <div
-        className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${
-          isUser ? "bg-primary/20 text-primary" : "bg-accent/20 text-accent"
-        }`}
-      >
-        {isUser ? <User size={14} /> : <Sparkles size={14} />}
-      </div>
-      <div className={`message-bubble ${isUser ? "message-user" : "message-assistant"}`}>
-        <div className="text-sm leading-relaxed">
-          {isUser ? (
-            <span className="whitespace-pre-wrap">{message.content}</span>
-          ) : (
-            <MathRenderer content={displayedContent} className="text-sm" />
-          )}
-          {isStreaming && !isUser && (
-            <span className="inline-block w-1.5 h-4 ml-0.5 bg-current animate-pulse rounded-sm align-text-bottom" />
-          )}
+  if (isUser) {
+    return (
+      <div className="flex gap-2.5 animate-fade-in flex-row-reverse">
+        <div className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center bg-primary/20 text-primary">
+          <User size={14} />
         </div>
+        <div className="message-bubble message-user">
+          <div className="text-sm leading-relaxed">
+            <span className="whitespace-pre-wrap">{message.content}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Assistant: no bubble, clean open layout
+  return (
+    <div className="animate-fade-in">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center bg-accent/20 text-accent">
+          <Sparkles size={12} />
+        </div>
+        <span className="text-xs font-medium text-accent">Study Bright</span>
+      </div>
+      <div className="pl-8">
+        <MathRenderer content={displayedContent} className="text-sm leading-relaxed" />
+        {isStreaming && (
+          <span className="inline-block w-1.5 h-4 ml-0.5 bg-current animate-pulse rounded-sm align-text-bottom" />
+        )}
       </div>
     </div>
   );

@@ -1,24 +1,32 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Auto-tracks student goals by checking actual activity counts in the database.
- * Maps goal_type to real DB tables and updates current_count accordingly.
+ * Uses a ref to avoid infinite re-render loops.
  */
 export function useGoalAutoTracker(goals: { id: string; goal_type: string; current_count: number; target_count: number; completed: boolean; created_at: string }[], refetch: () => void) {
   const { user } = useAuth();
+  const goalsRef = useRef(goals);
+  const refetchRef = useRef(refetch);
+  const isSyncing = useRef(false);
+
+  // Keep refs updated without triggering effects
+  useEffect(() => { goalsRef.current = goals; }, [goals]);
+  useEffect(() => { refetchRef.current = refetch; }, [refetch]);
 
   const syncGoals = useCallback(async () => {
-    if (!user || goals.length === 0) return;
+    if (!user || goalsRef.current.length === 0 || isSyncing.current) return;
+    isSyncing.current = true;
 
-    const goalCreatedDates = new Map(goals.map(g => [g.id, g.created_at]));
+    let anyUpdated = false;
 
-    for (const goal of goals) {
+    for (const goal of goalsRef.current) {
       if (goal.completed) continue;
 
       let actualCount = 0;
-      const createdAt = goalCreatedDates.get(goal.id) || goal.created_at;
+      const createdAt = goal.created_at;
 
       try {
         switch (goal.goal_type) {
@@ -87,7 +95,6 @@ export function useGoalAutoTracker(goals: { id: string; goal_type: string; curre
             break;
           }
           case 'focus': {
-            // Focus sessions are tracked in localStorage, read from there
             try {
               const raw = localStorage.getItem('focus-timer-stats');
               if (raw) {
@@ -100,7 +107,6 @@ export function useGoalAutoTracker(goals: { id: string; goal_type: string; curre
             break;
           }
           case 'flashcards': {
-            // Flashcards don't have a dedicated DB table, use student_answer_history with source
             const { count } = await supabase
               .from('student_answer_history')
               .select('*', { count: 'exact', head: true })
@@ -114,29 +120,31 @@ export function useGoalAutoTracker(goals: { id: string; goal_type: string; curre
             continue;
         }
 
-        // Cap at target
         const cappedCount = Math.min(actualCount, goal.target_count);
         const isCompleted = cappedCount >= goal.target_count;
 
-        // Only update if changed
         if (cappedCount !== goal.current_count || isCompleted !== goal.completed) {
           await supabase
             .from('student_goals')
             .update({ current_count: cappedCount, completed: isCompleted })
             .eq('id', goal.id);
+          anyUpdated = true;
         }
       } catch (err) {
         console.error(`Goal auto-track error for ${goal.goal_type}:`, err);
       }
     }
 
-    refetch();
-  }, [user, goals, refetch]);
+    isSyncing.current = false;
+    if (anyUpdated) {
+      refetchRef.current();
+    }
+  }, [user]); // Only depends on user, reads goals from ref
 
-  // Run sync on mount and every 30 seconds
+  // Run sync on mount and every 60 seconds
   useEffect(() => {
     syncGoals();
-    const interval = setInterval(syncGoals, 30000);
+    const interval = setInterval(syncGoals, 60000);
     return () => clearInterval(interval);
   }, [syncGoals]);
 }
