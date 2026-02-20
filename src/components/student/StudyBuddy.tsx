@@ -94,13 +94,16 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
       const systemPrompt = buildSystemPrompt();
       const allMessages = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
 
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
             messages: allMessages,
