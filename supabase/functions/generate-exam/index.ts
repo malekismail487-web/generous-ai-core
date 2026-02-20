@@ -149,6 +149,18 @@ IMPORTANT: Generate COMPLETELY DIFFERENT questions than any previous exam. Explo
       }),
     });
 
+    let raw: Record<string, unknown>;
+
+    const tryParseJson = (str: string): Record<string, unknown> => {
+      try {
+        return JSON.parse(str);
+      } catch {
+        // Sanitize bad LaTeX backslashes then retry
+        const sanitized = str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+        return JSON.parse(sanitized);
+      }
+    };
+
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
@@ -156,28 +168,67 @@ IMPORTANT: Generate COMPLETELY DIFFERENT questions than any previous exam. Explo
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errorText = await response.text();
-      console.error("Groq API error:", response.status, errorText);
-      throw new Error("Failed to generate exam questions");
+
+      // Groq sometimes returns 400 with tool_use_failed but includes valid generated content
+      const errorBody = await response.text();
+      let failedGen: string | null = null;
+      try {
+        const errJson = JSON.parse(errorBody);
+        failedGen = errJson?.error?.failed_generation || null;
+      } catch { /* ignore */ }
+
+      if (failedGen) {
+        const jsonMatch = failedGen.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          raw = tryParseJson(jsonMatch[0]);
+        } else {
+          console.error("Groq API error:", response.status, errorBody);
+          throw new Error("Failed to generate exam questions");
+        }
+      } else {
+        console.error("Groq API error:", response.status, errorBody);
+        throw new Error("Failed to generate exam questions");
+      }
+    } else {
+      const data = await response.json();
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+
+      if (toolCall && toolCall.function.name === "create_exam") {
+        raw = tryParseJson(toolCall.function.arguments);
+      } else {
+        const content = data.choices?.[0]?.message?.content || "";
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          raw = tryParseJson(jsonMatch[0]);
+        } else {
+          throw new Error("AI did not return structured exam data");
+        }
+      }
     }
-
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-
-    if (!toolCall || toolCall.function.name !== "create_exam") {
-      throw new Error("AI did not return structured exam data");
-    }
-
-    const raw = JSON.parse(toolCall.function.arguments);
 
     // Convert tool-call format to the expected frontend format
-    const questions = (raw.questions || []).map((q: Record<string, string>, idx: number) => ({
-      id: idx + 1,
-      type: "multiple_choice",
-      question: q.question,
-      options: [`A) ${q.option_a}`, `B) ${q.option_b}`, `C) ${q.option_c}`, `D) ${q.option_d}`],
-      correct_answer: `${q.correct_answer}) ${q[`option_${q.correct_answer.toLowerCase()}`]}`,
-    }));
+    const rawQuestions = (raw.questions || []) as Record<string, unknown>[];
+    const questions = rawQuestions.map((q, idx: number) => {
+      // Handle tool-call format (option_a, option_b, etc.)
+      if (q.option_a) {
+        const ca = String(q.correct_answer || "A");
+        return {
+          id: idx + 1,
+          type: "multiple_choice",
+          question: String(q.question),
+          options: [`A) ${q.option_a}`, `B) ${q.option_b}`, `C) ${q.option_c}`, `D) ${q.option_d}`],
+          correct_answer: `${ca}) ${q[`option_${ca.toLowerCase()}`]}`,
+        };
+      }
+      // Handle legacy format (options array, correct_answer as full string)
+      return {
+        id: idx + 1,
+        type: String(q.type || "multiple_choice"),
+        question: String(q.question),
+        options: q.options as string[],
+        correct_answer: String(q.correct_answer),
+      };
+    });
 
     const result = {
       exam_title: raw.exam_title || `${subject} ${difficulty} Exam`,
