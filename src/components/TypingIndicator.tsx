@@ -6,7 +6,7 @@ export function TypingIndicator() {
       <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-accent/20 text-accent">
         <Sparkles size={16} className="animate-pulse-glow" />
       </div>
-      <div className="message-bubble message-assistant">
+      <div>
         <div className="flex gap-1.5 py-1">
           <span
             className="w-2 h-2 rounded-full bg-muted-foreground animate-typing"
