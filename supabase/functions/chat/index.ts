@@ -67,7 +67,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, enableWebSearch, language, backgroundContext } = await req.json();
+    const { messages, enableWebSearch, language, backgroundContext, adaptiveLevel } = await req.json();
     
     const userKey = await getUserApiKey(req.headers.get("authorization"));
     const GROQ_API_KEY = userKey || Deno.env.get("GROQ_API_KEY");
@@ -77,6 +77,16 @@ serve(async (req) => {
     }
 
     let systemPrompt = SYSTEM_PROMPT;
+
+    // Adaptive learning level
+    if (adaptiveLevel) {
+      const levelGuides: Record<string, string> = {
+        beginner: `\n\n## Student Level: BEGINNER\nThis student is at a beginner level. Use simple vocabulary, short sentences, basic examples, and explain concepts step-by-step from the ground up. Avoid jargon. Use analogies and real-world comparisons. Be extra patient and encouraging.`,
+        intermediate: `\n\n## Student Level: INTERMEDIATE\nThis student is at an intermediate level. Use standard academic language, provide moderate detail, include some technical terms with brief explanations, and offer practical examples.`,
+        advanced: `\n\n## Student Level: ADVANCED\nThis student is at an advanced level. Use precise technical language, go deeper into theory, include challenging examples, edge cases, and connections to broader concepts. Push their understanding further.`,
+      };
+      systemPrompt += levelGuides[adaptiveLevel] || levelGuides.intermediate;
+    }
 
     if (language === 'ar') {
       systemPrompt += `\n\n## Language Instruction

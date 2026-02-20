@@ -86,7 +86,7 @@ serve(async (req) => {
   }
 
   try {
-    const { subject, grade, difficulty, count, materials, examType } = await req.json();
+    const { subject, grade, difficulty, count, materials, examType, adaptiveLevel } = await req.json();
 
     const userKey = await getUserApiKey(req.headers.get("authorization"));
     const GROQ_API_KEY = userKey || Deno.env.get("GROQ_API_KEY");
@@ -102,7 +102,10 @@ serve(async (req) => {
     const seed = Math.floor(Math.random() * 100000);
     const timestamp = Date.now();
     const varietyInstructions = getVarietyInstructions();
-    const dynamicDirective = `CRITICAL: This is generation #${seed}-${timestamp}. You MUST generate completely NEW and DIFFERENT questions from any previous generation. ${varietyInstructions} Shuffle the order of topics you cover. Vary which aspects of each topic you test. Never repeat the same question patterns.`;
+    const adaptiveLevelHint = adaptiveLevel
+      ? `\n\nIMPORTANT ADAPTIVE LEVEL: The student is at a "${adaptiveLevel}" level. ${adaptiveLevel === 'beginner' ? 'Generate simpler questions with clear, straightforward language. Focus on foundational concepts.' : adaptiveLevel === 'advanced' ? 'Generate challenging questions that test deeper understanding, edge cases, and multi-step reasoning.' : 'Generate questions at a moderate difficulty with a mix of recall and application.'}`
+      : '';
+    const dynamicDirective = `CRITICAL: This is generation #${seed}-${timestamp}. You MUST generate completely NEW and DIFFERENT questions from any previous generation. ${varietyInstructions} Shuffle the order of topics you cover. Vary which aspects of each topic you test. Never repeat the same question patterns.${adaptiveLevelHint}`;
 
     const materialContext = materials && materials.length > 0
       ? materials.map((m: { topic: string; content: string }) => `Topic: ${m.topic}\n${m.content}`).join('\n\n---\n\n').substring(0, 10000)

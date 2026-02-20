@@ -33,7 +33,7 @@ serve(async (req) => {
   }
 
   try {
-    const { fileContent, fileName } = await req.json();
+    const { fileContent, fileName, adaptiveLevel } = await req.json();
     
     const userKey = await getUserApiKey(req.headers.get("authorization"));
     const GROQ_API_KEY = userKey || Deno.env.get("GROQ_API_KEY");
@@ -76,7 +76,8 @@ Deliver a complete, structured educational lecture explaining everything in the 
 - For math/science, show step-by-step reasoning with LaTeX notation
 - Do NOT skip any section of the file
 - Do NOT say "I can't read the file" — the content is provided to you directly
-- Session ID: ${randomSeed} — Generate a fresh, unique explanation each time`;
+- Session ID: ${randomSeed} — Generate a fresh, unique explanation each time
+${adaptiveLevel === 'beginner' ? '\n## Adaptive Level: BEGINNER\nUse very simple vocabulary, short sentences, basic analogies, and explain every concept from scratch. Avoid jargon entirely.' : adaptiveLevel === 'advanced' ? '\n## Adaptive Level: ADVANCED\nUse precise technical language, go deeper into theory, include challenging details and connections to broader concepts.' : '\n## Adaptive Level: INTERMEDIATE\nUse standard academic language with moderate detail and practical examples.'}`;
 
     let response: Response | null = null;
     const maxRetries = 3;

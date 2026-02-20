@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import mammoth from 'mammoth';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { format } from 'date-fns';
 
 const EXPLAIN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/explain-file`;
@@ -35,6 +36,7 @@ export function PodcastsSection() {
   const { t, language } = useThemeLanguage();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
 
   // Fetch podcast count on mount
   useEffect(() => {
@@ -140,6 +142,7 @@ export function PodcastsSection() {
         body: JSON.stringify({
           fileContent: content.slice(0, 30000),
           fileName: file.name,
+          adaptiveLevel,
         }),
       });
 

@@ -1248,6 +1248,45 @@ export type Database = {
         }
         Relationships: []
       }
+      student_answer_history: {
+        Row: {
+          correct_answer: string | null
+          created_at: string
+          difficulty: string | null
+          id: string
+          is_correct: boolean
+          question_text: string | null
+          source: string
+          student_answer: string | null
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          correct_answer?: string | null
+          created_at?: string
+          difficulty?: string | null
+          id?: string
+          is_correct: boolean
+          question_text?: string | null
+          source?: string
+          student_answer?: string | null
+          subject: string
+          user_id: string
+        }
+        Update: {
+          correct_answer?: string | null
+          created_at?: string
+          difficulty?: string | null
+          id?: string
+          is_correct?: boolean
+          question_text?: string | null
+          source?: string
+          student_answer?: string | null
+          subject?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       student_classes: {
         Row: {
           class_id: string
@@ -1276,6 +1315,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      student_learning_profiles: {
+        Row: {
+          correct_answers: number
+          created_at: string
+          difficulty_level: string
+          id: string
+          recent_accuracy: number | null
+          subject: string
+          total_questions_answered: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          correct_answers?: number
+          created_at?: string
+          difficulty_level?: string
+          id?: string
+          recent_accuracy?: number | null
+          subject: string
+          total_questions_answered?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          correct_answers?: number
+          created_at?: string
+          difficulty_level?: string
+          id?: string
+          recent_accuracy?: number | null
+          subject?: string
+          total_questions_answered?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       subjects: {
         Row: {
