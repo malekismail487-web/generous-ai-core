@@ -17,8 +17,7 @@ import {
   Upload,
   Settings,
   Globe,
-  Bot,
-  Sparkles
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +29,6 @@ import { TeacherMaterials } from '@/components/teacher/TeacherMaterials';
 import { TeacherCopilot } from '@/components/teacher/TeacherCopilot';
 import { SubjectsSection } from '@/components/SubjectsSection';
 import { StudentInsights } from '@/components/teacher/StudentInsights';
-import { LessonPlanGenerator } from '@/components/teacher/LessonPlanGenerator';
 
 interface CourseMaterial {
   id: string;
@@ -250,7 +248,7 @@ export default function TeacherDashboard() {
         </div>
 
         <Tabs defaultValue="materials" className="space-y-6">
-          <TabsList className="grid grid-cols-8 w-full max-w-5xl">
+          <TabsList className="grid grid-cols-7 w-full max-w-5xl">
             <TabsTrigger value="materials" className="gap-2">
               <Upload className="w-4 h-4" />
               <span className="hidden sm:inline">{tr('materials', language)}</span>
@@ -259,9 +257,9 @@ export default function TeacherDashboard() {
               <ClipboardList className="w-4 h-4" />
               <span className="hidden sm:inline">{tr('assign', language)}</span>
             </TabsTrigger>
-            <TabsTrigger value="lesson-plans" className="gap-2">
-              <Sparkles className="w-4 h-4" />
-              <span className="hidden sm:inline">AI Plans</span>
+            <TabsTrigger value="ai-lectures" className="gap-2">
+              <Bot className="w-4 h-4" />
+              <span className="hidden sm:inline">AI Lectures</span>
             </TabsTrigger>
             <TabsTrigger value="ai-lectures" className="gap-2">
               <Bot className="w-4 h-4" />
@@ -323,14 +321,7 @@ export default function TeacherDashboard() {
             )}
           </TabsContent>
 
-          {/* AI Lesson Plan Generator Tab */}
-          <TabsContent value="lesson-plans" className="space-y-4">
-            <LessonPlanGenerator
-              schoolId={school.id}
-              teacherId={user.id}
-              onSaved={fetchData}
-            />
-          </TabsContent>
+          {/* AI Lectures Tab */}
 
           {/* AI Lectures Tab */}
           <TabsContent value="ai-lectures">

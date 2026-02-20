@@ -22,6 +22,7 @@ import { StudyBuddy } from "@/components/student/StudyBuddy";
 import { GoalTracker } from "@/components/student/GoalTracker";
 import { Leaderboard } from "@/components/student/Leaderboard";
 import { FocusTimer } from "@/components/student/FocusTimer";
+import { AIStudyPlan } from "@/components/student/AIStudyPlan";
 import { StudentHomeGrid, GridAction } from "@/components/StudentHomeGrid";
 import { WeeklyPlanSection } from "@/components/WeeklyPlanSection";
 import { BannerAd } from "@/components/BannerAd";
@@ -272,6 +273,8 @@ const Index = () => {
         return <Leaderboard />;
       case 'focustimer':
         return <FocusTimer />;
+      case 'aiplans':
+        return <AIStudyPlan />;
       default:
         return null;
     }
@@ -299,6 +302,7 @@ const Index = () => {
                    : activeTab === 'goals' ? t('My Goals', 'أهدافي')
                    : activeTab === 'leaderboard' ? t('Leaderboard', 'المتصدرين')
                    : activeTab === 'focustimer' ? t('Focus Timer', 'مؤقت التركيز')
+                   : activeTab === 'aiplans' ? t('AI Study Plan', 'خطة دراسة AI')
                   : activeTab === 'subjects' ? t('Subjects', 'المواد')
                   : activeTab === 'notes' ? t('Notes', 'الملاحظات')
                   : activeTab === 'flashcards' ? t('Flashcards', 'البطاقات التعليمية')

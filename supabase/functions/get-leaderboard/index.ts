@@ -134,14 +134,17 @@ serve(async (req) => {
       if (entry) entry.goalsCompleted += 1;
     }
 
-    // Calculate score: streak * 10 + correct answers * 2 + goals * 15
+    // Calculate score: goals completed is primary, with streak and accuracy as tiebreakers
     for (const entry of studentMap.values()) {
-      entry.score = (entry.streak * 10) + (entry.correctAnswers * 2) + (entry.goalsCompleted * 15);
+      entry.score = (entry.goalsCompleted * 20) + (entry.streak * 5) + (entry.correctAnswers * 1);
     }
 
-    // Sort by score descending
+    // Sort by goals completed first, then score for tiebreaking
     const leaderboard = Array.from(studentMap.values())
-      .sort((a, b) => b.score - a.score)
+      .sort((a, b) => {
+        if (b.goalsCompleted !== a.goalsCompleted) return b.goalsCompleted - a.goalsCompleted;
+        return b.score - a.score;
+      })
       .slice(0, 50);
 
     return new Response(JSON.stringify({
