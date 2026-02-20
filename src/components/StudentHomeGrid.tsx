@@ -17,6 +17,8 @@ import {
   Podcast,
   Brain,
   Target,
+  Trophy,
+  Timer,
 } from 'lucide-react';
 
 export type GridAction =
@@ -32,6 +34,8 @@ export type GridAction =
   | 'podcasts'
   | 'studybuddy'
   | 'goals'
+  | 'leaderboard'
+  | 'focustimer'
   | 'settings';
 
 interface StudentHomeGridProps {
@@ -47,6 +51,8 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
   const gridItems: { id: GridAction; icon: typeof MessageSquare; label: string; color: string; iconBg: string; schoolOnly?: boolean }[] = [
     { id: 'studybuddy', icon: Brain, label: t('Study Buddy', 'رفيق الدراسة'), color: 'from-violet-500 to-purple-600', iconBg: 'bg-violet-500/15 border-violet-500/30' },
     { id: 'goals', icon: Target, label: t('My Goals', 'أهدافي'), color: 'from-emerald-500 to-green-600', iconBg: 'bg-emerald-500/15 border-emerald-500/30' },
+    { id: 'leaderboard', icon: Trophy, label: t('Leaderboard', 'المتصدرين'), color: 'from-yellow-500 to-amber-600', iconBg: 'bg-yellow-500/15 border-yellow-500/30', schoolOnly: true },
+    { id: 'focustimer', icon: Timer, label: t('Focus Timer', 'مؤقت التركيز'), color: 'from-red-500 to-orange-600', iconBg: 'bg-red-500/15 border-red-500/30' },
     { id: 'subjects', icon: Layers, label: t('Subjects', 'المواد'), color: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-500/15 border-emerald-500/30' },
     { id: 'sat', icon: GraduationCap, label: t('SAT Prep', 'تحضير SAT'), color: 'from-violet-500 to-purple-600', iconBg: 'bg-violet-500/15 border-violet-500/30' },
     { id: 'examination', icon: BookOpen, label: t('Exams', 'الاختبارات'), color: 'from-sky-500 to-blue-600', iconBg: 'bg-sky-500/15 border-sky-500/30' },
