@@ -181,14 +181,26 @@ id must be sequential 1 to ${count}. Use LaTeX for math. Generate ALL ${count} q
     }
 
     let parsed;
+    const sanitize = (s: string) => {
+      // Fix bad LaTeX escapes that break JSON: replace single backslashes not followed by valid JSON escape chars
+      return s.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+    };
     try {
       parsed = JSON.parse(content.trim());
     } catch {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        parsed = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error("AI did not return valid JSON");
+      try {
+        parsed = JSON.parse(sanitize(content.trim()));
+      } catch {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            parsed = JSON.parse(jsonMatch[0]);
+          } catch {
+            parsed = JSON.parse(sanitize(jsonMatch[0]));
+          }
+        } else {
+          throw new Error("AI did not return valid JSON");
+        }
       }
     }
 
