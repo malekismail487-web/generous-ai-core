@@ -27,7 +27,6 @@ async function getUserApiKey(authHeader: string | null): Promise<string | null> 
   }
 }
 
-// Randomly pick question style instructions to force variety
 function getVarietyInstructions(): string {
   const styles = [
     "Focus on application and real-world scenarios.",
@@ -41,7 +40,6 @@ function getVarietyInstructions(): string {
     "Include multi-step reasoning questions.",
     "Ask about cause-and-effect relationships.",
   ];
-  // Pick 3 random styles
   const shuffled = styles.sort(() => Math.random() - 0.5);
   return shuffled.slice(0, 3).join(" ");
 }
@@ -80,6 +78,151 @@ const examTool = {
   },
 };
 
+function tryParseJson(str: string): Record<string, unknown> {
+  try {
+    return JSON.parse(str);
+  } catch {
+    const sanitized = str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+    return JSON.parse(sanitized);
+  }
+}
+
+function convertRawQuestion(q: Record<string, unknown>, idx: number) {
+  if (q.option_a) {
+    const ca = String(q.correct_answer || "A");
+    const answerKey = `option_${ca.toLowerCase()}`;
+    return {
+      id: idx + 1,
+      type: "multiple_choice",
+      question: String(q.question),
+      options: [`A) ${q.option_a}`, `B) ${q.option_b}`, `C) ${q.option_c}`, `D) ${q.option_d}`],
+      correct_answer: `${ca}) ${q[answerKey] || q.option_a}`,
+    };
+  }
+  const options = (q.options as string[]) || [];
+  const correctAnswer = q.correct_answer ? String(q.correct_answer) : (options[0] || "A");
+  return {
+    id: idx + 1,
+    type: String(q.type || "multiple_choice"),
+    question: String(q.question),
+    options,
+    correct_answer: correctAnswer,
+  };
+}
+
+// Distribute question counts across materials
+function distributeCounts(total: number, buckets: number): number[] {
+  if (buckets <= 0) return [total];
+  const base = Math.floor(total / buckets);
+  const remainder = total % buckets;
+  const result: number[] = [];
+  for (let i = 0; i < buckets; i++) {
+    result.push(base + (i < remainder ? 1 : 0));
+  }
+  // Shuffle so the "extra" questions aren't always on the first materials
+  return result.sort(() => Math.random() - 0.5);
+}
+
+interface GenerateBatchParams {
+  apiKey: string;
+  systemPrompt: string;
+  userPrompt: string;
+  count: number;
+}
+
+async function generateBatch(params: GenerateBatchParams): Promise<Record<string, unknown>[]> {
+  const { apiKey, systemPrompt, userPrompt, count } = params;
+  // ~300 tokens per question is a safe estimate for tool-call JSON
+  const maxTokens = Math.min(Math.max(count * 350, 4000), 16000);
+
+  const fetchHeaders = {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
+  };
+
+  const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+  let response: Response | null = null;
+
+  for (const model of models) {
+    const body = JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [examTool],
+      tool_choice: { type: "function", function: { name: "create_exam" } },
+      temperature: 0.9 + Math.random() * 0.1,
+      max_tokens: maxTokens,
+    });
+
+    const maxRetries = 3;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: fetchHeaders,
+        body,
+      });
+      if (response.status !== 429) break;
+      const waitMs = Math.pow(2, attempt) * 2000;
+      console.log(`Rate limited on ${model}, retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise(r => setTimeout(r, waitMs));
+    }
+    if (response && response.status !== 429) {
+      console.log(`Using model: ${model} for batch of ${count}`);
+      break;
+    }
+    console.log(`Model ${model} exhausted retries, trying fallback...`);
+  }
+
+  if (!response || response.status === 429) {
+    throw new Error("RATE_LIMITED");
+  }
+
+  let raw: Record<string, unknown>;
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    let failedGen: string | null = null;
+    try {
+      const errJson = JSON.parse(errorBody);
+      failedGen = errJson?.error?.failed_generation || null;
+    } catch { /* ignore */ }
+
+    if (failedGen) {
+      const jsonMatch = failedGen.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        raw = tryParseJson(jsonMatch[0]);
+      } else {
+        console.error("Groq API error:", response.status, errorBody);
+        throw new Error("Failed to generate exam questions");
+      }
+    } else {
+      console.error("Groq API error:", response.status, errorBody);
+      throw new Error("Failed to generate exam questions");
+    }
+  } else {
+    const data = await response.json();
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+
+    if (toolCall && toolCall.function?.name === "create_exam") {
+      raw = tryParseJson(toolCall.function.arguments);
+    } else {
+      const content = data.choices?.[0]?.message?.content || "";
+      const jsonMatch = content.match(/\{[\s\S]*"questions"[\s\S]*\}/);
+      if (jsonMatch) {
+        raw = tryParseJson(jsonMatch[0]);
+      } else {
+        console.error("No structured data in response:", JSON.stringify(data).substring(0, 500));
+        throw new Error("AI did not return structured exam data");
+      }
+    }
+  }
+
+  const rawQuestions = (raw.questions || []) as Record<string, unknown>[];
+  return rawQuestions.filter(q => q && q.question);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -98,7 +241,6 @@ serve(async (req) => {
       throw new Error("count is required and must be positive");
     }
 
-    // Strong randomization to ensure different questions every time
     const seed = Math.floor(Math.random() * 100000);
     const timestamp = Date.now();
     const varietyInstructions = getVarietyInstructions();
@@ -112,161 +254,95 @@ serve(async (req) => {
       : null;
     const materialCount = materials?.length || 0;
 
-    let systemPrompt: string;
-    let userPrompt: string;
+    // Determine batch strategy: for <= 15 questions, single batch. For more, split into batches of ~15.
+    const MAX_PER_BATCH = 15;
+    let allQuestions: Record<string, unknown>[] = [];
 
     if (examType === 'SAT_FULL') {
-      systemPrompt = `You are an expert SAT exam generator. Use LaTeX notation for all math: \\( ... \\) for inline, $$ ... $$ for display. ${dynamicDirective}`;
-      userPrompt = `Generate a Full SAT Practice Exam with EXACTLY ${count} questions. Cover: Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar, Vocabulary. Structure: roughly half Reading/Writing, half Math. Each question must have exactly 4 options. Use LaTeX for all mathematical expressions.`;
-    } else if (materialContext) {
-      const qPerTopic = materialCount > 0 ? Math.floor(count / materialCount) : count;
-      systemPrompt = `You are an expert exam generator. Use LaTeX notation for math: \\( ... \\) for inline, $$ ... $$ for display. ${dynamicDirective}`;
-      userPrompt = `Generate EXACTLY ${count} multiple-choice questions based on these study materials:
+      // SAT: split into batches
+      const batches = Math.ceil(count / MAX_PER_BATCH);
+      const batchSizes = distributeCounts(count, batches);
 
-${materialContext}
+      for (let b = 0; b < batchSizes.length; b++) {
+        const batchCount = batchSizes[b];
+        if (batchCount <= 0) continue;
+        const batchSeed = Math.floor(Math.random() * 100000);
+        const systemPrompt = `You are an expert SAT exam generator. Use LaTeX notation for all math: \\( ... \\) for inline, $$ ... $$ for display. ${dynamicDirective} Batch seed: ${batchSeed}.`;
+        const userPrompt = `Generate EXACTLY ${batchCount} multiple-choice SAT questions. Cover: Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar, Vocabulary. Each question must have exactly 4 options (A, B, C, D). Use LaTeX for mathematical expressions. This is batch ${b + 1} of ${batchSizes.length} — make questions unique.`;
+
+        const batchQuestions = await generateBatch({ apiKey: GROQ_API_KEY, systemPrompt, userPrompt, count: batchCount });
+        allQuestions.push(...batchQuestions);
+      }
+    } else if (materialContext && materialCount > 0) {
+      // Material-based: distribute questions across materials
+      const distribution = distributeCounts(count, materialCount);
+      const materialsList = materials as { topic: string; content: string }[];
+
+      for (let m = 0; m < materialsList.length; m++) {
+        const batchCount = distribution[m];
+        if (batchCount <= 0) continue;
+        const mat = materialsList[m];
+        const batchSeed = Math.floor(Math.random() * 100000);
+        const systemPrompt = `You are an expert exam generator. Use LaTeX notation for math: \\( ... \\) for inline, $$ ... $$ for display. ${dynamicDirective} Batch seed: ${batchSeed}.`;
+        const userPrompt = `Generate EXACTLY ${batchCount} multiple-choice questions based on this study material:
+
+Topic: ${mat.topic}
+${mat.content?.substring(0, 5000) || ''}
 
 Subject: ${subject}, Grade: ${grade || 'General'}, Difficulty: ${difficulty}.
-Distribute ~${qPerTopic} questions per topic. Every topic must have at least 1 question. 
-IMPORTANT: Generate COMPLETELY DIFFERENT questions than any previous exam. Explore different angles, sub-topics, and difficulty variations within each topic. Use LaTeX for mathematical notation.`;
-    } else {
-      systemPrompt = `You are an expert exam generator. Use LaTeX notation for math: \\( ... \\) for inline, $$ ... $$ for display. ${dynamicDirective}`;
-      userPrompt = `Generate EXACTLY ${count} multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover DIVERSE sub-topics within ${subject}. Use LaTeX for all mathematical expressions. Make each question unique and different from typical exam questions.`;
-    }
+Generate COMPLETELY UNIQUE questions. Use LaTeX for math. Each question must have exactly 4 options (A, B, C, D).`;
 
-    const requestBody = JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      tools: [examTool],
-      tool_choice: { type: "function", function: { name: "create_exam" } },
-      temperature: 0.9 + Math.random() * 0.1,
-      max_tokens: 8000,
-    });
-
-    let raw: Record<string, unknown>;
-
-    const tryParseJson = (str: string): Record<string, unknown> => {
-      try {
-        return JSON.parse(str);
-      } catch {
-        const sanitized = str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
-        return JSON.parse(sanitized);
+        const batchQuestions = await generateBatch({ apiKey: GROQ_API_KEY, systemPrompt, userPrompt, count: batchCount });
+        allQuestions.push(...batchQuestions);
       }
-    };
 
-    const fetchHeaders = {
-      Authorization: `Bearer ${GROQ_API_KEY}`,
-      "Content-Type": "application/json",
-    };
-
-    // Try models in order: primary → fallback
-    const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
-    let response: Response | null = null;
-
-    for (const model of models) {
-      const bodyWithModel = JSON.stringify({
-        ...JSON.parse(requestBody),
-        model,
-      });
-      const maxRetries = 3;
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: fetchHeaders,
-          body: bodyWithModel,
-        });
-        if (response.status !== 429) break;
-        const waitMs = Math.pow(2, attempt) * 2000;
-        console.log(`Rate limited on ${model}, retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
-        await new Promise(r => setTimeout(r, waitMs));
-      }
-      if (response && response.status !== 429) {
-        console.log(`Using model: ${model}`);
-        break;
-      }
-      console.log(`Model ${model} exhausted retries, trying fallback...`);
-    }
-
-    if (!response || response.status === 429) {
-      return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Handle error responses (including 400 with failed_generation)
-    if (!response.ok) {
-      const errorBody = await response.text();
-      let failedGen: string | null = null;
-      try {
-        const errJson = JSON.parse(errorBody);
-        failedGen = errJson?.error?.failed_generation || null;
-      } catch { /* ignore */ }
-
-      if (failedGen) {
-        const jsonMatch = failedGen.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          raw = tryParseJson(jsonMatch[0]);
-        } else {
-          console.error("Groq API error:", response.status, errorBody);
-          throw new Error("Failed to generate exam questions");
-        }
-      } else {
-        console.error("Groq API error:", response.status, errorBody);
-        throw new Error("Failed to generate exam questions");
+      // If we didn't get enough from material batches, generate remaining as general
+      if (allQuestions.length < count) {
+        const remaining = count - allQuestions.length;
+        console.log(`Got ${allQuestions.length}/${count} from materials, generating ${remaining} more`);
+        const batchSeed = Math.floor(Math.random() * 100000);
+        const systemPrompt = `You are an expert exam generator. Use LaTeX notation for math: \\( ... \\) for inline, $$ ... $$ for display. ${dynamicDirective} Batch seed: ${batchSeed}.`;
+        const userPrompt = `Generate EXACTLY ${remaining} multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Each question must have exactly 4 options (A, B, C, D). Use LaTeX for math. Make each question unique.`;
+        const extraQuestions = await generateBatch({ apiKey: GROQ_API_KEY, systemPrompt, userPrompt, count: remaining });
+        allQuestions.push(...extraQuestions);
       }
     } else {
-      const data = await response.json();
-      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      // No materials: split into batches for large counts
+      const batches = Math.ceil(count / MAX_PER_BATCH);
+      const batchSizes = distributeCounts(count, batches);
 
-      if (toolCall && toolCall.function?.name === "create_exam") {
-        raw = tryParseJson(toolCall.function.arguments);
-      } else {
-        // Fallback: try to extract JSON from content (common with smaller models)
-        const content = data.choices?.[0]?.message?.content || "";
-        const jsonMatch = content.match(/\{[\s\S]*"questions"[\s\S]*\}/);
-        if (jsonMatch) {
-          raw = tryParseJson(jsonMatch[0]);
-        } else {
-          console.error("No structured data in response:", JSON.stringify(data).substring(0, 500));
-          throw new Error("AI did not return structured exam data");
-        }
+      for (let b = 0; b < batchSizes.length; b++) {
+        const batchCount = batchSizes[b];
+        if (batchCount <= 0) continue;
+        const batchSeed = Math.floor(Math.random() * 100000);
+        const systemPrompt = `You are an expert exam generator. Use LaTeX notation for math: \\( ... \\) for inline, $$ ... $$ for display. ${dynamicDirective} Batch seed: ${batchSeed}.`;
+        const userPrompt = `Generate EXACTLY ${batchCount} multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover DIVERSE sub-topics within ${subject}. Each question must have exactly 4 options (A, B, C, D). Use LaTeX for math. This is batch ${b + 1} of ${batchSizes.length} — make questions unique and different.`;
+
+        const batchQuestions = await generateBatch({ apiKey: GROQ_API_KEY, systemPrompt, userPrompt, count: batchCount });
+        allQuestions.push(...batchQuestions);
+      }
+
+      // Fill remaining if needed
+      if (allQuestions.length < count) {
+        const remaining = count - allQuestions.length;
+        console.log(`Got ${allQuestions.length}/${count}, generating ${remaining} more`);
+        const batchSeed = Math.floor(Math.random() * 100000);
+        const systemPrompt = `You are an expert exam generator. Use LaTeX notation for math: \\( ... \\) for inline, $$ ... $$ for display. ${dynamicDirective} Batch seed: ${batchSeed}.`;
+        const userPrompt = `Generate EXACTLY ${remaining} multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Each question must have exactly 4 options (A, B, C, D). Use LaTeX for math.`;
+        const extraQuestions = await generateBatch({ apiKey: GROQ_API_KEY, systemPrompt, userPrompt, count: remaining });
+        allQuestions.push(...extraQuestions);
       }
     }
 
-    // Convert tool-call format to the expected frontend format
-    const rawQuestions = (raw.questions || []) as Record<string, unknown>[];
-    const questions = rawQuestions.filter(q => q && q.question).map((q, idx: number) => {
-      // Handle tool-call format (option_a, option_b, etc.)
-      if (q.option_a) {
-        const ca = String(q.correct_answer || "A");
-        const answerKey = `option_${ca.toLowerCase()}`;
-        return {
-          id: idx + 1,
-          type: "multiple_choice",
-          question: String(q.question),
-          options: [`A) ${q.option_a}`, `B) ${q.option_b}`, `C) ${q.option_c}`, `D) ${q.option_d}`],
-          correct_answer: `${ca}) ${q[answerKey] || q.option_a}`,
-        };
-      }
-      // Handle legacy/content-extracted format
-      const options = (q.options as string[]) || [];
-      const correctAnswer = q.correct_answer ? String(q.correct_answer) : (options[0] || "A");
-      return {
-        id: idx + 1,
-        type: String(q.type || "multiple_choice"),
-        question: String(q.question),
-        options,
-        correct_answer: correctAnswer,
-      };
-    });
+    // Convert all to frontend format
+    const questions = allQuestions.map((q, idx) => convertRawQuestion(q, idx));
+
+    console.log(`Generated ${questions.length}/${count} questions total`);
 
     const result = {
-      exam_title: raw.exam_title || `${subject} ${difficulty} Exam`,
-      grade_level: raw.grade_level || grade || "General",
-      subject: raw.subject || subject,
+      exam_title: `${subject || 'SAT'} ${difficulty || ''} Exam`.trim(),
+      grade_level: grade || "General",
+      subject: subject || "Mixed",
       total_questions: questions.length,
       questions,
     };
@@ -276,6 +352,12 @@ IMPORTANT: Generate COMPLETELY DIFFERENT questions than any previous exam. Explo
     });
   } catch (error) {
     console.error("Generate exam error:", error);
+    if (error instanceof Error && error.message === "RATE_LIMITED") {
+      return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

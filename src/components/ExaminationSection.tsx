@@ -156,9 +156,9 @@ function validateExamJSON(data: unknown): ExamJSON | null {
   if (typeof exam.exam_title !== 'string' || exam.exam_title.length === 0) return null;
   if (typeof exam.grade_level !== 'string' || exam.grade_level.length === 0) return null;
   if (typeof exam.subject !== 'string' || exam.subject.length === 0) return null;
-  if (typeof exam.total_questions !== 'number' || exam.total_questions <= 0) return null;
-  if (!Array.isArray(exam.questions)) return null;
-  if (exam.total_questions !== exam.questions.length) return null;
+  if (!Array.isArray(exam.questions) || exam.questions.length === 0) return null;
+  // Accept whatever count the AI actually returned (don't reject partial results)
+  exam.total_questions = exam.questions.length;
   
   for (let i = 0; i < exam.questions.length; i++) {
     if (!validateQuestion(exam.questions[i], i)) return null;
