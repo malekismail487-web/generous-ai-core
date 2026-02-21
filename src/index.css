@@ -441,3 +441,32 @@
   -webkit-text-fill-color: unset !important;
   color: hsl(var(--primary)) !important;
 }
+
+/* ═══════════════════════════════════════════
+   KaTeX — Ensure math renders with proper fonts
+   ═══════════════════════════════════════════ */
+.katex {
+  font-size: 1.1em !important;
+}
+
+.prose .katex,
+.prose-sm .katex {
+  font-family: KaTeX_Main, 'Times New Roman', serif !important;
+  font-size: 1.1em !important;
+  line-height: 1.4 !important;
+}
+
+.katex .katex-html {
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.katex-display {
+  margin: 0.75rem 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.katex-display > .katex {
+  text-align: center;
+}

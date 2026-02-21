@@ -150,35 +150,37 @@ IMPORTANT: Generate COMPLETELY DIFFERENT questions than any previous exam. Explo
       "Content-Type": "application/json",
     };
 
-    // Retry with exponential backoff for rate limits
+    // Try models in order: primary → fallback
+    const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
     let response: Response | null = null;
-    const maxRetries = 3;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: fetchHeaders,
-        body: requestBody,
+
+    for (const model of models) {
+      const bodyWithModel = JSON.stringify({
+        ...JSON.parse(requestBody),
+        model,
       });
-      if (response.status !== 429 || attempt === maxRetries) break;
-      const waitMs = Math.min(2000 * Math.pow(2, attempt), 15000);
-      await new Promise(r => setTimeout(r, waitMs));
+      const maxRetries = 3;
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: fetchHeaders,
+          body: bodyWithModel,
+        });
+        if (response.status !== 429) break;
+        const waitMs = Math.pow(2, attempt) * 2000;
+        console.log(`Rate limited on ${model}, retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+        await new Promise(r => setTimeout(r, waitMs));
+      }
+      if (response && response.status !== 429) {
+        console.log(`Using model: ${model}`);
+        break;
+      }
+      console.log(`Model ${model} exhausted retries, trying fallback...`);
     }
 
-    let raw: Record<string, unknown>;
-
-    const tryParseJson = (str: string): Record<string, unknown> => {
-      try {
-        return JSON.parse(str);
-      } catch {
-        // Sanitize bad LaTeX backslashes then retry
-        const sanitized = str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
-        return JSON.parse(sanitized);
-      }
-    };
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
+    if (!response || (!response.ok && response.status !== 400)) {
+      if (response?.status === 429) {
+        return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
