@@ -66,65 +66,85 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
 
     const userPrompt = `The teacher created an assignment titled "${title}" for the subject "${subject}" at the ${gradeLevel || 'general'} level. Generate exactly ${questionCount} multiple-choice questions that are specifically about "${title}". ${variationHint}${description ? ` The teacher also provided this description: "${description}"` : ''}`;
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "create_assignment_questions",
-              description: "Create a set of multiple-choice assignment questions",
-              parameters: {
-                type: "object",
-                properties: {
-                  title: { type: "string", description: "A suitable title for the assignment" },
-                  questions: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        questionTitle: { type: "string", description: "The question text" },
-                        optionA: { type: "string", description: "Option A text" },
-                        optionB: { type: "string", description: "Option B text" },
-                        optionC: { type: "string", description: "Option C text" },
-                        optionD: { type: "string", description: "Option D text" },
-                        correctAnswer: { type: "string", enum: ["A", "B", "C", "D"], description: "The correct answer letter" },
-                      },
-                      required: ["questionTitle", "optionA", "optionB", "optionC", "optionD", "correctAnswer"],
-                      additionalProperties: false,
-                    },
+    const toolDef = [
+      {
+        type: "function",
+        function: {
+          name: "create_assignment_questions",
+          description: "Create a set of multiple-choice assignment questions",
+          parameters: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "A suitable title for the assignment" },
+              questions: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    questionTitle: { type: "string", description: "The question text" },
+                    optionA: { type: "string", description: "Option A text" },
+                    optionB: { type: "string", description: "Option B text" },
+                    optionC: { type: "string", description: "Option C text" },
+                    optionD: { type: "string", description: "Option D text" },
+                    correctAnswer: { type: "string", enum: ["A", "B", "C", "D"], description: "The correct answer letter" },
                   },
+                  required: ["questionTitle", "optionA", "optionB", "optionC", "optionD", "correctAnswer"],
+                  additionalProperties: false,
                 },
-                required: ["title", "questions"],
-                additionalProperties: false,
               },
             },
+            required: ["title", "questions"],
+            additionalProperties: false,
           },
-        ],
-        tool_choice: { type: "function", function: { name: "create_assignment_questions" } },
-        temperature: 0.85 + Math.random() * 0.1,
-      }),
-    });
+        },
+      },
+    ];
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
+    // Try models in order: primary → fallback
+    const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+    let response: Response | null = null;
+
+    for (const model of models) {
+      const maxRetries = 3;
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${GROQ_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            tools: toolDef,
+            tool_choice: { type: "function", function: { name: "create_assignment_questions" } },
+            temperature: 0.85 + Math.random() * 0.1,
+          }),
+        });
+        if (response.status !== 429) break;
+        const waitMs = Math.pow(2, attempt) * 2000;
+        console.log(`Rate limited on ${model}, retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+        await new Promise(r => setTimeout(r, waitMs));
+      }
+      if (response && response.status !== 429) {
+        console.log(`Using model: ${model}`);
+        break;
+      }
+      console.log(`Model ${model} exhausted retries, trying fallback...`);
+    }
+
+    if (!response || !response.ok) {
+      if (response?.status === 429) {
+        return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      const errorText = await response?.text() || "No response";
+      console.error("AI gateway error:", response?.status, errorText);
       throw new Error("Failed to generate questions");
     }
 

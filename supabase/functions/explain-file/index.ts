@@ -79,50 +79,62 @@ Deliver a complete, structured educational lecture explaining everything in the 
 - Session ID: ${randomSeed} — Generate a fresh, unique explanation each time
 ${adaptiveLevel === 'beginner' ? '\n## Adaptive Level: BEGINNER\nUse very simple vocabulary, short sentences, basic analogies, and explain every concept from scratch. Avoid jargon entirely.' : adaptiveLevel === 'advanced' ? '\n## Adaptive Level: ADVANCED\nUse precise technical language, go deeper into theory, include challenging details and connections to broader concepts.' : '\n## Adaptive Level: INTERMEDIATE\nUse standard academic language with moderate detail and practical examples.'}`;
 
+    // Try models in order: primary → fallback
+    const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
     let response: Response | null = null;
-    const maxRetries = 3;
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${GROQ_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            { role: "system", content: systemPrompt },
-            {
-              role: "user",
-              content: `File: "${fileName}"\n\nContent:\n${fileContent}`,
-            },
-          ],
-          temperature: 0.7 + Math.random() * 0.2,
-          stream: true,
-        }),
-      });
 
-      if (response.status !== 429 || attempt === maxRetries - 1) break;
-      const waitMs = Math.pow(2, attempt) * 2000;
-      await new Promise((r) => setTimeout(r, waitMs));
+    for (const model of models) {
+      const maxRetries = 3;
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${GROQ_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              {
+                role: "user",
+                content: `File: "${fileName}"\n\nContent:\n${fileContent}`,
+              },
+            ],
+            temperature: 0.7 + Math.random() * 0.2,
+            stream: true,
+          }),
+        });
+
+        if (response.status !== 429) break;
+        const waitMs = Math.pow(2, attempt) * 2000;
+        console.log(`Rate limited on ${model}, retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+        await new Promise((r) => setTimeout(r, waitMs));
+      }
+
+      if (response && response.status !== 429) {
+        console.log(`Using model: ${model}`);
+        break;
+      }
+      console.log(`Model ${model} exhausted retries, trying fallback...`);
     }
 
-    if (!response!.ok) {
-      if (response!.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
+    if (!response || !response.ok) {
+      if (response?.status === 429) {
+        return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errorText = await response!.text();
-      console.error("AI gateway error:", response!.status, errorText);
+      const errorText = await response?.text() || "No response";
+      console.error("AI gateway error:", response?.status, errorText);
       return new Response(JSON.stringify({ error: "AI error" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(response!.body, {
+    return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
