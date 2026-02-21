@@ -189,15 +189,15 @@ IMPORTANT: Generate COMPLETELY DIFFERENT questions than any previous exam. Explo
       console.log(`Model ${model} exhausted retries, trying fallback...`);
     }
 
-    if (!response || (!response.ok && response.status !== 400)) {
-      if (response?.status === 429) {
-        return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    if (!response || response.status === 429) {
+      return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-      // Groq sometimes returns 400 with tool_use_failed but includes valid generated content
+    // Handle error responses (including 400 with failed_generation)
+    if (!response.ok) {
       const errorBody = await response.text();
       let failedGen: string | null = null;
       try {
@@ -221,14 +221,16 @@ IMPORTANT: Generate COMPLETELY DIFFERENT questions than any previous exam. Explo
       const data = await response.json();
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
 
-      if (toolCall && toolCall.function.name === "create_exam") {
+      if (toolCall && toolCall.function?.name === "create_exam") {
         raw = tryParseJson(toolCall.function.arguments);
       } else {
+        // Fallback: try to extract JSON from content (common with smaller models)
         const content = data.choices?.[0]?.message?.content || "";
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        const jsonMatch = content.match(/\{[\s\S]*"questions"[\s\S]*\}/);
         if (jsonMatch) {
           raw = tryParseJson(jsonMatch[0]);
         } else {
+          console.error("No structured data in response:", JSON.stringify(data).substring(0, 500));
           throw new Error("AI did not return structured exam data");
         }
       }
@@ -236,25 +238,28 @@ IMPORTANT: Generate COMPLETELY DIFFERENT questions than any previous exam. Explo
 
     // Convert tool-call format to the expected frontend format
     const rawQuestions = (raw.questions || []) as Record<string, unknown>[];
-    const questions = rawQuestions.map((q, idx: number) => {
+    const questions = rawQuestions.filter(q => q && q.question).map((q, idx: number) => {
       // Handle tool-call format (option_a, option_b, etc.)
       if (q.option_a) {
         const ca = String(q.correct_answer || "A");
+        const answerKey = `option_${ca.toLowerCase()}`;
         return {
           id: idx + 1,
           type: "multiple_choice",
           question: String(q.question),
           options: [`A) ${q.option_a}`, `B) ${q.option_b}`, `C) ${q.option_c}`, `D) ${q.option_d}`],
-          correct_answer: `${ca}) ${q[`option_${ca.toLowerCase()}`]}`,
+          correct_answer: `${ca}) ${q[answerKey] || q.option_a}`,
         };
       }
-      // Handle legacy format (options array, correct_answer as full string)
+      // Handle legacy/content-extracted format
+      const options = (q.options as string[]) || [];
+      const correctAnswer = q.correct_answer ? String(q.correct_answer) : (options[0] || "A");
       return {
         id: idx + 1,
         type: String(q.type || "multiple_choice"),
         question: String(q.question),
-        options: q.options as string[],
-        correct_answer: String(q.correct_answer),
+        options,
+        correct_answer: correctAnswer,
       };
     });
 
