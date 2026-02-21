@@ -145,6 +145,17 @@ IMPORTANT: Generate COMPLETELY DIFFERENT questions than any previous exam. Explo
       max_tokens: 8000,
     });
 
+    let raw: Record<string, unknown>;
+
+    const tryParseJson = (str: string): Record<string, unknown> => {
+      try {
+        return JSON.parse(str);
+      } catch {
+        const sanitized = str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+        return JSON.parse(sanitized);
+      }
+    };
+
     const fetchHeaders = {
       Authorization: `Bearer ${GROQ_API_KEY}`,
       "Content-Type": "application/json",
