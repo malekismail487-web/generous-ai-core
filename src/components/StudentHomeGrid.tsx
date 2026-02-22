@@ -20,6 +20,8 @@ import {
   Trophy,
   Timer,
   BookOpenCheck,
+  Megaphone,
+  MapPin,
 } from 'lucide-react';
 
 export type GridAction =
@@ -38,6 +40,8 @@ export type GridAction =
   | 'leaderboard'
   | 'focustimer'
   | 'aiplans'
+  | 'announcements'
+  | 'trips'
   | 'settings';
 
 interface StudentHomeGridProps {
@@ -66,6 +70,8 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
     { id: 'weeklyplan', icon: Calendar, label: t('Weekly Plan', 'الخطة الأسبوعية'), color: 'from-indigo-500 to-blue-600', iconBg: 'bg-indigo-500/15 border-indigo-500/30', schoolOnly: true },
     { id: 'chat', icon: MessageSquare, label: t('AI Tutor', 'المعلم الذكي'), color: 'from-primary to-accent', iconBg: 'bg-primary/15 border-primary/30' },
     { id: 'podcasts', icon: Podcast, label: t('AI Podcasts', 'بودكاست AI'), color: 'from-fuchsia-500/15 to-pink-600', iconBg: 'bg-fuchsia-500/15 border-fuchsia-500/30' },
+    { id: 'announcements', icon: Megaphone, label: t('Announcements', 'الإعلانات'), color: 'from-amber-500 to-orange-600', iconBg: 'bg-amber-500/15 border-amber-500/30', schoolOnly: true },
+    { id: 'trips', icon: MapPin, label: t('Trips', 'الرحلات'), color: 'from-teal-500 to-emerald-600', iconBg: 'bg-teal-500/15 border-teal-500/30', schoolOnly: true },
     { id: 'settings', icon: Settings, label: t('Settings', 'الإعدادات'), color: 'from-slate-500 to-gray-600', iconBg: 'bg-slate-500/15 border-slate-500/30' },
   ];
 

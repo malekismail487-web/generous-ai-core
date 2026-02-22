@@ -18,6 +18,8 @@ import { PodcastsSection } from "@/components/PodcastsSection";
 
 import { AssignmentsSection } from "@/components/AssignmentsSection";
 import { StudentReportCards } from "@/components/student/StudentReportCards";
+import { AnnouncementsViewer } from "@/components/AnnouncementsViewer";
+import { TripsViewer } from "@/components/TripsViewer";
 import { StudyBuddy } from "@/components/student/StudyBuddy";
 import { GoalTracker } from "@/components/student/GoalTracker";
 import { Leaderboard } from "@/components/student/Leaderboard";
@@ -276,6 +278,10 @@ const Index = () => {
         return <FocusTimer />;
       case 'aiplans':
         return <AIStudyPlan />;
+      case 'announcements':
+        return <AnnouncementsViewer />;
+      case 'trips':
+        return <TripsViewer />;
       default:
         return null;
     }
@@ -313,9 +319,11 @@ const Index = () => {
                   : activeTab === 'flashcards' ? t('Flashcards', 'البطاقات التعليمية')
                   : activeTab === 'examination' ? t('Exams', 'الاختبارات')
                   : activeTab === 'assignments' ? t('Assignments', 'الواجبات')
-                  : activeTab === 'reports' ? t('Report Cards', 'كشوف الدرجات')
-                  : activeTab === 'podcasts' ? t('AI Podcasts', 'بودكاست AI')
-                  : activeTab}
+                   : activeTab === 'reports' ? t('Report Cards', 'كشوف الدرجات')
+                   : activeTab === 'podcasts' ? t('AI Podcasts', 'بودكاست AI')
+                   : activeTab === 'announcements' ? t('Announcements', 'الإعلانات')
+                   : activeTab === 'trips' ? t('Trips', 'الرحلات')
+                   : activeTab}
               </span>
             </div>
           </div>
