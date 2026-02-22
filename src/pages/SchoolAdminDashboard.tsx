@@ -27,7 +27,8 @@ import {
   FileText,
   Calendar,
   Settings,
-  Globe
+  Globe,
+  MapPin
 } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { Button } from '@/components/ui/button';
@@ -101,6 +102,13 @@ interface Announcement {
   created_at: string;
 }
 
+interface Trip {
+  id: string;
+  title: string;
+  body: string;
+  created_at: string;
+}
+
 interface ActivityLog {
   id: string;
   user_id: string;
@@ -142,6 +150,13 @@ export default function SchoolAdminDashboard() {
   const [newAnnouncementTitle, setNewAnnouncementTitle] = useState('');
   const [newAnnouncementBody, setNewAnnouncementBody] = useState('');
   const [creatingAnnouncement, setCreatingAnnouncement] = useState(false);
+
+  // Trips state
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loadingTrips, setLoadingTrips] = useState(false);
+  const [newTripTitle, setNewTripTitle] = useState('');
+  const [newTripBody, setNewTripBody] = useState('');
+  const [creatingTrip, setCreatingTrip] = useState(false);
 
   // Activity logs state
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
@@ -223,6 +238,24 @@ export default function SchoolAdminDashboard() {
     setLoadingAnnouncements(false);
   }, [school]);
 
+  const fetchTrips = useCallback(async () => {
+    if (!school) return;
+    setLoadingTrips(true);
+    
+    const { data, error } = await supabase
+      .from('trips')
+      .select('*')
+      .eq('school_id', school.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching trips:', error);
+    } else {
+      setTrips((data || []) as Trip[]);
+    }
+    setLoadingTrips(false);
+  }, [school]);
+
   const fetchActivityLogs = useCallback(async () => {
     if (!school) return;
     setLoadingLogs(true);
@@ -248,9 +281,10 @@ export default function SchoolAdminDashboard() {
       fetchInviteCodes();
       fetchInviteRequests();
       fetchAnnouncements();
+      fetchTrips();
       fetchActivityLogs();
     }
-  }, [isSchoolAdmin, school, fetchUsers, fetchInviteCodes, fetchInviteRequests, fetchAnnouncements, fetchActivityLogs]);
+  }, [isSchoolAdmin, school, fetchUsers, fetchInviteCodes, fetchInviteRequests, fetchAnnouncements, fetchTrips, fetchActivityLogs]);
 
   const generateInviteCode = async () => {
     if (!school || !profile) return;
@@ -420,6 +454,47 @@ export default function SchoolAdminDashboard() {
     }
   };
 
+  const createTrip = async () => {
+    if (!school || !profile || !newTripTitle || !newTripBody) {
+      toast({ variant: 'destructive', title: t('error') });
+      return;
+    }
+
+    setCreatingTrip(true);
+    const { error } = await supabase
+      .from('trips')
+      .insert({
+        school_id: school.id,
+        title: newTripTitle,
+        body: newTripBody,
+        created_by: profile.id
+      });
+
+    if (error) {
+      toast({ variant: 'destructive', title: t('error') });
+    } else {
+      toast({ title: t('success') });
+      setNewTripTitle('');
+      setNewTripBody('');
+      fetchTrips();
+    }
+    setCreatingTrip(false);
+  };
+
+  const deleteTrip = async (tripId: string) => {
+    const { error } = await supabase
+      .from('trips')
+      .delete()
+      .eq('id', tripId);
+
+    if (error) {
+      toast({ variant: 'destructive', title: t('error') });
+    } else {
+      toast({ title: t('success') });
+      fetchTrips();
+    }
+  };
+
   const exportUsersCSV = () => {
     const csvContent = [
       [t('name'), t('role'), t('grade'), t('status')].join(','),
@@ -525,7 +600,7 @@ export default function SchoolAdminDashboard() {
         )}
 
         <Tabs defaultValue="codes" className="space-y-6">
-          <TabsList className="grid grid-cols-8 w-full max-w-5xl">
+          <TabsList className="grid grid-cols-9 w-full max-w-5xl">
             <TabsTrigger value="codes" className="gap-2">
               <Key className="w-4 h-4" />
               <span className="hidden sm:inline">{t('codes')}</span>
@@ -552,6 +627,10 @@ export default function SchoolAdminDashboard() {
             <TabsTrigger value="announcements" className="gap-2">
               <Megaphone className="w-4 h-4" />
               <span className="hidden sm:inline">{t('announce')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="trips" className="gap-2">
+              <MapPin className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('trips')}</span>
             </TabsTrigger>
             <TabsTrigger value="logs" className="gap-2">
               <Clock className="w-4 h-4" />
@@ -945,7 +1024,73 @@ export default function SchoolAdminDashboard() {
             </div>
           </TabsContent>
 
-          {/* Report Cards Tab */}
+          {/* Trips Tab */}
+          <TabsContent value="trips" className="space-y-4">
+            <h2 className="text-lg font-semibold">{t('trips')}</h2>
+
+            {/* Create Trip Form */}
+            <div className="glass-effect rounded-xl p-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="trip-title">{t('title')}</Label>
+                <Input
+                  id="trip-title"
+                  value={newTripTitle}
+                  onChange={(e) => setNewTripTitle(e.target.value)}
+                  placeholder={t('tripTitle')}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="trip-body">{t('message')}</Label>
+                <Textarea
+                  id="trip-body"
+                  value={newTripBody}
+                  onChange={(e) => setNewTripBody(e.target.value)}
+                  placeholder={t('writeTrip')}
+                  rows={4}
+                />
+              </div>
+              <Button
+                onClick={createTrip}
+                disabled={creatingTrip || !newTripTitle || !newTripBody}
+              >
+                {creatingTrip ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MapPin className="w-4 h-4 mr-2" />}
+                {t('postTrip')}
+              </Button>
+            </div>
+
+            {/* Trips List */}
+            <div className="space-y-4">
+              {trips.length === 0 ? (
+                <div className="glass-effect rounded-xl p-8 text-center">
+                  <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">{t('noTripsYet')}</p>
+                </div>
+              ) : (
+                trips.map((trip) => (
+                  <div key={trip.id} className="glass-effect rounded-xl p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold">{trip.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(trip.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteTrip(trip.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <p className="mt-2 text-muted-foreground whitespace-pre-wrap">{trip.body}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
           <TabsContent value="report-cards" className="space-y-4">
             <ReportCardCreator schoolId={school.id} adminId={profile.id} />
           </TabsContent>
