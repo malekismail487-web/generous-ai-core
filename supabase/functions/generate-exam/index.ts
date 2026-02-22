@@ -81,9 +81,24 @@ const examTool = {
 function tryParseJson(str: string): Record<string, unknown> {
   try {
     return JSON.parse(str);
-  } catch {
-    const sanitized = str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
-    return JSON.parse(sanitized);
+  } catch (e1) {
+    try {
+      // Attempt 1: double-escape lone backslashes
+      const sanitized = str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+      return JSON.parse(sanitized);
+    } catch (e2) {
+      try {
+        // Attempt 2: remove all backslashes that aren't valid JSON escapes
+        const stripped = str.replace(/\\(?!["\\/bfnrtu])/g, '');
+        return JSON.parse(stripped);
+      } catch (e3) {
+        // Attempt 3: aggressively remove all non-standard chars and try
+        const aggressive = str
+          .replace(/[\x00-\x1F\x7F]/g, ' ')  // control chars
+          .replace(/\\(?!["\\/bfnrtu])/g, ''); // bad escapes
+        return JSON.parse(aggressive);
+      }
+    }
   }
 }
 
