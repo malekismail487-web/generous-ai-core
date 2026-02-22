@@ -26,6 +26,7 @@ import { AIStudyPlan } from "@/components/student/AIStudyPlan";
 import { StudentHomeGrid, GridAction } from "@/components/StudentHomeGrid";
 import { WeeklyPlanSection } from "@/components/WeeklyPlanSection";
 import { BannerAd } from "@/components/BannerAd";
+import { FloatingTimer } from "@/components/student/FloatingTimer";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
@@ -283,7 +284,11 @@ const Index = () => {
   return (
     <div className="h-screen bg-background relative flex flex-col overflow-hidden">
       <AnimatedBackground />
-      
+
+      {/* Persistent floating timer - shows when timer is active on any page except focustimer */}
+      {activeTab !== 'focustimer' && (
+        <FloatingTimer onNavigate={() => setActiveTab('focustimer')} />
+      )}
       {/* Top bar - only show on sub-pages for back navigation */}
       {isSubPage && (
         <header className="fixed top-0 left-0 right-0 z-50 h-14 glass-effect-strong border-b border-border/30">
