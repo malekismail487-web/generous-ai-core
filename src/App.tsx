@@ -20,6 +20,7 @@ import PendingApprovalPage from "./pages/PendingApprovalPage";
 import StudentAssignmentTake from "./pages/StudentAssignmentTake";
 import StudentAssignmentResults from "./pages/StudentAssignmentResults";
 import ApiKeySetup from "./pages/ApiKeySetup";
+import IQTest from "./pages/IQTest";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
               />
               <Route path="/pending-approval" element={<PendingApprovalPage />} />
               <Route path="/setup-api-key" element={<ApiKeySetup />} />
+              <Route path="/iq-test" element={<IQTest />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

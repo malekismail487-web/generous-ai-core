@@ -38,8 +38,10 @@ export default function ApiKeySetup() {
 
   const getDestination = () => {
     const dest = sessionStorage.getItem('apiKeySetupReturn') || '/';
+    // After API key setup, go to IQ test (which will check if already done)
+    sessionStorage.setItem('iqTestReturn', dest);
     sessionStorage.removeItem('apiKeySetupReturn');
-    return dest;
+    return '/iq-test';
   };
 
   const handleSkip = () => {
