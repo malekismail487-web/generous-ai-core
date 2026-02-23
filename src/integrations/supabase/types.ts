@@ -819,6 +819,111 @@ export type Database = {
           },
         ]
       }
+      iq_test_results: {
+        Row: {
+          abstract_thinking_score: number | null
+          answers_json: Json
+          completed_at: string
+          created_at: string
+          estimated_iq: number | null
+          id: string
+          learning_pace: string | null
+          logical_reasoning_score: number | null
+          mathematical_ability_score: number | null
+          pattern_recognition_score: number | null
+          processing_speed_score: number | null
+          score: number
+          spatial_reasoning_score: number | null
+          total_questions: number
+          user_id: string
+          verbal_reasoning_score: number | null
+        }
+        Insert: {
+          abstract_thinking_score?: number | null
+          answers_json?: Json
+          completed_at?: string
+          created_at?: string
+          estimated_iq?: number | null
+          id?: string
+          learning_pace?: string | null
+          logical_reasoning_score?: number | null
+          mathematical_ability_score?: number | null
+          pattern_recognition_score?: number | null
+          processing_speed_score?: number | null
+          score?: number
+          spatial_reasoning_score?: number | null
+          total_questions?: number
+          user_id: string
+          verbal_reasoning_score?: number | null
+        }
+        Update: {
+          abstract_thinking_score?: number | null
+          answers_json?: Json
+          completed_at?: string
+          created_at?: string
+          estimated_iq?: number | null
+          id?: string
+          learning_pace?: string | null
+          logical_reasoning_score?: number | null
+          mathematical_ability_score?: number | null
+          pattern_recognition_score?: number | null
+          processing_speed_score?: number | null
+          score?: number
+          spatial_reasoning_score?: number | null
+          total_questions?: number
+          user_id?: string
+          verbal_reasoning_score?: number | null
+        }
+        Relationships: []
+      }
+      learning_style_profiles: {
+        Row: {
+          conceptual_score: number | null
+          created_at: string
+          dominant_style: string | null
+          id: string
+          kinesthetic_score: number | null
+          last_analyzed_at: string | null
+          logical_score: number | null
+          secondary_style: string | null
+          total_interactions: number | null
+          updated_at: string
+          user_id: string
+          verbal_score: number | null
+          visual_score: number | null
+        }
+        Insert: {
+          conceptual_score?: number | null
+          created_at?: string
+          dominant_style?: string | null
+          id?: string
+          kinesthetic_score?: number | null
+          last_analyzed_at?: string | null
+          logical_score?: number | null
+          secondary_style?: string | null
+          total_interactions?: number | null
+          updated_at?: string
+          user_id: string
+          verbal_score?: number | null
+          visual_score?: number | null
+        }
+        Update: {
+          conceptual_score?: number | null
+          created_at?: string
+          dominant_style?: string | null
+          id?: string
+          kinesthetic_score?: number | null
+          last_analyzed_at?: string | null
+          logical_score?: number | null
+          secondary_style?: string | null
+          total_interactions?: number | null
+          updated_at?: string
+          user_id?: string
+          verbal_score?: number | null
+          visual_score?: number | null
+        }
+        Relationships: []
+      }
       lesson_plans: {
         Row: {
           activities: string | null
@@ -1750,6 +1855,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_activity_log: {
+        Row: {
+          activity_type: string
+          category: string
+          created_at: string
+          details_json: Json | null
+          duration_seconds: number | null
+          id: string
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          category?: string
+          created_at?: string
+          details_json?: Json | null
+          duration_seconds?: number | null
+          id?: string
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          category?: string
+          created_at?: string
+          details_json?: Json | null
+          duration_seconds?: number | null
+          id?: string
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_api_keys: {
         Row: {

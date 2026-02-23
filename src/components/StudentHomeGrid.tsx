@@ -2,6 +2,7 @@ import { useStreak } from '@/hooks/useStreak';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { Progress } from '@/components/ui/progress';
+import { LearningProfileCard } from '@/components/student/LearningProfileCard';
 import {
   MessageSquare,
   Layers,
@@ -123,6 +124,11 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Learning Profile Card */}
+      <div className="px-4 mb-4">
+        <LearningProfileCard />
       </div>
 
       {/* Grid of features */}

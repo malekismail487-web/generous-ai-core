@@ -570,7 +570,16 @@ export function ExaminationSection() {
             <div className="text-4xl font-bold gradient-text mb-1">{percentage}%</div>
             <p className="text-muted-foreground text-sm">{correct} out of {total} correct</p>
           </div>
-          <Button onClick={handleReset}>Start New Exam</Button>
+          <div className="space-y-2">
+            <Button onClick={handleReset} className="w-full">Start New Exam</Button>
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={() => window.location.href = '/'}
+            >
+              Back to App
+            </Button>
+          </div>
         </div>
       </div>
     );
