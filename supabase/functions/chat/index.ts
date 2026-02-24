@@ -67,7 +67,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, enableWebSearch, language, backgroundContext, adaptiveLevel, systemPrompt: customSystemPrompt } = await req.json();
+    const { messages, enableWebSearch, language, backgroundContext, adaptiveLevel, learningStyle, systemPrompt: customSystemPrompt } = await req.json();
     
     const userKey = await getUserApiKey(req.headers.get("authorization"));
     const GROQ_API_KEY = userKey || Deno.env.get("GROQ_API_KEY");
@@ -87,6 +87,11 @@ serve(async (req) => {
         advanced: `\n\n## Student Level: ADVANCED\nThis student is at an advanced level. Use precise technical language, go deeper into theory, include challenging examples, edge cases, and connections to broader concepts. Push their understanding further.`,
       };
       systemPrompt += levelGuides[adaptiveLevel] || levelGuides.intermediate;
+    }
+
+    // Inject learning style personalization
+    if (!customSystemPrompt && learningStyle) {
+      systemPrompt += `\n\n## Learning Style Personalization\n${learningStyle}`;
     }
 
     if (language === 'ar') {
