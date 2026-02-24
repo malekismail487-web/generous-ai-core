@@ -36,6 +36,8 @@ import { useNotes } from "@/hooks/useNotes";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { useThemeLanguage } from "@/hooks/useThemeLanguage";
 import { useAdaptiveLevel } from "@/hooks/useAdaptiveLevel";
+import { useLearningStyle } from "@/hooks/useLearningStyle";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { Navigate } from "react-router-dom";
 import { Loader2, ArrowLeft, Sparkles, Menu, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -61,6 +63,8 @@ const Index = () => {
   } = useRoleGuard();
   const { t, language } = useThemeLanguage();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
+  const { getLearningStylePrompt, recalculate: recalculateLearningStyle } = useLearningStyle();
+  const { trackPageVisit } = useActivityTracker();
 
   const {
     conversations,
@@ -99,6 +103,20 @@ const Index = () => {
     scrollToBottom();
   }, [localMessages, scrollToBottom]);
 
+  // Track page visits and recalculate learning style periodically
+  useEffect(() => {
+    if (activeTab !== 'home' && activeTab !== 'profile') {
+      trackPageVisit(activeTab);
+    }
+  }, [activeTab, trackPageVisit]);
+
+  // Recalculate learning style when returning to home
+  useEffect(() => {
+    if (activeTab === 'home') {
+      recalculateLearningStyle();
+    }
+  }, [activeTab, recalculateLearningStyle]);
+
   const sendMessage = async (content: string) => {
     let conversationId = currentConversation?.id;
     
@@ -134,12 +152,14 @@ const Index = () => {
 
     // Fetch background context from past conversations
     const bgContext = await fetchBackgroundContext(conversationId);
+    const learningStylePrompt = getLearningStylePrompt();
 
     await streamChat({
       messages: messagesWithContext,
       language,
       backgroundContext: bgContext,
       adaptiveLevel,
+      learningStyle: learningStylePrompt,
       onDelta: updateAssistant,
       onDone: async () => {
         setIsLoading(false);

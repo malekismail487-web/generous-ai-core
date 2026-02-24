@@ -13,6 +13,7 @@ export async function streamChat({
   language,
   backgroundContext,
   adaptiveLevel,
+  learningStyle,
   onDelta,
   onDone,
   onError,
@@ -21,6 +22,7 @@ export async function streamChat({
   language?: string;
   backgroundContext?: { title: string; messages: { role: string; content: string }[] }[];
   adaptiveLevel?: string;
+  learningStyle?: string;
   onDelta: (deltaText: string) => void;
   onDone: () => void;
   onError: (error: Error) => void;
@@ -41,6 +43,7 @@ export async function streamChat({
         language: language || 'en',
         backgroundContext: backgroundContext || [],
         adaptiveLevel: adaptiveLevel || undefined,
+        learningStyle: learningStyle || undefined,
       }),
     });
 
