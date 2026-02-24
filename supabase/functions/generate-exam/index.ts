@@ -45,7 +45,9 @@ function getVarietyInstructions(): string {
 }
 
 /**
- * Robust JSON extraction: handles truncation, bad escapes, control chars, markdown wrappers
+ * ROBUST LaTeX-safe JSON extraction.
+ * Strategy: Extract the raw text, fix LaTeX backslashes that break JSON,
+ * then parse. This allows the AI to use full LaTeX like \frac, \sqrt, etc.
  */
 function extractJsonFromResponse(response: string): unknown {
   // Strip markdown code blocks
@@ -57,39 +59,106 @@ function extractJsonFromResponse(response: string): unknown {
   // Find JSON boundaries
   const jsonStart = cleaned.search(/[\{\[]/);
   if (jsonStart === -1) throw new Error("No JSON found in response");
-  
+
   const opener = cleaned[jsonStart];
   const closer = opener === '[' ? ']' : '}';
   const jsonEnd = cleaned.lastIndexOf(closer);
-  
+
   if (jsonEnd === -1 || jsonEnd <= jsonStart) throw new Error("No valid JSON boundaries found");
-  
+
   cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
 
-  // Try direct parse first
+  // Remove control characters (newlines inside strings etc)
+  cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, " ");
+
+  // Try direct parse first (unlikely with LaTeX but worth trying)
   try { return JSON.parse(cleaned); } catch { /* continue */ }
 
-  // Remove control characters
-  cleaned = cleaned.replace(/[\x00-\x1F\x7F]/g, " ");
+  // =====================================================
+  // KEY FIX: Properly escape LaTeX backslashes for JSON
+  // =====================================================
+  // In JSON, only these escape sequences are valid after \:
+  //   " \ / b f n r t u
+  // LaTeX uses \frac, \sqrt, \alpha, etc. which are INVALID JSON escapes.
+  // We need to double-escape them: \frac -> \\frac
+  //
+  // Strategy: Walk through the string character by character,
+  // and when inside a JSON string, fix bad backslash escapes.
   
-  // Fix bad backslash escapes (LaTeX inside JSON strings)
-  // Replace \( \) \[ \] and other LaTeX escapes that break JSON
-  cleaned = cleaned.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+  const fixedChars: string[] = [];
+  let inString = false;
+  let i = 0;
   
-  try { return JSON.parse(cleaned); } catch { /* continue */ }
-
-  // More aggressive: strip all backslashes that aren't valid JSON escapes
-  cleaned = cleaned
-    .replace(/\\\\(?!["\\/bfnrtu])/g, "")  // double-escaped bad ones
-    .replace(/\\(?!["\\/bfnrtu])/g, "");    // single bad ones
+  while (i < cleaned.length) {
+    const ch = cleaned[i];
+    
+    if (ch === '"' && (i === 0 || cleaned[i - 1] !== '\\')) {
+      // Check if the previous backslash was itself escaped
+      // Count consecutive backslashes before this quote
+      let backslashCount = 0;
+      let j = i - 1;
+      while (j >= 0 && cleaned[j] === '\\') {
+        backslashCount++;
+        j--;
+      }
+      // Quote is escaped only if odd number of backslashes precede it
+      if (backslashCount % 2 === 0) {
+        inString = !inString;
+      }
+      fixedChars.push(ch);
+      i++;
+      continue;
+    }
+    
+    if (inString && ch === '\\') {
+      const nextCh = i + 1 < cleaned.length ? cleaned[i + 1] : '';
+      // Valid JSON escapes: " \ / b f n r t u
+      if ('"\\//bfnrtu'.includes(nextCh)) {
+        // Valid escape, keep as-is
+        fixedChars.push(ch);
+        fixedChars.push(nextCh);
+        i += 2;
+        continue;
+      }
+      // Invalid escape (LaTeX command like \frac, \alpha, \sqrt, etc.)
+      // Double-escape it: \ -> \\
+      fixedChars.push('\\');
+      fixedChars.push('\\');
+      i++;
+      continue;
+    }
+    
+    // Handle actual newlines inside strings
+    if (inString && ch === '\n') {
+      fixedChars.push('\\');
+      fixedChars.push('n');
+      i++;
+      continue;
+    }
+    if (inString && ch === '\r') {
+      fixedChars.push('\\');
+      fixedChars.push('r');
+      i++;
+      continue;
+    }
+    if (inString && ch === '\t') {
+      fixedChars.push('\\');
+      fixedChars.push('t');
+      i++;
+      continue;
+    }
+    
+    fixedChars.push(ch);
+    i++;
+  }
   
-  try { return JSON.parse(cleaned); } catch { /* continue */ }
-
+  cleaned = fixedChars.join('');
+  
   // Fix trailing commas
   cleaned = cleaned
     .replace(/,\s*}/g, "}")
     .replace(/,\s*]/g, "]");
-  
+
   try { return JSON.parse(cleaned); } catch { /* continue */ }
 
   // Last resort: repair unbalanced braces/brackets from truncation
@@ -103,7 +172,6 @@ function extractJsonFromResponse(response: string): unknown {
   while (brackets > 0) { cleaned += ']'; brackets--; }
   while (braces > 0) { cleaned += '}'; braces--; }
 
-  // Remove trailing comma before closing
   cleaned = cleaned
     .replace(/,\s*}/g, "}")
     .replace(/,\s*]/g, "]");
@@ -114,7 +182,6 @@ function extractJsonFromResponse(response: string): unknown {
 function convertRawQuestion(q: Record<string, unknown>, idx: number) {
   if (q.option_a || q.optionA) {
     const ca = String(q.correct_answer || q.correctAnswer || "A");
-    // Support both snake_case and camelCase from AI
     const optA = String(q.option_a || q.optionA || "");
     const optB = String(q.option_b || q.optionB || "");
     const optC = String(q.option_c || q.optionC || "");
@@ -139,13 +206,12 @@ function convertRawQuestion(q: Record<string, unknown>, idx: number) {
   };
 }
 
-// The exam tool definition - simplified to reduce LaTeX escaping issues
-// CRITICAL: Tell AI to output plain text math, NOT LaTeX escape sequences
+// Tool definition - NOW allows LaTeX since our parser handles it
 const examTool = {
   type: "function" as const,
   function: {
     name: "create_exam",
-    description: "Create a structured exam with multiple-choice questions. For math expressions, write them in plain readable text like 'x^2 + 3x + 1' or use words. Do NOT use LaTeX backslash commands in your output.",
+    description: "Create a structured exam with multiple-choice questions. You MAY use LaTeX math notation freely (e.g. \\frac{a}{b}, \\sqrt{x}, \\alpha). The system handles rendering.",
     parameters: {
       type: "object",
       properties: {
@@ -155,7 +221,7 @@ const examTool = {
           items: {
             type: "object",
             properties: {
-              question: { type: "string", description: "The question text in plain text. For math, use readable notation like x^2, sqrt(x), pi, etc." },
+              question: { type: "string", description: "The question text. You may use LaTeX math like \\frac{a}{b}, \\sqrt{x}, x^2, etc." },
               option_a: { type: "string", description: "Option A" },
               option_b: { type: "string", description: "Option B" },
               option_c: { type: "string", description: "Option C" },
@@ -197,27 +263,23 @@ serve(async (req) => {
       ? `\nADAPTIVE LEVEL: "${adaptiveLevel}". ${adaptiveLevel === 'beginner' ? 'Simpler questions, clear language, foundational concepts.' : adaptiveLevel === 'advanced' ? 'Challenging questions, deeper understanding, multi-step reasoning.' : 'Moderate difficulty, mix of recall and application.'}`
       : '';
 
-    // Build material context
     const materialContext = materials && materials.length > 0
       ? materials.map((m: { topic: string; content: string }) => `Topic: ${m.topic}\n${m.content}`).join('\n---\n').substring(0, 8000)
       : null;
 
-    // CRITICAL FIX: Use the SAME simple approach as generate-assignment
-    // Single request, no batching for counts <= 30. Only batch for very large counts (SAT Full 140)
     const MAX_SINGLE_BATCH = 30;
     let allQuestions: Record<string, unknown>[] = [];
 
     const generateBatch = async (batchCount: number, batchContext?: string): Promise<Record<string, unknown>[]> => {
       const batchSeed = Math.floor(Math.random() * 100000);
-      
+
+      // CRITICAL: Allow LaTeX freely. Our extractJsonFromResponse handles the escaping.
       const systemPrompt = `You are an expert exam question generator. Generate EXACTLY ${batchCount} multiple-choice questions.
 
-CRITICAL RULES:
+RULES:
 - Each question MUST have exactly 4 options (A, B, C, D)
-- For math, write in plain readable text: x^2 + 3x + 1, sqrt(x), pi, etc.
-- Do NOT use LaTeX backslash commands like \\frac or \\sqrt
-- Do NOT use dollar signs for math
-- Keep all text JSON-safe: no special characters, no backslashes
+- You MAY use LaTeX math notation freely: \\frac{a}{b}, \\sqrt{x}, \\alpha, \\int, x^{2}, etc.
+- Wrap inline math in $...$ delimiters for clarity
 - Every question must be unique and educational
 - Seed: ${batchSeed}. ${varietyInstructions}${adaptiveLevelHint}`;
 
@@ -266,14 +328,12 @@ CRITICAL RULES:
 
       if (!response || response.status === 429) throw new Error("RATE_LIMITED");
 
-      // Extract questions with robust parsing
       let raw: Record<string, unknown>;
 
       if (!response.ok) {
         const errorBody = await response.text();
         console.error("Groq API error:", response.status, errorBody.substring(0, 500));
-        
-        // Try to extract from failed_generation
+
         try {
           const errJson = JSON.parse(errorBody);
           const failedGen = errJson?.error?.failed_generation;
@@ -282,8 +342,11 @@ CRITICAL RULES:
           } else {
             throw new Error("No recoverable data");
           }
-        } catch {
-          throw new Error("Failed to generate exam questions");
+        } catch (e) {
+          if (e instanceof SyntaxError || (e instanceof Error && e.message === "No recoverable data")) {
+            throw new Error("Failed to generate exam questions");
+          }
+          throw e;
         }
       } else {
         const data = await response.json();
@@ -293,7 +356,6 @@ CRITICAL RULES:
           try {
             raw = extractJsonFromResponse(toolCall.function.arguments) as Record<string, unknown>;
           } catch {
-            // Fallback: try content
             const content = data.choices?.[0]?.message?.content || "";
             raw = extractJsonFromResponse(content) as Record<string, unknown>;
           }
@@ -307,11 +369,9 @@ CRITICAL RULES:
       return rawQuestions.filter(q => q && (q.question || q.questionTitle));
     };
 
-    // Strategy: single batch for ≤30, split for larger
     if (count <= MAX_SINGLE_BATCH) {
       allQuestions = await generateBatch(count, materialContext || undefined);
     } else {
-      // Split into batches of ~15
       const batchSize = 15;
       const numBatches = Math.ceil(count / batchSize);
       for (let b = 0; b < numBatches; b++) {
@@ -324,7 +384,6 @@ CRITICAL RULES:
       }
     }
 
-    // If we didn't get enough, try one more fill batch
     if (allQuestions.length < count) {
       const remaining = count - allQuestions.length;
       console.log(`Got ${allQuestions.length}/${count}, filling ${remaining} more`);
@@ -336,7 +395,6 @@ CRITICAL RULES:
       }
     }
 
-    // Convert to frontend format
     const questions = allQuestions.map((q, idx) => convertRawQuestion(q, idx));
     console.log(`Generated ${questions.length}/${count} questions total`);
 

@@ -770,9 +770,9 @@ export function ExaminationSection() {
                     <p className="font-medium text-sm">
                       {isCorrect ? 'Correct!' : 'Not quite right'}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      The correct answer is: {currentQ.correct_answer}
-                    </p>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      The correct answer is: <MathRenderer content={currentQ.correct_answer} className="inline" />
+                    </div>
                   </div>
                 </div>
               </div>
