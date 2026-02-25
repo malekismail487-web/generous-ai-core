@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ArrowLeft, ArrowRight, Loader2, Plus, Sparkles, Trash2, Bot, BookOpen, Download, Image as ImageIcon, FileText, Presentation } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Plus, Sparkles, Trash2, Bot, BookOpen, Download, Image as ImageIcon, FileText, Presentation, Pencil, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
@@ -53,6 +53,8 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   const [lectureImages, setLectureImages] = useState<string[]>([]);
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState('');
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -78,25 +80,57 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
     setIsGeneratingImages(true);
     setLectureImages([]);
     try {
-      // Fetch real educational images from Wikipedia
-      const query = encodeURIComponent(`${topic} ${subjectName}`);
-      const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${query}&gsrlimit=8&prop=pageimages&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
-      const res = await fetch(url);
-      if (res.ok) {
+      // For Arabic topics, also search English Wikipedia with the subject name
+      // This ensures images are found regardless of the query language
+      const searchQueries = [
+        `${topic} ${subjectName}`,
+        // Extract English keywords from subject name for better results
+        subjectName,
+      ];
+      
+      const allImgs: string[] = [];
+      const seenUrls = new Set<string>();
+      
+      for (const searchTerm of searchQueries) {
+        if (allImgs.length >= 3) break;
+        const query = encodeURIComponent(searchTerm);
+        // Always search English Wikipedia since it has more images
+        const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${query}&gsrlimit=10&prop=pageimages&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
+        const res = await fetch(url);
+        if (!res.ok) continue;
         const data = await res.json();
         const pages = data.query?.pages;
-        if (pages) {
-          const imgs: string[] = [];
-          for (const page of Object.values(pages) as any[]) {
-            const thumb = page.thumbnail?.source;
-            if (thumb && !thumb.endsWith('.svg')) {
-              imgs.push(thumb);
-            }
-            if (imgs.length >= 3) break;
+        if (!pages) continue;
+        for (const page of Object.values(pages) as any[]) {
+          if (allImgs.length >= 3) break;
+          const thumb = page.thumbnail?.source;
+          if (thumb && !thumb.endsWith('.svg') && !seenUrls.has(thumb)) {
+            seenUrls.add(thumb);
+            allImgs.push(thumb);
           }
-          setLectureImages(imgs);
         }
       }
+      
+      // If still no images and topic contains Arabic, try extracting English words
+      if (allImgs.length === 0) {
+        // Try just the English subject name alone
+        const fallbackQuery = encodeURIComponent(subjectName);
+        const fallbackUrl = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${fallbackQuery}&gsrlimit=5&prop=pageimages&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
+        const fallbackRes = await fetch(fallbackUrl);
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          const fallbackPages = fallbackData.query?.pages;
+          if (fallbackPages) {
+            for (const page of Object.values(fallbackPages) as any[]) {
+              if (allImgs.length >= 3) break;
+              const thumb = (page as any).thumbnail?.source;
+              if (thumb && !thumb.endsWith('.svg')) allImgs.push(thumb);
+            }
+          }
+        }
+      }
+      
+      setLectureImages(allImgs);
     } catch (err) {
       console.warn('Image fetch failed:', err);
     } finally {
@@ -298,30 +332,60 @@ Use age-appropriate language for ${selectedGrade}.`;
               <h1 className="font-bold text-sm">{getSubjectName(selectedSubject!, language)}</h1>
               <p className="text-xs text-muted-foreground">{getGradeName(selectedGrade!, language)}</p>
             </div>
-            {/* Export button */}
+            {/* Edit & Export buttons - Edit only for teachers (embedded mode) */}
             {!isLoading && lectureContent && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5 text-xs" disabled={isExporting}>
-                    {isExporting ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
-                    Convert
+              <div className="flex items-center gap-1.5">
+                {embedded && (
+                  <Button
+                    variant={isEditing ? "default" : "outline"}
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    onClick={() => {
+                      if (isEditing) {
+                        // Save edits
+                        setLectureContent(editContent);
+                        if (activeMaterial) {
+                          // Update material in DB
+                          import('@/integrations/supabase/client').then(({ supabase }) => {
+                            supabase.from('materials').update({ content: editContent }).eq('id', activeMaterial.id).then(() => {
+                              toast({ title: tl('saved') || 'Saved!' });
+                            });
+                          });
+                        }
+                        setIsEditing(false);
+                      } else {
+                        setEditContent(lectureContent);
+                        setIsEditing(true);
+                      }
+                    }}
+                  >
+                    {isEditing ? <Save size={12} /> : <Pencil size={12} />}
+                    {isEditing ? (tl('save') || 'Save') : (tl('edit') || 'Edit')}
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleExport('pdf')}>
-                    <FileText className="w-4 h-4 mr-2 text-red-500" />
-                    Export as PDF
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleExport('docx')}>
-                    <FileText className="w-4 h-4 mr-2 text-blue-500" />
-                    Export as DOCX (Word)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleExport('pptx')}>
-                    <Presentation className="w-4 h-4 mr-2 text-orange-500" />
-                    Export as PPTX (PowerPoint)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-1.5 text-xs" disabled={isExporting}>
+                      {isExporting ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+                      Convert
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                      <FileText className="w-4 h-4 mr-2 text-red-500" />
+                      Export as PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('docx')}>
+                      <FileText className="w-4 h-4 mr-2 text-blue-500" />
+                      Export as DOCX (Word)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('pptx')}>
+                      <Presentation className="w-4 h-4 mr-2 text-orange-500" />
+                      Export as PPTX (PowerPoint)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             )}
           </div>
 
@@ -362,13 +426,20 @@ Use age-appropriate language for ${selectedGrade}.`;
             </div>
           </div>
 
-          {/* Lecture Content with Math Rendering */}
+          {/* Lecture Content with Math Rendering or Editor */}
           <div className="glass-effect rounded-2xl p-5">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 <span className="ml-2 text-sm text-muted-foreground">{tl('generatingLecture')}</span>
               </div>
+            ) : isEditing ? (
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="w-full min-h-[400px] bg-transparent border border-border rounded-xl p-4 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y font-mono"
+                dir="auto"
+              />
             ) : (
               <div className="prose prose-sm max-w-none">
                 <MathRenderer content={lectureContent} className="whitespace-pre-wrap text-sm leading-relaxed" />

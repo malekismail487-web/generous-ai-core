@@ -1,7 +1,6 @@
 import { useStreak } from '@/hooks/useStreak';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import { Progress } from '@/components/ui/progress';
 import { LearningProfileCard } from '@/components/student/LearningProfileCard';
 import {
   MessageSquare,
@@ -13,7 +12,6 @@ import {
   GraduationCap,
   Flame,
   Calendar,
-  Settings,
   Sparkles,
   Podcast,
   Brain,
@@ -50,46 +48,38 @@ interface StudentHomeGridProps {
   hasSchool: boolean;
 }
 
-// Organized grid: Primary actions first row (full-width featured), then categorized sections
+// Ring items: AI-powered features that surround Study Buddy
+const RING_ITEMS: { id: GridAction; icon: typeof MessageSquare; label: string; labelAr: string; color: string }[] = [
+  { id: 'chat', icon: MessageSquare, label: 'AI Tutor', labelAr: 'المعلم الذكي', color: 'from-blue-500 to-cyan-500' },
+  { id: 'examination', icon: BookOpen, label: 'Exams', labelAr: 'الاختبارات', color: 'from-sky-500 to-blue-500' },
+  { id: 'subjects', icon: Layers, label: 'Subjects', labelAr: 'المواد', color: 'from-emerald-500 to-green-500' },
+  { id: 'sat', icon: GraduationCap, label: 'SAT', labelAr: 'SAT', color: 'from-violet-500 to-purple-500' },
+  { id: 'flashcards', icon: FlipHorizontal, label: 'Cards', labelAr: 'بطاقات', color: 'from-amber-500 to-yellow-500' },
+  { id: 'podcasts', icon: Podcast, label: 'Podcasts', labelAr: 'بودكاست', color: 'from-fuchsia-500 to-pink-500' },
+  { id: 'aiplans', icon: BookOpenCheck, label: 'AI Plan', labelAr: 'خطة AI', color: 'from-indigo-500 to-violet-500' },
+  { id: 'notes', icon: ClipboardList, label: 'Notes', labelAr: 'ملاحظات', color: 'from-cyan-500 to-teal-500' },
+];
+
+// Branch items: School & progress features
+const BRANCH_ITEMS: { id: GridAction; icon: typeof MessageSquare; label: string; labelAr: string; schoolOnly?: boolean }[] = [
+  { id: 'assignments', icon: FileText, label: 'Assignments', labelAr: 'الواجبات', schoolOnly: true },
+  { id: 'weeklyplan', icon: Calendar, label: 'Weekly Plan', labelAr: 'الخطة', schoolOnly: true },
+  { id: 'leaderboard', icon: Trophy, label: 'Ranking', labelAr: 'الترتيب' },
+  { id: 'goals', icon: Target, label: 'Goals', labelAr: 'أهداف' },
+  { id: 'announcements', icon: Megaphone, label: 'News', labelAr: 'إعلانات', schoolOnly: true },
+  { id: 'trips', icon: MapPin, label: 'Trips', labelAr: 'رحلات', schoolOnly: true },
+  { id: 'reports', icon: FileText, label: 'Reports', labelAr: 'تقارير', schoolOnly: true },
+  { id: 'focustimer', icon: Timer, label: 'Timer', labelAr: 'مؤقت' },
+];
+
 export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps) {
   const { currentStreak, streakPercentage, MAX_STREAK, loading: streakLoading } = useStreak();
   const { profile } = useRoleGuard();
   const { t } = useThemeLanguage();
 
-  // Featured items (shown as larger cards at top)
-  const featuredItems: { id: GridAction; icon: typeof MessageSquare; label: string; description: string; color: string; iconBg: string }[] = [
-    { id: 'chat', icon: MessageSquare, label: t('AI Tutor', 'المعلم الذكي'), description: t('Ask anything', 'اسأل أي شيء'), color: 'from-primary to-accent', iconBg: 'bg-primary/15 border-primary/30' },
-    { id: 'studybuddy', icon: Brain, label: t('Study Buddy', 'رفيق الدراسة'), description: t('Study together', 'ادرس معاً'), color: 'from-violet-500 to-purple-600', iconBg: 'bg-violet-500/15 border-violet-500/30' },
-  ];
-
-  // Study tools section
-  const studyTools: { id: GridAction; icon: typeof MessageSquare; label: string; iconBg: string; schoolOnly?: boolean }[] = [
-    { id: 'subjects', icon: Layers, label: t('Subjects', 'المواد'), iconBg: 'bg-emerald-500/15 border-emerald-500/30' },
-    { id: 'examination', icon: BookOpen, label: t('Exams', 'الاختبارات'), iconBg: 'bg-sky-500/15 border-sky-500/30' },
-    { id: 'flashcards', icon: FlipHorizontal, label: t('Flashcards', 'البطاقات'), iconBg: 'bg-amber-500/15 border-amber-500/30' },
-    { id: 'notes', icon: ClipboardList, label: t('Notes', 'الملاحظات'), iconBg: 'bg-cyan-500/15 border-cyan-500/30' },
-    { id: 'sat', icon: GraduationCap, label: t('SAT Prep', 'SAT'), iconBg: 'bg-violet-500/15 border-violet-500/30' },
-    { id: 'podcasts', icon: Podcast, label: t('Podcasts', 'بودكاست'), iconBg: 'bg-fuchsia-500/15 border-fuchsia-500/30' },
-  ];
-
-  // Progress & Goals section
-  const progressItems: { id: GridAction; icon: typeof MessageSquare; label: string; iconBg: string }[] = [
-    { id: 'goals', icon: Target, label: t('My Goals', 'أهدافي'), iconBg: 'bg-emerald-500/15 border-emerald-500/30' },
-    { id: 'aiplans', icon: BookOpenCheck, label: t('AI Plan', 'خطة AI'), iconBg: 'bg-violet-500/15 border-violet-500/30' },
-    { id: 'focustimer', icon: Timer, label: t('Focus', 'تركيز'), iconBg: 'bg-red-500/15 border-red-500/30' },
-    { id: 'leaderboard', icon: Trophy, label: t('Ranking', 'الترتيب'), iconBg: 'bg-yellow-500/15 border-yellow-500/30' },
-  ];
-
-  // School section (only when user has a school)
-  const schoolItems: { id: GridAction; icon: typeof MessageSquare; label: string; iconBg: string }[] = [
-    { id: 'assignments', icon: FileText, label: t('Assignments', 'الواجبات'), iconBg: 'bg-orange-500/15 border-orange-500/30' },
-    { id: 'weeklyplan', icon: Calendar, label: t('Weekly Plan', 'الخطة'), iconBg: 'bg-indigo-500/15 border-indigo-500/30' },
-    { id: 'reports', icon: FileText, label: t('Reports', 'الدرجات'), iconBg: 'bg-rose-500/15 border-rose-500/30' },
-    { id: 'announcements', icon: Megaphone, label: t('News', 'الإعلانات'), iconBg: 'bg-amber-500/15 border-amber-500/30' },
-    { id: 'trips', icon: MapPin, label: t('Trips', 'الرحلات'), iconBg: 'bg-teal-500/15 border-teal-500/30' },
-  ];
-
   const firstName = profile?.full_name?.split(' ')[0] || t('Student', 'طالب');
+
+  const filteredBranches = BRANCH_ITEMS.filter(item => !item.schoolOnly || hasSchool);
 
   return (
     <div className="min-h-0 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-24">
@@ -99,7 +89,6 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
           <div className="absolute top-4 right-4 opacity-20">
             <Sparkles className="w-20 h-20 text-primary-foreground" />
           </div>
-
           <div className="flex items-center justify-between mb-5 relative z-10">
             <div>
               <h1 className="text-2xl font-extrabold text-white tracking-tight">
@@ -114,7 +103,6 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
               <span className="text-white font-bold text-lg">{streakLoading ? '...' : currentStreak}</span>
             </div>
           </div>
-
           <div className="space-y-2 relative z-10">
             <div className="flex justify-between text-xs text-white/70">
               <span>{t('Daily Streak', 'السلسلة اليومية')}</span>
@@ -123,10 +111,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
             <div className="w-full bg-white/10 backdrop-blur-sm rounded-full h-3.5 overflow-hidden border border-white/5">
               <div
                 className="h-full rounded-full transition-all duration-700 ease-out"
-                style={{
-                  width: `${streakPercentage}%`,
-                  background: 'linear-gradient(90deg, #4ade80, #facc15, #f97316, #ef4444)',
-                }}
+                style={{ width: `${streakPercentage}%`, background: 'linear-gradient(90deg, #4ade80, #facc15, #f97316, #ef4444)' }}
               />
             </div>
             <div className="flex justify-between text-[10px] text-white/50">
@@ -142,118 +127,106 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
         <LearningProfileCard />
       </div>
 
-      {/* Featured AI Tools - 2 large cards */}
-      <div className="px-4 grid grid-cols-2 gap-3 mb-5">
-        {featuredItems.map((item, index) => {
-          const Icon = item.icon;
-          return (
+      {/* === CIRCULAR MIND-MAP LAYOUT === */}
+      <div className="px-4 mb-6">
+        <div className="relative w-full" style={{ paddingBottom: '100%' }}>
+          <div className="absolute inset-0">
+            {/* SVG connection lines */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 100 100">
+              {/* Ring circle */}
+              <circle cx="50" cy="50" r="28" fill="none" stroke="hsl(var(--border))" strokeWidth="0.3" strokeDasharray="2 1" opacity="0.5" />
+              {/* Branch lines from ring to outer items */}
+              {filteredBranches.map((_, idx) => {
+                const total = filteredBranches.length;
+                const angle = (idx / total) * 360 - 90;
+                const rad = (angle * Math.PI) / 180;
+                const innerX = 50 + 28 * Math.cos(rad);
+                const innerY = 50 + 28 * Math.sin(rad);
+                const outerX = 50 + 44 * Math.cos(rad);
+                const outerY = 50 + 44 * Math.sin(rad);
+                return (
+                  <line key={idx} x1={innerX} y1={innerY} x2={outerX} y2={outerY}
+                    stroke="hsl(var(--border))" strokeWidth="0.25" opacity="0.4" />
+                );
+              })}
+            </svg>
+
+            {/* CENTER: Study Buddy - big circle */}
             <button
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className="group flex flex-col items-start gap-2 p-4 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10 hover:shadow-lg transition-all duration-300 active:scale-[0.97] opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards]"
-              style={{ animationDelay: `${index * 60 + 200}ms` }}
+              onClick={() => onNavigate('studybuddy')}
+              className="absolute z-20 flex flex-col items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards]"
+              style={{
+                width: '22%', height: '22%',
+                left: '39%', top: '39%',
+              }}
             >
-              <div className={`w-12 h-12 rounded-2xl border ${item.iconBg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
-                <Icon className="w-5 h-5 text-foreground" />
-              </div>
-              <div>
-                <span className="text-sm font-bold text-foreground block">{item.label}</span>
-                <span className="text-[11px] text-muted-foreground">{item.description}</span>
-              </div>
+              <Brain className="w-7 h-7 text-white mb-0.5" />
+              <span className="text-[8px] font-bold text-white leading-tight text-center">
+                {t('Study', 'رفيق')}
+                <br />
+                {t('Buddy', 'الدراسة')}
+              </span>
             </button>
-          );
-        })}
-      </div>
 
-      {/* Study Tools Section */}
-      <div className="px-4 mb-5">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
-          {t('📚 Study Tools', '📚 أدوات الدراسة')}
-        </h3>
-        <div className="grid grid-cols-3 gap-2.5">
-          {studyTools.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id)}
-                className="group flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-md transition-all duration-300 active:scale-[0.97] opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards]"
-                style={{ animationDelay: `${index * 50 + 400}ms` }}
-              >
-                <div className={`w-11 h-11 rounded-xl border ${item.iconBg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
-                  <Icon className="w-5 h-5 text-foreground" />
-                </div>
-                <span className="text-xs font-semibold text-foreground text-center">{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Progress & Goals Section */}
-      <div className="px-4 mb-5">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
-          {t('🎯 Progress & Goals', '🎯 التقدم والأهداف')}
-        </h3>
-        <div className="grid grid-cols-4 gap-2">
-          {progressItems.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id)}
-                className="group flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-md transition-all duration-300 active:scale-[0.97] opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards]"
-                style={{ animationDelay: `${index * 50 + 600}ms` }}
-              >
-                <div className={`w-9 h-9 rounded-lg border ${item.iconBg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
-                  <Icon className="w-4 h-4 text-foreground" />
-                </div>
-                <span className="text-[10px] font-semibold text-foreground text-center leading-tight">{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* School Section */}
-      {hasSchool && (
-        <div className="px-4 mb-5">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
-            {t('🏫 School', '🏫 المدرسة')}
-          </h3>
-          <div className="grid grid-cols-3 gap-2.5">
-            {schoolItems.map((item, index) => {
+            {/* RING: AI features arranged in a circle around Study Buddy */}
+            {RING_ITEMS.map((item, idx) => {
+              const total = RING_ITEMS.length;
+              const angle = (idx / total) * 360 - 90;
+              const rad = (angle * Math.PI) / 180;
+              const radius = 28; // % of container
+              const cx = 50 + radius * Math.cos(rad);
+              const cy = 50 + radius * Math.sin(rad);
               const Icon = item.icon;
               return (
                 <button
                   key={item.id}
                   onClick={() => onNavigate(item.id)}
-                  className="group flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-md transition-all duration-300 active:scale-[0.97] opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards]"
-                  style={{ animationDelay: `${index * 50 + 800}ms` }}
+                  className="absolute z-10 flex flex-col items-center justify-center rounded-full border border-border/50 bg-card shadow-md hover:shadow-lg hover:border-primary/40 transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards]"
+                  style={{
+                    width: '14%', height: '14%',
+                    left: `${cx - 7}%`, top: `${cy - 7}%`,
+                    animationDelay: `${idx * 60 + 200}ms`,
+                  }}
                 >
-                  <div className={`w-10 h-10 rounded-xl border ${item.iconBg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
-                    <Icon className="w-4.5 h-4.5 text-foreground" />
+                  <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${item.color} flex items-center justify-center mb-0.5`}>
+                    <Icon className="w-3 h-3 text-white" />
                   </div>
-                  <span className="text-xs font-semibold text-foreground text-center">{item.label}</span>
+                  <span className="text-[7px] font-semibold text-foreground leading-tight text-center">
+                    {t(item.label, item.labelAr)}
+                  </span>
+                </button>
+              );
+            })}
+
+            {/* BRANCHES: School & progress features around the outer edge */}
+            {filteredBranches.map((item, idx) => {
+              const total = filteredBranches.length;
+              const angle = (idx / total) * 360 - 90;
+              const rad = (angle * Math.PI) / 180;
+              const radius = 44; // % of container
+              const cx = 50 + radius * Math.cos(rad);
+              const cy = 50 + radius * Math.sin(rad);
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onNavigate(item.id)}
+                  className="absolute z-10 flex flex-col items-center justify-center rounded-full border border-border/30 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards]"
+                  style={{
+                    width: '11%', height: '11%',
+                    left: `${cx - 5.5}%`, top: `${cy - 5.5}%`,
+                    animationDelay: `${idx * 50 + 700}ms`,
+                  }}
+                >
+                  <Icon className="w-3.5 h-3.5 text-foreground mb-0.5" />
+                  <span className="text-[6px] font-semibold text-foreground leading-tight text-center">
+                    {t(item.label, item.labelAr)}
+                  </span>
                 </button>
               );
             })}
           </div>
         </div>
-      )}
-
-      {/* Settings - standalone at bottom */}
-      <div className="px-4 mb-6">
-        <button
-          onClick={() => onNavigate('settings')}
-          className="w-full group flex items-center gap-3 p-4 rounded-2xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-md transition-all duration-300 active:scale-[0.97] opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards]"
-          style={{ animationDelay: '1000ms' }}
-        >
-          <div className="w-10 h-10 rounded-xl border bg-slate-500/15 border-slate-500/30 flex items-center justify-center">
-            <Settings className="w-5 h-5 text-foreground" />
-          </div>
-          <span className="text-sm font-semibold text-foreground">{t('Settings', 'الإعدادات')}</span>
-        </button>
       </div>
     </div>
   );
