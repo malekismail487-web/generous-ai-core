@@ -26,8 +26,8 @@ export function EmptyState({ onSuggestionClick }: EmptyStateProps) {
              style={{ background: 'var(--gradient-primary)', opacity: 0.3 }} />
       </div>
       
-      <h1 className="text-2xl font-bold mb-2">
-        <span className="gradient-text">{t('Study Bright AI', 'ستدي برايت AI')}</span>
+      <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Caveat, cursive' }}>
+        <span className="gradient-text">{t('Lumina', 'لومينا')}</span>
       </h1>
       <p className="text-muted-foreground text-sm mb-6 max-w-xs">
         {t('Your personal study partner for KG1 through Grade 12', 'شريكك الدراسي الشخصي من الروضة إلى الصف الثاني عشر')}

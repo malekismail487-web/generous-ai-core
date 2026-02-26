@@ -115,7 +115,7 @@ export default function ApiKeySetup() {
           </div>
           <h1 className="text-2xl font-bold gradient-text">Connect Your AI Key</h1>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-            Study Bright AI uses Groq's free API. Each key resets daily — using your own key ensures uninterrupted AI access.
+            Lumina uses Groq's free API. Each key resets daily — using your own key ensures uninterrupted AI access.
           </p>
         </div>
 

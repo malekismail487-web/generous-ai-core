@@ -77,11 +77,11 @@ export function useLearningStyle() {
       switch (a.activity_type) {
         case 'material_viewed':
         case 'lecture_viewed':
-          visual += 2; // Visual learners consume more visual content
+          visual += 2;
           conceptual += 1;
           break;
         case 'podcast_listened':
-          verbal += 3; // Audio = verbal learner
+          verbal += 3;
           break;
         case 'study_buddy_chat':
         case 'ai_tutor_chat':
@@ -90,8 +90,12 @@ export function useLearningStyle() {
           break;
         case 'exam_completed':
         case 'quiz_answer':
-          kinesthetic += 2; // Active problem solving
+          kinesthetic += 2;
           logical += 2;
+          break;
+        case 'exam_started':
+          kinesthetic += 1;
+          logical += 1;
           break;
         case 'flashcard_studied':
           visual += 1;
@@ -100,16 +104,43 @@ export function useLearningStyle() {
         case 'note_created':
         case 'note_edited':
           verbal += 1;
-          conceptual += 2; // Note-taking = conceptual organization
+          conceptual += 2;
           break;
         case 'focus_session':
           logical += 1;
+          kinesthetic += 1;
           break;
         case 'subject_explored':
           conceptual += 2;
           visual += 1;
           break;
+        case 'page_visit': {
+          // Infer learning style from which pages are visited
+          const page = (a.details_json as any)?.page;
+          if (page === 'subjects' || page === 'flashcards') { visual += 1; }
+          else if (page === 'examination' || page === 'sat') { logical += 1; kinesthetic += 1; }
+          else if (page === 'chat' || page === 'studybuddy' || page === 'podcasts') { verbal += 1; }
+          else if (page === 'notes' || page === 'aiplans') { conceptual += 1; }
+          else if (page === 'focustimer' || page === 'goals') { kinesthetic += 1; }
+          else { conceptual += 0.5; verbal += 0.5; }
+          break;
+        }
+        case 'assignment_submitted':
+          kinesthetic += 2;
+          logical += 1;
+          break;
+        case 'goal_created':
+        case 'goal_completed':
+          kinesthetic += 1;
+          conceptual += 1;
+          break;
+        case 'iq_test_completed':
+          logical += 3;
+          break;
         default:
+          // Give small weight to any interaction
+          verbal += 0.25;
+          conceptual += 0.25;
           break;
       }
     }
