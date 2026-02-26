@@ -329,7 +329,7 @@ const Index = () => {
               <span className="font-bold text-foreground text-sm capitalize">
                 {activeTab === 'sat' ? t('SAT Prep', 'تحضير SAT') 
                   : activeTab === 'chat' ? t('AI Tutor', 'المعلم الذكي')
-                  : activeTab === 'studybuddy' ? t('Study Buddy', 'رفيق الدراسة')
+                  : activeTab === 'studybuddy' ? t('Lumina', 'لومينا')
                    : activeTab === 'goals' ? t('My Goals', 'أهدافي')
                    : activeTab === 'leaderboard' ? t('Leaderboard', 'المتصدرين')
                    : activeTab === 'focustimer' ? t('Focus Timer', 'مؤقت التركيز')

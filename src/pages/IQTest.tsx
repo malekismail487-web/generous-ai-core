@@ -266,7 +266,7 @@ export default function IQTest() {
             <div className="flex items-start gap-3">
               <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
               <p className="text-xs text-muted-foreground">
-                {t('Study Bright AI will now personalize your learning experience based on these results.', 'سيقوم Study Bright AI الآن بتخصيص تجربة التعلم الخاصة بك بناءً على هذه النتائج.')}
+                {t('Lumina will now personalize your learning experience based on these results.', 'ستقوم لومينا الآن بتخصيص تجربة التعلم الخاصة بك بناءً على هذه النتائج.')}
               </p>
             </div>
           </div>

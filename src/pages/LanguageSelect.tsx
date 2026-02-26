@@ -34,8 +34,8 @@ export default function LanguageSelect() {
             <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-5 glow-effect">
               <Sparkles className="w-10 h-10 text-primary-foreground" />
             </div>
-            <h1 className="text-3xl font-bold">
-              <span className="gradient-text">Study Bright AI</span>
+            <h1 className="text-3xl font-bold" style={{ fontFamily: 'Caveat, cursive' }}>
+              <span className="gradient-text">Lumina</span>
             </h1>
           </div>
 
@@ -95,8 +95,8 @@ export default function LanguageSelect() {
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-5 glow-effect">
             <Sparkles className="w-10 h-10 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold">
-            <span className="gradient-text">Study Bright AI</span>
+          <h1 className="text-3xl font-bold" style={{ fontFamily: 'Caveat, cursive' }}>
+            <span className="gradient-text">Lumina</span>
           </h1>
         </div>
 
