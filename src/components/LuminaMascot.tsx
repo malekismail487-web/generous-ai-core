@@ -1,4 +1,4 @@
-import luminaMascot from '@/assets/lumina-mascot.jpeg';
+import luminaMascot from '@/assets/lumina-mascot.png';
 
 interface LuminaMascotProps {
   size?: number;
