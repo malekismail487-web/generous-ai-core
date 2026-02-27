@@ -9,6 +9,9 @@ import { MathRenderer } from '@/components/MathRenderer';
 import { useAuth } from '@/hooks/useAuth';
 import { CourseMaterialsSection } from '@/components/CourseMaterialsSection';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
+import { useLearningStyle } from '@/hooks/useLearningStyle';
+import { useActivityTracker } from '@/hooks/useActivityTracker';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 import { exportAsPDF, exportAsDOCX, exportAsPPTX } from '@/lib/lectureExport';
 import {
@@ -66,6 +69,10 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
     deleteMaterial,
     loading: materialsLoading 
   } = useMaterials();
+
+  const { currentLevel: adaptiveLevel } = useAdaptiveLevel(selectedSubject || undefined);
+  const { getLearningStylePrompt } = useLearningStyle();
+  const { trackActivity, trackLectureViewed } = useActivityTracker();
 
   const containerClass = embedded
     ? "flex-1 min-h-0 overflow-y-auto py-4"
@@ -187,6 +194,8 @@ Use age-appropriate language for ${selectedGrade}.`;
     try {
       await streamChat({
         messages,
+        adaptiveLevel,
+        learningStyle: getLearningStylePrompt(),
         onDelta: (chunk) => {
           response += chunk;
           setLectureContent(response);
@@ -196,6 +205,13 @@ Use age-appropriate language for ${selectedGrade}.`;
           if (newMaterial) {
             setActiveMaterial(newMaterial);
           }
+          trackActivity({
+            activityType: 'subject_explored',
+            category: 'learning',
+            subject: selectedSubject,
+            details: { topic, grade: selectedGrade },
+          });
+          trackLectureViewed(selectedSubject, topic, Math.max(30, Math.round(response.length / 12)));
           setIsLoading(false);
           // Fetch related images from Wikipedia after lecture is done
           fetchLectureImages(topic, subject?.name || selectedSubject);

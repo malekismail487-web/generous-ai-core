@@ -12,6 +12,8 @@ import { cn } from '@/lib/utils';
 import mammoth from 'mammoth';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { format } from 'date-fns';
+import { useLearningStyle } from '@/hooks/useLearningStyle';
+import { useActivityTracker } from '@/hooks/useActivityTracker';
 
 const EXPLAIN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/explain-file`;
 
@@ -37,6 +39,8 @@ export function PodcastsSection() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
+  const { getLearningStylePrompt } = useLearningStyle();
+  const { trackPodcastListened } = useActivityTracker();
 
   // Fetch podcast count on mount
   useEffect(() => {
@@ -143,6 +147,7 @@ export function PodcastsSection() {
           fileContent: content.slice(0, 30000),
           fileName: file.name,
           adaptiveLevel,
+          learningStyle: getLearningStylePrompt(),
         }),
       });
 
@@ -193,7 +198,10 @@ export function PodcastsSection() {
         supabase
           .from('podcast_generations')
           .insert({ user_id: user.id, file_name: file.name, content: fullText })
-          .then(() => setPodcastCount(prev => prev + 1));
+          .then(() => {
+            setPodcastCount(prev => prev + 1);
+            trackPodcastListened(file.name, 100, Math.max(30, Math.round(fullText.length / 12)));
+          });
       }
     } catch (error) {
       setIsProcessing(false);

@@ -8,7 +8,7 @@ import { MathRenderer } from '@/components/MathRenderer';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
-
+import { useActivityTracker } from '@/hooks/useActivityTracker';
 // ============================================
 // ENUMS (IMMUTABLE)
 // ============================================
@@ -355,6 +355,7 @@ export function ExaminationSection() {
   const { user } = useAuth();
   const { getMaterialsBySubjectAndGrade, getMaterialsBySubject } = useMaterials();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
+  const { trackExamStarted, trackExamCompleted } = useActivityTracker();
 
   // Get saved materials for the selected subject and grade
   const savedMaterials = useMemo(() => {
@@ -487,6 +488,10 @@ export function ExaminationSection() {
     
     try {
       const count = resolveQuestionCount(examMenuType!, difficultyId);
+      const subjectName = examMenuType === ExamMenuType.SUBJECT && selectedSubject
+        ? (subjects.find(s => s.id === selectedSubject)?.name || 'general')
+        : 'SAT';
+      trackExamStarted(subjectName, count, difficultyId);
       generateQuestions(count, difficultyId);
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: String(error) });
@@ -558,6 +563,9 @@ export function ExaminationSection() {
   // RESULTS VIEW
   if (viewState === 'results' && examState) {
     const { correct, total, percentage } = calculateResults();
+    const resultKey = `${examState.exam.subject}-${total}-${correct}`;
+    sessionStorage.setItem('last_exam_result', resultKey);
+    trackExamCompleted(examState.exam.subject || 'general', correct, total, selectedDifficulty || 'unknown', 0);
 
     return (
       <div className="flex-1 flex items-center justify-center p-4 pt-16 pb-20">

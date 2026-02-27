@@ -64,7 +64,7 @@ const Index = () => {
   const { t, language } = useThemeLanguage();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
   const { getLearningStylePrompt, recalculate: recalculateLearningStyle } = useLearningStyle();
-  const { trackPageVisit } = useActivityTracker();
+  const { trackPageVisit, trackAITutorChat } = useActivityTracker();
 
   const {
     conversations,
@@ -164,6 +164,8 @@ const Index = () => {
       onDone: async () => {
         setIsLoading(false);
         await addMessage("assistant", assistantContent, conversationId);
+        trackAITutorChat(activeTab === 'chat' ? 'general' : activeTab, messagesWithContext.length + 1);
+        recalculateLearningStyle();
       },
       onError: (error) => {
         setIsLoading(false);
