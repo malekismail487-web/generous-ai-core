@@ -257,7 +257,8 @@ serve(async (req) => {
       throw new Error("count is required and must be positive");
     }
 
-    const seed = Math.floor(Math.random() * 100000);
+    const seed = Math.floor(Math.random() * 1000000);
+    const timestamp = Date.now();
     const varietyInstructions = getVarietyInstructions();
     const adaptiveLevelHint = adaptiveLevel
       ? `\nADAPTIVE LEVEL: "${adaptiveLevel}". ${adaptiveLevel === 'beginner' ? 'Simpler questions, clear language, foundational concepts.' : adaptiveLevel === 'advanced' ? 'Challenging questions, deeper understanding, multi-step reasoning.' : 'Moderate difficulty, mix of recall and application.'}`
@@ -271,25 +272,30 @@ serve(async (req) => {
     let allQuestions: Record<string, unknown>[] = [];
 
     const generateBatch = async (batchCount: number, batchContext?: string): Promise<Record<string, unknown>[]> => {
-      const batchSeed = Math.floor(Math.random() * 100000);
+      const batchSeed = Math.floor(Math.random() * 1000000);
+      const uniqueId = `${timestamp}-${batchSeed}-${Math.random().toString(36).slice(2, 8)}`;
 
       // CRITICAL: Allow LaTeX freely. Our extractJsonFromResponse handles the escaping.
       const systemPrompt = `You are an expert exam question generator. Generate EXACTLY ${batchCount} multiple-choice questions.
 
-RULES:
+CRITICAL UNIQUENESS RULES:
+- EVERY question MUST be completely unique and different from any standard textbook question
+- DO NOT reuse common example questions. Invent novel scenarios, numbers, and contexts each time
+- Vary question structures: some definitional, some computational, some analytical, some scenario-based
+- Use different numerical values, names, and contexts than typical examples
 - Each question MUST have exactly 4 options (A, B, C, D)
 - You MAY use LaTeX math notation freely: \\frac{a}{b}, \\sqrt{x}, \\alpha, \\int, x^{2}, etc.
 - Wrap inline math in $...$ delimiters for clarity
-- Every question must be unique and educational
-- Seed: ${batchSeed}. ${varietyInstructions}${adaptiveLevelHint}`;
+- Unique generation ID: ${uniqueId}
+- ${varietyInstructions}${adaptiveLevelHint}`;
 
       let userPrompt = '';
       if (examType === 'SAT_FULL') {
-        userPrompt = `Generate EXACTLY ${batchCount} SAT-style multiple-choice questions covering Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar. Each with 4 options (A-D). Make every question unique. Seed: ${batchSeed}`;
+        userPrompt = `Generate EXACTLY ${batchCount} SAT-style multiple-choice questions covering Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar. Each with 4 options (A-D). IMPORTANT: Create completely original questions with unique numbers, scenarios, and wording. Do NOT reuse standard SAT practice questions. Generation ID: ${uniqueId}`;
       } else if (batchContext) {
-        userPrompt = `Generate EXACTLY ${batchCount} multiple-choice questions based on this study material:\n\n${batchContext}\n\nSubject: ${subject}, Grade: ${grade || 'General'}, Difficulty: ${difficulty}. Each question must have 4 options (A-D).`;
+        userPrompt = `Generate EXACTLY ${batchCount} COMPLETELY NEW AND UNIQUE multiple-choice questions based on this study material:\n\n${batchContext}\n\nSubject: ${subject}, Grade: ${grade || 'General'}, Difficulty: ${difficulty}. Each question must have 4 options (A-D). CRITICAL: Even though the material is the same, you MUST create entirely different questions than any previous generation. Use different angles, different numerical values, different scenarios, and different phrasings. Approach the material from a fresh perspective. Generation ID: ${uniqueId}`;
       } else {
-        userPrompt = `Generate EXACTLY ${batchCount} multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover diverse sub-topics. Each question must have 4 options (A-D). Seed: ${batchSeed}`;
+        userPrompt = `Generate EXACTLY ${batchCount} COMPLETELY ORIGINAL multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover diverse sub-topics. Each question must have 4 options (A-D). IMPORTANT: Do NOT use standard textbook questions. Create novel questions with unique values and scenarios. Generation ID: ${uniqueId}`;
       }
 
       const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
@@ -311,7 +317,7 @@ RULES:
               ],
               tools: [examTool],
               tool_choice: { type: "function", function: { name: "create_exam" } },
-              temperature: 0.85 + Math.random() * 0.1,
+              temperature: 0.9 + Math.random() * 0.1,
               max_tokens: Math.min(Math.max(batchCount * 400, 4000), 16000),
             }),
           });
