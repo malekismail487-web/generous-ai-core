@@ -105,6 +105,15 @@ export function useActivityTracker() {
     });
   }, [trackActivity]);
 
+  const trackAITutorChat = useCallback((subject: string, messageCount: number) => {
+    trackActivity({
+      activityType: 'ai_tutor_chat',
+      category: 'learning',
+      subject,
+      details: { message_count: messageCount },
+    });
+  }, [trackActivity]);
+
   const trackMaterialViewed = useCallback((subject: string, topic: string, materialType: string) => {
     trackActivity({
       activityType: 'material_viewed',
@@ -138,6 +147,7 @@ export function useActivityTracker() {
     trackLectureViewed,
     trackPodcastListened,
     trackStudyBuddyChat,
+    trackAITutorChat,
     trackMaterialViewed,
     trackFocusSession,
     trackPageVisit,
