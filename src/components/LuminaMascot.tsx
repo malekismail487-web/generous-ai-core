@@ -1,5 +1,5 @@
-// Lumina mascot - a modern white-outline lightbulb character with eyes and small wings
-// Inspired by the user's hand-drawn design
+// Lumina mascot - a cute ghost/water droplet character with happy eyes and excited hands
+// Based on the user's design: upside-down water droplet shape, happy expression, hands popping out
 
 interface LuminaMascotProps {
   size?: number;
@@ -27,9 +27,10 @@ export function LuminaMascot({ size = 48, className = '' }: LuminaMascotProps) {
         </filter>
       </defs>
 
-      {/* Main body - inverted teardrop / lightbulb shape */}
+      {/* Main body - upside-down water droplet / ghost shape */}
+      {/* Pointed top, round bottom with wavy tail */}
       <path
-        d="M50 12 C32 12 20 28 20 42 C20 54 28 62 34 68 C36 70 38 74 38 78 L62 78 C62 74 64 70 66 68 C72 62 80 54 80 42 C80 28 68 12 50 12Z"
+        d="M50 8 C50 8 42 20 36 32 C28 48 24 56 24 66 C24 80 36 90 50 90 C64 90 76 80 76 66 C76 56 72 48 64 32 C58 20 50 8 50 8Z"
         stroke="currentColor"
         strokeWidth="2.5"
         strokeLinecap="round"
@@ -37,56 +38,90 @@ export function LuminaMascot({ size = 48, className = '' }: LuminaMascotProps) {
         filter="url(#lumina-glow)"
       />
 
-      {/* Base of lightbulb */}
+      {/* Wavy bottom edge to make it ghost-like */}
       <path
-        d="M38 78 L38 84 C38 87 43 90 50 90 C57 90 62 87 62 84 L62 78"
+        d="M24 66 C24 80 36 92 42 86 C46 82 46 90 50 90 C54 90 54 82 58 86 C64 92 76 80 76 66"
         stroke="currentColor"
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* Base lines */}
-      <line x1="38" y1="82" x2="62" y2="82" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="40" y1="86" x2="60" y2="86" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
 
-      {/* Left eye */}
-      <circle cx="40" cy="42" r="4" stroke="currentColor" strokeWidth="2" />
-      <circle cx="41" cy="41" r="1.5" fill="currentColor" />
-
-      {/* Right eye */}
-      <circle cx="60" cy="42" r="4" stroke="currentColor" strokeWidth="2" />
-      <circle cx="61" cy="41" r="1.5" fill="currentColor" />
-
-      {/* Smile */}
+      {/* Left eye - happy/curved */}
       <path
-        d="M43 52 C46 56 54 56 57 52"
+        d="M38 54 C38 50 42 48 44 52"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      {/* Left eye pupil */}
+      <circle cx="41" cy="52" r="1.5" fill="currentColor" />
+
+      {/* Right eye - happy/curved */}
+      <path
+        d="M56 54 C56 50 60 48 62 52"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      {/* Right eye pupil */}
+      <circle cx="59" cy="52" r="1.5" fill="currentColor" />
+
+      {/* Cute smile */}
+      <path
+        d="M44 62 C47 66 53 66 56 62"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
 
-      {/* Left wing/leaf */}
+      {/* Left hand - excited, popping out to the side */}
       <path
-        d="M20 38 C12 32 8 38 14 44"
+        d="M24 58 C18 52 12 50 10 54"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-
-      {/* Right wing/leaf */}
+      {/* Left hand fingers spread */}
       <path
-        d="M80 38 C88 32 92 38 86 44"
+        d="M10 54 C8 50 6 52 9 48"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
-        strokeLinejoin="round"
+      />
+      <path
+        d="M10 54 C6 54 6 56 8 58"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
       />
 
-      {/* Top sparkle */}
-      <line x1="50" y1="4" x2="50" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="36" y1="8" x2="38" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="64" y1="8" x2="62" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      {/* Right hand - excited, popping out to the side */}
+      <path
+        d="M76 58 C82 52 88 50 90 54"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Right hand fingers spread */}
+      <path
+        d="M90 54 C92 50 94 52 91 48"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M90 54 C94 54 94 56 92 58"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+
+      {/* Small sparkle/excitement marks above head */}
+      <line x1="46" y1="4" x2="44" y2="0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="54" y1="4" x2="56" y2="0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
