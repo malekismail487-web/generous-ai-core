@@ -12,6 +12,7 @@ import { tr } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { SchoolAdminPanel } from '@/components/SchoolAdminPanel';
 import SuperAdminPanel from '@/components/SuperAdminPanel';
+import { LearningProfileCard } from '@/components/student/LearningProfileCard';
 import { cn } from '@/lib/utils';
 
 type ViewState = 'main' | 'school-admin' | 'super-admin';
@@ -339,6 +340,11 @@ export function ProfileSection() {
             <ExternalLink size={12} />
             {t('Get a free Groq API key →', 'احصل على مفتاح Groq API مجاني ←')}
           </a>
+        </div>
+
+        {/* Learning Profile */}
+        <div className="mb-4">
+          <LearningProfileCard />
         </div>
 
         {/* Sign Out */}

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import { Brain, Sparkles, RefreshCw } from 'lucide-react';
+import { Brain, Sparkles, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -27,7 +27,6 @@ export function LearningProfileCard() {
   const { profile, loading, recalculate } = useLearningStyle();
   const { t } = useThemeLanguage();
 
-  // Auto-recalculate on mount if stale
   useEffect(() => {
     if (!loading && !profile) {
       recalculate();
@@ -35,7 +34,24 @@ export function LearningProfileCard() {
   }, [loading, profile, recalculate]);
 
   if (loading || !profile) {
-    return null; // Don't show card until we have data
+    return (
+      <div className="glass-effect rounded-2xl p-5 space-y-3 animate-fade-in">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-slate-400 to-gray-500 text-white">
+            <Brain className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm">{t('Learning Profile', 'ملف التعلم')}</h3>
+            <p className="text-xs text-muted-foreground">
+              {t('Keep using the app to build your profile...', 'استمر في استخدام التطبيق لبناء ملفك...')}
+            </p>
+          </div>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          {t('Lumina needs at least 20 interactions to identify your learning patterns.', 'تحتاج لومينا إلى 20 تفاعل على الأقل لتحديد أنماط تعلمك.')}
+        </p>
+      </div>
+    );
   }
 
   const bars = [
@@ -72,6 +88,19 @@ export function LearningProfileCard() {
         </Button>
       </div>
 
+      {/* Confidence indicator */}
+      <div className="flex items-center gap-2 text-[11px]">
+        <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />
+        <span className="text-muted-foreground">{t('Confidence', 'الثقة')}:</span>
+        <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-700"
+            style={{ width: `${profile.confidence}%` }}
+          />
+        </div>
+        <span className="font-medium">{profile.confidence}%</span>
+      </div>
+
       <div className="space-y-2.5">
         {bars.map(bar => (
           <div key={bar.key} className="space-y-1">
@@ -105,7 +134,7 @@ export function LearningProfileCard() {
       </div>
 
       <p className="text-[10px] text-muted-foreground text-center">
-        {t(`Based on ${profile.total_interactions} interactions`, `بناءً على ${profile.total_interactions} تفاعل`)}
+        {t(`Based on ${profile.total_interactions} behavioral signals`, `بناءً على ${profile.total_interactions} إشارة سلوكية`)}
       </p>
     </div>
   );

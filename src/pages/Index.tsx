@@ -64,7 +64,7 @@ const Index = () => {
   const { t, language } = useThemeLanguage();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
   const { getLearningStylePrompt, recalculate: recalculateLearningStyle } = useLearningStyle();
-  const { trackPageVisit, trackAITutorChat } = useActivityTracker();
+  const { trackPageVisit, trackAITutorChat, trackQuestionAsked, trackExplicitRequest } = useActivityTracker();
 
   const {
     conversations,
@@ -133,6 +133,10 @@ const Index = () => {
     setLocalMessages((prev) => [...prev, userMessage]);
     await addMessage("user", content, conversationId);
     setIsLoading(true);
+
+    // Track the question type for behavioral learning style analysis
+    trackQuestionAsked(content, activeTab === 'chat' ? 'general' : activeTab);
+    trackExplicitRequest(content, activeTab === 'chat' ? 'general' : activeTab);
 
     let assistantContent = "";
     const assistantId = generateId();

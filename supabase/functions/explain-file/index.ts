@@ -51,7 +51,7 @@ serve(async (req) => {
 
     const randomSeed = Math.floor(Math.random() * 99999);
 
-    const systemPrompt = `You are Study Bright, an expert educational AI tutor. The user has uploaded a study file. Your job is to:
+    const systemPrompt = `You are Lumina, an expert educational AI tutor. The user has uploaded a study file. Your job is to:
 
 1. READ and ANALYZE the entire file content carefully
 2. DETECT the language of the file (English or Arabic)

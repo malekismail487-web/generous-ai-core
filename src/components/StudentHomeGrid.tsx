@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useStreak } from '@/hooks/useStreak';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import { LearningProfileCard } from '@/components/student/LearningProfileCard';
 import { LuminaMascot } from '@/components/LuminaMascot';
 import {
   MessageSquare, Layers, BookOpen, FlipHorizontal, ClipboardList,
@@ -95,10 +94,6 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
         </div>
       </div>
 
-      {/* Learning Profile Card */}
-      <div className="px-4 mb-4">
-        <LearningProfileCard />
-      </div>
 
       {/* === CIRCULAR MIND-MAP LAYOUT === */}
       <div className="px-4 mb-6">

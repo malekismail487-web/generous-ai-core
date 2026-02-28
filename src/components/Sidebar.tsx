@@ -81,7 +81,7 @@ export function Sidebar({
               <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <span className="font-bold text-sidebar-foreground">Study Bright</span>
+              <span className="font-bold text-sidebar-foreground">Lumina</span>
               <span className="block text-xs text-muted-foreground">{t('aiLearning')}</span>
             </div>
           </div>
