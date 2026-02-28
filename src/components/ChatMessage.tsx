@@ -87,7 +87,7 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
         <div className="flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center bg-accent/20 text-accent">
           <Sparkles size={12} />
         </div>
-        <span className="text-xs font-medium text-accent">Study Bright</span>
+        <span className="text-xs font-medium text-accent">Lumina</span>
       </div>
       <div className="pl-8">
         <MathRenderer
