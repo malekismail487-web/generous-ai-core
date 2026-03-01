@@ -28,7 +28,7 @@ import { TeacherAssignments } from '@/components/teacher/TeacherAssignments';
 import { TeacherMaterials } from '@/components/teacher/TeacherMaterials';
 import { TeacherCopilot } from '@/components/teacher/TeacherCopilot';
 import { SubjectsSection } from '@/components/SubjectsSection';
-import { StudentInsights } from '@/components/teacher/StudentInsights';
+import { TeacherLearningStyleReports } from '@/components/teacher/TeacherLearningStyleReports';
 
 interface CourseMaterial {
   id: string;
@@ -261,10 +261,6 @@ export default function TeacherDashboard() {
               <Bot className="w-4 h-4" />
               <span className="hidden sm:inline">AI Lectures</span>
             </TabsTrigger>
-            <TabsTrigger value="ai-lectures" className="gap-2">
-              <Bot className="w-4 h-4" />
-              <span className="hidden sm:inline">AI Lectures</span>
-            </TabsTrigger>
             <TabsTrigger value="grading" className="gap-2">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">{tr('gradeVerb', language)}</span>
@@ -320,8 +316,6 @@ export default function TeacherDashboard() {
               />
             )}
           </TabsContent>
-
-          {/* AI Lectures Tab */}
 
           {/* AI Lectures Tab */}
           <TabsContent value="ai-lectures">
@@ -381,9 +375,9 @@ export default function TeacherDashboard() {
             )}
           </TabsContent>
 
-          {/* Insights Tab - Student Learning Analytics */}
+          {/* Insights Tab - Learning Style Reports + Performance */}
           <TabsContent value="insights" className="space-y-4">
-            <StudentInsights schoolId={school.id} />
+            <TeacherLearningStyleReports schoolId={school.id} />
           </TabsContent>
 
           {/* Announcements Tab */}

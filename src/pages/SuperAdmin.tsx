@@ -18,9 +18,11 @@ import {
   Users,
   UserCog,
   Check,
-  X
+  X,
+  BarChart3
 } from 'lucide-react';
 import { StudentAppPreview } from '@/components/StudentAppPreview';
+import { GlobalAnalyticsDashboard } from '@/components/admin/GlobalAnalyticsDashboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -72,6 +74,7 @@ export default function SuperAdmin() {
   const [loadingSchools, setLoadingSchools] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [testingRole, setTestingRole] = useState<TestingRole>('none');
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   
   // Create school form state
@@ -606,6 +609,20 @@ export default function SuperAdmin() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
+        {/* Tab Navigation */}
+        <div className="flex gap-2 mb-6">
+          <Button variant={!showAnalytics ? 'default' : 'outline'} onClick={() => setShowAnalytics(false)} className="gap-2">
+            <Building2 className="w-4 h-4" /> Schools
+          </Button>
+          <Button variant={showAnalytics ? 'default' : 'outline'} onClick={() => setShowAnalytics(true)} className="gap-2">
+            <BarChart3 className="w-4 h-4" /> Analytics
+          </Button>
+        </div>
+
+        {showAnalytics ? (
+          <GlobalAnalyticsDashboard />
+        ) : (
+        <>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="glass-effect rounded-xl p-4">
@@ -845,6 +862,8 @@ export default function SuperAdmin() {
             </Table>
           )}
         </div>
+        </>
+        )}
       </main>
     </div>
   );

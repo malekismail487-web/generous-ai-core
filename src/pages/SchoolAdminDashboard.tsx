@@ -28,9 +28,11 @@ import {
   Calendar,
   Settings,
   Globe,
-  MapPin
+  MapPin,
+  BarChart3
 } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
+import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -599,8 +601,12 @@ export default function SchoolAdminDashboard() {
           </div>
         )}
 
-        <Tabs defaultValue="codes" className="space-y-6">
-          <TabsList className="grid grid-cols-9 w-full max-w-5xl">
+        <Tabs defaultValue="performance" className="space-y-6">
+          <TabsList className="grid grid-cols-10 w-full max-w-5xl">
+            <TabsTrigger value="performance" className="gap-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Performance</span>
+            </TabsTrigger>
             <TabsTrigger value="codes" className="gap-2">
               <Key className="w-4 h-4" />
               <span className="hidden sm:inline">{t('codes')}</span>
@@ -641,6 +647,11 @@ export default function SchoolAdminDashboard() {
               <span className="hidden sm:inline">{t('settings')}</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Performance Dashboard Tab */}
+          <TabsContent value="performance" className="space-y-4">
+            <SchoolPerformanceDashboard schoolId={school.id} />
+          </TabsContent>
 
           {/* Invite Codes Tab */}
           <TabsContent value="codes" className="space-y-4">
