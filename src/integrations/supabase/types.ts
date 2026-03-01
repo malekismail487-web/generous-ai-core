@@ -268,6 +268,7 @@ export type Database = {
           points: number | null
           questions_json: Json | null
           school_id: string
+          source: string
           subject: string
           subject_id: string | null
           teacher_id: string
@@ -284,6 +285,7 @@ export type Database = {
           points?: number | null
           questions_json?: Json | null
           school_id: string
+          source?: string
           subject: string
           subject_id?: string | null
           teacher_id: string
@@ -300,6 +302,7 @@ export type Database = {
           points?: number | null
           questions_json?: Json | null
           school_id?: string
+          source?: string
           subject?: string
           subject_id?: string | null
           teacher_id?: string

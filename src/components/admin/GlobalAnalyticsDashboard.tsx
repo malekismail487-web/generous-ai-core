@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Building2, Users, GraduationCap, FileText, Brain,
-  BarChart3, TrendingUp, Loader2, Globe, Sparkles, BookOpen
+  BarChart3, TrendingUp, Loader2, Globe, Sparkles, BookOpen,
+  AlertTriangle
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -15,8 +16,15 @@ interface SchoolMetric {
   studentCount: number;
   teacherCount: number;
   assignmentCount: number;
+  copilotCount: number;
   materialCount: number;
   avgAccuracy: number;
+}
+
+interface HealthAlert {
+  severity: 'critical' | 'warning';
+  schoolName: string;
+  message: string;
 }
 
 interface GlobalMetrics {
@@ -25,11 +33,13 @@ interface GlobalMetrics {
   totalStudents: number;
   totalTeachers: number;
   totalAssignments: number;
+  copilotAssignments: number;
   totalMaterials: number;
   globalAvgAccuracy: number;
   schoolMetrics: SchoolMetric[];
   subjectPerformance: { subject: string; avgAccuracy: number; totalQuestions: number }[];
   learningStyleDistribution: { visual: number; logical: number; verbal: number; kinesthetic: number; conceptual: number } | null;
+  healthAlerts: HealthAlert[];
 }
 
 export function GlobalAnalyticsDashboard() {
@@ -39,42 +49,66 @@ export function GlobalAnalyticsDashboard() {
   const fetchMetrics = useCallback(async () => {
     setLoading(true);
 
-    // Fetch all schools
-    const { data: schools } = await supabase.from('schools').select('*').order('name');
+    const [
+      { data: schools },
+      { data: profiles },
+      { data: assignments },
+      { data: materials },
+      { data: learningData },
+      { data: styleData },
+    ] = await Promise.all([
+      supabase.from('schools').select('*').order('name'),
+      supabase.from('profiles').select('id, school_id, user_type, is_active'),
+      supabase.from('assignments').select('id, school_id, source'),
+      supabase.from('course_materials').select('id, school_id'),
+      supabase.from('student_learning_profiles').select('*'),
+      supabase.from('learning_style_profiles').select('visual_score, logical_score, verbal_score, kinesthetic_score, conceptual_score, total_interactions'),
+    ]);
+
     const schoolList = schools || [];
-
-    // Fetch all profiles
-    const { data: profiles } = await supabase.from('profiles').select('id, school_id, user_type, is_active');
     const allProfiles = profiles || [];
-
-    // Fetch all assignments
-    const { data: assignments } = await supabase.from('assignments').select('id, school_id');
     const allAssignments = assignments || [];
-
-    // Fetch all materials
-    const { data: materials } = await supabase.from('course_materials').select('id, school_id');
     const allMaterials = materials || [];
-
-    // Fetch learning performance data
-    const { data: learningData } = await supabase.from('student_learning_profiles').select('*');
     const allLearning = learningData || [];
-
-    // Fetch learning style profiles
-    const { data: styleData } = await supabase.from('learning_style_profiles').select('visual_score, logical_score, verbal_score, kinesthetic_score, conceptual_score, total_interactions');
     const allStyles = (styleData || []).filter(s => (s.total_interactions || 0) >= 20);
+
+    const copilotAssignments = allAssignments.filter((a: any) => a.source === 'copilot').length;
+
+    // Health alerts
+    const healthAlerts: HealthAlert[] = [];
 
     // Build per-school metrics
     const schoolMetrics: SchoolMetric[] = schoolList.map(school => {
       const schoolProfiles = allProfiles.filter(p => p.school_id === school.id);
       const students = schoolProfiles.filter(p => p.user_type === 'student' && p.is_active);
       const teachers = schoolProfiles.filter(p => p.user_type === 'teacher' && p.is_active);
-      const schoolAssignments = allAssignments.filter(a => a.school_id === school.id);
+      const schoolAssignments = allAssignments.filter((a: any) => a.school_id === school.id);
+      const schoolCopilot = schoolAssignments.filter((a: any) => a.source === 'copilot').length;
       const schoolMaterials = allMaterials.filter(m => m.school_id === school.id);
 
       const studentIds = students.map(s => s.id);
       const studentLearning = allLearning.filter(l => studentIds.includes(l.user_id));
       const totalQ = studentLearning.reduce((s, d) => s + (d.total_questions_answered || 0), 0);
       const totalC = studentLearning.reduce((s, d) => s + (d.correct_answers || 0), 0);
+      const accuracy = totalQ > 0 ? Math.round((totalC / totalQ) * 100) : 0;
+
+      // Health: low accuracy alert
+      if (totalQ > 50 && accuracy < 50) {
+        healthAlerts.push({
+          severity: 'critical',
+          schoolName: school.name,
+          message: `Accuracy at ${accuracy}% across ${totalQ} questions — needs attention`,
+        });
+      }
+
+      // Health: no copilot adoption
+      if (teachers.length > 0 && schoolCopilot === 0 && schoolAssignments.length > 3) {
+        healthAlerts.push({
+          severity: 'warning',
+          schoolName: school.name,
+          message: `${teachers.length} teachers, 0 Copilot assignments — low AI adoption`,
+        });
+      }
 
       return {
         id: school.id,
@@ -84,8 +118,9 @@ export function GlobalAnalyticsDashboard() {
         studentCount: students.length,
         teacherCount: teachers.length,
         assignmentCount: schoolAssignments.length,
+        copilotCount: schoolCopilot,
         materialCount: schoolMaterials.length,
-        avgAccuracy: totalQ > 0 ? Math.round((totalC / totalQ) * 100) : 0,
+        avgAccuracy: accuracy,
       };
     });
 
@@ -96,20 +131,19 @@ export function GlobalAnalyticsDashboard() {
     const globalTotalC = allLearning.reduce((s, d) => s + (d.correct_answers || 0), 0);
     const globalAvgAccuracy = globalTotalQ > 0 ? Math.round((globalTotalC / globalTotalQ) * 100) : 0;
 
-    // Subject performance
-    const subjectMap = new Map<string, { totalAcc: number; n: number; totalQ: number }>();
+    // Subject performance - weighted
+    const subjectMap = new Map<string, { totalCorrect: number; totalQuestions: number }>();
     for (const d of allLearning) {
-      const cur = subjectMap.get(d.subject) || { totalAcc: 0, n: 0, totalQ: 0 };
-      cur.totalAcc += Number(d.recent_accuracy) || 0;
-      cur.n += 1;
-      cur.totalQ += d.total_questions_answered || 0;
+      const cur = subjectMap.get(d.subject) || { totalCorrect: 0, totalQuestions: 0 };
+      cur.totalCorrect += d.correct_answers || 0;
+      cur.totalQuestions += d.total_questions_answered || 0;
       subjectMap.set(d.subject, cur);
     }
     const subjectPerformance = Array.from(subjectMap.entries())
       .map(([subject, data]) => ({
         subject,
-        avgAccuracy: data.n > 0 ? Math.round(data.totalAcc / data.n) : 0,
-        totalQuestions: data.totalQ,
+        avgAccuracy: data.totalQuestions > 0 ? Math.round((data.totalCorrect / data.totalQuestions) * 100) : 0,
+        totalQuestions: data.totalQuestions,
       }))
       .sort((a, b) => b.totalQuestions - a.totalQuestions);
 
@@ -140,11 +174,13 @@ export function GlobalAnalyticsDashboard() {
       totalStudents,
       totalTeachers,
       totalAssignments: allAssignments.length,
+      copilotAssignments,
       totalMaterials: allMaterials.length,
       globalAvgAccuracy,
       schoolMetrics,
       subjectPerformance,
       learningStyleDistribution,
+      healthAlerts,
     });
 
     setLoading(false);
@@ -162,6 +198,9 @@ export function GlobalAnalyticsDashboard() {
 
   if (!metrics) return null;
 
+  const timeSavedHours = Math.round(metrics.copilotAssignments * 18 / 60);
+  const productivityValue = Math.round(timeSavedHours * 30);
+
   return (
     <div className="space-y-6">
       {/* Hero Header */}
@@ -175,12 +214,35 @@ export function GlobalAnalyticsDashboard() {
         </p>
       </div>
 
+      {/* Health Alerts */}
+      {metrics.healthAlerts.length > 0 && (
+        <div className="glass-effect rounded-xl p-5 border border-red-500/20 bg-red-500/5">
+          <h3 className="font-semibold text-red-600 flex items-center gap-2 mb-3">
+            <AlertTriangle className="w-5 h-5" />
+            Health Alerts ({metrics.healthAlerts.length})
+          </h3>
+          <div className="space-y-2">
+            {metrics.healthAlerts.map((alert, i) => (
+              <div key={i} className="text-sm flex items-start gap-2">
+                <span className={cn(
+                  "shrink-0",
+                  alert.severity === 'critical' ? "text-red-500" : "text-amber-500"
+                )}>⚠</span>
+                <span>
+                  <strong>{alert.schoolName}</strong>: {alert.message}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Global KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <KPI icon={<Building2 className="w-5 h-5 text-blue-500" />} value={metrics.activeSchools} label="Active Schools" sub={`${metrics.totalSchools} total`} />
         <KPI icon={<Users className="w-5 h-5 text-green-500" />} value={metrics.totalStudents} label="Students" />
         <KPI icon={<GraduationCap className="w-5 h-5 text-violet-500" />} value={metrics.totalTeachers} label="Teachers" />
-        <KPI icon={<FileText className="w-5 h-5 text-amber-500" />} value={metrics.totalAssignments} label="Assignments" />
+        <KPI icon={<FileText className="w-5 h-5 text-amber-500" />} value={metrics.totalAssignments} label="Assignments" sub={`${metrics.copilotAssignments} AI`} />
         <KPI icon={<BookOpen className="w-5 h-5 text-cyan-500" />} value={metrics.totalMaterials} label="Materials" />
         <KPI icon={<BarChart3 className="w-5 h-5 text-emerald-500" />} value={`${metrics.globalAvgAccuracy}%`} label="Avg Accuracy" />
       </div>
@@ -203,7 +265,7 @@ export function GlobalAnalyticsDashboard() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{school.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {school.studentCount} students • {school.teacherCount} teachers • {school.assignmentCount} assignments
+                  {school.studentCount} students • {school.teacherCount} teachers • {school.copilotCount}/{school.assignmentCount} AI assignments
                 </p>
               </div>
               <div className="text-right shrink-0">
@@ -271,14 +333,11 @@ export function GlobalAnalyticsDashboard() {
                 );
               })}
             </div>
-            <p className="text-xs text-muted-foreground mt-3">
-              Visual learning is dominant globally. Consider emphasizing visual-first teaching approaches in teacher training.
-            </p>
           </div>
         )}
       </div>
 
-      {/* Teacher Productivity Summary */}
+      {/* Platform Impact Summary */}
       <div className="glass-effect rounded-xl p-5">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-green-500" />
@@ -286,8 +345,9 @@ export function GlobalAnalyticsDashboard() {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
-            <p className="text-2xl font-bold text-green-500">{Math.round(metrics.totalAssignments * 18 / 60)}h</p>
+            <p className="text-2xl font-bold text-green-500">{timeSavedHours}h</p>
             <p className="text-xs text-muted-foreground">Teacher Hours Saved</p>
+            <p className="text-[10px] text-muted-foreground">(Copilot only)</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-primary">{metrics.totalAssignments + metrics.totalMaterials}</p>
@@ -298,8 +358,9 @@ export function GlobalAnalyticsDashboard() {
             <p className="text-xs text-muted-foreground">Student Accuracy</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-amber-500">${Math.round(metrics.totalAssignments * 18 / 60 * 30)}</p>
+            <p className="text-2xl font-bold text-amber-500">${productivityValue}</p>
             <p className="text-xs text-muted-foreground">Est. Productivity Value</p>
+            <p className="text-[10px] text-muted-foreground">(Copilot only)</p>
           </div>
         </div>
       </div>

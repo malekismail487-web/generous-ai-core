@@ -101,6 +101,7 @@ export function AssignmentCreator({ onBack, onSuccess }: AssignmentCreatorProps)
         due_date: dueDate || null,
         points: totalPoints,
         questions_json: questions.length > 0 ? questions : null,
+        source: 'manual',
       } as any);
 
     setIsSubmitting(false);
