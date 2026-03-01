@@ -148,6 +148,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
       due_date: dueDate || null,
       points: questions.length * 10,
       questions_json: questions as any,
+      source: 'copilot',
     };
 
     const { error } = await supabase

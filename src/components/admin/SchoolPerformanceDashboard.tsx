@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import {
   Users, BookOpen, FileText, BarChart3, TrendingUp, Clock,
-  Loader2, Brain, GraduationCap, Sparkles
+  Loader2, Brain, GraduationCap, Sparkles, CheckCircle2
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -17,9 +17,11 @@ interface Metrics {
   activeStudents: number;
   totalTeachers: number;
   totalAssignments: number;
+  copilotAssignments: number;
   totalMaterials: number;
   totalSubmissions: number;
   avgAccuracy: number;
+  completionRate: number;
   subjectBreakdown: { subject: string; count: number; avgAccuracy: number }[];
   recentActivity: { action: string; date: string }[];
   teacherProductivity: { assignmentsGenerated: number; timeSaved: string };
@@ -33,62 +35,80 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
   const fetchMetrics = useCallback(async () => {
     setLoading(true);
 
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
     // Parallel queries
     const [
       studentsRes, teachersRes, assignmentsRes, materialsRes,
-      submissionsRes, learningRes, logsRes
+      learningRes, logsRes, recentActivityRes
     ] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact' })
         .eq('school_id', schoolId).eq('user_type', 'student').eq('is_active', true),
       supabase.from('profiles').select('id', { count: 'exact' })
         .eq('school_id', schoolId).eq('user_type', 'teacher').eq('is_active', true),
-      supabase.from('assignments').select('id, subject, created_at', { count: 'exact' })
+      supabase.from('assignments').select('id, subject, created_at, source')
         .eq('school_id', schoolId),
       supabase.from('course_materials').select('id', { count: 'exact' })
         .eq('school_id', schoolId),
-      supabase.from('submissions').select('id, assignment_id, grade')
-        .in('assignment_id', (await supabase.from('assignments').select('id').eq('school_id', schoolId)).data?.map(a => a.id) || []),
       supabase.from('student_learning_profiles').select('*')
         .in('user_id', (await supabase.from('profiles').select('id').eq('school_id', schoolId).eq('user_type', 'student')).data?.map(p => p.id) || []),
       supabase.from('activity_logs').select('action, created_at')
         .eq('school_id', schoolId).order('created_at', { ascending: false }).limit(10),
+      // Engagement: unique users active in last 7 days
+      supabase.from('activity_logs').select('user_id')
+        .eq('school_id', schoolId).gte('created_at', sevenDaysAgo),
     ]);
 
     const totalStudents = studentsRes.count || 0;
     const totalTeachers = teachersRes.count || 0;
-    const totalAssignments = assignmentsRes.count || 0;
+    const assignments = assignmentsRes.data || [];
+    const totalAssignments = assignments.length;
     const totalMaterials = materialsRes.count || 0;
-    const submissions = submissionsRes.data || [];
     const learningData = learningRes.data || [];
     const logs = logsRes.data || [];
 
-    // Calculate average accuracy
-    const totalAnswered = learningData.reduce((s, d) => s + (d.total_questions_answered || 0), 0);
-    const totalCorrect = learningData.reduce((s, d) => s + (d.correct_answers || 0), 0);
-    const avgAccuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+    // Copilot vs manual assignments
+    const copilotAssignments = assignments.filter((a: any) => a.source === 'copilot').length;
 
-    // Active students (those with learning data)
-    const activeStudentIds = new Set(learningData.map(d => d.user_id));
+    // Engagement: unique users from activity_logs in last 7 days
+    const recentUsers = recentActivityRes.data || [];
+    const activeStudentIds = new Set(recentUsers.map((r: any) => r.user_id));
 
-    // Subject breakdown
-    const subjectMap = new Map<string, { count: number; totalAcc: number; n: number }>();
+    // Weighted accuracy: totalCorrect / totalQuestions
+    const globalTotalQ = learningData.reduce((s, d) => s + (d.total_questions_answered || 0), 0);
+    const globalTotalC = learningData.reduce((s, d) => s + (d.correct_answers || 0), 0);
+    const avgAccuracy = globalTotalQ > 0 ? Math.round((globalTotalC / globalTotalQ) * 100) : 0;
+
+    // Subject breakdown - weighted by questions answered
+    const subjectMap = new Map<string, { totalCorrect: number; totalQuestions: number }>();
     for (const d of learningData) {
-      const cur = subjectMap.get(d.subject) || { count: 0, totalAcc: 0, n: 0 };
-      cur.count += d.total_questions_answered || 0;
-      cur.totalAcc += Number(d.recent_accuracy) || 0;
-      cur.n += 1;
+      const cur = subjectMap.get(d.subject) || { totalCorrect: 0, totalQuestions: 0 };
+      cur.totalCorrect += d.correct_answers || 0;
+      cur.totalQuestions += d.total_questions_answered || 0;
       subjectMap.set(d.subject, cur);
     }
     const subjectBreakdown = Array.from(subjectMap.entries())
       .map(([subject, data]) => ({
         subject,
-        count: data.count,
-        avgAccuracy: data.n > 0 ? Math.round(data.totalAcc / data.n) : 0,
+        count: data.totalQuestions,
+        avgAccuracy: data.totalQuestions > 0 ? Math.round((data.totalCorrect / data.totalQuestions) * 100) : 0,
       }))
       .sort((a, b) => b.count - a.count);
 
-    // Teacher productivity
-    const timeSavedMinutes = totalAssignments * 18; // 18 min saved per AI-generated assignment
+    // Assignment completion rate
+    let totalSubmissions = 0;
+    if (assignments.length > 0) {
+      const assignmentIds = assignments.map((a: any) => a.id);
+      const { count } = await supabase
+        .from('submissions')
+        .select('id', { count: 'exact', head: true })
+        .in('assignment_id', assignmentIds);
+      totalSubmissions = count || 0;
+    }
+    const completionRate = totalAssignments > 0 ? Math.round((totalSubmissions / totalAssignments) * 100) : 0;
+
+    // Teacher productivity - only copilot assignments
+    const timeSavedMinutes = copilotAssignments * 18;
     const timeSavedHours = Math.round(timeSavedMinutes / 60);
 
     setMetrics({
@@ -96,13 +116,15 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
       activeStudents: activeStudentIds.size,
       totalTeachers,
       totalAssignments,
+      copilotAssignments,
       totalMaterials,
-      totalSubmissions: submissions.length,
+      totalSubmissions,
       avgAccuracy,
+      completionRate,
       subjectBreakdown,
       recentActivity: logs.map(l => ({ action: l.action, date: l.created_at })),
       teacherProductivity: {
-        assignmentsGenerated: totalAssignments,
+        assignmentsGenerated: copilotAssignments,
         timeSaved: `${timeSavedHours} ${t('hours', 'ساعة')}`,
       },
     });
@@ -145,7 +167,7 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
           icon={<Users className="w-5 h-5 text-blue-500" />}
           value={metrics.totalStudents}
           label={t('Total Students', 'إجمالي الطلاب')}
-          sub={`${metrics.activeStudents} ${t('active', 'نشط')}`}
+          sub={`${metrics.activeStudents} ${t('active (7d)', 'نشط (7 أيام)')}`}
         />
         <MetricCard
           icon={<GraduationCap className="w-5 h-5 text-violet-500" />}
@@ -156,7 +178,7 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
           icon={<FileText className="w-5 h-5 text-green-500" />}
           value={metrics.totalAssignments}
           label={t('Assignments', 'الواجبات')}
-          sub={`${metrics.totalSubmissions} ${t('submissions', 'تسليم')}`}
+          sub={`${metrics.copilotAssignments} ${t('AI-generated', 'بالذكاء الاصطناعي')}`}
         />
         <MetricCard
           icon={<BookOpen className="w-5 h-5 text-amber-500" />}
@@ -176,7 +198,7 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
           <div className="space-y-3">
             <div>
               <div className="flex justify-between text-sm mb-1">
-                <span>{t('Engagement Rate', 'معدل المشاركة')}</span>
+                <span>{t('Engagement Rate (Last 7 Days)', 'معدل المشاركة (آخر 7 أيام)')}</span>
                 <span className="font-bold">{engagementRate}%</span>
               </div>
               <Progress value={engagementRate} className="h-3" />
@@ -190,6 +212,21 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
               </div>
               <Progress value={metrics.avgAccuracy} className="h-3" />
             </div>
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span>{t('Assignment Completion Rate', 'معدل إكمال الواجبات')}</span>
+                <span className={cn(
+                  "font-bold",
+                  metrics.completionRate >= 70 ? "text-green-500" : metrics.completionRate >= 50 ? "text-amber-500" : "text-red-500"
+                )}>
+                  {metrics.completionRate}%
+                </span>
+              </div>
+              <Progress value={metrics.completionRate} className="h-3" />
+              <p className="text-xs text-muted-foreground mt-1">
+                {metrics.totalSubmissions} / {metrics.totalAssignments} {t('assignments submitted', 'واجبات مسلمة')}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -201,8 +238,12 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
           </h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{t('Assignments Generated', 'واجبات تم إنشاؤها')}</span>
+              <span className="text-sm text-muted-foreground">{t('Copilot Assignments', 'واجبات المساعد')}</span>
               <span className="text-lg font-bold">{metrics.teacherProductivity.assignmentsGenerated}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">{t('Manual Assignments', 'واجبات يدوية')}</span>
+              <span className="text-lg font-bold">{metrics.totalAssignments - metrics.copilotAssignments}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">{t('Time Saved (est.)', 'الوقت الموفر (تقديري)')}</span>
@@ -210,8 +251,8 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
             </div>
             <p className="text-xs text-muted-foreground">
               {t(
-                'Based on 18 minutes saved per AI-generated assignment vs manual creation.',
-                'استناداً إلى 18 دقيقة موفرة لكل واجب تم إنشاؤه بالذكاء الاصطناعي.'
+                'Based on 18 minutes saved per AI-generated assignment. Only Copilot assignments counted.',
+                'استناداً إلى 18 دقيقة موفرة لكل واجب بالذكاء الاصطناعي فقط.'
               )}
             </p>
           </div>
