@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ArrowLeft, ArrowRight, Loader2, FileText, Upload } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, FileText, Upload, BookmarkCheck, Trash2, Zap, BookOpen, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +8,7 @@ import { MathRenderer } from '@/components/MathRenderer';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 import { FileNotesGenerator } from '@/components/FileNotesGenerator';
+import { useNotes, Note } from '@/hooks/useNotes';
 
 const subjects = [
   { id: 'biology', emoji: '🧬' },
@@ -33,7 +34,8 @@ const grades = [
   'Grade 10', 'Grade 11', 'Grade 12'
 ];
 
-type ViewState = 'menu' | 'subjects' | 'grade' | 'input' | 'notes' | 'file-upload';
+type NoteLength = 'short' | 'medium' | 'long';
+type ViewState = 'menu' | 'subjects' | 'grade' | 'input' | 'notes' | 'file-upload' | 'saved-notes' | 'saved-note-view';
 
 export function NotesSection() {
   const { language } = useThemeLanguage();
@@ -43,9 +45,51 @@ export function NotesSection() {
   const [topicInput, setTopicInput] = useState('');
   const [notesContent, setNotesContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [noteLength, setNoteLength] = useState<NoteLength>('medium');
+  const [viewingNote, setViewingNote] = useState<Note | null>(null);
   const { toast } = useToast();
+  const { notes, createNote, deleteNote, loading: notesLoading } = useNotes();
 
   const lang = language === 'ar' ? 'ar' : 'en';
+
+  const getLengthPrompt = (length: NoteLength): string => {
+    switch (length) {
+      case 'short':
+        return `Keep it CONCISE but THOROUGH — 4-6 pages.
+Include: Overview paragraph (5+ sentences), all key definitions, core concepts as detailed bullets, at least 1 ASCII diagram or table using box-drawing characters (┌─┐│└─┘→), 2-3 worked examples, 3-5 common mistakes, summary checklist.
+Use "💡 Pro Tip" boxes. **Bold** all key terms.`;
+      case 'medium':
+        return `Generate DETAILED content — 12-18 pages.
+Include ALL:
+1. Introduction & Context (full paragraph, historical background)
+2. Definitions (every term, 3-5 sentences each)
+3. Core Concepts Deep Dive (subsection per concept, step-by-step)
+4. Visual Representations — AT LEAST 3 ASCII diagrams: flowcharts (┌─┐│└─┘→←↑↓▼), comparison tables, hierarchy/tree diagrams
+5. Formulas & Rules with derivations
+6. Worked Examples (3-5 per concept, varying difficulty)
+7. Common Misconceptions (5-8 with wrong vs right)
+8. Real-World Applications (3-5)
+9. Self-Assessment (5-8 questions with answers)
+10. Summary with checklist
+Include "💡 Pro Tip" and "⚡ Quick Check" boxes throughout.`;
+      case 'long':
+        return `Make this a COLOSSAL ENCYCLOPEDIC resource — 30-50 pages, equivalent to a full textbook chapter.
+
+Structure as 10 PARTS:
+PART 1: FOUNDATIONS — Overview, historical background, prerequisites
+PART 2: DEFINITIONS — 15+ terms in glossary table (Term/Definition/Example/Related)
+PART 3: CONCEPTS DEEP DIVE — 6-8 concept sections each with: What It Is, How It Works, ASCII diagram, Key Properties, Connections
+PART 4: DIAGRAMS — 6-8 ASCII visuals: concept maps (┌─┐│└─┘→←↑↓▼), flowcharts, comparison tables, classification diagrams, cause-effect, cycles
+PART 5: FORMULAS — Complete sheet, step-by-step derivations, special cases
+PART 6: EXAMPLES — 5+ easy, 5+ medium, 5+ challenging, 3+ real-world
+PART 7: MISCONCEPTIONS — Top 10 mistakes with ❌ wrong vs ✅ correct
+PART 8: CONNECTIONS — Cross-topic links, 10+ real-world apps, current research
+PART 9: SELF-ASSESSMENT — 35+ questions (recall, conceptual, problem-solving, challenge) with answer key
+PART 10: SUMMARY — Section recap, master cheat sheet, study checklist with □ checkboxes
+
+Use --- between parts. Include 10+ "💡 Pro Tip" boxes. Include "⚡ Quick Check" after every section.`;
+    }
+  };
 
   const generateNotes = useCallback(async (topic: string) => {
     if (!selectedSubject || !selectedGrade) return;
@@ -53,41 +97,19 @@ export function NotesSection() {
     setNotesContent('');
 
     const subjectName = getSubjectName(selectedSubject, 'en');
+    const lengthPrompt = getLengthPrompt(noteLength);
+
     const prompt = `Generate structured study notes for ${subjectName} at ${selectedGrade} level about "${topic}".
 
-Create well-organized, PROFESSIONAL notes that include:
-
-## 📋 Overview
-Brief introduction to the topic
-
-## 📌 Key Definitions
-Every important term with clear definitions. **Bold** key terms.
-
-## 🧠 Core Concepts
-Detailed explanation of each major concept with bullet points
-
-## 📊 Visual Representations
-ASCII diagrams, flowcharts, or comparison tables where helpful
-
-## 🔬 Formulas & Rules
-Important formulas or rules (if applicable) with step-by-step breakdowns
-
-## ✅ Examples
-Clear, grade-appropriate worked examples
-
-## ⚠️ Common Mistakes
-What students typically get wrong and how to avoid it
-
-## 📝 Quick Summary
-Recap the most important takeaways
+${lengthPrompt}
 
 IMPORTANT FORMATTING:
-- Use emoji section headers consistently
-- Bold all key terms on first mention
+- Use emoji section headers consistently (📌, 🧠, 📊, ✅, ⚠️, 📝, 💡, ⚡)
+- **Bold** all key terms on first mention
 - Use tables for comparisons
+- Create ASCII diagrams using box-drawing characters: ┌ ─ ┐ │ └ ┘ → ← ↑ ↓ ▼ ▲
 - For ALL mathematical expressions, use LaTeX notation: \\( expression \\) or $$expression$$
-- Include "💡 Pro Tip" boxes for study advice
-- Be concise but comprehensive`;
+- Include "💡 Pro Tip" boxes for study advice`;
 
     const messages: Message[] = [{ id: '1', role: 'user', content: prompt }];
     let response = '';
@@ -96,11 +118,18 @@ IMPORTANT FORMATTING:
       await streamChat({
         messages,
         onDelta: (chunk) => { response += chunk; setNotesContent(response); },
-        onDone: () => { setIsLoading(false); setViewState('notes'); },
+        onDone: async () => {
+          setIsLoading(false);
+          setViewState('notes');
+          // Auto-save the note
+          const noteTitle = `${getSubjectName(selectedSubject, language)} — ${topic}`;
+          await createNote(noteTitle, response);
+          toast({ title: lang === 'ar' ? 'تم الحفظ!' : 'Note saved!' });
+        },
         onError: (error) => { setIsLoading(false); toast({ variant: 'destructive', title: 'Error', description: error.message }); },
       });
     } catch { setIsLoading(false); }
-  }, [selectedSubject, selectedGrade, toast]);
+  }, [selectedSubject, selectedGrade, toast, noteLength, createNote, language]);
 
   const handleSubjectClick = (subjectId: string) => { setSelectedSubject(subjectId); setSelectedGrade(null); setViewState('grade'); };
   const handleGradeSelect = (grade: string) => { setSelectedGrade(grade); setViewState('input'); };
@@ -116,6 +145,106 @@ IMPORTANT FORMATTING:
   // FILE UPLOAD VIEW
   if (viewState === 'file-upload') {
     return <FileNotesGenerator onBack={handleBackToMenu} />;
+  }
+
+  // SAVED NOTE VIEW
+  if (viewState === 'saved-note-view' && viewingNote) {
+    return (
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="flex items-center justify-between mb-4">
+            <Button variant="ghost" size="sm" onClick={() => { setViewingNote(null); setViewState('saved-notes'); }}>
+              <ArrowLeft size={14} className="mr-1" />{tr('back', language)}
+            </Button>
+          </div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary to-accent text-lg">📝</div>
+            <div className="flex-1">
+              <h1 className="font-bold text-sm">{viewingNote.title}</h1>
+              <p className="text-xs text-muted-foreground">{new Date(viewingNote.created_at).toLocaleDateString()}</p>
+            </div>
+          </div>
+          <div className="glass-effect rounded-2xl p-5 overflow-y-auto max-h-[65vh]">
+            <MathRenderer content={viewingNote.content} className="whitespace-pre-wrap text-sm leading-relaxed" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // SAVED NOTES LIST
+  if (viewState === 'saved-notes') {
+    return (
+      <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Button variant="ghost" size="sm" onClick={handleBackToMenu}>
+              <ArrowLeft size={16} className="mr-1" />{tr('back', language)}
+            </Button>
+          </div>
+          <div className="text-center mb-6 animate-fade-in">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-emerald-500 to-teal-600">
+              <BookmarkCheck className="w-7 h-7 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2 gradient-text">
+              {lang === 'ar' ? 'ملاحظاتي المحفوظة' : 'My Saved Notes'}
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              {lang === 'ar' ? `${notes.length} ملاحظة` : `${notes.length} notes`}
+            </p>
+          </div>
+
+          {notesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : notes.length === 0 ? (
+            <div className="text-center py-12 glass-effect rounded-2xl">
+              <FileText className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+              <p className="text-muted-foreground text-sm">
+                {lang === 'ar' ? 'لا توجد ملاحظات محفوظة بعد' : 'No saved notes yet'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {lang === 'ar' ? 'أنشئ ملاحظات جديدة وسيتم حفظها تلقائيًا' : 'Generate notes and they\'ll be auto-saved here'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {notes.map((note, idx) => (
+                <button
+                  key={note.id}
+                  onClick={() => { setViewingNote(note); setViewState('saved-note-view'); }}
+                  className="w-full glass-effect rounded-2xl p-4 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.01] hover:shadow-lg active:scale-[0.99]"
+                  style={{ animationDelay: `${idx * 40}ms` }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary/20 to-accent/20 text-primary">
+                      <FileText size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm text-foreground truncate">{note.title}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(note.created_at).toLocaleDateString()} • {note.content.length > 100 ? `${Math.ceil(note.content.length / 500)} pages` : 'Short'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNote(note.id);
+                        toast({ title: lang === 'ar' ? 'تم الحذف' : 'Note deleted' });
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   }
 
   if (isLoading) {
@@ -144,7 +273,7 @@ IMPORTANT FORMATTING:
               <p className="text-xs text-muted-foreground">{getGradeName(selectedGrade!, language)} • {topicInput}</p>
             </div>
           </div>
-          <div className="glass-effect rounded-2xl p-5 overflow-y-auto max-h-[60vh]">
+          <div className="glass-effect rounded-2xl p-5 overflow-y-auto max-h-[65vh]">
             <MathRenderer content={notesContent} className="whitespace-pre-wrap text-sm leading-relaxed" />
           </div>
         </div>
@@ -165,6 +294,35 @@ IMPORTANT FORMATTING:
           <div className="glass-effect rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-2 text-center text-lg">{tr('notesTopicQuestion', language)}</h3>
             <input type="text" value={topicInput} onChange={(e) => setTopicInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleTopicSubmit()} placeholder={tr('notesPlaceholder', language)} className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4" autoFocus />
+
+            {/* Length Selector */}
+            <div className="mb-4">
+              <p className="text-xs font-medium text-muted-foreground mb-2 text-center">
+                {lang === 'ar' ? 'مستوى التفصيل' : 'Detail Level'}
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { key: 'short' as NoteLength, icon: <Zap size={14} />, label: lang === 'ar' ? 'قصير' : 'Short' },
+                  { key: 'medium' as NoteLength, icon: <BookOpen size={14} />, label: lang === 'ar' ? 'متوسط' : 'Medium' },
+                  { key: 'long' as NoteLength, icon: <GraduationCap size={14} />, label: lang === 'ar' ? 'طويل' : 'Long' },
+                ]).map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setNoteLength(opt.key)}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all",
+                      noteLength === opt.key
+                        ? "bg-primary text-primary-foreground shadow-md scale-[1.02]"
+                        : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                    )}
+                  >
+                    {opt.icon}
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <Button size="sm" onClick={handleTopicSubmit} disabled={!topicInput.trim()} className="w-full gap-2">{tr('generateNotes', language)}<ArrowRight size={16} /></Button>
           </div>
         </div>
@@ -223,7 +381,7 @@ IMPORTANT FORMATTING:
     );
   }
 
-  // MAIN MENU - Choose between topic notes and file upload
+  // MAIN MENU
   return (
     <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6">
@@ -278,6 +436,33 @@ IMPORTANT FORMATTING:
                 </p>
               </div>
               <ArrowRight className="ml-auto text-muted-foreground group-hover:text-foreground transition-colors" />
+            </div>
+          </button>
+
+          {/* Saved Notes */}
+          <button
+            onClick={() => setViewState('saved-notes')}
+            className="glass-effect rounded-2xl p-6 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+            style={{ animationDelay: '100ms' }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+                <BookmarkCheck className="w-7 h-7" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg text-foreground">
+                  {lang === 'ar' ? 'ملاحظاتي المحفوظة' : 'My Saved Notes'}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {lang === 'ar' ? 'عرض وإدارة ملاحظاتك المحفوظة' : 'View and manage your saved notes'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {notes.length > 0 && (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">{notes.length}</span>
+                )}
+                <ArrowRight className="text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
             </div>
           </button>
         </div>
