@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
+import { BudgetOptimizationReport } from '@/components/admin/BudgetOptimizationReport';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -602,10 +603,14 @@ export default function SchoolAdminDashboard() {
         )}
 
         <Tabs defaultValue="performance" className="space-y-6">
-          <TabsList className="grid grid-cols-10 w-full max-w-5xl">
+          <TabsList className="grid grid-cols-11 w-full max-w-6xl">
             <TabsTrigger value="performance" className="gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Performance</span>
+            </TabsTrigger>
+            <TabsTrigger value="budget" className="gap-2">
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Budget</span>
             </TabsTrigger>
             <TabsTrigger value="codes" className="gap-2">
               <Key className="w-4 h-4" />
@@ -651,6 +656,13 @@ export default function SchoolAdminDashboard() {
           {/* Performance Dashboard Tab */}
           <TabsContent value="performance" className="space-y-4">
             <SchoolPerformanceDashboard schoolId={school.id} />
+          </TabsContent>
+
+
+
+          {/* Budget Optimization Tab */}
+          <TabsContent value="budget" className="space-y-4">
+            <BudgetOptimizationReport schoolId={school.id} />
           </TabsContent>
 
           {/* Invite Codes Tab */}

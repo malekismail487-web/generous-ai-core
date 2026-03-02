@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { StudentAppPreview } from '@/components/StudentAppPreview';
 import { GlobalAnalyticsDashboard } from '@/components/admin/GlobalAnalyticsDashboard';
+import { TeacherExcellenceProgram } from '@/components/admin/TeacherExcellenceProgram';
+import { MinistryReadinessReport } from '@/components/admin/MinistryReadinessReport';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -610,7 +612,7 @@ export default function SuperAdmin() {
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           <Button variant={!showAnalytics ? 'default' : 'outline'} onClick={() => setShowAnalytics(false)} className="gap-2">
             <Building2 className="w-4 h-4" /> Schools
           </Button>
@@ -620,7 +622,11 @@ export default function SuperAdmin() {
         </div>
 
         {showAnalytics ? (
-          <GlobalAnalyticsDashboard />
+          <div className="space-y-8">
+            <GlobalAnalyticsDashboard />
+            <TeacherExcellenceProgram />
+            <MinistryReadinessReport />
+          </div>
         ) : (
         <>
         {/* Stats Cards */}
