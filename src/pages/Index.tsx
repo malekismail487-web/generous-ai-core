@@ -59,6 +59,7 @@ const Index = () => {
     isSchoolAdmin, 
     isTeacher, 
     isStudent,
+    isParent,
     hasProfile
   } = useRoleGuard();
   const { t, language } = useThemeLanguage();
@@ -207,6 +208,7 @@ const Index = () => {
   if (isSuperAdmin) return <Navigate to="/super-admin" replace />;
   if (isSchoolAdmin && profile?.is_active) return <Navigate to="/admin" replace />;
   if (isTeacher && profile?.is_active) return <Navigate to="/teacher" replace />;
+  if (isParent) return <Navigate to="/parent" replace />;
   if (!hasProfile) return <Navigate to="/activate-school" replace />;
   if (profile?.status === 'pending' || profile?.status === 'rejected') return <Navigate to="/pending-approval" replace />;
 

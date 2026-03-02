@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-export type UserRole = 'super_admin' | 'school_admin' | 'teacher' | 'student' | 'none';
+export type UserRole = 'super_admin' | 'school_admin' | 'teacher' | 'student' | 'parent' | 'none';
 
 const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
 
@@ -40,6 +40,7 @@ export function useRoleGuard() {
   const isSchoolAdmin = role === 'school_admin';
   const isTeacher = role === 'teacher';
   const isStudent = role === 'student';
+  const isParent = role === 'parent';
 
   const fetchUserData = useCallback(async () => {
     if (!user) {
@@ -104,6 +105,8 @@ export function useRoleGuard() {
       setRole('teacher');
     } else if (userType === 'student') {
       setRole('student');
+    } else if (userType === 'parent') {
+      setRole('parent');
     } else {
       setRole('none');
     }
@@ -166,6 +169,7 @@ export function useRoleGuard() {
     isSchoolAdmin,
     isTeacher,
     isStudent,
+    isParent,
     isActive: profile?.is_active ?? false,
     hasProfile: !!profile,
     activateSchoolCode,
