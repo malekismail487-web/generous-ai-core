@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { useWallpaper } from '@/hooks/useWallpaper';
 
 interface Particle {
   x: number;
@@ -15,10 +16,10 @@ interface Particle {
 
 export function AnimatedBackground() {
   const { isLiteMode } = useThemeLanguage();
+  const { wallpaper } = useWallpaper();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animFrameRef = useRef<number>(0);
-  const isDarkRef = useRef(true);
 
   useEffect(() => {
     if (isLiteMode) return;
@@ -34,13 +35,8 @@ export function AnimatedBackground() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Detect theme
-    const checkTheme = () => {
-      isDarkRef.current = !document.documentElement.classList.contains('light');
-    };
-    checkTheme();
-    const observer = new MutationObserver(checkTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    const shapes: ('circle' | 'ring' | 'square')[] = wallpaper.shapeBias ?? ['circle', 'ring', 'square'];
+    const maxOpacity = wallpaper.maxOpacity ?? 0.08;
 
     // Create particles
     const count = Math.min(35, Math.floor((window.innerWidth * window.innerHeight) / 25000));
@@ -50,30 +46,23 @@ export function AnimatedBackground() {
       vx: (Math.random() - 0.5) * 0.4,
       vy: (Math.random() - 0.5) * 0.4,
       size: Math.random() * 20 + 8,
-      opacity: Math.random() * 0.08 + 0.03,
+      opacity: Math.random() * maxOpacity + 0.03,
       rotation: Math.random() * Math.PI * 2,
       rotationSpeed: (Math.random() - 0.5) * 0.008,
-      shape: (['circle', 'ring', 'square'] as const)[Math.floor(Math.random() * 3)],
+      shape: shapes[Math.floor(Math.random() * shapes.length)],
     }));
+
+    const { primaryH, primaryS, primaryL, accentH, accentS, accentL } = wallpaper;
+    const lineAlpha = wallpaper.lineAlpha ?? 0.04;
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const dark = isDarkRef.current;
-      // Primary color: gold (dark) / coral (light)
-      const primaryH = dark ? 38 : 15;
-      const primaryS = dark ? 95 : 85;
-      const primaryL = dark ? 60 : 55;
-      // Accent: teal
-      const accentH = 175;
-      const accentS = dark ? 70 : 60;
-      const accentL = dark ? 45 : 38;
 
       particlesRef.current.forEach((p, i) => {
         p.x += p.vx;
         p.y += p.vy;
         p.rotation += p.rotationSpeed;
 
-        // Wrap around edges
         if (p.x < -50) p.x = canvas.width + 50;
         if (p.x > canvas.width + 50) p.x = -50;
         if (p.y < -50) p.y = canvas.height + 50;
@@ -110,7 +99,7 @@ export function AnimatedBackground() {
         ctx.restore();
       });
 
-      // Draw faint lines between nearby particles
+      // Connection lines
       for (let i = 0; i < particlesRef.current.length; i++) {
         for (let j = i + 1; j < particlesRef.current.length; j++) {
           const a = particlesRef.current[i];
@@ -122,10 +111,8 @@ export function AnimatedBackground() {
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
-            const lineAlpha = (1 - dist / 180) * 0.04;
-            ctx.strokeStyle = dark
-              ? `hsla(38, 95%, 60%, ${lineAlpha})`
-              : `hsla(15, 85%, 55%, ${lineAlpha})`;
+            const alpha = (1 - dist / 180) * lineAlpha;
+            ctx.strokeStyle = `hsla(${primaryH}, ${primaryS}%, ${primaryL}%, ${alpha})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -140,9 +127,8 @@ export function AnimatedBackground() {
     return () => {
       cancelAnimationFrame(animFrameRef.current);
       window.removeEventListener('resize', resize);
-      observer.disconnect();
     };
-  }, [isLiteMode]);
+  }, [isLiteMode, wallpaper]);
 
   if (isLiteMode) return null;
 
