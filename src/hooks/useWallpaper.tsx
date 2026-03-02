@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { WallpaperPreset, getPresetById, getDefaultPreset, wallpaperPresets } from '@/lib/wallpaperPresets';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { type WallpaperPreset, getPresetById, getDefaultPreset, wallpaperPresets } from '@/lib/wallpaperPresets';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 
 interface WallpaperContextType {
