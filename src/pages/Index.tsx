@@ -197,7 +197,7 @@ const Index = () => {
   // Loading states
   if (authLoading || roleLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="ambient-glow" />
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
@@ -316,7 +316,7 @@ const Index = () => {
   };
 
   return (
-    <div className="h-screen relative flex flex-col overflow-hidden">
+    <div className="h-screen bg-background relative flex flex-col overflow-hidden">
       <AnimatedBackground />
 
       {/* Persistent floating timer - shows when timer is active on any page except focustimer */}
