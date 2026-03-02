@@ -41,7 +41,7 @@ serve(async (req) => {
   }
 
   try {
-    const { fileContent, fileName, adaptiveLevel, learningStyle } = await req.json();
+    const { fileContent, fileName, adaptiveLevel, learningStyle, customPrompt } = await req.json();
     
     const userKeys = await getUserApiKeys(req.headers.get("authorization"));
     const systemGroqKey = Deno.env.get("GROQ_API_KEY");
@@ -61,14 +61,7 @@ serve(async (req) => {
 
     const randomSeed = Math.floor(Math.random() * 99999);
 
-    const systemPrompt = `You are Lumina, an expert educational AI tutor. The user has uploaded a study file. Your job is to:
-
-1. READ and ANALYZE the entire file content carefully
-2. DETECT the language of the file (English or Arabic)
-3. RESPOND IN THE SAME LANGUAGE as the file content — if the file is in English, explain in English. If in Arabic, explain in Arabic. If mixed, use the dominant language.
-
-## Your Task
-Deliver a complete, structured educational lecture explaining everything in the file, exactly like you would in the Subjects section. This is NOT a summary — it's a full lesson.
+    const defaultTask = `Deliver a complete, structured educational lecture explaining everything in the file, exactly like you would in the Subjects section. This is NOT a summary — it's a full lesson.
 
 ## Lecture Structure
 1. **Introduction** — What is this topic about? Set context.
@@ -77,13 +70,28 @@ Deliver a complete, structured educational lecture explaining everything in the 
 4. **Key Formulas / Rules / Facts** — Highlight important formulas, dates, rules, or facts.
 5. **Common Mistakes & Misconceptions** — Warn about typical errors students make.
 6. **Examples** — Provide clear, grade-appropriate examples.
-7. **Summary** — Recap the most important takeaways.
+7. **Summary** — Recap the most important takeaways.`;
+
+    const taskInstructions = customPrompt || defaultTask;
+
+    const systemPrompt = `You are Lumina, an expert educational AI tutor. The user has uploaded a study file. Your job is to:
+
+1. READ and ANALYZE the entire file content carefully
+2. DETECT the language of the file (English or Arabic)
+3. RESPOND IN THE SAME LANGUAGE as the file content — if the file is in English, explain in English. If in Arabic, explain in Arabic. If mixed, use the dominant language.
+
+## Your Task
+${taskInstructions}
 
 ## Rules
 - Be thorough — cover ALL content in the file, not just highlights
 - Use clear, student-friendly language
-- Use markdown formatting for structure
+- Use markdown formatting for structure with emoji section headers (📌, 🧠, 📊, ✅, ⚠️, 📝, 💡, ⚡)
+- Bold all key terms on first use
+- Use tables for comparisons between concepts
 - For math/science, show step-by-step reasoning with LaTeX notation
+- Create ASCII diagrams or visual representations where helpful
+- Include "💡 Pro Tip" boxes for study advice
 - Do NOT skip any section of the file
 - Do NOT say "I can't read the file" — the content is provided to you directly
 - Session ID: ${randomSeed} — Generate a fresh, unique explanation each time

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ArrowLeft, ArrowRight, Loader2, Plus, Sparkles, Trash2, Bot, BookOpen, Download, Image as ImageIcon, FileText, Presentation, Pencil, Save } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Plus, Sparkles, Trash2, Bot, BookOpen, Download, Image as ImageIcon, FileText, Presentation, Pencil, Save, Zap, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
@@ -58,6 +58,7 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   const [isExporting, setIsExporting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
+  const [lectureLength, setLectureLength] = useState<'short' | 'medium' | 'long'>('medium');
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -154,11 +155,28 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
 
     const subject = subjects.find(s => s.id === selectedSubject);
     const isArabic = selectedSubject === 'arabic';
+
+    const lengthInstruction = lectureLength === 'short'
+      ? 'Keep it SHORT and CONCISE — 1-2 pages max. Only key definitions, main concepts as bullets, critical formulas, and a brief recap.'
+      : lectureLength === 'long'
+      ? `Make this EXTREMELY DETAILED — equivalent to 32+ slides of professional educational content. Include:
+- Full introduction with historical context
+- Every definition with etymology
+- Deep dive into each concept with multiple perspectives  
+- ASCII diagrams, flowcharts, and comparison tables
+- 5+ worked examples per concept at varying difficulty
+- Detailed analysis of common misconceptions
+- Cross-topic connections and real-world applications
+- Comprehensive summary with study checklist
+- "💡 Pro Tip" boxes and "⚡ Quick Check" questions throughout`
+      : 'Provide BALANCED notes — 5-8 pages with clear explanations, examples, diagrams where helpful, and a summary.';
     
     const prompt = isArabic 
       ? `أنت معلم للغة العربية لطالب في الصف ${selectedGrade}.
     
 الطالب يريد تعلم: "${topic}"
+
+${lectureLength === 'short' ? 'اجعل الشرح قصيرًا ومختصرًا — صفحة أو صفحتان فقط.' : lectureLength === 'long' ? 'اجعل الشرح مفصلاً جداً — ما يعادل 32+ شريحة من المحتوى التعليمي الشامل مع رسوم بيانية وأمثلة متعددة.' : 'اجعل الشرح متوازنًا — 5-8 صفحات مع أمثلة ورسوم بيانية.'}
 
 قم بإنشاء درس شامل يتضمن:
 1. شرح واضح للتعريفات أولاً
@@ -167,22 +185,30 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
 4. الأخطاء الشائعة التي يجب تجنبها
 5. ملخص قصير للمراجعة
 
+استخدم رموز الأقسام مع الإيموجي (📌، 🧠، 📊، ✅، ⚠️، 📝، 💡).
 مهم جداً: اكتب الدرس بالكامل باللغة العربية فقط.
 استخدم لغة مناسبة لعمر الطالب.`
       : `You are teaching ${subject?.name} to a ${selectedGrade} student.
     
 The student wants to learn about: "${topic}"
 
-Generate a comprehensive lecture that includes:
+${lengthInstruction}
+
+Generate a lecture that includes:
 1. Clear explanation of definitions first
 2. Step-by-step explanation of processes/concepts
 3. Examples appropriate for ${selectedGrade} level
 4. Common mistakes or misconceptions to avoid
 5. A short summary for revision
 
-IMPORTANT: For ALL mathematical expressions, use LaTeX notation:
-- Inline math: \\( expression \\) or $expression$
-- Display math: \\[ expression \\] or $$expression$$
+IMPORTANT FORMATTING:
+- Use emoji section headers (📌, 🧠, 📊, ✅, ⚠️, 📝, 💡, ⚡)
+- **Bold** all key terms on first mention
+- Use tables for comparisons between concepts
+- Create ASCII diagrams or visual representations where helpful
+- Include "💡 Pro Tip" boxes for study advice
+- For ALL mathematical expressions, use LaTeX notation:
+  \\( expression \\) or $expression$ for inline, \\[ expression \\] or $$expression$$ for display
 - Always include plain-text fallback after complex formulas
 
 Stay strictly within ${subject?.name}. Do not mix with other subjects.
@@ -536,6 +562,34 @@ Use age-appropriate language for ${selectedGrade}.`;
               className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
               autoFocus
             />
+
+            {/* Length Selector */}
+            <div className="mb-4">
+              <p className="text-xs font-medium text-muted-foreground mb-2 text-center">
+                {language === 'ar' ? 'مستوى التفصيل' : 'Detail Level'}
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { key: 'short' as const, icon: <Zap size={14} />, label: language === 'ar' ? 'قصير' : 'Short', color: 'from-amber-500 to-orange-500' },
+                  { key: 'medium' as const, icon: <BookOpen size={14} />, label: language === 'ar' ? 'متوسط' : 'Medium', color: 'from-blue-500 to-cyan-500' },
+                  { key: 'long' as const, icon: <GraduationCap size={14} />, label: language === 'ar' ? 'طويل' : 'Long', color: 'from-violet-500 to-purple-600' },
+                ]).map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setLectureLength(opt.key)}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all",
+                      lectureLength === opt.key
+                        ? "bg-primary text-primary-foreground shadow-md scale-[1.02]"
+                        : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                    )}
+                  >
+                    {opt.icon}
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="flex gap-2">
               {savedMaterials.length > 0 && (
