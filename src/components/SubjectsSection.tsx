@@ -157,19 +157,57 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
     const isArabic = selectedSubject === 'arabic';
 
     const lengthInstruction = lectureLength === 'short'
-      ? 'Keep it SHORT and CONCISE — 1-2 pages max. Only key definitions, main concepts as bullets, critical formulas, and a brief recap.'
+      ? `Generate CONCISE but THOROUGH content — 4-6 pages.
+Include:
+- Clear overview paragraph (5+ sentences)
+- All key definitions with precise explanations
+- Core concepts as detailed bullet points
+- At least 1 ASCII diagram or comparison table using box-drawing characters (┌─┐│└─┘→)
+- 2-3 worked examples
+- 3-5 common mistakes
+- Summary checklist
+Use "💡 Pro Tip" boxes. **Bold** all key terms.`
       : lectureLength === 'long'
-      ? `Make this EXTREMELY DETAILED — equivalent to 32+ slides of professional educational content. Include:
-- Full introduction with historical context
-- Every definition with etymology
-- Deep dive into each concept with multiple perspectives  
-- ASCII diagrams, flowcharts, and comparison tables
-- 5+ worked examples per concept at varying difficulty
-- Detailed analysis of common misconceptions
-- Cross-topic connections and real-world applications
-- Comprehensive summary with study checklist
-- "💡 Pro Tip" boxes and "⚡ Quick Check" questions throughout`
-      : 'Provide BALANCED notes — 5-8 pages with clear explanations, examples, diagrams where helpful, and a summary.';
+      ? `Make this a COLOSSAL, ENCYCLOPEDIC resource — equivalent to 60+ slides or a full textbook chapter. Aim for 30-50 pages.
+
+Structure as a COMPLETE TEXTBOOK CHAPTER with these parts:
+
+PART 1: FOUNDATIONS — Overview, historical background, prerequisites review
+PART 2: DEFINITIONS — Every term (15+ terms), glossary table with Term/Definition/Example/Related Terms columns
+PART 3: CORE CONCEPTS DEEP DIVE — Each concept gets: What It Is, How It Works, ASCII Visual Diagram, Key Properties, Connection to Other Concepts (minimum 6-8 concept sections)
+PART 4: DIAGRAMS & VISUAL LEARNING — Create 6-8 different ASCII visual elements:
+  - Concept map (tree structure using ┌─┐│└─┘→←↑↓▼)
+  - Process flowchart
+  - Multiple comparison tables
+  - Classification/hierarchy diagrams
+  - Cause-effect diagrams
+  - Cycle diagrams (if applicable)
+PART 5: FORMULAS & DERIVATIONS — Complete formula sheet, step-by-step derivations, special cases
+PART 6: EXTENSIVE WORKED EXAMPLES — 5+ easy, 5+ medium, 5+ challenging, 3+ real-world application problems
+PART 7: MISCONCEPTIONS — Top 10 student mistakes with ❌ wrong vs ✅ correct approach for each
+PART 8: CONNECTIONS — Cross-topic links, 10+ real-world applications, current research
+PART 9: SELF-ASSESSMENT — 10 recall questions, 10 conceptual questions, 10 problem-solving exercises, 5 challenge problems, full answer key
+PART 10: COMPREHENSIVE SUMMARY — Section recap, master cheat sheet, study checklist with checkboxes
+
+Use horizontal rules (---) between parts. Include "💡 Pro Tip" boxes (minimum 10). Include "⚡ Quick Check" questions after every major section.`
+      : `Generate DETAILED content — 12-18 pages of rich educational material.
+
+Include ALL of these:
+1. Introduction & Context — What, why, historical background (full paragraph)
+2. Definitions — Every term with 3-5 sentence definitions, etymology where helpful
+3. Core Concepts Deep Dive — Each concept gets its own subsection with explanation, step-by-step breakdown, and connection to other concepts
+4. Visual Representations — Create AT LEAST 3 ASCII diagrams:
+   - Flowcharts using box-drawing characters (┌─┐│└─┘→←↑↓▼)
+   - Comparison tables
+   - Hierarchy/tree diagrams or concept maps
+5. Formulas & Rules — Every formula with step-by-step breakdown
+6. Worked Examples — 3-5 per concept at varying difficulty
+7. Common Misconceptions — 5-8 errors with wrong vs right comparison
+8. Real-World Applications — 3-5 practical applications
+9. Self-Assessment — 5-8 practice questions with answers
+10. Summary — Section recap, key takeaways, formula sheet, study checklist
+
+Include "💡 Pro Tip" and "⚡ Quick Check" boxes throughout.`;
     
     const prompt = isArabic 
       ? `أنت معلم للغة العربية لطالب في الصف ${selectedGrade}.
