@@ -88,42 +88,80 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   const fetchLectureImages = useCallback(async (topic: string, subjectName: string) => {
     setIsGeneratingImages(true);
     setLectureImages([]);
+    const allImages: string[] = [];
+
+    // 1) Fetch professional Wikipedia images with strict filtering
+    try {
+      const fillerWords = new Set(['the', 'a', 'an', 'of', 'in', 'on', 'is', 'are', 'and', 'to', 'for', 'with', 'about', 'how', 'what', 'why', 'explain', 'show', 'tell', 'teach', 'understand']);
+      const coreWords = topic.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !fillerWords.has(w));
+      const coreTopic = coreWords.join(' ') || topic;
+      const searchTerms = [`${coreTopic} ${subjectName}`, coreTopic];
+      const personPatterns = /president|politician|actor|actress|singer|celebrity|minister|king|queen|prince|trump|biden|obama|leader|chairman|CEO|founder|footballer|player|rapper|musician|comedian|influencer|youtuber|tiktoker/i;
+      const irrelevantPatterns = /community|forum|software|band|album|film|movie|tv series|video game|disambiguation|logo|icon|screenshot|code|terminal|computer|programming|website|online|internet|chat|social media|debate|policy|politic|portrait|headshot|mugshot|selfie/i;
+      const seenUrls = new Set<string>();
+
+      for (const searchTerm of searchTerms) {
+        if (allImages.length >= 2) break;
+        const encoded = encodeURIComponent(searchTerm);
+        const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrlimit=10&prop=pageimages|description|categories&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const data = await res.json();
+        const pages = data.query?.pages;
+        if (!pages) continue;
+
+        const sorted = Object.values(pages).sort((a: any, b: any) => (a.index || 0) - (b.index || 0));
+        for (const page of sorted as any[]) {
+          if (allImages.length >= 2) break;
+          const thumb = page.thumbnail?.source;
+          const title = page.title || '';
+          const desc = page.description || '';
+          const cats = (page.categories || []).map((c: any) => c.title?.toLowerCase() || '').join(' ');
+          if (!thumb || seenUrls.has(thumb)) continue;
+          if (thumb.endsWith('.svg')) continue;
+          if (page.thumbnail?.width < 150 || page.thumbnail?.height < 100) continue;
+          if (irrelevantPatterns.test(title) || irrelevantPatterns.test(desc)) continue;
+          if (personPatterns.test(title) || personPatterns.test(desc) || personPatterns.test(cats)) continue;
+          // Check category for "births" or "people" — skip biographical pages
+          if (/births|people|living people|deaths/i.test(cats)) continue;
+          const titleLower = (title + ' ' + desc).toLowerCase();
+          const hasRelevance = coreWords.some(w => titleLower.includes(w));
+          if (!hasRelevance) continue;
+          seenUrls.add(thumb);
+          allImages.push(thumb);
+        }
+      }
+    } catch (err) {
+      console.warn('Wikipedia images failed:', err);
+    }
+
+    // Update with Wikipedia images first
+    if (allImages.length > 0) setLectureImages([...allImages]);
+
+    // 2) Also generate AI diagrams
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-diagram`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({
-            subject: subjectName,
-            topic,
-            grade: selectedGrade || 'General',
-            count: 2,
-          }),
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({ subject: subjectName, topic, grade: selectedGrade || 'General', count: 2 }),
         }
       );
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        console.warn('Diagram generation failed:', err.error || response.status);
-        return;
-      }
-
-      const data = await response.json();
-      if (data.images && data.images.length > 0) {
-        setLectureImages(data.images);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.images?.length > 0) {
+          allImages.push(...data.images);
+          setLectureImages([...allImages]);
+        }
       }
     } catch (err) {
       console.warn('Diagram generation failed:', err);
-    } finally {
-      setIsGeneratingImages(false);
     }
+
+    setIsGeneratingImages(false);
   }, [selectedGrade]);
 
   const generateLecture = useCallback(async (topic: string) => {

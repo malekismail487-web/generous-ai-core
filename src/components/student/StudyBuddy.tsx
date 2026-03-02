@@ -119,32 +119,27 @@ export function StudyBuddy() {
   const [showStylePicker, setShowStylePicker] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch relevant educational images from Wikipedia using direct topic search
-  const fetchWikipediaImages = useCallback(async (query: string): Promise<{ src: string; alt?: string }[]> => {
+  // Fetch relevant educational images from Wikipedia with strict filtering + AI diagrams
+  const fetchEducationalImages = useCallback(async (query: string): Promise<{ src: string; alt?: string }[]> => {
+    const imgs: { src: string; alt?: string }[] = [];
+    const seenUrls = new Set<string>();
+
+    // --- 1) Wikipedia images with strict person/politician filtering ---
     try {
       const keywords = query.replace(/[?!.,،؟]/g, '').trim();
-      
-      // Extract core topic words, removing filler words (English + Arabic)
       const fillerWords = new Set(['please', 'show', 'me', 'the', 'and', 'explain', 'it', 'to', 'bring', 'photos', 'for', 'about', 'tell', 'teach', 'help', 'understand', 'what', 'is', 'are', 'how', 'does', 'can', 'you', 'i', 'a', 'an', 'of', 'in', 'on', 'with', 'اشرح', 'لي', 'عن', 'ما', 'هو', 'هي', 'كيف', 'هل', 'في', 'من', 'على', 'أريد', 'ساعدني', 'وضح', 'صور']);
       const coreWords = keywords.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !fillerWords.has(w));
       const coreTopic = coreWords.join(' ') || keywords;
-
-      // Check if query contains Arabic characters
       const hasArabic = /[\u0600-\u06FF]/.test(query);
-
-      // Build search variants - always include English search
       const searchVariants = [coreTopic];
-      if (!hasArabic) {
-        searchVariants.push(`${coreTopic} biology`, `${coreTopic} botany`);
-      }
+      if (!hasArabic) searchVariants.push(`${coreTopic} diagram`, `${coreTopic} science`);
 
-      const irrelevantPatterns = /community|forum|software|band|album|film|movie|tv series|video game|disambiguation|logo|icon|screenshot|code|terminal|computer|programming|website|online|internet|chat|social media|CERN|particle|nuclear|energy source|power plant|electricity|debate|policy|politic/i;
-      const imgs: { src: string; alt?: string }[] = [];
-      const seenUrls = new Set<string>();
+      // Strict exclusion patterns — no people, politicians, celebrities
+      const personPatterns = /president|politician|actor|actress|singer|celebrity|minister|king|queen|prince|trump|biden|obama|leader|chairman|CEO|founder|footballer|player|rapper|musician|comedian|influencer|youtuber|tiktoker/i;
+      const irrelevantPatterns = /community|forum|software|band|album|film|movie|tv series|video game|disambiguation|logo|icon|screenshot|code|terminal|computer|programming|website|online|internet|chat|social media|debate|policy|politic|portrait|headshot|mugshot|selfie/i;
 
-      // Search English Wikipedia first (always has more images)
       for (const searchTerm of searchVariants) {
-        if (imgs.length >= 3) break;
+        if (imgs.length >= 2) break;
         const encoded = encodeURIComponent(searchTerm);
         const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrlimit=10&prop=pageimages|description|categories&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
         const res = await fetch(url);
@@ -154,33 +149,31 @@ export function StudyBuddy() {
         if (!pages) continue;
 
         const sorted = Object.values(pages).sort((a: any, b: any) => (a.index || 0) - (b.index || 0));
-
         for (const page of sorted as any[]) {
-          if (imgs.length >= 3) break;
+          if (imgs.length >= 2) break;
           const thumb = page.thumbnail?.source;
           const title = page.title || '';
           const desc = page.description || '';
+          const cats = (page.categories || []).map((c: any) => c.title?.toLowerCase() || '').join(' ');
           if (!thumb || seenUrls.has(thumb)) continue;
           if (thumb.endsWith('.svg')) continue;
           if (page.thumbnail?.width < 150 || page.thumbnail?.height < 100) continue;
           if (irrelevantPatterns.test(title) || irrelevantPatterns.test(desc)) continue;
-          
-          // For Arabic queries, skip relevance check since keywords won't match English titles
+          if (personPatterns.test(title) || personPatterns.test(desc) || personPatterns.test(cats)) continue;
+          if (/births|people|living people|deaths/i.test(cats)) continue;
           if (!hasArabic) {
-            const titleLower = title.toLowerCase() + ' ' + desc.toLowerCase();
-            const hasRelevance = coreWords.some(w => titleLower.includes(w));
-            if (!hasRelevance) continue;
+            const titleLower = (title + ' ' + desc).toLowerCase();
+            if (!coreWords.some(w => titleLower.includes(w))) continue;
           }
-          
           seenUrls.add(thumb);
           imgs.push({ src: thumb, alt: title });
         }
       }
 
-      // If Arabic and no results yet, also try Arabic Wikipedia
-      if (hasArabic && imgs.length < 3) {
+      // Arabic Wikipedia fallback
+      if (hasArabic && imgs.length < 2) {
         const encoded = encodeURIComponent(coreTopic);
-        const arUrl = `https://ar.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrlimit=10&prop=pageimages&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
+        const arUrl = `https://ar.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrlimit=10&prop=pageimages|description|categories&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
         try {
           const arRes = await fetch(arUrl);
           if (arRes.ok) {
@@ -188,22 +181,46 @@ export function StudyBuddy() {
             const arPages = arData.query?.pages;
             if (arPages) {
               for (const page of Object.values(arPages) as any[]) {
-                if (imgs.length >= 3) break;
+                if (imgs.length >= 2) break;
                 const thumb = page.thumbnail?.source;
-                if (thumb && !thumb.endsWith('.svg') && !seenUrls.has(thumb)) {
-                  seenUrls.add(thumb);
-                  imgs.push({ src: thumb, alt: page.title || '' });
-                }
+                const title = page.title || '';
+                const desc = page.description || '';
+                const cats = (page.categories || []).map((c: any) => c.title?.toLowerCase() || '').join(' ');
+                if (!thumb || seenUrls.has(thumb) || thumb.endsWith('.svg')) continue;
+                if (personPatterns.test(title) || personPatterns.test(desc)) continue;
+                if (/births|people|living people|deaths/i.test(cats)) continue;
+                seenUrls.add(thumb);
+                imgs.push({ src: thumb, alt: page.title || '' });
               }
             }
           }
         } catch { /* ignore */ }
       }
+    } catch { /* Wikipedia failed, continue */ }
 
-      return imgs;
-    } catch {
-      return [];
-    }
+    // --- 2) AI-generated educational diagrams ---
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-diagram`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({ subject: 'General', topic: query, grade: 'General', count: 2 }),
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.images?.length > 0) {
+          for (const imgUrl of data.images) {
+            imgs.push({ src: imgUrl, alt: `AI diagram: ${query}` });
+          }
+        }
+      }
+    } catch { /* diagram generation failed */ }
+
+    return imgs;
   }, []);
 
   // Load saved memory and style on mount
@@ -397,10 +414,10 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
         }
       }
 
-      // After streaming is done, always fetch real images from Wikipedia
+      // After streaming is done, fetch real educational images (Wikipedia + AI diagrams)
       if (assistantContent) {
         const searchQuery = content;
-        const imgs = await fetchWikipediaImages(searchQuery);
+        const imgs = await fetchEducationalImages(searchQuery);
         if (imgs.length > 0) {
           setMessages(prev =>
             prev.map(m => m.id === assistantId ? { ...m, images: imgs } : m)
