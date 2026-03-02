@@ -1,0 +1,1 @@
+ALTER TABLE public.user_api_keys ADD COLUMN IF NOT EXISTS groq_fallback_api_key TEXT DEFAULT NULL;

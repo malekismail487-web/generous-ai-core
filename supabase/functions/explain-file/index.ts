@@ -6,8 +6,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-async function getUserApiKey(authHeader: string | null): Promise<string | null> {
-  if (!authHeader) return null;
+interface UserKeys {
+  primaryKey: string | null;
+  fallbackKey: string | null;
+}
+
+async function getUserApiKeys(authHeader: string | null): Promise<UserKeys> {
+  if (!authHeader) return { primaryKey: null, fallbackKey: null };
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -15,15 +20,18 @@ async function getUserApiKey(authHeader: string | null): Promise<string | null> 
     );
     const token = authHeader.replace("Bearer ", "");
     const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user) return null;
+    if (!user) return { primaryKey: null, fallbackKey: null };
     const { data } = await supabase
       .from("user_api_keys")
-      .select("groq_api_key")
+      .select("groq_api_key, groq_fallback_api_key")
       .eq("user_id", user.id)
       .maybeSingle();
-    return data?.groq_api_key || null;
+    return {
+      primaryKey: data?.groq_api_key || null,
+      fallbackKey: data?.groq_fallback_api_key || null,
+    };
   } catch {
-    return null;
+    return { primaryKey: null, fallbackKey: null };
   }
 }
 
@@ -35,10 +43,12 @@ serve(async (req) => {
   try {
     const { fileContent, fileName, adaptiveLevel, learningStyle } = await req.json();
     
-    const userKey = await getUserApiKey(req.headers.get("authorization"));
-    const GROQ_API_KEY = userKey || Deno.env.get("GROQ_API_KEY");
+    const userKeys = await getUserApiKeys(req.headers.get("authorization"));
+    const systemGroqKey = Deno.env.get("GROQ_API_KEY");
+    const primaryApiKey = userKeys.primaryKey || systemGroqKey;
+    const fallbackApiKey = userKeys.fallbackKey || systemGroqKey;
 
-    if (!GROQ_API_KEY) {
+    if (!primaryApiKey) {
       throw new Error("No AI API key configured. Please add your Groq API key.");
     }
 
@@ -80,17 +90,20 @@ Deliver a complete, structured educational lecture explaining everything in the 
 ${adaptiveLevel === 'beginner' ? '\n## Adaptive Level: BEGINNER\nUse very simple vocabulary, short sentences, basic analogies, and explain every concept from scratch. Avoid jargon entirely.' : adaptiveLevel === 'advanced' ? '\n## Adaptive Level: ADVANCED\nUse precise technical language, go deeper into theory, include challenging details and connections to broader concepts.' : '\n## Adaptive Level: INTERMEDIATE\nUse standard academic language with moderate detail and practical examples.'}
 ${learningStyle ? `\n## Learning Style Personalization\n${learningStyle}` : ''}`;
 
-    // Try models in order: primary → fallback
-    const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+    // Model-to-key mapping: primary model uses primary key, fallback model uses fallback key
+    const modelConfigs = [
+      { model: "llama-3.3-70b-versatile", apiKey: primaryApiKey },
+      { model: "llama-3.1-8b-instant", apiKey: fallbackApiKey || primaryApiKey },
+    ];
     let response: Response | null = null;
 
-    for (const model of models) {
+    for (const { model, apiKey } of modelConfigs) {
       const maxRetries = 3;
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${GROQ_API_KEY}`,
+            Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
