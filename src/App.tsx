@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeLanguageProvider } from "@/hooks/useThemeLanguage";
+import DeviceBanScreen from "@/components/DeviceBanScreen";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import LanguageSelect from "./pages/LanguageSelect";
@@ -25,42 +26,44 @@ import IQTest from "./pages/IQTest";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <ThemeLanguageProvider>
-        <FocusTimerProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/language" element={<LanguageSelect />} />
-              <Route path="/super-admin" element={<SuperAdmin />} />
-              <Route path="/super-admin-verify" element={<SuperAdminVerify />} />
-              <Route path="/activate-school" element={<ActivateSchool />} />
-              <Route path="/admin" element={<SchoolAdminDashboard />} />
-              <Route path="/teacher" element={<TeacherDashboard />} />
-              <Route path="/student" element={<Navigate to="/" replace />} />
-              <Route path="/student/assignments/:assignmentId" element={<StudentAssignmentTake />} />
-              <Route
-                path="/student/assignments/:assignmentId/results"
-                element={<StudentAssignmentResults />}
-              />
-              <Route path="/pending-approval" element={<PendingApprovalPage />} />
-              <Route path="/setup-api-key" element={<ApiKeySetup />} />
-              <Route path="/iq-test" element={<IQTest />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-        </FocusTimerProvider>
-      </ThemeLanguageProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <DeviceBanScreen>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ThemeLanguageProvider>
+          <FocusTimerProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/language" element={<LanguageSelect />} />
+                  <Route path="/super-admin" element={<SuperAdmin />} />
+                  <Route path="/super-admin-verify" element={<SuperAdminVerify />} />
+                  <Route path="/activate-school" element={<ActivateSchool />} />
+                  <Route path="/admin" element={<SchoolAdminDashboard />} />
+                  <Route path="/teacher" element={<TeacherDashboard />} />
+                  <Route path="/student" element={<Navigate to="/" replace />} />
+                  <Route path="/student/assignments/:assignmentId" element={<StudentAssignmentTake />} />
+                  <Route
+                    path="/student/assignments/:assignmentId/results"
+                    element={<StudentAssignmentResults />}
+                  />
+                  <Route path="/pending-approval" element={<PendingApprovalPage />} />
+                  <Route path="/setup-api-key" element={<ApiKeySetup />} />
+                  <Route path="/iq-test" element={<IQTest />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </FocusTimerProvider>
+        </ThemeLanguageProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </DeviceBanScreen>
 );
 
 export default App;
