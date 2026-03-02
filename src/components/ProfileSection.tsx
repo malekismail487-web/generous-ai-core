@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Key, Loader2, Sun, Moon, Globe, ExternalLink, Trash2, Pencil, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Key, Loader2, Sun, Moon, Globe, ExternalLink, Trash2, Pencil, Eye, EyeOff, Heart, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
@@ -35,6 +35,27 @@ export function ProfileSection() {
   const { apiKey: savedApiKey, fallbackApiKey: savedFallbackKey, loading: keyLoading, refetch: refetchKey } = useUserApiKey();
   const { toast } = useToast();
   const tl = (key: Parameters<typeof tr>[0]) => tr(key, language);
+
+  // Parent code for students
+  const [parentCode, setParentCode] = useState<string | null>(null);
+  
+  const userType = profile?.user_type || 'student';
+  const isTeacher = userType === 'teacher';
+  const isStudent = userType === 'student';
+
+  useEffect(() => {
+    if (!user || !isStudent) return;
+    const fetchCode = async () => {
+      const { data } = await supabase
+        .from('parent_invite_codes')
+        .select('code')
+        .eq('student_id', user.id)
+        .eq('used', false)
+        .maybeSingle();
+      setParentCode((data as any)?.code || null);
+    };
+    fetchCode();
+  }, [user, isStudent]);
 
   const handleSaveApiKey = async () => {
     if (!user || !newApiKey.trim()) return;
@@ -92,9 +113,6 @@ export function ProfileSection() {
   if (viewState === 'super-admin') {
     return <SuperAdminPanel onBack={() => setViewState('main')} />;
   }
-
-  const userType = profile?.user_type || 'student';
-  const isTeacher = userType === 'teacher';
 
   return (
     <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
@@ -174,7 +192,26 @@ export function ProfileSection() {
           </div>
         </div>
 
-        {/* Admin Code Recovery removed - no longer shown to students */}
+        {/* Parent Invite Code for Students */}
+        {isStudent && parentCode && (
+          <div className="glass-effect rounded-2xl p-5 mb-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-pink-500 to-rose-500">
+                <Heart className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold">{t('Parent Access Code', 'رمز ولي الأمر')}</h3>
+                <p className="text-xs text-muted-foreground">{t('Share this code with your parent', 'شارك هذا الرمز مع ولي أمرك')}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-secondary/50 rounded-lg px-4 py-3">
+              <span className="font-mono text-lg font-bold tracking-widest flex-1">{parentCode}</span>
+              <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(parentCode); toast({ title: '✅ Copied!' }); }}>
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* School Admin Panel */}
         {isSchoolAdmin && (

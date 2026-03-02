@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import LanguageSelect from "./pages/LanguageSelect";
 import NotFound from "./pages/NotFound";
 import SuperAdmin from "./pages/SuperAdmin";
+import ParentDashboard from "./pages/ParentDashboard";
 import SuperAdminVerify from "./pages/SuperAdminVerify";
 import ActivateSchool from "./pages/ActivateSchool";
 import SchoolAdminDashboard from "./pages/SchoolAdminDashboard";
@@ -42,6 +43,7 @@ const App = () => (
                   <Route path="/language" element={<LanguageSelect />} />
                   <Route path="/super-admin" element={<SuperAdmin />} />
                   <Route path="/super-admin-verify" element={<SuperAdminVerify />} />
+                  <Route path="/parent" element={<ParentDashboard />} />
                   <Route path="/activate-school" element={<ActivateSchool />} />
                   <Route path="/admin" element={<SchoolAdminDashboard />} />
                   <Route path="/teacher" element={<TeacherDashboard />} />
