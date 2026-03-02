@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useMaterials, Material } from '@/hooks/useMaterials';
 import { MathRenderer } from '@/components/MathRenderer';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { CourseMaterialsSection } from '@/components/CourseMaterialsSection';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
@@ -88,63 +89,42 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
     setIsGeneratingImages(true);
     setLectureImages([]);
     try {
-      // For Arabic topics, also search English Wikipedia with the subject name
-      // This ensures images are found regardless of the query language
-      const searchQueries = [
-        `${topic} ${subjectName}`,
-        // Extract English keywords from subject name for better results
-        subjectName,
-      ];
-      
-      const allImgs: string[] = [];
-      const seenUrls = new Set<string>();
-      
-      for (const searchTerm of searchQueries) {
-        if (allImgs.length >= 3) break;
-        const query = encodeURIComponent(searchTerm);
-        // Always search English Wikipedia since it has more images
-        const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${query}&gsrlimit=10&prop=pageimages&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
-        const res = await fetch(url);
-        if (!res.ok) continue;
-        const data = await res.json();
-        const pages = data.query?.pages;
-        if (!pages) continue;
-        for (const page of Object.values(pages) as any[]) {
-          if (allImgs.length >= 3) break;
-          const thumb = page.thumbnail?.source;
-          if (thumb && !thumb.endsWith('.svg') && !seenUrls.has(thumb)) {
-            seenUrls.add(thumb);
-            allImgs.push(thumb);
-          }
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-diagram`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            subject: subjectName,
+            topic,
+            grade: selectedGrade || 'General',
+            count: 2,
+          }),
         }
+      );
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        console.warn('Diagram generation failed:', err.error || response.status);
+        return;
       }
-      
-      // If still no images and topic contains Arabic, try extracting English words
-      if (allImgs.length === 0) {
-        // Try just the English subject name alone
-        const fallbackQuery = encodeURIComponent(subjectName);
-        const fallbackUrl = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${fallbackQuery}&gsrlimit=5&prop=pageimages&piprop=thumbnail&pithumbsize=600&format=json&origin=*`;
-        const fallbackRes = await fetch(fallbackUrl);
-        if (fallbackRes.ok) {
-          const fallbackData = await fallbackRes.json();
-          const fallbackPages = fallbackData.query?.pages;
-          if (fallbackPages) {
-            for (const page of Object.values(fallbackPages) as any[]) {
-              if (allImgs.length >= 3) break;
-              const thumb = (page as any).thumbnail?.source;
-              if (thumb && !thumb.endsWith('.svg')) allImgs.push(thumb);
-            }
-          }
-        }
+
+      const data = await response.json();
+      if (data.images && data.images.length > 0) {
+        setLectureImages(data.images);
       }
-      
-      setLectureImages(allImgs);
     } catch (err) {
-      console.warn('Image fetch failed:', err);
+      console.warn('Diagram generation failed:', err);
     } finally {
       setIsGeneratingImages(false);
     }
-  }, []);
+  }, [selectedGrade]);
 
   const generateLecture = useCallback(async (topic: string) => {
     if (!selectedSubject || !selectedGrade || !user) return;
@@ -532,13 +512,13 @@ Use age-appropriate language for ${selectedGrade}.`;
             <div className="mt-4 space-y-3">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <ImageIcon className="w-4 h-4" />
-                <span>Related Images</span>
+                <span>{language === 'ar' ? 'رسوم بيانية تعليمية' : 'Educational Diagrams'}</span>
                 {isGeneratingImages && <Loader2 className="w-3 h-3 animate-spin" />}
               </div>
               {isGeneratingImages && lectureImages.length === 0 && (
                 <div className="flex items-center gap-2 px-4 py-6 glass-effect rounded-xl justify-center">
                   <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  <span className="text-sm text-muted-foreground">Generating lecture illustrations...</span>
+                  <span className="text-sm text-muted-foreground">{language === 'ar' ? 'جاري إنشاء الرسوم البيانية...' : 'Generating topic diagrams...'}</span>
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -546,8 +526,8 @@ Use age-appropriate language for ${selectedGrade}.`;
                   <div key={idx} className="glass-effect rounded-xl overflow-hidden">
                     <img
                       src={img}
-                      alt={`Lecture illustration ${idx + 1}`}
-                      className="w-full h-48 object-cover"
+                      alt={`Educational diagram ${idx + 1}`}
+                      className="w-full h-48 object-contain bg-white rounded-xl"
                       loading="lazy"
                     />
                   </div>
