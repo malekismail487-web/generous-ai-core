@@ -461,8 +461,6 @@ function WallpaperCircleSelector() {
       <div className="flex flex-wrap gap-3 justify-center">
         {currentPresets.map((preset) => {
           const isActive = wallpaperId === preset.id;
-          const gradientColor = `hsl(${preset.primaryH} ${preset.primaryS}% ${preset.primaryL}%)`;
-          const accentColor = `hsl(${preset.accentH} ${preset.accentS}% ${preset.accentL}%)`;
           return (
             <button
               key={preset.id}
@@ -477,7 +475,7 @@ function WallpaperCircleSelector() {
                     : "border-transparent hover:scale-105 hover:shadow-lg"
                 )}
                 style={{
-                  background: `linear-gradient(135deg, ${gradientColor}, ${accentColor})`,
+                  background: preset.preview,
                 }}
               >
                 {isActive && (
