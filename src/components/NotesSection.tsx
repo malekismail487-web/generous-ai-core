@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { ArrowLeft, ArrowRight, Loader2, FileText, Upload, BookmarkCheck, Trash2, Zap, BookOpen, GraduationCap } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { ArrowLeft, ArrowRight, Loader2, FileText, Upload, BookmarkCheck, Trash2, Zap, BookOpen, GraduationCap, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
@@ -47,10 +48,36 @@ export function NotesSection() {
   const [isLoading, setIsLoading] = useState(false);
   const [noteLength, setNoteLength] = useState<NoteLength>('medium');
   const [viewingNote, setViewingNote] = useState<Note | null>(null);
+  const [noteImages, setNoteImages] = useState<string[]>([]);
+  const [isGeneratingImages, setIsGeneratingImages] = useState(false);
   const { toast } = useToast();
   const { notes, createNote, deleteNote, loading: notesLoading } = useNotes();
 
   const lang = language === 'ar' ? 'ar' : 'en';
+
+  const fetchNoteDiagrams = useCallback(async (topic: string, subjectName: string, grade: string) => {
+    setIsGeneratingImages(true);
+    setNoteImages([]);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-diagram`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({ subject: subjectName, topic, grade, count: 2 }),
+        }
+      );
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data.images?.length > 0) setNoteImages(data.images);
+    } catch (err) {
+      console.warn('Diagram generation failed:', err);
+    } finally {
+      setIsGeneratingImages(false);
+    }
+  }, []);
 
   const getLengthPrompt = (length: NoteLength): string => {
     switch (length) {
@@ -125,6 +152,9 @@ IMPORTANT FORMATTING:
           const noteTitle = `${getSubjectName(selectedSubject, language)} — ${topic}`;
           await createNote(noteTitle, response);
           toast({ title: lang === 'ar' ? 'تم الحفظ!' : 'Note saved!' });
+          // Generate related diagrams
+          const subjectName = getSubjectName(selectedSubject, 'en');
+          fetchNoteDiagrams(topic, subjectName, selectedGrade!);
         },
         onError: (error) => { setIsLoading(false); toast({ variant: 'destructive', title: 'Error', description: error.message }); },
       });
@@ -276,6 +306,30 @@ IMPORTANT FORMATTING:
           <div className="glass-effect rounded-2xl p-5 overflow-y-auto max-h-[65vh]">
             <MathRenderer content={notesContent} className="whitespace-pre-wrap text-sm leading-relaxed" />
           </div>
+
+          {/* AI-Generated Diagrams */}
+          {(isGeneratingImages || noteImages.length > 0) && (
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <ImageIcon className="w-4 h-4" />
+                <span>{lang === 'ar' ? 'رسوم بيانية تعليمية' : 'Educational Diagrams'}</span>
+                {isGeneratingImages && <Loader2 className="w-3 h-3 animate-spin" />}
+              </div>
+              {isGeneratingImages && noteImages.length === 0 && (
+                <div className="flex items-center gap-2 px-4 py-6 glass-effect rounded-xl justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  <span className="text-sm text-muted-foreground">{lang === 'ar' ? 'جاري إنشاء الرسوم البيانية...' : 'Generating topic diagrams...'}</span>
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {noteImages.map((img, idx) => (
+                  <div key={idx} className="glass-effect rounded-xl overflow-hidden">
+                    <img src={img} alt={`Diagram ${idx + 1}`} className="w-full h-48 object-contain bg-white rounded-xl" loading="lazy" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
