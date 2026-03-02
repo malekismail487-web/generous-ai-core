@@ -82,8 +82,8 @@ export default function MinistryLogin() {
   }, [status, sessionToken, navigate]);
 
   const handleSubmit = async () => {
-    if (code.length !== 100) {
-      setError('Access code must be exactly 100 characters');
+    if (!code) {
+      setError('Please enter your access code');
       return;
     }
 
@@ -179,18 +179,13 @@ export default function MinistryLogin() {
               value={code}
               onChange={(e) => {
                 const val = e.target.value.replace(/\s/g, '');
-                if (val.length <= 100) setCode(val);
+                setCode(val);
               }}
-              placeholder="Enter 100-character access code..."
+              placeholder="Enter access code..."
               className="w-full h-32 bg-gray-950 border border-gray-800 rounded-lg p-4 text-emerald-400 font-mono text-xs resize-none focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700/50 placeholder:text-gray-700"
               spellCheck={false}
               autoComplete="off"
             />
-            <div className="absolute bottom-2 right-3 text-xs font-mono">
-              <span className={code.length === 100 ? 'text-emerald-500' : 'text-gray-600'}>
-                {code.length}/100
-              </span>
-            </div>
           </div>
 
           {error && (
@@ -199,7 +194,7 @@ export default function MinistryLogin() {
 
           <Button
             onClick={handleSubmit}
-            disabled={code.length !== 100 || loading}
+            disabled={!code || loading}
             className="w-full bg-emerald-900/50 hover:bg-emerald-800/50 text-emerald-400 border border-emerald-700/30 disabled:opacity-30"
           >
             {loading ? (
