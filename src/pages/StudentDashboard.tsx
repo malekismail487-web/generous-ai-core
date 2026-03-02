@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { StudentAssignments } from '@/components/student/StudentAssignments';
 import { StudentReportCards } from '@/components/student/StudentReportCards';
+import { WallpaperSelector } from '@/components/student/WallpaperSelector';
 
 interface CourseMaterial {
   id: string;
@@ -442,6 +443,10 @@ export default function StudentDashboard() {
                   checked={notificationsEnabled}
                   onCheckedChange={setNotificationsEnabled}
                 />
+              </div>
+
+              <div className="border-t pt-6">
+                <WallpaperSelector />
               </div>
 
               <div className="border-t pt-6">
