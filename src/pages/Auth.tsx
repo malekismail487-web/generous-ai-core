@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr } from '@/lib/translations';
-import { Sparkles, Mail, Lock, Loader2, KeyRound, Users, UserPlus } from 'lucide-react';
+import { Sparkles, Mail, Lock, Loader2, KeyRound, Users, UserPlus, Heart } from 'lucide-react';
 import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -27,7 +27,8 @@ export default function Auth() {
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; code?: string; name?: string }>({});
-  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'join'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'join' | 'parent'>('login');
+  const [parentCode, setParentCode] = useState('');
   
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
@@ -99,6 +100,7 @@ export default function Auth() {
             let dest = '/';
             if (profile.user_type === 'school_admin') dest = '/admin';
             else if (profile.user_type === 'teacher') dest = '/teacher';
+            else if (profile.user_type === 'parent') dest = '/parent';
             else if (profile.user_type === 'student') dest = '/';
             sessionStorage.setItem('apiKeySetupReturn', dest);
             navigate('/setup-api-key');
@@ -407,19 +409,23 @@ export default function Auth() {
           </h1>
         </div>
 
-        <Tabs value={authMode} onValueChange={(v) => { setAuthMode(v as 'login' | 'signup' | 'join'); setErrors({}); }}>
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="login" className="gap-2">
-              <Lock className="w-4 h-4" />
+        <Tabs value={authMode} onValueChange={(v) => { setAuthMode(v as 'login' | 'signup' | 'join' | 'parent'); setErrors({}); }}>
+          <TabsList className="grid w-full grid-cols-4 mb-4">
+            <TabsTrigger value="login" className="gap-1 text-xs px-2">
+              <Lock className="w-3.5 h-3.5" />
               {t('signIn')}
             </TabsTrigger>
-            <TabsTrigger value="signup" className="gap-2">
-              <UserPlus className="w-4 h-4" />
+            <TabsTrigger value="signup" className="gap-1 text-xs px-2">
+              <UserPlus className="w-3.5 h-3.5" />
               {t('signUp')}
             </TabsTrigger>
-            <TabsTrigger value="join" className="gap-2">
-              <Users className="w-4 h-4" />
+            <TabsTrigger value="join" className="gap-1 text-xs px-2">
+              <Users className="w-3.5 h-3.5" />
               {t('joinSchool')}
+            </TabsTrigger>
+            <TabsTrigger value="parent" className="gap-1 text-xs px-2">
+              <Heart className="w-3.5 h-3.5" />
+              {language === 'ar' ? 'ولي أمر' : 'Parent'}
             </TabsTrigger>
           </TabsList>
 
@@ -695,6 +701,130 @@ export default function Auth() {
                   </button>
                 </p>
               </div>
+            </form>
+          </TabsContent>
+          {/* Parent Tab */}
+          <TabsContent value="parent">
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const newErrors: { email?: string; password?: string; name?: string; code?: string } = {};
+              const emailResult = emailSchema.safeParse(email);
+              if (!emailResult.success) newErrors.email = emailResult.error.errors[0].message;
+              const passwordResult = passwordSchema.safeParse(password);
+              if (!passwordResult.success) newErrors.password = passwordResult.error.errors[0].message;
+              if (!name.trim()) newErrors.name = 'Full name is required';
+              if (!parentCode.trim() || parentCode.length < 6) newErrors.code = 'Parent code is required';
+              setErrors(newErrors);
+              if (Object.keys(newErrors).length > 0) return;
+
+              setIsSubmitting(true);
+              try {
+                // First create auth account
+                const { error: signUpError } = await signUp(email.trim().toLowerCase(), password);
+                let userId: string | null = null;
+
+                if (signUpError) {
+                  if (signUpError.message.includes('User already registered')) {
+                    const { error: signInError } = await signIn(email.trim().toLowerCase(), password);
+                    if (signInError) {
+                      toast({ variant: 'destructive', title: 'Account exists', description: 'Please sign in with your existing password.' });
+                      setAuthMode('login');
+                      setIsSubmitting(false);
+                      return;
+                    }
+                    const { data: { user: existingUser } } = await supabase.auth.getUser();
+                    userId = existingUser?.id || null;
+                  } else {
+                    toast({ variant: 'destructive', title: 'Error', description: signUpError.message });
+                    setIsSubmitting(false);
+                    return;
+                  }
+                } else {
+                  // Wait for session
+                  const { data: { user: newUser } } = await supabase.auth.getUser();
+                  userId = newUser?.id || null;
+                }
+
+                if (!userId) {
+                  toast({ variant: 'destructive', title: 'Error', description: 'Could not create account. Please check your email for verification.' });
+                  setIsSubmitting(false);
+                  return;
+                }
+
+                // Link as parent
+                const { data, error } = await supabase.rpc('signup_as_parent', {
+                  p_parent_user_id: userId,
+                  p_parent_code: parentCode.trim().toUpperCase(),
+                  p_full_name: name.trim(),
+                });
+
+                const result = data as { success: boolean; error?: string; school_name?: string } | null;
+
+                if (error || !result?.success) {
+                  toast({ variant: 'destructive', title: 'Error', description: result?.error || error?.message || 'Invalid parent code.' });
+                  setIsSubmitting(false);
+                  return;
+                }
+
+                toast({ title: 'Welcome!', description: `You're now linked as a parent at ${result.school_name}.` });
+                navigate('/parent');
+              } catch (err) {
+                toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
+              } finally {
+                setIsSubmitting(false);
+              }
+            }} className="glass-effect rounded-2xl p-6 space-y-4">
+              <p className="text-center text-muted-foreground mb-4">
+                {language === 'ar' ? 'سجّل كولي أمر لمتابعة أداء طفلك' : 'Sign up as a parent to track your child\'s progress'}
+              </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="parent-name">{t('fullName')}</Label>
+                <Input id="parent-name" placeholder={language === 'ar' ? 'الاسم الكامل' : 'Your full name'} value={name} onChange={(e) => setName(e.target.value)} />
+                {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="parent-email">{t('email')}</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input id="parent-email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" />
+                </div>
+                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="parent-password">{t('password')}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input id="parent-password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" />
+                </div>
+                {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="parent-code">{language === 'ar' ? 'رمز ولي الأمر' : 'Parent Invite Code'}</Label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input id="parent-code" placeholder={language === 'ar' ? 'أدخل رمز ولي الأمر' : 'Enter parent code (e.g. P1A2B3C4)'} value={parentCode} onChange={(e) => setParentCode(e.target.value.toUpperCase())} className="pl-10 tracking-wider uppercase font-mono" maxLength={10} />
+                </div>
+                {errors.code && <p className="text-sm text-destructive">{errors.code}</p>}
+                <p className="text-xs text-muted-foreground">
+                  {language === 'ar' ? 'يحصل طفلك على هذا الرمز في حسابه بعد الموافقة' : 'Your child receives this code in their account after approval'}
+                </p>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {language === 'ar' ? 'تسجيل كولي أمر' : 'Sign Up as Parent'}
+              </Button>
+
+              <p className="text-center text-xs text-muted-foreground mt-4">
+                {language === 'ar' ? 'لديك حساب بالفعل؟' : 'Already have an account?'}{' '}
+                <button type="button" onClick={() => { setAuthMode('login'); clearForm(); }} className="text-primary hover:underline">
+                  {t('signIn')}
+                </button>
+              </p>
             </form>
           </TabsContent>
         </Tabs>

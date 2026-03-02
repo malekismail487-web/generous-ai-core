@@ -1167,6 +1167,76 @@ export type Database = {
         }
         Relationships: []
       }
+      parent_invite_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          school_id: string
+          student_id: string
+          used: boolean
+          used_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          school_id: string
+          student_id: string
+          used?: boolean
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          school_id?: string
+          student_id?: string
+          used?: boolean
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_invite_codes_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parent_students: {
+        Row: {
+          created_at: string
+          id: string
+          parent_id: string
+          school_id: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          parent_id: string
+          school_id: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          parent_id?: string
+          school_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_students_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       podcast_generations: {
         Row: {
           content: string | null
@@ -2076,6 +2146,10 @@ export type Database = {
         Returns: boolean
       }
       is_hardcoded_admin: { Args: { check_email: string }; Returns: boolean }
+      is_parent_of: {
+        Args: { p_parent_id: string; p_student_id: string }
+        Returns: boolean
+      }
       is_school_admin: {
         Args: { _school_id: string; _user_id: string }
         Returns: boolean
@@ -2088,6 +2162,14 @@ export type Database = {
       is_teacher: { Args: { user_uuid: string }; Returns: boolean }
       link_profile_after_signup: {
         Args: { p_email: string; p_user_id: string }
+        Returns: Json
+      }
+      signup_as_parent: {
+        Args: {
+          p_full_name: string
+          p_parent_code: string
+          p_parent_user_id: string
+        }
         Returns: Json
       }
       signup_with_invite_code: {
