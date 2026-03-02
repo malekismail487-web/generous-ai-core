@@ -22,14 +22,26 @@ export function WallpaperProvider({ children }: { children: ReactNode }) {
 
   const wallpaper = getPresetById(wallpaperId) ?? getDefaultPreset(theme);
 
+  // If theme changes and current wallpaper doesn't match, switch to default
+  useEffect(() => {
+    if (wallpaper.category !== theme) {
+      const defaultId = theme === 'dark' ? 'midnight-ocean' : 'sunrise-sand';
+      setWallpaperIdState(defaultId);
+      localStorage.setItem('app-wallpaper', defaultId);
+    }
+  }, [theme, wallpaper.category]);
+
   const setWallpaper = (id: string) => {
     setWallpaperIdState(id);
     localStorage.setItem('app-wallpaper', id);
   };
 
-  // Apply background gradient as CSS variable
+  // Apply wallpaper background to body
   useEffect(() => {
-    document.documentElement.style.setProperty('--wallpaper-bg', wallpaper.bgGradient);
+    document.body.style.background = wallpaper.background;
+    return () => {
+      document.body.style.background = '';
+    };
   }, [wallpaper]);
 
   return (
