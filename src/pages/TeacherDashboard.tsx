@@ -28,6 +28,7 @@ import { TeacherAssignments } from '@/components/teacher/TeacherAssignments';
 import { TeacherMaterials } from '@/components/teacher/TeacherMaterials';
 import { TeacherCopilot } from '@/components/teacher/TeacherCopilot';
 import { SubjectsSection } from '@/components/SubjectsSection';
+import { AssignmentPerformanceAnalytics } from '@/components/teacher/AssignmentPerformanceAnalytics';
 import { TeacherLearningStyleReports } from '@/components/teacher/TeacherLearningStyleReports';
 
 interface CourseMaterial {
@@ -248,7 +249,7 @@ export default function TeacherDashboard() {
         </div>
 
         <Tabs defaultValue="materials" className="space-y-6">
-          <TabsList className="grid grid-cols-7 w-full max-w-5xl">
+          <TabsList className="grid grid-cols-8 w-full max-w-6xl">
             <TabsTrigger value="materials" className="gap-2">
               <Upload className="w-4 h-4" />
               <span className="hidden sm:inline">{tr('materials', language)}</span>
@@ -256,6 +257,10 @@ export default function TeacherDashboard() {
             <TabsTrigger value="assignments" className="gap-2">
               <ClipboardList className="w-4 h-4" />
               <span className="hidden sm:inline">{tr('assign', language)}</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
             <TabsTrigger value="ai-lectures" className="gap-2">
               <Bot className="w-4 h-4" />
@@ -315,6 +320,11 @@ export default function TeacherDashboard() {
                 onRefresh={fetchData}
               />
             )}
+          </TabsContent>
+
+          {/* Assignment Performance Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-4">
+            <AssignmentPerformanceAnalytics schoolId={school.id} teacherId={user.id} />
           </TabsContent>
 
           {/* AI Lectures Tab */}
