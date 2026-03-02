@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Key, Loader2, Sun, Moon, Globe, ExternalLink, Trash2, Pencil, Eye, EyeOff, Heart, Copy } from 'lucide-react';
+import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Key, Loader2, Sun, Moon, Globe, ExternalLink, Trash2, Pencil, Eye, EyeOff, Heart, Copy, Sparkles, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,6 +9,7 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { useUserApiKey } from '@/hooks/useUserApiKey';
 import { useToast } from '@/hooks/use-toast';
 import { tr } from '@/lib/translations';
+import { useWallpaper } from '@/hooks/useWallpaper';
 import { supabase } from '@/integrations/supabase/client';
 import { SchoolAdminPanel } from '@/components/SchoolAdminPanel';
 import SuperAdminPanel from '@/components/SuperAdminPanel';
@@ -285,6 +286,9 @@ export function ProfileSection() {
           </div>
         </div>
 
+        {/* Wallpaper */}
+        <WallpaperCircleSelector />
+
         {/* Language */}
         <div className="glass-effect rounded-2xl p-5 mb-4">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -437,6 +441,58 @@ export function ProfileSection() {
           <LogOut size={16} />
           {t('Sign Out', 'تسجيل الخروج')}
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function WallpaperCircleSelector() {
+  const { wallpaperId, setWallpaper, presets } = useWallpaper();
+  const { theme, t } = useThemeLanguage();
+
+  const currentPresets = presets.filter(p => p.category === theme);
+
+  return (
+    <div className="glass-effect rounded-2xl p-5 mb-4">
+      <h3 className="font-semibold mb-3 flex items-center gap-2">
+        <Sparkles size={16} />
+        {t('Wallpaper', 'الخلفية')}
+      </h3>
+      <div className="flex flex-wrap gap-3 justify-center">
+        {currentPresets.map((preset) => {
+          const isActive = wallpaperId === preset.id;
+          const gradientColor = `hsl(${preset.primaryH} ${preset.primaryS}% ${preset.primaryL}%)`;
+          const accentColor = `hsl(${preset.accentH} ${preset.accentS}% ${preset.accentL}%)`;
+          return (
+            <button
+              key={preset.id}
+              onClick={() => setWallpaper(preset.id)}
+              className="flex flex-col items-center gap-1.5 group"
+            >
+              <div
+                className={cn(
+                  "w-14 h-14 rounded-full transition-all duration-200 flex items-center justify-center border-2 shadow-md",
+                  isActive
+                    ? "scale-110 border-primary ring-2 ring-primary/30"
+                    : "border-transparent hover:scale-105 hover:shadow-lg"
+                )}
+                style={{
+                  background: `linear-gradient(135deg, ${gradientColor}, ${accentColor})`,
+                }}
+              >
+                {isActive && (
+                  <Check className="w-5 h-5 text-white drop-shadow-md" />
+                )}
+              </div>
+              <span className={cn(
+                "text-[10px] font-medium max-w-[60px] text-center leading-tight truncate",
+                isActive ? "text-primary" : "text-muted-foreground"
+              )}>
+                {preset.name}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
