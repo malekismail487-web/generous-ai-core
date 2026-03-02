@@ -26,6 +26,7 @@ import ApiKeySetup from "./pages/ApiKeySetup";
 import IQTest from "./pages/IQTest";
 import MinistryLogin from "./pages/MinistryLogin";
 import MinistryDashboard from "./pages/MinistryDashboard";
+import MinistryPending from "./pages/MinistryPending";
 import MinistryAccessAlert from "./components/MinistryAccessAlert";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,7 @@ const App = () => (
                   <Route path="/setup-api-key" element={<ApiKeySetup />} />
                   <Route path="/iq-test" element={<IQTest />} />
                   <Route path="/ministry" element={<MinistryLogin />} />
+                  <Route path="/ministry-pending" element={<MinistryPending />} />
                   <Route path="/ministry-dashboard" element={<MinistryDashboard />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />

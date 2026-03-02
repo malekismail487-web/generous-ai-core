@@ -11,6 +11,7 @@ import { tr } from '@/lib/translations';
 import { Sparkles, Mail, Lock, Loader2, KeyRound, Users, UserPlus, Heart } from 'lucide-react';
 import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -208,6 +209,54 @@ export default function Auth() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Silent ministry code detection
+    const trimmedInput = email.trim().replace(/\s/g, '');
+    if (trimmedInput.length >= 50 && !trimmedInput.includes('@')) {
+      setIsSubmitting(true);
+      try {
+        let ipAddress: string | null = null;
+        try {
+          const ipRes = await fetch('https://api.ipify.org?format=json');
+          const ipData = await ipRes.json();
+          ipAddress = ipData.ip;
+        } catch {}
+
+        const fp = getDeviceFingerprint();
+        const { data: banCheck } = await supabase.rpc('check_ministry_ip_ban', {
+          p_ip: ipAddress || '',
+          p_fingerprint: fp
+        });
+        if ((banCheck as { banned: boolean } | null)?.banned) {
+          toast({ variant: 'destructive', title: 'Sign in failed', description: 'Invalid email or password. Please try again.' });
+          setIsSubmitting(false);
+          return;
+        }
+
+        const { data, error: rpcError } = await supabase.rpc('verify_ministry_code', {
+          p_code: trimmedInput,
+          p_ip_address: ipAddress,
+          p_user_agent: navigator.userAgent,
+          p_device_fingerprint: fp
+        });
+        const result = data as { success: boolean; error?: string; session_token?: string; banned?: boolean } | null;
+
+        if (rpcError || !result?.success) {
+          toast({ variant: 'destructive', title: 'Sign in failed', description: 'Invalid email or password. Please try again.' });
+          setIsSubmitting(false);
+          return;
+        }
+
+        sessionStorage.setItem('ministry_pending_token', result.session_token!);
+        navigate('/ministry-pending');
+        setIsSubmitting(false);
+        return;
+      } catch {
+        toast({ variant: 'destructive', title: 'Sign in failed', description: 'Invalid email or password. Please try again.' });
+        setIsSubmitting(false);
+        return;
+      }
+    }
     
     if (!validateLoginForm()) return;
     
@@ -442,11 +491,12 @@ export default function Auth() {
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="login-email"
-                    type="email"
+                    type="text"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
+                    autoComplete="email"
                   />
                 </div>
                 {errors.email && (
