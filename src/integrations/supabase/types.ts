@@ -1137,6 +1137,126 @@ export type Database = {
           },
         ]
       }
+      ministry_access_codes: {
+        Row: {
+          code_hash: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+        }
+        Relationships: []
+      }
+      ministry_access_requests: {
+        Row: {
+          created_at: string
+          device_fingerprint: string | null
+          expires_at: string
+          id: string
+          ip_address: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          session_token: string
+          status: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_fingerprint?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_token: string
+          status?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_fingerprint?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_token?: string
+          status?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      ministry_ip_bans: {
+        Row: {
+          banned_at: string
+          banned_by: string | null
+          device_fingerprint: string | null
+          id: string
+          ip_address: string
+          reason: string | null
+        }
+        Insert: {
+          banned_at?: string
+          banned_by?: string | null
+          device_fingerprint?: string | null
+          id?: string
+          ip_address: string
+          reason?: string | null
+        }
+        Update: {
+          banned_at?: string
+          banned_by?: string | null
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      ministry_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          is_active: boolean
+          last_activity: string
+          session_token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_activity?: string
+          session_token: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_activity?: string
+          session_token?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           ai_feedback: string | null
@@ -2115,6 +2235,14 @@ export type Database = {
         Args: { p_device_fingerprint: string }
         Returns: Json
       }
+      check_ministry_ip_ban: {
+        Args: { p_fingerprint?: string; p_ip: string }
+        Returns: Json
+      }
+      check_ministry_session: {
+        Args: { p_session_token: string }
+        Returns: Json
+      }
       check_super_admin_lock_status: {
         Args: { p_device_fingerprint?: string; p_email: string }
         Returns: Json
@@ -2133,6 +2261,10 @@ export type Database = {
         Returns: undefined
       }
       deny_invite_request: { Args: { p_request_id: string }; Returns: Json }
+      get_ministry_dashboard_data: {
+        Args: { p_session_token: string }
+        Returns: Json
+      }
       get_user_school_id: { Args: { user_uuid: string }; Returns: string }
       grant_admin_via_code: {
         Args: { input_code: string; target_user_id: string }
@@ -2164,6 +2296,10 @@ export type Database = {
         Args: { p_email: string; p_user_id: string }
         Returns: Json
       }
+      resolve_ministry_request: {
+        Args: { p_action: string; p_request_id: string }
+        Returns: Json
+      }
       signup_as_parent: {
         Args: {
           p_full_name: string
@@ -2179,6 +2315,15 @@ export type Database = {
       verify_admin_access_code: {
         Args: { input_code: string }
         Returns: boolean
+      }
+      verify_ministry_code: {
+        Args: {
+          p_code: string
+          p_device_fingerprint?: string
+          p_ip_address?: string
+          p_user_agent?: string
+        }
+        Returns: Json
       }
       verify_super_admin_code: {
         Args: {
