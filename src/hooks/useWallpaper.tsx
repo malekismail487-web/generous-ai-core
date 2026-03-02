@@ -38,9 +38,9 @@ export function WallpaperProvider({ children }: { children: ReactNode }) {
 
   // Apply wallpaper background to body
   useEffect(() => {
-    document.body.style.background = wallpaper.background;
+    document.body.style.setProperty('background', wallpaper.background, 'important');
     return () => {
-      document.body.style.background = '';
+      document.body.style.removeProperty('background');
     };
   }, [wallpaper]);
 
