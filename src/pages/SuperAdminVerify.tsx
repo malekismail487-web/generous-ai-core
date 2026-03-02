@@ -4,11 +4,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Shield, AlertTriangle, Lock, ArrowLeft } from 'lucide-react';
+import { Shield, AlertTriangle, Lock, ArrowLeft, Ban, CheckCircle, Monitor, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 
 const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
+
+type AttackLog = {
+  id: string;
+  device_fingerprint: string;
+  user_agent: string | null;
+  attempt_count: number;
+  status: string;
+  resolved_action: string | null;
+  created_at: string;
+};
 
 export default function SuperAdminVerify() {
   const [code, setCode] = useState('');
@@ -19,6 +29,12 @@ export default function SuperAdminVerify() {
   const [isHighAlert, setIsHighAlert] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [hasAttacks, setHasAttacks] = useState(false);
+  
+  // Attack review modal state
+  const [showAttackReview, setShowAttackReview] = useState(false);
+  const [attackLogs, setAttackLogs] = useState<AttackLog[]>([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -53,6 +69,17 @@ export default function SuperAdminVerify() {
     checkAccess();
   }, [user, navigate, deviceFp]);
 
+  const fetchAttackLogs = async () => {
+    setReviewLoading(true);
+    const { data } = await supabase
+      .from('super_admin_attack_logs')
+      .select('*')
+      .eq('status', 'unreviewed')
+      .order('created_at', { ascending: false });
+    setAttackLogs((data as AttackLog[]) || []);
+    setReviewLoading(false);
+  };
+
   const handleVerify = async () => {
     if (!user?.email || code.length !== 8) {
       toast({ variant: 'destructive', title: 'Invalid code', description: 'Please enter an 8-character verification code.' });
@@ -77,9 +104,23 @@ export default function SuperAdminVerify() {
       const result = data as { success: boolean; error?: string; locked?: boolean; attempts_remaining?: number; is_high_alert?: boolean; locked_until?: string };
 
       if (result.success) {
-        toast({ title: 'Verification successful', description: 'Welcome, Super Admin.' });
         sessionStorage.setItem('superAdminVerified', 'true');
-        navigate('/super-admin');
+        
+        // Check if there are unreviewed attacks - show modal before proceeding
+        if (hasAttacks) {
+          await fetchAttackLogs();
+          if (attackLogs.length > 0 || hasAttacks) {
+            await fetchAttackLogs();
+            setShowAttackReview(true);
+            toast({ title: '⚠️ Security Alert', description: 'Attacks detected while you were away. Please review them.' });
+          } else {
+            toast({ title: 'Verification successful', description: 'Welcome, Super Admin.' });
+            navigate('/super-admin');
+          }
+        } else {
+          toast({ title: 'Verification successful', description: 'Welcome, Super Admin.' });
+          navigate('/super-admin');
+        }
       } else {
         if (result.locked) {
           setIsLocked(true);
@@ -99,10 +140,70 @@ export default function SuperAdminVerify() {
     setCode('');
   };
 
+  const handleAttackAction = async (log: AttackLog, action: 'ban' | 'let_go') => {
+    setActionLoading(log.id);
+
+    if (action === 'ban') {
+      // Permanently block the device
+      await supabase
+        .from('super_admin_attack_attempts')
+        .update({ permanently_blocked: true, updated_at: new Date().toISOString() })
+        .eq('device_fingerprint', log.device_fingerprint);
+    } else {
+      // Let go - reset the device lockout
+      await supabase
+        .from('super_admin_attack_attempts')
+        .update({ 
+          permanently_blocked: false, 
+          locked_until: null, 
+          attempts: 0, 
+          is_high_alert: false, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('device_fingerprint', log.device_fingerprint);
+    }
+
+    // Update log status
+    await supabase
+      .from('super_admin_attack_logs')
+      .update({
+        status: 'resolved',
+        resolved_action: action === 'ban' ? 'permanently_blocked' : 'dismissed',
+        resolved_at: new Date().toISOString(),
+      })
+      .eq('id', log.id);
+
+    setActionLoading(null);
+    
+    // Remove from list
+    setAttackLogs(prev => prev.filter(l => l.id !== log.id));
+    
+    toast({ 
+      title: action === 'ban' ? '🚫 Device Banned' : '✅ Lockout Removed',
+      description: action === 'ban' 
+        ? 'The attacker will see a termination screen on every page.' 
+        : 'The device lockout has been lifted.',
+    });
+  };
+
+  const handleFinishReview = () => {
+    setShowAttackReview(false);
+    navigate('/super-admin');
+  };
+
   const handleSignOut = async () => {
     sessionStorage.removeItem('superAdminVerified');
     await signOut();
     navigate('/auth');
+  };
+
+  const parseUserAgent = (ua: string | null) => {
+    if (!ua) return 'Unknown Device';
+    if (ua.includes('Mobile')) return '📱 Mobile Device';
+    if (ua.includes('Windows')) return '💻 Windows PC';
+    if (ua.includes('Mac')) return '💻 Mac';
+    if (ua.includes('Linux')) return '💻 Linux PC';
+    return '💻 Desktop';
   };
 
   if (checkingStatus) {
@@ -153,6 +254,91 @@ export default function SuperAdminVerify() {
     );
   }
 
+  // Attack review modal - shown after successful verification when attacks exist
+  if (showAttackReview) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-destructive/5 p-4">
+        <div className="w-full max-w-lg">
+          <div className="glass-effect rounded-3xl p-8 space-y-6 border border-destructive/30">
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 mx-auto rounded-full bg-destructive/20 flex items-center justify-center">
+                <AlertTriangle className="w-8 h-8 text-destructive" />
+              </div>
+              <h1 className="text-2xl font-bold">🚨 Security Alert</h1>
+              <p className="text-sm text-muted-foreground">
+                Unauthorized access attempts were detected while you were away. Review each incident below.
+              </p>
+            </div>
+
+            {reviewLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : attackLogs.length === 0 ? (
+              <div className="text-center py-6">
+                <Shield className="w-10 h-10 mx-auto mb-3 text-green-500" />
+                <p className="text-sm text-muted-foreground">All attacks have been reviewed.</p>
+                <Button onClick={handleFinishReview} className="mt-4 w-full">
+                  Continue to Dashboard
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                {attackLogs.map((log) => (
+                  <div key={log.id} className="glass-effect rounded-xl p-4 border border-destructive/20 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Monitor className="w-5 h-5 text-destructive mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold">{parseUserAgent(log.user_agent)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {log.attempt_count} failed attempts
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(log.created_at).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-mono truncate">
+                          FP: {log.device_fingerprint.slice(0, 24)}...
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleAttackAction(log, 'ban')}
+                        disabled={actionLoading === log.id}
+                        className="flex-1 gap-1"
+                      >
+                        {actionLoading === log.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Ban className="w-3 h-3" />}
+                        Ban Device
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAttackAction(log, 'let_go')}
+                        disabled={actionLoading === log.id}
+                        className="flex-1 gap-1"
+                      >
+                        {actionLoading === log.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+                        Let Go
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {attackLogs.length > 0 && (
+              <Button variant="outline" onClick={handleFinishReview} className="w-full">
+                Skip & Continue to Dashboard
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
       <div className="w-full max-w-md">
@@ -169,7 +355,7 @@ export default function SuperAdminVerify() {
             <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
               <div className="flex items-center gap-2 text-destructive">
                 <AlertTriangle className="w-4 h-4" />
-                <span className="text-sm font-medium">⚠️ Attack attempts detected! Review them in the panel.</span>
+                <span className="text-sm font-medium">⚠️ Attack attempts detected! Verify to review them.</span>
               </div>
             </div>
           )}

@@ -2041,6 +2041,10 @@ export type Database = {
         Args: { p_grade?: string; p_request_id: string }
         Returns: Json
       }
+      check_device_ban: {
+        Args: { p_device_fingerprint: string }
+        Returns: Json
+      }
       check_super_admin_lock_status: {
         Args: { p_device_fingerprint?: string; p_email: string }
         Returns: Json
