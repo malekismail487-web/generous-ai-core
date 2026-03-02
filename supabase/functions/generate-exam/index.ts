@@ -37,19 +37,42 @@ async function getUserApiKeys(authHeader: string | null): Promise<UserKeys> {
 
 function getVarietyInstructions(): string {
   const styles = [
-    "Focus on application and real-world scenarios.",
-    "Emphasize conceptual understanding.",
-    "Include tricky distractor options.",
-    "Mix easy recall with challenging analysis.",
-    "Focus on problem-solving and computation.",
-    "Compare and contrast concepts.",
-    "Ask about common misconceptions.",
-    "Focus on definitions and terminology.",
-    "Include multi-step reasoning questions.",
-    "Ask about cause-and-effect relationships.",
+    "Focus on application and real-world scenarios with specific numerical examples.",
+    "Emphasize conceptual understanding through analogies and comparisons.",
+    "Include tricky distractor options that test common misconceptions.",
+    "Mix easy recall with challenging multi-step analysis problems.",
+    "Focus on problem-solving and computation with unique numerical values.",
+    "Compare and contrast two or more related concepts in each question.",
+    "Ask about common misconceptions and why they are wrong.",
+    "Focus on definitions, terminology, and precise language distinctions.",
+    "Include multi-step reasoning questions requiring 2-3 logical steps.",
+    "Ask about cause-and-effect relationships and chain reactions.",
+    "Frame questions as real-world case studies or experiments.",
+    "Use reverse reasoning: give the answer and ask what question it solves.",
+    "Test ability to identify errors in given solutions or statements.",
+    "Ask about edge cases, exceptions, and boundary conditions.",
+    "Frame questions around diagrams, charts, or data interpretation.",
+    "Test sequencing: ask about correct order of steps or processes.",
+    "Use 'which of the following is NOT' style negative questions.",
+    "Ask students to identify the BEST answer among plausible options.",
+    "Frame questions as student debates where each option represents an argument.",
+    "Test transfer: apply a concept from one context to a completely different one.",
   ];
   const shuffled = styles.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 3).join(" ");
+  return shuffled.slice(0, 5).join(" ");
+}
+
+function getAntiRepetitionDirective(): string {
+  const angles = [
+    "historical context", "modern applications", "mathematical proof", "experimental design",
+    "ethical implications", "cross-disciplinary connections", "future predictions", "error analysis",
+    "optimization problems", "classification tasks", "comparative analysis", "process explanation",
+    "data interpretation", "hypothesis testing", "model evaluation", "resource allocation",
+    "risk assessment", "pattern recognition", "system design", "troubleshooting scenarios",
+  ];
+  const shuffled = angles.sort(() => Math.random() - 0.5);
+  const selected = shuffled.slice(0, 4);
+  return `MANDATORY QUESTION ANGLES for this generation (use at least 3): ${selected.join(", ")}. Each question MUST approach the topic from a DIFFERENT angle than typical textbook questions.`;
 }
 
 function extractJsonFromResponse(response: string): unknown {
@@ -253,18 +276,35 @@ serve(async (req) => {
       const batchSeed = Math.floor(Math.random() * 1000000);
       const uniqueId = `${timestamp}-${batchSeed}-${Math.random().toString(36).slice(2, 8)}`;
 
-      const systemPrompt = `You are an expert exam question generator. Generate EXACTLY ${batchCount} multiple-choice questions.\n\nCRITICAL UNIQUENESS RULES:\n- EVERY question MUST be completely unique and different from any standard textbook question\n- DO NOT reuse common example questions. Invent novel scenarios, numbers, and contexts each time\n- Vary question structures: some definitional, some computational, some analytical, some scenario-based\n- Use different numerical values, names, and contexts than typical examples\n- Each question MUST have exactly 4 options (A, B, C, D)\n- You MAY use LaTeX math notation freely: \\frac{a}{b}, \\sqrt{x}, \\alpha, \\int, x^{2}, etc.\n- Wrap inline math in $...$ delimiters for clarity\n- Unique generation ID: ${uniqueId}\n- ${varietyInstructions}${adaptiveLevelHint}`;
+      const antiRepetition = getAntiRepetitionDirective();
+      const nonce = crypto.randomUUID();
+
+      const systemPrompt = `You are an expert exam question generator. Generate EXACTLY ${batchCount} multiple-choice questions.
+
+ABSOLUTE UNIQUENESS REQUIREMENTS:
+- You MUST generate COMPLETELY NOVEL questions that have NEVER appeared in any textbook, past exam, or study guide.
+- NEVER reuse standard example questions. Invent entirely new scenarios, numbers, names, and contexts.
+- Each question must use DIFFERENT numerical values, variable names, and real-world contexts.
+- ${antiRepetition}
+- Vary question structures: definitional, computational, analytical, scenario-based, error-identification, best-answer, negative (which is NOT), and multi-step.
+- For math/science: use random non-round numbers (e.g., 37 instead of 10, 4.7 instead of 5).
+- For reading/language: create original passages and sentences, do NOT quote existing texts.
+- Each question MUST have exactly 4 options (A, B, C, D) with plausible distractors.
+- You MAY use LaTeX math notation freely: \\frac{a}{b}, \\sqrt{x}, \\alpha, \\int, x^{2}, etc.
+- Wrap inline math in $...$ delimiters for clarity.
+- ${varietyInstructions}${adaptiveLevelHint}
+- Generation nonce (ensures uniqueness): ${nonce}
+- Random seed: ${batchSeed}`;
 
       let userPrompt = '';
       if (examType === 'SAT_FULL') {
-        userPrompt = `Generate EXACTLY ${batchCount} SAT-style multiple-choice questions covering Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar. Each with 4 options (A-D). IMPORTANT: Create completely original questions with unique numbers, scenarios, and wording. Do NOT reuse standard SAT practice questions. Generation ID: ${uniqueId}`;
+        userPrompt = `Generate EXACTLY ${batchCount} completely original SAT-style multiple-choice questions. Cover: Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar. Each with 4 options (A-D). CRITICAL: Every single question must be freshly invented with unique numbers, names, and scenarios. Do NOT reproduce any known SAT practice question. Use unusual but realistic values. Nonce: ${nonce}`;
       } else if (batchContext) {
-        userPrompt = `Generate EXACTLY ${batchCount} COMPLETELY NEW AND UNIQUE multiple-choice questions based on this study material:\n\n${batchContext}\n\nSubject: ${subject}, Grade: ${grade || 'General'}, Difficulty: ${difficulty}. Each question must have 4 options (A-D). CRITICAL: Even though the material is the same, you MUST create entirely different questions than any previous generation. Use different angles, different numerical values, different scenarios, and different phrasings. Approach the material from a fresh perspective. Generation ID: ${uniqueId}`;
+        userPrompt = `Generate EXACTLY ${batchCount} BRAND NEW multiple-choice questions based on this study material:\n\n${batchContext}\n\nSubject: ${subject}, Grade: ${grade || 'General'}, Difficulty: ${difficulty}. Each question must have 4 options (A-D).\n\nCRITICAL ANTI-REPETITION RULES:\n- Even though the material is the same as previous requests, you MUST create ENTIRELY DIFFERENT questions.\n- Use different angles, different numerical values, different scenarios, different phrasings.\n- Approach the material from perspectives not typically covered in textbooks.\n- Invent novel real-world scenarios that apply the concepts.\n- Use random specific numbers (not round numbers like 10, 100, 50).\n- ${antiRepetition}\nNonce: ${nonce}`;
       } else {
-        userPrompt = `Generate EXACTLY ${batchCount} COMPLETELY ORIGINAL multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover diverse sub-topics. Each question must have 4 options (A-D). IMPORTANT: Do NOT use standard textbook questions. Create novel questions with unique values and scenarios. Generation ID: ${uniqueId}`;
+        userPrompt = `Generate EXACTLY ${batchCount} COMPLETELY ORIGINAL multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover diverse sub-topics. Each question must have 4 options (A-D).\n\nCRITICAL: Do NOT use any standard textbook questions. Create novel questions with unique specific values (avoid round numbers), original scenarios, and fresh phrasings. ${antiRepetition}\nNonce: ${nonce}`;
       }
 
-      // Model-to-key mapping: primary model uses primary key, fallback model uses fallback key
       const modelConfigs = [
         { model: "llama-3.3-70b-versatile", apiKey: primaryApiKey },
         { model: "llama-3.1-8b-instant", apiKey: fallbackApiKey || primaryApiKey },
@@ -371,7 +411,35 @@ serve(async (req) => {
       }
     }
 
-    const questions = allQuestions.map((q, idx) => convertRawQuestion(q, idx));
+    // Shuffle all questions for random order
+    for (let i = allQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+    }
+
+    // Also shuffle options within each question for extra randomness
+    const questions = allQuestions.map((q, idx) => {
+      const converted = convertRawQuestion(q, idx);
+      // Randomly shuffle options and update correct_answer
+      if (converted.options && converted.options.length === 4) {
+        const optionData = converted.options.map((opt: string) => {
+          const letter = opt.charAt(0);
+          const text = opt.substring(3); // Remove "A) " prefix
+          const isCorrect = converted.correct_answer.startsWith(letter);
+          return { text, isCorrect };
+        });
+        // Fisher-Yates shuffle
+        for (let i = optionData.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [optionData[i], optionData[j]] = [optionData[j], optionData[i]];
+        }
+        const letters = ['A', 'B', 'C', 'D'];
+        converted.options = optionData.map((o: { text: string; isCorrect: boolean }, i: number) => `${letters[i]}) ${o.text}`);
+        const correctIdx = optionData.findIndex((o: { text: string; isCorrect: boolean }) => o.isCorrect);
+        converted.correct_answer = `${letters[correctIdx]}) ${optionData[correctIdx].text}`;
+      }
+      return converted;
+    });
     console.log(`Generated ${questions.length}/${count} questions total`);
 
     const result = {
