@@ -24,6 +24,9 @@ import StudentAssignmentTake from "./pages/StudentAssignmentTake";
 import StudentAssignmentResults from "./pages/StudentAssignmentResults";
 import ApiKeySetup from "./pages/ApiKeySetup";
 import IQTest from "./pages/IQTest";
+import MinistryLogin from "./pages/MinistryLogin";
+import MinistryDashboard from "./pages/MinistryDashboard";
+import MinistryAccessAlert from "./components/MinistryAccessAlert";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +40,7 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <MinistryAccessAlert />
               
               <BrowserRouter>
                 <Routes>
@@ -58,6 +62,8 @@ const App = () => (
                   <Route path="/pending-approval" element={<PendingApprovalPage />} />
                   <Route path="/setup-api-key" element={<ApiKeySetup />} />
                   <Route path="/iq-test" element={<IQTest />} />
+                  <Route path="/ministry" element={<MinistryLogin />} />
+                  <Route path="/ministry-dashboard" element={<MinistryDashboard />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
