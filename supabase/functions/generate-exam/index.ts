@@ -6,8 +6,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-async function getUserApiKey(authHeader: string | null): Promise<string | null> {
-  if (!authHeader) return null;
+interface UserKeys {
+  primaryKey: string | null;
+  fallbackKey: string | null;
+}
+
+async function getUserApiKeys(authHeader: string | null): Promise<UserKeys> {
+  if (!authHeader) return { primaryKey: null, fallbackKey: null };
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -15,15 +20,18 @@ async function getUserApiKey(authHeader: string | null): Promise<string | null> 
     );
     const token = authHeader.replace("Bearer ", "");
     const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user) return null;
+    if (!user) return { primaryKey: null, fallbackKey: null };
     const { data } = await supabase
       .from("user_api_keys")
-      .select("groq_api_key")
+      .select("groq_api_key, groq_fallback_api_key")
       .eq("user_id", user.id)
       .maybeSingle();
-    return data?.groq_api_key || null;
+    return {
+      primaryKey: data?.groq_api_key || null,
+      fallbackKey: data?.groq_fallback_api_key || null,
+    };
   } catch {
-    return null;
+    return { primaryKey: null, fallbackKey: null };
   }
 }
 
@@ -44,19 +52,12 @@ function getVarietyInstructions(): string {
   return shuffled.slice(0, 3).join(" ");
 }
 
-/**
- * ROBUST LaTeX-safe JSON extraction.
- * Strategy: Extract the raw text, fix LaTeX backslashes that break JSON,
- * then parse. This allows the AI to use full LaTeX like \frac, \sqrt, etc.
- */
 function extractJsonFromResponse(response: string): unknown {
-  // Strip markdown code blocks
   let cleaned = response
     .replace(/```json\s*/gi, "")
     .replace(/```\s*/g, "")
     .trim();
 
-  // Find JSON boundaries
   const jsonStart = cleaned.search(/[\{\[]/);
   if (jsonStart === -1) throw new Error("No JSON found in response");
 
@@ -67,24 +68,10 @@ function extractJsonFromResponse(response: string): unknown {
   if (jsonEnd === -1 || jsonEnd <= jsonStart) throw new Error("No valid JSON boundaries found");
 
   cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
-
-  // Remove control characters (newlines inside strings etc)
   cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, " ");
 
-  // Try direct parse first (unlikely with LaTeX but worth trying)
   try { return JSON.parse(cleaned); } catch { /* continue */ }
 
-  // =====================================================
-  // KEY FIX: Properly escape LaTeX backslashes for JSON
-  // =====================================================
-  // In JSON, only these escape sequences are valid after \:
-  //   " \ / b f n r t u
-  // LaTeX uses \frac, \sqrt, \alpha, etc. which are INVALID JSON escapes.
-  // We need to double-escape them: \frac -> \\frac
-  //
-  // Strategy: Walk through the string character by character,
-  // and when inside a JSON string, fix bad backslash escapes.
-  
   const fixedChars: string[] = [];
   let inString = false;
   let i = 0;
@@ -93,15 +80,12 @@ function extractJsonFromResponse(response: string): unknown {
     const ch = cleaned[i];
     
     if (ch === '"' && (i === 0 || cleaned[i - 1] !== '\\')) {
-      // Check if the previous backslash was itself escaped
-      // Count consecutive backslashes before this quote
       let backslashCount = 0;
       let j = i - 1;
       while (j >= 0 && cleaned[j] === '\\') {
         backslashCount++;
         j--;
       }
-      // Quote is escaped only if odd number of backslashes precede it
       if (backslashCount % 2 === 0) {
         inString = !inString;
       }
@@ -112,23 +96,18 @@ function extractJsonFromResponse(response: string): unknown {
     
     if (inString && ch === '\\') {
       const nextCh = i + 1 < cleaned.length ? cleaned[i + 1] : '';
-      // Valid JSON escapes: " \ / b f n r t u
-      if ('"\\//bfnrtu'.includes(nextCh)) {
-        // Valid escape, keep as-is
+      if ('"\\/bfnrtu'.includes(nextCh)) {
         fixedChars.push(ch);
         fixedChars.push(nextCh);
         i += 2;
         continue;
       }
-      // Invalid escape (LaTeX command like \frac, \alpha, \sqrt, etc.)
-      // Double-escape it: \ -> \\
       fixedChars.push('\\');
       fixedChars.push('\\');
       i++;
       continue;
     }
     
-    // Handle actual newlines inside strings
     if (inString && ch === '\n') {
       fixedChars.push('\\');
       fixedChars.push('n');
@@ -154,14 +133,12 @@ function extractJsonFromResponse(response: string): unknown {
   
   cleaned = fixedChars.join('');
   
-  // Fix trailing commas
   cleaned = cleaned
     .replace(/,\s*}/g, "}")
     .replace(/,\s*]/g, "]");
 
   try { return JSON.parse(cleaned); } catch { /* continue */ }
 
-  // Last resort: repair unbalanced braces/brackets from truncation
   let braces = 0, brackets = 0;
   for (const char of cleaned) {
     if (char === '{') braces++;
@@ -206,7 +183,6 @@ function convertRawQuestion(q: Record<string, unknown>, idx: number) {
   };
 }
 
-// Tool definition - NOW allows LaTeX since our parser handles it
 const examTool = {
   type: "function" as const,
   function: {
@@ -247,10 +223,12 @@ serve(async (req) => {
   try {
     const { subject, grade, difficulty, count, materials, examType, adaptiveLevel } = await req.json();
 
-    const userKey = await getUserApiKey(req.headers.get("authorization"));
-    const GROQ_API_KEY = userKey || Deno.env.get("GROQ_API_KEY");
+    const userKeys = await getUserApiKeys(req.headers.get("authorization"));
+    const systemGroqKey = Deno.env.get("GROQ_API_KEY");
+    const primaryApiKey = userKeys.primaryKey || systemGroqKey;
+    const fallbackApiKey = userKeys.fallbackKey || systemGroqKey;
 
-    if (!GROQ_API_KEY) {
+    if (!primaryApiKey) {
       throw new Error("No AI API key configured. Please add your Groq API key in the settings.");
     }
     if (!count || count <= 0) {
@@ -275,19 +253,7 @@ serve(async (req) => {
       const batchSeed = Math.floor(Math.random() * 1000000);
       const uniqueId = `${timestamp}-${batchSeed}-${Math.random().toString(36).slice(2, 8)}`;
 
-      // CRITICAL: Allow LaTeX freely. Our extractJsonFromResponse handles the escaping.
-      const systemPrompt = `You are an expert exam question generator. Generate EXACTLY ${batchCount} multiple-choice questions.
-
-CRITICAL UNIQUENESS RULES:
-- EVERY question MUST be completely unique and different from any standard textbook question
-- DO NOT reuse common example questions. Invent novel scenarios, numbers, and contexts each time
-- Vary question structures: some definitional, some computational, some analytical, some scenario-based
-- Use different numerical values, names, and contexts than typical examples
-- Each question MUST have exactly 4 options (A, B, C, D)
-- You MAY use LaTeX math notation freely: \\frac{a}{b}, \\sqrt{x}, \\alpha, \\int, x^{2}, etc.
-- Wrap inline math in $...$ delimiters for clarity
-- Unique generation ID: ${uniqueId}
-- ${varietyInstructions}${adaptiveLevelHint}`;
+      const systemPrompt = `You are an expert exam question generator. Generate EXACTLY ${batchCount} multiple-choice questions.\n\nCRITICAL UNIQUENESS RULES:\n- EVERY question MUST be completely unique and different from any standard textbook question\n- DO NOT reuse common example questions. Invent novel scenarios, numbers, and contexts each time\n- Vary question structures: some definitional, some computational, some analytical, some scenario-based\n- Use different numerical values, names, and contexts than typical examples\n- Each question MUST have exactly 4 options (A, B, C, D)\n- You MAY use LaTeX math notation freely: \\frac{a}{b}, \\sqrt{x}, \\alpha, \\int, x^{2}, etc.\n- Wrap inline math in $...$ delimiters for clarity\n- Unique generation ID: ${uniqueId}\n- ${varietyInstructions}${adaptiveLevelHint}`;
 
       let userPrompt = '';
       if (examType === 'SAT_FULL') {
@@ -298,15 +264,19 @@ CRITICAL UNIQUENESS RULES:
         userPrompt = `Generate EXACTLY ${batchCount} COMPLETELY ORIGINAL multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover diverse sub-topics. Each question must have 4 options (A-D). IMPORTANT: Do NOT use standard textbook questions. Create novel questions with unique values and scenarios. Generation ID: ${uniqueId}`;
       }
 
-      const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+      // Model-to-key mapping: primary model uses primary key, fallback model uses fallback key
+      const modelConfigs = [
+        { model: "llama-3.3-70b-versatile", apiKey: primaryApiKey },
+        { model: "llama-3.1-8b-instant", apiKey: fallbackApiKey || primaryApiKey },
+      ];
       let response: Response | null = null;
 
-      for (const model of models) {
+      for (const { model, apiKey } of modelConfigs) {
         for (let attempt = 0; attempt < 3; attempt++) {
           response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${GROQ_API_KEY}`,
+              Authorization: `Bearer ${apiKey}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({

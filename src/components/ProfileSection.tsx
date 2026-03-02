@@ -24,30 +24,41 @@ export function ProfileSection() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [editingKey, setEditingKey] = useState(false);
   const [newApiKey, setNewApiKey] = useState('');
+  const [newFallbackKey, setNewFallbackKey] = useState('');
   const [savingKey, setSavingKey] = useState(false);
   const [showKey, setShowKey] = useState(false);
+  const [showFallbackKey, setShowFallbackKey] = useState(false);
   const { user, signOut } = useAuth();
   const { isAdmin, isHardcodedAdmin, verifyAdminCode } = useUserRole();
   const { profile, school, isSchoolAdmin, loading } = useSchool();
   const { theme, language, setTheme, setLanguage, t } = useThemeLanguage();
-  const { apiKey: savedApiKey, loading: keyLoading, refetch: refetchKey } = useUserApiKey();
+  const { apiKey: savedApiKey, fallbackApiKey: savedFallbackKey, loading: keyLoading, refetch: refetchKey } = useUserApiKey();
   const { toast } = useToast();
   const tl = (key: Parameters<typeof tr>[0]) => tr(key, language);
 
   const handleSaveApiKey = async () => {
     if (!user || !newApiKey.trim()) return;
     if (!newApiKey.trim().startsWith('gsk_')) {
-      toast({ variant: 'destructive', title: 'Invalid Key', description: 'Groq API keys start with "gsk_"' });
+      toast({ variant: 'destructive', title: 'Invalid Key', description: 'Primary key must start with "gsk_"' });
+      return;
+    }
+    if (newFallbackKey.trim() && !newFallbackKey.trim().startsWith('gsk_')) {
+      toast({ variant: 'destructive', title: 'Invalid Key', description: 'Fallback key must start with "gsk_"' });
       return;
     }
     setSavingKey(true);
     const { error } = await supabase
       .from('user_api_keys')
-      .upsert({ user_id: user.id, groq_api_key: newApiKey.trim() }, { onConflict: 'user_id' });
+      .upsert({ 
+        user_id: user.id, 
+        groq_api_key: newApiKey.trim(),
+        groq_fallback_api_key: newFallbackKey.trim() || null,
+      } as any, { onConflict: 'user_id' });
     if (!error) {
-      toast({ title: '✅ API Key Saved!' });
+      toast({ title: '✅ API Keys Saved!' });
       setEditingKey(false);
       setNewApiKey('');
+      setNewFallbackKey('');
       refetchKey();
     } else {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
@@ -269,11 +280,11 @@ export function ProfileSection() {
           </div>
         </div>
 
-        {/* AI API Key */}
+        {/* AI API Keys */}
         <div className="glass-effect rounded-2xl p-5 mb-4">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <Key size={16} />
-            {t('AI API Key', 'مفتاح API للذكاء الاصطناعي')}
+            {t('AI API Keys', 'مفاتيح API للذكاء الاصطناعي')}
           </h3>
           {keyLoading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -282,35 +293,68 @@ export function ProfileSection() {
             </div>
           ) : editingKey ? (
             <div className="space-y-3">
-              <Input
-                type="password"
-                placeholder="gsk_..."
-                value={newApiKey}
-                onChange={(e) => setNewApiKey(e.target.value)}
-                className="font-mono text-sm"
-              />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">{t('Primary Key (Llama 3.3 70B)', 'المفتاح الأساسي (Llama 3.3 70B)')}</p>
+                <Input
+                  type="password"
+                  placeholder="gsk_..."
+                  value={newApiKey}
+                  onChange={(e) => setNewApiKey(e.target.value)}
+                  className="font-mono text-sm"
+                />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">{t('Fallback Key (Llama 3.1 8B)', 'مفتاح الاحتياطي (Llama 3.1 8B)')}</p>
+                <Input
+                  type="password"
+                  placeholder="gsk_... (optional)"
+                  value={newFallbackKey}
+                  onChange={(e) => setNewFallbackKey(e.target.value)}
+                  className="font-mono text-sm"
+                />
+              </div>
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => { setEditingKey(false); setNewApiKey(''); }} className="flex-1">
+                <Button size="sm" variant="outline" onClick={() => { setEditingKey(false); setNewApiKey(''); setNewFallbackKey(''); }} className="flex-1">
                   {t('Cancel', 'إلغاء')}
                 </Button>
                 <Button size="sm" onClick={handleSaveApiKey} disabled={!newApiKey.trim() || savingKey} className="flex-1">
-                  {savingKey ? <Loader2 className="w-4 h-4 animate-spin" /> : t('Save Key', 'حفظ المفتاح')}
+                  {savingKey ? <Loader2 className="w-4 h-4 animate-spin" /> : t('Save Keys', 'حفظ المفاتيح')}
                 </Button>
               </div>
             </div>
           ) : savedApiKey ? (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-2">
-                <Key size={14} className="text-muted-foreground shrink-0" />
-                <span className="font-mono text-sm flex-1 truncate">
-                  {showKey ? savedApiKey : `gsk_${'•'.repeat(20)}`}
-                </span>
-                <button onClick={() => setShowKey(!showKey)} className="text-muted-foreground hover:text-foreground">
-                  {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">{t('Primary (Llama 3.3)', 'الأساسي (Llama 3.3)')}</p>
+                <div className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-2">
+                  <Key size={14} className="text-muted-foreground shrink-0" />
+                  <span className="font-mono text-sm flex-1 truncate">
+                    {showKey ? savedApiKey : `gsk_${'•'.repeat(20)}`}
+                  </span>
+                  <button onClick={() => setShowKey(!showKey)} className="text-muted-foreground hover:text-foreground">
+                    {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">{t('Fallback (Llama 3.1)', 'الاحتياطي (Llama 3.1)')}</p>
+                <div className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-2">
+                  <Key size={14} className="text-muted-foreground shrink-0" />
+                  <span className="font-mono text-sm flex-1 truncate">
+                    {savedFallbackKey 
+                      ? (showFallbackKey ? savedFallbackKey : `gsk_${'•'.repeat(20)}`)
+                      : t('Not set (uses primary)', 'غير محدد (يستخدم الأساسي)')
+                    }
+                  </span>
+                  {savedFallbackKey && (
+                    <button onClick={() => setShowFallbackKey(!showFallbackKey)} className="text-muted-foreground hover:text-foreground">
+                      {showFallbackKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => { setEditingKey(true); setNewApiKey(''); }} className="flex-1 gap-1">
+                <Button size="sm" variant="outline" onClick={() => { setEditingKey(true); setNewApiKey(''); setNewFallbackKey(''); }} className="flex-1 gap-1">
                   <Pencil size={12} />
                   {t('Change', 'تغيير')}
                 </Button>
@@ -323,11 +367,11 @@ export function ProfileSection() {
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                {t('No personal key set. The system key will be used.', 'لم يتم تعيين مفتاح شخصي. سيتم استخدام مفتاح النظام.')}
+                {t('No personal keys set. The system key will be used.', 'لم يتم تعيين مفاتيح شخصية. سيتم استخدام مفتاح النظام.')}
               </p>
               <Button size="sm" variant="outline" onClick={() => setEditingKey(true)} className="gap-1">
                 <Key size={12} />
-                {t('Add API Key', 'إضافة مفتاح API')}
+                {t('Add API Keys', 'إضافة مفاتيح API')}
               </Button>
             </div>
           )}
@@ -338,7 +382,7 @@ export function ProfileSection() {
             className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline mt-3"
           >
             <ExternalLink size={12} />
-            {t('Get a free Groq API key →', 'احصل على مفتاح Groq API مجاني ←')}
+            {t('Get free Groq API keys →', 'احصل على مفاتيح Groq API مجانية ←')}
           </a>
         </div>
 
