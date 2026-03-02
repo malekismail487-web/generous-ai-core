@@ -81,8 +81,8 @@ export default function SuperAdminVerify() {
   };
 
   const handleVerify = async () => {
-    if (!user?.email || code.length !== 8) {
-      toast({ variant: 'destructive', title: 'Invalid code', description: 'Please enter an 8-character verification code.' });
+    if (!user?.email || !code) {
+      toast({ variant: 'destructive', title: 'Invalid code', description: 'Please enter your verification code.' });
       return;
     }
     setLoading(true);
@@ -348,7 +348,7 @@ export default function SuperAdminVerify() {
               <Shield className="w-8 h-8 text-primary-foreground" />
             </div>
             <h1 className="text-2xl font-bold">Super Admin Verification</h1>
-            <p className="text-sm text-muted-foreground">Enter your 8-character verification code.</p>
+            <p className="text-sm text-muted-foreground">Enter your verification code to continue.</p>
           </div>
 
           {hasAttacks && (
@@ -374,16 +374,14 @@ export default function SuperAdminVerify() {
               <label className="text-sm font-medium mb-2 block">Verification Code</label>
               <Input
                 type="password"
-                placeholder="Enter 8-character code"
+                placeholder="Enter verification code"
                 value={code}
-                onChange={(e) => setCode(e.target.value.slice(0, 8))}
-                maxLength={8}
+                onChange={(e) => setCode(e.target.value)}
                 className="text-center text-lg tracking-widest font-mono"
                 onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
               />
-              <p className="text-xs text-muted-foreground mt-1 text-center">{code.length}/8 characters</p>
             </div>
-            <Button onClick={handleVerify} disabled={loading || code.length !== 8} className="w-full">
+            <Button onClick={handleVerify} disabled={loading || !code} className="w-full">
               {loading ? 'Verifying...' : 'Verify Access'}
             </Button>
             <Button variant="ghost" onClick={handleSignOut} className="w-full">
@@ -393,7 +391,7 @@ export default function SuperAdminVerify() {
 
           <div className="pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground text-center">
-              🔒 Secure verification. After 3 failed attempts, this device will be locked for 24 hours. Your account remains accessible from other devices.
+              🔒 Secure verification. Multiple failed attempts will result in a device lockout.
             </p>
           </div>
         </div>
