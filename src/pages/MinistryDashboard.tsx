@@ -40,7 +40,10 @@ export default function MinistryDashboard() {
   const [sessionValid, setSessionValid] = useState(false);
   const [schoolStats, setSchoolStats] = useState<SchoolStats[]>([]);
   const [nationalStats, setNationalStats] = useState<NationalStats | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'schools' | 'compliance' | 'atrisk'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'schools' | 'compliance' | 'atrisk' | 'moderators'>('overview');
+  const [modRequests, setModRequests] = useState<any[]>([]);
+  const [generatingModCode, setGeneratingModCode] = useState(false);
+  const [latestModCode, setLatestModCode] = useState<string | null>(null);
   const [lastActivity, setLastActivity] = useState(Date.now());
   const [timeLeft, setTimeLeft] = useState(900); // 15 min in seconds
 
@@ -200,7 +203,47 @@ export default function MinistryDashboard() {
     { id: 'schools' as const, label: 'School Rankings', icon: Building2 },
     { id: 'compliance' as const, label: 'Compliance Reports', icon: FileText },
     { id: 'atrisk' as const, label: 'At-Risk Alerts', icon: AlertTriangle },
+    { id: 'moderators' as const, label: 'Moderators', icon: Shield },
   ];
+
+  const generateModeratorCode = async () => {
+    setGeneratingModCode(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data, error } = await supabase.rpc('generate_moderator_invite_code');
+      const result = data as { success: boolean; code?: string; error?: string } | null;
+      if (error || !result?.success) {
+        console.error('Error generating moderator code:', result?.error || error?.message);
+      } else {
+        setLatestModCode(result.code || null);
+      }
+    } finally {
+      setGeneratingModCode(false);
+    }
+  };
+
+  const fetchModRequests = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const { data } = await supabase.from('moderator_requests').select('*').order('created_at', { ascending: false });
+    setModRequests(data || []);
+  }, []);
+
+  useEffect(() => {
+    if (sessionValid) fetchModRequests();
+  }, [sessionValid, fetchModRequests]);
+
+  const handleModRequest = async (requestId: string, action: 'approve' | 'deny') => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    if (action === 'approve') {
+      await supabase.rpc('approve_moderator_request', { p_request_id: requestId });
+    } else {
+      await supabase.rpc('deny_moderator_request', { p_request_id: requestId });
+    }
+    fetchModRequests();
+  };
 
   return (
     <div className="min-h-screen bg-black text-gray-200">
@@ -395,6 +438,72 @@ export default function MinistryDashboard() {
 
         {activeTab === 'atrisk' && sessionValid && (
           <AtRiskTab sessionToken={sessionStorage.getItem('ministry_session_token') || ''} />
+        )}
+
+        {activeTab === 'moderators' && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-emerald-400">🛡️ Moderator Management</h2>
+            
+            {/* Generate Code */}
+            <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 space-y-4">
+              <h3 className="font-semibold text-gray-200">Generate Moderator Invite Code</h3>
+              <p className="text-xs text-gray-500">Generate a code for a new content moderator. Codes expire in 48 hours.</p>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={generateModeratorCode}
+                  disabled={generatingModCode}
+                  className="px-4 py-2 rounded-lg bg-emerald-700/30 border border-emerald-600/30 text-emerald-400 text-sm hover:bg-emerald-700/50 disabled:opacity-50"
+                >
+                  {generatingModCode ? '⏳ Generating...' : '🔑 Generate Code'}
+                </button>
+                {latestModCode && (
+                  <div className="flex items-center gap-2">
+                    <code className="bg-gray-900 px-4 py-2 rounded-lg text-emerald-300 font-mono text-lg tracking-wider border border-emerald-700/30">
+                      {latestModCode}
+                    </code>
+                    <button onClick={() => { navigator.clipboard.writeText(latestModCode); }} className="text-xs text-gray-500 hover:text-gray-300">
+                      📋 Copy
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Pending Requests */}
+            <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 space-y-4">
+              <h3 className="font-semibold text-gray-200">Moderator Requests</h3>
+              {modRequests.length === 0 ? (
+                <p className="text-sm text-gray-600">No moderator requests</p>
+              ) : (
+                <div className="space-y-3">
+                  {modRequests.map(req => (
+                    <div key={req.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-900/50 border border-gray-800">
+                      <div>
+                        <p className="text-sm text-gray-200 font-medium">{req.name}</p>
+                        <p className="text-xs text-gray-500">{req.email}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {req.status === 'pending' ? (
+                          <>
+                            <button onClick={() => handleModRequest(req.id, 'approve')} className="px-3 py-1 rounded bg-emerald-800/40 text-emerald-400 text-xs border border-emerald-700/30 hover:bg-emerald-800/60">
+                              ✅ Approve
+                            </button>
+                            <button onClick={() => handleModRequest(req.id, 'deny')} className="px-3 py-1 rounded bg-red-800/40 text-red-400 text-xs border border-red-700/30 hover:bg-red-800/60">
+                              ❌ Deny
+                            </button>
+                          </>
+                        ) : (
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            req.status === 'approved' ? 'bg-emerald-950/50 text-emerald-400' : 'bg-red-950/50 text-red-400'
+                          }`}>{req.status}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </main>
     </div>

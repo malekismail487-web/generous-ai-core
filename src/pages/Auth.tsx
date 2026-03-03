@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr } from '@/lib/translations';
-import { Sparkles, Mail, Lock, Loader2, KeyRound, Users, UserPlus, Heart } from 'lucide-react';
+import { Sparkles, Mail, Lock, Loader2, KeyRound, Users, UserPlus, Heart, ShieldCheck } from 'lucide-react';
 import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
@@ -28,8 +28,9 @@ export default function Auth() {
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; code?: string; name?: string }>({});
-  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'join' | 'parent'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'join' | 'parent' | 'moderator'>('login');
   const [parentCode, setParentCode] = useState('');
+  const [modCode, setModCode] = useState('');
   
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
@@ -94,17 +95,18 @@ export default function Auth() {
         }
         
         if (profile) {
-          if (profile.status === 'pending' || profile.status === 'rejected') {
-            navigate('/pending-approval');
-          } else if (profile.status === 'approved' && profile.is_active) {
-            // Redirect to API key setup first, then to destination
-            let dest = '/';
-            if (profile.user_type === 'school_admin') dest = '/admin';
-            else if (profile.user_type === 'teacher') dest = '/teacher';
-            else if (profile.user_type === 'parent') dest = '/parent';
-            else if (profile.user_type === 'student') dest = '/';
-            sessionStorage.setItem('apiKeySetupReturn', dest);
-            navigate('/setup-api-key');
+            if (profile.status === 'pending' || profile.status === 'rejected') {
+             navigate('/pending-approval');
+           } else if (profile.status === 'approved' && profile.is_active) {
+             // Redirect to API key setup first, then to destination
+             let dest = '/';
+             if (profile.user_type === 'school_admin') dest = '/admin';
+             else if (profile.user_type === 'teacher') dest = '/teacher';
+             else if (profile.user_type === 'parent') dest = '/parent';
+             else if (profile.user_type === 'moderator') dest = '/moderator';
+             else if (profile.user_type === 'student') dest = '/';
+             sessionStorage.setItem('apiKeySetupReturn', dest);
+             navigate('/setup-api-key');
           } else {
             navigate('/');
           }
@@ -458,23 +460,27 @@ export default function Auth() {
           </h1>
         </div>
 
-        <Tabs value={authMode} onValueChange={(v) => { setAuthMode(v as 'login' | 'signup' | 'join' | 'parent'); setErrors({}); }}>
-          <TabsList className="grid w-full grid-cols-4 mb-4">
-            <TabsTrigger value="login" className="gap-1 text-xs px-2">
-              <Lock className="w-3.5 h-3.5" />
+        <Tabs value={authMode} onValueChange={(v) => { setAuthMode(v as 'login' | 'signup' | 'join' | 'parent' | 'moderator'); setErrors({}); }}>
+          <TabsList className="grid w-full grid-cols-5 mb-4">
+            <TabsTrigger value="login" className="gap-1 text-[10px] px-1">
+              <Lock className="w-3 h-3" />
               {t('signIn')}
             </TabsTrigger>
-            <TabsTrigger value="signup" className="gap-1 text-xs px-2">
-              <UserPlus className="w-3.5 h-3.5" />
+            <TabsTrigger value="signup" className="gap-1 text-[10px] px-1">
+              <UserPlus className="w-3 h-3" />
               {t('signUp')}
             </TabsTrigger>
-            <TabsTrigger value="join" className="gap-1 text-xs px-2">
-              <Users className="w-3.5 h-3.5" />
+            <TabsTrigger value="join" className="gap-1 text-[10px] px-1">
+              <Users className="w-3 h-3" />
               {t('joinSchool')}
             </TabsTrigger>
-            <TabsTrigger value="parent" className="gap-1 text-xs px-2">
-              <Heart className="w-3.5 h-3.5" />
+            <TabsTrigger value="parent" className="gap-1 text-[10px] px-1">
+              <Heart className="w-3 h-3" />
               {language === 'ar' ? 'ولي أمر' : 'Parent'}
+            </TabsTrigger>
+            <TabsTrigger value="moderator" className="gap-1 text-[10px] px-1">
+              <ShieldCheck className="w-3 h-3" />
+              {language === 'ar' ? 'مشرف' : 'Moderator'}
             </TabsTrigger>
           </TabsList>
 
@@ -753,6 +759,130 @@ export default function Auth() {
               </div>
             </form>
           </TabsContent>
+          {/* Moderator Tab */}
+          <TabsContent value="moderator">
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const newErrors: { email?: string; password?: string; name?: string; code?: string; confirmPassword?: string } = {};
+              const emailResult = emailSchema.safeParse(email);
+              if (!emailResult.success) newErrors.email = emailResult.error.errors[0].message;
+              const passwordResult = passwordSchema.safeParse(password);
+              if (!passwordResult.success) newErrors.password = passwordResult.error.errors[0].message;
+              if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+              if (!name.trim()) newErrors.name = 'Full name is required';
+              if (!modCode.trim() || modCode.length < 6) newErrors.code = 'Moderator invite code is required';
+              setErrors(newErrors);
+              if (Object.keys(newErrors).length > 0) return;
+
+              setIsSubmitting(true);
+              try {
+                // Submit moderator request via RPC
+                const { data, error: rpcError } = await supabase.rpc('signup_as_moderator', {
+                  p_email: email.trim().toLowerCase(),
+                  p_full_name: name.trim(),
+                  p_invite_code: modCode.trim().toUpperCase()
+                });
+                const result = data as { success: boolean; error?: string } | null;
+                if (rpcError || !result?.success) {
+                  toast({ variant: 'destructive', title: 'Error', description: result?.error || rpcError?.message || 'Invalid invite code' });
+                  setIsSubmitting(false);
+                  return;
+                }
+
+                // Create auth account
+                const { error: signUpError } = await signUp(email.trim().toLowerCase(), password);
+                if (signUpError) {
+                  if (signUpError.message.includes('User already registered')) {
+                    const { error: signInError } = await signIn(email.trim().toLowerCase(), password);
+                    if (signInError) {
+                      toast({ variant: 'destructive', title: 'Account exists', description: 'Please sign in with your existing password.' });
+                      setAuthMode('login');
+                      setIsSubmitting(false);
+                      return;
+                    }
+                    // Link moderator request to user
+                    const { data: { user: existingUser } } = await supabase.auth.getUser();
+                    if (existingUser) {
+                      await supabase.rpc('link_moderator_after_signup', { p_user_id: existingUser.id, p_email: email.trim().toLowerCase() });
+                    }
+                  } else {
+                    toast({ variant: 'destructive', title: 'Error', description: signUpError.message });
+                    setIsSubmitting(false);
+                    return;
+                  }
+                }
+
+                toast({ title: 'Request Submitted!', description: 'Your moderator request is pending approval from the Ministry.' });
+                navigate('/pending-approval');
+              } catch {
+                toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
+              } finally {
+                setIsSubmitting(false);
+              }
+            }} className="glass-effect rounded-2xl p-6 space-y-4">
+              <p className="text-center text-muted-foreground mb-4">
+                {language === 'ar' ? 'سجّل كمشرف للإشراف على المحتوى' : 'Sign up as a moderator to oversee content safety'}
+              </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="mod-name">{t('fullName')}</Label>
+                <Input id="mod-name" placeholder={language === 'ar' ? 'الاسم الكامل' : 'Your full name'} value={name} onChange={(e) => setName(e.target.value)} />
+                {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mod-email">{t('email')}</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input id="mod-email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" />
+                </div>
+                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mod-password">{t('password')}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input id="mod-password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" />
+                </div>
+                {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mod-confirm-password">{t('confirmPassword')}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input id="mod-confirm-password" type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10" />
+                </div>
+                {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mod-code">{language === 'ar' ? 'رمز دعوة المشرف' : 'Moderator Invite Code'}</Label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input id="mod-code" placeholder={language === 'ar' ? 'أدخل رمز الدعوة' : 'Enter moderator code (e.g. MOD-XXXXXXXX)'} value={modCode} onChange={(e) => setModCode(e.target.value.toUpperCase())} className="pl-10 tracking-wider uppercase font-mono" />
+                </div>
+                {errors.code && <p className="text-sm text-destructive">{errors.code}</p>}
+                <p className="text-xs text-muted-foreground">
+                  {language === 'ar' ? 'هذا الرمز تقدمه وزارة التعليم' : 'This code is provided by the Ministry of Education'}
+                </p>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {language === 'ar' ? 'التسجيل كمشرف' : 'Sign Up as Moderator'}
+              </Button>
+
+              <p className="text-center text-xs text-muted-foreground mt-4">
+                {language === 'ar' ? 'لديك حساب بالفعل؟' : 'Already have an account?'}{' '}
+                <button type="button" onClick={() => { setAuthMode('login'); clearForm(); }} className="text-primary hover:underline">
+                  {t('signIn')}
+                </button>
+              </p>
+            </form>
+          </TabsContent>
+
           {/* Parent Tab */}
           <TabsContent value="parent">
             <form onSubmit={async (e) => {

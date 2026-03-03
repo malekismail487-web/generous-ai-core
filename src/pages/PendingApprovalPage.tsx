@@ -83,6 +83,8 @@ export default function PendingApprovalPage() {
           navigate('/admin', { replace: true });
         } else if (profileData.user_type === 'teacher') {
           navigate('/teacher', { replace: true });
+        } else if (profileData.user_type === 'moderator') {
+          navigate('/moderator', { replace: true });
         } else {
           navigate('/', { replace: true });
         }
