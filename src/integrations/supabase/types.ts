@@ -511,6 +511,59 @@ export type Database = {
           },
         ]
       }
+      content_flags: {
+        Row: {
+          content_id: string | null
+          content_text: string
+          content_type: string
+          created_at: string
+          id: string
+          reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          school_id: string | null
+          severity: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          content_id?: string | null
+          content_text: string
+          content_type: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          school_id?: string | null
+          severity?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          content_id?: string | null
+          content_text?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          school_id?: string | null
+          severity?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_flags_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string
@@ -1256,6 +1309,143 @@ export type Database = {
           session_token?: string
         }
         Relationships: []
+      }
+      moderation_actions: {
+        Row: {
+          action_type: string
+          appeal_reason: string | null
+          appeal_resolved_at: string | null
+          appeal_resolved_by: string | null
+          appeal_status: string | null
+          appealed_by: string | null
+          created_at: string
+          expires_at: string | null
+          flag_id: string | null
+          id: string
+          is_active: boolean
+          message: string | null
+          moderator_id: string
+          school_id: string | null
+          target_user_id: string
+        }
+        Insert: {
+          action_type: string
+          appeal_reason?: string | null
+          appeal_resolved_at?: string | null
+          appeal_resolved_by?: string | null
+          appeal_status?: string | null
+          appealed_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          flag_id?: string | null
+          id?: string
+          is_active?: boolean
+          message?: string | null
+          moderator_id: string
+          school_id?: string | null
+          target_user_id: string
+        }
+        Update: {
+          action_type?: string
+          appeal_reason?: string | null
+          appeal_resolved_at?: string | null
+          appeal_resolved_by?: string | null
+          appeal_status?: string | null
+          appealed_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          flag_id?: string | null
+          id?: string
+          is_active?: boolean
+          message?: string | null
+          moderator_id?: string
+          school_id?: string | null
+          target_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_actions_flag_id_fkey"
+            columns: ["flag_id"]
+            isOneToOne: false
+            referencedRelation: "content_flags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moderation_actions_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      moderator_invite_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          used: boolean
+          used_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          used?: boolean
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used?: boolean
+          used_by?: string | null
+        }
+        Relationships: []
+      }
+      moderator_requests: {
+        Row: {
+          code_id: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          code_id: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          code_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderator_requests_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "moderator_invite_codes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notes: {
         Row: {
@@ -2231,6 +2421,10 @@ export type Database = {
         Args: { p_grade?: string; p_request_id: string }
         Returns: Json
       }
+      approve_moderator_request: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
       check_device_ban: {
         Args: { p_device_fingerprint: string }
         Returns: Json
@@ -2261,6 +2455,8 @@ export type Database = {
         Returns: undefined
       }
       deny_invite_request: { Args: { p_request_id: string }; Returns: Json }
+      deny_moderator_request: { Args: { p_request_id: string }; Returns: Json }
+      generate_moderator_invite_code: { Args: never; Returns: Json }
       get_ministry_dashboard_data: {
         Args: { p_session_token: string }
         Returns: Json
@@ -2278,6 +2474,7 @@ export type Database = {
         Returns: boolean
       }
       is_hardcoded_admin: { Args: { check_email: string }; Returns: boolean }
+      is_moderator: { Args: { user_uuid: string }; Returns: boolean }
       is_parent_of: {
         Args: { p_parent_id: string; p_student_id: string }
         Returns: boolean
@@ -2292,12 +2489,20 @@ export type Database = {
       }
       is_student: { Args: { user_uuid: string }; Returns: boolean }
       is_teacher: { Args: { user_uuid: string }; Returns: boolean }
+      link_moderator_after_signup: {
+        Args: { p_email: string; p_user_id: string }
+        Returns: Json
+      }
       link_profile_after_signup: {
         Args: { p_email: string; p_user_id: string }
         Returns: Json
       }
       resolve_ministry_request: {
         Args: { p_action: string; p_request_id: string }
+        Returns: Json
+      }
+      signup_as_moderator: {
+        Args: { p_email: string; p_full_name: string; p_invite_code: string }
         Returns: Json
       }
       signup_as_parent: {
