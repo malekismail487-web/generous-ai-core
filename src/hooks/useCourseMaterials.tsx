@@ -164,6 +164,18 @@ export function useCourseMaterials() {
 
     setMaterials(prev => [data as CourseMaterial, ...prev]);
     toast({ title: 'Material uploaded successfully!' });
+
+    // Scan content for moderation (fire-and-forget)
+    import('@/lib/contentScanner').then(({ scanContent }) => {
+      scanContent({
+        content: `${title} ${content || ''}`,
+        contentType: 'course_material',
+        contentId: (data as any).id,
+        userId: user.id,
+        schoolId: school.id,
+      });
+    });
+
     return data;
   }, [user, isTeacher, school, toast]);
 

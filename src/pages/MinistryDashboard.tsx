@@ -108,14 +108,28 @@ export default function MinistryDashboard() {
 
   // Fetch real data via security definer function (bypasses RLS)
   const fetchData = useCallback(async () => {
-    const token = sessionStorage.getItem('ministry_session_token');
-    if (!token) return;
+    try {
+      const token = sessionStorage.getItem('ministry_session_token');
+      if (!token) return;
 
-    const { data, error } = await supabase.rpc('get_ministry_dashboard_data', {
-      p_session_token: token
-    });
+      const { data, error } = await supabase.rpc('get_ministry_dashboard_data', {
+        p_session_token: token
+      });
 
-    if (error || !data || (data as any).error) return;
+      if (error) {
+        console.error('Ministry data fetch error:', error);
+        // Still show dashboard with empty data
+      }
+      if (!data || (data as any).error) {
+        console.warn('Ministry data empty or error:', (data as any)?.error);
+        // Initialize with empty stats so UI renders
+        setSchoolStats([]);
+        setNationalStats({
+          totalSchools: 0, totalStudents: 0, totalTeachers: 0,
+          totalAssignments: 0, totalSubmissions: 0, avgCompletionRate: 0, totalMaterials: 0,
+        });
+        return;
+      }
 
     const { schools, profiles, assignments, submissions, materials, learningProfiles } = data as any;
 
@@ -173,11 +187,30 @@ export default function MinistryDashboard() {
       avgCompletionRate: Math.round(avgCompletion * 10) / 10,
       totalMaterials: totalMats,
     });
+    } catch (e) {
+      console.error('Ministry dashboard data processing error:', e);
+      setSchoolStats([]);
+      setNationalStats({
+        totalSchools: 0, totalStudents: 0, totalTeachers: 0,
+        totalAssignments: 0, totalSubmissions: 0, avgCompletionRate: 0, totalMaterials: 0,
+      });
+    }
+  }, []);
+
+  const fetchModRequests = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const { data } = await supabase.from('moderator_requests').select('*').order('created_at', { ascending: false });
+    setModRequests(data || []);
   }, []);
 
   useEffect(() => {
     if (sessionValid) fetchData();
   }, [sessionValid, fetchData]);
+
+  useEffect(() => {
+    if (sessionValid) fetchModRequests();
+  }, [sessionValid, fetchModRequests]);
 
   const handleLogout = () => {
     sessionStorage.removeItem('ministry_session_token');
@@ -189,22 +222,6 @@ export default function MinistryDashboard() {
     const sec = s % 60;
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
-
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
-      </div>
-    );
-  }
-
-  const tabs = [
-    { id: 'overview' as const, label: 'National Overview', icon: BarChart3 },
-    { id: 'schools' as const, label: 'School Rankings', icon: Building2 },
-    { id: 'compliance' as const, label: 'Compliance Reports', icon: FileText },
-    { id: 'atrisk' as const, label: 'At-Risk Alerts', icon: AlertTriangle },
-    { id: 'moderators' as const, label: 'Moderators', icon: Shield },
-  ];
 
   const generateModeratorCode = async () => {
     setGeneratingModCode(true);
@@ -223,17 +240,6 @@ export default function MinistryDashboard() {
     }
   };
 
-  const fetchModRequests = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    const { data } = await supabase.from('moderator_requests').select('*').order('created_at', { ascending: false });
-    setModRequests(data || []);
-  }, []);
-
-  useEffect(() => {
-    if (sessionValid) fetchModRequests();
-  }, [sessionValid, fetchModRequests]);
-
   const handleModRequest = async (requestId: string, action: 'approve' | 'deny') => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
@@ -244,6 +250,22 @@ export default function MinistryDashboard() {
     }
     fetchModRequests();
   };
+
+  const tabs = [
+    { id: 'overview' as const, label: 'National Overview', icon: BarChart3 },
+    { id: 'schools' as const, label: 'School Rankings', icon: Building2 },
+    { id: 'compliance' as const, label: 'Compliance Reports', icon: FileText },
+    { id: 'atrisk' as const, label: 'At-Risk Alerts', icon: AlertTriangle },
+    { id: 'moderators' as const, label: 'Moderators', icon: Shield },
+  ];
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-gray-200">
@@ -300,9 +322,15 @@ export default function MinistryDashboard() {
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {activeTab === 'overview' && nationalStats && (
+        {activeTab === 'overview' && (
           <div className="space-y-8">
             <h2 className="text-xl font-bold text-emerald-400">🏛️ National Education Overview</h2>
+            {!nationalStats ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+                <span className="ml-3 text-gray-500">Loading national data...</span>
+              </div>
+            ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { label: 'Total Schools', value: nationalStats.totalSchools, icon: Building2, color: 'emerald' },
@@ -323,6 +351,7 @@ export default function MinistryDashboard() {
                 </div>
               ))}
             </div>
+            )}
           </div>
         )}
 

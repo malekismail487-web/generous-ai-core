@@ -34,6 +34,7 @@ import {
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
 import { BudgetOptimizationReport } from '@/components/admin/BudgetOptimizationReport';
+import { SchoolAdminAppeals } from '@/components/admin/SchoolAdminAppeals';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -603,7 +604,7 @@ export default function SchoolAdminDashboard() {
         )}
 
         <Tabs defaultValue="performance" className="space-y-6">
-          <TabsList className="grid grid-cols-11 w-full max-w-6xl">
+          <TabsList className="grid grid-cols-12 w-full max-w-6xl">
             <TabsTrigger value="performance" className="gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Performance</span>
@@ -650,6 +651,10 @@ export default function SchoolAdminDashboard() {
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">{t('settings')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="appeals" className="gap-2">
+              <Shield className="w-4 h-4" />
+              <span className="hidden sm:inline">Appeals</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1200,6 +1205,10 @@ export default function SchoolAdminDashboard() {
                 </div>
               </div>
             </div>
+          </TabsContent>
+          {/* Appeals Tab */}
+          <TabsContent value="appeals">
+            <SchoolAdminAppeals schoolId={profile?.school_id || ''} />
           </TabsContent>
         </Tabs>
       </main>

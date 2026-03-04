@@ -151,9 +151,11 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
       source: 'copilot',
     };
 
-    const { error } = await supabase
+    const { data: insertedData, error } = await supabase
       .from('assignments')
-      .insert(insertData as any);
+      .insert(insertData as any)
+      .select('id')
+      .single();
 
     if (error) {
       console.error('Publish error:', error);
@@ -161,6 +163,18 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
       setStep('preview');
       return;
     }
+
+    // Scan assignment content for moderation (fire-and-forget)
+    const scanText = questions.map((q: any) => `${q.question} ${(q.options || []).join(' ')}`).join(' ');
+    import('@/lib/contentScanner').then(({ scanContent }) => {
+      scanContent({
+        content: scanText.substring(0, 4000),
+        contentType: 'assignment',
+        contentId: insertedData?.id,
+        userId: authUserId,
+        schoolId,
+      });
+    });
 
     toast({ title: t('assignmentPublished') });
     reset();
