@@ -238,6 +238,110 @@ const examTool = {
   },
 };
 
+// ========== SELF-VALIDATION STEP ==========
+// After generating questions, the AI reviews its own work to fix wrong answers
+async function validateAndFixQuestions(
+  questions: Record<string, unknown>[],
+  subject: string,
+  apiKey: string,
+  fallbackKey: string | null
+): Promise<Record<string, unknown>[]> {
+  if (questions.length === 0) return questions;
+
+  // Build a compact representation for review
+  const questionsForReview = questions.slice(0, 20).map((q, i) => {
+    const ca = String(q.correct_answer || q.correctAnswer || "A");
+    const optA = String(q.option_a || q.optionA || "");
+    const optB = String(q.option_b || q.optionB || "");
+    const optC = String(q.option_c || q.optionC || "");
+    const optD = String(q.option_d || q.optionD || "");
+    return `Q${i + 1}: ${String(q.question || "")}\nA) ${optA}\nB) ${optB}\nC) ${optC}\nD) ${optD}\nMarked correct: ${ca}`;
+  }).join("\n\n");
+
+  const reviewPrompt = `You are a strict academic reviewer. Review these ${subject} exam questions. For EACH question:
+1. Verify the marked correct answer is actually correct. Solve the problem yourself.
+2. Verify all 4 options are plausible (not obviously wrong or duplicate).
+3. If a question has the WRONG correct answer, or if ALL options are wrong, fix it.
+
+Return ONLY a JSON array of corrections. If a question is correct, skip it. Only include questions that need fixing:
+[{"index": 0, "correct_answer": "B", "fixed_option_a": "...", "fixed_option_b": "...", "fixed_option_c": "...", "fixed_option_d": "...", "reason": "why it was wrong"}]
+
+If ALL questions are correct, return: []
+
+Questions to review:
+${questionsForReview}`;
+
+  const modelConfigs = [
+    { model: "llama-3.3-70b-versatile", apiKey },
+    { model: "llama-3.1-8b-instant", apiKey: fallbackKey || apiKey },
+  ];
+
+  for (const { model, apiKey: key } of modelConfigs) {
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: "You are an expert academic exam reviewer. Return ONLY valid JSON." },
+            { role: "user", content: reviewPrompt },
+          ],
+          temperature: 0.1,
+          max_tokens: 4000,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) continue;
+        console.warn("Validation API error:", response.status);
+        continue;
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || "[]";
+
+      try {
+        const corrections = extractJsonFromResponse(content) as any[];
+        if (!Array.isArray(corrections) || corrections.length === 0) {
+          console.log("AI validation: all questions verified correct");
+          return questions;
+        }
+
+        console.log(`AI validation: fixing ${corrections.length} questions`);
+        for (const fix of corrections) {
+          const idx = fix.index;
+          if (idx >= 0 && idx < questions.length) {
+            const q = questions[idx];
+            if (fix.correct_answer) {
+              q.correct_answer = fix.correct_answer;
+              q.correctAnswer = fix.correct_answer;
+            }
+            if (fix.fixed_option_a) { q.option_a = fix.fixed_option_a; q.optionA = fix.fixed_option_a; }
+            if (fix.fixed_option_b) { q.option_b = fix.fixed_option_b; q.optionB = fix.fixed_option_b; }
+            if (fix.fixed_option_c) { q.option_c = fix.fixed_option_c; q.optionC = fix.fixed_option_c; }
+            if (fix.fixed_option_d) { q.option_d = fix.fixed_option_d; q.optionD = fix.fixed_option_d; }
+            console.log(`Fixed Q${idx + 1}: ${fix.reason}`);
+          }
+        }
+        return questions;
+      } catch (e) {
+        console.warn("Could not parse validation response, skipping:", e);
+        return questions;
+      }
+    } catch (e) {
+      console.warn("Validation call failed:", e);
+      continue;
+    }
+  }
+
+  console.warn("All validation attempts failed, returning unvalidated questions");
+  return questions;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -269,6 +373,9 @@ serve(async (req) => {
       ? materials.map((m: { topic: string; content: string }) => `Topic: ${m.topic}\n${m.content}`).join('\n---\n').substring(0, 8000)
       : null;
 
+    // Detect if subject is math-related for 50/50 word problem vs equation balance
+    const isMathSubject = /math|algebra|calculus|geometry|trigonometry|statistics|arithmetic|رياضيات/i.test(subject || '');
+
     const MAX_SINGLE_BATCH = 30;
     let allQuestions: Record<string, unknown>[] = [];
 
@@ -278,6 +385,11 @@ serve(async (req) => {
 
       const antiRepetition = getAntiRepetitionDirective();
       const nonce = crypto.randomUUID();
+
+      // Math balance instruction
+      const mathBalanceRule = isMathSubject
+        ? `\n\nMATH QUESTION BALANCE (CRITICAL): Exactly HALF of your questions must be direct equations/computations (e.g., "Solve: 3x + 7 = 22", "Evaluate: \\int_0^1 x^2 dx", "Find the derivative of f(x) = x^3 + 2x"). The other HALF must be word problems that apply math concepts to real-world scenarios. Do NOT make all questions word problems.`
+        : '';
 
       const systemPrompt = `You are an expert exam question generator. Generate EXACTLY ${batchCount} multiple-choice questions.
 
@@ -292,7 +404,15 @@ ABSOLUTE UNIQUENESS REQUIREMENTS:
 - Each question MUST have exactly 4 options (A, B, C, D) with plausible distractors.
 - You MAY use LaTeX math notation freely: \\frac{a}{b}, \\sqrt{x}, \\alpha, \\int, x^{2}, etc.
 - Wrap inline math in $...$ delimiters for clarity.
-- ${varietyInstructions}${adaptiveLevelHint}
+- ${varietyInstructions}${adaptiveLevelHint}${mathBalanceRule}
+
+ANSWER ACCURACY (CRITICAL):
+- You MUST solve every question yourself BEFORE writing the answer key.
+- Double-check every computation, especially for math questions.
+- ALL FOUR options must be plausible and distinct. Never have all options be wrong.
+- The correct_answer field MUST match the actually correct option.
+- If you are unsure of an answer, work it out step by step internally before committing.
+
 - Generation nonce (ensures uniqueness): ${nonce}
 - Random seed: ${batchSeed}`;
 
@@ -411,6 +531,16 @@ ABSOLUTE UNIQUENESS REQUIREMENTS:
       }
     }
 
+    // ========== AI SELF-VALIDATION STEP ==========
+    // Review all generated questions for correctness before presenting
+    console.log("Starting AI self-validation of exam questions...");
+    allQuestions = await validateAndFixQuestions(
+      allQuestions,
+      subject || 'General',
+      primaryApiKey!,
+      fallbackApiKey
+    );
+
     // Shuffle all questions for random order
     for (let i = allQuestions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -440,7 +570,7 @@ ABSOLUTE UNIQUENESS REQUIREMENTS:
       }
       return converted;
     });
-    console.log(`Generated ${questions.length}/${count} questions total`);
+    console.log(`Generated ${questions.length}/${count} questions total (validated)`);
 
     const result = {
       exam_title: `${subject || 'SAT'} ${difficulty || ''} Exam`.trim(),
