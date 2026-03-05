@@ -1,36 +1,34 @@
+## Plan: Dynamic Ministry Invite Code Generation
 
+### Overview
 
-## Diagnosis
+Replace the static, hardcoded 100-character ministry access code with a dynamic system where the Super Admin clicks a button to generate a fresh code that expires after 15 minutes. Each generated code is hashed (SHA-256) before storage — the plaintext is shown once to the admin, then never stored.
 
-The chat function already uses Lovable AI Gateway with `google/gemini-2.5-flash` as the primary model. The issue is:
+### Database Changes
 
-1. **Temperature 0.4 is still too high** for educational content that must be factually precise.
-2. **The model choice could be stronger** — `gemini-2.5-flash` is good but `gemini-2.5-flash-lite` as fallback is weak. Since you want freemium (no extra API cost), we should use better Lovable AI models.
-3. **The topic adherence rules in the system prompt may not be strong enough** — the model is mixing topics (e.g., quadratic formula in a systems of equations lecture).
+**Migration:**
 
-## Plan
+1. Add `expires_at` column to `ministry_access_codes` table (timestamptz, nullable — null means permanent/legacy)
+2. Create a new RPC function `generate_ministry_invite_code()`that:
+  - Validates caller is super admin (email check)
+  - Generates a random 100-character alphanumeric code using `gen_random_bytes`
+  - Deactivates all previous active codes
+  - Inserts the SHA-256 hash + `expires_at = now() + 15 minutes`
+  - Returns the plaintext code (shown once to admin)
+3. Update `verify_ministry_code()` to also check `expires_at IS NULL OR expires_at > now()` so expired codes are rejected
 
-### 1. Upgrade primary model to `google/gemini-2.5-pro`
-This is the most accurate free model available via Lovable AI. It has the strongest reasoning and will dramatically reduce hallucinations and topic mixing. Use `gemini-2.5-flash` as the fallback (not `flash-lite`).
+### Frontend Changes
 
-**Model cascade:**
-- Primary: `google/gemini-2.5-pro` (best accuracy)
-- Fallback: `google/gemini-2.5-flash` (still good, faster)
-- Remove `gemini-2.5-flash-lite` (too weak for educational content)
+`**src/pages/SuperAdmin.tsx`:**
 
-### 2. Lower temperature to 0.2
-Reduces randomness further, making outputs more deterministic and factual.
+- Add a "Ministry" tab button alongside "Schools" and "Analytics"
+- In the Ministry tab, add a "Generate Ministry Code" button
+- On click, call the new RPC, display the 100-character code in a copyable dialog with a 15-minute countdown timer
+- Show warning: "This code will expire in 15 minutes. Copy it now."
 
-### 3. Strengthen topic adherence in system prompt
-Add an explicit pre-generation checklist instruction: before generating any lecture/notes, the AI must list the exact subtopics that belong to the requested topic and explicitly exclude unrelated ones.
+### Security
 
-### Technical changes
-
-**File: `supabase/functions/chat/index.ts`**
-- Lines 350-353: Change model list to `["google/gemini-2.5-pro", "google/gemini-2.5-flash"]`
-- Lines 365-368: Change `temperature: 0.4` → `temperature: 0.2`
-- Lines 408-413: Change Groq `temperature: 0.4` → `temperature: 0.2`
-- System prompt TOPIC ADHERENCE section: strengthen with explicit "list subtopics first, exclude unrelated concepts" instruction
-
-All models used are free via Lovable AI — no additional API keys needed.
-
+- Plaintext code never stored in DB — only the SHA-256 hash it must generate a 100 character code every time the super admin, clicks generate code and the super admin has a 15 minute cooldown before generating another code
+- Old codes automatically deactivated when a new one is generated
+- 15-minute expiry enforced server-side in both the generation function and verification function
+- Only super admin email can invoke the generation RPC 
