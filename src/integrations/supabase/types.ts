@@ -1195,6 +1195,7 @@ export type Database = {
           code_hash: string
           created_at: string | null
           description: string | null
+          expires_at: string | null
           id: string
           is_active: boolean
         }
@@ -1202,6 +1203,7 @@ export type Database = {
           code_hash: string
           created_at?: string | null
           description?: string | null
+          expires_at?: string | null
           id?: string
           is_active?: boolean
         }
@@ -1209,6 +1211,7 @@ export type Database = {
           code_hash?: string
           created_at?: string | null
           description?: string | null
+          expires_at?: string | null
           id?: string
           is_active?: boolean
         }
@@ -2456,6 +2459,7 @@ export type Database = {
       }
       deny_invite_request: { Args: { p_request_id: string }; Returns: Json }
       deny_moderator_request: { Args: { p_request_id: string }; Returns: Json }
+      generate_ministry_invite_code: { Args: never; Returns: Json }
       generate_moderator_invite_code: { Args: never; Returns: Json }
       get_ministry_dashboard_data: {
         Args: { p_session_token: string }
