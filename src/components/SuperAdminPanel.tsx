@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, RefreshCw, Building2, Loader2, Shield } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Building2, Loader2, Shield, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AttackLogsPanel from '@/components/AttackLogsPanel';
+import MinistryCodeGenerator from '@/components/admin/MinistryCodeGenerator';
 
 const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
 
@@ -25,7 +26,7 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<'schools' | 'security'>('schools');
+  const [activeTab, setActiveTab] = useState<'schools' | 'security' | 'ministry'>('schools');
 
   useEffect(() => {
     const checkEmail = async () => {
@@ -137,6 +138,13 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
             >
               <Shield size={14} className="mr-1" /> Security
             </Button>
+            <Button
+              variant={activeTab === 'ministry' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('ministry')}
+            >
+              <KeyRound size={14} className="mr-1" /> Ministry
+            </Button>
             {activeTab === 'schools' && (
               <Button variant="outline" size="icon" onClick={fetchSchools} disabled={loading}>
                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
@@ -151,7 +159,9 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
           </div>
         )}
 
-        {activeTab === 'security' ? (
+        {activeTab === 'ministry' ? (
+          <MinistryCodeGenerator />
+        ) : activeTab === 'security' ? (
           <AttackLogsPanel />
         ) : loading ? (
           <div className="flex items-center justify-center py-12">
