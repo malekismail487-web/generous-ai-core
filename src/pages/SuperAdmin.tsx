@@ -19,12 +19,14 @@ import {
   UserCog,
   Check,
   X,
-  BarChart3
+  BarChart3,
+  KeyRound
 } from 'lucide-react';
 import { StudentAppPreview } from '@/components/StudentAppPreview';
 import { GlobalAnalyticsDashboard } from '@/components/admin/GlobalAnalyticsDashboard';
 import { TeacherExcellenceProgram } from '@/components/admin/TeacherExcellenceProgram';
 import { MinistryReadinessReport } from '@/components/admin/MinistryReadinessReport';
+import MinistryCodeGenerator from '@/components/admin/MinistryCodeGenerator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -76,7 +78,7 @@ export default function SuperAdmin() {
   const [loadingSchools, setLoadingSchools] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [testingRole, setTestingRole] = useState<TestingRole>('none');
-  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [activeTab, setActiveTab] = useState<'schools' | 'analytics' | 'ministry'>('schools');
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   
   // Create school form state
@@ -613,15 +615,20 @@ export default function SuperAdmin() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-6 flex-wrap">
-          <Button variant={!showAnalytics ? 'default' : 'outline'} onClick={() => setShowAnalytics(false)} className="gap-2">
+          <Button variant={activeTab === 'schools' ? 'default' : 'outline'} onClick={() => setActiveTab('schools')} className="gap-2">
             <Building2 className="w-4 h-4" /> Schools
           </Button>
-          <Button variant={showAnalytics ? 'default' : 'outline'} onClick={() => setShowAnalytics(true)} className="gap-2">
+          <Button variant={activeTab === 'analytics' ? 'default' : 'outline'} onClick={() => setActiveTab('analytics')} className="gap-2">
             <BarChart3 className="w-4 h-4" /> Analytics
+          </Button>
+          <Button variant={activeTab === 'ministry' ? 'default' : 'outline'} onClick={() => setActiveTab('ministry')} className="gap-2">
+            <KeyRound className="w-4 h-4" /> Ministry
           </Button>
         </div>
 
-        {showAnalytics ? (
+        {activeTab === 'ministry' ? (
+          <MinistryCodeGenerator />
+        ) : activeTab === 'analytics' ? (
           <div className="space-y-8">
             <GlobalAnalyticsDashboard />
             <TeacherExcellenceProgram />
