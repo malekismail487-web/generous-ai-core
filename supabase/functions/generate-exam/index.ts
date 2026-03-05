@@ -238,18 +238,60 @@ const examTool = {
   },
 };
 
-// ========== SELF-VALIDATION STEP ==========
-// After generating questions, the AI reviews its own work to fix wrong answers
+// ========== ENHANCED SELF-VALIDATION ==========
+// Validates questions in batches, replaces failed ones (up to 3 attempts per question)
 async function validateAndFixQuestions(
+  questions: Record<string, unknown>[],
+  subject: string,
+  apiKey: string,
+  fallbackKey: string | null,
+  targetCount: number
+): Promise<Record<string, unknown>[]> {
+  if (questions.length === 0) return questions;
+
+  // Trim to exact target count first
+  if (questions.length > targetCount) {
+    console.log(`Trimming ${questions.length} questions to target ${targetCount}`);
+    questions = questions.slice(0, targetCount);
+  }
+
+  // Validate in chunks of 15 to stay within token limits
+  const CHUNK_SIZE = 15;
+  const validatedQuestions: Record<string, unknown>[] = [];
+  
+  for (let chunkStart = 0; chunkStart < questions.length; chunkStart += CHUNK_SIZE) {
+    const chunk = questions.slice(chunkStart, chunkStart + CHUNK_SIZE);
+    const validatedChunk = await validateChunk(chunk, subject, apiKey, fallbackKey);
+    validatedQuestions.push(...validatedChunk);
+  }
+
+  // If we lost questions during validation, try to fill back to target
+  if (validatedQuestions.length < targetCount) {
+    const deficit = targetCount - validatedQuestions.length;
+    console.log(`Validation removed ${deficit} unfixable questions, attempting replacements...`);
+    try {
+      const replacements = await generateReplacementQuestions(deficit, subject, apiKey, fallbackKey);
+      if (replacements.length > 0) {
+        // Validate replacements too (single pass, no recursion)
+        const validReplacements = await validateChunk(replacements, subject, apiKey, fallbackKey);
+        validatedQuestions.push(...validReplacements);
+      }
+    } catch (e) {
+      console.warn("Replacement generation failed:", e);
+    }
+  }
+
+  // Final trim to exact count
+  return validatedQuestions.slice(0, targetCount);
+}
+
+async function validateChunk(
   questions: Record<string, unknown>[],
   subject: string,
   apiKey: string,
   fallbackKey: string | null
 ): Promise<Record<string, unknown>[]> {
-  if (questions.length === 0) return questions;
-
-  // Build a compact representation for review
-  const questionsForReview = questions.slice(0, 20).map((q, i) => {
+  const questionsForReview = questions.map((q, i) => {
     const ca = String(q.correct_answer || q.correctAnswer || "A");
     const optA = String(q.option_a || q.optionA || "");
     const optB = String(q.option_b || q.optionB || "");
@@ -258,17 +300,32 @@ async function validateAndFixQuestions(
     return `Q${i + 1}: ${String(q.question || "")}\nA) ${optA}\nB) ${optB}\nC) ${optC}\nD) ${optD}\nMarked correct: ${ca}`;
   }).join("\n\n");
 
-  const reviewPrompt = `You are a strict academic reviewer. Review these ${subject} exam questions. For EACH question:
-1. Verify the marked correct answer is actually correct. Solve the problem yourself.
-2. Verify all 4 options are plausible (not obviously wrong or duplicate).
-3. If a question has the WRONG correct answer, or if ALL options are wrong, fix it.
+  const reviewPrompt = `You are a strict academic exam validator for ${subject}. Your job is to verify EVERY question is correct.
 
-Return ONLY a JSON array of corrections. If a question is correct, skip it. Only include questions that need fixing:
-[{"index": 0, "correct_answer": "B", "fixed_option_a": "...", "fixed_option_b": "...", "fixed_option_c": "...", "fixed_option_d": "...", "reason": "why it was wrong"}]
+FOR EACH QUESTION you MUST:
+1. Read the question carefully.
+2. Solve it yourself independently. Show your brief work mentally.
+3. Check if the marked answer matches YOUR answer.
+4. Check that ALL 4 options are distinct and plausible (not nonsensical).
+5. Check that EXACTLY ONE option is correct.
+6. For math: verify all arithmetic, algebra, and calculations are correct.
+7. For science: verify all facts are scientifically accurate.
+8. For history/social: verify all dates, names, and events are correct.
 
-If ALL questions are correct, return: []
+Return a JSON array. For EACH question include an entry:
+[
+  {"index": 0, "status": "PASS"},
+  {"index": 1, "status": "FAIL", "correct_answer": "C", "fixed_option_a": "...", "fixed_option_b": "...", "fixed_option_c": "...", "fixed_option_d": "...", "reason": "The marked answer was B but the correct answer is C because..."},
+  {"index": 2, "status": "DELETE", "reason": "This question is fundamentally flawed and cannot be fixed"}
+]
 
-Questions to review:
+Rules:
+- Use "PASS" if question and answer are correct.
+- Use "FAIL" with fixes if the answer is wrong but fixable.
+- Use "DELETE" if the question is unsalvageable (all options wrong, ambiguous, or factually broken).
+- You MUST verify EVERY question. Do not skip any.
+
+Questions to validate:
 ${questionsForReview}`;
 
   const modelConfigs = [
@@ -287,11 +344,11 @@ ${questionsForReview}`;
         body: JSON.stringify({
           model,
           messages: [
-            { role: "system", content: "You are an expert academic exam reviewer. Return ONLY valid JSON." },
+            { role: "system", content: "You are an expert academic exam validator. Return ONLY valid JSON array. Validate every single question rigorously." },
             { role: "user", content: reviewPrompt },
           ],
           temperature: 0.1,
-          max_tokens: 4000,
+          max_tokens: 6000,
         }),
       });
 
@@ -305,31 +362,50 @@ ${questionsForReview}`;
       const content = data.choices?.[0]?.message?.content || "[]";
 
       try {
-        const corrections = extractJsonFromResponse(content) as any[];
-        if (!Array.isArray(corrections) || corrections.length === 0) {
-          console.log("AI validation: all questions verified correct");
+        const results = extractJsonFromResponse(content) as any[];
+        if (!Array.isArray(results)) {
+          console.warn("Validation returned non-array, keeping all questions");
           return questions;
         }
 
-        console.log(`AI validation: fixing ${corrections.length} questions`);
-        for (const fix of corrections) {
-          const idx = fix.index;
-          if (idx >= 0 && idx < questions.length) {
-            const q = questions[idx];
-            if (fix.correct_answer) {
-              q.correct_answer = fix.correct_answer;
-              q.correctAnswer = fix.correct_answer;
+        const validQuestions: Record<string, unknown>[] = [];
+        let fixed = 0, deleted = 0, passed = 0;
+
+        for (let i = 0; i < questions.length; i++) {
+          const result = results.find((r: any) => r.index === i);
+          
+          if (!result || result.status === "PASS") {
+            validQuestions.push(questions[i]);
+            passed++;
+            continue;
+          }
+          
+          if (result.status === "DELETE") {
+            console.log(`Deleted Q${i + 1}: ${result.reason}`);
+            deleted++;
+            continue; // Skip this question entirely
+          }
+          
+          if (result.status === "FAIL") {
+            const q = { ...questions[i] };
+            if (result.correct_answer) {
+              q.correct_answer = result.correct_answer;
+              q.correctAnswer = result.correct_answer;
             }
-            if (fix.fixed_option_a) { q.option_a = fix.fixed_option_a; q.optionA = fix.fixed_option_a; }
-            if (fix.fixed_option_b) { q.option_b = fix.fixed_option_b; q.optionB = fix.fixed_option_b; }
-            if (fix.fixed_option_c) { q.option_c = fix.fixed_option_c; q.optionC = fix.fixed_option_c; }
-            if (fix.fixed_option_d) { q.option_d = fix.fixed_option_d; q.optionD = fix.fixed_option_d; }
-            console.log(`Fixed Q${idx + 1}: ${fix.reason}`);
+            if (result.fixed_option_a) { q.option_a = result.fixed_option_a; q.optionA = result.fixed_option_a; }
+            if (result.fixed_option_b) { q.option_b = result.fixed_option_b; q.optionB = result.fixed_option_b; }
+            if (result.fixed_option_c) { q.option_c = result.fixed_option_c; q.optionC = result.fixed_option_c; }
+            if (result.fixed_option_d) { q.option_d = result.fixed_option_d; q.optionD = result.fixed_option_d; }
+            console.log(`Fixed Q${i + 1}: ${result.reason}`);
+            validQuestions.push(q);
+            fixed++;
           }
         }
-        return questions;
+
+        console.log(`Validation results: ${passed} passed, ${fixed} fixed, ${deleted} deleted out of ${questions.length}`);
+        return validQuestions;
       } catch (e) {
-        console.warn("Could not parse validation response, skipping:", e);
+        console.warn("Could not parse validation response, keeping all:", e);
         return questions;
       }
     } catch (e) {
@@ -340,6 +416,70 @@ ${questionsForReview}`;
 
   console.warn("All validation attempts failed, returning unvalidated questions");
   return questions;
+}
+
+// Generate replacement questions for ones that were deleted during validation
+async function generateReplacementQuestions(
+  count: number,
+  subject: string,
+  apiKey: string,
+  fallbackKey: string | null
+): Promise<Record<string, unknown>[]> {
+  if (count <= 0) return [];
+  
+  const nonce = crypto.randomUUID();
+  const prompt = `Generate EXACTLY ${count} multiple-choice questions for ${subject}. Each must have 4 options (A-D) with exactly one correct answer. These are REPLACEMENT questions, so make them high quality and carefully verified.
+
+CRITICAL: Before writing each answer key, SOLVE the problem yourself. Double-check arithmetic. Verify facts. The answer MUST be correct.
+
+Return using the create_exam tool.
+Nonce: ${nonce}`;
+
+  const modelConfigs = [
+    { model: "llama-3.3-70b-versatile", apiKey },
+    { model: "llama-3.1-8b-instant", apiKey: fallbackKey || apiKey },
+  ];
+
+  for (const { model, apiKey: key } of modelConfigs) {
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: `Generate exactly ${count} verified multiple-choice questions for ${subject}.` },
+            { role: "user", content: prompt },
+          ],
+          tools: [examTool],
+          tool_choice: { type: "function", function: { name: "create_exam" } },
+          temperature: 0.8,
+          max_tokens: Math.max(count * 400, 2000),
+        }),
+      });
+
+      if (!response.ok) continue;
+      const data = await response.json();
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      let raw: Record<string, unknown>;
+      
+      if (toolCall?.function?.name === "create_exam") {
+        raw = extractJsonFromResponse(toolCall.function.arguments) as Record<string, unknown>;
+      } else {
+        raw = extractJsonFromResponse(data.choices?.[0]?.message?.content || "") as Record<string, unknown>;
+      }
+      
+      const rawQuestions = (raw.questions || []) as Record<string, unknown>[];
+      return rawQuestions.filter(q => q && (q.question || q.questionTitle)).slice(0, count);
+    } catch (e) {
+      console.warn("Replacement generation failed:", e);
+      continue;
+    }
+  }
+  return [];
 }
 
 serve(async (req) => {
@@ -391,7 +531,7 @@ serve(async (req) => {
         ? `\n\nMATH QUESTION BALANCE (CRITICAL): Exactly HALF of your questions must be direct equations/computations (e.g., "Solve: 3x + 7 = 22", "Evaluate: \\int_0^1 x^2 dx", "Find the derivative of f(x) = x^3 + 2x"). The other HALF must be word problems that apply math concepts to real-world scenarios. Do NOT make all questions word problems.`
         : '';
 
-      const systemPrompt = `You are an expert exam question generator. Generate EXACTLY ${batchCount} multiple-choice questions.
+      const systemPrompt = `You are an expert exam question generator. Generate EXACTLY ${batchCount} multiple-choice questions. NOT ${batchCount - 1}, NOT ${batchCount + 1}. EXACTLY ${batchCount}.
 
 ABSOLUTE UNIQUENESS REQUIREMENTS:
 - You MUST generate COMPLETELY NOVEL questions that have NEVER appeared in any textbook, past exam, or study guide.
@@ -406,12 +546,20 @@ ABSOLUTE UNIQUENESS REQUIREMENTS:
 - Wrap inline math in $...$ delimiters for clarity.
 - ${varietyInstructions}${adaptiveLevelHint}${mathBalanceRule}
 
-ANSWER ACCURACY (CRITICAL):
-- You MUST solve every question yourself BEFORE writing the answer key.
-- Double-check every computation, especially for math questions.
-- ALL FOUR options must be plausible and distinct. Never have all options be wrong.
-- The correct_answer field MUST match the actually correct option.
-- If you are unsure of an answer, work it out step by step internally before committing.
+ANSWER ACCURACY - MANDATORY SELF-VERIFICATION:
+- For EVERY question, you MUST solve it yourself step-by-step BEFORE writing the answer.
+- Double-check every computation: arithmetic, algebra, square roots, fractions.
+- For square root questions: verify √n by checking n = answer². E.g., √144: 12² = 144 ✓
+- For arithmetic: verify by reverse operation. E.g., 15 × 8 = 120: verify 120 ÷ 8 = 15 ✓
+- ALL FOUR options must be plausible, distinct, and NOT obviously wrong.
+- The correct_answer MUST be the letter (A/B/C/D) of the actually correct option.
+- If you cannot verify an answer with certainty, DO NOT include that question.
+- NEVER have a question where NONE of the 4 options is correct.
+- NEVER have a question where MULTIPLE options are correct (unless it says "best answer").
+
+QUESTION COUNT ENFORCEMENT:
+- You MUST return EXACTLY ${batchCount} questions in the questions array.
+- Count your questions before returning. If you have more or fewer, adjust.
 
 - Generation nonce (ensures uniqueness): ${nonce}
 - Random seed: ${batchSeed}`;
@@ -520,6 +668,7 @@ ANSWER ACCURACY (CRITICAL):
       }
     }
 
+    // Fill if we got fewer than requested
     if (allQuestions.length < count) {
       const remaining = count - allQuestions.length;
       console.log(`Got ${allQuestions.length}/${count}, filling ${remaining} more`);
@@ -531,15 +680,16 @@ ANSWER ACCURACY (CRITICAL):
       }
     }
 
-    // ========== AI SELF-VALIDATION STEP ==========
-    // Review all generated questions for correctness before presenting
-    console.log("Starting AI self-validation of exam questions...");
+    // ========== AI SELF-VALIDATION STEP (ENHANCED) ==========
+    console.log(`Starting enhanced AI validation of ${allQuestions.length} questions (target: ${count})...`);
     allQuestions = await validateAndFixQuestions(
       allQuestions,
       subject || 'General',
       primaryApiKey!,
-      fallbackApiKey
+      fallbackApiKey,
+      count // Pass target count for exact enforcement
     );
+    console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
 
     // Shuffle all questions for random order
     for (let i = allQuestions.length - 1; i > 0; i--) {
@@ -547,18 +697,16 @@ ANSWER ACCURACY (CRITICAL):
       [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
     }
 
-    // Also shuffle options within each question for extra randomness
+    // Convert and shuffle options within each question
     const questions = allQuestions.map((q, idx) => {
       const converted = convertRawQuestion(q, idx);
-      // Randomly shuffle options and update correct_answer
       if (converted.options && converted.options.length === 4) {
         const optionData = converted.options.map((opt: string) => {
           const letter = opt.charAt(0);
-          const text = opt.substring(3); // Remove "A) " prefix
+          const text = opt.substring(3);
           const isCorrect = converted.correct_answer.startsWith(letter);
           return { text, isCorrect };
         });
-        // Fisher-Yates shuffle
         for (let i = optionData.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [optionData[i], optionData[j]] = [optionData[j], optionData[i]];
@@ -570,7 +718,7 @@ ANSWER ACCURACY (CRITICAL):
       }
       return converted;
     });
-    console.log(`Generated ${questions.length}/${count} questions total (validated)`);
+    console.log(`Final output: ${questions.length} validated questions`);
 
     const result = {
       exam_title: `${subject || 'SAT'} ${difficulty || ''} Exam`.trim(),
