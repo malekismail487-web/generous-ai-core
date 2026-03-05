@@ -98,15 +98,14 @@ export default function Auth() {
             if (profile.status === 'pending' || profile.status === 'rejected') {
              navigate('/pending-approval');
            } else if (profile.status === 'approved' && profile.is_active) {
-             // Redirect to API key setup first, then to destination
-             let dest = '/';
-             if (profile.user_type === 'school_admin') dest = '/admin';
-             else if (profile.user_type === 'teacher') dest = '/teacher';
-             else if (profile.user_type === 'parent') dest = '/parent';
-             else if (profile.user_type === 'moderator') dest = '/moderator';
-             else if (profile.user_type === 'student') dest = '/';
-             sessionStorage.setItem('apiKeySetupReturn', dest);
-             navigate('/setup-api-key');
+              let dest = '/';
+              if (profile.user_type === 'school_admin') dest = '/admin';
+              else if (profile.user_type === 'teacher') dest = '/teacher';
+              else if (profile.user_type === 'parent') dest = '/parent';
+              else if (profile.user_type === 'moderator') dest = '/moderator';
+              else if (profile.user_type === 'student') dest = '/';
+              sessionStorage.setItem('iqTestReturn', dest);
+              navigate('/iq-test');
           } else {
             navigate('/');
           }
