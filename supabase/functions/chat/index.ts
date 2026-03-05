@@ -138,6 +138,12 @@ const SYSTEM_PROMPT = `You are Lumina, an educational AI integrated into a struc
 - Always provide comprehensive, well-researched answers
 - Refuse NSFW, harmful, or inappropriate requests
 
+## CRITICAL: TOPIC ADHERENCE
+- When asked to generate a lecture, notes, or explanation on a SPECIFIC topic, you MUST stay strictly on that topic.
+- Do NOT mix unrelated concepts. Example: If asked about "Systems of Equations," do NOT include the quadratic formula — those are separate topics.
+- Before generating content, identify the EXACT topic requested and list (internally) what subtopics belong to it.
+- If a concept is NOT directly part of the requested topic, do NOT include it.
+
 ## UNIVERSAL CONTENT VALIDATION (MANDATORY FOR ALL OUTPUTS)
 
 ### Rule 1: Factual Accuracy - ZERO TOLERANCE
@@ -333,39 +339,88 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
       systemPrompt += contextBlock;
     }
 
-    // Model-to-key mapping
-    const modelConfigs = [
-      { model: "llama-3.3-70b-versatile", apiKey: primaryApiKey },
-      { model: "llama-3.1-8b-instant", apiKey: fallbackApiKey || primaryApiKey },
-    ];
+    // Use Lovable AI Gateway (Gemini) as primary, fall back to Groq if needed
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    
+    const allMessages = [{ role: "system", content: systemPrompt }, ...messages];
     let response: Response | null = null;
 
-    for (const { model, apiKey } of modelConfigs) {
-      const maxRetries = 3;
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model,
-            messages: [{ role: "system", content: systemPrompt }, ...messages],
-            stream: true,
-            temperature: 0.7,
-          }),
-        });
+    // Strategy 1: Lovable AI Gateway (Gemini - most accurate)
+    if (LOVABLE_API_KEY) {
+      const lovableModels = [
+        "google/gemini-2.5-flash",
+        "google/gemini-2.5-flash-lite",
+      ];
 
-        if (response.status !== 429) break;
-        const waitMs = Math.pow(2, attempt) * 2000;
-        console.log(`Rate limited on ${model}, retrying in ${waitMs}ms`);
-        await new Promise((r) => setTimeout(r, waitMs));
+      for (const model of lovableModels) {
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model,
+                messages: allMessages,
+                stream: true,
+                temperature: 0.4,
+              }),
+            });
+
+            if (response.status === 429 || response.status === 402) {
+              const waitMs = Math.pow(2, attempt) * 2000;
+              console.log(`Lovable AI rate limited (${model}), retrying in ${waitMs}ms`);
+              await new Promise((r) => setTimeout(r, waitMs));
+              continue;
+            }
+
+            if (response.ok) {
+              console.log(`Using Lovable AI model: ${model}`);
+              break;
+            }
+          } catch (e) {
+            console.warn(`Lovable AI fetch error (${model}):`, e);
+          }
+        }
+        if (response && response.ok) break;
       }
+    }
 
-      if (response && response.status !== 429) {
-        console.log(`Using model: ${model}`);
-        break;
+    // Strategy 2: Groq fallback if Lovable AI unavailable
+    if (!response || !response.ok) {
+      console.log("Falling back to Groq API");
+      const groqModels = [
+        { model: "llama-3.3-70b-versatile", apiKey: primaryApiKey },
+        { model: "llama-3.1-8b-instant", apiKey: fallbackApiKey || primaryApiKey },
+      ];
+
+      for (const { model, apiKey } of groqModels) {
+        if (!apiKey) continue;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model,
+              messages: allMessages,
+              stream: true,
+              temperature: 0.4,
+            }),
+          });
+          if (response.status !== 429) break;
+          const waitMs = Math.pow(2, attempt) * 2000;
+          console.log(`Groq rate limited on ${model}, retrying in ${waitMs}ms`);
+          await new Promise((r) => setTimeout(r, waitMs));
+        }
+        if (response && response.status !== 429) {
+          console.log(`Using Groq model: ${model}`);
+          break;
+        }
       }
     }
 
@@ -375,6 +430,11 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      if (response?.status === 402) {
+        return new Response(JSON.stringify({ error: "AI usage limit reached. Please try again later." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const errorText = await response?.text() || "No response";
       console.error("AI gateway error:", response?.status, errorText);
       return new Response(JSON.stringify({ error: "Failed to get AI response" }), {
@@ -382,7 +442,7 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
       });
     }
 
-    return new Response(response!.body, {
+    return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
