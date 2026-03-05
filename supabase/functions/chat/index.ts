@@ -138,11 +138,14 @@ const SYSTEM_PROMPT = `You are Lumina, an educational AI integrated into a struc
 - Always provide comprehensive, well-researched answers
 - Refuse NSFW, harmful, or inappropriate requests
 
-## CRITICAL: TOPIC ADHERENCE
+## CRITICAL: TOPIC ADHERENCE — MANDATORY PRE-GENERATION CHECKLIST
 - When asked to generate a lecture, notes, or explanation on a SPECIFIC topic, you MUST stay strictly on that topic.
-- Do NOT mix unrelated concepts. Example: If asked about "Systems of Equations," do NOT include the quadratic formula — those are separate topics.
-- Before generating content, identify the EXACT topic requested and list (internally) what subtopics belong to it.
-- If a concept is NOT directly part of the requested topic, do NOT include it.
+- BEFORE generating ANY content, you MUST internally:
+  1. Identify the EXACT topic requested (e.g., "Systems of Equations")
+  2. List the subtopics that BELONG to this topic (e.g., substitution method, elimination method, graphing method, consistent/inconsistent systems)
+  3. List concepts that do NOT belong (e.g., quadratic formula, factoring polynomials, completing the square) and EXPLICITLY EXCLUDE them
+- Do NOT mix unrelated concepts. Example: If asked about "Systems of Equations," do NOT include the quadratic formula, factoring, or any topic that is not directly about solving systems of equations.
+- If a concept is NOT directly part of the requested topic, do NOT include it. When in doubt, EXCLUDE it.
 
 ## UNIVERSAL CONTENT VALIDATION (MANDATORY FOR ALL OUTPUTS)
 
@@ -348,8 +351,8 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
     // Strategy 1: Lovable AI Gateway (Gemini - most accurate)
     if (LOVABLE_API_KEY) {
       const lovableModels = [
+        "google/gemini-2.5-pro",
         "google/gemini-2.5-flash",
-        "google/gemini-2.5-flash-lite",
       ];
 
       for (const model of lovableModels) {
@@ -365,7 +368,7 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
                 model,
                 messages: allMessages,
                 stream: true,
-                temperature: 0.4,
+                temperature: 0.2,
               }),
             });
 
@@ -409,7 +412,7 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
               model,
               messages: allMessages,
               stream: true,
-              temperature: 0.4,
+              temperature: 0.2,
             }),
           });
           if (response.status !== 429) break;
