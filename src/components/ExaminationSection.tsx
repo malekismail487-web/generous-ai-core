@@ -503,17 +503,18 @@ export function ExaminationSection() {
   const handleAnswer = (answer: string) => {
     if (!examState || examState.answered) return;
     
-    const currentQ = examState.exam.questions[examState.currentQuestionId];
-    const isCorrect = answer === currentQ.correct_answer;
-    const subjectName = examState.exam.subject || selectedSubject || 'general';
+    const currentQ = getCurrentQuestion(examState);
+    if (!currentQ) return;
+    const isCorrectAnswer = answer === currentQ.correct_answer;
+    const subjectForTracking = examState.exam.subject || selectedSubject || 'general';
     
     // Record answer for adaptive learning
     recordAnswer({
-      subject: subjectName,
+      subject: subjectForTracking,
       questionText: currentQ.question,
       studentAnswer: answer,
       correctAnswer: currentQ.correct_answer,
-      isCorrect,
+      isCorrect: isCorrectAnswer,
       difficulty: selectedDifficulty?.replace('SUBJECT_', '').replace('SAT_', '') || 'medium',
       source: 'exam',
     });
