@@ -351,7 +351,7 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
     // Strategy 1: Lovable AI Gateway (Gemini - most accurate)
     if (LOVABLE_API_KEY) {
       const lovableModels = [
-        "google/gemini-2.5-pro",
+        "google/gemini-3-flash-preview",
         "google/gemini-2.5-flash",
       ];
 
