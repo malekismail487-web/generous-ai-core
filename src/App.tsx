@@ -22,7 +22,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import PendingApprovalPage from "./pages/PendingApprovalPage";
 import StudentAssignmentTake from "./pages/StudentAssignmentTake";
 import StudentAssignmentResults from "./pages/StudentAssignmentResults";
-import ApiKeySetup from "./pages/ApiKeySetup";
+
 import IQTest from "./pages/IQTest";
 import MinistryLogin from "./pages/MinistryLogin";
 import MinistryDashboard from "./pages/MinistryDashboard";
@@ -62,7 +62,7 @@ const App = () => (
                     element={<StudentAssignmentResults />}
                   />
                   <Route path="/pending-approval" element={<PendingApprovalPage />} />
-                  <Route path="/setup-api-key" element={<ApiKeySetup />} />
+                  
                   <Route path="/iq-test" element={<IQTest />} />
                   <Route path="/ministry" element={<MinistryLogin />} />
                   <Route path="/ministry-pending" element={<MinistryPending />} />

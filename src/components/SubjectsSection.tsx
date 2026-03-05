@@ -147,7 +147,7 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-          body: JSON.stringify({ subject: subjectName, topic, grade: selectedGrade || 'General', count: 2 }),
+          body: JSON.stringify({ subject: subjectName, topic, grade: selectedGrade || 'General', count: 3 }),
         }
       );
       if (response.ok) {
