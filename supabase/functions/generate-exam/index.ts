@@ -165,6 +165,7 @@ function convertRawQuestion(q: Record<string, unknown>, idx: number) {
       question: String(q.question || q.questionTitle || ""),
       options: [`A) ${optA}`, `B) ${optB}`, `C) ${optC}`, `D) ${optD}`],
       correct_answer: `${ca}) ${answerMap[ca] || optA}`,
+      explanation: q.explanation ? String(q.explanation) : undefined,
     };
   }
   const options = (q.options as string[]) || [];
@@ -175,6 +176,7 @@ function convertRawQuestion(q: Record<string, unknown>, idx: number) {
     question: String(q.question || ""),
     options,
     correct_answer: correctAnswer,
+    explanation: q.explanation ? String(q.explanation) : undefined,
   };
 }
 
@@ -198,8 +200,9 @@ const examTool = {
               option_c: { type: "string", description: "Option C" },
               option_d: { type: "string", description: "Option D" },
               correct_answer: { type: "string", enum: ["A", "B", "C", "D"], description: "Correct answer letter" },
+              explanation: { type: "string", description: "Brief explanation (1-2 sentences) of WHY the correct answer is right and why the other options are wrong. For math questions, show the key step of the solution." },
             },
-            required: ["question", "option_a", "option_b", "option_c", "option_d", "correct_answer"],
+            required: ["question", "option_a", "option_b", "option_c", "option_d", "correct_answer", "explanation"],
             additionalProperties: false,
           },
         },
@@ -523,6 +526,11 @@ ANSWER ACCURACY - MANDATORY SELF-VERIFICATION:
 - If you cannot verify an answer with certainty, DO NOT include that question.
 - NEVER have a question where NONE of the 4 options is correct.
 - NEVER have a question where MULTIPLE options are correct (unless it says "best answer").
+
+EXPLANATION REQUIREMENT:
+- For EVERY question, include a brief "explanation" field (1-2 sentences).
+- Explain WHY the correct answer is right and briefly mention why common wrong choices fail.
+- For math questions, show the key calculation step.
 
 QUESTION COUNT ENFORCEMENT:
 - You MUST return EXACTLY ${batchCount} questions in the questions array.

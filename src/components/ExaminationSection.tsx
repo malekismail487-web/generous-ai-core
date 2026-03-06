@@ -90,6 +90,7 @@ interface BaseQuestion {
   id: number;
   question: string;
   correct_answer: string;
+  explanation?: string;
 }
 
 interface MultipleChoiceQuestion extends BaseQuestion {
@@ -775,13 +776,23 @@ export function ExaminationSection() {
                   )}>
                     {isCorrect ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <p className="font-medium text-sm">
-                      {isCorrect ? 'Correct!' : 'Not quite right'}
+                      {isCorrect ? 'Correct! ✨' : 'Not quite right'}
                     </p>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      The correct answer is: <MathRenderer content={currentQ.correct_answer} className="inline" />
-                    </div>
+                    {!isCorrect && (
+                      <>
+                        <div className="text-xs text-muted-foreground">
+                          The correct answer is: <MathRenderer content={currentQ.correct_answer} className="inline font-semibold text-emerald-500" />
+                        </div>
+                        {currentQ.explanation && (
+                          <div className="text-xs text-muted-foreground mt-2 p-2.5 rounded-lg bg-secondary/50 border border-border/30">
+                            <span className="font-medium text-foreground">💡 Why? </span>
+                            <MathRenderer content={currentQ.explanation} className="inline" />
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
