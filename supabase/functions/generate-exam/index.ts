@@ -1,39 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface UserKeys {
-  primaryKey: string | null;
-  fallbackKey: string | null;
-}
-
-async function getUserApiKeys(authHeader: string | null): Promise<UserKeys> {
-  if (!authHeader) return { primaryKey: null, fallbackKey: null };
-  try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user) return { primaryKey: null, fallbackKey: null };
-    const { data } = await supabase
-      .from("user_api_keys")
-      .select("groq_api_key, groq_fallback_api_key")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    return {
-      primaryKey: data?.groq_api_key || null,
-      fallbackKey: data?.groq_fallback_api_key || null,
-    };
-  } catch {
-    return { primaryKey: null, fallbackKey: null };
-  }
-}
+const LOVABLE_API_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 function getVarietyInstructions(): string {
   const styles = [
@@ -239,41 +211,35 @@ const examTool = {
 };
 
 // ========== ENHANCED SELF-VALIDATION ==========
-// Validates questions in batches, replaces failed ones (up to 3 attempts per question)
 async function validateAndFixQuestions(
   questions: Record<string, unknown>[],
   subject: string,
   apiKey: string,
-  fallbackKey: string | null,
   targetCount: number
 ): Promise<Record<string, unknown>[]> {
   if (questions.length === 0) return questions;
 
-  // Trim to exact target count first
   if (questions.length > targetCount) {
     console.log(`Trimming ${questions.length} questions to target ${targetCount}`);
     questions = questions.slice(0, targetCount);
   }
 
-  // Validate in chunks of 15 to stay within token limits
   const CHUNK_SIZE = 15;
   const validatedQuestions: Record<string, unknown>[] = [];
   
   for (let chunkStart = 0; chunkStart < questions.length; chunkStart += CHUNK_SIZE) {
     const chunk = questions.slice(chunkStart, chunkStart + CHUNK_SIZE);
-    const validatedChunk = await validateChunk(chunk, subject, apiKey, fallbackKey);
+    const validatedChunk = await validateChunk(chunk, subject, apiKey);
     validatedQuestions.push(...validatedChunk);
   }
 
-  // If we lost questions during validation, try to fill back to target
   if (validatedQuestions.length < targetCount) {
     const deficit = targetCount - validatedQuestions.length;
     console.log(`Validation removed ${deficit} unfixable questions, attempting replacements...`);
     try {
-      const replacements = await generateReplacementQuestions(deficit, subject, apiKey, fallbackKey);
+      const replacements = await generateReplacementQuestions(deficit, subject, apiKey);
       if (replacements.length > 0) {
-        // Validate replacements too (single pass, no recursion)
-        const validReplacements = await validateChunk(replacements, subject, apiKey, fallbackKey);
+        const validReplacements = await validateChunk(replacements, subject, apiKey);
         validatedQuestions.push(...validReplacements);
       }
     } catch (e) {
@@ -281,15 +247,13 @@ async function validateAndFixQuestions(
     }
   }
 
-  // Final trim to exact count
   return validatedQuestions.slice(0, targetCount);
 }
 
 async function validateChunk(
   questions: Record<string, unknown>[],
   subject: string,
-  apiKey: string,
-  fallbackKey: string | null
+  apiKey: string
 ): Promise<Record<string, unknown>[]> {
   const questionsForReview = questions.map((q, i) => {
     const ca = String(q.correct_answer || q.correctAnswer || "A");
@@ -322,67 +286,32 @@ Return a JSON array. For EACH question include an entry:
 ]
 
 Rules:
-- Use "PASS" ONLY if you independently solved it and got the same answer as marked. Include your brief work in "verification".
-- Use "FAIL" with fixes if the answer is wrong but fixable. You MUST provide the correct_answer and optionally fix options.
-- Use "DELETE" if the question is unsalvageable (ambiguous, multiple correct answers, no correct answer, or factually broken).
+- Use "PASS" ONLY if you independently solved it and got the same answer as marked.
+- Use "FAIL" with fixes if the answer is wrong but fixable.
+- Use "DELETE" if the question is unsalvageable.
 - You MUST verify EVERY question. Do not skip any.
 - When in doubt, mark as FAIL or DELETE rather than PASS. Accuracy is paramount.
 
 Questions to validate:
 ${questionsForReview}`;
 
-  // Strategy: Try Lovable AI Gateway (Gemini) first for cross-model validation, then fall back to Groq
-  const LOVABLE_API_URL = "https://api.lovable.dev/v1/chat/completions";
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-  
-  const validationAttempts: Array<{
-    url: string;
-    model: string;
-    apiKey: string;
-    label: string;
-  }> = [];
-  
-  // Primary: Lovable AI Gateway with Gemini 2.5 Pro (cross-model validation - different model catches different mistakes)
-  if (lovableApiKey) {
-    validationAttempts.push({
-      url: LOVABLE_API_URL,
-      model: "google/gemini-2.5-pro",
-      apiKey: lovableApiKey,
-      label: "Gemini 2.5 Pro (cross-model)",
-    });
-    validationAttempts.push({
-      url: LOVABLE_API_URL,
-      model: "google/gemini-2.5-flash",
-      apiKey: lovableApiKey,
-      label: "Gemini 2.5 Flash (cross-model fallback)",
-    });
-  }
-  
-  // Fallback: Groq Llama models
-  validationAttempts.push({
-    url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama-3.3-70b-versatile",
-    apiKey,
-    label: "Llama 70B (same-family fallback)",
-  });
-  validationAttempts.push({
-    url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama-3.1-8b-instant",
-    apiKey: fallbackKey || apiKey,
-    label: "Llama 8B (last resort)",
-  });
+  // Use Gemini 2.5 Pro for validation (strongest reasoning model)
+  const validationModels = [
+    "google/gemini-2.5-pro",
+    "google/gemini-2.5-flash",
+  ];
 
-  for (const attempt of validationAttempts) {
+  for (const model of validationModels) {
     try {
-      console.log(`Validation attempt with ${attempt.label}...`);
-      const response = await fetch(attempt.url, {
+      console.log(`Validation attempt with ${model}...`);
+      const response = await fetch(LOVABLE_API_URL, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${attempt.apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: attempt.model,
+          model,
           messages: [
             { role: "system", content: "You are an expert academic exam validator. Return ONLY valid JSON array. Validate every single question rigorously by solving each one yourself. Accuracy is your #1 priority." },
             { role: "user", content: reviewPrompt },
@@ -395,10 +324,10 @@ ${questionsForReview}`;
       if (!response.ok) {
         const errText = await response.text();
         if (response.status === 429) {
-          console.warn(`Rate limited on ${attempt.label}, trying next...`);
+          console.warn(`Rate limited on ${model}, trying next...`);
           continue;
         }
-        console.warn(`Validation API error on ${attempt.label}:`, response.status, errText.substring(0, 200));
+        console.warn(`Validation API error on ${model}:`, response.status, errText.substring(0, 200));
         continue;
       }
 
@@ -408,7 +337,7 @@ ${questionsForReview}`;
       try {
         const results = extractJsonFromResponse(content) as any[];
         if (!Array.isArray(results)) {
-          console.warn(`${attempt.label} returned non-array, trying next...`);
+          console.warn(`${model} returned non-array, trying next...`);
           continue;
         }
 
@@ -425,7 +354,7 @@ ${questionsForReview}`;
           }
           
           if (result.status === "DELETE") {
-            console.log(`[${attempt.label}] Deleted Q${i + 1}: ${result.reason}`);
+            console.log(`[${model}] Deleted Q${i + 1}: ${result.reason}`);
             deleted++;
             continue;
           }
@@ -440,20 +369,20 @@ ${questionsForReview}`;
             if (result.fixed_option_b) { q.option_b = result.fixed_option_b; q.optionB = result.fixed_option_b; }
             if (result.fixed_option_c) { q.option_c = result.fixed_option_c; q.optionC = result.fixed_option_c; }
             if (result.fixed_option_d) { q.option_d = result.fixed_option_d; q.optionD = result.fixed_option_d; }
-            console.log(`[${attempt.label}] Fixed Q${i + 1}: ${result.reason}`);
+            console.log(`[${model}] Fixed Q${i + 1}: ${result.reason}`);
             validQuestions.push(q);
             fixed++;
           }
         }
 
-        console.log(`[${attempt.label}] Validation: ${passed} passed, ${fixed} fixed, ${deleted} deleted out of ${questions.length}`);
+        console.log(`[${model}] Validation: ${passed} passed, ${fixed} fixed, ${deleted} deleted out of ${questions.length}`);
         return validQuestions;
       } catch (e) {
-        console.warn(`Could not parse ${attempt.label} response, trying next:`, e);
+        console.warn(`Could not parse ${model} response, trying next:`, e);
         continue;
       }
     } catch (e) {
-      console.warn(`${attempt.label} call failed:`, e);
+      console.warn(`${model} call failed:`, e);
       continue;
     }
   }
@@ -462,12 +391,10 @@ ${questionsForReview}`;
   return questions;
 }
 
-// Generate replacement questions for ones that were deleted during validation
 async function generateReplacementQuestions(
   count: number,
   subject: string,
-  apiKey: string,
-  fallbackKey: string | null
+  apiKey: string
 ): Promise<Record<string, unknown>[]> {
   if (count <= 0) return [];
   
@@ -479,17 +406,17 @@ CRITICAL: Before writing each answer key, SOLVE the problem yourself. Double-che
 Return using the create_exam tool.
 Nonce: ${nonce}`;
 
-  const modelConfigs = [
-    { model: "llama-3.3-70b-versatile", apiKey },
-    { model: "llama-3.1-8b-instant", apiKey: fallbackKey || apiKey },
+  const models = [
+    "google/gemini-3-flash-preview",
+    "google/gemini-2.5-flash",
   ];
 
-  for (const { model, apiKey: key } of modelConfigs) {
+  for (const model of models) {
     try {
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      const response = await fetch(LOVABLE_API_URL, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${key}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -534,14 +461,11 @@ serve(async (req) => {
   try {
     const { subject, grade, difficulty, count, materials, examType, adaptiveLevel } = await req.json();
 
-    const userKeys = await getUserApiKeys(req.headers.get("authorization"));
-    const systemGroqKey = Deno.env.get("GROQ_API_KEY");
-    const primaryApiKey = userKeys.primaryKey || systemGroqKey;
-    const fallbackApiKey = userKeys.fallbackKey || systemGroqKey;
-
-    if (!primaryApiKey) {
-      throw new Error("No AI API key configured. Please add your Groq API key in the settings.");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
+
     if (!count || count <= 0) {
       throw new Error("count is required and must be positive");
     }
@@ -557,7 +481,6 @@ serve(async (req) => {
       ? materials.map((m: { topic: string; content: string }) => `Topic: ${m.topic}\n${m.content}`).join('\n---\n').substring(0, 8000)
       : null;
 
-    // Detect if subject is math-related for 50/50 word problem vs equation balance
     const isMathSubject = /math|algebra|calculus|geometry|trigonometry|statistics|arithmetic|رياضيات/i.test(subject || '');
 
     const MAX_SINGLE_BATCH = 30;
@@ -570,7 +493,6 @@ serve(async (req) => {
       const antiRepetition = getAntiRepetitionDirective();
       const nonce = crypto.randomUUID();
 
-      // Math balance instruction
       const mathBalanceRule = isMathSubject
         ? `\n\nMATH QUESTION BALANCE (CRITICAL): Exactly HALF of your questions must be direct equations/computations (e.g., "Solve: 3x + 7 = 22", "Evaluate: \\int_0^1 x^2 dx", "Find the derivative of f(x) = x^3 + 2x"). The other HALF must be word problems that apply math concepts to real-world scenarios. Do NOT make all questions word problems.`
         : '';
@@ -610,25 +532,26 @@ QUESTION COUNT ENFORCEMENT:
 
       let userPrompt = '';
       if (examType === 'SAT_FULL') {
-        userPrompt = `Generate EXACTLY ${batchCount} completely original SAT-style multiple-choice questions. Cover: Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar. Each with 4 options (A-D). CRITICAL: Every single question must be freshly invented with unique numbers, names, and scenarios. Do NOT reproduce any known SAT practice question. Use unusual but realistic values. Nonce: ${nonce}`;
+        userPrompt = `Generate EXACTLY ${batchCount} completely original SAT-style multiple-choice questions. Cover: Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar. Each with 4 options (A-D). CRITICAL: Every single question must be freshly invented with unique numbers, names, and scenarios. Do NOT reproduce any known SAT practice question. Nonce: ${nonce}`;
       } else if (batchContext) {
-        userPrompt = `Generate EXACTLY ${batchCount} BRAND NEW multiple-choice questions based on this study material:\n\n${batchContext}\n\nSubject: ${subject}, Grade: ${grade || 'General'}, Difficulty: ${difficulty}. Each question must have 4 options (A-D).\n\nCRITICAL ANTI-REPETITION RULES:\n- Even though the material is the same as previous requests, you MUST create ENTIRELY DIFFERENT questions.\n- Use different angles, different numerical values, different scenarios, different phrasings.\n- Approach the material from perspectives not typically covered in textbooks.\n- Invent novel real-world scenarios that apply the concepts.\n- Use random specific numbers (not round numbers like 10, 100, 50).\n- ${antiRepetition}\nNonce: ${nonce}`;
+        userPrompt = `Generate EXACTLY ${batchCount} BRAND NEW multiple-choice questions based on this study material:\n\n${batchContext}\n\nSubject: ${subject}, Grade: ${grade || 'General'}, Difficulty: ${difficulty}. Each question must have 4 options (A-D).\n\nCRITICAL ANTI-REPETITION RULES:\n- Even though the material is the same as previous requests, you MUST create ENTIRELY DIFFERENT questions.\n- Use different angles, different numerical values, different scenarios, different phrasings.\n- ${antiRepetition}\nNonce: ${nonce}`;
       } else {
-        userPrompt = `Generate EXACTLY ${batchCount} COMPLETELY ORIGINAL multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover diverse sub-topics. Each question must have 4 options (A-D).\n\nCRITICAL: Do NOT use any standard textbook questions. Create novel questions with unique specific values (avoid round numbers), original scenarios, and fresh phrasings. ${antiRepetition}\nNonce: ${nonce}`;
+        userPrompt = `Generate EXACTLY ${batchCount} COMPLETELY ORIGINAL multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover diverse sub-topics. Each question must have 4 options (A-D).\n\nCRITICAL: Do NOT use any standard textbook questions. Create novel questions with unique specific values, original scenarios, and fresh phrasings. ${antiRepetition}\nNonce: ${nonce}`;
       }
 
-      const modelConfigs = [
-        { model: "llama-3.3-70b-versatile", apiKey: primaryApiKey },
-        { model: "llama-3.1-8b-instant", apiKey: fallbackApiKey || primaryApiKey },
+      // Gemini models via Lovable AI Gateway
+      const models = [
+        "google/gemini-3-flash-preview",
+        "google/gemini-2.5-flash",
       ];
       let response: Response | null = null;
 
-      for (const { model, apiKey } of modelConfigs) {
+      for (const model of models) {
         for (let attempt = 0; attempt < 3; attempt++) {
-          response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          response = await fetch(LOVABLE_API_URL, {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${apiKey}`,
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -660,7 +583,7 @@ QUESTION COUNT ENFORCEMENT:
 
       if (!response.ok) {
         const errorBody = await response.text();
-        console.error("Groq API error:", response.status, errorBody.substring(0, 500));
+        console.error("AI API error:", response.status, errorBody.substring(0, 500));
 
         try {
           const errJson = JSON.parse(errorBody);
@@ -724,14 +647,13 @@ QUESTION COUNT ENFORCEMENT:
       }
     }
 
-    // ========== AI SELF-VALIDATION STEP (ENHANCED) ==========
-    console.log(`Starting enhanced AI validation of ${allQuestions.length} questions (target: ${count})...`);
+    // ========== AI SELF-VALIDATION STEP ==========
+    console.log(`Starting AI validation of ${allQuestions.length} questions (target: ${count})...`);
     allQuestions = await validateAndFixQuestions(
       allQuestions,
       subject || 'General',
-      primaryApiKey!,
-      fallbackApiKey,
-      count // Pass target count for exact enforcement
+      LOVABLE_API_KEY!,
+      count
     );
     console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
 

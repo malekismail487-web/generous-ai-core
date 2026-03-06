@@ -7,17 +7,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const LOVABLE_API_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!GROQ_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!LOVABLE_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return new Response(JSON.stringify({ error: "Not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -35,15 +37,15 @@ serve(async (req) => {
     // Truncate content for analysis
     const textToAnalyze = String(content).substring(0, 4000);
 
-    // Use Groq to analyze content
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    // Use Gemini via Lovable AI Gateway for content moderation
+    const response = await fetch(LOVABLE_API_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           {
             role: "system",
@@ -74,7 +76,7 @@ Be strict about content safety since this is a K-12 platform.`,
     });
 
     if (!response.ok) {
-      console.error("Groq moderation error:", response.status);
+      console.error("AI moderation error:", response.status);
       return new Response(JSON.stringify({ flagged: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

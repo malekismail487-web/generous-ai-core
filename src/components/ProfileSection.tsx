@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Key, Loader2, Sun, Moon, Globe, ExternalLink, Trash2, Pencil, Eye, EyeOff, Heart, Copy, Sparkles, Check } from 'lucide-react';
+import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Loader2, Sun, Moon, Globe, Heart, Copy, Sparkles, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSchool } from '@/hooks/useSchool';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import { useUserApiKey } from '@/hooks/useUserApiKey';
+
 import { useToast } from '@/hooks/use-toast';
 import { tr } from '@/lib/translations';
 import { useWallpaper } from '@/hooks/useWallpaper';
@@ -23,17 +23,11 @@ export function ProfileSection() {
   const [showAdminCodeInput, setShowAdminCodeInput] = useState(false);
   const [adminCode, setAdminCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [editingKey, setEditingKey] = useState(false);
-  const [newApiKey, setNewApiKey] = useState('');
-  const [newFallbackKey, setNewFallbackKey] = useState('');
-  const [savingKey, setSavingKey] = useState(false);
-  const [showKey, setShowKey] = useState(false);
-  const [showFallbackKey, setShowFallbackKey] = useState(false);
   const { user, signOut } = useAuth();
   const { isAdmin, isHardcodedAdmin, verifyAdminCode } = useUserRole();
   const { profile, school, isSchoolAdmin, loading } = useSchool();
   const { theme, language, setTheme, setLanguage, t } = useThemeLanguage();
-  const { apiKey: savedApiKey, fallbackApiKey: savedFallbackKey, loading: keyLoading, refetch: refetchKey } = useUserApiKey();
+  
   const { toast } = useToast();
   const tl = (key: Parameters<typeof tr>[0]) => tr(key, language);
 
@@ -58,43 +52,6 @@ export function ProfileSection() {
     fetchCode();
   }, [user, isStudent]);
 
-  const handleSaveApiKey = async () => {
-    if (!user || !newApiKey.trim()) return;
-    if (!newApiKey.trim().startsWith('gsk_')) {
-      toast({ variant: 'destructive', title: 'Invalid Key', description: 'Primary key must start with "gsk_"' });
-      return;
-    }
-    if (newFallbackKey.trim() && !newFallbackKey.trim().startsWith('gsk_')) {
-      toast({ variant: 'destructive', title: 'Invalid Key', description: 'Fallback key must start with "gsk_"' });
-      return;
-    }
-    setSavingKey(true);
-    const { error } = await supabase
-      .from('user_api_keys')
-      .upsert({ 
-        user_id: user.id, 
-        groq_api_key: newApiKey.trim(),
-        groq_fallback_api_key: newFallbackKey.trim() || null,
-      } as any, { onConflict: 'user_id' });
-    if (!error) {
-      toast({ title: '✅ API Keys Saved!' });
-      setEditingKey(false);
-      setNewApiKey('');
-      setNewFallbackKey('');
-      refetchKey();
-    } else {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
-    }
-    setSavingKey(false);
-  };
-
-  const handleDeleteApiKey = async () => {
-    if (!user) return;
-    await supabase.from('user_api_keys').delete().eq('user_id', user.id);
-    refetchKey();
-    setEditingKey(false);
-    toast({ title: 'API Key Removed', description: 'The system key will be used instead.' });
-  };
 
   const handleVerifyAdminCode = async () => {
     if (!adminCode.trim()) return;
