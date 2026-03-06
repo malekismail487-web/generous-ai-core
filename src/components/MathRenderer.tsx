@@ -57,13 +57,15 @@ export function MathRenderer({ content, className = '', images }: MathRendererPr
     <div className={`space-y-3 ${className}`}>
       {cleanedContent && (
         <div className="prose prose-sm dark:prose-invert max-w-none
-          prose-p:my-1.5 prose-p:leading-relaxed
+          font-serif
+          prose-p:my-1.5 prose-p:leading-[1.75]
           prose-ul:my-2 prose-ol:my-2
-          prose-li:my-0.5
-          prose-headings:mt-4 prose-headings:mb-2
+          prose-li:my-0.5 prose-li:leading-[1.75]
+          prose-headings:mt-4 prose-headings:mb-2 prose-headings:font-sans
           prose-strong:text-foreground
-          prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs
-          prose-a:text-primary prose-a:underline prose-a:font-medium">
+          prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-code:font-mono
+          prose-a:text-primary prose-a:underline prose-a:font-medium"
+          style={{ fontFamily: "'Source Serif 4', 'Georgia', serif" }}>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
