@@ -6,34 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface UserKeys {
-  primaryKey: string | null;
-  fallbackKey: string | null;
-}
-
-async function getUserApiKeys(authHeader: string | null): Promise<UserKeys> {
-  if (!authHeader) return { primaryKey: null, fallbackKey: null };
-  try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user) return { primaryKey: null, fallbackKey: null };
-    const { data } = await supabase
-      .from("user_api_keys")
-      .select("groq_api_key, groq_fallback_api_key")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    return {
-      primaryKey: data?.groq_api_key || null,
-      fallbackKey: data?.groq_fallback_api_key || null,
-    };
-  } catch {
-    return { primaryKey: null, fallbackKey: null };
-  }
-}
+const LOVABLE_API_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 async function getAdaptiveProfile(authHeader: string | null): Promise<{ learningPace?: string; iqData?: any; learningStylePrompt?: string } | null> {
   if (!authHeader) return null;
@@ -263,14 +236,9 @@ serve(async (req) => {
   try {
     const { messages, enableWebSearch, language, backgroundContext, adaptiveLevel, learningStyle, systemPrompt: customSystemPrompt } = await req.json();
     
-    const userKeys = await getUserApiKeys(req.headers.get("authorization"));
-    const systemGroqKey = Deno.env.get("GROQ_API_KEY");
-    
-    const primaryApiKey = userKeys.primaryKey || systemGroqKey;
-    const fallbackApiKey = userKeys.fallbackKey || systemGroqKey;
-    
-    if (!primaryApiKey) {
-      throw new Error("No AI API key configured. Please add your Groq API key in settings.");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     // Scan the latest user message for malicious content (fire-and-forget)
@@ -279,7 +247,6 @@ serve(async (req) => {
     if (userInfo && messages && messages.length > 0) {
       const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user');
       if (lastUserMsg) {
-        // Don't await - fire and forget
         scanContentAsync(lastUserMsg.content, userInfo.userId, userInfo.schoolId);
       }
     }
@@ -342,70 +309,24 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
       systemPrompt += contextBlock;
     }
 
-    // Use Lovable AI Gateway (Gemini) as primary, fall back to Groq if needed
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
     const allMessages = [{ role: "system", content: systemPrompt }, ...messages];
+
+    // Use Gemini models via Lovable AI Gateway
+    const geminiModels = [
+      "google/gemini-3-flash-preview",
+      "google/gemini-2.5-flash",
+      "google/gemini-2.5-flash-lite",
+    ];
+
     let response: Response | null = null;
 
-    // Strategy 1: Lovable AI Gateway (Gemini - most accurate)
-    if (LOVABLE_API_KEY) {
-      const lovableModels = [
-        "google/gemini-3-flash-preview",
-        "google/gemini-2.5-flash",
-      ];
-
-      for (const model of lovableModels) {
-        for (let attempt = 0; attempt < 2; attempt++) {
-          try {
-            response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${LOVABLE_API_KEY}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                model,
-                messages: allMessages,
-                stream: true,
-                temperature: 0.2,
-              }),
-            });
-
-            if (response.status === 429 || response.status === 402) {
-              const waitMs = Math.pow(2, attempt) * 2000;
-              console.log(`Lovable AI rate limited (${model}), retrying in ${waitMs}ms`);
-              await new Promise((r) => setTimeout(r, waitMs));
-              continue;
-            }
-
-            if (response.ok) {
-              console.log(`Using Lovable AI model: ${model}`);
-              break;
-            }
-          } catch (e) {
-            console.warn(`Lovable AI fetch error (${model}):`, e);
-          }
-        }
-        if (response && response.ok) break;
-      }
-    }
-
-    // Strategy 2: Groq fallback if Lovable AI unavailable
-    if (!response || !response.ok) {
-      console.log("Falling back to Groq API");
-      const groqModels = [
-        { model: "llama-3.3-70b-versatile", apiKey: primaryApiKey },
-        { model: "llama-3.1-8b-instant", apiKey: fallbackApiKey || primaryApiKey },
-      ];
-
-      for (const { model, apiKey } of groqModels) {
-        if (!apiKey) continue;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    for (const model of geminiModels) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          response = await fetch(LOVABLE_API_URL, {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${apiKey}`,
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -415,27 +336,35 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
               temperature: 0.2,
             }),
           });
-          if (response.status !== 429) break;
-          const waitMs = Math.pow(2, attempt) * 2000;
-          console.log(`Groq rate limited on ${model}, retrying in ${waitMs}ms`);
-          await new Promise((r) => setTimeout(r, waitMs));
-        }
-        if (response && response.status !== 429) {
-          console.log(`Using Groq model: ${model}`);
-          break;
+
+          if (response.status === 429) {
+            const waitMs = Math.pow(2, attempt) * 2000;
+            console.log(`Rate limited (${model}), retrying in ${waitMs}ms`);
+            await new Promise((r) => setTimeout(r, waitMs));
+            continue;
+          }
+
+          if (response.status === 402) {
+            return new Response(JSON.stringify({ error: "AI usage limit reached. Please add credits to continue." }), {
+              status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+
+          if (response.ok) {
+            console.log(`Using Gemini model: ${model}`);
+            break;
+          }
+        } catch (e) {
+          console.warn(`Gemini fetch error (${model}):`, e);
         }
       }
+      if (response && response.ok) break;
     }
 
     if (!response || !response.ok) {
       if (response?.status === 429) {
         return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response?.status === 402) {
-        return new Response(JSON.stringify({ error: "AI usage limit reached. Please try again later." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const errorText = await response?.text() || "No response";

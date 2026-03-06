@@ -1,39 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface UserKeys {
-  primaryKey: string | null;
-  fallbackKey: string | null;
-}
-
-async function getUserApiKeys(authHeader: string | null): Promise<UserKeys> {
-  if (!authHeader) return { primaryKey: null, fallbackKey: null };
-  try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user) return { primaryKey: null, fallbackKey: null };
-    const { data } = await supabase
-      .from("user_api_keys")
-      .select("groq_api_key, groq_fallback_api_key")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    return {
-      primaryKey: data?.groq_api_key || null,
-      fallbackKey: data?.groq_fallback_api_key || null,
-    };
-  } catch {
-    return { primaryKey: null, fallbackKey: null };
-  }
-}
+const LOVABLE_API_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -43,13 +15,9 @@ serve(async (req) => {
   try {
     const { title, description, subject, questionCount, gradeLevel, adaptiveLevel } = await req.json();
     
-    const userKeys = await getUserApiKeys(req.headers.get("authorization"));
-    const systemGroqKey = Deno.env.get("GROQ_API_KEY");
-    const primaryApiKey = userKeys.primaryKey || systemGroqKey;
-    const fallbackApiKey = userKeys.fallbackKey || systemGroqKey;
-
-    if (!primaryApiKey) {
-      throw new Error("No AI API key configured. Please add your Groq API key.");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     if (!title || !subject || !questionCount) {
@@ -110,20 +78,19 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
       },
     ];
 
-    // Model-to-key mapping: primary model uses primary key, fallback model uses fallback key
-    const modelConfigs = [
-      { model: "llama-3.3-70b-versatile", apiKey: primaryApiKey },
-      { model: "llama-3.1-8b-instant", apiKey: fallbackApiKey || primaryApiKey },
+    // Gemini models via Lovable AI Gateway
+    const models = [
+      "google/gemini-3-flash-preview",
+      "google/gemini-2.5-flash",
     ];
     let response: Response | null = null;
 
-    for (const { model, apiKey } of modelConfigs) {
-      const maxRetries = 3;
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    for (const model of models) {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        response = await fetch(LOVABLE_API_URL, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${apiKey}`,
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -139,20 +106,25 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
         });
         if (response.status !== 429) break;
         const waitMs = Math.pow(2, attempt) * 2000;
-        console.log(`Rate limited on ${model}, retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+        console.log(`Rate limited on ${model}, retrying in ${waitMs}ms`);
         await new Promise(r => setTimeout(r, waitMs));
       }
       if (response && response.status !== 429) {
         console.log(`Using model: ${model}`);
         break;
       }
-      console.log(`Model ${model} exhausted retries, trying fallback...`);
     }
 
     if (!response || !response.ok) {
       if (response?.status === 429) {
         return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
           status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response?.status === 402) {
+        return new Response(JSON.stringify({ error: "AI usage limit reached. Please add credits to continue." }), {
+          status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
