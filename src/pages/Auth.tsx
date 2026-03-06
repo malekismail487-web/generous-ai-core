@@ -218,9 +218,8 @@ export default function Auth() {
       try {
         let ipAddress: string | null = null;
         try {
-          const ipRes = await fetch('https://api.ipify.org?format=json');
-          const ipData = await ipRes.json();
-          ipAddress = ipData.ip;
+          const { data: ipData } = await supabase.functions.invoke('get-client-ip');
+          ipAddress = ipData?.ip || null;
         } catch {}
 
         const fp = getDeviceFingerprint();
