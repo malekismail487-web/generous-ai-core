@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
-import { Shield, Loader2, Lock, ShieldOff } from 'lucide-react';
+import { Shield, Loader2, Lock, ShieldOff, ShieldCheck, Mail, KeyRound, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+
+const emailSchema = z.string().email('Please enter a valid email address');
+const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 
 export default function MinistryLogin() {
   const navigate = useNavigate();
+  const { signIn, signUp } = useAuth();
+  const { toast } = useToast();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -14,6 +24,16 @@ export default function MinistryLogin() {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'pending' | 'approved' | 'denied'>('idle');
   const [ipAddress, setIpAddress] = useState<string | null>(null);
+  const [showModeratorForm, setShowModeratorForm] = useState(false);
+
+  // Moderator sign-up state
+  const [modEmail, setModEmail] = useState('');
+  const [modPassword, setModPassword] = useState('');
+  const [modConfirmPassword, setModConfirmPassword] = useState('');
+  const [modName, setModName] = useState('');
+  const [modCode, setModCode] = useState('');
+  const [modSubmitting, setModSubmitting] = useState(false);
+  const [modErrors, setModErrors] = useState<Record<string, string>>({});
 
   // Get IP address
   useEffect(() => {
@@ -41,7 +61,6 @@ export default function MinistryLogin() {
   useEffect(() => {
     const existing = sessionStorage.getItem('ministry_session_token');
     if (existing) {
-      // Check if session is still valid
       supabase.rpc('check_ministry_session', { p_session_token: existing })
         .then(({ data }) => {
           const result = data as { valid: boolean } | null;
@@ -116,6 +135,63 @@ export default function MinistryLogin() {
     setLoading(false);
   };
 
+  const handleModeratorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: Record<string, string> = {};
+    const emailResult = emailSchema.safeParse(modEmail);
+    if (!emailResult.success) newErrors.email = emailResult.error.errors[0].message;
+    const passwordResult = passwordSchema.safeParse(modPassword);
+    if (!passwordResult.success) newErrors.password = passwordResult.error.errors[0].message;
+    if (modPassword !== modConfirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (!modName.trim()) newErrors.name = 'Full name is required';
+    if (!modCode.trim() || modCode.length < 6) newErrors.code = 'Moderator invite code is required';
+    setModErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
+    setModSubmitting(true);
+    try {
+      const { data, error: rpcError } = await supabase.rpc('signup_as_moderator', {
+        p_email: modEmail.trim().toLowerCase(),
+        p_full_name: modName.trim(),
+        p_invite_code: modCode.trim().toUpperCase()
+      });
+      const result = data as { success: boolean; error?: string } | null;
+      if (rpcError || !result?.success) {
+        toast({ variant: 'destructive', title: 'Error', description: result?.error || rpcError?.message || 'Invalid invite code' });
+        setModSubmitting(false);
+        return;
+      }
+
+      // Create auth account
+      const { error: signUpError } = await signUp(modEmail.trim().toLowerCase(), modPassword);
+      if (signUpError) {
+        if (signUpError.message.includes('User already registered')) {
+          const { error: signInError } = await signIn(modEmail.trim().toLowerCase(), modPassword);
+          if (signInError) {
+            toast({ variant: 'destructive', title: 'Account exists', description: 'Please sign in with your existing password.' });
+            setModSubmitting(false);
+            return;
+          }
+          const { data: { user: existingUser } } = await supabase.auth.getUser();
+          if (existingUser) {
+            await supabase.rpc('link_moderator_after_signup', { p_user_id: existingUser.id, p_email: modEmail.trim().toLowerCase() });
+          }
+        } else {
+          toast({ variant: 'destructive', title: 'Error', description: signUpError.message });
+          setModSubmitting(false);
+          return;
+        }
+      }
+
+      toast({ title: 'Request Submitted!', description: 'Your moderator request is pending approval.' });
+      navigate('/pending-approval');
+    } catch {
+      toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
+    } finally {
+      setModSubmitting(false);
+    }
+  };
+
   if (banned) {
     return (
       <div className="fixed inset-0 z-[99999] bg-black flex items-center justify-center p-6">
@@ -153,6 +229,92 @@ export default function MinistryLogin() {
           <div className="pt-4 border-t border-gray-800">
             <p className="text-xs text-gray-600">
               Do not close this window. Your session will expire in 10 minutes if not approved.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Moderator sign-up form
+  if (showModeratorForm) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-6 overflow-y-auto">
+        <div className="max-w-lg w-full space-y-6 my-8">
+          <div className="text-center space-y-4">
+            <div className="w-20 h-20 mx-auto rounded-full bg-blue-950/30 border border-blue-700/30 flex items-center justify-center">
+              <ShieldCheck className="w-10 h-10 text-blue-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-blue-400">Moderator Registration</h1>
+            <p className="text-gray-500 text-xs">
+              Sign up as a moderator to oversee content safety across the platform.
+            </p>
+          </div>
+
+          <form onSubmit={handleModeratorSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="mod-name" className="text-gray-300 text-sm">Full Name</Label>
+              <Input id="mod-name" placeholder="Your full name" value={modName} onChange={(e) => setModName(e.target.value)}
+                className="bg-gray-950 border-gray-800 text-gray-200 focus:border-blue-700 focus:ring-blue-700/50" />
+              {modErrors.name && <p className="text-sm text-red-500">{modErrors.name}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mod-email" className="text-gray-300 text-sm">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Input id="mod-email" type="email" placeholder="you@example.com" value={modEmail} onChange={(e) => setModEmail(e.target.value)}
+                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 focus:border-blue-700 focus:ring-blue-700/50" />
+              </div>
+              {modErrors.email && <p className="text-sm text-red-500">{modErrors.email}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mod-password" className="text-gray-300 text-sm">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Input id="mod-password" type="password" placeholder="••••••••" value={modPassword} onChange={(e) => setModPassword(e.target.value)}
+                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 focus:border-blue-700 focus:ring-blue-700/50" />
+              </div>
+              {modErrors.password && <p className="text-sm text-red-500">{modErrors.password}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mod-confirm" className="text-gray-300 text-sm">Confirm Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Input id="mod-confirm" type="password" placeholder="••••••••" value={modConfirmPassword} onChange={(e) => setModConfirmPassword(e.target.value)}
+                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 focus:border-blue-700 focus:ring-blue-700/50" />
+              </div>
+              {modErrors.confirmPassword && <p className="text-sm text-red-500">{modErrors.confirmPassword}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mod-code" className="text-gray-300 text-sm">Moderator Invite Code</Label>
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Input id="mod-code" placeholder="MOD-XXXXXXXX" value={modCode} onChange={(e) => setModCode(e.target.value.toUpperCase())}
+                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 tracking-wider uppercase font-mono focus:border-blue-700 focus:ring-blue-700/50" />
+              </div>
+              {modErrors.code && <p className="text-sm text-red-500">{modErrors.code}</p>}
+              <p className="text-xs text-gray-600">This code is provided by the Ministry of Education</p>
+            </div>
+
+            <Button type="submit" disabled={modSubmitting}
+              className="w-full bg-blue-900/50 hover:bg-blue-800/50 text-blue-400 border border-blue-700/30">
+              {modSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <UserPlus className="w-4 h-4 mr-2" />}
+              Sign Up as Moderator
+            </Button>
+
+            <button type="button" onClick={() => setShowModeratorForm(false)}
+              className="w-full text-center text-gray-500 text-xs hover:text-gray-300 transition-colors">
+              ← Back to Access Portal
+            </button>
+          </form>
+
+          <div className="text-center">
+            <p className="text-gray-700 text-[10px]">
+              CLASSIFIED • RESTRICTED ACCESS
             </p>
           </div>
         </div>
@@ -202,6 +364,15 @@ export default function MinistryLogin() {
             ) : (
               'Request Access'
             )}
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={() => setShowModeratorForm(true)}
+            className="w-full text-blue-400/60 hover:text-blue-400 hover:bg-blue-950/20 text-xs gap-2"
+          >
+            <ShieldCheck className="w-3 h-3" />
+            Sign in as Moderator
           </Button>
         </div>
 
