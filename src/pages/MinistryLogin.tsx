@@ -35,11 +35,10 @@ export default function MinistryLogin() {
   const [modSubmitting, setModSubmitting] = useState(false);
   const [modErrors, setModErrors] = useState<Record<string, string>>({});
 
-  // Get IP address
+  // Get IP address via edge function
   useEffect(() => {
-    fetch('https://api.ipify.org?format=json')
-      .then(r => r.json())
-      .then(d => setIpAddress(d.ip))
+    supabase.functions.invoke('get-client-ip')
+      .then(({ data }) => setIpAddress(data?.ip || null))
       .catch(() => setIpAddress(null));
   }, []);
 
