@@ -40,8 +40,8 @@ export default function Auth() {
 
   // Redirect to language selection if not chosen yet
   useEffect(() => {
-    const hasSelected = localStorage.getItem('language-selected');
-    if (!hasSelected && !user) {
+    const hasSelectedThisTab = sessionStorage.getItem('language-selected-tab');
+    if (!hasSelectedThisTab && !user) {
       navigate('/language', { replace: true });
     }
   }, [navigate, user]);
@@ -96,8 +96,12 @@ export default function Auth() {
         
         if (profile) {
             if (profile.status === 'pending' || profile.status === 'rejected') {
-             navigate('/pending-approval');
-           } else if (profile.status === 'approved' && profile.is_active) {
+              if (profile.user_type === 'moderator') {
+                navigate('/moderator-pending');
+              } else {
+                navigate('/pending-approval');
+              }
+            } else if (profile.status === 'approved' && profile.is_active) {
               let dest = '/';
               if (profile.user_type === 'school_admin') dest = '/admin';
               else if (profile.user_type === 'teacher') dest = '/teacher';

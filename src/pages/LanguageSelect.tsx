@@ -20,6 +20,7 @@ export default function LanguageSelect() {
   const handleSelectBuild = (mode: 'new' | 'old') => {
     setBuildMode(mode);
     localStorage.setItem('language-selected', 'true');
+    sessionStorage.setItem('language-selected-tab', 'true');
     navigate('/auth');
   };
 
