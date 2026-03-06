@@ -183,7 +183,7 @@ export default function MinistryLogin() {
       }
 
       toast({ title: 'Request Submitted!', description: 'Your moderator request is pending approval.' });
-      navigate('/pending-approval');
+      navigate('/moderator-pending');
     } catch {
       toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
     } finally {
