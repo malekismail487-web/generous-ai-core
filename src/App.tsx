@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { FocusTimerProvider } from "@/hooks/useFocusTimer";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeLanguageProvider } from "@/hooks/useThemeLanguage";
 import { WallpaperProvider } from "@/hooks/useWallpaper";
@@ -33,6 +33,22 @@ import ModeratorPendingPage from "./pages/ModeratorPending";
 
 const queryClient = new QueryClient();
 
+// Gate: every new tab must go through /language first
+function LanguageGate({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const hasSelectedThisTab = sessionStorage.getItem('language-selected-tab');
+
+  // Allow /language route through always
+  if (location.pathname === '/language') return <>{children}</>;
+
+  // If this tab hasn't gone through language selection, redirect
+  if (!hasSelectedThisTab) {
+    return <Navigate to="/language" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 const App = () => (
   <DeviceBanScreen>
     <QueryClientProvider client={queryClient}>
@@ -46,33 +62,35 @@ const App = () => (
               <MinistryAccessAlert />
               
               <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/language" element={<LanguageSelect />} />
-                  <Route path="/super-admin" element={<SuperAdmin />} />
-                  <Route path="/super-admin-verify" element={<SuperAdminVerify />} />
-                  <Route path="/parent" element={<ParentDashboard />} />
-                  <Route path="/activate-school" element={<ActivateSchool />} />
-                  <Route path="/admin" element={<SchoolAdminDashboard />} />
-                  <Route path="/teacher" element={<TeacherDashboard />} />
-                  <Route path="/student" element={<Navigate to="/" replace />} />
-                  <Route path="/student/assignments/:assignmentId" element={<StudentAssignmentTake />} />
-                  <Route
-                    path="/student/assignments/:assignmentId/results"
-                    element={<StudentAssignmentResults />}
-                  />
-                  <Route path="/pending-approval" element={<PendingApprovalPage />} />
-                  
-                  <Route path="/iq-test" element={<IQTest />} />
-                  <Route path="/ministry" element={<MinistryLogin />} />
-                  <Route path="/ministry-pending" element={<MinistryPending />} />
-                  <Route path="/ministry-dashboard" element={<MinistryDashboard />} />
-                  <Route path="/moderator" element={<ModeratorDashboard />} />
-                  <Route path="/moderator-pending" element={<ModeratorPendingPage />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <LanguageGate>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/language" element={<LanguageSelect />} />
+                    <Route path="/super-admin" element={<SuperAdmin />} />
+                    <Route path="/super-admin-verify" element={<SuperAdminVerify />} />
+                    <Route path="/parent" element={<ParentDashboard />} />
+                    <Route path="/activate-school" element={<ActivateSchool />} />
+                    <Route path="/admin" element={<SchoolAdminDashboard />} />
+                    <Route path="/teacher" element={<TeacherDashboard />} />
+                    <Route path="/student" element={<Navigate to="/" replace />} />
+                    <Route path="/student/assignments/:assignmentId" element={<StudentAssignmentTake />} />
+                    <Route
+                      path="/student/assignments/:assignmentId/results"
+                      element={<StudentAssignmentResults />}
+                    />
+                    <Route path="/pending-approval" element={<PendingApprovalPage />} />
+                    
+                    <Route path="/iq-test" element={<IQTest />} />
+                    <Route path="/ministry" element={<MinistryLogin />} />
+                    <Route path="/ministry-pending" element={<MinistryPending />} />
+                    <Route path="/ministry-dashboard" element={<MinistryDashboard />} />
+                    <Route path="/moderator" element={<ModeratorDashboard />} />
+                    <Route path="/moderator-pending" element={<ModeratorPendingPage />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </LanguageGate>
               </BrowserRouter>
             </TooltipProvider>
           </FocusTimerProvider>
