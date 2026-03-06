@@ -300,61 +300,105 @@ async function validateChunk(
     return `Q${i + 1}: ${String(q.question || "")}\nA) ${optA}\nB) ${optB}\nC) ${optC}\nD) ${optD}\nMarked correct: ${ca}`;
   }).join("\n\n");
 
-  const reviewPrompt = `You are a strict academic exam validator for ${subject}. Your job is to verify EVERY question is correct.
+  const reviewPrompt = `You are a strict academic exam validator for ${subject}. Your job is to verify EVERY question is factually and mathematically correct.
 
 FOR EACH QUESTION you MUST:
 1. Read the question carefully.
-2. Solve it yourself independently. Show your brief work mentally.
+2. Solve it yourself independently step-by-step. For math: show your arithmetic. For science: verify facts.
 3. Check if the marked answer matches YOUR answer.
-4. Check that ALL 4 options are distinct and plausible (not nonsensical).
+4. Check that ALL 4 options are distinct, plausible, and well-formed.
 5. Check that EXACTLY ONE option is correct.
-6. For math: verify all arithmetic, algebra, and calculations are correct.
-7. For science: verify all facts are scientifically accurate.
-8. For history/social: verify all dates, names, and events are correct.
+6. For math: verify ALL arithmetic, algebra, and calculations by doing them yourself. Check: addition, multiplication, division, square roots, exponents.
+7. For science: verify all facts are scientifically accurate using established knowledge.
+8. For history/social: verify all dates, names, and events are historically correct.
+9. Verify the question is clear, unambiguous, and answerable from the options given.
+10. Check that no two options are essentially the same answer phrased differently.
 
 Return a JSON array. For EACH question include an entry:
 [
-  {"index": 0, "status": "PASS"},
-  {"index": 1, "status": "FAIL", "correct_answer": "C", "fixed_option_a": "...", "fixed_option_b": "...", "fixed_option_c": "...", "fixed_option_d": "...", "reason": "The marked answer was B but the correct answer is C because..."},
-  {"index": 2, "status": "DELETE", "reason": "This question is fundamentally flawed and cannot be fixed"}
+  {"index": 0, "status": "PASS", "my_answer": "A", "verification": "Brief work showing answer is correct"},
+  {"index": 1, "status": "FAIL", "my_answer": "C", "correct_answer": "C", "fixed_option_a": "...", "fixed_option_b": "...", "fixed_option_c": "...", "fixed_option_d": "...", "reason": "The marked answer was B but solving: [work shown] gives C"},
+  {"index": 2, "status": "DELETE", "reason": "This question is fundamentally flawed: [specific reason]"}
 ]
 
 Rules:
-- Use "PASS" if question and answer are correct.
-- Use "FAIL" with fixes if the answer is wrong but fixable.
-- Use "DELETE" if the question is unsalvageable (all options wrong, ambiguous, or factually broken).
+- Use "PASS" ONLY if you independently solved it and got the same answer as marked. Include your brief work in "verification".
+- Use "FAIL" with fixes if the answer is wrong but fixable. You MUST provide the correct_answer and optionally fix options.
+- Use "DELETE" if the question is unsalvageable (ambiguous, multiple correct answers, no correct answer, or factually broken).
 - You MUST verify EVERY question. Do not skip any.
+- When in doubt, mark as FAIL or DELETE rather than PASS. Accuracy is paramount.
 
 Questions to validate:
 ${questionsForReview}`;
 
-  const modelConfigs = [
-    { model: "llama-3.3-70b-versatile", apiKey },
-    { model: "llama-3.1-8b-instant", apiKey: fallbackKey || apiKey },
-  ];
+  // Strategy: Try Lovable AI Gateway (Gemini) first for cross-model validation, then fall back to Groq
+  const LOVABLE_API_URL = "https://api.lovable.dev/v1/chat/completions";
+  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+  
+  const validationAttempts: Array<{
+    url: string;
+    model: string;
+    apiKey: string;
+    label: string;
+  }> = [];
+  
+  // Primary: Lovable AI Gateway with Gemini 2.5 Pro (cross-model validation - different model catches different mistakes)
+  if (lovableApiKey) {
+    validationAttempts.push({
+      url: LOVABLE_API_URL,
+      model: "google/gemini-2.5-pro",
+      apiKey: lovableApiKey,
+      label: "Gemini 2.5 Pro (cross-model)",
+    });
+    validationAttempts.push({
+      url: LOVABLE_API_URL,
+      model: "google/gemini-2.5-flash",
+      apiKey: lovableApiKey,
+      label: "Gemini 2.5 Flash (cross-model fallback)",
+    });
+  }
+  
+  // Fallback: Groq Llama models
+  validationAttempts.push({
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    model: "llama-3.3-70b-versatile",
+    apiKey,
+    label: "Llama 70B (same-family fallback)",
+  });
+  validationAttempts.push({
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    model: "llama-3.1-8b-instant",
+    apiKey: fallbackKey || apiKey,
+    label: "Llama 8B (last resort)",
+  });
 
-  for (const { model, apiKey: key } of modelConfigs) {
+  for (const attempt of validationAttempts) {
     try {
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      console.log(`Validation attempt with ${attempt.label}...`);
+      const response = await fetch(attempt.url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${key}`,
+          Authorization: `Bearer ${attempt.apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model,
+          model: attempt.model,
           messages: [
-            { role: "system", content: "You are an expert academic exam validator. Return ONLY valid JSON array. Validate every single question rigorously." },
+            { role: "system", content: "You are an expert academic exam validator. Return ONLY valid JSON array. Validate every single question rigorously by solving each one yourself. Accuracy is your #1 priority." },
             { role: "user", content: reviewPrompt },
           ],
           temperature: 0.1,
-          max_tokens: 6000,
+          max_tokens: 8000,
         }),
       });
 
       if (!response.ok) {
-        if (response.status === 429) continue;
-        console.warn("Validation API error:", response.status);
+        const errText = await response.text();
+        if (response.status === 429) {
+          console.warn(`Rate limited on ${attempt.label}, trying next...`);
+          continue;
+        }
+        console.warn(`Validation API error on ${attempt.label}:`, response.status, errText.substring(0, 200));
         continue;
       }
 
@@ -364,8 +408,8 @@ ${questionsForReview}`;
       try {
         const results = extractJsonFromResponse(content) as any[];
         if (!Array.isArray(results)) {
-          console.warn("Validation returned non-array, keeping all questions");
-          return questions;
+          console.warn(`${attempt.label} returned non-array, trying next...`);
+          continue;
         }
 
         const validQuestions: Record<string, unknown>[] = [];
@@ -381,9 +425,9 @@ ${questionsForReview}`;
           }
           
           if (result.status === "DELETE") {
-            console.log(`Deleted Q${i + 1}: ${result.reason}`);
+            console.log(`[${attempt.label}] Deleted Q${i + 1}: ${result.reason}`);
             deleted++;
-            continue; // Skip this question entirely
+            continue;
           }
           
           if (result.status === "FAIL") {
@@ -396,20 +440,20 @@ ${questionsForReview}`;
             if (result.fixed_option_b) { q.option_b = result.fixed_option_b; q.optionB = result.fixed_option_b; }
             if (result.fixed_option_c) { q.option_c = result.fixed_option_c; q.optionC = result.fixed_option_c; }
             if (result.fixed_option_d) { q.option_d = result.fixed_option_d; q.optionD = result.fixed_option_d; }
-            console.log(`Fixed Q${i + 1}: ${result.reason}`);
+            console.log(`[${attempt.label}] Fixed Q${i + 1}: ${result.reason}`);
             validQuestions.push(q);
             fixed++;
           }
         }
 
-        console.log(`Validation results: ${passed} passed, ${fixed} fixed, ${deleted} deleted out of ${questions.length}`);
+        console.log(`[${attempt.label}] Validation: ${passed} passed, ${fixed} fixed, ${deleted} deleted out of ${questions.length}`);
         return validQuestions;
       } catch (e) {
-        console.warn("Could not parse validation response, keeping all:", e);
-        return questions;
+        console.warn(`Could not parse ${attempt.label} response, trying next:`, e);
+        continue;
       }
     } catch (e) {
-      console.warn("Validation call failed:", e);
+      console.warn(`${attempt.label} call failed:`, e);
       continue;
     }
   }
