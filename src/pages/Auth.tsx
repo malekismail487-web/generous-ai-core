@@ -40,8 +40,8 @@ export default function Auth() {
 
   // Redirect to language selection if not chosen yet
   useEffect(() => {
-    const hasSelected = localStorage.getItem('language-selected');
-    if (!hasSelected && !user) {
+    const hasSelectedThisTab = sessionStorage.getItem('language-selected-tab');
+    if (!hasSelectedThisTab && !user) {
       navigate('/language', { replace: true });
     }
   }, [navigate, user]);
