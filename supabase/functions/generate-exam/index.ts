@@ -227,10 +227,14 @@ async function validateAndFixQuestions(
   const CHUNK_SIZE = 15;
   const validatedQuestions: Record<string, unknown>[] = [];
   
+  const chunkPromises: Promise<Record<string, unknown>[]>[] = [];
   for (let chunkStart = 0; chunkStart < questions.length; chunkStart += CHUNK_SIZE) {
     const chunk = questions.slice(chunkStart, chunkStart + CHUNK_SIZE);
-    const validatedChunk = await validateChunk(chunk, subject, apiKey);
-    validatedQuestions.push(...validatedChunk);
+    chunkPromises.push(validateChunk(chunk, subject, apiKey));
+  }
+  const chunkResults = await Promise.all(chunkPromises);
+  for (const chunk of chunkResults) {
+    validatedQuestions.push(...chunk);
   }
 
   if (validatedQuestions.length < targetCount) {
@@ -238,10 +242,7 @@ async function validateAndFixQuestions(
     console.log(`Validation removed ${deficit} unfixable questions, attempting replacements...`);
     try {
       const replacements = await generateReplacementQuestions(deficit, subject, apiKey);
-      if (replacements.length > 0) {
-        const validReplacements = await validateChunk(replacements, subject, apiKey);
-        validatedQuestions.push(...validReplacements);
-      }
+      validatedQuestions.push(...replacements);
     } catch (e) {
       console.warn("Replacement generation failed:", e);
     }
@@ -297,8 +298,8 @@ ${questionsForReview}`;
 
   // Use Gemini 2.5 Pro for validation (strongest reasoning model)
   const validationModels = [
-    "google/gemini-2.5-pro",
     "google/gemini-2.5-flash",
+    "google/gemini-2.5-flash-lite",
   ];
 
   for (const model of validationModels) {
@@ -317,7 +318,7 @@ ${questionsForReview}`;
             { role: "user", content: reviewPrompt },
           ],
           temperature: 0.1,
-          max_tokens: 8000,
+          max_tokens: 4000,
         }),
       });
 
@@ -543,6 +544,7 @@ QUESTION COUNT ENFORCEMENT:
       const models = [
         "google/gemini-3-flash-preview",
         "google/gemini-2.5-flash",
+        "google/gemini-2.5-flash-lite",
       ];
       let response: Response | null = null;
 
