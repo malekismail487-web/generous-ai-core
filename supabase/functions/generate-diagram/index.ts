@@ -41,7 +41,7 @@ serve(async (req) => {
     for (let i = 0; i < diagramCount; i++) {
       try {
         // Key pool rotation per diagram
-        const startIdx = Math.floor(Math.random() * geminiKeys.length);
+        const startIdx = 0; // Sequential rotation: key1 → key2 → key3 → key4
         let response: Response | null = null;
 
         for (let k = 0; k < geminiKeys.length; k++) {
