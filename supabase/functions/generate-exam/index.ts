@@ -719,6 +719,12 @@ QUESTION COUNT ENFORCEMENT:
     });
   } catch (error) {
     console.error("Generate exam error:", error);
+    if (error instanceof Error && error.message === "INSUFFICIENT_BALANCE") {
+      return new Response(JSON.stringify({ error: "Your Ling-1T account has insufficient balance. Please top up your credits at ling-1t.ai." }), {
+        status: 402,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (error instanceof Error && error.message === "RATE_LIMITED") {
       return new Response(JSON.stringify({ error: "AI model is busy. Please wait 10-15 seconds and try again." }), {
         status: 429,
