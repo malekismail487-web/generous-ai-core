@@ -570,7 +570,7 @@ QUESTION COUNT ENFORCEMENT:
               Authorization: `Bearer ${GEMINI_API_KEY}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ model: "google/gemini-3-flash-preview", ...aiPayload }),
+            body: JSON.stringify({ model: "gemini-2.0-flash", ...aiPayload }),
           });
           console.log(`Lovable AI response status: ${response.status}`);
           if (response.ok) {
