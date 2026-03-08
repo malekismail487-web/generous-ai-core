@@ -348,44 +348,51 @@ Provide answers with citations when referencing external information.`;
 
     let response: Response | null = null;
 
-    // Key pool rotation with retries
-    const startIdx = 0; // Sequential rotation: key1 → key2 → key3 → key4
-    const maxAttempts = Math.max(geminiKeys.length, 3);
+    // Wave-based key rotation with backoff delays between waves
+    const MAX_WAVES = 3;
+    const WAVE_DELAYS = [15000, 30000, 45000]; // 15s, 30s, 45s between waves
+    let success = false;
 
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const keyIdx = (startIdx + attempt) % geminiKeys.length;
-      console.log(`Chat: trying key ${keyIdx + 1}/${geminiKeys.length} (attempt ${attempt + 1})`);
+    for (let wave = 0; wave < MAX_WAVES && !success; wave++) {
+      if (wave > 0) {
+        const delay = WAVE_DELAYS[wave - 1];
+        console.log(`All ${geminiKeys.length} keys exhausted. Waiting ${delay / 1000}s for rate limit reset (wave ${wave + 1}/${MAX_WAVES})...`);
+        await new Promise(r => setTimeout(r, delay));
+      }
 
-      try {
-        response = await fetch(GEMINI_API_URL, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${geminiKeys[keyIdx]}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "gemini-2.0-flash",
-            messages: allMessages,
-            stream: true,
-            temperature: 0.2,
-          }),
-        });
+      for (let i = 0; i < geminiKeys.length; i++) {
+        console.log(`Chat: trying key ${i + 1}/${geminiKeys.length} (wave ${wave + 1})`);
+        try {
+          response = await fetch(GEMINI_API_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${geminiKeys[i]}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "gemini-2.0-flash",
+              messages: allMessages,
+              stream: true,
+              temperature: 0.2,
+            }),
+          });
 
-        if (response.status === 429) {
-          console.log(`Key ${keyIdx + 1} rate limited, rotating...`);
-          await response.text();
-          continue;
-        }
-        if (response.ok) {
-          console.log(`Using key ${keyIdx + 1}/${geminiKeys.length}`);
+          if (response.status === 429) {
+            console.log(`Key ${i + 1} rate limited, rotating...`);
+            await response.text();
+            continue;
+          }
+          if (response.ok) {
+            console.log(`Using key ${i + 1}/${geminiKeys.length} (wave ${wave + 1})`);
+            success = true;
+            break;
+          }
+          console.warn("Gemini API error:", response.status);
+          success = true; // non-429 error, stop retrying
           break;
-        }
-        console.warn("Gemini API error:", response.status);
-        break;
-      } catch (e) {
-        console.warn("Gemini API fetch error:", e);
-        if (attempt < maxAttempts - 1) {
-          await new Promise((r) => setTimeout(r, 2000));
+        } catch (e) {
+          console.warn("Gemini API fetch error:", e);
+          await new Promise(r => setTimeout(r, 2000));
         }
       }
     }
