@@ -41,35 +41,39 @@ serve(async (req) => {
 
     for (let i = 0; i < diagramCount; i++) {
       try {
-        // Key pool rotation per diagram
-        const startIdx = 0; // Sequential rotation: key1 → key2 → key3 → key4
         let response: Response | null = null;
+        let diagramSuccess = false;
 
-        for (let k = 0; k < geminiKeys.length; k++) {
-          const keyIdx = (startIdx + k) % geminiKeys.length;
-          response = await fetch(GEMINI_API_URL, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${geminiKeys[keyIdx]}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "gemini-2.0-flash",
-              messages: [
-                {
-                  role: "user",
-                  content: `Create a clear, educational diagram about "${topic}" for ${subject} at ${grade || 'general'} level. The diagram should be visually clean, well-labeled, and suitable for studying. Use colors and clear labels.`,
-                },
-              ],
-            }),
-          });
-
-          if (response.status === 429) {
-            console.log(`Key ${keyIdx + 1} rate limited, rotating...`);
-            await response.text();
-            continue;
+        for (let wave = 0; wave < 2 && !diagramSuccess; wave++) {
+          if (wave > 0) {
+            console.log(`Diagram ${i+1}: waiting 15s for rate limit reset...`);
+            await new Promise(r => setTimeout(r, 15000));
           }
-          break;
+          for (let k = 0; k < geminiKeys.length; k++) {
+            response = await fetch(GEMINI_API_URL, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${geminiKeys[k]}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "gemini-2.0-flash",
+                messages: [
+                  {
+                    role: "user",
+                    content: `Create a clear, educational diagram about "${topic}" for ${subject} at ${grade || 'general'} level. The diagram should be visually clean, well-labeled, and suitable for studying. Use colors and clear labels.`,
+                  },
+                ],
+              }),
+            });
+
+            if (response.status === 429) {
+              console.log(`Key ${k + 1} rate limited, rotating...`);
+              await response.text();
+              continue;
+            }
+            diagramSuccess = true;
+            break;
         }
 
         if (!response || !response.ok) {
