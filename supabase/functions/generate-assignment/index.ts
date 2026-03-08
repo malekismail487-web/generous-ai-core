@@ -134,7 +134,7 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "gpt-4o-mini",
+              model: "gpt-4o",
               messages: aiMessages,
               tools: toolDef,
               tool_choice: { type: "function", function: { name: "create_assignment_questions" } },
