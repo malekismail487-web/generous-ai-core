@@ -724,7 +724,7 @@ QUESTION COUNT ENFORCEMENT:
   } catch (error) {
     console.error("Generate exam error:", error);
     if (error instanceof Error && error.message === "PAYMENT_REQUIRED") {
-      return new Response(JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }), {
+      return new Response(JSON.stringify({ error: "Payment required." }), {
         status: 402,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
