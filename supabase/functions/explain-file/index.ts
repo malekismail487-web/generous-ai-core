@@ -129,7 +129,7 @@ ${learningStyle ? `\n## Learning Style Personalization\n${learningStyle}` : ''}`
               stream: true,
             }),
           });
-          if (response.ok) console.log("Using OpenAI fallback: gpt-4o-mini");
+          if (response.ok) console.log("Using OpenAI fallback: gpt-4o");
         } catch (e) {
           console.error("OpenAI fallback error:", e);
         }

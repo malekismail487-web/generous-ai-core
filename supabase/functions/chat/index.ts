@@ -383,7 +383,7 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
             }),
           });
           if (response.ok) {
-            console.log("Using OpenAI fallback: gpt-4o-mini");
+            console.log("Using OpenAI fallback: gpt-4o");
           } else {
             const errText = await response.text();
             console.error("OpenAI fallback error:", response.status, errText);

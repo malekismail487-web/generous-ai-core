@@ -90,7 +90,7 @@ Be strict about content safety since this is a K-12 platform.`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "gpt-4o-mini",
+            model: "gpt-4o",
             messages: moderationMessages,
             temperature: 0.1,
             max_tokens: 200,

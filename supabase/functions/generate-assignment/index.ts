@@ -141,7 +141,7 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
               temperature: 0.85,
             }),
           });
-          if (response.ok) console.log("Using OpenAI fallback: gpt-4o-mini");
+          if (response.ok) console.log("Using OpenAI fallback: gpt-4o");
         } catch (e) {
           console.error("OpenAI fallback error:", e);
         }

@@ -620,7 +620,7 @@ QUESTION COUNT ENFORCEMENT:
                 Authorization: `Bearer ${OPENAI_KEY}`,
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ model: "gpt-4o-mini", ...aiPayload }),
+              body: JSON.stringify({ model: "gpt-4o", ...aiPayload }),
             });
             if (response.ok) console.log("Using OpenAI fallback for exam gen");
           } catch (e) {
