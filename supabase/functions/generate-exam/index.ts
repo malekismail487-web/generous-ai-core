@@ -230,14 +230,20 @@ async function validateAndFixQuestions(
   const CHUNK_SIZE = 15;
   const validatedQuestions: Record<string, unknown>[] = [];
   
-  const chunkPromises: Promise<Record<string, unknown>[]>[] = [];
+  // SEQUENTIAL validation to avoid Gemini rate limits
   for (let chunkStart = 0; chunkStart < questions.length; chunkStart += CHUNK_SIZE) {
     const chunk = questions.slice(chunkStart, chunkStart + CHUNK_SIZE);
-    chunkPromises.push(validateChunk(chunk, subject, apiKey));
-  }
-  const chunkResults = await Promise.all(chunkPromises);
-  for (const chunk of chunkResults) {
-    validatedQuestions.push(...chunk);
+    if (chunkStart > 0) {
+      // Wait between validation calls to respect rate limits
+      await new Promise(r => setTimeout(r, 3000));
+    }
+    try {
+      const validated = await validateChunk(chunk, subject, apiKey);
+      validatedQuestions.push(...validated);
+    } catch (e) {
+      console.warn(`Validation chunk failed, keeping unvalidated:`, e);
+      validatedQuestions.push(...chunk);
+    }
   }
 
   if (validatedQuestions.length < targetCount) {
