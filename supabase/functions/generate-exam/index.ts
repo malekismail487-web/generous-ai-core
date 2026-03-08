@@ -5,61 +5,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-function getGeminiKeys(): string[] {
-  const keys: string[] = [];
-  const key1 = Deno.env.get("GEMINI_API_KEY");
-  if (key1 && key1.trim()) keys.push(key1.trim());
-  const pool = Deno.env.get("GEMINI_API_KEY_POOL");
-  if (pool) {
-    for (const k of pool.split(",")) {
-      const trimmed = k.trim();
-      if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
-    }
-  }
-  console.log(`Gemini key pool: ${keys.length} unique key(s) loaded [${keys.map((k, i) => `Key${i+1}:${k.substring(0,8)}...`).join(', ')}]`);
-  return keys;
-}
-
-// Shared fetch helper: rotates through key pool on 429 with retry waves
-async function geminiPoolFetch(url: string, body: object, keys: string[], lightMode = false): Promise<Response> {
-  const MAX_WAVES = lightMode ? 1 : 3; // Light mode = single pass, no waiting
-  const WAVE_DELAY_MS = [15000, 30000, 45000];
-  let lastResponse: Response | null = null;
-
-  for (let wave = 0; wave < MAX_WAVES; wave++) {
-    if (wave > 0) {
-      const delay = WAVE_DELAY_MS[wave - 1] || 30000;
-      console.log(`All ${keys.length} keys exhausted. Waiting ${delay / 1000}s for rate limit reset (wave ${wave + 1}/${MAX_WAVES})...`);
-      await new Promise(r => setTimeout(r, delay));
-    }
-
-    for (let i = 0; i < keys.length; i++) {
-      try {
-        lastResponse = await fetch(url, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${keys[i]}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        });
-
-        if (lastResponse.status === 429) {
-          console.log(`Key ${i + 1}/${keys.length} rate limited (wave ${wave + 1}), rotating...`);
-          await lastResponse.text();
-          continue;
-        }
-        return lastResponse;
-      } catch (e) {
-        console.warn(`Key ${i + 1} fetch error:`, e);
-        await new Promise(r => setTimeout(r, 2000));
-      }
-    }
-  }
-
-  return lastResponse || new Response(JSON.stringify({ error: "All keys exhausted after retries" }), { status: 429 });
+async function gatewayFetch(body: object, apiKey: string): Promise<Response> {
+  return await fetch(AI_GATEWAY_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
 }
 
 function getVarietyInstructions(): string {
@@ -132,13 +88,8 @@ function extractJsonFromResponse(response: string): unknown {
     if (ch === '"' && (i === 0 || cleaned[i - 1] !== '\\')) {
       let backslashCount = 0;
       let j = i - 1;
-      while (j >= 0 && cleaned[j] === '\\') {
-        backslashCount++;
-        j--;
-      }
-      if (backslashCount % 2 === 0) {
-        inString = !inString;
-      }
+      while (j >= 0 && cleaned[j] === '\\') { backslashCount++; j--; }
+      if (backslashCount % 2 === 0) inString = !inString;
       fixedChars.push(ch);
       i++;
       continue;
@@ -158,34 +109,16 @@ function extractJsonFromResponse(response: string): unknown {
       continue;
     }
     
-    if (inString && ch === '\n') {
-      fixedChars.push('\\');
-      fixedChars.push('n');
-      i++;
-      continue;
-    }
-    if (inString && ch === '\r') {
-      fixedChars.push('\\');
-      fixedChars.push('r');
-      i++;
-      continue;
-    }
-    if (inString && ch === '\t') {
-      fixedChars.push('\\');
-      fixedChars.push('t');
-      i++;
-      continue;
-    }
+    if (inString && ch === '\n') { fixedChars.push('\\', 'n'); i++; continue; }
+    if (inString && ch === '\r') { fixedChars.push('\\', 'r'); i++; continue; }
+    if (inString && ch === '\t') { fixedChars.push('\\', 't'); i++; continue; }
     
     fixedChars.push(ch);
     i++;
   }
   
   cleaned = fixedChars.join('');
-  
-  cleaned = cleaned
-    .replace(/,\s*}/g, "}")
-    .replace(/,\s*]/g, "]");
+  cleaned = cleaned.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
 
   try { return JSON.parse(cleaned); } catch { /* continue */ }
 
@@ -199,9 +132,7 @@ function extractJsonFromResponse(response: string): unknown {
   while (brackets > 0) { cleaned += ']'; brackets--; }
   while (braces > 0) { cleaned += '}'; braces--; }
 
-  cleaned = cleaned
-    .replace(/,\s*}/g, "}")
-    .replace(/,\s*]/g, "]");
+  cleaned = cleaned.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
 
   return JSON.parse(cleaned);
 }
@@ -255,7 +186,7 @@ const examTool = {
               option_c: { type: "string", description: "Option C" },
               option_d: { type: "string", description: "Option D" },
               correct_answer: { type: "string", enum: ["A", "B", "C", "D"], description: "Correct answer letter" },
-              explanation: { type: "string", description: "Brief explanation (1-2 sentences) of WHY the correct answer is right and why the other options are wrong. For math questions, show the key step of the solution." },
+              explanation: { type: "string", description: "Brief explanation of WHY the correct answer is right." },
             },
             required: ["question", "option_a", "option_b", "option_c", "option_d", "correct_answer", "explanation"],
             additionalProperties: false,
@@ -268,17 +199,16 @@ const examTool = {
   },
 };
 
-// ========== SELF-VALIDATION (now uses key pool) ==========
+// ========== SELF-VALIDATION ==========
 async function validateAndFixQuestions(
   questions: Record<string, unknown>[],
   subject: string,
-  keys: string[],
+  apiKey: string,
   targetCount: number
 ): Promise<Record<string, unknown>[]> {
   if (questions.length === 0) return questions;
 
   if (questions.length > targetCount) {
-    console.log(`Trimming ${questions.length} questions to target ${targetCount}`);
     questions = questions.slice(0, targetCount);
   }
 
@@ -288,10 +218,10 @@ async function validateAndFixQuestions(
   for (let chunkStart = 0; chunkStart < questions.length; chunkStart += CHUNK_SIZE) {
     const chunk = questions.slice(chunkStart, chunkStart + CHUNK_SIZE);
     if (chunkStart > 0) {
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise(r => setTimeout(r, 2000));
     }
     try {
-      const validated = await validateChunk(chunk, subject, keys);
+      const validated = await validateChunk(chunk, subject, apiKey);
       validatedQuestions.push(...validated);
     } catch (e) {
       console.warn(`Validation chunk failed, keeping unvalidated:`, e);
@@ -299,11 +229,9 @@ async function validateAndFixQuestions(
     }
   }
 
-  // Skip replacement generation — it causes extra API calls that trigger rate limits.
-  // The generation prompt already has self-verification, so missing 1-2 questions is acceptable.
   if (validatedQuestions.length < targetCount) {
     const deficit = targetCount - validatedQuestions.length;
-    console.log(`Validation removed ${deficit} questions. Skipping replacement to avoid rate limits.`);
+    console.log(`Validation removed ${deficit} questions. Skipping replacement to avoid extra calls.`);
   }
 
   return validatedQuestions.slice(0, targetCount);
@@ -312,7 +240,7 @@ async function validateAndFixQuestions(
 async function validateChunk(
   questions: Record<string, unknown>[],
   subject: string,
-  keys: string[]
+  apiKey: string
 ): Promise<Record<string, unknown>[]> {
   const questionsForReview = questions.map((q, i) => {
     const ca = String(q.correct_answer || q.correctAnswer || "A");
@@ -327,48 +255,35 @@ async function validateChunk(
 
 FOR EACH QUESTION you MUST:
 1. Read the question carefully.
-2. Solve it yourself independently step-by-step. For math: show your arithmetic. For science: verify facts.
+2. Solve it yourself independently step-by-step.
 3. Check if the marked answer matches YOUR answer.
 4. Check that ALL 4 options are distinct, plausible, and well-formed.
 5. Check that EXACTLY ONE option is correct.
-6. For math: verify ALL arithmetic, algebra, and calculations by doing them yourself. Check: addition, multiplication, division, square roots, exponents.
-7. For science: verify all facts are scientifically accurate using established knowledge.
-8. For history/social: verify all dates, names, and events are historically correct.
-9. Verify the question is clear, unambiguous, and answerable from the options given.
-10. Check that no two options are essentially the same answer phrased differently.
 
 Return a JSON array. For EACH question include an entry:
 [
-  {"index": 0, "status": "PASS", "my_answer": "A", "verification": "Brief work showing answer is correct"},
-  {"index": 1, "status": "FAIL", "my_answer": "C", "correct_answer": "C", "fixed_option_a": "...", "fixed_option_b": "...", "fixed_option_c": "...", "fixed_option_d": "...", "reason": "The marked answer was B but solving: [work shown] gives C"},
-  {"index": 2, "status": "DELETE", "reason": "This question is fundamentally flawed: [specific reason]"}
+  {"index": 0, "status": "PASS", "my_answer": "A", "verification": "Brief work"},
+  {"index": 1, "status": "FAIL", "my_answer": "C", "correct_answer": "C", "fixed_option_a": "...", "fixed_option_b": "...", "fixed_option_c": "...", "fixed_option_d": "...", "reason": "explanation"},
+  {"index": 2, "status": "DELETE", "reason": "fundamentally flawed"}
 ]
-
-Rules:
-- Use "PASS" ONLY if you independently solved it and got the same answer as marked.
-- Use "FAIL" with fixes if the answer is wrong but fixable.
-- Use "DELETE" if the question is unsalvageable.
-- You MUST verify EVERY question. Do not skip any.
-- When in doubt, mark as FAIL or DELETE rather than PASS. Accuracy is paramount.
 
 Questions to validate:
 ${questionsForReview}`;
 
-  // Use light mode for validation — single pass, no wave retries
-  const response = await geminiPoolFetch(GEMINI_API_URL, {
-    model: "gemini-2.0-flash",
+  const response = await gatewayFetch({
+    model: "google/gemini-2.5-flash-lite",
     messages: [
-      { role: "system", content: "You are an expert academic exam validator. Return ONLY valid JSON array. Validate every single question rigorously by solving each one yourself. Accuracy is your #1 priority." },
+      { role: "system", content: "You are an expert academic exam validator. Return ONLY valid JSON array." },
       { role: "user", content: reviewPrompt },
     ],
     temperature: 0.1,
     max_tokens: 4000,
-  }, keys, true); // lightMode = true: skip wave retries for validation
+  }, apiKey);
 
   if (!response.ok) {
     console.warn(`Validation API error:`, response.status);
     await response.text();
-    return questions; // Return unvalidated
+    return questions;
   }
 
   const data = await response.json();
@@ -376,10 +291,7 @@ ${questionsForReview}`;
 
   try {
     const results = extractJsonFromResponse(content) as any[];
-    if (!Array.isArray(results)) {
-      console.warn(`AI returned non-array`);
-      return questions;
-    }
+    if (!Array.isArray(results)) return questions;
 
     const validQuestions: Record<string, unknown>[] = [];
     let fixed = 0, deleted = 0, passed = 0;
@@ -387,29 +299,17 @@ ${questionsForReview}`;
     for (let i = 0; i < questions.length; i++) {
       const result = results.find((r: any) => r.index === i);
       
-      if (!result || result.status === "PASS") {
-        validQuestions.push(questions[i]);
-        passed++;
-        continue;
-      }
+      if (!result || result.status === "PASS") { validQuestions.push(questions[i]); passed++; continue; }
       
-      if (result.status === "DELETE") {
-        console.log(`Deleted Q${i + 1}: ${result.reason}`);
-        deleted++;
-        continue;
-      }
+      if (result.status === "DELETE") { console.log(`Deleted Q${i + 1}: ${result.reason}`); deleted++; continue; }
       
       if (result.status === "FAIL") {
         const q = { ...questions[i] };
-        if (result.correct_answer) {
-          q.correct_answer = result.correct_answer;
-          q.correctAnswer = result.correct_answer;
-        }
+        if (result.correct_answer) { q.correct_answer = result.correct_answer; q.correctAnswer = result.correct_answer; }
         if (result.fixed_option_a) { q.option_a = result.fixed_option_a; q.optionA = result.fixed_option_a; }
         if (result.fixed_option_b) { q.option_b = result.fixed_option_b; q.optionB = result.fixed_option_b; }
         if (result.fixed_option_c) { q.option_c = result.fixed_option_c; q.optionC = result.fixed_option_c; }
         if (result.fixed_option_d) { q.option_d = result.fixed_option_d; q.optionD = result.fixed_option_d; }
-        console.log(`Fixed Q${i + 1}: ${result.reason}`);
         validQuestions.push(q);
         fixed++;
       }
@@ -423,52 +323,6 @@ ${questionsForReview}`;
   }
 }
 
-async function generateReplacementQuestions(
-  count: number,
-  subject: string,
-  keys: string[]
-): Promise<Record<string, unknown>[]> {
-  if (count <= 0) return [];
-  
-  const nonce = crypto.randomUUID();
-  const prompt = `Generate EXACTLY ${count} multiple-choice questions for ${subject}. Each must have 4 options (A-D) with exactly one correct answer. These are REPLACEMENT questions, so make them high quality and carefully verified.
-
-CRITICAL: Before writing each answer key, SOLVE the problem yourself. Double-check arithmetic. Verify facts. The answer MUST be correct.
-
-Return using the create_exam tool.
-Nonce: ${nonce}`;
-
-  const response = await geminiPoolFetch(GEMINI_API_URL, {
-    model: "gemini-2.0-flash",
-    messages: [
-      { role: "system", content: `Generate exactly ${count} verified multiple-choice questions for ${subject}.` },
-      { role: "user", content: prompt },
-    ],
-    tools: [examTool],
-    tool_choice: { type: "function", function: { name: "create_exam" } },
-    temperature: 0.8,
-    max_tokens: Math.max(count * 400, 2000),
-  }, keys);
-
-  if (!response.ok) {
-    await response.text();
-    return [];
-  }
-
-  const data = await response.json();
-  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-  let raw: Record<string, unknown>;
-  
-  if (toolCall?.function?.name === "create_exam") {
-    raw = extractJsonFromResponse(toolCall.function.arguments) as Record<string, unknown>;
-  } else {
-    raw = extractJsonFromResponse(data.choices?.[0]?.message?.content || "") as Record<string, unknown>;
-  }
-  
-  const rawQuestions = (raw.questions || []) as Record<string, unknown>[];
-  return rawQuestions.filter(q => q && (q.question || q.questionTitle)).slice(0, count);
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -477,9 +331,9 @@ serve(async (req) => {
   try {
     const { subject, grade, difficulty, count, materials, examType, adaptiveLevel } = await req.json();
 
-    const geminiKeys = getGeminiKeys();
-    if (geminiKeys.length === 0) {
-      throw new Error("No Gemini API keys configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     if (!count || count <= 0) {
@@ -504,64 +358,51 @@ serve(async (req) => {
 
     const generateBatch = async (batchCount: number, batchContext?: string): Promise<Record<string, unknown>[]> => {
       const batchSeed = Math.floor(Math.random() * 1000000);
-      const uniqueId = `${timestamp}-${batchSeed}-${Math.random().toString(36).slice(2, 8)}`;
-
       const antiRepetition = getAntiRepetitionDirective();
       const nonce = crypto.randomUUID();
 
       const mathBalanceRule = isMathSubject
-        ? `\n\nMATH QUESTION BALANCE (CRITICAL): Exactly HALF of your questions must be direct equations/computations (e.g., "Solve: 3x + 7 = 22", "Evaluate: \\int_0^1 x^2 dx", "Find the derivative of f(x) = x^3 + 2x"). The other HALF must be word problems that apply math concepts to real-world scenarios. Do NOT make all questions word problems.`
+        ? `\n\nMATH QUESTION BALANCE (CRITICAL): Exactly HALF must be direct equations/computations. The other HALF must be word problems.`
         : '';
 
       const systemPrompt = `You are an expert exam question generator. Generate EXACTLY ${batchCount} multiple-choice questions. NOT ${batchCount - 1}, NOT ${batchCount + 1}. EXACTLY ${batchCount}.
 
 ABSOLUTE UNIQUENESS REQUIREMENTS:
-- You MUST generate COMPLETELY NOVEL questions that have NEVER appeared in any textbook, past exam, or study guide.
-- NEVER reuse standard example questions. Invent entirely new scenarios, numbers, names, and contexts.
-- Each question must use DIFFERENT numerical values, variable names, and real-world contexts.
+- Generate COMPLETELY NOVEL questions.
+- NEVER reuse standard example questions.
+- Each question must use DIFFERENT numerical values, variable names, and contexts.
 - ${antiRepetition}
-- Vary question structures: definitional, computational, analytical, scenario-based, error-identification, best-answer, negative (which is NOT), and multi-step.
-- For math/science: use random non-round numbers (e.g., 37 instead of 10, 4.7 instead of 5).
-- For reading/language: create original passages and sentences, do NOT quote existing texts.
+- Vary question structures: definitional, computational, analytical, scenario-based, error-identification, best-answer, negative, and multi-step.
+- For math/science: use random non-round numbers.
 - Each question MUST have exactly 4 options (A, B, C, D) with plausible distractors.
-- You MAY use LaTeX math notation freely: \\frac{a}{b}, \\sqrt{x}, \\alpha, \\int, x^{2}, etc.
-- Wrap inline math in $...$ delimiters for clarity.
+- You MAY use LaTeX math notation freely.
 - ${varietyInstructions}${adaptiveLevelHint}${mathBalanceRule}
 
 ANSWER ACCURACY - MANDATORY SELF-VERIFICATION:
-- For EVERY question, you MUST solve it yourself step-by-step BEFORE writing the answer.
-- Double-check every computation: arithmetic, algebra, square roots, fractions.
-- Square root verification: √n = x means x² = n. Always verify. E.g., √144: 12² = 144 ✓
-- For arithmetic: verify by reverse operation. E.g., 15 × 8 = 120: verify 120 ÷ 8 = 15 ✓
-- ALL FOUR options must be plausible, distinct, and NOT obviously wrong.
-- The correct_answer MUST be the letter (A/B/C/D) of the actually correct option.
-- If you cannot verify an answer with certainty, DO NOT include that question.
-- NEVER have a question where NONE of the 4 options is correct.
-- NEVER have a question where MULTIPLE options are correct (unless it says "best answer").
+- For EVERY question, solve it yourself step-by-step BEFORE writing the answer.
+- Double-check every computation.
+- The correct_answer MUST be the letter of the actually correct option.
 
 EXPLANATION REQUIREMENT:
 - For EVERY question, include a brief "explanation" field (1-2 sentences).
-- Explain WHY the correct answer is right and briefly mention why common wrong choices fail.
-- For math questions, show the key calculation step.
 
 QUESTION COUNT ENFORCEMENT:
-- You MUST return EXACTLY ${batchCount} questions in the questions array.
-- Count your questions before returning. If you have more or fewer, adjust.
+- You MUST return EXACTLY ${batchCount} questions.
 
-- Generation nonce (ensures uniqueness): ${nonce}
+- Generation nonce: ${nonce}
 - Random seed: ${batchSeed}`;
 
       let userPrompt = '';
       if (examType === 'SAT_FULL') {
-        userPrompt = `Generate EXACTLY ${batchCount} completely original SAT-style multiple-choice questions. Cover: Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar. Each with 4 options (A-D). CRITICAL: Every single question must be freshly invented with unique numbers, names, and scenarios. Do NOT reproduce any known SAT practice question. Nonce: ${nonce}`;
+        userPrompt = `Generate EXACTLY ${batchCount} completely original SAT-style multiple-choice questions. Cover: Algebra, Geometry, Probability, Statistics, Reading Comprehension, Grammar. Nonce: ${nonce}`;
       } else if (batchContext) {
-        userPrompt = `Generate EXACTLY ${batchCount} BRAND NEW multiple-choice questions based on this study material:\n\n${batchContext}\n\nSubject: ${subject}, Grade: ${grade || 'General'}, Difficulty: ${difficulty}. Each question must have 4 options (A-D).\n\nCRITICAL ANTI-REPETITION RULES:\n- Even though the material is the same as previous requests, you MUST create ENTIRELY DIFFERENT questions.\n- Use different angles, different numerical values, different scenarios, different phrasings.\n- ${antiRepetition}\nNonce: ${nonce}`;
+        userPrompt = `Generate EXACTLY ${batchCount} BRAND NEW multiple-choice questions based on this study material:\n\n${batchContext}\n\nSubject: ${subject}, Grade: ${grade || 'General'}, Difficulty: ${difficulty}.\n${antiRepetition}\nNonce: ${nonce}`;
       } else {
-        userPrompt = `Generate EXACTLY ${batchCount} COMPLETELY ORIGINAL multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover diverse sub-topics. Each question must have 4 options (A-D).\n\nCRITICAL: Do NOT use any standard textbook questions. Create novel questions with unique specific values, original scenarios, and fresh phrasings. ${antiRepetition}\nNonce: ${nonce}`;
+        userPrompt = `Generate EXACTLY ${batchCount} COMPLETELY ORIGINAL multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. ${antiRepetition}\nNonce: ${nonce}`;
       }
 
-      const aiPayload = {
-        model: "gemini-2.0-flash",
+      const response = await gatewayFetch({
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -570,17 +411,13 @@ QUESTION COUNT ENFORCEMENT:
         tool_choice: { type: "function", function: { name: "create_exam" } },
         temperature: 0.9 + Math.random() * 0.1,
         max_tokens: Math.min(Math.max(batchCount * 400, 4000), 16000),
-      };
-
-      // Use key pool rotation for batch generation
-      const response = await geminiPoolFetch(GEMINI_API_URL, aiPayload, geminiKeys);
-      console.log(`Gemini API response status: ${response.status}`);
+      }, LOVABLE_API_KEY);
 
       if (!response.ok) {
         if (response.status === 429) throw new Error("RATE_LIMITED");
         if (response.status === 402) throw new Error("PAYMENT_REQUIRED");
         const errText = await response.text();
-        console.error(`Gemini API failed with ${response.status}: ${errText.substring(0, 300)}`);
+        console.error(`AI Gateway failed with ${response.status}: ${errText.substring(0, 300)}`);
         throw new Error("Failed to generate exam questions");
       }
 
@@ -631,14 +468,14 @@ QUESTION COUNT ENFORCEMENT:
       }
     }
 
-    // ========== AI SELF-VALIDATION STEP (graceful — skipped on rate limit) ==========
-    console.log(`Quick validation attempt (light mode, no heavy retries)...`);
-    await new Promise(r => setTimeout(r, 3000));
+    // ========== AI SELF-VALIDATION STEP ==========
+    console.log(`Quick validation attempt...`);
+    await new Promise(r => setTimeout(r, 2000));
     try {
       allQuestions = await validateAndFixQuestions(
         allQuestions,
         subject || 'General',
-        geminiKeys,
+        LOVABLE_API_KEY,
         count
       );
       console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
@@ -690,15 +527,13 @@ QUESTION COUNT ENFORCEMENT:
   } catch (error) {
     console.error("Generate exam error:", error);
     if (error instanceof Error && error.message === "PAYMENT_REQUIRED") {
-      return new Response(JSON.stringify({ error: "Payment required." }), {
-        status: 402,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "Payment required, please add credits to your workspace." }), {
+        status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (error instanceof Error && error.message === "RATE_LIMITED") {
       return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     return new Response(

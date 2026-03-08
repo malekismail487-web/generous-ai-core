@@ -7,22 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-
-function getGeminiKeys(): string[] {
-  const keys: string[] = [];
-  const key1 = Deno.env.get("GEMINI_API_KEY");
-  if (key1 && key1.trim()) keys.push(key1.trim());
-  const pool = Deno.env.get("GEMINI_API_KEY_POOL");
-  if (pool) {
-    for (const k of pool.split(",")) {
-      const trimmed = k.trim();
-      if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
-    }
-  }
-  console.log(`Gemini key pool: ${keys.length} unique key(s) loaded [${keys.map((k, i) => `Key${i+1}:${k.substring(0,8)}...`).join(', ')}]`);
-  return keys;
-}
+const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -32,9 +17,9 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const geminiKeys = getGeminiKeys();
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-    if (geminiKeys.length === 0 || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!LOVABLE_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return new Response(JSON.stringify({ error: "Not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -76,50 +61,23 @@ Be strict about content safety since this is a K-12 platform.`,
       },
     ];
 
-    // Wave-based key rotation with backoff
-    let response: Response | null = null;
-    const MAX_WAVES = 2; // Moderation is non-blocking, don't wait too long
-    const WAVE_DELAYS = [10000, 20000];
-    let success = false;
+    const response = await fetch(AI_GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: moderationMessages,
+        temperature: 0.1,
+        max_tokens: 200,
+      }),
+    });
 
-    for (let wave = 0; wave < MAX_WAVES && !success; wave++) {
-      if (wave > 0) {
-        const delay = WAVE_DELAYS[wave - 1];
-        console.log(`All keys exhausted. Waiting ${delay / 1000}s (wave ${wave + 1})...`);
-        await new Promise(r => setTimeout(r, delay));
-      }
-      for (let i = 0; i < geminiKeys.length; i++) {
-        console.log(`Trying key ${i + 1}/${geminiKeys.length} (wave ${wave + 1})`);
-        try {
-          response = await fetch(GEMINI_API_URL, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${geminiKeys[i]}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "gemini-2.0-flash-lite",
-              messages: moderationMessages,
-              temperature: 0.1,
-              max_tokens: 200,
-            }),
-          });
-          if (response.status === 429) {
-            console.log(`Key ${i + 1} rate limited, rotating...`);
-            await response.text();
-            continue;
-          }
-          success = true;
-          break;
-        } catch (e) {
-          console.warn("Fetch error:", e);
-        }
-      }
-    }
-
-    if (!response || !response.ok) {
-      console.error("All keys exhausted or error:", response?.status);
-      await response?.text();
+    if (!response.ok) {
+      console.error("AI Gateway error for scan:", response.status);
+      await response.text();
       return new Response(JSON.stringify({ flagged: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

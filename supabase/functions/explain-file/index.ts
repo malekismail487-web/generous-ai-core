@@ -5,22 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-
-function getGeminiKeys(): string[] {
-  const keys: string[] = [];
-  const key1 = Deno.env.get("GEMINI_API_KEY");
-  if (key1 && key1.trim()) keys.push(key1.trim());
-  const pool = Deno.env.get("GEMINI_API_KEY_POOL");
-  if (pool) {
-    for (const k of pool.split(",")) {
-      const trimmed = k.trim();
-      if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
-    }
-  }
-  console.log(`Gemini key pool: ${keys.length} unique key(s) loaded [${keys.map((k, i) => `Key${i+1}:${k.substring(0,8)}...`).join(', ')}]`);
-  return keys;
-}
+const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -30,9 +15,9 @@ serve(async (req) => {
   try {
     const { fileContent, fileName, adaptiveLevel, learningStyle, customPrompt } = await req.json();
     
-    const geminiKeys = getGeminiKeys();
-    if (geminiKeys.length === 0) {
-      throw new Error("No Gemini API keys configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     if (!fileContent) {
@@ -86,55 +71,33 @@ ${learningStyle ? `\n## Learning Style Personalization\n${learningStyle}` : ''}`
       { role: "user", content: `File: "${fileName}"\n\nContent:\n${fileContent}` },
     ];
 
-    let response: Response | null = null;
-    const MAX_WAVES = 3;
-    const WAVE_DELAYS = [15000, 30000, 45000];
-    let success = false;
+    const response = await fetch(AI_GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: aiMessages,
+        temperature: 0.7,
+        stream: true,
+      }),
+    });
 
-    for (let wave = 0; wave < MAX_WAVES && !success; wave++) {
-      if (wave > 0) {
-        const delay = WAVE_DELAYS[wave - 1];
-        console.log(`All keys exhausted. Waiting ${delay / 1000}s (wave ${wave + 1}/${MAX_WAVES})...`);
-        await new Promise(r => setTimeout(r, delay));
-      }
-      for (let i = 0; i < geminiKeys.length; i++) {
-        console.log(`Trying key ${i + 1}/${geminiKeys.length} (wave ${wave + 1})`);
-        try {
-          response = await fetch(GEMINI_API_URL, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${geminiKeys[i]}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "gemini-2.0-flash",
-              messages: aiMessages,
-              temperature: 0.7,
-              stream: true,
-            }),
-          });
-          if (response.status === 429) {
-            console.log(`Key ${i + 1} rate limited, rotating...`);
-            await response.text();
-            continue;
-          }
-          success = true;
-          break;
-        } catch (e) {
-          console.warn("Fetch error:", e);
-          await new Promise(r => setTimeout(r, 2000));
-        }
-      }
-    }
-
-    if (!response || !response.ok) {
-      if (response?.status === 429) {
+    if (!response.ok) {
+      if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errorText = await response?.text() || "No response";
-      console.error("Gemini API failed:", response?.status, errorText);
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Payment required, please add credits to your workspace." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const errorText = await response.text();
+      console.error("AI Gateway failed:", response.status, errorText);
       return new Response(JSON.stringify({ error: "AI error" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

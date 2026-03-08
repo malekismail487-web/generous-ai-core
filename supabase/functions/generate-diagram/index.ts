@@ -6,22 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-
-function getGeminiKeys(): string[] {
-  const keys: string[] = [];
-  const key1 = Deno.env.get("GEMINI_API_KEY");
-  if (key1 && key1.trim()) keys.push(key1.trim());
-  const pool = Deno.env.get("GEMINI_API_KEY_POOL");
-  if (pool) {
-    for (const k of pool.split(",")) {
-      const trimmed = k.trim();
-      if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
-    }
-  }
-  console.log(`Gemini key pool: ${keys.length} unique key(s) loaded [${keys.map((k, i) => `Key${i+1}:${k.substring(0,8)}...`).join(', ')}]`);
-  return keys;
-}
+const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -31,9 +16,9 @@ serve(async (req) => {
   try {
     const { subject, topic, grade, count } = await req.json();
 
-    const geminiKeys = getGeminiKeys();
-    if (geminiKeys.length === 0) {
-      throw new Error("No Gemini API keys configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     const diagramCount = Math.min(count || 2, 3);
@@ -41,43 +26,30 @@ serve(async (req) => {
 
     for (let i = 0; i < diagramCount; i++) {
       try {
-        let response: Response | null = null;
-        let diagramSuccess = false;
-
-        for (let wave = 0; wave < 2 && !diagramSuccess; wave++) {
-          if (wave > 0) {
-            console.log(`Diagram ${i+1}: waiting 15s for rate limit reset...`);
-            await new Promise(r => setTimeout(r, 15000));
-          }
-          for (let k = 0; k < geminiKeys.length; k++) {
-            response = await fetch(GEMINI_API_URL, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${geminiKeys[k]}`,
-                "Content-Type": "application/json",
+        const response = await fetch(AI_GATEWAY_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              {
+                role: "user",
+                content: `Create a clear, educational diagram about "${topic}" for ${subject} at ${grade || 'general'} level. The diagram should be visually clean, well-labeled, and suitable for studying. Use colors and clear labels.`,
               },
-              body: JSON.stringify({
-                model: "gemini-2.0-flash",
-                messages: [
-                  {
-                    role: "user",
-                    content: `Create a clear, educational diagram about "${topic}" for ${subject} at ${grade || 'general'} level. The diagram should be visually clean, well-labeled, and suitable for studying. Use colors and clear labels.`,
-                  },
-                ],
-              }),
-            });
+            ],
+          }),
+        });
 
-            if (response.status === 429) {
-              console.log(`Key ${k + 1} rate limited, rotating...`);
-              await response.text();
-              continue;
+        if (!response.ok) {
+          console.warn(`Diagram generation ${i + 1} failed:`, response.status);
+          if (response.status === 429 || response.status === 402) {
+            await response.text();
+            break;
           }
-        }
-        }
-
-        if (!response || !response.ok) {
-          console.warn(`Diagram generation ${i + 1} failed:`, response?.status);
-          await response?.text();
+          await response.text();
           continue;
         }
 
