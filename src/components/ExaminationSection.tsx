@@ -469,6 +469,7 @@ export function ExaminationSection() {
 
         setExamState(createInitialExamState(fixedExam));
         setViewState('exam');
+        setIsLoading(false);
         return; // Success — exit the retry loop
       } catch (error) {
         if (attempt === MAX_CLIENT_RETRIES - 1 || (error instanceof Error && !error.message.includes('Rate'))) {
