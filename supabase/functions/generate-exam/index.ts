@@ -300,11 +300,16 @@ Rules:
 Questions to validate:
 ${questionsForReview}`;
 
-  // Use Gemini 2.5 Pro for validation (strongest reasoning model)
+  // Use validation models - try Lovable first, then OpenAI fallback
   const validationModels = [
-    "google/gemini-2.5-flash",
-    "google/gemini-2.5-flash-lite",
+    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash" },
+    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash-lite" },
   ];
+  
+  const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (OPENAI_KEY) {
+    validationModels.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o-mini" });
+  }
 
   for (const model of validationModels) {
     try {
