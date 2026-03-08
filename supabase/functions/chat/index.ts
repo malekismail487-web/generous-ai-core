@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const LOVABLE_API_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 async function getAdaptiveProfile(authHeader: string | null): Promise<{ learningPace?: string; iqData?: any; learningStylePrompt?: string } | null> {
   if (!authHeader) return null;
