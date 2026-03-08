@@ -5,8 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LOVABLE_API_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+const ZENMUX_API_URL = "https://zenmux.ai/api/v1/chat/completions";
 
 function getVarietyInstructions(): string {
   const styles = [
@@ -214,7 +213,7 @@ const examTool = {
   },
 };
 
-// ========== ENHANCED SELF-VALIDATION ==========
+// ========== SELF-VALIDATION ==========
 async function validateAndFixQuestions(
   questions: Record<string, unknown>[],
   subject: string,
@@ -300,29 +299,18 @@ Rules:
 Questions to validate:
 ${questionsForReview}`;
 
-  // Use validation models - try OpenAI first, then Lovable fallback
-  const validationModels: { url: string; key: string; model: string }[] = [];
-  
-  const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
-  if (OPENAI_KEY) {
-    validationModels.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o" });
-  }
-  validationModels.push(
-    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash" },
-    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash-lite" },
-  );
-
-  for (const { url, key, model } of validationModels) {
+  // Use Ling-1T via ZenMux for validation
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      console.log(`Validation attempt with ${model}...`);
-      const response = await fetch(url, {
+      console.log(`Validation attempt ${attempt + 1} with Ling-1T...`);
+      const response = await fetch(ZENMUX_API_URL, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${key}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model,
+          model: "inclusionai/ling-1t",
           messages: [
             { role: "system", content: "You are an expert academic exam validator. Return ONLY valid JSON array. Validate every single question rigorously by solving each one yourself. Accuracy is your #1 priority." },
             { role: "user", content: reviewPrompt },
@@ -333,16 +321,12 @@ ${questionsForReview}`;
       });
 
       if (!response.ok) {
-        const errText = await response.text();
         if (response.status === 429) {
-          console.warn(`Rate limited on ${model}, trying next...`);
+          console.warn(`Rate limited, retrying...`);
+          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 2000));
           continue;
         }
-        if (response.status === 402) {
-          console.warn(`Credits exhausted on ${model}, trying next...`);
-          continue;
-        }
-        console.warn(`Validation API error on ${model}:`, response.status, errText.substring(0, 200));
+        console.warn(`Validation API error:`, response.status);
         continue;
       }
 
@@ -352,7 +336,7 @@ ${questionsForReview}`;
       try {
         const results = extractJsonFromResponse(content) as any[];
         if (!Array.isArray(results)) {
-          console.warn(`${model} returned non-array, trying next...`);
+          console.warn(`Ling-1T returned non-array, retrying...`);
           continue;
         }
 
@@ -369,7 +353,7 @@ ${questionsForReview}`;
           }
           
           if (result.status === "DELETE") {
-            console.log(`[${model}] Deleted Q${i + 1}: ${result.reason}`);
+            console.log(`Deleted Q${i + 1}: ${result.reason}`);
             deleted++;
             continue;
           }
@@ -384,20 +368,20 @@ ${questionsForReview}`;
             if (result.fixed_option_b) { q.option_b = result.fixed_option_b; q.optionB = result.fixed_option_b; }
             if (result.fixed_option_c) { q.option_c = result.fixed_option_c; q.optionC = result.fixed_option_c; }
             if (result.fixed_option_d) { q.option_d = result.fixed_option_d; q.optionD = result.fixed_option_d; }
-            console.log(`[${model}] Fixed Q${i + 1}: ${result.reason}`);
+            console.log(`Fixed Q${i + 1}: ${result.reason}`);
             validQuestions.push(q);
             fixed++;
           }
         }
 
-        console.log(`[${model}] Validation: ${passed} passed, ${fixed} fixed, ${deleted} deleted out of ${questions.length}`);
+        console.log(`Validation: ${passed} passed, ${fixed} fixed, ${deleted} deleted out of ${questions.length}`);
         return validQuestions;
       } catch (e) {
-        console.warn(`Could not parse ${model} response, trying next:`, e);
+        console.warn(`Could not parse response, retrying:`, e);
         continue;
       }
     } catch (e) {
-      console.warn(`${model} call failed:`, e);
+      console.warn(`Validation call failed:`, e);
       continue;
     }
   }
@@ -421,27 +405,16 @@ CRITICAL: Before writing each answer key, SOLVE the problem yourself. Double-che
 Return using the create_exam tool.
 Nonce: ${nonce}`;
 
-  // Try OpenAI first, then Lovable fallback
-  const models: { url: string; key: string; model: string }[] = [];
-  const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
-  if (OPENAI_KEY) {
-    models.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o" });
-  }
-  models.push(
-    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-3-flash-preview" },
-    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash" },
-  );
-
-  for (const { url, key, model } of models) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const response = await fetch(url, {
+      const response = await fetch(ZENMUX_API_URL, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${key}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model,
+          model: "inclusionai/ling-1t",
           messages: [
             { role: "system", content: `Generate exactly ${count} verified multiple-choice questions for ${subject}.` },
             { role: "user", content: prompt },
@@ -454,7 +427,10 @@ Nonce: ${nonce}`;
       });
 
       if (!response.ok) {
-        if (response.status === 402) { console.warn(`Credits exhausted on ${model}, trying next...`); continue; }
+        if (response.status === 429) {
+          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 2000));
+          continue;
+        }
         continue;
       }
       const data = await response.json();
@@ -485,9 +461,9 @@ serve(async (req) => {
   try {
     const { subject, grade, difficulty, count, materials, examType, adaptiveLevel } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const ZENMUX_API_KEY = Deno.env.get("ZENMUX_API_KEY");
+    if (!ZENMUX_API_KEY) {
+      throw new Error("ZENMUX_API_KEY is not configured");
     }
 
     if (!count || count <= 0) {
@@ -539,7 +515,7 @@ ABSOLUTE UNIQUENESS REQUIREMENTS:
 ANSWER ACCURACY - MANDATORY SELF-VERIFICATION:
 - For EVERY question, you MUST solve it yourself step-by-step BEFORE writing the answer.
 - Double-check every computation: arithmetic, algebra, square roots, fractions.
-- For square root questions: verify √n by checking n = answer². E.g., √144: 12² = 144 ✓
+- Square root verification: √n = x means x² = n. Always verify. E.g., √144: 12² = 144 ✓
 - For arithmetic: verify by reverse operation. E.g., 15 × 8 = 120: verify 120 ÷ 8 = 15 ✓
 - ALL FOUR options must be plausible, distinct, and NOT obviously wrong.
 - The correct_answer MUST be the letter (A/B/C/D) of the actually correct option.
@@ -581,56 +557,33 @@ QUESTION COUNT ENFORCEMENT:
 
       let response: Response | null = null;
 
-      // PRIMARY: OpenAI gpt-4o
-      const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
-      console.log(`OpenAI key present: ${!!OPENAI_KEY}, key length: ${OPENAI_KEY?.length || 0}`);
-      if (OPENAI_KEY) {
+      // Use Ling-1T via ZenMux API with retries
+      for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          response = await fetch(OPENAI_API_URL, {
+          response = await fetch(ZENMUX_API_URL, {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${OPENAI_KEY}`,
+              Authorization: `Bearer ${ZENMUX_API_KEY}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ model: "gpt-4o", ...aiPayload }),
+            body: JSON.stringify({ model: "inclusionai/ling-1t", ...aiPayload }),
           });
-          console.log(`OpenAI response status: ${response.status}`);
+          console.log(`ZenMux response status: ${response.status}`);
           if (response.ok) {
-            console.log(`Using primary: OpenAI gpt-4o for batch of ${batchCount}`);
-          } else {
-            const errText = await response.text();
-            console.error(`OpenAI failed with ${response.status}: ${errText.substring(0, 300)}`);
-            response = null; // Reset so fallback can try
+            console.log(`Using Ling-1T for batch of ${batchCount}`);
+            break;
           }
-        } catch (e) {
-          console.warn("OpenAI network error:", e);
-          response = null;
-        }
-      } else {
-        console.warn("OPENAI_API_KEY not found in secrets");
-      }
-
-      // FALLBACK: Lovable AI Gateway
-      if (!response || !response.ok) {
-        const models = [
-          "google/gemini-3-flash-preview",
-          "google/gemini-2.5-flash",
-          "google/gemini-2.5-flash-lite",
-        ];
-        for (const model of models) {
-          for (let attempt = 0; attempt < 3; attempt++) {
-            response = await fetch(LOVABLE_API_URL, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${LOVABLE_API_KEY}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ model, ...aiPayload }),
-            });
-            if (response.status !== 429) break;
+          if (response.status === 429) {
             await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 2000));
+            continue;
           }
-          if (response && response.ok) { console.log(`Using fallback: ${model}`); break; }
+          const errText = await response.text();
+          console.error(`ZenMux failed with ${response.status}: ${errText.substring(0, 300)}`);
+          response = null;
+        } catch (e) {
+          console.warn("ZenMux network error:", e);
+          response = null;
+          if (attempt < 2) await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 2000));
         }
       }
 
@@ -709,7 +662,7 @@ QUESTION COUNT ENFORCEMENT:
     allQuestions = await validateAndFixQuestions(
       allQuestions,
       subject || 'General',
-      LOVABLE_API_KEY!,
+      ZENMUX_API_KEY!,
       count
     );
     console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
@@ -757,7 +710,7 @@ QUESTION COUNT ENFORCEMENT:
   } catch (error) {
     console.error("Generate exam error:", error);
     if (error instanceof Error && error.message === "RATE_LIMITED") {
-      return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
+      return new Response(JSON.stringify({ error: "AI model is busy. Please wait 10-15 seconds and try again." }), {
         status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
