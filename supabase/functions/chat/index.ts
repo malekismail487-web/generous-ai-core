@@ -376,14 +376,14 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "gpt-4o-mini",
+              model: "gpt-4o",
               messages: allMessages,
               stream: true,
               temperature: 0.2,
             }),
           });
           if (response.ok) {
-            console.log("Using OpenAI fallback: gpt-4o-mini");
+            console.log("Using OpenAI fallback: gpt-4o");
           } else {
             const errText = await response.text();
             console.error("OpenAI fallback error:", response.status, errText);

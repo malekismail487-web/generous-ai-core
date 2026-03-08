@@ -308,7 +308,7 @@ ${questionsForReview}`;
   
   const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
   if (OPENAI_KEY) {
-    validationModels.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o-mini" });
+    validationModels.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o" });
   }
 
   for (const { url, key, model } of validationModels) {
@@ -426,7 +426,7 @@ Nonce: ${nonce}`;
   ];
   const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
   if (OPENAI_KEY) {
-    models.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o-mini" });
+    models.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o" });
   }
 
   for (const { url, key, model } of models) {
@@ -620,7 +620,7 @@ QUESTION COUNT ENFORCEMENT:
                 Authorization: `Bearer ${OPENAI_KEY}`,
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ model: "gpt-4o-mini", ...aiPayload }),
+              body: JSON.stringify({ model: "gpt-4o", ...aiPayload }),
             });
             if (response.ok) console.log("Using OpenAI fallback for exam gen");
           } catch (e) {

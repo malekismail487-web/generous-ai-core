@@ -123,13 +123,13 @@ ${learningStyle ? `\n## Learning Style Personalization\n${learningStyle}` : ''}`
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "gpt-4o-mini",
+              model: "gpt-4o",
               messages: aiMessages,
               temperature: 0.7,
               stream: true,
             }),
           });
-          if (response.ok) console.log("Using OpenAI fallback: gpt-4o-mini");
+          if (response.ok) console.log("Using OpenAI fallback: gpt-4o");
         } catch (e) {
           console.error("OpenAI fallback error:", e);
         }
