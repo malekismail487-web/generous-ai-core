@@ -583,6 +583,7 @@ QUESTION COUNT ENFORCEMENT:
 
       // PRIMARY: OpenAI gpt-4o
       const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
+      console.log(`OpenAI key present: ${!!OPENAI_KEY}, key length: ${OPENAI_KEY?.length || 0}`);
       if (OPENAI_KEY) {
         try {
           response = await fetch(OPENAI_API_URL, {
@@ -593,10 +594,20 @@ QUESTION COUNT ENFORCEMENT:
             },
             body: JSON.stringify({ model: "gpt-4o", ...aiPayload }),
           });
-          if (response.ok) console.log(`Using primary: OpenAI gpt-4o for batch of ${batchCount}`);
+          console.log(`OpenAI response status: ${response.status}`);
+          if (response.ok) {
+            console.log(`Using primary: OpenAI gpt-4o for batch of ${batchCount}`);
+          } else {
+            const errText = await response.text();
+            console.error(`OpenAI failed with ${response.status}: ${errText.substring(0, 300)}`);
+            response = null; // Reset so fallback can try
+          }
         } catch (e) {
-          console.warn("OpenAI error:", e);
+          console.warn("OpenAI network error:", e);
+          response = null;
         }
+      } else {
+        console.warn("OPENAI_API_KEY not found in secrets");
       }
 
       // FALLBACK: Lovable AI Gateway
