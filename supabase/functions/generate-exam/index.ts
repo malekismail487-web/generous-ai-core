@@ -676,7 +676,7 @@ QUESTION COUNT ENFORCEMENT:
     allQuestions = await validateAndFixQuestions(
       allQuestions,
       subject || 'General',
-      LOVABLE_API_KEY!,
+      GEMINI_API_KEY!,
       count
     );
     console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
