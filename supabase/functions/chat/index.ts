@@ -320,6 +320,7 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
     ];
 
     let response: Response | null = null;
+    let hit402 = false;
 
     for (const model of geminiModels) {
       for (let attempt = 0; attempt < 2; attempt++) {
@@ -346,9 +347,8 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
           }
 
           if (response.status === 402) {
-            return new Response(JSON.stringify({ error: "AI usage limit reached. Please add credits to continue." }), {
-              status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
+            hit402 = true;
+            break;
           }
 
           if (response.ok) {
@@ -359,13 +359,50 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
           console.warn(`Gemini fetch error (${model}):`, e);
         }
       }
+      if (hit402) break;
       if (response && response.ok) break;
+    }
+
+    // Fallback to OpenAI if Lovable AI credits exhausted (402)
+    if (hit402 || (!response?.ok && !response?.status)) {
+      const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+      if (OPENAI_API_KEY) {
+        console.log("Lovable AI credits exhausted, falling back to OpenAI...");
+        try {
+          response = await fetch(OPENAI_API_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${OPENAI_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "gpt-4o-mini",
+              messages: allMessages,
+              stream: true,
+              temperature: 0.2,
+            }),
+          });
+          if (response.ok) {
+            console.log("Using OpenAI fallback: gpt-4o-mini");
+          } else {
+            const errText = await response.text();
+            console.error("OpenAI fallback error:", response.status, errText);
+          }
+        } catch (e) {
+          console.error("OpenAI fallback fetch error:", e);
+        }
+      }
     }
 
     if (!response || !response.ok) {
       if (response?.status === 429) {
         return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (hit402 && !Deno.env.get("OPENAI_API_KEY")) {
+        return new Response(JSON.stringify({ error: "AI usage limit reached and no fallback API key configured." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const errorText = await response?.text() || "No response";
