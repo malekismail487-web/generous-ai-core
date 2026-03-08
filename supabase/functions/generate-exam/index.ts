@@ -420,10 +420,14 @@ CRITICAL: Before writing each answer key, SOLVE the problem yourself. Double-che
 Return using the create_exam tool.
 Nonce: ${nonce}`;
 
-  const models = [
-    "google/gemini-3-flash-preview",
-    "google/gemini-2.5-flash",
+  const models: { url: string; key: string; model: string }[] = [
+    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-3-flash-preview" },
+    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash" },
   ];
+  const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (OPENAI_KEY) {
+    models.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o-mini" });
+  }
 
   for (const model of models) {
     try {
