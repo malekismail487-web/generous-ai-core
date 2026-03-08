@@ -429,12 +429,12 @@ Nonce: ${nonce}`;
     models.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o-mini" });
   }
 
-  for (const model of models) {
+  for (const { url, key, model } of models) {
     try {
-      const response = await fetch(LOVABLE_API_URL, {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${key}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -450,7 +450,10 @@ Nonce: ${nonce}`;
         }),
       });
 
-      if (!response.ok) continue;
+      if (!response.ok) {
+        if (response.status === 402) { console.warn(`Credits exhausted on ${model}, trying next...`); continue; }
+        continue;
+      }
       const data = await response.json();
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
       let raw: Record<string, unknown>;
