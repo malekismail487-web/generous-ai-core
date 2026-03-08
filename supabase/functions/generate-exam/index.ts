@@ -299,15 +299,11 @@ async function validateAndFixQuestions(
     }
   }
 
+  // Skip replacement generation — it causes extra API calls that trigger rate limits.
+  // The generation prompt already has self-verification, so missing 1-2 questions is acceptable.
   if (validatedQuestions.length < targetCount) {
     const deficit = targetCount - validatedQuestions.length;
-    console.log(`Validation removed ${deficit} unfixable questions, attempting replacements...`);
-    try {
-      const replacements = await generateReplacementQuestions(deficit, subject, keys);
-      validatedQuestions.push(...replacements);
-    } catch (e) {
-      console.warn("Replacement generation failed:", e);
-    }
+    console.log(`Validation removed ${deficit} questions. Skipping replacement to avoid rate limits.`);
   }
 
   return validatedQuestions.slice(0, targetCount);
