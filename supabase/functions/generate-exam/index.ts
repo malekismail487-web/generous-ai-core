@@ -595,7 +595,7 @@ QUESTION COUNT ENFORCEMENT:
           response = null;
         } catch (e) {
           if (e instanceof Error && e.message === "PAYMENT_REQUIRED") throw e;
-          console.warn("Lovable AI network error:", e);
+          console.warn("Gemini API network error:", e);
           response = null;
           if (attempt < 2) await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 3000));
         }
