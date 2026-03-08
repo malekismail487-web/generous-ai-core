@@ -8,6 +8,7 @@ const corsHeaders = {
 };
 
 const LOVABLE_API_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -37,19 +38,10 @@ serve(async (req) => {
     // Truncate content for analysis
     const textToAnalyze = String(content).substring(0, 4000);
 
-    // Use Gemini via Lovable AI Gateway for content moderation
-    const response = await fetch(LOVABLE_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
-          {
-            role: "system",
-            content: `You are a content moderation AI for an educational platform used by students and teachers. Analyze the following content and determine if it is inappropriate, malicious, or harmful. Consider:
+    const moderationMessages = [
+      {
+        role: "system",
+        content: `You are a content moderation AI for an educational platform used by students and teachers. Analyze the following content and determine if it is inappropriate, malicious, or harmful. Consider:
 - Profanity, hate speech, slurs, or offensive language
 - Bullying, threats, or harassment
 - Sexual or explicit content
@@ -64,16 +56,48 @@ Respond with a JSON object:
 
 If the content is normal educational material, respond with {"flagged": false}.
 Be strict about content safety since this is a K-12 platform.`,
-          },
-          {
-            role: "user",
-            content: `Analyze this ${content_type.replace("_", " ")} content:\n\n${textToAnalyze}`,
-          },
-        ],
+      },
+      {
+        role: "user",
+        content: `Analyze this ${content_type.replace("_", " ")} content:\n\n${textToAnalyze}`,
+      },
+    ];
+
+    // Use Gemini via Lovable AI Gateway for content moderation
+    let response = await fetch(LOVABLE_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: moderationMessages,
         temperature: 0.1,
         max_tokens: 200,
       }),
     });
+
+    // Fallback to OpenAI if 402
+    if (response.status === 402) {
+      const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+      if (OPENAI_API_KEY) {
+        console.log("Scan-content: falling back to OpenAI...");
+        response = await fetch(OPENAI_API_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: moderationMessages,
+            temperature: 0.1,
+            max_tokens: 200,
+          }),
+        });
+      }
+    }
 
     if (!response.ok) {
       console.error("AI moderation error:", response.status);

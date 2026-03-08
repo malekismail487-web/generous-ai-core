@@ -6,6 +6,7 @@ const corsHeaders = {
 };
 
 const LOVABLE_API_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -84,6 +85,12 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
       "google/gemini-2.5-flash",
     ];
     let response: Response | null = null;
+    let hit402 = false;
+
+    const aiMessages = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ];
 
     for (const model of models) {
       for (let attempt = 0; attempt < 3; attempt++) {
@@ -95,23 +102,49 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
           },
           body: JSON.stringify({
             model,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt },
-            ],
+            messages: aiMessages,
             tools: toolDef,
             tool_choice: { type: "function", function: { name: "create_assignment_questions" } },
             temperature: 0.85 + Math.random() * 0.1,
           }),
         });
+        if (response.status === 402) { hit402 = true; break; }
         if (response.status !== 429) break;
         const waitMs = Math.pow(2, attempt) * 2000;
         console.log(`Rate limited on ${model}, retrying in ${waitMs}ms`);
         await new Promise(r => setTimeout(r, waitMs));
       }
+      if (hit402) break;
       if (response && response.status !== 429) {
         console.log(`Using model: ${model}`);
         break;
+      }
+    }
+
+    // Fallback to OpenAI if 402
+    if (hit402 || (!response?.ok && !response?.status)) {
+      const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+      if (OPENAI_API_KEY) {
+        console.log("Falling back to OpenAI...");
+        try {
+          response = await fetch(OPENAI_API_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${OPENAI_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "gpt-4o-mini",
+              messages: aiMessages,
+              tools: toolDef,
+              tool_choice: { type: "function", function: { name: "create_assignment_questions" } },
+              temperature: 0.85,
+            }),
+          });
+          if (response.ok) console.log("Using OpenAI fallback: gpt-4o-mini");
+        } catch (e) {
+          console.error("OpenAI fallback error:", e);
+        }
       }
     }
 
@@ -122,8 +155,8 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response?.status === 402) {
-        return new Response(JSON.stringify({ error: "AI usage limit reached. Please add credits to continue." }), {
+      if (hit402 && !Deno.env.get("OPENAI_API_KEY")) {
+        return new Response(JSON.stringify({ error: "AI usage limit reached and no fallback configured." }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

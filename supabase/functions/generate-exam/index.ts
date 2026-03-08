@@ -6,6 +6,7 @@ const corsHeaders = {
 };
 
 const LOVABLE_API_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 function getVarietyInstructions(): string {
   const styles = [
@@ -299,19 +300,24 @@ Rules:
 Questions to validate:
 ${questionsForReview}`;
 
-  // Use Gemini 2.5 Pro for validation (strongest reasoning model)
+  // Use validation models - try Lovable first, then OpenAI fallback
   const validationModels = [
-    "google/gemini-2.5-flash",
-    "google/gemini-2.5-flash-lite",
+    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash" },
+    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash-lite" },
   ];
+  
+  const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (OPENAI_KEY) {
+    validationModels.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o-mini" });
+  }
 
-  for (const model of validationModels) {
+  for (const { url, key, model } of validationModels) {
     try {
       console.log(`Validation attempt with ${model}...`);
-      const response = await fetch(LOVABLE_API_URL, {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${key}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -329,6 +335,10 @@ ${questionsForReview}`;
         const errText = await response.text();
         if (response.status === 429) {
           console.warn(`Rate limited on ${model}, trying next...`);
+          continue;
+        }
+        if (response.status === 402) {
+          console.warn(`Credits exhausted on ${model}, trying next...`);
           continue;
         }
         console.warn(`Validation API error on ${model}:`, response.status, errText.substring(0, 200));
@@ -410,17 +420,21 @@ CRITICAL: Before writing each answer key, SOLVE the problem yourself. Double-che
 Return using the create_exam tool.
 Nonce: ${nonce}`;
 
-  const models = [
-    "google/gemini-3-flash-preview",
-    "google/gemini-2.5-flash",
+  const models: { url: string; key: string; model: string }[] = [
+    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-3-flash-preview" },
+    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash" },
   ];
+  const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (OPENAI_KEY) {
+    models.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o-mini" });
+  }
 
-  for (const model of models) {
+  for (const { url, key, model } of models) {
     try {
-      const response = await fetch(LOVABLE_API_URL, {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${key}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -436,7 +450,10 @@ Nonce: ${nonce}`;
         }),
       });
 
-      if (!response.ok) continue;
+      if (!response.ok) {
+        if (response.status === 402) { console.warn(`Credits exhausted on ${model}, trying next...`); continue; }
+        continue;
+      }
       const data = await response.json();
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
       let raw: Record<string, unknown>;
@@ -555,6 +572,18 @@ QUESTION COUNT ENFORCEMENT:
         "google/gemini-2.5-flash-lite",
       ];
       let response: Response | null = null;
+      let hit402 = false;
+
+      const aiPayload = {
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        tools: [examTool],
+        tool_choice: { type: "function", function: { name: "create_exam" } },
+        temperature: 0.9 + Math.random() * 0.1,
+        max_tokens: Math.min(Math.max(batchCount * 400, 4000), 16000),
+      };
 
       for (const model of models) {
         for (let attempt = 0; attempt < 3; attempt++) {
@@ -564,26 +593,39 @@ QUESTION COUNT ENFORCEMENT:
               Authorization: `Bearer ${LOVABLE_API_KEY}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              model,
-              messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userPrompt },
-              ],
-              tools: [examTool],
-              tool_choice: { type: "function", function: { name: "create_exam" } },
-              temperature: 0.9 + Math.random() * 0.1,
-              max_tokens: Math.min(Math.max(batchCount * 400, 4000), 16000),
-            }),
+            body: JSON.stringify({ model, ...aiPayload }),
           });
+          if (response.status === 402) { hit402 = true; break; }
           if (response.status !== 429) break;
           const waitMs = Math.pow(2, attempt) * 2000;
           console.log(`Rate limited on ${model}, retrying in ${waitMs}ms`);
           await new Promise(r => setTimeout(r, waitMs));
         }
+        if (hit402) break;
         if (response && response.status !== 429) {
           console.log(`Using model: ${model} for batch of ${batchCount}`);
           break;
+        }
+      }
+
+      // Fallback to OpenAI if 402
+      if (hit402) {
+        const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
+        if (OPENAI_KEY) {
+          console.log("Exam gen: falling back to OpenAI...");
+          try {
+            response = await fetch(OPENAI_API_URL, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${OPENAI_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ model: "gpt-4o-mini", ...aiPayload }),
+            });
+            if (response.ok) console.log("Using OpenAI fallback for exam gen");
+          } catch (e) {
+            console.error("OpenAI fallback error:", e);
+          }
         }
       }
 
