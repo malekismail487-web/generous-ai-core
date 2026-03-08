@@ -23,9 +23,9 @@ function getGeminiKeys(): string[] {
 }
 
 // Shared fetch helper: rotates through key pool on 429 with retry waves
-async function geminiPoolFetch(url: string, body: object, keys: string[]): Promise<Response> {
-  const MAX_WAVES = 3; // Try all keys up to 3 times with delays between waves
-  const WAVE_DELAY_MS = [15000, 30000, 45000]; // 15s, 30s, 45s between waves
+async function geminiPoolFetch(url: string, body: object, keys: string[], lightMode = false): Promise<Response> {
+  const MAX_WAVES = lightMode ? 1 : 3; // Light mode = single pass, no waiting
+  const WAVE_DELAY_MS = [15000, 30000, 45000];
   let lastResponse: Response | null = null;
 
   for (let wave = 0; wave < MAX_WAVES; wave++) {
@@ -35,33 +35,30 @@ async function geminiPoolFetch(url: string, body: object, keys: string[]): Promi
       await new Promise(r => setTimeout(r, delay));
     }
 
-    const startIdx = 0; // Sequential rotation: key1 → key2 → key3 → key4
     for (let i = 0; i < keys.length; i++) {
-      const keyIdx = (startIdx + i) % keys.length;
       try {
         lastResponse = await fetch(url, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${keys[keyIdx]}`,
+            Authorization: `Bearer ${keys[i]}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(body),
         });
 
         if (lastResponse.status === 429) {
-          console.log(`Key ${keyIdx + 1}/${keys.length} rate limited (wave ${wave + 1}), rotating...`);
+          console.log(`Key ${i + 1}/${keys.length} rate limited (wave ${wave + 1}), rotating...`);
           await lastResponse.text();
           continue;
         }
         return lastResponse;
       } catch (e) {
-        console.warn(`Key ${keyIdx + 1} fetch error:`, e);
+        console.warn(`Key ${i + 1} fetch error:`, e);
         await new Promise(r => setTimeout(r, 2000));
       }
     }
   }
 
-  // Return last response or a synthetic 429
   return lastResponse || new Response(JSON.stringify({ error: "All keys exhausted after retries" }), { status: 429 });
 }
 
