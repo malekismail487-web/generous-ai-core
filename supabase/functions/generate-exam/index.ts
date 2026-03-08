@@ -573,17 +573,27 @@ QUESTION COUNT ENFORCEMENT:
             console.log(`Using Ling-1T for batch of ${batchCount}`);
             break;
           }
+          if (response.status === 402) {
+            const errText = await response.text();
+            console.error(`Ling-1T insufficient balance: ${errText.substring(0, 300)}`);
+            throw new Error("INSUFFICIENT_BALANCE");
+          }
           if (response.status === 429) {
-            await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 2000));
+            const retryAfter = response.headers.get("Retry-After");
+            const delayMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : Math.pow(2, attempt) * 3000 + Math.random() * 2000;
+            console.log(`Ling-1T rate limited, waiting ${delayMs}ms (attempt ${attempt + 1})`);
+            await response.text(); // consume body
+            await new Promise(r => setTimeout(r, Math.min(delayMs, 30000)));
             continue;
           }
           const errText = await response.text();
-          console.error(`ZenMux failed with ${response.status}: ${errText.substring(0, 300)}`);
+          console.error(`Ling-1T failed with ${response.status}: ${errText.substring(0, 300)}`);
           response = null;
         } catch (e) {
-          console.warn("ZenMux network error:", e);
+          if (e instanceof Error && e.message === "INSUFFICIENT_BALANCE") throw e;
+          console.warn("Ling-1T network error:", e);
           response = null;
-          if (attempt < 2) await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 2000));
+          if (attempt < 2) await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 3000));
         }
       }
 
