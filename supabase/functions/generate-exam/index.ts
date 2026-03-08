@@ -367,7 +367,7 @@ ${questionsForReview}`;
     ],
     temperature: 0.1,
     max_tokens: 4000,
-  }, keys);
+  }, keys, true); // lightMode = true: skip wave retries for validation
 
   if (!response.ok) {
     console.warn(`Validation API error:`, response.status);
