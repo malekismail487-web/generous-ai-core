@@ -591,7 +591,7 @@ QUESTION COUNT ENFORCEMENT:
             throw new Error("PAYMENT_REQUIRED");
           }
           const errText = await response.text();
-          console.error(`Lovable AI failed with ${response.status}: ${errText.substring(0, 300)}`);
+          console.error(`Gemini API failed with ${response.status}: ${errText.substring(0, 300)}`);
           response = null;
         } catch (e) {
           if (e instanceof Error && e.message === "PAYMENT_REQUIRED") throw e;
