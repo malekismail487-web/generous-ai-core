@@ -1,0 +1,17 @@
+{
+  "name": "Lumina",
+  "short_name": "Lumina",
+  "description": "AI-powered adaptive learning platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/app-icon.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
