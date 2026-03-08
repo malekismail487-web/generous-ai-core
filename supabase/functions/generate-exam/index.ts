@@ -566,15 +566,6 @@ QUESTION COUNT ENFORCEMENT:
         userPrompt = `Generate EXACTLY ${batchCount} COMPLETELY ORIGINAL multiple-choice questions for ${subject}${grade ? ` at ${grade} level` : ''} with ${difficulty} difficulty. Cover diverse sub-topics. Each question must have 4 options (A-D).\n\nCRITICAL: Do NOT use any standard textbook questions. Create novel questions with unique specific values, original scenarios, and fresh phrasings. ${antiRepetition}\nNonce: ${nonce}`;
       }
 
-      // Gemini models via Lovable AI Gateway
-      const models = [
-        "google/gemini-3-flash-preview",
-        "google/gemini-2.5-flash",
-        "google/gemini-2.5-flash-lite",
-      ];
-      let response: Response | null = null;
-      let hit402 = false;
-
       const aiPayload = {
         messages: [
           { role: "system", content: systemPrompt },
@@ -586,47 +577,47 @@ QUESTION COUNT ENFORCEMENT:
         max_tokens: Math.min(Math.max(batchCount * 400, 4000), 16000),
       };
 
-      for (const model of models) {
-        for (let attempt = 0; attempt < 3; attempt++) {
-          response = await fetch(LOVABLE_API_URL, {
+      let response: Response | null = null;
+
+      // PRIMARY: OpenAI gpt-4o
+      const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
+      if (OPENAI_KEY) {
+        try {
+          response = await fetch(OPENAI_API_URL, {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              Authorization: `Bearer ${OPENAI_KEY}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ model, ...aiPayload }),
+            body: JSON.stringify({ model: "gpt-4o", ...aiPayload }),
           });
-          if (response.status === 402) { hit402 = true; break; }
-          if (response.status !== 429) break;
-          const waitMs = Math.pow(2, attempt) * 2000;
-          console.log(`Rate limited on ${model}, retrying in ${waitMs}ms`);
-          await new Promise(r => setTimeout(r, waitMs));
-        }
-        if (hit402) break;
-        if (response && response.status !== 429) {
-          console.log(`Using model: ${model} for batch of ${batchCount}`);
-          break;
+          if (response.ok) console.log(`Using primary: OpenAI gpt-4o for batch of ${batchCount}`);
+        } catch (e) {
+          console.warn("OpenAI error:", e);
         }
       }
 
-      // Fallback to OpenAI if 402
-      if (hit402) {
-        const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
-        if (OPENAI_KEY) {
-          console.log("Exam gen: falling back to OpenAI...");
-          try {
-            response = await fetch(OPENAI_API_URL, {
+      // FALLBACK: Lovable AI Gateway
+      if (!response || !response.ok) {
+        const models = [
+          "google/gemini-3-flash-preview",
+          "google/gemini-2.5-flash",
+          "google/gemini-2.5-flash-lite",
+        ];
+        for (const model of models) {
+          for (let attempt = 0; attempt < 3; attempt++) {
+            response = await fetch(LOVABLE_API_URL, {
               method: "POST",
               headers: {
-                Authorization: `Bearer ${OPENAI_KEY}`,
+                Authorization: `Bearer ${LOVABLE_API_KEY}`,
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ model: "gpt-4o", ...aiPayload }),
+              body: JSON.stringify({ model, ...aiPayload }),
             });
-            if (response.ok) console.log("Using OpenAI fallback for exam gen");
-          } catch (e) {
-            console.error("OpenAI fallback error:", e);
+            if (response.status !== 429) break;
+            await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 2000));
           }
+          if (response && response.ok) { console.log(`Using fallback: ${model}`); break; }
         }
       }
 
