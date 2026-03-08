@@ -358,7 +358,7 @@ Rules:
 Questions to validate:
 ${questionsForReview}`;
 
-  // Use key pool rotation for validation
+  // Use light mode for validation — single pass, no wave retries
   const response = await geminiPoolFetch(GEMINI_API_URL, {
     model: "gemini-2.0-flash",
     messages: [
