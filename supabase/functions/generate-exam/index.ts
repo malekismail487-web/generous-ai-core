@@ -302,8 +302,8 @@ ${questionsForReview}`;
   // Use Lovable AI (gemini-2.5-flash) for validation - fast and cheap
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      console.log(`Validation attempt ${attempt + 1} with Lovable AI...`);
-      const response = await fetch(LOVABLE_AI_URL, {
+      console.log(`Validation attempt ${attempt + 1} with Gemini API...`);
+      const response = await fetch(GEMINI_API_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
