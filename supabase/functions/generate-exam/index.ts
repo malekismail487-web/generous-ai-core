@@ -572,9 +572,9 @@ QUESTION COUNT ENFORCEMENT:
             },
             body: JSON.stringify({ model: "gemini-2.0-flash", ...aiPayload }),
           });
-          console.log(`Lovable AI response status: ${response.status}`);
+          console.log(`Gemini API response status: ${response.status}`);
           if (response.ok) {
-            console.log(`Using Lovable AI for batch of ${batchCount}`);
+            console.log(`Using Gemini API for batch of ${batchCount}`);
             break;
           }
           if (response.status === 429) {
