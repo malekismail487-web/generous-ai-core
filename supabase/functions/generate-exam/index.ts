@@ -230,14 +230,20 @@ async function validateAndFixQuestions(
   const CHUNK_SIZE = 15;
   const validatedQuestions: Record<string, unknown>[] = [];
   
-  const chunkPromises: Promise<Record<string, unknown>[]>[] = [];
+  // SEQUENTIAL validation to avoid Gemini rate limits
   for (let chunkStart = 0; chunkStart < questions.length; chunkStart += CHUNK_SIZE) {
     const chunk = questions.slice(chunkStart, chunkStart + CHUNK_SIZE);
-    chunkPromises.push(validateChunk(chunk, subject, apiKey));
-  }
-  const chunkResults = await Promise.all(chunkPromises);
-  for (const chunk of chunkResults) {
-    validatedQuestions.push(...chunk);
+    if (chunkStart > 0) {
+      // Wait between validation calls to respect rate limits
+      await new Promise(r => setTimeout(r, 3000));
+    }
+    try {
+      const validated = await validateChunk(chunk, subject, apiKey);
+      validatedQuestions.push(...validated);
+    } catch (e) {
+      console.warn(`Validation chunk failed, keeping unvalidated:`, e);
+      validatedQuestions.push(...chunk);
+    }
   }
 
   if (validatedQuestions.length < targetCount) {
@@ -601,7 +607,10 @@ QUESTION COUNT ENFORCEMENT:
         }
       }
 
-      if (!response || response.status === 429) throw new Error("RATE_LIMITED");
+      if (!response || !response.ok) {
+        if (response?.status === 429) throw new Error("RATE_LIMITED");
+        throw new Error("Failed to generate exam questions");
+      }
 
       let raw: Record<string, unknown>;
 
@@ -672,14 +681,23 @@ QUESTION COUNT ENFORCEMENT:
     }
 
     // ========== AI SELF-VALIDATION STEP ==========
+    // Add delay before validation to avoid rate limits after generation
+    console.log(`Waiting before validation to respect rate limits...`);
+    await new Promise(r => setTimeout(r, 5000));
     console.log(`Starting AI validation of ${allQuestions.length} questions (target: ${count})...`);
-    allQuestions = await validateAndFixQuestions(
-      allQuestions,
-      subject || 'General',
-      GEMINI_API_KEY!,
-      count
-    );
-    console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
+    try {
+      allQuestions = await validateAndFixQuestions(
+        allQuestions,
+        subject || 'General',
+        GEMINI_API_KEY!,
+        count
+      );
+      console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
+    } catch (e) {
+      console.warn("Validation failed entirely, using unvalidated questions:", e);
+      // Still deliver questions even if validation fails
+      allQuestions = allQuestions.slice(0, count);
+    }
 
     // Shuffle all questions for random order
     for (let i = allQuestions.length - 1; i > 0; i--) {
