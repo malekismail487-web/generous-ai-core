@@ -62,15 +62,15 @@ Be strict about content safety since this is a K-12 platform.`,
       },
     ];
 
-    // Use Lovable AI Gateway with lightweight model for moderation
-    const response = await fetch(LOVABLE_AI_URL, {
+    // Use Google Gemini API directly for moderation
+    const response = await fetch(GEMINI_API_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${GEMINI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "gemini-2.0-flash-lite",
         messages: moderationMessages,
         temperature: 0.1,
         max_tokens: 200,
