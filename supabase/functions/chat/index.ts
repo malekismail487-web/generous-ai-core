@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
 async function getAdaptiveProfile(authHeader: string | null): Promise<{ learningPace?: string; iqData?: any; learningStylePrompt?: string } | null> {
   if (!authHeader) return null;
