@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
 function getVarietyInstructions(): string {
   const styles = [
@@ -299,18 +299,18 @@ Rules:
 Questions to validate:
 ${questionsForReview}`;
 
-  // Use Lovable AI (gemini-2.5-flash) for validation - fast and cheap
+  // Use Google Gemini API for validation
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      console.log(`Validation attempt ${attempt + 1} with Lovable AI...`);
-      const response = await fetch(LOVABLE_AI_URL, {
+      console.log(`Validation attempt ${attempt + 1} with Gemini API...`);
+      const response = await fetch(GEMINI_API_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "gemini-2.0-flash",
           messages: [
             { role: "system", content: "You are an expert academic exam validator. Return ONLY valid JSON array. Validate every single question rigorously by solving each one yourself. Accuracy is your #1 priority." },
             { role: "user", content: reviewPrompt },
@@ -409,14 +409,14 @@ Nonce: ${nonce}`;
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const response = await fetch(LOVABLE_AI_URL, {
+      const response = await fetch(GEMINI_API_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: "gemini-2.0-flash",
           messages: [
             { role: "system", content: `Generate exactly ${count} verified multiple-choice questions for ${subject}.` },
             { role: "user", content: prompt },
@@ -465,9 +465,9 @@ serve(async (req) => {
   try {
     const { subject, grade, difficulty, count, materials, examType, adaptiveLevel } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
     if (!count || count <= 0) {
@@ -561,20 +561,20 @@ QUESTION COUNT ENFORCEMENT:
 
       let response: Response | null = null;
 
-      // Use Lovable AI Gateway with retries
+      // Use Google Gemini API with retries
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          response = await fetch(LOVABLE_AI_URL, {
+          response = await fetch(GEMINI_API_URL, {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              Authorization: `Bearer ${GEMINI_API_KEY}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ model: "google/gemini-3-flash-preview", ...aiPayload }),
+            body: JSON.stringify({ model: "gemini-2.0-flash", ...aiPayload }),
           });
-          console.log(`Lovable AI response status: ${response.status}`);
+          console.log(`Gemini API response status: ${response.status}`);
           if (response.ok) {
-            console.log(`Using Lovable AI for batch of ${batchCount}`);
+            console.log(`Using Gemini API for batch of ${batchCount}`);
             break;
           }
           if (response.status === 429) {
@@ -591,11 +591,11 @@ QUESTION COUNT ENFORCEMENT:
             throw new Error("PAYMENT_REQUIRED");
           }
           const errText = await response.text();
-          console.error(`Lovable AI failed with ${response.status}: ${errText.substring(0, 300)}`);
+          console.error(`Gemini API failed with ${response.status}: ${errText.substring(0, 300)}`);
           response = null;
         } catch (e) {
           if (e instanceof Error && e.message === "PAYMENT_REQUIRED") throw e;
-          console.warn("Lovable AI network error:", e);
+          console.warn("Gemini API network error:", e);
           response = null;
           if (attempt < 2) await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 3000));
         }
@@ -676,7 +676,7 @@ QUESTION COUNT ENFORCEMENT:
     allQuestions = await validateAndFixQuestions(
       allQuestions,
       subject || 'General',
-      LOVABLE_API_KEY!,
+      GEMINI_API_KEY!,
       count
     );
     console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
@@ -724,7 +724,7 @@ QUESTION COUNT ENFORCEMENT:
   } catch (error) {
     console.error("Generate exam error:", error);
     if (error instanceof Error && error.message === "PAYMENT_REQUIRED") {
-      return new Response(JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }), {
+      return new Response(JSON.stringify({ error: "Payment required." }), {
         status: 402,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

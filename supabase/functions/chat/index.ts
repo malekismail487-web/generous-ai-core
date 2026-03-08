@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
 async function getAdaptiveProfile(authHeader: string | null): Promise<{ learningPace?: string; iqData?: any; learningStylePrompt?: string } | null> {
   if (!authHeader) return null;
@@ -236,9 +236,9 @@ serve(async (req) => {
   try {
     const { messages, enableWebSearch, language, backgroundContext, adaptiveLevel, learningStyle, systemPrompt: customSystemPrompt } = await req.json();
     
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
     // Scan the latest user message for malicious content (fire-and-forget)
@@ -313,17 +313,17 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
 
     let response: Response | null = null;
 
-    // Use Lovable AI Gateway
+    // Use Google Gemini API directly
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        response = await fetch(LOVABLE_AI_URL, {
+        response = await fetch(GEMINI_API_URL, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            Authorization: `Bearer ${GEMINI_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
+            model: "gemini-2.0-flash",
             messages: allMessages,
             stream: true,
             temperature: 0.2,
@@ -332,19 +332,19 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
 
         if (response.status === 429) {
           const waitMs = Math.pow(2, attempt) * 3000 + Math.random() * 2000;
-          console.log(`Lovable AI rate limited, retrying in ${waitMs}ms`);
+          console.log(`Gemini rate limited, retrying in ${waitMs}ms`);
           await response.text();
           await new Promise((r) => setTimeout(r, waitMs));
           continue;
         }
         if (response.ok) {
-          console.log("Using Lovable AI (gemini-3-flash-preview)");
+          console.log("Using Gemini API (gemini-2.0-flash)");
           break;
         }
-        console.warn("Lovable AI error:", response.status);
+        console.warn("Gemini API error:", response.status);
         break;
       } catch (e) {
-        console.warn("Lovable AI fetch error:", e);
+        console.warn("Gemini API fetch error:", e);
         if (attempt < 2) {
           await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 3000));
         }
@@ -357,13 +357,8 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response?.status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const errorText = await response?.text() || "No response";
-      console.error("Lovable AI failed:", response?.status, errorText);
+      console.error("Gemini API failed:", response?.status, errorText);
       return new Response(JSON.stringify({ error: "Failed to get AI response" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
