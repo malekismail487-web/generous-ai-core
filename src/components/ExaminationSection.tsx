@@ -1,5 +1,6 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { ArrowLeft, CheckCircle2, XCircle, Loader2, Trophy, AlertCircle } from 'lucide-react';
+import { ExamLoadingProgress } from '@/components/ExamLoadingProgress';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -816,13 +817,19 @@ export function ExaminationSection() {
 
   // LOADING VIEW
   if (isLoading) {
+    const loadingCount = selectedDifficulty ? (() => {
+      try {
+        return resolveQuestionCount(examMenuType!, selectedDifficulty);
+      } catch { return undefined; }
+    })() : undefined;
+    const subjectName = examMenuType === ExamMenuType.SUBJECT && selectedSubject
+      ? subjects.find(s => s.id === selectedSubject)?.name
+      : 'SAT';
     return (
-      <div className="flex-1 flex items-center justify-center pt-16 pb-20">
-        <div className="text-center animate-fade-in">
-          <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">Generating exam questions...</p>
-        </div>
-      </div>
+      <ExamLoadingProgress 
+        questionCount={loadingCount} 
+        label={`Generating ${subjectName} Exam`}
+      />
     );
   }
 

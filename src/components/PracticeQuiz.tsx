@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, CheckCircle2, XCircle, Loader2, RotateCcw, Trophy } from 'lucide-react';
+import { ExamLoadingProgress } from '@/components/ExamLoadingProgress';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
