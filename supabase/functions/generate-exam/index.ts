@@ -416,7 +416,7 @@ Nonce: ${nonce}`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: "gemini-2.0-flash",
           messages: [
             { role: "system", content: `Generate exactly ${count} verified multiple-choice questions for ${subject}.` },
             { role: "user", content: prompt },
