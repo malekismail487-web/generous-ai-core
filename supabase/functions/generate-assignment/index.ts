@@ -5,22 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-
-function getGeminiKeys(): string[] {
-  const keys: string[] = [];
-  const key1 = Deno.env.get("GEMINI_API_KEY");
-  if (key1 && key1.trim()) keys.push(key1.trim());
-  const pool = Deno.env.get("GEMINI_API_KEY_POOL");
-  if (pool) {
-    for (const k of pool.split(",")) {
-      const trimmed = k.trim();
-      if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
-    }
-  }
-  console.log(`Gemini key pool: ${keys.length} unique key(s) loaded [${keys.map((k, i) => `Key${i+1}:${k.substring(0,8)}...`).join(', ')}]`);
-  return keys;
-}
+const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -30,9 +15,9 @@ serve(async (req) => {
   try {
     const { title, description, subject, questionCount, gradeLevel, adaptiveLevel } = await req.json();
     
-    const geminiKeys = getGeminiKeys();
-    if (geminiKeys.length === 0) {
-      throw new Error("No Gemini API keys configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     if (!title || !subject || !questionCount) {
@@ -40,7 +25,7 @@ serve(async (req) => {
     }
 
     const randomSeed = Math.floor(Math.random() * 99999);
-    const variationHint = `Seed: ${randomSeed}. Make this UNIQUE — vary which subtopics, question styles, and angles you cover. Do not repeat patterns from previous generations.`;
+    const variationHint = `Seed: ${randomSeed}. Make this UNIQUE — vary which subtopics, question styles, and angles you cover.`;
 
     const systemPrompt = `You are an expert educational content creator. Generate multiple-choice quiz questions based on the assignment title and subject provided by the teacher.
 
@@ -54,7 +39,7 @@ Rules:
 - Vary difficulty within the set
 - Questions should be clear, unambiguous, and educational
 - ${variationHint}
-${adaptiveLevel ? `- ADAPTIVE LEVEL: Student is "${adaptiveLevel}". ${adaptiveLevel === 'beginner' ? 'Generate simpler questions with clear language and foundational concepts.' : adaptiveLevel === 'advanced' ? 'Generate challenging questions testing deeper understanding and multi-step reasoning.' : 'Generate moderate difficulty questions mixing recall and application.'}` : ''}
+${adaptiveLevel ? `- ADAPTIVE LEVEL: Student is "${adaptiveLevel}". ${adaptiveLevel === 'beginner' ? 'Generate simpler questions.' : adaptiveLevel === 'advanced' ? 'Generate challenging questions.' : 'Generate moderate difficulty questions.'}` : ''}
 ${description ? `- Additional context from the teacher: "${description}"` : ''}`;
 
     const userPrompt = `The teacher created an assignment titled "${title}" for the subject "${subject}" at the ${gradeLevel || 'general'} level. Generate exactly ${questionCount} multiple-choice questions that are specifically about "${title}". ${variationHint}${description ? ` The teacher also provided this description: "${description}"` : ''}`;
@@ -93,61 +78,37 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
       },
     ];
 
-    const aiMessages = [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ];
+    const response = await fetch(AI_GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        tools: toolDef,
+        tool_choice: { type: "function", function: { name: "create_assignment_questions" } },
+        temperature: 0.85,
+      }),
+    });
 
-    let response: Response | null = null;
-    const MAX_WAVES = 3;
-    const WAVE_DELAYS = [15000, 30000, 45000];
-    let success = false;
-
-    for (let wave = 0; wave < MAX_WAVES && !success; wave++) {
-      if (wave > 0) {
-        const delay = WAVE_DELAYS[wave - 1];
-        console.log(`All keys exhausted. Waiting ${delay / 1000}s (wave ${wave + 1}/${MAX_WAVES})...`);
-        await new Promise(r => setTimeout(r, delay));
-      }
-      for (let i = 0; i < geminiKeys.length; i++) {
-        console.log(`Trying key ${i + 1}/${geminiKeys.length} (wave ${wave + 1})`);
-        try {
-          response = await fetch(GEMINI_API_URL, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${geminiKeys[i]}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "gemini-2.0-flash",
-              messages: aiMessages,
-              tools: toolDef,
-              tool_choice: { type: "function", function: { name: "create_assignment_questions" } },
-              temperature: 0.85,
-            }),
-          });
-          if (response.status === 429) {
-            console.log(`Key ${i + 1} rate limited, rotating...`);
-            await response.text();
-            continue;
-          }
-          success = true;
-          break;
-        } catch (e) {
-          console.warn("Fetch error:", e);
-          await new Promise(r => setTimeout(r, 2000));
-        }
-      }
-    }
-
-    if (!response || !response.ok) {
-      if (response?.status === 429) {
+    if (!response.ok) {
+      if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errorText = await response?.text() || "No response";
-      console.error("Gemini API failed:", response?.status, errorText);
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Payment required, please add credits to your workspace." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const errorText = await response.text();
+      console.error("AI Gateway failed:", response.status, errorText);
       throw new Error("Failed to generate questions");
     }
 
