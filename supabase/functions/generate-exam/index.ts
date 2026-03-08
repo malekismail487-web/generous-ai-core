@@ -308,7 +308,7 @@ ${questionsForReview}`;
   
   const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
   if (OPENAI_KEY) {
-    validationModels.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o-mini" });
+    validationModels.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o" });
   }
 
   for (const { url, key, model } of validationModels) {
