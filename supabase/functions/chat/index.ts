@@ -8,6 +8,20 @@ const corsHeaders = {
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
+function getGeminiKeys(): string[] {
+  const keys: string[] = [];
+  const single = Deno.env.get("GEMINI_API_KEY");
+  if (single) keys.push(single.trim());
+  const pool = Deno.env.get("GEMINI_API_KEY_POOL");
+  if (pool) {
+    for (const k of pool.split(",")) {
+      const trimmed = k.trim();
+      if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
+    }
+  }
+  return keys;
+}
+
 async function getAdaptiveProfile(authHeader: string | null): Promise<{ learningPace?: string; iqData?: any; learningStylePrompt?: string } | null> {
   if (!authHeader) return null;
   try {
@@ -56,7 +70,6 @@ async function getAdaptiveProfile(authHeader: string | null): Promise<{ learning
   }
 }
 
-// Content scanning helper - fire and forget
 async function scanContentAsync(content: string, userId: string, schoolId: string | null) {
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -79,7 +92,6 @@ async function scanContentAsync(content: string, userId: string, schoolId: strin
   }
 }
 
-// Get user info for content scanning
 async function getUserInfo(authHeader: string | null): Promise<{ userId: string; schoolId: string | null } | null> {
   if (!authHeader) return null;
   try {
@@ -236,9 +248,9 @@ serve(async (req) => {
   try {
     const { messages, enableWebSearch, language, backgroundContext, adaptiveLevel, learningStyle, systemPrompt: customSystemPrompt } = await req.json();
     
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    const geminiKeys = getGeminiKeys();
+    if (geminiKeys.length === 0) {
+      throw new Error("No Gemini API keys configured");
     }
 
     // Scan the latest user message for malicious content (fire-and-forget)
@@ -254,26 +266,33 @@ serve(async (req) => {
     // Fetch adaptive profile from DB for deeper personalization
     const adaptiveProfile = await getAdaptiveProfile(authHeader);
 
-    // Use custom system prompt if provided (e.g. from Study Buddy), otherwise default
     let systemPrompt = customSystemPrompt || SYSTEM_PROMPT;
 
-    // Apply adaptive level
     if (!customSystemPrompt && adaptiveLevel) {
       const levelGuides: Record<string, string> = {
-        beginner: `\n\n## Student Level: BEGINNER\nUse simple vocabulary, short sentences, basic examples. Explain step-by-step from the ground up. Avoid jargon. Use analogies and real-world comparisons.`,
-        intermediate: `\n\n## Student Level: INTERMEDIATE\nUse standard academic language, moderate detail, some technical terms with brief explanations, practical examples.`,
-        advanced: `\n\n## Student Level: ADVANCED\nUse precise technical language, deeper theory, challenging examples, edge cases, connections to broader concepts.`,
+        beginner: `
+
+## Student Level: BEGINNER
+Use simple vocabulary, short sentences, basic examples. Explain step-by-step from the ground up. Avoid jargon. Use analogies and real-world comparisons.`,
+        intermediate: `
+
+## Student Level: INTERMEDIATE
+Use standard academic language, moderate detail, some technical terms with brief explanations, practical examples.`,
+        advanced: `
+
+## Student Level: ADVANCED
+Use precise technical language, deeper theory, challenging examples, edge cases, connections to broader concepts.`,
       };
       systemPrompt += levelGuides[adaptiveLevel] || levelGuides.intermediate;
     }
 
-    // Inject learning style
     const effectiveLearningStyle = learningStyle || adaptiveProfile?.learningStylePrompt;
     if (!customSystemPrompt && effectiveLearningStyle) {
-      systemPrompt += `\n\n${effectiveLearningStyle}`;
+      systemPrompt += `
+
+${effectiveLearningStyle}`;
     }
 
-    // Inject IQ-based learning pace
     if (!customSystemPrompt && adaptiveProfile?.learningPace) {
       const paceGuides: Record<string, string> = {
         accelerated: 'This student learns very fast. Move quickly, provide advanced challenges, minimize repetition.',
@@ -284,25 +303,38 @@ serve(async (req) => {
       };
       const paceInstruction = paceGuides[adaptiveProfile.learningPace];
       if (paceInstruction) {
-        systemPrompt += `\n\n## Learning Pace\n${paceInstruction}`;
+        systemPrompt += `
+
+## Learning Pace
+${paceInstruction}`;
       }
     }
 
     if (language === 'ar') {
-      systemPrompt += `\n\n## Language Instruction
+      systemPrompt += `
+
+## Language Instruction
 CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations, examples, definitions, summaries, and instructions must be in Arabic.`;
     }
     
     if (enableWebSearch) {
-      systemPrompt += `\n\n## Web Search Mode Active\nProvide answers with citations when referencing external information.`;
+      systemPrompt += `
+
+## Web Search Mode Active
+Provide answers with citations when referencing external information.`;
     }
 
     if (backgroundContext && Array.isArray(backgroundContext) && backgroundContext.length > 0) {
-      let contextBlock = `\n\n## Previous Conversation Memory\n`;
+      let contextBlock = `
+
+## Previous Conversation Memory
+`;
       for (const conv of backgroundContext) {
-        contextBlock += `### Past Chat: "${conv.title}"\n`;
+        contextBlock += `### Past Chat: "${conv.title}"
+`;
         for (const msg of conv.messages) {
-          contextBlock += `- ${msg.role === 'user' ? 'Student' : 'You'}: ${msg.content}\n`;
+          contextBlock += `- ${msg.role === 'user' ? 'Student' : 'You'}: ${msg.content}
+`;
         }
         contextBlock += '\n';
       }
@@ -313,13 +345,19 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
 
     let response: Response | null = null;
 
-    // Use Google Gemini API directly
-    for (let attempt = 0; attempt < 3; attempt++) {
+    // Key pool rotation with retries
+    const startIdx = Math.floor(Math.random() * geminiKeys.length);
+    const maxAttempts = Math.max(geminiKeys.length, 3);
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const keyIdx = (startIdx + attempt) % geminiKeys.length;
+      console.log(`Chat: trying key ${keyIdx + 1}/${geminiKeys.length} (attempt ${attempt + 1})`);
+
       try {
         response = await fetch(GEMINI_API_URL, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${GEMINI_API_KEY}`,
+            Authorization: `Bearer ${geminiKeys[keyIdx]}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -331,22 +369,20 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
         });
 
         if (response.status === 429) {
-          const waitMs = Math.pow(2, attempt) * 3000 + Math.random() * 2000;
-          console.log(`Gemini rate limited, retrying in ${waitMs}ms`);
+          console.log(`Key ${keyIdx + 1} rate limited, rotating...`);
           await response.text();
-          await new Promise((r) => setTimeout(r, waitMs));
           continue;
         }
         if (response.ok) {
-          console.log("Using Gemini API (gemini-2.0-flash)");
+          console.log(`Using key ${keyIdx + 1}/${geminiKeys.length}`);
           break;
         }
         console.warn("Gemini API error:", response.status);
         break;
       } catch (e) {
         console.warn("Gemini API fetch error:", e);
-        if (attempt < 2) {
-          await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 3000));
+        if (attempt < maxAttempts - 1) {
+          await new Promise((r) => setTimeout(r, 2000));
         }
       }
     }
@@ -358,7 +394,7 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
         });
       }
       const errorText = await response?.text() || "No response";
-      console.error("Gemini API failed:", response?.status, errorText);
+      console.error("All keys exhausted:", response?.status, errorText);
       return new Response(JSON.stringify({ error: "Failed to get AI response" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

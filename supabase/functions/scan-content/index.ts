@@ -9,17 +9,31 @@ const corsHeaders = {
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
+function getGeminiKeys(): string[] {
+  const keys: string[] = [];
+  const single = Deno.env.get("GEMINI_API_KEY");
+  if (single) keys.push(single.trim());
+  const pool = Deno.env.get("GEMINI_API_KEY_POOL");
+  if (pool) {
+    for (const k of pool.split(",")) {
+      const trimmed = k.trim();
+      if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
+    }
+  }
+  return keys;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const geminiKeys = getGeminiKeys();
 
-    if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (geminiKeys.length === 0 || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return new Response(JSON.stringify({ error: "Not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -34,7 +48,6 @@ serve(async (req) => {
       });
     }
 
-    // Truncate content for analysis
     const textToAnalyze = String(content).substring(0, 4000);
 
     const moderationMessages = [
@@ -62,24 +75,39 @@ Be strict about content safety since this is a K-12 platform.`,
       },
     ];
 
-    // Use Google Gemini API directly for moderation
-    const response = await fetch(GEMINI_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${GEMINI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gemini-2.0-flash-lite",
-        messages: moderationMessages,
-        temperature: 0.1,
-        max_tokens: 200,
-      }),
-    });
+    // Key pool rotation
+    const startIdx = Math.floor(Math.random() * geminiKeys.length);
+    let response: Response | null = null;
 
-    if (!response.ok) {
-      console.error("Gemini moderation error:", response.status);
-      await response.text();
+    for (let i = 0; i < geminiKeys.length; i++) {
+      const keyIdx = (startIdx + i) % geminiKeys.length;
+      console.log(`Trying key ${keyIdx + 1}/${geminiKeys.length}`);
+
+      response = await fetch(GEMINI_API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${geminiKeys[keyIdx]}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gemini-2.0-flash-lite",
+          messages: moderationMessages,
+          temperature: 0.1,
+          max_tokens: 200,
+        }),
+      });
+
+      if (response.status === 429) {
+        console.log(`Key ${keyIdx + 1} rate limited, rotating...`);
+        await response.text();
+        continue;
+      }
+      break;
+    }
+
+    if (!response || !response.ok) {
+      console.error("All keys exhausted or error:", response?.status);
+      await response?.text();
       return new Response(JSON.stringify({ flagged: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -95,13 +123,11 @@ Be strict about content safety since this is a K-12 platform.`,
         result = JSON.parse(jsonMatch[0]);
       }
     } catch {
-      // If can't parse, assume safe
       return new Response(JSON.stringify({ flagged: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // If flagged, insert into content_flags table
     if (result.flagged) {
       const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       await admin.from("content_flags").insert({

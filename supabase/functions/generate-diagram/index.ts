@@ -8,6 +8,20 @@ const corsHeaders = {
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
+function getGeminiKeys(): string[] {
+  const keys: string[] = [];
+  const single = Deno.env.get("GEMINI_API_KEY");
+  if (single) keys.push(single.trim());
+  const pool = Deno.env.get("GEMINI_API_KEY_POOL");
+  if (pool) {
+    for (const k of pool.split(",")) {
+      const trimmed = k.trim();
+      if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
+    }
+  }
+  return keys;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -16,37 +30,50 @@ serve(async (req) => {
   try {
     const { subject, topic, grade, count } = await req.json();
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    const geminiKeys = getGeminiKeys();
+    if (geminiKeys.length === 0) {
+      throw new Error("No Gemini API keys configured");
     }
 
-    // Use Gemini for diagram descriptions
     const diagramCount = Math.min(count || 2, 3);
     const images: string[] = [];
 
     for (let i = 0; i < diagramCount; i++) {
       try {
-        const response = await fetch(GEMINI_API_URL, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${GEMINI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "gemini-2.0-flash",
-            messages: [
-              {
-                role: "user",
-                content: `Create a clear, educational diagram about "${topic}" for ${subject} at ${grade || 'general'} level. The diagram should be visually clean, well-labeled, and suitable for studying. Use colors and clear labels.`,
-              },
-            ],
-          }),
-        });
+        // Key pool rotation per diagram
+        const startIdx = Math.floor(Math.random() * geminiKeys.length);
+        let response: Response | null = null;
 
-        if (!response.ok) {
-          console.warn(`Diagram generation ${i + 1} failed:`, response.status);
-          await response.text();
+        for (let k = 0; k < geminiKeys.length; k++) {
+          const keyIdx = (startIdx + k) % geminiKeys.length;
+          response = await fetch(GEMINI_API_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${geminiKeys[keyIdx]}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "gemini-2.0-flash",
+              messages: [
+                {
+                  role: "user",
+                  content: `Create a clear, educational diagram about "${topic}" for ${subject} at ${grade || 'general'} level. The diagram should be visually clean, well-labeled, and suitable for studying. Use colors and clear labels.`,
+                },
+              ],
+            }),
+          });
+
+          if (response.status === 429) {
+            console.log(`Key ${keyIdx + 1} rate limited, rotating...`);
+            await response.text();
+            continue;
+          }
+          break;
+        }
+
+        if (!response || !response.ok) {
+          console.warn(`Diagram generation ${i + 1} failed:`, response?.status);
+          await response?.text();
           continue;
         }
 
