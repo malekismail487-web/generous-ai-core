@@ -78,7 +78,7 @@ Be strict about content safety since this is a K-12 platform.`,
     });
 
     if (!response.ok) {
-      console.error("Lovable AI moderation error:", response.status);
+      console.error("Gemini moderation error:", response.status);
       await response.text();
       return new Response(JSON.stringify({ flagged: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
