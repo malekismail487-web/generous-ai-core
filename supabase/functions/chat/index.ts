@@ -346,7 +346,7 @@ Provide answers with citations when referencing external information.`;
     let response: Response | null = null;
 
     // Key pool rotation with retries
-    const startIdx = Math.floor(Math.random() * geminiKeys.length);
+    const startIdx = 0; // Sequential rotation: key1 → key2 → key3 → key4
     const maxAttempts = Math.max(geminiKeys.length, 3);
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {

@@ -76,7 +76,7 @@ Be strict about content safety since this is a K-12 platform.`,
     ];
 
     // Key pool rotation
-    const startIdx = Math.floor(Math.random() * geminiKeys.length);
+    const startIdx = 0; // Sequential rotation: key1 → key2 → key3 → key4
     let response: Response | null = null;
 
     for (let i = 0; i < geminiKeys.length; i++) {
