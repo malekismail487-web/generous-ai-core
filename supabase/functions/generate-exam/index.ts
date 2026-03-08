@@ -299,7 +299,7 @@ Rules:
 Questions to validate:
 ${questionsForReview}`;
 
-  // Use Lovable AI (gemini-2.5-flash) for validation - fast and cheap
+  // Use Google Gemini API for validation
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       console.log(`Validation attempt ${attempt + 1} with Gemini API...`);
