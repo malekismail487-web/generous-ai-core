@@ -76,34 +76,45 @@ Be strict about content safety since this is a K-12 platform.`,
       },
     ];
 
-    // Key pool rotation
-    const startIdx = 0; // Sequential rotation: key1 → key2 → key3 → key4
+    // Wave-based key rotation with backoff
     let response: Response | null = null;
+    const MAX_WAVES = 2; // Moderation is non-blocking, don't wait too long
+    const WAVE_DELAYS = [10000, 20000];
+    let success = false;
 
-    for (let i = 0; i < geminiKeys.length; i++) {
-      const keyIdx = (startIdx + i) % geminiKeys.length;
-      console.log(`Trying key ${keyIdx + 1}/${geminiKeys.length}`);
-
-      response = await fetch(GEMINI_API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${geminiKeys[keyIdx]}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gemini-2.0-flash-lite",
-          messages: moderationMessages,
-          temperature: 0.1,
-          max_tokens: 200,
-        }),
-      });
-
-      if (response.status === 429) {
-        console.log(`Key ${keyIdx + 1} rate limited, rotating...`);
-        await response.text();
-        continue;
+    for (let wave = 0; wave < MAX_WAVES && !success; wave++) {
+      if (wave > 0) {
+        const delay = WAVE_DELAYS[wave - 1];
+        console.log(`All keys exhausted. Waiting ${delay / 1000}s (wave ${wave + 1})...`);
+        await new Promise(r => setTimeout(r, delay));
       }
-      break;
+      for (let i = 0; i < geminiKeys.length; i++) {
+        console.log(`Trying key ${i + 1}/${geminiKeys.length} (wave ${wave + 1})`);
+        try {
+          response = await fetch(GEMINI_API_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${geminiKeys[i]}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "gemini-2.0-flash-lite",
+              messages: moderationMessages,
+              temperature: 0.1,
+              max_tokens: 200,
+            }),
+          });
+          if (response.status === 429) {
+            console.log(`Key ${i + 1} rate limited, rotating...`);
+            await response.text();
+            continue;
+          }
+          success = true;
+          break;
+        } catch (e) {
+          console.warn("Fetch error:", e);
+        }
+      }
     }
 
     if (!response || !response.ok) {

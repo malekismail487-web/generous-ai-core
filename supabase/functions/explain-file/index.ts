@@ -87,35 +87,44 @@ ${learningStyle ? `\n## Learning Style Personalization\n${learningStyle}` : ''}`
     ];
 
     let response: Response | null = null;
+    const MAX_WAVES = 3;
+    const WAVE_DELAYS = [15000, 30000, 45000];
+    let success = false;
 
-    // Key pool rotation with retries
-    const startIdx = 0; // Sequential rotation: key1 → key2 → key3 → key4
-    const maxAttempts = Math.max(geminiKeys.length, 3);
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const keyIdx = (startIdx + attempt) % geminiKeys.length;
-      console.log(`Trying key ${keyIdx + 1}/${geminiKeys.length} (attempt ${attempt + 1})`);
-
-      response = await fetch(GEMINI_API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${geminiKeys[keyIdx]}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gemini-2.0-flash",
-          messages: aiMessages,
-          temperature: 0.7,
-          stream: true,
-        }),
-      });
-
-      if (response.status === 429) {
-        console.log(`Key ${keyIdx + 1} rate limited, rotating...`);
-        await response.text();
-        continue;
+    for (let wave = 0; wave < MAX_WAVES && !success; wave++) {
+      if (wave > 0) {
+        const delay = WAVE_DELAYS[wave - 1];
+        console.log(`All keys exhausted. Waiting ${delay / 1000}s (wave ${wave + 1}/${MAX_WAVES})...`);
+        await new Promise(r => setTimeout(r, delay));
       }
-      break;
+      for (let i = 0; i < geminiKeys.length; i++) {
+        console.log(`Trying key ${i + 1}/${geminiKeys.length} (wave ${wave + 1})`);
+        try {
+          response = await fetch(GEMINI_API_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${geminiKeys[i]}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "gemini-2.0-flash",
+              messages: aiMessages,
+              temperature: 0.7,
+              stream: true,
+            }),
+          });
+          if (response.status === 429) {
+            console.log(`Key ${i + 1} rate limited, rotating...`);
+            await response.text();
+            continue;
+          }
+          success = true;
+          break;
+        } catch (e) {
+          console.warn("Fetch error:", e);
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
     }
 
     if (!response || !response.ok) {
