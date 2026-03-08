@@ -11,8 +11,8 @@ const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/
 
 function getGeminiKeys(): string[] {
   const keys: string[] = [];
-  const single = Deno.env.get("GEMINI_API_KEY");
-  if (single) keys.push(single.trim());
+  const key1 = Deno.env.get("GEMINI_API_KEY");
+  if (key1 && key1.trim()) keys.push(key1.trim());
   const pool = Deno.env.get("GEMINI_API_KEY_POOL");
   if (pool) {
     for (const k of pool.split(",")) {
@@ -20,6 +20,7 @@ function getGeminiKeys(): string[] {
       if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
     }
   }
+  console.log(`Gemini key pool: ${keys.length} unique key(s) loaded [${keys.map((k, i) => `Key${i+1}:${k.substring(0,8)}...`).join(', ')}]`);
   return keys;
 }
 
