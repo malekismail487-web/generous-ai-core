@@ -561,7 +561,7 @@ QUESTION COUNT ENFORCEMENT:
 
       let response: Response | null = null;
 
-      // Use Lovable AI Gateway with retries
+      // Use Google Gemini API with retries
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
           response = await fetch(GEMINI_API_URL, {
