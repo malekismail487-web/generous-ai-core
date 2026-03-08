@@ -300,16 +300,17 @@ Rules:
 Questions to validate:
 ${questionsForReview}`;
 
-  // Use validation models - try Lovable first, then OpenAI fallback
-  const validationModels = [
-    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash" },
-    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash-lite" },
-  ];
+  // Use validation models - try OpenAI first, then Lovable fallback
+  const validationModels: { url: string; key: string; model: string }[] = [];
   
   const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
   if (OPENAI_KEY) {
     validationModels.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o" });
   }
+  validationModels.push(
+    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash" },
+    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash-lite" },
+  );
 
   for (const { url, key, model } of validationModels) {
     try {
