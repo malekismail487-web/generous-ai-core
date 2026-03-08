@@ -5,8 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LOVABLE_API_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+const ZENMUX_API_URL = "https://zenmux.ai/api/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -16,9 +15,9 @@ serve(async (req) => {
   try {
     const { fileContent, fileName, adaptiveLevel, learningStyle, customPrompt } = await req.json();
     
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const ZENMUX_API_KEY = Deno.env.get("ZENMUX_API_KEY");
+    if (!ZENMUX_API_KEY) {
+      throw new Error("ZENMUX_API_KEY is not configured");
     }
 
     if (!fileContent) {
@@ -74,57 +73,38 @@ ${learningStyle ? `\n## Learning Style Personalization\n${learningStyle}` : ''}`
 
     let response: Response | null = null;
 
-    // PRIMARY: OpenAI gpt-4o
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (OPENAI_API_KEY) {
-      try {
-        response = await fetch(OPENAI_API_URL, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "gpt-4o",
-            messages: aiMessages,
-            temperature: 0.7,
-            stream: true,
-          }),
-        });
-        if (response.ok) console.log("Using primary: OpenAI gpt-4o");
-      } catch (e) {
-        console.warn("OpenAI error:", e);
-      }
-    }
-
-    // FALLBACK: Lovable AI Gateway
-    if (!response || !response.ok) {
-      const models = ["google/gemini-3-flash-preview", "google/gemini-2.5-flash"];
-      for (const model of models) {
-        for (let attempt = 0; attempt < 3; attempt++) {
-          response = await fetch(LOVABLE_API_URL, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ model, messages: aiMessages, temperature: 0.7, stream: true }),
-          });
-          if (response.status !== 429) break;
-          await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 2000));
-        }
-        if (response && response.ok) { console.log(`Using fallback: ${model}`); break; }
-      }
+    // Use Ling-1T via ZenMux API with retries
+    for (let attempt = 0; attempt < 3; attempt++) {
+      response = await fetch(ZENMUX_API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${ZENMUX_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "inclusionai/ling-1t",
+          messages: aiMessages,
+          temperature: 0.7,
+          stream: true,
+        }),
+      });
+      if (response.status !== 429) break;
+      await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 2000));
     }
 
     if (!response || !response.ok) {
       if (response?.status === 429) {
-        return new Response(JSON.stringify({ error: "All AI models are busy. Please wait and try again." }), {
+        return new Response(JSON.stringify({ error: "AI model is busy. Please wait and try again." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      if (response?.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Please check your plan." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const errorText = await response?.text() || "No response";
-      console.error("All AI providers failed:", response?.status, errorText);
+      console.error("ZenMux failed:", response?.status, errorText);
       return new Response(JSON.stringify({ error: "AI error" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

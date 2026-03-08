@@ -7,8 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const LOVABLE_API_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+const ZENMUX_API_URL = "https://zenmux.ai/api/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -16,11 +15,11 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const ZENMUX_API_KEY = Deno.env.get("ZENMUX_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!LOVABLE_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!ZENMUX_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return new Response(JSON.stringify({ error: "Not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -63,50 +62,23 @@ Be strict about content safety since this is a K-12 platform.`,
       },
     ];
 
-    // PRIMARY: OpenAI gpt-4o
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    let response: Response | null = null;
-
-    if (OPENAI_API_KEY) {
-      try {
-        response = await fetch(OPENAI_API_URL, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "gpt-4o",
-            messages: moderationMessages,
-            temperature: 0.1,
-            max_tokens: 200,
-          }),
-        });
-        if (response.ok) console.log("Scan-content using primary: OpenAI gpt-4o");
-      } catch (e) {
-        console.warn("OpenAI scan error:", e);
-      }
-    }
-
-    // FALLBACK: Lovable AI Gateway
-    if (!response || !response.ok) {
-      response = await fetch(LOVABLE_API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash-lite",
-          messages: moderationMessages,
-          temperature: 0.1,
-          max_tokens: 200,
-        }),
-      });
-    }
+    // Use Ling-1T via ZenMux API
+    const response = await fetch(ZENMUX_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${ZENMUX_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "inclusionai/ling-1t",
+        messages: moderationMessages,
+        temperature: 0.1,
+        max_tokens: 200,
+      }),
+    });
 
     if (!response.ok) {
-      console.error("AI moderation error:", response.status);
+      console.error("ZenMux moderation error:", response.status);
       return new Response(JSON.stringify({ flagged: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
