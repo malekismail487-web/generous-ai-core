@@ -556,6 +556,18 @@ QUESTION COUNT ENFORCEMENT:
         "google/gemini-2.5-flash-lite",
       ];
       let response: Response | null = null;
+      let hit402 = false;
+
+      const aiPayload = {
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        tools: [examTool],
+        tool_choice: { type: "function", function: { name: "create_exam" } },
+        temperature: 0.9 + Math.random() * 0.1,
+        max_tokens: Math.min(Math.max(batchCount * 400, 4000), 16000),
+      };
 
       for (const model of models) {
         for (let attempt = 0; attempt < 3; attempt++) {
@@ -565,26 +577,39 @@ QUESTION COUNT ENFORCEMENT:
               Authorization: `Bearer ${LOVABLE_API_KEY}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              model,
-              messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userPrompt },
-              ],
-              tools: [examTool],
-              tool_choice: { type: "function", function: { name: "create_exam" } },
-              temperature: 0.9 + Math.random() * 0.1,
-              max_tokens: Math.min(Math.max(batchCount * 400, 4000), 16000),
-            }),
+            body: JSON.stringify({ model, ...aiPayload }),
           });
+          if (response.status === 402) { hit402 = true; break; }
           if (response.status !== 429) break;
           const waitMs = Math.pow(2, attempt) * 2000;
           console.log(`Rate limited on ${model}, retrying in ${waitMs}ms`);
           await new Promise(r => setTimeout(r, waitMs));
         }
+        if (hit402) break;
         if (response && response.status !== 429) {
           console.log(`Using model: ${model} for batch of ${batchCount}`);
           break;
+        }
+      }
+
+      // Fallback to OpenAI if 402
+      if (hit402) {
+        const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
+        if (OPENAI_KEY) {
+          console.log("Exam gen: falling back to OpenAI...");
+          try {
+            response = await fetch(OPENAI_API_URL, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${OPENAI_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ model: "gpt-4o-mini", ...aiPayload }),
+            });
+            if (response.ok) console.log("Using OpenAI fallback for exam gen");
+          } catch (e) {
+            console.error("OpenAI fallback error:", e);
+          }
         }
       }
 
