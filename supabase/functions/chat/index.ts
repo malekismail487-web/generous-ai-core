@@ -376,7 +376,7 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "gpt-4o-mini",
+              model: "gpt-4o",
               messages: allMessages,
               stream: true,
               temperature: 0.2,
