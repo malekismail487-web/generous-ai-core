@@ -7,6 +7,56 @@ const corsHeaders = {
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
+function getGeminiKeys(): string[] {
+  const keys: string[] = [];
+  const single = Deno.env.get("GEMINI_API_KEY");
+  if (single) keys.push(single.trim());
+  const pool = Deno.env.get("GEMINI_API_KEY_POOL");
+  if (pool) {
+    for (const k of pool.split(",")) {
+      const trimmed = k.trim();
+      if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
+    }
+  }
+  return keys;
+}
+
+// Shared fetch helper: rotates through key pool on 429
+async function geminiPoolFetch(url: string, body: object, keys: string[]): Promise<Response> {
+  const startIdx = Math.floor(Math.random() * keys.length);
+  const maxAttempts = Math.max(keys.length, 3);
+  let lastResponse: Response | null = null;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const keyIdx = (startIdx + attempt) % keys.length;
+    try {
+      lastResponse = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${keys[keyIdx]}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (lastResponse.status === 429) {
+        console.log(`Key ${keyIdx + 1}/${keys.length} rate limited, rotating...`);
+        await lastResponse.text();
+        continue;
+      }
+      return lastResponse;
+    } catch (e) {
+      console.warn(`Key ${keyIdx + 1} fetch error:`, e);
+      if (attempt < maxAttempts - 1) {
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+  }
+
+  // Return last response or a synthetic 429
+  return lastResponse || new Response(JSON.stringify({ error: "All keys exhausted" }), { status: 429 });
+}
+
 function getVarietyInstructions(): string {
   const styles = [
     "Focus on application and real-world scenarios with specific numerical examples.",
@@ -213,11 +263,11 @@ const examTool = {
   },
 };
 
-// ========== SELF-VALIDATION ==========
+// ========== SELF-VALIDATION (now uses key pool) ==========
 async function validateAndFixQuestions(
   questions: Record<string, unknown>[],
   subject: string,
-  apiKey: string,
+  keys: string[],
   targetCount: number
 ): Promise<Record<string, unknown>[]> {
   if (questions.length === 0) return questions;
@@ -230,15 +280,13 @@ async function validateAndFixQuestions(
   const CHUNK_SIZE = 15;
   const validatedQuestions: Record<string, unknown>[] = [];
   
-  // SEQUENTIAL validation to avoid Gemini rate limits
   for (let chunkStart = 0; chunkStart < questions.length; chunkStart += CHUNK_SIZE) {
     const chunk = questions.slice(chunkStart, chunkStart + CHUNK_SIZE);
     if (chunkStart > 0) {
-      // Wait between validation calls to respect rate limits
       await new Promise(r => setTimeout(r, 3000));
     }
     try {
-      const validated = await validateChunk(chunk, subject, apiKey);
+      const validated = await validateChunk(chunk, subject, keys);
       validatedQuestions.push(...validated);
     } catch (e) {
       console.warn(`Validation chunk failed, keeping unvalidated:`, e);
@@ -250,7 +298,7 @@ async function validateAndFixQuestions(
     const deficit = targetCount - validatedQuestions.length;
     console.log(`Validation removed ${deficit} unfixable questions, attempting replacements...`);
     try {
-      const replacements = await generateReplacementQuestions(deficit, subject, apiKey);
+      const replacements = await generateReplacementQuestions(deficit, subject, keys);
       validatedQuestions.push(...replacements);
     } catch (e) {
       console.warn("Replacement generation failed:", e);
@@ -263,7 +311,7 @@ async function validateAndFixQuestions(
 async function validateChunk(
   questions: Record<string, unknown>[],
   subject: string,
-  apiKey: string
+  keys: string[]
 ): Promise<Record<string, unknown>[]> {
   const questionsForReview = questions.map((q, i) => {
     const ca = String(q.correct_answer || q.correctAnswer || "A");
@@ -305,103 +353,79 @@ Rules:
 Questions to validate:
 ${questionsForReview}`;
 
-  // Use Google Gemini API for validation
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      console.log(`Validation attempt ${attempt + 1} with Gemini API...`);
-      const response = await fetch(GEMINI_API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gemini-2.0-flash",
-          messages: [
-            { role: "system", content: "You are an expert academic exam validator. Return ONLY valid JSON array. Validate every single question rigorously by solving each one yourself. Accuracy is your #1 priority." },
-            { role: "user", content: reviewPrompt },
-          ],
-          temperature: 0.1,
-          max_tokens: 4000,
-        }),
-      });
+  // Use key pool rotation for validation
+  const response = await geminiPoolFetch(GEMINI_API_URL, {
+    model: "gemini-2.0-flash",
+    messages: [
+      { role: "system", content: "You are an expert academic exam validator. Return ONLY valid JSON array. Validate every single question rigorously by solving each one yourself. Accuracy is your #1 priority." },
+      { role: "user", content: reviewPrompt },
+    ],
+    temperature: 0.1,
+    max_tokens: 4000,
+  }, keys);
 
-      if (!response.ok) {
-        if (response.status === 429) {
-          console.warn(`Rate limited, retrying...`);
-          await response.text();
-          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 3000 + Math.random() * 2000));
-          continue;
-        }
-        console.warn(`Validation API error:`, response.status);
-        await response.text();
-        continue;
-      }
-
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || "[]";
-
-      try {
-        const results = extractJsonFromResponse(content) as any[];
-        if (!Array.isArray(results)) {
-          console.warn(`AI returned non-array, retrying...`);
-          continue;
-        }
-
-        const validQuestions: Record<string, unknown>[] = [];
-        let fixed = 0, deleted = 0, passed = 0;
-
-        for (let i = 0; i < questions.length; i++) {
-          const result = results.find((r: any) => r.index === i);
-          
-          if (!result || result.status === "PASS") {
-            validQuestions.push(questions[i]);
-            passed++;
-            continue;
-          }
-          
-          if (result.status === "DELETE") {
-            console.log(`Deleted Q${i + 1}: ${result.reason}`);
-            deleted++;
-            continue;
-          }
-          
-          if (result.status === "FAIL") {
-            const q = { ...questions[i] };
-            if (result.correct_answer) {
-              q.correct_answer = result.correct_answer;
-              q.correctAnswer = result.correct_answer;
-            }
-            if (result.fixed_option_a) { q.option_a = result.fixed_option_a; q.optionA = result.fixed_option_a; }
-            if (result.fixed_option_b) { q.option_b = result.fixed_option_b; q.optionB = result.fixed_option_b; }
-            if (result.fixed_option_c) { q.option_c = result.fixed_option_c; q.optionC = result.fixed_option_c; }
-            if (result.fixed_option_d) { q.option_d = result.fixed_option_d; q.optionD = result.fixed_option_d; }
-            console.log(`Fixed Q${i + 1}: ${result.reason}`);
-            validQuestions.push(q);
-            fixed++;
-          }
-        }
-
-        console.log(`Validation: ${passed} passed, ${fixed} fixed, ${deleted} deleted out of ${questions.length}`);
-        return validQuestions;
-      } catch (e) {
-        console.warn(`Could not parse response, retrying:`, e);
-        continue;
-      }
-    } catch (e) {
-      console.warn(`Validation call failed:`, e);
-      continue;
-    }
+  if (!response.ok) {
+    console.warn(`Validation API error:`, response.status);
+    await response.text();
+    return questions; // Return unvalidated
   }
 
-  console.warn("All validation attempts failed, returning unvalidated questions");
-  return questions;
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content || "[]";
+
+  try {
+    const results = extractJsonFromResponse(content) as any[];
+    if (!Array.isArray(results)) {
+      console.warn(`AI returned non-array`);
+      return questions;
+    }
+
+    const validQuestions: Record<string, unknown>[] = [];
+    let fixed = 0, deleted = 0, passed = 0;
+
+    for (let i = 0; i < questions.length; i++) {
+      const result = results.find((r: any) => r.index === i);
+      
+      if (!result || result.status === "PASS") {
+        validQuestions.push(questions[i]);
+        passed++;
+        continue;
+      }
+      
+      if (result.status === "DELETE") {
+        console.log(`Deleted Q${i + 1}: ${result.reason}`);
+        deleted++;
+        continue;
+      }
+      
+      if (result.status === "FAIL") {
+        const q = { ...questions[i] };
+        if (result.correct_answer) {
+          q.correct_answer = result.correct_answer;
+          q.correctAnswer = result.correct_answer;
+        }
+        if (result.fixed_option_a) { q.option_a = result.fixed_option_a; q.optionA = result.fixed_option_a; }
+        if (result.fixed_option_b) { q.option_b = result.fixed_option_b; q.optionB = result.fixed_option_b; }
+        if (result.fixed_option_c) { q.option_c = result.fixed_option_c; q.optionC = result.fixed_option_c; }
+        if (result.fixed_option_d) { q.option_d = result.fixed_option_d; q.optionD = result.fixed_option_d; }
+        console.log(`Fixed Q${i + 1}: ${result.reason}`);
+        validQuestions.push(q);
+        fixed++;
+      }
+    }
+
+    console.log(`Validation: ${passed} passed, ${fixed} fixed, ${deleted} deleted out of ${questions.length}`);
+    return validQuestions;
+  } catch (e) {
+    console.warn(`Could not parse validation response:`, e);
+    return questions;
+  }
 }
 
 async function generateReplacementQuestions(
   count: number,
   subject: string,
-  apiKey: string
+  keys: string[]
 ): Promise<Record<string, unknown>[]> {
   if (count <= 0) return [];
   
@@ -413,54 +437,35 @@ CRITICAL: Before writing each answer key, SOLVE the problem yourself. Double-che
 Return using the create_exam tool.
 Nonce: ${nonce}`;
 
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const response = await fetch(GEMINI_API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gemini-2.0-flash",
-          messages: [
-            { role: "system", content: `Generate exactly ${count} verified multiple-choice questions for ${subject}.` },
-            { role: "user", content: prompt },
-          ],
-          tools: [examTool],
-          tool_choice: { type: "function", function: { name: "create_exam" } },
-          temperature: 0.8,
-          max_tokens: Math.max(count * 400, 2000),
-        }),
-      });
+  const response = await geminiPoolFetch(GEMINI_API_URL, {
+    model: "gemini-2.0-flash",
+    messages: [
+      { role: "system", content: `Generate exactly ${count} verified multiple-choice questions for ${subject}.` },
+      { role: "user", content: prompt },
+    ],
+    tools: [examTool],
+    tool_choice: { type: "function", function: { name: "create_exam" } },
+    temperature: 0.8,
+    max_tokens: Math.max(count * 400, 2000),
+  }, keys);
 
-      if (!response.ok) {
-        if (response.status === 429) {
-          await response.text();
-          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 3000 + Math.random() * 2000));
-          continue;
-        }
-        await response.text();
-        continue;
-      }
-      const data = await response.json();
-      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-      let raw: Record<string, unknown>;
-      
-      if (toolCall?.function?.name === "create_exam") {
-        raw = extractJsonFromResponse(toolCall.function.arguments) as Record<string, unknown>;
-      } else {
-        raw = extractJsonFromResponse(data.choices?.[0]?.message?.content || "") as Record<string, unknown>;
-      }
-      
-      const rawQuestions = (raw.questions || []) as Record<string, unknown>[];
-      return rawQuestions.filter(q => q && (q.question || q.questionTitle)).slice(0, count);
-    } catch (e) {
-      console.warn("Replacement generation failed:", e);
-      continue;
-    }
+  if (!response.ok) {
+    await response.text();
+    return [];
   }
-  return [];
+
+  const data = await response.json();
+  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+  let raw: Record<string, unknown>;
+  
+  if (toolCall?.function?.name === "create_exam") {
+    raw = extractJsonFromResponse(toolCall.function.arguments) as Record<string, unknown>;
+  } else {
+    raw = extractJsonFromResponse(data.choices?.[0]?.message?.content || "") as Record<string, unknown>;
+  }
+  
+  const rawQuestions = (raw.questions || []) as Record<string, unknown>[];
+  return rawQuestions.filter(q => q && (q.question || q.questionTitle)).slice(0, count);
 }
 
 serve(async (req) => {
@@ -471,9 +476,9 @@ serve(async (req) => {
   try {
     const { subject, grade, difficulty, count, materials, examType, adaptiveLevel } = await req.json();
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    const geminiKeys = getGeminiKeys();
+    if (geminiKeys.length === 0) {
+      throw new Error("No Gemini API keys configured");
     }
 
     if (!count || count <= 0) {
@@ -555,6 +560,7 @@ QUESTION COUNT ENFORCEMENT:
       }
 
       const aiPayload = {
+        model: "gemini-2.0-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -565,88 +571,32 @@ QUESTION COUNT ENFORCEMENT:
         max_tokens: Math.min(Math.max(batchCount * 400, 4000), 16000),
       };
 
-      let response: Response | null = null;
+      // Use key pool rotation for batch generation
+      const response = await geminiPoolFetch(GEMINI_API_URL, aiPayload, geminiKeys);
+      console.log(`Gemini API response status: ${response.status}`);
 
-      // Use Google Gemini API with retries
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          response = await fetch(GEMINI_API_URL, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${GEMINI_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ model: "gemini-2.0-flash", ...aiPayload }),
-          });
-          console.log(`Gemini API response status: ${response.status}`);
-          if (response.ok) {
-            console.log(`Using Gemini API for batch of ${batchCount}`);
-            break;
-          }
-          if (response.status === 429) {
-            const retryAfter = response.headers.get("Retry-After");
-            const delayMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : Math.pow(2, attempt) * 3000 + Math.random() * 2000;
-            console.log(`Rate limited, waiting ${delayMs}ms (attempt ${attempt + 1})`);
-            await response.text();
-            await new Promise(r => setTimeout(r, Math.min(delayMs, 30000)));
-            continue;
-          }
-          if (response.status === 402) {
-            const errText = await response.text();
-            console.error(`Payment required: ${errText.substring(0, 300)}`);
-            throw new Error("PAYMENT_REQUIRED");
-          }
-          const errText = await response.text();
-          console.error(`Gemini API failed with ${response.status}: ${errText.substring(0, 300)}`);
-          response = null;
-        } catch (e) {
-          if (e instanceof Error && e.message === "PAYMENT_REQUIRED") throw e;
-          console.warn("Gemini API network error:", e);
-          response = null;
-          if (attempt < 2) await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 3000));
-        }
-      }
-
-      if (!response || !response.ok) {
-        if (response?.status === 429) throw new Error("RATE_LIMITED");
+      if (!response.ok) {
+        if (response.status === 429) throw new Error("RATE_LIMITED");
+        if (response.status === 402) throw new Error("PAYMENT_REQUIRED");
+        const errText = await response.text();
+        console.error(`Gemini API failed with ${response.status}: ${errText.substring(0, 300)}`);
         throw new Error("Failed to generate exam questions");
       }
 
       let raw: Record<string, unknown>;
+      const data = await response.json();
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error("AI API error:", response.status, errorBody.substring(0, 500));
-
+      if (toolCall?.function?.name === "create_exam") {
         try {
-          const errJson = JSON.parse(errorBody);
-          const failedGen = errJson?.error?.failed_generation;
-          if (failedGen) {
-            raw = extractJsonFromResponse(failedGen) as Record<string, unknown>;
-          } else {
-            throw new Error("No recoverable data");
-          }
-        } catch (e) {
-          if (e instanceof SyntaxError || (e instanceof Error && e.message === "No recoverable data")) {
-            throw new Error("Failed to generate exam questions");
-          }
-          throw e;
-        }
-      } else {
-        const data = await response.json();
-        const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-
-        if (toolCall?.function?.name === "create_exam") {
-          try {
-            raw = extractJsonFromResponse(toolCall.function.arguments) as Record<string, unknown>;
-          } catch {
-            const content = data.choices?.[0]?.message?.content || "";
-            raw = extractJsonFromResponse(content) as Record<string, unknown>;
-          }
-        } else {
+          raw = extractJsonFromResponse(toolCall.function.arguments) as Record<string, unknown>;
+        } catch {
           const content = data.choices?.[0]?.message?.content || "";
           raw = extractJsonFromResponse(content) as Record<string, unknown>;
         }
+      } else {
+        const content = data.choices?.[0]?.message?.content || "";
+        raw = extractJsonFromResponse(content) as Record<string, unknown>;
       }
 
       const rawQuestions = (raw.questions || []) as Record<string, unknown>[];
@@ -681,7 +631,6 @@ QUESTION COUNT ENFORCEMENT:
     }
 
     // ========== AI SELF-VALIDATION STEP ==========
-    // Add delay before validation to avoid rate limits after generation
     console.log(`Waiting before validation to respect rate limits...`);
     await new Promise(r => setTimeout(r, 5000));
     console.log(`Starting AI validation of ${allQuestions.length} questions (target: ${count})...`);
@@ -689,13 +638,12 @@ QUESTION COUNT ENFORCEMENT:
       allQuestions = await validateAndFixQuestions(
         allQuestions,
         subject || 'General',
-        GEMINI_API_KEY!,
+        geminiKeys,
         count
       );
       console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
     } catch (e) {
       console.warn("Validation failed entirely, using unvalidated questions:", e);
-      // Still deliver questions even if validation fails
       allQuestions = allQuestions.slice(0, count);
     }
 

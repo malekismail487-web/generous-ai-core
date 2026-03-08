@@ -7,6 +7,20 @@ const corsHeaders = {
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
+function getGeminiKeys(): string[] {
+  const keys: string[] = [];
+  const single = Deno.env.get("GEMINI_API_KEY");
+  if (single) keys.push(single.trim());
+  const pool = Deno.env.get("GEMINI_API_KEY_POOL");
+  if (pool) {
+    for (const k of pool.split(",")) {
+      const trimmed = k.trim();
+      if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
+    }
+  }
+  return keys;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -15,9 +29,9 @@ serve(async (req) => {
   try {
     const { title, description, subject, questionCount, gradeLevel, adaptiveLevel } = await req.json();
     
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    const geminiKeys = getGeminiKeys();
+    if (geminiKeys.length === 0) {
+      throw new Error("No Gemini API keys configured");
     }
 
     if (!title || !subject || !questionCount) {
@@ -85,12 +99,18 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
 
     let response: Response | null = null;
 
-    // Use Google Gemini API directly with retries
-    for (let attempt = 0; attempt < 3; attempt++) {
+    // Key pool rotation with retries
+    const startIdx = Math.floor(Math.random() * geminiKeys.length);
+    const maxAttempts = Math.max(geminiKeys.length, 3);
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const keyIdx = (startIdx + attempt) % geminiKeys.length;
+      console.log(`Trying key ${keyIdx + 1}/${geminiKeys.length} (attempt ${attempt + 1})`);
+
       response = await fetch(GEMINI_API_URL, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${GEMINI_API_KEY}`,
+          Authorization: `Bearer ${geminiKeys[keyIdx]}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -101,10 +121,13 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
           temperature: 0.85,
         }),
       });
-      if (response.status !== 429) break;
-      const waitMs = Math.pow(2, attempt) * 3000 + Math.random() * 2000;
-      await response.text();
-      await new Promise(r => setTimeout(r, waitMs));
+
+      if (response.status === 429) {
+        console.log(`Key ${keyIdx + 1} rate limited, rotating...`);
+        await response.text();
+        continue;
+      }
+      break;
     }
 
     if (!response || !response.ok) {
