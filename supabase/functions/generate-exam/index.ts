@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const ZENMUX_API_URL = "https://ling-1t.ai/api/v1/chat/completions";
+const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 function getVarietyInstructions(): string {
   const styles = [
@@ -299,18 +299,18 @@ Rules:
 Questions to validate:
 ${questionsForReview}`;
 
-  // Use Ling-1T via ZenMux for validation
+  // Use Lovable AI (gemini-2.5-flash) for validation - fast and cheap
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      console.log(`Validation attempt ${attempt + 1} with Ling-1T...`);
-      const response = await fetch(ZENMUX_API_URL, {
+      console.log(`Validation attempt ${attempt + 1} with Lovable AI...`);
+      const response = await fetch(LOVABLE_AI_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "inclusionai/ling-1t",
+          model: "google/gemini-2.5-flash",
           messages: [
             { role: "system", content: "You are an expert academic exam validator. Return ONLY valid JSON array. Validate every single question rigorously by solving each one yourself. Accuracy is your #1 priority." },
             { role: "user", content: reviewPrompt },
@@ -323,10 +323,12 @@ ${questionsForReview}`;
       if (!response.ok) {
         if (response.status === 429) {
           console.warn(`Rate limited, retrying...`);
-          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 2000));
+          await response.text();
+          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 3000 + Math.random() * 2000));
           continue;
         }
         console.warn(`Validation API error:`, response.status);
+        await response.text();
         continue;
       }
 
@@ -336,7 +338,7 @@ ${questionsForReview}`;
       try {
         const results = extractJsonFromResponse(content) as any[];
         if (!Array.isArray(results)) {
-          console.warn(`Ling-1T returned non-array, retrying...`);
+          console.warn(`AI returned non-array, retrying...`);
           continue;
         }
 
@@ -407,14 +409,14 @@ Nonce: ${nonce}`;
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const response = await fetch(ZENMUX_API_URL, {
+      const response = await fetch(LOVABLE_AI_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "inclusionai/ling-1t",
+          model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: `Generate exactly ${count} verified multiple-choice questions for ${subject}.` },
             { role: "user", content: prompt },
@@ -428,9 +430,11 @@ Nonce: ${nonce}`;
 
       if (!response.ok) {
         if (response.status === 429) {
-          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 2000));
+          await response.text();
+          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 3000 + Math.random() * 2000));
           continue;
         }
+        await response.text();
         continue;
       }
       const data = await response.json();
@@ -461,9 +465,9 @@ serve(async (req) => {
   try {
     const { subject, grade, difficulty, count, materials, examType, adaptiveLevel } = await req.json();
 
-    const ZENMUX_API_KEY = Deno.env.get("ZENMUX_API_KEY");
-    if (!ZENMUX_API_KEY) {
-      throw new Error("ZENMUX_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     if (!count || count <= 0) {
@@ -557,41 +561,41 @@ QUESTION COUNT ENFORCEMENT:
 
       let response: Response | null = null;
 
-      // Use Ling-1T via ZenMux API with retries
+      // Use Lovable AI Gateway with retries
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          response = await fetch(ZENMUX_API_URL, {
+          response = await fetch(LOVABLE_AI_URL, {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${ZENMUX_API_KEY}`,
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ model: "inclusionai/ling-1t", ...aiPayload }),
+            body: JSON.stringify({ model: "google/gemini-3-flash-preview", ...aiPayload }),
           });
-          console.log(`ZenMux response status: ${response.status}`);
+          console.log(`Lovable AI response status: ${response.status}`);
           if (response.ok) {
-            console.log(`Using Ling-1T for batch of ${batchCount}`);
+            console.log(`Using Lovable AI for batch of ${batchCount}`);
             break;
-          }
-          if (response.status === 402) {
-            const errText = await response.text();
-            console.error(`Ling-1T insufficient balance: ${errText.substring(0, 300)}`);
-            throw new Error("INSUFFICIENT_BALANCE");
           }
           if (response.status === 429) {
             const retryAfter = response.headers.get("Retry-After");
             const delayMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : Math.pow(2, attempt) * 3000 + Math.random() * 2000;
-            console.log(`Ling-1T rate limited, waiting ${delayMs}ms (attempt ${attempt + 1})`);
-            await response.text(); // consume body
+            console.log(`Rate limited, waiting ${delayMs}ms (attempt ${attempt + 1})`);
+            await response.text();
             await new Promise(r => setTimeout(r, Math.min(delayMs, 30000)));
             continue;
           }
+          if (response.status === 402) {
+            const errText = await response.text();
+            console.error(`Payment required: ${errText.substring(0, 300)}`);
+            throw new Error("PAYMENT_REQUIRED");
+          }
           const errText = await response.text();
-          console.error(`Ling-1T failed with ${response.status}: ${errText.substring(0, 300)}`);
+          console.error(`Lovable AI failed with ${response.status}: ${errText.substring(0, 300)}`);
           response = null;
         } catch (e) {
-          if (e instanceof Error && e.message === "INSUFFICIENT_BALANCE") throw e;
-          console.warn("Ling-1T network error:", e);
+          if (e instanceof Error && e.message === "PAYMENT_REQUIRED") throw e;
+          console.warn("Lovable AI network error:", e);
           response = null;
           if (attempt < 2) await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 3000));
         }
@@ -672,7 +676,7 @@ QUESTION COUNT ENFORCEMENT:
     allQuestions = await validateAndFixQuestions(
       allQuestions,
       subject || 'General',
-      ZENMUX_API_KEY!,
+      LOVABLE_API_KEY!,
       count
     );
     console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
@@ -719,14 +723,14 @@ QUESTION COUNT ENFORCEMENT:
     });
   } catch (error) {
     console.error("Generate exam error:", error);
-    if (error instanceof Error && error.message === "INSUFFICIENT_BALANCE") {
-      return new Response(JSON.stringify({ error: "Your Ling-1T account has insufficient balance. Please top up your credits at ling-1t.ai." }), {
+    if (error instanceof Error && error.message === "PAYMENT_REQUIRED") {
+      return new Response(JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }), {
         status: 402,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (error instanceof Error && error.message === "RATE_LIMITED") {
-      return new Response(JSON.stringify({ error: "AI model is busy. Please wait 10-15 seconds and try again." }), {
+      return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
         status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
