@@ -67,93 +67,66 @@ ${taskInstructions}
 ${adaptiveLevel === 'beginner' ? '\n## Adaptive Level: BEGINNER\nUse very simple vocabulary, short sentences, basic analogies, and explain every concept from scratch. Avoid jargon entirely.' : adaptiveLevel === 'advanced' ? '\n## Adaptive Level: ADVANCED\nUse precise technical language, go deeper into theory, include challenging details and connections to broader concepts.' : '\n## Adaptive Level: INTERMEDIATE\nUse standard academic language with moderate detail and practical examples.'}
 ${learningStyle ? `\n## Learning Style Personalization\n${learningStyle}` : ''}`;
 
-    // Gemini models via Lovable AI Gateway
-    const models = [
-      "google/gemini-3-flash-preview",
-      "google/gemini-2.5-flash",
-    ];
-    let response: Response | null = null;
-    let hit402 = false;
-
     const aiMessages = [
       { role: "system", content: systemPrompt },
       { role: "user", content: `File: "${fileName}"\n\nContent:\n${fileContent}` },
     ];
 
-    for (const model of models) {
-      for (let attempt = 0; attempt < 3; attempt++) {
-        response = await fetch(LOVABLE_API_URL, {
+    let response: Response | null = null;
+
+    // PRIMARY: OpenAI gpt-4o
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (OPENAI_API_KEY) {
+      try {
+        response = await fetch(OPENAI_API_URL, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model,
+            model: "gpt-4o",
             messages: aiMessages,
-            temperature: 0.7 + Math.random() * 0.2,
+            temperature: 0.7,
             stream: true,
           }),
         });
-
-        if (response.status === 402) { hit402 = true; break; }
-        if (response.status !== 429) break;
-        const waitMs = Math.pow(2, attempt) * 2000;
-        console.log(`Rate limited on ${model}, retrying in ${waitMs}ms`);
-        await new Promise((r) => setTimeout(r, waitMs));
-      }
-
-      if (hit402) break;
-      if (response && response.status !== 429) {
-        console.log(`Using model: ${model}`);
-        break;
+        if (response.ok) console.log("Using primary: OpenAI gpt-4o");
+      } catch (e) {
+        console.warn("OpenAI error:", e);
       }
     }
 
-    // Fallback to OpenAI if 402
-    if (hit402 || (!response?.ok && !response?.status)) {
-      const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-      if (OPENAI_API_KEY) {
-        console.log("Falling back to OpenAI...");
-        try {
-          response = await fetch(OPENAI_API_URL, {
+    // FALLBACK: Lovable AI Gateway
+    if (!response || !response.ok) {
+      const models = ["google/gemini-3-flash-preview", "google/gemini-2.5-flash"];
+      for (const model of models) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          response = await fetch(LOVABLE_API_URL, {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${OPENAI_API_KEY}`,
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              model: "gpt-4o",
-              messages: aiMessages,
-              temperature: 0.7,
-              stream: true,
-            }),
+            body: JSON.stringify({ model, messages: aiMessages, temperature: 0.7, stream: true }),
           });
-          if (response.ok) console.log("Using OpenAI fallback: gpt-4o");
-        } catch (e) {
-          console.error("OpenAI fallback error:", e);
+          if (response.status !== 429) break;
+          await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 2000));
         }
+        if (response && response.ok) { console.log(`Using fallback: ${model}`); break; }
       }
     }
 
     if (!response || !response.ok) {
       if (response?.status === 429) {
-        return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (hit402 && !Deno.env.get("OPENAI_API_KEY")) {
-        return new Response(JSON.stringify({ error: "AI usage limit reached and no fallback configured." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return new Response(JSON.stringify({ error: "All AI models are busy. Please wait and try again." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const errorText = await response?.text() || "No response";
-      console.error("AI gateway error:", response?.status, errorText);
+      console.error("All AI providers failed:", response?.status, errorText);
       return new Response(JSON.stringify({ error: "AI error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
