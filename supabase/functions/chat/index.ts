@@ -320,54 +320,11 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
     ];
 
     let response: Response | null = null;
-    let hit402 = false;
 
-    for (const model of geminiModels) {
+    // PRIMARY: OpenAI gpt-4o (user's own API key)
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (OPENAI_API_KEY) {
       for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          response = await fetch(LOVABLE_API_URL, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model,
-              messages: allMessages,
-              stream: true,
-              temperature: 0.2,
-            }),
-          });
-
-          if (response.status === 429) {
-            const waitMs = Math.pow(2, attempt) * 2000;
-            console.log(`Rate limited (${model}), retrying in ${waitMs}ms`);
-            await new Promise((r) => setTimeout(r, waitMs));
-            continue;
-          }
-
-          if (response.status === 402) {
-            hit402 = true;
-            break;
-          }
-
-          if (response.ok) {
-            console.log(`Using Gemini model: ${model}`);
-            break;
-          }
-        } catch (e) {
-          console.warn(`Gemini fetch error (${model}):`, e);
-        }
-      }
-      if (hit402) break;
-      if (response && response.ok) break;
-    }
-
-    // Fallback to OpenAI if Lovable AI credits exhausted (402)
-    if (hit402 || (!response?.ok && !response?.status)) {
-      const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-      if (OPENAI_API_KEY) {
-        console.log("Lovable AI credits exhausted, falling back to OpenAI...");
         try {
           response = await fetch(OPENAI_API_URL, {
             method: "POST",
@@ -382,15 +339,65 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
               temperature: 0.2,
             }),
           });
-          if (response.ok) {
-            console.log("Using OpenAI fallback: gpt-4o");
-          } else {
-            const errText = await response.text();
-            console.error("OpenAI fallback error:", response.status, errText);
+          if (response.status === 429) {
+            const waitMs = Math.pow(2, attempt) * 2000;
+            console.log(`OpenAI rate limited, retrying in ${waitMs}ms`);
+            await new Promise((r) => setTimeout(r, waitMs));
+            continue;
           }
+          if (response.ok) {
+            console.log("Using primary model: OpenAI gpt-4o");
+            break;
+          }
+          console.warn("OpenAI error:", response.status);
+          break;
         } catch (e) {
-          console.error("OpenAI fallback fetch error:", e);
+          console.warn("OpenAI fetch error:", e);
         }
+      }
+    }
+
+    // FALLBACK: Lovable AI Gateway (Gemini) if OpenAI unavailable
+    if (!response || !response.ok) {
+      console.log("Falling back to Lovable AI Gateway...");
+      const geminiModels = [
+        "google/gemini-3-flash-preview",
+        "google/gemini-2.5-flash",
+        "google/gemini-2.5-flash-lite",
+      ];
+
+      for (const model of geminiModels) {
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            response = await fetch(LOVABLE_API_URL, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model,
+                messages: allMessages,
+                stream: true,
+                temperature: 0.2,
+              }),
+            });
+
+            if (response.status === 429) {
+              const waitMs = Math.pow(2, attempt) * 2000;
+              await new Promise((r) => setTimeout(r, waitMs));
+              continue;
+            }
+            if (response.status === 402) break;
+            if (response.ok) {
+              console.log(`Using fallback Gemini model: ${model}`);
+              break;
+            }
+          } catch (e) {
+            console.warn(`Gemini fetch error (${model}):`, e);
+          }
+        }
+        if (response && response.ok) break;
       }
     }
 
@@ -400,13 +407,8 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (hit402 && !Deno.env.get("OPENAI_API_KEY")) {
-        return new Response(JSON.stringify({ error: "AI usage limit reached and no fallback API key configured." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const errorText = await response?.text() || "No response";
-      console.error("AI gateway error:", response?.status, errorText);
+      console.error("All AI providers failed:", response?.status, errorText);
       return new Response(JSON.stringify({ error: "Failed to get AI response" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

@@ -63,26 +63,12 @@ Be strict about content safety since this is a K-12 platform.`,
       },
     ];
 
-    // Use Gemini via Lovable AI Gateway for content moderation
-    let response = await fetch(LOVABLE_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: moderationMessages,
-        temperature: 0.1,
-        max_tokens: 200,
-      }),
-    });
+    // PRIMARY: OpenAI gpt-4o
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    let response: Response | null = null;
 
-    // Fallback to OpenAI if 402
-    if (response.status === 402) {
-      const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-      if (OPENAI_API_KEY) {
-        console.log("Scan-content: falling back to OpenAI...");
+    if (OPENAI_API_KEY) {
+      try {
         response = await fetch(OPENAI_API_URL, {
           method: "POST",
           headers: {
@@ -96,7 +82,28 @@ Be strict about content safety since this is a K-12 platform.`,
             max_tokens: 200,
           }),
         });
+        if (response.ok) console.log("Scan-content using primary: OpenAI gpt-4o");
+      } catch (e) {
+        console.warn("OpenAI scan error:", e);
       }
+    }
+
+    // FALLBACK: Lovable AI Gateway
+    if (!response || !response.ok) {
+      response = await fetch(LOVABLE_API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-lite",
+          messages: moderationMessages,
+          temperature: 0.1,
+          max_tokens: 200,
+        }),
+      });
+    }
     }
 
     if (!response.ok) {
