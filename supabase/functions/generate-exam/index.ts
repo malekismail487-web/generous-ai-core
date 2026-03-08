@@ -311,13 +311,13 @@ ${questionsForReview}`;
     validationModels.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o-mini" });
   }
 
-  for (const model of validationModels) {
+  for (const { url, key, model } of validationModels) {
     try {
       console.log(`Validation attempt with ${model}...`);
-      const response = await fetch(LOVABLE_API_URL, {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${key}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -335,6 +335,10 @@ ${questionsForReview}`;
         const errText = await response.text();
         if (response.status === 429) {
           console.warn(`Rate limited on ${model}, trying next...`);
+          continue;
+        }
+        if (response.status === 402) {
+          console.warn(`Credits exhausted on ${model}, trying next...`);
           continue;
         }
         console.warn(`Validation API error on ${model}:`, response.status, errText.substring(0, 200));
