@@ -21,40 +21,47 @@ function getGeminiKeys(): string[] {
   return keys;
 }
 
-// Shared fetch helper: rotates through key pool on 429
+// Shared fetch helper: rotates through key pool on 429 with retry waves
 async function geminiPoolFetch(url: string, body: object, keys: string[]): Promise<Response> {
-  const startIdx = Math.floor(Math.random() * keys.length);
-  const maxAttempts = Math.max(keys.length, 3);
+  const MAX_WAVES = 3; // Try all keys up to 3 times with delays between waves
+  const WAVE_DELAY_MS = [15000, 30000, 45000]; // 15s, 30s, 45s between waves
   let lastResponse: Response | null = null;
 
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const keyIdx = (startIdx + attempt) % keys.length;
-    try {
-      lastResponse = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${keys[keyIdx]}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
+  for (let wave = 0; wave < MAX_WAVES; wave++) {
+    if (wave > 0) {
+      const delay = WAVE_DELAY_MS[wave - 1] || 30000;
+      console.log(`All ${keys.length} keys exhausted. Waiting ${delay / 1000}s for rate limit reset (wave ${wave + 1}/${MAX_WAVES})...`);
+      await new Promise(r => setTimeout(r, delay));
+    }
 
-      if (lastResponse.status === 429) {
-        console.log(`Key ${keyIdx + 1}/${keys.length} rate limited, rotating...`);
-        await lastResponse.text();
-        continue;
-      }
-      return lastResponse;
-    } catch (e) {
-      console.warn(`Key ${keyIdx + 1} fetch error:`, e);
-      if (attempt < maxAttempts - 1) {
+    const startIdx = Math.floor(Math.random() * keys.length);
+    for (let i = 0; i < keys.length; i++) {
+      const keyIdx = (startIdx + i) % keys.length;
+      try {
+        lastResponse = await fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${keys[keyIdx]}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (lastResponse.status === 429) {
+          console.log(`Key ${keyIdx + 1}/${keys.length} rate limited (wave ${wave + 1}), rotating...`);
+          await lastResponse.text();
+          continue;
+        }
+        return lastResponse;
+      } catch (e) {
+        console.warn(`Key ${keyIdx + 1} fetch error:`, e);
         await new Promise(r => setTimeout(r, 2000));
       }
     }
   }
 
   // Return last response or a synthetic 429
-  return lastResponse || new Response(JSON.stringify({ error: "All keys exhausted" }), { status: 429 });
+  return lastResponse || new Response(JSON.stringify({ error: "All keys exhausted after retries" }), { status: 429 });
 }
 
 function getVarietyInstructions(): string {
