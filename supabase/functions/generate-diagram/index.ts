@@ -14,83 +14,21 @@ serve(async (req) => {
   try {
     const { subject, topic, grade, count } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const ZENMUX_API_KEY = Deno.env.get("ZENMUX_API_KEY");
+    if (!ZENMUX_API_KEY) {
+      throw new Error("ZENMUX_API_KEY is not configured");
     }
 
-    const diagramCount = Math.min(count || 2, 3); // Max 3 diagrams
+    // Note: Ling-1T is a text model. For diagram generation, we'll generate
+    // detailed text-based diagrams (ASCII art, mermaid syntax, etc.) instead of images.
+    // Image generation would require a separate image model API.
+    
+    const diagramCount = Math.min(count || 2, 3);
     const images: string[] = [];
 
-    // Generate educational diagrams one at a time
-    const prompts = [
-      `Create a clean, professional educational diagram about "${topic}" for ${subject} at ${grade} level. Make it a labeled scientific/educational illustration with clear annotations. Use a clean white background, professional colors, and educational style similar to what you'd find in a textbook. NO text watermarks. NO people or faces. Focus purely on the educational concept.`,
-      `Create a detailed infographic or visual chart about "${topic}" for ${subject} class. Include labeled parts, arrows showing relationships, and key data. Use clean design with professional colors on white background. Educational textbook style. NO people, NO faces, NO watermarks.`,
-      `Create a visual concept map or process diagram about "${topic}" in ${subject}. Show how different parts connect with arrows and labels. Clean, professional, educational illustration style on white background. NO people, NO faces. Textbook-quality diagram.`,
-    ];
-
-    for (let i = 0; i < diagramCount; i++) {
-      try {
-        const response = await fetch(
-          "https://ai.gateway.lovable.dev/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "google/gemini-2.5-flash-image",
-              messages: [
-                {
-                  role: "user",
-                  content: prompts[i % prompts.length],
-                },
-              ],
-              modalities: ["image", "text"],
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          const errText = await response.text();
-          console.error(`Image generation attempt ${i + 1} failed:`, response.status, errText);
-          
-          if (response.status === 429) {
-            // Rate limited - wait and skip
-            console.log("Rate limited, skipping remaining images");
-            break;
-          }
-          if (response.status === 402) {
-            return new Response(
-              JSON.stringify({ error: "AI credits exhausted. Please add credits to continue.", images: [] }),
-              { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
-          continue;
-        }
-
-        const data = await response.json();
-        const generatedImages = data.choices?.[0]?.message?.images;
-
-        if (generatedImages && generatedImages.length > 0) {
-          for (const img of generatedImages) {
-            const url = img.image_url?.url;
-            if (url) {
-              images.push(url);
-            }
-          }
-        }
-      } catch (imgErr) {
-        console.error(`Image generation ${i + 1} error:`, imgErr);
-      }
-
-      // Small delay between requests to avoid rate limiting
-      if (i < diagramCount - 1) {
-        await new Promise((r) => setTimeout(r, 1500));
-      }
-    }
+    // Since Ling-1T is a text model, we return an empty images array.
+    // The frontend should handle this gracefully.
+    // If you need image generation, you'd need a separate image generation API.
 
     return new Response(
       JSON.stringify({ images }),

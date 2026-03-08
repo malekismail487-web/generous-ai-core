@@ -6,8 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LOVABLE_API_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+const ZENMUX_API_URL = "https://zenmux.ai/api/v1/chat/completions";
 
 async function getAdaptiveProfile(authHeader: string | null): Promise<{ learningPace?: string; iqData?: any; learningStylePrompt?: string } | null> {
   if (!authHeader) return null;
@@ -237,9 +236,9 @@ serve(async (req) => {
   try {
     const { messages, enableWebSearch, language, backgroundContext, adaptiveLevel, learningStyle, systemPrompt: customSystemPrompt } = await req.json();
     
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const ZENMUX_API_KEY = Deno.env.get("ZENMUX_API_KEY");
+    if (!ZENMUX_API_KEY) {
+      throw new Error("ZENMUX_API_KEY is not configured");
     }
 
     // Scan the latest user message for malicious content (fire-and-forget)
@@ -312,103 +311,58 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
 
     const allMessages = [{ role: "system", content: systemPrompt }, ...messages];
 
-    // Use Gemini models via Lovable AI Gateway
-    const geminiModels = [
-      "google/gemini-3-flash-preview",
-      "google/gemini-2.5-flash",
-      "google/gemini-2.5-flash-lite",
-    ];
-
     let response: Response | null = null;
 
-    // PRIMARY: OpenAI gpt-4o (user's own API key)
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (OPENAI_API_KEY) {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          response = await fetch(OPENAI_API_URL, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${OPENAI_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "gpt-4o",
-              messages: allMessages,
-              stream: true,
-              temperature: 0.2,
-            }),
-          });
-          if (response.status === 429) {
-            const waitMs = Math.pow(2, attempt) * 2000;
-            console.log(`OpenAI rate limited, retrying in ${waitMs}ms`);
-            await new Promise((r) => setTimeout(r, waitMs));
-            continue;
-          }
-          if (response.ok) {
-            console.log("Using primary model: OpenAI gpt-4o");
-            break;
-          }
-          console.warn("OpenAI error:", response.status);
+    // Use Ling-1T via ZenMux API
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        response = await fetch(ZENMUX_API_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${ZENMUX_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "inclusionai/ling-1t",
+            messages: allMessages,
+            stream: true,
+            temperature: 0.2,
+          }),
+        });
+
+        if (response.status === 429) {
+          const waitMs = Math.pow(2, attempt) * 2000;
+          console.log(`ZenMux rate limited, retrying in ${waitMs}ms`);
+          await new Promise((r) => setTimeout(r, waitMs));
+          continue;
+        }
+        if (response.ok) {
+          console.log("Using Ling-1T via ZenMux");
           break;
-        } catch (e) {
-          console.warn("OpenAI fetch error:", e);
         }
-      }
-    }
-
-    // FALLBACK: Lovable AI Gateway (Gemini) if OpenAI unavailable
-    if (!response || !response.ok) {
-      console.log("Falling back to Lovable AI Gateway...");
-      const geminiModels = [
-        "google/gemini-3-flash-preview",
-        "google/gemini-2.5-flash",
-        "google/gemini-2.5-flash-lite",
-      ];
-
-      for (const model of geminiModels) {
-        for (let attempt = 0; attempt < 2; attempt++) {
-          try {
-            response = await fetch(LOVABLE_API_URL, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${LOVABLE_API_KEY}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                model,
-                messages: allMessages,
-                stream: true,
-                temperature: 0.2,
-              }),
-            });
-
-            if (response.status === 429) {
-              const waitMs = Math.pow(2, attempt) * 2000;
-              await new Promise((r) => setTimeout(r, waitMs));
-              continue;
-            }
-            if (response.status === 402) break;
-            if (response.ok) {
-              console.log(`Using fallback Gemini model: ${model}`);
-              break;
-            }
-          } catch (e) {
-            console.warn(`Gemini fetch error (${model}):`, e);
-          }
+        console.warn("ZenMux error:", response.status);
+        break;
+      } catch (e) {
+        console.warn("ZenMux fetch error:", e);
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 2000));
         }
-        if (response && response.ok) break;
       }
     }
 
     if (!response || !response.ok) {
       if (response?.status === 429) {
-        return new Response(JSON.stringify({ error: "All AI models are busy. Please wait 10-15 seconds and try again." }), {
+        return new Response(JSON.stringify({ error: "AI model is busy. Please wait 10-15 seconds and try again." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      if (response?.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Please check your plan." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const errorText = await response?.text() || "No response";
-      console.error("All AI providers failed:", response?.status, errorText);
+      console.error("ZenMux failed:", response?.status, errorText);
       return new Response(JSON.stringify({ error: "Failed to get AI response" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
