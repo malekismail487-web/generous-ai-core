@@ -421,14 +421,16 @@ CRITICAL: Before writing each answer key, SOLVE the problem yourself. Double-che
 Return using the create_exam tool.
 Nonce: ${nonce}`;
 
-  const models: { url: string; key: string; model: string }[] = [
-    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-3-flash-preview" },
-    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash" },
-  ];
+  // Try OpenAI first, then Lovable fallback
+  const models: { url: string; key: string; model: string }[] = [];
   const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
   if (OPENAI_KEY) {
     models.push({ url: OPENAI_API_URL, key: OPENAI_KEY, model: "gpt-4o" });
   }
+  models.push(
+    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-3-flash-preview" },
+    { url: LOVABLE_API_URL, key: apiKey, model: "google/gemini-2.5-flash" },
+  );
 
   for (const { url, key, model } of models) {
     try {
