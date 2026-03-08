@@ -607,7 +607,10 @@ QUESTION COUNT ENFORCEMENT:
         }
       }
 
-      if (!response || response.status === 429) throw new Error("RATE_LIMITED");
+      if (!response || !response.ok) {
+        if (response?.status === 429) throw new Error("RATE_LIMITED");
+        throw new Error("Failed to generate exam questions");
+      }
 
       let raw: Record<string, unknown>;
 
