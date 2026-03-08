@@ -394,70 +394,93 @@ export function ExaminationSection() {
       ? (isFullSAT ? [] : satMaterials.map(m => ({ topic: m.topic, content: m.content })))
       : savedMaterials.map(m => ({ topic: m.topic, content: m.content }));
 
-    try {
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-exam`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: JSON.stringify({
-          subject: subjectName,
-          grade: selectedGrade,
-          difficulty: difficulty.replace('SUBJECT_', '').replace('SAT_', ''),
-          count,
-          materials: materialsToSend,
-          examType: isFullSAT ? 'SAT_FULL' : undefined,
-          adaptiveLevel,
-        }),
-      });
+    const MAX_CLIENT_RETRIES = 3;
+    const RETRY_DELAYS = [20000, 40000, 60000]; // 20s, 40s, 60s
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Request failed: ${res.status}`);
-      }
+    for (let attempt = 0; attempt < MAX_CLIENT_RETRIES; attempt++) {
+      try {
+        if (attempt > 0) {
+          toast({
+            title: `⏳ Retrying (attempt ${attempt + 1}/${MAX_CLIENT_RETRIES})`,
+            description: `Rate limit hit. Waiting ${RETRY_DELAYS[attempt - 1] / 1000}s for API quota to reset...`,
+          });
+          await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt - 1]));
+        }
 
-      const parsed = await res.json();
-
-      if (!parsed.questions || !Array.isArray(parsed.questions) || parsed.questions.length === 0) {
-        throw new Error('AI did not return valid questions. Please try again.');
-      }
-
-      const minAcceptable = Math.floor(count * 0.8);
-      if (parsed.questions.length < minAcceptable) {
-        throw new Error(`Only ${parsed.questions.length} of ${count} questions generated. Please try again.`);
-      }
-
-      const fixedExam: ExamJSON = {
-        exam_title: parsed.exam_title || `${subjectName} Exam`,
-        grade_level: parsed.grade_level || selectedGrade || 'General',
-        subject: parsed.subject || subjectName || 'Mixed',
-        total_questions: parsed.questions.length,
-        questions: parsed.questions,
-      };
-
-      if (parsed.questions.length < count) {
-        toast({
-          title: 'Partial Success',
-          description: `Generated ${parsed.questions.length} of ${count} questions.`,
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-exam`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            subject: subjectName,
+            grade: selectedGrade,
+            difficulty: difficulty.replace('SUBJECT_', '').replace('SAT_', ''),
+            count,
+            materials: materialsToSend,
+            examType: isFullSAT ? 'SAT_FULL' : undefined,
+            adaptiveLevel,
+          }),
         });
-      }
 
-      setExamState(createInitialExamState(fixedExam));
-      setViewState('exam');
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error generating exam',
-        description: error instanceof Error ? error.message : 'Please try again.',
-      });
-    } finally {
-      setIsLoading(false);
+        if (res.status === 429) {
+          if (attempt < MAX_CLIENT_RETRIES - 1) {
+            console.log(`Exam generation rate limited, will retry (attempt ${attempt + 1})`);
+            continue; // Retry after delay
+          }
+          throw new Error('AI servers are busy. Please wait 1-2 minutes and try again.');
+        }
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Request failed: ${res.status}`);
+        }
+
+        const parsed = await res.json();
+
+        if (!parsed.questions || !Array.isArray(parsed.questions) || parsed.questions.length === 0) {
+          throw new Error('AI did not return valid questions. Please try again.');
+        }
+
+        const minAcceptable = Math.floor(count * 0.8);
+        if (parsed.questions.length < minAcceptable) {
+          throw new Error(`Only ${parsed.questions.length} of ${count} questions generated. Please try again.`);
+        }
+
+        const fixedExam: ExamJSON = {
+          exam_title: parsed.exam_title || `${subjectName} Exam`,
+          grade_level: parsed.grade_level || selectedGrade || 'General',
+          subject: parsed.subject || subjectName || 'Mixed',
+          total_questions: parsed.questions.length,
+          questions: parsed.questions,
+        };
+
+        if (parsed.questions.length < count) {
+          toast({
+            title: 'Partial Success',
+            description: `Generated ${parsed.questions.length} of ${count} questions.`,
+          });
+        }
+
+        setExamState(createInitialExamState(fixedExam));
+        setViewState('exam');
+        return; // Success — exit the retry loop
+      } catch (error) {
+        if (attempt === MAX_CLIENT_RETRIES - 1 || (error instanceof Error && !error.message.includes('Rate'))) {
+          toast({
+            variant: 'destructive',
+            title: 'Error generating exam',
+            description: error instanceof Error ? error.message : 'Please try again.',
+          });
+        }
+      }
     }
+    setIsLoading(false);
   }, [examMenuType, selectedSubject, selectedGrade, savedMaterials, satMaterials, toast]);
 
   const handleExamTypeSelect = (type: ExamMenuType) => {
