@@ -564,10 +564,10 @@ QUESTION COUNT ENFORCEMENT:
       // Use Lovable AI Gateway with retries
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          response = await fetch(LOVABLE_AI_URL, {
+          response = await fetch(GEMINI_API_URL, {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              Authorization: `Bearer ${GEMINI_API_KEY}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ model: "google/gemini-3-flash-preview", ...aiPayload }),
