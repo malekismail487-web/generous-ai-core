@@ -71,9 +71,8 @@ serve(async (req) => {
               console.log(`Key ${k + 1} rate limited, rotating...`);
               await response.text();
               continue;
-            }
-            diagramSuccess = true;
-            break;
+          }
+        }
         }
 
         if (!response || !response.ok) {
