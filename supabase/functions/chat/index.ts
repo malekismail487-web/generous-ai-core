@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const ZENMUX_API_URL = "https://ling-1t.ai/api/v1/chat/completions";
+const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 async function getAdaptiveProfile(authHeader: string | null): Promise<{ learningPace?: string; iqData?: any; learningStylePrompt?: string } | null> {
   if (!authHeader) return null;
@@ -236,9 +236,9 @@ serve(async (req) => {
   try {
     const { messages, enableWebSearch, language, backgroundContext, adaptiveLevel, learningStyle, systemPrompt: customSystemPrompt } = await req.json();
     
-    const ZENMUX_API_KEY = Deno.env.get("ZENMUX_API_KEY");
-    if (!ZENMUX_API_KEY) {
-      throw new Error("ZENMUX_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     // Scan the latest user message for malicious content (fire-and-forget)
@@ -313,17 +313,17 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
 
     let response: Response | null = null;
 
-    // Use Ling-1T via ZenMux API
+    // Use Lovable AI Gateway
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        response = await fetch(ZENMUX_API_URL, {
+        response = await fetch(LOVABLE_AI_URL, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${ZENMUX_API_KEY}`,
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "inclusionai/ling-1t",
+            model: "google/gemini-3-flash-preview",
             messages: allMessages,
             stream: true,
             temperature: 0.2,
@@ -331,38 +331,39 @@ CRITICAL: You MUST respond ENTIRELY in Arabic (العربية). All explanations
         });
 
         if (response.status === 429) {
-          const waitMs = Math.pow(2, attempt) * 2000;
-          console.log(`ZenMux rate limited, retrying in ${waitMs}ms`);
+          const waitMs = Math.pow(2, attempt) * 3000 + Math.random() * 2000;
+          console.log(`Lovable AI rate limited, retrying in ${waitMs}ms`);
+          await response.text();
           await new Promise((r) => setTimeout(r, waitMs));
           continue;
         }
         if (response.ok) {
-          console.log("Using Ling-1T via ZenMux");
+          console.log("Using Lovable AI (gemini-3-flash-preview)");
           break;
         }
-        console.warn("ZenMux error:", response.status);
+        console.warn("Lovable AI error:", response.status);
         break;
       } catch (e) {
-        console.warn("ZenMux fetch error:", e);
+        console.warn("Lovable AI fetch error:", e);
         if (attempt < 2) {
-          await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 2000));
+          await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 3000));
         }
       }
     }
 
     if (!response || !response.ok) {
       if (response?.status === 429) {
-        return new Response(JSON.stringify({ error: "AI model is busy. Please wait 10-15 seconds and try again." }), {
+        return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response?.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please check your plan." }), {
+        return new Response(JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const errorText = await response?.text() || "No response";
-      console.error("ZenMux failed:", response?.status, errorText);
+      console.error("Lovable AI failed:", response?.status, errorText);
       return new Response(JSON.stringify({ error: "Failed to get AI response" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

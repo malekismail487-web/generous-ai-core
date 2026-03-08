@@ -6,6 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -14,21 +16,53 @@ serve(async (req) => {
   try {
     const { subject, topic, grade, count } = await req.json();
 
-    const ZENMUX_API_KEY = Deno.env.get("ZENMUX_API_KEY");
-    if (!ZENMUX_API_KEY) {
-      throw new Error("ZENMUX_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Note: Ling-1T is a text model. For diagram generation, we'll generate
-    // detailed text-based diagrams (ASCII art, mermaid syntax, etc.) instead of images.
-    // Image generation would require a separate image model API.
-    
+    // Use Gemini image generation model for diagrams
     const diagramCount = Math.min(count || 2, 3);
     const images: string[] = [];
 
-    // Since Ling-1T is a text model, we return an empty images array.
-    // The frontend should handle this gracefully.
-    // If you need image generation, you'd need a separate image generation API.
+    for (let i = 0; i < diagramCount; i++) {
+      try {
+        const response = await fetch(LOVABLE_AI_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-3-pro-image-preview",
+            messages: [
+              {
+                role: "user",
+                content: `Create a clear, educational diagram about "${topic}" for ${subject} at ${grade || 'general'} level. The diagram should be visually clean, well-labeled, and suitable for studying. Use colors and clear labels.`,
+              },
+            ],
+          }),
+        });
+
+        if (!response.ok) {
+          console.warn(`Diagram generation ${i + 1} failed:`, response.status);
+          await response.text();
+          continue;
+        }
+
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (content) {
+          // Check if the response contains an image URL or base64
+          const imgMatch = content.match(/!\[.*?\]\((.*?)\)/);
+          if (imgMatch) {
+            images.push(imgMatch[1]);
+          }
+        }
+      } catch (e) {
+        console.warn(`Diagram ${i + 1} error:`, e);
+      }
+    }
 
     return new Response(
       JSON.stringify({ images }),

@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ZENMUX_API_URL = "https://ling-1t.ai/api/v1/chat/completions";
+const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -15,11 +15,11 @@ serve(async (req) => {
   }
 
   try {
-    const ZENMUX_API_KEY = Deno.env.get("ZENMUX_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!ZENMUX_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!LOVABLE_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return new Response(JSON.stringify({ error: "Not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -62,15 +62,15 @@ Be strict about content safety since this is a K-12 platform.`,
       },
     ];
 
-    // Use Ling-1T via ZenMux API
-    const response = await fetch(ZENMUX_API_URL, {
+    // Use Lovable AI Gateway with lightweight model for moderation
+    const response = await fetch(LOVABLE_AI_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${ZENMUX_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "inclusionai/ling-1t",
+        model: "google/gemini-2.5-flash-lite",
         messages: moderationMessages,
         temperature: 0.1,
         max_tokens: 200,
@@ -78,7 +78,8 @@ Be strict about content safety since this is a K-12 platform.`,
     });
 
     if (!response.ok) {
-      console.error("ZenMux moderation error:", response.status);
+      console.error("Lovable AI moderation error:", response.status);
+      await response.text();
       return new Response(JSON.stringify({ flagged: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
