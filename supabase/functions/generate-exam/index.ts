@@ -681,14 +681,23 @@ QUESTION COUNT ENFORCEMENT:
     }
 
     // ========== AI SELF-VALIDATION STEP ==========
+    // Add delay before validation to avoid rate limits after generation
+    console.log(`Waiting before validation to respect rate limits...`);
+    await new Promise(r => setTimeout(r, 5000));
     console.log(`Starting AI validation of ${allQuestions.length} questions (target: ${count})...`);
-    allQuestions = await validateAndFixQuestions(
-      allQuestions,
-      subject || 'General',
-      GEMINI_API_KEY!,
-      count
-    );
-    console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
+    try {
+      allQuestions = await validateAndFixQuestions(
+        allQuestions,
+        subject || 'General',
+        GEMINI_API_KEY!,
+        count
+      );
+      console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
+    } catch (e) {
+      console.warn("Validation failed entirely, using unvalidated questions:", e);
+      // Still deliver questions even if validation fails
+      allQuestions = allQuestions.slice(0, count);
+    }
 
     // Shuffle all questions for random order
     for (let i = allQuestions.length - 1; i > 0; i--) {
