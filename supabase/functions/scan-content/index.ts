@@ -104,7 +104,6 @@ Be strict about content safety since this is a K-12 platform.`,
         }),
       });
     }
-    }
 
     if (!response.ok) {
       console.error("AI moderation error:", response.status);
