@@ -631,10 +631,9 @@ QUESTION COUNT ENFORCEMENT:
       }
     }
 
-    // ========== AI SELF-VALIDATION STEP ==========
-    console.log(`Waiting before validation to respect rate limits...`);
-    await new Promise(r => setTimeout(r, 5000));
-    console.log(`Starting AI validation of ${allQuestions.length} questions (target: ${count})...`);
+    // ========== AI SELF-VALIDATION STEP (graceful — skipped on rate limit) ==========
+    console.log(`Quick validation attempt (light mode, no heavy retries)...`);
+    await new Promise(r => setTimeout(r, 3000));
     try {
       allQuestions = await validateAndFixQuestions(
         allQuestions,
