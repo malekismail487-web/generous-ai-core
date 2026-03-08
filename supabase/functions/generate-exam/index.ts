@@ -409,7 +409,7 @@ Nonce: ${nonce}`;
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const response = await fetch(LOVABLE_AI_URL, {
+      const response = await fetch(GEMINI_API_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
