@@ -18,12 +18,10 @@ export function EmptyState({ onSuggestionClick }: EmptyStateProps) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 animate-fade-in">
-      <div className="relative mb-5">
-        <div className="w-16 h-16 rounded-2xl overflow-hidden glow-effect">
+      <div className="mb-5">
+        <div className="w-16 h-16 rounded-2xl overflow-hidden">
           <LuminaLogo size={64} />
         </div>
-        <div className="absolute inset-0 rounded-2xl animate-pulse-glow" 
-             style={{ background: 'var(--gradient-primary)', opacity: 0.3 }} />
       </div>
       
       <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Caveat, cursive' }}>
