@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   FileText, Loader2, Building2, Users, GraduationCap,
-  TrendingUp, Clock, Brain, Download, Sparkles
+  TrendingUp, Clock, Brain, Download
 } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
