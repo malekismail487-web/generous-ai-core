@@ -1,4 +1,5 @@
-import { User, Sparkles } from "lucide-react";
+import { User } from "lucide-react";
+import { LuminaLogo } from "@/components/LuminaLogo";
 import { useEffect, useRef, useState } from "react";
 import { MathRenderer } from "@/components/MathRenderer";
 
