@@ -33,7 +33,7 @@ export default function LanguageSelect() {
         <div className="w-full max-w-sm animate-fade-in">
           {/* Logo */}
           <div className="flex flex-col items-center mb-10">
-            <div className="w-20 h-20 rounded-3xl overflow-hidden mb-5 glow-effect">
+            <div className="w-20 h-20 rounded-3xl overflow-hidden mb-5">
               <LuminaLogo size={80} />
             </div>
             <h1 className="text-3xl font-bold" style={{ fontFamily: 'Caveat, cursive' }}>
