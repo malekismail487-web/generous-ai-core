@@ -19,9 +19,8 @@ export function EmptyState({ onSuggestionClick }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 animate-fade-in">
       <div className="relative mb-5">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center glow-effect"
-             style={{ background: 'var(--gradient-primary)' }}>
-          <Sparkles className="w-8 h-8 text-primary-foreground" />
+        <div className="w-16 h-16 rounded-2xl overflow-hidden glow-effect">
+          <LuminaLogo size={64} />
         </div>
         <div className="absolute inset-0 rounded-2xl animate-pulse-glow" 
              style={{ background: 'var(--gradient-primary)', opacity: 0.3 }} />
