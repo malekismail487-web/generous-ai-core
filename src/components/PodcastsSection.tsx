@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, Podcast, Volume2, VolumeX, Loader2, FileText, X, Sparkles, History, ArrowLeft, Clock } from 'lucide-react';
+import { Upload, Podcast, Volume2, VolumeX, Loader2, FileText, X, History, ArrowLeft, Clock } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MathRenderer } from '@/components/MathRenderer';
@@ -433,7 +434,7 @@ export function PodcastsSection() {
                   {t('Ready to explain this file', 'جاهز لشرح هذا الملف')}
                 </p>
                 <Button onClick={handleExplain} className="rounded-xl px-6 gap-2" size="lg">
-                  <Sparkles className="w-5 h-5" />
+                  <LuminaLogo size={20} />
                   {t('Explain with AI', 'اشرح بالذكاء الاصطناعي')}
                 </Button>
               </div>

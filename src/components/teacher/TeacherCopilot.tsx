@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { generateId } from '@/lib/utils';
-import { Bot, Sparkles, Loader2, CheckCircle2, Trash2, X } from 'lucide-react';
+import { Bot, Loader2, CheckCircle2, Trash2, X } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -188,7 +189,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
         <Button className="gap-2 bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-xl transition-shadow">
           <Bot className="w-4 h-4" />
           <span className="hidden sm:inline">{t('copilotLabel')}</span>
-          <Sparkles className="w-3 h-3" />
+          <LuminaLogo size={12} />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -281,7 +282,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
               size="lg"
               disabled={!title.trim() || !subject || !gradeLevel}
             >
-              <Sparkles className="w-4 h-4" />
+              <LuminaLogo size={16} />
               {t('generateWithAI')} {questionCount} {t('questionsWithAI')}
             </Button>
           </div>
@@ -292,7 +293,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <div className="relative">
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
-              <Sparkles className="w-5 h-5 text-accent absolute -top-1 -right-1 animate-pulse" />
+              <LuminaLogo size={20} className="absolute -top-1 -right-1 animate-pulse" />
             </div>
             <p className="text-muted-foreground text-sm">{t('aiCraftingQuestions')}</p>
             <p className="text-xs text-muted-foreground/60">{t('mayTakeFewSeconds')}</p>

@@ -1,4 +1,4 @@
-import luminaLogo from '@/assets/lumina-logo.png';
+import luminaLogo from '@/assets/lumina-logo.jpeg';
 
 interface LuminaLogoProps {
   size?: number;
@@ -12,7 +12,7 @@ export function LuminaLogo({ size = 32, className = '' }: LuminaLogoProps) {
       alt="Lumina"
       width={size}
       height={size}
-      className={`object-contain ${className}`}
+      className={`object-cover rounded-lg ${className}`}
     />
   );
 }

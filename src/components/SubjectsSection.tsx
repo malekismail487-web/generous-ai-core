@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { ArrowLeft, ArrowRight, Loader2, Plus, Sparkles, Trash2, Bot, BookOpen, Download, Image as ImageIcon, FileText, Presentation, Pencil, Save, Zap, GraduationCap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2, Bot, BookOpen, Download, Image as ImageIcon, FileText, Presentation, Pencil, Save, Zap, GraduationCap } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
@@ -732,8 +733,8 @@ Use age-appropriate language for ${selectedGrade}.`;
       <div className={containerClass}>
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="text-center mb-8 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-primary to-accent">
-              <Sparkles className="w-7 h-7 text-primary-foreground" />
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect overflow-hidden">
+              <LuminaLogo size={56} />
             </div>
             <h1 className="text-2xl font-bold mb-2 gradient-text">{tl('subjects')}</h1>
             <p className="text-muted-foreground text-sm">{tl('chooseHowToLearn')}</p>

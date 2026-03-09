@@ -1,10 +1,10 @@
-import { Sparkles } from "lucide-react";
+import { LuminaLogo } from "@/components/LuminaLogo";
 
 export function TypingIndicator() {
   return (
     <div className="flex gap-3 animate-fade-in">
-      <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-accent/20 text-accent">
-        <Sparkles size={16} className="animate-pulse-glow" />
+      <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden">
+        <LuminaLogo size={32} />
       </div>
       <div>
         <div className="flex gap-1.5 py-1">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Brain, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Loader2, Brain, ShieldCheck, CheckCircle2, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 
@@ -11,7 +11,7 @@ interface ExamLoadingProgressProps {
 const stages = [
   { icon: Brain, label: 'Crafting unique questions', duration: 8000 },
   { icon: ShieldCheck, label: 'Validating accuracy', duration: 12000 },
-  { icon: Sparkles, label: 'Finalizing your exam', duration: 6000 },
+  { icon: Star, label: 'Finalizing your exam', duration: 6000 },
 ];
 
 const tips = [

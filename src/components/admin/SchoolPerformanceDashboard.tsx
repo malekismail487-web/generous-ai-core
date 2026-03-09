@@ -3,8 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import {
   Users, BookOpen, FileText, BarChart3, TrendingUp, Clock,
-  Loader2, Brain, GraduationCap, Sparkles, CheckCircle2
+  Loader2, Brain, GraduationCap, CheckCircle2
 } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
@@ -233,7 +234,7 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
         {/* Teacher Productivity */}
         <div className="glass-effect rounded-xl p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-violet-500" />
+            <LuminaLogo size={16} />
             {t('Teacher Productivity', 'إنتاجية المعلمين')}
           </h3>
           <div className="space-y-3">

@@ -5,7 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Note } from '@/hooks/useNotes';
-import { Sparkles, Loader2, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { streamChat } from '@/lib/chat';
 
 interface NoteEditorProps {
@@ -143,7 +144,7 @@ export function NoteEditor({ note, onUpdate, onCreateNote }: NoteEditorProps) {
           {isReviewing ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
           ) : (
-            <Sparkles className="w-4 h-4 mr-2" />
+            <LuminaLogo size={16} className="mr-2" />
           )}
           Ask AI to Review
         </Button>

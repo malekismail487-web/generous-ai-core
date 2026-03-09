@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import { Loader2, Sparkles, Save, Copy, BookOpen } from 'lucide-react';
+import { Loader2, Save, Copy, BookOpen } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -180,8 +181,8 @@ ${additionalNotes ? `- Additional Notes: ${additionalNotes}` : ''}`;
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-white" />
+        <div className="w-10 h-10 rounded-xl overflow-hidden">
+          <LuminaLogo size={40} />
         </div>
         <div>
           <h2 className="text-lg font-bold">{t('AI Lesson Plan Generator', 'مولد خطط الدروس بالذكاء الاصطناعي')}</h2>
@@ -262,7 +263,7 @@ ${additionalNotes ? `- Additional Notes: ${additionalNotes}` : ''}`;
             {isGenerating ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t('Generating...', 'جاري الإنشاء...')}</>
             ) : (
-              <><Sparkles className="w-4 h-4 mr-2" /> {t('Generate Lesson Plan', 'إنشاء خطة الدرس')}</>
+              <><LuminaLogo size={16} className="mr-2" /> {t('Generate Lesson Plan', 'إنشاء خطة الدرس')}</>
             )}
           </Button>
         </div>

@@ -5,9 +5,10 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { LuminaMascot } from '@/components/LuminaMascot';
 import {
   MessageSquare, Layers, BookOpen, FlipHorizontal, ClipboardList,
-  FileText, GraduationCap, Flame, Calendar, Sparkles, Podcast,
+  FileText, GraduationCap, Flame, Calendar, Podcast,
   Target, Trophy, Timer, BookOpenCheck, Megaphone, MapPin,
 } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 
 export type GridAction =
   | 'chat' | 'subjects' | 'examination' | 'flashcards' | 'notes' | 'sat'
@@ -59,7 +60,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
       <div className="mx-3 mb-5 rounded-3xl overflow-hidden opacity-0 animate-[slideUpFade_0.6s_ease-out_forwards]" style={{ background: 'var(--gradient-hero)' }}>
         <div className="px-5 pt-5 pb-6 relative">
           <div className="absolute top-4 right-4 opacity-20">
-            <Sparkles className="w-20 h-20 text-primary-foreground" />
+            <LuminaLogo size={80} className="opacity-20" />
           </div>
           <div className="flex items-center justify-between mb-5 relative z-10">
             <div>

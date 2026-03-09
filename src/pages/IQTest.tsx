@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Brain, ChevronRight, Loader2, Trophy, Sparkles, CheckCircle2, SkipForward } from 'lucide-react';
+import { Brain, ChevronRight, Loader2, Trophy, CheckCircle2, SkipForward } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { cn } from '@/lib/utils';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 
@@ -264,7 +265,7 @@ export default function IQTest() {
           </div>
           <div className="glass-effect rounded-2xl p-4">
             <div className="flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+              <LuminaLogo size={20} className="mt-0.5 shrink-0" />
               <p className="text-xs text-muted-foreground">
                 {t('Lumina will now personalize your learning experience based on these results.', 'ستقوم لومينا الآن بتخصيص تجربة التعلم الخاصة بك بناءً على هذه النتائج.')}
               </p>

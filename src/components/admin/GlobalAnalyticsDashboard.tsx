@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Building2, Users, GraduationCap, FileText, Brain,
-  BarChart3, TrendingUp, Loader2, Globe, Sparkles, BookOpen,
+  BarChart3, TrendingUp, Loader2, Globe, BookOpen,
   AlertTriangle
 } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
@@ -287,7 +288,7 @@ export function GlobalAnalyticsDashboard() {
         {metrics.subjectPerformance.length > 0 && (
           <div className="glass-effect rounded-xl p-5">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-500" />
+              <LuminaLogo size={16} />
               Subject Performance (Global)
             </h3>
             <div className="space-y-3">

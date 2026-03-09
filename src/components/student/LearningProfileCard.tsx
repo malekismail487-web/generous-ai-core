@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import { Brain, Sparkles, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Brain, RefreshCw, ShieldCheck } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -122,7 +123,7 @@ export function LearningProfileCard() {
       </div>
 
       <div className="flex items-start gap-2 bg-primary/5 rounded-xl p-3">
-        <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+        <LuminaLogo size={16} className="mt-0.5 shrink-0" />
         <p className="text-[11px] text-muted-foreground">
           {dominant === 'visual' && t('You learn best through images, diagrams, and visual content.', 'تتعلم بشكل أفضل من خلال الصور والمخططات.')}
           {dominant === 'logical' && t('You excel with step-by-step reasoning and structured logic.', 'تتفوق في التفكير المنطقي والمنظم.')}
