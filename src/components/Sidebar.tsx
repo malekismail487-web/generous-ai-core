@@ -76,7 +76,7 @@ export function Sidebar({
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border/50">
         {!collapsed && (
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl overflow-hidden glow-effect">
+            <div className="w-10 h-10 rounded-xl overflow-hidden">
               <LuminaLogo size={40} />
             </div>
             <div>

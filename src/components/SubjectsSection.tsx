@@ -733,7 +733,7 @@ Use age-appropriate language for ${selectedGrade}.`;
       <div className={containerClass}>
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="text-center mb-8 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect overflow-hidden">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 overflow-hidden">
               <LuminaLogo size={56} />
             </div>
             <h1 className="text-2xl font-bold mb-2 gradient-text">{tl('subjects')}</h1>
