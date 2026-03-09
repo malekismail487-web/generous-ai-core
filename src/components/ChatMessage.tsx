@@ -1,4 +1,5 @@
-import { User, Sparkles } from "lucide-react";
+import { User } from "lucide-react";
+import { LuminaLogo } from "@/components/LuminaLogo";
 import { useEffect, useRef, useState } from "react";
 import { MathRenderer } from "@/components/MathRenderer";
 
@@ -84,8 +85,8 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
   return (
     <div className="animate-fade-in">
       <div className="flex items-center gap-2 mb-2">
-        <div className="flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center bg-accent/20 text-accent">
-          <Sparkles size={12} />
+        <div className="flex-shrink-0 w-6 h-6 rounded-lg overflow-hidden">
+          <LuminaLogo size={24} />
         </div>
         <span className="text-xs font-medium text-accent">Lumina</span>
       </div>

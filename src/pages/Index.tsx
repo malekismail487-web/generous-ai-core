@@ -39,7 +39,8 @@ import { useAdaptiveLevel } from "@/hooks/useAdaptiveLevel";
 import { useLearningStyle } from "@/hooks/useLearningStyle";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { Navigate } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Menu, History } from "lucide-react";
+import { Loader2, ArrowLeft, Menu, History } from "lucide-react";
+import { LuminaLogo } from "@/components/LuminaLogo";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
@@ -331,8 +332,8 @@ const Index = () => {
               <ArrowLeft size={20} />
             </Button>
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
-                <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
+              <div className="w-7 h-7 rounded-lg overflow-hidden">
+                <LuminaLogo size={28} />
               </div>
               <span className="font-bold text-foreground text-sm capitalize">
                 {activeTab === 'sat' ? t('SAT Prep', 'تحضير SAT') 

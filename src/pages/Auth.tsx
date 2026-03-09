@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr } from '@/lib/translations';
-import { Sparkles, Mail, Lock, Loader2, KeyRound, Users, UserPlus, Heart, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Loader2, KeyRound, Users, UserPlus, Heart, ShieldCheck } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
@@ -454,8 +455,8 @@ export default function Auth() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-4 glow-effect">
-            <Sparkles className="w-8 h-8 text-primary-foreground" />
+          <div className="w-16 h-16 rounded-2xl overflow-hidden mb-4 glow-effect">
+            <LuminaLogo size={64} />
           </div>
           <h1 className="text-3xl font-bold" style={{ fontFamily: 'Caveat, cursive' }}>
             <span className="gradient-text">Lumina</span>
