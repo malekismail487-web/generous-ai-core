@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  DollarSign, TrendingUp, Clock, Users, Loader2, BarChart3, Sparkles
+  DollarSign, TrendingUp, Clock, Users, Loader2, BarChart3
 } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
