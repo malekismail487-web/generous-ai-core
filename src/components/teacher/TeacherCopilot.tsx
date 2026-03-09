@@ -282,7 +282,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
               size="lg"
               disabled={!title.trim() || !subject || !gradeLevel}
             >
-              <Sparkles className="w-4 h-4" />
+              <LuminaLogo size={16} />
               {t('generateWithAI')} {questionCount} {t('questionsWithAI')}
             </Button>
           </div>
