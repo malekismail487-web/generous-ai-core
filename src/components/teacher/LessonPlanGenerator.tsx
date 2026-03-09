@@ -181,8 +181,8 @@ ${additionalNotes ? `- Additional Notes: ${additionalNotes}` : ''}`;
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-white" />
+        <div className="w-10 h-10 rounded-xl overflow-hidden">
+          <LuminaLogo size={40} />
         </div>
         <div>
           <h2 className="text-lg font-bold">{t('AI Lesson Plan Generator', 'مولد خطط الدروس بالذكاء الاصطناعي')}</h2>
