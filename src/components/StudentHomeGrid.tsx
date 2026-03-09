@@ -5,9 +5,10 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { LuminaMascot } from '@/components/LuminaMascot';
 import {
   MessageSquare, Layers, BookOpen, FlipHorizontal, ClipboardList,
-  FileText, GraduationCap, Flame, Calendar, Sparkles, Podcast,
+  FileText, GraduationCap, Flame, Calendar, Podcast,
   Target, Trophy, Timer, BookOpenCheck, Megaphone, MapPin,
 } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 
 export type GridAction =
   | 'chat' | 'subjects' | 'examination' | 'flashcards' | 'notes' | 'sat'
