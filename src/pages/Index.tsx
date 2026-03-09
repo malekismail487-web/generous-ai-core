@@ -39,7 +39,8 @@ import { useAdaptiveLevel } from "@/hooks/useAdaptiveLevel";
 import { useLearningStyle } from "@/hooks/useLearningStyle";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { Navigate } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Menu, History } from "lucide-react";
+import { Loader2, ArrowLeft, Menu, History } from "lucide-react";
+import { LuminaLogo } from "@/components/LuminaLogo";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
