@@ -153,8 +153,8 @@ export function PracticeSection({ type, onStartPractice, hasLearningHistory }: P
         {/* Tips */}
         <div className="mt-8 glass-effect rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '300ms' }}>
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-5 h-5 text-primary" />
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
+              <LuminaLogo size={36} />
             </div>
             <div>
               <h4 className="font-medium text-foreground text-sm">Personalized Practice</h4>

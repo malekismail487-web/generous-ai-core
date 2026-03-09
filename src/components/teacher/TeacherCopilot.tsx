@@ -293,7 +293,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <div className="relative">
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
-              <Sparkles className="w-5 h-5 text-accent absolute -top-1 -right-1 animate-pulse" />
+              <LuminaLogo size={20} className="absolute -top-1 -right-1 animate-pulse" />
             </div>
             <p className="text-muted-foreground text-sm">{t('aiCraftingQuestions')}</p>
             <p className="text-xs text-muted-foreground/60">{t('mayTakeFewSeconds')}</p>

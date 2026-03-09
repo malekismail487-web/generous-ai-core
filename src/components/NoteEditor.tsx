@@ -144,7 +144,7 @@ export function NoteEditor({ note, onUpdate, onCreateNote }: NoteEditorProps) {
           {isReviewing ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
           ) : (
-            <Sparkles className="w-4 h-4 mr-2" />
+            <LuminaLogo size={16} className="mr-2" />
           )}
           Ask AI to Review
         </Button>

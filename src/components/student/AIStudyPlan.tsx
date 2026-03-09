@@ -218,7 +218,7 @@ ${additionalNotes ? `- My Notes: ${additionalNotes}` : ''}`;
               {isGenerating ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t('Generating...', 'جاري الإنشاء...')}</>
               ) : (
-                <><Sparkles className="w-4 h-4 mr-2" /> {t('Generate My Study Plan', 'إنشاء خطة دراستي')}</>
+                <><LuminaLogo size={16} className="mr-2" /> {t('Generate My Study Plan', 'إنشاء خطة دراستي')}</>
               )}
             </Button>
           </div>

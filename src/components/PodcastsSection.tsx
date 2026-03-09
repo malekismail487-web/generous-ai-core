@@ -434,7 +434,7 @@ export function PodcastsSection() {
                   {t('Ready to explain this file', 'جاهز لشرح هذا الملف')}
                 </p>
                 <Button onClick={handleExplain} className="rounded-xl px-6 gap-2" size="lg">
-                  <Sparkles className="w-5 h-5" />
+                  <LuminaLogo size={20} />
                   {t('Explain with AI', 'اشرح بالذكاء الاصطناعي')}
                 </Button>
               </div>

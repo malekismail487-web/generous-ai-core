@@ -308,7 +308,7 @@ function WallpaperCircleSelector() {
   return (
     <div className="glass-effect rounded-2xl p-5 mb-4">
       <h3 className="font-semibold mb-3 flex items-center gap-2">
-        <Sparkles size={16} />
+        <LuminaLogo size={16} />
         {t('Wallpaper', 'الخلفية')}
       </h3>
       <div className="flex flex-wrap gap-3 justify-center">

@@ -264,7 +264,7 @@ export function FlashcardsSection() {
           </div>
           <div className="space-y-3 animate-fade-in">
             <button onClick={handleGenerateFromMaterials} className="w-full glass-effect rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-500 text-white"><Sparkles size={24} /></div>
+              <div className="w-12 h-12 rounded-xl overflow-hidden"><LuminaLogo size={48} /></div>
               <div>
                 <h3 className="font-semibold">{tr('fromSavedMaterials', language)}</h3>
                 <p className="text-xs text-muted-foreground">{tr('fromSavedMaterialsDesc', language).replace('your saved material(s)', `${savedMaterials.length} ${tr('saved', language)}`)}</p>
