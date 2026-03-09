@@ -136,8 +136,8 @@ ${additionalNotes ? `- My Notes: ${additionalNotes}` : ''}`;
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-2xl overflow-hidden">
+            <LuminaLogo size={48} />
           </div>
           <div>
             <h2 className="text-lg font-bold">{t('AI Study Plan', 'خطة دراسة بالذكاء الاصطناعي')}</h2>
