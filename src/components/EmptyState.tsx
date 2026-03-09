@@ -1,4 +1,5 @@
-import { Sparkles, BookOpen, Brain, Lightbulb, GraduationCap } from "lucide-react";
+import { BookOpen, Brain, Lightbulb, GraduationCap } from "lucide-react";
+import { LuminaLogo } from "@/components/LuminaLogo";
 import { useThemeLanguage } from "@/hooks/useThemeLanguage";
 
 interface EmptyStateProps {
