@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Loader2, Sun, Moon, Globe, Heart, Copy, Sparkles, Check } from 'lucide-react';
+import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Loader2, Sun, Moon, Globe, Heart, Copy, Check } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';

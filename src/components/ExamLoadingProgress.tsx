@@ -11,7 +11,7 @@ interface ExamLoadingProgressProps {
 const stages = [
   { icon: Brain, label: 'Crafting unique questions', duration: 8000 },
   { icon: ShieldCheck, label: 'Validating accuracy', duration: 12000 },
-  { icon: Sparkles, label: 'Finalizing your exam', duration: 6000 },
+  { icon: Star, label: 'Finalizing your exam', duration: 6000 },
 ];
 
 const tips = [

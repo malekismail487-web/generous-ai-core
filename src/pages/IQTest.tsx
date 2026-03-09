@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Brain, ChevronRight, Loader2, Trophy, Sparkles, CheckCircle2, SkipForward } from 'lucide-react';
+import { Brain, ChevronRight, Loader2, Trophy, CheckCircle2, SkipForward } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { cn } from '@/lib/utils';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 

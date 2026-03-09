@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, Podcast, Volume2, VolumeX, Loader2, FileText, X, Sparkles, History, ArrowLeft, Clock } from 'lucide-react';
+import { Upload, Podcast, Volume2, VolumeX, Loader2, FileText, X, History, ArrowLeft, Clock } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MathRenderer } from '@/components/MathRenderer';

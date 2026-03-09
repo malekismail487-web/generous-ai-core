@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { BookOpen, GraduationCap, Zap, Brain, Target, ArrowRight, Sparkles, AlertCircle } from 'lucide-react';
+import { BookOpen, GraduationCap, Zap, Brain, Target, ArrowRight, AlertCircle } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { cn } from '@/lib/utils';
 
 type Difficulty = 'beginner' | 'intermediate' | 'hard';

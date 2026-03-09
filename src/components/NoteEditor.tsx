@@ -5,7 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Note } from '@/hooks/useNotes';
-import { Sparkles, Loader2, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { streamChat } from '@/lib/chat';
 
 interface NoteEditorProps {

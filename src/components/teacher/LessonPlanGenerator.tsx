@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import { Loader2, Sparkles, Save, Copy, BookOpen } from 'lucide-react';
+import { Loader2, Save, Copy, BookOpen } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';

@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import { Brain, Sparkles, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Brain, RefreshCw, ShieldCheck } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 

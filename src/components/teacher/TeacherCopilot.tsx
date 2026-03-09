@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { generateId } from '@/lib/utils';
-import { Bot, Sparkles, Loader2, CheckCircle2, Trash2, X } from 'lucide-react';
+import { Bot, Loader2, CheckCircle2, Trash2, X } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

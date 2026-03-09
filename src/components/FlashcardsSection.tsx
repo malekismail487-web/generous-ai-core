@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
-import { ArrowLeft, ArrowRight, Loader2, ChevronLeft, ChevronRight, RotateCcw, BookOpen, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, ChevronLeft, ChevronRight, RotateCcw, BookOpen } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
