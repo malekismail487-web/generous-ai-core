@@ -242,7 +242,7 @@ RECOMMENDATION
       {data.topSubjects.length > 0 && (
         <div className="glass-effect rounded-xl p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500" />
+            <LuminaLogo size={16} />
             Subject Performance
           </h3>
           <div className="space-y-3">

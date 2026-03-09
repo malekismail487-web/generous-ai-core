@@ -161,7 +161,7 @@ export function BudgetOptimizationReport({ schoolId }: Props) {
       {/* Summary */}
       <div className="glass-effect rounded-xl p-5">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-500" />
+          <LuminaLogo size={16} />
           {t('Content Created', 'المحتوى المُنشأ')}
         </h3>
         <div className="grid grid-cols-3 gap-4 text-center">

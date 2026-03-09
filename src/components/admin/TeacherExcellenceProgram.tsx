@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  Trophy, Users, Sparkles, Loader2, FileText, BookOpen,
+  Trophy, Users, Loader2, FileText, BookOpen,
   Star, Award, TrendingUp
 } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';

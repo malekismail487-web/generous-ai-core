@@ -234,7 +234,7 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
         {/* Teacher Productivity */}
         <div className="glass-effect rounded-xl p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-violet-500" />
+            <LuminaLogo size={16} />
             {t('Teacher Productivity', 'إنتاجية المعلمين')}
           </h3>
           <div className="space-y-3">
