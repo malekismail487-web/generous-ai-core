@@ -33,8 +33,8 @@ export default function LanguageSelect() {
         <div className="w-full max-w-sm animate-fade-in">
           {/* Logo */}
           <div className="flex flex-col items-center mb-10">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-5 glow-effect">
-              <Sparkles className="w-10 h-10 text-primary-foreground" />
+            <div className="w-20 h-20 rounded-3xl overflow-hidden mb-5 glow-effect">
+              <LuminaLogo size={80} />
             </div>
             <h1 className="text-3xl font-bold" style={{ fontFamily: 'Caveat, cursive' }}>
               <span className="gradient-text">Lumina</span>
