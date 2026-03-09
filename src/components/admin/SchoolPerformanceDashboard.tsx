@@ -3,8 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import {
   Users, BookOpen, FileText, BarChart3, TrendingUp, Clock,
-  Loader2, Brain, GraduationCap, Sparkles, CheckCircle2
+  Loader2, Brain, GraduationCap, CheckCircle2
 } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
