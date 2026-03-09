@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Brain, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Loader2, Brain, ShieldCheck, CheckCircle2, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 
