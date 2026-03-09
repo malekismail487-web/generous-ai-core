@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { 
   MessageSquare, 
   FileText, 
@@ -9,7 +10,6 @@ import {
   LogOut, 
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   BookOpen,
   GraduationCap
 } from 'lucide-react';
