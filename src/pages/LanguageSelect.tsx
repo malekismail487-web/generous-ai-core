@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import { Sparkles, Globe, Zap, Feather } from 'lucide-react';
+import { Globe, Zap, Feather } from 'lucide-react';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { useNavigate } from 'react-router-dom';
 
 type Step = 'language' | 'build';
