@@ -240,15 +240,37 @@ export default function MinistryDashboard() {
     }
   };
 
+  const [modActionLoading, setModActionLoading] = useState<string | null>(null);
+
   const handleModRequest = async (requestId: string, action: 'approve' | 'deny') => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    if (action === 'approve') {
-      await supabase.rpc('approve_moderator_request', { p_request_id: requestId });
-    } else {
-      await supabase.rpc('deny_moderator_request', { p_request_id: requestId });
+    const token = sessionStorage.getItem('ministry_session_token');
+    if (!token) {
+      toast({ variant: 'destructive', title: 'Session expired. Please log in again.' });
+      navigate('/ministry');
+      return;
     }
-    fetchModRequests();
+
+    setModActionLoading(requestId);
+    try {
+      const rpcName = action === 'approve' ? 'approve_moderator_request' : 'deny_moderator_request';
+      const { data, error } = await supabase.rpc(rpcName, {
+        p_request_id: requestId,
+        p_session_token: token,
+      });
+
+      const result = data as { success: boolean; error?: string } | null;
+
+      if (error || !result?.success) {
+        toast({ variant: 'destructive', title: result?.error || error?.message || `Failed to ${action} request` });
+      } else {
+        toast({ title: action === 'approve' ? '✅ Moderator approved' : '❌ Request denied' });
+        fetchModRequests();
+      }
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: e.message || 'Unexpected error' });
+    } finally {
+      setModActionLoading(null);
+    }
   };
 
   const tabs = [
