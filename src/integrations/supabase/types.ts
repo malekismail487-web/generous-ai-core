@@ -2424,10 +2424,12 @@ export type Database = {
         Args: { p_grade?: string; p_request_id: string }
         Returns: Json
       }
-      approve_moderator_request: {
-        Args: { p_request_id: string }
-        Returns: Json
-      }
+      approve_moderator_request:
+        | { Args: { p_request_id: string }; Returns: Json }
+        | {
+            Args: { p_request_id: string; p_session_token?: string }
+            Returns: Json
+          }
       check_device_ban: {
         Args: { p_device_fingerprint: string }
         Returns: Json
@@ -2458,7 +2460,12 @@ export type Database = {
         Returns: undefined
       }
       deny_invite_request: { Args: { p_request_id: string }; Returns: Json }
-      deny_moderator_request: { Args: { p_request_id: string }; Returns: Json }
+      deny_moderator_request:
+        | { Args: { p_request_id: string }; Returns: Json }
+        | {
+            Args: { p_request_id: string; p_session_token?: string }
+            Returns: Json
+          }
       generate_ministry_invite_code: { Args: never; Returns: Json }
       generate_moderator_invite_code: { Args: never; Returns: Json }
       get_ministry_dashboard_data: {
