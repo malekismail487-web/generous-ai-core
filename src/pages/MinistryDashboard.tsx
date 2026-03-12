@@ -36,6 +36,7 @@ type NationalStats = {
 };
 
 export default function MinistryDashboard() {
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [sessionValid, setSessionValid] = useState(false);
