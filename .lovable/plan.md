@@ -1,36 +1,107 @@
-## Why Exam Generation Is Slow — Analysis and Fix Plan
 
-### Root Cause
 
-The exam generation makes **multiple sequential AI API calls**, each taking 10-30+ seconds:
+# Full Monochromatic Grey Redesign — 360 Overhaul
 
-1. **Generation call** — Gemini 3 Flash generates questions (~10-15s)
-2. **Validation call** — Gemini 2.5 **Pro** validates questions in chunks of 15 (~20-40s per chunk). For 30 questions, that's **2 sequential validation calls**
-3. **Replacement generation** — if validation deletes questions, another generation call (~10-15s)
-4. **Re-validation of replacements** — yet another validation call (~15-20s)
+## What We're Building
 
-**Total worst case for 30 questions: 4-6 AI calls = 60-120+ seconds.**
+A complete visual overhaul of the entire app to match your new logo's aesthetic: a monochromatic grey/charcoal palette for dark mode (matching the textured charcoal background in your dark logo photo) and a clean neutral white/grey palette for light mode (matching your light logo photo). Every role — Student, Teacher, School Admin, Super Admin, Ministry — gets this treatment.
 
-The biggest bottleneck is using `gemini-2.5-pro` for validation — it's the most powerful but also the **slowest** model.
+## Summary of Changes
 
-### Plan
+### 1. Replace the Logo Asset
+- Copy your new icon (dark variant for dark mode, light variant for light mode) into the project
+- Update `LuminaLogo` component to swap between dark/light variants based on current theme
+- Remove the old `lumina-mascot.png` and all references to `LuminaMascot` component (the blue ghost)
+- Replace `LuminaMascot` usage in `StudentHomeGrid.tsx` center button with the new `LuminaLogo`
 
-1. **Switch validation model to `gemini-2.5-flash**` (primary) and `gemini-2.5-flash-lite` (fallback) — validation doesn't need Pro-tier reasoning, Flash is accurate enough and 3-5x faster
-2. **Parallelize validation chunks** — currently chunks of 15 are validated sequentially with `for` loop + `await`. Use `Promise.all()` to validate both chunks simultaneously, cutting validation time in half for 30-question exams
-3. **Skip replacement re-validation** — replacement questions are already generated with self-verification prompts. Re-validating them adds another round trip for minimal benefit. Trust the generation prompt instead
-4. **Reduce max_tokens on validation** — currently 8000, but validation responses are compact JSON. Reduce to 4000 to speed up response generation
-5. **Add a faster generation model** — use `gemini-2.5-flash-lite` as a third fallback for generation to reduce wait times when other models are busy
+### 2. Rewrite the Core Color System (`src/index.css`)
 
-### Technical Details
+**Dark mode (`:root` / `.dark`)** — Monochromatic charcoal:
+```text
+Background:    ~#1a1a1a  (0 0% 10%)
+Card:          ~#242424  (0 0% 14%)
+Foreground:    ~#e5e5e5  (0 0% 90%)
+Primary:       ~#ffffff  (0 0% 100%) — white as the accent
+Secondary:     ~#2a2a2a  (0 0% 16%)
+Muted:         ~#333333  (0 0% 20%)
+Muted-fg:      ~#888888  (0 0% 53%)
+Border:        ~#333333  (0 0% 20%)
+Accent:        ~#a0a0a0  (0 0% 63%) — soft grey highlight
+```
 
-**File**: `supabase/functions/generate-exam/index.ts`
+**Light mode (`.light`)** — Clean white/grey:
+```text
+Background:    ~#f5f5f5  (0 0% 96%)
+Card:          ~#ffffff  (0 0% 100%)
+Foreground:    ~#1a1a1a  (0 0% 10%)
+Primary:       ~#1a1a1a  (0 0% 10%) — dark as the accent
+Secondary:     ~#ebebeb  (0 0% 92%)
+Muted:         ~#e0e0e0  (0 0% 88%)
+Muted-fg:      ~#666666  (0 0% 40%)
+Border:        ~#d4d4d4  (0 0% 83%)
+Accent:        ~#555555  (0 0% 33%)
+```
 
-- Lines 299-302: Change validation models from `["google/gemini-2.5-pro", "google/gemini-2.5-flash"]` to `["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"]`
-- Lines 230-234: Replace sequential chunk loop with `Promise.all()` for parallel validation
-- Lines 240-247: Remove the re-validation step for replacement questions (just push replacements directly)
-- Line 321: Reduce `max_tokens: 8000` to `max_tokens: 4000`
-- Lines 543-546: Add `gemini-2.5-flash-lite` as third generation fallback model
+All gradient custom properties (`--gradient-primary`, `--gradient-warm`, `--gradient-hero`, etc.) will be rewritten to use grey tones — no more gold/teal/coral.
 
-**Expected improvement**: From ~60-120s down to ~20-40s for a 30-question exam.
+### 3. Update the Animated Background (`AnimatedBackground.tsx`)
+- Change particle colors from gold/teal to shades of grey/white
+- Connection lines become subtle white/grey instead of gold/coral
 
-I like this plan and I approve it but the AI MUST GENERATE CORRECT EQUATIONS WITH ANSWERABLE QUESTIONS AND ANSWERABLE CHOICES
+### 4. Update Ambient Glow CSS
+- Blob colors change from gold/teal radial gradients to subtle white/grey glows
+- Light mode blobs become soft grey shadows
+
+### 5. Redesign the Student Dashboard (`StudentHomeGrid.tsx`)
+- Center button: Replace `LuminaMascot` + purple gradient with `LuminaLogo` on a clean dark/light circle
+- Ring items: Replace colorful gradients (`from-blue-500 to-cyan-500`, etc.) with monochromatic grey shades — each icon gets a subtle grey tone distinction rather than rainbow colors
+- Hero greeting banner: Change from `--gradient-hero` (colorful) to a grey gradient
+- Streak bar: Muted grey tones instead of rainbow gradient
+
+### 6. Update Bottom Navigation (`BottomNav.tsx`)
+- Active state uses `text-foreground` instead of `text-primary` (which was gold/coral)
+- Active icon background becomes subtle grey instead of `bg-primary/15`
+
+### 7. Update Wallpaper Presets (`wallpaperPresets.ts`)
+- Change `default-dark` to the new charcoal grey HSL values
+- Change `default-light` to the new neutral white HSL values
+- Keep "Sunrise Sand" and other warm presets as selectable options
+
+### 8. Preserve the Old Theme as a Selectable Option
+- Keep all existing warm wallpaper presets (Midnight Ocean, Sunrise Sand, etc.) available in the wallpaper picker
+- The defaults just become the new grey aesthetic
+
+### 9. Update All Dashboard Pages
+- **Teacher Dashboard**: Tab triggers, cards, badges — all follow the new grey tokens
+- **School Admin Dashboard**: Same treatment — no hardcoded colors, everything flows from CSS variables
+- **Auth page**: Gradient text and button styling updated
+- **Language Select**: Same grey aesthetic
+- Since these pages already use Tailwind's `bg-background`, `text-foreground`, `bg-card`, etc., most of the change is automatic via the CSS variable update. Hardcoded color classes (`from-blue-500`, `text-amber-400`, etc.) need to be replaced with grey equivalents.
+
+### 10. Component-Level Color Fixes
+Scan and update any components using hardcoded non-grey colors:
+- `gradient-text` utility → grey-to-white gradient (dark) / dark-to-grey gradient (light)
+- `message-user` bubble → dark grey gradient instead of gold
+- Tab active states → grey/white instead of gold
+- Streak flame icon → neutral grey instead of amber
+- Badge/progress colors throughout teacher/admin panels
+
+## Technical Details
+
+**Files to modify:**
+- `src/index.css` — Core theme rewrite (biggest change)
+- `src/components/LuminaLogo.tsx` — Theme-aware logo switching
+- `src/components/LuminaMascot.tsx` — Remove (or keep for legacy, unused)
+- `src/components/AnimatedBackground.tsx` — Grey particle palette
+- `src/components/StudentHomeGrid.tsx` — Remove color gradients, use monochrome
+- `src/components/BottomNav.tsx` — Grey active states
+- `src/lib/wallpaperPresets.ts` — Update defaults
+- `src/pages/LanguageSelect.tsx` — Grey styling
+- `src/pages/Auth.tsx` — Grey styling
+- Various teacher/admin components with hardcoded colors
+
+**Files to add:**
+- New logo assets (dark + light variants) in `src/assets/`
+
+**Approach:** The CSS variable system means ~70% of the app updates automatically when we change `index.css`. The remaining 30% is hunting down hardcoded Tailwind color classes (`from-blue-500`, `text-amber-400`, etc.) and replacing them with theme-aware equivalents.
+
