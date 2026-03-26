@@ -9,7 +9,7 @@ interface LuminaLogoProps {
 
 export function LuminaLogo({ size = 32, className = '' }: LuminaLogoProps) {
   const { theme } = useThemeLanguage();
-  const src = theme === 'light' ? luminaLogoLight : luminaLogoDark;
+  const src = theme === 'light' ? luminaLogoDark : luminaLogoLight;
 
   return (
     <img
