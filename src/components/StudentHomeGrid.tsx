@@ -129,7 +129,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
               }}
             >
               <div className={`transition-transform duration-500 ${hoveredId === 'studybuddy' ? 'scale-110' : ''}`}>
-                <LuminaLogo size={32} />
+                <LuminaLogo size={56} />
               </div>
               <span className="text-[9px] font-bold text-foreground leading-tight text-center" style={{ fontFamily: 'Caveat, cursive' }}>
                 {t('Lumina', 'لومينا')}
