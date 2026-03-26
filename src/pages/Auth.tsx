@@ -455,8 +455,8 @@ export default function Auth() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl overflow-hidden mb-4">
-            <LuminaLogo size={64} />
+          <div className="w-28 h-28 rounded-3xl overflow-hidden mb-4">
+            <LuminaLogo size={112} />
           </div>
           <h1 className="text-3xl font-bold" style={{ fontFamily: 'Caveat, cursive' }}>
             <span className="gradient-text">Lumina</span>

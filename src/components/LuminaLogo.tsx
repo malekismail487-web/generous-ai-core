@@ -18,6 +18,7 @@ export function LuminaLogo({ size = 32, className = '' }: LuminaLogoProps) {
       width={size}
       height={size}
       className={`object-cover rounded-lg ${className}`}
+      style={{ mixBlendMode: theme === 'light' ? 'darken' : 'lighten' }}
     />
   );
 }
