@@ -34,7 +34,6 @@ export function AnimatedBackground() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Detect theme
     const checkTheme = () => {
       isDarkRef.current = !document.documentElement.classList.contains('light');
     };
@@ -42,7 +41,6 @@ export function AnimatedBackground() {
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
-    // Create particles
     const count = Math.min(35, Math.floor((window.innerWidth * window.innerHeight) / 25000));
     particlesRef.current = Array.from({ length: count }, () => ({
       x: Math.random() * canvas.width,
@@ -59,12 +57,9 @@ export function AnimatedBackground() {
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const dark = isDarkRef.current;
-      const primaryH = dark ? 38 : 15;
-      const primaryS = dark ? 95 : 85;
-      const primaryL = dark ? 60 : 55;
-      const accentH = 175;
-      const accentS = dark ? 70 : 60;
-      const accentL = dark ? 45 : 38;
+      // Monochromatic: use white/grey shades
+      const baseL = dark ? 85 : 25;
+      const accentL = dark ? 60 : 45;
 
       particlesRef.current.forEach((p, i) => {
         p.x += p.vx;
@@ -76,10 +71,7 @@ export function AnimatedBackground() {
         if (p.y < -50) p.y = canvas.height + 50;
         if (p.y > canvas.height + 50) p.y = -50;
 
-        const useAccent = i % 3 === 0;
-        const h = useAccent ? accentH : primaryH;
-        const s = useAccent ? accentS : primaryS;
-        const l = useAccent ? accentL : primaryL;
+        const l = i % 3 === 0 ? accentL : baseL;
 
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -89,17 +81,17 @@ export function AnimatedBackground() {
         if (p.shape === 'circle') {
           ctx.beginPath();
           ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-          ctx.fillStyle = `hsl(${h} ${s}% ${l}%)`;
+          ctx.fillStyle = `hsl(0 0% ${l}%)`;
           ctx.fill();
         } else if (p.shape === 'ring') {
           ctx.beginPath();
           ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-          ctx.strokeStyle = `hsl(${h} ${s}% ${l}%)`;
+          ctx.strokeStyle = `hsl(0 0% ${l}%)`;
           ctx.lineWidth = 1.5;
           ctx.stroke();
         } else {
           const half = p.size * 0.8;
-          ctx.strokeStyle = `hsl(${h} ${s}% ${l}%)`;
+          ctx.strokeStyle = `hsl(0 0% ${l}%)`;
           ctx.lineWidth = 1.5;
           ctx.strokeRect(-half, -half, half * 2, half * 2);
         }
@@ -119,9 +111,8 @@ export function AnimatedBackground() {
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
             const lineAlpha = (1 - dist / 180) * 0.04;
-            ctx.strokeStyle = dark
-              ? `hsla(38, 95%, 60%, ${lineAlpha})`
-              : `hsla(15, 85%, 55%, ${lineAlpha})`;
+            const lineL = dark ? 80 : 30;
+            ctx.strokeStyle = `hsla(0, 0%, ${lineL}%, ${lineAlpha})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }

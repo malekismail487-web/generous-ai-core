@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 type Step = 'language' | 'build';
 
 export default function LanguageSelect() {
-  const { setLanguage, setBuildMode, t, language } = useThemeLanguage();
+  const { setLanguage, setBuildMode, language } = useThemeLanguage();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('language');
   const [selectedLang, setSelectedLang] = useState<'en' | 'ar' | null>(null);
@@ -31,17 +31,15 @@ export default function LanguageSelect() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <div className="w-full max-w-sm animate-fade-in">
-          {/* Logo */}
           <div className="flex flex-col items-center mb-10">
             <div className="w-20 h-20 rounded-3xl overflow-hidden mb-5">
               <LuminaLogo size={80} />
             </div>
-            <h1 className="text-3xl font-bold" style={{ fontFamily: 'Caveat, cursive' }}>
-              <span className="gradient-text">Lumina</span>
+            <h1 className="text-3xl font-bold gradient-text" style={{ fontFamily: 'Caveat, cursive' }}>
+              Lumina
             </h1>
           </div>
 
-          {/* Build Selection */}
           <div className="flex flex-col items-center mb-8">
             <Zap className="w-6 h-6 text-muted-foreground mb-3" />
             <p className="text-muted-foreground text-sm mb-1">
@@ -54,7 +52,7 @@ export default function LanguageSelect() {
               onClick={() => handleSelectBuild('new')}
               className="w-full glass-effect rounded-2xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4 group"
             >
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary to-accent text-primary-foreground">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-foreground text-background">
                 <Zap className="w-6 h-6" />
               </div>
               <div className="flex-1">
@@ -92,17 +90,15 @@ export default function LanguageSelect() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       <div className="w-full max-w-sm animate-fade-in">
-        {/* Logo */}
         <div className="flex flex-col items-center mb-10">
           <div className="w-20 h-20 rounded-3xl overflow-hidden mb-5">
             <LuminaLogo size={80} />
           </div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'Caveat, cursive' }}>
-            <span className="gradient-text">Lumina</span>
+          <h1 className="text-3xl font-bold gradient-text" style={{ fontFamily: 'Caveat, cursive' }}>
+            Lumina
           </h1>
         </div>
 
-        {/* Language Selection */}
         <div className="flex flex-col items-center mb-8">
           <Globe className="w-6 h-6 text-muted-foreground mb-3" />
           <p className="text-muted-foreground text-sm mb-1">Choose your language</p>
@@ -114,7 +110,7 @@ export default function LanguageSelect() {
             onClick={() => handleSelectLanguage('en')}
             className="w-full glass-effect rounded-2xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4 group"
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-500/15 border border-blue-500/30 text-2xl">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-muted border border-border/50 text-2xl">
               🇺🇸
             </div>
             <div>
@@ -127,7 +123,7 @@ export default function LanguageSelect() {
             onClick={() => handleSelectLanguage('ar')}
             className="w-full glass-effect rounded-2xl p-5 text-right transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4 group flex-row-reverse"
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/15 border border-emerald-500/30 text-2xl">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-muted border border-border/50 text-2xl">
               🇸🇦
             </div>
             <div>

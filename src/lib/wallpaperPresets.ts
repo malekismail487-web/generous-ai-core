@@ -15,11 +15,11 @@ export const wallpaperPresets: WallpaperPreset[] = [
   // ─── DARK THEMES ───
   {
     id: 'default-dark',
-    name: 'Default Dark',
-    nameAr: 'الافتراضي الداكن',
+    name: 'Charcoal',
+    nameAr: 'فحمي',
     category: 'dark',
-    backgroundHSL: '222 47% 6%',
-    preview: '#0d1117',
+    backgroundHSL: '0 0% 10%',
+    preview: '#1a1a1a',
     isDefault: true,
   },
   {
@@ -90,11 +90,11 @@ export const wallpaperPresets: WallpaperPreset[] = [
   // ─── LIGHT THEMES ───
   {
     id: 'default-light',
-    name: 'Default Light',
-    nameAr: 'الافتراضي الفاتح',
+    name: 'Clean White',
+    nameAr: 'أبيض نقي',
     category: 'light',
-    backgroundHSL: '40 30% 96%',
-    preview: '#f5f0e8',
+    backgroundHSL: '0 0% 96%',
+    preview: '#f5f5f5',
     isDefault: true,
   },
   {

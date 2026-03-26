@@ -1,4 +1,6 @@
-import luminaLogo from '@/assets/lumina-logo.jpeg';
+import luminaLogoDark from '@/assets/lumina-logo-dark.jpeg';
+import luminaLogoLight from '@/assets/lumina-logo-light.jpeg';
+import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 
 interface LuminaLogoProps {
   size?: number;
@@ -6,9 +8,12 @@ interface LuminaLogoProps {
 }
 
 export function LuminaLogo({ size = 32, className = '' }: LuminaLogoProps) {
+  const { theme } = useThemeLanguage();
+  const src = theme === 'light' ? luminaLogoLight : luminaLogoDark;
+
   return (
     <img
-      src={luminaLogo}
+      src={src}
       alt="Lumina"
       width={size}
       height={size}
