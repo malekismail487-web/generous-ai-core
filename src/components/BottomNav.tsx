@@ -33,12 +33,12 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               onClick={() => onTabChange(tab.id)}
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all duration-300",
-                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300",
-                isActive && "bg-primary/15 shadow-sm"
+                isActive && "bg-muted shadow-sm"
               )}>
                 <Icon size={18} className={cn(
                   "transition-transform duration-300",
@@ -47,7 +47,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               </div>
               <span className={cn(
                 "text-[10px] font-semibold transition-all",
-                isActive && "text-primary"
+                isActive && "text-foreground"
               )}>
                 {tab.label}
               </span>
