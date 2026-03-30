@@ -202,7 +202,8 @@ CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fence
 
       const systemPrompt = `You are expanding a mind map node. Given a subtopic of "${mindMap.center}", return ONLY valid JSON with 3-4 new child nodes:
 { "children": [{ "label": "Detail 1" }, { "label": "Detail 2" }, { "label": "Detail 3" }] }
-Keep labels concise (2-5 words). ${language === 'ar' ? 'Use Arabic.' : ''}`;
+Keep labels concise (2-5 words). ${language === 'ar' ? 'Use Arabic.' : ''}
+CRITICAL: Return ONLY the raw JSON object. No markdown, no code fences, no explanation.`;
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
