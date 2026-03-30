@@ -1190,6 +1190,30 @@ export type Database = {
           },
         ]
       }
+      mind_map_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          mind_map_data: Json
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mind_map_data: Json
+          topic: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mind_map_data?: Json
+          topic?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ministry_access_codes: {
         Row: {
           code_hash: string
