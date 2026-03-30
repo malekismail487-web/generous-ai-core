@@ -3,7 +3,7 @@ import { useStreak } from '@/hooks/useStreak';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import {
-  MessageSquare, Layers, BookOpen, FlipHorizontal, ClipboardList,
+  Brain, Layers, BookOpen, FlipHorizontal, ClipboardList,
   FileText, GraduationCap, Flame, Calendar, Podcast,
   Target, Trophy, Timer, BookOpenCheck, Megaphone, MapPin,
 } from 'lucide-react';
