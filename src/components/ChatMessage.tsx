@@ -100,9 +100,8 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
       </div>
       <div className="pl-8">
         <MathRenderer
-          content={displayedContent}
+          content={contentWithImages}
           className="text-sm leading-relaxed"
-          images={!isStreaming ? message.images : undefined}
         />
         {isStreaming && (
           <span className="inline-block w-1.5 h-4 ml-0.5 bg-current animate-pulse rounded-sm align-text-bottom" />
