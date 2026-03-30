@@ -10,7 +10,7 @@ import {
 import { LuminaLogo } from '@/components/LuminaLogo';
 
 export type GridAction =
-  | 'chat' | 'subjects' | 'examination' | 'flashcards' | 'notes' | 'sat'
+  | 'mindmaps' | 'subjects' | 'examination' | 'flashcards' | 'notes' | 'sat'
   | 'assignments' | 'reports' | 'weeklyplan' | 'podcasts' | 'studybuddy'
   | 'goals' | 'leaderboard' | 'focustimer' | 'aiplans' | 'announcements'
   | 'trips' | 'settings';
