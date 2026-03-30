@@ -132,7 +132,8 @@ export function MindMapGenerator() {
 }
 
 Generate 4-6 main branches with 2-4 children each. Keep labels concise (2-5 words). Make it educational and comprehensive for a ${currentLevel} level student.
-${language === 'ar' ? 'Generate all labels in Arabic.' : ''}`;
+${language === 'ar' ? 'Generate all labels in Arabic.' : ''}
+CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fences. Do NOT add any explanatory text before or after. Just the JSON.`;
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
