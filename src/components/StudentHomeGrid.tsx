@@ -208,7 +208,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
 
 function getIconAnimation(id: string): string {
   switch (id) {
-    case 'chat': return 'animate-[wiggle_0.4s_ease-in-out]';
+    case 'mindmaps': return 'animate-[wiggle_0.4s_ease-in-out]';
     case 'examination': return 'animate-[bounceOnce_0.5s_ease]';
     case 'subjects': return 'animate-[stackUp_0.4s_ease]';
     case 'sat': return 'animate-[bounceOnce_0.5s_ease]';
