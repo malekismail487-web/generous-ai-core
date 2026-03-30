@@ -303,8 +303,10 @@ Use age-appropriate language for ${selectedGrade}.`;
           });
           trackLectureViewed(selectedSubject, topic, Math.max(30, Math.round(response.length / 12)));
           setIsLoading(false);
-          // Fetch related images from Wikipedia after lecture is done
-          fetchLectureImages(topic, subject?.name || selectedSubject);
+          // Fetch related images and merge inline
+          fetchLectureImages(topic, subject?.name || selectedSubject).then(() => {
+            // Images will be merged via the render logic
+          });
         },
         onError: (error) => {
           setIsLoading(false);
