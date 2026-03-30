@@ -64,21 +64,6 @@ const Index = () => {
     selectNote,
   } = useNotes();
 
-  useEffect(() => {
-    setLocalMessages(messages.map((m) => ({
-      id: m.id,
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    })));
-  }, [messages]);
-
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [localMessages, scrollToBottom]);
 
   // Track page visits and recalculate learning style periodically
   useEffect(() => {
@@ -93,72 +78,6 @@ const Index = () => {
       recalculateLearningStyle();
     }
   }, [activeTab, recalculateLearningStyle]);
-
-  const sendMessage = async (content: string) => {
-    let conversationId = currentConversation?.id;
-    
-    if (!conversationId) {
-      const newConv = await createConversation();
-      if (!newConv) {
-        toast({ variant: "destructive", title: "Error", description: "Failed to create conversation" });
-        return;
-      }
-      conversationId = newConv.id;
-    }
-
-    const userMessage: Message = { id: generateId(), role: "user", content };
-    setLocalMessages((prev) => [...prev, userMessage]);
-    await addMessage("user", content, conversationId);
-    setIsLoading(true);
-
-    // Track the question type for behavioral learning style analysis
-    trackQuestionAsked(content, activeTab === 'chat' ? 'general' : activeTab);
-    trackExplicitRequest(content, activeTab === 'chat' ? 'general' : activeTab);
-
-    let assistantContent = "";
-    const assistantId = generateId();
-
-    const updateAssistant = (chunk: string) => {
-      assistantContent += chunk;
-      setLocalMessages((prev) => {
-        const lastMessage = prev[prev.length - 1];
-        if (lastMessage?.role === "assistant") {
-          return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
-        }
-        return [...prev, { id: assistantId, role: "assistant", content: assistantContent }];
-      });
-    };
-
-    const messagesWithContext = [...localMessages.map(m => ({ ...m, content: m.content })), userMessage];
-
-    // Fetch background context from past conversations
-    const bgContext = await fetchBackgroundContext(conversationId);
-    const learningStylePrompt = getLearningStylePrompt();
-
-    await streamChat({
-      messages: messagesWithContext,
-      language,
-      backgroundContext: bgContext,
-      adaptiveLevel,
-      learningStyle: learningStylePrompt,
-      onDelta: updateAssistant,
-      onDone: async () => {
-        setIsLoading(false);
-        await addMessage("assistant", assistantContent, conversationId);
-        trackAITutorChat(activeTab === 'chat' ? 'general' : activeTab, messagesWithContext.length + 1);
-        recalculateLearningStyle();
-      },
-      onError: (error) => {
-        setIsLoading(false);
-        toast({ variant: "destructive", title: "Error", description: error.message || "Something went wrong." });
-      },
-    });
-  };
-
-  const handleNewChat = () => {
-    clearCurrentConversation();
-    setLocalMessages([]);
-  };
 
   const handleGridNavigate = (action: GridAction) => {
     if (action === 'settings') {
