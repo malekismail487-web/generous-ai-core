@@ -19,6 +19,63 @@ interface MindMapData {
   branches: MindMapNode[];
 }
 
+function extractJsonFromResponse(response: string): unknown {
+  let cleaned = response
+    .replace(/```json\s*/gi, '')
+    .replace(/```\s*/g, '')
+    .trim();
+
+  let braceDepth = 0;
+  let jsonStart = -1;
+  let jsonEnd = -1;
+
+  for (let i = 0; i < cleaned.length; i++) {
+    const char = cleaned[i];
+    if (char === '{') {
+      if (braceDepth === 0) jsonStart = i;
+      braceDepth++;
+    } else if (char === '}') {
+      braceDepth--;
+      if (braceDepth === 0 && jsonStart !== -1) {
+        jsonEnd = i;
+        break;
+      }
+    }
+  }
+
+  if (jsonStart === -1 || jsonEnd === -1) {
+    // Try repair if unbalanced
+    if (jsonStart !== -1 && jsonEnd === -1) {
+      let repaired = cleaned.substring(jsonStart);
+      const open = (repaired.match(/{/g) || []).length;
+      const close = (repaired.match(/}/g) || []).length;
+      for (let i = 0; i < open - close; i++) repaired += '}';
+      const openB = (repaired.match(/\[/g) || []).length;
+      const closeB = (repaired.match(/\]/g) || []).length;
+      for (let i = 0; i < openB - closeB; i++) repaired += ']';
+      cleaned = repaired;
+    } else {
+      throw new Error('No JSON object found in response');
+    }
+  } else {
+    cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+  }
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    cleaned = cleaned
+      .replace(/,\s*}/g, '}')
+      .replace(/,\s*]/g, ']')
+      .replace(/[\x00-\x1F\x7F]/g, '');
+    try {
+      return JSON.parse(cleaned);
+    } catch (e) {
+      throw new Error(`Failed to parse JSON: ${e}`);
+    }
+  }
+}
+
 // Branch colors using HSL with design tokens
 const BRANCH_COLORS = [
   'hsl(var(--primary))',
@@ -75,7 +132,8 @@ export function MindMapGenerator() {
 }
 
 Generate 4-6 main branches with 2-4 children each. Keep labels concise (2-5 words). Make it educational and comprehensive for a ${currentLevel} level student.
-${language === 'ar' ? 'Generate all labels in Arabic.' : ''}`;
+${language === 'ar' ? 'Generate all labels in Arabic.' : ''}
+CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fences. Do NOT add any explanatory text before or after. Just the JSON.`;
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
@@ -116,11 +174,7 @@ ${language === 'ar' ? 'Generate all labels in Arabic.' : ''}`;
         }
       }
 
-      // Extract JSON from response
-      const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON found');
-
-      const mapData: MindMapData = JSON.parse(jsonMatch[0]);
+      const mapData = extractJsonFromResponse(fullContent) as MindMapData;
       if (!mapData.center || !mapData.branches) throw new Error('Invalid format');
 
       setMindMap(mapData);
@@ -148,7 +202,8 @@ ${language === 'ar' ? 'Generate all labels in Arabic.' : ''}`;
 
       const systemPrompt = `You are expanding a mind map node. Given a subtopic of "${mindMap.center}", return ONLY valid JSON with 3-4 new child nodes:
 { "children": [{ "label": "Detail 1" }, { "label": "Detail 2" }, { "label": "Detail 3" }] }
-Keep labels concise (2-5 words). ${language === 'ar' ? 'Use Arabic.' : ''}`;
+Keep labels concise (2-5 words). ${language === 'ar' ? 'Use Arabic.' : ''}
+CRITICAL: Return ONLY the raw JSON object. No markdown, no code fences, no explanation.`;
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
@@ -189,10 +244,7 @@ Keep labels concise (2-5 words). ${language === 'ar' ? 'Use Arabic.' : ''}`;
         }
       }
 
-      const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON');
-
-      const newChildren: { children: MindMapNode[] } = JSON.parse(jsonMatch[0]);
+      const newChildren = extractJsonFromResponse(fullContent) as { children: MindMapNode[] };
 
       setMindMap(prev => {
         if (!prev) return prev;
