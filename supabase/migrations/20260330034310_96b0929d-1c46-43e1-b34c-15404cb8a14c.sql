@@ -1,0 +1,1 @@
+INSERT INTO storage.buckets (id, name, public) VALUES ('generated-diagrams', 'generated-diagrams', true) ON CONFLICT (id) DO NOTHING;
