@@ -60,6 +60,7 @@ export function AssignmentQuizTaker({
 }: AssignmentQuizTakerProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { recordAnswer } = useAdaptiveLevel();
   
   const questions: Question[] = (assignment.questions_json as Question[]) || [];
   
