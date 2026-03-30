@@ -269,6 +269,12 @@ IMPORTANT FORMATTING:
   \\( expression \\) or $expression$ for inline, \\[ expression \\] or $$expression$$ for display
 - Always include plain-text fallback after complex formulas
 
+IMPORTANT IMAGE PLACEMENT:
+- Place exactly 5 image markers throughout your lecture at the most relevant points.
+- Use the format [IMAGE_PLACEHOLDER_1], [IMAGE_PLACEHOLDER_2], etc.
+- Place each marker on its own line, right after the paragraph or section where a visual would help.
+- Example: After explaining photosynthesis, place [IMAGE_PLACEHOLDER_1] where a diagram of sunlight absorption would appear.
+
 Stay strictly within ${subject?.name}. Do not mix with other subjects.
 Use age-appropriate language for ${selectedGrade}.`;
 
