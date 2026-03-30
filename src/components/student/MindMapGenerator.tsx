@@ -679,7 +679,7 @@ IMPORTANT FORMATTING:
             );
             elements.push(
               <g key={`gc-${bi}-${ci}-${gi}`} className="cursor-pointer"
-                onClick={() => label && generateLecture(gc.label)}
+                onClick={() => generateLecture(gc.label)}
               >
                 <circle
                   cx={animated ? gcX : cx} cy={animated ? gcY : cy} r={18}
