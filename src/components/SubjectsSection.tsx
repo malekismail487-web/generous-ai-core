@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useMaterials, Material } from '@/hooks/useMaterials';
 import { MathRenderer } from '@/components/MathRenderer';
+import { mergeImagesIntoContent, urlsToInlineImages } from '@/lib/imageInsertion';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { CourseMaterialsSection } from '@/components/CourseMaterialsSection';
