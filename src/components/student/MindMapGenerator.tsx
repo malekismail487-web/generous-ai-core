@@ -568,7 +568,7 @@ IMPORTANT FORMATTING:
     const branches = mindMap.branches;
     const branchCount = branches.length;
     const elements: JSX.Element[] = [];
-    const branchR = Math.max(120, Math.min(200, 900 / (branchCount + 2)));
+    const branchR = Math.max(160, Math.min(280, 1100 / (branchCount + 2)));
 
     // Center node
     elements.push(
