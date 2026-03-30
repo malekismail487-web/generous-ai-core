@@ -19,6 +19,63 @@ interface MindMapData {
   branches: MindMapNode[];
 }
 
+function extractJsonFromResponse(response: string): unknown {
+  let cleaned = response
+    .replace(/```json\s*/gi, '')
+    .replace(/```\s*/g, '')
+    .trim();
+
+  let braceDepth = 0;
+  let jsonStart = -1;
+  let jsonEnd = -1;
+
+  for (let i = 0; i < cleaned.length; i++) {
+    const char = cleaned[i];
+    if (char === '{') {
+      if (braceDepth === 0) jsonStart = i;
+      braceDepth++;
+    } else if (char === '}') {
+      braceDepth--;
+      if (braceDepth === 0 && jsonStart !== -1) {
+        jsonEnd = i;
+        break;
+      }
+    }
+  }
+
+  if (jsonStart === -1 || jsonEnd === -1) {
+    // Try repair if unbalanced
+    if (jsonStart !== -1 && jsonEnd === -1) {
+      let repaired = cleaned.substring(jsonStart);
+      const open = (repaired.match(/{/g) || []).length;
+      const close = (repaired.match(/}/g) || []).length;
+      for (let i = 0; i < open - close; i++) repaired += '}';
+      const openB = (repaired.match(/\[/g) || []).length;
+      const closeB = (repaired.match(/\]/g) || []).length;
+      for (let i = 0; i < openB - closeB; i++) repaired += ']';
+      cleaned = repaired;
+    } else {
+      throw new Error('No JSON object found in response');
+    }
+  } else {
+    cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+  }
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    cleaned = cleaned
+      .replace(/,\s*}/g, '}')
+      .replace(/,\s*]/g, ']')
+      .replace(/[\x00-\x1F\x7F]/g, '');
+    try {
+      return JSON.parse(cleaned);
+    } catch (e) {
+      throw new Error(`Failed to parse JSON: ${e}`);
+    }
+  }
+}
+
 // Branch colors using HSL with design tokens
 const BRANCH_COLORS = [
   'hsl(var(--primary))',
