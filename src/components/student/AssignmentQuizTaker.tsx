@@ -101,6 +101,20 @@ export function AssignmentQuizTaker({
       };
     });
 
+
+    // Record each answer for adaptive learning
+    for (const result of quizResults) {
+      recordAnswer({
+        subject: assignment.subject,
+        questionText: result.questionTitle,
+        studentAnswer: result.selectedAnswer,
+        correctAnswer: result.correctAnswer,
+        isCorrect: result.isCorrect,
+        difficulty: 'medium',
+        source: 'assignment',
+      });
+    }
+
     const correctCount = quizResults.filter(r => r.isCorrect).length;
     const score = Math.round((correctCount / questions.length) * assignment.points);
 
