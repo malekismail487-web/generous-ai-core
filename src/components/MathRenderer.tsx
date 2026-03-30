@@ -7,8 +7,6 @@ import 'katex/dist/katex.min.css';
 interface MathRendererProps {
   content: string;
   className?: string;
-  /** Optional real images to display (e.g. from Wikipedia API) */
-  images?: { src: string; alt?: string }[];
 }
 
 function renderLatex(text: string, displayMode: boolean): string {
