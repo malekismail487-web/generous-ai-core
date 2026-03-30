@@ -3,14 +3,14 @@ import { useStreak } from '@/hooks/useStreak';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import {
-  MessageSquare, Layers, BookOpen, FlipHorizontal, ClipboardList,
+  Brain, Layers, BookOpen, FlipHorizontal, ClipboardList,
   FileText, GraduationCap, Flame, Calendar, Podcast,
   Target, Trophy, Timer, BookOpenCheck, Megaphone, MapPin,
 } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 
 export type GridAction =
-  | 'chat' | 'subjects' | 'examination' | 'flashcards' | 'notes' | 'sat'
+  | 'mindmaps' | 'subjects' | 'examination' | 'flashcards' | 'notes' | 'sat'
   | 'assignments' | 'reports' | 'weeklyplan' | 'podcasts' | 'studybuddy'
   | 'goals' | 'leaderboard' | 'focustimer' | 'aiplans' | 'announcements'
   | 'trips' | 'settings';
@@ -21,8 +21,8 @@ interface StudentHomeGridProps {
 }
 
 // Ring items — monochromatic grey shades
-const RING_ITEMS: { id: GridAction; icon: typeof MessageSquare; label: string; labelAr: string }[] = [
-  { id: 'chat', icon: MessageSquare, label: 'AI Tutor', labelAr: 'المعلم الذكي' },
+const RING_ITEMS: { id: GridAction; icon: typeof Brain; label: string; labelAr: string }[] = [
+  { id: 'mindmaps', icon: Brain, label: 'Mind Maps', labelAr: 'خرائط ذهنية' },
   { id: 'examination', icon: BookOpen, label: 'Exams', labelAr: 'الاختبارات' },
   { id: 'subjects', icon: Layers, label: 'Subjects', labelAr: 'المواد' },
   { id: 'sat', icon: GraduationCap, label: 'SAT', labelAr: 'SAT' },
@@ -33,7 +33,7 @@ const RING_ITEMS: { id: GridAction; icon: typeof MessageSquare; label: string; l
 ];
 
 // Branch items
-const BRANCH_ITEMS: { id: GridAction; icon: typeof MessageSquare; label: string; labelAr: string; schoolOnly?: boolean }[] = [
+const BRANCH_ITEMS: { id: GridAction; icon: typeof Brain; label: string; labelAr: string; schoolOnly?: boolean }[] = [
   { id: 'assignments', icon: FileText, label: 'Assignments', labelAr: 'الواجبات', schoolOnly: true },
   { id: 'weeklyplan', icon: Calendar, label: 'Weekly Plan', labelAr: 'الخطة', schoolOnly: true },
   { id: 'leaderboard', icon: Trophy, label: 'Ranking', labelAr: 'الترتيب' },
@@ -208,7 +208,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
 
 function getIconAnimation(id: string): string {
   switch (id) {
-    case 'chat': return 'animate-[wiggle_0.4s_ease-in-out]';
+    case 'mindmaps': return 'animate-[wiggle_0.4s_ease-in-out]';
     case 'examination': return 'animate-[bounceOnce_0.5s_ease]';
     case 'subjects': return 'animate-[stackUp_0.4s_ease]';
     case 'sat': return 'animate-[bounceOnce_0.5s_ease]';

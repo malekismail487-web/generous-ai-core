@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // This is a preview version of the student app for Super Admin testing
 export function StudentAppPreview() {
-  const [activeTab, setActiveTab] = useState<TabType>('chat');
+  const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -81,7 +81,7 @@ export function StudentAppPreview() {
 
   const renderMainContent = () => {
     switch (activeTab) {
-      case 'chat':
+      case 'home':
         return (
           <div className="flex flex-col h-full pt-14 pb-20">
             <main className="flex-1 overflow-y-auto">
