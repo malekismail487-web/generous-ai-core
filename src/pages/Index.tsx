@@ -118,60 +118,8 @@ const Index = () => {
       case 'weeklyplan':
         return <WeeklyPlanSection />;
 
-      case 'chat':
-        return (
-          <div className="flex flex-col h-full pt-14">
-            {/* History button */}
-            <div className="flex items-center justify-between px-4 pt-2">
-              <BannerAd location="home" />
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setHistoryOpen(true)}
-                >
-                  <History size={16} />
-                </Button>
-              </div>
-            </div>
-            <main className="flex-1 overflow-y-auto pb-36">
-              <div className="max-w-2xl mx-auto px-4 py-4">
-                {localMessages.length === 0 ? (
-                  <EmptyState onSuggestionClick={sendMessage} />
-                ) : (
-                  <div className="space-y-3">
-                    {localMessages.map((message, idx) => (
-                      <ChatMessage
-                        key={message.id}
-                        message={message}
-                        isStreaming={isLoading && message.role === "assistant" && idx === localMessages.length - 1}
-                      />
-                    ))}
-                    {isLoading && localMessages[localMessages.length - 1]?.role === "user" && (
-                      <TypingIndicator />
-                    )}
-                    <div ref={messagesEndRef} />
-                  </div>
-                )}
-              </div>
-            </main>
-            <footer className="fixed bottom-16 left-0 right-0 glass-effect-strong border-t border-border/30 z-40">
-              <div className="max-w-2xl mx-auto px-4 py-3">
-                <ChatInput onSend={sendMessage} disabled={isLoading} />
-              </div>
-            </footer>
-            <ChatHistoryDrawer
-              open={historyOpen}
-              onClose={() => setHistoryOpen(false)}
-              conversations={conversations}
-              currentId={currentConversation?.id}
-              onSelect={(conv) => { selectConversation(conv); }}
-              onDelete={deleteConversation}
-              onNewChat={handleNewChat}
-            />
-          </div>
-        );
+      case 'mindmaps':
+        return <MindMapGenerator />;
 
       case 'subjects':
         return <SubjectsSection />;
