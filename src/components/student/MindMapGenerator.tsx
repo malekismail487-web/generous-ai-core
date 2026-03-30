@@ -316,6 +316,13 @@ CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fence
       const fullContent = await readChatStream(response);
       const mapData = extractJsonFromResponse(fullContent) as MindMapData;
       if (!mapData.center || !mapData.branches) throw new Error('Invalid format');
+      // Filter out branches/children with empty labels
+      mapData.branches = mapData.branches
+        .filter(b => b.label && b.label.trim())
+        .map(b => ({
+          ...b,
+          children: (b.children || []).filter(c => c.label && c.label.trim()),
+        }));
 
       setMindMap(mapData);
       saveMindMap(mapData, t_topic);
