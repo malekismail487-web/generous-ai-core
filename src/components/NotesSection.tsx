@@ -179,6 +179,11 @@ Use --- between parts. Include 10+ "💡 Pro Tip" boxes. Include "⚡ Quick Chec
 
 ${lengthPrompt}
 
+IMPORTANT IMAGE PLACEMENT:
+- Place exactly 5 image markers throughout your notes at the most relevant points.
+- Use the format [IMAGE_PLACEHOLDER_1], [IMAGE_PLACEHOLDER_2], etc.
+- Place each marker on its own line, right after the paragraph or section where a visual would help.
+
 IMPORTANT FORMATTING:
 - Use emoji section headers consistently (📌, 🧠, 📊, ✅, ⚠️, 📝, 💡, ⚡)
 - **Bold** all key terms on first mention
