@@ -39,6 +39,7 @@ export function PracticeQuiz({ difficulty, type, onBack, learningContext }: Prac
   const [isLoading, setIsLoading] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
   const { toast } = useToast();
+  const { recordAnswer } = useAdaptiveLevel();
 
   const maxQuestions = difficulty === 'beginner' ? 5 : difficulty === 'intermediate' ? 7 : 10;
 
