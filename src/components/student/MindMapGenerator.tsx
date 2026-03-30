@@ -26,54 +26,138 @@ function extractJsonFromResponse(response: string): unknown {
     .trim();
 
   let braceDepth = 0;
+  let bracketDepth = 0;
   let jsonStart = -1;
   let jsonEnd = -1;
+  let inString = false;
+  let escaped = false;
 
   for (let i = 0; i < cleaned.length; i++) {
     const char = cleaned[i];
-    if (char === '{') {
-      if (braceDepth === 0) jsonStart = i;
-      braceDepth++;
-    } else if (char === '}') {
-      braceDepth--;
-      if (braceDepth === 0 && jsonStart !== -1) {
-        jsonEnd = i;
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (inString && char === '\\') {
+      escaped = true;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (jsonStart === -1 && (char === '{' || char === '[')) {
+      jsonStart = i;
+    }
+
+    if (char === '{') braceDepth++;
+    else if (char === '}') braceDepth--;
+    else if (char === '[') bracketDepth++;
+    else if (char === ']') bracketDepth--;
+
+    if (jsonStart !== -1 && braceDepth === 0 && bracketDepth === 0) {
+      jsonEnd = i;
+      break;
+    }
+  }
+
+  if (jsonStart === -1) {
+    throw new Error('No JSON object found in response');
+  }
+
+  cleaned = cleaned.substring(jsonStart, jsonEnd === -1 ? cleaned.length : jsonEnd + 1);
+  cleaned = cleaned
+    .replace(/,\s*}/g, '}')
+    .replace(/,\s*]/g, ']')
+    .replace(/[\x00-\x1F\x7F]/g, '');
+
+  if (jsonEnd === -1 || braceDepth !== 0 || bracketDepth !== 0) {
+    const openBraces = (cleaned.match(/{/g) || []).length;
+    const closeBraces = (cleaned.match(/}/g) || []).length;
+    const openBrackets = (cleaned.match(/\[/g) || []).length;
+    const closeBrackets = (cleaned.match(/\]/g) || []).length;
+
+    for (let i = 0; i < openBraces - closeBraces; i++) cleaned += '}';
+    for (let i = 0; i < openBrackets - closeBrackets; i++) cleaned += ']';
+  }
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    throw new Error(`Failed to parse JSON: ${e}`);
+  }
+}
+
+async function readChatStream(response: Response): Promise<string> {
+  if (!response.body) {
+    throw new Error('No response body');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let textBuffer = '';
+  let fullContent = '';
+  let streamDone = false;
+
+  while (!streamDone) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    textBuffer += decoder.decode(value, { stream: true });
+
+    let newlineIndex: number;
+    while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+      let line = textBuffer.slice(0, newlineIndex);
+      textBuffer = textBuffer.slice(newlineIndex + 1);
+
+      if (line.endsWith('\r')) line = line.slice(0, -1);
+      if (line.startsWith(':') || line.trim() === '') continue;
+      if (!line.startsWith('data: ')) continue;
+
+      const jsonStr = line.slice(6).trim();
+      if (jsonStr === '[DONE]') {
+        streamDone = true;
+        break;
+      }
+
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const delta = parsed.choices?.[0]?.delta?.content as string | undefined;
+        if (delta) fullContent += delta;
+      } catch {
+        textBuffer = line + '\n' + textBuffer;
         break;
       }
     }
   }
 
-  if (jsonStart === -1 || jsonEnd === -1) {
-    // Try repair if unbalanced
-    if (jsonStart !== -1 && jsonEnd === -1) {
-      let repaired = cleaned.substring(jsonStart);
-      const open = (repaired.match(/{/g) || []).length;
-      const close = (repaired.match(/}/g) || []).length;
-      for (let i = 0; i < open - close; i++) repaired += '}';
-      const openB = (repaired.match(/\[/g) || []).length;
-      const closeB = (repaired.match(/\]/g) || []).length;
-      for (let i = 0; i < openB - closeB; i++) repaired += ']';
-      cleaned = repaired;
-    } else {
-      throw new Error('No JSON object found in response');
+  if (textBuffer.trim()) {
+    for (let raw of textBuffer.split('\n')) {
+      if (!raw) continue;
+      if (raw.endsWith('\r')) raw = raw.slice(0, -1);
+      if (raw.startsWith(':') || raw.trim() === '') continue;
+      if (!raw.startsWith('data: ')) continue;
+
+      const jsonStr = raw.slice(6).trim();
+      if (jsonStr === '[DONE]') continue;
+
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const delta = parsed.choices?.[0]?.delta?.content as string | undefined;
+        if (delta) fullContent += delta;
+      } catch {
+        /* ignore partial leftovers */
+      }
     }
-  } else {
-    cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
   }
 
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    cleaned = cleaned
-      .replace(/,\s*}/g, '}')
-      .replace(/,\s*]/g, ']')
-      .replace(/[\x00-\x1F\x7F]/g, '');
-    try {
-      return JSON.parse(cleaned);
-    } catch (e) {
-      throw new Error(`Failed to parse JSON: ${e}`);
-    }
-  }
+  return fullContent.trim();
 }
 
 // Branch colors using HSL with design tokens
