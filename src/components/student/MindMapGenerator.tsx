@@ -316,6 +316,13 @@ CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fence
       const fullContent = await readChatStream(response);
       const mapData = extractJsonFromResponse(fullContent) as MindMapData;
       if (!mapData.center || !mapData.branches) throw new Error('Invalid format');
+      // Filter out branches/children with empty labels
+      mapData.branches = mapData.branches
+        .filter(b => b.label && b.label.trim())
+        .map(b => ({
+          ...b,
+          children: (b.children || []).filter(c => c.label && c.label.trim()),
+        }));
 
       setMindMap(mapData);
       saveMindMap(mapData, t_topic);
@@ -364,6 +371,8 @@ CRITICAL: Return ONLY the raw JSON object. No markdown, no code fences, no expla
       if (!response.ok || !response.body) throw new Error('Failed');
       const fullContent = await readChatStream(response);
       const newChildren = extractJsonFromResponse(fullContent) as { children: MindMapNode[] };
+      // Filter empty labels
+      const validChildren = (newChildren.children || []).filter(c => c.label && c.label.trim());
 
       setMindMap(prev => {
         if (!prev) return prev;
@@ -371,12 +380,12 @@ CRITICAL: Return ONLY the raw JSON object. No markdown, no code fences, no expla
         if (childIdx !== undefined) {
           const branch = { ...updated.branches[branchIdx] };
           const children = [...(branch.children || [])];
-          children[childIdx] = { ...children[childIdx], children: newChildren.children, expanded: true };
+          children[childIdx] = { ...children[childIdx], children: validChildren, expanded: true };
           branch.children = children;
           updated.branches[branchIdx] = branch;
         } else {
           const branch = { ...updated.branches[branchIdx] };
-          branch.children = [...(branch.children || []), ...newChildren.children];
+          branch.children = [...(branch.children || []), ...validChildren];
           branch.expanded = true;
           updated.branches[branchIdx] = branch;
         }
@@ -551,7 +560,7 @@ IMPORTANT FORMATTING:
 
   // ─── SVG layout calculations ───────────────────────────────────────────────
 
-  const viewBoxSize = 900;
+  const viewBoxSize = 1100;
   const cx = viewBoxSize / 2;
   const cy = viewBoxSize / 2;
 
@@ -561,7 +570,7 @@ IMPORTANT FORMATTING:
     const branches = mindMap.branches;
     const branchCount = branches.length;
     const elements: JSX.Element[] = [];
-    const branchR = Math.max(120, Math.min(200, 900 / (branchCount + 2)));
+    const branchR = Math.max(160, Math.min(280, 1100 / (branchCount + 2)));
 
     // Center node
     elements.push(
@@ -624,7 +633,7 @@ IMPORTANT FORMATTING:
         const childBaseAngle = angle - (childAngleSpread * (children.length - 1)) / 2;
         const childAngle = childBaseAngle + ci * childAngleSpread;
         const childRad = (childAngle * Math.PI) / 180;
-        const childR = 80;
+        const childR = 100;
         const childX = bx + childR * Math.cos(childRad);
         const childY = by + childR * Math.sin(childRad);
         const childDelay = delay + 0.15 + ci * 0.05;
