@@ -551,7 +551,7 @@ IMPORTANT FORMATTING:
 
   // ─── SVG layout calculations ───────────────────────────────────────────────
 
-  const viewBoxSize = 900;
+  const viewBoxSize = 1100;
   const cx = viewBoxSize / 2;
   const cy = viewBoxSize / 2;
 
