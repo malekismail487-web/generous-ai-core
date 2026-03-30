@@ -631,7 +631,7 @@ IMPORTANT FORMATTING:
         const childBaseAngle = angle - (childAngleSpread * (children.length - 1)) / 2;
         const childAngle = childBaseAngle + ci * childAngleSpread;
         const childRad = (childAngle * Math.PI) / 180;
-        const childR = 80;
+        const childR = 100;
         const childX = bx + childR * Math.cos(childRad);
         const childY = by + childR * Math.sin(childRad);
         const childDelay = delay + 0.15 + ci * 0.05;
