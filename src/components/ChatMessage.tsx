@@ -67,6 +67,13 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
   const isUser = message.role === "user";
   const displayedContent = useTypewriter(message.content, isStreaming && !isUser);
 
+  // Merge images inline into content
+  const contentWithImages = useMemo(() => {
+    if (isUser || isStreaming || !message.images || message.images.length === 0) {
+      return displayedContent;
+    }
+    return mergeImagesIntoContent(displayedContent, message.images);
+  }, [displayedContent, message.images, isUser, isStreaming]);
   if (isUser) {
     return (
       <div className="flex gap-2.5 animate-fade-in flex-row-reverse">
