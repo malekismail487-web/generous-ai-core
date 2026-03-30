@@ -174,11 +174,7 @@ CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fence
         }
       }
 
-      // Extract JSON from response
-      const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON found');
-
-      const mapData: MindMapData = JSON.parse(jsonMatch[0]);
+      const mapData = extractJsonFromResponse(fullContent) as MindMapData;
       if (!mapData.center || !mapData.branches) throw new Error('Invalid format');
 
       setMindMap(mapData);
