@@ -37,8 +37,9 @@ function processMathInText(text: string): string {
   return result;
 }
 
-export function MathRenderer({ content, className = '', images }: MathRendererProps) {
+export function MathRenderer({ content, className = '' }: MathRendererProps) {
   // Remove markdown image syntax from content (AI sometimes outputs broken image URLs)
+  // but KEEP [INLINE_IMG:...] tokens — those are our own
   const cleanedContent = useMemo(() => {
     let cleaned = content;
     // Remove markdown images ![alt](url)
@@ -49,10 +50,10 @@ export function MathRenderer({ content, className = '', images }: MathRendererPr
     cleaned = cleaned.replace(/https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\S*/gi, '');
     // Remove markdown links that contain YouTube URLs [text](youtube...)
     cleaned = cleaned.replace(/\[([^\]]*)\]\(https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\S*\)/gi, '$1');
-    // Remove any remaining raw URLs on their own line (likely hallucinated)
-    cleaned = cleaned.replace(/^https?:\/\/\S+$/gm, '');
-    // Remove inline raw URLs (keep surrounding text)
-    cleaned = cleaned.replace(/https?:\/\/\S+/g, '');
+    // Remove any remaining raw URLs on their own line (likely hallucinated) — but not INLINE_IMG tokens
+    cleaned = cleaned.replace(/^(?!\[INLINE_IMG:)https?:\/\/\S+$/gm, '');
+    // Remove inline raw URLs (keep surrounding text) — but not inside INLINE_IMG tokens
+    cleaned = cleaned.replace(/(?<!\[INLINE_IMG:)https?:\/\/(?![^\]]*\])\S+/g, '');
     // Clean up double spaces and empty lines from removals
     cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
     return cleaned.trim();
