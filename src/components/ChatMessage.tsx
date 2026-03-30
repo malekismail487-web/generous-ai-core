@@ -1,7 +1,8 @@
 import { User } from "lucide-react";
 import { LuminaLogo } from "@/components/LuminaLogo";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { MathRenderer } from "@/components/MathRenderer";
+import { mergeImagesIntoContent, InlineImage } from "@/lib/imageInsertion";
 
 interface ChatMessageProps {
   message: {
