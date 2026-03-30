@@ -550,37 +550,22 @@ Use age-appropriate language for ${selectedGrade}.`;
               />
             ) : (
               <div className="prose prose-sm max-w-none">
-                <MathRenderer content={lectureContent} className="whitespace-pre-wrap text-sm leading-relaxed" />
+                <MathRenderer 
+                  content={lectureImages.length > 0 
+                    ? mergeImagesIntoContent(lectureContent, urlsToInlineImages(lectureImages, activeMaterial?.topic))
+                    : lectureContent
+                  } 
+                  className="whitespace-pre-wrap text-sm leading-relaxed" 
+                />
               </div>
             )}
           </div>
 
-          {/* Lecture Images */}
-          {!isLoading && (isGeneratingImages || lectureImages.length > 0) && (
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <ImageIcon className="w-4 h-4" />
-                <span>{language === 'ar' ? 'رسوم بيانية تعليمية' : 'Educational Diagrams'}</span>
-                {isGeneratingImages && <Loader2 className="w-3 h-3 animate-spin" />}
-              </div>
-              {isGeneratingImages && lectureImages.length === 0 && (
-                <div className="flex items-center gap-2 px-4 py-6 glass-effect rounded-xl justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  <span className="text-sm text-muted-foreground">{language === 'ar' ? 'جاري إنشاء الرسوم البيانية...' : 'Generating topic diagrams...'}</span>
-                </div>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {lectureImages.map((img, idx) => (
-                  <div key={idx} className="glass-effect rounded-xl overflow-hidden">
-                    <img
-                      src={img}
-                      alt={`Educational diagram ${idx + 1}`}
-                      className="w-full h-48 object-contain bg-white rounded-xl"
-                      loading="lazy"
-                    />
-                  </div>
-                ))}
-              </div>
+          {/* Loading indicator for images being generated */}
+          {!isLoading && isGeneratingImages && lectureImages.length === 0 && (
+            <div className="mt-4 flex items-center gap-2 px-4 py-3 glass-effect rounded-xl justify-center">
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+              <span className="text-xs text-muted-foreground">{language === 'ar' ? 'جاري إنشاء الرسوم البيانية...' : 'Loading diagrams...'}</span>
             </div>
           )}
         </div>

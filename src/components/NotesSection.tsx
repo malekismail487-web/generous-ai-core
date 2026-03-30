@@ -6,6 +6,7 @@ import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { MathRenderer } from '@/components/MathRenderer';
+import { mergeImagesIntoContent, urlsToInlineImages } from '@/lib/imageInsertion';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 import { FileNotesGenerator } from '@/components/FileNotesGenerator';
