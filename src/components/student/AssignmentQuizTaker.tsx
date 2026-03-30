@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 
 interface Question {
   id: string;

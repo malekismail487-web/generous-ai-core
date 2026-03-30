@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 
 type Difficulty = 'beginner' | 'intermediate' | 'hard';
 type PracticeType = 'examination' | 'sat';
