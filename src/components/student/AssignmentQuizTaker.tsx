@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 
 interface Question {
   id: string;
@@ -59,6 +60,7 @@ export function AssignmentQuizTaker({
 }: AssignmentQuizTakerProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { recordAnswer } = useAdaptiveLevel();
   
   const questions: Question[] = (assignment.questions_json as Question[]) || [];
   
@@ -98,6 +100,20 @@ export function AssignmentQuizTaker({
         isCorrect
       };
     });
+
+
+    // Record each answer for adaptive learning
+    for (const result of quizResults) {
+      recordAnswer({
+        subject: assignment.subject,
+        questionText: result.questionTitle,
+        studentAnswer: result.selectedAnswer,
+        correctAnswer: result.correctAnswer,
+        isCorrect: result.isCorrect,
+        difficulty: 'medium',
+        source: 'assignment',
+      });
+    }
 
     const correctCount = quizResults.filter(r => r.isCorrect).length;
     const score = Math.round((correctCount / questions.length) * assignment.points);

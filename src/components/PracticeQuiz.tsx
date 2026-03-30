@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 
 type Difficulty = 'beginner' | 'intermediate' | 'hard';
 type PracticeType = 'examination' | 'sat';
@@ -38,6 +39,7 @@ export function PracticeQuiz({ difficulty, type, onBack, learningContext }: Prac
   const [isLoading, setIsLoading] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
   const { toast } = useToast();
+  const { recordAnswer } = useAdaptiveLevel();
 
   const maxQuestions = difficulty === 'beginner' ? 5 : difficulty === 'intermediate' ? 7 : 10;
 
@@ -126,9 +128,23 @@ Make sure the question directly relates to topics from their learning history. B
     setSelectedAnswer(index);
     setShowResult(true);
 
-    if (index === currentQuestion?.correctIndex) {
+    const isCorrect = index === currentQuestion?.correctIndex;
+    if (isCorrect) {
       setScore((prev) => prev + 1);
     }
+
+    // Record for adaptive learning
+    const subjectMatch = learningContext.match(/subject[:\s]+(\w+)/i);
+    const subjectName = subjectMatch ? subjectMatch[1] : 'general';
+    recordAnswer({
+      subject: subjectName,
+      questionText: currentQuestion?.question,
+      studentAnswer: currentQuestion?.options[index],
+      correctAnswer: currentQuestion?.options[currentQuestion?.correctIndex],
+      isCorrect: !!isCorrect,
+      difficulty,
+      source: type === 'sat' ? 'sat_practice' : 'practice_quiz',
+    });
   };
 
   const handleNext = () => {

@@ -1,0 +1,1 @@
+CREATE POLICY "Allow public read access on generated-diagrams" ON storage.objects FOR SELECT TO public USING (bucket_id = 'generated-diagrams');
