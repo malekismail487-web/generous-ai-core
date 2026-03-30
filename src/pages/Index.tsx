@@ -1,12 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
-import { Message, streamChat } from "@/lib/chat";
-import { generateId } from "@/lib/utils";
-import { ChatMessage } from "@/components/ChatMessage";
-import { ChatInput } from "@/components/ChatInput";
-import { ChatHistoryDrawer } from "@/components/ChatHistoryDrawer";
-import { TypingIndicator } from "@/components/TypingIndicator";
-import { EmptyState } from "@/components/EmptyState";
 import { BottomNav, TabType } from "@/components/BottomNav";
 import { SubjectsSection } from "@/components/SubjectsSection";
 import { FlashcardsSection } from "@/components/FlashcardsSection";
@@ -21,6 +14,7 @@ import { StudentReportCards } from "@/components/student/StudentReportCards";
 import { AnnouncementsViewer } from "@/components/AnnouncementsViewer";
 import { TripsViewer } from "@/components/TripsViewer";
 import { StudyBuddy } from "@/components/student/StudyBuddy";
+import { MindMapGenerator } from "@/components/student/MindMapGenerator";
 import { GoalTracker } from "@/components/student/GoalTracker";
 import { Leaderboard } from "@/components/student/Leaderboard";
 import { FocusTimer } from "@/components/student/FocusTimer";
@@ -29,9 +23,7 @@ import { StudentHomeGrid, GridAction } from "@/components/StudentHomeGrid";
 import { WeeklyPlanSection } from "@/components/WeeklyPlanSection";
 import { BannerAd } from "@/components/BannerAd";
 import { FloatingTimer } from "@/components/student/FloatingTimer";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useConversations } from "@/hooks/useConversations";
 import { useNotes } from "@/hooks/useNotes";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { useThemeLanguage } from "@/hooks/useThemeLanguage";
@@ -39,18 +31,13 @@ import { useAdaptiveLevel } from "@/hooks/useAdaptiveLevel";
 import { useLearningStyle } from "@/hooks/useLearningStyle";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { Navigate } from "react-router-dom";
-import { Loader2, ArrowLeft, Menu, History } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { LuminaLogo } from "@/components/LuminaLogo";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
-  const [isLoading, setIsLoading] = useState(false);
-  const [localMessages, setLocalMessages] = useState<Message[]>([]);
-  const [historyOpen, setHistoryOpen] = useState(false);
   
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const { 
     profile, 
@@ -65,21 +52,9 @@ const Index = () => {
   } = useRoleGuard();
   const { t, language } = useThemeLanguage();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
-  const { getLearningStylePrompt, recalculate: recalculateLearningStyle } = useLearningStyle();
-  const { trackPageVisit, trackAITutorChat, trackQuestionAsked, trackExplicitRequest } = useActivityTracker();
+  const { recalculate: recalculateLearningStyle } = useLearningStyle();
+  const { trackPageVisit } = useActivityTracker();
 
-  const {
-    conversations,
-    currentConversation,
-    messages,
-    createConversation,
-    addMessage,
-    deleteConversation,
-    selectConversation,
-    clearCurrentConversation,
-    fetchBackgroundContext,
-  } = useConversations();
-  
   const {
     notes,
     currentNote,
