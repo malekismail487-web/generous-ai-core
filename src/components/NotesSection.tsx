@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, ArrowRight, Loader2, FileText, Upload, BookmarkCheck, Trash2, Zap, BookOpen, GraduationCap, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, FileText, Upload, BookmarkCheck, Trash2, Zap, BookOpen, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
