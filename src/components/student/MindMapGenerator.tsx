@@ -237,26 +237,7 @@ CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fence
 
       if (!response.ok || !response.body) throw new Error('Failed');
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) fullContent += delta;
-          } catch { /* partial */ }
-        }
-      }
+      const fullContent = await readChatStream(response);
 
       const mapData = extractJsonFromResponse(fullContent) as MindMapData;
       if (!mapData.center || !mapData.branches) throw new Error('Invalid format');
