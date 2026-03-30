@@ -21,7 +21,7 @@ interface StudentHomeGridProps {
 }
 
 // Ring items — monochromatic grey shades
-const RING_ITEMS: { id: GridAction; icon: typeof MessageSquare; label: string; labelAr: string }[] = [
+const RING_ITEMS: { id: GridAction; icon: typeof Brain; label: string; labelAr: string }[] = [
   { id: 'mindmaps', icon: Brain, label: 'Mind Maps', labelAr: 'خرائط ذهنية' },
   { id: 'examination', icon: BookOpen, label: 'Exams', labelAr: 'الاختبارات' },
   { id: 'subjects', icon: Layers, label: 'Subjects', labelAr: 'المواد' },
