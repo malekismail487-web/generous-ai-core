@@ -371,6 +371,8 @@ CRITICAL: Return ONLY the raw JSON object. No markdown, no code fences, no expla
       if (!response.ok || !response.body) throw new Error('Failed');
       const fullContent = await readChatStream(response);
       const newChildren = extractJsonFromResponse(fullContent) as { children: MindMapNode[] };
+      // Filter empty labels
+      const validChildren = (newChildren.children || []).filter(c => c.label && c.label.trim());
 
       setMindMap(prev => {
         if (!prev) return prev;
