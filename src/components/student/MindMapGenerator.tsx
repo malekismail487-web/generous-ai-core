@@ -380,12 +380,12 @@ CRITICAL: Return ONLY the raw JSON object. No markdown, no code fences, no expla
         if (childIdx !== undefined) {
           const branch = { ...updated.branches[branchIdx] };
           const children = [...(branch.children || [])];
-          children[childIdx] = { ...children[childIdx], children: newChildren.children, expanded: true };
+          children[childIdx] = { ...children[childIdx], children: validChildren, expanded: true };
           branch.children = children;
           updated.branches[branchIdx] = branch;
         } else {
           const branch = { ...updated.branches[branchIdx] };
-          branch.children = [...(branch.children || []), ...newChildren.children];
+          branch.children = [...(branch.children || []), ...validChildren];
           branch.expanded = true;
           updated.branches[branchIdx] = branch;
         }
