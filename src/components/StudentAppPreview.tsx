@@ -81,7 +81,7 @@ export function StudentAppPreview() {
 
   const renderMainContent = () => {
     switch (activeTab) {
-      case 'chat':
+      case 'home':
         return (
           <div className="flex flex-col h-full pt-14 pb-20">
             <main className="flex-1 overflow-y-auto">
