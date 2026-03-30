@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // This is a preview version of the student app for Super Admin testing
 export function StudentAppPreview() {
-  const [activeTab, setActiveTab] = useState<TabType>('chat');
+  const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
