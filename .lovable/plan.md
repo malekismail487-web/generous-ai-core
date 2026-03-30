@@ -1,107 +1,70 @@
+- Inline Contextual Images — Replacing "Visual References" Gallery
 
+## Summary
 
-# Full Monochromatic Grey Redesign — 360 Overhaul
+Currently, images (Wikipedia + AI diagrams) are fetched after lecture/note generation and displayed in a separate gallery section at the bottom ("Educational Diagrams" / "Visual References"). You want images placed **inline within the content**, contextually next to the relevant section they relate to — not lumped together at the end.
 
-## What We're Building
+## Current State
 
-A complete visual overhaul of the entire app to match your new logo's aesthetic: a monochromatic grey/charcoal palette for dark mode (matching the textured charcoal background in your dark logo photo) and a clean neutral white/grey palette for light mode (matching your light logo photo). Every role — Student, Teacher, School Admin, Super Admin, Ministry — gets this treatment.
+- **Image sources**: Wikipedia thumbnails (up to 2) + AI-generated diagrams (up to 3) = 3-5 images total. This is already implemented and working.
+- **Display**: Images appear in a separate grid section below the lecture/notes content.
+- **MathRenderer**: Has an `images` prop that renders a "📸 Visual References" horizontal gallery at the bottom (only used by StudyBuddy chat).
+- **SubjectsSection & NotesSection**: Render their own image grids after the MathRenderer content block.
 
-## Summary of Changes
+## Plan
 
-### 1. Replace the Logo Asset
-- Copy your new icon (dark variant for dark mode, light variant for light mode) into the project
-- Update `LuminaLogo` component to swap between dark/light variants based on current theme
-- Remove the old `lumina-mascot.png` and all references to `LuminaMascot` component (the blue ghost)
-- Replace `LuminaMascot` usage in `StudentHomeGrid.tsx` center button with the new `LuminaLogo`
+### Step 1: Update AI prompts to include image placement markers
 
-### 2. Rewrite the Core Color System (`src/index.css`)
+Modify the lecture/notes generation prompts (in `SubjectsSection.tsx` and `NotesSection.tsx`) to instruct the AI to output markers like `[IMAGE_PLACEHOLDER_1]`, `[IMAGE_PLACEHOLDER_2]`, etc. at contextually appropriate points within the lecture text. This tells us where images should go.
 
-**Dark mode (`:root` / `.dark`)** — Monochromatic charcoal:
-```text
-Background:    ~#1a1a1a  (0 0% 10%)
-Card:          ~#242424  (0 0% 14%)
-Foreground:    ~#e5e5e5  (0 0% 90%)
-Primary:       ~#ffffff  (0 0% 100%) — white as the accent
-Secondary:     ~#2a2a2a  (0 0% 16%)
-Muted:         ~#333333  (0 0% 20%)
-Muted-fg:      ~#888888  (0 0% 53%)
-Border:        ~#333333  (0 0% 20%)
-Accent:        ~#a0a0a0  (0 0% 63%) — soft grey highlight
-```
+### Step 2: Create an image insertion utility
 
-**Light mode (`.light`)** — Clean white/grey:
-```text
-Background:    ~#f5f5f5  (0 0% 96%)
-Card:          ~#ffffff  (0 0% 100%)
-Foreground:    ~#1a1a1a  (0 0% 10%)
-Primary:       ~#1a1a1a  (0 0% 10%) — dark as the accent
-Secondary:     ~#ebebeb  (0 0% 92%)
-Muted:         ~#e0e0e0  (0 0% 88%)
-Muted-fg:      ~#666666  (0 0% 40%)
-Border:        ~#d4d4d4  (0 0% 83%)
-Accent:        ~#555555  (0 0% 33%)
-```
+Build a helper function that takes the generated text content + the array of fetched images, finds `[IMAGE_PLACEHOLDER_N]` markers, and replaces them with actual image markdown or a custom token that MathRenderer can render.
 
-All gradient custom properties (`--gradient-primary`, `--gradient-warm`, `--gradient-hero`, etc.) will be rewritten to use grey tones — no more gold/teal/coral.
+### Step 3: Update MathRenderer to render inline images
 
-### 3. Update the Animated Background (`AnimatedBackground.tsx`)
-- Change particle colors from gold/teal to shades of grey/white
-- Connection lines become subtle white/grey instead of gold/coral
+Instead of stripping all markdown images and showing a gallery at the bottom:
 
-### 4. Update Ambient Glow CSS
-- Blob colors change from gold/teal radial gradients to subtle white/grey glows
-- Light mode blobs become soft grey shadows
+- Keep a whitelist of image sources (our own fetched Wikipedia/diagram URLs)
+- Render `[INLINE_IMG:url:alt]` custom tokens as inline `<img>` elements within the content flow
+- Remove the "📸 Visual References" gallery section entirely
 
-### 5. Redesign the Student Dashboard (`StudentHomeGrid.tsx`)
-- Center button: Replace `LuminaMascot` + purple gradient with `LuminaLogo` on a clean dark/light circle
-- Ring items: Replace colorful gradients (`from-blue-500 to-cyan-500`, etc.) with monochromatic grey shades — each icon gets a subtle grey tone distinction rather than rainbow colors
-- Hero greeting banner: Change from `--gradient-hero` (colorful) to a grey gradient
-- Streak bar: Muted grey tones instead of rainbow gradient
+### Step 4: Update SubjectsSection lecture view
 
-### 6. Update Bottom Navigation (`BottomNav.tsx`)
-- Active state uses `text-foreground` instead of `text-primary` (which was gold/coral)
-- Active icon background becomes subtle grey instead of `bg-primary/15`
+- After images are fetched, call the insertion utility to merge images into `lectureContent` at the placeholder positions
+- Remove the separate "Educational Diagrams" grid section below the lecture
+- Images now appear inline within the lecture text
 
-### 7. Update Wallpaper Presets (`wallpaperPresets.ts`)
-- Change `default-dark` to the new charcoal grey HSL values
-- Change `default-light` to the new neutral white HSL values
-- Keep "Sunrise Sand" and other warm presets as selectable options
+### Step 5: Update NotesSection notes view
 
-### 8. Preserve the Old Theme as a Selectable Option
-- Keep all existing warm wallpaper presets (Midnight Ocean, Sunrise Sand, etc.) available in the wallpaper picker
-- The defaults just become the new grey aesthetic
+- Same approach: merge images into `notesContent` at placeholder positions
+- Remove the separate diagrams grid section
 
-### 9. Update All Dashboard Pages
-- **Teacher Dashboard**: Tab triggers, cards, badges — all follow the new grey tokens
-- **School Admin Dashboard**: Same treatment — no hardcoded colors, everything flows from CSS variables
-- **Auth page**: Gradient text and button styling updated
-- **Language Select**: Same grey aesthetic
-- Since these pages already use Tailwind's `bg-background`, `text-foreground`, `bg-card`, etc., most of the change is automatic via the CSS variable update. Hardcoded color classes (`from-blue-500`, `text-amber-400`, etc.) need to be replaced with grey equivalents.
+### Step 6: Update StudyBuddy / ChatMessage
 
-### 10. Component-Level Color Fixes
-Scan and update any components using hardcoded non-grey colors:
-- `gradient-text` utility → grey-to-white gradient (dark) / dark-to-grey gradient (light)
-- `message-user` bubble → dark grey gradient instead of gold
-- Tab active states → grey/white instead of gold
-- Streak flame icon → neutral grey instead of amber
-- Badge/progress colors throughout teacher/admin panels
+- Remove the `images` gallery from MathRenderer
+- For chat messages with images, insert them inline into the message content before rendering
 
-## Technical Details
+## Files to modify
 
-**Files to modify:**
-- `src/index.css` — Core theme rewrite (biggest change)
-- `src/components/LuminaLogo.tsx` — Theme-aware logo switching
-- `src/components/LuminaMascot.tsx` — Remove (or keep for legacy, unused)
-- `src/components/AnimatedBackground.tsx` — Grey particle palette
-- `src/components/StudentHomeGrid.tsx` — Remove color gradients, use monochrome
-- `src/components/BottomNav.tsx` — Grey active states
-- `src/lib/wallpaperPresets.ts` — Update defaults
-- `src/pages/LanguageSelect.tsx` — Grey styling
-- `src/pages/Auth.tsx` — Grey styling
-- Various teacher/admin components with hardcoded colors
+- `src/components/MathRenderer.tsx` — Add inline image rendering, remove gallery
+- `src/components/SubjectsSection.tsx` — Update prompts with placeholders, merge images into content, remove separate image grid
+- `src/components/NotesSection.tsx` — Same as above
+- `src/components/ChatMessage.tsx` — Pass images inline instead of as gallery prop
+- `src/components/student/StudyBuddy.tsx` — Merge images into message content
+- `src/components/FileNotesGenerator.tsx` — If it also shows images, apply same pattern
 
-**Files to add:**
-- New logo assets (dark + light variants) in `src/assets/`
+## Technical Detail
 
-**Approach:** The CSS variable system means ~70% of the app updates automatically when we change `index.css`. The remaining 30% is hunting down hardcoded Tailwind color classes (`from-blue-500`, `text-amber-400`, etc.) and replacing them with theme-aware equivalents.
+The image placeholder approach works because:
 
+1. AI generates text with `[IMAGE_PLACEHOLDER_1]` at contextual spots (e.g., after explaining photosynthesis)
+2. Wikipedia/diagram images arrive async after text generation
+3. A merge function maps placeholder N to image N from the fetched array
+4. MathRenderer renders `<img>` tags at those positions inline
+
+If the AI doesn't output enough placeholders or images don't match exactly, remaining images get distributed evenly through the content (e.g., after major section headings).
+
+&nbsp;
+
+Make sure that math renderer does not render from the inside and only renders when the user wants to view them, this should've been implemented by now but I'm just telling you to make sure 
