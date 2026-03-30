@@ -244,10 +244,7 @@ CRITICAL: Return ONLY the raw JSON object. No markdown, no code fences, no expla
         }
       }
 
-      const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON');
-
-      const newChildren: { children: MindMapNode[] } = JSON.parse(jsonMatch[0]);
+      const newChildren = extractJsonFromResponse(fullContent) as { children: MindMapNode[] };
 
       setMindMap(prev => {
         if (!prev) return prev;
