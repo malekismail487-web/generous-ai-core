@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, ArrowRight, Loader2, FileText, Upload, BookmarkCheck, Trash2, Zap, BookOpen, GraduationCap, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, FileText, Upload, BookmarkCheck, Trash2, Zap, BookOpen, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { MathRenderer } from '@/components/MathRenderer';
+import { mergeImagesIntoContent, urlsToInlineImages } from '@/lib/imageInsertion';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 import { FileNotesGenerator } from '@/components/FileNotesGenerator';
@@ -177,6 +178,11 @@ Use --- between parts. Include 10+ "💡 Pro Tip" boxes. Include "⚡ Quick Chec
     const prompt = `Generate structured study notes for ${subjectName} at ${selectedGrade} level about "${topic}".
 
 ${lengthPrompt}
+
+IMPORTANT IMAGE PLACEMENT:
+- Place exactly 5 image markers throughout your notes at the most relevant points.
+- Use the format [IMAGE_PLACEHOLDER_1], [IMAGE_PLACEHOLDER_2], etc.
+- Place each marker on its own line, right after the paragraph or section where a visual would help.
 
 IMPORTANT FORMATTING:
 - Use emoji section headers consistently (📌, 🧠, 📊, ✅, ⚠️, 📝, 💡, ⚡)
@@ -352,30 +358,20 @@ IMPORTANT FORMATTING:
             </div>
           </div>
           <div className="glass-effect rounded-2xl p-5 overflow-y-auto max-h-[65vh]">
-            <MathRenderer content={notesContent} className="whitespace-pre-wrap text-sm leading-relaxed" />
+            <MathRenderer 
+              content={noteImages.length > 0 
+                ? mergeImagesIntoContent(notesContent, urlsToInlineImages(noteImages, topicInput))
+                : notesContent
+              } 
+              className="whitespace-pre-wrap text-sm leading-relaxed" 
+            />
           </div>
 
-          {/* AI-Generated Diagrams */}
-          {(isGeneratingImages || noteImages.length > 0) && (
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <ImageIcon className="w-4 h-4" />
-                <span>{lang === 'ar' ? 'رسوم بيانية تعليمية' : 'Educational Diagrams'}</span>
-                {isGeneratingImages && <Loader2 className="w-3 h-3 animate-spin" />}
-              </div>
-              {isGeneratingImages && noteImages.length === 0 && (
-                <div className="flex items-center gap-2 px-4 py-6 glass-effect rounded-xl justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  <span className="text-sm text-muted-foreground">{lang === 'ar' ? 'جاري إنشاء الرسوم البيانية...' : 'Generating topic diagrams...'}</span>
-                </div>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {noteImages.map((img, idx) => (
-                  <div key={idx} className="glass-effect rounded-xl overflow-hidden">
-                    <img src={img} alt={`Diagram ${idx + 1}`} className="w-full h-48 object-contain bg-white rounded-xl" loading="lazy" />
-                  </div>
-                ))}
-              </div>
+          {/* Loading indicator for images being generated */}
+          {isGeneratingImages && noteImages.length === 0 && (
+            <div className="mt-4 flex items-center gap-2 px-4 py-3 glass-effect rounded-xl justify-center">
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+              <span className="text-xs text-muted-foreground">{lang === 'ar' ? 'جاري إنشاء الرسوم البيانية...' : 'Loading diagrams...'}</span>
             </div>
           )}
         </div>

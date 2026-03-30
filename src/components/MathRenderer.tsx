@@ -7,8 +7,6 @@ import 'katex/dist/katex.min.css';
 interface MathRendererProps {
   content: string;
   className?: string;
-  /** Optional real images to display (e.g. from Wikipedia API) */
-  images?: { src: string; alt?: string }[];
 }
 
 function renderLatex(text: string, displayMode: boolean): string {
@@ -22,6 +20,11 @@ function renderLatex(text: string, displayMode: boolean): string {
 function processMathInText(text: string): string {
   if (!text) return '';
   let result = text;
+  // Process inline images first — protect them from other transformations
+  result = result.replace(/\[INLINE_IMG:(.*?):(.*?)\]/g, (_, url, alt) => {
+    const cleanAlt = alt.replace(/꞉/g, ':');
+    return `<div class="my-4 rounded-xl overflow-hidden border border-border/30 bg-card/50 shadow-sm inline-block max-w-full"><img src="${url}" alt="${cleanAlt}" class="w-full max-h-64 object-contain bg-white rounded-xl" loading="lazy" onerror="this.parentElement.style.display='none'" />${cleanAlt ? `<p class="text-[11px] text-center text-muted-foreground px-2.5 py-1.5 truncate">${cleanAlt}</p>` : ''}</div>`;
+  });
   result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => renderLatex(math, true));
   result = result.replace(/\\\[([\s\S]*?)\\\]/g, (_, math) => renderLatex(math, true));
   result = result.replace(/\\\(([\s\S]*?)\\\)/g, (_, math) => renderLatex(math, false));
@@ -32,8 +35,9 @@ function processMathInText(text: string): string {
   return result;
 }
 
-export function MathRenderer({ content, className = '', images }: MathRendererProps) {
+export function MathRenderer({ content, className = '' }: MathRendererProps) {
   // Remove markdown image syntax from content (AI sometimes outputs broken image URLs)
+  // but KEEP [INLINE_IMG:...] tokens — those are our own
   const cleanedContent = useMemo(() => {
     let cleaned = content;
     // Remove markdown images ![alt](url)
@@ -44,10 +48,10 @@ export function MathRenderer({ content, className = '', images }: MathRendererPr
     cleaned = cleaned.replace(/https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\S*/gi, '');
     // Remove markdown links that contain YouTube URLs [text](youtube...)
     cleaned = cleaned.replace(/\[([^\]]*)\]\(https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\S*\)/gi, '$1');
-    // Remove any remaining raw URLs on their own line (likely hallucinated)
-    cleaned = cleaned.replace(/^https?:\/\/\S+$/gm, '');
-    // Remove inline raw URLs (keep surrounding text)
-    cleaned = cleaned.replace(/https?:\/\/\S+/g, '');
+    // Remove any remaining raw URLs on their own line (likely hallucinated) — but not INLINE_IMG tokens
+    cleaned = cleaned.replace(/^(?!\[INLINE_IMG:)https?:\/\/\S+$/gm, '');
+    // Remove inline raw URLs (keep surrounding text) — but not inside INLINE_IMG tokens
+    cleaned = cleaned.replace(/(?<!\[INLINE_IMG:)https?:\/\/(?![^\]]*\])\S+/g, '');
     // Clean up double spaces and empty lines from removals
     cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
     return cleaned.trim();
@@ -99,30 +103,6 @@ export function MathRenderer({ content, className = '', images }: MathRendererPr
         </div>
       )}
 
-      {/* Real images gallery (from Wikipedia API — like AI lectures) */}
-      {images && images.length > 0 && (
-        <div className="mt-4 space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">📸 Visual References</p>
-          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin">
-            {images.map((img, idx) => (
-              <div key={idx} className="flex-shrink-0 w-64 snap-center rounded-xl overflow-hidden border border-border/30 bg-card/50 shadow-sm">
-                <img
-                  src={img.src}
-                  alt={img.alt || 'Educational image'}
-                  className="w-full h-44 object-cover bg-muted/20"
-                  loading="lazy"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).parentElement!.style.display = 'none';
-                  }}
-                />
-                {img.alt && (
-                  <p className="text-[11px] text-muted-foreground px-2.5 py-1.5 text-center truncate">{img.alt}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

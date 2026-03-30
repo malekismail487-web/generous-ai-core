@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useMaterials, Material } from '@/hooks/useMaterials';
 import { MathRenderer } from '@/components/MathRenderer';
+import { mergeImagesIntoContent, urlsToInlineImages } from '@/lib/imageInsertion';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { CourseMaterialsSection } from '@/components/CourseMaterialsSection';
@@ -244,7 +245,11 @@ ${lectureLength === 'short' ? 'اجعل الشرح قصيرًا ومختصرًا
 
 استخدم رموز الأقسام مع الإيموجي (📌، 🧠، 📊، ✅، ⚠️، 📝، 💡).
 مهم جداً: اكتب الدرس بالكامل باللغة العربية فقط.
-استخدم لغة مناسبة لعمر الطالب.`
+استخدم لغة مناسبة لعمر الطالب.
+
+مهم: ضع بالضبط 5 علامات للصور في الأماكن المناسبة في الدرس.
+استخدم التنسيق [IMAGE_PLACEHOLDER_1]، [IMAGE_PLACEHOLDER_2]، إلخ.
+ضع كل علامة في سطر مستقل بعد الفقرة التي تحتاج صورة توضيحية.`
       : `You are teaching ${subject?.name} to a ${selectedGrade} student.
     
 The student wants to learn about: "${topic}"
@@ -267,6 +272,12 @@ IMPORTANT FORMATTING:
 - For ALL mathematical expressions, use LaTeX notation:
   \\( expression \\) or $expression$ for inline, \\[ expression \\] or $$expression$$ for display
 - Always include plain-text fallback after complex formulas
+
+IMPORTANT IMAGE PLACEMENT:
+- Place exactly 5 image markers throughout your lecture at the most relevant points.
+- Use the format [IMAGE_PLACEHOLDER_1], [IMAGE_PLACEHOLDER_2], etc.
+- Place each marker on its own line, right after the paragraph or section where a visual would help.
+- Example: After explaining photosynthesis, place [IMAGE_PLACEHOLDER_1] where a diagram of sunlight absorption would appear.
 
 Stay strictly within ${subject?.name}. Do not mix with other subjects.
 Use age-appropriate language for ${selectedGrade}.`;
@@ -296,8 +307,10 @@ Use age-appropriate language for ${selectedGrade}.`;
           });
           trackLectureViewed(selectedSubject, topic, Math.max(30, Math.round(response.length / 12)));
           setIsLoading(false);
-          // Fetch related images from Wikipedia after lecture is done
-          fetchLectureImages(topic, subject?.name || selectedSubject);
+          // Fetch related images and merge inline
+          fetchLectureImages(topic, subject?.name || selectedSubject).then(() => {
+            // Images will be merged via the render logic
+          });
         },
         onError: (error) => {
           setIsLoading(false);
@@ -541,37 +554,22 @@ Use age-appropriate language for ${selectedGrade}.`;
               />
             ) : (
               <div className="prose prose-sm max-w-none">
-                <MathRenderer content={lectureContent} className="whitespace-pre-wrap text-sm leading-relaxed" />
+                <MathRenderer 
+                  content={lectureImages.length > 0 
+                    ? mergeImagesIntoContent(lectureContent, urlsToInlineImages(lectureImages, activeMaterial?.topic))
+                    : lectureContent
+                  } 
+                  className="whitespace-pre-wrap text-sm leading-relaxed" 
+                />
               </div>
             )}
           </div>
 
-          {/* Lecture Images */}
-          {!isLoading && (isGeneratingImages || lectureImages.length > 0) && (
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <ImageIcon className="w-4 h-4" />
-                <span>{language === 'ar' ? 'رسوم بيانية تعليمية' : 'Educational Diagrams'}</span>
-                {isGeneratingImages && <Loader2 className="w-3 h-3 animate-spin" />}
-              </div>
-              {isGeneratingImages && lectureImages.length === 0 && (
-                <div className="flex items-center gap-2 px-4 py-6 glass-effect rounded-xl justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  <span className="text-sm text-muted-foreground">{language === 'ar' ? 'جاري إنشاء الرسوم البيانية...' : 'Generating topic diagrams...'}</span>
-                </div>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {lectureImages.map((img, idx) => (
-                  <div key={idx} className="glass-effect rounded-xl overflow-hidden">
-                    <img
-                      src={img}
-                      alt={`Educational diagram ${idx + 1}`}
-                      className="w-full h-48 object-contain bg-white rounded-xl"
-                      loading="lazy"
-                    />
-                  </div>
-                ))}
-              </div>
+          {/* Loading indicator for images being generated */}
+          {!isLoading && isGeneratingImages && lectureImages.length === 0 && (
+            <div className="mt-4 flex items-center gap-2 px-4 py-3 glass-effect rounded-xl justify-center">
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+              <span className="text-xs text-muted-foreground">{language === 'ar' ? 'جاري إنشاء الرسوم البيانية...' : 'Loading diagrams...'}</span>
             </div>
           )}
         </div>

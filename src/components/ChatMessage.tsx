@@ -1,7 +1,8 @@
 import { User } from "lucide-react";
 import { LuminaLogo } from "@/components/LuminaLogo";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { MathRenderer } from "@/components/MathRenderer";
+import { mergeImagesIntoContent, InlineImage } from "@/lib/imageInsertion";
 
 interface ChatMessageProps {
   message: {
@@ -66,6 +67,13 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
   const isUser = message.role === "user";
   const displayedContent = useTypewriter(message.content, isStreaming && !isUser);
 
+  // Merge images inline into content
+  const contentWithImages = useMemo(() => {
+    if (isUser || isStreaming || !message.images || message.images.length === 0) {
+      return displayedContent;
+    }
+    return mergeImagesIntoContent(displayedContent, message.images);
+  }, [displayedContent, message.images, isUser, isStreaming]);
   if (isUser) {
     return (
       <div className="flex gap-2.5 animate-fade-in flex-row-reverse">
@@ -92,9 +100,8 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
       </div>
       <div className="pl-8">
         <MathRenderer
-          content={displayedContent}
+          content={contentWithImages}
           className="text-sm leading-relaxed"
-          images={!isStreaming ? message.images : undefined}
         />
         {isStreaming && (
           <span className="inline-block w-1.5 h-4 ml-0.5 bg-current animate-pulse rounded-sm align-text-bottom" />
