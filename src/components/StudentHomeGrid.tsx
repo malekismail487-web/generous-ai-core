@@ -33,7 +33,7 @@ const RING_ITEMS: { id: GridAction; icon: typeof MessageSquare; label: string; l
 ];
 
 // Branch items
-const BRANCH_ITEMS: { id: GridAction; icon: typeof MessageSquare; label: string; labelAr: string; schoolOnly?: boolean }[] = [
+const BRANCH_ITEMS: { id: GridAction; icon: typeof Brain; label: string; labelAr: string; schoolOnly?: boolean }[] = [
   { id: 'assignments', icon: FileText, label: 'Assignments', labelAr: 'الواجبات', schoolOnly: true },
   { id: 'weeklyplan', icon: Calendar, label: 'Weekly Plan', labelAr: 'الخطة', schoolOnly: true },
   { id: 'leaderboard', icon: Trophy, label: 'Ranking', labelAr: 'الترتيب' },
