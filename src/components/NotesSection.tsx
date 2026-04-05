@@ -13,6 +13,7 @@ import { FileNotesGenerator } from '@/components/FileNotesGenerator';
 import { useNotes, Note } from '@/hooks/useNotes';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 const subjects = [
   { id: 'biology', emoji: '🧬' },
@@ -45,6 +46,7 @@ export function NotesSection() {
   const { language } = useThemeLanguage();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
   const { getLearningStylePrompt } = useLearningStyle();
+  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
   const [viewState, setViewState] = useState<ViewState>('menu');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
@@ -179,6 +181,12 @@ Use --- between parts. Include 10+ "💡 Pro Tip" boxes. Include "⚡ Quick Chec
     const subjectName = getSubjectName(selectedSubject, 'en');
     const lengthPrompt = getLengthPrompt(noteLength);
 
+    // Get full intelligence context
+    let intelligenceParams = { adaptiveLevel: adaptiveLevel as string, learningStyle: getLearningStylePrompt() };
+    try {
+      intelligenceParams = await getSimpleParams('notes', subjectName);
+    } catch { /* fallback to basic */ }
+
     const prompt = `Generate structured study notes for ${subjectName} at ${selectedGrade} level about "${topic}".
 
 ${lengthPrompt}
@@ -202,8 +210,8 @@ IMPORTANT FORMATTING:
     try {
       await streamChat({
         messages,
-        adaptiveLevel,
-        learningStyle: getLearningStylePrompt(),
+        adaptiveLevel: intelligenceParams.adaptiveLevel,
+        learningStyle: intelligenceParams.learningStyle,
         onDelta: (chunk) => { response += chunk; setNotesContent(response); },
         onDone: async () => {
           setIsLoading(false);
@@ -212,14 +220,16 @@ IMPORTANT FORMATTING:
           const noteTitle = `${getSubjectName(selectedSubject, language)} — ${topic}`;
           await createNote(noteTitle, response);
           toast({ title: lang === 'ar' ? 'تم الحفظ!' : 'Note saved!' });
+          // Record study activity for intelligence engine
+          recordActivity({ subject: subjectName, topic, feature: 'notes' });
           // Generate related diagrams
-          const subjectName = getSubjectName(selectedSubject, 'en');
-          fetchNoteDiagrams(topic, subjectName, selectedGrade!);
+          const subjectNameEn = getSubjectName(selectedSubject, 'en');
+          fetchNoteDiagrams(topic, subjectNameEn, selectedGrade!);
         },
         onError: (error) => { setIsLoading(false); toast({ variant: 'destructive', title: 'Error', description: error.message }); },
       });
     } catch { setIsLoading(false); }
-  }, [selectedSubject, selectedGrade, toast, noteLength, createNote, language, adaptiveLevel, getLearningStylePrompt]);
+  }, [selectedSubject, selectedGrade, toast, noteLength, createNote, language, adaptiveLevel, getLearningStylePrompt, getSimpleParams, recordActivity]);
 
   const handleSubjectClick = (subjectId: string) => { setSelectedSubject(subjectId); setSelectedGrade(null); setViewState('grade'); };
   const handleGradeSelect = (grade: string) => { setSelectedGrade(grade); setViewState('input'); };

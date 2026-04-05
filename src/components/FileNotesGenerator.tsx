@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 type NoteLength = 'short' | 'medium' | 'long';
 
@@ -345,6 +346,7 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
   const { getLearningStylePrompt } = useLearningStyle();
+  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
 
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -439,6 +441,12 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
 
     const lengthPrompt = getLengthPrompt(selectedLength);
 
+    // Get full intelligence context
+    let intelligenceParams = { adaptiveLevel: adaptiveLevel as string, learningStyle: getLearningStylePrompt() };
+    try {
+      intelligenceParams = await getSimpleParams('file_analysis');
+    } catch { /* fallback to basic */ }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -453,8 +461,8 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
           fileContent,
           fileName: selectedFile?.name || 'uploaded-file',
           customPrompt: lengthPrompt,
-          adaptiveLevel,
-          learningStyle: getLearningStylePrompt(),
+          adaptiveLevel: intelligenceParams.adaptiveLevel,
+          learningStyle: intelligenceParams.learningStyle,
         }),
       });
 

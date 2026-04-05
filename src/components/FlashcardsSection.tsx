@@ -11,6 +11,7 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 const subjects = [
   { id: 'biology', emoji: '🧬' },
@@ -47,6 +48,7 @@ export function FlashcardsSection() {
   const { language } = useThemeLanguage();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
   const { getLearningStylePrompt } = useLearningStyle();
+  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
   const [viewState, setViewState] = useState<ViewState>('subjects');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
@@ -75,6 +77,12 @@ export function FlashcardsSection() {
     const subjectName = getSubjectName(selectedSubject, 'en');
     const isArabic = selectedSubject === 'arabic';
     
+    // Get full intelligence context
+    let intelligenceParams = { adaptiveLevel: adaptiveLevel as string, learningStyle: getLearningStylePrompt() };
+    try {
+      intelligenceParams = await getSimpleParams('flashcards', subjectName);
+    } catch { /* fallback to basic */ }
+
     let materialContext = '';
     if (fromMaterials && hasSavedMaterials) {
       materialContext = savedMaterials.map(m => `Topic: ${m.topic}\n${m.content}`).join('\n\n---\n\n');
@@ -90,8 +98,8 @@ export function FlashcardsSection() {
     try {
       await streamChat({
         messages,
-        adaptiveLevel,
-        learningStyle: getLearningStylePrompt(),
+        adaptiveLevel: intelligenceParams.adaptiveLevel,
+        learningStyle: intelligenceParams.learningStyle,
         onDelta: (chunk) => { response += chunk; },
         onDone: () => {
           try {
@@ -100,6 +108,8 @@ export function FlashcardsSection() {
               const parsed = JSON.parse(jsonMatch[0]);
               setFlashcards(parsed);
               setViewState('cards');
+              // Record study activity
+              recordActivity({ subject: subjectName, topic, feature: 'flashcards' });
             } else {
               throw new Error('No JSON found');
             }
@@ -116,7 +126,7 @@ export function FlashcardsSection() {
     } catch {
       setIsLoading(false);
     }
-  }, [selectedSubject, selectedGrade, hasSavedMaterials, savedMaterials, toast, adaptiveLevel, getLearningStylePrompt]);
+  }, [selectedSubject, selectedGrade, hasSavedMaterials, savedMaterials, toast, adaptiveLevel, getLearningStylePrompt, getSimpleParams, recordActivity]);
 
   const handleSubjectClick = (subjectId: string) => {
     setSelectedSubject(subjectId);
