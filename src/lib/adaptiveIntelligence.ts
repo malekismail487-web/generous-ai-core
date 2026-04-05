@@ -177,20 +177,20 @@ async function fetchKnowledgeGaps(userId: string): Promise<Array<{
 async function fetchStudentMemories(userId: string): Promise<string[]> {
   const { data } = await supabase
     .from('student_memory')
-    .select('memory_text, category, importance')
+    .select('content, memory_type, confidence')
     .eq('user_id', userId)
-    .order('importance', { ascending: false })
+    .order('confidence', { ascending: false })
     .limit(15);
   
   if (!data || data.length === 0) return [];
   
   return data.map(m => {
-    const prefix = m.category === 'preference' ? '🎯' 
-      : m.category === 'struggle' ? '⚠️'
-      : m.category === 'strength' ? '💪'
-      : m.category === 'personality' ? '🧑'
+    const prefix = m.memory_type === 'preference' ? '🎯' 
+      : m.memory_type === 'struggle' ? '⚠️'
+      : m.memory_type === 'strength' ? '💪'
+      : m.memory_type === 'personality' ? '🧑'
       : '📌';
-    return `${prefix} ${m.memory_text}`;
+    return `${prefix} ${m.content}`;
   });
 }
 
