@@ -1382,7 +1382,7 @@ export function recordChatMessage(messageText: string): void {
 
   // Record cognitive event (interaction)
   try {
-    recordCognitiveEventByType('interaction', { type: 'chat' });
+    recordCognitiveEventByType('session_resume');
   } catch { /* ignore */ }
 }
 
@@ -1421,7 +1421,7 @@ export function recordStudyActivity(params: {
 
   // Also feed into cognitive model
   try {
-    recordCognitiveEventByType('interaction', { feature: params.feature });
+    recordCognitiveEventByType('session_resume');
   } catch { /* ignore */ }
 }
 
