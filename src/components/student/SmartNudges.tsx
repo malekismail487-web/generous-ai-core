@@ -16,13 +16,18 @@ interface Nudge {
 export function SmartNudges() {
   const { user } = useAuth();
   const { t } = useThemeLanguage();
-  const [shown, setShown] = useState(false);
 
   useEffect(() => {
-    if (!user || shown) return;
-    const timer = setTimeout(() => generateNudges(), 2000);
+    if (!user) return;
+    // Persistent daily check — only show nudges once per day
+    const key = `smart-nudges-${new Date().toDateString()}`;
+    if (localStorage.getItem(key)) return;
+    const timer = setTimeout(() => {
+      localStorage.setItem(key, 'shown');
+      generateNudges();
+    }, 2000);
     return () => clearTimeout(timer);
-  }, [user, shown]);
+  }, [user]);
 
   const generateNudges = async () => {
     if (!user) return;

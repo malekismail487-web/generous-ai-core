@@ -97,11 +97,16 @@ Respond with ONLY a JSON array, no markdown:`;
             for (const mem of memories) {
               if (!mem.content || !mem.memory_type) continue;
 
-              // Simple dedup: check if similar memory exists
-              const duplicate = existing?.find(
-                (e) => e.content.toLowerCase().includes(mem.content.toLowerCase().slice(0, 30)) ||
-                  mem.content.toLowerCase().includes(e.content.toLowerCase().slice(0, 30))
-              );
+              // Semantic dedup: normalize and compare word overlap
+              const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+              const memWords = new Set(normalize(mem.content).split(/\s+/).filter(w => w.length > 3));
+              const duplicate = existing?.find((e) => {
+                const existingWords = new Set(normalize(e.content).split(/\s+/).filter(w => w.length > 3));
+                if (memWords.size === 0 || existingWords.size === 0) return false;
+                const overlap = [...memWords].filter(w => existingWords.has(w)).length;
+                const similarity = overlap / Math.min(memWords.size, existingWords.size);
+                return similarity >= 0.6;
+              });
 
               if (duplicate) {
                 // Boost confidence of existing memory
