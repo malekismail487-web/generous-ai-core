@@ -240,7 +240,7 @@ export function computeEmotionalProfile(): EmotionalProfile {
       'negative_language': { frustrated: 4, discouraged: 2 },
       'break_taken': { neutral: 3 },
       'long_session': { determined: 2, frustrated: 1 },
-      'retry_after_failure': { determined: 5, resilient: 0 },
+      'retry_after_failure': { determined: 5 },
       'give_up_signal': { discouraged: 5, frustrated: 3 },
     };
 
