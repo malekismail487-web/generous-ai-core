@@ -932,6 +932,45 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_gaps: {
+        Row: {
+          created_at: string
+          detected_from: string
+          gap_description: string
+          id: string
+          resolved: boolean
+          severity: string
+          subject: string
+          topic: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          detected_from?: string
+          gap_description: string
+          id?: string
+          resolved?: boolean
+          severity?: string
+          subject: string
+          topic: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          detected_from?: string
+          gap_description?: string
+          id?: string
+          resolved?: boolean
+          severity?: string
+          subject?: string
+          topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_style_profiles: {
         Row: {
           conceptual_score: number | null
@@ -1933,6 +1972,39 @@ export type Database = {
           recent_accuracy?: number | null
           subject?: string
           total_questions_answered?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      student_memory: {
+        Row: {
+          confidence: number
+          content: string
+          created_at: string
+          id: string
+          memory_type: string
+          subject: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number
+          content: string
+          created_at?: string
+          id?: string
+          memory_type?: string
+          subject?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          content?: string
+          created_at?: string
+          id?: string
+          memory_type?: string
+          subject?: string | null
           updated_at?: string
           user_id?: string
         }
