@@ -189,6 +189,19 @@ export function useAdaptiveIntelligence() {
   }, []);
 
   /**
+   * Record a teaching event (content was generated for the student).
+   * Feeds into strategy tracker + learning outcome loop.
+   */
+  const recordTeaching = useCallback((params: {
+    topic: string;
+    subject: string;
+    feature: string;
+    content?: string;
+  }) => {
+    recordTeachingEvent(params);
+  }, []);
+
+  /**
    * Get the cached profile if available and fresh.
    */
   const getCachedProfile = useCallback((): StudentIntelligenceProfile | null => {
@@ -208,6 +221,7 @@ export function useAdaptiveIntelligence() {
     recordChat,
     recordActivity,
     getDueItems,
+    recordTeaching,
     getCachedProfile,
     userId: user?.id || null,
   };

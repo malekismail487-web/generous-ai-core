@@ -40,7 +40,7 @@ export interface TeachingRule {
   /** Unique identifier */
   id: string;
   /** Category of rule */
-  category: 'pace' | 'content' | 'interaction' | 'emotional' | 'structural';
+  category: 'pace' | 'content' | 'interaction' | 'emotional' | 'structural' | 'strategy';
   /** The rule expressed as an instruction */
   instruction: string;
   /** When this rule was generated */
