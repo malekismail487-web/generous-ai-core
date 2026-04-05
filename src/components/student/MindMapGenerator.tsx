@@ -17,6 +17,7 @@ interface MindMapNode {
   label: string;
   children?: MindMapNode[];
   expanded?: boolean;
+  terminal?: boolean;
 }
 
 interface MindMapData {
@@ -53,6 +54,48 @@ function sanitizeMindMapData(data: MindMapData): MindMapData {
       .map((branch) => sanitizeMindMapNode(branch))
       .filter((branch): branch is MindMapNode => Boolean(branch)),
   };
+}
+
+// ─── Recursive node helpers ──────────────────────────────────────────────────
+
+function getNodeByPath(data: MindMapData, path: number[]): MindMapNode | null {
+  if (path.length === 0) return null;
+  let node: MindMapNode | undefined = data.branches[path[0]];
+  for (let i = 1; i < path.length; i++) {
+    if (!node?.children) return null;
+    node = node.children[path[i]];
+  }
+  return node || null;
+}
+
+function updateNodeByPath(data: MindMapData, path: number[], updater: (node: MindMapNode) => MindMapNode): MindMapData {
+  if (path.length === 0) return data;
+
+  const cloneNode = (n: MindMapNode): MindMapNode => ({
+    ...n,
+    children: n.children ? n.children.map(c => ({ ...c })) : undefined,
+  });
+
+  const newData: MindMapData = { center: data.center, branches: data.branches.map(b => cloneNode(b)) };
+  let current: MindMapNode = newData.branches[path[0]];
+  const parents: { node: MindMapNode; childIdx: number }[] = [];
+
+  for (let i = 1; i < path.length; i++) {
+    if (!current.children) return data;
+    parents.push({ node: current, childIdx: path[i] });
+    current = current.children[path[i]];
+  }
+
+  const updated = updater(current);
+
+  if (parents.length === 0) {
+    newData.branches[path[0]] = updated;
+  } else {
+    const last = parents[parents.length - 1];
+    last.node.children![last.childIdx] = updated;
+  }
+
+  return newData;
 }
 
 // ─── JSON extraction ───────────────────────────────────────────────────────────
@@ -229,9 +272,9 @@ export function MindMapGenerator() {
   const [animated, setAnimated] = useState(false);
   const animationFrameRef = useRef<number | null>(null);
 
-  // Dual-tap state
+  // Dual-tap state — use path as string key for comparison
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastClickRef = useRef<{ branchIdx: number; childIdx?: number; time: number } | null>(null);
+  const lastClickRef = useRef<{ pathKey: string; time: number } | null>(null);
 
   // Lecture panel
   const [lectureOpen, setLectureOpen] = useState(false);
@@ -355,24 +398,29 @@ CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fence
     setLoading(false);
   }, [topic, user, currentLevel, language, t, saveMindMap]);
 
-  // ─── Expand node (double tap) ───────────────────────────────────────────────
+  // ─── Expand node by path (double tap) ───────────────────────────────────────
 
-  const expandNode = useCallback(async (branchIdx: number, childIdx?: number) => {
+  const expandNodeByPath = useCallback(async (path: number[]) => {
     if (!mindMap || !user) return;
 
-    const targetLabel = childIdx !== undefined
-      ? mindMap.branches[branchIdx]?.children?.[childIdx]?.label
-      : mindMap.branches[branchIdx]?.label;
+    const target = getNodeByPath(mindMap, path);
+    if (!target) return;
 
-    if (!targetLabel) return;
-    setExpandingNode(targetLabel);
+    // If already marked terminal, show message immediately
+    if (target.terminal) {
+      toast.info(t('End of node', 'نهاية العقدة'));
+      return;
+    }
+
+    setExpandingNode(target.label);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      const systemPrompt = `You are expanding a mind map node. Given a subtopic of "${mindMap.center}", return ONLY valid JSON with 3-4 new child nodes:
-{ "children": [{ "label": "Detail 1" }, { "label": "Detail 2" }, { "label": "Detail 3" }] }
+      const systemPrompt = `You are expanding a mind map node. Given a subtopic of "${mindMap.center}", return ONLY valid JSON with new child nodes.
+If the topic "${target.label}" is already very specific and atomic with nothing meaningful to break down further, return: { "children": [] }
+Otherwise return 3-4 new child nodes: { "children": [{ "label": "Detail 1" }, { "label": "Detail 2" }, { "label": "Detail 3" }] }
 Keep labels concise (2-5 words). ${language === 'ar' ? 'Use Arabic.' : ''}
 CRITICAL: Return ONLY the raw JSON object. No markdown, no code fences, no explanation.`;
 
@@ -382,7 +430,7 @@ CRITICAL: Return ONLY the raw JSON object. No markdown, no code fences, no expla
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
           body: JSON.stringify({
-            messages: [{ role: 'user', content: `Expand the subtopic: "${targetLabel}" (part of ${mindMap.center})` }],
+            messages: [{ role: 'user', content: `Expand the subtopic: "${target.label}" (part of ${mindMap.center})` }],
             systemPrompt,
             language,
           }),
@@ -396,23 +444,27 @@ CRITICAL: Return ONLY the raw JSON object. No markdown, no code fences, no expla
         .map((child) => sanitizeMindMapNode(child))
         .filter((child): child is MindMapNode => Boolean(child));
 
-      setMindMap(prev => {
-        if (!prev) return prev;
-        const updated = { ...prev, branches: [...prev.branches] };
-        if (childIdx !== undefined) {
-          const branch = { ...updated.branches[branchIdx] };
-          const children = [...(branch.children || [])];
-          children[childIdx] = { ...children[childIdx], children: validChildren, expanded: true };
-          branch.children = children;
-          updated.branches[branchIdx] = branch;
-        } else {
-          const branch = { ...updated.branches[branchIdx] };
-          branch.children = [...(branch.children || []), ...validChildren];
-          branch.expanded = true;
-          updated.branches[branchIdx] = branch;
-        }
-        return updated;
-      });
+      // Filter out duplicates by label
+      const existingLabels = new Set((target.children || []).map(c => c.label.toLowerCase()));
+      const uniqueNew = validChildren.filter(c => !existingLabels.has(c.label.toLowerCase()));
+
+      if (uniqueNew.length === 0) {
+        // Terminal node — nothing new to add
+        setMindMap(prev => {
+          if (!prev) return prev;
+          return updateNodeByPath(prev, path, (node) => ({ ...node, terminal: true, expanded: true }));
+        });
+        toast.info(t('End of node', 'نهاية العقدة'));
+      } else {
+        setMindMap(prev => {
+          if (!prev) return prev;
+          return updateNodeByPath(prev, path, (node) => ({
+            ...node,
+            children: [...(node.children || []), ...uniqueNew],
+            expanded: true,
+          }));
+        });
+      }
     } catch (e) {
       console.error('Node expansion error:', e);
       toast.error(t('Failed to expand node', 'فشل في توسيع العقدة'));
@@ -486,7 +538,6 @@ IMPORTANT FORMATTING:
         },
         onDone: async () => {
           setLectureLoading(false);
-          // Fetch images
           fetchLectureImages(label, centerTopic);
         },
         onError: (error) => {
@@ -549,36 +600,39 @@ IMPORTANT FORMATTING:
     if (allImages.length > 0) setLectureImages(allImages);
   }, []);
 
-  // ─── Dual tap handler ──────────────────────────────────────────────────────
+  // ─── Unified tap handler using onPointerUp ─────────────────────────────────
 
-  const handleNodeClick = useCallback((branchIdx: number, childIdx: number | undefined, label?: string) => {
+  const handleNodeTap = useCallback((path: number[], label: string) => {
     const now = Date.now();
+    const pathKey = path.join(',');
     const last = lastClickRef.current;
 
-    // Check if this is a double-tap on the same node within 400ms
-    if (last && now - last.time < 400 && last.branchIdx === branchIdx && last.childIdx === childIdx) {
-      // Double tap → expand node
+    // Check for double-tap on same node within 400ms
+    if (last && now - last.time < 400 && last.pathKey === pathKey) {
+      // Double tap → expand
       lastClickRef.current = null;
-      clearTimeout(clickTimerRef.current);
-      clickTimerRef.current = null;
-      const target = childIdx !== undefined
-        ? mindMap?.branches[branchIdx]?.children?.[childIdx]
-        : mindMap?.branches[branchIdx];
-      if (target && !target.expanded) {
-        expandNode(branchIdx, childIdx);
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+        clickTimerRef.current = null;
       }
+      expandNodeByPath(path);
     } else {
-      // First tap — record it and wait for potential second tap
-      lastClickRef.current = { branchIdx, childIdx, time: now };
+      // First tap — record and wait
+      lastClickRef.current = { pathKey, time: now };
       if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
       clickTimerRef.current = setTimeout(() => {
         clickTimerRef.current = null;
         lastClickRef.current = null;
         // Single tap → lecture
         if (label) generateLecture(label);
-      }, 400);
+      }, 450);
     }
-  }, [mindMap, expandNode, generateLecture]);
+  }, [expandNodeByPath, generateLecture]);
+
+  // Center node tap — only lecture, no expansion
+  const handleCenterTap = useCallback((label: string) => {
+    generateLecture(label);
+  }, [generateLecture]);
 
   // ─── Load from history ──────────────────────────────────────────────────────
 
@@ -605,7 +659,7 @@ IMPORTANT FORMATTING:
 
     // Center node
     elements.push(
-      <g key="center" className="cursor-pointer" onClick={() => generateLecture(mindMap.center)}>
+      <g key="center" className="cursor-pointer" onPointerUp={() => handleCenterTap(mindMap.center)}>
         <circle cx={cx} cy={cy} r={50}
           fill={centerColor} opacity={0.9}
           style={{
@@ -618,6 +672,76 @@ IMPORTANT FORMATTING:
       </g>
     );
 
+    // Recursive renderer for nodes at any depth
+    const renderNode = (
+      node: MindMapNode,
+      path: number[],
+      parentX: number, parentY: number,
+      nodeX: number, nodeY: number,
+      color: string, delay: number, radius: number,
+      maxChars: number, fontSize: number
+    ) => {
+      const pathKey = path.join('-');
+      const isExpanding = expandingNode === node.label;
+
+      // Line from parent to this node
+      elements.push(
+        <line key={`line-${pathKey}`}
+          x1={animated ? parentX : cx} y1={animated ? parentY : cy}
+          x2={animated ? nodeX : cx} y2={animated ? nodeY : cy}
+          stroke={color} strokeWidth={Math.max(1, 2.5 - path.length * 0.5)} opacity={Math.max(0.2, 0.6 - path.length * 0.1)}
+          style={{ transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s` }}
+        />
+      );
+
+      // Node circle + label
+      elements.push(
+        <g key={`node-${pathKey}`} className="cursor-pointer"
+          onPointerUp={(e) => { e.stopPropagation(); handleNodeTap(path, node.label); }}
+        >
+          <circle
+            cx={animated ? nodeX : cx} cy={animated ? nodeY : cy} r={radius}
+            fill={color} opacity={Math.max(0.4, 0.85 - path.length * 0.15)}
+            className="hover:opacity-100"
+            style={{ transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s` }}
+          />
+          {isExpanding && (
+            <circle cx={nodeX} cy={nodeY} r={radius + 4} fill="none" stroke={color} strokeWidth={1.5}
+              className="animate-ping" opacity={0.3} />
+          )}
+          {animated && <SvgLabel x={nodeX} y={nodeY} text={node.label} maxChars={maxChars} fontSize={fontSize} fill="white" fontWeight="600" />}
+        </g>
+      );
+
+      // Render children recursively
+      const children = node.children || [];
+      if (children.length > 0) {
+        const parentAngle = Math.atan2(nodeY - parentX === cx ? cy : parentY, nodeX - (parentX === cx ? cx : parentX));
+        const baseAngle = Math.atan2(nodeY - parentY, nodeX - parentX) * (180 / Math.PI);
+        const childAngleSpread = Math.max(20, 45 / Math.max(children.length, 1));
+        const childR = Math.max(40, radius * 2.2);
+        const childRadius = Math.max(14, radius * 0.7);
+        const childFontSize = Math.max(5.5, fontSize * 0.85);
+        const childMaxChars = Math.max(10, maxChars - 2);
+
+        children.forEach((child, ci) => {
+          const childBaseAngle = baseAngle - (childAngleSpread * (children.length - 1)) / 2;
+          const childAngle = childBaseAngle + ci * childAngleSpread;
+          const childRad = (childAngle * Math.PI) / 180;
+          const childNodeX = nodeX + childR * Math.cos(childRad);
+          const childNodeY = nodeY + childR * Math.sin(childRad);
+          const childDelay = delay + 0.12 + ci * 0.04;
+
+          renderNode(
+            child, [...path, ci],
+            nodeX, nodeY, childNodeX, childNodeY,
+            color, childDelay, childRadius,
+            childMaxChars, childFontSize
+          );
+        });
+      }
+    };
+
     branches.forEach((branch, bi) => {
       const angle = (bi / branchCount) * 360 - 90;
       const rad = (angle * Math.PI) / 180;
@@ -626,112 +750,7 @@ IMPORTANT FORMATTING:
       const color = BRANCH_COLORS[(bi + 1) % BRANCH_COLORS.length];
       const delay = bi * 0.08;
 
-      // Line center→branch
-      elements.push(
-        <line key={`line-${bi}`}
-          x1={cx} y1={cy}
-          x2={animated ? bx : cx} y2={animated ? by : cy}
-          stroke={color} strokeWidth={2.5} opacity={0.6}
-          style={{ transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s` }}
-        />
-      );
-
-      // Branch node
-      const isExpanding = expandingNode === branch.label;
-      elements.push(
-        <g key={`branch-${bi}`} className="cursor-pointer"
-          onClick={() => handleNodeClick(bi, undefined, branch.label)}
-        >
-          <circle cx={animated ? bx : cx} cy={animated ? by : cy} r={36}
-            fill={color} opacity={0.85}
-            style={{
-              transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
-            }}
-            className="hover:opacity-100"
-          />
-          {isExpanding && (
-            <circle cx={bx} cy={by} r={40} fill="none" stroke={color} strokeWidth={2}
-              className="animate-ping" opacity={0.4} />
-          )}
-          {animated && <SvgLabel x={bx} y={by} text={branch.label} maxChars={18} fontSize={10} fill="white" fontWeight="600" />}
-        </g>
-      );
-
-      // Children
-      const children = branch.children || [];
-      const childAngleSpread = Math.max(25, 50 / Math.max(children.length, 1));
-      children.forEach((child, ci) => {
-        const childBaseAngle = angle - (childAngleSpread * (children.length - 1)) / 2;
-        const childAngle = childBaseAngle + ci * childAngleSpread;
-        const childRad = (childAngle * Math.PI) / 180;
-        const childR = 100;
-        const childX = bx + childR * Math.cos(childRad);
-        const childY = by + childR * Math.sin(childRad);
-        const childDelay = delay + 0.15 + ci * 0.05;
-
-        elements.push(
-          <line key={`cline-${bi}-${ci}`}
-            x1={animated ? bx : cx} y1={animated ? by : cy}
-            x2={animated ? childX : cx} y2={animated ? childY : cy}
-            stroke={color} strokeWidth={1.5} opacity={0.35}
-            style={{ transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${childDelay}s` }}
-          />
-        );
-
-        const isChildExpanding = expandingNode === child.label;
-        elements.push(
-          <g key={`child-${bi}-${ci}`} className="cursor-pointer"
-            onClick={() => handleNodeClick(bi, ci, child.label)}
-          >
-            <circle
-              cx={animated ? childX : cx} cy={animated ? childY : cy} r={26}
-              fill={color} opacity={0.6}
-              className="hover:opacity-85"
-              style={{ transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${childDelay}s` }}
-            />
-            {isChildExpanding && (
-              <circle cx={childX} cy={childY} r={30} fill="none" stroke={color} strokeWidth={1.5}
-                className="animate-ping" opacity={0.3} />
-            )}
-            {animated && <SvgLabel x={childX} y={childY} text={child.label} maxChars={16} fontSize={8} fill="white" fontWeight="500" />}
-          </g>
-        );
-
-        // Grandchildren
-        if (child.children) {
-          child.children.forEach((gc, gi) => {
-            const gcAngleSpread = 25;
-            const gcBaseAngle = childAngle - (gcAngleSpread * (child.children!.length - 1)) / 2;
-            const gcAngle = gcBaseAngle + gi * gcAngleSpread;
-            const gcRad = (gcAngle * Math.PI) / 180;
-            const gcR = 50;
-            const gcX = childX + gcR * Math.cos(gcRad);
-            const gcY = childY + gcR * Math.sin(gcRad);
-            const gcDelay = childDelay + 0.1 + gi * 0.04;
-
-            elements.push(
-              <line key={`gcline-${bi}-${ci}-${gi}`}
-                x1={animated ? childX : cx} y1={animated ? childY : cy}
-                x2={animated ? gcX : cx} y2={animated ? gcY : cy}
-                stroke={color} strokeWidth={1} opacity={0.25}
-                style={{ transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${gcDelay}s` }}
-              />
-            );
-            elements.push(
-              <g key={`gc-${bi}-${ci}-${gi}`} className="cursor-pointer"
-                onClick={() => generateLecture(gc.label)}
-              >
-                <circle
-                  cx={animated ? gcX : cx} cy={animated ? gcY : cy} r={18}
-                  fill={color} opacity={0.4}
-                  style={{ transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${gcDelay}s` }}
-                />
-                {animated && <SvgLabel x={gcX} y={gcY} text={gc.label} maxChars={12} fontSize={6.5} fill="white" fontWeight="500" />}
-              </g>
-            );
-          });
-        }
-      });
+      renderNode(branch, [bi], cx, cy, bx, by, color, delay, 36, 18, 10);
     });
 
     return elements;
@@ -806,7 +825,10 @@ IMPORTANT FORMATTING:
             </Button>
           </div>
 
-          <div className="w-full h-full overflow-auto flex items-center justify-center" style={{ minHeight: '400px' }}>
+          <div
+            className="w-full h-full overflow-auto flex items-center justify-center"
+            style={{ minHeight: '400px', touchAction: 'manipulation' }}
+          >
             <svg
               ref={svgRef}
               viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
@@ -815,6 +837,7 @@ IMPORTANT FORMATTING:
                 width: `${viewBoxSize * zoom}px`,
                 height: `${viewBoxSize * zoom}px`,
                 maxWidth: 'none',
+                touchAction: 'manipulation',
               }}
             >
               {renderMindMapSVG()}
