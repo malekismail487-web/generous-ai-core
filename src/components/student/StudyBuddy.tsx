@@ -441,6 +441,21 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
         }
         // Save assistant message to DB
         await addMessage('assistant', assistantContent, convId);
+
+        // Extract memories from conversation (fire-and-forget)
+        try {
+          const { data: { session: memSession } } = await supabase.auth.getSession();
+          const memToken = memSession?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-memories`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${memToken}` },
+            body: JSON.stringify({
+              messages: [...localMessages, userMsg, { role: 'assistant', content: assistantContent }]
+                .slice(-10)
+                .map(m => ({ role: m.role, content: m.content })),
+            }),
+          }).catch(() => {});
+        } catch {}
       }
     } catch (e) {
       console.error('Lumina error:', e);
