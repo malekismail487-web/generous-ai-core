@@ -43,6 +43,8 @@ type ViewState = 'menu' | 'subjects' | 'grade' | 'input' | 'notes' | 'file-uploa
 
 export function NotesSection() {
   const { language } = useThemeLanguage();
+  const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
+  const { getLearningStylePrompt } = useLearningStyle();
   const [viewState, setViewState] = useState<ViewState>('menu');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
@@ -200,6 +202,8 @@ IMPORTANT FORMATTING:
     try {
       await streamChat({
         messages,
+        adaptiveLevel,
+        learningStyle: getLearningStylePrompt(),
         onDelta: (chunk) => { response += chunk; setNotesContent(response); },
         onDone: async () => {
           setIsLoading(false);
@@ -215,7 +219,7 @@ IMPORTANT FORMATTING:
         onError: (error) => { setIsLoading(false); toast({ variant: 'destructive', title: 'Error', description: error.message }); },
       });
     } catch { setIsLoading(false); }
-  }, [selectedSubject, selectedGrade, toast, noteLength, createNote, language]);
+  }, [selectedSubject, selectedGrade, toast, noteLength, createNote, language, adaptiveLevel, getLearningStylePrompt]);
 
   const handleSubjectClick = (subjectId: string) => { setSelectedSubject(subjectId); setSelectedGrade(null); setViewState('grade'); };
   const handleGradeSelect = (grade: string) => { setSelectedGrade(grade); setViewState('input'); };

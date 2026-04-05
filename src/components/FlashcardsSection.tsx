@@ -45,6 +45,8 @@ type ViewState = 'subjects' | 'grade' | 'input' | 'cards' | 'materials';
 
 export function FlashcardsSection() {
   const { language } = useThemeLanguage();
+  const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
+  const { getLearningStylePrompt } = useLearningStyle();
   const [viewState, setViewState] = useState<ViewState>('subjects');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
@@ -88,6 +90,8 @@ export function FlashcardsSection() {
     try {
       await streamChat({
         messages,
+        adaptiveLevel,
+        learningStyle: getLearningStylePrompt(),
         onDelta: (chunk) => { response += chunk; },
         onDone: () => {
           try {
@@ -112,7 +116,7 @@ export function FlashcardsSection() {
     } catch {
       setIsLoading(false);
     }
-  }, [selectedSubject, selectedGrade, hasSavedMaterials, savedMaterials, toast]);
+  }, [selectedSubject, selectedGrade, hasSavedMaterials, savedMaterials, toast, adaptiveLevel, getLearningStylePrompt]);
 
   const handleSubjectClick = (subjectId: string) => {
     setSelectedSubject(subjectId);

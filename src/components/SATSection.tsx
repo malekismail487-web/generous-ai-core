@@ -24,6 +24,8 @@ type ViewState = 'sections' | 'grade' | 'input' | 'lecture';
 
 export function SATSection() {
   const { language } = useThemeLanguage();
+  const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
+  const { getLearningStylePrompt } = useLearningStyle();
   const [viewState, setViewState] = useState<ViewState>('sections');
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
@@ -48,6 +50,8 @@ export function SATSection() {
     try {
       await streamChat({
         messages,
+        adaptiveLevel,
+        learningStyle: getLearningStylePrompt(),
         onDelta: (chunk) => { response += chunk; setLectureContent(response); },
         onDone: async () => {
           const newMaterial = await createMaterial(selectedSection, selectedGrade, topic, response);
@@ -57,7 +61,7 @@ export function SATSection() {
         onError: (error) => { setIsLoading(false); toast({ variant: 'destructive', title: 'Error', description: error.message }); },
       });
     } catch { setIsLoading(false); }
-  }, [selectedSection, selectedGrade, user, createMaterial, toast]);
+  }, [selectedSection, selectedGrade, user, createMaterial, toast, adaptiveLevel, getLearningStylePrompt]);
 
   const handleSectionClick = (sectionId: string) => { setSelectedSection(sectionId); setSelectedGrade(null); setActiveMaterial(null); setLectureContent(''); setViewState('grade'); };
   const handleGradeSelect = (grade: string) => {
