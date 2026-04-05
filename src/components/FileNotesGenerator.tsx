@@ -7,6 +7,8 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
+import { useLearningStyle } from '@/hooks/useLearningStyle';
 
 type NoteLength = 'short' | 'medium' | 'long';
 
@@ -341,6 +343,8 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
   const { language } = useThemeLanguage();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
+  const { getLearningStylePrompt } = useLearningStyle();
 
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -449,6 +453,8 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
           fileContent,
           fileName: selectedFile?.name || 'uploaded-file',
           customPrompt: lengthPrompt,
+          adaptiveLevel,
+          learningStyle: getLearningStylePrompt(),
         }),
       });
 
