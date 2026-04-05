@@ -468,13 +468,10 @@ function hydrateSubsystemsFromHistory(
   answers: Awaited<ReturnType<typeof fetchAnswerHistory>>,
   subjectPerformances: SubjectPerformance[],
 ): void {
-  // Feed recent answers into the mistake analyzer, spaced repetition,
-  // and predictive engine (local-storage-based subsystems)
-  const recentAnswers = answers.slice(0, 100); // last 100 for efficiency
+  const recentAnswers = answers.slice(0, 100);
   
   for (const answer of recentAnswers) {
     if (!answer.is_correct && answer.question_text && answer.student_answer && answer.correct_answer) {
-      // Feed mistakes into the mistake analyzer
       try {
         recordMistake({
           subject: answer.subject,
@@ -482,13 +479,13 @@ function hydrateSubsystemsFromHistory(
           questionText: answer.question_text,
           studentAnswer: answer.student_answer,
           correctAnswer: answer.correct_answer,
-          historicalAccuracy: subjectPerformances.find(p => p.subject === answer.subject.toLowerCase())?.accuracy || 50,
-          responseTimeSec: null,
+          wasQuickAnswer: false,
+          historicalAccuracyOnTopic: subjectPerformances.find(p => p.subject === answer.subject.toLowerCase())?.accuracy || 50,
+          isNewTopicFormat: false,
         });
       } catch { /* already recorded */ }
     }
 
-    // Feed into spaced repetition
     if (answer.question_text) {
       try {
         const quality = mapAnswerToQuality(answer.is_correct, answer.difficulty as any, null);
@@ -496,12 +493,12 @@ function hydrateSubsystemsFromHistory(
           subject: answer.subject,
           topic: answer.question_text.slice(0, 60),
           quality,
+          source: (answer.source as any) || 'quiz',
         });
       } catch { /* ignore duplicates */ }
     }
   }
 
-  // Feed per-subject performance sessions into predictive engine
   for (const perf of subjectPerformances) {
     if (perf.totalQuestions >= 3) {
       try {
@@ -509,21 +506,20 @@ function hydrateSubsystemsFromHistory(
           subject: perf.subject,
           accuracy: perf.recentAccuracy,
           questionsAnswered: Math.min(perf.totalQuestions, 20),
-          timestamp: perf.lastPracticed ? new Date(perf.lastPracticed).getTime() : Date.now(),
+          sessionDurationMinutes: 15,
         });
       } catch { /* ignore */ }
     }
   }
 
-  // Feed cognitive events from answer patterns
   const last10 = answers.slice(0, 10);
   const last10Correct = last10.filter(a => a.is_correct).length;
   const recentRate = last10.length > 0 ? last10Correct / last10.length : 0.5;
   
   if (recentRate < 0.3) {
-    recordCognitiveEventByType('error', { severity: 'high' });
+    recordCognitiveEventByType('consecutive_errors');
   } else if (recentRate > 0.8) {
-    recordCognitiveEventByType('correct_answer', { streak: true });
+    recordCognitiveEventByType('consecutive_correct');
   }
 }
 
