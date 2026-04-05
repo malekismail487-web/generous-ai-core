@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { toast } from 'sonner';
-import { Brain, AlertTriangle, Flame, Target } from 'lucide-react';
 
 interface Nudge {
   id: string;
@@ -31,7 +30,6 @@ export function SmartNudges() {
 
   const generateNudges = async () => {
     if (!user) return;
-    setShown(true);
 
     try {
       // Check for critical knowledge gaps
