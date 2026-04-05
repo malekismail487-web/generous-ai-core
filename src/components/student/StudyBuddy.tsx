@@ -90,6 +90,7 @@ export function StudyBuddy() {
   const { currentLevel, profiles, getLevelPrompt } = useAdaptiveLevel();
   const { t, language } = useThemeLanguage();
   const { trackStudyBuddyChat } = useActivityTracker();
+  const { getContext, recordChat, recordActivity } = useAdaptiveIntelligence();
 
   // Persistent conversations via Supabase
   const {
@@ -374,6 +375,10 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
 
     // Save user message to DB
     await addMessage('user', content, convId);
+
+    // === FEED THE INTELLIGENCE ENGINE ===
+    recordChat(content);
+    recordActivity({ subject: 'general', topic: content.slice(0, 60), feature: 'chat' });
 
     let assistantContent = '';
     const assistantId = crypto.randomUUID();
