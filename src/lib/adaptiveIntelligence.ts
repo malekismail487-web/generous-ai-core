@@ -37,7 +37,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import { getStoredBehavior, type BehavioralDataPoint, type ContentModality } from '@/hooks/useActivityTracker';
+import { getStoredBehavior, classifyQuestion as classifyQuestionModality, type BehavioralDataPoint, type ContentModality } from '@/hooks/useActivityTracker';
 
 // === Subsystem Imports ===
 import { computeCognitiveState, getCognitiveContextPrompt, recordCognitiveEventByType, type CognitiveState } from '@/lib/adaptive/cognitiveModel';
@@ -1452,8 +1452,7 @@ export function recordChatMessage(messageText: string): void {
   // === NEW: Bridge to behavioral tracking pipeline ===
   // Classify the message modality and add as a behavioral data point
   try {
-    const { classifyQuestion } = require('@/hooks/useActivityTracker');
-    const { modality } = classifyQuestion(messageText);
+    const { modality } = classifyQuestionModality(messageText);
 
     // Import getStoredBehavior utilities directly
     const BEHAVIOR_STORAGE_KEY = 'lumina_behavioral_data';
