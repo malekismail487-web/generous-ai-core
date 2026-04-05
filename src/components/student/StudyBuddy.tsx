@@ -87,7 +87,7 @@ function saveStyle(style: string) {
 
 export function StudyBuddy() {
   const { user } = useAuth();
-  const { currentLevel, profiles, getLevelPrompt } = useAdaptiveLevel();
+  const { currentLevel, profiles, getLevelPrompt, recordChatInteraction } = useAdaptiveLevel();
   const { t, language } = useThemeLanguage();
   const { trackStudyBuddyChat, trackQuestionAsked, trackExplicitRequest, trackTimeOnContent } = useActivityTracker();
   const { getContext, recordChat, recordActivity, recordTeaching } = useAdaptiveIntelligence();
@@ -383,6 +383,8 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
     // === BEHAVIORAL TRACKING — Document every message word-for-word ===
     trackQuestionAsked(content, 'general');
     trackExplicitRequest(content, 'general');
+    // Document this message word-for-word in the database
+    recordChatInteraction(content, 'general');
 
     let assistantContent = '';
     const assistantId = crypto.randomUUID();
