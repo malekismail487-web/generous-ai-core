@@ -31,6 +31,30 @@ interface SavedMindMap {
   created_at: string;
 }
 
+function sanitizeMindMapNode(node: MindMapNode | null | undefined): MindMapNode | null {
+  const label = node?.label?.trim();
+  if (!label) return null;
+
+  const children = (node.children || [])
+    .map((child) => sanitizeMindMapNode(child))
+    .filter((child): child is MindMapNode => Boolean(child));
+
+  return {
+    ...node,
+    label,
+    children: children.length ? children : undefined,
+  };
+}
+
+function sanitizeMindMapData(data: MindMapData): MindMapData {
+  return {
+    center: data.center?.trim() || '',
+    branches: (data.branches || [])
+      .map((branch) => sanitizeMindMapNode(branch))
+      .filter((branch): branch is MindMapNode => Boolean(branch)),
+  };
+}
+
 // ─── JSON extraction ───────────────────────────────────────────────────────────
 
 function extractJsonFromResponse(response: string): unknown {
@@ -129,7 +153,6 @@ async function readChatStream(response: Response): Promise<string> {
 // ─── Colors ────────────────────────────────────────────────────────────────────
 
 const BRANCH_COLORS = [
-  'hsl(var(--primary))',
   'hsl(220, 70%, 55%)',
   'hsl(160, 60%, 45%)',
   'hsl(35, 80%, 50%)',
@@ -137,6 +160,7 @@ const BRANCH_COLORS = [
   'hsl(10, 70%, 55%)',
   'hsl(190, 60%, 45%)',
   'hsl(330, 60%, 55%)',
+  'hsl(48, 86%, 52%)',
 ];
 
 // ─── Multi-line SVG text helper ────────────────────────────────────────────────
@@ -144,16 +168,19 @@ const BRANCH_COLORS = [
 function SvgLabel({ x, y, text, maxChars, fontSize, fill, fontWeight }: {
   x: number; y: number; text: string; maxChars: number; fontSize: number; fill: string; fontWeight: string;
 }) {
-  if (text.length <= maxChars) {
+  const cleanedText = text.trim().replace(/\s+/g, ' ');
+
+  if (cleanedText.length <= maxChars) {
     return (
       <text x={x} y={y} textAnchor="middle" dominantBaseline="central"
         fill={fill} fontSize={fontSize} fontWeight={fontWeight} className="pointer-events-none">
-        {text}
+        {cleanedText}
       </text>
     );
   }
+
   // Word wrap into lines
-  const words = text.split(' ');
+  const words = cleanedText.split(' ');
   const lines: string[] = [];
   let current = '';
   for (const word of words) {
@@ -174,9 +201,9 @@ function SvgLabel({ x, y, text, maxChars, fontSize, fill, fontWeight }: {
   const startY = y - ((lines.length - 1) * lineHeight) / 2;
 
   return (
-    <text x={x} textAnchor="middle" fill={fill} fontSize={fontSize} fontWeight={fontWeight} className="pointer-events-none">
+    <text textAnchor="middle" fill={fill} fontSize={fontSize} fontWeight={fontWeight} className="pointer-events-none">
       {lines.map((line, i) => (
-        <tspan key={i} x={x} dy={i === 0 ? startY - y : lineHeight} dominantBaseline="central">
+        <tspan key={i} x={x} y={startY + i * lineHeight} dominantBaseline="middle">
           {line}
         </tspan>
       ))}
@@ -314,15 +341,8 @@ CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fence
 
       if (!response.ok || !response.body) throw new Error('Failed');
       const fullContent = await readChatStream(response);
-      const mapData = extractJsonFromResponse(fullContent) as MindMapData;
-      if (!mapData.center || !mapData.branches) throw new Error('Invalid format');
-      // Filter out branches/children with empty labels
-      mapData.branches = mapData.branches
-        .filter(b => b.label && b.label.trim())
-        .map(b => ({
-          ...b,
-          children: (b.children || []).filter(c => c.label && c.label.trim()),
-        }));
+      const mapData = sanitizeMindMapData(extractJsonFromResponse(fullContent) as MindMapData);
+      if (!mapData.center || mapData.branches.length === 0) throw new Error('Invalid format');
 
       setMindMap(mapData);
       saveMindMap(mapData, t_topic);
@@ -371,8 +391,9 @@ CRITICAL: Return ONLY the raw JSON object. No markdown, no code fences, no expla
       if (!response.ok || !response.body) throw new Error('Failed');
       const fullContent = await readChatStream(response);
       const newChildren = extractJsonFromResponse(fullContent) as { children: MindMapNode[] };
-      // Filter empty labels
-      const validChildren = (newChildren.children || []).filter(c => c.label && c.label.trim());
+      const validChildren = (newChildren.children || [])
+        .map((child) => sanitizeMindMapNode(child))
+        .filter((child): child is MindMapNode => Boolean(child));
 
       setMindMap(prev => {
         if (!prev) return prev;
@@ -553,7 +574,7 @@ IMPORTANT FORMATTING:
   // ─── Load from history ──────────────────────────────────────────────────────
 
   const loadFromHistory = useCallback((item: SavedMindMap) => {
-    setMindMap(item.mind_map_data);
+    setMindMap(sanitizeMindMapData(item.mind_map_data));
     setTopic(item.topic);
     setHistoryOpen(false);
   }, []);
@@ -571,19 +592,20 @@ IMPORTANT FORMATTING:
     const branchCount = branches.length;
     const elements: JSX.Element[] = [];
     const branchR = Math.max(160, Math.min(280, 1100 / (branchCount + 2)));
+    const centerColor = BRANCH_COLORS[0];
 
     // Center node
     elements.push(
       <g key="center" className="cursor-pointer" onClick={() => generateLecture(mindMap.center)}>
         <circle cx={cx} cy={cy} r={50}
-          fill="hsl(var(--primary))" opacity={0.9}
+          fill={centerColor} opacity={0.9}
           style={{
             transform: animated ? 'scale(1)' : 'scale(0)',
             transformOrigin: `${cx}px ${cy}px`,
             transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
           }}
         />
-        <SvgLabel x={cx} y={cy} text={mindMap.center} maxChars={20} fontSize={12} fill="hsl(var(--primary-foreground))" fontWeight="bold" />
+        <SvgLabel x={cx} y={cy} text={mindMap.center} maxChars={20} fontSize={12} fill="white" fontWeight="bold" />
       </g>
     );
 
@@ -592,7 +614,7 @@ IMPORTANT FORMATTING:
       const rad = (angle * Math.PI) / 180;
       const bx = cx + branchR * Math.cos(rad);
       const by = cy + branchR * Math.sin(rad);
-      const color = BRANCH_COLORS[bi % BRANCH_COLORS.length];
+      const color = BRANCH_COLORS[(bi + 1) % BRANCH_COLORS.length];
       const delay = bi * 0.08;
 
       // Line center→branch
