@@ -231,6 +231,7 @@ export function MindMapGenerator() {
 
   // Dual-tap state
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastClickRef = useRef<{ branchIdx: number; childIdx?: number; time: number } | null>(null);
 
   // Lecture panel
   const [lectureOpen, setLectureOpen] = useState(false);
@@ -550,9 +551,14 @@ IMPORTANT FORMATTING:
 
   // ─── Dual tap handler ──────────────────────────────────────────────────────
 
-  const handleNodeClick = useCallback((branchIdx: number, childIdx?: number, label?: string) => {
-    if (clickTimerRef.current) {
-      // Double tap → expand
+  const handleNodeClick = useCallback((branchIdx: number, childIdx: number | undefined, label?: string) => {
+    const now = Date.now();
+    const last = lastClickRef.current;
+
+    // Check if this is a double-tap on the same node within 400ms
+    if (last && now - last.time < 400 && last.branchIdx === branchIdx && last.childIdx === childIdx) {
+      // Double tap → expand node
+      lastClickRef.current = null;
       clearTimeout(clickTimerRef.current);
       clickTimerRef.current = null;
       const target = childIdx !== undefined
@@ -562,12 +568,15 @@ IMPORTANT FORMATTING:
         expandNode(branchIdx, childIdx);
       }
     } else {
-      // Wait for potential second tap
+      // First tap — record it and wait for potential second tap
+      lastClickRef.current = { branchIdx, childIdx, time: now };
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
       clickTimerRef.current = setTimeout(() => {
         clickTimerRef.current = null;
+        lastClickRef.current = null;
         // Single tap → lecture
         if (label) generateLecture(label);
-      }, 300);
+      }, 400);
     }
   }, [mindMap, expandNode, generateLecture]);
 
