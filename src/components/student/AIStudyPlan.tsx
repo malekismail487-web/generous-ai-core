@@ -19,7 +19,7 @@ export function AIStudyPlan() {
   const { t, language } = useThemeLanguage();
   const { currentLevel: adaptiveLevel, getLevelPrompt } = useAdaptiveLevel();
   const { getLearningStylePrompt } = useLearningStyle();
-  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
+  const { getSimpleParams, recordActivity, recordTeaching } = useAdaptiveIntelligence();
   const [subject, setSubject] = useState('');
   const [topic, setTopic] = useState('');
   const [gradeLevel, setGradeLevel] = useState('');

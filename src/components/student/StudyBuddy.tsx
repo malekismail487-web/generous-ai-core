@@ -90,7 +90,7 @@ export function StudyBuddy() {
   const { currentLevel, profiles, getLevelPrompt } = useAdaptiveLevel();
   const { t, language } = useThemeLanguage();
   const { trackStudyBuddyChat } = useActivityTracker();
-  const { getContext, recordChat, recordActivity } = useAdaptiveIntelligence();
+  const { getContext, recordChat, recordActivity, recordTeaching } = useAdaptiveIntelligence();
 
   // Persistent conversations via Supabase
   const {
