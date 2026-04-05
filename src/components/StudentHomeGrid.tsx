@@ -8,6 +8,8 @@ import {
   Target, Trophy, Timer, BookOpenCheck, Megaphone, MapPin,
 } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
+import { SmartNudges } from '@/components/student/SmartNudges';
+import { MorningBriefing } from '@/components/student/MorningBriefing';
 
 export type GridAction =
   | 'mindmaps' | 'subjects' | 'examination' | 'flashcards' | 'notes' | 'sat'
@@ -55,6 +57,12 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
 
   return (
     <div className="min-h-0 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-24">
+      {/* Smart Nudges (toast-based, renders nothing) */}
+      <SmartNudges />
+
+      {/* Morning Briefing Card */}
+      <MorningBriefing onNavigate={onNavigate} />
+
       {/* Hero greeting — monochromatic */}
       <div className="mx-3 mb-5 rounded-3xl overflow-hidden opacity-0 animate-[slideUpFade_0.6s_ease-out_forwards]" style={{ background: 'var(--gradient-hero)' }}>
         <div className="px-5 pt-5 pb-6 relative">

@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { SchoolAdminPanel } from '@/components/SchoolAdminPanel';
 import SuperAdminPanel from '@/components/SuperAdminPanel';
 import { LearningProfileCard } from '@/components/student/LearningProfileCard';
+import { LuminaMemoryViewer } from '@/components/student/LuminaMemoryViewer';
 import { cn } from '@/lib/utils';
 
 type ViewState = 'main' | 'school-admin' | 'super-admin';
@@ -279,6 +280,13 @@ export function ProfileSection() {
           </div>
         </div>
 
+
+        {/* Lumina's Brain (Memory + Knowledge Gaps) */}
+        {isStudent && (
+          <div className="mb-4">
+            <LuminaMemoryViewer />
+          </div>
+        )}
 
         {/* Learning Profile */}
         <div className="mb-4">
