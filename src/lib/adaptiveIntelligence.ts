@@ -15,25 +15,38 @@
  *   3. CONTEXT INJECTION — Generating rich, personalized context for AI prompts
  * 
  * Architecture:
- * ┌──────────────────────────────────────────────────────────────────┐
- * │                    ADAPTIVE INTELLIGENCE ENGINE                  │
- * ├──────────────┬──────────────┬───────────────┬───────────────────┤
- * │  Chat Data   │  Quiz Data   │ Activity Data │  Behavioral Data  │
- * │  (messages)  │  (answers)   │  (views/time) │  (modality prefs) │
- * ├──────────────┴──────────────┴───────────────┴───────────────────┤
- * │                    PATTERN ANALYZER                              │
- * │  ┌─────────┐ ┌──────────┐ ┌────────────┐ ┌──────────────────┐  │
- * │  │Accuracy │ │ Strengths│ │ Weaknesses │ │ Learning Style   │  │
- * │  │Tracker  │ │ Detector │ │ Detector   │ │ Classifier       │  │
- * │  └─────────┘ └──────────┘ └────────────┘ └──────────────────┘  │
- * ├─────────────────────────────────────────────────────────────────┤
- * │                    CONTEXT GENERATOR                             │
- * │  Produces personalized prompts for every AI feature              │
- * └─────────────────────────────────────────────────────────────────┘
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │                    ADAPTIVE INTELLIGENCE ENGINE                          │
+ * ├──────────────┬──────────────┬───────────────┬───────────────────────────┤
+ * │  Chat Data   │  Quiz Data   │ Activity Data │  Behavioral Data          │
+ * │  (messages)  │  (answers)   │  (views/time) │  (modality prefs)         │
+ * ├──────────────┴──────────────┴───────────────┴───────────────────────────┤
+ * │                    SUBSYSTEM ORCHESTRATOR                                │
+ * │  ┌────────────┐ ┌─────────────┐ ┌──────────────┐ ┌──────────────────┐  │
+ * │  │ Cognitive   │ │  Spaced     │ │  Mistake     │ │  Predictive      │  │
+ * │  │ Model       │ │  Repetition │ │  Analyzer    │ │  Engine          │  │
+ * │  └────────────┘ └─────────────┘ └──────────────┘ └──────────────────┘  │
+ * │  ┌────────────┐ ┌─────────────┐ ┌──────────────┐                       │
+ * │  │ Emotional   │ │  Concept    │ │  Rule        │                       │
+ * │  │ State       │ │  Graph      │ │  Generator   │                       │
+ * │  └────────────┘ └─────────────┘ └──────────────┘                       │
+ * ├────────────────────────────────────────────────────────────────────────┤
+ * │                    CONTEXT GENERATOR                                     │
+ * │  Produces personalized prompts for every AI feature                      │
+ * └────────────────────────────────────────────────────────────────────────┘
  */
 
 import { supabase } from '@/integrations/supabase/client';
 import { getStoredBehavior, type BehavioralDataPoint, type ContentModality } from '@/hooks/useActivityTracker';
+
+// === Subsystem Imports ===
+import { computeCognitiveState, getCognitiveContextPrompt, recordCognitiveEventByType, type CognitiveState } from '@/lib/adaptive/cognitiveModel';
+import { getSpacedRepetitionContextPrompt, getRetentionSummary, recordConceptEncounter, mapAnswerToQuality, getDueItems, type RetentionSummary } from '@/lib/adaptive/spacedRepetition';
+import { analyzeMistakePatterns, getMistakePatternContextPrompt, recordMistake, classifyMistake, type MistakeAnalysis } from '@/lib/adaptive/mistakeAnalyzer';
+import { calculateLearningVelocity, forecastPerformance, analyzeCrossSubjectTransfer, modelGrowthTrajectory, getPredictiveContextPrompt, recordPerformanceSession, type LearningVelocity, type PerformanceForecast, type GrowthTrajectory, type CrossSubjectTransfer } from '@/lib/adaptive/predictiveEngine';
+import { computeEmotionalProfile, getEmotionalContextPrompt, recordEmotionalSignal, detectEmotionFromText, type EmotionalProfile } from '@/lib/adaptive/emotionalStateEngine';
+import { analyzeConceptGraph, getConceptGraphContextPrompt, type ConceptGraphAnalysis } from '@/lib/adaptive/conceptGraph';
+import { generateTeachingRules, generateSocraticQuestions, optimizeStudySession, getRulesContextPrompt, type TeachingRule, type SocraticQuestion, type SessionPlan } from '@/lib/adaptive/ruleGenerator';
 
 // ============================================================================
 //  TYPES & INTERFACES
@@ -88,6 +101,20 @@ export interface StudentIntelligenceProfile {
   // Memory context (from student_memory table)
   relevantMemories: string[];
   
+  // === SUBSYSTEM DATA ===
+  cognitiveState: CognitiveState | null;
+  emotionalProfile: EmotionalProfile | null;
+  mistakeAnalysis: MistakeAnalysis | null;
+  learningVelocity: LearningVelocity | null;
+  performanceForecasts: PerformanceForecast[];
+  growthTrajectory: GrowthTrajectory | null;
+  crossSubjectTransfers: CrossSubjectTransfer[];
+  retentionSummary: RetentionSummary | null;
+  conceptGraphAnalysis: ConceptGraphAnalysis | null;
+  teachingRules: TeachingRule[];
+  socraticQuestions: SocraticQuestion[];
+  sessionPlan: SessionPlan | null;
+  
   // Meta
   profileCompleteness: number; // 0-100, how much data we have
   lastUpdated: string;
@@ -121,11 +148,13 @@ async function fetchAnswerHistory(userId: string, limit = 500): Promise<Array<{
   difficulty: string;
   source: string;
   question_text: string | null;
+  student_answer: string | null;
+  correct_answer: string | null;
   created_at: string;
 }>> {
   const { data } = await supabase
     .from('student_answer_history')
-    .select('subject, is_correct, difficulty, source, question_text, created_at')
+    .select('subject, is_correct, difficulty, source, question_text, student_answer, correct_answer, created_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -226,7 +255,6 @@ async function fetchRecentChatTopics(userId: string): Promise<string[]> {
       .limit(20);
     
     if (messages) {
-      // Extract topic keywords from recent user messages
       const topicKeywords = extractTopicKeywords(messages.map(m => m.content));
       topics.push(...topicKeywords);
     }
@@ -241,7 +269,6 @@ async function fetchRecentChatTopics(userId: string): Promise<string[]> {
 
 /**
  * Extract topic keywords from a set of messages.
- * Uses frequency analysis to find the most discussed topics.
  */
 function extractTopicKeywords(messages: string[]): string[] {
   const stopWords = new Set([
@@ -275,7 +302,7 @@ function extractTopicKeywords(messages: string[]): string[] {
     }
   }
 
-  // Also extract bigrams (two-word phrases) for better topic detection
+  // Also extract bigrams (two-word phrases)
   for (const msg of messages) {
     const words = msg
       .toLowerCase()
@@ -285,7 +312,7 @@ function extractTopicKeywords(messages: string[]): string[] {
     
     for (let i = 0; i < words.length - 1; i++) {
       const bigram = `${words[i]} ${words[i + 1]}`;
-      wordFreq[bigram] = (wordFreq[bigram] || 0) + 2; // bigrams get double weight
+      wordFreq[bigram] = (wordFreq[bigram] || 0) + 2;
     }
   }
 
@@ -323,7 +350,7 @@ function analyzeSubjectPerformance(
     const recentCorrect = recent.filter(a => a.is_correct).length;
     const recentAccuracy = recent.length > 0 ? Math.round((recentCorrect / recent.length) * 100) : accuracy;
 
-    // Determine trend by comparing recent vs overall
+    // Determine trend
     let trend: 'improving' | 'stable' | 'declining' = 'stable';
     if (total >= 10) {
       const diff = recentAccuracy - accuracy;
@@ -331,11 +358,10 @@ function analyzeSubjectPerformance(
       else if (diff < -10) trend = 'declining';
     }
 
-    // Find strong and weak topics from question text
+    // Strong and weak topics from question text
     const topicAccuracy: Record<string, { correct: number; total: number }> = {};
     for (const answer of subjectAnswers) {
       if (!answer.question_text) continue;
-      // Extract a rough topic from the question (first few meaningful words)
       const topic = answer.question_text.slice(0, 60).replace(/[?!.]/g, '').trim();
       if (topic.length < 5) continue;
       if (!topicAccuracy[topic]) topicAccuracy[topic] = { correct: 0, total: 0 };
@@ -374,7 +400,6 @@ function analyzeSubjectPerformance(
     });
   }
 
-  // Sort by most practiced
   return performances.sort((a, b) => b.totalQuestions - a.totalQuestions);
 }
 
@@ -400,7 +425,6 @@ function analyzeLearningStyle(dataPoints: BehavioralDataPoint[]): {
     scores[m] = Math.round((Math.max(0, weights[m]) / totalWeight) * 100);
   }
 
-  // Normalize to sum to 100
   const sum = Object.values(scores).reduce((a, b) => a + b, 0);
   if (sum !== 100 && sum > 0) {
     const maxKey = modalities.reduce((a, b) => scores[a] >= scores[b] ? a : b);
@@ -433,18 +457,245 @@ function calculateInactivityDays(performances: SubjectPerformance[]): Record<str
 }
 
 // ============================================================================
+//  SUBSYSTEM ORCHESTRATION — Run all subsystems and collect their output
+// ============================================================================
+
+/**
+ * Feed answer history into all subsystems so they have data to analyze.
+ * This is called once during profile building to hydrate local engines.
+ */
+function hydrateSubsystemsFromHistory(
+  answers: Awaited<ReturnType<typeof fetchAnswerHistory>>,
+  subjectPerformances: SubjectPerformance[],
+): void {
+  const recentAnswers = answers.slice(0, 100);
+  
+  for (const answer of recentAnswers) {
+    if (!answer.is_correct && answer.question_text && answer.student_answer && answer.correct_answer) {
+      try {
+        recordMistake({
+          subject: answer.subject,
+          topic: answer.question_text.slice(0, 60),
+          questionText: answer.question_text,
+          studentAnswer: answer.student_answer,
+          correctAnswer: answer.correct_answer,
+          wasQuickAnswer: false,
+          historicalAccuracyOnTopic: subjectPerformances.find(p => p.subject === answer.subject.toLowerCase())?.accuracy || 50,
+          isNewTopicFormat: false,
+        });
+      } catch { /* already recorded */ }
+    }
+
+    if (answer.question_text) {
+      try {
+        const quality = mapAnswerToQuality(answer.is_correct, answer.difficulty as any, null);
+        recordConceptEncounter({
+          subject: answer.subject,
+          topic: answer.question_text.slice(0, 60),
+          quality,
+          source: (answer.source as any) || 'quiz',
+        });
+      } catch { /* ignore duplicates */ }
+    }
+  }
+
+  for (const perf of subjectPerformances) {
+    if (perf.totalQuestions >= 3) {
+      try {
+        recordPerformanceSession({
+          subject: perf.subject,
+          accuracy: perf.recentAccuracy,
+          questionsAnswered: Math.min(perf.totalQuestions, 20),
+          sessionDurationMinutes: 15,
+        });
+      } catch { /* ignore */ }
+    }
+  }
+
+  const last10 = answers.slice(0, 10);
+  const last10Correct = last10.filter(a => a.is_correct).length;
+  const recentRate = last10.length > 0 ? last10Correct / last10.length : 0.5;
+  
+  if (recentRate < 0.3) {
+    recordCognitiveEventByType('consecutive_errors');
+  } else if (recentRate > 0.8) {
+    recordCognitiveEventByType('consecutive_correct');
+  }
+}
+
+/**
+ * Run all subsystems and collect their analysis results.
+ */
+function runSubsystems(
+  answers: Awaited<ReturnType<typeof fetchAnswerHistory>>,
+  subjectPerformances: SubjectPerformance[],
+  gaps: Array<{ subject: string; topic: string; severity: string; gap_description: string }>,
+): {
+  cognitiveState: CognitiveState | null;
+  emotionalProfile: EmotionalProfile | null;
+  mistakeAnalysis: MistakeAnalysis | null;
+  learningVelocity: LearningVelocity | null;
+  performanceForecasts: PerformanceForecast[];
+  growthTrajectory: GrowthTrajectory | null;
+  crossSubjectTransfers: CrossSubjectTransfer[];
+  retentionSummary: RetentionSummary | null;
+  conceptGraphAnalysis: ConceptGraphAnalysis | null;
+  teachingRules: TeachingRule[];
+  socraticQuestions: SocraticQuestion[];
+  sessionPlan: SessionPlan | null;
+} {
+  // Compute overall recent accuracy for cognitive model
+  const last20 = answers.slice(0, 20);
+  const last20Correct = last20.filter(a => a.is_correct).length;
+  const recentAccuracy = last20.length > 0 ? Math.round((last20Correct / last20.length) * 100) : 60;
+
+  // 1. Cognitive Model
+  let cognitiveState: CognitiveState | null = null;
+  try {
+    cognitiveState = computeCognitiveState(recentAccuracy);
+  } catch { /* graceful fallback */ }
+
+  // 2. Emotional Profile
+  let emotionalProfile: EmotionalProfile | null = null;
+  try {
+    emotionalProfile = computeEmotionalProfile();
+  } catch { /* graceful fallback */ }
+
+  // 3. Mistake Analysis (per subject + overall)
+  let mistakeAnalysis: MistakeAnalysis | null = null;
+  try {
+    mistakeAnalysis = analyzeMistakePatterns();
+  } catch { /* graceful fallback */ }
+
+  // 4. Learning Velocity
+  let learningVelocity: LearningVelocity | null = null;
+  try {
+    const answerData = answers.map(a => ({ subject: a.subject, is_correct: a.is_correct, created_at: a.created_at }));
+    learningVelocity = calculateLearningVelocity(answerData);
+  } catch { /* graceful fallback */ }
+
+  // 5. Performance Forecasts
+  const performanceForecasts: PerformanceForecast[] = [];
+  try {
+    const answerData = answers.map(a => ({ subject: a.subject, is_correct: a.is_correct, created_at: a.created_at }));
+    const allForecasts = forecastPerformance(answerData);
+    performanceForecasts.push(...allForecasts);
+  } catch { /* skip */ }
+
+  // 6. Growth Trajectory
+  let growthTrajectory: GrowthTrajectory | null = null;
+  try {
+    const answerData = answers.map(a => ({ subject: a.subject, is_correct: a.is_correct, created_at: a.created_at }));
+    growthTrajectory = modelGrowthTrajectory(answerData);
+  } catch { /* graceful fallback */ }
+
+  // 7. Cross-Subject Transfer
+  const crossSubjectTransfers: CrossSubjectTransfer[] = [];
+  try {
+    const answerData = answers.map(a => ({ subject: a.subject, is_correct: a.is_correct, created_at: a.created_at }));
+    const transfers = analyzeCrossSubjectTransfer(answerData);
+    crossSubjectTransfers.push(...transfers);
+  } catch { /* skip */ }
+
+  // 8. Retention Summary
+  let retentionSummary: RetentionSummary | null = null;
+  try {
+    retentionSummary = getRetentionSummary();
+  } catch { /* graceful fallback */ }
+
+  // 9. Concept Graph Analysis
+  let conceptGraphAnalysis: ConceptGraphAnalysis | null = null;
+  try {
+    const perfData = subjectPerformances.map(p => ({
+      subject: p.subject,
+      accuracy: p.recentAccuracy,
+      strongTopics: p.strongTopics,
+      weakTopics: p.weakTopics,
+    }));
+    const gapTopics = gaps.map(g => ({ subject: g.subject, topic: g.topic, severity: g.severity }));
+    conceptGraphAnalysis = analyzeConceptGraph(perfData, gapTopics);
+  } catch { /* graceful fallback */ }
+
+  // 10. Teaching Rules
+  let teachingRules: TeachingRule[] = [];
+  try {
+    if (mistakeAnalysis && emotionalProfile && cognitiveState && learningVelocity && growthTrajectory && retentionSummary) {
+      teachingRules = generateTeachingRules({
+        mistakeAnalysis,
+        emotionalProfile,
+        cognitiveState,
+        learningVelocity,
+        growthTrajectory,
+        retentionSummary,
+        dominantLearningStyle: 'balanced',
+        overallAccuracy: recentAccuracy,
+        activeSubjects: subjectPerformances.map(p => p.subject),
+      });
+    }
+  } catch { /* graceful fallback */ }
+
+  // 11. Socratic Questions
+  let socraticQuestions: SocraticQuestion[] = [];
+  try {
+    const weakPerf = subjectPerformances.filter(p => p.recentAccuracy < 60);
+    if (weakPerf.length > 0) {
+      const targetSubject = weakPerf[0];
+      socraticQuestions = generateSocraticQuestions({
+        subject: targetSubject.subject,
+        currentTopic: targetSubject.weakTopics[0] || targetSubject.subject,
+        weakTopics: targetSubject.weakTopics,
+        strongTopics: targetSubject.strongTopics,
+        knowledgeGaps: gaps.slice(0, 5).map(g => ({ topic: g.topic, description: g.gap_description })),
+        difficulty: targetSubject.difficultyLevel,
+      });
+    }
+  } catch { /* graceful fallback */ }
+
+  // 12. Session Plan
+  let sessionPlan: SessionPlan | null = null;
+  try {
+    if (cognitiveState && retentionSummary && emotionalProfile) {
+      const dueItems = getDueItems();
+      sessionPlan = optimizeStudySession({
+        availableMinutes: 45,
+        cognitiveState,
+        retentionSummary,
+        weakSubjects: subjectPerformances.filter(p => p.recentAccuracy < 60).map(p => p.subject),
+        strongSubjects: subjectPerformances.filter(p => p.recentAccuracy >= 80).map(p => p.subject),
+        dueReviewItems: dueItems.map(i => `${i.subject}: ${i.topic}`),
+        emotionalProfile,
+        bestStudyTime: 'now',
+      });
+    }
+  } catch { /* graceful fallback */ }
+
+  return {
+    cognitiveState,
+    emotionalProfile,
+    mistakeAnalysis,
+    learningVelocity,
+    performanceForecasts,
+    growthTrajectory,
+    crossSubjectTransfers,
+    retentionSummary,
+    conceptGraphAnalysis,
+    teachingRules,
+    socraticQuestions,
+    sessionPlan,
+  };
+}
+
+// ============================================================================
 //  FULL PROFILE BUILDER — Assembles the complete intelligence profile
 // ============================================================================
 
 /**
  * Build a comprehensive intelligence profile for a student.
- * This is the main entry point that aggregates all data sources.
- * 
- * @param userId - The authenticated user's ID
- * @returns A complete StudentIntelligenceProfile
+ * This is the main entry point that aggregates all data sources
+ * AND runs all 7 subsystems.
  */
 export async function buildIntelligenceProfile(userId: string): Promise<StudentIntelligenceProfile> {
-  // Fetch all data sources in parallel for maximum efficiency
+  // Fetch all data sources in parallel
   const [answers, profiles, gaps, memories, recentTopics, behaviorData] = await Promise.all([
     fetchAnswerHistory(userId),
     fetchLearningProfiles(userId),
@@ -491,15 +742,27 @@ export async function buildIntelligenceProfile(userId: string): Promise<StudentI
   // Inactivity tracking
   const daysSinceLastActivity = calculateInactivityDays(subjectPerformances);
 
+  // === SUBSYSTEM ORCHESTRATION ===
+  // Hydrate subsystems with historical data, then run them
+  hydrateSubsystemsFromHistory(answers, subjectPerformances);
+  const subsystemResults = runSubsystems(answers, subjectPerformances, gaps);
+
   // Profile completeness score
   let completeness = 0;
-  if (totalQuestions > 0) completeness += 25;
-  if (totalQuestions >= 20) completeness += 15;
-  if (behaviorData.dataPoints.length >= 20) completeness += 20;
-  if (memories.length > 0) completeness += 15;
-  if (recentTopics.length > 0) completeness += 10;
-  if (gaps.length >= 0) completeness += 5; // even zero gaps is data
-  if (profiles.length > 0) completeness += 10;
+  if (totalQuestions > 0) completeness += 15;
+  if (totalQuestions >= 20) completeness += 10;
+  if (totalQuestions >= 100) completeness += 5;
+  if (behaviorData.dataPoints.length >= 20) completeness += 15;
+  if (memories.length > 0) completeness += 10;
+  if (recentTopics.length > 0) completeness += 5;
+  if (gaps.length >= 0) completeness += 5;
+  if (profiles.length > 0) completeness += 5;
+  if (subsystemResults.cognitiveState) completeness += 5;
+  if (subsystemResults.emotionalProfile) completeness += 5;
+  if (subsystemResults.mistakeAnalysis && subsystemResults.mistakeAnalysis.totalMistakes > 0) completeness += 5;
+  if (subsystemResults.learningVelocity) completeness += 5;
+  if (subsystemResults.retentionSummary) completeness += 5;
+  if (subsystemResults.teachingRules.length > 0) completeness += 5;
 
   return {
     overallAccuracy,
@@ -522,6 +785,8 @@ export async function buildIntelligenceProfile(userId: string): Promise<StudentI
     recentlyStudiedTopics: subjectPerformances.slice(0, 5).map(p => p.subject),
     daysSinceLastActivity,
     relevantMemories: memories,
+    // Subsystem data
+    ...subsystemResults,
     profileCompleteness: Math.min(100, completeness),
     lastUpdated: new Date().toISOString(),
   };
@@ -638,7 +903,7 @@ function getSubjectContext(
     ctx += `\n- Needs work: ${perf.weakTopics.slice(0, 3).join(', ')} (focus extra attention here)`;
   }
 
-  // Check for knowledge gaps in this subject
+  // Knowledge gaps for this subject
   const subjectGaps = profile.activeGaps.filter(g => 
     g.subject.toLowerCase() === subjectLower ||
     subjectLower.includes(g.subject.toLowerCase())
@@ -677,7 +942,7 @@ ${profile.relevantMemories.map(m => `- ${m}`).join('\n')}`;
 }
 
 /**
- * Generate feature-specific instructions for how to use adaptive data.
+ * Generate feature-specific instructions.
  */
 function getFeatureInstructions(feature: FeatureType): string {
   const instructions: Record<FeatureType, string> = {
@@ -718,14 +983,16 @@ function getFeatureInstructions(feature: FeatureType): string {
 - Allocate LESS time to subjects where they're already strong.
 - Reference known knowledge gaps and include targeted remediation.
 - Consider their learning style when suggesting study methods.
-- If they haven't practiced certain subjects recently, prioritize those.`,
+- If they haven't practiced certain subjects recently, prioritize those.
+- Use spaced repetition data to schedule review sessions optimally.`,
 
     practice_quiz: `ADAPTIVE PRACTICE QUIZ:
 - Questions should match the student's current difficulty level.
 - Include MORE questions on weak topics and knowledge gaps.
 - For topics they answered WRONG previously, rephrase similar questions differently.
 - For topics they answered RIGHT, introduce slight variations or harder versions.
-- Track patterns in wrong answers to identify systematic misunderstandings.`,
+- Track patterns in wrong answers to identify systematic misunderstandings.
+- Consider the student's cognitive load — if fatigued, reduce complexity.`,
 
     lecture: `ADAPTIVE LECTURE GENERATION:
 - Match explanation depth and vocabulary to the student's level.
@@ -733,18 +1000,21 @@ function getFeatureInstructions(feature: FeatureType): string {
 - Address known knowledge gaps naturally within the content.
 - For VISUAL learners: more diagrams, charts, spatial layouts.
 - For LOGICAL learners: more derivations, step-by-step proofs.
-- For KINESTHETIC learners: more practice problems and applications.`,
+- For KINESTHETIC learners: more practice problems and applications.
+- Pace content according to their learning velocity.`,
 
     chat: `ADAPTIVE CHAT:
 - Respond at the student's demonstrated comprehension level.
 - If they're struggling (low accuracy), be more patient and thorough.
 - If they're advanced, be more concise and challenging.
-- Track what they ask about and adapt future responses accordingly.`,
+- Track what they ask about and adapt future responses accordingly.
+- Detect emotional signals in their messages and adapt tone.`,
 
     exam: `ADAPTIVE EXAM:
 - Calibrate question difficulty based on the student's performance data.
 - Include questions that test known knowledge gaps.
-- Progressively increase difficulty within the exam.`,
+- Progressively increase difficulty within the exam.
+- Consider the student's mistake patterns when crafting distractors.`,
 
     podcast: `ADAPTIVE PODCAST ANALYSIS:
 - Adjust explanation depth to the student's level.
@@ -754,10 +1024,119 @@ function getFeatureInstructions(feature: FeatureType): string {
     mind_map: `ADAPTIVE MIND MAP:
 - Adjust complexity based on the student's level.
 - Emphasize connections that address knowledge gaps.
-- Use visual structures that match their learning style.`,
+- Use visual structures that match their learning style.
+- Show prerequisite relationships from the concept graph.`,
   };
 
   return instructions[feature] || '';
+}
+
+// ============================================================================
+//  SUBSYSTEM CONTEXT INJECTION — Pull prompts from each subsystem
+// ============================================================================
+
+/**
+ * Generate the subsystem-specific context sections.
+ * These are appended to the main context for maximum intelligence.
+ */
+function getSubsystemContextSections(
+  profile: StudentIntelligenceProfile,
+  subject?: string,
+): string[] {
+  const sections: string[] = [];
+
+  // Cognitive State
+  if (profile.cognitiveState) {
+    try {
+      const cogPrompt = getCognitiveContextPrompt(profile.cognitiveState);
+      if (cogPrompt) sections.push(cogPrompt);
+    } catch { /* skip */ }
+  }
+
+  // Emotional Profile
+  if (profile.emotionalProfile) {
+    try {
+      const emoPrompt = getEmotionalContextPrompt(profile.emotionalProfile);
+      if (emoPrompt) sections.push(emoPrompt);
+    } catch { /* skip */ }
+  }
+
+  // Mistake Patterns
+  if (profile.mistakeAnalysis && profile.mistakeAnalysis.totalMistakes > 0) {
+    try {
+      const mistakePrompt = getMistakePatternContextPrompt(subject);
+      if (mistakePrompt) sections.push(mistakePrompt);
+    } catch { /* skip */ }
+  }
+
+  // Spaced Repetition (due reviews)
+  try {
+    const srPrompt = getSpacedRepetitionContextPrompt(subject);
+    if (srPrompt) sections.push(srPrompt);
+  } catch { /* skip */ }
+
+  // Predictive Engine
+  if (profile.learningVelocity || profile.performanceForecasts.length > 0) {
+    try {
+      // Build a minimal answer-history-like array for the prompt generator
+      const answerData = profile.subjectPerformances.flatMap(p => {
+        const entries: Array<{ subject: string; is_correct: boolean; created_at: string }> = [];
+        for (let i = 0; i < Math.min(p.totalQuestions, 20); i++) {
+          entries.push({
+            subject: p.subject,
+            is_correct: i < p.correctAnswers,
+            created_at: p.lastPracticed || new Date().toISOString(),
+          });
+        }
+        return entries;
+      });
+      if (answerData.length >= 10) {
+        const predPrompt = getPredictiveContextPrompt(answerData, subject);
+        if (predPrompt) sections.push(predPrompt);
+      }
+    } catch { /* skip */ }
+  }
+
+  // Concept Graph
+  if (profile.conceptGraphAnalysis) {
+    try {
+      const graphPrompt = getConceptGraphContextPrompt(profile.conceptGraphAnalysis, subject);
+      if (graphPrompt) sections.push(graphPrompt);
+    } catch { /* skip */ }
+  }
+
+  // Teaching Rules
+  if (profile.teachingRules.length > 0) {
+    try {
+      const rulesPrompt = getRulesContextPrompt(profile.teachingRules);
+      if (rulesPrompt) sections.push(rulesPrompt);
+    } catch { /* skip */ }
+  }
+
+  // Socratic Questions
+  if (profile.socraticQuestions.length > 0) {
+    const sqPrompt = `\nSOCRATIC QUESTIONS TO ASK (when appropriate):
+${profile.socraticQuestions.slice(0, 3).map(q => `- [${q.targetConcept || 'general'}] ${q.question}`).join('\n')}
+Use these to probe understanding — don't just give answers, make the student think.`;
+    sections.push(sqPrompt);
+  }
+
+  // Session Plan
+  if (profile.sessionPlan) {
+    const sp = profile.sessionPlan;
+    let planPrompt = `\nOPTIMAL SESSION PLAN:
+- Recommended duration: ${sp.recommendedDuration} minutes
+- Topics priority: ${sp.topicPriority?.join(', ') || 'balanced'}`;
+    if (sp.breakSchedule) {
+      planPrompt += `\n- Break schedule: ${sp.breakSchedule}`;
+    }
+    if (sp.phases.length > 0) {
+      planPrompt += `\n- Phases: ${sp.phases.map(p => `${p.name} (${p.durationMinutes}min)`).join(' → ')}`;
+    }
+    sections.push(planPrompt);
+  }
+
+  return sections;
 }
 
 // ============================================================================
@@ -768,16 +1147,14 @@ function getFeatureInstructions(feature: FeatureType): string {
  * Generate a complete adaptive context string for an AI feature.
  * This is the PRIMARY function that all AI features should call.
  * 
- * @param userId - The authenticated user's ID
- * @param feature - The type of AI feature requesting context
- * @param subject - Optional subject filter for more targeted context
- * @returns A comprehensive context string to inject into AI prompts
- * 
- * @example
- * ```tsx
- * const context = await generateAdaptiveContext(user.id, 'notes', 'biology');
- * // Pass `context` as adaptiveLevel or learningStyle to streamChat()
- * ```
+ * It orchestrates ALL 7 subsystems:
+ *  1. Cognitive Model → fatigue, load, ZPD
+ *  2. Spaced Repetition → due reviews, retention curves
+ *  3. Mistake Analyzer → error patterns, remediation
+ *  4. Predictive Engine → forecasts, velocity, growth
+ *  5. Emotional State → tone, encouragement
+ *  6. Concept Graph → prerequisites, curriculum position
+ *  7. Rule Generator → teaching rules, Socratic questions, session plan
  */
 export async function generateAdaptiveContext(
   userId: string,
@@ -791,7 +1168,6 @@ export async function generateAdaptiveContext(
 }> {
   const profile = await buildIntelligenceProfile(userId);
 
-  // Build the complete context
   const sections: string[] = [];
 
   // 1. Difficulty level
@@ -821,7 +1197,7 @@ export async function generateAdaptiveContext(
   // 6. Feature-specific instructions
   sections.push(getFeatureInstructions(feature));
 
-  // 7. Recently studied topics (for context continuity)
+  // 7. Recently studied topics
   if (profile.preferredStudyTopics.length > 0) {
     sections.push(`\nRECENT STUDY TOPICS: ${profile.preferredStudyTopics.join(', ')}`);
   }
@@ -829,20 +1205,27 @@ export async function generateAdaptiveContext(
   // 8. Overall profile summary
   sections.push(`\nPROFILE SUMMARY: ${profile.totalInteractions} total interactions | ${profile.profileCompleteness}% profile completeness | Overall accuracy: ${profile.overallAccuracy}%`);
 
-  // 9. Adaptive behavior rules
+  // 9. === SUBSYSTEM CONTEXT INJECTION ===
+  const subsystemSections = getSubsystemContextSections(profile, subject);
+  sections.push(...subsystemSections);
+
+  // 10. Adaptive behavior rules (always last)
   sections.push(`\nADAPTIVE BEHAVIOR RULES:
 - If the student EXPLICITLY requests a different format or level, honor it immediately.
 - After explaining, verify understanding and offer alternative formats.
 - If the student seems confused, switch to a SIMPLER modality.
 - If the student breezes through content, increase challenge level.
 - NEVER mention the adaptive system itself — it should be invisible.
-- Balance personalization with well-rounded education.`);
+- Balance personalization with well-rounded education.
+- When the student shows signs of fatigue, simplify or suggest a break.
+- Use Socratic questioning to develop deeper understanding.
+- Track emotional cues in their messages and adapt your tone accordingly.`);
 
   const fullContext = sections.filter(s => s.trim()).join('\n\n');
 
   return {
     adaptiveLevel: effectiveLevel,
-    learningStyle: fullContext, // The full context IS the learning style + everything else
+    learningStyle: fullContext,
     fullContext,
     profile,
   };
@@ -869,9 +1252,9 @@ export async function getSimpleAdaptiveParams(
 // ============================================================================
 
 /**
- * Record a quiz/practice answer and update the adaptive profile.
- * This wraps the existing recordAnswer from useAdaptiveLevel 
- * with additional intelligence tracking.
+ * Record a quiz/practice answer with full subsystem integration.
+ * This wraps answer recording with mistake analysis, spaced repetition,
+ * cognitive events, emotional signals, and predictive tracking.
  */
 export async function recordIntelligentAnswer(params: {
   userId: string;
@@ -882,8 +1265,9 @@ export async function recordIntelligentAnswer(params: {
   isCorrect: boolean;
   difficulty: string;
   source: string;
+  responseTimeSec?: number;
 }): Promise<void> {
-  // Insert into answer history
+  // 1. Insert into answer history (DB)
   await supabase.from('student_answer_history').insert({
     user_id: params.userId,
     subject: params.subject.toLowerCase(),
@@ -895,11 +1279,66 @@ export async function recordIntelligentAnswer(params: {
     source: params.source,
   });
 
-  // If the answer was wrong, also create/update a knowledge gap
+  // 2. Feed into Spaced Repetition
+  try {
+    const quality = mapAnswerToQuality(
+      params.isCorrect,
+      params.responseTimeSec,
+      params.difficulty,
+    );
+    recordConceptEncounter({
+      subject: params.subject,
+      topic: params.questionText.slice(0, 60),
+      quality,
+      source: (params.source as any) || 'quiz',
+    });
+  } catch { /* ignore */ }
+
+  // 3. Feed into Mistake Analyzer (if wrong)
+  if (!params.isCorrect) {
+    try {
+      recordMistake({
+        subject: params.subject,
+        topic: params.questionText.slice(0, 60),
+        questionText: params.questionText,
+        studentAnswer: params.studentAnswer,
+        correctAnswer: params.correctAnswer,
+        wasQuickAnswer: (params.responseTimeSec || 999) < 5,
+        historicalAccuracyOnTopic: 50,
+        isNewTopicFormat: false,
+      });
+    } catch { /* ignore */ }
+  }
+
+  // 4. Feed into Cognitive Model
+  try {
+    recordCognitiveEventByType(
+      params.isCorrect ? 'question_answered_correct' : 'question_answered_wrong',
+    );
+  } catch { /* ignore */ }
+
+  // 5. Feed into Emotional State Engine
+  try {
+    recordEmotionalSignal(
+      params.isCorrect ? 'correct_answer' : 'wrong_answer',
+      params.isCorrect ? 0.6 : 0.8,
+    );
+  } catch { /* ignore */ }
+
+  // 6. Feed into Predictive Engine
+  try {
+    recordPerformanceSession({
+      subject: params.subject,
+      accuracy: params.isCorrect ? 100 : 0,
+      questionsAnswered: 1,
+      sessionDurationMinutes: 1,
+    });
+  } catch { /* ignore */ }
+
+  // 7. Create/update knowledge gap (if wrong)
   if (!params.isCorrect) {
     const topicKeywords = params.questionText.slice(0, 80).replace(/[?!.]/g, '').trim();
     
-    // Check if a similar gap already exists
     const { data: existingGaps } = await supabase
       .from('knowledge_gaps')
       .select('id, topic')
@@ -929,8 +1368,26 @@ export async function recordIntelligentAnswer(params: {
 }
 
 /**
+ * Record a chat message for emotional analysis and behavioral tracking.
+ * Call this when the student sends a message in any chat context.
+ */
+export function recordChatMessage(messageText: string): void {
+  // Detect emotion from the message text
+  try {
+    const emotion = detectEmotionFromText(messageText);
+    if (emotion) {
+      recordEmotionalSignal(emotion, 0.5);
+    }
+  } catch { /* ignore */ }
+
+  // Record cognitive event (interaction)
+  try {
+    recordCognitiveEventByType('session_resume');
+  } catch { /* ignore */ }
+}
+
+/**
  * Record that a student is studying a particular topic.
- * This helps the system understand what topics are being actively studied.
  */
 export function recordStudyActivity(params: {
   subject: string;
@@ -938,7 +1395,6 @@ export function recordStudyActivity(params: {
   feature: FeatureType;
   durationEstimate?: number;
 }): void {
-  // Store in localStorage for quick access (behavioral tracking)
   const key = 'lumina_study_activity';
   try {
     const raw = localStorage.getItem(key);
@@ -956,11 +1412,23 @@ export function recordStudyActivity(params: {
       timestamp: Date.now(),
     });
 
-    // Keep last 100 activities
     if (activities.length > 100) {
       activities.splice(0, activities.length - 100);
     }
 
     localStorage.setItem(key, JSON.stringify(activities));
   } catch { /* ignore */ }
+
+  // Also feed into cognitive model
+  try {
+    recordCognitiveEventByType('session_resume');
+  } catch { /* ignore */ }
+}
+
+/**
+ * Get items due for review from the spaced repetition engine.
+ * Useful for flashcard and review session features.
+ */
+export function getDueReviewItems(subject?: string) {
+  return getDueItems(subject);
 }
