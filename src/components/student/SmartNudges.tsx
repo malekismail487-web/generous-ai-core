@@ -1,32 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { toast } from 'sonner';
-import { Brain, AlertTriangle, Flame, Target } from 'lucide-react';
 
-interface Nudge {
-  id: string;
-  message: string;
-  messageAr: string;
-  icon: typeof Brain;
-  type: 'gap' | 'streak' | 'inactive' | 'goal';
-}
 
 export function SmartNudges() {
   const { user } = useAuth();
   const { t } = useThemeLanguage();
-  const [shown, setShown] = useState(false);
 
   useEffect(() => {
-    if (!user || shown) return;
-    const timer = setTimeout(() => generateNudges(), 2000);
+    if (!user) return;
+    // Persistent daily check — only show nudges once per day
+    const key = `smart-nudges-${new Date().toDateString()}`;
+    if (localStorage.getItem(key)) return;
+    const timer = setTimeout(() => {
+      localStorage.setItem(key, 'shown');
+      generateNudges();
+    }, 2000);
     return () => clearTimeout(timer);
-  }, [user, shown]);
+  }, [user]);
 
   const generateNudges = async () => {
     if (!user) return;
-    setShown(true);
 
     try {
       // Check for critical knowledge gaps
