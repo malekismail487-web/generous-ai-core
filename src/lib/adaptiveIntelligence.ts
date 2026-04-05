@@ -1429,6 +1429,11 @@ export async function recordIntelligentAnswer(params: {
 /**
  * Record a chat message for emotional analysis and behavioral tracking.
  * Call this when the student sends a message in any chat context.
+ * 
+ * CRITICAL: This now also adds a behavioral data point so that EVERY
+ * chat message increments the behavioral signals counter and feeds the
+ * learning style profile. The full message text is stored word-for-word
+ * in the behavioral data point's details for complete documentation.
  */
 export function recordChatMessage(messageText: string): void {
   // Detect emotion from the message text
@@ -1443,6 +1448,38 @@ export function recordChatMessage(messageText: string): void {
   try {
     recordCognitiveEventByType('session_resume');
   } catch { /* ignore */ }
+
+  // === NEW: Bridge to behavioral tracking pipeline ===
+  // Classify the message modality and add as a behavioral data point
+  try {
+    const { classifyQuestion } = require('@/hooks/useActivityTracker');
+    const { modality } = classifyQuestion(messageText);
+
+    // Import getStoredBehavior utilities directly
+    const BEHAVIOR_STORAGE_KEY = 'lumina_behavioral_data';
+    const raw = localStorage.getItem(BEHAVIOR_STORAGE_KEY);
+    const profile = raw ? JSON.parse(raw) : { dataPoints: [], totalInteractions: 0, lastUpdated: Date.now() };
+
+    profile.dataPoints.push({
+      timestamp: Date.now(),
+      type: 'question_type',
+      modality,
+      weight: 1.5,
+      details: {
+        questionType: 'chat_message',
+        fullText: messageText,  // Store EVERY word the user typed
+        preview: messageText.slice(0, 200),
+      },
+    });
+    profile.totalInteractions += 1;
+    profile.lastUpdated = Date.now();
+
+    // Keep last 500 data points
+    if (profile.dataPoints.length > 500) {
+      profile.dataPoints = profile.dataPoints.slice(-500);
+    }
+    localStorage.setItem(BEHAVIOR_STORAGE_KEY, JSON.stringify(profile));
+  } catch { /* ignore — behavioral tracking is best-effort */ }
 }
 
 /**
