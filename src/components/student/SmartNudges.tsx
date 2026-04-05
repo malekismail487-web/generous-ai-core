@@ -4,13 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { toast } from 'sonner';
 
-interface Nudge {
-  id: string;
-  message: string;
-  messageAr: string;
-  icon: typeof Brain;
-  type: 'gap' | 'streak' | 'inactive' | 'goal';
-}
 
 export function SmartNudges() {
   const { user } = useAuth();
