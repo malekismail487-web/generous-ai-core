@@ -48,7 +48,7 @@ export function FlashcardsSection() {
   const { language } = useThemeLanguage();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
   const { getLearningStylePrompt } = useLearningStyle();
-  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
+  const { getSimpleParams, recordActivity, recordTeaching } = useAdaptiveIntelligence();
   const [viewState, setViewState] = useState<ViewState>('subjects');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);

@@ -78,7 +78,7 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel(selectedSubject || undefined);
   const { getLearningStylePrompt } = useLearningStyle();
   const { trackActivity, trackLectureViewed } = useActivityTracker();
-  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
+  const { getSimpleParams, recordActivity, recordTeaching } = useAdaptiveIntelligence();
 
   const containerClass = embedded
     ? "flex-1 min-h-0 overflow-y-auto py-4"
