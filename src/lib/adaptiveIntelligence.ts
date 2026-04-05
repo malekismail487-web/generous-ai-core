@@ -1078,13 +1078,22 @@ function getSubsystemContextSections(
   // Predictive Engine
   if (profile.learningVelocity || profile.performanceForecasts.length > 0) {
     try {
-      const predPrompt = getPredictiveContextPrompt(
-        profile.learningVelocity!,
-        profile.performanceForecasts,
-        profile.growthTrajectory!,
-        profile.crossSubjectTransfers,
-      );
-      if (predPrompt) sections.push(predPrompt);
+      // Build a minimal answer-history-like array for the prompt generator
+      const answerData = profile.subjectPerformances.flatMap(p => {
+        const entries: Array<{ subject: string; is_correct: boolean; created_at: string }> = [];
+        for (let i = 0; i < Math.min(p.totalQuestions, 20); i++) {
+          entries.push({
+            subject: p.subject,
+            is_correct: i < p.correctAnswers,
+            created_at: p.lastPracticed || new Date().toISOString(),
+          });
+        }
+        return entries;
+      });
+      if (answerData.length >= 10) {
+        const predPrompt = getPredictiveContextPrompt(answerData, subject);
+        if (predPrompt) sections.push(predPrompt);
+      }
     } catch { /* skip */ }
   }
 
@@ -1104,10 +1113,10 @@ function getSubsystemContextSections(
     } catch { /* skip */ }
   }
 
-  // Socratic Questions (for relevant features)
+  // Socratic Questions
   if (profile.socraticQuestions.length > 0) {
     const sqPrompt = `\nSOCRATIC QUESTIONS TO ASK (when appropriate):
-${profile.socraticQuestions.slice(0, 3).map(q => `- [${q.targetGap || 'general'}] ${q.question}`).join('\n')}
+${profile.socraticQuestions.slice(0, 3).map(q => `- [${q.targetConcept || 'general'}] ${q.question}`).join('\n')}
 Use these to probe understanding — don't just give answers, make the student think.`;
     sections.push(sqPrompt);
   }
@@ -1116,13 +1125,13 @@ Use these to probe understanding — don't just give answers, make the student t
   if (profile.sessionPlan) {
     const sp = profile.sessionPlan;
     let planPrompt = `\nOPTIMAL SESSION PLAN:
-- Recommended duration: ${sp.recommendedDurationMin} minutes
-- Focus subjects: ${sp.focusSubjects?.join(', ') || 'balanced'}`;
-    if (sp.breakAfterMin) {
-      planPrompt += `\n- Suggest a break after ${sp.breakAfterMin} minutes`;
+- Recommended duration: ${sp.recommendedDuration} minutes
+- Topics priority: ${sp.topicPriority?.join(', ') || 'balanced'}`;
+    if (sp.breakSchedule) {
+      planPrompt += `\n- Break schedule: ${sp.breakSchedule}`;
     }
-    if (sp.sessionStrategy) {
-      planPrompt += `\n- Strategy: ${sp.sessionStrategy}`;
+    if (sp.phases.length > 0) {
+      planPrompt += `\n- Phases: ${sp.phases.map(p => `${p.name} (${p.durationMinutes}min)`).join(' → ')}`;
     }
     sections.push(planPrompt);
   }
