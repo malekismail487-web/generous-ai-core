@@ -1,102 +1,49 @@
-# Mind Map Overhaul: Dual Interaction, Saved History, Smooth Animations
 
-## Summary
+Goal:
+Make double-tap expansion work reliably on mobile/desktop for every expandable mind-map node, and show “End of node” when a node can’t be meaningfully expanded further.
 
-Three major improvements to the Mind Map feature:
+What I found:
+- The current feature uses SVG `onClick` to detect double taps. On phones, two taps on SVG often do not arrive as two clean `click` events, so the single-tap lecture timer wins and the sheet opens instead.
+- Expansion is blocked once a node has `expanded = true`, so some nodes stop reacting even when the user expects further branching.
+- Grandchildren currently bypass the shared expand handler, so not every visible node can expand.
+- The AI prompt forces 3–4 children, which makes “this is a terminal node” impossible to detect cleanly.
 
-1. **Single tap = generate a lecture** about that node; **Double tap = expand** the node (current behavior)
-2. **Saved mind map history** persisted in the database
-3. **Smooth branching animations** — nodes grow outward organically instead of popping in
+Plan:
+1. Replace the gesture logic
+- Switch node interaction from `onClick` to pointer/touch-safe handling (`onPointerUp`).
+- Track the tapped node with a stable node path plus timestamp in a ref.
+- Keep the single-tap lecture delay, but cancel it when the same node is tapped again within the double-tap window.
+- Add `touch-action: manipulation` on the SVG/container so mobile double taps are not eaten by browser behavior.
 
-Plus fixing the **text cutoff** and **overlap** issues visible in the screenshots.
+2. Make expansion path-based instead of index-limited
+- Refactor `expandNode(branchIdx, childIdx?)` into a path-based expansion helper so any visible node can use the same logic.
+- Add recursive helpers to read/update a node anywhere in the tree.
+- Route all node circles through one shared tap handler, including deeper descendants.
 
----
+3. Stop treating `expanded` as a blocker
+- Remove the `!target.expanded` guard.
+- Use expansion state only for UI/animation, not to prevent future branching attempts.
+- Merge unique children by label instead of silently doing nothing.
 
-## 1. Dual Tap Interaction (Single vs Double)
+4. Add real “End of node” behavior
+- Update the expansion prompt so the AI is allowed to return `{ "children": [] }` when a node is already atomic.
+- If the AI returns no valid children, only duplicates, or unusable labels, mark that node as terminal.
+- Show a toast message: `End of node` (with Arabic localization too).
+- If the user double taps that same terminal node again, show the message immediately without making another AI request.
 
-**How it works:**
+5. Preserve the lecture feature
+- Keep one tap = lecture.
+- Only fire lecture generation after the double-tap window expires with no second tap.
+- Keep the current lecture sheet and image flow unchanged.
 
-- Track clicks with a 300ms timer. If a second click arrives within 300ms → double tap (expand node). If not → single tap (generate lecture).
-- Single tap opens a slide-up panel/sheet showing a streamed lecture about that node's topic, using the existing `streamChat` pattern.
-- Double tap triggers the current `expandNode` AI call.
-- Visual hint text updated: "Tap to learn, double-tap to expand"
+6. Rendering updates
+- Pass each rendered node its path and terminal/expanding state.
+- Keep the current animation style, but make newly added descendants animate outward from their parent after expansion.
 
-**Implementation:**
+Files to change:
+- `src/components/student/MindMapGenerator.tsx`
 
-- Add a `clickTimer` ref and `handleNodeClick(branchIdx, childIdx?)` function that distinguishes single vs double click
-- Single tap: call chat edge function with a lecture prompt for that label, display result in a Drawer/Sheet component with `MathRenderer`
-- Double tap: existing `expandNode` logic
-
-## 2. Saved Mind Map History (Database)
-
-**Database migration:** Create a `mind_map_history` table:
-
-```sql
-CREATE TABLE public.mind_map_history (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  topic TEXT NOT NULL,
-  mind_map_data JSONB NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-ALTER TABLE public.mind_map_history ENABLE ROW LEVEL SECURITY;
--- Users can only CRUD their own
-CREATE POLICY "Users manage own mind maps" ON public.mind_map_history
-  FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-```
-
-**UI changes:**
-
-- After generating a mind map, auto-save to the table
-- Add a "History" button (clock icon) in the toolbar that opens a drawer listing past mind maps
-- Tapping a saved mind map loads it instantly without re-generating
-- Swipe-to-delete or delete button on history items
-
-## 3. Smooth Branching Animations
-
-**Problem:** Currently nodes appear instantly when the map loads or when expanded — feels rigid and mechanical.
-
-**Fix:** Use SVG `<animate>` elements and CSS transitions:
-
-- When mind map first renders, branches animate outward from center with staggered delays (each branch starts 100ms after the previous)
-- Lines grow from center to branch position (animate `x2`/`y2` from center coords to final coords)
-- Node circles scale from 0 to full size with a spring-like ease
-- When expanding a node, new children animate outward from the parent node with the same organic feel
-- Use React state to track `animationPhase` — nodes render at center initially, then transition to final positions via inline style transitions
-
-**Approach:** Store node positions as state. On mount/expand, set initial positions at parent, then after a RAF, set final positions. CSS `transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)` handles the spring motion.
-
-## 4. Fix Text Cutoff & Overlap
-
-**Problems from screenshots:**
-
-- 600×600 viewBox is too small — nodes at edges get clipped
-- Fixed radii (140px branch, 70px child) cause overlap with 5+ branches
-- Text truncated at 12-14 chars is too aggressive
-
-**Fixes:**
-
-- Increase viewBox to 900×900 with dynamic scaling based on branch count
-- Increase truncation limits (20 chars for branches, 16 for children)
-- Use multi-line `<text>` with `<tspan>` for longer labels (word-wrap inside nodes)
-- Dynamically adjust `branchR` based on `branchCount` to prevent overlap
-- Increase child angle spread to prevent clustering
-
----
-
-## Files to Change
-
-
-| File                                          | Change                                                                        |
-| --------------------------------------------- | ----------------------------------------------------------------------------- |
-| `src/components/student/MindMapGenerator.tsx` | All 4 features: dual tap, animations, layout fixes, history UI, lecture panel |
-| Database migration                            | New `mind_map_history` table with RLS                                         |
-
-
-## Technical Detail
-
-- Single/double tap detection uses `setTimeout(300ms)` with a ref to track pending clicks
-- Lecture panel uses a `Sheet` component from the UI library, streaming via the same chat edge function
-- Animation uses CSS transitions on `transform` and `opacity` with staggered `transition-delay` per node index
-- History stored as JSONB so the full mind map structure can be restored without re-generation
-- ViewBox dynamically sized: `max(900, branchCount * 180)` to accommodate large maps and about lecture generation, it should function exactly like the subject section difficulty set to medium, not long, but everything from the subject section should be the generator for mind nap everything down to the details and image generation should be the generator for mind map
+Technical notes:
+- Add a small `terminal?: boolean` field to `MindMapNode`.
+- No database changes are needed.
+- This should fully cover parent nodes, child nodes, and any deeper nodes that are rendered.
