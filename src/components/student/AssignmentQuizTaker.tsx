@@ -149,6 +149,30 @@ export function AssignmentQuizTaker({
       toast({ variant: 'destructive', title: 'Error submitting quiz' });
     } else {
       toast({ title: 'Quiz submitted and graded!' });
+
+      // Send wrong answers to knowledge gap tracker (fire-and-forget)
+      const wrongAnswers = quizResults
+        .filter(r => !r.isCorrect)
+        .map(r => ({ topic: r.questionTitle, question: r.questionTitle }));
+      if (wrongAnswers.length > 0) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          const token = session?.access_token;
+          if (token) {
+            fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-memories`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({
+                knowledgeGapData: {
+                  subject: assignment.subject,
+                  wrongAnswers,
+                  source: 'assignment',
+                },
+              }),
+            }).catch(() => {});
+          }
+        });
+      }
+
       // Redirect to results page
       navigate(`/student/assignments/${assignment.id}/results`);
     }
