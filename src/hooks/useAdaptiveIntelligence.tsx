@@ -40,6 +40,7 @@ import {
   recordIntelligentAnswer,
   recordChatMessage,
   recordStudyActivity,
+  recordTeachingEvent,
   getDueReviewItems,
   type FeatureType,
   type StudentIntelligenceProfile,

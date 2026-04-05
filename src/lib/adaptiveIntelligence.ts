@@ -1491,3 +1491,44 @@ export function recordStudyActivity(params: {
 export function getDueReviewItems(subject?: string) {
   return getDueItems(subject);
 }
+
+// ============================================================================
+//  NEW: Teaching Event & Strategy Recording
+// ============================================================================
+
+/**
+ * Record a teaching event (content was generated/shown to the student).
+ * Call this after generating notes, lectures, flashcards, chat responses, etc.
+ */
+export function recordTeachingEvent(params: {
+  topic: string;
+  subject: string;
+  strategy?: string;
+  feature: string;
+  content?: string;
+}): void {
+  const strategy = params.strategy || (params.content ? inferStrategyFromContent(params.content) : 'worked_example');
+  
+  try {
+    recordTeachingStrategy({
+      topic: params.topic,
+      subject: params.subject,
+      strategy: strategy as any,
+      feature: params.feature,
+    });
+  } catch { /* ignore */ }
+
+  try {
+    recordTeaching({
+      topic: params.topic,
+      subject: params.subject,
+      strategy,
+      feature: params.feature,
+    });
+  } catch { /* ignore */ }
+}
+
+/**
+ * Re-export for direct component use.
+ */
+export { inferStrategyFromContent, selectBestStrategy, getCrossDomainRecommendations };
