@@ -16,6 +16,8 @@ import { useLearningStyle } from '@/hooks/useLearningStyle';
 export function AIStudyPlan() {
   const { user } = useAuth();
   const { t, language } = useThemeLanguage();
+  const { currentLevel: adaptiveLevel, getLevelPrompt } = useAdaptiveLevel();
+  const { getLearningStylePrompt } = useLearningStyle();
   const [subject, setSubject] = useState('');
   const [topic, setTopic] = useState('');
   const [gradeLevel, setGradeLevel] = useState('');
@@ -43,6 +45,10 @@ export function AIStudyPlan() {
       const systemPrompt = `You are an expert AI study coach that creates personalized study plans for students. Generate detailed, actionable study plans that students can follow on their own.
 
 ${language === 'ar' ? 'CRITICAL: Respond entirely in Arabic.' : ''}
+
+${getLevelPrompt(subject)}
+
+${getLearningStylePrompt()}
 
 Create a comprehensive study plan with these sections:
 1. **Study Plan Overview** - Subject, topic, estimated time
@@ -84,6 +90,8 @@ ${additionalNotes ? `- My Notes: ${additionalNotes}` : ''}`;
             messages: [{ role: 'user', content: userPrompt }],
             systemPrompt,
             language,
+            adaptiveLevel,
+            learningStyle: getLearningStylePrompt(),
           }),
         }
       );

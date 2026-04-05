@@ -343,6 +343,8 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
   const { language } = useThemeLanguage();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
+  const { getLearningStylePrompt } = useLearningStyle();
 
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -451,6 +453,8 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
           fileContent,
           fileName: selectedFile?.name || 'uploaded-file',
           customPrompt: lengthPrompt,
+          adaptiveLevel,
+          learningStyle: getLearningStylePrompt(),
         }),
       });
 
