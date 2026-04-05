@@ -1,101 +1,184 @@
-# Operation: Unleash the Full Intelligence Engine
+# Operation: Self-Learning Teaching Engine
 
-## The Discovery
+## What This Builds
 
-The 1,434-line adaptive intelligence engine with 7 subsystems (cognitive model, spaced repetition, mistake analyzer, predictive engine, emotional state, concept graph, rule generator) is **completely disconnected from every component**. None of the three main recording functions or the context generation API are called anywhere in the app. The brain exists but has no nervous system.
+Three interconnected systems that make Lumina detect whether its teaching is actually working, switch strategies when it's not, and transfer knowledge across subjects automatically.
 
-## What This Plan Does
+## Architecture
 
-Wire every AI-powered feature directly into the full intelligence engine so that all 7 subsystems actively feed data AND shape every AI response.
+```text
+┌──────────────────────────────────────────────────────────────────┐
+│              TEACHING STRATEGY TRACKER (NEW)                      │
+├────────────────┬─────────────────┬───────────────────────────────┤
+│  Strategy      │  Outcome        │  Effectiveness               │
+│  Logger        │  Evaluator      │  Ranker                      │
+│  "Used visual  │  "Did student   │  "Visual: 78% success        │
+│   analogy for  │   get next 3    │   Step-by-step: 45%          │
+│   fractions"   │   correct?"     │   → SWITCH to visual"        │
+├────────────────┴─────────────────┴───────────────────────────────┤
+│              CROSS-DOMAIN TRANSFER ENGINE (ENHANCED)              │
+│  "Student strong in Math → use math analogies for Physics"        │
+│  "Fraction errors → likely ratio errors in Chemistry too"         │
+├──────────────────────────────────────────────────────────────────┤
+│              LEARNING OUTCOME FEEDBACK LOOP (NEW)                 │
+│  Teach topic → Track if student answers correctly later →          │
+│  If YES → reinforce approach | If NO → flag & switch              │
+└──────────────────────────────────────────────────────────────────┘
+```
 
 ## Changes
 
-### 1. Create a React hook: `useAdaptiveIntelligence` (NEW FILE)
+### 1. New File: `src/lib/adaptive/teachingStrategyTracker.ts` (~400 lines)
 
-A hook that wraps the engine's async functions for easy component use:
+**Teaching Strategy Logger:**
 
-- `getContext(feature, subject?)` → calls `generateAdaptiveContext`
-- `recordAnswer(params)` → calls `recordIntelligentAnswer`
-- `recordChat(text)` → calls `recordChatMessage`
-- `recordActivity(params)` → calls `recordStudyActivity`
-- Caches the profile to avoid re-fetching on every render
+- Defines strategy types: `visual_diagram`, `step_by_step`, `analogy_based`, `socratic_questioning`, `practice_first`, `narrative_story`, `real_world_application`, `worked_example`, `peer_explanation`, `chunked_micro_lessons`
+- Records which strategy was used for which topic/subject
+- Stores in localStorage with timestamps
 
-### 2. StudyBuddy (`src/components/student/StudyBuddy.tsx`)
+**Outcome Evaluator:**
 
-- Replace basic `useAdaptiveLevel` with the full engine
-- Call `generateAdaptiveContext(userId, 'chat')` when building system prompt → injects all 7 subsystem contexts
-- Call `recordChatMessage(content)` on every user message sent
-- Call `recordStudyActivity` when a session starts
+- After a strategy is used, monitors the next 3-5 answers on that topic
+- Calculates a "strategy effectiveness score" (0-100) per strategy per subject
+- Detects patterns: "visual works for math but not for history"
 
-### 3. PracticeQuiz (`src/components/PracticeQuiz.tsx`)
+**Strategy Effectiveness Ranker:**
 
-- Replace `useAdaptiveLevel().recordAnswer` with `recordIntelligentAnswer` → feeds mistake analyzer, spaced repetition, cognitive model, emotional state, predictive engine, AND knowledge gaps simultaneously
-- Use `generateAdaptiveContext(userId, 'practice_quiz')` to inject full context into question generation prompt
+- Ranks all strategies per subject by effectiveness
+- Generates "preferred strategy" and "avoid strategy" lists per subject
+- Produces a context prompt: "For Math, use visual diagrams (78% effective). Avoid narrative approach (32% effective)."
 
-### 4. NotesSection (`src/components/NotesSection.tsx`)
+**Strategy Switch Detector:**
 
-- Call `getSimpleAdaptiveParams(userId, 'notes', subject)` before generation
-- Pass full context string (not just level/style) to `streamChat`
-- Call `recordStudyActivity` when notes are generated
+- Detects when the student has answered 3+ wrong in a row on the same topic after a particular teaching approach
+- Triggers a "SWITCH STRATEGY" signal that gets injected into the next AI prompt
+- Tracks how many times strategies have been switched per topic
 
-### 5. SATSection (`src/components/SATSection.tsx`)
+### 2. New File: `src/lib/adaptive/crossDomainTransfer.ts` (~350 lines)
 
-- Same pattern: use `getSimpleAdaptiveParams(userId, 'sat_prep', subject)`
-- Call `recordStudyActivity` on lecture generation
+**Enhanced Transfer Map:**
 
-### 6. FlashcardsSection (`src/components/FlashcardsSection.tsx`)
+- Expands the existing `knownTransfers` into a comprehensive skill-transfer graph with 15+ subject pairs
+- Maps specific skills: "proportional reasoning" transfers from Math → Chemistry → Physics
+- Maps specific error patterns: "if student confuses X in Math, they likely confuse Y in Chemistry"
 
-- Use full adaptive context for flashcard generation
-- Call `recordStudyActivity` when flashcards are created
+**Active Transfer Recommendations:**
 
-### 7. AIStudyPlan (`src/components/student/AIStudyPlan.tsx`)
+- When teaching a weak subject, finds the student's strongest correlated subject
+- Generates specific analogies: "Think of chemical equations like algebraic equations — both sides must balance"
+- Produces transfer context: "Student excels at Math (92%). When teaching Physics, frame concepts as mathematical relationships."
 
-- Call `generateAdaptiveContext(userId, 'study_plan', subject)` to get the full context including spaced repetition due items, knowledge gaps, cognitive state
-- Inject `fullContext` into the system prompt (replacing the current basic level/style injection)
+**Error Transfer Detection:**
 
-### 8. FileNotesGenerator (`src/components/FileNotesGenerator.tsx`)
+- When a student makes a mistake in one subject, checks if the same conceptual error pattern exists in related subjects
+- Creates "cross-domain knowledge gaps" that warn: "Student struggles with ratios in Math — likely also struggles with stoichiometry in Chemistry"
 
-- Pass full adaptive context to the `/functions/v1/explain-file` edge function
+### 3. New File: `src/lib/adaptive/learningOutcomeLoop.ts` (~300 lines)
 
-### 9. Main Chat (Index home via `StudentAppPreview` / `streamChat`)
+**Teaching Record:**
 
-- The home chat in Index.tsx uses `streamChat` directly — inject adaptive params
+- Every time Lumina teaches a concept (lecture, notes, chat explanation), logs it with a hash of the topic
+- Stores: topic, subject, strategy used, timestamp, teaching feature (notes/chat/lecture)
 
-### 10. ExaminationSection
+**Outcome Tracker:**
 
-- Pass adaptive context to exam generation edge function
+- When a student answers a question, checks if that topic was recently taught
+- If correct → marks teaching as "effective", boosts that strategy's score
+- If wrong → marks teaching as "ineffective", decrements strategy score
+- Calculates a "teaching success rate" per strategy per subject
 
-## Technical Pattern
+**Adaptive Strategy Selector:**
 
-Every component follows this flow:
+- Before generating content, checks what strategies have worked/failed for this student+subject
+- Generates a ranked recommendation: "Try worked_example (82% success rate for this student in Math)"
+- If all strategies have been tried and failed, recommends "escalation": break the topic into even smaller pieces or approach from a completely different angle
+
+### 4. Update: `src/lib/adaptiveIntelligence.ts`
+
+- Import and integrate all three new subsystems
+- Add `teachingStrategyTracker` to the subsystem orchestration pipeline
+- Add `crossDomainTransfer` enhanced context generation
+- Add `learningOutcomeLoop` to recording helpers
+- New recording function: `recordTeachingEvent(topic, subject, strategy, feature)`
+- New recording function: `recordStrategyOutcome(topic, isCorrect)`
+- Inject strategy effectiveness, cross-domain transfer, and teaching outcome data into every AI prompt
+
+### 5. Update: `src/lib/adaptive/ruleGenerator.ts`
+
+- Add new rule category: `strategy` for strategy-switching rules
+- Generate rules like: "SWITCH STRATEGY for topic X — previous approach failed 3 times"
+- Generate rules like: "USE cross-domain analogy — student strong in Math, teaching Physics"
+
+### 6. Update: `src/hooks/useAdaptiveIntelligence.tsx`
+
+- Expose `recordTeachingEvent` and `recordStrategyOutcome` to components
+- Add `getStrategyRecommendation(subject)` for components to query before generating
+
+### 7. Update AI-Generating Components
+
+All components that generate content (StudyBuddy, SubjectsSection, NotesSection, SATSection, FlashcardsSection, AIStudyPlan, PracticeQuiz) will:
+
+- Call `recordTeachingEvent()` after generating content
+- Include strategy effectiveness context in prompts
+- Include cross-domain transfer recommendations in prompts
+
+PracticeQuiz and any quiz-taking component will:
+
+- Call `recordStrategyOutcome()` after each answer to close the feedback loop
+
+## Technical Details
+
+**Storage:** localStorage for strategy data (consistent with existing subsystems). Keys:
+
+- `lumina_teaching_strategies` — strategy usage log
+- `lumina_strategy_effectiveness` — per-strategy success rates
+- `lumina_teaching_records` — what was taught and when
+- `lumina_cross_domain_gaps` — transferred error patterns
+
+**Context injection example:**
 
 ```text
-Component mounts
-  → useAuth() gets userId
-  → generateAdaptiveContext(userId, featureType, subject)
-  → Returns { adaptiveLevel, learningStyle (= fullContext), profile }
-  → Pass adaptiveLevel + learningStyle to streamChat / edge function
-  → On user action, call recordIntelligentAnswer / recordChatMessage / recordStudyActivity
-  → These feed all 7 subsystems simultaneously
+## TEACHING STRATEGY INTELLIGENCE
+Strategies ranked by effectiveness for "Math":
+1. visual_diagram: 82% success (12 uses)
+2. worked_example: 71% success (8 uses)
+3. narrative_story: 34% success (5 uses) ← AVOID
+
+ACTIVE SWITCH SIGNAL: Student failed 3x on "quadratic equations" 
+using step_by_step. SWITCH to visual_diagram or analogy_based.
+
+## CROSS-DOMAIN TRANSFER
+- Student excels at Math (92%) → use mathematical framing for Physics
+- "Ratios" weakness in Math → likely affects Chemistry stoichiometry
+- Leverage English reading skills (85%) for History source analysis
+
+## TEACHING OUTCOME FEEDBACK
+- Last 10 taught topics: 7/10 learned successfully (70% teaching rate)
+- "Fractions" taught 3 times, still not learned → try completely different approach
+- "Algebra basics" taught once, learned immediately → this student responds to worked examples in algebra
 ```
 
 ## Files to Create
 
-- `src/hooks/useAdaptiveIntelligence.tsx`
+- `src/lib/adaptive/teachingStrategyTracker.ts`
+- `src/lib/adaptive/crossDomainTransfer.ts`
+- `src/lib/adaptive/learningOutcomeLoop.ts`
 
 ## Files to Edit
 
+- `src/lib/adaptiveIntelligence.ts`
+- `src/lib/adaptive/ruleGenerator.ts`
+- `src/hooks/useAdaptiveIntelligence.tsx`
 - `src/components/student/StudyBuddy.tsx`
-- `src/components/PracticeQuiz.tsx`
+- `src/components/SubjectsSection.tsx`
 - `src/components/NotesSection.tsx`
 - `src/components/SATSection.tsx`
 - `src/components/FlashcardsSection.tsx`
+- `src/components/PracticeQuiz.tsx`
 - `src/components/student/AIStudyPlan.tsx`
-- `src/components/FileNotesGenerator.tsx`
-- `src/components/ExaminationSection.tsx`
 
 ## Impact
 
-Every AI response will now be shaped by: cognitive load, emotional state, mistake patterns, spaced repetition schedules, performance predictions, concept prerequisites, and personalized teaching rules — all at once.
+Lumina will now detect if its teaching works, switch approaches when it doesn't, leverage cross-subject strengths to teach weak areas, and continuously improve its strategy selection based on accumulated student data. This is the feedback loop that moves the system from "smart tutor" to "self-improving tutor."
 
-Don't forget the normal subject as well because you didn't mention it and as I said, go absolute haywire with it I approve you using my credit. Heck you could even use like 60 credits. If you wanted just use the amount that you really need to go to the absolute max with every feature, you could think of.
+And also just wanted to throw this out, but you built a prediction engine. Do you know the possibilities of that you could do a lot of things with it and you better think of one after this plan and also you must include very high and intelligent reasoning. I think this exists because you're using Gemini 2.5
