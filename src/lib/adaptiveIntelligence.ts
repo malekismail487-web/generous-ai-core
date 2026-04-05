@@ -48,6 +48,11 @@ import { computeEmotionalProfile, getEmotionalContextPrompt, recordEmotionalSign
 import { analyzeConceptGraph, getConceptGraphContextPrompt, type ConceptGraphAnalysis } from '@/lib/adaptive/conceptGraph';
 import { generateTeachingRules, generateSocraticQuestions, optimizeStudySession, getRulesContextPrompt, type TeachingRule, type SocraticQuestion, type SessionPlan } from '@/lib/adaptive/ruleGenerator';
 
+// === NEW Subsystem Imports (Self-Learning Teaching Engine) ===
+import { recordTeachingStrategy, recordStrategyOutcome, getTeachingStrategyContextPrompt, inferStrategyFromContent, type TeachingStrategy } from '@/lib/adaptive/teachingStrategyTracker';
+import { getCrossDomainContextPrompt, detectErrorTransfer, getCrossDomainRecommendations } from '@/lib/adaptive/crossDomainTransfer';
+import { recordTeaching, recordLearningOutcome, getLearningOutcomeContextPrompt, selectBestStrategy } from '@/lib/adaptive/learningOutcomeLoop';
+
 // ============================================================================
 //  TYPES & INTERFACES
 // ============================================================================
@@ -1136,6 +1141,33 @@ Use these to probe understanding — don't just give answers, make the student t
     sections.push(planPrompt);
   }
 
+  // === NEW: Teaching Strategy Intelligence ===
+  try {
+    const strategyPrompt = getTeachingStrategyContextPrompt(subject);
+    if (strategyPrompt) sections.push(strategyPrompt);
+  } catch { /* skip */ }
+
+  // === NEW: Cross-Domain Transfer ===
+  try {
+    const subjectAccuracies: Record<string, number> = {};
+    for (const perf of profile.subjectPerformances) {
+      subjectAccuracies[perf.subject] = perf.recentAccuracy;
+    }
+    if (subject && Object.keys(subjectAccuracies).length >= 2) {
+      const crossDomainPrompt = getCrossDomainContextPrompt({
+        targetSubject: subject,
+        subjectAccuracies,
+      });
+      if (crossDomainPrompt) sections.push(crossDomainPrompt);
+    }
+  } catch { /* skip */ }
+
+  // === NEW: Learning Outcome Feedback ===
+  try {
+    const outcomePrompt = getLearningOutcomeContextPrompt(subject);
+    if (outcomePrompt) sections.push(outcomePrompt);
+  } catch { /* skip */ }
+
   return sections;
 }
 
@@ -1308,6 +1340,15 @@ export async function recordIntelligentAnswer(params: {
         isNewTopicFormat: false,
       });
     } catch { /* ignore */ }
+
+    // 3b. Detect cross-domain error transfer
+    try {
+      detectErrorTransfer({
+        subject: params.subject,
+        errorDescription: params.questionText.slice(0, 120),
+        topic: params.questionText.slice(0, 60),
+      });
+    } catch { /* ignore */ }
   }
 
   // 4. Feed into Cognitive Model
@@ -1332,6 +1373,24 @@ export async function recordIntelligentAnswer(params: {
       accuracy: params.isCorrect ? 100 : 0,
       questionsAnswered: 1,
       sessionDurationMinutes: 1,
+    });
+  } catch { /* ignore */ }
+
+  // 7b. Feed into Teaching Strategy Outcome Tracker
+  try {
+    recordStrategyOutcome({
+      topic: params.questionText.slice(0, 60),
+      subject: params.subject,
+      isCorrect: params.isCorrect,
+    });
+  } catch { /* ignore */ }
+
+  // 7c. Feed into Learning Outcome Loop
+  try {
+    recordLearningOutcome({
+      topic: params.questionText.slice(0, 60),
+      subject: params.subject,
+      isCorrect: params.isCorrect,
     });
   } catch { /* ignore */ }
 
