@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { MathRenderer } from '@/components/MathRenderer';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
+import { useLearningStyle } from '@/hooks/useLearningStyle';
 
 export function AIStudyPlan() {
   const { user } = useAuth();

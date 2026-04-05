@@ -7,6 +7,8 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
+import { useLearningStyle } from '@/hooks/useLearningStyle';
 
 type NoteLength = 'short' | 'medium' | 'long';
 

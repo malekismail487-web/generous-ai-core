@@ -11,6 +11,8 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 import { FileNotesGenerator } from '@/components/FileNotesGenerator';
 import { useNotes, Note } from '@/hooks/useNotes';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
+import { useLearningStyle } from '@/hooks/useLearningStyle';
 
 const subjects = [
   { id: 'biology', emoji: '🧬' },

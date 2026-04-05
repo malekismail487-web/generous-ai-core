@@ -9,6 +9,8 @@ import { MathRenderer } from '@/components/MathRenderer';
 import { useAuth } from '@/hooks/useAuth';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
+import { useLearningStyle } from '@/hooks/useLearningStyle';
 
 const satSections = [
   { id: 'sat_math', emoji: '🔢', color: 'from-blue-500 to-cyan-600' },

@@ -9,6 +9,8 @@ import { MathRenderer } from '@/components/MathRenderer';
 import { useMaterials } from '@/hooks/useMaterials';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
+import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
+import { useLearningStyle } from '@/hooks/useLearningStyle';
 
 const subjects = [
   { id: 'biology', emoji: '🧬' },
