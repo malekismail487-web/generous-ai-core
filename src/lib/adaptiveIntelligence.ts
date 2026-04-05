@@ -1283,13 +1283,14 @@ export async function recordIntelligentAnswer(params: {
   try {
     const quality = mapAnswerToQuality(
       params.isCorrect,
-      params.difficulty as any,
-      params.responseTimeSec || null,
+      params.responseTimeSec,
+      params.difficulty,
     );
     recordConceptEncounter({
       subject: params.subject,
       topic: params.questionText.slice(0, 60),
       quality,
+      source: (params.source as any) || 'quiz',
     });
   } catch { /* ignore */ }
 
@@ -1302,8 +1303,9 @@ export async function recordIntelligentAnswer(params: {
         questionText: params.questionText,
         studentAnswer: params.studentAnswer,
         correctAnswer: params.correctAnswer,
-        historicalAccuracy: 50, // will be recalculated
-        responseTimeSec: params.responseTimeSec || null,
+        wasQuickAnswer: (params.responseTimeSec || 999) < 5,
+        historicalAccuracyOnTopic: 50,
+        isNewTopicFormat: false,
       });
     } catch { /* ignore */ }
   }
@@ -1311,8 +1313,7 @@ export async function recordIntelligentAnswer(params: {
   // 4. Feed into Cognitive Model
   try {
     recordCognitiveEventByType(
-      params.isCorrect ? 'correct_answer' : 'error',
-      { subject: params.subject },
+      params.isCorrect ? 'question_answered_correct' : 'question_answered_wrong',
     );
   } catch { /* ignore */ }
 
@@ -1330,7 +1331,7 @@ export async function recordIntelligentAnswer(params: {
       subject: params.subject,
       accuracy: params.isCorrect ? 100 : 0,
       questionsAnswered: 1,
-      timestamp: Date.now(),
+      sessionDurationMinutes: 1,
     });
   } catch { /* ignore */ }
 
