@@ -570,36 +570,32 @@ function runSubsystems(
   // 4. Learning Velocity
   let learningVelocity: LearningVelocity | null = null;
   try {
-    const subjects = subjectPerformances.map(p => p.subject);
-    learningVelocity = calculateLearningVelocity(subjects);
+    const answerData = answers.map(a => ({ subject: a.subject, is_correct: a.is_correct, created_at: a.created_at }));
+    learningVelocity = calculateLearningVelocity(answerData);
   } catch { /* graceful fallback */ }
 
-  // 5. Performance Forecasts (for each subject with enough data)
+  // 5. Performance Forecasts
   const performanceForecasts: PerformanceForecast[] = [];
-  for (const perf of subjectPerformances) {
-    if (perf.totalQuestions >= 5) {
-      try {
-        const forecast = forecastPerformance(perf.subject);
-        if (forecast) performanceForecasts.push(forecast);
-      } catch { /* skip */ }
-    }
-  }
+  try {
+    const answerData = answers.map(a => ({ subject: a.subject, is_correct: a.is_correct, created_at: a.created_at }));
+    const allForecasts = forecastPerformance(answerData);
+    performanceForecasts.push(...allForecasts);
+  } catch { /* skip */ }
 
   // 6. Growth Trajectory
   let growthTrajectory: GrowthTrajectory | null = null;
   try {
-    growthTrajectory = modelGrowthTrajectory(subjectPerformances.map(p => p.subject));
+    const answerData = answers.map(a => ({ subject: a.subject, is_correct: a.is_correct, created_at: a.created_at }));
+    growthTrajectory = modelGrowthTrajectory(answerData);
   } catch { /* graceful fallback */ }
 
   // 7. Cross-Subject Transfer
   const crossSubjectTransfers: CrossSubjectTransfer[] = [];
-  const subjects = subjectPerformances.filter(p => p.totalQuestions >= 5).map(p => p.subject);
-  if (subjects.length >= 2) {
-    try {
-      const transfers = analyzeCrossSubjectTransfer(subjects);
-      crossSubjectTransfers.push(...transfers);
-    } catch { /* skip */ }
-  }
+  try {
+    const answerData = answers.map(a => ({ subject: a.subject, is_correct: a.is_correct, created_at: a.created_at }));
+    const transfers = analyzeCrossSubjectTransfer(answerData);
+    crossSubjectTransfers.push(...transfers);
+  } catch { /* skip */ }
 
   // 8. Retention Summary
   let retentionSummary: RetentionSummary | null = null;
@@ -610,39 +606,47 @@ function runSubsystems(
   // 9. Concept Graph Analysis
   let conceptGraphAnalysis: ConceptGraphAnalysis | null = null;
   try {
-    const masteryMap: Record<string, number> = {};
-    for (const perf of subjectPerformances) {
-      masteryMap[perf.subject] = perf.recentAccuracy;
-    }
+    const perfData = subjectPerformances.map(p => ({
+      subject: p.subject,
+      accuracy: p.recentAccuracy,
+      strongTopics: p.strongTopics,
+      weakTopics: p.weakTopics,
+    }));
     const gapTopics = gaps.map(g => ({ subject: g.subject, topic: g.topic, severity: g.severity }));
-    conceptGraphAnalysis = analyzeConceptGraph(masteryMap, gapTopics);
+    conceptGraphAnalysis = analyzeConceptGraph(perfData, gapTopics);
   } catch { /* graceful fallback */ }
 
-  // 10. Teaching Rules (aggregates from all subsystems)
+  // 10. Teaching Rules
   let teachingRules: TeachingRule[] = [];
   try {
-    teachingRules = generateTeachingRules({
-      mistakeAnalysis: mistakeAnalysis || undefined,
-      emotionalProfile: emotionalProfile || undefined,
-      cognitiveState: cognitiveState || undefined,
-      learningVelocity: learningVelocity || undefined,
-      retentionSummary: retentionSummary || undefined,
-    });
+    if (mistakeAnalysis && emotionalProfile && cognitiveState && learningVelocity && growthTrajectory && retentionSummary) {
+      teachingRules = generateTeachingRules({
+        mistakeAnalysis,
+        emotionalProfile,
+        cognitiveState,
+        learningVelocity,
+        growthTrajectory,
+        retentionSummary,
+        dominantLearningStyle: 'balanced',
+        overallAccuracy: recentAccuracy,
+        activeSubjects: subjectPerformances.map(p => p.subject),
+      });
+    }
   } catch { /* graceful fallback */ }
 
-  // 11. Socratic Questions (for weak areas)
+  // 11. Socratic Questions
   let socraticQuestions: SocraticQuestion[] = [];
   try {
-    const weakTopics = gaps.slice(0, 5).map(g => ({
-      subject: g.subject,
-      topic: g.topic,
-      severity: g.severity,
-    }));
-    if (weakTopics.length > 0) {
+    const weakPerf = subjectPerformances.filter(p => p.recentAccuracy < 60);
+    if (weakPerf.length > 0) {
+      const targetSubject = weakPerf[0];
       socraticQuestions = generateSocraticQuestions({
-        knowledgeGaps: weakTopics,
-        mistakeAnalysis: mistakeAnalysis || undefined,
-        difficultyLevel: subjectPerformances[0]?.difficultyLevel || 'intermediate',
+        subject: targetSubject.subject,
+        currentTopic: targetSubject.weakTopics[0] || targetSubject.subject,
+        weakTopics: targetSubject.weakTopics,
+        strongTopics: targetSubject.strongTopics,
+        knowledgeGaps: gaps.slice(0, 5).map(g => ({ topic: g.topic, description: g.gap_description })),
+        difficulty: targetSubject.difficultyLevel,
       });
     }
   } catch { /* graceful fallback */ }
@@ -650,14 +654,19 @@ function runSubsystems(
   // 12. Session Plan
   let sessionPlan: SessionPlan | null = null;
   try {
-    sessionPlan = optimizeStudySession({
-      cognitiveState: cognitiveState || undefined,
-      emotionalProfile: emotionalProfile || undefined,
-      retentionSummary: retentionSummary || undefined,
-      learningVelocity: learningVelocity || undefined,
-      subjectPerformances,
-      growthTrajectory: growthTrajectory || undefined,
-    });
+    if (cognitiveState && retentionSummary && emotionalProfile) {
+      const dueItems = getDueItems();
+      sessionPlan = optimizeStudySession({
+        availableMinutes: 45,
+        cognitiveState,
+        retentionSummary,
+        weakSubjects: subjectPerformances.filter(p => p.recentAccuracy < 60).map(p => p.subject),
+        strongSubjects: subjectPerformances.filter(p => p.recentAccuracy >= 80).map(p => p.subject),
+        dueReviewItems: dueItems.map(i => `${i.subject}: ${i.topic}`),
+        emotionalProfile,
+        bestStudyTime: 'now',
+      });
+    }
   } catch { /* graceful fallback */ }
 
   return {
