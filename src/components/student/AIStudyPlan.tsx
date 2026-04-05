@@ -12,12 +12,14 @@ import { toast } from 'sonner';
 import { MathRenderer } from '@/components/MathRenderer';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 export function AIStudyPlan() {
   const { user } = useAuth();
   const { t, language } = useThemeLanguage();
   const { currentLevel: adaptiveLevel, getLevelPrompt } = useAdaptiveLevel();
   const { getLearningStylePrompt } = useLearningStyle();
+  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
   const [subject, setSubject] = useState('');
   const [topic, setTopic] = useState('');
   const [gradeLevel, setGradeLevel] = useState('');
@@ -40,6 +42,12 @@ export function AIStudyPlan() {
 
     setIsGenerating(true);
     setGeneratedPlan('');
+
+    // Get full intelligence context for study plan
+    let intelligenceParams = { adaptiveLevel: adaptiveLevel as string, learningStyle: getLearningStylePrompt() };
+    try {
+      intelligenceParams = await getSimpleParams('study_plan', subject);
+    } catch { /* fallback to basic */ }
 
     try {
       const systemPrompt = `You are an expert AI study coach that creates personalized study plans for students. Generate detailed, actionable study plans that students can follow on their own.
@@ -90,8 +98,8 @@ ${additionalNotes ? `- My Notes: ${additionalNotes}` : ''}`;
             messages: [{ role: 'user', content: userPrompt }],
             systemPrompt,
             language,
-            adaptiveLevel,
-            learningStyle: getLearningStylePrompt(),
+            adaptiveLevel: intelligenceParams.adaptiveLevel,
+            learningStyle: intelligenceParams.learningStyle,
           }),
         }
       );
@@ -128,6 +136,7 @@ ${additionalNotes ? `- My Notes: ${additionalNotes}` : ''}`;
       }
 
       toast.success(t('Study plan generated!', 'تم إنشاء خطة الدراسة!'));
+      recordActivity({ subject, topic, feature: 'study_plan' });
     } catch (e) {
       console.error('Generation error:', e);
       toast.error(t('Failed to generate plan', 'فشل إنشاء الخطة'));

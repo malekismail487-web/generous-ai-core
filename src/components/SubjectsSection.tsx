@@ -15,6 +15,7 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 import { exportAsPDF, exportAsDOCX, exportAsPPTX } from '@/lib/lectureExport';
 import {
@@ -77,6 +78,7 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel(selectedSubject || undefined);
   const { getLearningStylePrompt } = useLearningStyle();
   const { trackActivity, trackLectureViewed } = useActivityTracker();
+  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
 
   const containerClass = embedded
     ? "flex-1 min-h-0 overflow-y-auto py-4"

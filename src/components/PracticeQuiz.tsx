@@ -6,6 +6,7 @@ import { streamChat, Message } from '@/lib/chat';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 type Difficulty = 'beginner' | 'intermediate' | 'hard';
 type PracticeType = 'examination' | 'sat';
@@ -39,7 +40,8 @@ export function PracticeQuiz({ difficulty, type, onBack, learningContext }: Prac
   const [isLoading, setIsLoading] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
   const { toast } = useToast();
-  const { recordAnswer } = useAdaptiveLevel();
+  const { recordAnswer: basicRecordAnswer } = useAdaptiveLevel();
+  const { recordAnswer: intelligentRecordAnswer, getSimpleParams, recordActivity } = useAdaptiveIntelligence();
 
   const maxQuestions = difficulty === 'beginner' ? 5 : difficulty === 'intermediate' ? 7 : 10;
 
@@ -51,6 +53,14 @@ export function PracticeQuiz({ difficulty, type, onBack, learningContext }: Prac
     const satContext = type === 'sat' 
       ? 'Format the question in SAT standardized test style with reading comprehension or math focus.' 
       : '';
+
+    // Get full adaptive context from the intelligence engine
+    const subjectMatch = learningContext.match(/subject[:\s]+(\w+)/i);
+    const subjectName = subjectMatch ? subjectMatch[1] : 'general';
+    let adaptiveParams = { adaptiveLevel: '', learningStyle: '' };
+    try {
+      adaptiveParams = await getSimpleParams('practice_quiz', subjectName);
+    } catch { /* fallback to no adaptive context */ }
 
     const prompt = `Based on the following topics the student has been learning about:
 
@@ -78,6 +88,8 @@ Make sure the question directly relates to topics from their learning history. B
     try {
       await streamChat({
         messages,
+        adaptiveLevel: adaptiveParams.adaptiveLevel,
+        learningStyle: adaptiveParams.learningStyle,
         onDelta: (chunk) => {
           response += chunk;
         },
@@ -133,10 +145,23 @@ Make sure the question directly relates to topics from their learning history. B
       setScore((prev) => prev + 1);
     }
 
-    // Record for adaptive learning
+    // Record for adaptive learning — FULL intelligence engine
     const subjectMatch = learningContext.match(/subject[:\s]+(\w+)/i);
     const subjectName = subjectMatch ? subjectMatch[1] : 'general';
-    recordAnswer({
+    
+    // Fire the full intelligent answer recording (feeds all 7 subsystems)
+    intelligentRecordAnswer({
+      subject: subjectName,
+      questionText: currentQuestion?.question || '',
+      studentAnswer: currentQuestion?.options[index] || '',
+      correctAnswer: currentQuestion?.options[currentQuestion?.correctIndex] || '',
+      isCorrect: !!isCorrect,
+      difficulty,
+      source: type === 'sat' ? 'sat_practice' : 'practice_quiz',
+    });
+
+    // Also record via basic adaptive level for backward compat
+    basicRecordAnswer({
       subject: subjectName,
       questionText: currentQuestion?.question,
       studentAnswer: currentQuestion?.options[index],

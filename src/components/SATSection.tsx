@@ -11,6 +11,7 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 const satSections = [
   { id: 'sat_math', emoji: '🔢', color: 'from-blue-500 to-cyan-600' },
@@ -26,6 +27,7 @@ export function SATSection() {
   const { language } = useThemeLanguage();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
   const { getLearningStylePrompt } = useLearningStyle();
+  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
   const [viewState, setViewState] = useState<ViewState>('sections');
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
@@ -44,24 +46,33 @@ export function SATSection() {
     setIsLoading(true);
     setLectureContent('');
     const sectionName = getSubjectName(selectedSection, 'en');
+
+    // Get full intelligence context
+    let intelligenceParams = { adaptiveLevel: adaptiveLevel as string, learningStyle: getLearningStylePrompt() };
+    try {
+      intelligenceParams = await getSimpleParams('sat_prep', sectionName);
+    } catch { /* fallback to basic */ }
+
     const prompt = `You are an SAT prep tutor teaching ${sectionName} to a ${selectedGrade} student.\n\nThe student is studying/struggling with: "${topic}"\n\nGenerate SAT-style material that includes:\n1. Clear explanation of the concept\n2. SAT-specific strategies and tips\n3. Example SAT-style questions with explanations\n4. Common mistakes to avoid\n5. Quick review summary\n\nIMPORTANT: For ALL mathematical expressions, use LaTeX notation.\n\nStay strictly within SAT ${sectionName} scope. Match official SAT format and style.`;
     const messages: Message[] = [{ id: '1', role: 'user', content: prompt }];
     let response = '';
     try {
       await streamChat({
         messages,
-        adaptiveLevel,
-        learningStyle: getLearningStylePrompt(),
+        adaptiveLevel: intelligenceParams.adaptiveLevel,
+        learningStyle: intelligenceParams.learningStyle,
         onDelta: (chunk) => { response += chunk; setLectureContent(response); },
         onDone: async () => {
           const newMaterial = await createMaterial(selectedSection, selectedGrade, topic, response);
           if (newMaterial) setActiveMaterial(newMaterial);
           setIsLoading(false);
+          // Record study activity
+          recordActivity({ subject: sectionName, topic, feature: 'sat_prep' });
         },
         onError: (error) => { setIsLoading(false); toast({ variant: 'destructive', title: 'Error', description: error.message }); },
       });
     } catch { setIsLoading(false); }
-  }, [selectedSection, selectedGrade, user, createMaterial, toast, adaptiveLevel, getLearningStylePrompt]);
+  }, [selectedSection, selectedGrade, user, createMaterial, toast, adaptiveLevel, getLearningStylePrompt, getSimpleParams, recordActivity]);
 
   const handleSectionClick = (sectionId: string) => { setSelectedSection(sectionId); setSelectedGrade(null); setActiveMaterial(null); setLectureContent(''); setViewState('grade'); };
   const handleGradeSelect = (grade: string) => {

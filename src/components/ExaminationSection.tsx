@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 // ============================================
 // ENUMS (IMMUTABLE)
 // ============================================
@@ -358,6 +359,7 @@ export function ExaminationSection() {
   const { getMaterialsBySubjectAndGrade, getMaterialsBySubject } = useMaterials();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
   const { trackExamStarted, trackExamCompleted } = useActivityTracker();
+  const { recordAnswer: intelligentRecordAnswer, recordActivity } = useAdaptiveIntelligence();
 
   // Get saved materials for the selected subject and grade
   const savedMaterials = useMemo(() => {
