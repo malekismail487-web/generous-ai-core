@@ -1,60 +1,101 @@
-Fix: Wire Adaptive Learning Into All AI Generation Features
+# Operation: Unleash the Full Intelligence Engine
 
-## Problem
+## The Discovery
 
-6 out of 11 AI-powered features completely ignore the student's adaptive level and learning style. They generate identical content for beginners and advanced students.
+The 1,434-line adaptive intelligence engine with 7 subsystems (cognitive model, spaced repetition, mistake analyzer, predictive engine, emotional state, concept graph, rule generator) is **completely disconnected from every component**. None of the three main recording functions or the context generation API are called anywhere in the app. The brain exists but has no nervous system.
 
-## What Changes
+## What This Plan Does
 
-### 1. Notes Section (`src/components/NotesSection.tsx`)
+Wire every AI-powered feature directly into the full intelligence engine so that all 7 subsystems actively feed data AND shape every AI response.
 
-- Import `useAdaptiveLevel` and `useLearningStyle`
-- Pass `adaptiveLevel` and `learningStyle` to `streamChat()` call
+## Changes
 
-### 2. SAT Section (`src/components/SATSection.tsx`)
+### 1. Create a React hook: `useAdaptiveIntelligence` (NEW FILE)
 
-- Import both hooks
-- Pass adaptive params to `streamChat()` call
+A hook that wraps the engine's async functions for easy component use:
 
-### 3. Flashcards Section (`src/components/FlashcardsSection.tsx`)
+- `getContext(feature, subject?)` → calls `generateAdaptiveContext`
+- `recordAnswer(params)` → calls `recordIntelligentAnswer`
+- `recordChat(text)` → calls `recordChatMessage`
+- `recordActivity(params)` → calls `recordStudyActivity`
+- Caches the profile to avoid re-fetching on every render
 
-- Import both hooks
-- Pass adaptive params to the AI generation call
+### 2. StudyBuddy (`src/components/student/StudyBuddy.tsx`)
 
-### 4. File Notes Generator (`src/components/FileNotesGenerator.tsx`)
+- Replace basic `useAdaptiveLevel` with the full engine
+- Call `generateAdaptiveContext(userId, 'chat')` when building system prompt → injects all 7 subsystem contexts
+- Call `recordChatMessage(content)` on every user message sent
+- Call `recordStudyActivity` when a session starts
 
-- Import both hooks
-- Pass `adaptiveLevel` and `learningStyle` to the `/functions/v1/explain-file` fetch body (same pattern as PodcastsSection)
+### 3. PracticeQuiz (`src/components/PracticeQuiz.tsx`)
 
-### 5. AI Study Plan (`src/components/student/AIStudyPlan.tsx`)
+- Replace `useAdaptiveLevel().recordAnswer` with `recordIntelligentAnswer` → feeds mistake analyzer, spaced repetition, cognitive model, emotional state, predictive engine, AND knowledge gaps simultaneously
+- Use `generateAdaptiveContext(userId, 'practice_quiz')` to inject full context into question generation prompt
 
-- Import both hooks
-- Inject level context into the system prompt sent to `/functions/v1/chat`
+### 4. NotesSection (`src/components/NotesSection.tsx`)
 
-### 6. Practice Section (`src/components/PracticeSection.tsx`)
+- Call `getSimpleAdaptiveParams(userId, 'notes', subject)` before generation
+- Pass full context string (not just level/style) to `streamChat`
+- Call `recordStudyActivity` when notes are generated
 
-- Import both hooks
-- Pass adaptive params to the AI generation call
+### 5. SATSection (`src/components/SATSection.tsx`)
 
-## Pattern
+- Same pattern: use `getSimpleAdaptiveParams(userId, 'sat_prep', subject)`
+- Call `recordStudyActivity` on lecture generation
 
-Every fix follows the same 3-line pattern already used in SubjectsSection and PodcastsSection:
+### 6. FlashcardsSection (`src/components/FlashcardsSection.tsx`)
 
-1. `const { currentLevel: adaptiveLevel } = useAdaptiveLevel();`
-2. `const { getLearningStylePrompt } = useLearningStyle();`
-3. Add `adaptiveLevel` and `learningStyle: getLearningStylePrompt()` to the AI call
+- Use full adaptive context for flashcard generation
+- Call `recordStudyActivity` when flashcards are created
 
-## Files to change
+### 7. AIStudyPlan (`src/components/student/AIStudyPlan.tsx`)
 
+- Call `generateAdaptiveContext(userId, 'study_plan', subject)` to get the full context including spaced repetition due items, knowledge gaps, cognitive state
+- Inject `fullContext` into the system prompt (replacing the current basic level/style injection)
+
+### 8. FileNotesGenerator (`src/components/FileNotesGenerator.tsx`)
+
+- Pass full adaptive context to the `/functions/v1/explain-file` edge function
+
+### 9. Main Chat (Index home via `StudentAppPreview` / `streamChat`)
+
+- The home chat in Index.tsx uses `streamChat` directly — inject adaptive params
+
+### 10. ExaminationSection
+
+- Pass adaptive context to exam generation edge function
+
+## Technical Pattern
+
+Every component follows this flow:
+
+```text
+Component mounts
+  → useAuth() gets userId
+  → generateAdaptiveContext(userId, featureType, subject)
+  → Returns { adaptiveLevel, learningStyle (= fullContext), profile }
+  → Pass adaptiveLevel + learningStyle to streamChat / edge function
+  → On user action, call recordIntelligentAnswer / recordChatMessage / recordStudyActivity
+  → These feed all 7 subsystems simultaneously
+```
+
+## Files to Create
+
+- `src/hooks/useAdaptiveIntelligence.tsx`
+
+## Files to Edit
+
+- `src/components/student/StudyBuddy.tsx`
+- `src/components/PracticeQuiz.tsx`
 - `src/components/NotesSection.tsx`
 - `src/components/SATSection.tsx`
 - `src/components/FlashcardsSection.tsx`
-- `src/components/FileNotesGenerator.tsx`
 - `src/components/student/AIStudyPlan.tsx`
-- `src/components/PracticeSection.tsx`
+- `src/components/FileNotesGenerator.tsx`
+- `src/components/ExaminationSection.tsx`
 
-No database or edge function changes needed.
+## Impact
 
-&nbsp;
+Every AI response will now be shaped by: cognitive load, emotional state, mistake patterns, spaced repetition schedules, performance predictions, concept prerequisites, and personalized teaching rules — all at once.
 
-And remember the flow should work like this the AI tracks the data of the user like literal data from every questions answered and every activity and every single chat message and chat history this is gonna be considered input or the feeding source, the AI feeds on those sources and stores those sources in its brain it then like "talks" to itself and tries to make sense of the data. It makes sense of the data and converts it into like a new rule and also remember that it MUST record every single question they use their ever types and the AI ever types because this place is a huge role and let me tell you why for example the student talks to the AI and the AI notices that for example the student learns logically the most this is considered a data it stores it in its brain and it always knows to make that approach unless it changes again and the students now surprisingly learns conceptually this is all just an example.This is how it should work for the AI chat. For questions and answers it should record every answer solved by the student for answers that are solved right the AI brings a bit more questions like them, but if a question was answered wrong, the AI takes the data and tries to make less questions like it or maybe the same questions but like word it differently and the output or the AI's response should apply to the subject, and I think the subject should feed off the data recorded in every chat message and probably every right and wrong answers AI study plans should feed off chat messages and also right or wrong answer answers notes should follow both chat and answers and the SAT prep should follow chat and answers as well and flashcards should follow chat and answers as well. I think I have now. Explained to you how the adaptive learning should work and also a note. Take your time. I know I know that this is gonna be hard so take your time and please do it. Professionally don't do rushed codes or a little amount of code. No, I want it to be professional like I want you to write thousands upon thousands of lines because I need you to perfect this I know that the JSON files are big. They are like probably 9000 lines of codes. I want the adaptive learning to be as big or almost as big as that, whatever you can do just do a professionally.
+Don't forget the normal subject as well because you didn't mention it and as I said, go absolute haywire with it I approve you using my credit. Heck you could even use like 60 credits. If you wanted just use the amount that you really need to go to the absolute max with every feature, you could think of.
