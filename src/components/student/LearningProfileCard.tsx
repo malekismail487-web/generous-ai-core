@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { getStoredBehavior } from '@/hooks/useActivityTracker';
 import { Brain, RefreshCw, ShieldCheck } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,25 @@ const styleEmojis: Record<string, string> = {
 export function LearningProfileCard() {
   const { profile, loading, recalculate } = useLearningStyle();
   const { t } = useThemeLanguage();
+  const [behavioralCount, setBehavioralCount] = useState(0);
+
+  // Poll behavioral data every 10 seconds to detect new interactions
+  useEffect(() => {
+    const check = () => {
+      const behavior = getStoredBehavior();
+      setBehavioralCount(behavior.totalInteractions);
+    };
+    check();
+    const interval = setInterval(check, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-recalculate when behavioral data changes significantly
+  useEffect(() => {
+    if (!loading && behavioralCount > 0 && behavioralCount % 5 === 0) {
+      recalculate();
+    }
+  }, [behavioralCount, loading, recalculate]);
 
   useEffect(() => {
     if (!loading && !profile) {

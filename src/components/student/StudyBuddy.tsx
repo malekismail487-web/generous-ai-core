@@ -87,9 +87,9 @@ function saveStyle(style: string) {
 
 export function StudyBuddy() {
   const { user } = useAuth();
-  const { currentLevel, profiles, getLevelPrompt } = useAdaptiveLevel();
+  const { currentLevel, profiles, getLevelPrompt, recordChatInteraction } = useAdaptiveLevel();
   const { t, language } = useThemeLanguage();
-  const { trackStudyBuddyChat } = useActivityTracker();
+  const { trackStudyBuddyChat, trackQuestionAsked, trackExplicitRequest, trackTimeOnContent } = useActivityTracker();
   const { getContext, recordChat, recordActivity, recordTeaching } = useAdaptiveIntelligence();
 
   // Persistent conversations via Supabase
@@ -380,6 +380,12 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
     recordChat(content);
     recordActivity({ subject: 'general', topic: content.slice(0, 60), feature: 'chat' });
 
+    // === BEHAVIORAL TRACKING — Document every message word-for-word ===
+    trackQuestionAsked(content, 'general');
+    trackExplicitRequest(content, 'general');
+    // Document this message word-for-word in the database
+    recordChatInteraction(content, 'general');
+
     let assistantContent = '';
     const assistantId = crypto.randomUUID();
 
@@ -459,6 +465,10 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
         }
         // Save assistant message to DB
         await addMessage('assistant', assistantContent, convId);
+
+        // Track engagement time for the assistant response (estimate ~1s per 50 chars)
+        const estimatedReadTime = Math.max(10, Math.round(assistantContent.length / 50));
+        trackTimeOnContent('verbal', estimatedReadTime, 'general');
 
         // Extract memories from conversation (fire-and-forget) — only after ≥6 messages to avoid waste
         const allMsgs = [...localMessages, userMsg, { role: 'assistant', content: assistantContent }];

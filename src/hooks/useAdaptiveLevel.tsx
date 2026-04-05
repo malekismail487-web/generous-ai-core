@@ -83,6 +83,33 @@ export function useAdaptiveLevel(subject?: string) {
     await fetchProfiles();
   }, [user, fetchProfiles]);
 
+  /**
+   * Record a chat interaction as a "soft" learning signal.
+   * Every chat message is documented and contributes to level progression.
+   * The progression is conservative: sustained complex questioning moves levels.
+   */
+  const recordChatInteraction = useCallback(async (messageText: string, subject?: string) => {
+    if (!user) return;
+
+    const subj = (subject || 'general').toLowerCase();
+
+    // Store the full message in answer history as a chat-type entry
+    // This ensures EVERY message is documented word-for-word in the database
+    await supabase.from('student_answer_history').insert({
+      user_id: user.id,
+      subject: subj,
+      question_text: messageText,
+      student_answer: messageText,
+      correct_answer: null,
+      is_correct: true, // chat interactions count as positive engagement
+      difficulty: 'medium',
+      source: 'chat',
+    });
+
+    // Refresh profiles so the UI updates
+    await fetchProfiles();
+  }, [user, fetchProfiles]);
+
   const getLevelPrompt = useCallback((subjectName?: string): string => {
     const level = subjectName
       ? profiles.find(p => p.subject === subjectName.toLowerCase())?.difficulty_level || currentLevel
@@ -102,6 +129,7 @@ export function useAdaptiveLevel(subject?: string) {
     currentLevel,
     loading,
     recordAnswer,
+    recordChatInteraction,
     getLevelPrompt,
     refetch: fetchProfiles,
   };
