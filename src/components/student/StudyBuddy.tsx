@@ -5,6 +5,7 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { useConversations } from '@/hooks/useConversations';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
+import { useLearningStyle } from '@/hooks/useLearningStyle';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
@@ -91,6 +92,7 @@ export function StudyBuddy() {
   const { t, language } = useThemeLanguage();
   const { trackStudyBuddyChat, trackQuestionAsked, trackExplicitRequest, trackTimeOnContent } = useActivityTracker();
   const { getContext, recordChat, recordActivity, recordTeaching } = useAdaptiveIntelligence();
+  const { recalculate: recalculateLearningStyle } = useLearningStyle();
 
   // Persistent conversations via Supabase
   const {
@@ -385,6 +387,8 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
     trackExplicitRequest(content, 'general');
     // Document this message word-for-word in the database
     recordChatInteraction(content, 'general');
+    // Trigger learning style recalculation to sync behavioral data to DB
+    recalculateLearningStyle();
 
     let assistantContent = '';
     const assistantId = crypto.randomUUID();

@@ -27,8 +27,8 @@ const STYLE_LABELS: Record<string, string> = {
   balanced: '⚖️ Balanced',
 };
 
-const MIN_INTERACTIONS_FOR_PROFILE = 20;
-const HIGH_CONFIDENCE_THRESHOLD = 100;
+const MIN_INTERACTIONS_FOR_PROFILE = 5;
+const HIGH_CONFIDENCE_THRESHOLD = 50;
 
 /**
  * Analyze behavioral data points to calculate learning style percentages.
