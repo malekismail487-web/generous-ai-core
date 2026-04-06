@@ -387,6 +387,8 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
     trackExplicitRequest(content, 'general');
     // Document this message word-for-word in the database
     recordChatInteraction(content, 'general');
+    // Trigger learning style recalculation to sync behavioral data to DB
+    recalculateLearningStyle();
 
     let assistantContent = '';
     const assistantId = crypto.randomUUID();
