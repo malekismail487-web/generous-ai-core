@@ -261,8 +261,17 @@ export default function LCTPanel() {
     const { data: examData } = await supabase.from('lct_exams').select('*').eq('id', examId).single();
     if (examData) {
       setExam(examData as LCTExam);
-      const { data } = await supabase.from('lct_exam_students').select('*').eq('exam_id', examId).order('score', { ascending: false });
-      setResultsData(data || []);
+      const { data: studentData } = await supabase.from('lct_exam_students').select('*').eq('exam_id', examId).order('score', { ascending: false });
+      // Fetch student names
+      if (studentData?.length) {
+        const studentIds = studentData.map((s: any) => s.student_id);
+        const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', studentIds);
+        const nameMap: Record<string, string> = {};
+        (profiles || []).forEach((p: any) => { nameMap[p.id] = p.full_name; });
+        setResultsData(studentData.map((s: any) => ({ ...s, full_name: nameMap[s.student_id] || 'Unknown' })));
+      } else {
+        setResultsData([]);
+      }
       setStep('results');
     }
   };
