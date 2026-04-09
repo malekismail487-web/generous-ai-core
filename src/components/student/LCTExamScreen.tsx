@@ -297,7 +297,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
 
         // Load questions
         const qs = Array.isArray(data.translated_questions_json) ? data.translated_questions_json : [];
-        setQuestions(qs as QuestionData[]);
+        setQuestions(qs as unknown as QuestionData[]);
 
         // Restore answers
         if (data.answers_json && typeof data.answers_json === 'object' && !Array.isArray(data.answers_json)) {
