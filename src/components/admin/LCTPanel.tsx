@@ -595,7 +595,7 @@ export default function LCTPanel() {
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-mono text-muted-foreground w-6">#{i + 1}</span>
                     <div>
-                      <p className="text-sm font-medium">Student {student.student_id.slice(0, 8)}...</p>
+                      <p className="text-sm font-medium">{student.full_name || 'Unknown Student'}</p>
                       <p className="text-xs text-muted-foreground capitalize">{student.learning_style} · {student.status}</p>
                     </div>
                   </div>
