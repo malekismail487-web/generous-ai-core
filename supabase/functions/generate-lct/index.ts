@@ -9,6 +9,10 @@ const corsHeaders = {
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const SUPER_ADMIN_EMAIL = "malekismail487@gmail.com";
 
+// Primary model for generation, secondary for validation
+const PRIMARY_MODEL = "google/gemini-2.5-flash";
+const VALIDATION_MODEL = "google/gemini-2.5-flash-lite";
+
 function getSupabaseAdmin() {
   return createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -23,8 +27,20 @@ function respond(data: any, status = 200) {
   });
 }
 
-async function callAI(prompt: string, systemPrompt: string, apiKey: string): Promise<string> {
-  const maxRetries = 3;
+// ─── AI CALL WITH RETRY + PROPER API KEY ────────────────────────────────────
+async function callAI(
+  prompt: string,
+  systemPrompt: string,
+  options: { model?: string; maxTokens?: number; temperature?: number } = {}
+): Promise<string> {
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
+
+  const model = options.model || PRIMARY_MODEL;
+  const maxTokens = options.maxTokens || 32000;
+  const temperature = options.temperature || 0.7;
+  const maxRetries = 4;
+
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const res = await fetch(AI_GATEWAY_URL, {
@@ -34,21 +50,26 @@ async function callAI(prompt: string, systemPrompt: string, apiKey: string): Pro
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: prompt },
           ],
-          temperature: 0.7,
-          max_tokens: 16000,
+          temperature,
+          max_tokens: maxTokens,
         }),
       });
 
-      if (res.status === 429 || res.status === 402) {
-        const delay = res.status === 402 
-          ? (attempt + 1) * 20000 
-          : (attempt + 1) * 15000;
-        console.warn(`AI rate limited (${res.status}), retrying in ${delay}ms...`);
+      if (res.status === 429) {
+        const delay = Math.min((attempt + 1) * 15000, 60000);
+        console.warn(`Rate limited (429), retry ${attempt + 1}/${maxRetries} in ${delay}ms`);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+
+      if (res.status === 402) {
+        const delay = Math.min((attempt + 1) * 20000, 60000);
+        console.warn(`Payment required (402), retry ${attempt + 1}/${maxRetries} in ${delay}ms`);
         await new Promise((r) => setTimeout(r, delay));
         continue;
       }
@@ -61,66 +82,133 @@ async function callAI(prompt: string, systemPrompt: string, apiKey: string): Pro
       const data = await res.json();
       return data.choices?.[0]?.message?.content || "";
     } catch (e) {
+      console.error(`AI call attempt ${attempt + 1} failed:`, e);
       if (attempt === maxRetries - 1) throw e;
       await new Promise((r) => setTimeout(r, (attempt + 1) * 10000));
     }
   }
-  throw new Error("AI call failed after retries");
+  throw new Error("AI call failed after all retries");
 }
 
+// ─── ROBUST JSON PARSER ─────────────────────────────────────────────────────
 function parseJsonFromAI(text: string): any[] {
+  // Strategy 1: Direct parse
   try {
-    // Try direct parse first
     const parsed = JSON.parse(text.trim());
     return Array.isArray(parsed) ? parsed : [parsed];
-  } catch {
-    // Try extracting from markdown code blocks
-    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[1].trim());
-        return Array.isArray(parsed) ? parsed : [parsed];
-      } catch {
-        // Fall through
-      }
-    }
-    
-    // Try finding array in text
-    const arrayMatch = text.match(/\[[\s\S]*\]/);
-    if (arrayMatch) {
-      try {
-        return JSON.parse(arrayMatch[0]);
-      } catch {
-        // Fall through
-      }
-    }
-    
-    throw new Error(`Failed to parse AI response as JSON. Response starts with: ${text.slice(0, 200)}`);
+  } catch { /* continue */ }
+
+  // Strategy 2: Extract from markdown code blocks
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlockMatch) {
+    try {
+      const parsed = JSON.parse(codeBlockMatch[1].trim());
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch { /* continue */ }
   }
+
+  // Strategy 3: Find largest JSON array in text
+  const arrayMatches = text.match(/\[[\s\S]*\]/g);
+  if (arrayMatches) {
+    // Try the longest match first (most likely the full array)
+    const sorted = arrayMatches.sort((a, b) => b.length - a.length);
+    for (const match of sorted) {
+      try {
+        const parsed = JSON.parse(match);
+        if (Array.isArray(parsed)) return parsed;
+      } catch { /* continue */ }
+    }
+  }
+
+  // Strategy 4: Try to fix common JSON issues (trailing commas, etc.)
+  try {
+    const cleaned = text
+      .replace(/,\s*]/g, ']')
+      .replace(/,\s*}/g, '}')
+      .replace(/\n/g, ' ');
+    const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      return JSON.parse(arrayMatch[0]);
+    }
+  } catch { /* continue */ }
+
+  throw new Error(`Failed to parse AI response as JSON. First 300 chars: ${text.slice(0, 300)}`);
 }
 
+// ─── QUESTION VALIDATOR ─────────────────────────────────────────────────────
 function validateQuestions(questions: any[], expectedCount: number, subject: string): any[] {
-  // Validate each question has required fields
   const valid = questions.filter((q: any) => {
-    return q && 
-      typeof q.question === 'string' && q.question.length > 0 &&
-      Array.isArray(q.options) && q.options.length === 4 &&
-      typeof q.correct_answer === 'string' && ['A', 'B', 'C', 'D'].includes(q.correct_answer);
+    if (!q || typeof q.question !== 'string' || q.question.length < 10) return false;
+    if (!Array.isArray(q.options) || q.options.length !== 4) return false;
+    if (typeof q.correct_answer !== 'string' || !['A', 'B', 'C', 'D'].includes(q.correct_answer.toUpperCase())) return false;
+    // Ensure options are meaningful (not empty strings)
+    if (q.options.some((o: any) => typeof o !== 'string' || o.trim().length < 2)) return false;
+    return true;
   });
 
-  if (valid.length < expectedCount * 0.8) {
-    console.warn(`${subject}: Only ${valid.length}/${expectedCount} valid questions generated`);
-  }
-
-  // Ensure all have subject and explanation
+  // Normalize
   valid.forEach((q: any) => {
+    q.correct_answer = q.correct_answer.toUpperCase();
     if (!q.subject) q.subject = subject;
-    if (!q.explanation) q.explanation = "See the answer key for details.";
+    if (!q.explanation || q.explanation.length < 5) q.explanation = "Review the correct answer and its reasoning.";
   });
+
+  if (valid.length < expectedCount * 0.7) {
+    console.warn(`[VALIDATE] ${subject}: Only ${valid.length}/${expectedCount} passed validation — below 70% threshold`);
+  } else {
+    console.log(`[VALIDATE] ${subject}: ${valid.length}/${expectedCount} questions valid`);
+  }
 
   return valid;
 }
 
+// ─── CROSS-MODEL VALIDATION ─────────────────────────────────────────────────
+async function validateAnswerKeys(questions: any[], subject: string): Promise<any[]> {
+  try {
+    // Send a sample (first 5 questions) for cross-validation
+    const sample = questions.slice(0, Math.min(5, questions.length));
+    const sampleForValidation = sample.map((q: any) => ({
+      id: q.id,
+      question: q.question,
+      options: q.options,
+      claimed_answer: q.correct_answer,
+    }));
+
+    const validationResponse = await callAI(
+      `Verify these ${subject} exam questions. For each, confirm if the claimed correct answer is actually correct. Return ONLY a JSON array: [{"id": 1, "claimed_answer": "A", "verified_answer": "A", "is_correct": true, "fix_explanation": ""}]
+
+Questions: ${JSON.stringify(sampleForValidation)}`,
+      `You are an expert ${subject} teacher. Verify MCQ answers with 100% accuracy. If a claimed answer is wrong, provide the correct one.`,
+      { model: VALIDATION_MODEL, maxTokens: 4000, temperature: 0.1 }
+    );
+
+    const validations = parseJsonFromAI(validationResponse);
+    let corrections = 0;
+
+    validations.forEach((v: any) => {
+      if (!v.is_correct && v.verified_answer) {
+        const q = questions.find((q: any) => q.id === v.id);
+        if (q && ['A', 'B', 'C', 'D'].includes(v.verified_answer.toUpperCase())) {
+          console.log(`[CROSS-VALIDATE] ${subject} Q${v.id}: Corrected ${q.correct_answer} → ${v.verified_answer}`);
+          q.correct_answer = v.verified_answer.toUpperCase();
+          if (v.fix_explanation) q.explanation = v.fix_explanation;
+          corrections++;
+        }
+      }
+    });
+
+    if (corrections > 0) {
+      console.log(`[CROSS-VALIDATE] ${subject}: ${corrections} answer key corrections applied`);
+    }
+
+    return questions;
+  } catch (e) {
+    console.warn(`[CROSS-VALIDATE] ${subject} validation failed, using unverified answers:`, e);
+    return questions; // Graceful fallback — return unverified
+  }
+}
+
+// ─── AUTH VERIFICATION ──────────────────────────────────────────────────────
 async function verifyAdmin(req: Request, supabase: any): Promise<boolean> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) return false;
@@ -156,18 +244,16 @@ serve(async (req) => {
     // All other actions require super admin
     const isAdmin = await verifyAdmin(req, supabaseAuth);
     if (!isAdmin) {
-      return respond({ error: "Unauthorized" }, 403);
+      return respond({ error: "Unauthorized — Super Admin only" }, 403);
     }
-
-    const apiKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     switch (action) {
       case "collect_data":
         return await handleCollectData(supabaseAdmin, body);
       case "generate_exam":
-        return await handleGenerateExam(supabaseAdmin, body, apiKey);
+        return await handleGenerateExam(supabaseAdmin, body);
       case "translate_exam":
-        return await handleTranslateExam(supabaseAdmin, body, apiKey);
+        return await handleTranslateExam(supabaseAdmin, body);
       case "start_exam":
         return await handleStartExam(supabaseAdmin, body);
       case "end_exam":
@@ -185,11 +271,12 @@ serve(async (req) => {
 async function handleCollectData(supabase: any, body: any) {
   const { school_ids, exam_id } = body;
 
-  if (!Array.isArray(school_ids) || school_ids.length === 0 || !exam_id) {
-    return respond({ error: "Missing school_ids (array) or exam_id" }, 400);
+  if (!Array.isArray(school_ids) || school_ids.length === 0) {
+    return respond({ error: "Missing school_ids array" }, 400);
   }
+  if (!exam_id) return respond({ error: "Missing exam_id" }, 400);
 
-  // Get students from selected schools
+  // Get students from selected schools (grade 9+)
   const { data: students, error: studErr } = await supabase
     .from("profiles")
     .select("id, full_name, grade_level, school_id")
@@ -211,7 +298,7 @@ async function handleCollectData(supabase: any, body: any) {
     return respond({ error: "No eligible students found (Grade 9+) in the selected schools." }, 400);
   }
 
-  // Fetch learning style profiles
+  // Fetch learning style profiles for ALL eligible students
   const studentIds = eligible.map((s: any) => s.id);
   const { data: styles } = await supabase
     .from("learning_style_profiles")
@@ -223,9 +310,10 @@ async function handleCollectData(supabase: any, body: any) {
 
   // Batch insert schools
   const schoolRows = school_ids.map((sid: string) => ({ exam_id, school_id: sid }));
-  await supabase.from("lct_exam_schools").upsert(schoolRows, { onConflict: "exam_id,school_id" });
+  const { error: schoolErr } = await supabase.from("lct_exam_schools").upsert(schoolRows, { onConflict: "exam_id,school_id" });
+  if (schoolErr) console.error("School insert error:", schoolErr);
 
-  // Batch insert students (chunks of 50 to avoid payload limits)
+  // Batch insert students (chunks of 50)
   const studentRows = eligible.map((student: any) => ({
     exam_id,
     student_id: student.id,
@@ -236,96 +324,151 @@ async function handleCollectData(supabase: any, body: any) {
 
   for (let i = 0; i < studentRows.length; i += 50) {
     const chunk = studentRows.slice(i, i + 50);
-    const { error: insertErr } = await supabase.from("lct_exam_students").upsert(chunk, { onConflict: "exam_id,student_id" });
-    if (insertErr) console.error(`Batch insert error at chunk ${i}:`, insertErr);
+    const { error: insertErr } = await supabase
+      .from("lct_exam_students")
+      .upsert(chunk, { onConflict: "exam_id,student_id" });
+    if (insertErr) console.error(`Student batch insert error at chunk ${i}:`, insertErr);
   }
 
   // Update exam status
   await supabase.from("lct_exams").update({ status: "data_collected" }).eq("id", exam_id);
 
-  // Count by style
+  // Count by learning style
   const styleCounts: Record<string, number> = {};
+  const gradeDistribution: Record<string, number> = {};
   eligible.forEach((s: any) => {
     const st = styleMap[s.id]?.dominant_style || "balanced";
     styleCounts[st] = (styleCounts[st] || 0) + 1;
+    const grade = s.grade_level || "unknown";
+    gradeDistribution[grade] = (gradeDistribution[grade] || 0) + 1;
   });
 
   return respond({
     success: true,
     total_students: eligible.length,
     style_breakdown: styleCounts,
+    grade_distribution: gradeDistribution,
     schools_count: school_ids.length,
   });
 }
 
 // ─── GENERATE EXAM ──────────────────────────────────────────────────────────
-async function handleGenerateExam(supabase: any, body: any, apiKey: string) {
+async function handleGenerateExam(supabase: any, body: any) {
   const { exam_id } = body;
   if (!exam_id) return respond({ error: "Missing exam_id" }, 400);
 
   const subjects = [
-    { name: "English", count: 28 },
-    { name: "Mathematics", count: 28 },
-    { name: "Physics", count: 28 },
-    { name: "Chemistry", count: 28 },
-    { name: "Biology", count: 28 },
+    { name: "English", count: 28, topics: "reading comprehension, grammar, vocabulary in context, literary analysis, rhetorical analysis, sentence completion, error identification, passage-based reasoning" },
+    { name: "Mathematics", count: 28, topics: "algebra, geometry, trigonometry, calculus basics, statistics, probability, number theory, problem solving, mathematical reasoning, functions and graphs" },
+    { name: "Physics", count: 28, topics: "mechanics, thermodynamics, waves and optics, electricity and magnetism, modern physics, energy and work, circular motion, fluid mechanics" },
+    { name: "Chemistry", count: 28, topics: "atomic structure, chemical bonding, stoichiometry, thermochemistry, equilibrium, acids and bases, organic chemistry basics, electrochemistry, periodic trends" },
+    { name: "Biology", count: 28, topics: "cell biology, genetics and heredity, evolution, ecology, human physiology, molecular biology, plant biology, microbiology, biotechnology" },
   ];
 
   const allQuestions: any[] = [];
   const allAnswerKeys: any[] = [];
+  const subjectStats: Record<string, number> = {};
+
+  // Generate a random seed for variety
+  const randomSeed = Math.floor(Math.random() * 100000);
 
   for (const subject of subjects) {
-    const systemPrompt = `You are an expert exam creator for a standardized cognitive test called the Luminary Cognitive Test (LCT). This test is meant to be CHALLENGING — harder than typical high school exams. It targets students in grades 9-12.
+    console.log(`[GENERATE] Starting ${subject.name}...`);
 
-Generate exactly ${subject.count} multiple-choice questions for ${subject.name}.
+    const systemPrompt = `You are a world-class exam creator for the Luminary Cognitive Test (LCT), a standardized cognitive assessment for gifted students in grades 9-12. Your questions must be:
 
-Requirements:
-- Each question MUST have exactly 4 options labeled A), B), C), D)
-- Exactly one correct answer per question
-- Test deep understanding, critical thinking, and application — not mere memorization
-- Mix difficulty levels but lean towards challenging
-- For Math/Physics/Chemistry: include numerical problems with specific values
-- Make distractors plausible — avoid obviously wrong answers
+1. CHALLENGING — significantly harder than typical high school exams
+2. DEEP — test critical thinking, application, analysis, and evaluation (Bloom's taxonomy levels 3-6)
+3. VARIED — cover all major topics within the subject
+4. PRECISE — each question has exactly ONE unambiguous correct answer
+5. REALISTIC — distractors should be plausible misconceptions, not obviously wrong
 
-CRITICAL: Return ONLY a valid JSON array. No markdown code blocks, no explanation text.
-Each item must have this EXACT format:
-[{"id":1,"subject":"${subject.name}","question":"...","options":["A) ...","B) ...","C) ...","D) ..."],"correct_answer":"A","explanation":"Brief explanation"}]`;
+Topics to cover: ${subject.topics}
 
-    const prompt = `Generate ${subject.count} challenging ${subject.name} MCQ questions for the LCT standardized test. Questions should span the full grade 9-12 curriculum. Include: conceptual understanding, application, analysis, and evaluation. Number questions starting from ${allQuestions.length + 1}.`;
+Distribution: ~40% application, ~30% analysis, ~20% evaluation, ~10% knowledge/comprehension
+
+FORMATTING RULES:
+- Return ONLY a valid JSON array — NO markdown, NO explanation, NO text before/after
+- Each question object: {"id": <number>, "subject": "${subject.name}", "question": "<text>", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct_answer": "<A|B|C|D>", "explanation": "<2-3 sentence explanation of why this answer is correct>"}
+- Exactly 4 options per question, labeled A) B) C) D)
+- Explanations must be educational and specific
+- For Math/Physics/Chemistry: include specific numerical values where appropriate
+- Variety seed: ${randomSeed} — use this to vary your question selection`;
+
+    const prompt = `Generate exactly ${subject.count} challenging ${subject.name} MCQ questions for the LCT. Number questions starting from ${allQuestions.length + 1}. Cover all listed topics evenly. Make each question test DEEP understanding, not surface-level recall.`;
 
     let questions: any[] = [];
-    try {
-      const response = await callAI(prompt, systemPrompt, apiKey);
-      questions = parseJsonFromAI(response);
-      questions = validateQuestions(questions, subject.count, subject.name);
-    } catch (e) {
-      console.error(`Failed to generate ${subject.name} questions:`, e);
-      // If one subject fails, don't fail the entire exam — log and continue
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      try {
+        console.log(`[GENERATE] ${subject.name} attempt ${attempts}/${maxAttempts}`);
+        const response = await callAI(prompt, systemPrompt, {
+          maxTokens: 32000,
+          temperature: 0.7 + (attempts * 0.1), // Increase creativity on retries
+        });
+        
+        const parsed = parseJsonFromAI(response);
+        questions = validateQuestions(parsed, subject.count, subject.name);
+
+        if (questions.length >= subject.count * 0.7) {
+          console.log(`[GENERATE] ${subject.name}: ${questions.length}/${subject.count} questions validated on attempt ${attempts}`);
+          break;
+        } else {
+          console.warn(`[GENERATE] ${subject.name}: Only ${questions.length} valid, retrying...`);
+        }
+      } catch (e) {
+        console.error(`[GENERATE] ${subject.name} attempt ${attempts} failed:`, e);
+        if (attempts === maxAttempts) {
+          console.error(`[GENERATE] ${subject.name}: ALL ${maxAttempts} attempts failed`);
+        }
+      }
+
+      // Rate limit protection between retries
+      if (attempts < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 5000));
+      }
+    }
+
+    if (questions.length === 0) {
+      console.error(`[GENERATE] CRITICAL: ${subject.name} produced 0 questions after ${maxAttempts} attempts`);
       continue;
     }
 
-    // Re-index to ensure uniqueness
+    // Cross-model validation of answer keys
+    console.log(`[GENERATE] Cross-validating ${subject.name} answer keys...`);
+    questions = await validateAnswerKeys(questions, subject.name);
+
+    // Re-index
     questions.forEach((q: any, i: number) => {
       q.id = allQuestions.length + i + 1;
       q.subject = subject.name;
     });
 
     allQuestions.push(...questions);
+    subjectStats[subject.name] = questions.length;
+
     questions.forEach((q: any) => {
       allAnswerKeys.push({
         id: q.id,
         subject: q.subject,
         correct_answer: q.correct_answer,
-        explanation: q.explanation || "See answer key.",
+        explanation: q.explanation,
       });
     });
 
-    // Rate limit protection between subjects
-    await new Promise((r) => setTimeout(r, 2000));
+    // Rate limit protection between subjects (longer delay)
+    await new Promise((r) => setTimeout(r, 3000));
   }
 
   if (allQuestions.length === 0) {
-    return respond({ error: "Failed to generate any questions. Please try again." }, 500);
+    return respond({ error: "Failed to generate any questions after multiple attempts. Please try again." }, 500);
+  }
+
+  if (allQuestions.length < 100) {
+    console.warn(`[GENERATE] WARNING: Only ${allQuestions.length}/140 questions generated. Some subjects may have failed.`);
   }
 
   // Store in DB
@@ -337,23 +480,26 @@ Each item must have this EXACT format:
 
   if (updateErr) throw new Error(`Failed to save exam: ${updateErr.message}`);
 
+  console.log(`[GENERATE] Exam saved: ${allQuestions.length} total questions`);
+
   return respond({
     success: true,
     total_questions: allQuestions.length,
+    subject_stats: subjectStats,
     questions: allQuestions,
     answer_key: allAnswerKeys,
   });
 }
 
 // ─── TRANSLATE EXAM ─────────────────────────────────────────────────────────
-async function handleTranslateExam(supabase: any, body: any, apiKey: string) {
+async function handleTranslateExam(supabase: any, body: any) {
   const { exam_id } = body;
   if (!exam_id) return respond({ error: "Missing exam_id" }, 400);
 
   // Get exam questions
   const { data: exam, error: examErr } = await supabase
     .from("lct_exams")
-    .select("questions_json")
+    .select("questions_json, answer_key_json")
     .eq("id", exam_id)
     .single();
 
@@ -367,7 +513,7 @@ async function handleTranslateExam(supabase: any, body: any, apiKey: string) {
 
   if (studErr || !students?.length) return respond({ error: "No students found for this exam" }, 400);
 
-  // Group students by learning style for efficiency (translate once per style, not per student)
+  // Group students by learning style (translate once per style, not per student)
   const styleGroups: Record<string, any[]> = {};
   students.forEach((s: any) => {
     const style = s.learning_style || "balanced";
@@ -375,108 +521,134 @@ async function handleTranslateExam(supabase: any, body: any, apiKey: string) {
     styleGroups[style].push(s);
   });
 
-  let translatedCount = 0;
   const questions = exam.questions_json as any[];
+  const answerKey = exam.answer_key_json as any[];
+  let translatedCount = 0;
+  const styleResults: Record<string, { students: number; status: string }> = {};
+
+  const styleInstructions: Record<string, string> = {
+    visual: `Reword each question to leverage visual-spatial thinking. Include references to diagrams, graphs, charts, spatial relationships, color patterns, or visual representations. Use phrases like "Examine the following diagram...", "Visualize a scenario where...", "Looking at the pattern...". For math/science, describe what a visual representation would show. Keep the core content, difficulty, and correct answer EXACTLY the same.`,
+    
+    logical: `Reword each question using systematic, step-by-step logical frameworks. Structure questions as logical chains: "Given that X... and knowing that Y... what follows?", "If we apply the principle that...", "Following the sequence of reasoning...". Emphasize cause-and-effect relationships and deductive reasoning. Keep the core content, difficulty, and correct answer EXACTLY the same.`,
+    
+    conceptual: `Reword each question to emphasize abstract concepts, theoretical frameworks, and big-picture understanding. Use phrases like "In the broader context of...", "Considering the underlying principle...", "From a theoretical perspective...". Focus on conceptual connections between ideas rather than specific details. Keep the core content, difficulty, and correct answer EXACTLY the same.`,
+    
+    kinesthetic: `Reword each question to reference hands-on activities, physical processes, experiments, and real-world applications. Use phrases like "If you were conducting an experiment...", "During a hands-on demonstration...", "While physically performing...". Make abstract concepts concrete through physical analogies. Keep the core content, difficulty, and correct answer EXACTLY the same.`,
+    
+    verbal: `Reword each question using rich narrative context, analogies, and descriptive language. Create brief scenario-based stems, use storytelling elements, and employ metaphors where appropriate. Use phrases like "Consider the following scenario...", "To illustrate this concept...". Keep the core content, difficulty, and correct answer EXACTLY the same.`,
+  };
 
   for (const [style, group] of Object.entries(styleGroups)) {
+    console.log(`[TRANSLATE] Processing ${style} style (${group.length} students)...`);
+
     let translatedQuestions: any[];
 
     if (style === "balanced") {
       // Balanced students get original questions
       translatedQuestions = questions;
+      styleResults[style] = { students: group.length, status: "original (no translation needed)" };
     } else {
       // Translate per subject to stay within token limits
       translatedQuestions = [];
       const subjects = ["English", "Mathematics", "Physics", "Chemistry", "Biology"];
-      
+
       for (const subject of subjects) {
         const subjectQs = questions.filter((q: any) => q.subject === subject);
         if (subjectQs.length === 0) continue;
 
-        const styleInstructions: Record<string, string> = {
-          visual: `Reword each question to include visual descriptions, spatial references, or diagram-based thinking. For math/science, describe what a graph, chart, or diagram would look like. Add phrases like "Imagine a diagram showing..." or "Consider the following visual representation...". Do NOT change the difficulty, correct answer, or core content.`,
-          logical: `Reword each question using step-by-step logical framing. Use phrases like "Given that... and knowing that... what follows?" or "If we apply the rule that...". Structure questions as logical chains. Do NOT change the difficulty, correct answer, or core content.`,
-          conceptual: `Reword each question to emphasize abstract concepts, big-picture understanding, and theoretical frameworks. Use phrases like "In the broader context of..." or "Considering the underlying principle...". Do NOT change the difficulty, correct answer, or core content.`,
-          kinesthetic: `Reword each question to reference hands-on activities, experiments, or physical processes. Use phrases like "If you were to physically..." or "During an experiment...". Do NOT change the difficulty, correct answer, or core content.`,
-          verbal: `Reword each question using rich descriptive language, analogies, and narrative context. Use phrases like "To put it another way..." or create brief scenario-based stems. Do NOT change the difficulty, correct answer, or core content.`,
-        };
-
         const instruction = styleInstructions[style] || styleInstructions.verbal;
 
-        const systemPrompt = `You are an expert exam translator for the Luminary Cognitive Test (LCT). Reword exam questions to match a ${style} learning style WITHOUT changing difficulty or correct answers.
+        const systemPrompt = `You are an expert exam translator for the Luminary Cognitive Test (LCT). Your job is to REWORD exam questions to match a ${style} learner's cognitive style, WITHOUT changing the difficulty, correct answer, or fundamental content.
 
 ${instruction}
 
-CRITICAL RULES:
-1. The correct_answer letter (A/B/C/D) MUST remain EXACTLY the same
-2. The explanation MUST remain the same
-3. The difficulty MUST NOT decrease
-4. Return ONLY a valid JSON array — no markdown, no explanation text
+ABSOLUTE RULES — VIOLATION = FAILURE:
+1. The correct_answer letter (A/B/C/D) MUST remain EXACTLY the same as provided
+2. The explanation MUST remain semantically the same
+3. Difficulty MUST NOT decrease — if anything, maintain or slightly increase
+4. Return ONLY a valid JSON array — no markdown, no explanation text, no code blocks
 5. Keep the same id and subject for each question
-6. Return the SAME number of questions you received`;
+6. Return EXACTLY ${subjectQs.length} questions — no more, no less
+7. Each option must still start with the correct letter (A), B), C), D))`;
 
-        // Send only essential fields to reduce token usage
+        // Only send essential fields to reduce tokens
         const compactQs = subjectQs.map((q: any) => ({
-          id: q.id, subject: q.subject, question: q.question,
-          options: q.options, correct_answer: q.correct_answer, explanation: q.explanation,
+          id: q.id,
+          subject: q.subject,
+          question: q.question,
+          options: q.options,
+          correct_answer: q.correct_answer,
+          explanation: q.explanation,
         }));
 
         try {
           const response = await callAI(
-            `Translate these ${subjectQs.length} ${subject} questions for a ${style} learner:\n${JSON.stringify(compactQs)}`,
+            `Translate these ${subjectQs.length} ${subject} questions for a ${style} learner. Preserve all answer keys exactly.\n\n${JSON.stringify(compactQs)}`,
             systemPrompt,
-            apiKey
+            { maxTokens: 32000, temperature: 0.5 }
           );
+
           const translated = parseJsonFromAI(response);
-          
-          // Validate translated questions preserve answer keys
-          const validated = translated.map((tq: any, idx: number) => {
-            const original = subjectQs[idx];
-            if (!original) return tq;
-            // Force-preserve critical fields from original
+
+          // CRITICAL: Force-preserve answer keys from originals
+          const validated = subjectQs.map((original: any, idx: number) => {
+            const tq = translated[idx];
+            if (!tq) return original; // Fallback to original if missing
+
             return {
-              ...tq,
               id: original.id,
               subject: original.subject,
-              correct_answer: original.correct_answer,
-              explanation: original.explanation,
-              // Keep translated question and options
-              question: tq.question || original.question,
-              options: Array.isArray(tq.options) && tq.options.length === 4 ? tq.options : original.options,
+              correct_answer: original.correct_answer, // ALWAYS from original
+              explanation: original.explanation, // ALWAYS from original
+              question: (tq.question && tq.question.length > 10) ? tq.question : original.question,
+              options: (Array.isArray(tq.options) && tq.options.length === 4 && tq.options.every((o: any) => typeof o === 'string' && o.length > 2))
+                ? tq.options
+                : original.options,
             };
           });
-          
+
           translatedQuestions.push(...validated);
+          console.log(`[TRANSLATE] ${style}/${subject}: ${validated.length} questions translated`);
         } catch (e) {
-          console.error(`Translation failed for ${style}/${subject}, using originals:`, e);
+          console.error(`[TRANSLATE] ${style}/${subject} failed, using originals:`, e);
           translatedQuestions.push(...subjectQs);
         }
 
         // Rate limit protection between subjects
         await new Promise((r) => setTimeout(r, 2000));
       }
+
+      styleResults[style] = { students: group.length, status: "translated" };
     }
 
-    // Batch update all students with this style
-    const studentIds = group.map((s: any) => s.id);
-    for (let i = 0; i < studentIds.length; i += 50) {
-      const chunk = studentIds.slice(i, i + 50);
-      for (const sid of chunk) {
-        await supabase.from("lct_exam_students").update({
-          translated_questions_json: translatedQuestions,
-        }).eq("id", sid);
+    // BATCH update all students with this style using a single SQL filter
+    const groupIds = group.map((s: any) => s.id);
+    
+    // Process in chunks of 100 for efficiency
+    for (let i = 0; i < groupIds.length; i += 100) {
+      const chunk = groupIds.slice(i, i + 100);
+      const { error: updateErr } = await supabase
+        .from("lct_exam_students")
+        .update({ translated_questions_json: translatedQuestions })
+        .in("id", chunk);
+      
+      if (updateErr) {
+        console.error(`[TRANSLATE] Batch update error for ${style} chunk ${i}:`, updateErr);
       }
     }
+
     translatedCount += group.length;
   }
 
   // Update exam status
   await supabase.from("lct_exams").update({ status: "translated" }).eq("id", exam_id);
 
+  console.log(`[TRANSLATE] Complete: ${translatedCount} students across ${Object.keys(styleGroups).length} styles`);
+
   return respond({
     success: true,
     translated_count: translatedCount,
-    styles_processed: Object.keys(styleGroups),
+    styles_processed: styleResults,
   });
 }
 
@@ -485,16 +657,23 @@ async function handleStartExam(supabase: any, body: any) {
   const { exam_id } = body;
   if (!exam_id) return respond({ error: "Missing exam_id" }, 400);
 
-  // Verify exam is in translated state
-  const { data: exam } = await supabase.from("lct_exams").select("status").eq("id", exam_id).single();
-  if (!exam || (exam.status !== "translated" && exam.status !== "generated")) {
-    return respond({ error: `Exam is in '${exam?.status}' state and cannot be started.` }, 400);
+  // Verify exam state
+  const { data: exam } = await supabase
+    .from("lct_exams")
+    .select("status")
+    .eq("id", exam_id)
+    .single();
+
+  if (!exam) return respond({ error: "Exam not found" }, 404);
+  if (exam.status === "active") return respond({ error: "Exam is already active" }, 400);
+  if (exam.status !== "translated" && exam.status !== "generated") {
+    return respond({ error: `Exam is in '${exam.status}' state and cannot be started. Must be 'translated' or 'generated'.` }, 400);
   }
 
   const now = new Date();
-  const endsAt = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 hours
+  const endsAt = new Date(now.getTime() + 2 * 60 * 60 * 1000); // Exactly 2 hours
 
-  // Update exam
+  // Update exam to active
   const { error: updateErr } = await supabase.from("lct_exams").update({
     status: "active",
     started_at: now.toISOString(),
@@ -503,7 +682,7 @@ async function handleStartExam(supabase: any, body: any) {
 
   if (updateErr) throw new Error(`Failed to start exam: ${updateErr.message}`);
 
-  // Get all students for this exam
+  // Get all students
   const { data: students } = await supabase
     .from("lct_exam_students")
     .select("student_id")
@@ -513,7 +692,7 @@ async function handleStartExam(supabase: any, body: any) {
     return respond({ error: "No students found for this exam" }, 400);
   }
 
-  // Batch create locks (chunks of 50)
+  // Create locks in batches
   const lockRows = students.map((s: any) => ({
     student_id: s.student_id,
     exam_id,
@@ -522,9 +701,13 @@ async function handleStartExam(supabase: any, body: any) {
 
   for (let i = 0; i < lockRows.length; i += 50) {
     const chunk = lockRows.slice(i, i + 50);
-    const { error: lockErr } = await supabase.from("lct_exam_locks").upsert(chunk, { onConflict: "student_id" });
+    const { error: lockErr } = await supabase
+      .from("lct_exam_locks")
+      .upsert(chunk, { onConflict: "student_id" });
     if (lockErr) console.error(`Lock batch error at ${i}:`, lockErr);
   }
+
+  console.log(`[START] Exam ${exam_id} started. ${students.length} students locked until ${endsAt.toISOString()}`);
 
   return respond({
     success: true,
@@ -539,9 +722,11 @@ async function handleSubmitExam(req: Request, supabaseAdmin: any, supabaseAuth: 
   const { exam_id, answers } = body;
 
   if (!exam_id) return respond({ error: "Missing exam_id" }, 400);
-  if (!answers || typeof answers !== 'object') return respond({ error: "Missing or invalid answers" }, 400);
+  if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
+    return respond({ error: "Missing or invalid answers object" }, 400);
+  }
 
-  // Get user from auth
+  // Auth
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) return respond({ error: "Unauthorized" }, 401);
 
@@ -549,7 +734,7 @@ async function handleSubmitExam(req: Request, supabaseAdmin: any, supabaseAuth: 
   const { data: { user }, error: authErr } = await supabaseAuth.auth.getUser(token);
   if (authErr || !user) return respond({ error: "Unauthorized" }, 401);
 
-  // Verify student is actually assigned to this exam
+  // Verify student assignment
   const { data: studentExam } = await supabaseAdmin
     .from("lct_exam_students")
     .select("id, status")
@@ -558,7 +743,15 @@ async function handleSubmitExam(req: Request, supabaseAdmin: any, supabaseAuth: 
     .single();
 
   if (!studentExam) return respond({ error: "You are not assigned to this exam" }, 403);
-  if (studentExam.status === "completed") return respond({ error: "Exam already submitted" }, 400);
+  if (studentExam.status === "completed") {
+    // Already submitted — return existing results
+    const { data: existing } = await supabaseAdmin
+      .from("lct_exam_students")
+      .select("score")
+      .eq("id", studentExam.id)
+      .single();
+    return respond({ success: true, score: existing?.score, already_submitted: true });
+  }
 
   // Get answer key
   const { data: exam } = await supabaseAdmin
@@ -569,20 +762,20 @@ async function handleSubmitExam(req: Request, supabaseAdmin: any, supabaseAuth: 
 
   if (!exam) return respond({ error: "Exam not found" }, 404);
 
-  // Grade the exam
+  // Grade
   const answerKey = exam.answer_key_json as any[];
   let correct = 0;
   const results: any[] = [];
 
   answerKey.forEach((ak: any) => {
-    const studentAnswer = answers[String(ak.id)] || answers[ak.id];
-    const isCorrect = studentAnswer === ak.correct_answer;
+    const studentAnswer = answers[String(ak.id)] || answers[ak.id] || null;
+    const isCorrect = studentAnswer !== null && studentAnswer.toUpperCase() === ak.correct_answer.toUpperCase();
     if (isCorrect) correct++;
     results.push({
       id: ak.id,
       subject: ak.subject,
       correct_answer: ak.correct_answer,
-      student_answer: studentAnswer || null,
+      student_answer: studentAnswer,
       is_correct: isCorrect,
       explanation: ak.explanation,
     });
@@ -591,18 +784,17 @@ async function handleSubmitExam(req: Request, supabaseAdmin: any, supabaseAuth: 
   const score = answerKey.length > 0 ? Math.round((correct / answerKey.length) * 100) : 0;
 
   // Update student record
-  const { error: updateErr } = await supabaseAdmin.from("lct_exam_students").update({
+  await supabaseAdmin.from("lct_exam_students").update({
     answers_json: answers,
     score,
     status: "completed",
     submitted_at: new Date().toISOString(),
   }).eq("exam_id", exam_id).eq("student_id", user.id);
 
-  if (updateErr) console.error("Failed to update student record:", updateErr);
-
   // Remove lock
-  const { error: lockErr } = await supabaseAdmin.from("lct_exam_locks").delete().eq("student_id", user.id);
-  if (lockErr) console.error("Failed to remove lock:", lockErr);
+  await supabaseAdmin.from("lct_exam_locks").delete().eq("student_id", user.id);
+
+  console.log(`[SUBMIT] Student ${user.id} submitted exam ${exam_id}: ${score}% (${correct}/${answerKey.length})`);
 
   return respond({
     success: true,
@@ -618,22 +810,70 @@ async function handleEndExam(supabase: any, body: any) {
   const { exam_id } = body;
   if (!exam_id) return respond({ error: "Missing exam_id" }, 400);
 
-  // Verify exam exists and is active
-  const { data: exam } = await supabase.from("lct_exams").select("status").eq("id", exam_id).single();
-  if (!exam) return respond({ error: "Exam not found" }, 404);
-  if (exam.status === "completed") return respond({ success: true, message: "Exam already ended" });
+  const { data: exam } = await supabase
+    .from("lct_exams")
+    .select("status")
+    .eq("id", exam_id)
+    .single();
 
-  // Mark incomplete students as timed_out
-  await supabase.from("lct_exam_students")
-    .update({ status: "timed_out", submitted_at: new Date().toISOString() })
+  if (!exam) return respond({ error: "Exam not found" }, 404);
+  if (exam.status === "completed") {
+    return respond({ success: true, message: "Exam already ended" });
+  }
+
+  // Grade any in-progress students who haven't submitted (auto-grade their saved answers)
+  const { data: incompleteStudents } = await supabase
+    .from("lct_exam_students")
+    .select("id, student_id, answers_json")
     .eq("exam_id", exam_id)
     .in("status", ["pending", "in_progress"]);
 
-  // Remove all locks for this exam
+  if (incompleteStudents?.length > 0) {
+    // Get answer key for auto-grading
+    const { data: examData } = await supabase
+      .from("lct_exams")
+      .select("answer_key_json")
+      .eq("id", exam_id)
+      .single();
+
+    if (examData) {
+      const answerKey = examData.answer_key_json as any[];
+      
+      for (const student of incompleteStudents) {
+        const savedAnswers = (student.answers_json && typeof student.answers_json === 'object' && !Array.isArray(student.answers_json))
+          ? student.answers_json as Record<string, string>
+          : {};
+
+        let correct = 0;
+        answerKey.forEach((ak: any) => {
+          const sa = savedAnswers[String(ak.id)] || null;
+          if (sa && sa.toUpperCase() === ak.correct_answer.toUpperCase()) correct++;
+        });
+
+        const score = answerKey.length > 0 ? Math.round((correct / answerKey.length) * 100) : 0;
+
+        await supabase.from("lct_exam_students").update({
+          status: "timed_out",
+          score,
+          submitted_at: new Date().toISOString(),
+        }).eq("id", student.id);
+      }
+    } else {
+      // Can't grade — just mark as timed_out
+      await supabase.from("lct_exam_students")
+        .update({ status: "timed_out", submitted_at: new Date().toISOString() })
+        .eq("exam_id", exam_id)
+        .in("status", ["pending", "in_progress"]);
+    }
+  }
+
+  // Remove all locks
   await supabase.from("lct_exam_locks").delete().eq("exam_id", exam_id);
 
-  // Update exam status
+  // Mark exam complete
   await supabase.from("lct_exams").update({ status: "completed" }).eq("id", exam_id);
 
-  return respond({ success: true });
+  console.log(`[END] Exam ${exam_id} ended. ${incompleteStudents?.length || 0} students auto-graded.`);
+
+  return respond({ success: true, auto_graded: incompleteStudents?.length || 0 });
 }
