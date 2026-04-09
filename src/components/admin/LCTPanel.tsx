@@ -243,13 +243,21 @@ export default function LCTPanel() {
         body: { action: 'end_exam', exam_id: exam.id },
       });
       setExam(prev => prev ? { ...prev, status: 'completed' } : null);
-      // Load results
+      // Load results with student names
       const { data } = await supabase
         .from('lct_exam_students')
         .select('*')
         .eq('exam_id', exam.id)
         .order('score', { ascending: false });
-      setResultsData(data || []);
+      if (data?.length) {
+        const studentIds = data.map((s: any) => s.student_id);
+        const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', studentIds);
+        const nameMap: Record<string, string> = {};
+        (profiles || []).forEach((p: any) => { nameMap[p.id] = p.full_name; });
+        setResultsData(data.map((s: any) => ({ ...s, full_name: nameMap[s.student_id] || 'Unknown' })));
+      } else {
+        setResultsData([]);
+      }
       setStep('results');
       toast({ title: 'Exam ended. Results are ready.' });
     } catch (err: any) {
