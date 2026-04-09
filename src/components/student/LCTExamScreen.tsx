@@ -14,35 +14,51 @@ interface LCTExamScreenProps {
 export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamScreenProps) {
   const { toast } = useToast();
   const [questions, setQuestions] = useState<any[]>([]);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [currentQ, setCurrentQ] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [results, setResults] = useState<any>(null);
+  const [showNav, setShowNav] = useState(false);
   const submittedRef = useRef(false);
+  const answersRef = useRef<Record<string, string>>({});
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
 
   // Load student's exam
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('lct_exam_students')
         .select('translated_questions_json, status, answers_json, score')
         .eq('exam_id', examId)
         .eq('student_id', userId)
         .single();
 
+      if (error) {
+        console.error('Failed to load LCT exam:', error);
+        setLoading(false);
+        return;
+      }
+
       if (data) {
         if (data.status === 'completed' || data.status === 'timed_out') {
           setSubmitted(true);
+          submittedRef.current = true;
           setResults({ score: data.score });
         }
         setQuestions(Array.isArray(data.translated_questions_json) ? data.translated_questions_json : []);
         if (data.answers_json && typeof data.answers_json === 'object' && !Array.isArray(data.answers_json)) {
-          setAnswers(data.answers_json as Record<number, string>);
+          const restored = data.answers_json as Record<string, string>;
+          setAnswers(restored);
+          answersRef.current = restored;
         }
 
-        // Mark as in_progress
+        // Mark as in_progress if pending
         if (data.status === 'pending') {
           await supabase.from('lct_exam_students').update({
             status: 'in_progress',
@@ -55,7 +71,28 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
     load();
   }, [examId, userId]);
 
-  // Timer
+  // Submit function using ref to avoid stale closure
+  const doSubmit = useCallback(async () => {
+    if (submittedRef.current) return;
+    submittedRef.current = true;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-lct', {
+        body: { action: 'submit_exam', exam_id: examId, answers: answersRef.current },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setSubmitted(true);
+      setResults(data);
+      toast({ title: 'Exam submitted!' });
+    } catch (err: any) {
+      submittedRef.current = false;
+      toast({ variant: 'destructive', title: 'Error submitting', description: err.message });
+    }
+  }, [examId, toast]);
+
+  // Timer — uses doSubmit which reads from ref (no stale closure)
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date().getTime();
@@ -64,9 +101,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
 
       if (diff <= 0) {
         setTimeRemaining('00:00:00');
-        if (!submittedRef.current) {
-          submitExam();
-        }
+        doSubmit();
         clearInterval(interval);
         return;
       }
@@ -78,7 +113,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [lockedUntil]);
+  }, [lockedUntil, doSubmit]);
 
   // Prevent leaving
   useEffect(() => {
@@ -92,37 +127,20 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
 
   // Auto-save answers periodically
   useEffect(() => {
-    if (submitted || Object.keys(answers).length === 0) return;
+    if (submitted) return;
     const interval = setInterval(async () => {
+      const currentAnswers = answersRef.current;
+      if (Object.keys(currentAnswers).length === 0) return;
       await supabase.from('lct_exam_students').update({
-        answers_json: answers,
+        answers_json: currentAnswers,
       }).eq('exam_id', examId).eq('student_id', userId);
-    }, 30000); // Save every 30 seconds
+    }, 30000);
     return () => clearInterval(interval);
-  }, [answers, examId, userId, submitted]);
+  }, [examId, userId, submitted]);
 
   const selectAnswer = useCallback((questionId: number, answer: string) => {
-    setAnswers(prev => ({ ...prev, [questionId]: answer }));
+    setAnswers(prev => ({ ...prev, [String(questionId)]: answer }));
   }, []);
-
-  const submitExam = async () => {
-    if (submittedRef.current) return;
-    submittedRef.current = true;
-
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-lct', {
-        body: { action: 'submit_exam', exam_id: examId, answers },
-      });
-
-      if (error) throw error;
-      setSubmitted(true);
-      setResults(data);
-      toast({ title: 'Exam submitted!' });
-    } catch (err: any) {
-      submittedRef.current = false;
-      toast({ variant: 'destructive', title: 'Error submitting', description: err.message });
-    }
-  };
 
   if (loading) {
     return (
@@ -135,7 +153,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
     );
   }
 
-  // Results screen
+  // Results screen — shows which questions were right/wrong
   if (submitted && results) {
     return (
       <div className="fixed inset-0 z-[9999] bg-background overflow-y-auto">
@@ -182,7 +200,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
     );
   }
 
-  // Waiting for results (submitted but no results yet)
+  // Submitted but no results yet
   if (submitted) {
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center">
@@ -201,7 +219,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
   return (
     <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
       {/* Header */}
-      <div className="border-b border-border bg-card px-4 py-3">
+      <div className="border-b border-border bg-card px-4 py-3 shrink-0">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="font-bold text-sm">Luminary Cognitive Test</h1>
@@ -218,6 +236,39 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
         </div>
         <div className="max-w-3xl mx-auto mt-2">
           <Progress value={((currentQ + 1) / questions.length) * 100} className="h-1.5" />
+        </div>
+
+        {/* Question navigator toggle */}
+        <div className="max-w-3xl mx-auto mt-2">
+          <button
+            onClick={() => setShowNav(!showNav)}
+            className="text-xs text-primary hover:underline"
+          >
+            {showNav ? 'Hide' : 'Show'} Question Navigator
+          </button>
+          {showNav && (
+            <div className="flex flex-wrap gap-1 mt-2 max-h-24 overflow-y-auto">
+              {questions.map((q: any, i: number) => {
+                const isAnswered = !!answers[String(q.id)];
+                const isCurrent = i === currentQ;
+                return (
+                  <button
+                    key={q.id}
+                    onClick={() => { setCurrentQ(i); setShowNav(false); }}
+                    className={`w-7 h-7 text-[10px] font-mono rounded border transition-colors ${
+                      isCurrent
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : isAnswered
+                          ? 'border-primary/50 bg-primary/10 text-primary'
+                          : 'border-border bg-background text-muted-foreground'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -238,7 +289,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
               <div className="space-y-3">
                 {(question.options || []).map((opt: string, i: number) => {
                   const letter = opt.charAt(0);
-                  const isSelected = answers[question.id] === letter;
+                  const isSelected = answers[String(question.id)] === letter;
                   return (
                     <button
                       key={i}
@@ -260,7 +311,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border bg-card px-4 py-3">
+      <div className="border-t border-border bg-card px-4 py-3 shrink-0">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Button
             variant="outline"
@@ -271,7 +322,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
           </Button>
 
           {currentQ === questions.length - 1 ? (
-            <Button onClick={submitExam} disabled={submittedRef.current} className="gap-2">
+            <Button onClick={doSubmit} disabled={submittedRef.current} className="gap-2">
               <CheckCircle2 className="w-4 h-4" /> Submit Exam
             </Button>
           ) : (
