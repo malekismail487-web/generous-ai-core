@@ -20,9 +20,11 @@ import {
   Check,
   X,
   BarChart3,
-  KeyRound
+  KeyRound,
+  Brain
 } from 'lucide-react';
 import { StudentAppPreview } from '@/components/StudentAppPreview';
+import LCTPanel from '@/components/admin/LCTPanel';
 import { GlobalAnalyticsDashboard } from '@/components/admin/GlobalAnalyticsDashboard';
 import { TeacherExcellenceProgram } from '@/components/admin/TeacherExcellenceProgram';
 import { MinistryReadinessReport } from '@/components/admin/MinistryReadinessReport';
@@ -78,7 +80,7 @@ export default function SuperAdmin() {
   const [loadingSchools, setLoadingSchools] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [testingRole, setTestingRole] = useState<TestingRole>('none');
-  const [activeTab, setActiveTab] = useState<'schools' | 'analytics' | 'ministry'>('schools');
+  const [activeTab, setActiveTab] = useState<'schools' | 'analytics' | 'ministry' | 'lct'>('schools');
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   
   // Create school form state
@@ -624,9 +626,14 @@ export default function SuperAdmin() {
           <Button variant={activeTab === 'ministry' ? 'default' : 'outline'} onClick={() => setActiveTab('ministry')} className="gap-2">
             <KeyRound className="w-4 h-4" /> Ministry
           </Button>
+          <Button variant={activeTab === 'lct' ? 'default' : 'outline'} onClick={() => setActiveTab('lct')} className="gap-2">
+            <Brain className="w-4 h-4" /> LCT
+          </Button>
         </div>
 
-        {activeTab === 'ministry' ? (
+        {activeTab === 'lct' ? (
+          <LCTPanel />
+        ) : activeTab === 'ministry' ? (
           <MinistryCodeGenerator />
         ) : activeTab === 'analytics' ? (
           <div className="space-y-8">
