@@ -971,6 +971,170 @@ export type Database = {
         }
         Relationships: []
       }
+      lct_exam_locks: {
+        Row: {
+          created_at: string
+          exam_id: string
+          id: string
+          locked_until: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_id: string
+          id?: string
+          locked_until: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_id?: string
+          id?: string
+          locked_until?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lct_exam_locks_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "lct_exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lct_exam_schools: {
+        Row: {
+          created_at: string
+          exam_id: string
+          id: string
+          school_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_id: string
+          id?: string
+          school_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_id?: string
+          id?: string
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lct_exam_schools_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "lct_exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lct_exam_schools_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lct_exam_students: {
+        Row: {
+          answers_json: Json
+          created_at: string
+          exam_id: string
+          id: string
+          learning_style: string
+          school_id: string
+          score: number | null
+          started_at: string | null
+          status: string
+          student_id: string
+          submitted_at: string | null
+          translated_questions_json: Json
+        }
+        Insert: {
+          answers_json?: Json
+          created_at?: string
+          exam_id: string
+          id?: string
+          learning_style?: string
+          school_id: string
+          score?: number | null
+          started_at?: string | null
+          status?: string
+          student_id: string
+          submitted_at?: string | null
+          translated_questions_json?: Json
+        }
+        Update: {
+          answers_json?: Json
+          created_at?: string
+          exam_id?: string
+          id?: string
+          learning_style?: string
+          school_id?: string
+          score?: number | null
+          started_at?: string | null
+          status?: string
+          student_id?: string
+          submitted_at?: string | null
+          translated_questions_json?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lct_exam_students_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "lct_exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lct_exam_students_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lct_exams: {
+        Row: {
+          answer_key_json: Json
+          created_at: string
+          created_by: string
+          ends_at: string | null
+          id: string
+          questions_json: Json
+          started_at: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          answer_key_json?: Json
+          created_at?: string
+          created_by: string
+          ends_at?: string | null
+          id?: string
+          questions_json?: Json
+          started_at?: string | null
+          status?: string
+          title?: string
+        }
+        Update: {
+          answer_key_json?: Json
+          created_at?: string
+          created_by?: string
+          ends_at?: string | null
+          id?: string
+          questions_json?: Json
+          started_at?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
       learning_style_profiles: {
         Row: {
           conceptual_score: number | null
@@ -2530,6 +2694,7 @@ export type Database = {
         Args: { p_device_fingerprint: string }
         Returns: Json
       }
+      check_lct_lock: { Args: { p_user_id: string }; Returns: Json }
       check_ministry_ip_ban: {
         Args: { p_fingerprint?: string; p_ip: string }
         Returns: Json
