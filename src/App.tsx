@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeLanguageProvider } from "@/hooks/useThemeLanguage";
 import { WallpaperProvider } from "@/hooks/useWallpaper";
 import DeviceBanScreen from "@/components/DeviceBanScreen";
+import LCTExamGuard from "@/components/LCTExamGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import LanguageSelect from "./pages/LanguageSelect";
@@ -62,6 +63,7 @@ const App = () => (
               <MinistryAccessAlert />
               
               <BrowserRouter>
+                <LCTExamGuard>
                 <LanguageGate>
                   <Routes>
                     <Route path="/" element={<Index />} />
@@ -91,6 +93,7 @@ const App = () => (
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </LanguageGate>
+                </LCTExamGuard>
               </BrowserRouter>
             </TooltipProvider>
           </FocusTimerProvider>

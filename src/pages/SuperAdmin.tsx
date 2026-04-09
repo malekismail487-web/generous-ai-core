@@ -631,7 +631,9 @@ export default function SuperAdmin() {
           </Button>
         </div>
 
-        {activeTab === 'ministry' ? (
+        {activeTab === 'lct' ? (
+          <LCTPanel />
+        ) : activeTab === 'ministry' ? (
           <MinistryCodeGenerator />
         ) : activeTab === 'analytics' ? (
           <div className="space-y-8">
