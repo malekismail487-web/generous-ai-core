@@ -20,7 +20,8 @@ import {
   Check,
   X,
   BarChart3,
-  KeyRound
+  KeyRound,
+  Brain
 } from 'lucide-react';
 import { StudentAppPreview } from '@/components/StudentAppPreview';
 import LCTPanel from '@/components/admin/LCTPanel';
