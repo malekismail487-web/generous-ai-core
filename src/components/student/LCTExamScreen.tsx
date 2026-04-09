@@ -37,7 +37,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
           setSubmitted(true);
           setResults({ score: data.score });
         }
-        setQuestions(data.translated_questions_json || []);
+        setQuestions(Array.isArray(data.translated_questions_json) ? data.translated_questions_json : []);
         if (data.answers_json && typeof data.answers_json === 'object' && !Array.isArray(data.answers_json)) {
           setAnswers(data.answers_json as Record<number, string>);
         }
