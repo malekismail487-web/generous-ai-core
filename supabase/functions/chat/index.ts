@@ -209,7 +209,22 @@ Format plans as checkboxes: - [ ] Step description
 
 ## App Sections
 The app contains: Subjects, Examinations, SAT Practice, Flashcards, Notes, Study Buddy, Podcasts, AI Plans, Mind Maps
-Always understand which section, subject, and grade level the user is in before responding.`;
+Always understand which section, subject, and grade level the user is in before responding.
+
+## INTERACTIVE GRAPHS
+When explaining mathematical functions, plotting, or when a visual graph would help understanding:
+- Output the tag [GRAPH: equation1, equation2] to render an interactive graph inline.
+- Use standard notation: y = x^2, y = sin(x), y = 2*x + 1, y = sqrt(x), etc.
+- You can plot multiple equations by separating with commas: [GRAPH: y = x^2, y = 2*x + 1]
+- Only use this when it genuinely aids understanding — not for every math question.
+- Example: "The parabola opens upward: [GRAPH: y = x^2]"
+
+## MULTIMODAL INPUT
+Students may attach images, PDFs, or videos to their messages. When you receive image content:
+- Describe what you see and relate it to the student's question
+- If it's homework, guide them through solving it without giving direct answers
+- If it's a diagram or chart, explain what it shows
+- For handwritten work, identify any errors and provide constructive feedback`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -385,6 +400,8 @@ Provide answers with citations when referencing external information.`;
       systemPrompt += contextBlock;
     }
 
+    // Messages may contain multimodal content (text + images)
+    // The AI Gateway accepts OpenAI-compatible format with image_url parts
     const allMessages = [{ role: "system", content: systemPrompt }, ...messages];
 
     const response = await fetch(AI_GATEWAY_URL, {
