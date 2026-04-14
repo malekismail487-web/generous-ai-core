@@ -19,6 +19,7 @@ import { GoalTracker } from "@/components/student/GoalTracker";
 import { Leaderboard } from "@/components/student/Leaderboard";
 import { FocusTimer } from "@/components/student/FocusTimer";
 import { AIStudyPlan } from "@/components/student/AIStudyPlan";
+import { GraphCalculator } from "@/components/student/GraphCalculator";
 import { StudentHomeGrid, GridAction } from "@/components/StudentHomeGrid";
 import { WeeklyPlanSection } from "@/components/WeeklyPlanSection";
 import { BannerAd } from "@/components/BannerAd";
@@ -153,6 +154,8 @@ const Index = () => {
         return <AnnouncementsViewer />;
       case 'trips':
         return <TripsViewer />;
+      case 'graphcalc':
+        return <GraphCalculator />;
       default:
         return null;
     }
@@ -194,6 +197,7 @@ const Index = () => {
                    : activeTab === 'podcasts' ? t('AI Podcasts', 'بودكاست AI')
                    : activeTab === 'announcements' ? t('Announcements', 'الإعلانات')
                    : activeTab === 'trips' ? t('Trips', 'الرحلات')
+                   : activeTab === 'graphcalc' ? t('Graph Calculator', 'حاسبة الرسوم')
                    : activeTab}
               </span>
             </div>

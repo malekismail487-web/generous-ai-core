@@ -1,8 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import { InteractiveGraph } from '@/components/student/InteractiveGraph';
+import { GraphModal } from '@/components/student/GraphModal';
 
 interface MathRendererProps {
   content: string;
@@ -36,6 +38,20 @@ function processMathInText(text: string): string {
 }
 
 export function MathRenderer({ content, className = '' }: MathRendererProps) {
+  const [expandGraph, setExpandGraph] = useState<string[] | null>(null);
+
+  // Extract [GRAPH: ...] tokens
+  const { graphs, contentWithoutGraphs } = useMemo(() => {
+    const graphRegex = /\[GRAPH:\s*(.*?)\]/g;
+    const foundGraphs: string[][] = [];
+    const cleaned = content.replace(graphRegex, (_, eqs: string) => {
+      const equations = eqs.split(',').map((e: string) => e.trim()).filter(Boolean);
+      if (equations.length > 0) foundGraphs.push(equations);
+      return ''; // remove from text
+    });
+    return { graphs: foundGraphs, contentWithoutGraphs: cleaned };
+  }, [content]);
+
   // Remove markdown image syntax from content (AI sometimes outputs broken image URLs)
   // but KEEP [INLINE_IMG:...] tokens — those are our own
   const cleanedContent = useMemo(() => {
@@ -55,7 +71,7 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
     // Clean up double spaces and empty lines from removals
     cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
     return cleaned.trim();
-  }, [content]);
+  }, [contentWithoutGraphs]);
 
   return (
     <div className={`space-y-3 ${className}`}>
@@ -103,6 +119,27 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
         </div>
       )}
 
+      {/* Inline interactive graphs */}
+      {graphs.map((eqs, i) => (
+        <div key={i} className="my-3">
+          <InteractiveGraph
+            equations={eqs}
+            width={280}
+            height={180}
+            compact
+            onExpand={() => setExpandGraph(eqs)}
+          />
+        </div>
+      ))}
+
+      {/* Full-screen graph modal */}
+      {expandGraph && (
+        <GraphModal
+          open={!!expandGraph}
+          onClose={() => setExpandGraph(null)}
+          initialEquations={expandGraph}
+        />
+      )}
     </div>
   );
 }

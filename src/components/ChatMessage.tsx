@@ -11,6 +11,7 @@ interface ChatMessageProps {
     role: "user" | "assistant";
     content: string;
     images?: { src: string; alt?: string }[];
+    attachments?: { name: string; type: string; url?: string; preview?: string }[];
   };
   isStreaming?: boolean;
 }
@@ -143,6 +144,22 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
           <User size={14} />
         </div>
         <div className="message-bubble message-user">
+          {/* Attachment previews */}
+          {message.attachments && message.attachments.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {message.attachments.map((att, i) => (
+                <div key={i}>
+                  {att.preview ? (
+                    <img src={att.preview} alt={att.name} className="w-20 h-20 rounded-lg object-cover border border-border/20" />
+                  ) : (
+                    <div className="px-2 py-1 rounded-lg bg-primary/10 text-[10px] text-primary flex items-center gap-1">
+                      📎 {att.name}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           <div className="text-sm leading-relaxed">
             <span className="whitespace-pre-wrap">{message.content}</span>
           </div>

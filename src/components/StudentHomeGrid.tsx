@@ -5,7 +5,7 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import {
   Brain, Layers, BookOpen, FlipHorizontal, ClipboardList,
   FileText, GraduationCap, Flame, Calendar, Podcast,
-  Target, Trophy, Timer, BookOpenCheck, Megaphone, MapPin,
+  Target, Trophy, Timer, BookOpenCheck, Megaphone, MapPin, LineChart,
 } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { SmartNudges } from '@/components/student/SmartNudges';
@@ -15,7 +15,7 @@ export type GridAction =
   | 'mindmaps' | 'subjects' | 'examination' | 'flashcards' | 'notes' | 'sat'
   | 'assignments' | 'reports' | 'weeklyplan' | 'podcasts' | 'studybuddy'
   | 'goals' | 'leaderboard' | 'focustimer' | 'aiplans' | 'announcements'
-  | 'trips' | 'settings';
+  | 'trips' | 'settings' | 'graphcalc';
 
 interface StudentHomeGridProps {
   onNavigate: (action: GridAction) => void;
@@ -44,6 +44,7 @@ const BRANCH_ITEMS: { id: GridAction; icon: typeof Brain; label: string; labelAr
   { id: 'trips', icon: MapPin, label: 'Trips', labelAr: 'رحلات', schoolOnly: true },
   { id: 'reports', icon: FileText, label: 'Reports', labelAr: 'تقارير', schoolOnly: true },
   { id: 'focustimer', icon: Timer, label: 'Timer', labelAr: 'مؤقت' },
+  { id: 'graphcalc', icon: LineChart, label: 'Graphs', labelAr: 'رسوم' },
 ];
 
 export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps) {
@@ -232,6 +233,7 @@ function getIconAnimation(id: string): string {
     case 'trips': return 'animate-[bounceOnce_0.5s_ease]';
     case 'reports': return 'animate-[stackUp_0.4s_ease]';
     case 'focustimer': return 'animate-[sparkleRotate_0.6s_ease]';
+    case 'graphcalc': return 'animate-[bounceOnce_0.5s_ease]';
     default: return '';
   }
 }
