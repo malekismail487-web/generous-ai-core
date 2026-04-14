@@ -385,6 +385,8 @@ Provide answers with citations when referencing external information.`;
       systemPrompt += contextBlock;
     }
 
+    // Messages may contain multimodal content (text + images)
+    // The AI Gateway accepts OpenAI-compatible format with image_url parts
     const allMessages = [{ role: "system", content: systemPrompt }, ...messages];
 
     const response = await fetch(AI_GATEWAY_URL, {
