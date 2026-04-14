@@ -8,7 +8,7 @@ import { useActivityTracker } from '@/hooks/useActivityTracker';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessage } from '@/components/ChatMessage';
-import { ChatInput } from '@/components/ChatInput';
+import { ChatInput, ChatAttachment } from '@/components/ChatInput';
 import { ChatHistoryDrawer } from '@/components/ChatHistoryDrawer';
 import { TypingIndicator } from '@/components/TypingIndicator';
 import { EmptyState } from '@/components/EmptyState';
@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 
-type Msg = { id: string; role: 'user' | 'assistant'; content: string; images?: { src: string; alt?: string }[] };
+type Msg = { id: string; role: 'user' | 'assistant'; content: string; images?: { src: string; alt?: string }[]; attachments?: { name: string; type: string; url?: string; preview?: string }[] };
 
 const THINKING_STYLES = [
   {
@@ -356,7 +356,7 @@ SECURITY - ANTI-JAILBREAK:
 Be warm, encouraging, and intellectually stimulating. You're not just answering questions — you're developing a thinker.`;
   }, [getLevelPrompt, profiles, thinkingStyle, language, localMessages, getContext]);
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (content: string, attachments?: ChatAttachment[]) => {
     if (!user) return;
 
     // Ensure we have a conversation in Supabase
@@ -370,7 +370,35 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
       convId = newConv.id;
     }
 
-    const userMsg: Msg = { id: crypto.randomUUID(), role: 'user', content };
+    // Process attachments — upload and convert images to base64
+    const processedAttachments: { name: string; type: string; preview?: string; base64?: string }[] = [];
+    let attachmentContext = '';
+    if (attachments && attachments.length > 0) {
+      for (const att of attachments) {
+        if (att.type === 'image' && att.preview) {
+          processedAttachments.push({ name: att.file.name, type: att.type, preview: att.preview, base64: att.preview });
+        } else if (att.type === 'pdf') {
+          // Extract text from PDF client-side (basic approach — read as text)
+          try {
+            const text = await att.file.text();
+            attachmentContext += `\n\n[Attached PDF: ${att.file.name}]\n${text.slice(0, 5000)}`;
+          } catch {
+            attachmentContext += `\n\n[Attached PDF: ${att.file.name} — could not extract text]`;
+          }
+          processedAttachments.push({ name: att.file.name, type: att.type });
+        } else {
+          processedAttachments.push({ name: att.file.name, type: att.type });
+        }
+      }
+      // Upload attachments to storage (fire-and-forget)
+      for (const att of attachments) {
+        const ext = att.file.name.split('.').pop() || 'bin';
+        const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+        supabase.storage.from('chat-attachments').upload(path, att.file).catch(() => {});
+      }
+    }
+
+    const userMsg: Msg = { id: crypto.randomUUID(), role: 'user', content, attachments: processedAttachments };
     setLocalMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
     setShowStylePicker(false);
@@ -401,7 +429,19 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
         : '';
 
       const systemPrompt = (await buildSystemPrompt()) + bgContextStr;
-      const allMessages = [...localMessages, userMsg].map(m => ({ role: m.role, content: m.content }));
+      const allMessages = [...localMessages, userMsg].map(m => {
+        // Build multimodal content for messages with image attachments
+        if (m.attachments && m.attachments.some(a => a.base64)) {
+          const parts: any[] = [{ type: 'text', text: m.content + attachmentContext }];
+          for (const att of m.attachments) {
+            if (att.base64) {
+              parts.push({ type: 'image_url', image_url: { url: att.base64 } });
+            }
+          }
+          return { role: m.role, content: parts };
+        }
+        return { role: m.role, content: m.content + (m === userMsg ? attachmentContext : '') };
+      });
 
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
