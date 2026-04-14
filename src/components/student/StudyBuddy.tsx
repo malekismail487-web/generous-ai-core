@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 
-type Msg = { id: string; role: 'user' | 'assistant'; content: string; images?: { src: string; alt?: string }[]; attachments?: { name: string; type: string; url?: string; preview?: string }[] };
+type Msg = { id: string; role: 'user' | 'assistant'; content: string; images?: { src: string; alt?: string }[]; attachments?: { name: string; type: string; url?: string; preview?: string; base64?: string }[] };
 
 const THINKING_STYLES = [
   {

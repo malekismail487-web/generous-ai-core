@@ -11,7 +11,7 @@ interface ChatMessageProps {
     role: "user" | "assistant";
     content: string;
     images?: { src: string; alt?: string }[];
-    attachments?: { name: string; type: string; url?: string; preview?: string }[];
+    attachments?: { name: string; type: string; url?: string; preview?: string; base64?: string }[];
   };
   isStreaming?: boolean;
 }
