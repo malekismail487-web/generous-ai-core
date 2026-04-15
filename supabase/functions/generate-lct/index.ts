@@ -1648,19 +1648,19 @@ async function handleGetAnalytics(supabase: any, body: any) {
       in_progress: students.filter((s: any) => s.status === "in_progress").length,
     },
     scores: {
-      mean: scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
-      median: scores.length > 0 ? scores.sort((a, b) => a - b)[Math.floor(scores.length / 2)] : 0,
+      mean: scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : 0,
+      median: scores.length > 0 ? scores.sort((a: number, b: number) => a - b)[Math.floor(scores.length / 2)] : 0,
       highest: scores.length > 0 ? Math.max(...scores) : 0,
       lowest: scores.length > 0 ? Math.min(...scores) : 0,
       std_dev: scores.length > 1
-        ? Math.round(Math.sqrt(scores.reduce((sum, s) => sum + Math.pow(s - (scores.reduce((a, b) => a + b, 0) / scores.length), 2), 0) / scores.length))
+        ? Math.round(Math.sqrt(scores.reduce((sum: number, s: number) => sum + Math.pow(s - (scores.reduce((a: number, b: number) => a + b, 0) / scores.length), 2), 0) / scores.length))
         : 0,
     },
     grade_bands: {
-      excellent: scores.filter((s) => s >= 90).length,
-      good: scores.filter((s) => s >= 70 && s < 90).length,
-      average: scores.filter((s) => s >= 50 && s < 70).length,
-      below_average: scores.filter((s) => s < 50).length,
+      excellent: scores.filter((s: number) => s >= 90).length,
+      good: scores.filter((s: number) => s >= 70 && s < 90).length,
+      average: scores.filter((s: number) => s >= 50 && s < 70).length,
+      below_average: scores.filter((s: number) => s < 50).length,
     },
     by_learning_style: {} as Record<string, { count: number; avg_score: number }>,
     by_school: {} as Record<string, { name: string; count: number; avg_score: number }>,
