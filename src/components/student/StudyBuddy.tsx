@@ -398,10 +398,34 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
       }
     }
 
+    // === COGNITIVE MIRROR — resolve previous unanswered snapshot using this new user message
+    const previousAssistant = [...localMessages].reverse().find(m => m.role === 'assistant' && m.mirrorSnapshotId && !m.mirrorActualAnswer);
+    if (previousAssistant?.mirrorSnapshotId) {
+      const snapshotIdToResolve = previousAssistant.mirrorSnapshotId;
+      setLocalMessages(prev => prev.map(m => m.id === previousAssistant.id ? { ...m, mirrorActualAnswer: content } : m));
+      // resolution happens client-side via MirrorRevealCard mounting with actual_answer
+      void snapshotIdToResolve;
+    }
+
     const userMsg: Msg = { id: crypto.randomUUID(), role: 'user', content, attachments: processedAttachments };
     setLocalMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
     setShowStylePicker(false);
+
+    // === COGNITIVE MIRROR — fire silent prediction in parallel with AI call ===
+    const mirrorPromise: Promise<{ snapshot_id: string; predicted_answer: string; predicted_misconception: string; predicted_reasoning: string } | null> = (async () => {
+      try {
+        const { data: { session: ms } } = await supabase.auth.getSession();
+        const mt = ms?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/predict-student`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mt}` },
+          body: JSON.stringify({ question: content, source: 'chat' }),
+        });
+        if (!r.ok) return null;
+        return await r.json();
+      } catch { return null; }
+    })();
 
     // Save user message to DB
     await addMessage('user', content, convId);
