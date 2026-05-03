@@ -10,6 +10,7 @@ import {
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { SmartNudges } from '@/components/student/SmartNudges';
 import { MorningBriefing } from '@/components/student/MorningBriefing';
+import { CognitiveMirrorGauge } from '@/components/student/CognitiveMirrorCard';
 
 export type GridAction =
   | 'mindmaps' | 'subjects' | 'examination' | 'flashcards' | 'notes' | 'sat'
@@ -63,6 +64,11 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
 
       {/* Morning Briefing Card */}
       <MorningBriefing onNavigate={onNavigate} />
+
+      {/* Cognitive Mirror gauge */}
+      <div className="mx-3 mb-4">
+        <CognitiveMirrorGauge />
+      </div>
 
       {/* Hero greeting — monochromatic */}
       <div className="mx-3 mb-5 rounded-3xl overflow-hidden opacity-0 animate-[slideUpFade_0.6s_ease-out_forwards]" style={{ background: 'var(--gradient-hero)' }}>
