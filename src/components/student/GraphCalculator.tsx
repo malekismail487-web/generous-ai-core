@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { InteractiveGraph } from './InteractiveGraph';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Trash2 } from 'lucide-react';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { MathKeyboard } from './MathKeyboard';
 
 const PRESET_EQUATIONS = [
   { label: 'y = x²', eq: 'y = x^2' },
@@ -19,7 +20,36 @@ const COLORS = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'
 export function GraphCalculator() {
   const [equations, setEquations] = useState<string[]>(['y = x^2']);
   const [newEq, setNewEq] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const { t } = useThemeLanguage();
+
+  const insertAtCursor = (text: string, back = 0) => {
+    const el = inputRef.current;
+    const start = el?.selectionStart ?? newEq.length;
+    const end = el?.selectionEnd ?? newEq.length;
+    const next = newEq.slice(0, start) + text + newEq.slice(end);
+    setNewEq(next);
+    requestAnimationFrame(() => {
+      const pos = start + text.length - back;
+      el?.focus();
+      el?.setSelectionRange(pos, pos);
+    });
+  };
+
+  const backspace = () => {
+    const el = inputRef.current;
+    const start = el?.selectionStart ?? newEq.length;
+    const end = el?.selectionEnd ?? newEq.length;
+    if (start === end && start === 0) return;
+    if (start === end) {
+      const next = newEq.slice(0, start - 1) + newEq.slice(end);
+      setNewEq(next);
+      requestAnimationFrame(() => { el?.focus(); el?.setSelectionRange(start - 1, start - 1); });
+    } else {
+      setNewEq(newEq.slice(0, start) + newEq.slice(end));
+      requestAnimationFrame(() => { el?.focus(); el?.setSelectionRange(start, start); });
+    }
+  };
 
   const addEquation = () => {
     if (newEq.trim() && equations.length < 6) {
@@ -69,17 +99,27 @@ export function GraphCalculator() {
         </div>
 
         {/* Add equation input */}
-        <div className="flex gap-2">
-          <Input
-            value={newEq}
-            onChange={(e) => setNewEq(e.target.value)}
-            placeholder={t('e.g. y = 2*sin(x) + 1', 'مثال: y = 2*sin(x) + 1')}
-            className="text-sm font-mono"
-            onKeyDown={(e) => e.key === 'Enter' && addEquation()}
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Input
+              ref={inputRef}
+              value={newEq}
+              onChange={(e) => setNewEq(e.target.value)}
+              placeholder={t('e.g. y = 2*sin(x) + 1', 'مثال: y = 2*sin(x) + 1')}
+              className="text-sm font-mono"
+              inputMode="none"
+              onKeyDown={(e) => e.key === 'Enter' && addEquation()}
+            />
+            <Button size="sm" onClick={addEquation} disabled={!newEq.trim() || equations.length >= 6}>
+              <Plus size={14} />
+            </Button>
+          </div>
+          <MathKeyboard
+            onInsert={insertAtCursor}
+            onBackspace={backspace}
+            onClear={() => setNewEq('')}
+            onSubmit={addEquation}
           />
-          <Button size="sm" onClick={addEquation} disabled={!newEq.trim() || equations.length >= 6}>
-            <Plus size={14} />
-          </Button>
         </div>
 
         {/* Presets */}
