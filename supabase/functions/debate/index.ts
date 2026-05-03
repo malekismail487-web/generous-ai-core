@@ -70,9 +70,13 @@ async function getUser(req: Request) {
   try {
     const supa = admin();
     const { data: { user } } = await supa.auth.getUser(auth.replace("Bearer ", ""));
-    return user;
+    if (!user) return null;
+    const { data: profile } = await supa.from("profiles").select("school_id").eq("id", user.id).maybeSingle();
+    return { id: user.id, schoolId: profile?.school_id ?? null };
   } catch { return null; }
 }
+
+const DEBATE_DAILY_CAP = 10;
 
 async function streamPersona(
   persona: Persona,
@@ -201,6 +205,21 @@ serve(async (req) => {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  // Cost cap: max DEBATE_DAILY_CAP debates per student per day
+  try {
+    const supa = admin();
+    const { data: cap } = await supa.rpc("check_and_increment_cost", {
+      p_user_id: user.id, p_school_id: user.schoolId, p_feature: "debate", p_daily_cap: DEBATE_DAILY_CAP,
+    });
+    if (cap && cap.allowed === false) {
+      return new Response(JSON.stringify({
+        error: "daily_cap_reached",
+        message: `You've used your ${DEBATE_DAILY_CAP} debates for today. Resets at UTC midnight.`,
+        used: cap.used, cap: cap.cap,
+      }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+  } catch (e) { console.warn("cost check failed", e); }
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
