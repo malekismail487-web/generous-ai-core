@@ -114,6 +114,7 @@ export function StudyBuddy() {
   const [thinkingStyle, setThinkingStyle] = useState<string | null>(null);
   const [showStylePicker, setShowStylePicker] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [debateOpen, setDebateOpen] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Sync DB messages to local display messages
