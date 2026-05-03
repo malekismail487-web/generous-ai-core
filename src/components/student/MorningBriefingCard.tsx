@@ -17,6 +17,25 @@ interface Briefing {
   opened_at: string | null;
 }
 
+const COMPLETION_KEY = "lumina:mb:completedAt";
+const DISMISS_KEY = "lumina:mb:dismissedAt";
+const TWENTY_FOUR_H = 24 * 60 * 60 * 1000;
+
+function isWithin24h(key: string, userId: string): boolean {
+  try {
+    const raw = localStorage.getItem(`${key}:${userId}`);
+    if (!raw) return false;
+    const ts = parseInt(raw, 10);
+    return Number.isFinite(ts) && Date.now() - ts < TWENTY_FOUR_H;
+  } catch {
+    return false;
+  }
+}
+
+function stamp(key: string, userId: string) {
+  try { localStorage.setItem(`${key}:${userId}`, String(Date.now())); } catch { /* ignore */ }
+}
+
 export function MorningBriefingCard() {
   const { user } = useAuth();
   const [briefing, setBriefing] = useState<Briefing | null>(null);
@@ -27,6 +46,12 @@ export function MorningBriefingCard() {
 
   useEffect(() => {
     if (!user) return;
+    // 24-hour cooldown after completion or dismissal
+    if (isWithin24h(COMPLETION_KEY, user.id) || isWithin24h(DISMISS_KEY, user.id)) {
+      setLoading(false);
+      setDismissed(true);
+      return;
+    }
     let cancel = false;
     const load = async () => {
       const today = new Date().toISOString().slice(0, 10);
@@ -66,6 +91,11 @@ export function MorningBriefingCard() {
     return () => { cancel = true; };
   }, [user]);
 
+  const dismissNow = () => {
+    if (user?.id) stamp(DISMISS_KEY, user.id);
+    setDismissed(true);
+  };
+
   if (loading || generating) {
     return (
       <div className="mx-3 mb-4 rounded-2xl border border-border/40 bg-card/70 backdrop-blur-sm p-4 flex items-center gap-3">
@@ -81,6 +111,11 @@ export function MorningBriefingCard() {
   const quiz = Array.isArray(briefing.mini_quiz) ? briefing.mini_quiz : [];
   const allAnswered = quiz.length > 0 && quiz.every((_, i) => picked[i] !== undefined);
   const correctCount = quiz.reduce((acc, q, i) => acc + (picked[i] === q.answer_index ? 1 : 0), 0);
+
+  // Stamp completion as soon as user finishes the quiz so it stays gone for 24h
+  if (allAnswered && user?.id && !isWithin24h(COMPLETION_KEY, user.id)) {
+    stamp(COMPLETION_KEY, user.id);
+  }
 
   const handlePick = (qi: number, ci: number) => {
     if (picked[qi] !== undefined) return;
