@@ -531,6 +531,21 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
             prev.map(m => m.id === assistantId ? { ...m, images: imgs } : m)
           );
         }
+        // Attach Cognitive Mirror prediction to this assistant message (silent)
+        try {
+          const mirror = await mirrorPromise;
+          if (mirror?.snapshot_id) {
+            setLocalMessages(prev => prev.map(m => m.id === assistantId ? {
+              ...m,
+              mirrorSnapshotId: mirror.snapshot_id,
+              mirrorPrediction: {
+                predicted_answer: mirror.predicted_answer,
+                predicted_misconception: mirror.predicted_misconception,
+              },
+            } : m));
+          }
+        } catch { /* mirror non-fatal */ }
+
         // Save assistant message to DB
         await addMessage('assistant', assistantContent, convId);
 
