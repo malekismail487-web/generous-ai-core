@@ -1,1 +1,4 @@
 project_id = "ivzltzehosalijmkgzhb"
+
+[functions.lumina-api]
+verify_jwt = false

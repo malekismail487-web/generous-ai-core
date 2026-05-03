@@ -29,6 +29,7 @@ import { GlobalAnalyticsDashboard } from '@/components/admin/GlobalAnalyticsDash
 import { TeacherExcellenceProgram } from '@/components/admin/TeacherExcellenceProgram';
 import { MinistryReadinessReport } from '@/components/admin/MinistryReadinessReport';
 import MinistryCodeGenerator from '@/components/admin/MinistryCodeGenerator';
+import LuminaApiPanel from '@/components/admin/LuminaApiPanel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -80,7 +81,7 @@ export default function SuperAdmin() {
   const [loadingSchools, setLoadingSchools] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [testingRole, setTestingRole] = useState<TestingRole>('none');
-  const [activeTab, setActiveTab] = useState<'schools' | 'analytics' | 'ministry' | 'lct'>('schools');
+  const [activeTab, setActiveTab] = useState<'schools' | 'analytics' | 'ministry' | 'lct' | 'api'>('schools');
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   
   // Create school form state
@@ -629,9 +630,14 @@ export default function SuperAdmin() {
           <Button variant={activeTab === 'lct' ? 'default' : 'outline'} onClick={() => setActiveTab('lct')} className="gap-2">
             <Brain className="w-4 h-4" /> LCT
           </Button>
+          <Button variant={activeTab === 'api' ? 'default' : 'outline'} onClick={() => setActiveTab('api')} className="gap-2">
+            <KeyRound className="w-4 h-4" /> Lumina API
+          </Button>
         </div>
 
-        {activeTab === 'lct' ? (
+        {activeTab === 'api' ? (
+          <LuminaApiPanel />
+        ) : activeTab === 'lct' ? (
           <LCTPanel />
         ) : activeTab === 'ministry' ? (
           <MinistryCodeGenerator />

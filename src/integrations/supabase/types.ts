@@ -1267,6 +1267,101 @@ export type Database = {
           },
         ]
       }
+      lumina_api_keys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_used_at: string | null
+          monthly_request_quota: number
+          partner_name: string
+          quota_reset_at: string
+          rate_limit_per_minute: number
+          requests_this_month: number
+          revoked_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_used_at?: string | null
+          monthly_request_quota?: number
+          partner_name: string
+          quota_reset_at?: string
+          rate_limit_per_minute?: number
+          requests_this_month?: number
+          revoked_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          key_prefix?: string
+          label?: string
+          last_used_at?: string | null
+          monthly_request_quota?: number
+          partner_name?: string
+          quota_reset_at?: string
+          rate_limit_per_minute?: number
+          requests_this_month?: number
+          revoked_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lumina_api_usage: {
+        Row: {
+          api_key_id: string
+          created_at: string
+          endpoint: string
+          error_message: string | null
+          id: string
+          latency_ms: number | null
+          status_code: number
+          tokens_used: number | null
+        }
+        Insert: {
+          api_key_id: string
+          created_at?: string
+          endpoint: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          status_code: number
+          tokens_used?: number | null
+        }
+        Update: {
+          api_key_id?: string
+          created_at?: string
+          endpoint?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          status_code?: number
+          tokens_used?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lumina_api_usage_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "lumina_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_comments: {
         Row: {
           comment: string
@@ -2763,6 +2858,7 @@ export type Database = {
         Returns: boolean
       }
       is_student: { Args: { user_uuid: string }; Returns: boolean }
+      is_super_admin_user: { Args: { uid: string }; Returns: boolean }
       is_teacher: { Args: { user_uuid: string }; Returns: boolean }
       link_moderator_after_signup: {
         Args: { p_email: string; p_user_id: string }
