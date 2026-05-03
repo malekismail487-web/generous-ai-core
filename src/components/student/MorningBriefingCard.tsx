@@ -140,7 +140,7 @@ export function MorningBriefingCard() {
   if (allAnswered) {
     return (
       <div className="mx-3 mb-4 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 animate-fade-in flex items-center gap-3 relative">
-        <button onClick={() => setDismissed(true)} className="absolute top-2 right-2 p-1 rounded-lg hover:bg-muted/50 text-muted-foreground">
+        <button onClick={dismissNow} className="absolute top-2 right-2 p-1 rounded-lg hover:bg-muted/50 text-muted-foreground">
           <X size={14} />
         </button>
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -158,7 +158,7 @@ export function MorningBriefingCard() {
 
   return (
     <div className="mx-3 mb-4 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 animate-fade-in relative">
-      <button onClick={() => setDismissed(true)} className="absolute top-2 right-2 p-1 rounded-lg hover:bg-muted/50 text-muted-foreground" aria-label="Skip briefing">
+      <button onClick={dismissNow} className="absolute top-2 right-2 p-1 rounded-lg hover:bg-muted/50 text-muted-foreground" aria-label="Skip briefing">
         <X size={14} />
       </button>
       <div className="flex items-center gap-2 mb-2">
@@ -217,7 +217,7 @@ export function MorningBriefingCard() {
             </div>
           ))}
           <button
-            onClick={() => setDismissed(true)}
+            onClick={dismissNow}
             className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2"
           >
             Skip for today
