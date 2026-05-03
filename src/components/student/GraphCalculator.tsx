@@ -99,17 +99,27 @@ export function GraphCalculator() {
         </div>
 
         {/* Add equation input */}
-        <div className="flex gap-2">
-          <Input
-            value={newEq}
-            onChange={(e) => setNewEq(e.target.value)}
-            placeholder={t('e.g. y = 2*sin(x) + 1', 'مثال: y = 2*sin(x) + 1')}
-            className="text-sm font-mono"
-            onKeyDown={(e) => e.key === 'Enter' && addEquation()}
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Input
+              ref={inputRef}
+              value={newEq}
+              onChange={(e) => setNewEq(e.target.value)}
+              placeholder={t('e.g. y = 2*sin(x) + 1', 'مثال: y = 2*sin(x) + 1')}
+              className="text-sm font-mono"
+              inputMode="none"
+              onKeyDown={(e) => e.key === 'Enter' && addEquation()}
+            />
+            <Button size="sm" onClick={addEquation} disabled={!newEq.trim() || equations.length >= 6}>
+              <Plus size={14} />
+            </Button>
+          </div>
+          <MathKeyboard
+            onInsert={insertAtCursor}
+            onBackspace={backspace}
+            onClear={() => setNewEq('')}
+            onSubmit={addEquation}
           />
-          <Button size="sm" onClick={addEquation} disabled={!newEq.trim() || equations.length >= 6}>
-            <Plus size={14} />
-          </Button>
         </div>
 
         {/* Presets */}
