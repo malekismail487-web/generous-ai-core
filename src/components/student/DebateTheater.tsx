@@ -2,10 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Brain, GraduationCap, ShieldQuestion, Users, Target, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import remarkGfm from "remark-gfm";
+import { MathRenderer } from "@/components/MathRenderer";
 
 const PERSONAS = [
   { id: "prof",    name: "The Professor", icon: GraduationCap, accent: "text-sky-500"   },
@@ -135,11 +132,9 @@ export function DebateTheater({ question, onClose, onSideWith }: Props) {
                     {isSided ? "Sided ✓" : "Side with"}
                   </button>
                 </div>
-                <div className="prose prose-sm dark:prose-invert max-w-none px-3 py-2 overflow-y-auto text-[13px] leading-relaxed" style={{ fontFamily: 'Source Serif 4, serif' }}>
+                <div className="px-3 py-2 overflow-y-auto text-[13px] leading-relaxed" style={{ fontFamily: 'Source Serif 4, serif' }}>
                   {panes[p.id] ? (
-                    <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}>
-                      {panes[p.id]}
-                    </ReactMarkdown>
+                    <MathRenderer content={panes[p.id]} />
                   ) : (
                     <p className="text-muted-foreground italic text-xs">Thinking…</p>
                   )}
@@ -159,8 +154,8 @@ export function DebateTheater({ question, onClose, onSideWith }: Props) {
               {phase === "complete" && verdict && <span className="text-[10px] text-emerald-500">final</span>}
             </div>
             {verdict ? (
-              <div className="prose prose-sm dark:prose-invert max-w-none text-[13px]" style={{ fontFamily: 'Source Serif 4, serif' }}>
-                <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}>{verdict}</ReactMarkdown>
+              <div className="text-[13px]" style={{ fontFamily: 'Source Serif 4, serif' }}>
+                <MathRenderer content={verdict} />
               </div>
             ) : (
               <p className="text-xs text-muted-foreground italic">
