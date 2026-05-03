@@ -11,6 +11,7 @@ import { LuminaLogo } from '@/components/LuminaLogo';
 import { SmartNudges } from '@/components/student/SmartNudges';
 import { MorningBriefing } from '@/components/student/MorningBriefing';
 import { CognitiveMirrorGauge } from '@/components/student/CognitiveMirrorCard';
+import { MorningBriefingCard } from '@/components/student/MorningBriefingCard';
 
 export type GridAction =
   | 'mindmaps' | 'subjects' | 'examination' | 'flashcards' | 'notes' | 'sat'
@@ -64,6 +65,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
 
       {/* Morning Briefing Card */}
       <MorningBriefing onNavigate={onNavigate} />
+      <MorningBriefingCard />
 
       {/* Cognitive Mirror gauge */}
       <div className="mx-3 mb-4">
