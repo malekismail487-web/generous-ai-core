@@ -80,10 +80,7 @@ export function MorningBriefingCard() {
 
   const quiz = Array.isArray(briefing.mini_quiz) ? briefing.mini_quiz : [];
   const allAnswered = quiz.length > 0 && quiz.every((_, i) => picked[i] !== undefined);
-  const correctCount = useMemo(
-    () => quiz.reduce((acc, q, i) => acc + (picked[i] === q.answer_index ? 1 : 0), 0),
-    [picked, quiz],
-  );
+  const correctCount = quiz.reduce((acc, q, i) => acc + (picked[i] === q.answer_index ? 1 : 0), 0);
 
   const handlePick = (qi: number, ci: number) => {
     if (picked[qi] !== undefined) return;
