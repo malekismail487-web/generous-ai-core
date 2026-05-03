@@ -1865,6 +1865,45 @@ export type Database = {
           },
         ]
       }
+      morning_briefings: {
+        Row: {
+          briefing_md: string
+          created_at: string
+          id: string
+          key_insight: string | null
+          leverage_topic: string | null
+          mini_quiz: Json | null
+          opened_at: string | null
+          scheduled_for: string
+          school_id: string | null
+          user_id: string
+        }
+        Insert: {
+          briefing_md: string
+          created_at?: string
+          id?: string
+          key_insight?: string | null
+          leverage_topic?: string | null
+          mini_quiz?: Json | null
+          opened_at?: string | null
+          scheduled_for?: string
+          school_id?: string | null
+          user_id: string
+        }
+        Update: {
+          briefing_md?: string
+          created_at?: string
+          id?: string
+          key_insight?: string | null
+          leverage_topic?: string | null
+          mini_quiz?: Json | null
+          opened_at?: string | null
+          scheduled_for?: string
+          school_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           ai_feedback: string | null
@@ -2044,6 +2083,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recall_schedule: {
+        Row: {
+          concept: string
+          created_at: string
+          delivered_at: string | null
+          due_at: string
+          id: string
+          reason: string | null
+          school_id: string | null
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          concept: string
+          created_at?: string
+          delivered_at?: string | null
+          due_at?: string
+          id?: string
+          reason?: string | null
+          school_id?: string | null
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          concept?: string
+          created_at?: string
+          delivered_at?: string | null
+          due_at?: string
+          id?: string
+          reason?: string | null
+          school_id?: string | null
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       report_cards: {
         Row: {
