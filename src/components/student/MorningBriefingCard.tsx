@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Sparkles, Moon, Check, X } from "lucide-react";
+import { Sparkles, Moon, Check, X, Heart } from "lucide-react";
 import { MathRenderer } from "@/components/MathRenderer";
+import { recordIntelligentAnswer } from "@/lib/adaptiveIntelligence";
 import { cn } from "@/lib/utils";
 
 interface QuizQ { q: string; choices: string[]; answer_index: number; explanation: string; }
