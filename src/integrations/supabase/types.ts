@@ -511,6 +511,96 @@ export type Database = {
           },
         ]
       }
+      cognitive_mirror_snapshots: {
+        Row: {
+          actual_answer: string | null
+          context: Json | null
+          created_at: string
+          drift_score: number | null
+          id: string
+          predicted_answer: string | null
+          predicted_misconception: string | null
+          predicted_reasoning: string | null
+          prediction_matched: boolean | null
+          question: string
+          resolved_at: string | null
+          school_id: string | null
+          source: string
+          subject: string | null
+          topic: string | null
+          user_id: string
+          was_correct: boolean | null
+        }
+        Insert: {
+          actual_answer?: string | null
+          context?: Json | null
+          created_at?: string
+          drift_score?: number | null
+          id?: string
+          predicted_answer?: string | null
+          predicted_misconception?: string | null
+          predicted_reasoning?: string | null
+          prediction_matched?: boolean | null
+          question: string
+          resolved_at?: string | null
+          school_id?: string | null
+          source?: string
+          subject?: string | null
+          topic?: string | null
+          user_id: string
+          was_correct?: boolean | null
+        }
+        Update: {
+          actual_answer?: string | null
+          context?: Json | null
+          created_at?: string
+          drift_score?: number | null
+          id?: string
+          predicted_answer?: string | null
+          predicted_misconception?: string | null
+          predicted_reasoning?: string | null
+          prediction_matched?: boolean | null
+          question?: string
+          resolved_at?: string | null
+          school_id?: string | null
+          source?: string
+          subject?: string | null
+          topic?: string | null
+          user_id?: string
+          was_correct?: boolean | null
+        }
+        Relationships: []
+      }
+      cognitive_mirror_stats: {
+        Row: {
+          avg_drift: number
+          last_updated: string
+          matched_predictions: number
+          rolling_accuracy: number
+          school_id: string | null
+          total_predictions: number
+          user_id: string
+        }
+        Insert: {
+          avg_drift?: number
+          last_updated?: string
+          matched_predictions?: number
+          rolling_accuracy?: number
+          school_id?: string | null
+          total_predictions?: number
+          user_id: string
+        }
+        Update: {
+          avg_drift?: number
+          last_updated?: string
+          matched_predictions?: number
+          rolling_accuracy?: number
+          school_id?: string | null
+          total_predictions?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       content_flags: {
         Row: {
           content_id: string | null
@@ -1775,6 +1865,45 @@ export type Database = {
           },
         ]
       }
+      morning_briefings: {
+        Row: {
+          briefing_md: string
+          created_at: string
+          id: string
+          key_insight: string | null
+          leverage_topic: string | null
+          mini_quiz: Json | null
+          opened_at: string | null
+          scheduled_for: string
+          school_id: string | null
+          user_id: string
+        }
+        Insert: {
+          briefing_md: string
+          created_at?: string
+          id?: string
+          key_insight?: string | null
+          leverage_topic?: string | null
+          mini_quiz?: Json | null
+          opened_at?: string | null
+          scheduled_for?: string
+          school_id?: string | null
+          user_id: string
+        }
+        Update: {
+          briefing_md?: string
+          created_at?: string
+          id?: string
+          key_insight?: string | null
+          leverage_topic?: string | null
+          mini_quiz?: Json | null
+          opened_at?: string | null
+          scheduled_for?: string
+          school_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           ai_feedback: string | null
@@ -1954,6 +2083,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recall_schedule: {
+        Row: {
+          concept: string
+          created_at: string
+          delivered_at: string | null
+          due_at: string
+          id: string
+          reason: string | null
+          school_id: string | null
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          concept: string
+          created_at?: string
+          delivered_at?: string | null
+          due_at?: string
+          id?: string
+          reason?: string | null
+          school_id?: string | null
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          concept?: string
+          created_at?: string
+          delivered_at?: string | null
+          due_at?: string
+          id?: string
+          reason?: string | null
+          school_id?: string | null
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       report_cards: {
         Row: {

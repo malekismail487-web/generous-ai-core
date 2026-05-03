@@ -13,11 +13,13 @@ import { ChatHistoryDrawer } from '@/components/ChatHistoryDrawer';
 import { TypingIndicator } from '@/components/TypingIndicator';
 import { EmptyState } from '@/components/EmptyState';
 import { Brain, TrendingUp, History, ArrowLeft } from 'lucide-react';
+import { MirrorRevealCard } from '@/components/student/MirrorRevealCard';
+import { DebateTheater } from '@/components/student/DebateTheater';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 
-type Msg = { id: string; role: 'user' | 'assistant'; content: string; images?: { src: string; alt?: string }[]; attachments?: { name: string; type: string; url?: string; preview?: string; base64?: string }[] };
+type Msg = { id: string; role: 'user' | 'assistant'; content: string; images?: { src: string; alt?: string }[]; attachments?: { name: string; type: string; url?: string; preview?: string; base64?: string }[]; mirrorSnapshotId?: string; mirrorPrediction?: { predicted_answer: string; predicted_misconception: string }; mirrorActualAnswer?: string };
 
 const THINKING_STYLES = [
   {
@@ -113,6 +115,7 @@ export function StudyBuddy() {
   const [thinkingStyle, setThinkingStyle] = useState<string | null>(null);
   const [showStylePicker, setShowStylePicker] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [debateOpen, setDebateOpen] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Sync DB messages to local display messages
@@ -398,10 +401,34 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
       }
     }
 
+    // === COGNITIVE MIRROR — resolve previous unanswered snapshot using this new user message
+    const previousAssistant = [...localMessages].reverse().find(m => m.role === 'assistant' && m.mirrorSnapshotId && !m.mirrorActualAnswer);
+    if (previousAssistant?.mirrorSnapshotId) {
+      const snapshotIdToResolve = previousAssistant.mirrorSnapshotId;
+      setLocalMessages(prev => prev.map(m => m.id === previousAssistant.id ? { ...m, mirrorActualAnswer: content } : m));
+      // resolution happens client-side via MirrorRevealCard mounting with actual_answer
+      void snapshotIdToResolve;
+    }
+
     const userMsg: Msg = { id: crypto.randomUUID(), role: 'user', content, attachments: processedAttachments };
     setLocalMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
     setShowStylePicker(false);
+
+    // === COGNITIVE MIRROR — fire silent prediction in parallel with AI call ===
+    const mirrorPromise: Promise<{ snapshot_id: string; predicted_answer: string; predicted_misconception: string; predicted_reasoning: string } | null> = (async () => {
+      try {
+        const { data: { session: ms } } = await supabase.auth.getSession();
+        const mt = ms?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/predict-student`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mt}` },
+          body: JSON.stringify({ question: content, source: 'chat' }),
+        });
+        if (!r.ok) return null;
+        return await r.json();
+      } catch { return null; }
+    })();
 
     // Save user message to DB
     await addMessage('user', content, convId);
@@ -507,6 +534,21 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
             prev.map(m => m.id === assistantId ? { ...m, images: imgs } : m)
           );
         }
+        // Attach Cognitive Mirror prediction to this assistant message (silent)
+        try {
+          const mirror = await mirrorPromise;
+          if (mirror?.snapshot_id) {
+            setLocalMessages(prev => prev.map(m => m.id === assistantId ? {
+              ...m,
+              mirrorSnapshotId: mirror.snapshot_id,
+              mirrorPrediction: {
+                predicted_answer: mirror.predicted_answer,
+                predicted_misconception: mirror.predicted_misconception,
+              },
+            } : m));
+          }
+        } catch { /* mirror non-fatal */ }
+
         // Save assistant message to DB
         await addMessage('assistant', assistantContent, convId);
 
@@ -666,11 +708,27 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
 
               <div className="space-y-3">
                 {localMessages.map((msg, idx) => (
-                  <ChatMessage
-                    key={msg.id}
-                    message={msg}
-                    isStreaming={isLoading && msg.role === 'assistant' && idx === localMessages.length - 1}
-                  />
+                  <div key={msg.id}>
+                    <ChatMessage
+                      message={msg}
+                      isStreaming={isLoading && msg.role === 'assistant' && idx === localMessages.length - 1}
+                    />
+                    {msg.role === 'user' && msg.content.length > 6 && (
+                      <button
+                        onClick={() => setDebateOpen(msg.content)}
+                        className="mt-1 ml-1 text-[10px] px-2 py-0.5 rounded-full border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
+                        title={t('Open Debate Theater on this question', 'افتح مسرح المناظرة على هذا السؤال')}
+                      >
+                        🎭 {t('Debate this', 'ناقش هذا')}
+                      </button>
+                    )}
+                    {msg.role === 'assistant' && msg.mirrorSnapshotId && msg.mirrorActualAnswer && (
+                      <MirrorRevealCard
+                        snapshotId={msg.mirrorSnapshotId}
+                        actualAnswer={msg.mirrorActualAnswer}
+                      />
+                    )}
+                  </div>
                 ))}
                 {isLoading && localMessages[localMessages.length - 1]?.role === 'user' && <TypingIndicator />}
                 <div ref={messagesEndRef} />
@@ -699,6 +757,10 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
         onDelete={deleteConversation}
         onNewChat={handleNewChat}
       />
+
+      {debateOpen && (
+        <DebateTheater question={debateOpen} onClose={() => setDebateOpen(null)} />
+      )}
     </div>
   );
 }
