@@ -630,9 +630,14 @@ export default function SuperAdmin() {
           <Button variant={activeTab === 'lct' ? 'default' : 'outline'} onClick={() => setActiveTab('lct')} className="gap-2">
             <Brain className="w-4 h-4" /> LCT
           </Button>
+          <Button variant={activeTab === 'api' ? 'default' : 'outline'} onClick={() => setActiveTab('api')} className="gap-2">
+            <KeyRound className="w-4 h-4" /> Lumina API
+          </Button>
         </div>
 
-        {activeTab === 'lct' ? (
+        {activeTab === 'api' ? (
+          <LuminaApiPanel />
+        ) : activeTab === 'lct' ? (
           <LCTPanel />
         ) : activeTab === 'ministry' ? (
           <MinistryCodeGenerator />
