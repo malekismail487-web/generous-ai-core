@@ -29,6 +29,7 @@ import { GlobalAnalyticsDashboard } from '@/components/admin/GlobalAnalyticsDash
 import { TeacherExcellenceProgram } from '@/components/admin/TeacherExcellenceProgram';
 import { MinistryReadinessReport } from '@/components/admin/MinistryReadinessReport';
 import MinistryCodeGenerator from '@/components/admin/MinistryCodeGenerator';
+import LuminaApiPanel from '@/components/admin/LuminaApiPanel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
