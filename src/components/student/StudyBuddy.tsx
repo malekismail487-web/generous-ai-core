@@ -13,6 +13,7 @@ import { ChatHistoryDrawer } from '@/components/ChatHistoryDrawer';
 import { TypingIndicator } from '@/components/TypingIndicator';
 import { EmptyState } from '@/components/EmptyState';
 import { Brain, TrendingUp, History, ArrowLeft } from 'lucide-react';
+import { MirrorRevealCard } from '@/components/student/MirrorRevealCard';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -705,11 +706,18 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
 
               <div className="space-y-3">
                 {localMessages.map((msg, idx) => (
-                  <ChatMessage
-                    key={msg.id}
-                    message={msg}
-                    isStreaming={isLoading && msg.role === 'assistant' && idx === localMessages.length - 1}
-                  />
+                  <div key={msg.id}>
+                    <ChatMessage
+                      message={msg}
+                      isStreaming={isLoading && msg.role === 'assistant' && idx === localMessages.length - 1}
+                    />
+                    {msg.role === 'assistant' && msg.mirrorSnapshotId && msg.mirrorActualAnswer && (
+                      <MirrorRevealCard
+                        snapshotId={msg.mirrorSnapshotId}
+                        actualAnswer={msg.mirrorActualAnswer}
+                      />
+                    )}
+                  </div>
                 ))}
                 {isLoading && localMessages[localMessages.length - 1]?.role === 'user' && <TypingIndicator />}
                 <div ref={messagesEndRef} />
