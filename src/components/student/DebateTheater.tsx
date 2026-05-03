@@ -114,7 +114,7 @@ export function DebateTheater({ question, onClose, onSideWith }: Props) {
                 key={p.id}
                 className={cn(
                   "rounded-2xl border bg-card/70 backdrop-blur-sm overflow-hidden flex flex-col",
-                  "min-h-[220px] max-h-[55vh]",
+                  "min-h-[180px] max-h-[40vh] sm:max-h-[55vh]",
                   isSided ? "border-primary ring-2 ring-primary/30" : "border-border/40",
                 )}
               >
