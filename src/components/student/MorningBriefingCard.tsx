@@ -79,16 +79,61 @@ export function MorningBriefingCard() {
   if (!briefing || dismissed) return null;
 
   const quiz = Array.isArray(briefing.mini_quiz) ? briefing.mini_quiz : [];
+  const allAnswered = quiz.length > 0 && quiz.every((_, i) => picked[i] !== undefined);
+  const correctCount = useMemo(
+    () => quiz.reduce((acc, q, i) => acc + (picked[i] === q.answer_index ? 1 : 0), 0),
+    [picked, quiz],
+  );
+
+  const handlePick = (qi: number, ci: number) => {
+    if (picked[qi] !== undefined) return;
+    const q = quiz[qi];
+    setPicked(p => ({ ...p, [qi]: ci }));
+    // Feed the adaptive engine
+    if (user?.id) {
+      recordIntelligentAnswer({
+        userId: user.id,
+        subject: briefing.leverage_topic || "General",
+        questionText: q.q,
+        studentAnswer: q.choices?.[ci] ?? String(ci),
+        correctAnswer: q.choices?.[q.answer_index] ?? String(q.answer_index),
+        isCorrect: ci === q.answer_index,
+        difficulty: "intermediate",
+        source: "morning_briefing",
+      }).catch(() => {});
+    }
+  };
+
+  // Completion screen — shrink and thank the user
+  if (allAnswered) {
+    return (
+      <div className="mx-3 mb-4 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 animate-fade-in flex items-center gap-3 relative">
+        <button onClick={() => setDismissed(true)} className="absolute top-2 right-2 p-1 rounded-lg hover:bg-muted/50 text-muted-foreground">
+          <X size={14} />
+        </button>
+        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <Heart size={18} className="text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold">Thank you for taking the survey</div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">
+            Scored {correctCount}/{quiz.length} — your answers help Lumina personalize your learning.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-3 mb-4 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 animate-fade-in relative">
-      <button onClick={() => setDismissed(true)} className="absolute top-2 right-2 p-1 rounded-lg hover:bg-muted/50 text-muted-foreground">
+      <button onClick={() => setDismissed(true)} className="absolute top-2 right-2 p-1 rounded-lg hover:bg-muted/50 text-muted-foreground" aria-label="Skip briefing">
         <X size={14} />
       </button>
       <div className="flex items-center gap-2 mb-2">
         <Moon size={16} className="text-primary" />
         <span className="text-sm font-bold">Morning Briefing</span>
         <Sparkles size={12} className="text-muted-foreground" />
+        <span className="ml-auto mr-6 text-[10px] text-muted-foreground italic">Optional</span>
       </div>
       {briefing.key_insight && (
         <div className="mb-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 text-[12px] text-foreground">
@@ -117,7 +162,7 @@ export function MorningBriefingCard() {
                     <button
                       key={ci}
                       disabled={isAnswered}
-                      onClick={() => setPicked(p => ({ ...p, [qi]: ci }))}
+                      onClick={() => handlePick(qi, ci)}
                       className={cn(
                         "text-left text-[12px] px-2.5 py-1.5 rounded-md border transition-colors",
                         !isAnswered && "border-border/50 hover:border-primary/50",
@@ -139,6 +184,12 @@ export function MorningBriefingCard() {
               )}
             </div>
           ))}
+          <button
+            onClick={() => setDismissed(true)}
+            className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+          >
+            Skip for today
+          </button>
         </div>
       )}
     </div>
