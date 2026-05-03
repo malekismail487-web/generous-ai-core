@@ -42,6 +42,10 @@ export function DebateTheater({ question, onClose, onSideWith }: Props) {
           body: JSON.stringify({ question }),
           signal: ac.signal,
         });
+        if (res.status === 429) {
+          const j = await res.json().catch(() => ({}));
+          throw new Error(j.message || "Daily debate limit reached. Try again tomorrow.");
+        }
         if (!res.ok || !res.body) throw new Error("debate failed");
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
