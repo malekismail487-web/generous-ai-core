@@ -511,6 +511,96 @@ export type Database = {
           },
         ]
       }
+      cognitive_mirror_snapshots: {
+        Row: {
+          actual_answer: string | null
+          context: Json | null
+          created_at: string
+          drift_score: number | null
+          id: string
+          predicted_answer: string | null
+          predicted_misconception: string | null
+          predicted_reasoning: string | null
+          prediction_matched: boolean | null
+          question: string
+          resolved_at: string | null
+          school_id: string | null
+          source: string
+          subject: string | null
+          topic: string | null
+          user_id: string
+          was_correct: boolean | null
+        }
+        Insert: {
+          actual_answer?: string | null
+          context?: Json | null
+          created_at?: string
+          drift_score?: number | null
+          id?: string
+          predicted_answer?: string | null
+          predicted_misconception?: string | null
+          predicted_reasoning?: string | null
+          prediction_matched?: boolean | null
+          question: string
+          resolved_at?: string | null
+          school_id?: string | null
+          source?: string
+          subject?: string | null
+          topic?: string | null
+          user_id: string
+          was_correct?: boolean | null
+        }
+        Update: {
+          actual_answer?: string | null
+          context?: Json | null
+          created_at?: string
+          drift_score?: number | null
+          id?: string
+          predicted_answer?: string | null
+          predicted_misconception?: string | null
+          predicted_reasoning?: string | null
+          prediction_matched?: boolean | null
+          question?: string
+          resolved_at?: string | null
+          school_id?: string | null
+          source?: string
+          subject?: string | null
+          topic?: string | null
+          user_id?: string
+          was_correct?: boolean | null
+        }
+        Relationships: []
+      }
+      cognitive_mirror_stats: {
+        Row: {
+          avg_drift: number
+          last_updated: string
+          matched_predictions: number
+          rolling_accuracy: number
+          school_id: string | null
+          total_predictions: number
+          user_id: string
+        }
+        Insert: {
+          avg_drift?: number
+          last_updated?: string
+          matched_predictions?: number
+          rolling_accuracy?: number
+          school_id?: string | null
+          total_predictions?: number
+          user_id: string
+        }
+        Update: {
+          avg_drift?: number
+          last_updated?: string
+          matched_predictions?: number
+          rolling_accuracy?: number
+          school_id?: string | null
+          total_predictions?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       content_flags: {
         Row: {
           content_id: string | null
