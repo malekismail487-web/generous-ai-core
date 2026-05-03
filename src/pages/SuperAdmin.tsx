@@ -81,7 +81,7 @@ export default function SuperAdmin() {
   const [loadingSchools, setLoadingSchools] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [testingRole, setTestingRole] = useState<TestingRole>('none');
-  const [activeTab, setActiveTab] = useState<'schools' | 'analytics' | 'ministry' | 'lct'>('schools');
+  const [activeTab, setActiveTab] = useState<'schools' | 'analytics' | 'ministry' | 'lct' | 'api'>('schools');
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   
   // Create school form state
