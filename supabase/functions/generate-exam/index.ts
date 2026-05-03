@@ -441,8 +441,13 @@ QUESTION COUNT ENFORCEMENT:
       return rawQuestions.filter(q => q && (q.question || q.questionTitle));
     };
 
+    const safeBatch = async (n: number, ctx?: string) => {
+      try { return await generateBatch(n, ctx); }
+      catch (e) { console.warn("Batch failed, continuing:", e instanceof Error ? e.message : e); return []; }
+    };
+
     if (count <= MAX_SINGLE_BATCH) {
-      allQuestions = await generateBatch(count, materialContext || undefined);
+      allQuestions = await safeBatch(count, materialContext || undefined);
     } else {
       const batchSize = 15;
       const numBatches = Math.ceil(count / batchSize);
@@ -450,10 +455,23 @@ QUESTION COUNT ENFORCEMENT:
         const remaining = count - allQuestions.length;
         const thisCount = Math.min(batchSize, remaining);
         if (thisCount <= 0) break;
-        const questions = await generateBatch(thisCount, materialContext || undefined);
+        const questions = await safeBatch(thisCount, materialContext || undefined);
         allQuestions.push(...questions);
         if (allQuestions.length >= count) break;
       }
+    }
+
+    // If everything failed, retry once with a smaller batch
+    if (allQuestions.length === 0) {
+      console.warn("All batches empty — retrying with reduced count");
+      allQuestions = await safeBatch(Math.min(10, count), materialContext || undefined);
+    }
+
+    if (allQuestions.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "AI returned no parseable questions. Please try again." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Fill if we got fewer than requested
