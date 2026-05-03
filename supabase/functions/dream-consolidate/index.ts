@@ -37,12 +37,117 @@ function safeJson(s: string): any | null {
   return null;
 }
 
+async function generateForUser(supa: any, userId: string, schoolId: string | null, apiKey: string, today: string) {
+  // Idempotent: skip if already generated today
+  const { data: existing } = await supa.from("morning_briefings")
+    .select("*").eq("user_id", userId).eq("scheduled_for", today).maybeSingle();
+  if (existing) return { briefing: existing, cached: true };
+
+  // Daily cap (1/day) — also serves as race guard for cron runs
+  const { data: cap } = await supa.rpc("check_and_increment_cost", {
+    p_user_id: userId, p_school_id: schoolId, p_feature: "dream", p_daily_cap: 1,
+  });
+  if (cap && cap.allowed === false) return { skipped: true, reason: "daily_cap" };
+
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const [gaps, mirror, profiles] = await Promise.all([
+    supa.from("knowledge_gaps").select("subject, topic, gap_description, severity")
+      .eq("user_id", userId).eq("resolved", false).order("severity", { ascending: false }).limit(10),
+    supa.from("cognitive_mirror_snapshots").select("subject, question, predicted_misconception, was_correct, prediction_matched, drift_score")
+      .eq("user_id", userId).gte("created_at", since).order("created_at", { ascending: false }).limit(20),
+    supa.from("student_learning_profiles").select("subject, difficulty_level, recent_accuracy")
+      .eq("user_id", userId),
+  ]);
+
+  const dossier = [
+    "## Open knowledge gaps",
+    ...(gaps.data ?? []).map((g: any) => `- [${g.severity}] ${g.subject} > ${g.topic}: ${g.gap_description}`),
+    "\n## Last-24h Cognitive Mirror snapshots",
+    ...(mirror.data ?? []).map((m: any) => `- ${m.subject ?? "?"} | Q: ${(m.question ?? "").slice(0, 100)} | misconception: ${m.predicted_misconception ?? "—"} | correct: ${m.was_correct ?? "—"} | drift: ${m.drift_score ?? "—"}`),
+    "\n## Subject performance",
+    ...(profiles.data ?? []).map((p: any) => `- ${p.subject}: ${p.difficulty_level} (${p.recent_accuracy ?? "?"}%)`),
+  ].join("\n");
+
+  const sys = `You are LUMINA generating a 60-second personal MORNING BRIEFING for a single student.
+Identify the SINGLE biggest leverage point — the one misconception or weak topic that, if fixed today, unlocks the most future learning.
+Output VALID JSON ONLY with these keys:
+{
+  "key_insight": "one short sentence — the leverage point",
+  "leverage_topic": "subject > topic",
+  "briefing_md": "3-4 short paragraphs in markdown, warm, second-person, ending with a clear call-to-action",
+  "mini_quiz": [
+    { "q": "question text", "choices": ["A","B","C","D"], "answer_index": 0, "explanation": "1 sentence" },
+    { "q": "...", "choices": [], "answer_index": 1, "explanation": "..." },
+    { "q": "...", "choices": [], "answer_index": 2, "explanation": "..." }
+  ],
+  "recall_items": [
+    { "subject": "...", "concept": "...", "reason": "...", "hours_until_due": 6 },
+    { "subject": "...", "concept": "...", "reason": "...", "hours_until_due": 24 }
+  ]
+}
+Mini-quiz must have EXACTLY 3 questions and target the leverage_topic. answer_index is 0-3.`;
+
+  const userPrompt = `STUDENT DOSSIER (last 24h):
+${dossier || "(no recent activity — produce a gentle warm-up briefing)"}
+
+Today is ${today}. Produce the JSON briefing now.`;
+
+  let aiText = "";
+  try {
+    const res = await fetch(AI_GATEWAY_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: MODEL,
+        temperature: 0.6,
+        response_format: { type: "json_object" },
+        messages: [{ role: "system", content: sys }, { role: "user", content: userPrompt }],
+      }),
+    });
+    if (res.ok) {
+      const j = await res.json();
+      aiText = j.choices?.[0]?.message?.content ?? "";
+    }
+  } catch (e) { console.warn("AI fetch failed", e); }
+
+  const parsed = safeJson(aiText) ?? {
+    key_insight: "Pick one weak topic and review it for 10 minutes.",
+    leverage_topic: "general > review",
+    briefing_md: "Good morning! Today's focus: pick one topic you struggled with yesterday and spend 10 focused minutes on it. Small, daily wins compound.",
+    mini_quiz: [], recall_items: [],
+  };
+  const miniQuiz = Array.isArray(parsed.mini_quiz) ? parsed.mini_quiz.slice(0, 3) : [];
+  const recallItems = Array.isArray(parsed.recall_items) ? parsed.recall_items.slice(0, 5) : [];
+
+  const { data: inserted, error } = await supa.from("morning_briefings").insert({
+    user_id: userId, school_id: schoolId,
+    briefing_md: String(parsed.briefing_md ?? "").slice(0, 4000),
+    key_insight: String(parsed.key_insight ?? "").slice(0, 500),
+    leverage_topic: String(parsed.leverage_topic ?? "").slice(0, 200),
+    mini_quiz: miniQuiz, scheduled_for: today,
+  }).select("*").single();
+
+  if (error) {
+    const { data: race } = await supa.from("morning_briefings").select("*").eq("user_id", userId).eq("scheduled_for", today).maybeSingle();
+    if (race) return { briefing: race, cached: true };
+    return { error: error.message };
+  }
+
+  if (recallItems.length > 0) {
+    const rows = recallItems.map((r: any) => ({
+      user_id: userId, school_id: schoolId,
+      subject: String(r.subject ?? "general").slice(0, 100),
+      concept: String(r.concept ?? "").slice(0, 300),
+      reason: String(r.reason ?? "").slice(0, 500),
+      due_at: new Date(Date.now() + Math.max(1, Math.min(72, Number(r.hours_until_due) || 12)) * 3600 * 1000).toISOString(),
+    })).filter((r: any) => r.concept);
+    if (rows.length) await supa.from("recall_schedule").insert(rows);
+  }
+  return { briefing: inserted, cached: false };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  const user = await getUser(req);
-  if (!user) {
-    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  }
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) {
     return new Response(JSON.stringify({ error: "LOVABLE_API_KEY missing" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
