@@ -1452,6 +1452,39 @@ export type Database = {
           },
         ]
       }
+      lumina_cost_ledger: {
+        Row: {
+          count: number
+          created_at: string
+          feature: string
+          id: string
+          last_used_at: string
+          school_id: string | null
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          feature: string
+          id?: string
+          last_used_at?: string
+          school_id?: string | null
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          feature?: string
+          id?: string
+          last_used_at?: string
+          school_id?: string | null
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       material_comments: {
         Row: {
           comment: string
@@ -2953,6 +2986,15 @@ export type Database = {
             Args: { p_request_id: string; p_session_token?: string }
             Returns: Json
           }
+      check_and_increment_cost: {
+        Args: {
+          p_daily_cap: number
+          p_feature: string
+          p_school_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       check_device_ban: {
         Args: { p_device_fingerprint: string }
         Returns: Json
