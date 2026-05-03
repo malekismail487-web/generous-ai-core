@@ -20,7 +20,36 @@ const COLORS = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'
 export function GraphCalculator() {
   const [equations, setEquations] = useState<string[]>(['y = x^2']);
   const [newEq, setNewEq] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const { t } = useThemeLanguage();
+
+  const insertAtCursor = (text: string, back = 0) => {
+    const el = inputRef.current;
+    const start = el?.selectionStart ?? newEq.length;
+    const end = el?.selectionEnd ?? newEq.length;
+    const next = newEq.slice(0, start) + text + newEq.slice(end);
+    setNewEq(next);
+    requestAnimationFrame(() => {
+      const pos = start + text.length - back;
+      el?.focus();
+      el?.setSelectionRange(pos, pos);
+    });
+  };
+
+  const backspace = () => {
+    const el = inputRef.current;
+    const start = el?.selectionStart ?? newEq.length;
+    const end = el?.selectionEnd ?? newEq.length;
+    if (start === end && start === 0) return;
+    if (start === end) {
+      const next = newEq.slice(0, start - 1) + newEq.slice(end);
+      setNewEq(next);
+      requestAnimationFrame(() => { el?.focus(); el?.setSelectionRange(start - 1, start - 1); });
+    } else {
+      setNewEq(newEq.slice(0, start) + newEq.slice(end));
+      requestAnimationFrame(() => { el?.focus(); el?.setSelectionRange(start, start); });
+    }
+  };
 
   const addEquation = () => {
     if (newEq.trim() && equations.length < 6) {
