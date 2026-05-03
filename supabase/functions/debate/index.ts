@@ -70,9 +70,13 @@ async function getUser(req: Request) {
   try {
     const supa = admin();
     const { data: { user } } = await supa.auth.getUser(auth.replace("Bearer ", ""));
-    return user;
+    if (!user) return null;
+    const { data: profile } = await supa.from("profiles").select("school_id").eq("id", user.id).maybeSingle();
+    return { id: user.id, schoolId: profile?.school_id ?? null };
   } catch { return null; }
 }
+
+const DEBATE_DAILY_CAP = 10;
 
 async function streamPersona(
   persona: Persona,
