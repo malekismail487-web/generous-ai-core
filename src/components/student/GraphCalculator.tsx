@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { InteractiveGraph } from './InteractiveGraph';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Trash2 } from 'lucide-react';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { MathKeyboard } from './MathKeyboard';
 
 const PRESET_EQUATIONS = [
   { label: 'y = x²', eq: 'y = x^2' },
