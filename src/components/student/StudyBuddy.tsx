@@ -14,6 +14,7 @@ import { TypingIndicator } from '@/components/TypingIndicator';
 import { EmptyState } from '@/components/EmptyState';
 import { Brain, TrendingUp, History, ArrowLeft } from 'lucide-react';
 import { MirrorRevealCard } from '@/components/student/MirrorRevealCard';
+import { DebateTheater } from '@/components/student/DebateTheater';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -712,6 +713,15 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
                       message={msg}
                       isStreaming={isLoading && msg.role === 'assistant' && idx === localMessages.length - 1}
                     />
+                    {msg.role === 'user' && msg.content.length > 6 && (
+                      <button
+                        onClick={() => setDebateOpen(msg.content)}
+                        className="mt-1 ml-1 text-[10px] px-2 py-0.5 rounded-full border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
+                        title={t('Open Debate Theater on this question', 'افتح مسرح المناظرة على هذا السؤال')}
+                      >
+                        🎭 {t('Debate this', 'ناقش هذا')}
+                      </button>
+                    )}
                     {msg.role === 'assistant' && msg.mirrorSnapshotId && msg.mirrorActualAnswer && (
                       <MirrorRevealCard
                         snapshotId={msg.mirrorSnapshotId}
@@ -747,6 +757,10 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
         onDelete={deleteConversation}
         onNewChat={handleNewChat}
       />
+
+      {debateOpen && (
+        <DebateTheater question={debateOpen} onClose={() => setDebateOpen(null)} />
+      )}
     </div>
   );
 }
