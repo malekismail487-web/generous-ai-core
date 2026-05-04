@@ -319,6 +319,18 @@ export function StudyBuddy() {
       // Fallback: engine unavailable, continue with basic context
     }
 
+    // === Phase 2B: Cross-Surface Mastery signal ===
+    let masteryBlock = '';
+    try {
+      if (user?.id) {
+        const [weak, due] = await Promise.all([
+          getWeakestTopics(user.id, null, 5),
+          getDueReviews(user.id, 5),
+        ]);
+        masteryBlock = buildMasteryPromptBlock(weak, due);
+      }
+    } catch { /* mastery is optional */ }
+
     return `You are Lumina — a brilliant, adaptive AI tutor that personalizes learning to each student's unique thinking style and level.
 
 ${levelPrompt}
