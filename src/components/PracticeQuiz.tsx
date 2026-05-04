@@ -282,6 +282,17 @@ Make sure the question directly relates to topics from their learning history. B
                 <p className="text-sm font-medium leading-relaxed">{currentQuestion.question}</p>
               </div>
 
+              {!showResult && (
+                <div className="mb-4 rounded-2xl border border-border/50 bg-card/40 p-3">
+                  <ConfidencePicker
+                    value={confidence}
+                    onChange={setConfidence}
+                    disabled={showResult}
+                    compact
+                  />
+                </div>
+              )}
+
               <div className="space-y-2 mb-5">
                 {currentQuestion.options.map((option, index) => {
                   const isSelected = selectedAnswer === index;
@@ -293,7 +304,7 @@ Make sure the question directly relates to topics from their learning history. B
                     <button
                       key={index}
                       onClick={() => handleAnswer(index)}
-                      disabled={showResult}
+                      disabled={showResult || !confidence}
                       className={cn(
                         "w-full p-3.5 rounded-xl text-left transition-all duration-200 border",
                         "flex items-center gap-3 group text-sm",
