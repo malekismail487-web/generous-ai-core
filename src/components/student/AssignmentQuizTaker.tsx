@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
+import { ConfidencePicker, type ConfidenceLevel } from '@/components/ConfidencePicker';
+import { recordConfidence } from '@/lib/confidence';
 
 interface Question {
   id: string;
@@ -66,12 +68,18 @@ export function AssignmentQuizTaker({
   
   // Student's answers for each question
   const [answers, setAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
-  
+  // Confidence per question (1-4) — required before submit
+  const [confidences, setConfidences] = useState<Record<string, ConfidenceLevel>>({});
+
   // Quiz state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAnswerChange = (questionId: string, answer: 'A' | 'B' | 'C' | 'D') => {
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
+  };
+
+  const handleConfidenceChange = (questionId: string, level: ConfidenceLevel) => {
+    setConfidences(prev => ({ ...prev, [questionId]: level }));
   };
 
   const submitQuiz = async () => {
@@ -82,6 +90,15 @@ export function AssignmentQuizTaker({
         variant: 'destructive', 
         title: `Please answer all questions`,
         description: `${unanswered.length} question(s) remaining`
+      });
+      return;
+    }
+    const missingConfidence = questions.filter(q => !confidences[q.id]);
+    if (missingConfidence.length > 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Set confidence on every question',
+        description: `${missingConfidence.length} question(s) need a confidence level`,
       });
       return;
     }
