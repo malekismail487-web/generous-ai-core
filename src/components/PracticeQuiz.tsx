@@ -36,6 +36,7 @@ const difficultyPrompts = {
 export function PracticeQuiz({ difficulty, type, onBack, learningContext }: PracticeQuizProps) {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [confidence, setConfidence] = useState<ConfidenceLevel | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
