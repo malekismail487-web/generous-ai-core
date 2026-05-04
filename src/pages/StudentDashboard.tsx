@@ -15,7 +15,8 @@ import {
   AlertCircle,
   Star,
   Settings,
-  Bell
+  Bell,
+  Brain
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +28,7 @@ import { StudentAssignments } from '@/components/student/StudentAssignments';
 import { StudentReportCards } from '@/components/student/StudentReportCards';
 import { CalibrationCurve } from '@/components/student/CalibrationCurve';
 import { DecayDashboardCard } from '@/components/student/DecayDashboardCard';
+import { LearningModesHub } from '@/components/student/learning-modes/LearningModesHub';
 
 interface CourseMaterial {
   id: string;
@@ -289,7 +291,7 @@ export default function StudentDashboard() {
         </div>
 
         <Tabs defaultValue="assignments" className="space-y-6">
-          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+          <TabsList className="grid grid-cols-6 w-full max-w-3xl">
 
             <TabsTrigger value="assignments" className="gap-2">
               <FileText className="w-4 h-4" />
@@ -297,6 +299,10 @@ export default function StudentDashboard() {
               {overdueAssignments.length > 0 && (
                 <Badge variant="destructive" className="ml-1">{overdueAssignments.length}</Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="learning-modes" className="gap-2">
+              <Brain className="w-4 h-4" />
+              <span className="hidden sm:inline">Modes</span>
             </TabsTrigger>
             <TabsTrigger value="report-cards" className="gap-2">
               <BookOpen className="w-4 h-4" />
@@ -315,6 +321,10 @@ export default function StudentDashboard() {
               <span className="hidden sm:inline">{tl('settings')}</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="learning-modes" className="space-y-4">
+            <LearningModesHub />
+          </TabsContent>
 
           {/* Report Cards Tab */}
           <TabsContent value="report-cards" className="space-y-4">
