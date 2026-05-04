@@ -477,7 +477,19 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
   // ─── Actions ──────────────────────────────────────────────────────────────
 
   const selectAnswer = useCallback((questionId: number, answer: string) => {
+    // Block answering until confidence is set for this question.
+    if (!confidencesRef.current[String(questionId)]) {
+      toast({
+        title: 'Set your confidence first',
+        description: 'Pick how sure you are before choosing an option.',
+      });
+      return;
+    }
     setAnswers(prev => ({ ...prev, [String(questionId)]: answer }));
+  }, [toast]);
+
+  const setConfidenceFor = useCallback((questionId: number, level: ConfidenceLevel) => {
+    setConfidences(prev => ({ ...prev, [String(questionId)]: level }));
   }, []);
 
   const toggleFlag = useCallback((questionId: number | undefined) => {
