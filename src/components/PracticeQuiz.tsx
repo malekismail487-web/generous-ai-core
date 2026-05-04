@@ -45,8 +45,11 @@ export function PracticeQuiz({ difficulty, type, onBack, learningContext }: Prac
   const [isLoading, setIsLoading] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   const { recordAnswer: basicRecordAnswer } = useAdaptiveLevel();
   const { recordAnswer: intelligentRecordAnswer, getSimpleParams, recordActivity, recordTeaching } = useAdaptiveIntelligence();
+  const [activeTopic, setActiveTopic] = useState<string | null>(null);
+  const [activeMastery, setActiveMastery] = useState<number | null>(null);
 
   const maxQuestions = difficulty === 'beginner' ? 5 : difficulty === 'intermediate' ? 7 : 10;
 
