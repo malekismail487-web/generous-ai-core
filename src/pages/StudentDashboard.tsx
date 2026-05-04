@@ -324,6 +324,7 @@ export default function StudentDashboard() {
           </TabsList>
 
           <TabsContent value="learning-modes" className="space-y-4">
+            <MasteryMap />
             <LearningModesHub />
           </TabsContent>
 
