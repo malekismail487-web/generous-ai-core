@@ -501,7 +501,7 @@ export function ExaminationSection() {
       }
     }
     setIsLoading(false);
-  }, [examMenuType, selectedSubject, selectedGrade, savedMaterials, satMaterials, toast]);
+  }, [examMenuType, selectedSubject, selectedGrade, savedMaterials, satMaterials, toast, user?.id, adaptiveLevel]);
 
   const handleExamTypeSelect = (type: ExamMenuType) => {
     setExamMenuType(type);
