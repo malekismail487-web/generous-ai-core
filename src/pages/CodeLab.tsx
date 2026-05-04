@@ -527,6 +527,9 @@ Rules:
       </div>
 
       <div className="border-t border-border/40 p-2 flex items-end gap-2 flex-shrink-0 pb-[calc(env(safe-area-inset-bottom,0px)+8px)]">
+        <Button variant="ghost" size="sm" className="h-10 md:hidden" onClick={() => setMobilePane((pane) => pane === 'editor' ? 'preview' : 'editor')}>
+          {mobilePane === 'editor' ? 'Preview' : 'Editor'}
+        </Button>
         <Textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
