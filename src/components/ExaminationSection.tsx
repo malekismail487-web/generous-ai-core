@@ -402,6 +402,16 @@ export function ExaminationSection() {
       ? (isFullSAT ? [] : satMaterials.map(m => ({ topic: m.topic, content: m.content })))
       : savedMaterials.map(m => ({ topic: m.topic, content: m.content }));
 
+    // Phase 2B: Cross-Surface Mastery — pull this student's weakest topics in this subject.
+    let weakTopics: string[] = [];
+    if (user?.id && !isFullSAT) {
+      try {
+        const schoolId = await getCurrentSchoolId(user.id);
+        const weak = await getWeakestTopics(user.id, subjectName === 'SAT' ? null : (subjectName ?? null), 6, schoolId);
+        weakTopics = weak.map(w => w.topic).filter(Boolean);
+      } catch { /* mastery is optional */ }
+    }
+
     const MAX_CLIENT_RETRIES = 3;
     const RETRY_DELAYS = [20000, 40000, 60000]; // 20s, 40s, 60s
 
