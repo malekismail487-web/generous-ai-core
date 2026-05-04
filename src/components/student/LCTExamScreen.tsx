@@ -8,6 +8,8 @@ import {
   Brain, Flag, Keyboard, LayoutGrid, Minus, ArrowUp, ChevronDown,
   ChevronUp, BookOpen, BarChart3, Target, Wifi, WifiOff
 } from 'lucide-react';
+import { ConfidencePicker, type ConfidenceLevel } from '@/components/ConfidencePicker';
+import { recordConfidence } from '@/lib/confidence';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
