@@ -1,90 +1,116 @@
-## Lumina Code Lab — student-side coding capability
+# Phase 1 — The Three Foundations
 
-Goal: let Lumina write code (like Claude/ChatGPT/Kimi) and let students view, copy, and **live-preview** the result inside the app. No hosting/domains involved — preview is sandboxed in-browser only.
+Three features that share infrastructure (snapshots, history, dashboard widgets) so building together is cheaper than sequential. No rushing. After build, I re-read every file and verify data flow against the schema before declaring done.
 
-### 1. Inline code rendering in chat (every Lumina message)
+---
 
-Upgrade `src/components/MathRenderer.tsx` to render fenced code blocks (`lang …` ) with a real code component instead of the current minimal `<code>` styling:
+## 1. Confidence Calibration
 
-- New `CodeBlock` component with:
-  - Syntax highlighting (`react-syntax-highlighter` w/ Prism, dark/light theme aware).
-  - Header row: language label, **Copy**, **Run / Preview** (when previewable), **Open in Code Lab**.
-  - Copy uses `navigator.clipboard`, shows toast.
-- Wire into `MathRenderer` via the ReactMarkdown `code` component override.
+**Concept:** Every time a student answers a question (assignment, exam, AI quiz), they pick a confidence level *before* seeing the result. Over time we plot Confidence vs. Accuracy — exposing overconfidence (knows less than they think) and underconfidence (knows more than they think).
 
-### 2. Live preview (sandboxed, in-browser only)
+**Student value:** They see their own metacognition curve. "You're 85% confident on Algebra but only 60% accurate — slow down."
+**Teacher value:** Heatmap of overconfident topics per class — exactly where to re-teach.
 
-Previewable languages:
+**UI:**
+- Confidence picker (1=Guessing, 2=Unsure, 3=Likely, 4=Certain) appears inline before submitting any answer.
+- Student dashboard widget: calibration curve (Recharts line chart, monochrome).
+- Teacher analytics: per-topic overconfidence ranking.
 
-- **HTML / CSS / JS / HTML+CSS+JS combos** → rendered in an `<iframe sandbox="allow-scripts">` using a generated `srcDoc`. No network, no parent access.
-- **React (JSX/TSX single-file)** → rendered in the same sandboxed iframe using Babel standalone (CDN inside the iframe) + React/ReactDOM CDN. Single `App` component convention.
-- **Python** → executed in-browser via Pyodide (loaded lazily on first run). Stdout streams into a console panel. No filesystem/network.
-- **SQL** → executed via `sql.js` (SQLite WASM) against an in-memory DB, results shown as a table.
-- **Markdown** → rendered preview.
-- Other languages (Java, C++, Go, Rust, etc.) → show code only with a note: “Preview not available for {lang}. Copy and run locally or paste into GitHub.”
+---
 
-All execution happens client-side. Nothing is uploaded; no domains needed.
+## 2. Knowledge Decay Map
 
-### 3. Code Lab page (full editor + preview)
+**Concept:** Every concept a student masters has a decay timer (spaced-repetition curve). When a topic crosses the "about to be forgotten" threshold, a small refresher card appears on the dashboard — one question, 30 seconds, no pressure.
 
-New route `/code-lab` and a new tab in `BottomNav` for students (icon: `Code2`).
+**Student value:** Long-term retention without manual review.
+**Teacher value:** Class-wide decay heatmap shows topics drifting backwards even when grades look fine.
 
-Layout (mobile-first, split):
+**UI:**
+- Dashboard widget: "3 topics fading" card with refresh-now button.
+- Refresher modal: single AI-generated question on the decaying topic.
+- Teacher view: subject × topic × decay-percentage grid.
 
-```text
-┌──────────────────────────────┐
-│ Files | Lang ▾ | Run | Share │
-├──────────────┬───────────────┤
-│   Editor     │   Preview     │
-│ (Monaco)     │ (iframe /     │
-│              │  console)     │
-├──────────────┴───────────────┤
-│ Console (stdout / errors)    │
-└──────────────────────────────┘
-```
+---
 
-- Editor: `@monaco-editor/react` with TS/JS/HTML/CSS/Python/SQL modes, theme synced with app.
-- Multi-file tabs for HTML/CSS/JS projects (index.html / styles.css / script.js).
-- “Ask Lumina” button: sends the current code + a prompt to the chat edge function, response streams back and can replace or insert into the editor.
-- “Copy all”, “Download .zip” (via `jszip`), and a “Copy GitHub-ready snippet” action (formatted with file headers) — satisfies the “paste into GitHub” requirement without needing a domain.
-- Saved snippets persisted per-user in a new `code_snippets` table (RLS: owner-only).
+## 3. Time-Travel Notes
 
-### 4. Lumina prompt upgrade (server side only)
+**Concept:** Snapshot every saved note's full content on each save. A timeline slider lets the student scrub through their own understanding of a topic over weeks/months — "Here's how I explained photosynthesis 6 weeks ago vs. today." A diff view highlights what they added, removed, and corrected.
 
-Edit `supabase/functions/chat/index.ts` system prompt to add a **Coding** section:
+**Student value:** Tangible proof of growth. Reflection tool.
+**Teacher value:** Optional shared timelines show learning trajectory, not just current state.
 
-- Lumina may write code in any language when asked.
-- Always wrap code in proper fenced blocks with the language tag.
-- For runnable web demos, prefer a single self-contained HTML block.
-- For React, output one file exporting `App`.
-- Never claim it deployed anything; tell the student they can preview in Code Lab or copy to GitHub.
-- Keep existing identity/safety rules intact.
+**UI:**
+- New "Timeline" button on each saved note.
+- Full-screen overlay with horizontal time slider, side-by-side diff, "growth highlights" auto-summary (AI).
 
-No client-side prompt changes (per project rules).
+---
 
-### 5. Database (Lovable Cloud)
+## Technical Section
 
-Migration:
+### New tables
+1. **confidence_responses** — `id, user_id, school_id, subject, topic, question_id, question_text, confidence_level (1-4), was_correct, source ('assignment'|'exam'|'ai_quiz'|'lct'), created_at`
+2. **confidence_calibration_stats** — rolling per-user / per-topic aggregates (avg_confidence, avg_accuracy, gap, sample_size, updated_at)
+3. **concept_mastery** — `id, user_id, school_id, subject, topic, mastery_score (0-1), last_practiced_at, decay_rate, next_review_at, created_at, updated_at`
+4. **decay_refreshers** — `id, user_id, concept_mastery_id, question_text, was_correct, answered_at, created_at` (audit of refreshers shown)
+5. **note_snapshots** — `id, note_id, user_id, content, content_hash, word_count, snapshot_at`
+6. **note_timeline_summaries** — cached AI growth summary per note (id, note_id, user_id, summary_md, generated_at)
 
-- `code_snippets` table: `id`, `user_id`, `title`, `language`, `files jsonb`, `created_at`, `updated_at`.
-- RLS: `user_id = auth.uid()` for select/insert/update/delete.
-- Trigger to auto-update `updated_at`.
+All tables: RLS — students read/write own rows; teachers read same-school via `is_teacher() + school_id`; school admins read same-school; super admin all. Strict school isolation. `is_test_data` flag where appropriate.
 
-### 6. Files to add / change
+### Triggers / functions
+- `update_confidence_stats()` trigger after insert on `confidence_responses` → recomputes rolling aggregates.
+- `update_concept_mastery_after_answer()` — called from existing assignment / exam / AI-quiz submission paths; bumps mastery on correct, decays on incorrect, recomputes `next_review_at` using SM-2-style interval.
+- `snapshot_note_on_save()` trigger after insert/update on existing notes table → inserts into `note_snapshots` only when `content_hash` differs from latest snapshot (no duplicates).
+- Daily `pg_cron` job: scans `concept_mastery`, marks rows where `next_review_at <= now()` as "due", surfaces them to dashboard query.
 
-- Add: `src/components/CodeBlock.tsx`, `src/components/code/CodePreviewFrame.tsx`, `src/components/code/PyodideRunner.tsx`, `src/components/code/SqlRunner.tsx`, `src/pages/CodeLab.tsx`, `src/hooks/useCodeSnippets.tsx`.
-- Edit: `src/components/MathRenderer.tsx` (code override), `src/components/BottomNav.tsx` (new tab), `src/App.tsx` (route), `src/components/StudentHomeGrid.tsx` (entry tile), `supabase/functions/chat/index.ts` (coding rules).
-- Deps: `react-syntax-highlighter`, `@monaco-editor/react`, `monaco-editor`, `jszip`. Pyodide and sql.js loaded lazily from CDN inside the iframe so they don’t bloat the main bundle.
+### Edge functions
+- `confidence-record` — validates and writes confidence response, updates stats.
+- `decay-generate-refresher` — calls Lovable AI Gateway (gemini-2.5-flash) for a single MCQ on the decaying topic, returns to client.
+- `decay-grade-refresher` — grades the answer, updates `concept_mastery`.
+- `note-timeline-summary` — generates "growth highlights" AI summary across snapshots (gemini-2.5-flash).
 
-### 7. Safety & isolation
+All edge functions: CORS, JWT validation in code, Zod input validation, double-layer retry on 429/402, school-isolation checks server-side.
 
-- All previews run in `<iframe sandbox="allow-scripts">` (no `allow-same-origin`) so student code can’t touch app state, cookies, or other schools’ data.
-- Pyodide/sql.js are CPU-only, no network access from the sandboxed iframe.
-- Snippets are RLS-scoped per user; no cross-school leakage.
-- Code is scanned by the existing `scan-content` flow before saving (reuses moderation pipeline).
+### Frontend (monochromatic, Source Serif 4 for AI text)
+- `ConfidencePicker.tsx` — inline 4-button selector, used in assignment/exam/quiz answer flows.
+- `CalibrationCurve.tsx` — student dashboard widget (Recharts).
+- `OverconfidenceHeatmap.tsx` — teacher analytics tab.
+- `DecayDashboardCard.tsx` — "Topics fading" student widget + modal flow.
+- `DecayHeatmap.tsx` — teacher class-level grid.
+- `NoteTimeline.tsx` — full-screen overlay with slider, diff (using `diff` library), AI growth summary.
+- All views: internal scrolling with `h-[calc(100vh-120px)]` + `pb-24`.
 
-### Out of scope
+### Integration points (read existing code first, then wire in)
+- Existing assignment submission flow → inject `ConfidencePicker` before submit, write to `confidence_responses` + update `concept_mastery`.
+- Existing exam submission flow → same.
+- Existing AI quiz / Study Buddy answer flow → same.
+- Existing Notes Management module → add Timeline button and snapshot trigger.
+- Student dashboard → add Calibration + Decay widgets (respect Lite Mode).
+- Teacher analytics dashboard → add Overconfidence + Decay tabs.
 
-- No deployment, no custom domains, no server-side code execution.
-- No collaborative editing (can be a follow-up).
-- Also Lumina should be able to code with all languages if that's possible and there should be a circle on the top left called code. It should not be connected to the web. It should be a tiny circle on the top left it should function literally exactly like you and any other AI that can code you tell it what to code, it codes it, you preview the Work, but minus the ability of creating a domain, but if they use really wants to create a domain, then they have the option to view the entire codes that Lumina coded
+### Self-review checklist (run after build, before declaring done)
+1. Every new table has RLS enabled and policies cover SELECT/INSERT/UPDATE/DELETE correctly per role.
+2. School isolation verified on every query (no cross-school leak).
+3. Every edge function: CORS headers on all responses incl. errors, Zod validation, JWT check, retry wrapper.
+4. Every new component respects monochromatic theme, internal scrolling, pb-24, Source Serif 4 for AI text.
+5. Confidence picker actually blocks submission until selected.
+6. Note snapshot trigger does not create duplicates on no-op updates (hash check).
+7. Decay refresher cannot be exploited to farm mastery (rate-limited per concept per day).
+8. All new dashboard widgets honor Lite Mode (no canvas/animations when enabled).
+9. No placeholders. No trademark symbols. No char-limit hints on sensitive inputs.
+10. Trace one full user journey end-to-end in source for each of the three features.
+
+---
+
+## Build order within Phase 1
+1. Migrations (all 6 tables + triggers + RLS) — single coordinated migration.
+2. Edge functions (4 of them).
+3. Shared components (ConfidencePicker first — used by 3 flows).
+4. Wire ConfidencePicker into assignment/exam/AI-quiz flows.
+5. Concept mastery integration in those same flows.
+6. Note snapshot trigger + Timeline UI.
+7. Dashboard widgets (student + teacher).
+8. Self-review pass against the 10-item checklist above.
+9. Report back with what was verified and any issues found/fixed.
+
+Approve and I start with the migration.
