@@ -830,19 +830,29 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
 
               <p className="text-base font-medium mb-6 leading-relaxed">{question.question}</p>
 
+              <div className="mb-5 rounded-xl border border-border/60 bg-muted/30 p-3">
+                <ConfidencePicker
+                  value={confidences[String(question.id)] ?? null}
+                  onChange={(level) => setConfidenceFor(question.id, level)}
+                  compact
+                />
+              </div>
+
               <div className="space-y-3">
                 {(question.options || []).map((opt: string, i: number) => {
                   const letter = opt.charAt(0);
                   const isSelected = answers[String(question.id)] === letter;
+                  const hasConfidence = !!confidences[String(question.id)];
                   return (
                     <button
                       key={i}
                       onClick={() => selectAnswer(question.id, letter)}
+                      disabled={!hasConfidence}
                       className={`w-full text-left p-4 rounded-xl border-2 transition-all group ${
                         isSelected
                           ? 'border-primary bg-primary/10 shadow-sm'
                           : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                      }`}
+                      } ${!hasConfidence ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <div className="flex items-start gap-3">
                         <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
