@@ -191,6 +191,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
   // Core state
   const [questions, setQuestions] = useState<QuestionData[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [confidences, setConfidences] = useState<Record<string, ConfidenceLevel>>({});
   const [currentQ, setCurrentQ] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState('');
   const [loading, setLoading] = useState(true);
@@ -210,10 +211,12 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
   // Refs for stale closure prevention
   const submittedRef = useRef(false);
   const answersRef = useRef<Record<string, string>>({});
+  const confidencesRef = useRef<Record<string, ConfidenceLevel>>({});
   const currentQRef = useRef(0);
 
   // Keep refs synced
   useEffect(() => { answersRef.current = answers; }, [answers]);
+  useEffect(() => { confidencesRef.current = confidences; }, [confidences]);
   useEffect(() => { currentQRef.current = currentQ; }, [currentQ]);
 
   // ─── Derived Data ─────────────────────────────────────────────────────────
