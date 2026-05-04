@@ -186,6 +186,8 @@ export default function CodeLab() {
   const [aiConfig, setAiConfig] = useState<AIConfig | undefined>(() => loadAIConfig());
   const [aiRuntime, setAiRuntime] = useState<AIConfig | undefined>(undefined);
   const [previewKey, setPreviewKey] = useState(0);
+  const [hasRun, setHasRun] = useState(false);
+  const [runSnapshot, setRunSnapshot] = useState<{ doc: string | null; lang: string; code: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [askLoading, setAskLoading] = useState(false);
@@ -410,7 +412,11 @@ Rules:
           {copied ? <Check size={14} /> : <Copy size={14} />}
           <span className="ml-1 text-xs">{copied ? 'Copied' : 'Copy'}</span>
         </Button>
-        <Button size="sm" onClick={() => setPreviewKey((k) => k + 1)} disabled={!canPreviewProject && !canPreviewActive} className="h-8">
+        <Button size="sm" onClick={() => {
+          setRunSnapshot({ doc: projectDoc, lang: activeLang, code: activeFile?.content ?? '' });
+          setHasRun(true);
+          setPreviewKey((k) => k + 1);
+        }} disabled={!canPreviewProject && !canPreviewActive} className="h-8">
           <Play size={14} /><span className="ml-1 text-xs">Run</span>
         </Button>
       </header>
@@ -487,19 +493,23 @@ Rules:
 
         <section className="flex flex-col min-h-0 bg-muted/20">
           <div className="px-3 py-1.5 border-b border-border/40 text-[11px] font-mono text-muted-foreground">Preview</div>
-          {canPreviewProject ? (
+          {!hasRun || !runSnapshot ? (
+            <div className="flex-1 flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
+              Press <span className="font-mono mx-1">Run</span> to preview your project.
+            </div>
+          ) : runSnapshot.doc ? (
             <iframe
               key={`proj-${previewKey}`}
               title="Project preview"
               sandbox="allow-scripts"
-              srcDoc={projectDoc!}
+              srcDoc={runSnapshot.doc}
               className="flex-1 w-full bg-white border-0"
             />
-          ) : canPreviewActive && activeFile ? (
+          ) : isPreviewable(runSnapshot.lang) ? (
             <CodePreviewFrame
               key={`file-${previewKey}`}
-              language={activeLang}
-              code={activeFile.content}
+              language={runSnapshot.lang}
+              code={runSnapshot.code}
               ai={aiRuntime}
               className="flex-1 w-full bg-white border-0"
             />
