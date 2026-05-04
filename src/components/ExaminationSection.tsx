@@ -443,6 +443,7 @@ export function ExaminationSection() {
             materials: materialsToSend,
             examType: isFullSAT ? 'SAT_FULL' : undefined,
             adaptiveLevel,
+            weakTopics,
           }),
         });
 
