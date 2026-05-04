@@ -209,7 +209,7 @@ Make sure the question directly relates to topics from their learning history. B
     // Confidence calibration + mastery (fire-and-forget)
     void recordConfidence({
       subject: subjectName,
-      topic: subjectName,
+      topic: activeTopic || subjectName,
       question_text: currentQuestion?.question,
       confidence_level: confidence,
       was_correct: !!isCorrect,
