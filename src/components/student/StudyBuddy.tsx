@@ -340,6 +340,7 @@ ${subjectBreakdown}
 
 ${styleInstructions}
 ${fullIntelligenceContext}
+${masteryBlock}
 
 YOUR APPROACH:
 1. ADAPT your explanations to match the student's proven level per subject
