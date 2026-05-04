@@ -114,3 +114,130 @@ All edge functions: CORS, JWT validation in code, Zod input validation, double-l
 9. Report back with what was verified and any issues found/fixed.
 
 Approve and I start with the migration.
+
+---
+
+# Phase 2 — The Intelligence Expansion
+
+Phase 1 shipped raw signal (confidence, mastery, decay, note snapshots). Phase 2 turns that signal into:
+- **2A. Novel Learning Modes** — student-facing pedagogy that uses mastery data
+- **2B. Cross-Surface Mastery Engine** — adaptive difficulty + smart-nudge integration
+- **2C. Teacher Intelligence Layer** — heatmaps & re-teach lists
+- **2D. Parent + Ministry Insight Layer** — calibration/decay rolled up to non-student roles
+
+Build order is 2A → 2B → 2C → 2D. Each sub-phase ends with a code-level re-verification before the next begins. No rushing.
+
+---
+
+## 2A. Novel Learning Modes (student-facing)
+
+Three new study modes that consume `concept_mastery` + `confidence_calibration_stats` from Phase 1:
+
+1. **Socratic Mode** — Student picks a topic; AI asks Socratic questions instead of giving answers. Each turn the student types a response; AI grades reasoning quality (1-5) and asks the next deeper question. 5-question session. Records to `concept_mastery` (correct = quality ≥ 4).
+2. **Teach-Back Mode** — Student picks a topic they think they know. AI asks them to teach it in 2-4 paragraphs. AI grades the explanation across {clarity, accuracy, completeness, examples} on 0-25 each (total 100). Score ≥ 70 = mastery bump.
+3. **Misconception Hunt** — AI generates 5 statements about a topic, some subtly wrong. Student marks each true/false + explains why. AI scores. Targets the exact misconceptions teachers care about most.
+
+### Tables
+- `learning_mode_sessions` — `id, user_id, school_id, mode ('socratic'|'teach_back'|'misconception_hunt'), subject, topic, status ('active'|'completed'|'abandoned'), score (numeric, 0-100), turns_json (jsonb), started_at, completed_at, is_test_data`
+
+### Edge functions (Lovable AI Gateway, gemini-2.5-flash, double-layer retry)
+- `socratic-next-turn` — input: session_id + last_student_response → returns next question + grade for previous turn
+- `teach-back-grade` — input: subject, topic, explanation_text → returns rubric scores + feedback
+- `misconception-hunt-generate` — input: subject, topic → returns 5 statements with hidden truth_index array
+- `misconception-hunt-grade` — input: session_id, student_marks[], student_explanations[] → returns per-item scores + total
+
+All four feed `update_concept_mastery` on completion.
+
+### Components
+- `src/components/student/learning-modes/SocraticMode.tsx`
+- `src/components/student/learning-modes/TeachBackMode.tsx`
+- `src/components/student/learning-modes/MisconceptionHunt.tsx`
+- `src/components/student/learning-modes/LearningModesHub.tsx` — picker landing page
+- New tab in `StudentDashboard.tsx` → "Learning Modes"
+
+Monochromatic, Source Serif 4 for AI text, internal scrolling, pb-24, Lite-Mode aware.
+
+---
+
+## 2B. Cross-Surface Mastery Engine
+
+Wire Phase 1 mastery into existing surfaces:
+
+1. **Adaptive PracticeQuiz difficulty** — when generating practice questions, send the student's `mastery_score` for that subject/topic to the existing quiz-generation edge function so weakest topics get more questions and slightly harder ones for high mastery.
+2. **Smart-Nudge integration** — Smart Nudges already rotate 4 types per 24h. Add a 5th type: "Decay Refresh — your mastery in [topic] is fading; quick refresher?" pulled from `concept_mastery` where `next_review_at <= now()`.
+3. **AI Study Plan prioritization** — when generating a study plan, call a new helper to fetch top-5 weakest topics by mastery_score and inject them into the plan-generation prompt.
+
+### Tables
+None — purely consumes Phase 1 tables.
+
+### Helpers
+- `src/lib/mastery.ts` — `fetchWeakestTopics(userId, limit)`, `fetchDueRefreshers(userId)`.
+- Modify existing `practice-quiz-generate` (if present) or the AI quiz generator path to accept `mastery_context`.
+- Modify Smart Nudge rotation to include decay-refresh type.
+- Modify Study Plan generation to prepend weakest-topic context.
+
+### Components
+- `src/components/student/MasteryBadge.tsx` — small inline badge showing current mastery for the topic of an open quiz/material.
+
+---
+
+## 2C. Teacher Intelligence Layer
+
+Pure read-side dashboards over Phase 1 + 2A data:
+
+1. **Overconfidence Heatmap** — subject × topic grid colored by `calibration_gap` (positive = overconfident). Click cell → student list ranked by gap.
+2. **Class Decay Grid** — subject × topic, cell = % of class with `next_review_at <= now()`. Click → student list.
+3. **Per-student Calibration Profile** — sparkline of last 30 days of confidence-vs-accuracy for one student.
+4. **Re-teach Recommendations** — auto-list of topics where ≥ 30% of class is overconfident OR decayed.
+
+### Tables
+None.
+
+### Edge functions
+- `teacher-class-analytics` — single endpoint; input: `school_id, grade_level?, class_id?` → returns aggregated heatmap + decay-grid + re-teach list. Server-side school isolation.
+
+### Components
+- `src/components/teacher/OverconfidenceHeatmap.tsx`
+- `src/components/teacher/ClassDecayGrid.tsx`
+- `src/components/teacher/StudentCalibrationProfile.tsx`
+- `src/components/teacher/ReteachRecommendations.tsx`
+- New tab in teacher analytics dashboard → "Class Intelligence"
+
+---
+
+## 2D. Parent + Ministry Insight Layer
+
+1. **Parent dashboard cards** — Calibration Trend (child's calibration_gap over time), Decay Alerts (topics fading for child).
+2. **Ministry aggregates** — extend `get_ministry_dashboard_data` RPC to include national avg calibration_gap, top-10 overconfident topics, % students with decayed topics by school.
+
+### Tables
+None.
+
+### RPC changes
+- Extend existing `get_ministry_dashboard_data(p_session_token)` to include calibration + decay aggregates. Strict school-isolation already enforced by session token.
+
+### Components
+- `src/components/parent/ChildCalibrationCard.tsx`
+- `src/components/parent/ChildDecayAlertsCard.tsx`
+- New section in ministry dashboard → "National Cognitive Health"
+
+---
+
+## Self-review checklist (run after EACH sub-phase)
+1. RLS on every new table; school isolation enforced server-side.
+2. Edge functions: CORS on all responses (including errors), Zod validation, JWT check, 429/402 retry wrapper.
+3. Monochromatic theme, Source Serif 4 for AI text, internal scrolling, pb-24, Lite-Mode aware.
+4. No placeholders, no trademark symbols, no char-limit hints.
+5. Mastery updates only fire on legitimate completion (no client-side trust for grading).
+6. Trace one full user journey end-to-end in source for each new feature.
+7. Verify all new tables have `is_test_data` where appropriate.
+
+---
+
+## Build order
+- **2A** Migration → 4 edge functions → 4 components → dashboard tab → re-verify.
+- **2B** mastery.ts helper → wire into existing surfaces → re-verify.
+- **2C** edge function → 4 components → teacher tab → re-verify.
+- **2D** RPC extension → 2 parent cards + ministry section → re-verify.
+
+Starting with 2A migration.
