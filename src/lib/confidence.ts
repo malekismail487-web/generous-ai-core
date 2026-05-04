@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { notifyMasteryUpdated } from "@/lib/mastery";
 
 export type ConfidenceSource =
   | "assignment"
