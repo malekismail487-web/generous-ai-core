@@ -186,6 +186,8 @@ export default function CodeLab() {
   const [aiConfig, setAiConfig] = useState<AIConfig | undefined>(() => loadAIConfig());
   const [aiRuntime, setAiRuntime] = useState<AIConfig | undefined>(undefined);
   const [previewKey, setPreviewKey] = useState(0);
+  const [hasRun, setHasRun] = useState(false);
+  const [runSnapshot, setRunSnapshot] = useState<{ doc: string | null; lang: string; code: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [askLoading, setAskLoading] = useState(false);
