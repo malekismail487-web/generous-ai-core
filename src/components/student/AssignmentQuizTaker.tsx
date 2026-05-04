@@ -119,7 +119,7 @@ export function AssignmentQuizTaker({
     });
 
 
-    // Record each answer for adaptive learning
+    // Record each answer for adaptive learning + confidence calibration + mastery
     for (const result of quizResults) {
       recordAnswer({
         subject: assignment.subject,
@@ -130,6 +130,20 @@ export function AssignmentQuizTaker({
         difficulty: 'medium',
         source: 'assignment',
       });
+      const conf = confidences[result.questionId];
+      if (conf) {
+        // Fire-and-forget: don't block submission on this
+        recordConfidence({
+          subject: assignment.subject,
+          topic: result.questionTitle.slice(0, 200),
+          question_id: result.questionId,
+          question_text: result.questionTitle,
+          confidence_level: conf,
+          was_correct: result.isCorrect,
+          source: 'assignment',
+          update_mastery: true,
+        });
+      }
     }
 
     const correctCount = quizResults.filter(r => r.isCorrect).length;
