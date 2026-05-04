@@ -9,7 +9,7 @@ import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { ConfidencePicker, type ConfidenceLevel } from '@/components/ConfidencePicker';
 import { recordConfidence } from '@/lib/confidence';
-import { getWeakestTopics, masteryDifficultyHint } from '@/lib/mastery';
+import { getWeakestTopics, masteryDifficultyHint, getCurrentSchoolId } from '@/lib/mastery';
 import { useAuth } from '@/hooks/useAuth';
 
 type Difficulty = 'beginner' | 'intermediate' | 'hard';
