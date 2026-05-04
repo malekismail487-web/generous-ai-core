@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
+import { ConfidencePicker, type ConfidenceLevel } from '@/components/ConfidencePicker';
+import { recordConfidence } from '@/lib/confidence';
 // ============================================
 // ENUMS (IMMUTABLE)
 // ============================================
@@ -210,6 +212,7 @@ interface ExamState {
   completed: boolean;
   selectedAnswer: string | null;
   answers: Record<number, string>;
+  currentConfidence: ConfidenceLevel | null;
 }
 
 function createInitialExamState(exam: ExamJSON): ExamState {
@@ -219,7 +222,8 @@ function createInitialExamState(exam: ExamJSON): ExamState {
     answered: false,
     completed: false,
     selectedAnswer: null,
-    answers: {}
+    answers: {},
+    currentConfidence: null
   };
 }
 
@@ -288,7 +292,8 @@ function onNextQuestion(state: ExamState): ExamState {
     ...state,
     currentQuestionId: state.currentQuestionId + 1,
     answered: false,
-    selectedAnswer: null
+    selectedAnswer: null,
+    currentConfidence: null
   };
 }
 
@@ -530,12 +535,28 @@ export function ExaminationSection() {
 
   const handleAnswer = (answer: string) => {
     if (!examState || examState.answered) return;
-    
+    if (!examState.currentConfidence) {
+      toast({
+        title: 'Set your confidence first',
+        description: 'Pick how sure you are before answering.',
+      });
+      return;
+    }
+
     const currentQ = getCurrentQuestion(examState);
     if (!currentQ) return;
-    const isCorrectAnswer = answer === currentQ.correct_answer;
+
+    // Compute correctness consistent with the UI (typed answers use fuzzy match)
+    let isCorrectAnswer: boolean;
+    if (isMultipleChoice(currentQ)) {
+      isCorrectAnswer = answer === currentQ.correct_answer;
+    } else {
+      isCorrectAnswer = checkTypedAnswer(answer, currentQ as FillInBlankQuestion | TypedAnswerQuestion);
+    }
+
     const subjectForTracking = examState.exam.subject || selectedSubject || 'general';
-    
+    const confidenceLevel = examState.currentConfidence;
+
     // Record answer for adaptive learning
     recordAnswer({
       subject: subjectForTracking,
@@ -546,7 +567,18 @@ export function ExaminationSection() {
       difficulty: selectedDifficulty?.replace('SUBJECT_', '').replace('SAT_', '') || 'medium',
       source: 'exam',
     });
-    
+
+    // Record confidence + update mastery (fire-and-forget)
+    void recordConfidence({
+      subject: subjectForTracking,
+      topic: examState.exam.subject || subjectForTracking,
+      question_id: String(currentQ.id),
+      question_text: currentQ.question,
+      confidence_level: confidenceLevel,
+      was_correct: isCorrectAnswer,
+      source: 'exam',
+    });
+
     setExamState(prev => {
       if (!prev) return prev;
       const newAnswers = { ...prev.answers, [prev.currentQuestionId]: answer };
@@ -696,6 +728,20 @@ export function ExaminationSection() {
               <MathRenderer content={currentQ.question} className="text-sm font-medium leading-relaxed" />
             </div>
 
+            {/* CONFIDENCE PICKER (required before answering) */}
+            {!examState.answered && (
+              <div className="mb-4 rounded-2xl border border-border/50 bg-card/40 p-3">
+                <ConfidencePicker
+                  value={examState.currentConfidence}
+                  onChange={(level) =>
+                    setExamState(prev => prev ? { ...prev, currentConfidence: level } : prev)
+                  }
+                  disabled={examState.answered}
+                  compact
+                />
+              </div>
+            )}
+
             {/* MULTIPLE CHOICE OPTIONS */}
             {isMultipleChoice(currentQ) && (
               <div className="space-y-2 mb-5">
@@ -709,7 +755,7 @@ export function ExaminationSection() {
                     <button
                       key={index}
                       onClick={() => handleAnswer(option)}
-                      disabled={examState.answered}
+                      disabled={examState.answered || !examState.currentConfidence}
                       className={cn(
                         "w-full p-3.5 rounded-xl text-left transition-all duration-200 border",
                         "flex items-center gap-3 text-sm",
@@ -749,17 +795,18 @@ export function ExaminationSection() {
                     examState.answered && !isCorrect && "bg-destructive/20 border-destructive"
                   )}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && examState.selectedAnswer && !examState.answered) {
+                    if (e.key === 'Enter' && examState.selectedAnswer && !examState.answered && examState.currentConfidence) {
                       handleAnswer(examState.selectedAnswer);
                     }
                   }}
                 />
                 {!examState.answered && examState.selectedAnswer && (
-                  <Button 
-                    onClick={() => handleAnswer(examState.selectedAnswer!)} 
+                  <Button
+                    onClick={() => handleAnswer(examState.selectedAnswer!)}
+                    disabled={!examState.currentConfidence}
                     className="mt-3 w-full"
                   >
-                    Submit Answer
+                    {examState.currentConfidence ? 'Submit Answer' : 'Pick confidence to submit'}
                   </Button>
                 )}
               </div>
@@ -782,11 +829,12 @@ export function ExaminationSection() {
                   )}
                 />
                 {!examState.answered && examState.selectedAnswer && (
-                  <Button 
-                    onClick={() => handleAnswer(examState.selectedAnswer!)} 
+                  <Button
+                    onClick={() => handleAnswer(examState.selectedAnswer!)}
+                    disabled={!examState.currentConfidence}
                     className="mt-3 w-full"
                   >
-                    Submit Answer
+                    {examState.currentConfidence ? 'Submit Answer' : 'Pick confidence to submit'}
                   </Button>
                 )}
               </div>

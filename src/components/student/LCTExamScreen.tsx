@@ -8,6 +8,8 @@ import {
   Brain, Flag, Keyboard, LayoutGrid, Minus, ArrowUp, ChevronDown,
   ChevronUp, BookOpen, BarChart3, Target, Wifi, WifiOff
 } from 'lucide-react';
+import { ConfidencePicker, type ConfidenceLevel } from '@/components/ConfidencePicker';
+import { recordConfidence } from '@/lib/confidence';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -189,6 +191,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
   // Core state
   const [questions, setQuestions] = useState<QuestionData[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [confidences, setConfidences] = useState<Record<string, ConfidenceLevel>>({});
   const [currentQ, setCurrentQ] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState('');
   const [loading, setLoading] = useState(true);
@@ -208,10 +211,12 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
   // Refs for stale closure prevention
   const submittedRef = useRef(false);
   const answersRef = useRef<Record<string, string>>({});
+  const confidencesRef = useRef<Record<string, ConfidenceLevel>>({});
   const currentQRef = useRef(0);
 
   // Keep refs synced
   useEffect(() => { answersRef.current = answers; }, [answers]);
+  useEffect(() => { confidencesRef.current = confidences; }, [confidences]);
   useEffect(() => { currentQRef.current = currentQ; }, [currentQ]);
 
   // ─── Derived Data ─────────────────────────────────────────────────────────
@@ -335,14 +340,39 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
       if (data?.error) throw new Error(data.error);
 
       setSubmitted(true);
-      setResults(data as ExamResult);
+      const examResults = data as ExamResult;
+      setResults(examResults);
       toast({ title: '✅ Exam submitted successfully!' });
+
+      // Fire confidence calibration batch for every question we have a confidence for.
+      // Done after results land so we know was_correct per question.
+      try {
+        const confSnapshot = confidencesRef.current;
+        const perResult = examResults?.results || [];
+        const qIndex = new Map(questions.map(q => [q.id, q]));
+        for (const r of perResult) {
+          const conf = confSnapshot[String(r.id)];
+          if (!conf) continue;
+          const q = qIndex.get(r.id);
+          void recordConfidence({
+            subject: r.subject || 'LCT',
+            topic: r.subject || 'LCT',
+            question_id: String(r.id),
+            question_text: q?.question,
+            confidence_level: conf,
+            was_correct: !!r.is_correct,
+            source: 'lct',
+          });
+        }
+      } catch {
+        // Never block submit success on calibration recording.
+      }
     } catch (err: any) {
       submittedRef.current = false;
       toast({ variant: 'destructive', title: 'Error submitting', description: err.message });
     }
     setSubmitting(false);
-  }, [examId, toast]);
+  }, [examId, toast, questions]);
 
   // ─── Timer ────────────────────────────────────────────────────────────────
 
@@ -447,7 +477,19 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
   // ─── Actions ──────────────────────────────────────────────────────────────
 
   const selectAnswer = useCallback((questionId: number, answer: string) => {
+    // Block answering until confidence is set for this question.
+    if (!confidencesRef.current[String(questionId)]) {
+      toast({
+        title: 'Set your confidence first',
+        description: 'Pick how sure you are before choosing an option.',
+      });
+      return;
+    }
     setAnswers(prev => ({ ...prev, [String(questionId)]: answer }));
+  }, [toast]);
+
+  const setConfidenceFor = useCallback((questionId: number, level: ConfidenceLevel) => {
+    setConfidences(prev => ({ ...prev, [String(questionId)]: level }));
   }, []);
 
   const toggleFlag = useCallback((questionId: number | undefined) => {
@@ -788,19 +830,29 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
 
               <p className="text-base font-medium mb-6 leading-relaxed">{question.question}</p>
 
+              <div className="mb-5 rounded-xl border border-border/60 bg-muted/30 p-3">
+                <ConfidencePicker
+                  value={confidences[String(question.id)] ?? null}
+                  onChange={(level) => setConfidenceFor(question.id, level)}
+                  compact
+                />
+              </div>
+
               <div className="space-y-3">
                 {(question.options || []).map((opt: string, i: number) => {
                   const letter = opt.charAt(0);
                   const isSelected = answers[String(question.id)] === letter;
+                  const hasConfidence = !!confidences[String(question.id)];
                   return (
                     <button
                       key={i}
                       onClick={() => selectAnswer(question.id, letter)}
+                      disabled={!hasConfidence}
                       className={`w-full text-left p-4 rounded-xl border-2 transition-all group ${
                         isSelected
                           ? 'border-primary bg-primary/10 shadow-sm'
                           : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                      }`}
+                      } ${!hasConfidence ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <div className="flex items-start gap-3">
                         <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${

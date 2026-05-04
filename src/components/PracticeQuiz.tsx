@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
+import { ConfidencePicker, type ConfidenceLevel } from '@/components/ConfidencePicker';
+import { recordConfidence } from '@/lib/confidence';
 
 type Difficulty = 'beginner' | 'intermediate' | 'hard';
 type PracticeType = 'examination' | 'sat';
@@ -34,6 +36,7 @@ const difficultyPrompts = {
 export function PracticeQuiz({ difficulty, type, onBack, learningContext }: PracticeQuizProps) {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [confidence, setConfidence] = useState<ConfidenceLevel | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
@@ -48,6 +51,7 @@ export function PracticeQuiz({ difficulty, type, onBack, learningContext }: Prac
   const generateQuestion = useCallback(async () => {
     setIsLoading(true);
     setSelectedAnswer(null);
+    setConfidence(null);
     setShowResult(false);
 
     const satContext = type === 'sat' 
@@ -137,6 +141,13 @@ Make sure the question directly relates to topics from their learning history. B
 
   const handleAnswer = (index: number) => {
     if (showResult) return;
+    if (!confidence) {
+      toast({
+        title: 'Set your confidence first',
+        description: 'Pick how sure you are before answering.',
+      });
+      return;
+    }
     setSelectedAnswer(index);
     setShowResult(true);
 
@@ -148,7 +159,7 @@ Make sure the question directly relates to topics from their learning history. B
     // Record for adaptive learning — FULL intelligence engine
     const subjectMatch = learningContext.match(/subject[:\s]+(\w+)/i);
     const subjectName = subjectMatch ? subjectMatch[1] : 'general';
-    
+
     // Fire the full intelligent answer recording (feeds all 7 subsystems)
     intelligentRecordAnswer({
       subject: subjectName,
@@ -169,6 +180,16 @@ Make sure the question directly relates to topics from their learning history. B
       isCorrect: !!isCorrect,
       difficulty,
       source: type === 'sat' ? 'sat_practice' : 'practice_quiz',
+    });
+
+    // Confidence calibration + mastery (fire-and-forget)
+    void recordConfidence({
+      subject: subjectName,
+      topic: subjectName,
+      question_text: currentQuestion?.question,
+      confidence_level: confidence,
+      was_correct: !!isCorrect,
+      source: 'ai_quiz',
     });
   };
 
@@ -261,6 +282,17 @@ Make sure the question directly relates to topics from their learning history. B
                 <p className="text-sm font-medium leading-relaxed">{currentQuestion.question}</p>
               </div>
 
+              {!showResult && (
+                <div className="mb-4 rounded-2xl border border-border/50 bg-card/40 p-3">
+                  <ConfidencePicker
+                    value={confidence}
+                    onChange={setConfidence}
+                    disabled={showResult}
+                    compact
+                  />
+                </div>
+              )}
+
               <div className="space-y-2 mb-5">
                 {currentQuestion.options.map((option, index) => {
                   const isSelected = selectedAnswer === index;
@@ -272,7 +304,7 @@ Make sure the question directly relates to topics from their learning history. B
                     <button
                       key={index}
                       onClick={() => handleAnswer(index)}
-                      disabled={showResult}
+                      disabled={showResult || !confidence}
                       className={cn(
                         "w-full p-3.5 rounded-xl text-left transition-all duration-200 border",
                         "flex items-center gap-3 group text-sm",
