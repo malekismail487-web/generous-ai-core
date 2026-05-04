@@ -728,6 +728,20 @@ export function ExaminationSection() {
               <MathRenderer content={currentQ.question} className="text-sm font-medium leading-relaxed" />
             </div>
 
+            {/* CONFIDENCE PICKER (required before answering) */}
+            {!examState.answered && (
+              <div className="mb-4 rounded-2xl border border-border/50 bg-card/40 p-3">
+                <ConfidencePicker
+                  value={examState.currentConfidence}
+                  onChange={(level) =>
+                    setExamState(prev => prev ? { ...prev, currentConfidence: level } : prev)
+                  }
+                  disabled={examState.answered}
+                  compact
+                />
+              </div>
+            )}
+
             {/* MULTIPLE CHOICE OPTIONS */}
             {isMultipleChoice(currentQ) && (
               <div className="space-y-2 mb-5">
