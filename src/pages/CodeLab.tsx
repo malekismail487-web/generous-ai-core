@@ -532,7 +532,7 @@ Rules:
         </section>
       </div>
 
-      <div className="border-t border-border/40 p-2 flex items-end gap-2 flex-shrink-0 pb-[calc(env(safe-area-inset-bottom,0px)+8px)]">
+      <div className="border-t border-border/40 p-2 flex items-end gap-2 flex-shrink-0 pb-[calc(env(safe-area-inset-bottom,0px)+8px)] max-h-24 overflow-hidden">
         <Button variant="ghost" size="sm" className="h-10 md:hidden" onClick={() => setMobilePane((pane) => pane === 'editor' ? 'preview' : 'editor')}>
           {mobilePane === 'editor' ? 'Preview' : 'Editor'}
         </Button>
@@ -540,7 +540,7 @@ Rules:
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder='Ask Lumina to build or change something — e.g. "make it a glassmorphism todo app with AI suggestions"'
-          className="min-h-[42px] max-h-32 text-sm"
+          className="min-h-[42px] max-h-16 text-sm"
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onAsk(); } }}
         />
         <Button onClick={onAsk} disabled={askLoading || !prompt.trim()} className="h-10">
