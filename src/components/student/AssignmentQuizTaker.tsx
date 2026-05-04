@@ -325,6 +325,15 @@ export function AssignmentQuizTaker({
                 );
               })}
             </div>
+
+            {/* Confidence picker — required before submit */}
+            <div className="mt-5 pt-4 border-t border-border/50">
+              <ConfidencePicker
+                value={confidences[question.id] ?? null}
+                onChange={(lvl) => handleConfidenceChange(question.id, lvl)}
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -333,7 +342,7 @@ export function AssignmentQuizTaker({
       <div className="sticky bottom-4">
         <Button 
           onClick={submitQuiz} 
-          disabled={isSubmitting || answeredCount < questions.length}
+          disabled={isSubmitting || answeredCount < questions.length || Object.keys(confidences).length < questions.length}
           size="lg"
           className="w-full gap-2 shadow-lg"
         >
@@ -344,6 +353,11 @@ export function AssignmentQuizTaker({
         {answeredCount < questions.length && (
           <p className="text-center text-sm text-muted-foreground mt-3">
             Answer all {questions.length - answeredCount} remaining question(s) to submit
+          </p>
+        )}
+        {answeredCount === questions.length && Object.keys(confidences).length < questions.length && (
+          <p className="text-center text-sm text-muted-foreground mt-3">
+            Set a confidence level on every question to submit
           </p>
         )}
       </div>
