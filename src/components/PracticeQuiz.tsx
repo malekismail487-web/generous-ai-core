@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
+import { ConfidencePicker, type ConfidenceLevel } from '@/components/ConfidencePicker';
+import { recordConfidence } from '@/lib/confidence';
 
 type Difficulty = 'beginner' | 'intermediate' | 'hard';
 type PracticeType = 'examination' | 'sat';
