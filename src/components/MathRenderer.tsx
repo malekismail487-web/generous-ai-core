@@ -101,6 +101,17 @@ export function MathRenderer({ content, className = '' }: MathRendererProps) {
               ),
               // Don't render markdown images — we show real images from the images prop
               img: () => null,
+              // Render fenced code blocks with our CodeBlock (copy + preview)
+              code: ({ inline, className, children, ...props }: any) => {
+                const text = String(children ?? '').replace(/\n$/, '');
+                if (inline) {
+                  return <code className={className} {...props}>{children}</code>;
+                }
+                const match = /language-(\w+)/.exec(className || '');
+                const lang = match?.[1] || 'text';
+                return <CodeBlock language={lang} code={text} />;
+              },
+              pre: ({ children }: any) => <>{children}</>,
               // Make all links clickable, opening in new tab
               a: ({ children, href, ...props }) => (
                 <a
