@@ -192,7 +192,7 @@ export default function CodeLab() {
   const [copied, setCopied] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [askLoading, setAskLoading] = useState(false);
-  const [showFiles, setShowFiles] = useState(true);
+  const [showFiles, setShowFiles] = useState(false);
   const [renamingPath, setRenamingPath] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [aiOpen, setAiOpen] = useState(false);
@@ -422,9 +422,9 @@ Rules:
         </Button>
       </header>
 
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-[200px_minmax(0,1fr)_minmax(360px,1fr)] min-h-0">
+      <div className="relative flex-1 grid grid-cols-1 md:grid-cols-[200px_minmax(0,1fr)_minmax(360px,1fr)] min-h-0">
         {showFiles && (
-          <aside className="border-r border-border/40 bg-muted/20 flex flex-col min-h-0">
+          <aside className="absolute inset-x-2 top-2 bottom-2 z-20 rounded-lg border border-border/40 bg-background shadow-2xl flex flex-col min-h-0 md:static md:inset-auto md:z-auto md:rounded-none md:border-y-0 md:border-l-0 md:shadow-none md:bg-muted/20">
             <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/40">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Files</span>
               <div className="flex items-center gap-1">
