@@ -51,6 +51,7 @@ export function PracticeQuiz({ difficulty, type, onBack, learningContext }: Prac
   const generateQuestion = useCallback(async () => {
     setIsLoading(true);
     setSelectedAnswer(null);
+    setConfidence(null);
     setShowResult(false);
 
     const satContext = type === 'sat' 
