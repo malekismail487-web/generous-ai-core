@@ -422,7 +422,7 @@ Rules:
         </Button>
       </header>
 
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-[200px_1fr_1fr] min-h-0">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-[200px_minmax(0,1fr)_minmax(360px,1fr)] min-h-0">
         {showFiles && (
           <aside className="border-r border-border/40 bg-muted/20 flex flex-col min-h-0">
             <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/40">
@@ -466,7 +466,7 @@ Rules:
           </aside>
         )}
 
-        <section className="flex flex-col min-h-0 border-r border-border/40">
+        <section className={`flex-col min-h-0 border-r border-border/40 ${mobilePane === 'editor' ? 'flex' : 'hidden'} md:flex`}>
           <div className="px-3 py-1.5 border-b border-border/40 text-[11px] font-mono text-muted-foreground flex items-center justify-between">
             <span>{activeFile?.path}</span>
             <span className="uppercase tracking-wide">{languageFromPath(activeFile?.path ?? '')}</span>
@@ -492,8 +492,11 @@ Rules:
           </div>
         </section>
 
-        <section className="flex flex-col min-h-0 bg-muted/20">
-          <div className="px-3 py-1.5 border-b border-border/40 text-[11px] font-mono text-muted-foreground">Preview</div>
+        <section className={`flex-col min-h-0 bg-muted/20 ${mobilePane === 'preview' ? 'flex' : 'hidden'} md:flex`}>
+          <div className="px-3 py-1.5 border-b border-border/40 text-[11px] font-mono text-muted-foreground flex items-center justify-between">
+            <span>Preview</span>
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] md:hidden" onClick={() => setMobilePane('editor')}>Edit</Button>
+          </div>
           {!hasRun || !runSnapshot ? (
             <div className="flex-1 flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
               Press <span className="font-mono mx-1">Run</span> to preview your project.
