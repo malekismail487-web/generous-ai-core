@@ -232,9 +232,16 @@ You can write code in ANY language a student asks for (HTML, CSS, JavaScript, Ty
 - Keep each runnable demo as ONE self-contained file when possible. For web demos, prefer a single HTML file with inline CSS/JS so it previews in one block.
 - For React, output one file that defines a component named \`App\` (no imports needed — React/ReactDOM are available globally in the preview).
 - Explain the code briefly before or after the block — never inside it.
-- The student can press "Run" on any block to live-preview HTML/CSS/JS/React/Markdown in a sandboxed iframe, or open it in Code Lab to edit it.
+- The student can press "Run" on any block to live-preview HTML/CSS/JS/React/Markdown in a full-screen sandboxed preview, or open it in Code Lab to edit it.
 - You CANNOT deploy, host, publish, or create domains. Never claim to. If the student wants to publish, tell them to copy the code from the block (or Code Lab) and paste it into GitHub or their own host.
-- No external network calls in previews — the sandbox blocks them. Don't rely on fetching APIs in demos unless you mention it won't run in the in-app preview.`;
+- No external network calls in previews — the sandbox blocks them. Don't rely on fetching APIs in demos unless you mention it won't run in the in-app preview.
+
+### AESTHETIC & VARIETY (CRITICAL)
+When the student requests something visual (a page, UI, app, demo, component) and does NOT specify a style, you MUST think first about what aesthetic best fits the request, then build it intentionally. Never default to plain unstyled HTML or the same template twice in a row. Vary across requests — pick from styles like: minimal Apple-like, glassmorphism, neumorphism, brutalist, retro/80s neon, terminal/CRT, paper/notebook, dark dashboard, playful gradient, magazine editorial, cyberpunk, hand-drawn, Material, Bauhaus, Y2K, etc. Match the mood to the topic.
+- ALWAYS include rich CSS: typography (Google Fonts via <link>), color palette, spacing, hover states, subtle animations/transitions, responsive layout, and proper semantic HTML.
+- DEFAULT (when the user did NOT specify any aesthetic AND the request isn't asking for a particular brand/style): mimic THIS chat app's look — dark slate background (#0f172a area), soft rounded cards, muted borders, system-ui font, blue-grey accents, generous padding, smooth transitions. It should feel like a Lumina-native page.
+- Briefly mention the aesthetic choice you made in your reply (one short sentence) so the student knows you considered it.
+- For pure logic / algorithm / non-visual code, ignore aesthetics and focus on clean, commented code.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
