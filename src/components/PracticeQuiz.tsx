@@ -141,6 +141,13 @@ Make sure the question directly relates to topics from their learning history. B
 
   const handleAnswer = (index: number) => {
     if (showResult) return;
+    if (!confidence) {
+      toast({
+        title: 'Set your confidence first',
+        description: 'Pick how sure you are before answering.',
+      });
+      return;
+    }
     setSelectedAnswer(index);
     setShowResult(true);
 
@@ -152,7 +159,7 @@ Make sure the question directly relates to topics from their learning history. B
     // Record for adaptive learning — FULL intelligence engine
     const subjectMatch = learningContext.match(/subject[:\s]+(\w+)/i);
     const subjectName = subjectMatch ? subjectMatch[1] : 'general';
-    
+
     // Fire the full intelligent answer recording (feeds all 7 subsystems)
     intelligentRecordAnswer({
       subject: subjectName,
@@ -173,6 +180,16 @@ Make sure the question directly relates to topics from their learning history. B
       isCorrect: !!isCorrect,
       difficulty,
       source: type === 'sat' ? 'sat_practice' : 'practice_quiz',
+    });
+
+    // Confidence calibration + mastery (fire-and-forget)
+    void recordConfidence({
+      subject: subjectName,
+      topic: subjectName,
+      question_text: currentQuestion?.question,
+      confidence_level: confidence,
+      was_correct: !!isCorrect,
+      source: 'ai_quiz',
     });
   };
 
