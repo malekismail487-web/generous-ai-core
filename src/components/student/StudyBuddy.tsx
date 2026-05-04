@@ -323,9 +323,10 @@ export function StudyBuddy() {
     let masteryBlock = '';
     try {
       if (user?.id) {
+        const schoolId = await getCurrentSchoolId(user.id);
         const [weak, due] = await Promise.all([
-          getWeakestTopics(user.id, null, 5),
-          getDueReviews(user.id, 5),
+          getWeakestTopics(user.id, null, 5, schoolId),
+          getDueReviews(user.id, 5, schoolId),
         ]);
         masteryBlock = buildMasteryPromptBlock(weak, due);
       }
