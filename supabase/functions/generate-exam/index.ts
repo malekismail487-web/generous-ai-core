@@ -329,7 +329,7 @@ serve(async (req) => {
   }
 
   try {
-    const { subject, grade, difficulty, count, materials, examType, adaptiveLevel } = await req.json();
+    const { subject, grade, difficulty, count, materials, examType, adaptiveLevel, weakTopics } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -345,6 +345,11 @@ serve(async (req) => {
     const varietyInstructions = getVarietyInstructions();
     const adaptiveLevelHint = adaptiveLevel
       ? `\nADAPTIVE LEVEL: "${adaptiveLevel}". ${adaptiveLevel === 'beginner' ? 'Simpler questions, clear language, foundational concepts.' : adaptiveLevel === 'advanced' ? 'Challenging questions, deeper understanding, multi-step reasoning.' : 'Moderate difficulty, mix of recall and application.'}`
+      : '';
+
+    // Phase 2B: Cross-Surface Mastery — bias toward student's weakest topics.
+    const masteryHint = Array.isArray(weakTopics) && weakTopics.length > 0
+      ? `\nMASTERY FOCUS: Bias roughly half of the questions toward these specific topics where the student is weakest: ${weakTopics.slice(0, 6).map((t: string) => `"${t}"`).join(', ')}. Do NOT label them as "weak" in the question text.`
       : '';
 
     const materialContext = materials && materials.length > 0
