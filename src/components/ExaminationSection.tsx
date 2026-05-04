@@ -755,7 +755,7 @@ export function ExaminationSection() {
                     <button
                       key={index}
                       onClick={() => handleAnswer(option)}
-                      disabled={examState.answered}
+                      disabled={examState.answered || !examState.currentConfidence}
                       className={cn(
                         "w-full p-3.5 rounded-xl text-left transition-all duration-200 border",
                         "flex items-center gap-3 text-sm",
@@ -795,17 +795,18 @@ export function ExaminationSection() {
                     examState.answered && !isCorrect && "bg-destructive/20 border-destructive"
                   )}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && examState.selectedAnswer && !examState.answered) {
+                    if (e.key === 'Enter' && examState.selectedAnswer && !examState.answered && examState.currentConfidence) {
                       handleAnswer(examState.selectedAnswer);
                     }
                   }}
                 />
                 {!examState.answered && examState.selectedAnswer && (
-                  <Button 
-                    onClick={() => handleAnswer(examState.selectedAnswer!)} 
+                  <Button
+                    onClick={() => handleAnswer(examState.selectedAnswer!)}
+                    disabled={!examState.currentConfidence}
                     className="mt-3 w-full"
                   >
-                    Submit Answer
+                    {examState.currentConfidence ? 'Submit Answer' : 'Pick confidence to submit'}
                   </Button>
                 )}
               </div>
@@ -828,11 +829,12 @@ export function ExaminationSection() {
                   )}
                 />
                 {!examState.answered && examState.selectedAnswer && (
-                  <Button 
-                    onClick={() => handleAnswer(examState.selectedAnswer!)} 
+                  <Button
+                    onClick={() => handleAnswer(examState.selectedAnswer!)}
+                    disabled={!examState.currentConfidence}
                     className="mt-3 w-full"
                   >
-                    Submit Answer
+                    {examState.currentConfidence ? 'Submit Answer' : 'Pick confidence to submit'}
                   </Button>
                 )}
               </div>
