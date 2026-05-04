@@ -5,9 +5,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Note } from '@/hooks/useNotes';
-import { Loader2, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { streamChat } from '@/lib/chat';
+import { NoteTimeline } from '@/components/NoteTimeline';
 
 interface NoteEditorProps {
   note: Note | null;
@@ -21,6 +22,7 @@ export function NoteEditor({ note, onUpdate, onCreateNote }: NoteEditorProps) {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isReviewing, setIsReviewing] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [timelineOpen, setTimelineOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -137,6 +139,15 @@ export function NoteEditor({ note, onUpdate, onCreateNote }: NoteEditorProps) {
           className="text-lg font-semibold border-0 bg-transparent focus-visible:ring-0 px-0"
         />
         <Button
+          variant="outline"
+          onClick={() => setTimelineOpen(true)}
+          className="flex-shrink-0 gap-2"
+          aria-label="Open note timeline"
+        >
+          <Clock className="w-4 h-4" />
+          Timeline
+        </Button>
+        <Button
           onClick={handleReview}
           disabled={isReviewing || !content.trim()}
           className="flex-shrink-0"
@@ -149,6 +160,14 @@ export function NoteEditor({ note, onUpdate, onCreateNote }: NoteEditorProps) {
           Ask AI to Review
         </Button>
       </div>
+
+      {note && (
+        <NoteTimeline
+          noteId={note.id}
+          open={timelineOpen}
+          onClose={() => setTimelineOpen(false)}
+        />
+      )}
 
       {/* Content */}
       <div className="flex-1 flex overflow-hidden">

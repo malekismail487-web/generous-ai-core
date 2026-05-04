@@ -601,6 +601,141 @@ export type Database = {
         }
         Relationships: []
       }
+      concept_mastery: {
+        Row: {
+          created_at: string
+          ease_factor: number
+          id: string
+          interval_days: number
+          is_test_data: boolean
+          last_practiced_at: string
+          mastery_score: number
+          next_review_at: string
+          repetitions: number
+          school_id: string | null
+          subject: string
+          topic: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ease_factor?: number
+          id?: string
+          interval_days?: number
+          is_test_data?: boolean
+          last_practiced_at?: string
+          mastery_score?: number
+          next_review_at?: string
+          repetitions?: number
+          school_id?: string | null
+          subject: string
+          topic: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ease_factor?: number
+          id?: string
+          interval_days?: number
+          is_test_data?: boolean
+          last_practiced_at?: string
+          mastery_score?: number
+          next_review_at?: string
+          repetitions?: number
+          school_id?: string | null
+          subject?: string
+          topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      confidence_calibration_stats: {
+        Row: {
+          avg_accuracy: number
+          avg_confidence: number
+          calibration_gap: number
+          id: string
+          sample_size: number
+          school_id: string | null
+          subject: string | null
+          topic: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_accuracy?: number
+          avg_confidence?: number
+          calibration_gap?: number
+          id?: string
+          sample_size?: number
+          school_id?: string | null
+          subject?: string | null
+          topic?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_accuracy?: number
+          avg_confidence?: number
+          calibration_gap?: number
+          id?: string
+          sample_size?: number
+          school_id?: string | null
+          subject?: string | null
+          topic?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      confidence_responses: {
+        Row: {
+          confidence_level: number
+          created_at: string
+          id: string
+          is_test_data: boolean
+          question_id: string | null
+          question_text: string | null
+          school_id: string | null
+          source: string
+          subject: string | null
+          topic: string | null
+          user_id: string
+          was_correct: boolean
+        }
+        Insert: {
+          confidence_level: number
+          created_at?: string
+          id?: string
+          is_test_data?: boolean
+          question_id?: string | null
+          question_text?: string | null
+          school_id?: string | null
+          source: string
+          subject?: string | null
+          topic?: string | null
+          user_id: string
+          was_correct: boolean
+        }
+        Update: {
+          confidence_level?: number
+          created_at?: string
+          id?: string
+          is_test_data?: boolean
+          question_id?: string | null
+          question_text?: string | null
+          school_id?: string | null
+          source?: string
+          subject?: string | null
+          topic?: string | null
+          user_id?: string
+          was_correct?: boolean
+        }
+        Relationships: []
+      }
       content_flags: {
         Row: {
           content_id: string | null
@@ -754,6 +889,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      decay_refreshers: {
+        Row: {
+          answered_at: string | null
+          concept_mastery_id: string
+          correct_index: number | null
+          created_at: string
+          id: string
+          options_json: Json
+          question_text: string
+          selected_index: number | null
+          shown_at: string
+          user_id: string
+          was_correct: boolean | null
+        }
+        Insert: {
+          answered_at?: string | null
+          concept_mastery_id: string
+          correct_index?: number | null
+          created_at?: string
+          id?: string
+          options_json?: Json
+          question_text: string
+          selected_index?: number | null
+          shown_at?: string
+          user_id: string
+          was_correct?: boolean | null
+        }
+        Update: {
+          answered_at?: string | null
+          concept_mastery_id?: string
+          correct_index?: number | null
+          created_at?: string
+          id?: string
+          options_json?: Json
+          question_text?: string
+          selected_index?: number | null
+          shown_at?: string
+          user_id?: string
+          was_correct?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decay_refreshers_concept_mastery_id_fkey"
+            columns: ["concept_mastery_id"]
+            isOneToOne: false
+            referencedRelation: "concept_mastery"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exam_submissions: {
         Row: {
@@ -1937,6 +2122,82 @@ export type Database = {
         }
         Relationships: []
       }
+      note_snapshots: {
+        Row: {
+          content: string
+          content_hash: string
+          id: string
+          note_id: string
+          snapshot_at: string
+          title: string
+          user_id: string
+          word_count: number
+        }
+        Insert: {
+          content: string
+          content_hash: string
+          id?: string
+          note_id: string
+          snapshot_at?: string
+          title: string
+          user_id: string
+          word_count?: number
+        }
+        Update: {
+          content?: string
+          content_hash?: string
+          id?: string
+          note_id?: string
+          snapshot_at?: string
+          title?: string
+          user_id?: string
+          word_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_snapshots_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      note_timeline_summaries: {
+        Row: {
+          generated_at: string
+          id: string
+          note_id: string
+          snapshots_count: number
+          summary_md: string
+          user_id: string
+        }
+        Insert: {
+          generated_at?: string
+          id?: string
+          note_id: string
+          snapshots_count?: number
+          summary_md: string
+          user_id: string
+        }
+        Update: {
+          generated_at?: string
+          id?: string
+          note_id?: string
+          snapshots_count?: number
+          summary_md?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_timeline_summaries_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: true
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notes: {
         Row: {
           ai_feedback: string | null
@@ -3094,6 +3355,16 @@ export type Database = {
       signup_with_invite_code: {
         Args: { p_email: string; p_full_name: string; p_invite_code: string }
         Returns: Json
+      }
+      update_concept_mastery: {
+        Args: {
+          p_school_id: string
+          p_subject: string
+          p_topic: string
+          p_user_id: string
+          p_was_correct: boolean
+        }
+        Returns: string
       }
       verify_admin_access_code: {
         Args: { input_code: string }

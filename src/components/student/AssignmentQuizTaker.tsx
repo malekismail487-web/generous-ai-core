@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
+import { ConfidencePicker, type ConfidenceLevel } from '@/components/ConfidencePicker';
+import { recordConfidence } from '@/lib/confidence';
 
 interface Question {
   id: string;
@@ -66,12 +68,18 @@ export function AssignmentQuizTaker({
   
   // Student's answers for each question
   const [answers, setAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
-  
+  // Confidence per question (1-4) — required before submit
+  const [confidences, setConfidences] = useState<Record<string, ConfidenceLevel>>({});
+
   // Quiz state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAnswerChange = (questionId: string, answer: 'A' | 'B' | 'C' | 'D') => {
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
+  };
+
+  const handleConfidenceChange = (questionId: string, level: ConfidenceLevel) => {
+    setConfidences(prev => ({ ...prev, [questionId]: level }));
   };
 
   const submitQuiz = async () => {
@@ -82,6 +90,15 @@ export function AssignmentQuizTaker({
         variant: 'destructive', 
         title: `Please answer all questions`,
         description: `${unanswered.length} question(s) remaining`
+      });
+      return;
+    }
+    const missingConfidence = questions.filter(q => !confidences[q.id]);
+    if (missingConfidence.length > 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Set confidence on every question',
+        description: `${missingConfidence.length} question(s) need a confidence level`,
       });
       return;
     }
@@ -102,7 +119,7 @@ export function AssignmentQuizTaker({
     });
 
 
-    // Record each answer for adaptive learning
+    // Record each answer for adaptive learning + confidence calibration + mastery
     for (const result of quizResults) {
       recordAnswer({
         subject: assignment.subject,
@@ -113,6 +130,20 @@ export function AssignmentQuizTaker({
         difficulty: 'medium',
         source: 'assignment',
       });
+      const conf = confidences[result.questionId];
+      if (conf) {
+        // Fire-and-forget: don't block submission on this
+        recordConfidence({
+          subject: assignment.subject,
+          topic: result.questionTitle.slice(0, 200),
+          question_id: result.questionId,
+          question_text: result.questionTitle,
+          confidence_level: conf,
+          was_correct: result.isCorrect,
+          source: 'assignment',
+          update_mastery: true,
+        });
+      }
     }
 
     const correctCount = quizResults.filter(r => r.isCorrect).length;
@@ -294,6 +325,15 @@ export function AssignmentQuizTaker({
                 );
               })}
             </div>
+
+            {/* Confidence picker — required before submit */}
+            <div className="mt-5 pt-4 border-t border-border/50">
+              <ConfidencePicker
+                value={confidences[question.id] ?? null}
+                onChange={(lvl) => handleConfidenceChange(question.id, lvl)}
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -302,7 +342,7 @@ export function AssignmentQuizTaker({
       <div className="sticky bottom-4">
         <Button 
           onClick={submitQuiz} 
-          disabled={isSubmitting || answeredCount < questions.length}
+          disabled={isSubmitting || answeredCount < questions.length || Object.keys(confidences).length < questions.length}
           size="lg"
           className="w-full gap-2 shadow-lg"
         >
@@ -313,6 +353,11 @@ export function AssignmentQuizTaker({
         {answeredCount < questions.length && (
           <p className="text-center text-sm text-muted-foreground mt-3">
             Answer all {questions.length - answeredCount} remaining question(s) to submit
+          </p>
+        )}
+        {answeredCount === questions.length && Object.keys(confidences).length < questions.length && (
+          <p className="text-center text-sm text-muted-foreground mt-3">
+            Set a confidence level on every question to submit
           </p>
         )}
       </div>

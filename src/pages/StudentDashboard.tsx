@@ -25,6 +25,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { StudentAssignments } from '@/components/student/StudentAssignments';
 import { StudentReportCards } from '@/components/student/StudentReportCards';
+import { CalibrationCurve } from '@/components/student/CalibrationCurve';
+import { DecayDashboardCard } from '@/components/student/DecayDashboardCard';
 
 interface CourseMaterial {
   id: string;
@@ -280,8 +282,15 @@ export default function StudentDashboard() {
           )}
         </div>
 
+        {/* Phase 1: Calibration + Decay widgets */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <CalibrationCurve userId={profile.id} />
+          <DecayDashboardCard userId={profile.id} />
+        </div>
+
         <Tabs defaultValue="assignments" className="space-y-6">
           <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+
             <TabsTrigger value="assignments" className="gap-2">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">{tl('work')}</span>
