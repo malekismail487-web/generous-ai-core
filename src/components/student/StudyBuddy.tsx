@@ -18,6 +18,7 @@ import { DebateTheater } from '@/components/student/DebateTheater';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { getWeakestTopics, getDueReviews, buildMasteryPromptBlock } from '@/lib/mastery';
 
 type Msg = { id: string; role: 'user' | 'assistant'; content: string; images?: { src: string; alt?: string }[]; attachments?: { name: string; type: string; url?: string; preview?: string; base64?: string }[]; mirrorSnapshotId?: string; mirrorPrediction?: { predicted_answer: string; predicted_misconception: string }; mirrorActualAnswer?: string };
 
@@ -318,6 +319,18 @@ export function StudyBuddy() {
       // Fallback: engine unavailable, continue with basic context
     }
 
+    // === Phase 2B: Cross-Surface Mastery signal ===
+    let masteryBlock = '';
+    try {
+      if (user?.id) {
+        const [weak, due] = await Promise.all([
+          getWeakestTopics(user.id, null, 5),
+          getDueReviews(user.id, 5),
+        ]);
+        masteryBlock = buildMasteryPromptBlock(weak, due);
+      }
+    } catch { /* mastery is optional */ }
+
     return `You are Lumina — a brilliant, adaptive AI tutor that personalizes learning to each student's unique thinking style and level.
 
 ${levelPrompt}
@@ -327,6 +340,7 @@ ${subjectBreakdown}
 
 ${styleInstructions}
 ${fullIntelligenceContext}
+${masteryBlock}
 
 YOUR APPROACH:
 1. ADAPT your explanations to match the student's proven level per subject

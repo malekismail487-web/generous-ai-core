@@ -29,6 +29,7 @@ import { StudentReportCards } from '@/components/student/StudentReportCards';
 import { CalibrationCurve } from '@/components/student/CalibrationCurve';
 import { DecayDashboardCard } from '@/components/student/DecayDashboardCard';
 import { LearningModesHub } from '@/components/student/learning-modes/LearningModesHub';
+import { MasteryMap } from '@/components/student/MasteryMap';
 
 interface CourseMaterial {
   id: string;
@@ -323,6 +324,7 @@ export default function StudentDashboard() {
           </TabsList>
 
           <TabsContent value="learning-modes" className="space-y-4">
+            <MasteryMap />
             <LearningModesHub />
           </TabsContent>
 

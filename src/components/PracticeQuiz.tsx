@@ -9,6 +9,8 @@ import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { ConfidencePicker, type ConfidenceLevel } from '@/components/ConfidencePicker';
 import { recordConfidence } from '@/lib/confidence';
+import { getWeakestTopics, masteryDifficultyHint } from '@/lib/mastery';
+import { useAuth } from '@/hooks/useAuth';
 
 type Difficulty = 'beginner' | 'intermediate' | 'hard';
 type PracticeType = 'examination' | 'sat';
@@ -43,8 +45,11 @@ export function PracticeQuiz({ difficulty, type, onBack, learningContext }: Prac
   const [isLoading, setIsLoading] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   const { recordAnswer: basicRecordAnswer } = useAdaptiveLevel();
   const { recordAnswer: intelligentRecordAnswer, getSimpleParams, recordActivity, recordTeaching } = useAdaptiveIntelligence();
+  const [activeTopic, setActiveTopic] = useState<string | null>(null);
+  const [activeMastery, setActiveMastery] = useState<number | null>(null);
 
   const maxQuestions = difficulty === 'beginner' ? 5 : difficulty === 'intermediate' ? 7 : 10;
 
@@ -66,11 +71,30 @@ export function PracticeQuiz({ difficulty, type, onBack, learningContext }: Prac
       adaptiveParams = await getSimpleParams('practice_quiz', subjectName);
     } catch { /* fallback to no adaptive context */ }
 
+    // === Phase 2B: Cross-Surface Mastery — bias toward weakest topic ===
+    let masteryBlock = '';
+    let chosenTopic: string | null = null;
+    let chosenScore: number | null = null;
+    if (user?.id) {
+      try {
+        const weak = await getWeakestTopics(user.id, subjectName === 'general' ? null : subjectName, 3);
+        if (weak.length) {
+          const pick = weak[Math.floor(Math.random() * weak.length)];
+          chosenTopic = pick.topic;
+          chosenScore = Number(pick.mastery_score) || 0;
+          masteryBlock = `\n\nFOCUS TOPIC (student is weak here): "${pick.topic}" in ${pick.subject}.\n${masteryDifficultyHint(chosenScore)}`;
+        }
+      } catch { /* mastery is optional */ }
+    }
+    setActiveTopic(chosenTopic);
+    setActiveMastery(chosenScore);
+
     const prompt = `Based on the following topics the student has been learning about:
 
 ${learningContext}
+${masteryBlock}
 
-Generate a ${difficultyPrompts[difficulty]} multiple choice question that tests their understanding of these topics.
+Generate a ${difficultyPrompts[difficulty]} multiple choice question that tests their understanding${chosenTopic ? ` of "${chosenTopic}"` : ' of these topics'}.
 ${satContext}
 
 Return ONLY valid JSON in this exact format, no other text:
@@ -185,7 +209,7 @@ Make sure the question directly relates to topics from their learning history. B
     // Confidence calibration + mastery (fire-and-forget)
     void recordConfidence({
       subject: subjectName,
-      topic: subjectName,
+      topic: activeTopic || subjectName,
       question_text: currentQuestion?.question,
       confidence_level: confidence,
       was_correct: !!isCorrect,

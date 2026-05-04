@@ -3298,6 +3298,10 @@ export type Database = {
             Args: { p_request_id: string; p_session_token?: string }
             Returns: Json
           }
+      can_view_student_mastery: {
+        Args: { p_student: string; p_viewer: string }
+        Returns: boolean
+      }
       check_and_increment_cost: {
         Args: {
           p_daily_cap: number
@@ -3346,11 +3350,32 @@ export type Database = {
           }
       generate_ministry_invite_code: { Args: never; Returns: Json }
       generate_moderator_invite_code: { Args: never; Returns: Json }
+      get_due_reviews: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          mastery_score: number
+          next_review_at: string
+          overdue_hours: number
+          subject: string
+          topic: string
+        }[]
+      }
       get_ministry_dashboard_data: {
         Args: { p_session_token: string }
         Returns: Json
       }
       get_user_school_id: { Args: { user_uuid: string }; Returns: string }
+      get_weakest_topics: {
+        Args: { p_limit?: number; p_subject?: string; p_user_id: string }
+        Returns: {
+          last_practiced_at: string
+          mastery_score: number
+          next_review_at: string
+          repetitions: number
+          subject: string
+          topic: string
+        }[]
+      }
       grant_admin_via_code: {
         Args: { input_code: string; target_user_id: string }
         Returns: boolean
