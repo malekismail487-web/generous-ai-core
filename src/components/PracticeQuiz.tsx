@@ -71,11 +71,30 @@ export function PracticeQuiz({ difficulty, type, onBack, learningContext }: Prac
       adaptiveParams = await getSimpleParams('practice_quiz', subjectName);
     } catch { /* fallback to no adaptive context */ }
 
+    // === Phase 2B: Cross-Surface Mastery — bias toward weakest topic ===
+    let masteryBlock = '';
+    let chosenTopic: string | null = null;
+    let chosenScore: number | null = null;
+    if (user?.id) {
+      try {
+        const weak = await getWeakestTopics(user.id, subjectName === 'general' ? null : subjectName, 3);
+        if (weak.length) {
+          const pick = weak[Math.floor(Math.random() * weak.length)];
+          chosenTopic = pick.topic;
+          chosenScore = Number(pick.mastery_score) || 0;
+          masteryBlock = `\n\nFOCUS TOPIC (student is weak here): "${pick.topic}" in ${pick.subject}.\n${masteryDifficultyHint(chosenScore)}`;
+        }
+      } catch { /* mastery is optional */ }
+    }
+    setActiveTopic(chosenTopic);
+    setActiveMastery(chosenScore);
+
     const prompt = `Based on the following topics the student has been learning about:
 
 ${learningContext}
+${masteryBlock}
 
-Generate a ${difficultyPrompts[difficulty]} multiple choice question that tests their understanding of these topics.
+Generate a ${difficultyPrompts[difficulty]} multiple choice question that tests their understanding${chosenTopic ? ` of "${chosenTopic}"` : ' of these topics'}.
 ${satContext}
 
 Return ONLY valid JSON in this exact format, no other text:
