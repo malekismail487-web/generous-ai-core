@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { notifyMasteryUpdated } from "@/lib/mastery";
 
 export type ConfidenceSource =
   | "assignment"
@@ -31,6 +32,8 @@ export async function recordConfidence(
       { body: args },
     );
     if (error) return { ok: false };
+    // Mastery score may have changed — let listening UI refresh.
+    notifyMasteryUpdated();
     return { ok: true, mastery_id: (data as any)?.mastery_id ?? null };
   } catch {
     return { ok: false };

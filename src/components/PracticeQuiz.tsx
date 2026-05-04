@@ -9,7 +9,7 @@ import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { ConfidencePicker, type ConfidenceLevel } from '@/components/ConfidencePicker';
 import { recordConfidence } from '@/lib/confidence';
-import { getWeakestTopics, masteryDifficultyHint } from '@/lib/mastery';
+import { getWeakestTopics, masteryDifficultyHint, getCurrentSchoolId } from '@/lib/mastery';
 import { useAuth } from '@/hooks/useAuth';
 
 type Difficulty = 'beginner' | 'intermediate' | 'hard';
@@ -77,7 +77,8 @@ export function PracticeQuiz({ difficulty, type, onBack, learningContext }: Prac
     let chosenScore: number | null = null;
     if (user?.id) {
       try {
-        const weak = await getWeakestTopics(user.id, subjectName === 'general' ? null : subjectName, 3);
+        const schoolId = await getCurrentSchoolId(user.id);
+        const weak = await getWeakestTopics(user.id, subjectName === 'general' ? null : subjectName, 3, schoolId);
         if (weak.length) {
           const pick = weak[Math.floor(Math.random() * weak.length)];
           chosenTopic = pick.topic;

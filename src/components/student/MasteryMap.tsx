@@ -1,8 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { getWeakestTopics, getDueReviews, type WeakTopic, type DueReview } from '@/lib/mastery';
+import {
+  getWeakestTopics,
+  getDueReviews,
+  getCurrentSchoolId,
+  MASTERY_UPDATED_EVENT,
+  type WeakTopic,
+  type DueReview,
+} from '@/lib/mastery';
 import { Card } from '@/components/ui/card';
-import { Brain, Clock, Loader2, Target } from 'lucide-react';
+import { Brain, Clock, Loader2, Target, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function masteryColor(score: number): string {
@@ -16,26 +23,48 @@ export function MasteryMap() {
   const [weak, setWeak] = useState<WeakTopic[]>([]);
   const [due, setDue] = useState<DueReview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!user?.id) return;
+    if (!hasLoadedOnce) setLoading(true);
+    const schoolId = await getCurrentSchoolId(user.id);
+    const [w, d] = await Promise.all([
+      getWeakestTopics(user.id, null, 12, schoolId),
+      getDueReviews(user.id, 8, schoolId),
+    ]);
+    setWeak(w);
+    setDue(d);
+    setLoading(false);
+    setHasLoadedOnce(true);
+  }, [user?.id, hasLoadedOnce]);
 
   useEffect(() => {
-    if (!user?.id) return;
     let cancelled = false;
-    (async () => {
-      setLoading(true);
-      const [w, d] = await Promise.all([
-        getWeakestTopics(user.id, null, 12),
-        getDueReviews(user.id, 8),
-      ]);
-      if (!cancelled) {
-        setWeak(w);
-        setDue(d);
-        setLoading(false);
-      }
+    void (async () => {
+      if (cancelled) return;
+      await load();
     })();
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [load]);
+
+  // Refresh on tab focus + after a confidence/mastery update event.
+  useEffect(() => {
+    if (!user?.id) return;
+    const onFocus = () => { void load(); };
+    const onUpdate = () => { void load(); };
+    const onVisibility = () => { if (document.visibilityState === 'visible') void load(); };
+    window.addEventListener('focus', onFocus);
+    window.addEventListener(MASTERY_UPDATED_EVENT, onUpdate);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener(MASTERY_UPDATED_EVENT, onUpdate);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [user?.id, load]);
 
   if (loading) {
     return (
@@ -49,12 +78,14 @@ export function MasteryMap() {
   if (!weak.length && !due.length) {
     return (
       <Card className="p-6">
-        <div className="flex items-center gap-2 mb-1">
-          <Brain className="w-4 h-4 text-muted-foreground" />
-          <h3 className="font-semibold">Mastery Map</h3>
+        <div className="flex items-center gap-2 mb-2">
+          <Sparkles className="w-4 h-4 text-muted-foreground" />
+          <h3 className="font-semibold">Mastery Map — warming up</h3>
         </div>
         <p className="text-sm text-muted-foreground">
-          Complete a few questions to start mapping your concept mastery across subjects.
+          Answer a few questions in Practice, Examination, or an assignment and your
+          mastery map will fill in here. Each correct answer strengthens a concept;
+          each miss schedules it for spaced review.
         </p>
       </Card>
     );
