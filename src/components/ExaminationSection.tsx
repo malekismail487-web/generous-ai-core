@@ -13,6 +13,7 @@ import { useActivityTracker } from '@/hooks/useActivityTracker';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { ConfidencePicker, type ConfidenceLevel } from '@/components/ConfidencePicker';
 import { recordConfidence } from '@/lib/confidence';
+import { getWeakestTopics, getCurrentSchoolId } from '@/lib/mastery';
 // ============================================
 // ENUMS (IMMUTABLE)
 // ============================================
