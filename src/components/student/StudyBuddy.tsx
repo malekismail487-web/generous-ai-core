@@ -18,6 +18,7 @@ import { DebateTheater } from '@/components/student/DebateTheater';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { getWeakestTopics, getDueReviews, buildMasteryPromptBlock } from '@/lib/mastery';
 
 type Msg = { id: string; role: 'user' | 'assistant'; content: string; images?: { src: string; alt?: string }[]; attachments?: { name: string; type: string; url?: string; preview?: string; base64?: string }[]; mirrorSnapshotId?: string; mirrorPrediction?: { predicted_answer: string; predicted_misconception: string }; mirrorActualAnswer?: string };
 
