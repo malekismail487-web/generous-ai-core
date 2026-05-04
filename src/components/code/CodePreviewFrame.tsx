@@ -130,7 +130,7 @@ function buildSrcDoc(language: string, code: string, ai?: AIConfig): string {
       // Inject AI runtime into <head>
       return code.replace(/<head([^>]*)>/i, `<head$1><script>${aiRuntime}<\/script>`);
     }
-    return `<!doctype html><html><head><meta charset="utf-8"><script>${aiRuntime}<\/script><style>body{font-family:system-ui,sans-serif;padding:12px;color:#111;background:#fff}</style></head><body>${code}</body></html>`;
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>${aiRuntime}<\/script><style>html,body{min-height:100%;margin:0}body{font-family:system-ui,sans-serif;color:#111;background:#fff}</style></head><body>${code}</body></html>`;
   }
 
   if (lang === 'css') {
@@ -154,7 +154,7 @@ function buildSrcDoc(language: string, code: string, ai?: AIConfig): string {
   }
 
   if (lang === 'jsx' || lang === 'tsx' || lang === 'react') {
-    return `<!doctype html><html><head><meta charset="utf-8"><script>${aiRuntime}<\/script><style>body{font-family:system-ui,sans-serif;padding:12px;background:#fff;color:#111}</style>
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>${aiRuntime}<\/script><style>html,body,#root{min-height:100%;margin:0}body{font-family:system-ui,sans-serif;background:#fff;color:#111}</style>
 <script src="https://unpkg.com/react@18/umd/react.development.js"><\/script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
