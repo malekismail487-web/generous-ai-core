@@ -381,7 +381,7 @@ ABSOLUTE UNIQUENESS REQUIREMENTS:
 - For math/science: use random non-round numbers.
 - Each question MUST have exactly 4 options (A, B, C, D) with plausible distractors.
 - You MAY use LaTeX math notation freely.
-- ${varietyInstructions}${adaptiveLevelHint}${mathBalanceRule}
+- ${varietyInstructions}${adaptiveLevelHint}${masteryHint}${mathBalanceRule}
 
 ANSWER ACCURACY - MANDATORY SELF-VERIFICATION:
 - For EVERY question, solve it yourself step-by-step BEFORE writing the answer.
