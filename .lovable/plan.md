@@ -1,122 +1,90 @@
-Plan: Lumina Singularity Mode
+## Lumina Code Lab — student-side coding capability
 
-Three intertwined capabilities no shipping AI (GPT, Gemini, Kimi, Claude, Grok) currently does as a unified product. All codable with the existing Lovable AI Gateway, the LUMI profile, and a nightly cron edge function.
+Goal: let Lumina write code (like Claude/ChatGPT/Kimi) and let students view, copy, and **live-preview** the result inside the app. No hosting/domains involved — preview is sandboxed in-browser only.
 
----
+### 1. Inline code rendering in chat (every Lumina message)
 
-## 1. Cognitive Mirror — "Lumina thinks AS you, before you do"
+Upgrade `src/components/MathRenderer.tsx` to render fenced code blocks (`lang …` ) with a real code component instead of the current minimal `<code>` styling:
 
-A live, evolving simulation of *the student's own mind*. Before the student answers anything, Lumina silently predicts:
+- New `CodeBlock` component with:
+  - Syntax highlighting (`react-syntax-highlighter` w/ Prism, dark/light theme aware).
+  - Header row: language label, **Copy**, **Run / Preview** (when previewable), **Open in Code Lab**.
+  - Copy uses `navigator.clipboard`, shows toast.
+- Wire into `MathRenderer` via the ReactMarkdown `code` component override.
 
-- The exact answer this specific student will give
-- The reasoning path they will take
-- The misconception they are most likely to fall into
+### 2. Live preview (sandboxed, in-browser only)
 
-Then it compares prediction vs reality. Over time the Mirror gets eerily accurate ("Lumina knew you'd say 7 instead of 9 because you confused the distributive step — same as 11 days ago").
+Previewable languages:
 
-**What makes it new:** No public AI maintains a *predictive student-self model* that forecasts errors before they happen. This is not RAG or fine-tuning — it's a continuously updated behavioral simulation per user.
+- **HTML / CSS / JS / HTML+CSS+JS combos** → rendered in an `<iframe sandbox="allow-scripts">` using a generated `srcDoc`. No network, no parent access.
+- **React (JSX/TSX single-file)** → rendered in the same sandboxed iframe using Babel standalone (CDN inside the iframe) + React/ReactDOM CDN. Single `App` component convention.
+- **Python** → executed in-browser via Pyodide (loaded lazily on first run). Stdout streams into a console panel. No filesystem/network.
+- **SQL** → executed via `sql.js` (SQLite WASM) against an in-memory DB, results shown as a table.
+- **Markdown** → rendered preview.
+- Other languages (Java, C++, Go, Rust, etc.) → show code only with a note: “Preview not available for {lang}. Copy and run locally or paste into GitHub.”
 
-**How it's built:**
+All execution happens client-side. Nothing is uploaded; no domains needed.
 
-- New table `cognitive_mirror_snapshots` (user_id, subject, predicted_answer, predicted_misconception, actual_answer, was_correct, drift_score, created_at)
-- Before each question render, an edge function `predict-student` calls Gemini Flash with the LUMI profile + last 20 misconception patterns + the question → returns a prediction stored silently
-- After the student answers, a "Mirror Reveal" card slides up: *"I predicted you'd say X because of Y. You said Z. Here's what shifted."*
-- A `Mirror Accuracy` gauge on the dashboard (e.g., "Lumina knows you 73%")
+### 3. Code Lab page (full editor + preview)
 
----
+New route `/code-lab` and a new tab in `BottomNav` for students (icon: `Code2`).
 
-## 2. Debate Theater — watch 4 minds argue your question in real time
-
-When a student asks a hard question, instead of one answer, Lumina spawns four streamed personas in a split view:
+Layout (mobile-first, split):
 
 ```text
-┌─────────────┬─────────────┐
-│  THE PROF   │  THE SKEPTIC│   each streams in parallel
-│ (rigorous)  │ (challenges)│   student sees them argue
-├─────────────┼─────────────┤
-│  THE PEER   │  THE COACH  │   final "verdict" panel
-│ (relatable) │ (strategy)  │   synthesises winner
-└─────────────┴─────────────┘
+┌──────────────────────────────┐
+│ Files | Lang ▾ | Run | Share │
+├──────────────┬───────────────┤
+│   Editor     │   Preview     │
+│ (Monaco)     │ (iframe /     │
+│              │  console)     │
+├──────────────┴───────────────┤
+│ Console (stdout / errors)    │
+└──────────────────────────────┘
 ```
 
-Each persona is a separate streaming call to Gemini Flash with a distinct system prompt. They reference each other ("The Skeptic raises a fair point, but…"). The student can tap any panel to "side with" that persona, which feeds the LUMI profile (do they prefer rigor? relatability?).
+- Editor: `@monaco-editor/react` with TS/JS/HTML/CSS/Python/SQL modes, theme synced with app.
+- Multi-file tabs for HTML/CSS/JS projects (index.html / styles.css / script.js).
+- “Ask Lumina” button: sends the current code + a prompt to the chat edge function, response streams back and can replace or insert into the editor.
+- “Copy all”, “Download .zip” (via `jszip`), and a “Copy GitHub-ready snippet” action (formatted with file headers) — satisfies the “paste into GitHub” requirement without needing a domain.
+- Saved snippets persisted per-user in a new `code_snippets` table (RLS: owner-only).
 
-**What makes it new:** Multi-agent debate frameworks exist in research (Society of Mind, AutoGen) but no consumer AI ships a *visible, tap-to-side-with* debate as the default answer surface. Students literally watch reasoning happen.
+### 4. Lumina prompt upgrade (server side only)
 
-**How it's built:**
+Edit `supabase/functions/chat/index.ts` system prompt to add a **Coding** section:
 
-- New component `DebateTheater.tsx` (4-pane CSS grid, each pane is its own SSE stream)
-- Edge function `debate` opens 4 parallel SSE pipes from `lovable-ai-gateway`
-- A 5th synthesis call runs after all four finish → "Verdict" card
-- Toggle in Study Buddy: 💬 Single answer / 🎭 Debate mode
+- Lumina may write code in any language when asked.
+- Always wrap code in proper fenced blocks with the language tag.
+- For runnable web demos, prefer a single self-contained HTML block.
+- For React, output one file exporting `App`.
+- Never claim it deployed anything; tell the student they can preview in Code Lab or copy to GitHub.
+- Keep existing identity/safety rules intact.
 
----
+No client-side prompt changes (per project rules).
 
-## 3. Dream Consolidation — Lumina learns *while the student sleeps*
+### 5. Database (Lovable Cloud)
 
-A nightly cron edge function (3am school timezone) runs per active student:
+Migration:
 
-1. Pulls the day's chats, assignments, mistakes, mind-maps
-2. Runs a "consolidation" prompt that finds the *single biggest leverage point* — the one misconception that, if fixed, unlocks the most future learning
-3. Generates a 60-second personalised "Morning Briefing" (text + auto-generated mini-quiz of 3 questions) waiting on the dashboard at sunrise
-4. Updates the LUMI profile with overnight deltas
-5. Schedules spaced-repetition prompts at the student's historically best recall hour (chronotype detected from app activity timestamps)
+- `code_snippets` table: `id`, `user_id`, `title`, `language`, `files jsonb`, `created_at`, `updated_at`.
+- RLS: `user_id = auth.uid()` for select/insert/update/delete.
+- Trigger to auto-update `updated_at`.
 
-**What makes it new:** No AI runs *autonomous overnight self-improvement on behalf of an individual user*. ChatGPT memory is passive. This is active, scheduled, per-student cognitive maintenance.
+### 6. Files to add / change
 
-**How it's built:**
+- Add: `src/components/CodeBlock.tsx`, `src/components/code/CodePreviewFrame.tsx`, `src/components/code/PyodideRunner.tsx`, `src/components/code/SqlRunner.tsx`, `src/pages/CodeLab.tsx`, `src/hooks/useCodeSnippets.tsx`.
+- Edit: `src/components/MathRenderer.tsx` (code override), `src/components/BottomNav.tsx` (new tab), `src/App.tsx` (route), `src/components/StudentHomeGrid.tsx` (entry tile), `supabase/functions/chat/index.ts` (coding rules).
+- Deps: `react-syntax-highlighter`, `@monaco-editor/react`, `monaco-editor`, `jszip`. Pyodide and sql.js loaded lazily from CDN inside the iframe so they don’t bloat the main bundle.
 
-- pg_cron job → invokes edge function `dream-consolidate` nightly
-- New table `morning_briefings` (user_id, briefing_md, mini_quiz_jsonb, scheduled_for, opened_at)
-- New table `recall_schedule` (user_id, concept, due_at) → drives Smart Nudges
-- Dashboard widget `MorningBriefingCard.tsx` appears only between 6am–11am local
+### 7. Safety & isolation
 
----
+- All previews run in `<iframe sandbox="allow-scripts">` (no `allow-same-origin`) so student code can’t touch app state, cookies, or other schools’ data.
+- Pyodide/sql.js are CPU-only, no network access from the sandboxed iframe.
+- Snippets are RLS-scoped per user; no cross-school leakage.
+- Code is scanned by the existing `scan-content` flow before saving (reuses moderation pipeline).
 
-## Integration with what already exists
+### Out of scope
 
-- **LUMI profile** → feeds all three (predictions, debate persona weighting, consolidation deltas)
-- **Smart Nudges** → become driven by `recall_schedule` instead of fixed rotation
-- **Mind Maps** → consolidation can auto-generate a new mind-map from yesterday's gaps
-- **Teacher Intervention System** → low Mirror Accuracy + high error rate triggers an alert
-- **Lumina API** → expose `/predict`, `/debate`, `/consolidate` endpoints so the robotics partner gets these too
-
-## Files to create / modify
-
-**New**
-
-- `supabase/migrations/<ts>_lumina_singularity.sql` — 3 tables + pg_cron
-- `supabase/functions/predict-student/index.ts`
-- `supabase/functions/debate/index.ts`
-- `supabase/functions/dream-consolidate/index.ts`
-- `src/components/student/DebateTheater.tsx`
-- `src/components/student/CognitiveMirrorCard.tsx`
-- `src/components/student/MorningBriefingCard.tsx`
-- `src/components/admin/SingularityMetrics.tsx` (Super Admin: global Mirror Accuracy, debate engagement, briefing open-rate)
-
-**Modified**
-
-- `src/components/student/StudyBuddy.tsx` — Debate toggle + Mirror Reveal hook
-- `src/components/StudentHomeGrid.tsx` — Morning Briefing slot + Mirror gauge
-- `supabase/functions/lumina-api/index.ts` — expose new endpoints
-- `src/integrations/supabase/types.ts` (auto)
-
-## Constraints respected
-
-- Internal only (Lovable AI Gateway / Gemini Flash) — no external APIs
-- Strict school isolation on all new tables (RLS by school_id)
-- No placeholders — every panel, gauge, and briefing renders real data or a clean empty state
-- No interruptions — Morning Briefing is a card, never a modal/overlay
-- Monochromatic grey/charcoal styling, Source Serif 4 for AI text
-
-## Rollout
-
-Phase 1: Cognitive Mirror (highest "wow" per line of code)
-Phase 2: Debate Theater (visual flagship)
-Phase 3: Dream Consolidation (requires cron + a night to see results)
-
-Approve and I'll build Phase 1 first, then chain 2 and 3.
-
-&nbsp;
-
-I approve but under one condition every phase you make must be professional with hundreds of thousands of codes possible like just push it to the absolute limit. I want to see 10,000 lines of codes.(if that would be possible phase 1, phase 2, and phase 3) and after you finish each one, you must recheck what you have done and verify everything is working and that there is no static material because I don't have time for you to send screenshot screenshots just verify based off of codes if there is something static or something wrong then fix it and re verify that new fix
+- No deployment, no custom domains, no server-side code execution.
+- No collaborative editing (can be a follow-up).
+- Also Lumina should be able to code with all languages if that's possible and there should be a circle on the top left called code. It should not be connected to the web. It should be a tiny circle on the top left it should function literally exactly like you and any other AI that can code you tell it what to code, it codes it, you preview the Work, but minus the ability of creating a domain, but if they use really wants to create a domain, then they have the option to view the entire codes that Lumina coded
