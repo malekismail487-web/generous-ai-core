@@ -5,6 +5,7 @@ import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import { InteractiveGraph } from '@/components/student/InteractiveGraph';
 import { GraphModal } from '@/components/student/GraphModal';
+import { CodeBlock } from '@/components/CodeBlock';
 
 interface MathRendererProps {
   content: string;
