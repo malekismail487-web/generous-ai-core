@@ -183,11 +183,12 @@ export default function CodeLab() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [project, setProject] = useState<Project>(() => loadProject());
-  const [aiConfig, setAiConfig] = useState<AIConfig | undefined>(() => loadAIConfig());
+  const [aiConfig, setAiConfig] = useState<AIConfig | undefined>(() => loadAIConfig() ?? { mode: 'lumina' });
   const [aiRuntime, setAiRuntime] = useState<AIConfig | undefined>(undefined);
   const [previewKey, setPreviewKey] = useState(0);
   const [hasRun, setHasRun] = useState(false);
   const [runSnapshot, setRunSnapshot] = useState<{ doc: string | null; lang: string; code: string } | null>(null);
+  const [mobilePane, setMobilePane] = useState<'editor' | 'preview'>('editor');
   const [copied, setCopied] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [askLoading, setAskLoading] = useState(false);
@@ -319,9 +320,7 @@ export default function CodeLab() {
       .map((f) => `\`\`\`${languageFromPath(f.path)} path=${f.path}\n${f.content}\n\`\`\``)
       .join('\n\n');
 
-    const aiHint = aiConfig
-      ? `\n\nThe preview has an AI helper available: \`await LUMINA_AI("prompt", { system?, model? })\` returns a string. Use it if the student wants AI features in their app.`
-      : '';
+    const aiHint = `\n\nThe preview has an AI helper available: \`await LUMINA_AI("prompt", { system?, model? })\` returns a string. Use it for AI apps, AI chatbots, summarizers, generators, tutors, classifiers, and assistants. Never ask the student to paste provider fetch code for AI features; the Code Lab runtime handles Lumina, Lovable Gateway, and custom keys from AI Settings.`;
 
     let buf = '';
     await streamChat({
@@ -341,6 +340,7 @@ Rules:
 - Output the COMPLETE new content of every changed/created file (no diffs, no "...").
 - Only include files that change.
 - Keep web demos as index.html + styles.css + app.js so they preview together.
+- If the student asks for an AI chat/chatbot/assistant, build a real chat UI: message history, input/textarea, send button, loading state, Enter-to-send, assistant/user bubbles, and calls to LUMINA_AI() inside app.js.
 - Pick an aesthetic that fits the request; never default to plain unstyled HTML.
 - No prose outside the fenced blocks.`,
       }],
@@ -415,6 +415,7 @@ Rules:
         <Button size="sm" onClick={() => {
           setRunSnapshot({ doc: projectDoc, lang: activeLang, code: activeFile?.content ?? '' });
           setHasRun(true);
+          setMobilePane('preview');
           setPreviewKey((k) => k + 1);
         }} disabled={!canPreviewProject && !canPreviewActive} className="h-8">
           <Play size={14} /><span className="ml-1 text-xs">Run</span>
