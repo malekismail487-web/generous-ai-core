@@ -31,6 +31,7 @@ import MinistryPending from "./pages/MinistryPending";
 import MinistryAccessAlert from "./components/MinistryAccessAlert";
 import ModeratorDashboard from "./pages/ModeratorDashboard";
 import ModeratorPendingPage from "./pages/ModeratorPending";
+import CodeLab from "./pages/CodeLab";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +90,7 @@ const App = () => (
                     <Route path="/ministry-dashboard" element={<MinistryDashboard />} />
                     <Route path="/moderator" element={<ModeratorDashboard />} />
                     <Route path="/moderator-pending" element={<ModeratorPendingPage />} />
+                    <Route path="/code-lab" element={<CodeLab />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
