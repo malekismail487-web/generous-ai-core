@@ -340,14 +340,39 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
       if (data?.error) throw new Error(data.error);
 
       setSubmitted(true);
-      setResults(data as ExamResult);
+      const examResults = data as ExamResult;
+      setResults(examResults);
       toast({ title: '✅ Exam submitted successfully!' });
+
+      // Fire confidence calibration batch for every question we have a confidence for.
+      // Done after results land so we know was_correct per question.
+      try {
+        const confSnapshot = confidencesRef.current;
+        const perResult = examResults?.results || [];
+        const qIndex = new Map(questions.map(q => [q.id, q]));
+        for (const r of perResult) {
+          const conf = confSnapshot[String(r.id)];
+          if (!conf) continue;
+          const q = qIndex.get(r.id);
+          void recordConfidence({
+            subject: r.subject || 'LCT',
+            topic: r.subject || 'LCT',
+            question_id: String(r.id),
+            question_text: q?.question,
+            confidence_level: conf,
+            was_correct: !!r.is_correct,
+            source: 'lct',
+          });
+        }
+      } catch {
+        // Never block submit success on calibration recording.
+      }
     } catch (err: any) {
       submittedRef.current = false;
       toast({ variant: 'destructive', title: 'Error submitting', description: err.message });
     }
     setSubmitting(false);
-  }, [examId, toast]);
+  }, [examId, toast, questions]);
 
   // ─── Timer ────────────────────────────────────────────────────────────────
 
