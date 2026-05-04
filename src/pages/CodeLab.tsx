@@ -412,7 +412,11 @@ Rules:
           {copied ? <Check size={14} /> : <Copy size={14} />}
           <span className="ml-1 text-xs">{copied ? 'Copied' : 'Copy'}</span>
         </Button>
-        <Button size="sm" onClick={() => setPreviewKey((k) => k + 1)} disabled={!canPreviewProject && !canPreviewActive} className="h-8">
+        <Button size="sm" onClick={() => {
+          setRunSnapshot({ doc: projectDoc, lang: activeLang, code: activeFile?.content ?? '' });
+          setHasRun(true);
+          setPreviewKey((k) => k + 1);
+        }} disabled={!canPreviewProject && !canPreviewActive} className="h-8">
           <Play size={14} /><span className="ml-1 text-xs">Run</span>
         </Button>
       </header>
