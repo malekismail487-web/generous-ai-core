@@ -535,12 +535,28 @@ export function ExaminationSection() {
 
   const handleAnswer = (answer: string) => {
     if (!examState || examState.answered) return;
-    
+    if (!examState.currentConfidence) {
+      toast({
+        title: 'Set your confidence first',
+        description: 'Pick how sure you are before answering.',
+      });
+      return;
+    }
+
     const currentQ = getCurrentQuestion(examState);
     if (!currentQ) return;
-    const isCorrectAnswer = answer === currentQ.correct_answer;
+
+    // Compute correctness consistent with the UI (typed answers use fuzzy match)
+    let isCorrectAnswer: boolean;
+    if (isMultipleChoice(currentQ)) {
+      isCorrectAnswer = answer === currentQ.correct_answer;
+    } else {
+      isCorrectAnswer = checkTypedAnswer(answer, currentQ as FillInBlankQuestion | TypedAnswerQuestion);
+    }
+
     const subjectForTracking = examState.exam.subject || selectedSubject || 'general';
-    
+    const confidenceLevel = examState.currentConfidence;
+
     // Record answer for adaptive learning
     recordAnswer({
       subject: subjectForTracking,
@@ -551,7 +567,18 @@ export function ExaminationSection() {
       difficulty: selectedDifficulty?.replace('SUBJECT_', '').replace('SAT_', '') || 'medium',
       source: 'exam',
     });
-    
+
+    // Record confidence + update mastery (fire-and-forget)
+    void recordConfidence({
+      subject: subjectForTracking,
+      topic: examState.exam.subject || subjectForTracking,
+      question_id: String(currentQ.id),
+      question_text: currentQ.question,
+      confidence_level: confidenceLevel,
+      was_correct: isCorrectAnswer,
+      source: 'exam',
+    });
+
     setExamState(prev => {
       if (!prev) return prev;
       const newAnswers = { ...prev.answers, [prev.currentQuestionId]: answer };
