@@ -212,6 +212,7 @@ interface ExamState {
   completed: boolean;
   selectedAnswer: string | null;
   answers: Record<number, string>;
+  currentConfidence: ConfidenceLevel | null;
 }
 
 function createInitialExamState(exam: ExamJSON): ExamState {
@@ -221,7 +222,8 @@ function createInitialExamState(exam: ExamJSON): ExamState {
     answered: false,
     completed: false,
     selectedAnswer: null,
-    answers: {}
+    answers: {},
+    currentConfidence: null
   };
 }
 
