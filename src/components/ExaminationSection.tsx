@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
+import { ConfidencePicker, type ConfidenceLevel } from '@/components/ConfidencePicker';
+import { recordConfidence } from '@/lib/confidence';
 // ============================================
 // ENUMS (IMMUTABLE)
 // ============================================
