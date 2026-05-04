@@ -292,7 +292,8 @@ function onNextQuestion(state: ExamState): ExamState {
     ...state,
     currentQuestionId: state.currentQuestionId + 1,
     answered: false,
-    selectedAnswer: null
+    selectedAnswer: null,
+    currentConfidence: null
   };
 }
 
