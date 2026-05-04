@@ -17,15 +17,26 @@ export type DueReview = {
   overdue_hours: number;
 };
 
+/** Custom event dispatched when mastery data has likely changed (after answering a question). */
+export const MASTERY_UPDATED_EVENT = 'lumina:mastery-updated';
+
+export function notifyMasteryUpdated() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(MASTERY_UPDATED_EVENT));
+  }
+}
+
 export async function getWeakestTopics(
   userId: string,
   subject?: string | null,
   limit = 5,
+  schoolId?: string | null,
 ): Promise<WeakTopic[]> {
   const { data, error } = await supabase.rpc('get_weakest_topics', {
     p_user_id: userId,
     p_subject: subject ?? null,
     p_limit: limit,
+    p_school_id: schoolId ?? null,
   });
   if (error) {
     console.warn('[mastery] get_weakest_topics failed', error.message);
@@ -34,10 +45,15 @@ export async function getWeakestTopics(
   return (data || []) as WeakTopic[];
 }
 
-export async function getDueReviews(userId: string, limit = 10): Promise<DueReview[]> {
+export async function getDueReviews(
+  userId: string,
+  limit = 10,
+  schoolId?: string | null,
+): Promise<DueReview[]> {
   const { data, error } = await supabase.rpc('get_due_reviews', {
     p_user_id: userId,
     p_limit: limit,
+    p_school_id: schoolId ?? null,
   });
   if (error) {
     console.warn('[mastery] get_due_reviews failed', error.message);
@@ -83,4 +99,15 @@ export function buildMasteryPromptBlock(weak: WeakTopic[], due: DueReview[]): st
   ]
     .filter(Boolean)
     .join('\n');
+}
+
+/** Resolve current user's school_id once (cached per call site). */
+export async function getCurrentSchoolId(userId: string): Promise<string | null> {
+  if (!userId) return null;
+  const { data } = await supabase
+    .from('profiles')
+    .select('school_id')
+    .eq('id', userId)
+    .maybeSingle();
+  return (data?.school_id as string | null) ?? null;
 }
