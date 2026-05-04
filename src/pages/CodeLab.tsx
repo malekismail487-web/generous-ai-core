@@ -183,15 +183,16 @@ export default function CodeLab() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [project, setProject] = useState<Project>(() => loadProject());
-  const [aiConfig, setAiConfig] = useState<AIConfig | undefined>(() => loadAIConfig());
+  const [aiConfig, setAiConfig] = useState<AIConfig | undefined>(() => loadAIConfig() ?? { mode: 'lumina' });
   const [aiRuntime, setAiRuntime] = useState<AIConfig | undefined>(undefined);
   const [previewKey, setPreviewKey] = useState(0);
   const [hasRun, setHasRun] = useState(false);
   const [runSnapshot, setRunSnapshot] = useState<{ doc: string | null; lang: string; code: string } | null>(null);
+  const [mobilePane, setMobilePane] = useState<'editor' | 'preview'>('editor');
   const [copied, setCopied] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [askLoading, setAskLoading] = useState(false);
-  const [showFiles, setShowFiles] = useState(true);
+  const [showFiles, setShowFiles] = useState(false);
   const [renamingPath, setRenamingPath] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [aiOpen, setAiOpen] = useState(false);
@@ -319,9 +320,7 @@ export default function CodeLab() {
       .map((f) => `\`\`\`${languageFromPath(f.path)} path=${f.path}\n${f.content}\n\`\`\``)
       .join('\n\n');
 
-    const aiHint = aiConfig
-      ? `\n\nThe preview has an AI helper available: \`await LUMINA_AI("prompt", { system?, model? })\` returns a string. Use it if the student wants AI features in their app.`
-      : '';
+    const aiHint = `\n\nThe preview has an AI helper available: \`await LUMINA_AI("prompt", { system?, model? })\` returns a string. Use it for AI apps, AI chatbots, summarizers, generators, tutors, classifiers, and assistants. Never ask the student to paste provider fetch code for AI features; the Code Lab runtime handles Lumina, Lovable Gateway, and custom keys from AI Settings.`;
 
     let buf = '';
     await streamChat({
@@ -341,6 +340,7 @@ Rules:
 - Output the COMPLETE new content of every changed/created file (no diffs, no "...").
 - Only include files that change.
 - Keep web demos as index.html + styles.css + app.js so they preview together.
+- If the student asks for an AI chat/chatbot/assistant, build a real chat UI: message history, input/textarea, send button, loading state, Enter-to-send, assistant/user bubbles, and calls to LUMINA_AI() inside app.js.
 - Pick an aesthetic that fits the request; never default to plain unstyled HTML.
 - No prose outside the fenced blocks.`,
       }],
@@ -413,17 +413,24 @@ Rules:
           <span className="ml-1 text-xs">{copied ? 'Copied' : 'Copy'}</span>
         </Button>
         <Button size="sm" onClick={() => {
-          setRunSnapshot({ doc: projectDoc, lang: activeLang, code: activeFile?.content ?? '' });
+          const activePath = activeFile?.path.toLowerCase() ?? '';
+          const runActiveOnly = activePath.startsWith('snippet.') || (!canPreviewProject && canPreviewActive);
+          setRunSnapshot({
+            doc: runActiveOnly ? null : projectDoc,
+            lang: activeLang,
+            code: activeFile?.content ?? '',
+          });
           setHasRun(true);
+          setMobilePane('preview');
           setPreviewKey((k) => k + 1);
         }} disabled={!canPreviewProject && !canPreviewActive} className="h-8">
           <Play size={14} /><span className="ml-1 text-xs">Run</span>
         </Button>
       </header>
 
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-[200px_1fr_1fr] min-h-0">
+      <div className="relative flex-1 grid grid-cols-1 md:grid-cols-[200px_minmax(0,1fr)_minmax(360px,1fr)] min-h-0">
         {showFiles && (
-          <aside className="border-r border-border/40 bg-muted/20 flex flex-col min-h-0">
+          <aside className="absolute inset-x-2 top-2 bottom-2 z-20 rounded-lg border border-border/40 bg-background shadow-2xl flex flex-col min-h-0 md:static md:inset-auto md:z-auto md:rounded-none md:border-y-0 md:border-l-0 md:shadow-none md:bg-muted/20">
             <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/40">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Files</span>
               <div className="flex items-center gap-1">
@@ -465,7 +472,7 @@ Rules:
           </aside>
         )}
 
-        <section className="flex flex-col min-h-0 border-r border-border/40">
+        <section className={`flex-col min-h-0 border-r border-border/40 ${mobilePane === 'editor' ? 'flex' : 'hidden'} md:flex`}>
           <div className="px-3 py-1.5 border-b border-border/40 text-[11px] font-mono text-muted-foreground flex items-center justify-between">
             <span>{activeFile?.path}</span>
             <span className="uppercase tracking-wide">{languageFromPath(activeFile?.path ?? '')}</span>
@@ -491,8 +498,11 @@ Rules:
           </div>
         </section>
 
-        <section className="flex flex-col min-h-0 bg-muted/20">
-          <div className="px-3 py-1.5 border-b border-border/40 text-[11px] font-mono text-muted-foreground">Preview</div>
+        <section className={`flex-col min-h-0 bg-muted/20 ${mobilePane === 'preview' ? 'flex' : 'hidden'} md:flex`}>
+          <div className="px-3 py-1.5 border-b border-border/40 text-[11px] font-mono text-muted-foreground flex items-center justify-between">
+            <span>Preview</span>
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] md:hidden" onClick={() => setMobilePane('editor')}>Edit</Button>
+          </div>
           {!hasRun || !runSnapshot ? (
             <div className="flex-1 flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
               Press <span className="font-mono mx-1">Run</span> to preview your project.
@@ -522,12 +532,15 @@ Rules:
         </section>
       </div>
 
-      <div className="border-t border-border/40 p-2 flex items-end gap-2 flex-shrink-0 pb-[calc(env(safe-area-inset-bottom,0px)+8px)]">
+      <div className="border-t border-border/40 p-2 flex items-end gap-2 flex-shrink-0 pb-[calc(env(safe-area-inset-bottom,0px)+8px)] max-h-24 overflow-hidden">
+        <Button variant="ghost" size="sm" className="h-10 md:hidden" onClick={() => setMobilePane((pane) => pane === 'editor' ? 'preview' : 'editor')}>
+          {mobilePane === 'editor' ? 'Preview' : 'Editor'}
+        </Button>
         <Textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder='Ask Lumina to build or change something — e.g. "make it a glassmorphism todo app with AI suggestions"'
-          className="min-h-[42px] max-h-32 text-sm"
+          className="min-h-[42px] max-h-16 text-sm"
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onAsk(); } }}
         />
         <Button onClick={onAsk} disabled={askLoading || !prompt.trim()} className="h-10">
