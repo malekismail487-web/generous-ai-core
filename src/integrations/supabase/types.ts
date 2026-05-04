@@ -1410,6 +1410,57 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_mode_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          is_test_data: boolean
+          mode: string
+          school_id: string | null
+          score: number | null
+          started_at: string
+          status: string
+          subject: string
+          topic: string
+          turns_json: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_test_data?: boolean
+          mode: string
+          school_id?: string | null
+          score?: number | null
+          started_at?: string
+          status?: string
+          subject: string
+          topic: string
+          turns_json?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_test_data?: boolean
+          mode?: string
+          school_id?: string | null
+          score?: number | null
+          started_at?: string
+          status?: string
+          subject?: string
+          topic?: string
+          turns_json?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_style_profiles: {
         Row: {
           conceptual_score: number | null
