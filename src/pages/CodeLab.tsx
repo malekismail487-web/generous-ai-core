@@ -413,7 +413,13 @@ Rules:
           <span className="ml-1 text-xs">{copied ? 'Copied' : 'Copy'}</span>
         </Button>
         <Button size="sm" onClick={() => {
-          setRunSnapshot({ doc: projectDoc, lang: activeLang, code: activeFile?.content ?? '' });
+          const activePath = activeFile?.path.toLowerCase() ?? '';
+          const runActiveOnly = activePath.startsWith('snippet.') || (!canPreviewProject && canPreviewActive);
+          setRunSnapshot({
+            doc: runActiveOnly ? null : projectDoc,
+            lang: activeLang,
+            code: activeFile?.content ?? '',
+          });
           setHasRun(true);
           setMobilePane('preview');
           setPreviewKey((k) => k + 1);
