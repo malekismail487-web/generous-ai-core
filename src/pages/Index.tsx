@@ -31,13 +31,14 @@ import { useThemeLanguage } from "@/hooks/useThemeLanguage";
 import { useAdaptiveLevel } from "@/hooks/useAdaptiveLevel";
 import { useLearningStyle } from "@/hooks/useLearningStyle";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
-import { Navigate } from "react-router-dom";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { Loader2, ArrowLeft, Code2 } from "lucide-react";
 import { LuminaLogo } from "@/components/LuminaLogo";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
+  const navigate = useNavigate();
   
   const { user, loading: authLoading } = useAuth();
   const { 
@@ -168,6 +169,19 @@ const Index = () => {
       {/* Persistent floating timer - shows when timer is active on any page except focustimer */}
       {activeTab !== 'focustimer' && (
         <FloatingTimer onNavigate={() => setActiveTab('focustimer')} />
+      )}
+
+      {/* Code Lab quick-access circle (students only) */}
+      {isStudent && (
+        <button
+          onClick={() => navigate('/code-lab')}
+          aria-label="Open Code Lab"
+          title="Code Lab"
+          className="fixed top-3 left-3 z-50 w-11 h-11 rounded-full bg-foreground text-background shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+          style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
+        >
+          <Code2 size={18} />
+        </button>
       )}
       {/* Top bar - only show on sub-pages for back navigation */}
       {isSubPage && (
