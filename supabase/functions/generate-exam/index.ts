@@ -413,6 +413,7 @@ serve(async (req) => {
       : null;
 
     const isMathSubject = /math|algebra|calculus|geometry|trigonometry|statistics|arithmetic|رياضيات/i.test(subject || '');
+    const requestedCount = Math.min(Number(count), examType === 'SAT_FULL' ? 70 : 30);
 
     const MAX_SINGLE_BATCH = 30;
     let allQuestions: Record<string, unknown>[] = [];
@@ -436,7 +437,8 @@ ABSOLUTE UNIQUENESS REQUIREMENTS:
 - Vary question structures: definitional, computational, analytical, scenario-based, error-identification, best-answer, negative, and multi-step.
 - For math/science: use random non-round numbers.
 - Each question MUST have exactly 4 options (A, B, C, D) with plausible distractors.
-- You MAY use LaTeX math notation freely.
+- Keep math as raw LaTeX text only. Do NOT render LaTeX to HTML, SVG, KaTeX, MathML, images, or pre-rendered markup.
+- Use simple inline delimiters only: $...$ for inline math and $$...$$ for short display equations. Avoid complex align environments.
 - ${varietyInstructions}${adaptiveLevelHint}${masteryHint}${mathBalanceRule}
 
 ANSWER ACCURACY - MANDATORY SELF-VERIFICATION:
