@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { ArrowLeft, CheckCircle2, XCircle, Loader2, Trophy, AlertCircle } from 'lucide-react';
 import { ExamLoadingProgress } from '@/components/ExamLoadingProgress';
 import { Button } from '@/components/ui/button';
@@ -466,9 +466,10 @@ export function ExaminationSection() {
           throw new Error('AI did not return valid questions. Please try again.');
         }
 
-        const minAcceptable = Math.floor(count * 0.8);
+        const reliableTarget = isFullSAT ? 70 : Math.min(count, 30);
+        const minAcceptable = Math.floor(reliableTarget * 0.8);
         if (parsed.questions.length < minAcceptable) {
-          throw new Error(`Only ${parsed.questions.length} of ${count} questions generated. Please try again.`);
+          throw new Error(`Only ${parsed.questions.length} reliable questions generated. Please try again.`);
         }
 
         const fixedExam: ExamJSON = {
@@ -481,8 +482,8 @@ export function ExaminationSection() {
 
         if (parsed.questions.length < count) {
           toast({
-            title: 'Partial Success',
-            description: `Generated ${parsed.questions.length} of ${count} questions.`,
+            title: 'Exam ready',
+            description: parsed.note || `Generated ${parsed.questions.length} reliable questions.`,
           });
         }
 

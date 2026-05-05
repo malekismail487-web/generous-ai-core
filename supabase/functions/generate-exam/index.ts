@@ -8,14 +8,24 @@ const corsHeaders = {
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 async function gatewayFetch(body: object, apiKey: string): Promise<Response> {
-  return await fetch(AI_GATEWAY_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 35_000);
+  try {
+    return await fetch(AI_GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw new Error("AI_TIMEOUT");
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function getVarietyInstructions(): string {
@@ -58,23 +68,53 @@ function getAntiRepetitionDirective(): string {
   return `MANDATORY QUESTION ANGLES for this generation (use at least 3): ${selected.join(", ")}. Each question MUST approach the topic from a DIFFERENT angle than typical textbook questions.`;
 }
 
+function findBalancedJsonEnd(text: string, start: number): number {
+  const opener = text[start];
+  const stack: string[] = [opener === '[' ? ']' : '}'];
+  let inString = false;
+  let escaping = false;
+
+  for (let i = start + 1; i < text.length; i++) {
+    const ch = text[i];
+    if (escaping) { escaping = false; continue; }
+    if (ch === '\\') { escaping = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === '{') stack.push('}');
+    else if (ch === '[') stack.push(']');
+    else if (ch === stack[stack.length - 1]) {
+      stack.pop();
+      if (stack.length === 0) return i;
+    }
+  }
+
+  return -1;
+}
+
 function extractJsonFromResponse(response: string): unknown {
   let cleaned = response
     .replace(/```json\s*/gi, "")
     .replace(/```\s*/g, "")
     .trim();
 
-  const jsonStart = cleaned.search(/[\{\[]/);
+  const objectStart = cleaned.indexOf("{");
+  const arrayStart = cleaned.indexOf("[");
+  const jsonStart = objectStart === -1 ? arrayStart : arrayStart === -1 ? objectStart : Math.min(objectStart, arrayStart);
   if (jsonStart === -1) throw new Error("No JSON found in response");
 
-  const opener = cleaned[jsonStart];
-  const closer = opener === '[' ? ']' : '}';
-  const jsonEnd = cleaned.lastIndexOf(closer);
+  let jsonEnd = findBalancedJsonEnd(cleaned, jsonStart);
+  if (jsonEnd === -1) {
+    const closer = cleaned[jsonStart] === '[' ? ']' : '}';
+    jsonEnd = cleaned.lastIndexOf(closer);
+  }
 
   if (jsonEnd === -1 || jsonEnd <= jsonStart) throw new Error("No valid JSON boundaries found");
 
   cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
-  cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, " ");
+  cleaned = Array.from(cleaned).map((ch) => {
+    const code = ch.charCodeAt(0);
+    return (code <= 8 || code === 11 || code === 12 || (code >= 14 && code <= 31) || code === 127) ? " " : ch;
+  }).join("");
 
   try { return JSON.parse(cleaned); } catch { /* continue */ }
 
@@ -166,11 +206,42 @@ function convertRawQuestion(q: Record<string, unknown>, idx: number) {
   };
 }
 
+function sanitizeExamText(value: unknown): string {
+  return String(value ?? "")
+    .replace(/\\\[/g, "$$")
+    .replace(/\\\]/g, "$$")
+    .replace(/\\\(/g, "$")
+    .replace(/\\\)/g, "$")
+    .replace(/\\begin\{(?:aligned|align|equation|gather)\}/g, "")
+    .replace(/\\end\{(?:aligned|align|equation|gather)\}/g, "")
+    .replace(/\\displaystyle\s*/g, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
+}
+
+function normalizeQuestion(q: Record<string, unknown>, idx: number) {
+  const optionValues = Array.isArray(q.options) && q.options.length >= 4
+    ? (q.options as unknown[]).slice(0, 4).map(sanitizeExamText)
+    : [q.option_a ?? q.optionA, q.option_b ?? q.optionB, q.option_c ?? q.optionC, q.option_d ?? q.optionD].map(sanitizeExamText);
+  const correctLetter = String(q.correct_answer || q.correctAnswer || "A").trim().charAt(0).toUpperCase();
+  const answerIndex = Math.max(0, ["A", "B", "C", "D"].indexOf(correctLetter));
+
+  return {
+    question: sanitizeExamText(q.question || q.questionTitle),
+    option_a: optionValues[0] || `Option ${idx + 1}A`,
+    option_b: optionValues[1] || `Option ${idx + 1}B`,
+    option_c: optionValues[2] || `Option ${idx + 1}C`,
+    option_d: optionValues[3] || `Option ${idx + 1}D`,
+    correct_answer: ["A", "B", "C", "D"][answerIndex],
+    explanation: sanitizeExamText(q.explanation || "Review the correct option and compare it with the distractors."),
+  };
+}
+
 const examTool = {
   type: "function" as const,
   function: {
     name: "create_exam",
-    description: "Create a structured exam with multiple-choice questions. You MAY use LaTeX math notation freely (e.g. \\frac{a}{b}, \\sqrt{x}, \\alpha). The system handles rendering.",
+    description: "Create a structured exam with multiple-choice questions. Keep math as raw LaTeX text; never return rendered HTML, SVG, MathML, KaTeX output, or images.",
     parameters: {
       type: "object",
       properties: {
@@ -180,7 +251,7 @@ const examTool = {
           items: {
             type: "object",
             properties: {
-              question: { type: "string", description: "The question text. You may use LaTeX math like \\frac{a}{b}, \\sqrt{x}, x^2, etc." },
+              question: { type: "string", description: "The question text. Use raw LaTeX only when needed, with $...$ or $$...$$ delimiters." },
               option_a: { type: "string", description: "Option A" },
               option_b: { type: "string", description: "Option B" },
               option_c: { type: "string", description: "Option C" },
@@ -198,130 +269,6 @@ const examTool = {
     },
   },
 };
-
-// ========== SELF-VALIDATION ==========
-async function validateAndFixQuestions(
-  questions: Record<string, unknown>[],
-  subject: string,
-  apiKey: string,
-  targetCount: number
-): Promise<Record<string, unknown>[]> {
-  if (questions.length === 0) return questions;
-
-  if (questions.length > targetCount) {
-    questions = questions.slice(0, targetCount);
-  }
-
-  const CHUNK_SIZE = 15;
-  const validatedQuestions: Record<string, unknown>[] = [];
-  
-  for (let chunkStart = 0; chunkStart < questions.length; chunkStart += CHUNK_SIZE) {
-    const chunk = questions.slice(chunkStart, chunkStart + CHUNK_SIZE);
-    if (chunkStart > 0) {
-      await new Promise(r => setTimeout(r, 2000));
-    }
-    try {
-      const validated = await validateChunk(chunk, subject, apiKey);
-      validatedQuestions.push(...validated);
-    } catch (e) {
-      console.warn(`Validation chunk failed, keeping unvalidated:`, e);
-      validatedQuestions.push(...chunk);
-    }
-  }
-
-  if (validatedQuestions.length < targetCount) {
-    const deficit = targetCount - validatedQuestions.length;
-    console.log(`Validation removed ${deficit} questions. Skipping replacement to avoid extra calls.`);
-  }
-
-  return validatedQuestions.slice(0, targetCount);
-}
-
-async function validateChunk(
-  questions: Record<string, unknown>[],
-  subject: string,
-  apiKey: string
-): Promise<Record<string, unknown>[]> {
-  const questionsForReview = questions.map((q, i) => {
-    const ca = String(q.correct_answer || q.correctAnswer || "A");
-    const optA = String(q.option_a || q.optionA || "");
-    const optB = String(q.option_b || q.optionB || "");
-    const optC = String(q.option_c || q.optionC || "");
-    const optD = String(q.option_d || q.optionD || "");
-    return `Q${i + 1}: ${String(q.question || "")}\nA) ${optA}\nB) ${optB}\nC) ${optC}\nD) ${optD}\nMarked correct: ${ca}`;
-  }).join("\n\n");
-
-  const reviewPrompt = `You are a strict academic exam validator for ${subject}. Your job is to verify EVERY question is factually and mathematically correct.
-
-FOR EACH QUESTION you MUST:
-1. Read the question carefully.
-2. Solve it yourself independently step-by-step.
-3. Check if the marked answer matches YOUR answer.
-4. Check that ALL 4 options are distinct, plausible, and well-formed.
-5. Check that EXACTLY ONE option is correct.
-
-Return a JSON array. For EACH question include an entry:
-[
-  {"index": 0, "status": "PASS", "my_answer": "A", "verification": "Brief work"},
-  {"index": 1, "status": "FAIL", "my_answer": "C", "correct_answer": "C", "fixed_option_a": "...", "fixed_option_b": "...", "fixed_option_c": "...", "fixed_option_d": "...", "reason": "explanation"},
-  {"index": 2, "status": "DELETE", "reason": "fundamentally flawed"}
-]
-
-Questions to validate:
-${questionsForReview}`;
-
-  const response = await gatewayFetch({
-    model: "google/gemini-2.5-flash-lite",
-    messages: [
-      { role: "system", content: "You are an expert academic exam validator. Return ONLY valid JSON array." },
-      { role: "user", content: reviewPrompt },
-    ],
-    temperature: 0.1,
-    max_tokens: 4000,
-  }, apiKey);
-
-  if (!response.ok) {
-    console.warn(`Validation API error:`, response.status);
-    await response.text();
-    return questions;
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || "[]";
-
-  try {
-    const results = extractJsonFromResponse(content) as any[];
-    if (!Array.isArray(results)) return questions;
-
-    const validQuestions: Record<string, unknown>[] = [];
-    let fixed = 0, deleted = 0, passed = 0;
-
-    for (let i = 0; i < questions.length; i++) {
-      const result = results.find((r: any) => r.index === i);
-      
-      if (!result || result.status === "PASS") { validQuestions.push(questions[i]); passed++; continue; }
-      
-      if (result.status === "DELETE") { console.log(`Deleted Q${i + 1}: ${result.reason}`); deleted++; continue; }
-      
-      if (result.status === "FAIL") {
-        const q = { ...questions[i] };
-        if (result.correct_answer) { q.correct_answer = result.correct_answer; q.correctAnswer = result.correct_answer; }
-        if (result.fixed_option_a) { q.option_a = result.fixed_option_a; q.optionA = result.fixed_option_a; }
-        if (result.fixed_option_b) { q.option_b = result.fixed_option_b; q.optionB = result.fixed_option_b; }
-        if (result.fixed_option_c) { q.option_c = result.fixed_option_c; q.optionC = result.fixed_option_c; }
-        if (result.fixed_option_d) { q.option_d = result.fixed_option_d; q.optionD = result.fixed_option_d; }
-        validQuestions.push(q);
-        fixed++;
-      }
-    }
-
-    console.log(`Validation: ${passed} passed, ${fixed} fixed, ${deleted} deleted out of ${questions.length}`);
-    return validQuestions;
-  } catch (e) {
-    console.warn(`Could not parse validation response:`, e);
-    return questions;
-  }
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -357,8 +304,9 @@ serve(async (req) => {
       : null;
 
     const isMathSubject = /math|algebra|calculus|geometry|trigonometry|statistics|arithmetic|رياضيات/i.test(subject || '');
+    const requestedCount = Math.min(Number(count), 30);
 
-    const MAX_SINGLE_BATCH = 30;
+    const MAX_SINGLE_BATCH = 10;
     let allQuestions: Record<string, unknown>[] = [];
 
     const generateBatch = async (batchCount: number, batchContext?: string): Promise<Record<string, unknown>[]> => {
@@ -380,12 +328,11 @@ ABSOLUTE UNIQUENESS REQUIREMENTS:
 - Vary question structures: definitional, computational, analytical, scenario-based, error-identification, best-answer, negative, and multi-step.
 - For math/science: use random non-round numbers.
 - Each question MUST have exactly 4 options (A, B, C, D) with plausible distractors.
-- You MAY use LaTeX math notation freely.
+- Keep math as raw LaTeX text only. Do NOT render LaTeX to HTML, SVG, KaTeX, MathML, images, or pre-rendered markup.
+- Use simple inline delimiters only: $...$ for inline math and $$...$$ for short display equations. Avoid complex align environments.
 - ${varietyInstructions}${adaptiveLevelHint}${masteryHint}${mathBalanceRule}
 
-ANSWER ACCURACY - MANDATORY SELF-VERIFICATION:
-- For EVERY question, solve it yourself step-by-step BEFORE writing the answer.
-- Double-check every computation.
+ANSWER ACCURACY:
 - The correct_answer MUST be the letter of the actually correct option.
 
 EXPLANATION REQUIREMENT:
@@ -407,7 +354,7 @@ QUESTION COUNT ENFORCEMENT:
       }
 
       const response = await gatewayFetch({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -415,7 +362,7 @@ QUESTION COUNT ENFORCEMENT:
         tools: [examTool],
         tool_choice: { type: "function", function: { name: "create_exam" } },
         temperature: 0.9 + Math.random() * 0.1,
-        max_tokens: Math.min(Math.max(batchCount * 400, 4000), 16000),
+        max_tokens: Math.min(Math.max(batchCount * 260, 2500), 8500),
       }, LOVABLE_API_KEY);
 
       if (!response.ok) {
@@ -451,25 +398,23 @@ QUESTION COUNT ENFORCEMENT:
       catch (e) { console.warn("Batch failed, continuing:", e instanceof Error ? e.message : e); return []; }
     };
 
-    if (count <= MAX_SINGLE_BATCH) {
-      allQuestions = await safeBatch(count, materialContext || undefined);
+    if (requestedCount <= MAX_SINGLE_BATCH) {
+      allQuestions = await safeBatch(requestedCount, materialContext || undefined);
     } else {
-      const batchSize = 15;
-      const numBatches = Math.ceil(count / batchSize);
-      for (let b = 0; b < numBatches; b++) {
-        const remaining = count - allQuestions.length;
-        const thisCount = Math.min(batchSize, remaining);
-        if (thisCount <= 0) break;
-        const questions = await safeBatch(thisCount, materialContext || undefined);
-        allQuestions.push(...questions);
-        if (allQuestions.length >= count) break;
-      }
+      const batchSize = 10;
+      const numBatches = Math.ceil(requestedCount / batchSize);
+      const batches = Array.from({ length: numBatches }, (_, b) => {
+        const alreadyPlanned = b * batchSize;
+        const thisCount = Math.min(batchSize, requestedCount - alreadyPlanned);
+        return safeBatch(thisCount, materialContext || undefined);
+      });
+      allQuestions = (await Promise.all(batches)).flat();
     }
 
     // If everything failed, retry once with a smaller batch
     if (allQuestions.length === 0) {
       console.warn("All batches empty — retrying with reduced count");
-      allQuestions = await safeBatch(Math.min(10, count), materialContext || undefined);
+      allQuestions = await safeBatch(Math.min(10, requestedCount), materialContext || undefined);
     }
 
     if (allQuestions.length === 0) {
@@ -480,9 +425,9 @@ QUESTION COUNT ENFORCEMENT:
     }
 
     // Fill if we got fewer than requested
-    if (allQuestions.length < count) {
-      const remaining = count - allQuestions.length;
-      console.log(`Got ${allQuestions.length}/${count}, filling ${remaining} more`);
+    if (allQuestions.length < requestedCount) {
+      const remaining = requestedCount - allQuestions.length;
+      console.log(`Got ${allQuestions.length}/${requestedCount}, filling ${remaining} more`);
       try {
         const extra = await generateBatch(remaining);
         allQuestions.push(...extra);
@@ -491,21 +436,7 @@ QUESTION COUNT ENFORCEMENT:
       }
     }
 
-    // ========== AI SELF-VALIDATION STEP ==========
-    console.log(`Quick validation attempt...`);
-    await new Promise(r => setTimeout(r, 2000));
-    try {
-      allQuestions = await validateAndFixQuestions(
-        allQuestions,
-        subject || 'General',
-        LOVABLE_API_KEY,
-        count
-      );
-      console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
-    } catch (e) {
-      console.warn("Validation failed entirely, using unvalidated questions:", e);
-      allQuestions = allQuestions.slice(0, count);
-    }
+    allQuestions = allQuestions.slice(0, requestedCount).map(normalizeQuestion);
 
     // Shuffle all questions for random order
     for (let i = allQuestions.length - 1; i > 0; i--) {
@@ -541,6 +472,9 @@ QUESTION COUNT ENFORCEMENT:
       grade_level: grade || "General",
       subject: subject || "Mixed",
       total_questions: questions.length,
+      requested_questions: count,
+      generated_questions: questions.length,
+      note: count > requestedCount ? `Generated ${questions.length} reliable questions now. Start another exam for more practice.` : undefined,
       questions,
     };
 
