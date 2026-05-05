@@ -58,6 +58,29 @@ function getAntiRepetitionDirective(): string {
   return `MANDATORY QUESTION ANGLES for this generation (use at least 3): ${selected.join(", ")}. Each question MUST approach the topic from a DIFFERENT angle than typical textbook questions.`;
 }
 
+function findBalancedJsonEnd(text: string, start: number): number {
+  const opener = text[start];
+  const stack: string[] = [opener === '[' ? ']' : '}'];
+  let inString = false;
+  let escaping = false;
+
+  for (let i = start + 1; i < text.length; i++) {
+    const ch = text[i];
+    if (escaping) { escaping = false; continue; }
+    if (ch === '\\') { escaping = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === '{') stack.push('}');
+    else if (ch === '[') stack.push(']');
+    else if (ch === stack[stack.length - 1]) {
+      stack.pop();
+      if (stack.length === 0) return i;
+    }
+  }
+
+  return -1;
+}
+
 function extractJsonFromResponse(response: string): unknown {
   let cleaned = response
     .replace(/```json\s*/gi, "")
@@ -67,9 +90,11 @@ function extractJsonFromResponse(response: string): unknown {
   const jsonStart = cleaned.search(/[\{\[]/);
   if (jsonStart === -1) throw new Error("No JSON found in response");
 
-  const opener = cleaned[jsonStart];
-  const closer = opener === '[' ? ']' : '}';
-  const jsonEnd = cleaned.lastIndexOf(closer);
+  let jsonEnd = findBalancedJsonEnd(cleaned, jsonStart);
+  if (jsonEnd === -1) {
+    const closer = cleaned[jsonStart] === '[' ? ']' : '}';
+    jsonEnd = cleaned.lastIndexOf(closer);
+  }
 
   if (jsonEnd === -1 || jsonEnd <= jsonStart) throw new Error("No valid JSON boundaries found");
 
