@@ -191,6 +191,37 @@ function convertRawQuestion(q: Record<string, unknown>, idx: number) {
   };
 }
 
+function sanitizeExamText(value: unknown): string {
+  return String(value ?? "")
+    .replace(/\\\[/g, "$$")
+    .replace(/\\\]/g, "$$")
+    .replace(/\\\(/g, "$ ")
+    .replace(/\\\)/g, " $")
+    .replace(/\\begin\{(?:aligned|align|equation|gather)\}/g, "")
+    .replace(/\\end\{(?:aligned|align|equation|gather)\}/g, "")
+    .replace(/\\displaystyle\s*/g, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
+}
+
+function normalizeQuestion(q: Record<string, unknown>, idx: number) {
+  const optionValues = Array.isArray(q.options) && q.options.length >= 4
+    ? (q.options as unknown[]).slice(0, 4).map(sanitizeExamText)
+    : [q.option_a ?? q.optionA, q.option_b ?? q.optionB, q.option_c ?? q.optionC, q.option_d ?? q.optionD].map(sanitizeExamText);
+  const correctLetter = String(q.correct_answer || q.correctAnswer || "A").trim().charAt(0).toUpperCase();
+  const answerIndex = Math.max(0, ["A", "B", "C", "D"].indexOf(correctLetter));
+
+  return {
+    question: sanitizeExamText(q.question || q.questionTitle),
+    option_a: optionValues[0] || `Option ${idx + 1}A`,
+    option_b: optionValues[1] || `Option ${idx + 1}B`,
+    option_c: optionValues[2] || `Option ${idx + 1}C`,
+    option_d: optionValues[3] || `Option ${idx + 1}D`,
+    correct_answer: ["A", "B", "C", "D"][answerIndex],
+    explanation: sanitizeExamText(q.explanation || "Review the correct option and compare it with the distractors."),
+  };
+}
+
 const examTool = {
   type: "function" as const,
   function: {
