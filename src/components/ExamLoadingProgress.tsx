@@ -6,12 +6,13 @@ import { Progress } from '@/components/ui/progress';
 interface ExamLoadingProgressProps {
   questionCount?: number;
   label?: string;
+  elapsedSeconds?: number;
 }
 
 const stages = [
-  { icon: Brain, label: 'Crafting unique questions', duration: 8000 },
-  { icon: ShieldCheck, label: 'Validating accuracy', duration: 12000 },
-  { icon: Star, label: 'Finalizing your exam', duration: 6000 },
+  { icon: Brain, label: 'Crafting unique questions', at: 0 },
+  { icon: ShieldCheck, label: 'Checking structure', at: 8 },
+  { icon: Star, label: 'Preparing raw LaTeX for display', at: 16 },
 ];
 
 const tips = [
@@ -23,36 +24,25 @@ const tips = [
   '✅ Wrong answers are validated to be plausible but incorrect',
 ];
 
-export function ExamLoadingProgress({ questionCount, label }: ExamLoadingProgressProps) {
-  const [currentStage, setCurrentStage] = useState(0);
+export function ExamLoadingProgress({ questionCount, label, elapsedSeconds: externalElapsedSeconds }: ExamLoadingProgressProps) {
   const [progress, setProgress] = useState(0);
   const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * tips.length));
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const visibleElapsedSeconds = externalElapsedSeconds ?? elapsedSeconds;
+  const currentStage = visibleElapsedSeconds >= 16 ? 2 : visibleElapsedSeconds >= 8 ? 1 : 0;
 
   // Animate progress smoothly
   useEffect(() => {
     const interval = setInterval(() => {
       setProgress(prev => {
         // Slow down as we approach 95% (never reach 100 until done)
-        if (prev >= 92) return Math.min(prev + 0.05, 95);
+        if (prev >= 90) return Math.min(prev + 0.03, 92);
         if (prev >= 80) return prev + 0.15;
         if (prev >= 60) return prev + 0.3;
         return prev + 0.6;
       });
     }, 200);
     return () => clearInterval(interval);
-  }, []);
-
-  // Stage progression
-  useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    let accumulated = 0;
-    stages.forEach((stage, i) => {
-      if (i === 0) return; // Start at stage 0
-      accumulated += stages[i - 1].duration;
-      timers.push(setTimeout(() => setCurrentStage(i), accumulated));
-    });
-    return () => timers.forEach(clearTimeout);
   }, []);
 
   // Tip rotation
