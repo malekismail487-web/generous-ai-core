@@ -585,6 +585,9 @@ QUESTION COUNT ENFORCEMENT:
       grade_level: grade || "General",
       subject: subject || "Mixed",
       total_questions: questions.length,
+      requested_questions: count,
+      generated_questions: questions.length,
+      note: count > requestedCount ? `Generated ${questions.length} reliable questions now. Start another exam for more practice.` : undefined,
       questions,
     };
 
