@@ -97,7 +97,9 @@ function extractJsonFromResponse(response: string): unknown {
     .replace(/```\s*/g, "")
     .trim();
 
-  const jsonStart = cleaned.search(/[\{\[]/);
+  const objectStart = cleaned.indexOf("{");
+  const arrayStart = cleaned.indexOf("[");
+  const jsonStart = objectStart === -1 ? arrayStart : arrayStart === -1 ? objectStart : Math.min(objectStart, arrayStart);
   if (jsonStart === -1) throw new Error("No JSON found in response");
 
   let jsonEnd = findBalancedJsonEnd(cleaned, jsonStart);
@@ -109,7 +111,10 @@ function extractJsonFromResponse(response: string): unknown {
   if (jsonEnd === -1 || jsonEnd <= jsonStart) throw new Error("No valid JSON boundaries found");
 
   cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
-  cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, " ");
+  cleaned = Array.from(cleaned).map((ch) => {
+    const code = ch.charCodeAt(0);
+    return (code <= 8 || code === 11 || code === 12 || (code >= 14 && code <= 31) || code === 127) ? " " : ch;
+  }).join("");
 
   try { return JSON.parse(cleaned); } catch { /* continue */ }
 
