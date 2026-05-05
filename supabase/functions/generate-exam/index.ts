@@ -509,25 +509,25 @@ QUESTION COUNT ENFORCEMENT:
       catch (e) { console.warn("Batch failed, continuing:", e instanceof Error ? e.message : e); return []; }
     };
 
-    if (count <= MAX_SINGLE_BATCH) {
-      allQuestions = await safeBatch(count, materialContext || undefined);
+    if (requestedCount <= MAX_SINGLE_BATCH) {
+      allQuestions = await safeBatch(requestedCount, materialContext || undefined);
     } else {
       const batchSize = 15;
-      const numBatches = Math.ceil(count / batchSize);
+      const numBatches = Math.ceil(requestedCount / batchSize);
       for (let b = 0; b < numBatches; b++) {
-        const remaining = count - allQuestions.length;
+        const remaining = requestedCount - allQuestions.length;
         const thisCount = Math.min(batchSize, remaining);
         if (thisCount <= 0) break;
         const questions = await safeBatch(thisCount, materialContext || undefined);
         allQuestions.push(...questions);
-        if (allQuestions.length >= count) break;
+        if (allQuestions.length >= requestedCount) break;
       }
     }
 
     // If everything failed, retry once with a smaller batch
     if (allQuestions.length === 0) {
       console.warn("All batches empty — retrying with reduced count");
-      allQuestions = await safeBatch(Math.min(10, count), materialContext || undefined);
+      allQuestions = await safeBatch(Math.min(10, requestedCount), materialContext || undefined);
     }
 
     if (allQuestions.length === 0) {
@@ -538,9 +538,9 @@ QUESTION COUNT ENFORCEMENT:
     }
 
     // Fill if we got fewer than requested
-    if (allQuestions.length < count) {
-      const remaining = count - allQuestions.length;
-      console.log(`Got ${allQuestions.length}/${count}, filling ${remaining} more`);
+    if (allQuestions.length < requestedCount) {
+      const remaining = requestedCount - allQuestions.length;
+      console.log(`Got ${allQuestions.length}/${requestedCount}, filling ${remaining} more`);
       try {
         const extra = await generateBatch(remaining);
         allQuestions.push(...extra);
@@ -549,21 +549,7 @@ QUESTION COUNT ENFORCEMENT:
       }
     }
 
-    // ========== AI SELF-VALIDATION STEP ==========
-    console.log(`Quick validation attempt...`);
-    await new Promise(r => setTimeout(r, 2000));
-    try {
-      allQuestions = await validateAndFixQuestions(
-        allQuestions,
-        subject || 'General',
-        LOVABLE_API_KEY,
-        count
-      );
-      console.log(`After validation: ${allQuestions.length} questions (target was ${count})`);
-    } catch (e) {
-      console.warn("Validation failed entirely, using unvalidated questions:", e);
-      allQuestions = allQuestions.slice(0, count);
-    }
+    allQuestions = allQuestions.slice(0, requestedCount).map(normalizeQuestion);
 
     // Shuffle all questions for random order
     for (let i = allQuestions.length - 1; i > 0; i--) {
