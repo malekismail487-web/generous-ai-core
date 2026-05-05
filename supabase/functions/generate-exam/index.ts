@@ -236,7 +236,7 @@ const examTool = {
   type: "function" as const,
   function: {
     name: "create_exam",
-    description: "Create a structured exam with multiple-choice questions. You MAY use LaTeX math notation freely (e.g. \\frac{a}{b}, \\sqrt{x}, \\alpha). The system handles rendering.",
+    description: "Create a structured exam with multiple-choice questions. Keep math as raw LaTeX text; never return rendered HTML, SVG, MathML, KaTeX output, or images.",
     parameters: {
       type: "object",
       properties: {
@@ -246,7 +246,7 @@ const examTool = {
           items: {
             type: "object",
             properties: {
-              question: { type: "string", description: "The question text. You may use LaTeX math like \\frac{a}{b}, \\sqrt{x}, x^2, etc." },
+              question: { type: "string", description: "The question text. Use raw LaTeX only when needed, with $...$ or $$...$$ delimiters." },
               option_a: { type: "string", description: "Option A" },
               option_b: { type: "string", description: "Option B" },
               option_c: { type: "string", description: "Option C" },
