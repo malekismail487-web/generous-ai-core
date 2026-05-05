@@ -304,9 +304,9 @@ serve(async (req) => {
       : null;
 
     const isMathSubject = /math|algebra|calculus|geometry|trigonometry|statistics|arithmetic|رياضيات/i.test(subject || '');
-    const requestedCount = Math.min(Number(count), examType === 'SAT_FULL' ? 50 : 20);
+    const requestedCount = Math.min(Number(count), 30);
 
-    const MAX_SINGLE_BATCH = 30;
+    const MAX_SINGLE_BATCH = 10;
     let allQuestions: Record<string, unknown>[] = [];
 
     const generateBatch = async (batchCount: number, batchContext?: string): Promise<Record<string, unknown>[]> => {
@@ -401,16 +401,14 @@ QUESTION COUNT ENFORCEMENT:
     if (requestedCount <= MAX_SINGLE_BATCH) {
       allQuestions = await safeBatch(requestedCount, materialContext || undefined);
     } else {
-      const batchSize = 15;
+      const batchSize = 10;
       const numBatches = Math.ceil(requestedCount / batchSize);
-      for (let b = 0; b < numBatches; b++) {
-        const remaining = requestedCount - allQuestions.length;
-        const thisCount = Math.min(batchSize, remaining);
-        if (thisCount <= 0) break;
-        const questions = await safeBatch(thisCount, materialContext || undefined);
-        allQuestions.push(...questions);
-        if (allQuestions.length >= requestedCount) break;
-      }
+      const batches = Array.from({ length: numBatches }, (_, b) => {
+        const alreadyPlanned = b * batchSize;
+        const thisCount = Math.min(batchSize, requestedCount - alreadyPlanned);
+        return safeBatch(thisCount, materialContext || undefined);
+      });
+      allQuestions = (await Promise.all(batches)).flat();
     }
 
     // If everything failed, retry once with a smaller batch
