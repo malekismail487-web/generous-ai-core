@@ -9,7 +9,7 @@ const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 async function gatewayFetch(body: object, apiKey: string): Promise<Response> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 55_000);
+  const timeout = setTimeout(() => controller.abort(), 35_000);
   try {
     return await fetch(AI_GATEWAY_URL, {
       method: "POST",
@@ -304,7 +304,7 @@ serve(async (req) => {
       : null;
 
     const isMathSubject = /math|algebra|calculus|geometry|trigonometry|statistics|arithmetic|رياضيات/i.test(subject || '');
-    const requestedCount = Math.min(Number(count), examType === 'SAT_FULL' ? 70 : 30);
+    const requestedCount = Math.min(Number(count), examType === 'SAT_FULL' ? 50 : 20);
 
     const MAX_SINGLE_BATCH = 30;
     let allQuestions: Record<string, unknown>[] = [];
@@ -332,9 +332,7 @@ ABSOLUTE UNIQUENESS REQUIREMENTS:
 - Use simple inline delimiters only: $...$ for inline math and $$...$$ for short display equations. Avoid complex align environments.
 - ${varietyInstructions}${adaptiveLevelHint}${masteryHint}${mathBalanceRule}
 
-ANSWER ACCURACY - MANDATORY SELF-VERIFICATION:
-- For EVERY question, solve it yourself step-by-step BEFORE writing the answer.
-- Double-check every computation.
+ANSWER ACCURACY:
 - The correct_answer MUST be the letter of the actually correct option.
 
 EXPLANATION REQUIREMENT:
@@ -356,7 +354,7 @@ QUESTION COUNT ENFORCEMENT:
       }
 
       const response = await gatewayFetch({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -364,7 +362,7 @@ QUESTION COUNT ENFORCEMENT:
         tools: [examTool],
         tool_choice: { type: "function", function: { name: "create_exam" } },
         temperature: 0.9 + Math.random() * 0.1,
-        max_tokens: Math.min(Math.max(batchCount * 400, 4000), 16000),
+        max_tokens: Math.min(Math.max(batchCount * 260, 2500), 8500),
       }, LOVABLE_API_KEY);
 
       if (!response.ok) {
