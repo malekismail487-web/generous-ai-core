@@ -18,6 +18,7 @@ import { useActivityTracker } from '@/hooks/useActivityTracker';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 import { exportAsPDF, exportAsDOCX, exportAsPPTX } from '@/lib/lectureExport';
+import { LectureGenerator } from '@/components/student/LectureGenerator';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +64,7 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [lectureLength, setLectureLength] = useState<'short' | 'medium' | 'long'>('medium');
+  const [showVisualLecture, setShowVisualLecture] = useState(false);
   
   const { toast } = useToast();
   const { user } = useAuth();
