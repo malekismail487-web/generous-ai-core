@@ -584,6 +584,16 @@ Use age-appropriate language for ${selectedGrade}.`;
 
   // INPUT VIEW - User enters material/topic
   if (viewState === 'input' && selectedSubject && selectedGrade) {
+    if (showVisualLecture) {
+      return (
+        <div className={containerClass}>
+          <LectureGenerator
+            defaultSubject={getSubjectName(selectedSubject, 'en')}
+            onBack={() => setShowVisualLecture(false)}
+          />
+        </div>
+      );
+    }
     return (
       <div className={containerClass}>
         <div className="max-w-2xl mx-auto px-4 py-6">
