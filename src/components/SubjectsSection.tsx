@@ -18,6 +18,7 @@ import { useActivityTracker } from '@/hooks/useActivityTracker';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 import { exportAsPDF, exportAsDOCX, exportAsPPTX } from '@/lib/lectureExport';
+import { LectureGenerator } from '@/components/student/LectureGenerator';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +64,7 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [lectureLength, setLectureLength] = useState<'short' | 'medium' | 'long'>('medium');
+  const [showVisualLecture, setShowVisualLecture] = useState(false);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -582,6 +584,16 @@ Use age-appropriate language for ${selectedGrade}.`;
 
   // INPUT VIEW - User enters material/topic
   if (viewState === 'input' && selectedSubject && selectedGrade) {
+    if (showVisualLecture) {
+      return (
+        <div className={containerClass}>
+          <LectureGenerator
+            defaultSubject={getSubjectName(selectedSubject, 'en')}
+            onBack={() => setShowVisualLecture(false)}
+          />
+        </div>
+      );
+    }
     return (
       <div className={containerClass}>
         <div className="max-w-2xl mx-auto px-4 py-6">
@@ -603,6 +615,21 @@ Use age-appropriate language for ${selectedGrade}.`;
             <h1 className="text-2xl font-bold mb-2">{getSubjectName(selectedSubject!, language)}</h1>
             <p className="text-sm text-muted-foreground">{getGradeName(selectedGrade!, language)}</p>
           </div>
+
+          {/* NEW: Visual Lecture entrypoint */}
+          <button
+            onClick={() => setShowVisualLecture(true)}
+            className="w-full glass-effect rounded-2xl p-4 mb-3 text-left transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.99] flex items-center gap-3 border-2 border-primary/30"
+          >
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary to-accent text-primary-foreground">
+              <ImageIcon size={20} />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-sm">Visual Lecture</h3>
+              <p className="text-xs text-muted-foreground">Photoreal images for every paragraph — ~45s</p>
+            </div>
+            <ArrowRight size={16} className="text-muted-foreground" />
+          </button>
 
           {/* Topic Input */}
           <div className="glass-effect rounded-2xl p-5 animate-fade-in">
