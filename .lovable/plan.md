@@ -1,56 +1,128 @@
-# Plan: Visual Lecture Generator + Notes Tab Redesign
+# Path to ~99% Adaptive Accuracy
 
-Two coordinated changes:
+Getting from ~60% to ~99% is not "more prompt text" — it requires changing **how** adaptation works, not just **what** is injected. Six concrete upgrades, ordered by impact.
 
-## 1. Visual Lecture Generator (Subjects / Lectures)
+---
 
-A new generator surface that produces a structured lecture with one high-quality image per paragraph, generated in parallel.
+## 1. Output Validation Loop (biggest single gain: +15–20%)
 
-### Flow
-1. User picks **Topic** (free text), **Subject** (existing 12-subject list), and **Expertise**: Basic / Intermediate / Advanced / Expert.
-2. Click **Generate Lecture**.
-3. Stage A — *Outline pass* (fast, ~3-5s):
-   - One call to `google/gemini-3-flash-preview` returns JSON: `{ title, intro, paragraphs: [{ heading, body, image_prompt }], conclusion, key_takeaways[] }`.
-   - Body = 5-8 paragraphs × 4-7 sentences. `image_prompt` is a self-contained, photorealistic prompt tuned to the expertise level.
-4. Stage B — *Parallel image pass* (~15-30s):
-   - All paragraph `image_prompt`s fired concurrently to `google/gemini-2.5-flash-image` (Nano Banana) via the AI Gateway through a new edge function.
-   - Per-image timeout (25s) + one retry. If an image still fails, slot is marked `failed` with a per-paragraph **Retry** button — the rest of the lecture still renders.
-5. UI shows live progress: `Writing lecture… → Generating image 3 / 7…`.
+Today: we inject the student profile into the prompt and *hope* the model honors it.
+Change: after every AI generation, run a fast second-pass validator (Gemini Flash Lite, ~300ms) that scores the output against the profile on 4 axes:
 
-### Edge functions (new)
-- `lecture-outline` — single call, structured JSON via tool calling, raw LaTeX preserved (no pre-rendering).
-- `lecture-image` — accepts `{ prompt, expertise }`, returns base64 data URL from Nano Banana. Stateless so the client can fan out N parallel calls.
+- Vocabulary level matches `adaptiveLevel` (Basic/Intermediate/Advanced/Expert)
+- Explanation modality matches dominant learning style (visual/verbal/kinesthetic/logical)
+- Length & density match `cognitiveLoad` + `fatigueLevel`
+- No forbidden patterns (e.g. jargon for Basic, baby-talk for Expert)
 
-### Frontend
-- New `src/components/student/LectureGenerator.tsx` (replaces current ad-hoc subject lecture flow inside `SubjectsSection`).
-- Inline reader: serif body (Source Serif 4), centered images ≥800px wide with `loading="lazy"`, raw LaTeX rendered only at display time via existing `MathRenderer`.
-- Per-paragraph **Retry image** button.
-- **Download PDF** via existing `lectureExport` (extended to embed base64 images).
-- Hooked into `SubjectsSection` as the primary lecture path; legacy text-only generator removed.
+If score < 0.85 → auto-regenerate once with a corrective addendum. Log score to a new `adaptive_quality_scores` table for continuous measurement.
 
-### Performance
-- Outline + 7 parallel images target: ≤45s end-to-end on Nano Banana Flash.
-- No sequential awaits; `Promise.allSettled` for image fan-out.
+**This is the missing closed loop.** Without it, we have no idea if adaptation actually happened.
 
-## 2. Notes Tab Redesign (file → AI essay)
+---
 
-Current Notes tab duplicates Subjects. Replace with a **file-driven note generator**:
+## 2. Hard Routing, Not Soft Hints (+10%)
 
-- Upload PDF / DOCX / PPT / image (reuse existing 50MB pipeline + `explain-file` edge function).
-- AI produces a long-form, structured **essay-style notes** document (intro, 6-10 sections, key terms, summary, takeaways) — same depth contract as Subjects lectures.
-- Saved into the existing `notes` table so the user keeps a library; raw LaTeX preserved, rendered on display.
-- Same depth contract reused inside SAT generation and Subjects generation so all three (Subjects / SAT / Notes) share a single "comprehensive essay" prompt module.
+Today: every feature uses one prompt template + appended context.
+Change: maintain **4 distinct prompt templates per feature** (one per expertise level) plus learning-style fragments that get *swapped in*, not concatenated. The model can't ignore a template it never received.
 
-### Files
-- Edit `src/components/NotesSection.tsx` → file uploader + generated essay viewer + library.
-- New helper `src/lib/comprehensiveEssayPrompt.ts` shared by Subjects, SAT, Notes generators.
-- Reuse `explain-file` edge function with the new shared prompt.
+Apply to: Subjects, Lectures, Study Buddy, Examination, SAT, Notes, Practice, Lecture-outline.
 
-## Out of scope (call out, don't build)
-- Per-paragraph "make longer / add examples" inline edits — defer to a follow-up unless you want it now.
-- Sharing links — defer; PDF download covers the main export need.
+---
 
-## Risks / cost note
-Nano Banana image calls are billed per image. A 7-paragraph lecture = 7 image calls per generation. If that's a concern I can default to 5 paragraphs (still meets the 5-8 range) and let "Expert" go up to 8.
+## 3. Real-Time Profile Invalidation (+5–8%)
 
-Confirm and I'll build it.
+Today: 60s cache; mid-session signals are ignored.
+Change:
+
+- Drop cache TTL to 15s
+- Event-driven invalidation: any `recordAnswer`, `recordChat` with strong emotional signal, or 3+ consecutive wrong answers → immediate cache bust
+- Add a lightweight `profile_version` integer; every component subscribes via `useSyncExternalStore` and re-fetches on bump
+
+---
+
+## 4. Per-Output Helpfulness Signal (+8–12%)
+
+Today: we know if an *answer* was right; we don't know if an *explanation* worked.
+Change: add unobtrusive "Did this help? 👍 / 🤔 / 👎" + optional "too easy / too hard / just right" under every AI explanation, lecture paragraph, and study-buddy turn. Feed into:
+
+- `learningOutcomeLoop` (already exists, lightly wired)
+- `teachingStrategyTracker` to learn which **strategy** works for **which student** on **which subject**
+
+After ~30 signals per student, the system can predict the best modality with high confidence.
+
+---
+
+## 5. Cold-Start Bootstrap (+5%)
+
+Today: new students get generic adaptation for their first ~10 sessions.
+Change: extend the IQ test result + first 3 chat turns into a **synthetic profile** using a one-time Gemini Pro analysis. This collapses the cold-start window from ~10 sessions to ~1.
+
+---
+
+## 6. Cross-Feature Consistency Audit (+3–5%)
+
+Today: each feature calls `useAdaptiveIntelligence` differently; some pass full context, some only `{adaptiveLevel, learningStyle}`.
+Change: introduce a single `withAdaptiveContext(feature, subject)` HOC/wrapper that every AI-calling component must use. Lint rule (eslint custom rule) blocks direct `streamChat` calls without it.
+
+---
+
+## Realistic Ceiling
+
+
+| After step                                    | Estimated accuracy |
+| --------------------------------------------- | ------------------ |
+| Today                                         | ~60%               |
+| +1 Validation loop                            | ~75%               |
+| +2 Hard routing                               | ~83%               |
+| +3 Real-time invalidation                     | ~88%               |
+| +4 Helpfulness signal (after 30 days of data) | ~94%               |
+| +5 Cold-start bootstrap                       | ~96%               |
+| +6 Consistency audit                          | ~97–98%            |
+
+
+**99% is asymptotic** — the last 1–2% comes from sheer interaction volume per student (the system genuinely can't know a student it has only seen 5 times). 97–98% is the practical ceiling for an active student after ~4 weeks of use.
+
+---
+
+## Technical Section
+
+**New tables**
+
+- `adaptive_quality_scores(id, user_id, feature, subject, score, dimensions_jsonb, regenerated boolean, created_at)`
+- `output_helpfulness(id, user_id, feature, content_id, signal enum('helpful','confused','too_easy','too_hard'), created_at)`
+
+**New edge function**
+
+- `adaptive-validate` — takes `{ output, profile_snapshot, feature }` → returns `{ score, failures[] }` in ≤500ms
+
+**New module**
+
+- `src/lib/adaptive/promptTemplates.ts` — exports `getTemplate(feature, level, dominantStyle)` returning a complete system prompt (no concatenation in callers)
+- `src/lib/adaptive/withAdaptiveContext.tsx` — wrapper hook enforcing usage
+
+**Modified**
+
+- `useAdaptiveIntelligence` — TTL 60s → 15s, add `version` selector, `bump()` method
+- `recordIntelligentAnswer` — auto-bump version on streak break or strong-emotion chat
+- All AI components (Subjects, Lectures, StudyBuddy, Examination, SAT, Notes, Practice) — switch to `getTemplate()` + post-call `validate()`
+
+**Rollout order**
+
+1. Validation loop + new tables (1 phase)
+2. Prompt templates + consistency wrapper (1 phase)
+3. Helpfulness UI + invalidation (1 phase)
+4. Cold-start bootstrap (1 phase)
+
+**Out of scope**
+
+- True RLHF fine-tuning (requires dedicated model — not available on Lovable AI Gateway)
+- Multi-modal video adaptation
+- Voice-tone adaptation (would need audio pipeline)
+
+---
+
+## Open Question Before Building
+
+Do you want me to build **all 6 phases** in sequence, or start with **Phase 1 (validation loop)** alone and measure the actual lift before committing to the rest? Phase 1 alone is the highest-ROI change and gives us real data instead of estimates.
+
+Start with phase 1, and after you finish it verify that it works and don't you dare rush any codes

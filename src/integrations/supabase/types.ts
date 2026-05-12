@@ -49,6 +49,51 @@ export type Database = {
           },
         ]
       }
+      adaptive_quality_scores: {
+        Row: {
+          created_at: string
+          dimensions: Json
+          failures: string[]
+          feature: string
+          id: string
+          output_excerpt: string | null
+          profile_snapshot: Json | null
+          regenerated: boolean
+          school_id: string | null
+          score: number
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dimensions?: Json
+          failures?: string[]
+          feature: string
+          id?: string
+          output_excerpt?: string | null
+          profile_snapshot?: Json | null
+          regenerated?: boolean
+          school_id?: string | null
+          score: number
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dimensions?: Json
+          failures?: string[]
+          feature?: string
+          id?: string
+          output_excerpt?: string | null
+          profile_snapshot?: Json | null
+          regenerated?: boolean
+          school_id?: string | null
+          score?: number
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_access_codes: {
         Row: {
           code_hash: string
