@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { MathRenderer } from '@/components/MathRenderer';
 import { exportAsPDF } from '@/lib/lectureExport';
 import { cn } from '@/lib/utils';
+import { validateAdaptation } from '@/lib/adaptiveValidator';
 
 type Expertise = 'basic' | 'intermediate' | 'advanced' | 'expert';
 
@@ -98,6 +99,21 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
       const out: Outline = await res.json();
       if (cancelRef.current) return;
       setOutline(out);
+
+      // Phase 1: passive adaptation validation (fire-and-forget; logs to
+      // adaptive_quality_scores so we can measure adaptation quality over time).
+      // Auto-regeneration intentionally deferred until Phase 2 (templated prompts).
+      void validateAdaptation({
+        output: [
+          out.title,
+          out.intro,
+          ...out.paragraphs.map((p) => `${p.heading}\n${p.body}`),
+          out.conclusion,
+        ].join('\n\n'),
+        feature: 'visual_lecture',
+        subject: subject || undefined,
+        profile: { adaptiveLevel: expertise },
+      }).catch(() => { /* fail open */ });
 
       // Stage B — parallel images
       const total = out.paragraphs.length;
