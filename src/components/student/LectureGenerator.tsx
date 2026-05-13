@@ -63,6 +63,7 @@ interface Props {
 
 export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBack }: Props) {
   const { toast } = useToast();
+  const { getContext } = useAdaptiveIntelligence();
   const [topic, setTopic] = useState(defaultTopic);
   const [subject, setSubject] = useState(defaultSubject);
   const [expertise, setExpertise] = useState<Expertise>('intermediate');
