@@ -1,4 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  buildHardRoutedSystemPrompt,
+  getTemplateSpec,
+  normalizeLevel,
+  normalizeStyle,
+} from "../_shared/promptTemplates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,18 +13,17 @@ const corsHeaders = {
 
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-const EXPERTISE_GUIDE: Record<string, string> = {
-  basic: "8th grade reading level. Simple vocabulary, short sentences, concrete analogies. Avoid jargon. Image prompts should be friendly, clear, textbook-style illustrations.",
-  intermediate: "High-school / early college level. Standard academic language, moderate technical depth, real examples. Image prompts should be polished educational illustrations or photographs.",
-  advanced: "Upper-division college level. Precise technical language, detailed mechanisms, formal definitions. Image prompts should be detailed scientific or technical illustrations.",
-  expert: "Graduate / specialist level. Domain-precise terminology, derivations, edge cases, current research framing. Image prompts should be sophisticated, near-publication quality scientific visualizations.",
-};
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { topic, subject, expertise = "intermediate" } = await req.json();
+    const {
+      topic,
+      subject,
+      expertise = "intermediate",
+      learning_style = "balanced",
+      addendum = "",
+    } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
     if (!topic || typeof topic !== "string") {
@@ -27,24 +32,30 @@ serve(async (req) => {
       });
     }
 
-    const guide = EXPERTISE_GUIDE[expertise] || EXPERTISE_GUIDE.intermediate;
-    const paragraphCount = expertise === "expert" ? 8 : expertise === "advanced" ? 7 : 6;
+    // Phase 2 — hard routing. The (level × style) combo selects ONE template;
+    // the validator addendum (Phase 1) is prepended verbatim on regeneration.
+    const level = normalizeLevel(expertise);
+    const style = normalizeStyle(learning_style);
+    const spec = getTemplateSpec(level, style);
+    const paragraphCount = spec.paragraphCount;
 
-    const systemPrompt = `You are an expert educator generating a structured, visually-rich lecture.
+    const extraRules = [
+      `SUBJECT FOCUS: ${subject || "general"}`,
+      `- Produce a complete lecture outline with exactly ${paragraphCount} body paragraphs.`,
+      "- Each paragraph: focused on ONE specific concept that builds on the previous one.",
+      "- Each paragraph MUST include a self-contained image_prompt for a photorealistic / educational image. Image prompts must NOT contain text overlays, watermarks, or labels. Always specify 'no text, no watermark, photorealistic / detailed digital illustration, educational, high detail'.",
+      "- For math/science, output RAW LaTeX delimited as $...$ inline or $$...$$ display. DO NOT pre-render LaTeX. The frontend renders it for the student.",
+      "- Title must be specific to the topic, not generic.",
+      "- key_takeaways: 5-7 short bullet sentences distilling the essential information.",
+    ].join("\n");
 
-EXPERTISE LEVEL: ${expertise.toUpperCase()}
-${guide}
-
-SUBJECT FOCUS: ${subject || "general"}
-
-OUTPUT RULES:
-- Produce a complete lecture outline with ${paragraphCount} substantive body paragraphs.
-- Each paragraph: 4-7 sentences, focused on ONE specific concept that builds on the previous one.
-- Each paragraph MUST include a self-contained image_prompt that, when sent to a photorealistic image model, produces a relevant, professional, educational image. Image prompts must NOT contain any text-overlay instructions, watermarks, or labels. Always specify "no text, no watermark, photorealistic / detailed digital illustration, educational, high detail".
-- For math/science, use raw LaTeX delimited as $...$ inline or $$...$$ display. DO NOT pre-render LaTeX. Output the raw source.
-- Keep language clear and engaging. Use the expertise level above to calibrate vocabulary.
-- Title must be specific to the topic, not generic.
-- key_takeaways: 5-7 short bullet sentences distilling the essential information.`;
+    const systemPrompt = buildHardRoutedSystemPrompt({
+      feature: "visual_lecture",
+      level,
+      style,
+      addendum,
+      extraRules,
+    });
 
     const tool = {
       type: "function",

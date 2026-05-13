@@ -10,6 +10,8 @@ import { MathRenderer } from '@/components/MathRenderer';
 import { exportAsPDF } from '@/lib/lectureExport';
 import { cn } from '@/lib/utils';
 import { validateAdaptation } from '@/lib/adaptiveValidator';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
+import { normalizeStyle } from '@/lib/promptTemplates';
 
 type Expertise = 'basic' | 'intermediate' | 'advanced' | 'expert';
 
@@ -61,6 +63,7 @@ interface Props {
 
 export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBack }: Props) {
   const { toast } = useToast();
+  const { getContext } = useAdaptiveIntelligence();
   const [topic, setTopic] = useState(defaultTopic);
   const [subject, setSubject] = useState(defaultSubject);
   const [expertise, setExpertise] = useState<Expertise>('intermediate');
@@ -84,36 +87,82 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
     setProgress({ done: 0, total: 0 });
 
     try {
-      // Stage A — outline
+      // Stage A — outline (Phase 2: hard-routed prompt template selected by level + style)
       const { data: { session } } = await supabase.auth.getSession();
       const auth = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lecture-outline`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth}` },
-        body: JSON.stringify({ topic: topic.trim(), subject, expertise }),
-      });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j.error || `outline_failed_${res.status}`);
-      }
-      const out: Outline = await res.json();
-      if (cancelRef.current) return;
-      setOutline(out);
 
-      // Phase 1: passive adaptation validation (fire-and-forget; logs to
-      // adaptive_quality_scores so we can measure adaptation quality over time).
-      // Auto-regeneration intentionally deferred until Phase 2 (templated prompts).
-      void validateAdaptation({
-        output: [
-          out.title,
-          out.intro,
-          ...out.paragraphs.map((p) => `${p.heading}\n${p.body}`),
-          out.conclusion,
-        ].join('\n\n'),
-        feature: 'visual_lecture',
-        subject: subject || undefined,
-        profile: { adaptiveLevel: expertise },
-      }).catch(() => { /* fail open */ });
+      // Resolve dominant learning style from the adaptive engine — Phase 1↔2 bridge.
+      let dominantStyle = 'balanced';
+      let profileForValidator: any = { adaptiveLevel: expertise };
+      try {
+        const ctx = await getContext('lecture' as any, subject || undefined);
+        const ds = (ctx.profile as any)?.dominantStyle;
+        if (ds) dominantStyle = normalizeStyle(ds);
+        profileForValidator = {
+          adaptiveLevel: expertise,
+          dominantStyle,
+          cognitiveLoad: (ctx.profile as any)?.cognitiveLoad,
+          fatigueLevel: (ctx.profile as any)?.fatigueLevel,
+        };
+      } catch { /* fall through with defaults */ }
+
+      const fetchOutline = async (addendum: string): Promise<Outline> => {
+        const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lecture-outline`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth}` },
+          body: JSON.stringify({
+            topic: topic.trim(),
+            subject,
+            expertise,
+            learning_style: dominantStyle,
+            addendum,
+          }),
+        });
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          throw new Error(j.error || `outline_failed_${r.status}`);
+        }
+        return await r.json();
+      };
+
+      let out = await fetchOutline('');
+      if (cancelRef.current) return;
+
+      // Phase 1+2 bridge: validate, and if it fails, regenerate ONCE with the
+      // auditor's corrective addendum prepended to the same hard-routed template.
+      try {
+        const verdict = await validateAdaptation({
+          output: [
+            out.title,
+            out.intro,
+            ...out.paragraphs.map((p) => `${p.heading}\n${p.body}`),
+            out.conclusion,
+          ].join('\n\n'),
+          feature: 'visual_lecture',
+          subject: subject || undefined,
+          profile: profileForValidator,
+        });
+
+        if (verdict.shouldRegenerate && verdict.addendum) {
+          const regenerated = await fetchOutline(verdict.addendum);
+          if (cancelRef.current) return;
+          out = regenerated;
+          void validateAdaptation({
+            output: [
+              out.title,
+              out.intro,
+              ...out.paragraphs.map((p) => `${p.heading}\n${p.body}`),
+              out.conclusion,
+            ].join('\n\n'),
+            feature: 'visual_lecture',
+            subject: subject || undefined,
+            profile: profileForValidator,
+            regenerated: true,
+          }).catch(() => { /* fail open */ });
+        }
+      } catch { /* validator must never block the flow */ }
+
+      setOutline(out);
 
       // Stage B — parallel images
       const total = out.paragraphs.length;
@@ -153,7 +202,7 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
       toast({ variant: 'destructive', title: 'Lecture failed', description: e.message || 'Try again' });
       setPhase('idle');
     }
-  }, [topic, subject, expertise, toast]);
+  }, [topic, subject, expertise, toast, getContext]);
 
   const retryImage = useCallback(async (idx: number) => {
     if (!outline) return;
