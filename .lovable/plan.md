@@ -1,128 +1,81 @@
-# Path to ~99% Adaptive Accuracy
+# Phase 3 — Real-Time Profile Invalidation
 
-Getting from ~60% to ~99% is not "more prompt text" — it requires changing **how** adaptation works, not just **what** is injected. Six concrete upgrades, ordered by impact.
+Phases 1 (validation loop) and 2 (hard routing) are live. The next bottleneck: the adaptive profile is cached for 60s, so mid-session signals (a sudden wrong-answer streak, a frustrated chat message, a fatigue spike) are ignored until the cache expires. That breaks the closed loop — Phase 1 measures drift, Phase 2 routes to a template, but the **profile feeding the template can be up to a minute stale**.
 
----
+## Goal
 
-## 1. Output Validation Loop (biggest single gain: +15–20%)
+Make the profile react within ~1 render frame to any meaningful signal, while keeping network traffic low.
 
-Today: we inject the student profile into the prompt and *hope* the model honors it.
-Change: after every AI generation, run a fast second-pass validator (Gemini Flash Lite, ~300ms) that scores the output against the profile on 4 axes:
+## Changes
 
-- Vocabulary level matches `adaptiveLevel` (Basic/Intermediate/Advanced/Expert)
-- Explanation modality matches dominant learning style (visual/verbal/kinesthetic/logical)
-- Length & density match `cognitiveLoad` + `fatigueLevel`
-- No forbidden patterns (e.g. jargon for Basic, baby-talk for Expert)
+### 1. `useAdaptiveIntelligence` — versioned store, not a TTL cache
 
-If score < 0.85 → auto-regenerate once with a corrective addendum. Log score to a new `adaptive_quality_scores` table for continuous measurement.
+- Drop `CACHE_TTL_MS` from 60s → 15s as a safety net only.
+- Add a module-level `profileVersion` integer + `subscribe/getSnapshot` pair so components can use `useSyncExternalStore`.
+- Expose `bumpProfile(reason)` — increments the version and invalidates the cache for the current user.
+- `getContext` / `getSimpleParams` re-read whenever version changes, regardless of TTL.
 
-**This is the missing closed loop.** Without it, we have no idea if adaptation actually happened.
+### 2. Event-driven invalidation triggers
 
----
+Wire `bumpProfile()` into the existing recorders inside `src/lib/adaptiveIntelligence.ts`:
 
-## 2. Hard Routing, Not Soft Hints (+10%)
+- `recordIntelligentAnswer`: bump when (a) 3+ consecutive wrong answers in the same subject, (b) a correct-streak ≥5 breaks, or (c) response time deviates >2× from rolling median.
+- `recordChatMessage`: bump when the emotional state engine flags a strong negative signal (frustration / confusion ≥ 0.7) or an explicit "I don't get it" / "too easy" pattern.
+- `recordStudyActivity`: bump when fatigueLevel crosses a band boundary (low→med, med→high).
 
-Today: every feature uses one prompt template + appended context.
-Change: maintain **4 distinct prompt templates per feature** (one per expertise level) plus learning-style fragments that get *swapped in*, not concatenated. The model can't ignore a template it never received.
+All bumps are debounced (250ms) so a burst of events causes one re-fetch.
 
-Apply to: Subjects, Lectures, Study Buddy, Examination, SAT, Notes, Practice, Lecture-outline.
+### 3. Phase 1 ↔ Phase 3 bridge
 
----
+After `validateAdaptation` returns a score < 0.85, call `bumpProfile('low_quality_score')` so the regeneration in Phase 2 uses a **fresh** profile snapshot, not the stale one that produced the bad output.
 
-## 3. Real-Time Profile Invalidation (+5–8%)
+### 4. Phase 2 ↔ Phase 3 bridge
 
-Today: 60s cache; mid-session signals are ignored.
-Change:
+`LectureGenerator` (and the other components we'll migrate later) switch from one-shot `getContext()` at mount to `useSyncExternalStore`-backed context that updates between generations within a single session.
 
-- Drop cache TTL to 15s
-- Event-driven invalidation: any `recordAnswer`, `recordChat` with strong emotional signal, or 3+ consecutive wrong answers → immediate cache bust
-- Add a lightweight `profile_version` integer; every component subscribes via `useSyncExternalStore` and re-fetches on bump
+### 5. Lightweight diagnostics
 
----
+Add a `profile_invalidations` count + last-reason to `getCachedProfile()` return shape (dev-only console log behind a flag) so we can watch invalidation cadence during QA.
 
-## 4. Per-Output Helpfulness Signal (+8–12%)
+## Out of scope for Phase 3
 
-Today: we know if an *answer* was right; we don't know if an *explanation* worked.
-Change: add unobtrusive "Did this help? 👍 / 🤔 / 👎" + optional "too easy / too hard / just right" under every AI explanation, lecture paragraph, and study-buddy turn. Feed into:
+- Migrating all 7 remaining AI surfaces to hard routing — that's Phase 2 cleanup, tracked separately.
+- Helpfulness signal UI (Phase 4).
+- Cold-start bootstrap (Phase 5).
 
-- `learningOutcomeLoop` (already exists, lightly wired)
-- `teachingStrategyTracker` to learn which **strategy** works for **which student** on **which subject**
+## Technical section
 
-After ~30 signals per student, the system can predict the best modality with high confidence.
+**Files touched**
 
----
+- `src/hooks/useAdaptiveIntelligence.tsx` — add external store, `bumpProfile`, version-aware cache read.
+- `src/lib/adaptiveIntelligence.ts` — emit invalidation events from `recordIntelligentAnswer`, `recordChatMessage`, `recordStudyActivity`. Add a tiny pub/sub (no new dep).
+- `src/lib/adaptiveValidator.ts` — call `bumpProfile` on low score before regeneration.
+- `src/components/student/LectureGenerator.tsx` — consume versioned context (minimal change, mostly swapping `useState` snapshot for the store hook).
 
-## 5. Cold-Start Bootstrap (+5%)
+**No DB / edge-function changes.** This phase is entirely client-side state plumbing.
 
-Today: new students get generic adaptation for their first ~10 sessions.
-Change: extend the IQ test result + first 3 chat turns into a **synthetic profile** using a one-time Gemini Pro analysis. This collapses the cold-start window from ~10 sessions to ~1.
+**Verification plan**
 
----
+1. Unit-style smoke: trigger 3 wrong answers in a row in dev → confirm `profile_invalidations` increments and next `getContext` call returns a freshly built profile (different `generatedAt`).
+2. Validator path: force a low score via a dev override → confirm bump fires before regeneration and the addendum-augmented prompt sees the new level if cognitive load shifted.
+3. No regression: confirm normal lecture generation still hits cache on rapid repeat (no thundering herd).
 
-## 6. Cross-Feature Consistency Audit (+3–5%)
+Approve and I'll implement Phase 3 only — Phases 4–6 stay untouched until you say so.
 
-Today: each feature calls `useAdaptiveIntelligence` differently; some pass full context, some only `{adaptiveLevel, learningStyle}`.
-Change: introduce a single `withAdaptiveContext(feature, subject)` HOC/wrapper that every AI-calling component must use. Lint rule (eslint custom rule) blocks direct `streamChat` calls without it.
+&nbsp;
 
----
+Make sure that the adaptive learning profile actually goes up based on the adaptive data as well, and after you finish phase 3, you must make a test.
 
-## Realistic Ceiling
+I think once Phase 3 is implemented, we should focus heavily on adaptation testing instead of only technical testing. The biggest question is not just whether invalidation works, but whether the AI genuinely teaches differently and more effectively when the student’s behavior changes.
 
+We should test the system using simulated student personas rather than only static unit tests. For example, we can create profiles like a fast learner, a frustrated learner, a fatigued learner, an inconsistent learner, and an overconfident learner. Then we run the same lesson through all of them and compare how the AI changes its pacing, explanation depth, difficulty progression, hint frequency, and teaching style.
 
-| After step                                    | Estimated accuracy |
-| --------------------------------------------- | ------------------ |
-| Today                                         | ~60%               |
-| +1 Validation loop                            | ~75%               |
-| +2 Hard routing                               | ~83%               |
-| +3 Real-time invalidation                     | ~88%               |
-| +4 Helpfulness signal (after 30 days of data) | ~94%               |
-| +5 Cold-start bootstrap                       | ~96%               |
-| +6 Consistency audit                          | ~97–98%            |
+The most important thing to verify is whether the AI adapts naturally from behavioral signals alone rather than relying on explicit instructions from the student. Personally, I think the system becomes more intelligent if it infers optimal teaching strategies through performance patterns, response times, emotional signals, repeated mistakes, and cognitive load instead of the student manually saying things like “teach me visually” or “explain it step-by-step.” The AI should gradually discover what works best for the learner.
 
+I also think we need to watch carefully for overreaction and instability. A strong adaptive system should react quickly but not impulsively. One bad streak should not immediately downgrade the student, and one successful streak should not instantly spike difficulty. We should test for oscillation over long sessions and make sure the adaptation feels smooth and stable rather than hyperactive.
 
-**99% is asymptotic** — the last 1–2% comes from sheer interaction volume per student (the system genuinely can't know a student it has only seen 5 times). 97–98% is the practical ceiling for an active student after ~4 weeks of use.
+Another important area is validating whether the adaptations actually improve learning outcomes. We should compare metrics before and after adaptation changes, including retention, repeated mistakes, frustration recovery, engagement time, and comprehension speed. If the AI changes behavior but learning outcomes do not improve, then the adaptation may not actually be meaningful.
 
----
+I also think we should build a temporary internal diagnostics dashboard during testing. Seeing profile invalidations, adaptation scores, emotional-state shifts, difficulty changes, and generation timestamps visually will make tuning significantly easier and help us catch unstable behavior early.
 
-## Technical Section
-
-**New tables**
-
-- `adaptive_quality_scores(id, user_id, feature, subject, score, dimensions_jsonb, regenerated boolean, created_at)`
-- `output_helpfulness(id, user_id, feature, content_id, signal enum('helpful','confused','too_easy','too_hard'), created_at)`
-
-**New edge function**
-
-- `adaptive-validate` — takes `{ output, profile_snapshot, feature }` → returns `{ score, failures[] }` in ≤500ms
-
-**New module**
-
-- `src/lib/adaptive/promptTemplates.ts` — exports `getTemplate(feature, level, dominantStyle)` returning a complete system prompt (no concatenation in callers)
-- `src/lib/adaptive/withAdaptiveContext.tsx` — wrapper hook enforcing usage
-
-**Modified**
-
-- `useAdaptiveIntelligence` — TTL 60s → 15s, add `version` selector, `bump()` method
-- `recordIntelligentAnswer` — auto-bump version on streak break or strong-emotion chat
-- All AI components (Subjects, Lectures, StudyBuddy, Examination, SAT, Notes, Practice) — switch to `getTemplate()` + post-call `validate()`
-
-**Rollout order**
-
-1. Validation loop + new tables (1 phase)
-2. Prompt templates + consistency wrapper (1 phase)
-3. Helpfulness UI + invalidation (1 phase)
-4. Cold-start bootstrap (1 phase)
-
-**Out of scope**
-
-- True RLHF fine-tuning (requires dedicated model — not available on Lovable AI Gateway)
-- Multi-modal video adaptation
-- Voice-tone adaptation (would need audio pipeline)
-
----
-
-## Open Question Before Building
-
-Do you want me to build **all 6 phases** in sequence, or start with **Phase 1 (validation loop)** alone and measure the actual lift before committing to the rest? Phase 1 alone is the highest-ROI change and gives us real data instead of estimates.
-
-Start with phase 1, and after you finish it verify that it works and don't you dare rush any codes
+Overall, I think Phase 3 is a strong architectural improvement because it moves the system from delayed adaptation toward real-time adaptive tutoring. The next challenge is making sure the AI adapts accurately, smoothly, and intelligently under realistic learning conditions.

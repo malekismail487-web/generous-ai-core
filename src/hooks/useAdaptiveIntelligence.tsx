@@ -32,7 +32,7 @@
  * └─────────────────────────────────────────────────┘
  */
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useSyncExternalStore } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import {
   generateAdaptiveContext,
@@ -45,14 +45,23 @@ import {
   type FeatureType,
   type StudentIntelligenceProfile,
 } from '@/lib/adaptiveIntelligence';
+import {
+  bumpProfile,
+  subscribeProfileVersion,
+  getProfileVersion,
+  type BumpReason,
+} from '@/lib/adaptiveProfileBus';
 
-/** Cached profile to avoid re-fetching within 60 seconds */
+/** Cached profile entry — TTL acts as a safety net; the bus drives invalidation. */
 interface CachedProfile {
   profile: StudentIntelligenceProfile;
   timestamp: number;
+  version: number;
 }
 
-const CACHE_TTL_MS = 60_000; // 60 seconds
+// Phase 3: dropped from 60s → 15s. The profile bus invalidates on event,
+// so the TTL only protects against stale data when no signals fire.
+const CACHE_TTL_MS = 15_000;
 
 // Module-level cache shared across hook instances (per page load)
 const profileCache: Record<string, CachedProfile> = {};
@@ -64,13 +73,26 @@ export function useAdaptiveIntelligence() {
   const { user } = useAuth();
   const pendingRef = useRef<Promise<any> | null>(null);
 
+  // Phase 3: subscribe to the bus so any component using this hook re-renders
+  // when an event-driven invalidation fires (3+ wrong, strong emotion, etc).
+  const profileVersion = useSyncExternalStore(
+    subscribeProfileVersion,
+    getProfileVersion,
+    getProfileVersion,
+  );
+
+  /** Read cached profile if it's both fresh AND matches the current bus version. */
+  const readCache = useCallback((userId: string): StudentIntelligenceProfile | null => {
+    const c = profileCache[userId];
+    if (!c) return null;
+    if (c.version !== profileVersion) return null;
+    if (Date.now() - c.timestamp >= CACHE_TTL_MS) return null;
+    return c.profile;
+  }, [profileVersion]);
+
   /**
    * Get the FULL adaptive context with all 7 subsystem outputs.
    * Returns { adaptiveLevel, learningStyle (= full context string), fullContext, profile }.
-   * 
-   * The `learningStyle` field IS the full context string — this is by design so that
-   * components using the simple `streamChat({ adaptiveLevel, learningStyle })` pattern
-   * automatically get all subsystem intelligence injected.
    */
   const getContext = useCallback(async (
     feature: FeatureType,
@@ -91,11 +113,8 @@ export function useAdaptiveIntelligence() {
       };
     }
 
-    // Deduplicate concurrent calls
     if (pendingRef.current) {
-      try {
-        await pendingRef.current;
-      } catch { /* ignore */ }
+      try { await pendingRef.current; } catch { /* ignore */ }
     }
 
     const promise = generateAdaptiveContext(userId, feature, subject);
@@ -103,21 +122,17 @@ export function useAdaptiveIntelligence() {
 
     try {
       const result = await promise;
-      // Cache the profile
       profileCache[userId] = {
         profile: result.profile,
         timestamp: Date.now(),
+        version: profileVersion,
       };
       return result;
     } finally {
       pendingRef.current = null;
     }
-  }, [user?.id]);
+  }, [user?.id, profileVersion]);
 
-  /**
-   * Lightweight version — returns just { adaptiveLevel, learningStyle } strings.
-   * Use this when you only need to pass params to streamChat or an edge function.
-   */
   const getSimpleParams = useCallback(async (
     feature: FeatureType,
     subject?: string,
@@ -127,17 +142,6 @@ export function useAdaptiveIntelligence() {
     return getSimpleAdaptiveParams(userId, feature, subject);
   }, [user?.id]);
 
-  /**
-   * Record a quiz/practice/exam answer with FULL subsystem integration.
-   * This feeds into ALL 7 subsystems simultaneously:
-   *   1. DB (student_answer_history)
-   *   2. Spaced Repetition engine
-   *   3. Mistake Analyzer
-   *   4. Cognitive Model
-   *   5. Emotional State Engine
-   *   6. Predictive Engine
-   *   7. Knowledge Gap tracker
-   */
   const recordAnswer = useCallback(async (params: {
     subject: string;
     questionText: string;
@@ -150,28 +154,17 @@ export function useAdaptiveIntelligence() {
   }) => {
     const userId = user?.id;
     if (!userId) return;
-
     try {
-      await recordIntelligentAnswer({
-        userId,
-        ...params,
-      });
+      await recordIntelligentAnswer({ userId, ...params });
     } catch (err) {
       console.warn('[AdaptiveIntelligence] recordAnswer error:', err);
     }
   }, [user?.id]);
 
-  /**
-   * Record a chat message for emotional analysis + cognitive tracking.
-   * Call this on every user message in any chat context.
-   */
   const recordChat = useCallback((messageText: string) => {
     recordChatMessage(messageText);
   }, []);
 
-  /**
-   * Record study activity (viewing a lecture, generating notes, etc.)
-   */
   const recordActivity = useCallback((params: {
     subject: string;
     topic: string;
@@ -181,17 +174,10 @@ export function useAdaptiveIntelligence() {
     recordStudyActivity(params);
   }, []);
 
-  /**
-   * Get items that are due for spaced repetition review.
-   */
   const getDueItems = useCallback((subject?: string) => {
     return getDueReviewItems(subject);
   }, []);
 
-  /**
-   * Record a teaching event (content was generated for the student).
-   * Feeds into strategy tracker + learning outcome loop.
-   */
   const recordTeaching = useCallback((params: {
     topic: string;
     subject: string;
@@ -201,18 +187,16 @@ export function useAdaptiveIntelligence() {
     recordTeachingEvent(params);
   }, []);
 
-  /**
-   * Get the cached profile if available and fresh.
-   */
   const getCachedProfile = useCallback((): StudentIntelligenceProfile | null => {
     const userId = user?.id;
     if (!userId) return null;
-    const cached = profileCache[userId];
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-      return cached.profile;
-    }
-    return null;
-  }, [user?.id]);
+    return readCache(userId);
+  }, [user?.id, readCache]);
+
+  /** Phase 3 — explicit manual invalidation. Most callers don't need this. */
+  const invalidateProfile = useCallback((reason: BumpReason = 'manual', detail?: string) => {
+    bumpProfile(reason, detail);
+  }, []);
 
   return {
     getContext,
@@ -223,6 +207,9 @@ export function useAdaptiveIntelligence() {
     getDueItems,
     recordTeaching,
     getCachedProfile,
+    invalidateProfile,
+    profileVersion,
     userId: user?.id || null,
   };
 }
+

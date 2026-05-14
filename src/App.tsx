@@ -29,6 +29,7 @@ import MinistryLogin from "./pages/MinistryLogin";
 import MinistryDashboard from "./pages/MinistryDashboard";
 import MinistryPending from "./pages/MinistryPending";
 import MinistryAccessAlert from "./components/MinistryAccessAlert";
+import { AdaptiveDiagnosticsPanel } from "./components/student/AdaptiveDiagnosticsPanel";
 import ModeratorDashboard from "./pages/ModeratorDashboard";
 import ModeratorPendingPage from "./pages/ModeratorPending";
 import CodeLab from "./pages/CodeLab";
@@ -62,6 +63,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <MinistryAccessAlert />
+              <AdaptiveDiagnosticsPanel />
               
               <BrowserRouter>
                 <LCTExamGuard>
