@@ -32,7 +32,7 @@
  * └─────────────────────────────────────────────────┘
  */
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useSyncExternalStore } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import {
   generateAdaptiveContext,
@@ -45,14 +45,23 @@ import {
   type FeatureType,
   type StudentIntelligenceProfile,
 } from '@/lib/adaptiveIntelligence';
+import {
+  bumpProfile,
+  subscribeProfileVersion,
+  getProfileVersion,
+  type BumpReason,
+} from '@/lib/adaptiveProfileBus';
 
-/** Cached profile to avoid re-fetching within 60 seconds */
+/** Cached profile entry — TTL acts as a safety net; the bus drives invalidation. */
 interface CachedProfile {
   profile: StudentIntelligenceProfile;
   timestamp: number;
+  version: number;
 }
 
-const CACHE_TTL_MS = 60_000; // 60 seconds
+// Phase 3: dropped from 60s → 15s. The profile bus invalidates on event,
+// so the TTL only protects against stale data when no signals fire.
+const CACHE_TTL_MS = 15_000;
 
 // Module-level cache shared across hook instances (per page load)
 const profileCache: Record<string, CachedProfile> = {};
