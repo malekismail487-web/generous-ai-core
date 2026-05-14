@@ -120,7 +120,7 @@ export async function validateAdaptation(params: {
       return failOpen("empty_response");
     }
 
-    return {
+    const result: ValidationResult = {
       score: typeof data.score === "number" ? data.score : null,
       dimensions: data.dimensions ?? null,
       failures: Array.isArray(data.failures) ? data.failures : [],
@@ -129,6 +129,20 @@ export async function validateAdaptation(params: {
       error: data.error,
       skipped: data.skipped,
     };
+
+    // Phase 1↔3 bridge: a low quality score means the profile we used to
+    // shape the prompt was probably stale. Invalidate so the regeneration
+    // (and any subsequent feature in this session) builds on fresh signals.
+    if (
+      !regenerated &&
+      result.shouldRegenerate &&
+      typeof result.score === "number" &&
+      result.score < 0.85
+    ) {
+      try { bumpProfile("low_quality_score", `${feature}=${result.score.toFixed(2)}`); } catch { /* ignore */ }
+    }
+
+    return result;
   } catch (err) {
     return failOpen((err as Error).message);
   }
