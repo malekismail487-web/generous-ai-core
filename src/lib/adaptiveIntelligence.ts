@@ -1628,6 +1628,9 @@ export function recordStudyActivity(params: {
   try {
     recordCognitiveEventByType('session_resume');
   } catch { /* ignore */ }
+
+  // Phase 3: study activity may shift fatigue band — re-evaluate.
+  try { _maybeBumpFatigue(); } catch { /* ignore */ }
 }
 
 /**
