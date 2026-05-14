@@ -1514,6 +1514,16 @@ export async function recordIntelligentAnswer(params: {
       });
     }
   }
+
+  // Phase 3: smoothed invalidation triggers
+  try {
+    _evaluateAnswerSignals({
+      subject: params.subject,
+      isCorrect: params.isCorrect,
+      responseTimeSec: params.responseTimeSec,
+    });
+    _maybeBumpFatigue();
+  } catch { /* never let signal evaluation break recording */ }
 }
 
 /**
