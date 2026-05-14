@@ -1284,11 +1284,100 @@ export async function getSimpleAdaptiveParams(
 //  RECORDING HELPERS — Convenience methods for recording student data
 // ============================================================================
 
-/**
- * Record a quiz/practice answer with full subsystem integration.
- * This wraps answer recording with mistake analysis, spaced repetition,
- * cognitive events, emotional signals, and predictive tracking.
- */
+// --- Phase 3: smoothed invalidation triggers --------------------------------
+// We watch sustained signals (not single events) before bumping the profile,
+// so the system reacts quickly but never impulsively.
+
+interface AnswerSignalState {
+  consecutiveWrong: number;
+  consecutiveCorrect: number;
+  recentTimes: number[]; // last ~10 response times in seconds
+  lastSubject: string | null;
+}
+
+const _answerSignal: AnswerSignalState = {
+  consecutiveWrong: 0,
+  consecutiveCorrect: 0,
+  recentTimes: [],
+  lastSubject: null,
+};
+
+let _lastFatigueBand: 'low' | 'med' | 'high' | null = null;
+
+function _median(arr: number[]): number {
+  if (arr.length === 0) return 0;
+  const s = [...arr].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function _evaluateAnswerSignals(params: {
+  subject: string;
+  isCorrect: boolean;
+  responseTimeSec?: number;
+}) {
+  // Reset streak counters when subject changes — streaks are per-subject.
+  if (_answerSignal.lastSubject && _answerSignal.lastSubject !== params.subject) {
+    _answerSignal.consecutiveWrong = 0;
+    _answerSignal.consecutiveCorrect = 0;
+  }
+  _answerSignal.lastSubject = params.subject;
+
+  if (params.isCorrect) {
+    // Streak break detected BEFORE we increment correct streak.
+    if (_answerSignal.consecutiveWrong >= 3) {
+      bumpProfile('consecutive_wrong', `${_answerSignal.consecutiveWrong} in ${params.subject}`);
+    }
+    _answerSignal.consecutiveWrong = 0;
+    _answerSignal.consecutiveCorrect += 1;
+  } else {
+    // A correct streak of ≥5 just broke — student may be hitting a harder zone.
+    if (_answerSignal.consecutiveCorrect >= 5) {
+      bumpProfile('streak_break', `correct=${_answerSignal.consecutiveCorrect} broke in ${params.subject}`);
+    }
+    _answerSignal.consecutiveCorrect = 0;
+    _answerSignal.consecutiveWrong += 1;
+    // Bump exactly when we cross the 3-wrong threshold.
+    if (_answerSignal.consecutiveWrong === 3) {
+      bumpProfile('consecutive_wrong', `3 wrong in ${params.subject}`);
+    }
+  }
+
+  // Response-time spike: > 2× rolling median, only meaningful with ≥4 samples.
+  if (typeof params.responseTimeSec === 'number' && params.responseTimeSec > 0) {
+    const med = _median(_answerSignal.recentTimes);
+    if (_answerSignal.recentTimes.length >= 4 && med > 0 && params.responseTimeSec > med * 2) {
+      bumpProfile('response_time_spike', `t=${params.responseTimeSec.toFixed(1)}s median=${med.toFixed(1)}s`);
+    }
+    _answerSignal.recentTimes.push(params.responseTimeSec);
+    if (_answerSignal.recentTimes.length > 10) _answerSignal.recentTimes.shift();
+  }
+}
+
+function _maybeBumpFatigue(): void {
+  try {
+    const cog = computeCognitiveState();
+    const f = (cog as any)?.fatigueLevel ?? 0;
+    const band: 'low' | 'med' | 'high' = f < 0.34 ? 'low' : f < 0.67 ? 'med' : 'high';
+    if (_lastFatigueBand && band !== _lastFatigueBand) {
+      bumpProfile('fatigue_band_shift', `${_lastFatigueBand}→${band}`);
+    }
+    _lastFatigueBand = band;
+  } catch { /* ignore */ }
+}
+
+// Tunable: which detected emotions are "strong" enough to invalidate.
+const _STRONG_EMOTIONS = new Set([
+  'frustration',
+  'frustrated',
+  'confusion',
+  'confused',
+  'overwhelmed',
+  'anxious',
+  'bored',
+]);
+
+
 export async function recordIntelligentAnswer(params: {
   userId: string;
   subject: string;
