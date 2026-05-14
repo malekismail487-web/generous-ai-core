@@ -62,6 +62,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <MinistryAccessAlert />
+              <AdaptiveDiagnosticsPanel />
               
               <BrowserRouter>
                 <LCTExamGuard>
