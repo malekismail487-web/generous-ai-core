@@ -17,6 +17,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { StudentIntelligenceProfile } from "@/lib/adaptiveIntelligence";
+import { bumpProfile } from "@/lib/adaptiveProfileBus";
 
 export interface AdaptiveProfileSnapshot {
   adaptiveLevel?: string;
