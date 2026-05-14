@@ -1537,9 +1537,11 @@ export async function recordIntelligentAnswer(params: {
  */
 export function recordChatMessage(messageText: string): void {
   // Detect emotion from the message text
+  let detectedEmotion: string | null = null;
   try {
     const emotion = detectEmotionFromText(messageText);
     if (emotion) {
+      detectedEmotion = emotion;
       recordEmotionalSignal(emotion, 0.5);
     }
   } catch { /* ignore */ }
@@ -1547,6 +1549,14 @@ export function recordChatMessage(messageText: string): void {
   // Record cognitive event (interaction)
   try {
     recordCognitiveEventByType('session_resume');
+  } catch { /* ignore */ }
+
+  // Phase 3: strong-emotion invalidation. Single signal is enough here because
+  // emotion classification already requires intent words ("I'm stuck", etc.).
+  try {
+    if (detectedEmotion && _STRONG_EMOTIONS.has(String(detectedEmotion).toLowerCase())) {
+      bumpProfile('strong_emotion', detectedEmotion);
+    }
   } catch { /* ignore */ }
 
   // === NEW: Bridge to behavioral tracking pipeline ===
