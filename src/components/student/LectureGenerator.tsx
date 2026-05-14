@@ -144,6 +144,21 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
         });
 
         if (verdict.shouldRegenerate && verdict.addendum) {
+          // Phase 3: validator already bumped the profile bus on low score.
+          // Refresh the captured snapshot so regeneration uses the new
+          // dominantStyle / level / cognitiveLoad if they shifted.
+          try {
+            const fresh = await getContext('lecture' as any, subject || undefined);
+            const ds = (fresh.profile as any)?.dominantStyle;
+            if (ds) dominantStyle = normalizeStyle(ds);
+            profileForValidator = {
+              adaptiveLevel: expertise,
+              dominantStyle,
+              cognitiveLoad: (fresh.profile as any)?.cognitiveLoad,
+              fatigueLevel: (fresh.profile as any)?.fatigueLevel,
+            };
+          } catch { /* keep prior snapshot */ }
+
           const regenerated = await fetchOutline(verdict.addendum);
           if (cancelRef.current) return;
           out = regenerated;
