@@ -114,15 +114,22 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
     signalGivenRef.current = true;
   }, []);
 
-  // On unmount, flush any pending dwell-based positive.
-  // (Effect import handled below — we use useEffect here.)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Flush any pending dwell-positive on unmount.
+  useEffect(() => {
+    return () => { flushImplicitSignal(); };
+  }, [flushImplicitSignal]);
 
   const generate = useCallback(async () => {
     if (!topic.trim()) {
       toast({ variant: 'destructive', title: 'Enter a topic' });
       return;
     }
+
+    // Phase 4: if a previous outline was on screen, flush its implicit signal
+    // (regen if dwell was short, dwell-positive if it was long) BEFORE we
+    // start the new run so we don't lose the signal.
+    flushImplicitSignal('implicit_regen');
+
     cancelRef.current = false;
     setPhase('outlining');
     setOutline(null);
