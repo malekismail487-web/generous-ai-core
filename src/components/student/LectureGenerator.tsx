@@ -275,7 +275,7 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
       toast({ variant: 'destructive', title: 'Lecture failed', description: e.message || 'Try again' });
       setPhase('idle');
     }
-  }, [topic, subject, expertise, toast, getContext]);
+  }, [topic, subject, expertise, toast, getContext, flushImplicitSignal]);
 
   const retryImage = useCallback(async (idx: number) => {
     if (!outline) return;
