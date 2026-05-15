@@ -165,6 +165,51 @@ export type Database = {
           },
         ]
       }
+      ai_output_signals: {
+        Row: {
+          created_at: string
+          feature: string
+          id: string
+          output_excerpt: string | null
+          output_hash: string
+          profile_snapshot: Json | null
+          reason: string | null
+          school_id: string | null
+          signal: string
+          subject: string | null
+          topic: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature: string
+          id?: string
+          output_excerpt?: string | null
+          output_hash: string
+          profile_snapshot?: Json | null
+          reason?: string | null
+          school_id?: string | null
+          signal: string
+          subject?: string | null
+          topic?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature?: string
+          id?: string
+          output_excerpt?: string | null
+          output_hash?: string
+          profile_snapshot?: Json | null
+          reason?: string | null
+          school_id?: string | null
+          signal?: string
+          subject?: string | null
+          topic?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       announcement_reads: {
         Row: {
           announcement_id: string

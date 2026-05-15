@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Loader2, Sparkles, RefreshCw, Download, ArrowLeft, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,8 @@ import { cn } from '@/lib/utils';
 import { validateAdaptation } from '@/lib/adaptiveValidator';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { normalizeStyle } from '@/lib/promptTemplates';
+import { HelpfulnessFeedback } from '@/components/student/HelpfulnessFeedback';
+import { recordHelpfulness } from '@/lib/helpfulnessSignal';
 
 type Expertise = 'basic' | 'intermediate' | 'advanced' | 'expert';
 
@@ -75,11 +77,59 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
   const [isExporting, setIsExporting] = useState(false);
   const cancelRef = useRef(false);
 
+  // Phase 4 — helpfulness signal bookkeeping (refs avoid re-render churn)
+  const profileSnapshotRef = useRef<Record<string, unknown> | null>(null);
+  const readyAtRef = useRef<number | null>(null);
+  const signalGivenRef = useRef(false);
+  const lastTopicRef = useRef<string | null>(null);
+  const lastSubjectRef = useRef<string>('');
+  const lastOutputTextRef = useRef<string>('');
+
+  const flattenOutline = (o: Outline) => [
+    o.title, o.intro,
+    ...o.paragraphs.map((p) => `${p.heading}\n${p.body}`),
+    o.conclusion,
+    ...(o.key_takeaways || []),
+  ].join('\n\n');
+
+  /** Fire implicit signal for the previously-shown outline (regen / sustained dwell). */
+  const flushImplicitSignal = useCallback((reasonOverride?: 'implicit_regen') => {
+    if (!lastOutputTextRef.current || signalGivenRef.current) return;
+    const dwellMs = readyAtRef.current ? Date.now() - readyAtRef.current : 0;
+    let signal: 'implicit_regen' | 'implicit_dwell_positive' | null = null;
+    if (reasonOverride === 'implicit_regen' && dwellMs < 30_000) {
+      signal = 'implicit_regen';
+    } else if (dwellMs >= 30_000) {
+      signal = 'implicit_dwell_positive';
+    }
+    if (!signal) return;
+    void recordHelpfulness({
+      feature: 'visual_lecture',
+      subject: lastSubjectRef.current || undefined,
+      topic: lastTopicRef.current || undefined,
+      output: lastOutputTextRef.current,
+      signal,
+      profileSnapshot: profileSnapshotRef.current ?? undefined,
+    }).catch(() => { /* fail open */ });
+    signalGivenRef.current = true;
+  }, []);
+
+  // Flush any pending dwell-positive on unmount.
+  useEffect(() => {
+    return () => { flushImplicitSignal(); };
+  }, [flushImplicitSignal]);
+
   const generate = useCallback(async () => {
     if (!topic.trim()) {
       toast({ variant: 'destructive', title: 'Enter a topic' });
       return;
     }
+
+    // Phase 4: if a previous outline was on screen, flush its implicit signal
+    // (regen if dwell was short, dwell-positive if it was long) BEFORE we
+    // start the new run so we don't lose the signal.
+    flushImplicitSignal('implicit_regen');
+
     cancelRef.current = false;
     setPhase('outlining');
     setOutline(null);
@@ -179,6 +229,14 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
 
       setOutline(out);
 
+      // Phase 4: capture refs for the helpfulness widget + implicit signals.
+      profileSnapshotRef.current = profileForValidator;
+      lastTopicRef.current = topic.trim();
+      lastSubjectRef.current = subject;
+      lastOutputTextRef.current = flattenOutline(out);
+      readyAtRef.current = Date.now();
+      signalGivenRef.current = false;
+
       // Stage B — parallel images
       const total = out.paragraphs.length;
       setImages(out.paragraphs.map(() => ({ status: 'loading' })));
@@ -217,7 +275,7 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
       toast({ variant: 'destructive', title: 'Lecture failed', description: e.message || 'Try again' });
       setPhase('idle');
     }
-  }, [topic, subject, expertise, toast, getContext]);
+  }, [topic, subject, expertise, toast, getContext, flushImplicitSignal]);
 
   const retryImage = useCallback(async (idx: number) => {
     if (!outline) return;
@@ -421,6 +479,17 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
               {outline.key_takeaways.map((t, i) => (<li key={i}>{t}</li>))}
             </ul>
           </section>
+
+          {phase === 'ready' && (
+            <HelpfulnessFeedback
+              feature="visual_lecture"
+              subject={lastSubjectRef.current || subject || undefined}
+              topic={lastTopicRef.current || topic || undefined}
+              output={lastOutputTextRef.current}
+              profileSnapshot={profileSnapshotRef.current ?? undefined}
+              onRecorded={() => { signalGivenRef.current = true; }}
+            />
+          )}
         </article>
       )}
     </div>
