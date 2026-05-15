@@ -109,18 +109,18 @@ export async function recordHelpfulness(
 
     const { data, error } = await supabase
       .from("ai_output_signals")
-      .insert({
+      .insert([{
         user_id: userId,
-        school_id: schoolId,
+        school_id: schoolId ?? undefined,
         feature,
-        subject: subject ?? null,
-        topic: topic ?? null,
+        subject: subject ?? undefined,
+        topic: topic ?? undefined,
         output_hash,
         output_excerpt: excerpt,
         signal,
-        reason: reason ?? null,
-        profile_snapshot: profileSnapshot ?? null,
-      })
+        reason: reason ?? undefined,
+        profile_snapshot: (profileSnapshot ?? null) as any,
+      }])
       .select("id")
       .maybeSingle();
 
