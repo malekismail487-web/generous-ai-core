@@ -77,6 +77,47 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
   const [isExporting, setIsExporting] = useState(false);
   const cancelRef = useRef(false);
 
+  // Phase 4 — helpfulness signal bookkeeping (refs avoid re-render churn)
+  const profileSnapshotRef = useRef<Record<string, unknown> | null>(null);
+  const readyAtRef = useRef<number | null>(null);
+  const signalGivenRef = useRef(false);
+  const lastTopicRef = useRef<string | null>(null);
+  const lastSubjectRef = useRef<string>('');
+  const lastOutputTextRef = useRef<string>('');
+
+  const flattenOutline = (o: Outline) => [
+    o.title, o.intro,
+    ...o.paragraphs.map((p) => `${p.heading}\n${p.body}`),
+    o.conclusion,
+    ...(o.key_takeaways || []),
+  ].join('\n\n');
+
+  /** Fire implicit signal for the previously-shown outline (regen / sustained dwell). */
+  const flushImplicitSignal = useCallback((reasonOverride?: 'implicit_regen') => {
+    if (!lastOutputTextRef.current || signalGivenRef.current) return;
+    const dwellMs = readyAtRef.current ? Date.now() - readyAtRef.current : 0;
+    let signal: 'implicit_regen' | 'implicit_dwell_positive' | null = null;
+    if (reasonOverride === 'implicit_regen' && dwellMs < 30_000) {
+      signal = 'implicit_regen';
+    } else if (dwellMs >= 30_000) {
+      signal = 'implicit_dwell_positive';
+    }
+    if (!signal) return;
+    void recordHelpfulness({
+      feature: 'visual_lecture',
+      subject: lastSubjectRef.current || undefined,
+      topic: lastTopicRef.current || undefined,
+      output: lastOutputTextRef.current,
+      signal,
+      profileSnapshot: profileSnapshotRef.current ?? undefined,
+    }).catch(() => { /* fail open */ });
+    signalGivenRef.current = true;
+  }, []);
+
+  // On unmount, flush any pending dwell-based positive.
+  // (Effect import handled below — we use useEffect here.)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   const generate = useCallback(async () => {
     if (!topic.trim()) {
       toast({ variant: 'destructive', title: 'Enter a topic' });
