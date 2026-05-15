@@ -12,6 +12,8 @@ import { cn } from '@/lib/utils';
 import { validateAdaptation } from '@/lib/adaptiveValidator';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { normalizeStyle } from '@/lib/promptTemplates';
+import { HelpfulnessFeedback } from '@/components/student/HelpfulnessFeedback';
+import { recordHelpfulness } from '@/lib/helpfulnessSignal';
 
 type Expertise = 'basic' | 'intermediate' | 'advanced' | 'expert';
 
