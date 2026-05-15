@@ -479,6 +479,17 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
               {outline.key_takeaways.map((t, i) => (<li key={i}>{t}</li>))}
             </ul>
           </section>
+
+          {phase === 'ready' && (
+            <HelpfulnessFeedback
+              feature="visual_lecture"
+              subject={lastSubjectRef.current || subject || undefined}
+              topic={lastTopicRef.current || topic || undefined}
+              output={lastOutputTextRef.current}
+              profileSnapshot={profileSnapshotRef.current ?? undefined}
+              onRecorded={() => { signalGivenRef.current = true; }}
+            />
+          )}
         </article>
       )}
     </div>
