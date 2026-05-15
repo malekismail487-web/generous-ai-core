@@ -20,6 +20,8 @@ export type BumpReason =
   | 'strong_emotion'
   | 'fatigue_band_shift'
   | 'low_quality_score'
+  | 'helpfulness_negative'
+  | 'helpfulness_positive'
   | 'manual'
   | 'cold_start_complete';
 
