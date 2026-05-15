@@ -229,6 +229,14 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
 
       setOutline(out);
 
+      // Phase 4: capture refs for the helpfulness widget + implicit signals.
+      profileSnapshotRef.current = profileForValidator;
+      lastTopicRef.current = topic.trim();
+      lastSubjectRef.current = subject;
+      lastOutputTextRef.current = flattenOutline(out);
+      readyAtRef.current = Date.now();
+      signalGivenRef.current = false;
+
       // Stage B — parallel images
       const total = out.paragraphs.length;
       setImages(out.paragraphs.map(() => ({ status: 'loading' })));
