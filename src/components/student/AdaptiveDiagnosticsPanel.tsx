@@ -185,6 +185,29 @@ export function AdaptiveDiagnosticsPanel() {
             </ul>
           )}
         </section>
+
+        <section>
+          <div className="font-medium text-muted-foreground mb-1">Recent helpfulness</div>
+          {signals.length === 0 ? (
+            <div className="text-muted-foreground italic">No signals yet</div>
+          ) : (
+            <ul className="space-y-1">
+              {signals.map((s, i) => {
+                const negative = ['down','too_hard','confusing','off_topic','implicit_regen','implicit_followup_confused'].includes(s.signal);
+                return (
+                  <li key={i} className="font-mono text-[11px] flex justify-between gap-2">
+                    <span className="truncate">
+                      <Badge variant="outline" className="text-[9px] py-0 h-4 mr-1">{s.feature}</Badge>
+                    </span>
+                    <span className={negative ? 'text-destructive' : 'text-foreground'}>
+                      {s.signal}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
       </ScrollArea>
 
       <div className="px-3 py-2 border-t border-border text-[10px] text-muted-foreground">
