@@ -51,6 +51,7 @@ export function AdaptiveDiagnosticsPanel() {
     generatedAt?: number;
   } | null>(null);
   const [scores, setScores] = useState<Array<{ score: number; feature: string; created_at: string; regenerated: boolean }>>([]);
+  const [signals, setSignals] = useState<Array<{ signal: string; feature: string; created_at: string }>>([]);
 
   // Subscribe to bus to repaint when version changes
   useEffect(() => {
@@ -79,19 +80,29 @@ export function AdaptiveDiagnosticsPanel() {
     return () => { cancelled = true; };
   }, [enabled, userId, profileVersion, getContext]);
 
-  // Pull last 8 quality scores for this user
+  // Pull last 8 quality scores + last 8 helpfulness signals for this user
   useEffect(() => {
     if (!enabled || !userId) return;
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await supabase
-          .from("adaptive_quality_scores")
-          .select("score, feature, created_at, regenerated")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(8);
-        if (!cancelled && data) setScores(data as any);
+        const [{ data: qs }, { data: sigs }] = await Promise.all([
+          supabase
+            .from("adaptive_quality_scores")
+            .select("score, feature, created_at, regenerated")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(8),
+          supabase
+            .from("ai_output_signals")
+            .select("signal, feature, created_at")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(8),
+        ]);
+        if (cancelled) return;
+        if (qs) setScores(qs as any);
+        if (sigs) setSignals(sigs as any);
       } catch { /* ignore */ }
     })();
     return () => { cancelled = true; };
