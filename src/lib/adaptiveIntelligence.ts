@@ -125,6 +125,10 @@ export interface StudentIntelligenceProfile {
   // Meta
   profileCompleteness: number; // 0-100, how much data we have
   lastUpdated: string;
+
+  // === COLD-START (Phase 5) ===
+  /** Present iff seed was actually applied to this profile snapshot. */
+  coldStartSeed: ColdStartSeed | null;
 }
 
 /** Configuration for generating adaptive context for different feature types */
