@@ -738,17 +738,38 @@ export async function buildIntelligenceProfile(userId: string): Promise<StudentI
 
   // Determine overall difficulty level
   let overallLevel: 'beginner' | 'intermediate' | 'advanced' = 'intermediate';
+  let hadExplicitLevelOverride = false;
   if (profiles.length > 0) {
     const levelCounts: Record<string, number> = {};
     for (const p of profiles) {
       levelCounts[p.difficulty_level] = (levelCounts[p.difficulty_level] || 0) + 1;
     }
     const topLevel = Object.entries(levelCounts).sort((a, b) => b[1] - a[1])[0];
-    if (topLevel) overallLevel = topLevel[0] as typeof overallLevel;
+    if (topLevel) { overallLevel = topLevel[0] as typeof overallLevel; hadExplicitLevelOverride = true; }
   } else if (overallAccuracy >= 85) {
-    overallLevel = 'advanced';
+    overallLevel = 'advanced'; hadExplicitLevelOverride = true;
   } else if (overallAccuracy < 55) {
-    overallLevel = 'beginner';
+    overallLevel = 'beginner'; hadExplicitLevelOverride = true;
+  }
+
+  // === Phase 5: Cold-start seed ===
+  // Only consulted when the engine really has nothing to say yet.
+  let appliedColdStart: ColdStartSeed | null = null;
+  let finalDominantStyle = styleAnalysis.dominant;
+  let finalSecondaryStyle = styleAnalysis.secondary;
+  let finalStyleScores = styleAnalysis.scores;
+  let finalStyleConfidence = styleAnalysis.confidence;
+  if (coldStartSeedRaw && shouldApplyColdStart({
+    answerCount: totalQuestions,
+    behaviorDataPoints: behaviorData.dataPoints.length,
+    hadExplicitLevelOverride,
+  })) {
+    appliedColdStart = coldStartSeedRaw;
+    if (!hadExplicitLevelOverride) overallLevel = coldStartSeedRaw.seedLevel;
+    finalDominantStyle = coldStartSeedRaw.seedDominantStyle;
+    finalSecondaryStyle = coldStartSeedRaw.seedSecondaryStyle;
+    finalStyleScores = coldStartSeedRaw.seedStyleScores;
+    finalStyleConfidence = Math.max(styleAnalysis.confidence, coldStartSeedRaw.seedConfidence);
   }
 
   // Inactivity tracking
@@ -775,16 +796,17 @@ export async function buildIntelligenceProfile(userId: string): Promise<StudentI
   if (subsystemResults.learningVelocity) completeness += 5;
   if (subsystemResults.retentionSummary) completeness += 5;
   if (subsystemResults.teachingRules.length > 0) completeness += 5;
+  if (appliedColdStart) completeness += 10;
 
   return {
     overallAccuracy,
     subjectPerformances,
     strongestSubjects,
     weakestSubjects,
-    dominantStyle: styleAnalysis.dominant,
-    secondaryStyle: styleAnalysis.secondary,
-    styleScores: styleAnalysis.scores,
-    styleConfidence: styleAnalysis.confidence,
+    dominantStyle: finalDominantStyle,
+    secondaryStyle: finalSecondaryStyle,
+    styleScores: finalStyleScores,
+    styleConfidence: finalStyleConfidence,
     overallLevel,
     activeGaps: gaps.map(g => ({
       subject: g.subject,
@@ -801,6 +823,7 @@ export async function buildIntelligenceProfile(userId: string): Promise<StudentI
     ...subsystemResults,
     profileCompleteness: Math.min(100, completeness),
     lastUpdated: new Date().toISOString(),
+    coldStartSeed: appliedColdStart,
   };
 }
 
