@@ -48,6 +48,8 @@ export function AdaptiveDiagnosticsPanel() {
     style?: string;
     cognitiveLoad?: number;
     fatigueLevel?: number;
+    completeness?: number;
+    coldStart?: { source: string; grade: string | null; pace: string | null; iq: number | null } | null;
     generatedAt?: number;
   } | null>(null);
   const [scores, setScores] = useState<Array<{ score: number; feature: string; created_at: string; regenerated: boolean }>>([]);
@@ -73,6 +75,15 @@ export function AdaptiveDiagnosticsPanel() {
           style: p.dominantStyle,
           cognitiveLoad: p.cognitiveLoad,
           fatigueLevel: p.fatigueLevel,
+          completeness: p.profileCompleteness,
+          coldStart: p.coldStartSeed
+            ? {
+                source: p.coldStartSeed.source,
+                grade: p.coldStartSeed.gradeLevel ?? null,
+                pace: p.coldStartSeed.iq?.learning_pace ?? null,
+                iq: p.coldStartSeed.iq?.estimated_iq ?? null,
+              }
+            : null,
           generatedAt: Date.now(),
         });
       } catch { /* ignore */ }
