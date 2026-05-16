@@ -125,20 +125,19 @@ export async function fetchColdStartSeed(userId: string): Promise<ColdStartSeed 
   if (!userId) return null;
 
   // Two cheap reads in parallel; both are user-scoped via RLS.
-  const [iqRes, profileRes] = await Promise.all([
-    supabase
-      .from('iq_test_results')
-      .select('processing_speed_score, logical_reasoning_score, pattern_recognition_score, spatial_reasoning_score, verbal_reasoning_score, mathematical_ability_score, abstract_thinking_score, estimated_iq, learning_pace, completed_at')
-      .eq('user_id', userId)
-      .order('completed_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from('profiles')
-      .select('grade_level')
-      .eq('user_id', userId)
-      .maybeSingle(),
-  ]);
+  const iqQuery = supabase
+    .from('iq_test_results')
+    .select('processing_speed_score, logical_reasoning_score, pattern_recognition_score, spatial_reasoning_score, verbal_reasoning_score, mathematical_ability_score, abstract_thinking_score, estimated_iq, learning_pace, completed_at')
+    .eq('user_id', userId)
+    .order('completed_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const profileQuery = supabase
+    .from('profiles')
+    .select('grade_level')
+    .eq('user_id', userId)
+    .maybeSingle();
+  const [iqRes, profileRes] = await Promise.all([iqQuery, profileQuery]);
 
   const iq = iqRes.data ?? null;
   const gradeLevel = (profileRes.data?.grade_level as string | null) ?? null;
