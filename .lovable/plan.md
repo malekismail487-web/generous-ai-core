@@ -1,54 +1,57 @@
-# Phase 4 — Per-Output Helpfulness Signal (DONE)
+# Phase 5 — Cold-Start Bootstrap (DONE)
 
-Phases 1–3 are live. Phase 4 closes another part of the loop: every AI
-output can now collect a per-output helpfulness signal (explicit thumbs +
-reason chips, plus implicit dwell / regeneration signals) that flows back
-into the adaptive profile and the teaching-strategy tracker.
+Phases 1–4 are live. Phase 5 closes the "first session" gap: a brand-new
+student now gets a *meaningful* adaptive profile before they've produced
+any behavioral signals, so their very first lecture/chat/quiz is already
+tuned to their grade level and IQ-test results.
 
 ## What shipped
 
-### DB
-- `public.ai_output_signals` — feature, subject, topic, output_hash,
-  output_excerpt, signal kind, optional reason, profile snapshot.
-- RLS: students see/insert their own; teachers + school admins see signals
-  for students in their school; super admin sees all.
-
 ### Client
-- `src/lib/helpfulnessSignal.ts` — `recordHelpfulness(...)`, fail-open.
-  Bumps the profile bus on negative signals (`helpfulness_negative`) and on
-  explicit thumbs-up (`helpfulness_positive`). Feeds outcome into
-  `recordStrategyOutcome` when topic+subject are known so the teaching
-  strategy tracker learns which approach actually helped.
-- `src/components/student/HelpfulnessFeedback.tsx` — compact thumbs +
-  reason chips (`Too easy / Too hard / Confusing / Off-topic`). One-shot
-  per mount, collapses to "Thanks" once submitted.
-- `src/lib/adaptiveProfileBus.ts` — added `helpfulness_negative` and
-  `helpfulness_positive` to `BumpReason`.
-- `src/components/student/LectureGenerator.tsx`:
-  - Mounts `HelpfulnessFeedback` after Key Takeaways.
-  - Tracks refs for output text, topic, subject, profile snapshot.
-  - On regenerate or unmount, fires implicit signal:
-    - dwell < 30s + new generation → `implicit_regen`
-    - dwell ≥ 30s without explicit signal → `implicit_dwell_positive`
-- `src/components/student/AdaptiveDiagnosticsPanel.tsx` — new "Recent
-  helpfulness" section so we can watch signals live.
+- `src/lib/coldStartBootstrap.ts` — fetches `iq_test_results` + `profiles.grade_level`
+  and maps them to:
+  - `seedLevel` from `learning_pace` / `estimated_iq` (with grade-level guardrails)
+  - `seedStyleScores` from the 7 IQ subscales mapped onto the 5
+    ContentModality channels (visual/logical/verbal/kinesthetic/conceptual)
+  - `seedConfidence = 35` (above the <30 "unknown" cutoff so style
+    directives actually fire, well below any earned by real behavior so
+    live engines overwrite it quickly)
+- `src/lib/adaptiveIntelligence.ts`:
+  - `buildIntelligenceProfile` now fetches the seed in parallel with the
+    other data sources and applies it via `shouldApplyColdStart(...)` —
+    only when `answerCount < 5 && behaviorDataPoints < 20` AND no explicit
+    per-subject profile already pinned the level.
+  - Seed lifts `profileCompleteness` by +10 so brand-new students don't
+    show 0% to the rest of the engine.
+  - `generateAdaptiveContext` emits a `COLD-START NOTE` instructing the
+    model to treat the inferred level/style as a starting hypothesis and
+    recalibrate fast.
+  - New `coldStartSeed` field on `StudentIntelligenceProfile` for downstream
+    consumers (diagnostics, future phases).
+- `src/pages/IQTest.tsx` — bumps the profile bus with reason
+  `cold_start_complete` immediately after IQ insert so the next
+  `getContext()` call rebuilds with the fresh seed.
+- `src/components/student/AdaptiveDiagnosticsPanel.tsx` — new "Cold-start
+  seed" section (source, grade, pace, est. IQ) + completeness % so we can
+  see at a glance when a profile is seed-only vs. behaviorally-earned.
 
 ### Verification
-- `bunx tsc -p tsconfig.app.json --noEmit` is clean.
-- Manual smoke pending in dashboard: run a lecture, click 👎 → "Confusing"
-  → diag panel shows signal + a `helpfulness_negative` invalidation in the
-  bus, profile re-reads on next generate.
+- `bunx tsc -p tsconfig.app.json --noEmit` — clean.
+- `scripts/coldStartTest.ts` — gate logic: 4/4 assertions pass
+  (fresh user → applies, override wins, enough behavior skips,
+  enough answers skips).
+- Phase 3 bus reason `cold_start_complete` was already in the enum, so
+  the post-IQ bump flows through invalidation diagnostics unchanged.
 
-## Out of scope for Phase 4 (tracked for later phases)
+## Out of scope (Phase 6)
 
-- Migrating the other 7 AI surfaces (StudyBuddy, Notes, Mind Maps,
-  Practice, etc.) to mount `HelpfulnessFeedback` — Phase 4b cleanup.
-- Cold-start bootstrap (Phase 5).
-- Long-horizon outcome metrics dashboard (Phase 6).
+- Long-horizon outcome metrics dashboard (Phase 6 proper).
+- Migrating the remaining 7 AI surfaces to mount `HelpfulnessFeedback`
+  (Phase 4b cleanup).
 
-## Verification plan for Phase 6
+## Verification plan for after Phase 6
 
-After Phase 6 finishes, re-verify Phases 1–4 end-to-end:
+Re-verify Phases 1–5 end-to-end:
 1. Phase 1 — force a low-quality output, confirm a row in
    `adaptive_quality_scores` and a regeneration.
 2. Phase 2 — switch dominant style and confirm hard-routed template
@@ -58,3 +61,8 @@ After Phase 6 finishes, re-verify Phases 1–4 end-to-end:
 4. Phase 4 — submit 👎 "Too hard" on a lecture, confirm
    `ai_output_signals` row, `helpfulness_negative` invalidation, and that
    the next generated lecture downshifts level/density.
+5. Phase 5 — sign in as a fresh student who just finished the IQ test,
+   confirm the diagnostics panel shows the cold-start seed section, the
+   first lecture context includes the `COLD-START NOTE`, and the level/
+   style match the IQ subscales. Then record 5+ answers and re-open the
+   panel — the seed should disappear as live engines take over.

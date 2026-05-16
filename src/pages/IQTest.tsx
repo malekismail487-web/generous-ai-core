@@ -198,6 +198,12 @@ export default function IQTest() {
           user_id: user!.id, activity_type: 'iq_test_completed', category: 'assessment',
           details_json: { score: results.score, estimated_iq: results.estimatedIQ, learning_pace: results.learningPace, time_taken_seconds: Math.round((Date.now() - startTimeRef.current) / 1000) },
         });
+        // Phase 5: tell the adaptive engine a brand-new seed is available
+        // so the next getContext() call rebuilds the profile immediately.
+        try {
+          const { bumpProfile } = await import('@/lib/adaptiveProfileBus');
+          bumpProfile('cold_start_complete', `iq=${results.estimatedIQ}`);
+        } catch { /* fail-open */ }
       } catch (err) { console.error('Failed to save IQ results:', err); }
       finally { setSaving(false); }
     }

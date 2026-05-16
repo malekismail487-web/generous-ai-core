@@ -39,6 +39,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { getStoredBehavior, classifyQuestion as classifyQuestionModality, type BehavioralDataPoint, type ContentModality } from '@/hooks/useActivityTracker';
 import { bumpProfile } from '@/lib/adaptiveProfileBus';
+import { fetchColdStartSeed, shouldApplyColdStart, type ColdStartSeed } from '@/lib/coldStartBootstrap';
 
 // === Subsystem Imports ===
 import { computeCognitiveState, getCognitiveContextPrompt, recordCognitiveEventByType, type CognitiveState } from '@/lib/adaptive/cognitiveModel';
@@ -124,6 +125,10 @@ export interface StudentIntelligenceProfile {
   // Meta
   profileCompleteness: number; // 0-100, how much data we have
   lastUpdated: string;
+
+  // === COLD-START (Phase 5) ===
+  /** Present iff seed was actually applied to this profile snapshot. */
+  coldStartSeed: ColdStartSeed | null;
 }
 
 /** Configuration for generating adaptive context for different feature types */
@@ -702,13 +707,14 @@ function runSubsystems(
  */
 export async function buildIntelligenceProfile(userId: string): Promise<StudentIntelligenceProfile> {
   // Fetch all data sources in parallel
-  const [answers, profiles, gaps, memories, recentTopics, behaviorData] = await Promise.all([
+  const [answers, profiles, gaps, memories, recentTopics, behaviorData, coldStartSeedRaw] = await Promise.all([
     fetchAnswerHistory(userId),
     fetchLearningProfiles(userId),
     fetchKnowledgeGaps(userId),
     fetchStudentMemories(userId),
     fetchRecentChatTopics(userId),
     Promise.resolve(getStoredBehavior()),
+    fetchColdStartSeed(userId).catch(() => null),
   ]);
 
   // Analyze subject performance
@@ -732,17 +738,38 @@ export async function buildIntelligenceProfile(userId: string): Promise<StudentI
 
   // Determine overall difficulty level
   let overallLevel: 'beginner' | 'intermediate' | 'advanced' = 'intermediate';
+  let hadExplicitLevelOverride = false;
   if (profiles.length > 0) {
     const levelCounts: Record<string, number> = {};
     for (const p of profiles) {
       levelCounts[p.difficulty_level] = (levelCounts[p.difficulty_level] || 0) + 1;
     }
     const topLevel = Object.entries(levelCounts).sort((a, b) => b[1] - a[1])[0];
-    if (topLevel) overallLevel = topLevel[0] as typeof overallLevel;
+    if (topLevel) { overallLevel = topLevel[0] as typeof overallLevel; hadExplicitLevelOverride = true; }
   } else if (overallAccuracy >= 85) {
-    overallLevel = 'advanced';
+    overallLevel = 'advanced'; hadExplicitLevelOverride = true;
   } else if (overallAccuracy < 55) {
-    overallLevel = 'beginner';
+    overallLevel = 'beginner'; hadExplicitLevelOverride = true;
+  }
+
+  // === Phase 5: Cold-start seed ===
+  // Only consulted when the engine really has nothing to say yet.
+  let appliedColdStart: ColdStartSeed | null = null;
+  let finalDominantStyle = styleAnalysis.dominant;
+  let finalSecondaryStyle = styleAnalysis.secondary;
+  let finalStyleScores = styleAnalysis.scores;
+  let finalStyleConfidence = styleAnalysis.confidence;
+  if (coldStartSeedRaw && shouldApplyColdStart({
+    answerCount: totalQuestions,
+    behaviorDataPoints: behaviorData.dataPoints.length,
+    hadExplicitLevelOverride,
+  })) {
+    appliedColdStart = coldStartSeedRaw;
+    if (!hadExplicitLevelOverride) overallLevel = coldStartSeedRaw.seedLevel;
+    finalDominantStyle = coldStartSeedRaw.seedDominantStyle;
+    finalSecondaryStyle = coldStartSeedRaw.seedSecondaryStyle;
+    finalStyleScores = coldStartSeedRaw.seedStyleScores;
+    finalStyleConfidence = Math.max(styleAnalysis.confidence, coldStartSeedRaw.seedConfidence);
   }
 
   // Inactivity tracking
@@ -769,16 +796,17 @@ export async function buildIntelligenceProfile(userId: string): Promise<StudentI
   if (subsystemResults.learningVelocity) completeness += 5;
   if (subsystemResults.retentionSummary) completeness += 5;
   if (subsystemResults.teachingRules.length > 0) completeness += 5;
+  if (appliedColdStart) completeness += 10;
 
   return {
     overallAccuracy,
     subjectPerformances,
     strongestSubjects,
     weakestSubjects,
-    dominantStyle: styleAnalysis.dominant,
-    secondaryStyle: styleAnalysis.secondary,
-    styleScores: styleAnalysis.scores,
-    styleConfidence: styleAnalysis.confidence,
+    dominantStyle: finalDominantStyle,
+    secondaryStyle: finalSecondaryStyle,
+    styleScores: finalStyleScores,
+    styleConfidence: finalStyleConfidence,
     overallLevel,
     activeGaps: gaps.map(g => ({
       subject: g.subject,
@@ -795,6 +823,7 @@ export async function buildIntelligenceProfile(userId: string): Promise<StudentI
     ...subsystemResults,
     profileCompleteness: Math.min(100, completeness),
     lastUpdated: new Date().toISOString(),
+    coldStartSeed: appliedColdStart,
   };
 }
 
@@ -1237,6 +1266,14 @@ export async function generateAdaptiveContext(
 
   // 8. Overall profile summary
   sections.push(`\nPROFILE SUMMARY: ${profile.totalInteractions} total interactions | ${profile.profileCompleteness}% profile completeness | Overall accuracy: ${profile.overallAccuracy}%`);
+
+  // 8b. Cold-start banner — Phase 5
+  if (profile.coldStartSeed) {
+    const s = profile.coldStartSeed;
+    sections.push(
+      `\nCOLD-START NOTE: This is one of the student's first sessions, so the profile above is *seeded* from their onboarding signals (source: ${s.source}; grade: ${s.gradeLevel ?? '—'}; pace: ${s.iq?.learning_pace ?? '—'}). Treat the inferred level and style as a starting hypothesis — probe gently in the first few exchanges and recalibrate fast if responses suggest a different level or modality fits better.`
+    );
+  }
 
   // 9. === SUBSYSTEM CONTEXT INJECTION ===
   const subsystemSections = getSubsystemContextSections(profile, subject);
