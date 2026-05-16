@@ -125,14 +125,16 @@ export async function fetchColdStartSeed(userId: string): Promise<ColdStartSeed 
   if (!userId) return null;
 
   // Two cheap reads in parallel; both are user-scoped via RLS.
-  const iqQuery = supabase
+  // Casts avoid the deeply-nested generic explosion of the supabase
+  // query builder under `Promise.all` — we own the column list above.
+  const iqQuery = (supabase as any)
     .from('iq_test_results')
     .select('processing_speed_score, logical_reasoning_score, pattern_recognition_score, spatial_reasoning_score, verbal_reasoning_score, mathematical_ability_score, abstract_thinking_score, estimated_iq, learning_pace, completed_at')
     .eq('user_id', userId)
     .order('completed_at', { ascending: false })
     .limit(1)
     .maybeSingle();
-  const profileQuery = supabase
+  const profileQuery = (supabase as any)
     .from('profiles')
     .select('grade_level')
     .eq('user_id', userId)
