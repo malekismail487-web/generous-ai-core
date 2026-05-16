@@ -152,8 +152,21 @@ export function AdaptiveDiagnosticsPanel() {
             <div>Dominant style: <span className="font-mono">{snapshot?.style ?? "—"}</span></div>
             <div>Cognitive load: <span className="font-mono">{snapshot?.cognitiveLoad?.toFixed?.(2) ?? "—"}</span></div>
             <div>Fatigue: <span className="font-mono">{snapshot?.fatigueLevel?.toFixed?.(2) ?? "—"}</span></div>
+            <div>Completeness: <span className="font-mono">{snapshot?.completeness ?? "—"}%</span></div>
           </div>
         </section>
+
+        {snapshot?.coldStart && (
+          <section>
+            <div className="font-medium text-muted-foreground mb-1">Cold-start seed</div>
+            <div className="space-y-0.5 font-mono text-[11px]">
+              <div>source: {snapshot.coldStart.source}</div>
+              <div>grade: {snapshot.coldStart.grade ?? "—"}</div>
+              <div>pace: {snapshot.coldStart.pace ?? "—"}</div>
+              <div>est. IQ: {snapshot.coldStart.iq ?? "—"}</div>
+            </div>
+          </section>
+        )}
 
         <section>
           <div className="font-medium text-muted-foreground mb-1">Invalidations ({diag.invalidationCount})</div>
