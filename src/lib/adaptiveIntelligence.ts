@@ -39,6 +39,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { getStoredBehavior, classifyQuestion as classifyQuestionModality, type BehavioralDataPoint, type ContentModality } from '@/hooks/useActivityTracker';
 import { bumpProfile } from '@/lib/adaptiveProfileBus';
+import { fetchColdStartSeed, shouldApplyColdStart, type ColdStartSeed } from '@/lib/coldStartBootstrap';
 
 // === Subsystem Imports ===
 import { computeCognitiveState, getCognitiveContextPrompt, recordCognitiveEventByType, type CognitiveState } from '@/lib/adaptive/cognitiveModel';
