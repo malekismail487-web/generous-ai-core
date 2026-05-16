@@ -1267,6 +1267,14 @@ export async function generateAdaptiveContext(
   // 8. Overall profile summary
   sections.push(`\nPROFILE SUMMARY: ${profile.totalInteractions} total interactions | ${profile.profileCompleteness}% profile completeness | Overall accuracy: ${profile.overallAccuracy}%`);
 
+  // 8b. Cold-start banner — Phase 5
+  if (profile.coldStartSeed) {
+    const s = profile.coldStartSeed;
+    sections.push(
+      `\nCOLD-START NOTE: This is one of the student's first sessions, so the profile above is *seeded* from their onboarding signals (source: ${s.source}; grade: ${s.gradeLevel ?? '—'}; pace: ${s.iq?.learning_pace ?? '—'}). Treat the inferred level and style as a starting hypothesis — probe gently in the first few exchanges and recalibrate fast if responses suggest a different level or modality fits better.`
+    );
+  }
+
   // 9. === SUBSYSTEM CONTEXT INJECTION ===
   const subsystemSections = getSubsystemContextSections(profile, subject);
   sections.push(...subsystemSections);
