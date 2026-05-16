@@ -707,13 +707,14 @@ function runSubsystems(
  */
 export async function buildIntelligenceProfile(userId: string): Promise<StudentIntelligenceProfile> {
   // Fetch all data sources in parallel
-  const [answers, profiles, gaps, memories, recentTopics, behaviorData] = await Promise.all([
+  const [answers, profiles, gaps, memories, recentTopics, behaviorData, coldStartSeedRaw] = await Promise.all([
     fetchAnswerHistory(userId),
     fetchLearningProfiles(userId),
     fetchKnowledgeGaps(userId),
     fetchStudentMemories(userId),
     fetchRecentChatTopics(userId),
     Promise.resolve(getStoredBehavior()),
+    fetchColdStartSeed(userId).catch(() => null),
   ]);
 
   // Analyze subject performance
