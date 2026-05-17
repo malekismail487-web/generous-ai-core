@@ -60,6 +60,7 @@ export function AdaptiveDiagnosticsPanel() {
   } | null>(null);
   const [scores, setScores] = useState<Array<{ score: number; feature: string; created_at: string; regenerated: boolean }>>([]);
   const [signals, setSignals] = useState<Array<{ signal: string; feature: string; created_at: string }>>([]);
+  const [outcomes, setOutcomes] = useState<OutcomeMetricsResult | null>(null);
 
   // Subscribe to bus to repaint when version changes
   useEffect(() => {
