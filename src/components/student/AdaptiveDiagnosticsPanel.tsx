@@ -126,6 +126,19 @@ export function AdaptiveDiagnosticsPanel() {
     return () => { cancelled = true; };
   }, [enabled, userId, profileVersion]);
 
+  // Phase 6: long-horizon outcomes (refresh only on version change, not every render)
+  useEffect(() => {
+    if (!enabled || !userId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const m = await computeOutcomeMetrics(userId);
+        if (!cancelled) setOutcomes(m);
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [enabled, userId, profileVersion]);
+
   const diag = useMemo(() => getInvalidationDiagnostics(), [profileVersion]);
 
   if (!enabled) return null;
