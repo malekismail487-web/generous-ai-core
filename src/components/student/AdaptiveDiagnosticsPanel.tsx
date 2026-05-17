@@ -252,6 +252,41 @@ export function AdaptiveDiagnosticsPanel() {
             </ul>
           )}
         </section>
+
+        <section>
+          <div className="font-medium text-muted-foreground mb-1">Outcome metrics (last 7d / Δ vs prior 7d)</div>
+          {!outcomes ? (
+            <div className="text-muted-foreground italic">Insufficient data</div>
+          ) : (
+            <div className="space-y-0.5 font-mono text-[11px]">
+              {(['accuracyDelta','qualityDelta','helpfulnessDelta'] as const).map((k) => {
+                const label = k === 'accuracyDelta' ? 'accuracy' : k === 'qualityDelta' ? 'quality' : 'helpfulness+';
+                const w = outcomes.windows.last7;
+                const base = k === 'accuracyDelta' ? w.accuracy : k === 'qualityDelta' ? w.qualityAvg : w.helpfulnessPositiveRate;
+                const d = formatDelta(outcomes.trends[k]);
+                const toneClass = d.tone === 'up' ? 'text-foreground' : d.tone === 'down' ? 'text-destructive' : 'text-muted-foreground';
+                return (
+                  <div key={k} className="flex justify-between gap-2">
+                    <span>{label}: {formatRate(base, 1)}</span>
+                    <span className={toneClass}>{d.text}</span>
+                  </div>
+                );
+              })}
+              <div className="flex justify-between gap-2 pt-1 border-t border-border/40 mt-1">
+                <span>regen rate (7d)</span>
+                <span>{formatRate(outcomes.windows.last7.qualityRegenRate, 1)}</span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span>samples (q/sig/ans)</span>
+                <span>
+                  {outcomes.windows.last7.qualitySampleCount}/
+                  {outcomes.windows.last7.helpfulnessSampleCount}/
+                  {outcomes.windows.last7.answerCount}
+                </span>
+              </div>
+            </div>
+          )}
+        </section>
       </ScrollArea>
 
       <div className="px-3 py-2 border-t border-border text-[10px] text-muted-foreground">
