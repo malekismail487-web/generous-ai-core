@@ -27,6 +27,12 @@ import {
 } from "@/lib/adaptiveProfileBus";
 import { useAdaptiveIntelligence } from "@/hooks/useAdaptiveIntelligence";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  computeOutcomeMetrics,
+  formatRate,
+  formatDelta,
+  type OutcomeMetricsResult,
+} from "@/lib/outcomeMetrics";
 
 function isEnabled(): boolean {
   if (typeof window === "undefined") return false;
