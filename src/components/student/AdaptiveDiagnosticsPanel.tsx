@@ -27,6 +27,12 @@ import {
 } from "@/lib/adaptiveProfileBus";
 import { useAdaptiveIntelligence } from "@/hooks/useAdaptiveIntelligence";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  computeOutcomeMetrics,
+  formatRate,
+  formatDelta,
+  type OutcomeMetricsResult,
+} from "@/lib/outcomeMetrics";
 
 function isEnabled(): boolean {
   if (typeof window === "undefined") return false;
@@ -54,6 +60,7 @@ export function AdaptiveDiagnosticsPanel() {
   } | null>(null);
   const [scores, setScores] = useState<Array<{ score: number; feature: string; created_at: string; regenerated: boolean }>>([]);
   const [signals, setSignals] = useState<Array<{ signal: string; feature: string; created_at: string }>>([]);
+  const [outcomes, setOutcomes] = useState<OutcomeMetricsResult | null>(null);
 
   // Subscribe to bus to repaint when version changes
   useEffect(() => {
@@ -114,6 +121,19 @@ export function AdaptiveDiagnosticsPanel() {
         if (cancelled) return;
         if (qs) setScores(qs as any);
         if (sigs) setSignals(sigs as any);
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [enabled, userId, profileVersion]);
+
+  // Phase 6: long-horizon outcomes (refresh only on version change, not every render)
+  useEffect(() => {
+    if (!enabled || !userId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const m = await computeOutcomeMetrics(userId);
+        if (!cancelled) setOutcomes(m);
       } catch { /* ignore */ }
     })();
     return () => { cancelled = true; };
@@ -230,6 +250,41 @@ export function AdaptiveDiagnosticsPanel() {
                 );
               })}
             </ul>
+          )}
+        </section>
+
+        <section>
+          <div className="font-medium text-muted-foreground mb-1">Outcome metrics (last 7d / Δ vs prior 7d)</div>
+          {!outcomes ? (
+            <div className="text-muted-foreground italic">Insufficient data</div>
+          ) : (
+            <div className="space-y-0.5 font-mono text-[11px]">
+              {(['accuracyDelta','qualityDelta','helpfulnessDelta'] as const).map((k) => {
+                const label = k === 'accuracyDelta' ? 'accuracy' : k === 'qualityDelta' ? 'quality' : 'helpfulness+';
+                const w = outcomes.windows.last7;
+                const base = k === 'accuracyDelta' ? w.accuracy : k === 'qualityDelta' ? w.qualityAvg : w.helpfulnessPositiveRate;
+                const d = formatDelta(outcomes.trends[k]);
+                const toneClass = d.tone === 'up' ? 'text-foreground' : d.tone === 'down' ? 'text-destructive' : 'text-muted-foreground';
+                return (
+                  <div key={k} className="flex justify-between gap-2">
+                    <span>{label}: {formatRate(base, 1)}</span>
+                    <span className={toneClass}>{d.text}</span>
+                  </div>
+                );
+              })}
+              <div className="flex justify-between gap-2 pt-1 border-t border-border/40 mt-1">
+                <span>regen rate (7d)</span>
+                <span>{formatRate(outcomes.windows.last7.qualityRegenRate, 1)}</span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span>samples (q/sig/ans)</span>
+                <span>
+                  {outcomes.windows.last7.qualitySampleCount}/
+                  {outcomes.windows.last7.helpfulnessSampleCount}/
+                  {outcomes.windows.last7.answerCount}
+                </span>
+              </div>
+            </div>
           )}
         </section>
       </ScrollArea>
