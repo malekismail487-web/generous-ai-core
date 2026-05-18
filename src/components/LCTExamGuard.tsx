@@ -37,12 +37,6 @@ export default function LCTExamGuard({ children }: LCTExamGuardProps) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const retriesRef = useRef(0);
   const userIdRef = useRef<string | null>(null);
-  const [lockData, setLockData] = useState<LockData | null>(null);
-  const [checking, setChecking] = useState(true);
-  const [checkFailed, setCheckFailed] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const retriesRef = useRef(0);
-  const userIdRef = useRef<string | null>(null);
 
   // Track user ID changes
   useEffect(() => {
