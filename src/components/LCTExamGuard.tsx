@@ -121,7 +121,7 @@ export default function LCTExamGuard({ children }: LCTExamGuardProps) {
   // ─── Periodic Re-check ───────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!user || authLoading || checking) return;
+    if (!user || authLoading || checking || isSuperAdmin) return;
 
     const interval = setInterval(async () => {
       if (!navigator.onLine) return;
