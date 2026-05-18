@@ -26,8 +26,11 @@ interface LCTExamGuardProps {
 
 // ─── Component ──────────────────────────────────────────────────────────────────
 
+const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
+
 export default function LCTExamGuard({ children }: LCTExamGuardProps) {
   const { user, loading: authLoading } = useAuth();
+  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
   const [lockData, setLockData] = useState<LockData | null>(null);
   const [checking, setChecking] = useState(true);
   const [checkFailed, setCheckFailed] = useState(false);
@@ -65,7 +68,7 @@ export default function LCTExamGuard({ children }: LCTExamGuardProps) {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
+    if (!user || isSuperAdmin) {
       setLockData(null);
       setChecking(false);
       return;
@@ -118,7 +121,7 @@ export default function LCTExamGuard({ children }: LCTExamGuardProps) {
   // ─── Periodic Re-check ───────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!user || authLoading || checking) return;
+    if (!user || authLoading || checking || isSuperAdmin) return;
 
     const interval = setInterval(async () => {
       if (!navigator.onLine) return;
@@ -137,7 +140,7 @@ export default function LCTExamGuard({ children }: LCTExamGuardProps) {
   // ─── Re-check when coming back online ─────────────────────────────────────
 
   useEffect(() => {
-    if (isOnline && user && !checking) {
+    if (isOnline && user && !checking && !isSuperAdmin) {
       checkLock(user.id)
         .then(result => {
           setLockData(result);
