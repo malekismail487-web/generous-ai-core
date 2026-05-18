@@ -68,7 +68,7 @@ export default function LCTExamGuard({ children }: LCTExamGuardProps) {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
+    if (!user || isSuperAdmin) {
       setLockData(null);
       setChecking(false);
       return;
