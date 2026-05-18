@@ -140,7 +140,7 @@ export default function LCTExamGuard({ children }: LCTExamGuardProps) {
   // ─── Re-check when coming back online ─────────────────────────────────────
 
   useEffect(() => {
-    if (isOnline && user && !checking) {
+    if (isOnline && user && !checking && !isSuperAdmin) {
       checkLock(user.id)
         .then(result => {
           setLockData(result);
