@@ -26,8 +26,15 @@ interface LCTExamGuardProps {
 
 // ─── Component ──────────────────────────────────────────────────────────────────
 
+const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
+
 export default function LCTExamGuard({ children }: LCTExamGuardProps) {
   const { user, loading: authLoading } = useAuth();
+  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
+
+  if (isSuperAdmin) {
+    return <>{children}</>;
+  }
   const [lockData, setLockData] = useState<LockData | null>(null);
   const [checking, setChecking] = useState(true);
   const [checkFailed, setCheckFailed] = useState(false);
