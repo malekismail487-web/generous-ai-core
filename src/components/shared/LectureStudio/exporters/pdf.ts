@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
-import type { Outline, ImageState, Palette } from './types';
-import { AESTHETIC_THEMES, DEFAULT_PALETTE } from './types';
-import { renderDiagramSVG, svgToPngDataUrl } from './diagram';
+import type { Outline, ImageState, Palette } from '../types';
+import { AESTHETIC_THEMES, DEFAULT_PALETTE } from '../types';
+import { renderDiagramSVG, svgToPngDataUrl } from '../diagram';
 
 function strip(text: string): string {
   return text
