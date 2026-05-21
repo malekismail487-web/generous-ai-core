@@ -424,7 +424,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
               topic={topic || undefined}
               output={lastOutputTextRef.current}
               profileSnapshot={profileSnapshotRef.current ?? undefined}
-              onSubmitted={() => { signalGivenRef.current = true; }}
+              onRecorded={() => { signalGivenRef.current = true; }}
             />
           )}
         </article>
