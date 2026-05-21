@@ -326,7 +326,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
         </Button>
         {outline && phase === 'ready' && (
           <div className="flex gap-2">
-            {mode === 'teacher' && (
+            {mode === 'teacher' && schoolId && (
               <Button size="sm" variant="outline" onClick={saveAsLessonPlan} disabled={isSaving}>
                 {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Save
