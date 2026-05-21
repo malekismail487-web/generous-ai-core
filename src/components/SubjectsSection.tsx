@@ -18,7 +18,7 @@ import { useActivityTracker } from '@/hooks/useActivityTracker';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 import { exportAsPDF, exportAsDOCX, exportAsPPTX } from '@/lib/lectureExport';
-import { LectureGenerator } from '@/components/student/LectureGenerator';
+import { LectureStudio } from '@/components/shared/LectureStudio/LectureStudio';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -587,7 +587,7 @@ Use age-appropriate language for ${selectedGrade}.`;
     if (showVisualLecture) {
       return (
         <div className={containerClass}>
-          <LectureGenerator
+          <LectureStudio
             defaultSubject={getSubjectName(selectedSubject, 'en')}
             onBack={() => setShowVisualLecture(false)}
           />
