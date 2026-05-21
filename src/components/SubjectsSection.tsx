@@ -587,7 +587,7 @@ Use age-appropriate language for ${selectedGrade}.`;
     if (showVisualLecture) {
       return (
         <div className={containerClass}>
-          <LectureGenerator
+          <LectureStudio
             defaultSubject={getSubjectName(selectedSubject, 'en')}
             onBack={() => setShowVisualLecture(false)}
           />
