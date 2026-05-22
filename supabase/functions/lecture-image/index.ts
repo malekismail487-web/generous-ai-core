@@ -11,7 +11,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, expertise = "intermediate" } = await req.json();
+    const { prompt, expertise = "intermediate", mode = "illustration" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
     if (!prompt || typeof prompt !== "string") {
@@ -20,11 +20,15 @@ serve(async (req) => {
       });
     }
 
-    const styleSuffix = expertise === "basic"
-      ? "Friendly textbook-style illustration. Bright clear colors. No text, no watermark, no labels."
-      : expertise === "expert"
-        ? "Highly detailed scientific visualization, near publication quality. Realistic, accurate proportions. No text, no watermark, no labels."
-        : "Detailed photorealistic or polished educational illustration. Accurate, professional. No text, no watermark, no labels.";
+    const isHero = mode === "hero_subject";
+
+    const styleSuffix = isHero
+      ? "Single isolated subject, perfectly centered, cinematic studio lighting, dramatic rim light, museum-quality. Pure transparent background (no scene, no floor, no shadow, no ground plane). High-resolution cutout, sharp edges, no text, no watermark, no labels, no logos."
+      : expertise === "basic"
+        ? "Friendly textbook-style illustration. Bright clear colors. No text, no watermark, no labels."
+        : expertise === "expert"
+          ? "Highly detailed scientific visualization, near publication quality. Realistic, accurate proportions. No text, no watermark, no labels."
+          : "Detailed photorealistic or polished educational illustration. Accurate, professional. No text, no watermark, no labels.";
 
     const fullPrompt = `${prompt}\n\nStyle: ${styleSuffix}`;
 
