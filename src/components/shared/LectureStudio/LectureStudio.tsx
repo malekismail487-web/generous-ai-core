@@ -20,6 +20,7 @@ import { renderDiagramSVG } from './diagram';
 import { exportLectureAsPDF } from './exporters/pdf';
 import { exportLectureAsDOCX } from './exporters/docx';
 import { exportLectureAsPPTX } from './exporters/pptx';
+import { SlidePreview } from './SlidePreview';
 
 const EXPERTISE_OPTIONS: { value: Expertise; label: string; desc: string }[] = [
   { value: 'basic', label: 'Basic', desc: '8th grade — simple language' },
@@ -31,13 +32,13 @@ const EXPERTISE_OPTIONS: { value: Expertise; label: string; desc: string }[] = [
 const GRADE_OPTIONS = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
 const DURATION_OPTIONS = ['30','45','60','90','120'];
 
-async function callImage(prompt: string, expertise: Expertise): Promise<string> {
+async function callImage(prompt: string, expertise: Expertise, mode: 'illustration' | 'hero_subject' = 'illustration'): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();
   const auth = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lecture-image`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth}` },
-    body: JSON.stringify({ prompt, expertise }),
+    body: JSON.stringify({ prompt, expertise, mode }),
   });
   if (!res.ok) throw new Error(`image_${res.status}`);
   const j = await res.json();
@@ -72,6 +73,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
   const [phase, setPhase] = useState<'idle' | 'outlining' | 'imaging' | 'ready'>('idle');
   const [outline, setOutline] = useState<Outline | null>(null);
   const [images, setImages] = useState<ImageState[]>([]);
+  const [heroUrl, setHeroUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [isExporting, setIsExporting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -106,7 +108,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
     if (!topic.trim()) { toast({ variant: 'destructive', title: 'Enter a topic' }); return; }
     flushImplicitSignal('implicit_regen');
     cancelRef.current = false;
-    setPhase('outlining'); setOutline(null); setImages([]); setProgress({ done: 0, total: 0 });
+    setPhase('outlining'); setOutline(null); setImages([]); setHeroUrl(null); setProgress({ done: 0, total: 0 });
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -177,7 +179,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
       setPhase('imaging');
 
       let done = 0;
-      await Promise.allSettled(out.paragraphs.map((p, i) =>
+      const paragraphJobs = out.paragraphs.map((p, i) =>
         callImage(p.image_prompt, expertise)
           .then((url) => {
             if (cancelRef.current) return;
@@ -187,7 +189,16 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
             setImages((prev) => { const n = [...prev]; n[i] = { status: 'failed' }; return n; });
           })
           .finally(() => { done += 1; setProgress({ done, total }); })
-      ));
+      );
+
+      // Hero subject — generated in parallel, used on EVERY slide
+      const heroJob = out.hero_subject_prompt
+        ? callImage(out.hero_subject_prompt, expertise, 'hero_subject')
+            .then((url) => { if (!cancelRef.current) setHeroUrl(url); })
+            .catch((e) => { console.warn('hero failed', e); })
+        : Promise.resolve();
+
+      await Promise.allSettled([...paragraphJobs, heroJob]);
 
       if (!cancelRef.current) setPhase('ready');
     } catch (e: any) {
@@ -203,7 +214,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
     try {
       if (kind === 'pdf') await exportLectureAsPDF(outline, images);
       else if (kind === 'docx') await exportLectureAsDOCX(outline, images);
-      else await exportLectureAsPPTX(outline, images);
+      else await exportLectureAsPPTX(outline, images, heroUrl);
       toast({ title: `${kind.toUpperCase()} downloaded` });
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Export failed', description: e.message });
@@ -372,6 +383,10 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
               </p>
             )}
           </header>
+
+          {phase === 'ready' && (
+            <SlidePreview outline={outline} images={images} heroUrl={heroUrl} />
+          )}
 
           <section className="text-base leading-relaxed">
             <MathRenderer content={outline.intro} />

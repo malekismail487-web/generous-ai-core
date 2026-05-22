@@ -1,9 +1,11 @@
-import type { Outline, ImageState, Palette, SlideTransition, Aesthetic } from '../types';
+import type { Outline, ImageState, Palette, SlideTransition, Paragraph, HeroMotion } from '../types';
 import { AESTHETIC_THEMES, DEFAULT_PALETTE } from '../types';
 import { renderDiagramSVG, svgToPngDataUrl } from '../diagram';
 
+// ---------- helpers ----------
+
 function strip(text: string): string {
-  return text
+  return (text || '')
     .replace(/\*\*(.*?)\*\*/g, '$1')
     .replace(/\*(.*?)\*/g, '$1')
     .replace(/`{1,3}(.*?)`{1,3}/gs, '$1')
@@ -11,8 +13,7 @@ function strip(text: string): string {
     .replace(/\$(.*?)\$/g, '$1')
     .trim();
 }
-
-const noHash = (h: string) => h.replace('#', '').toUpperCase();
+const noHash = (h: string) => (h || '').replace('#', '').toUpperCase().padEnd(6, '0').slice(0, 6);
 
 async function urlToBase64(url: string): Promise<string | null> {
   try {
@@ -27,213 +28,437 @@ async function urlToBase64(url: string): Promise<string | null> {
   } catch { return null; }
 }
 
-/** Pick a per-slide layout variant index so the deck doesn't feel monotonous. */
-function variantFor(i: number, aesthetic: Aesthetic): 'image_right' | 'image_left' | 'image_full' | 'image_top' {
-  // editorial / vibrant aesthetics tolerate more variation; minimal stays steadier.
-  const cycle = (aesthetic === 'modern_minimal' || aesthetic === 'scholarly_serif')
-    ? ['image_right', 'image_left']
-    : ['image_right', 'image_left', 'image_full', 'image_top'];
-  return cycle[i % cycle.length] as any;
+const W = 13.333;
+const H = 7.5;
+
+interface ThemeCtx {
+  headingFace: string;
+  bodyFace: string;
+  bg: string;        // no-hash
+  fg: string;        // no-hash
+  primary: string;
+  secondary: string;
+  accent: string;
+  surface: string;
+  transition: SlideTransition;
+  isDark: boolean;
 }
+
+function buildTheme(outline: Outline): ThemeCtx {
+  const palette: Palette = outline.palette || DEFAULT_PALETTE;
+  const aTheme = AESTHETIC_THEMES[outline.aesthetic] || AESTHETIC_THEMES.cinematic_editorial;
+  const bg = noHash(aTheme.bgHex);
+  const isDark = parseInt(bg, 16) < 0x808080;
+  const fg = noHash(aTheme.fgHex);
+  return {
+    headingFace: aTheme.fontFace,
+    bodyFace: aTheme.bodyFontFace,
+    bg, fg,
+    primary: noHash(palette.primary),
+    secondary: noHash(palette.secondary),
+    accent: noHash(palette.accent),
+    surface: noHash(palette.surface),
+    transition: outline.transition || 'morph',
+    isDark,
+  };
+}
+
+function applyTransition(slide: any, theme: ThemeCtx) {
+  try { slide.transition = { type: theme.transition }; } catch { /* ignore */ }
+}
+
+/** Cinematic master: pure bg + thin frame + footer chip */
+function paintMaster(slide: any, theme: ThemeCtx, opts: { footer?: string; page?: string } = {}) {
+  slide.background = { color: theme.bg };
+  // Hairline frame for editorial feel
+  slide.addShape('rect' as any, {
+    x: 0.35, y: 0.35, w: W - 0.7, h: H - 0.7,
+    line: { color: theme.fg, width: 0.5, transparency: 70 }, fill: { type: 'none' } as any,
+  });
+  if (opts.footer) {
+    slide.addText(opts.footer, {
+      x: 0.5, y: H - 0.4, w: 6, h: 0.3, fontSize: 9, color: theme.fg, fontFace: theme.bodyFace,
+      transparency: 50,
+    });
+  }
+  if (opts.page) {
+    slide.addText(opts.page, {
+      x: W - 2, y: H - 0.4, w: 1.5, h: 0.3, fontSize: 9, color: theme.fg, fontFace: theme.bodyFace,
+      align: 'right', transparency: 50,
+    });
+  }
+}
+
+/** Hero placement options derived from a normalized HeroMotion + a fallback motion. */
+function heroRect(motion: HeroMotion | undefined, fallbackIdx: number, total: number) {
+  const t = total > 1 ? fallbackIdx / (total - 1) : 0;
+  const m: HeroMotion = motion || {
+    x: 0.3 + 0.4 * Math.sin(t * Math.PI),
+    y: 0.45 + 0.1 * Math.cos(t * Math.PI * 1.3),
+    scale: 0.55 + 0.35 * Math.cos(t * Math.PI),
+    rotate: Math.round(-15 + 30 * t),
+    opacity: 1,
+  };
+  const heightIn = Math.max(2, Math.min(H * 1.4, H * m.scale));
+  const widthIn = heightIn; // square framing; transparent cutout keeps proportions
+  const cx = m.x * W;
+  const cy = m.y * H;
+  return {
+    x: cx - widthIn / 2, y: cy - heightIn / 2, w: widthIn, h: heightIn,
+    rotate: m.rotate || 0,
+    opacity: typeof m.opacity === 'number' ? m.opacity : 1,
+  };
+}
+
+function addHero(slide: any, heroData: string | null, motion: HeroMotion | undefined, fallbackIdx: number, total: number) {
+  if (!heroData) return;
+  const r = heroRect(motion, fallbackIdx, total);
+  const opts: any = {
+    data: heroData,
+    x: Math.max(-2, r.x), y: Math.max(-2, r.y), w: r.w, h: r.h,
+    rotate: r.rotate,
+    sizing: { type: 'contain', w: r.w, h: r.h },
+    // Shared name is what unlocks PowerPoint Morph between slides.
+    altText: 'lumina_hero',
+  };
+  if (r.opacity < 1) opts.transparency = Math.round((1 - r.opacity) * 100);
+  try { slide.addImage(opts); } catch (e) { console.warn('addHero failed', e); }
+}
+
+function addRing(slide: any, theme: ThemeCtx, cx: number, cy: number, diameter: number) {
+  slide.addShape('ellipse' as any, {
+    x: cx - diameter / 2, y: cy - diameter / 2, w: diameter, h: diameter,
+    line: { color: theme.fg, width: 1, transparency: 40 }, fill: { type: 'none' } as any,
+    altText: 'lumina_ring',
+  });
+}
+
+// ---------- layout renderers ----------
+
+function renderCover(slide: any, theme: ThemeCtx, outline: Outline, heroData: string | null) {
+  paintMaster(slide, theme);
+  addHero(slide, heroData, { x: 0.72, y: 0.55, scale: 1.15, rotate: -6, opacity: 1 }, 0, 1);
+
+  slide.addText(strip(outline.title), {
+    x: 0.7, y: H / 2 - 1.2, w: W * 0.55, h: 2.4,
+    fontSize: 56, bold: true, color: theme.fg, fontFace: theme.headingFace,
+    valign: 'middle', align: 'left', lineSpacingMultiple: 0.95,
+  });
+  if (outline.theme_tagline) {
+    slide.addText(strip(outline.theme_tagline), {
+      x: 0.7, y: H / 2 + 1.3, w: W * 0.55, h: 0.5,
+      fontSize: 16, italic: true, color: theme.fg, fontFace: theme.bodyFace, transparency: 30,
+    });
+  }
+  slide.addText('A LUMINA LECTURE', {
+    x: 0.7, y: 0.55, w: 4, h: 0.4, fontSize: 10, bold: true, color: theme.fg,
+    fontFace: theme.bodyFace, charSpacing: 6, transparency: 40,
+  });
+  applyTransition(slide, theme);
+}
+
+function renderRingPortrait(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
+  paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
+  const cx = W * 0.3, cy = H * 0.55, diameter = 4.6;
+  addRing(slide, theme, cx, cy, diameter);
+  addHero(slide, heroData || illustration, p.hero_motion || { x: 0.3, y: 0.55, scale: 0.55, rotate: 0 }, idx, total);
+
+  slide.addText(`0${(idx % 9) + 1}`, {
+    x: W * 0.55, y: 0.7, w: 2, h: 0.5, fontSize: 12, color: theme.fg, transparency: 50,
+    fontFace: theme.bodyFace, charSpacing: 4,
+  });
+  slide.addText(strip(p.heading), {
+    x: W * 0.55, y: 1.3, w: W * 0.4, h: 1.5,
+    fontSize: 34, bold: true, color: theme.fg, fontFace: theme.headingFace, valign: 'top',
+    lineSpacingMultiple: 1.0,
+  });
+  const bullets = (p.bullet_points || []).slice(0, 3).map((b) => ({
+    text: strip(b),
+    options: { bullet: { code: '25A0' }, color: theme.fg, fontSize: 16, fontFace: theme.bodyFace, breakLine: true },
+  }));
+  slide.addText(bullets as any, {
+    x: W * 0.55, y: 3.0, w: W * 0.4, h: H - 3.7, valign: 'top', paraSpaceAfter: 8,
+  });
+  applyTransition(slide, theme);
+}
+
+function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null) {
+  paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
+  const cx = W / 2, cy = H / 2;
+  addRing(slide, theme, cx, cy, 3.6);
+  addHero(slide, heroData, p.hero_motion || { x: 0.5, y: 0.5, scale: 0.45, rotate: 4 }, idx, total);
+
+  slide.addText(strip(p.heading), {
+    x: 0.7, y: 0.55, w: W - 1.4, h: 0.6,
+    fontSize: 22, bold: true, color: theme.fg, fontFace: theme.headingFace, align: 'center',
+  });
+
+  const bullets = (p.bullet_points && p.bullet_points.length >= 3
+    ? p.bullet_points.slice(0, 4)
+    : [...(p.bullet_points || []), p.concept_keyword || strip(p.heading)].slice(0, 4)
+  );
+  while (bullets.length < 4) bullets.push(p.concept_keyword || 'Key idea');
+
+  const quads: Array<{ x: number; y: number; align: 'left' | 'right' }> = [
+    { x: 0.7,            y: 1.4,            align: 'left'  },
+    { x: W - 4.0 - 0.3,  y: 1.4,            align: 'right' },
+    { x: 0.7,            y: H - 1.8,        align: 'left'  },
+    { x: W - 4.0 - 0.3,  y: H - 1.8,        align: 'right' },
+  ];
+  quads.forEach((q, i) => {
+    slide.addText(`0${i + 1}`, {
+      x: q.x, y: q.y, w: 0.5, h: 0.35, fontSize: 10, color: theme.fg, transparency: 50, align: q.align,
+      fontFace: theme.bodyFace, charSpacing: 4,
+    });
+    slide.addText(strip(bullets[i]), {
+      x: q.x, y: q.y + 0.4, w: 4.0, h: 1.2,
+      fontSize: 16, color: theme.fg, fontFace: theme.bodyFace, align: q.align, valign: 'top',
+      lineSpacingMultiple: 1.1,
+    });
+  });
+  applyTransition(slide, theme);
+}
+
+function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, side: 'left' | 'right') {
+  paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
+  const heroX = side === 'left' ? 0.28 : 0.72;
+  addHero(slide, heroData, p.hero_motion || { x: heroX, y: 0.5, scale: 0.9, rotate: side === 'left' ? 6 : -6 }, idx, total);
+
+  const textX = side === 'left' ? W * 0.5 + 0.2 : 0.7;
+  slide.addText(strip(p.heading), {
+    x: textX, y: 1.0, w: W * 0.45, h: 1.6,
+    fontSize: 30, bold: true, color: theme.fg, fontFace: theme.headingFace, valign: 'top',
+    lineSpacingMultiple: 1.0,
+  });
+  const bullets = (p.bullet_points || []).slice(0, 4).map((b) => ({
+    text: strip(b),
+    options: { bullet: { code: '25A0' }, color: theme.fg, fontSize: 15, fontFace: theme.bodyFace, breakLine: true },
+  }));
+  slide.addText(bullets as any, {
+    x: textX, y: 2.8, w: W * 0.45, h: H - 3.5, valign: 'top', paraSpaceAfter: 8,
+  });
+  applyTransition(slide, theme);
+}
+
+function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null) {
+  paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
+  addHero(slide, heroData, p.hero_motion || { x: 0.88, y: 0.85, scale: 0.5, rotate: -10, opacity: 0.85 }, idx, total);
+
+  slide.addText(strip(p.concept_keyword || p.heading).toUpperCase(), {
+    x: 0.7, y: 1.0, w: W - 1.4, h: 0.5, fontSize: 12, color: theme.fg, transparency: 40,
+    fontFace: theme.bodyFace, charSpacing: 6,
+  });
+  slide.addText(strip(p.heading), {
+    x: 0.7, y: 1.7, w: W * 0.65, h: 3.0,
+    fontSize: 96, bold: true, color: theme.fg, fontFace: theme.headingFace, valign: 'top',
+    lineSpacingMultiple: 0.9,
+  });
+  const supporting = (p.bullet_points && p.bullet_points[0]) || strip(p.body).slice(0, 160);
+  slide.addText(strip(supporting), {
+    x: 0.7, y: H - 1.7, w: W * 0.55, h: 1.0,
+    fontSize: 16, color: theme.fg, fontFace: theme.bodyFace, valign: 'top', transparency: 15,
+  });
+  applyTransition(slide, theme);
+}
+
+/** Real 3-D isometric cube built from three rotated rhombus shapes (top, left, right). */
+function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number) {
+  paintMaster(slide, theme, { footer: 'LUMINA · CONCEPT', page: `${idx + 1} / ${total}` });
+  slide.addText('CORE CONCEPT', {
+    x: 0.7, y: 0.7, w: 4, h: 0.4, fontSize: 11, color: theme.fg, transparency: 40,
+    fontFace: theme.bodyFace, charSpacing: 6,
+  });
+  slide.addText(strip(p.heading), {
+    x: 0.7, y: 1.2, w: W * 0.45, h: 1.6,
+    fontSize: 36, bold: true, color: theme.fg, fontFace: theme.headingFace, lineSpacingMultiple: 1.0,
+  });
+  slide.addText(strip(p.body).split('. ').slice(0, 2).join('. ') + '.', {
+    x: 0.7, y: 3.0, w: W * 0.45, h: 3.5,
+    fontSize: 14, color: theme.fg, fontFace: theme.bodyFace, valign: 'top', transparency: 15,
+    lineSpacingMultiple: 1.35,
+  });
+
+  // ----- Isometric cube on right side -----
+  const cx = W * 0.74, cy = H * 0.52;
+  const s = 1.55;                 // face half-width
+  const cubeColor = theme.accent;
+  // Top face (rhombus pointing up)
+  slide.addShape('diamond' as any, {
+    x: cx - s, y: cy - s * 1.5, w: s * 2, h: s,
+    fill: { color: cubeColor, transparency: 10 },
+    line: { color: theme.fg, width: 0.75 },
+    altText: 'lumina_cube_top',
+  });
+  // Left face (parallelogram tilted)
+  slide.addShape('parallelogram' as any, {
+    x: cx - s * 1.05, y: cy - s * 0.5, w: s * 1.1, h: s * 1.7,
+    rotate: 0,
+    fill: { color: cubeColor, transparency: 35 },
+    line: { color: theme.fg, width: 0.75 },
+    altText: 'lumina_cube_left',
+  });
+  // Right face
+  slide.addShape('parallelogram' as any, {
+    x: cx - 0.05, y: cy - s * 0.5, w: s * 1.1, h: s * 1.7,
+    flipH: true,
+    fill: { color: cubeColor, transparency: 55 },
+    line: { color: theme.fg, width: 0.75 },
+    altText: 'lumina_cube_right',
+  });
+  // Concept keyword overlaid on top face
+  slide.addText(strip(p.concept_keyword || p.heading).slice(0, 18), {
+    x: cx - s, y: cy - s * 1.25, w: s * 2, h: 0.6,
+    fontSize: 14, bold: true, color: theme.fg, fontFace: theme.headingFace, align: 'center',
+  });
+  applyTransition(slide, theme);
+}
+
+function renderChapter(slide: any, theme: ThemeCtx, label: string, heroData: string | null) {
+  paintMaster(slide, theme);
+  addHero(slide, heroData, { x: 0.85, y: 0.5, scale: 1.3, rotate: 8, opacity: 0.6 }, 0, 1);
+  slide.addText(label.toUpperCase(), {
+    x: 0.7, y: 0.7, w: 4, h: 0.4, fontSize: 11, color: theme.fg, transparency: 40,
+    fontFace: theme.bodyFace, charSpacing: 6,
+  });
+  slide.addText(label, {
+    x: 0.7, y: H / 2 - 1.0, w: W * 0.6, h: 2,
+    fontSize: 64, bold: true, color: theme.fg, fontFace: theme.headingFace, valign: 'middle',
+    lineSpacingMultiple: 0.9,
+  });
+  applyTransition(slide, theme);
+}
+
+function renderTakeaways(slide: any, theme: ThemeCtx, outline: Outline, heroData: string | null) {
+  paintMaster(slide, theme);
+  addHero(slide, heroData, { x: 0.85, y: 0.5, scale: 0.9, rotate: -4, opacity: 0.35 }, 0, 1);
+  slide.addText('KEY TAKEAWAYS', {
+    x: 0.7, y: 0.7, w: 5, h: 0.4, fontSize: 11, color: theme.fg, transparency: 40,
+    fontFace: theme.bodyFace, charSpacing: 6,
+  });
+  slide.addText('What to remember', {
+    x: 0.7, y: 1.2, w: W * 0.6, h: 1.0,
+    fontSize: 40, bold: true, color: theme.fg, fontFace: theme.headingFace,
+  });
+  const items = (outline.key_takeaways || []).map((t) => ({
+    text: strip(t),
+    options: { bullet: { code: '25A0' }, color: theme.fg, fontSize: 18, fontFace: theme.bodyFace, breakLine: true },
+  }));
+  slide.addText(items as any, {
+    x: 0.7, y: 2.6, w: W * 0.55, h: H - 3.4, valign: 'top', paraSpaceAfter: 10,
+  });
+  applyTransition(slide, theme);
+}
+
+// ---------- dispatcher ----------
+
+function renderContentSlide(pptx: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
+  const slide = pptx.addSlide();
+  switch (p.slide_layout) {
+    case 'quadrant':         return renderQuadrant(slide, theme, p, idx, total, heroData);
+    case 'half_bleed_left':  return renderHalfBleed(slide, theme, p, idx, total, heroData, 'left');
+    case 'half_bleed_right': return renderHalfBleed(slide, theme, p, idx, total, heroData, 'right');
+    case 'stat_callout':     return renderStatCallout(slide, theme, p, idx, total, heroData);
+    case 'iso_cube':         return renderIsoCube(slide, theme, p, idx, total);
+    case 'ring_portrait':
+    default:                 return renderRingPortrait(slide, theme, p, idx, total, heroData, illustration);
+  }
+}
+
+// ---------- public API ----------
 
 export async function exportLectureAsPPTX(
   outline: Outline,
   images: ImageState[],
+  heroSubjectDataUrl?: string | null,
 ): Promise<void> {
   const pptxgen = (await import('pptxgenjs')).default;
   const pptx = new pptxgen();
-  pptx.layout = 'LAYOUT_WIDE'; // 13.33 x 7.5 inches
-  const W = 13.333, H = 7.5;
+  pptx.layout = 'LAYOUT_WIDE';
+  pptx.title = outline.title;
+  pptx.author = 'Lumina';
 
-  const palette: Palette = outline.palette || DEFAULT_PALETTE;
-  const theme = AESTHETIC_THEMES[outline.aesthetic] || AESTHETIC_THEMES.scholarly_serif;
-  const fontFace = theme.fontFace;
-  const transition: SlideTransition = outline.transition || 'fade';
-  const primary = noHash(palette.primary);
-  const secondary = noHash(palette.secondary);
-  const accent = noHash(palette.accent);
-  const surface = noHash(palette.surface);
+  const theme = buildTheme(outline);
 
-  const applyTransition = (slide: any) => {
-    // pptxgenjs supports transition on recent versions; wrap defensively.
-    try { slide.transition = { type: transition }; } catch { /* ignore */ }
-  };
+  // Embed hero once for re-use on every slide.
+  const heroData = heroSubjectDataUrl
+    ? (heroSubjectDataUrl.startsWith('data:') ? heroSubjectDataUrl : await urlToBase64(heroSubjectDataUrl))
+    : null;
 
-  // ----- Cover slide -----
+  // ----- Cover -----
   const cover = pptx.addSlide();
-  cover.background = { color: primary };
-  cover.addShape('rect' as any, { x: 0, y: 0, w: 0.18, h: H, fill: { color: accent } });
-  cover.addText(strip(outline.title), {
-    x: 0.8, y: H / 2 - 1.6, w: W - 1.6, h: 2,
-    fontSize: 48, bold: true, color: 'FFFFFF', fontFace,
-    align: 'left', valign: 'middle',
-  });
-  cover.addText('A Lumina-generated lecture', {
-    x: 0.8, y: H / 2 + 0.6, w: W - 1.6, h: 0.6,
-    fontSize: 18, italic: true, color: surface, fontFace,
-  });
-  cover.addShape('rect' as any, {
-    x: 0.8, y: H / 2 + 1.4, w: 1.5, h: 0.05, fill: { color: accent },
-  });
-  applyTransition(cover);
+  renderCover(cover, theme, outline, heroData);
 
-  // ----- Intro slide -----
-  const introSlide = pptx.addSlide();
-  introSlide.background = { color: surface };
-  introSlide.addText('Introduction', {
-    x: 0.7, y: 0.5, w: W - 1.4, h: 0.8,
-    fontSize: 32, bold: true, color: primary, fontFace,
-  });
-  introSlide.addShape('rect' as any, { x: 0.7, y: 1.3, w: 1.2, h: 0.05, fill: { color: accent } });
-  introSlide.addText(strip(outline.intro), {
-    x: 0.7, y: 1.6, w: W - 1.4, h: H - 2.2,
-    fontSize: 20, color: '333333', fontFace, valign: 'top',
-    paraSpaceAfter: 8,
-  });
-  applyTransition(introSlide);
+  // ----- Chapter divider -----
+  const chap = pptx.addSlide();
+  renderChapter(chap, theme, outline.hero_subject_label || strip(outline.title).split(/[:—-]/)[0], heroData);
 
-  // ----- Section slides -----
-  for (let i = 0; i < outline.paragraphs.length; i++) {
+  // ----- Body slides -----
+  const total = outline.paragraphs.length;
+  for (let i = 0; i < total; i++) {
     const p = outline.paragraphs[i];
-    const variant = variantFor(i, outline.aesthetic);
-    const slide = pptx.addSlide();
-    slide.background = { color: surface };
-
-    // Header
-    slide.addShape('rect' as any, { x: 0, y: 0, w: W, h: 0.18, fill: { color: primary } });
-    slide.addText(`${i + 1} · ${strip(p.heading)}`, {
-      x: 0.5, y: 0.32, w: W - 1, h: 0.7,
-      fontSize: 26, bold: true, color: primary, fontFace,
-    });
-    slide.addShape('rect' as any, { x: 0.5, y: 1.0, w: 0.8, h: 0.04, fill: { color: accent } });
-
-    const bullets = (p.bullet_points && p.bullet_points.length
-      ? p.bullet_points
-      : [strip(p.body).slice(0, 140)]
-    ).map((b) => ({ text: strip(b), options: { bullet: { code: '25A0' }, color: '222222', fontSize: 18, fontFace } }));
-
     const imgState = images[i];
-    const dataUrl = (imgState?.status === 'done' && imgState.url)
-      ? await urlToBase64(imgState.url) : null;
+    const illustration = imgState?.status === 'done' && imgState.url ? await urlToBase64(imgState.url) : null;
+    renderContentSlide(pptx, theme, p, i, total, heroData, illustration);
 
-    if (variant === 'image_full' && dataUrl) {
-      // image fills right 55%, bullets compact on left
-      slide.addImage({ data: dataUrl, x: W * 0.45, y: 1.2, w: W * 0.5, h: H - 1.6 });
-      slide.addText(bullets as any, {
-        x: 0.6, y: 1.3, w: W * 0.4 - 0.5, h: H - 1.8,
-        valign: 'top', paraSpaceAfter: 8,
-      });
-    } else if (variant === 'image_top' && dataUrl) {
-      slide.addImage({ data: dataUrl, x: 0.6, y: 1.2, w: W - 1.2, h: H * 0.45 });
-      slide.addText(bullets as any, {
-        x: 0.6, y: H * 0.45 + 1.4, w: W - 1.2, h: H - (H * 0.45 + 1.6),
-        valign: 'top', paraSpaceAfter: 6,
-      });
-    } else if (variant === 'image_left' && dataUrl) {
-      slide.addImage({ data: dataUrl, x: 0.6, y: 1.3, w: W * 0.45, h: H - 1.8 });
-      slide.addText(bullets as any, {
-        x: W * 0.5, y: 1.3, w: W * 0.45, h: H - 1.8,
-        valign: 'top', paraSpaceAfter: 8,
-      });
-    } else {
-      // image_right (default) or no image -> bullets left, image right (if any)
-      if (dataUrl) {
-        slide.addImage({ data: dataUrl, x: W * 0.5, y: 1.3, w: W * 0.45, h: H - 1.8 });
-        slide.addText(bullets as any, {
-          x: 0.6, y: 1.3, w: W * 0.4, h: H - 1.8,
-          valign: 'top', paraSpaceAfter: 8,
-        });
-      } else {
-        slide.addText(bullets as any, {
-          x: 0.6, y: 1.3, w: W - 1.2, h: H - 1.8,
-          valign: 'top', paraSpaceAfter: 10,
-        });
-      }
-    }
-
-    // Footer
-    slide.addText(strip(outline.title), {
-      x: 0.5, y: H - 0.4, w: W / 2, h: 0.3, fontSize: 10, color: secondary, fontFace,
-    });
-    slide.addText(`${i + 1} / ${outline.paragraphs.length}`, {
-      x: W - 1.5, y: H - 0.4, w: 1, h: 0.3, fontSize: 10, color: secondary, fontFace, align: 'right',
-    });
-
-    applyTransition(slide);
-
-    // Diagram on its own slide
+    // Diagram slide retains old behavior, on the cinematic master
     if (p.diagram_spec) {
       try {
-        const svg = renderDiagramSVG(p.diagram_spec, palette);
+        const svg = renderDiagramSVG(p.diagram_spec, outline.palette);
         const png = await svgToPngDataUrl(svg);
         const ds = pptx.addSlide();
-        ds.background = { color: surface };
+        paintMaster(ds, theme, { footer: 'LUMINA · DIAGRAM', page: `${i + 1} / ${total}` });
         ds.addText(`${strip(p.heading)} — diagram`, {
-          x: 0.5, y: 0.4, w: W - 1, h: 0.7,
-          fontSize: 22, bold: true, color: primary, fontFace,
+          x: 0.7, y: 0.7, w: W - 1.4, h: 0.7,
+          fontSize: 22, bold: true, color: theme.fg, fontFace: theme.headingFace,
         });
-        ds.addImage({ data: png, x: 1, y: 1.3, w: W - 2, h: H - 2.2 });
+        ds.addImage({ data: png, x: 1.5, y: 1.6, w: W - 3, h: H - 2.6 });
         ds.addText(p.diagram_spec.caption || '', {
-          x: 0.5, y: H - 0.7, w: W - 1, h: 0.4,
-          fontSize: 12, italic: true, color: secondary, fontFace, align: 'center',
+          x: 0.7, y: H - 0.9, w: W - 1.4, h: 0.4,
+          fontSize: 11, italic: true, color: theme.fg, transparency: 30,
+          fontFace: theme.bodyFace, align: 'center',
         });
-        applyTransition(ds);
+        applyTransition(ds, theme);
       } catch { /* skip */ }
     }
   }
 
-  // ----- Key takeaways -----
+  // ----- Takeaways -----
   if (outline.key_takeaways?.length) {
     const kt = pptx.addSlide();
-    kt.background = { color: primary };
-    kt.addText('Key Takeaways', {
-      x: 0.7, y: 0.6, w: W - 1.4, h: 0.8,
-      fontSize: 34, bold: true, color: 'FFFFFF', fontFace,
-    });
-    kt.addShape('rect' as any, { x: 0.7, y: 1.5, w: 1.2, h: 0.05, fill: { color: accent } });
-    kt.addText(
-      outline.key_takeaways.map((t) => ({
-        text: strip(t),
-        options: { bullet: { code: '25A0' }, color: 'FFFFFF', fontSize: 20, fontFace },
-      })) as any,
-      { x: 0.9, y: 1.9, w: W - 1.8, h: H - 2.5, paraSpaceAfter: 10, valign: 'top' },
-    );
-    applyTransition(kt);
+    renderTakeaways(kt, theme, outline, heroData);
   }
 
   // ----- Teacher lesson plan -----
   if (outline.lesson_plan) {
     const lp = outline.lesson_plan;
-    const planTitle = pptx.addSlide();
-    planTitle.background = { color: surface };
-    planTitle.addText('Lesson Plan', {
-      x: 0.7, y: H / 2 - 0.6, w: W - 1.4, h: 1.2,
-      fontSize: 44, bold: true, color: primary, fontFace, align: 'center',
-    });
-    planTitle.addShape('rect' as any, { x: W / 2 - 0.6, y: H / 2 + 0.8, w: 1.2, h: 0.05, fill: { color: accent } });
-    applyTransition(planTitle);
+    const lpTitle = pptx.addSlide();
+    renderChapter(lpTitle, theme, 'Lesson Plan', heroData);
 
     const addPlanSlide = (label: string, content: string | string[]) => {
       const s = pptx.addSlide();
-      s.background = { color: surface };
-      s.addShape('rect' as any, { x: 0, y: 0, w: W, h: 0.18, fill: { color: primary } });
-      s.addText(label, {
-        x: 0.6, y: 0.35, w: W - 1.2, h: 0.7,
-        fontSize: 26, bold: true, color: primary, fontFace,
+      paintMaster(s, theme, { footer: 'LUMINA · LESSON PLAN' });
+      s.addText(label.toUpperCase(), {
+        x: 0.7, y: 0.7, w: 5, h: 0.4, fontSize: 11, color: theme.fg, transparency: 40,
+        fontFace: theme.bodyFace, charSpacing: 6,
       });
-      s.addShape('rect' as any, { x: 0.6, y: 1.0, w: 0.8, h: 0.04, fill: { color: accent } });
+      s.addText(label, {
+        x: 0.7, y: 1.2, w: W - 1.4, h: 0.9,
+        fontSize: 32, bold: true, color: theme.fg, fontFace: theme.headingFace,
+      });
       if (Array.isArray(content)) {
-        s.addText(
-          content.map((c) => ({ text: c, options: { bullet: { code: '25A0' }, color: '222222', fontSize: 18, fontFace } })) as any,
-          { x: 0.7, y: 1.3, w: W - 1.4, h: H - 1.8, paraSpaceAfter: 8, valign: 'top' },
-        );
+        s.addText(content.map((c) => ({
+          text: strip(c),
+          options: { bullet: { code: '25A0' }, color: theme.fg, fontSize: 16, fontFace: theme.bodyFace, breakLine: true },
+        })) as any, {
+          x: 0.7, y: 2.4, w: W - 1.4, h: H - 3.2, paraSpaceAfter: 8, valign: 'top',
+        });
       } else {
-        s.addText(content, {
-          x: 0.7, y: 1.3, w: W - 1.4, h: H - 1.8,
-          fontSize: 18, color: '222222', fontFace, valign: 'top', paraSpaceAfter: 6,
+        s.addText(strip(content), {
+          x: 0.7, y: 2.4, w: W - 1.4, h: H - 3.2,
+          fontSize: 16, color: theme.fg, fontFace: theme.bodyFace, valign: 'top', lineSpacingMultiple: 1.3,
         });
       }
-      applyTransition(s);
+      applyTransition(s, theme);
     };
 
     addPlanSlide('Objectives', lp.objectives);
@@ -252,5 +477,7 @@ export async function exportLectureAsPPTX(
     addPlanSlide('Teacher notes', lp.teacher_notes);
   }
 
-  await pptx.writeFile({ fileName: `${strip(outline.title).replace(/[^a-z0-9]+/gi, '_').slice(0, 60)}.pptx` });
+  await pptx.writeFile({
+    fileName: `${strip(outline.title).replace(/[^a-z0-9]+/gi, '_').slice(0, 60) || 'lecture'}.pptx`,
+  });
 }
