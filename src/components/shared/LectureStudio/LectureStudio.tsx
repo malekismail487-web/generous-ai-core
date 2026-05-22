@@ -179,7 +179,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
       setPhase('imaging');
 
       let done = 0;
-      await Promise.allSettled(out.paragraphs.map((p, i) =>
+      const paragraphJobs = out.paragraphs.map((p, i) =>
         callImage(p.image_prompt, expertise)
           .then((url) => {
             if (cancelRef.current) return;
@@ -189,7 +189,16 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
             setImages((prev) => { const n = [...prev]; n[i] = { status: 'failed' }; return n; });
           })
           .finally(() => { done += 1; setProgress({ done, total }); })
-      ));
+      );
+
+      // Hero subject — generated in parallel, used on EVERY slide
+      const heroJob = out.hero_subject_prompt
+        ? callImage(out.hero_subject_prompt, expertise, 'hero_subject')
+            .then((url) => { if (!cancelRef.current) setHeroUrl(url); })
+            .catch((e) => { console.warn('hero failed', e); })
+        : Promise.resolve();
+
+      await Promise.allSettled([...paragraphJobs, heroJob]);
 
       if (!cancelRef.current) setPhase('ready');
     } catch (e: any) {
