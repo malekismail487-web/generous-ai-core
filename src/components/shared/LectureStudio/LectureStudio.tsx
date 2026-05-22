@@ -384,6 +384,10 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
             )}
           </header>
 
+          {phase === 'ready' && (
+            <SlidePreview outline={outline} images={images} heroUrl={heroUrl} />
+          )}
+
           <section className="text-base leading-relaxed">
             <MathRenderer content={outline.intro} />
           </section>
