@@ -32,13 +32,13 @@ const EXPERTISE_OPTIONS: { value: Expertise; label: string; desc: string }[] = [
 const GRADE_OPTIONS = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
 const DURATION_OPTIONS = ['30','45','60','90','120'];
 
-async function callImage(prompt: string, expertise: Expertise): Promise<string> {
+async function callImage(prompt: string, expertise: Expertise, mode: 'illustration' | 'hero_subject' = 'illustration'): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();
   const auth = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lecture-image`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth}` },
-    body: JSON.stringify({ prompt, expertise }),
+    body: JSON.stringify({ prompt, expertise, mode }),
   });
   if (!res.ok) throw new Error(`image_${res.status}`);
   const j = await res.json();
