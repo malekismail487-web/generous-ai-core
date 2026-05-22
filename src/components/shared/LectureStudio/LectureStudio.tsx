@@ -108,7 +108,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
     if (!topic.trim()) { toast({ variant: 'destructive', title: 'Enter a topic' }); return; }
     flushImplicitSignal('implicit_regen');
     cancelRef.current = false;
-    setPhase('outlining'); setOutline(null); setImages([]); setProgress({ done: 0, total: 0 });
+    setPhase('outlining'); setOutline(null); setImages([]); setHeroUrl(null); setProgress({ done: 0, total: 0 });
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
