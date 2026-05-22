@@ -214,7 +214,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
     try {
       if (kind === 'pdf') await exportLectureAsPDF(outline, images);
       else if (kind === 'docx') await exportLectureAsDOCX(outline, images);
-      else await exportLectureAsPPTX(outline, images);
+      else await exportLectureAsPPTX(outline, images, heroUrl);
       toast({ title: `${kind.toUpperCase()} downloaded` });
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Export failed', description: e.message });
