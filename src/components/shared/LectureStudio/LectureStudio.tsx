@@ -20,6 +20,7 @@ import { renderDiagramSVG } from './diagram';
 import { exportLectureAsPDF } from './exporters/pdf';
 import { exportLectureAsDOCX } from './exporters/docx';
 import { exportLectureAsPPTX } from './exporters/pptx';
+import { SlidePreview } from './SlidePreview';
 
 const EXPERTISE_OPTIONS: { value: Expertise; label: string; desc: string }[] = [
   { value: 'basic', label: 'Basic', desc: '8th grade — simple language' },
