@@ -1,111 +1,129 @@
-## Goal
+# Cinematic PPTX upgrade for Lumina Lecture Studio
 
-One unified, presentation-grade lecture generator used by **both students and teachers**, producing notebook-LM / Kimi-quality output exportable to **PDF, DOCX, and PPTX** with AI-generated photos and diagrams. The current `LectureGenerator` (student) and `LessonPlanGenerator` (teacher) collapse into a single shared component with role-aware behavior.
+Goal: when a student or teacher generates a lecture, the exported `.pptx` looks and *moves* like the reference video — dark editorial deck, a recurring cutout "hero subject" that appears to fly, rotate and zoom between slides via PowerPoint Morph, ring/circle framing, and large serif typography. Same Studio, same button — only the output gets dramatically better. Add an in-app interactive slide preview so the user can actually feel the deck before downloading.
 
-## Architecture (single source of truth)
+This is a frontend + edge-function + exporter change only. No DB or auth changes.
 
-```text
-src/components/shared/LectureStudio/
-├── LectureStudio.tsx        ← the one component (used by student + teacher tabs)
-├── useLectureGeneration.ts  ← outline + image + diagram orchestration
-├── exporters/
-│   ├── pdf.ts               ← rebuilt pro PDF (cover, TOC, image+caption, key takeaways)
-│   ├── docx.ts              ← rebuilt pro DOCX (Heading styles, embedded PNGs, TOC)
-│   └── pptx.ts              ← rebuilt pro PPTX (1 cover + N image slides + summary)
-└── types.ts
+## What the reference video is actually doing
+
+- Pure 2D PowerPoint with the **Morph** slide transition.
+- One **transparent-background "hero" image** (a marble bust) is placed on every slide with the *same shape name*, but at different size / position / rotation / crop. Morph then animates the camera-like motion between slides.
+- Editorial dark theme: pure black background, off-white serif headlines, thin circular ring SVG, generous negative space, a small "chapter number" mark.
+- Content slides use a **2×2 quadrant** layout around the hero, or a half-bleed hero with a stacked text column.
+- Cover and section dividers are full-bleed hero with a single huge serif title.
+
+Lumina already returns aesthetic + palette + transition from `lecture-outline`. We extend that contract and rebuild the PPTX exporter around it.
+
+## Scope
+
+1. New "cinematic" aesthetic option + cinematic master template
+2. Real Morph transitions via shared shape IDs
+3. A reusable transparent "hero subject" image per lecture
+4. New PPTX slide layouts (hero cover, ring portrait, quadrant, half-bleed, chapter divider, takeaways)
+5. In-app interactive slide preview (HTML/CSS, mirrors the PPTX look, click-through + arrow keys + Morph-style FLIP animation between slides)
+6. Wire it for both student and teacher Studio modes — no separate tool
+
+## Files to change / add
+
+```
+supabase/functions/lecture-outline/index.ts        (extend schema)
+supabase/functions/lecture-image/index.ts          (add hero-subject mode, transparent bg)
+src/components/shared/LectureStudio/types.ts       (new aesthetic + slide_plan types)
+src/components/shared/LectureStudio/LectureStudio.tsx
+src/components/shared/LectureStudio/SlidePreview.tsx       NEW (interactive preview)
+src/components/shared/LectureStudio/slideLayouts.ts        NEW (layout picker)
+src/components/shared/LectureStudio/exporters/pptx.ts      (rewrite around layouts + Morph)
 ```
 
-- **Student tab (`SubjectsSection`)**: mounts `<LectureStudio mode="student" />`.
-- **Teacher tab (`TeacherDashboard` lesson-plan area)**: replaces `LessonPlanGenerator` with `<LectureStudio mode="teacher" />`. Teacher mode adds the lesson-plan fields (grade level, duration, lesson-plan sections) and a **Save to lesson_plans** button. Student mode hides those and keeps adaptive validator + helpfulness signals.
-- Both modes share: topic / subject / expertise, outline generation, parallel AI image generation, diagram generation, export buttons (PDF / DOCX / PPTX).
-- `LessonPlanGenerator.tsx` and `src/components/student/LectureGenerator.tsx` become thin re-exports for one release (avoids breaking imports) and are then removed.
+No changes to `docx.ts`, `pdf.ts`, DB schema, RLS, or auth.
 
-## Generation pipeline
+## 1. Outline contract additions
 
-```text
-[topic, subject, level, style, mode]
-        │
-        ▼
- lecture-outline edge fn  ── returns { title, intro, sections[{heading, body,
-        │                             image_prompt, diagram_spec?}], conclusion,
-        │                             key_takeaways, lesson_plan? (teacher only) }
-        ▼
- parallel:
-   lecture-image    (per section, photo / illustration)
-   generate-diagram (per section that needs a labeled diagram — flowchart, anatomy,
-                    cycle, comparison, graph; existing edge fn reused)
-        ▼
- LectureStudio state → preview → export to PDF / DOCX / PPTX
-```
+`lecture-outline` already returns `aesthetic`, `palette`, `transition`. We add:
 
-### Edge-function changes (minimal, additive)
+- `hero_subject_prompt`: one self-contained prompt for the recurring transparent cutout subject (e.g. "marble bust of Apollo, studio lighting, isolated"). The model must pick a subject that *makes sense* across all paragraphs of the lecture (a molecule for chemistry, a brain for neuroscience, a Roman column for history, etc.).
+- per-paragraph `slide_layout`: `"cover" | "chapter" | "ring_portrait" | "quadrant" | "half_bleed_left" | "half_bleed_right" | "stat_callout" | "takeaways"` — model picks the best layout per beat.
+- per-paragraph `hero_motion`: `{ scale, x, y, rotate, crop }` normalized 0-1 — the *camera frame* for the hero on that slide. This is what drives Morph.
 
-- `supabase/functions/lecture-outline/index.ts`:
-  - Add optional `mode: "student" | "teacher"` and `grade_level`, `duration_minutes`.
-  - When `mode === "teacher"`, the JSON tool schema also emits `lesson_plan` (objectives, warmup, guided practice, independent practice, closure, differentiation, assessment, homework, teacher_notes).
-  - For every section, also emit optional `diagram_spec` ({ kind: "flow"|"cycle"|"compare"|"anatomy"|"chart", nodes, edges, caption }) when a labeled diagram would help — this is what makes it Kimi/NotebookLM-grade.
-- Reuse existing `lecture-image` for photos. Reuse existing `generate-diagram` edge function for diagrams (already in repo). No new functions needed.
+We add `"cinematic_editorial"` to the `aesthetic` enum and instruct the model to default to it when the topic is humanities / history / art / literature, and to pick another aesthetic otherwise.
 
-## Exports (the "presentation-perfect" part)
+## 2. Hero subject generation
 
-All three exporters live in `LectureStudio/exporters/` and accept the same `{ outline, images, diagrams, mode, meta }` payload.
+`lecture-image` gains a `mode: "hero_subject"` flag. When set, it requests a **transparent-background** PNG (Gemini image with prompt suffix "isolated on pure transparent background, no shadow, no ground, studio cutout"). The Studio generates the hero **once** at outline-load time, then reuses it on every slide. This is the trick that makes Morph feel 3D — same object, different camera.
 
-- **PDF (`pdf.ts`)** — rebuild on top of jsPDF:
-  - Cover page (title, subject, level, Lumina mark)
-  - Auto-generated TOC with page numbers
-  - Per-section: H2 heading, justified body, embedded image (full-width, captioned), embedded diagram if any
-  - "Key Takeaways" boxed callout
-  - Teacher mode appends a "Lesson Plan" appendix
-  - Page numbers + running footer
-- **DOCX (`docx.ts`)** — `docx` library:
-  - Proper Heading 1 / Heading 2 styles (so Word's TOC works), `TableOfContents`, `ImageRun` with captions, page breaks between sections, footer with page number. Teacher mode appends lesson-plan section using styled tables.
-- **PPTX (`pptx.ts`)** — `pptxgenjs`:
-  - Title slide (cover)
-  - Per section: one slide = heading + 2-3 bullet takeaways (auto-summarized from body) + embedded image, with diagram on a follow-up slide when present. No giant text dumps (fixes today's "paragraph crammed onto slide" problem).
-  - "Key Takeaways" closing slide
-  - Teacher mode adds lesson-plan slides at the end
-  - Embed images as base64 (per pptx skill rule)
-  - Use a single muted theme (slate + accent) instead of today's purple gradient
+The per-paragraph illustrations stay as they are (used only on layouts that have a secondary illustration slot).
 
-## UI
+## 3. PPTX exporter rewrite
 
-Single screen with three states (idle / generating / ready). On ready:
+New file structure inside `exporters/pptx.ts`:
 
 ```text
-┌────────────────────────────────────────────────┐
-│  Title                              [PDF][DOCX][PPTX] │
-│  Intro paragraph                                │
-│  ── Section 1 ─────────────────────────────────│
-│    body…                                        │
-│    [AI image]   [diagram if any]                │
-│  ── Section 2 ─────────────────────────────────│
-│    …                                            │
-│  Key Takeaways (bulleted)                       │
-│  Teacher-only: Lesson Plan accordion            │
-└────────────────────────────────────────────────┘
+exportLectureAsPPTX(outline, images, heroSubjectUrl)
+  ├─ buildTheme(aesthetic, palette)       → fonts, colors, master bg
+  ├─ addCoverSlide()
+  ├─ for each paragraph: addContentSlide(layout, heroMotion, paragraph, image)
+  ├─ addTakeawaysSlide()
+  └─ (teacher) addLessonPlanSlides()
 ```
 
-- Single "Download" dropdown groups the three export formats.
-- Adaptive intelligence + helpfulness signal logic from current `LectureGenerator` is preserved (only the student mode triggers it).
-- Teacher mode keeps the existing **Save** flow into `lesson_plans` (uses `content_json` to also persist the structured outline so it can be re-exported later).
+Per-layout renderers (`layouts/cover.ts`, `layouts/ringPortrait.ts`, `layouts/quadrant.ts`, etc.) each:
 
-## Files touched
+- draw the master background (black with subtle vignette for cinematic)
+- place the hero image with `name: "lumina_hero"` and `{x,y,w,h,rotate}` derived from `hero_motion` — **same name on every slide is what triggers Morph to animate it**
+- place an optional thin SVG ring with `name: "lumina_ring"` (also morphs)
+- place title / body / bullets using the aesthetic's font stack
+- write `slide.transition = { type: "morph" }` (pptxgenjs supports it; we already wrap defensively)
 
-- **New**: `src/components/shared/LectureStudio/{LectureStudio.tsx, useLectureGeneration.ts, types.ts, exporters/{pdf.ts, docx.ts, pptx.ts}}`
-- **Edited**: `supabase/functions/lecture-outline/index.ts` (add teacher mode + diagram_spec), `src/components/SubjectsSection.tsx` (swap to `LectureStudio`), `src/components/teacher/TeacherDashboard.tsx` (swap LessonPlanGenerator → LectureStudio teacher mode)
-- **Deprecated re-export shims** (then removed next pass): `src/components/student/LectureGenerator.tsx`, `src/components/teacher/LessonPlanGenerator.tsx`
-- **Removed**: old `src/lib/lectureExport.ts` (replaced by `exporters/`)
+Quadrant layout: hero centered, 4 short bullets in the corners with hairline connectors. Ring-portrait: hero centered inside a thin circle, single column of body text on the right. Chapter divider: hero pushed off-frame with only a huge serif chapter title visible — the next slide's Morph then reveals the new composition.
 
-## Out of scope
+Diagrams stay on their own dedicated slide (current behavior), but use the cinematic master.
 
-- No DB schema changes (`lesson_plans` already stores `content_json`).
-- No new edge functions; we extend `lecture-outline` and reuse `lecture-image` + `generate-diagram`.
-- No changes to auth, RLS, or unrelated tabs.
+## 4. In-app interactive preview
 
-## Open question
+New `SlidePreview.tsx` mounted in `LectureStudio` after generation. Pure React + Framer-Motion-free CSS:
 
-The teacher's existing lesson-plan tab currently saves to `lesson_plans` with a markdown blob. Confirm we should switch to storing the full structured outline (title, sections, images URLs, diagram specs, lesson_plan) in `content_json` so saved plans can be re-exported as PDF/DOCX/PPTX later. Default if you don't reply: yes, switch to structured storage (backward compatible — old rows still render via the markdown field).
+- Renders each slide as an HTML composition that mirrors the PPTX layout exactly (same hero image, same ring SVG, same fonts, same coordinates scaled to a 16:9 box).
+- Arrow keys / on-screen prev-next / dot pager to navigate.
+- Between slides, the hero `<img>` and ring `<svg>` are absolutely positioned with a shared `layoutId`-style key; on slide change we read both bounding boxes and animate `transform: translate/scale/rotate` with a 600ms cubic-bezier — a hand-rolled FLIP, no extra deps. This is the on-screen equivalent of PowerPoint's Morph and is what gives the "3D" feel in the app itself.
+- "Download .pptx" button stays where it is; preview is shown above it. The preview makes the value visible *before* the user downloads.
 
-&nbsp;
+## 5. Aesthetic guardrails
 
-Yes, I agree and also, I know that there is a feature just like the subject tab for students and also Lumina should create styles and variance and professional transitions not those ugly transitions where for example example one is like a curtain and another is like a paper airplane note when I say professional, I mean it it should have variation and everything should be interactive and exciting and luminous should have its own taste of looks it shouldn't be a single layout for all PowerPoint it will generate, but it should look at the lecture that it generated and it will try to find a style or aesthetic that perfectly matches it if you are capable to do these features with excellent position, then do it and also this feature is optional, but for students and teachers Lumina should also ask what design they are feeling if they do actually type in a design, then Lumina must follow it and create transitions based on it with morphine, and what not but if they do not mention anything, then Lumina looks for anesthetic for the subject or PowerPoint that it will generate  with morphine and transitions and etc. if you are able to do all of this professionally, so do it
+We force the cinematic aesthetic to:
+
+- background `#000000`, surface `#0A0A0A`, primary `#F5F1E8` (warm off-white), accent picked by model
+- heading font `"Cormorant Garamond"` (PPTX: `"Cormorant Garamond"` with `"Georgia"` fallback), body `"Inter"` with `"Calibri"` fallback
+- transition forced to `morph`
+- ring stroke 1pt, opacity 60%
+- no decorative under-title accent lines (per design memory rule)
+
+Other aesthetics keep current behavior so existing decks don't regress.
+
+## 6. Student + teacher parity
+
+`LectureStudio` already mounts in both `SubjectsSection` (student) and the teacher AI Lectures tab. No new wiring — both modes get the new exporter and the new preview automatically. Teacher lesson-plan slides keep their existing dedicated slides but adopt the cinematic master when the aesthetic is cinematic.
+
+## Out of scope (intentionally)
+
+- Real 3D (WebGL / three.js) inside PPTX — not possible in the file format.
+- Native PowerPoint 3D Models (`.glb`) — pptxgenjs has no API for it and it would break LibreOffice fallback.
+- Auto-generated speaker-notes audio.
+- Changing DOCX or PDF exporters.
+
+## Verification
+
+- `tsc --noEmit` clean.
+- Generate a sample lecture ("The Museum of Ancient Art") in student mode, open the in-app preview, step through slides, confirm hero animates between frames.
+- Download `.pptx`, open in PowerPoint desktop, confirm Morph transitions actually animate the bust between slides (this is the real success criterion).
+- Open same file in LibreOffice to confirm it doesn't crash even if Morph degrades to fade.
+- Repeat in teacher mode and confirm lesson-plan slides still render.
+
+## Technical notes for implementation
+
+- pptxgenjs Morph: set `slide.transition = { type: "morph" }`. For shape morphing, pptxgenjs honors the `name` field on shapes/images when present; we set `name: "lumina_hero"` and `name: "lumina_ring"` consistently. If a runtime check shows the installed pptxgenjs version doesn't write the name attribute, we write a tiny post-process step that patches the generated XML in-memory before `writeFile` to inject `<p:nvSpPr><p:cNvPr name="lumina_hero"/>` — kept behind a feature flag.
+- Hero image is fetched once, converted to base64, and embedded into every slide via `data:` (per skill guidance — never `path:`).
+- Preview uses `requestAnimationFrame` + cached bounding rects; no animation library added.
+- must generate at least one 3-D object in a presentation 
+- Lumina must read its lectures that it has generated and try to decide a theme based off of the lecture, and this is a must
+- Presentations must be equally balanced no slide should be word heavy and little to no pictures and no slides should be one picture and little words every slide it creates must be balanced
+- Do not rush any codes and make this professional
