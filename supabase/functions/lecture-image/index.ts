@@ -21,14 +21,17 @@ serve(async (req) => {
     }
 
     const isHero = mode === "hero_subject";
+    const isSlideFigure = mode === "slide_figure" || mode === "illustration";
 
     const styleSuffix = isHero
-      ? "Single isolated subject, perfectly centered, cinematic studio lighting, dramatic rim light, museum-quality. Pure transparent background (no scene, no floor, no shadow, no ground plane). High-resolution cutout, sharp edges, no text, no watermark, no labels, no logos."
-      : expertise === "basic"
-        ? "Friendly textbook-style illustration. Bright clear colors. No text, no watermark, no labels."
-        : expertise === "expert"
-          ? "Highly detailed scientific visualization, near publication quality. Realistic, accurate proportions. No text, no watermark, no labels."
-          : "Detailed photorealistic or polished educational illustration. Accurate, professional. No text, no watermark, no labels.";
+      ? "Single isolated recurring hero subject, perfectly centered, sculpted dimensional object, cinematic museum lighting, dramatic rim light. Pure transparent background (no scene, no floor, no shadow, no ground plane). High-resolution cutout, sharp edges, no text, no watermark, no labels, no logos."
+      : isSlideFigure
+        ? "Unique slide-specific sculpted 3-D educational figure/object, not a flat illustration, not a generic scene, not text. Premium museum/gallery lighting, dramatic depth, transparent background cutout, sharp edges, cinematic professional presentation asset, balanced composition with empty space for slide text, no watermark, no labels, no logos."
+        : expertise === "basic"
+          ? "Friendly textbook-style illustration. Bright clear colors. No text, no watermark, no labels."
+          : expertise === "expert"
+            ? "Highly detailed scientific visualization, near publication quality. Realistic, accurate proportions. No text, no watermark, no labels."
+            : "Detailed photorealistic or polished educational illustration. Accurate, professional. No text, no watermark, no labels.";
 
     const fullPrompt = `${prompt}\n\nStyle: ${styleSuffix}`;
 
