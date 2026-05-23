@@ -130,6 +130,7 @@ function addHero(slide: any, heroData: string | null, motion: HeroMotion | undef
     rotate: r.rotate,
     sizing: { type: 'contain', w: r.w, h: r.h },
     // Shared name is what unlocks PowerPoint Morph between slides.
+    name: 'lumina_hero',
     altText: 'lumina_hero',
   };
   if (r.opacity < 1) opts.transparency = Math.round((1 - r.opacity) * 100);
@@ -145,6 +146,7 @@ function addSlideFigure(slide: any, figureData: string | null, opts: { x: number
       rotate: opts.rotate || 0,
       transparency: opts.transparency,
       sizing: { type: 'contain', w: opts.w, h: opts.h },
+      name: 'lumina_slide_figure',
       altText: 'lumina_slide_figure',
     } as any);
   } catch (e) { console.warn('addSlideFigure failed', e); }
@@ -154,6 +156,7 @@ function addRing(slide: any, theme: ThemeCtx, cx: number, cy: number, diameter: 
   slide.addShape('ellipse' as any, {
     x: cx - diameter / 2, y: cy - diameter / 2, w: diameter, h: diameter,
     line: { color: theme.fg, width: 1, transparency: 40 }, fill: { type: 'none' } as any,
+    name: 'lumina_ring',
     altText: 'lumina_ring',
   });
 }
