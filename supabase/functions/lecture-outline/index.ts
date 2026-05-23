@@ -261,9 +261,10 @@ Produce ${paragraphCount} body paragraphs. Then READ YOUR OWN DRAFT and pick the
 
     if (!aiRes?.ok) {
       const txt = lastGatewayText || await aiRes?.text().catch(() => "") || "";
-      console.error("lecture-outline gateway error", aiRes.status, txt);
-      if (aiRes.status === 429) return new Response(JSON.stringify({ error: "Rate limit. Try again shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (aiRes.status === 402) return new Response(JSON.stringify({ error: "AI credits exhausted." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const status = aiRes?.status || 500;
+      console.error("lecture-outline gateway error", status, txt);
+      if (status === 429) return new Response(JSON.stringify({ error: "Rate limit. Try again shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (status === 402) return new Response(JSON.stringify({ error: "AI credits exhausted." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       return new Response(JSON.stringify({ error: "AI gateway error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
