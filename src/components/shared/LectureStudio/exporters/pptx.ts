@@ -385,11 +385,11 @@ function renderTakeaways(slide: any, theme: ThemeCtx, outline: Outline, heroData
 function renderContentSlide(pptx: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   const slide = pptx.addSlide();
   switch (p.slide_layout) {
-    case 'quadrant':         return renderQuadrant(slide, theme, p, idx, total, heroData);
-    case 'half_bleed_left':  return renderHalfBleed(slide, theme, p, idx, total, heroData, 'left');
-    case 'half_bleed_right': return renderHalfBleed(slide, theme, p, idx, total, heroData, 'right');
-    case 'stat_callout':     return renderStatCallout(slide, theme, p, idx, total, heroData);
-    case 'iso_cube':         return renderIsoCube(slide, theme, p, idx, total);
+    case 'quadrant':         return renderQuadrant(slide, theme, p, idx, total, heroData, illustration);
+    case 'half_bleed_left':  return renderHalfBleed(slide, theme, p, idx, total, heroData, illustration, 'left');
+    case 'half_bleed_right': return renderHalfBleed(slide, theme, p, idx, total, heroData, illustration, 'right');
+    case 'stat_callout':     return renderStatCallout(slide, theme, p, idx, total, heroData, illustration);
+    case 'iso_cube':         return renderIsoCube(slide, theme, p, idx, total, heroData, illustration);
     case 'ring_portrait':
     default:                 return renderRingPortrait(slide, theme, p, idx, total, heroData, illustration);
   }
