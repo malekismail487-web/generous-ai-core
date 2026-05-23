@@ -190,7 +190,7 @@ function renderRingPortrait(slide: any, theme: ThemeCtx, p: Paragraph, idx: numb
   const cx = W * 0.3, cy = H * 0.55, diameter = 4.6;
   addRing(slide, theme, cx, cy, diameter);
   addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.16, y: 0.82, scale: 0.22, rotate: 0, opacity: 0.2 }), idx, total);
-  addSlideFigure(slide, illustration || heroData, { x: 1.05, y: 1.25, w: 5.7, h: 5.2, rotate: -2 });
+  addSlideFigure(slide, illustration, { x: 1.05, y: 1.25, w: 5.7, h: 5.2, rotate: -2 });
 
   slide.addText(`0${(idx % 9) + 1}`, {
     x: W * 0.55, y: 0.7, w: 2, h: 0.5, fontSize: 12, color: theme.fg, transparency: 50,
@@ -216,7 +216,7 @@ function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, 
   const cx = W / 2, cy = H / 2;
   addRing(slide, theme, cx, cy, 3.6);
   addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.12, y: 0.86, scale: 0.18, rotate: 4, opacity: 0.18 }), idx, total);
-  addSlideFigure(slide, illustration || heroData, { x: W / 2 - 2.0, y: H / 2 - 2.0, w: 4.0, h: 4.0, rotate: 3 });
+  addSlideFigure(slide, illustration, { x: W / 2 - 2.0, y: H / 2 - 2.0, w: 4.0, h: 4.0, rotate: 3 });
 
   slide.addText(strip(p.heading), {
     x: 0.7, y: 0.55, w: W - 1.4, h: 0.6,
@@ -253,7 +253,7 @@ function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number,
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
   const heroX = side === 'left' ? 0.28 : 0.72;
   addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: side === 'left' ? 0.08 : 0.92, y: 0.86, scale: 0.18, rotate: side === 'left' ? 6 : -6, opacity: 0.2 }), idx, total);
-  addSlideFigure(slide, illustration || heroData, { x: side === 'left' ? 0.45 : W * 0.52, y: 0.85, w: 5.6, h: 5.85, rotate: side === 'left' ? 3 : -3 });
+  addSlideFigure(slide, illustration, { x: side === 'left' ? 0.45 : W * 0.52, y: 0.85, w: 5.6, h: 5.85, rotate: side === 'left' ? 3 : -3 });
 
   const textX = side === 'left' ? W * 0.5 + 0.2 : 0.7;
   slide.addText(strip(p.heading), {
@@ -274,7 +274,7 @@ function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number,
 function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
   addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.92, y: 0.87, scale: 0.2, rotate: -10, opacity: 0.18 }), idx, total);
-  addSlideFigure(slide, illustration || heroData, { x: W * 0.64, y: 1.25, w: 3.9, h: 4.2, rotate: -4 });
+  addSlideFigure(slide, illustration, { x: W * 0.64, y: 1.25, w: 3.9, h: 4.2, rotate: -4 });
 
   slide.addText(strip(p.concept_keyword || p.heading).toUpperCase(), {
     x: 0.7, y: 1.0, w: W - 1.4, h: 0.5, fontSize: 12, color: theme.fg, transparency: 40,
@@ -311,7 +311,7 @@ function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, t
     lineSpacingMultiple: 1.35,
   });
 
-  addSlideFigure(slide, illustration || heroData, { x: W * 0.54, y: 0.9, w: 4.8, h: 4.8, rotate: 0 });
+  addSlideFigure(slide, illustration, { x: W * 0.54, y: 0.9, w: 4.8, h: 4.8, rotate: 0 });
   // ----- Subtle isometric plinth on right side, not the main visual -----
   const cx = W * 0.74, cy = H * 0.52;
   const s = 1.55;                 // face half-width
