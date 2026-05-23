@@ -293,7 +293,7 @@ function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: numbe
   applyTransition(slide, theme);
 }
 
-/** Real 3-D isometric cube built from three rotated rhombus shapes (top, left, right). */
+/** Concept slide: real generated 3-D figure with a subtle isometric plinth behind it. */
 function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   paintMaster(slide, theme, { footer: 'LUMINA · CONCEPT', page: `${idx + 1} / ${total}` });
   addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.92, y: 0.85, scale: 0.2, rotate: -8, opacity: 0.18 }), idx, total);
