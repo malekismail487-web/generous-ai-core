@@ -110,6 +110,17 @@ function heroRect(motion: HeroMotion | undefined, fallbackIdx: number, total: nu
   };
 }
 
+function subtleHeroMotion(motion: HeroMotion | undefined, fallback: HeroMotion): HeroMotion {
+  const m = motion || fallback;
+  return {
+    x: m.x,
+    y: m.y,
+    scale: Math.max(0.14, Math.min(0.24, (m.scale || fallback.scale) * 0.22)),
+    rotate: m.rotate || 0,
+    opacity: Math.min(0.22, typeof m.opacity === 'number' ? m.opacity : 0.18),
+  };
+}
+
 function addHero(slide: any, heroData: string | null, motion: HeroMotion | undefined, fallbackIdx: number, total: number) {
   if (!heroData) return;
   const r = heroRect(motion, fallbackIdx, total);
@@ -119,16 +130,33 @@ function addHero(slide: any, heroData: string | null, motion: HeroMotion | undef
     rotate: r.rotate,
     sizing: { type: 'contain', w: r.w, h: r.h },
     // Shared name is what unlocks PowerPoint Morph between slides.
+    name: 'lumina_hero',
     altText: 'lumina_hero',
   };
   if (r.opacity < 1) opts.transparency = Math.round((1 - r.opacity) * 100);
   try { slide.addImage(opts); } catch (e) { console.warn('addHero failed', e); }
 }
 
+function addSlideFigure(slide: any, figureData: string | null, opts: { x: number; y: number; w: number; h: number; rotate?: number; transparency?: number }) {
+  if (!figureData) return;
+  try {
+    slide.addImage({
+      data: figureData,
+      x: opts.x, y: opts.y, w: opts.w, h: opts.h,
+      rotate: opts.rotate || 0,
+      transparency: opts.transparency,
+      sizing: { type: 'contain', w: opts.w, h: opts.h },
+      name: 'lumina_slide_figure',
+      altText: 'lumina_slide_figure',
+    } as any);
+  } catch (e) { console.warn('addSlideFigure failed', e); }
+}
+
 function addRing(slide: any, theme: ThemeCtx, cx: number, cy: number, diameter: number) {
   slide.addShape('ellipse' as any, {
     x: cx - diameter / 2, y: cy - diameter / 2, w: diameter, h: diameter,
     line: { color: theme.fg, width: 1, transparency: 40 }, fill: { type: 'none' } as any,
+    name: 'lumina_ring',
     altText: 'lumina_ring',
   });
 }
@@ -161,7 +189,8 @@ function renderRingPortrait(slide: any, theme: ThemeCtx, p: Paragraph, idx: numb
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
   const cx = W * 0.3, cy = H * 0.55, diameter = 4.6;
   addRing(slide, theme, cx, cy, diameter);
-  addHero(slide, heroData || illustration, p.hero_motion || { x: 0.3, y: 0.55, scale: 0.55, rotate: 0 }, idx, total);
+  addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.16, y: 0.82, scale: 0.22, rotate: 0, opacity: 0.2 }), idx, total);
+  addSlideFigure(slide, illustration, { x: 1.05, y: 1.25, w: 5.7, h: 5.2, rotate: -2 });
 
   slide.addText(`0${(idx % 9) + 1}`, {
     x: W * 0.55, y: 0.7, w: 2, h: 0.5, fontSize: 12, color: theme.fg, transparency: 50,
@@ -182,11 +211,12 @@ function renderRingPortrait(slide: any, theme: ThemeCtx, p: Paragraph, idx: numb
   applyTransition(slide, theme);
 }
 
-function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null) {
+function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
   const cx = W / 2, cy = H / 2;
   addRing(slide, theme, cx, cy, 3.6);
-  addHero(slide, heroData, p.hero_motion || { x: 0.5, y: 0.5, scale: 0.45, rotate: 4 }, idx, total);
+  addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.12, y: 0.86, scale: 0.18, rotate: 4, opacity: 0.18 }), idx, total);
+  addSlideFigure(slide, illustration, { x: W / 2 - 2.0, y: H / 2 - 2.0, w: 4.0, h: 4.0, rotate: 3 });
 
   slide.addText(strip(p.heading), {
     x: 0.7, y: 0.55, w: W - 1.4, h: 0.6,
@@ -219,10 +249,11 @@ function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, 
   applyTransition(slide, theme);
 }
 
-function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, side: 'left' | 'right') {
+function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null, side: 'left' | 'right') {
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
   const heroX = side === 'left' ? 0.28 : 0.72;
-  addHero(slide, heroData, p.hero_motion || { x: heroX, y: 0.5, scale: 0.9, rotate: side === 'left' ? 6 : -6 }, idx, total);
+  addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: side === 'left' ? 0.08 : 0.92, y: 0.86, scale: 0.18, rotate: side === 'left' ? 6 : -6, opacity: 0.2 }), idx, total);
+  addSlideFigure(slide, illustration, { x: side === 'left' ? 0.45 : W * 0.52, y: 0.85, w: 5.6, h: 5.85, rotate: side === 'left' ? 3 : -3 });
 
   const textX = side === 'left' ? W * 0.5 + 0.2 : 0.7;
   slide.addText(strip(p.heading), {
@@ -240,9 +271,10 @@ function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number,
   applyTransition(slide, theme);
 }
 
-function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null) {
+function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
-  addHero(slide, heroData, p.hero_motion || { x: 0.88, y: 0.85, scale: 0.5, rotate: -10, opacity: 0.85 }, idx, total);
+  addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.92, y: 0.87, scale: 0.2, rotate: -10, opacity: 0.18 }), idx, total);
+  addSlideFigure(slide, illustration, { x: W * 0.64, y: 1.25, w: 3.9, h: 4.2, rotate: -4 });
 
   slide.addText(strip(p.concept_keyword || p.heading).toUpperCase(), {
     x: 0.7, y: 1.0, w: W - 1.4, h: 0.5, fontSize: 12, color: theme.fg, transparency: 40,
@@ -261,9 +293,10 @@ function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: numbe
   applyTransition(slide, theme);
 }
 
-/** Real 3-D isometric cube built from three rotated rhombus shapes (top, left, right). */
-function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number) {
+/** Concept slide: real generated 3-D figure with a subtle isometric plinth behind it. */
+function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   paintMaster(slide, theme, { footer: 'LUMINA · CONCEPT', page: `${idx + 1} / ${total}` });
+  addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.92, y: 0.85, scale: 0.2, rotate: -8, opacity: 0.18 }), idx, total);
   slide.addText('CORE CONCEPT', {
     x: 0.7, y: 0.7, w: 4, h: 0.4, fontSize: 11, color: theme.fg, transparency: 40,
     fontFace: theme.bodyFace, charSpacing: 6,
@@ -278,14 +311,15 @@ function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, t
     lineSpacingMultiple: 1.35,
   });
 
-  // ----- Isometric cube on right side -----
+  addSlideFigure(slide, illustration, { x: W * 0.54, y: 0.9, w: 4.8, h: 4.8, rotate: 0 });
+  // ----- Subtle isometric plinth on right side, not the main visual -----
   const cx = W * 0.74, cy = H * 0.52;
   const s = 1.55;                 // face half-width
   const cubeColor = theme.accent;
   // Top face (rhombus pointing up)
   slide.addShape('diamond' as any, {
     x: cx - s, y: cy - s * 1.5, w: s * 2, h: s,
-    fill: { color: cubeColor, transparency: 10 },
+    fill: { color: cubeColor, transparency: 75 },
     line: { color: theme.fg, width: 0.75 },
     altText: 'lumina_cube_top',
   });
@@ -293,7 +327,7 @@ function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, t
   slide.addShape('parallelogram' as any, {
     x: cx - s * 1.05, y: cy - s * 0.5, w: s * 1.1, h: s * 1.7,
     rotate: 0,
-    fill: { color: cubeColor, transparency: 35 },
+    fill: { color: cubeColor, transparency: 82 },
     line: { color: theme.fg, width: 0.75 },
     altText: 'lumina_cube_left',
   });
@@ -301,7 +335,7 @@ function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, t
   slide.addShape('parallelogram' as any, {
     x: cx - 0.05, y: cy - s * 0.5, w: s * 1.1, h: s * 1.7,
     flipH: true,
-    fill: { color: cubeColor, transparency: 55 },
+    fill: { color: cubeColor, transparency: 88 },
     line: { color: theme.fg, width: 0.75 },
     altText: 'lumina_cube_right',
   });
@@ -354,11 +388,11 @@ function renderTakeaways(slide: any, theme: ThemeCtx, outline: Outline, heroData
 function renderContentSlide(pptx: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   const slide = pptx.addSlide();
   switch (p.slide_layout) {
-    case 'quadrant':         return renderQuadrant(slide, theme, p, idx, total, heroData);
-    case 'half_bleed_left':  return renderHalfBleed(slide, theme, p, idx, total, heroData, 'left');
-    case 'half_bleed_right': return renderHalfBleed(slide, theme, p, idx, total, heroData, 'right');
-    case 'stat_callout':     return renderStatCallout(slide, theme, p, idx, total, heroData);
-    case 'iso_cube':         return renderIsoCube(slide, theme, p, idx, total);
+    case 'quadrant':         return renderQuadrant(slide, theme, p, idx, total, heroData, illustration);
+    case 'half_bleed_left':  return renderHalfBleed(slide, theme, p, idx, total, heroData, illustration, 'left');
+    case 'half_bleed_right': return renderHalfBleed(slide, theme, p, idx, total, heroData, illustration, 'right');
+    case 'stat_callout':     return renderStatCallout(slide, theme, p, idx, total, heroData, illustration);
+    case 'iso_cube':         return renderIsoCube(slide, theme, p, idx, total, heroData, illustration);
     case 'ring_portrait':
     default:                 return renderRingPortrait(slide, theme, p, idx, total, heroData, illustration);
   }

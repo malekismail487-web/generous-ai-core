@@ -33,17 +33,27 @@ function buildSlides(outline: Outline): PreviewSlide[] {
   return slides;
 }
 
-function heroStyle(motion: HeroMotion | undefined, fallback: HeroMotion) {
+function heroStyle(motion: HeroMotion | undefined, fallback: HeroMotion, subtle = false) {
   const m = motion || fallback;
-  const heightPct = Math.max(20, Math.min(140, m.scale * 100));
+  const heightPct = subtle ? Math.max(14, Math.min(24, m.scale * 22)) : Math.max(20, Math.min(140, m.scale * 100));
   return {
     left: `${m.x * 100}%`,
     top: `${m.y * 100}%`,
     height: `${heightPct}%`,
     width: `${heightPct}%`,
     transform: `translate(-50%, -50%) rotate(${m.rotate}deg)`,
-    opacity: typeof m.opacity === 'number' ? m.opacity : 1,
+    opacity: subtle ? Math.min(0.22, typeof m.opacity === 'number' ? m.opacity : 0.18) : (typeof m.opacity === 'number' ? m.opacity : 1),
   } as React.CSSProperties;
+}
+
+function figureStyle(layout: SlideLayout | undefined) {
+  const base: React.CSSProperties = { position: 'absolute', objectFit: 'contain', filter: 'drop-shadow(0 36px 50px rgba(0,0,0,0.45))' };
+  if (layout === 'quadrant') return { ...base, left: '50%', top: '51%', width: '34%', height: '48%', transform: 'translate(-50%, -50%) rotate(2deg)' };
+  if (layout === 'half_bleed_left') return { ...base, left: '5%', top: '13%', width: '44%', height: '74%', transform: 'rotate(2deg)' };
+  if (layout === 'half_bleed_right') return { ...base, right: '5%', top: '13%', width: '44%', height: '74%', transform: 'rotate(-2deg)' };
+  if (layout === 'stat_callout') return { ...base, right: '8%', top: '18%', width: '30%', height: '52%', transform: 'rotate(-3deg)' };
+  if (layout === 'iso_cube') return { ...base, right: '11%', top: '14%', width: '34%', height: '54%' };
+  return { ...base, left: '9%', top: '18%', width: '42%', height: '68%', transform: 'rotate(-1deg)' };
 }
 
 export function SlidePreview({ outline, images, heroUrl }: Props) {
@@ -134,7 +144,7 @@ export function SlidePreview({ outline, images, heroUrl }: Props) {
               alt={outline.hero_subject_label || 'hero'}
               className="absolute object-contain pointer-events-none select-none"
               style={{
-                ...heroStyle(currentMotion, { x: 0.5, y: 0.5, scale: 0.55, rotate: 0 }),
+                ...heroStyle(currentMotion, { x: 0.5, y: 0.5, scale: 0.55, rotate: 0 }, slide.kind === 'content'),
                 transition: 'all 700ms cubic-bezier(0.22, 1, 0.36, 1)',
                 filter: aTheme.bgHex === '000000' ? 'drop-shadow(0 0 40px rgba(255,255,255,0.05))' : 'none',
               }}
@@ -160,7 +170,7 @@ export function SlidePreview({ outline, images, heroUrl }: Props) {
           )}
 
           {/* Slide-specific content */}
-          <SlideContents slide={slide} outline={outline} total={total} fg={fg} headingFont={aTheme.headingFont} />
+          <SlideContents slide={slide} outline={outline} images={images} total={total} fg={fg} headingFont={aTheme.headingFont} />
 
           {/* Footer chip */}
           <div className="absolute bottom-4 left-8 text-[11px] tracking-[0.3em] opacity-50" style={{ color: fg }}>
@@ -199,7 +209,7 @@ export function SlidePreview({ outline, images, heroUrl }: Props) {
   );
 }
 
-function SlideContents({ slide, outline, total, fg, headingFont }: { slide: PreviewSlide; outline: Outline; total: number; fg: string; headingFont: string }) {
+function SlideContents({ slide, outline, images, total, fg, headingFont }: { slide: PreviewSlide; outline: Outline; images: ImageState[]; total: number; fg: string; headingFont: string }) {
   if (slide.kind === 'cover') {
     return (
       <>
@@ -252,10 +262,12 @@ function SlideContents({ slide, outline, total, fg, headingFont }: { slide: Prev
 
   const p = slide.paragraph!;
   const layout = slide.layout;
+  const slideFigure = typeof slide.index === 'number' ? images[slide.index]?.url : undefined;
 
   if (layout === 'iso_cube') {
     return (
       <>
+        {slideFigure && <img src={slideFigure} alt="" style={figureStyle(layout)} draggable={false} />}
         <div className="absolute top-12 left-12 text-[11px] tracking-[0.4em] opacity-50" style={{ color: fg }}>CORE CONCEPT</div>
         <div className="absolute" style={{ left: 56, top: 130, maxWidth: '45%', color: fg, fontFamily: headingFont }}>
           <h3 style={{ fontSize: 48, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.02em' }}>{p.heading}</h3>
@@ -323,6 +335,7 @@ function SlideContents({ slide, outline, total, fg, headingFont }: { slide: Prev
     ];
     return (
       <>
+        {slideFigure && <img src={slideFigure} alt="" style={figureStyle(layout)} draggable={false} />}
         <h3 className="absolute left-1/2 -translate-x-1/2 text-center" style={{ top: 50, fontSize: 32, fontWeight: 700, color: fg, fontFamily: headingFont }}>{p.heading}</h3>
         {pos.map((s, i) => (
           <div key={i} className="absolute" style={{ ...s, color: fg, maxWidth: '32%' }}>
@@ -338,6 +351,7 @@ function SlideContents({ slide, outline, total, fg, headingFont }: { slide: Prev
     const supporting = (p.bullet_points && p.bullet_points[0]) || p.body.slice(0, 160);
     return (
       <>
+        {slideFigure && <img src={slideFigure} alt="" style={figureStyle(layout)} draggable={false} />}
         <div className="absolute top-24 left-14 text-[11px] tracking-[0.4em] opacity-50" style={{ color: fg }}>
           {(p.concept_keyword || p.heading).toUpperCase()}
         </div>
@@ -358,6 +372,7 @@ function SlideContents({ slide, outline, total, fg, headingFont }: { slide: Prev
     : { left: 56, top: 110, maxWidth: '42%' };
   return (
     <>
+      {slideFigure && <img src={slideFigure} alt="" style={figureStyle(layout)} draggable={false} />}
       <div className="absolute text-[11px] tracking-[0.4em] opacity-50" style={{ ...textStyle, top: 80, color: fg }}>
         {`0${((slide.index ?? 0) % 9) + 1}`} · {(p.concept_keyword || '').toUpperCase()}
       </div>

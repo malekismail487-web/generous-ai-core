@@ -105,6 +105,7 @@ export type Mode = 'student' | 'teacher';
 export type Expertise = 'basic' | 'intermediate' | 'advanced' | 'expert';
 
 export interface ImageState { status: 'pending' | 'loading' | 'done' | 'failed'; url?: string }
+export type ImageMode = 'illustration' | 'hero_subject' | 'slide_figure';
 
 export interface AestheticTheme {
   headingFont: string;

@@ -15,7 +15,7 @@ import { HelpfulnessFeedback } from '@/components/student/HelpfulnessFeedback';
 import { recordHelpfulness } from '@/lib/helpfulnessSignal';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/hooks/useAuth';
-import type { Outline, ImageState, Expertise, Mode } from './types';
+import type { Outline, ImageState, Expertise, Mode, ImageMode } from './types';
 import { renderDiagramSVG } from './diagram';
 import { exportLectureAsPDF } from './exporters/pdf';
 import { exportLectureAsDOCX } from './exporters/docx';
@@ -32,7 +32,7 @@ const EXPERTISE_OPTIONS: { value: Expertise; label: string; desc: string }[] = [
 const GRADE_OPTIONS = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
 const DURATION_OPTIONS = ['30','45','60','90','120'];
 
-async function callImage(prompt: string, expertise: Expertise, mode: 'illustration' | 'hero_subject' = 'illustration'): Promise<string> {
+async function callImage(prompt: string, expertise: Expertise, mode: ImageMode = 'slide_figure'): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();
   const auth = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lecture-image`, {
@@ -44,6 +44,18 @@ async function callImage(prompt: string, expertise: Expertise, mode: 'illustrati
   const j = await res.json();
   if (!j.image) throw new Error('no_image');
   return j.image as string;
+}
+
+async function callImageWithRetry(prompt: string, expertise: Expertise, mode: ImageMode = 'slide_figure'): Promise<string> {
+  try {
+    return await callImage(prompt, expertise, mode);
+  } catch (firstError) {
+    const strengthenedPrompt = mode === 'slide_figure'
+      ? `${prompt}\n\nRegenerate as a different premium sculpted 3-D cutout object for this exact slide. It must not be the shared hero, must not be a box/cube, and must be suitable as the main visual on a cinematic PowerPoint slide.`
+      : prompt;
+    try { return await callImage(strengthenedPrompt, expertise, mode); }
+    catch { throw firstError; }
+  }
 }
 
 interface Props {
@@ -180,7 +192,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
 
       let done = 0;
       const paragraphJobs = out.paragraphs.map((p, i) =>
-        callImage(p.image_prompt, expertise)
+        callImageWithRetry(p.image_prompt, expertise, 'slide_figure')
           .then((url) => {
             if (cancelRef.current) return;
             setImages((prev) => { const n = [...prev]; n[i] = { status: 'done', url }; return n; });
@@ -193,7 +205,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
 
       // Hero subject — generated in parallel, used on EVERY slide
       const heroJob = out.hero_subject_prompt
-        ? callImage(out.hero_subject_prompt, expertise, 'hero_subject')
+        ? callImageWithRetry(out.hero_subject_prompt, expertise, 'hero_subject')
             .then((url) => { if (!cancelRef.current) setHeroUrl(url); })
             .catch((e) => { console.warn('hero failed', e); })
         : Promise.resolve();
