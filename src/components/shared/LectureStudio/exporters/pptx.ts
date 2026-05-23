@@ -249,7 +249,7 @@ function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, 
 function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null, side: 'left' | 'right') {
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
   const heroX = side === 'left' ? 0.28 : 0.72;
-  addHero(slide, heroData, p.hero_motion || { x: side === 'left' ? 0.08 : 0.92, y: 0.86, scale: 0.18, rotate: side === 'left' ? 6 : -6, opacity: 0.2 }, idx, total);
+  addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: side === 'left' ? 0.08 : 0.92, y: 0.86, scale: 0.18, rotate: side === 'left' ? 6 : -6, opacity: 0.2 }), idx, total);
   addSlideFigure(slide, illustration || heroData, { x: side === 'left' ? 0.45 : W * 0.52, y: 0.85, w: 5.6, h: 5.85, rotate: side === 'left' ? 3 : -3 });
 
   const textX = side === 'left' ? W * 0.5 + 0.2 : 0.7;
@@ -270,7 +270,7 @@ function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number,
 
 function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
-  addHero(slide, heroData, p.hero_motion || { x: 0.92, y: 0.87, scale: 0.2, rotate: -10, opacity: 0.18 }, idx, total);
+  addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.92, y: 0.87, scale: 0.2, rotate: -10, opacity: 0.18 }), idx, total);
   addSlideFigure(slide, illustration || heroData, { x: W * 0.64, y: 1.25, w: 3.9, h: 4.2, rotate: -4 });
 
   slide.addText(strip(p.concept_keyword || p.heading).toUpperCase(), {
@@ -293,7 +293,7 @@ function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: numbe
 /** Real 3-D isometric cube built from three rotated rhombus shapes (top, left, right). */
 function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   paintMaster(slide, theme, { footer: 'LUMINA · CONCEPT', page: `${idx + 1} / ${total}` });
-  addHero(slide, heroData, p.hero_motion || { x: 0.92, y: 0.85, scale: 0.2, rotate: -8, opacity: 0.18 }, idx, total);
+  addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.92, y: 0.85, scale: 0.2, rotate: -8, opacity: 0.18 }), idx, total);
   slide.addText('CORE CONCEPT', {
     x: 0.7, y: 0.7, w: 4, h: 0.4, fontSize: 11, color: theme.fg, transparency: 40,
     fontFace: theme.bodyFace, charSpacing: 6,
