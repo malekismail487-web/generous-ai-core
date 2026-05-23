@@ -46,6 +46,18 @@ async function callImage(prompt: string, expertise: Expertise, mode: ImageMode =
   return j.image as string;
 }
 
+async function callImageWithRetry(prompt: string, expertise: Expertise, mode: ImageMode = 'slide_figure'): Promise<string> {
+  try {
+    return await callImage(prompt, expertise, mode);
+  } catch (firstError) {
+    const strengthenedPrompt = mode === 'slide_figure'
+      ? `${prompt}\n\nRegenerate as a different premium sculpted 3-D cutout object for this exact slide. It must not be the shared hero, must not be a box/cube, and must be suitable as the main visual on a cinematic PowerPoint slide.`
+      : prompt;
+    try { return await callImage(strengthenedPrompt, expertise, mode); }
+    catch { throw firstError; }
+  }
+}
+
 interface Props {
   defaultSubject?: string;
   defaultTopic?: string;
@@ -180,7 +192,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
 
       let done = 0;
       const paragraphJobs = out.paragraphs.map((p, i) =>
-        callImage(p.image_prompt, expertise, 'slide_figure')
+        callImageWithRetry(p.image_prompt, expertise, 'slide_figure')
           .then((url) => {
             if (cancelRef.current) return;
             setImages((prev) => { const n = [...prev]; n[i] = { status: 'done', url }; return n; });
@@ -193,7 +205,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
 
       // Hero subject — generated in parallel, used on EVERY slide
       const heroJob = out.hero_subject_prompt
-        ? callImage(out.hero_subject_prompt, expertise, 'hero_subject')
+        ? callImageWithRetry(out.hero_subject_prompt, expertise, 'hero_subject')
             .then((url) => { if (!cancelRef.current) setHeroUrl(url); })
             .catch((e) => { console.warn('hero failed', e); })
         : Promise.resolve();
