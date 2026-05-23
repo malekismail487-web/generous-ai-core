@@ -70,7 +70,7 @@ serve(async (req) => {
       "  · quadrant: hero centered, 4 short bullet labels in the corners.",
       "  · half_bleed_left / half_bleed_right: hero fills half the slide, copy stack on the other half.",
       "  · stat_callout: ONE giant number or short phrase with brief supporting text and the hero small in a corner.",
-      "  · iso_cube: 3-D isometric cube anchoring a single core concept — pick this for EXACTLY ONE paragraph (the most pivotal one).",
+      "  · iso_cube: optional subtle isometric plinth behind the real sculpted figure — use at most once, only if it genuinely helps the concept.",
       "- hero_motion (per paragraph): the camera frame for the hero — {x, y, scale, rotate, opacity}. x,y are 0..1 centers, scale is 0.25..1.4 (fraction of slide height), rotate is -25..25 degrees, opacity is 0..1. VARY x/y/scale/rotate dramatically between consecutive slides so PowerPoint Morph creates cinematic motion. Never repeat the same hero_motion twice.",
       "",
       "IMPORTANT: Do NOT rely on one repeated image. The hero_subject is only a subtle Morph continuity layer; each paragraph's image_prompt must create the dominant slide-specific 3-D figure for that exact concept.",
