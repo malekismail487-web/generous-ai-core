@@ -46,7 +46,7 @@ serve(async (req) => {
       `SUBJECT FOCUS: ${subject || "general"}`,
       `- Produce a complete lecture outline with exactly ${paragraphCount} body paragraphs.`,
       "- Each paragraph: focused on ONE specific concept that builds on the previous one.",
-      "- Each paragraph MUST include a self-contained image_prompt for a photorealistic / educational image. Image prompts must NOT contain text overlays, watermarks, or labels. Always specify 'no text, no watermark, photorealistic / detailed digital illustration, educational, high detail'.",
+      "- Each paragraph MUST include a self-contained image_prompt for a DIFFERENT sculpted 3-D figure/object based on that paragraph's concept. It must be an actual dimensional object, not a flat icon, not a generic scene, not a cube unless the concept specifically requires it. Always specify: premium museum/gallery lighting, transparent-background cutout, sculpted 3-D educational object, cinematic, high detail, balanced with slide text, no text, no watermark, no labels.",
       "- When a labeled diagram (flowchart, cycle, comparison, anatomy, or simple chart) would genuinely help a student understand the concept, also include a diagram_spec for that paragraph. Diagrams must be schematic and information-bearing — NOT decorative. Skip diagram_spec when an illustration alone is enough.",
       "- For math/science, output RAW LaTeX delimited as $...$ inline or $$...$$ display. DO NOT pre-render LaTeX. The frontend renders it for the student.",
       "- Title must be specific to the topic, not generic.",
@@ -60,11 +60,11 @@ serve(async (req) => {
       "- palette: 4 hex colors {primary, secondary, accent, surface} that match the aesthetic. For cinematic_editorial the surface MUST be near-black (#000000-#0A0A0A) and primary a warm off-white (#F5F1E8 / #EFE9DA). For light aesthetics surface is near-white.",
       "- transition: ONE PowerPoint transition that fits the aesthetic. Choose from: morph, fade, push, wipe, split, reveal, cover, uncover, cut. Prefer 'morph' for cinematic_editorial and editorial_magazine. Avoid gimmicks.",
       "",
-      "HERO SUBJECT (recurring across all slides — this is the deck's anchor):",
-      "- hero_subject_prompt: ONE self-contained prompt for a single iconic transparent-background subject that thematically anchors the WHOLE lecture (e.g. 'marble bust of Apollo' for Greek art, 'human brain anatomical model' for neuroscience, 'Roman Doric column' for classical architecture, 'DNA double helix' for genetics). MUST be a single object that can be photographed/rendered on pure transparent background and re-framed cinematically. Avoid scenes, multiple subjects, or text.",
+      "HERO SUBJECT (recurring Morph anchor only — NOT the only picture):",
+      "- hero_subject_prompt: ONE self-contained prompt for a single iconic transparent-background sculpted 3-D subject that thematically anchors the WHOLE lecture (e.g. 'marble bust of Apollo' for Greek art, 'human brain anatomical model' for neuroscience, 'Roman Doric column' for classical architecture, 'DNA double helix' for genetics). MUST be a single object that can be rendered on pure transparent background and re-framed cinematically. Avoid scenes, multiple subjects, flat icons, or text.",
       "- hero_subject_label: 2-4 word human label for that subject (e.g. 'Apollo Belvedere').",
       "",
-      "PER-SLIDE LAYOUT (BALANCE IS MANDATORY — no slide may be word-heavy with no image, no slide may be image-heavy with no words):",
+      "PER-SLIDE LAYOUT (BALANCE IS MANDATORY — every slide must have its OWN sculpted 3-D figure plus concise text):",
       "- For each paragraph, pick slide_layout from: ring_portrait, quadrant, half_bleed_left, half_bleed_right, stat_callout, iso_cube. VARY the layout across consecutive slides — never use the same layout twice in a row.",
       "  · ring_portrait: hero centered inside a thin ring, body text in a column to the side.",
       "  · quadrant: hero centered, 4 short bullet labels in the corners.",
@@ -73,7 +73,8 @@ serve(async (req) => {
       "  · iso_cube: 3-D isometric cube anchoring a single core concept — pick this for EXACTLY ONE paragraph (the most pivotal one).",
       "- hero_motion (per paragraph): the camera frame for the hero — {x, y, scale, rotate, opacity}. x,y are 0..1 centers, scale is 0.25..1.4 (fraction of slide height), rotate is -25..25 degrees, opacity is 0..1. VARY x/y/scale/rotate dramatically between consecutive slides so PowerPoint Morph creates cinematic motion. Never repeat the same hero_motion twice.",
       "",
-      "EXACTLY ONE iso_cube slide is required across the deck. Place it at the most conceptually pivotal paragraph (NOT the first or last).",
+      "IMPORTANT: Do NOT rely on one repeated image. The hero_subject is only a subtle Morph continuity layer; each paragraph's image_prompt must create the dominant slide-specific 3-D figure for that exact concept.",
+      "Use iso_cube at most once, and only if a cube genuinely fits the concept. Prefer actual sculpted subject figures over geometric boxes.",
     ];
     if (design_hint) {
       extraRules.push(`- USER DESIGN HINT (must follow): "${String(design_hint).slice(0, 240)}"`);
