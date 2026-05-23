@@ -125,6 +125,20 @@ function addHero(slide: any, heroData: string | null, motion: HeroMotion | undef
   try { slide.addImage(opts); } catch (e) { console.warn('addHero failed', e); }
 }
 
+function addSlideFigure(slide: any, figureData: string | null, opts: { x: number; y: number; w: number; h: number; rotate?: number; transparency?: number }) {
+  if (!figureData) return;
+  try {
+    slide.addImage({
+      data: figureData,
+      x: opts.x, y: opts.y, w: opts.w, h: opts.h,
+      rotate: opts.rotate || 0,
+      transparency: opts.transparency,
+      sizing: { type: 'contain', w: opts.w, h: opts.h },
+      altText: 'lumina_slide_figure',
+    } as any);
+  } catch (e) { console.warn('addSlideFigure failed', e); }
+}
+
 function addRing(slide: any, theme: ThemeCtx, cx: number, cy: number, diameter: number) {
   slide.addShape('ellipse' as any, {
     x: cx - diameter / 2, y: cy - diameter / 2, w: diameter, h: diameter,
@@ -161,7 +175,8 @@ function renderRingPortrait(slide: any, theme: ThemeCtx, p: Paragraph, idx: numb
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
   const cx = W * 0.3, cy = H * 0.55, diameter = 4.6;
   addRing(slide, theme, cx, cy, diameter);
-  addHero(slide, heroData || illustration, p.hero_motion || { x: 0.3, y: 0.55, scale: 0.55, rotate: 0 }, idx, total);
+  addHero(slide, heroData, p.hero_motion || { x: 0.16, y: 0.82, scale: 0.22, rotate: 0, opacity: 0.25 }, idx, total);
+  addSlideFigure(slide, illustration || heroData, { x: 1.05, y: 1.25, w: 5.7, h: 5.2, rotate: -2 });
 
   slide.addText(`0${(idx % 9) + 1}`, {
     x: W * 0.55, y: 0.7, w: 2, h: 0.5, fontSize: 12, color: theme.fg, transparency: 50,
@@ -186,7 +201,7 @@ function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, 
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
   const cx = W / 2, cy = H / 2;
   addRing(slide, theme, cx, cy, 3.6);
-  addHero(slide, heroData, p.hero_motion || { x: 0.5, y: 0.5, scale: 0.45, rotate: 4 }, idx, total);
+  addHero(slide, heroData, p.hero_motion || { x: 0.12, y: 0.86, scale: 0.18, rotate: 4, opacity: 0.18 }, idx, total);
 
   slide.addText(strip(p.heading), {
     x: 0.7, y: 0.55, w: W - 1.4, h: 0.6,
