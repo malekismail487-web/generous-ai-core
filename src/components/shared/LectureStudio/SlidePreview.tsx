@@ -209,7 +209,7 @@ export function SlidePreview({ outline, images, heroUrl }: Props) {
   );
 }
 
-function SlideContents({ slide, outline, total, fg, headingFont }: { slide: PreviewSlide; outline: Outline; total: number; fg: string; headingFont: string }) {
+function SlideContents({ slide, outline, images, total, fg, headingFont }: { slide: PreviewSlide; outline: Outline; images: ImageState[]; total: number; fg: string; headingFont: string }) {
   if (slide.kind === 'cover') {
     return (
       <>
@@ -262,10 +262,12 @@ function SlideContents({ slide, outline, total, fg, headingFont }: { slide: Prev
 
   const p = slide.paragraph!;
   const layout = slide.layout;
+  const slideFigure = typeof slide.index === 'number' ? images[slide.index]?.url : undefined;
 
   if (layout === 'iso_cube') {
     return (
       <>
+        {slideFigure && <img src={slideFigure} alt="" style={figureStyle(layout)} draggable={false} />}
         <div className="absolute top-12 left-12 text-[11px] tracking-[0.4em] opacity-50" style={{ color: fg }}>CORE CONCEPT</div>
         <div className="absolute" style={{ left: 56, top: 130, maxWidth: '45%', color: fg, fontFamily: headingFont }}>
           <h3 style={{ fontSize: 48, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.02em' }}>{p.heading}</h3>
