@@ -35,15 +35,25 @@ function buildSlides(outline: Outline): PreviewSlide[] {
 
 function heroStyle(motion: HeroMotion | undefined, fallback: HeroMotion) {
   const m = motion || fallback;
-  const heightPct = Math.max(20, Math.min(140, m.scale * 100));
+  const heightPct = Math.max(14, Math.min(24, m.scale * 22));
   return {
     left: `${m.x * 100}%`,
     top: `${m.y * 100}%`,
     height: `${heightPct}%`,
     width: `${heightPct}%`,
     transform: `translate(-50%, -50%) rotate(${m.rotate}deg)`,
-    opacity: typeof m.opacity === 'number' ? m.opacity : 1,
+    opacity: Math.min(0.22, typeof m.opacity === 'number' ? m.opacity : 0.18),
   } as React.CSSProperties;
+}
+
+function figureStyle(layout: SlideLayout | undefined) {
+  const base: React.CSSProperties = { position: 'absolute', objectFit: 'contain', filter: 'drop-shadow(0 36px 50px rgba(0,0,0,0.45))' };
+  if (layout === 'quadrant') return { ...base, left: '50%', top: '51%', width: '34%', height: '48%', transform: 'translate(-50%, -50%) rotate(2deg)' };
+  if (layout === 'half_bleed_left') return { ...base, left: '5%', top: '13%', width: '44%', height: '74%', transform: 'rotate(2deg)' };
+  if (layout === 'half_bleed_right') return { ...base, right: '5%', top: '13%', width: '44%', height: '74%', transform: 'rotate(-2deg)' };
+  if (layout === 'stat_callout') return { ...base, right: '8%', top: '18%', width: '30%', height: '52%', transform: 'rotate(-3deg)' };
+  if (layout === 'iso_cube') return { ...base, right: '11%', top: '14%', width: '34%', height: '54%' };
+  return { ...base, left: '9%', top: '18%', width: '42%', height: '68%', transform: 'rotate(-1deg)' };
 }
 
 export function SlidePreview({ outline, images, heroUrl }: Props) {
@@ -160,7 +170,7 @@ export function SlidePreview({ outline, images, heroUrl }: Props) {
           )}
 
           {/* Slide-specific content */}
-          <SlideContents slide={slide} outline={outline} total={total} fg={fg} headingFont={aTheme.headingFont} />
+          <SlideContents slide={slide} outline={outline} images={images} total={total} fg={fg} headingFont={aTheme.headingFont} />
 
           {/* Footer chip */}
           <div className="absolute bottom-4 left-8 text-[11px] tracking-[0.3em] opacity-50" style={{ color: fg }}>
