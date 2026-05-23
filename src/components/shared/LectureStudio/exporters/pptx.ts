@@ -110,6 +110,17 @@ function heroRect(motion: HeroMotion | undefined, fallbackIdx: number, total: nu
   };
 }
 
+function subtleHeroMotion(motion: HeroMotion | undefined, fallback: HeroMotion): HeroMotion {
+  const m = motion || fallback;
+  return {
+    x: m.x,
+    y: m.y,
+    scale: Math.max(0.14, Math.min(0.24, (m.scale || fallback.scale) * 0.22)),
+    rotate: m.rotate || 0,
+    opacity: Math.min(0.22, typeof m.opacity === 'number' ? m.opacity : 0.18),
+  };
+}
+
 function addHero(slide: any, heroData: string | null, motion: HeroMotion | undefined, fallbackIdx: number, total: number) {
   if (!heroData) return;
   const r = heroRect(motion, fallbackIdx, total);
@@ -175,7 +186,7 @@ function renderRingPortrait(slide: any, theme: ThemeCtx, p: Paragraph, idx: numb
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
   const cx = W * 0.3, cy = H * 0.55, diameter = 4.6;
   addRing(slide, theme, cx, cy, diameter);
-  addHero(slide, heroData, p.hero_motion || { x: 0.16, y: 0.82, scale: 0.22, rotate: 0, opacity: 0.25 }, idx, total);
+  addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.16, y: 0.82, scale: 0.22, rotate: 0, opacity: 0.2 }), idx, total);
   addSlideFigure(slide, illustration || heroData, { x: 1.05, y: 1.25, w: 5.7, h: 5.2, rotate: -2 });
 
   slide.addText(`0${(idx % 9) + 1}`, {
@@ -201,7 +212,7 @@ function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, 
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
   const cx = W / 2, cy = H / 2;
   addRing(slide, theme, cx, cy, 3.6);
-  addHero(slide, heroData, p.hero_motion || { x: 0.12, y: 0.86, scale: 0.18, rotate: 4, opacity: 0.18 }, idx, total);
+  addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.12, y: 0.86, scale: 0.18, rotate: 4, opacity: 0.18 }), idx, total);
   addSlideFigure(slide, illustration || heroData, { x: W / 2 - 2.0, y: H / 2 - 2.0, w: 4.0, h: 4.0, rotate: 3 });
 
   slide.addText(strip(p.heading), {
