@@ -93,46 +93,34 @@ serve(async (req) => {
     });
 
     const paragraphProps: Record<string, unknown> = {
-      heading: { type: "string", description: "Short section heading, 2-6 words." },
-      body: { type: "string", description: "4-7 sentence paragraph. Raw LaTeX allowed." },
-      image_prompt: { type: "string", description: "Self-contained, photorealistic prompt for the paragraph's image." },
-      bullet_points: {
-        type: "array",
-        minItems: 2,
-        maxItems: 3,
-        items: { type: "string", description: "Ultra-concise slide bullet, <= 9 words." },
-      },
-      concept_keyword: { type: "string", description: "1-3 word noun phrase naming the core idea." },
-      slide_layout: {
-        type: "string",
-        enum: ["ring_portrait", "quadrant", "half_bleed_left", "half_bleed_right", "stat_callout", "iso_cube"],
-      },
+      heading: { type: "string" },
+      body: { type: "string" },
+      image_prompt: { type: "string" },
+      bullet_points: { type: "array", items: { type: "string" } },
+      concept_keyword: { type: "string" },
+      slide_layout: { type: "string" },
       hero_motion: {
         type: "object",
         properties: {
-          x: { type: "number", minimum: 0, maximum: 1 },
-          y: { type: "number", minimum: 0, maximum: 1 },
-          scale: { type: "number", minimum: 0.2, maximum: 1.6 },
-          rotate: { type: "number", minimum: -45, maximum: 45 },
-          opacity: { type: "number", minimum: 0, maximum: 1 },
+          x: { type: "number" },
+          y: { type: "number" },
+          scale: { type: "number" },
+          rotate: { type: "number" },
+          opacity: { type: "number" },
         },
         required: ["x", "y", "scale", "rotate"],
         additionalProperties: false,
       },
       diagram_spec: {
         type: "object",
-        description: "Optional. Include only when a labeled diagram would genuinely aid understanding.",
         properties: {
-          kind: { type: "string", enum: ["flow", "cycle", "compare", "anatomy", "chart"] },
+          kind: { type: "string" },
           caption: { type: "string" },
           nodes: {
             type: "array",
             items: {
               type: "object",
-              properties: {
-                id: { type: "string" },
-                label: { type: "string" },
-              },
+              properties: { id: { type: "string" }, label: { type: "string" } },
               required: ["id", "label"],
               additionalProperties: false,
             },
@@ -158,11 +146,9 @@ serve(async (req) => {
 
     const properties: Record<string, unknown> = {
       title: { type: "string" },
-      intro: { type: "string", description: "Hook + why this matters + what they'll learn. 4-6 sentences." },
+      intro: { type: "string" },
       paragraphs: {
         type: "array",
-        minItems: 5,
-        maxItems: 8,
         items: {
           type: "object",
           properties: paragraphProps,
@@ -170,25 +156,12 @@ serve(async (req) => {
           additionalProperties: false,
         },
       },
-      conclusion: { type: "string", description: "Strong summary reinforcing main points. 4-6 sentences." },
-      key_takeaways: { type: "array", items: { type: "string" }, minItems: 4, maxItems: 8 },
-      theme_tagline: { type: "string", description: "Poetic one-liner (max 10 words) capturing the deck's emotional throughline." },
-      hero_subject_prompt: { type: "string", description: "Self-contained transparent-background hero subject prompt." },
-      hero_subject_label: { type: "string", description: "Short label for the hero subject (2-4 words)." },
-      aesthetic: {
-        type: "string",
-        enum: [
-          "cinematic_editorial",
-          "scholarly_serif",
-          "modern_minimal",
-          "scientific_grid",
-          "humanist_warm",
-          "editorial_magazine",
-          "technical_blueprint",
-          "classical_textbook",
-          "vibrant_creative",
-        ],
-      },
+      conclusion: { type: "string" },
+      key_takeaways: { type: "array", items: { type: "string" } },
+      theme_tagline: { type: "string" },
+      hero_subject_prompt: { type: "string" },
+      hero_subject_label: { type: "string" },
+      aesthetic: { type: "string" },
       palette: {
         type: "object",
         properties: {
@@ -200,10 +173,7 @@ serve(async (req) => {
         required: ["primary", "secondary", "accent", "surface"],
         additionalProperties: false,
       },
-      transition: {
-        type: "string",
-        enum: ["morph", "fade", "push", "wipe", "split", "reveal", "cover", "uncover", "cut"],
-      },
+      transition: { type: "string" },
     };
 
     const required = [
@@ -216,7 +186,7 @@ serve(async (req) => {
       (properties as any).lesson_plan = {
         type: "object",
         properties: {
-          objectives: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 5 },
+          objectives: { type: "array", items: { type: "string" } },
           prerequisites: { type: "array", items: { type: "string" } },
           materials: { type: "array", items: { type: "string" } },
           warmup: { type: "string" },
@@ -246,6 +216,7 @@ serve(async (req) => {
       };
       required.push("lesson_plan");
     }
+
 
     const tool = {
       type: "function",
