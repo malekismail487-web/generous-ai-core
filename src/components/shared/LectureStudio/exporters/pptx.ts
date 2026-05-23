@@ -197,11 +197,12 @@ function renderRingPortrait(slide: any, theme: ThemeCtx, p: Paragraph, idx: numb
   applyTransition(slide, theme);
 }
 
-function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null) {
+function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
   const cx = W / 2, cy = H / 2;
   addRing(slide, theme, cx, cy, 3.6);
   addHero(slide, heroData, p.hero_motion || { x: 0.12, y: 0.86, scale: 0.18, rotate: 4, opacity: 0.18 }, idx, total);
+  addSlideFigure(slide, illustration || heroData, { x: W / 2 - 2.0, y: H / 2 - 2.0, w: 4.0, h: 4.0, rotate: 3 });
 
   slide.addText(strip(p.heading), {
     x: 0.7, y: 0.55, w: W - 1.4, h: 0.6,
@@ -234,10 +235,11 @@ function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, 
   applyTransition(slide, theme);
 }
 
-function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, side: 'left' | 'right') {
+function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null, side: 'left' | 'right') {
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
   const heroX = side === 'left' ? 0.28 : 0.72;
-  addHero(slide, heroData, p.hero_motion || { x: heroX, y: 0.5, scale: 0.9, rotate: side === 'left' ? 6 : -6 }, idx, total);
+  addHero(slide, heroData, p.hero_motion || { x: side === 'left' ? 0.08 : 0.92, y: 0.86, scale: 0.18, rotate: side === 'left' ? 6 : -6, opacity: 0.2 }, idx, total);
+  addSlideFigure(slide, illustration || heroData, { x: side === 'left' ? 0.45 : W * 0.52, y: 0.85, w: 5.6, h: 5.85, rotate: side === 'left' ? 3 : -3 });
 
   const textX = side === 'left' ? W * 0.5 + 0.2 : 0.7;
   slide.addText(strip(p.heading), {
@@ -255,9 +257,10 @@ function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number,
   applyTransition(slide, theme);
 }
 
-function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null) {
+function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   paintMaster(slide, theme, { footer: 'LUMINA', page: `${idx + 1} / ${total}` });
-  addHero(slide, heroData, p.hero_motion || { x: 0.88, y: 0.85, scale: 0.5, rotate: -10, opacity: 0.85 }, idx, total);
+  addHero(slide, heroData, p.hero_motion || { x: 0.92, y: 0.87, scale: 0.2, rotate: -10, opacity: 0.18 }, idx, total);
+  addSlideFigure(slide, illustration || heroData, { x: W * 0.64, y: 1.25, w: 3.9, h: 4.2, rotate: -4 });
 
   slide.addText(strip(p.concept_keyword || p.heading).toUpperCase(), {
     x: 0.7, y: 1.0, w: W - 1.4, h: 0.5, fontSize: 12, color: theme.fg, transparency: 40,
@@ -277,8 +280,9 @@ function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: numbe
 }
 
 /** Real 3-D isometric cube built from three rotated rhombus shapes (top, left, right). */
-function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number) {
+function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   paintMaster(slide, theme, { footer: 'LUMINA · CONCEPT', page: `${idx + 1} / ${total}` });
+  addHero(slide, heroData, p.hero_motion || { x: 0.92, y: 0.85, scale: 0.2, rotate: -8, opacity: 0.18 }, idx, total);
   slide.addText('CORE CONCEPT', {
     x: 0.7, y: 0.7, w: 4, h: 0.4, fontSize: 11, color: theme.fg, transparency: 40,
     fontFace: theme.bodyFace, charSpacing: 6,
@@ -293,14 +297,15 @@ function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, t
     lineSpacingMultiple: 1.35,
   });
 
-  // ----- Isometric cube on right side -----
+  addSlideFigure(slide, illustration || heroData, { x: W * 0.54, y: 0.9, w: 4.8, h: 4.8, rotate: 0 });
+  // ----- Subtle isometric plinth on right side, not the main visual -----
   const cx = W * 0.74, cy = H * 0.52;
   const s = 1.55;                 // face half-width
   const cubeColor = theme.accent;
   // Top face (rhombus pointing up)
   slide.addShape('diamond' as any, {
     x: cx - s, y: cy - s * 1.5, w: s * 2, h: s,
-    fill: { color: cubeColor, transparency: 10 },
+    fill: { color: cubeColor, transparency: 75 },
     line: { color: theme.fg, width: 0.75 },
     altText: 'lumina_cube_top',
   });
@@ -308,7 +313,7 @@ function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, t
   slide.addShape('parallelogram' as any, {
     x: cx - s * 1.05, y: cy - s * 0.5, w: s * 1.1, h: s * 1.7,
     rotate: 0,
-    fill: { color: cubeColor, transparency: 35 },
+    fill: { color: cubeColor, transparency: 82 },
     line: { color: theme.fg, width: 0.75 },
     altText: 'lumina_cube_left',
   });
@@ -316,7 +321,7 @@ function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, t
   slide.addShape('parallelogram' as any, {
     x: cx - 0.05, y: cy - s * 0.5, w: s * 1.1, h: s * 1.7,
     flipH: true,
-    fill: { color: cubeColor, transparency: 55 },
+    fill: { color: cubeColor, transparency: 88 },
     line: { color: theme.fg, width: 0.75 },
     altText: 'lumina_cube_right',
   });
