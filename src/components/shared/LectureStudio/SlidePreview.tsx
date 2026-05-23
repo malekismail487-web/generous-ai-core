@@ -33,16 +33,16 @@ function buildSlides(outline: Outline): PreviewSlide[] {
   return slides;
 }
 
-function heroStyle(motion: HeroMotion | undefined, fallback: HeroMotion) {
+function heroStyle(motion: HeroMotion | undefined, fallback: HeroMotion, subtle = false) {
   const m = motion || fallback;
-  const heightPct = Math.max(14, Math.min(24, m.scale * 22));
+  const heightPct = subtle ? Math.max(14, Math.min(24, m.scale * 22)) : Math.max(20, Math.min(140, m.scale * 100));
   return {
     left: `${m.x * 100}%`,
     top: `${m.y * 100}%`,
     height: `${heightPct}%`,
     width: `${heightPct}%`,
     transform: `translate(-50%, -50%) rotate(${m.rotate}deg)`,
-    opacity: Math.min(0.22, typeof m.opacity === 'number' ? m.opacity : 0.18),
+    opacity: subtle ? Math.min(0.22, typeof m.opacity === 'number' ? m.opacity : 0.18) : (typeof m.opacity === 'number' ? m.opacity : 1),
   } as React.CSSProperties;
 }
 
@@ -144,7 +144,7 @@ export function SlidePreview({ outline, images, heroUrl }: Props) {
               alt={outline.hero_subject_label || 'hero'}
               className="absolute object-contain pointer-events-none select-none"
               style={{
-                ...heroStyle(currentMotion, { x: 0.5, y: 0.5, scale: 0.55, rotate: 0 }),
+                ...heroStyle(currentMotion, { x: 0.5, y: 0.5, scale: 0.55, rotate: 0 }, slide.kind === 'content'),
                 transition: 'all 700ms cubic-bezier(0.22, 1, 0.36, 1)',
                 filter: aTheme.bgHex === '000000' ? 'drop-shadow(0 0 40px rgba(255,255,255,0.05))' : 'none',
               }}
