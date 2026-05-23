@@ -335,6 +335,7 @@ function SlideContents({ slide, outline, images, total, fg, headingFont }: { sli
     ];
     return (
       <>
+        {slideFigure && <img src={slideFigure} alt="" style={figureStyle(layout)} draggable={false} />}
         <h3 className="absolute left-1/2 -translate-x-1/2 text-center" style={{ top: 50, fontSize: 32, fontWeight: 700, color: fg, fontFamily: headingFont }}>{p.heading}</h3>
         {pos.map((s, i) => (
           <div key={i} className="absolute" style={{ ...s, color: fg, maxWidth: '32%' }}>
@@ -350,6 +351,7 @@ function SlideContents({ slide, outline, images, total, fg, headingFont }: { sli
     const supporting = (p.bullet_points && p.bullet_points[0]) || p.body.slice(0, 160);
     return (
       <>
+        {slideFigure && <img src={slideFigure} alt="" style={figureStyle(layout)} draggable={false} />}
         <div className="absolute top-24 left-14 text-[11px] tracking-[0.4em] opacity-50" style={{ color: fg }}>
           {(p.concept_keyword || p.heading).toUpperCase()}
         </div>
@@ -370,6 +372,7 @@ function SlideContents({ slide, outline, images, total, fg, headingFont }: { sli
     : { left: 56, top: 110, maxWidth: '42%' };
   return (
     <>
+      {slideFigure && <img src={slideFigure} alt="" style={figureStyle(layout)} draggable={false} />}
       <div className="absolute text-[11px] tracking-[0.4em] opacity-50" style={{ ...textStyle, top: 80, color: fg }}>
         {`0${((slide.index ?? 0) % 9) + 1}`} · {(p.concept_keyword || '').toUpperCase()}
       </div>
