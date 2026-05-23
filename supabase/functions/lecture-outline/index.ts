@@ -272,17 +272,13 @@ Produce ${paragraphCount} body paragraphs. Then READ YOUR OWN DRAFT and pick the
       return new Response(JSON.stringify({ error: "Failed to parse outline JSON" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // ---- Server-side normalization to guarantee balance + exactly-one iso_cube ----
+      // ---- Server-side normalization to guarantee balance + varied sculpted 3-D visuals ----
     try {
       const paragraphs: any[] = Array.isArray(parsed.paragraphs) ? parsed.paragraphs : [];
       const layouts = ["ring_portrait", "quadrant", "half_bleed_left", "half_bleed_right", "stat_callout"];
       let cubeCount = paragraphs.filter((p) => p?.slide_layout === "iso_cube").length;
-      // Ensure exactly one iso_cube somewhere in the middle.
-      if (cubeCount === 0 && paragraphs.length >= 3) {
-        const mid = Math.floor(paragraphs.length / 2);
-        paragraphs[mid].slide_layout = "iso_cube";
-        cubeCount = 1;
-      } else if (cubeCount > 1) {
+        // Keep at most one cube. It should never become the visual default.
+        if (cubeCount > 1) {
         let seen = 0;
         for (const p of paragraphs) {
           if (p.slide_layout === "iso_cube") {
@@ -300,6 +296,9 @@ Produce ${paragraphCount} body paragraphs. Then READ YOUR OWN DRAFT and pick the
       }
       // Default hero_motion if missing — gentle camera arc across the deck.
       paragraphs.forEach((p, i) => {
+        const basePrompt = typeof p.image_prompt === "string" ? p.image_prompt : `${p.heading || parsed.title} sculpted 3-D educational figure`;
+        const concept = p.concept_keyword || p.heading || `concept ${i + 1}`;
+        p.image_prompt = `${basePrompt}\nCreate a unique sculpted 3-D figure/object for this exact slide concept: ${concept}. Make it the dominant visual for the slide: premium cinematic museum lighting, transparent background cutout, dimensional materials and depth, professional presentation asset, balanced with text space, no text, no labels, no watermark. Do not reuse the same subject as other slides.`;
         if (!p.hero_motion || typeof p.hero_motion !== "object") {
           const t = paragraphs.length > 1 ? i / (paragraphs.length - 1) : 0;
           p.hero_motion = {
