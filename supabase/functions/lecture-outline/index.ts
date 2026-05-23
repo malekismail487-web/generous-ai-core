@@ -236,22 +236,31 @@ serve(async (req) => {
     const userPrompt = `Generate a complete, professional lecture on: "${topic}"${subject ? ` (subject: ${subject})` : ""}.
 Produce ${paragraphCount} body paragraphs. Then READ YOUR OWN DRAFT and pick the aesthetic, palette, transition, hero subject, theme_tagline, and per-slide layouts/motions that best match what you just wrote. Balance every slide so words and visuals share weight.${isTeacher ? `\nMode: teacher. Grade: ${grade_level || "unspecified"}. Duration: ${duration_minutes} minutes.` : ""}${design_hint ? `\nUser design hint: ${design_hint}` : ""}`;
 
-    const aiRes = await fetch(AI_GATEWAY_URL, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [tool],
-        tool_choice: { type: "function", function: { name: "emit_lecture" } },
-      }),
+    const gatewayBody = (model: string) => ({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [tool],
+      tool_choice: { type: "function", function: { name: "emit_lecture" } },
     });
 
-    if (!aiRes.ok) {
-      const txt = await aiRes.text();
+    let aiRes: Response | null = null;
+    let lastGatewayText = "";
+    for (const model of ["google/gemini-3.5-flash", "google/gemini-2.5-flash", "openai/gpt-5-mini"]) {
+      aiRes = await fetch(AI_GATEWAY_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify(gatewayBody(model)),
+      });
+      if (aiRes.ok || aiRes.status === 429 || aiRes.status === 402) break;
+      lastGatewayText = await aiRes.text().catch(() => "");
+      console.error("lecture-outline gateway retry", model, aiRes.status, lastGatewayText.slice(0, 500));
+    }
+
+    if (!aiRes?.ok) {
+      const txt = lastGatewayText || await aiRes?.text().catch(() => "") || "";
       console.error("lecture-outline gateway error", aiRes.status, txt);
       if (aiRes.status === 429) return new Response(JSON.stringify({ error: "Rate limit. Try again shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (aiRes.status === 402) return new Response(JSON.stringify({ error: "AI credits exhausted." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
