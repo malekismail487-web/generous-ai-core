@@ -53,14 +53,20 @@ function ensureRootNamespaces(xml: string): string {
   });
 }
 
-/** Inject stable a16:creationId into <p:cNvPr name="lumina_*"> so PowerPoint matches the shape across slides. */
+/** Inject stable a16:creationId into <p:cNvPr> for any shape whose name OR descr matches lumina_*. */
 function injectCreationIds(xml: string): string {
-  // Match <p:cNvPr id="N" name="lumina_xxx" [more attrs]> with optional self-close or open tag.
-  // Handles both <p:cNvPr .../> and <p:cNvPr ...>...</p:cNvPr>.
-  const cNvPrRegex = /<p:cNvPr\b([^>]*?)\bname="(lumina_[a-z_]+)"([^>]*?)(\/>|>)/g;
-  return xml.replace(cNvPrRegex, (match, before: string, name: string, after: string, end: string) => {
-    const guid = SHARED_CREATION_IDS[name];
-    if (!guid) return match; // unknown lumina_* name — leave alone
+  // pptxgenjs may write the marker as either name="lumina_hero" or descr="lumina_hero".
+  const cNvPrRegex = /<p:cNvPr\b([^>]*?)(\/>|>)/g;
+  return xml.replace(cNvPrRegex, (match, attrs: string, end: string) => {
+    const nameMatch = attrs.match(/\bname="(lumina_[a-z_]+)"/);
+    const descrMatch = attrs.match(/\bdescr="(lumina_[a-z_]+)"/);
+    const key = (nameMatch?.[1] || descrMatch?.[1]) as string | undefined;
+    if (!key) return match;
+    const guid = SHARED_CREATION_IDS[key];
+    if (!guid) return match;
+    // Normalize name= so PowerPoint also matches by name.
+    let newAttrs = attrs;
+    if (!nameMatch) newAttrs = newAttrs.replace(/\bname="[^"]*"/, `name="${key}"`);
     const creationIdExt =
       `<a:extLst>` +
       `<a:ext uri="${CREATIONID_EXT_URI}">` +
@@ -68,13 +74,10 @@ function injectCreationIds(xml: string): string {
       `</a:ext>` +
       `</a:extLst>`;
     if (end === '/>') {
-      // Convert self-closing tag to open+close with extLst child.
-      return `<p:cNvPr${before}name="${name}"${after}>${creationIdExt}</p:cNvPr>`;
+      return `<p:cNvPr${newAttrs}>${creationIdExt}</p:cNvPr>`;
     }
-    // Already an open tag with children — skip if we've already inserted creationId.
     if (/a16:creationId/.test(match)) return match;
-    // Inject extLst as the first child by inserting right after the opening tag.
-    return `<p:cNvPr${before}name="${name}"${after}>${creationIdExt}`;
+    return `<p:cNvPr${newAttrs}>${creationIdExt}`;
   });
 }
 
