@@ -496,7 +496,11 @@ export async function exportLectureAsPPTX(
     addPlanSlide('Teacher notes', lp.teacher_notes);
   }
 
-  await pptx.writeFile({
-    fileName: `${strip(outline.title).replace(/[^a-z0-9]+/gi, '_').slice(0, 60) || 'lecture'}.pptx`,
-  });
+  // Write to ArrayBuffer, then post-process to inject native PowerPoint Morph + shared shape identity.
+  const arrayBuf = (await pptx.write({ outputType: 'arraybuffer' } as any)) as ArrayBuffer;
+  const patched = theme.transition === 'morph'
+    ? await patchPptxForMorph(arrayBuf, { skipFirstSlide: true })
+    : new Blob([arrayBuf], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+  const fileName = `${strip(outline.title).replace(/[^a-z0-9]+/gi, '_').slice(0, 60) || 'lecture'}.pptx`;
+  downloadBlob(patched, fileName);
 }
