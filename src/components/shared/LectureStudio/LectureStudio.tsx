@@ -15,6 +15,7 @@ import { HelpfulnessFeedback } from '@/components/student/HelpfulnessFeedback';
 import { recordHelpfulness } from '@/lib/helpfulnessSignal';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/hooks/useAuth';
+import { useAestheticGenerator } from '@/hooks/useAestheticGenerator';
 import type { Outline, ImageState, Expertise, Mode, ImageMode } from './types';
 import { renderDiagramSVG } from './diagram';
 import { exportLectureAsPDF } from './exporters/pdf';
@@ -73,6 +74,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
   const { user } = useAuth();
   const { isTeacher } = useUserRole();
   const { getContext } = useAdaptiveIntelligence();
+  const { generateForLecture } = useAestheticGenerator();
   const mode: Mode = modeOverride ?? (isTeacher ? 'teacher' : 'student');
 
   const [topic, setTopic] = useState(defaultTopic);
@@ -140,6 +142,15 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
         };
       } catch {}
 
+      // PHASE 1: Generate aesthetic intelligently
+      const generatedAesthetic = generateForLecture({
+        subject,
+        topic,
+        expertise,
+        gradeLevel: mode === 'teacher' ? gradeLevel : undefined,
+        designHint,
+      });
+
       const fetchOutline = async (addendum: string): Promise<Outline> => {
         const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lecture-outline`, {
           method: 'POST',
@@ -151,6 +162,12 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
             grade_level: mode === 'teacher' ? gradeLevel : '',
             duration_minutes: mode === 'teacher' ? Number(duration) : undefined,
             design_hint: designHint.trim() || undefined,
+            // Pass aesthetic system to outline generation
+            preset_aesthetic: generatedAesthetic.aesthetic,
+            preset_palette: generatedAesthetic.palette,
+            preset_transition: generatedAesthetic.transition,
+            hero_subject_prompt: generatedAesthetic.heroSubjectPrompt,
+            hero_subject_label: generatedAesthetic.heroSubjectLabel,
           }),
         });
         if (!r.ok) {
@@ -162,6 +179,17 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
 
       let out = await fetchOutline('');
       if (cancelRef.current) return;
+
+      // Ensure outline has our generated aesthetic
+      out = {
+        ...out,
+        aesthetic: generatedAesthetic.aesthetic,
+        palette: generatedAesthetic.palette,
+        transition: generatedAesthetic.transition,
+        hero_subject_prompt: generatedAesthetic.heroSubjectPrompt,
+        hero_subject_label: generatedAesthetic.heroSubjectLabel,
+        theme_tagline: generatedAesthetic.themeTagline,
+      };
 
       if (mode === 'student') {
         try {
@@ -218,7 +246,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
       toast({ variant: 'destructive', title: 'Generation failed', description: e.message });
       setPhase('idle');
     }
-  }, [topic, subject, expertise, mode, gradeLevel, duration, designHint, toast, getContext, flushImplicitSignal]);
+  }, [topic, subject, expertise, mode, gradeLevel, duration, designHint, toast, getContext, flushImplicitSignal, generateForLecture]);
 
   const doExport = async (kind: 'pdf' | 'docx' | 'pptx') => {
     if (!outline) return;
@@ -387,6 +415,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
             <p className="text-xs text-muted-foreground">
               Aesthetic: <span className="font-medium">{outline.aesthetic?.replace(/_/g, ' ')}</span>
               {outline.transition ? <> · Transition: <span className="font-medium">{outline.transition}</span></> : null}
+              {outline.theme_tagline ? <> · <span className="italic">{outline.theme_tagline}</span></> : null}
             </p>
             {phase === 'imaging' && (
               <p className="text-xs text-muted-foreground inline-flex items-center gap-2">
