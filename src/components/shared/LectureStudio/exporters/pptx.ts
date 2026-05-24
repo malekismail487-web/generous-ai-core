@@ -1,6 +1,7 @@
 import type { Outline, ImageState, Palette, SlideTransition, Paragraph, HeroMotion } from '../types';
 import { AESTHETIC_THEMES, DEFAULT_PALETTE } from '../types';
 import { renderDiagramSVG, svgToPngDataUrl } from '../diagram';
+import { patchPptxForMorph, downloadBlob } from './pptxMorphPatch';
 
 // ---------- helpers ----------
 
@@ -64,6 +65,9 @@ function buildTheme(outline: Outline): ThemeCtx {
 }
 
 function applyTransition(slide: any, theme: ThemeCtx) {
+  // Morph is injected post-write via pptxMorphPatch (pptxgenjs cannot emit it).
+  // For non-morph transitions, pptxgenjs DOES support them — pass through.
+  if (theme.transition === 'morph') return;
   try { slide.transition = { type: theme.transition }; } catch { /* ignore */ }
 }
 
@@ -293,57 +297,38 @@ function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: numbe
   applyTransition(slide, theme);
 }
 
-/** Concept slide: real generated 3-D figure with a subtle isometric plinth behind it. */
+/** Concept slide: the AI-generated 3D figure IS the centerpiece. No fake geometry. */
 function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, total: number, heroData: string | null, illustration: string | null) {
   paintMaster(slide, theme, { footer: 'LUMINA · CONCEPT', page: `${idx + 1} / ${total}` });
   addHero(slide, heroData, subtleHeroMotion(p.hero_motion, { x: 0.92, y: 0.85, scale: 0.2, rotate: -8, opacity: 0.18 }), idx, total);
+
   slide.addText('CORE CONCEPT', {
     x: 0.7, y: 0.7, w: 4, h: 0.4, fontSize: 11, color: theme.fg, transparency: 40,
     fontFace: theme.bodyFace, charSpacing: 6,
   });
   slide.addText(strip(p.heading), {
-    x: 0.7, y: 1.2, w: W * 0.45, h: 1.6,
-    fontSize: 36, bold: true, color: theme.fg, fontFace: theme.headingFace, lineSpacingMultiple: 1.0,
+    x: 0.7, y: 1.2, w: W * 0.42, h: 1.8,
+    fontSize: 40, bold: true, color: theme.fg, fontFace: theme.headingFace, lineSpacingMultiple: 1.0,
   });
   slide.addText(strip(p.body).split('. ').slice(0, 2).join('. ') + '.', {
-    x: 0.7, y: 3.0, w: W * 0.45, h: 3.5,
+    x: 0.7, y: 3.4, w: W * 0.42, h: 3.0,
     fontSize: 14, color: theme.fg, fontFace: theme.bodyFace, valign: 'top', transparency: 15,
-    lineSpacingMultiple: 1.35,
+    lineSpacingMultiple: 1.4,
   });
+  if (p.concept_keyword) {
+    slide.addText(strip(p.concept_keyword).toUpperCase(), {
+      x: 0.7, y: H - 1.2, w: W * 0.42, h: 0.4,
+      fontSize: 12, bold: true, color: theme.fg, fontFace: theme.bodyFace, charSpacing: 8, transparency: 30,
+    });
+  }
 
-  addSlideFigure(slide, illustration, { x: W * 0.54, y: 0.9, w: 4.8, h: 4.8, rotate: 0 });
-  // ----- Subtle isometric plinth on right side, not the main visual -----
-  const cx = W * 0.74, cy = H * 0.52;
-  const s = 1.55;                 // face half-width
-  const cubeColor = theme.accent;
-  // Top face (rhombus pointing up)
-  slide.addShape('diamond' as any, {
-    x: cx - s, y: cy - s * 1.5, w: s * 2, h: s,
-    fill: { color: cubeColor, transparency: 75 },
-    line: { color: theme.fg, width: 0.75 },
-    altText: 'lumina_cube_top',
-  });
-  // Left face (parallelogram tilted)
-  slide.addShape('parallelogram' as any, {
-    x: cx - s * 1.05, y: cy - s * 0.5, w: s * 1.1, h: s * 1.7,
-    rotate: 0,
-    fill: { color: cubeColor, transparency: 82 },
-    line: { color: theme.fg, width: 0.75 },
-    altText: 'lumina_cube_left',
-  });
-  // Right face
-  slide.addShape('parallelogram' as any, {
-    x: cx - 0.05, y: cy - s * 0.5, w: s * 1.1, h: s * 1.7,
-    flipH: true,
-    fill: { color: cubeColor, transparency: 88 },
-    line: { color: theme.fg, width: 0.75 },
-    altText: 'lumina_cube_right',
-  });
-  // Concept keyword overlaid on top face
-  slide.addText(strip(p.concept_keyword || p.heading).slice(0, 18), {
-    x: cx - s, y: cy - s * 1.25, w: s * 2, h: 0.6,
-    fontSize: 14, bold: true, color: theme.fg, fontFace: theme.headingFace, align: 'center',
-  });
+  // The generated topic-specific 3D figure dominates the right half — no geometric placeholder.
+  addSlideFigure(slide, illustration, { x: W * 0.48, y: 0.85, w: W * 0.48, h: H - 1.7, rotate: 0 });
+
+  // Thin ring as continuity element (morph anchor) behind the figure.
+  const cx = W * 0.72, cy = H * 0.52;
+  addRing(slide, theme, cx, cy, 5.0);
+
   applyTransition(slide, theme);
 }
 
@@ -511,7 +496,11 @@ export async function exportLectureAsPPTX(
     addPlanSlide('Teacher notes', lp.teacher_notes);
   }
 
-  await pptx.writeFile({
-    fileName: `${strip(outline.title).replace(/[^a-z0-9]+/gi, '_').slice(0, 60) || 'lecture'}.pptx`,
-  });
+  // Write to ArrayBuffer, then post-process to inject native PowerPoint Morph + shared shape identity.
+  const arrayBuf = (await pptx.write({ outputType: 'arraybuffer' } as any)) as ArrayBuffer;
+  const patched = theme.transition === 'morph'
+    ? await patchPptxForMorph(arrayBuf, { skipFirstSlide: true })
+    : new Blob([arrayBuf], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+  const fileName = `${strip(outline.title).replace(/[^a-z0-9]+/gi, '_').slice(0, 60) || 'lecture'}.pptx`;
+  downloadBlob(patched, fileName);
 }
