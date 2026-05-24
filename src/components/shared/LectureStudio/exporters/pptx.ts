@@ -65,6 +65,9 @@ function buildTheme(outline: Outline): ThemeCtx {
 }
 
 function applyTransition(slide: any, theme: ThemeCtx) {
+  // Morph is injected post-write via pptxMorphPatch (pptxgenjs cannot emit it).
+  // For non-morph transitions, pptxgenjs DOES support them — pass through.
+  if (theme.transition === 'morph') return;
   try { slide.transition = { type: theme.transition }; } catch { /* ignore */ }
 }
 
