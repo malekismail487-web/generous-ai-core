@@ -1,6 +1,7 @@
 import type { Outline, ImageState, Palette, SlideTransition, Paragraph, HeroMotion } from '../types';
 import { AESTHETIC_THEMES, DEFAULT_PALETTE } from '../types';
 import { renderDiagramSVG, svgToPngDataUrl } from '../diagram';
+import { patchPptxForMorph, downloadBlob } from './pptxMorphPatch';
 
 // ---------- helpers ----------
 
