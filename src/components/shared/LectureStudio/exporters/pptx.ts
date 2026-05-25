@@ -45,12 +45,34 @@ interface ThemeCtx {
   isDark: boolean;
 }
 
+function pickReadableFg(bgHex: string, candidates: string[]): string {
+  const lum = (hex: string) => {
+    const n = parseInt(hex, 16);
+    const r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  };
+  const bgL = lum(bgHex);
+  let best = candidates[0]; let bestDelta = -1;
+  for (const c of candidates) {
+    const d = Math.abs(lum(c) - bgL);
+    if (d > bestDelta) { bestDelta = d; best = c; }
+  }
+  if (bestDelta < 0.35) best = bgL < 0.5 ? 'F5F1E8' : '0A0A0A';
+  return best;
+}
+
 function buildTheme(outline: Outline): ThemeCtx {
   const palette: Palette = outline.palette || DEFAULT_PALETTE;
   const aTheme = AESTHETIC_THEMES[outline.aesthetic] || AESTHETIC_THEMES.cinematic_editorial;
-  const bg = noHash(aTheme.bgHex);
+  // PRIORITIZE the AI-generated palette: surface = background, primary = ink/foreground.
+  // Fall back to the aesthetic preset only when palette is missing.
+  const bg = noHash(palette.surface || aTheme.bgHex);
+  const fg = pickReadableFg(bg, [
+    noHash(palette.primary),
+    noHash(palette.secondary),
+    aTheme.fgHex,
+  ]);
   const isDark = parseInt(bg, 16) < 0x808080;
-  const fg = noHash(aTheme.fgHex);
   return {
     headingFace: aTheme.fontFace,
     bodyFace: aTheme.bodyFontFace,
@@ -71,13 +93,18 @@ function applyTransition(slide: any, theme: ThemeCtx) {
   try { slide.transition = { type: theme.transition }; } catch { /* ignore */ }
 }
 
-/** Cinematic master: pure bg + thin frame + footer chip */
+/** Cinematic master: pure bg + accent-tinted frame + footer chip */
 function paintMaster(slide: any, theme: ThemeCtx, opts: { footer?: string; page?: string } = {}) {
   slide.background = { color: theme.bg };
-  // Hairline frame for editorial feel
+  // Hairline frame in the AI-chosen accent color for editorial feel
   slide.addShape('rect' as any, {
     x: 0.35, y: 0.35, w: W - 0.7, h: H - 0.7,
-    line: { color: theme.fg, width: 0.5, transparency: 70 }, fill: { type: 'none' } as any,
+    line: { color: theme.accent, width: 0.75, transparency: 55 }, fill: { type: 'none' } as any,
+  });
+  // Thin accent bar on the left edge (topic-specific color signature)
+  slide.addShape('rect' as any, {
+    x: 0, y: 0, w: 0.08, h: H,
+    fill: { type: 'solid', color: theme.accent }, line: { type: 'none' } as any,
   });
   if (opts.footer) {
     slide.addText(opts.footer, {
@@ -159,7 +186,7 @@ function addSlideFigure(slide: any, figureData: string | null, opts: { x: number
 function addRing(slide: any, theme: ThemeCtx, cx: number, cy: number, diameter: number) {
   slide.addShape('ellipse' as any, {
     x: cx - diameter / 2, y: cy - diameter / 2, w: diameter, h: diameter,
-    line: { color: theme.fg, width: 1, transparency: 40 }, fill: { type: 'none' } as any,
+    line: { color: theme.accent, width: 1.25, transparency: 30 }, fill: { type: 'none' } as any,
     name: 'lumina_ring',
     altText: 'lumina_ring',
   });
