@@ -45,12 +45,34 @@ interface ThemeCtx {
   isDark: boolean;
 }
 
+function pickReadableFg(bgHex: string, candidates: string[]): string {
+  const lum = (hex: string) => {
+    const n = parseInt(hex, 16);
+    const r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  };
+  const bgL = lum(bgHex);
+  let best = candidates[0]; let bestDelta = -1;
+  for (const c of candidates) {
+    const d = Math.abs(lum(c) - bgL);
+    if (d > bestDelta) { bestDelta = d; best = c; }
+  }
+  if (bestDelta < 0.35) best = bgL < 0.5 ? 'F5F1E8' : '0A0A0A';
+  return best;
+}
+
 function buildTheme(outline: Outline): ThemeCtx {
   const palette: Palette = outline.palette || DEFAULT_PALETTE;
   const aTheme = AESTHETIC_THEMES[outline.aesthetic] || AESTHETIC_THEMES.cinematic_editorial;
-  const bg = noHash(aTheme.bgHex);
+  // PRIORITIZE the AI-generated palette: surface = background, primary = ink/foreground.
+  // Fall back to the aesthetic preset only when palette is missing.
+  const bg = noHash(palette.surface || aTheme.bgHex);
+  const fg = pickReadableFg(bg, [
+    noHash(palette.primary),
+    noHash(palette.secondary),
+    aTheme.fgHex,
+  ]);
   const isDark = parseInt(bg, 16) < 0x808080;
-  const fg = noHash(aTheme.fgHex);
   return {
     headingFace: aTheme.fontFace,
     bodyFace: aTheme.bodyFontFace,
