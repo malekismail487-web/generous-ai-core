@@ -93,13 +93,18 @@ function applyTransition(slide: any, theme: ThemeCtx) {
   try { slide.transition = { type: theme.transition }; } catch { /* ignore */ }
 }
 
-/** Cinematic master: pure bg + thin frame + footer chip */
+/** Cinematic master: pure bg + accent-tinted frame + footer chip */
 function paintMaster(slide: any, theme: ThemeCtx, opts: { footer?: string; page?: string } = {}) {
   slide.background = { color: theme.bg };
-  // Hairline frame for editorial feel
+  // Hairline frame in the AI-chosen accent color for editorial feel
   slide.addShape('rect' as any, {
     x: 0.35, y: 0.35, w: W - 0.7, h: H - 0.7,
-    line: { color: theme.fg, width: 0.5, transparency: 70 }, fill: { type: 'none' } as any,
+    line: { color: theme.accent, width: 0.75, transparency: 55 }, fill: { type: 'none' } as any,
+  });
+  // Thin accent bar on the left edge (topic-specific color signature)
+  slide.addShape('rect' as any, {
+    x: 0, y: 0, w: 0.08, h: H,
+    fill: { type: 'solid', color: theme.accent }, line: { type: 'none' } as any,
   });
   if (opts.footer) {
     slide.addText(opts.footer, {
