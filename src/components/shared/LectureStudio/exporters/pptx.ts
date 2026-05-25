@@ -186,7 +186,7 @@ function addSlideFigure(slide: any, figureData: string | null, opts: { x: number
 function addRing(slide: any, theme: ThemeCtx, cx: number, cy: number, diameter: number) {
   slide.addShape('ellipse' as any, {
     x: cx - diameter / 2, y: cy - diameter / 2, w: diameter, h: diameter,
-    line: { color: theme.fg, width: 1, transparency: 40 }, fill: { type: 'none' } as any,
+    line: { color: theme.accent, width: 1.25, transparency: 30 }, fill: { type: 'none' } as any,
     name: 'lumina_ring',
     altText: 'lumina_ring',
   });
