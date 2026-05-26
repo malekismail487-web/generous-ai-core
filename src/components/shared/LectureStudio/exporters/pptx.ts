@@ -419,6 +419,9 @@ export async function exportLectureAsPPTX(
   outline: Outline,
   images: ImageState[],
   heroSubjectDataUrl?: string | null,
+  /** Optional aligned list of GLB data URLs (one per paragraph). When present, the
+   *  corresponding slide gets a real <p:graphicFrame> 3D model embedded. */
+  perSlideGlbDataUrls: (string | null | undefined)[] = [],
 ): Promise<void> {
   const pptxgen = (await import('pptxgenjs')).default;
   const pptx = new pptxgen();
@@ -428,10 +431,22 @@ export async function exportLectureAsPPTX(
 
   const theme = buildTheme(outline);
 
-  // Embed hero once for re-use on every slide.
   const heroData = heroSubjectDataUrl
     ? (heroSubjectDataUrl.startsWith('data:') ? heroSubjectDataUrl : await urlToBase64(heroSubjectDataUrl))
     : null;
+
+  // Pre-resolve illustration data URLs and build a semantic slide graph so layout,
+  // morph plan and identity are wired from the same source the exporter renders.
+  const total = outline.paragraphs.length;
+  const perSlideImageDataUrls: (string | null)[] = await Promise.all(
+    images.map(async (s) => (s?.status === 'done' && s.url ? await urlToBase64(s.url) : null)),
+  );
+  const payload = buildSlideGraph({
+    outline,
+    heroImageDataUrl: heroData,
+    perSlideImageDataUrls,
+    perSlideGlbDataUrls: perSlideGlbDataUrls.map((g) => g || null),
+  });
 
   // ----- Cover -----
   const cover = pptx.addSlide();
@@ -441,15 +456,16 @@ export async function exportLectureAsPPTX(
   const chap = pptx.addSlide();
   renderChapter(chap, theme, outline.hero_subject_label || strip(outline.title).split(/[:—-]/)[0], heroData);
 
+  const bodyStartIndex = 3; // 1-based slide number where body slides begin
+
   // ----- Body slides -----
-  const total = outline.paragraphs.length;
   for (let i = 0; i < total; i++) {
     const p = outline.paragraphs[i];
-    const imgState = images[i];
-    const illustration = imgState?.status === 'done' && imgState.url ? await urlToBase64(imgState.url) : null;
-    renderContentSlide(pptx, theme, p, i, total, heroData, illustration);
+    const illustration = perSlideImageDataUrls[i];
+    // Use the graph's adaptive layout choice instead of the AI's raw slide_layout
+    const adapted: Paragraph = { ...p, slide_layout: payload.graph[i].layout.rendererLayout };
+    renderContentSlide(pptx, theme, adapted, i, total, heroData, illustration);
 
-    // Diagram slide retains old behavior, on the cinematic master
     if (p.diagram_spec) {
       try {
         const svg = renderDiagramSVG(p.diagram_spec, outline.palette);
@@ -469,6 +485,15 @@ export async function exportLectureAsPPTX(
         applyTransition(ds, theme);
       } catch { /* skip */ }
     }
+  }
+
+  // Compute the real slide numbers for body slides (diagram slides shift them).
+  const realBodySlideNumbers: number[] = [];
+  let cursor = bodyStartIndex;
+  for (let i = 0; i < total; i++) {
+    realBodySlideNumbers.push(cursor);
+    cursor++;
+    if (outline.paragraphs[i].diagram_spec) cursor++;
   }
 
   // ----- Takeaways -----
@@ -526,11 +551,33 @@ export async function exportLectureAsPPTX(
     addPlanSlide('Teacher notes', lp.teacher_notes);
   }
 
-  // Write to ArrayBuffer, then post-process to inject native PowerPoint Morph + shared shape identity.
+  // Write to ArrayBuffer, then post-process to:
+  //   (a) embed real .glb 3D models on body slides that have one
+  //   (b) inject Morph + shared shape identity for PowerPoint
   const arrayBuf = (await pptx.write({ outputType: 'arraybuffer' } as any)) as ArrayBuffer;
-  const patched = theme.transition === 'morph'
-    ? await patchPptxForMorph(arrayBuf, { skipFirstSlide: true })
-    : new Blob([arrayBuf], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+
+  let zip: JSZip;
+  let embeddedBuf: ArrayBuffer = arrayBuf;
+  try {
+    zip = await JSZip.loadAsync(arrayBuf);
+    if (perSlideGlbDataUrls.some((g) => !!g)) {
+      const ordered = realBodySlideNumbers.map((_, i) => perSlideGlbDataUrls[i] || null);
+      await embedGlbModels(zip, {
+        bodySlideStartIndex: realBodySlideNumbers[0] || bodyStartIndex,
+        perBodySlideGlbDataUrls: ordered,
+        placement: { x: 6.6, y: 0.9, w: 6.2, h: 5.7 },
+      });
+      embeddedBuf = await zip.generateAsync({ type: 'arraybuffer' });
+    }
+  } catch (e) {
+    console.warn('GLB embed step skipped:', e);
+    embeddedBuf = arrayBuf;
+  }
+
+  const patched = payload.transition === 'morph'
+    ? await patchPptxForMorph(embeddedBuf, { skipFirstSlide: true })
+    : new Blob([embeddedBuf], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
   const fileName = `${strip(outline.title).replace(/[^a-z0-9]+/gi, '_').slice(0, 60) || 'lecture'}.pptx`;
   downloadBlob(patched, fileName);
 }
+
