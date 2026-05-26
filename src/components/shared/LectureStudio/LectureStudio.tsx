@@ -117,6 +117,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
   const [phase, setPhase] = useState<'idle' | 'outlining' | 'imaging' | 'ready'>('idle');
   const [outline, setOutline] = useState<Outline | null>(null);
   const [images, setImages] = useState<ImageState[]>([]);
+  const [glbDataUrls, setGlbDataUrls] = useState<(string | null)[]>([]);
   const [heroUrl, setHeroUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [isExporting, setIsExporting] = useState(false);
