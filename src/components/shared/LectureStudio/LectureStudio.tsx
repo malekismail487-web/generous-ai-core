@@ -220,6 +220,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
 
       const total = out.paragraphs.length;
       setImages(out.paragraphs.map(() => ({ status: 'loading' })));
+      setGlbDataUrls(out.paragraphs.map(() => null));
       setProgress({ done: 0, total });
       setPhase('imaging');
 
@@ -236,6 +237,20 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
           .finally(() => { done += 1; setProgress({ done, total }); })
       );
 
+      // 3D GLB per paragraph — AI-decided geometry, procedural three.js build.
+      // Independently fault-tolerant: any failure leaves that slot null and the slide falls back to its 2D figure.
+      const glbJobs = out.paragraphs.map((p, i) =>
+        buildGlbForParagraph({
+          subject, topic: out.title, slide_heading: p.heading, slide_body: p.body,
+          palette: out.palette || {},
+        })
+          .then((dataUrl) => {
+            if (cancelRef.current) return;
+            setGlbDataUrls((prev) => { const n = [...prev]; n[i] = dataUrl; return n; });
+          })
+          .catch((e) => { console.warn('glb job failed', i, e); })
+      );
+
       // Hero subject — generated in parallel, used on EVERY slide
       const heroJob = out.hero_subject_prompt
         ? callImageWithRetry(out.hero_subject_prompt, expertise, 'hero_subject')
@@ -243,7 +258,8 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
             .catch((e) => { console.warn('hero failed', e); })
         : Promise.resolve();
 
-      await Promise.allSettled([...paragraphJobs, heroJob]);
+      await Promise.allSettled([...paragraphJobs, ...glbJobs, heroJob]);
+
 
       if (!cancelRef.current) setPhase('ready');
     } catch (e: any) {
