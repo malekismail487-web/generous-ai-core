@@ -60,6 +60,36 @@ async function callImageWithRetry(prompt: string, expertise: Expertise, mode: Im
   }
 }
 
+async function fetch3DSpec(params: {
+  subject?: string; topic: string; slide_heading: string; slide_body: string;
+  palette: { primary?: string; secondary?: string; accent?: string; surface?: string };
+}): Promise<ThreeDObjectSpec> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const auth = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lecture-3d-spec`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth}` },
+    body: JSON.stringify(params),
+  });
+  if (!r.ok) throw new Error(`spec_${r.status}`);
+  const j = await r.json();
+  return j.spec as ThreeDObjectSpec;
+}
+
+async function buildGlbForParagraph(params: {
+  subject?: string; topic: string; slide_heading: string; slide_body: string;
+  palette: { primary?: string; secondary?: string; accent?: string; surface?: string };
+}): Promise<string | null> {
+  // Two-layer fallback: AI spec fails → use fallbackSpec. Three.js fails → null (2D figure remains).
+  let spec: ThreeDObjectSpec;
+  try { spec = await fetch3DSpec(params); }
+  catch {
+    spec = fallbackSpec([params.palette.primary, params.palette.accent, params.palette.secondary].filter(Boolean) as string[]);
+  }
+  try { return await generateGlbDataUrl(spec); }
+  catch (e) { console.warn('glb build failed', e); return null; }
+}
+
 interface Props {
   defaultSubject?: string;
   defaultTopic?: string;
