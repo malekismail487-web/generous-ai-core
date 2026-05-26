@@ -21,6 +21,8 @@ import { exportLectureAsPDF } from './exporters/pdf';
 import { exportLectureAsDOCX } from './exporters/docx';
 import { exportLectureAsPPTX } from './exporters/pptx';
 import { SlidePreview } from './SlidePreview';
+import { generateGlbDataUrl, fallbackSpec } from './architecture/glbGenerator';
+import type { ThreeDObjectSpec } from './architecture/types';
 
 const EXPERTISE_OPTIONS: { value: Expertise; label: string; desc: string }[] = [
   { value: 'basic', label: 'Basic', desc: '8th grade — simple language' },
