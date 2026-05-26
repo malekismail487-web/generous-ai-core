@@ -21,6 +21,8 @@ import { exportLectureAsPDF } from './exporters/pdf';
 import { exportLectureAsDOCX } from './exporters/docx';
 import { exportLectureAsPPTX } from './exporters/pptx';
 import { SlidePreview } from './SlidePreview';
+import { generateGlbDataUrl, fallbackSpec } from './architecture/glbGenerator';
+import type { ThreeDObjectSpec } from './architecture/types';
 
 const EXPERTISE_OPTIONS: { value: Expertise; label: string; desc: string }[] = [
   { value: 'basic', label: 'Basic', desc: '8th grade — simple language' },
@@ -58,6 +60,36 @@ async function callImageWithRetry(prompt: string, expertise: Expertise, mode: Im
   }
 }
 
+async function fetch3DSpec(params: {
+  subject?: string; topic: string; slide_heading: string; slide_body: string;
+  palette: { primary?: string; secondary?: string; accent?: string; surface?: string };
+}): Promise<ThreeDObjectSpec> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const auth = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lecture-3d-spec`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth}` },
+    body: JSON.stringify(params),
+  });
+  if (!r.ok) throw new Error(`spec_${r.status}`);
+  const j = await r.json();
+  return j.spec as ThreeDObjectSpec;
+}
+
+async function buildGlbForParagraph(params: {
+  subject?: string; topic: string; slide_heading: string; slide_body: string;
+  palette: { primary?: string; secondary?: string; accent?: string; surface?: string };
+}): Promise<string | null> {
+  // Two-layer fallback: AI spec fails → use fallbackSpec. Three.js fails → null (2D figure remains).
+  let spec: ThreeDObjectSpec;
+  try { spec = await fetch3DSpec(params); }
+  catch {
+    spec = fallbackSpec([params.palette.primary, params.palette.accent, params.palette.secondary].filter(Boolean) as string[]);
+  }
+  try { return await generateGlbDataUrl(spec); }
+  catch (e) { console.warn('glb build failed', e); return null; }
+}
+
 interface Props {
   defaultSubject?: string;
   defaultTopic?: string;
@@ -85,6 +117,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
   const [phase, setPhase] = useState<'idle' | 'outlining' | 'imaging' | 'ready'>('idle');
   const [outline, setOutline] = useState<Outline | null>(null);
   const [images, setImages] = useState<ImageState[]>([]);
+  const [glbDataUrls, setGlbDataUrls] = useState<(string | null)[]>([]);
   const [heroUrl, setHeroUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [isExporting, setIsExporting] = useState(false);
@@ -120,7 +153,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
     if (!topic.trim()) { toast({ variant: 'destructive', title: 'Enter a topic' }); return; }
     flushImplicitSignal('implicit_regen');
     cancelRef.current = false;
-    setPhase('outlining'); setOutline(null); setImages([]); setHeroUrl(null); setProgress({ done: 0, total: 0 });
+    setPhase('outlining'); setOutline(null); setImages([]); setGlbDataUrls([]); setHeroUrl(null); setProgress({ done: 0, total: 0 });
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -187,6 +220,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
 
       const total = out.paragraphs.length;
       setImages(out.paragraphs.map(() => ({ status: 'loading' })));
+      setGlbDataUrls(out.paragraphs.map(() => null));
       setProgress({ done: 0, total });
       setPhase('imaging');
 
@@ -203,6 +237,20 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
           .finally(() => { done += 1; setProgress({ done, total }); })
       );
 
+      // 3D GLB per paragraph — AI-decided geometry, procedural three.js build.
+      // Independently fault-tolerant: any failure leaves that slot null and the slide falls back to its 2D figure.
+      const glbJobs = out.paragraphs.map((p, i) =>
+        buildGlbForParagraph({
+          subject, topic: out.title, slide_heading: p.heading, slide_body: p.body,
+          palette: out.palette || {},
+        })
+          .then((dataUrl) => {
+            if (cancelRef.current) return;
+            setGlbDataUrls((prev) => { const n = [...prev]; n[i] = dataUrl; return n; });
+          })
+          .catch((e) => { console.warn('glb job failed', i, e); })
+      );
+
       // Hero subject — generated in parallel, used on EVERY slide
       const heroJob = out.hero_subject_prompt
         ? callImageWithRetry(out.hero_subject_prompt, expertise, 'hero_subject')
@@ -210,7 +258,8 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
             .catch((e) => { console.warn('hero failed', e); })
         : Promise.resolve();
 
-      await Promise.allSettled([...paragraphJobs, heroJob]);
+      await Promise.allSettled([...paragraphJobs, ...glbJobs, heroJob]);
+
 
       if (!cancelRef.current) setPhase('ready');
     } catch (e: any) {
@@ -226,7 +275,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
     try {
       if (kind === 'pdf') await exportLectureAsPDF(outline, images);
       else if (kind === 'docx') await exportLectureAsDOCX(outline, images);
-      else await exportLectureAsPPTX(outline, images, heroUrl);
+      else await exportLectureAsPPTX(outline, images, heroUrl, glbDataUrls);
       toast({ title: `${kind.toUpperCase()} downloaded` });
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Export failed', description: e.message });
