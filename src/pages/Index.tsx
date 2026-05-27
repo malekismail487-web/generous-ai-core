@@ -32,7 +32,7 @@ import { useAdaptiveLevel } from "@/hooks/useAdaptiveLevel";
 import { useLearningStyle } from "@/hooks/useLearningStyle";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Loader2, ArrowLeft, Code2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { LuminaLogo } from "@/components/LuminaLogo";
 import { Button } from "@/components/ui/button";
 
