@@ -170,57 +170,13 @@ export default function LCTExamGuard({ children }: LCTExamGuardProps) {
     return <>{children}</>;
   }
 
-  // ─── Render: Checking Lock ────────────────────────────────────────────────
-
-  if (checking) {
-    return (
-      <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Brain className="w-10 h-10 text-primary mx-auto mb-3 animate-pulse" />
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mx-auto mb-2" />
-          <p className="text-xs text-muted-foreground">Checking exam status...</p>
-          {!isOnline && (
-            <div className="flex items-center gap-1.5 justify-center mt-2 text-amber-500">
-              <WifiOff className="w-3.5 h-3.5" />
-              <span className="text-[10px]">Waiting for connection...</span>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // ─── Render: Check Failed Warning ─────────────────────────────────────────
-
-  if (checkFailed && !lockData?.locked) {
-    // Show children but with a subtle retry banner
-    return (
-      <>
-        <div className="fixed top-0 left-0 right-0 z-[9998] bg-amber-500/10 border-b border-amber-500/30 px-4 py-1.5 flex items-center justify-center gap-2">
-          <WifiOff className="w-3 h-3 text-amber-500" />
-          <span className="text-[10px] text-amber-600 dark:text-amber-400">
-            Could not verify exam status.
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-5 text-[10px] px-2"
-            onClick={async () => {
-              if (user) {
-                try {
-                  const result = await checkLock(user.id);
-                  setLockData(result);
-                  setCheckFailed(false);
-                } catch { /* ignore */ }
-              }
-            }}
-          >
-            Retry
-          </Button>
-        </div>
-        {children}
-      </>
-    );
+  // While the initial lock check runs, render the app immediately instead of
+  // covering it with a "Checking exam status..." overlay. The check still runs
+  // in the background and will swap in the exam screen if a real lock comes
+  // back; failures stay silent (no retry banner that reloads the app).
+  if (checking || checkFailed) {
+    // Fall through to the normal-app render path below; if a lock arrives
+    // later the periodic re-check will flip to the exam screen.
   }
 
   // ─── Render: Locked into Exam ─────────────────────────────────────────────
