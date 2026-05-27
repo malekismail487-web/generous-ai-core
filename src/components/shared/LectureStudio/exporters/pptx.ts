@@ -32,6 +32,37 @@ async function urlToBase64(url: string): Promise<string | null> {
   } catch { return null; }
 }
 
+/**
+ * Flatten any transparent / checkered AI image onto an opaque background
+ * so PowerPoint never renders the editor checkerboard. Returns a clean PNG
+ * data URL. Falls back to the original input on any failure.
+ */
+async function flattenOnBackground(dataUrl: string | null, bgHex: string): Promise<string | null> {
+  if (!dataUrl) return null;
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.crossOrigin = 'anonymous';
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('img load'));
+      el.src = dataUrl;
+    });
+    const w = img.naturalWidth || 1024;
+    const h = img.naturalHeight || 1024;
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return dataUrl;
+    // Paint solid background first, then composite the image on top.
+    ctx.fillStyle = `#${(bgHex || 'FFFFFF').replace('#', '')}`;
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL('image/jpeg', 0.92);
+  } catch {
+    return dataUrl;
+  }
+}
+
 const W = 13.333;
 const H = 7.5;
 
@@ -407,7 +438,9 @@ function renderContentSlide(pptx: any, theme: ThemeCtx, p: Paragraph, idx: numbe
     case 'half_bleed_left':  return renderHalfBleed(slide, theme, p, idx, total, heroData, illustration, 'left');
     case 'half_bleed_right': return renderHalfBleed(slide, theme, p, idx, total, heroData, illustration, 'right');
     case 'stat_callout':     return renderStatCallout(slide, theme, p, idx, total, heroData, illustration);
-    case 'iso_cube':         return renderIsoCube(slide, theme, p, idx, total, heroData, illustration);
+    // iso_cube intentionally collapses to ring_portrait: the fake 3D cube
+    // wasted space and the real GLB pipeline is disabled for now.
+    case 'iso_cube':
     case 'ring_portrait':
     default:                 return renderRingPortrait(slide, theme, p, idx, total, heroData, illustration);
   }
@@ -431,21 +464,29 @@ export async function exportLectureAsPPTX(
 
   const theme = buildTheme(outline);
 
-  const heroData = heroSubjectDataUrl
+  const rawHero = heroSubjectDataUrl
     ? (heroSubjectDataUrl.startsWith('data:') ? heroSubjectDataUrl : await urlToBase64(heroSubjectDataUrl))
     : null;
+  // Flatten transparent AI images onto the slide background so PowerPoint
+  // never displays the checkered transparency canvas as a real background.
+  const heroData = await flattenOnBackground(rawHero, theme.bg);
 
   // Pre-resolve illustration data URLs and build a semantic slide graph so layout,
   // morph plan and identity are wired from the same source the exporter renders.
   const total = outline.paragraphs.length;
   const perSlideImageDataUrls: (string | null)[] = await Promise.all(
-    images.map(async (s) => (s?.status === 'done' && s.url ? await urlToBase64(s.url) : null)),
+    images.map(async (s) => {
+      if (!(s?.status === 'done' && s.url)) return null;
+      const raw = await urlToBase64(s.url);
+      return await flattenOnBackground(raw, theme.bg);
+    }),
   );
   const payload = buildSlideGraph({
     outline,
     heroImageDataUrl: heroData,
     perSlideImageDataUrls,
-    perSlideGlbDataUrls: perSlideGlbDataUrls.map((g) => g || null),
+    // GLB embedding is disabled until the three.js pipeline is production-stable.
+    perSlideGlbDataUrls: perSlideImageDataUrls.map(() => null),
   });
 
   // ----- Cover -----
@@ -551,32 +592,16 @@ export async function exportLectureAsPPTX(
     addPlanSlide('Teacher notes', lp.teacher_notes);
   }
 
-  // Write to ArrayBuffer, then post-process to:
-  //   (a) embed real .glb 3D models on body slides that have one
-  //   (b) inject Morph + shared shape identity for PowerPoint
+  // Write to ArrayBuffer. GLB 3D embedding is deliberately disabled — the
+  // three.js → .glb pipeline silently failed and produced broken decks with
+  // dangling relationships. Once that pipeline is hardened, re-enable here.
+  // Morph transitions still run on the hero image, which has a stable shared
+  // shape name across every slide and is the only thing that needs to morph.
   const arrayBuf = (await pptx.write({ outputType: 'arraybuffer' } as any)) as ArrayBuffer;
 
-  let zip: JSZip;
-  let embeddedBuf: ArrayBuffer = arrayBuf;
-  try {
-    zip = await JSZip.loadAsync(arrayBuf);
-    if (perSlideGlbDataUrls.some((g) => !!g)) {
-      const ordered = realBodySlideNumbers.map((_, i) => perSlideGlbDataUrls[i] || null);
-      await embedGlbModels(zip, {
-        bodySlideStartIndex: realBodySlideNumbers[0] || bodyStartIndex,
-        perBodySlideGlbDataUrls: ordered,
-        placement: { x: 6.6, y: 0.9, w: 6.2, h: 5.7 },
-      });
-      embeddedBuf = await zip.generateAsync({ type: 'arraybuffer' });
-    }
-  } catch (e) {
-    console.warn('GLB embed step skipped:', e);
-    embeddedBuf = arrayBuf;
-  }
-
   const patched = payload.transition === 'morph'
-    ? await patchPptxForMorph(embeddedBuf, { skipFirstSlide: true })
-    : new Blob([embeddedBuf], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+    ? await patchPptxForMorph(arrayBuf, { skipFirstSlide: true })
+    : new Blob([arrayBuf], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
   const fileName = `${strip(outline.title).replace(/[^a-z0-9]+/gi, '_').slice(0, 60) || 'lecture'}.pptx`;
   downloadBlob(patched, fileName);
 }
