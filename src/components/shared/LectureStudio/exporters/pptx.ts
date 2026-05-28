@@ -337,12 +337,14 @@ function renderRingPortrait(slide: any, theme: ThemeCtx, p: Paragraph, idx: numb
     fontSize: 34, bold: true, color: theme.fg, fontFace: theme.headingFace, valign: 'top',
     lineSpacingMultiple: 1.0,
   });
-  const bullets = (p.bullet_points || []).slice(0, 3).map((b) => ({
-    text: strip(b),
-    options: { bullet: { code: '25A0' }, color: theme.fg, fontSize: 16, fontFace: theme.bodyFace, breakLine: true },
-  }));
-  slide.addText(bullets as any, {
-    x: W * 0.55, y: 3.0, w: W * 0.4, h: H - 3.7, valign: 'top', paraSpaceAfter: 8,
+  const body = strip(p.body);
+  const text = p.bullet_points?.length
+    ? `${body}\n\n${p.bullet_points.map((b) => `• ${strip(b)}`).join('\n')}`
+    : body;
+  slide.addText(text, {
+    x: W * 0.55, y: 3.0, w: W * 0.4, h: H - 3.7, valign: 'top',
+    fontSize: textSizeFor(text.length, 14), color: theme.fg, fontFace: theme.bodyFace,
+    breakLine: false, fit: 'shrink', margin: 0.05, lineSpacingMultiple: 1.18,
   });
   applyTransition(slide, theme);
 }
@@ -359,11 +361,8 @@ function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, 
     fontSize: 22, bold: true, color: theme.fg, fontFace: theme.headingFace, align: 'center',
   });
 
-  const bullets = (p.bullet_points && p.bullet_points.length >= 3
-    ? p.bullet_points.slice(0, 4)
-    : [...(p.bullet_points || []), p.concept_keyword || strip(p.heading)].slice(0, 4)
-  );
-  while (bullets.length < 4) bullets.push(p.concept_keyword || 'Key idea');
+  const bullets = p.bullet_points?.length ? p.bullet_points.slice(0, 4) : splitTextForBoxes(p.body, 4);
+  while (bullets.length < 4) bullets.push(...splitTextForBoxes(p.body, 4).slice(0, 4 - bullets.length));
 
   const quads: Array<{ x: number; y: number; align: 'left' | 'right' }> = [
     { x: 0.7,            y: 1.4,            align: 'left'  },
@@ -378,8 +377,8 @@ function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, 
     });
     slide.addText(strip(bullets[i]), {
       x: q.x, y: q.y + 0.4, w: 4.0, h: 1.2,
-      fontSize: 16, color: theme.fg, fontFace: theme.bodyFace, align: q.align, valign: 'top',
-      lineSpacingMultiple: 1.1,
+      fontSize: textSizeFor(strip(bullets[i]).length, 15), color: theme.fg, fontFace: theme.bodyFace, align: q.align, valign: 'top',
+      lineSpacingMultiple: 1.1, fit: 'shrink', margin: 0.03,
     });
   });
   applyTransition(slide, theme);
