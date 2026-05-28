@@ -22,7 +22,7 @@ import JSZip from 'jszip';
 const NS_P14 = 'http://schemas.microsoft.com/office/powerpoint/2010/main';
 const NS_P159 = 'http://schemas.microsoft.com/office/powerpoint/2015/09/main';
 const NS_A16 = 'http://schemas.microsoft.com/office/drawing/2014/main';
-const MORPH_EXT_URI = '{E01B4FDE-9E4C-4A24-A5C6-7F8E8B6D4DD0}';
+const NS_MC = 'http://schemas.openxmlformats.org/markup-compatibility/2006';
 const CREATIONID_EXT_URI = '{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}';
 
 /** Stable, fake-but-valid GUIDs for each recurring shape name.
@@ -34,12 +34,8 @@ const SHARED_CREATION_IDS: Record<string, string> = {
 };
 
 const TRANSITION_XML =
-  `<p:transition xmlns:p14="${NS_P14}" spd="med" p14:dur="850">` +
-  `<p:extLst>` +
-  `<p:ext uri="${MORPH_EXT_URI}">` +
-  `<p159:prstTrans xmlns:p159="${NS_P159}" val="morph" option="byObject"/>` +
-  `</p:ext>` +
-  `</p:extLst>` +
+  `<p:transition xmlns:p14="${NS_P14}" xmlns:p159="${NS_P159}" spd="med" p14:dur="900">` +
+  `<p159:morph option="byObject"/>` +
   `</p:transition>`;
 
 function ensureRootNamespaces(xml: string): string {
@@ -49,6 +45,16 @@ function ensureRootNamespaces(xml: string): string {
     if (!/xmlns:p14=/.test(updated)) updated += ` xmlns:p14="${NS_P14}"`;
     if (!/xmlns:p159=/.test(updated)) updated += ` xmlns:p159="${NS_P159}"`;
     if (!/xmlns:a16=/.test(updated)) updated += ` xmlns:a16="${NS_A16}"`;
+    if (!/xmlns:mc=/.test(updated)) updated += ` xmlns:mc="${NS_MC}"`;
+    if (/\bmc:Ignorable="([^"]*)"/.test(updated)) {
+      updated = updated.replace(/\bmc:Ignorable="([^"]*)"/, (_m, val: string) => {
+        const parts = new Set(String(val).split(/\s+/).filter(Boolean));
+        ['p14', 'p159', 'a16'].forEach((p) => parts.add(p));
+        return `mc:Ignorable="${Array.from(parts).join(' ')}"`;
+      });
+    } else {
+      updated += ` mc:Ignorable="p14 p159 a16"`;
+    }
     return `<p:sld${updated}>`;
   });
 }
