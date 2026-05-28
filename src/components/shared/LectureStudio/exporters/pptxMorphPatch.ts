@@ -64,15 +64,17 @@ function injectCreationIds(xml: string): string {
   // pptxgenjs may write the marker as either name="lumina_hero" or descr="lumina_hero".
   const cNvPrRegex = /<p:cNvPr\b([^>]*?)(\/>|>)/g;
   return xml.replace(cNvPrRegex, (match, attrs: string, end: string) => {
-    const nameMatch = attrs.match(/\bname="(lumina_[a-z_]+)"/);
-    const descrMatch = attrs.match(/\bdescr="(lumina_[a-z_]+)"/);
+    const nameMatch = attrs.match(/\bname="(?:!!)?(lumina_[a-z_]+)"/);
+    const descrMatch = attrs.match(/\bdescr="(?:!!)?(lumina_[a-z_]+)"/);
     const key = (nameMatch?.[1] || descrMatch?.[1]) as string | undefined;
     if (!key) return match;
     const guid = SHARED_CREATION_IDS[key];
     if (!guid) return match;
-    // Normalize name= so PowerPoint also matches by name.
+    // Normalize name= so PowerPoint's official Morph name matching also kicks in.
+    // The "!!" prefix forces object matching across slides in supported PowerPoint clients.
     let newAttrs = attrs;
-    if (!nameMatch) newAttrs = newAttrs.replace(/\bname="[^"]*"/, `name="${key}"`);
+    if (/\bname="[^"]*"/.test(newAttrs)) newAttrs = newAttrs.replace(/\bname="[^"]*"/, `name="!!${key}"`);
+    else newAttrs += ` name="!!${key}"`;
     const creationIdExt =
       `<a:extLst>` +
       `<a:ext uri="${CREATIONID_EXT_URI}">` +
