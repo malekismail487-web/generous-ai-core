@@ -287,6 +287,16 @@ function withContinuation(p: Paragraph, body: string, part: number, totalParts: 
   };
 }
 
+function splitTextForBoxes(text: string, count: number): string[] {
+  const sentences = strip(text).match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((s) => s.trim()).filter(Boolean) || [strip(text)];
+  const boxes = Array.from({ length: count }, () => '');
+  sentences.forEach((sentence, i) => {
+    const target = i % count;
+    boxes[target] = boxes[target] ? `${boxes[target]} ${sentence}` : sentence;
+  });
+  return boxes;
+}
+
 // ---------- layout renderers ----------
 
 function renderCover(slide: any, theme: ThemeCtx, outline: Outline, heroData: string | null) {
