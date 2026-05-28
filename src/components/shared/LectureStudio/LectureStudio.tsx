@@ -159,7 +159,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
         .eq('id', id)
         .maybeSingle();
       if (error || !data) throw error || new Error('not found');
-      setOutline(data.outline_json as Outline);
+      setOutline(data.outline_json as unknown as Outline);
       const urls = (data.image_urls as (string | null)[]) || [];
       setImages(urls.map((u) => u ? { status: 'done', url: u } : { status: 'failed' }));
       setHeroUrl((data.hero_url as string) || null);
