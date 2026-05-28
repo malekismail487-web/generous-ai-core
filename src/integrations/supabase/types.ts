@@ -2619,6 +2619,60 @@ export type Database = {
           },
         ]
       }
+      saved_lectures: {
+        Row: {
+          created_at: string
+          duration_minutes: number | null
+          expertise: string | null
+          grade_level: string | null
+          hero_url: string | null
+          id: string
+          image_urls: Json
+          mode: string
+          outline_json: Json
+          school_id: string | null
+          subject: string | null
+          title: string
+          topic: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number | null
+          expertise?: string | null
+          grade_level?: string | null
+          hero_url?: string | null
+          id?: string
+          image_urls?: Json
+          mode?: string
+          outline_json: Json
+          school_id?: string | null
+          subject?: string | null
+          title: string
+          topic?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number | null
+          expertise?: string | null
+          grade_level?: string | null
+          hero_url?: string | null
+          id?: string
+          image_urls?: Json
+          mode?: string
+          outline_json?: Json
+          school_id?: string | null
+          subject?: string | null
+          title?: string
+          topic?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       school_admins: {
         Row: {
           created_at: string

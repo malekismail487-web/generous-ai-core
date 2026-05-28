@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Loader2, Sparkles, ArrowLeft, Download, FileText, Presentation, FileType2, Wand2 } from 'lucide-react';
+import { Loader2, Sparkles, ArrowLeft, Download, FileText, Presentation, FileType2, Wand2, BookMarked, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -123,6 +123,94 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
   const [isExporting, setIsExporting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const cancelRef = useRef(false);
+
+  // My saved lectures
+  interface SavedLecture {
+    id: string;
+    title: string;
+    subject: string | null;
+    topic: string | null;
+    created_at: string;
+  }
+  const [savedLectures, setSavedLectures] = useState<SavedLecture[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+
+  const loadSavedLectures = useCallback(async () => {
+    if (!user) return;
+    setSavedLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('saved_lectures')
+        .select('id,title,subject,topic,created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (!error && data) setSavedLectures(data as SavedLecture[]);
+    } finally { setSavedLoading(false); }
+  }, [user]);
+
+  useEffect(() => { loadSavedLectures(); }, [loadSavedLectures]);
+
+  const openSavedLecture = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('saved_lectures')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (error || !data) throw error || new Error('not found');
+      setOutline(data.outline_json as unknown as Outline);
+      const urls = (data.image_urls as (string | null)[]) || [];
+      setImages(urls.map((u) => u ? { status: 'done', url: u } : { status: 'failed' }));
+      setHeroUrl((data.hero_url as string) || null);
+      setSubject(data.subject || '');
+      setTopic(data.topic || '');
+      if (data.expertise) setExpertise(data.expertise as Expertise);
+      if (data.grade_level) setGradeLevel(data.grade_level);
+      if (data.duration_minutes) setDuration(String(data.duration_minutes));
+      setPhase('ready');
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Could not open lecture', description: e?.message });
+    }
+  };
+
+  const deleteSavedLecture = async (id: string) => {
+    try {
+      const { error } = await supabase.from('saved_lectures').delete().eq('id', id);
+      if (error) throw error;
+      setSavedLectures((prev) => prev.filter((l) => l.id !== id));
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Delete failed', description: e?.message });
+    }
+  };
+
+  const saveLecture = async () => {
+    if (!outline || !user) return;
+    setIsSaving(true);
+    try {
+      const image_urls = images.map((i) => i.status === 'done' ? i.url : null);
+      const { error } = await supabase.from('saved_lectures').insert({
+        user_id: user.id,
+        school_id: schoolId || null,
+        mode,
+        title: outline.title,
+        subject: subject || null,
+        topic: topic || null,
+        grade_level: mode === 'teacher' ? gradeLevel : null,
+        duration_minutes: mode === 'teacher' ? Number(duration) : null,
+        expertise,
+        outline_json: outline as any,
+        hero_url: heroUrl,
+        image_urls: image_urls as any,
+      });
+      if (error) throw error;
+      toast({ title: 'Lecture saved' });
+      loadSavedLectures();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Save failed', description: e?.message });
+    } finally { setIsSaving(false); }
+  };
+
 
   const profileSnapshotRef = useRef<Record<string, unknown> | null>(null);
   const readyAtRef = useRef<number | null>(null);
@@ -375,6 +463,45 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
             <Sparkles className="w-4 h-4 mr-2" /> Generate Lecture
           </Button>
         </div>
+
+        {/* My saved lectures — available for both students and teachers */}
+        <div className="glass-effect rounded-2xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <BookMarked size={16} className="text-primary" />
+            <h2 className="text-sm font-semibold">My saved lectures</h2>
+            {savedLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
+          </div>
+          {savedLectures.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No saved lectures yet. After generating a lecture, tap <span className="font-medium">Save</span> to keep it here.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border/40">
+              {savedLectures.map((l) => (
+                <li key={l.id} className="flex items-center gap-2 py-2">
+                  <button
+                    onClick={() => openSavedLecture(l.id)}
+                    className="flex-1 text-left min-w-0 hover:opacity-80"
+                  >
+                    <div className="text-sm font-medium truncate">{l.title}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {l.subject ? `${l.subject} · ` : ''}{new Date(l.created_at).toLocaleDateString()}
+                    </div>
+                  </button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 shrink-0"
+                    onClick={() => deleteSavedLecture(l.id)}
+                    aria-label="Delete saved lecture"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     );
   }
@@ -387,11 +514,15 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
           <ArrowLeft size={14} className="mr-1" /> Back
         </Button>
         {outline && phase === 'ready' && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {/* Save into "My saved lectures" — works for both students and teachers */}
+            <Button size="sm" variant="outline" onClick={saveLecture} disabled={isSaving}>
+              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BookMarked className="w-4 h-4 mr-2" />}
+              Save
+            </Button>
             {mode === 'teacher' && schoolId && (
               <Button size="sm" variant="outline" onClick={saveAsLessonPlan} disabled={isSaving}>
-                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Save
+                Save to lesson plans
               </Button>
             )}
             <DropdownMenu>
