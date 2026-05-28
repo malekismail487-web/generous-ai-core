@@ -564,6 +564,9 @@ export async function exportLectureAsPPTX(
   // never displays the checkered transparency canvas as a real background.
   const heroData = await flattenOnBackground(rawHero, theme.bg);
 
+  const paragraphChunks = outline.paragraphs.map((p) => splitBodyIntoBalancedChunks(p.body));
+  const bodySlideTotal = paragraphChunks.reduce((sum, chunks) => sum + chunks.length, 0);
+
   // Pre-resolve illustration data URLs and build a semantic slide graph so layout,
   // morph plan and identity are wired from the same source the exporter renders.
   const total = outline.paragraphs.length;
@@ -590,15 +593,26 @@ export async function exportLectureAsPPTX(
   const chap = pptx.addSlide();
   renderChapter(chap, theme, outline.hero_subject_label || strip(outline.title).split(/[:—-]/)[0], heroData);
 
-  const bodyStartIndex = 3; // 1-based slide number where body slides begin
+  splitBodyIntoBalancedChunks(outline.intro).forEach((chunk, part, arr) => {
+    const intro = pptx.addSlide();
+    renderNarrativeSlide(intro, theme, arr.length > 1 ? `Introduction ${part + 1}/${arr.length}` : 'Introduction', outline.title, chunk, heroData);
+  });
 
   // ----- Body slides -----
+  let contentSlideIndex = 0;
   for (let i = 0; i < total; i++) {
     const p = outline.paragraphs[i];
     const illustration = perSlideImageDataUrls[i];
-    // Use the graph's adaptive layout choice instead of the AI's raw slide_layout
-    const adapted: Paragraph = { ...p, slide_layout: payload.graph[i].layout.rendererLayout };
-    renderContentSlide(pptx, theme, adapted, i, total, heroData, illustration);
+    const chunks = paragraphChunks[i];
+    chunks.forEach((chunk, part) => {
+      const slideParagraph = withContinuation(p, chunk, part, chunks.length);
+      const layout = part === 0
+        ? payload.graph[i].layout.rendererLayout
+        : (part % 2 === 0 ? 'half_bleed_right' : 'ring_portrait');
+      const adapted: Paragraph = { ...slideParagraph, slide_layout: layout };
+      renderContentSlide(pptx, theme, adapted, contentSlideIndex, bodySlideTotal, heroData, illustration);
+      contentSlideIndex += 1;
+    });
 
     if (p.diagram_spec) {
       try {
@@ -621,14 +635,10 @@ export async function exportLectureAsPPTX(
     }
   }
 
-  // Compute the real slide numbers for body slides (diagram slides shift them).
-  const realBodySlideNumbers: number[] = [];
-  let cursor = bodyStartIndex;
-  for (let i = 0; i < total; i++) {
-    realBodySlideNumbers.push(cursor);
-    cursor++;
-    if (outline.paragraphs[i].diagram_spec) cursor++;
-  }
+  splitBodyIntoBalancedChunks(outline.conclusion).forEach((chunk, part, arr) => {
+    const conclusion = pptx.addSlide();
+    renderNarrativeSlide(conclusion, theme, arr.length > 1 ? `Conclusion ${part + 1}/${arr.length}` : 'Conclusion', 'Conclusion', chunk, heroData);
+  });
 
   // ----- Takeaways -----
   if (outline.key_takeaways?.length) {
