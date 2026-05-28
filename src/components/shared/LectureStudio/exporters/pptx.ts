@@ -51,10 +51,36 @@ async function flattenOnBackground(dataUrl: string | null, bgHex: string): Promi
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d');
     if (!ctx) return dataUrl;
+    const bg = (bgHex || 'FFFFFF').replace('#', '').padEnd(6, '0').slice(0, 6);
     // Paint solid background first, then composite the image on top.
-    ctx.fillStyle = `#${(bgHex || 'FFFFFF').replace('#', '')}`;
+    ctx.fillStyle = `#${bg}`;
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(img, 0, 0, w, h);
+    // Some image models bake a grey checkerboard into the PNG instead of true alpha.
+    // Replace edge-connected low-chroma checker pixels so PowerPoint never shows it.
+    const data = ctx.getImageData(0, 0, w, h);
+    const px = data.data;
+    const br = parseInt(bg.slice(0, 2), 16), bgc = parseInt(bg.slice(2, 4), 16), bb = parseInt(bg.slice(4, 6), 16);
+    const seen = new Uint8Array(w * h);
+    const stack: number[] = [];
+    const isChecker = (idx: number) => {
+      const o = idx * 4, r = px[o], g = px[o + 1], b = px[o + 2];
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      return max - min < 18 && max > 145;
+    };
+    for (let x = 0; x < w; x++) { stack.push(x, (h - 1) * w + x); }
+    for (let y = 0; y < h; y++) { stack.push(y * w, y * w + w - 1); }
+    while (stack.length) {
+      const idx = stack.pop()!;
+      if (idx < 0 || idx >= w * h || seen[idx] || !isChecker(idx)) continue;
+      seen[idx] = 1;
+      const o = idx * 4; px[o] = br; px[o + 1] = bgc; px[o + 2] = bb; px[o + 3] = 255;
+      const x = idx % w;
+      if (x > 0) stack.push(idx - 1);
+      if (x < w - 1) stack.push(idx + 1);
+      stack.push(idx - w, idx + w);
+    }
+    ctx.putImageData(data, 0, 0);
     return canvas.toDataURL('image/jpeg', 0.92);
   } catch {
     return dataUrl;
@@ -63,6 +89,7 @@ async function flattenOnBackground(dataUrl: string | null, bgHex: string): Promi
 
 const W = 13.333;
 const H = 7.5;
+const MAX_BODY_CHARS_PER_SLIDE = 720;
 
 interface ThemeCtx {
   headingFace: string;
@@ -224,6 +251,52 @@ function addRing(slide: any, theme: ThemeCtx, cx: number, cy: number, diameter: 
   });
 }
 
+function splitBodyIntoBalancedChunks(body: string): string[] {
+  const clean = strip(body).replace(/\s+/g, ' ');
+  if (!clean) return [''];
+  const sentences = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((s) => s.trim()).filter(Boolean) || [clean];
+  const chunks: string[] = [];
+  let current = '';
+  for (const sentence of sentences) {
+    const next = current ? `${current} ${sentence}` : sentence;
+    if (next.length > MAX_BODY_CHARS_PER_SLIDE && current.length > 180) {
+      chunks.push(current);
+      current = sentence;
+    } else {
+      current = next;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks.length ? chunks : [clean];
+}
+
+function textSizeFor(chars: number, base = 14): number {
+  if (chars > 620) return Math.max(11.5, base - 2.5);
+  if (chars > 480) return Math.max(12, base - 2);
+  if (chars > 340) return Math.max(12.5, base - 1);
+  return base;
+}
+
+function withContinuation(p: Paragraph, body: string, part: number, totalParts: number): Paragraph {
+  return {
+    ...p,
+    body,
+    heading: totalParts > 1 ? `${p.heading} (${part + 1}/${totalParts})` : p.heading,
+    bullet_points: part === 0 ? (p.bullet_points || []) : [],
+    diagram_spec: part === 0 ? p.diagram_spec : undefined,
+  };
+}
+
+function splitTextForBoxes(text: string, count: number): string[] {
+  const sentences = strip(text).match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((s) => s.trim()).filter(Boolean) || [strip(text)];
+  const boxes = Array.from({ length: count }, () => '');
+  sentences.forEach((sentence, i) => {
+    const target = i % count;
+    boxes[target] = boxes[target] ? `${boxes[target]} ${sentence}` : sentence;
+  });
+  return boxes;
+}
+
 // ---------- layout renderers ----------
 
 function renderCover(slide: any, theme: ThemeCtx, outline: Outline, heroData: string | null) {
@@ -264,12 +337,14 @@ function renderRingPortrait(slide: any, theme: ThemeCtx, p: Paragraph, idx: numb
     fontSize: 34, bold: true, color: theme.fg, fontFace: theme.headingFace, valign: 'top',
     lineSpacingMultiple: 1.0,
   });
-  const bullets = (p.bullet_points || []).slice(0, 3).map((b) => ({
-    text: strip(b),
-    options: { bullet: { code: '25A0' }, color: theme.fg, fontSize: 16, fontFace: theme.bodyFace, breakLine: true },
-  }));
-  slide.addText(bullets as any, {
-    x: W * 0.55, y: 3.0, w: W * 0.4, h: H - 3.7, valign: 'top', paraSpaceAfter: 8,
+  const body = strip(p.body);
+  const text = p.bullet_points?.length
+    ? `${body}\n\n${p.bullet_points.map((b) => `• ${strip(b)}`).join('\n')}`
+    : body;
+  slide.addText(text, {
+    x: W * 0.55, y: 3.0, w: W * 0.4, h: H - 3.7, valign: 'top',
+    fontSize: textSizeFor(text.length, 14), color: theme.fg, fontFace: theme.bodyFace,
+    breakLine: false, fit: 'shrink', margin: 0.05, lineSpacingMultiple: 1.18,
   });
   applyTransition(slide, theme);
 }
@@ -286,11 +361,8 @@ function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, 
     fontSize: 22, bold: true, color: theme.fg, fontFace: theme.headingFace, align: 'center',
   });
 
-  const bullets = (p.bullet_points && p.bullet_points.length >= 3
-    ? p.bullet_points.slice(0, 4)
-    : [...(p.bullet_points || []), p.concept_keyword || strip(p.heading)].slice(0, 4)
-  );
-  while (bullets.length < 4) bullets.push(p.concept_keyword || 'Key idea');
+  const bullets = p.bullet_points?.length ? p.bullet_points.slice(0, 4) : splitTextForBoxes(p.body, 4);
+  while (bullets.length < 4) bullets.push(...splitTextForBoxes(p.body, 4).slice(0, 4 - bullets.length));
 
   const quads: Array<{ x: number; y: number; align: 'left' | 'right' }> = [
     { x: 0.7,            y: 1.4,            align: 'left'  },
@@ -305,8 +377,8 @@ function renderQuadrant(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, 
     });
     slide.addText(strip(bullets[i]), {
       x: q.x, y: q.y + 0.4, w: 4.0, h: 1.2,
-      fontSize: 16, color: theme.fg, fontFace: theme.bodyFace, align: q.align, valign: 'top',
-      lineSpacingMultiple: 1.1,
+      fontSize: textSizeFor(strip(bullets[i]).length, 15), color: theme.fg, fontFace: theme.bodyFace, align: q.align, valign: 'top',
+      lineSpacingMultiple: 1.1, fit: 'shrink', margin: 0.03,
     });
   });
   applyTransition(slide, theme);
@@ -324,12 +396,13 @@ function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number,
     fontSize: 30, bold: true, color: theme.fg, fontFace: theme.headingFace, valign: 'top',
     lineSpacingMultiple: 1.0,
   });
-  const bullets = (p.bullet_points || []).slice(0, 4).map((b) => ({
-    text: strip(b),
-    options: { bullet: { code: '25A0' }, color: theme.fg, fontSize: 15, fontFace: theme.bodyFace, breakLine: true },
-  }));
-  slide.addText(bullets as any, {
-    x: textX, y: 2.8, w: W * 0.45, h: H - 3.5, valign: 'top', paraSpaceAfter: 8,
+  const text = p.bullet_points?.length
+    ? `${strip(p.body)}\n\n${p.bullet_points.map((b) => `• ${strip(b)}`).join('\n')}`
+    : strip(p.body);
+  slide.addText(text, {
+    x: textX, y: 2.8, w: W * 0.45, h: H - 3.5, valign: 'top',
+    fontSize: textSizeFor(text.length, 14), color: theme.fg, fontFace: theme.bodyFace,
+    fit: 'shrink', margin: 0.05, lineSpacingMultiple: 1.18,
   });
   applyTransition(slide, theme);
 }
@@ -348,10 +421,11 @@ function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: numbe
     fontSize: 96, bold: true, color: theme.fg, fontFace: theme.headingFace, valign: 'top',
     lineSpacingMultiple: 0.9,
   });
-  const supporting = (p.bullet_points && p.bullet_points[0]) || strip(p.body).slice(0, 160);
+  const supporting = strip(p.body);
   slide.addText(strip(supporting), {
-    x: 0.7, y: H - 1.7, w: W * 0.55, h: 1.0,
-    fontSize: 16, color: theme.fg, fontFace: theme.bodyFace, valign: 'top', transparency: 15,
+    x: 0.7, y: H - 2.2, w: W * 0.55, h: 1.6,
+    fontSize: textSizeFor(strip(supporting).length, 14), color: theme.fg, fontFace: theme.bodyFace, valign: 'top', transparency: 15,
+    fit: 'shrink', margin: 0.04, lineSpacingMultiple: 1.15,
   });
   applyTransition(slide, theme);
 }
@@ -369,10 +443,11 @@ function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, t
     x: 0.7, y: 1.2, w: W * 0.42, h: 1.8,
     fontSize: 40, bold: true, color: theme.fg, fontFace: theme.headingFace, lineSpacingMultiple: 1.0,
   });
-  slide.addText(strip(p.body).split('. ').slice(0, 2).join('. ') + '.', {
+  const body = strip(p.body);
+  slide.addText(body, {
     x: 0.7, y: 3.4, w: W * 0.42, h: 3.0,
-    fontSize: 14, color: theme.fg, fontFace: theme.bodyFace, valign: 'top', transparency: 15,
-    lineSpacingMultiple: 1.4,
+    fontSize: textSizeFor(body.length, 14), color: theme.fg, fontFace: theme.bodyFace, valign: 'top', transparency: 15,
+    lineSpacingMultiple: 1.18, fit: 'shrink', margin: 0.05,
   });
   if (p.concept_keyword) {
     slide.addText(strip(p.concept_keyword).toUpperCase(), {
@@ -402,6 +477,26 @@ function renderChapter(slide: any, theme: ThemeCtx, label: string, heroData: str
     x: 0.7, y: H / 2 - 1.0, w: W * 0.6, h: 2,
     fontSize: 64, bold: true, color: theme.fg, fontFace: theme.headingFace, valign: 'middle',
     lineSpacingMultiple: 0.9,
+  });
+  applyTransition(slide, theme);
+}
+
+function renderNarrativeSlide(slide: any, theme: ThemeCtx, label: string, title: string, body: string, heroData: string | null) {
+  paintMaster(slide, theme, { footer: 'LUMINA' });
+  addHero(slide, heroData, { x: 0.88, y: 0.78, scale: 0.32, rotate: 5, opacity: 0.22 }, 0, 1);
+  slide.addText(label.toUpperCase(), {
+    x: 0.7, y: 0.7, w: 4, h: 0.4, fontSize: 11, color: theme.fg, transparency: 40,
+    fontFace: theme.bodyFace, charSpacing: 6,
+  });
+  slide.addText(strip(title), {
+    x: 0.7, y: 1.2, w: W * 0.52, h: 1.1,
+    fontSize: 34, bold: true, color: theme.fg, fontFace: theme.headingFace, lineSpacingMultiple: 1.0,
+  });
+  const clean = strip(body);
+  slide.addText(clean, {
+    x: 0.7, y: 2.55, w: W * 0.72, h: H - 3.25,
+    fontSize: textSizeFor(clean.length, 15), color: theme.fg, fontFace: theme.bodyFace,
+    valign: 'top', fit: 'shrink', margin: 0.05, lineSpacingMultiple: 1.18,
   });
   applyTransition(slide, theme);
 }
@@ -469,6 +564,9 @@ export async function exportLectureAsPPTX(
   // never displays the checkered transparency canvas as a real background.
   const heroData = await flattenOnBackground(rawHero, theme.bg);
 
+  const paragraphChunks = outline.paragraphs.map((p) => splitBodyIntoBalancedChunks(p.body));
+  const bodySlideTotal = paragraphChunks.reduce((sum, chunks) => sum + chunks.length, 0);
+
   // Pre-resolve illustration data URLs and build a semantic slide graph so layout,
   // morph plan and identity are wired from the same source the exporter renders.
   const total = outline.paragraphs.length;
@@ -495,15 +593,26 @@ export async function exportLectureAsPPTX(
   const chap = pptx.addSlide();
   renderChapter(chap, theme, outline.hero_subject_label || strip(outline.title).split(/[:—-]/)[0], heroData);
 
-  const bodyStartIndex = 3; // 1-based slide number where body slides begin
+  splitBodyIntoBalancedChunks(outline.intro).forEach((chunk, part, arr) => {
+    const intro = pptx.addSlide();
+    renderNarrativeSlide(intro, theme, arr.length > 1 ? `Introduction ${part + 1}/${arr.length}` : 'Introduction', outline.title, chunk, heroData);
+  });
 
   // ----- Body slides -----
+  let contentSlideIndex = 0;
   for (let i = 0; i < total; i++) {
     const p = outline.paragraphs[i];
     const illustration = perSlideImageDataUrls[i];
-    // Use the graph's adaptive layout choice instead of the AI's raw slide_layout
-    const adapted: Paragraph = { ...p, slide_layout: payload.graph[i].layout.rendererLayout };
-    renderContentSlide(pptx, theme, adapted, i, total, heroData, illustration);
+    const chunks = paragraphChunks[i];
+    chunks.forEach((chunk, part) => {
+      const slideParagraph = withContinuation(p, chunk, part, chunks.length);
+      const layout = part === 0
+        ? payload.graph[i].layout.rendererLayout
+        : (part % 2 === 0 ? 'half_bleed_right' : 'ring_portrait');
+      const adapted: Paragraph = { ...slideParagraph, slide_layout: layout };
+      renderContentSlide(pptx, theme, adapted, contentSlideIndex, bodySlideTotal, heroData, illustration);
+      contentSlideIndex += 1;
+    });
 
     if (p.diagram_spec) {
       try {
@@ -526,14 +635,10 @@ export async function exportLectureAsPPTX(
     }
   }
 
-  // Compute the real slide numbers for body slides (diagram slides shift them).
-  const realBodySlideNumbers: number[] = [];
-  let cursor = bodyStartIndex;
-  for (let i = 0; i < total; i++) {
-    realBodySlideNumbers.push(cursor);
-    cursor++;
-    if (outline.paragraphs[i].diagram_spec) cursor++;
-  }
+  splitBodyIntoBalancedChunks(outline.conclusion).forEach((chunk, part, arr) => {
+    const conclusion = pptx.addSlide();
+    renderNarrativeSlide(conclusion, theme, arr.length > 1 ? `Conclusion ${part + 1}/${arr.length}` : 'Conclusion', 'Conclusion', chunk, heroData);
+  });
 
   // ----- Takeaways -----
   if (outline.key_takeaways?.length) {
@@ -597,7 +702,8 @@ export async function exportLectureAsPPTX(
   // shape name across every slide and is the only thing that needs to morph.
   const arrayBuf = (await pptx.write({ outputType: 'arraybuffer' } as any)) as ArrayBuffer;
 
-  const patched = payload.transition === 'morph'
+  const shouldUseMorph = payload.transition === 'morph' || outline.transition === 'morph';
+  const patched = shouldUseMorph
     ? await patchPptxForMorph(arrayBuf, { skipFirstSlide: true })
     : new Blob([arrayBuf], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
   const fileName = `${strip(outline.title).replace(/[^a-z0-9]+/gi, '_').slice(0, 60) || 'lecture'}.pptx`;

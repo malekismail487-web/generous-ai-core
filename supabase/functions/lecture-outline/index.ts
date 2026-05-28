@@ -45,14 +45,16 @@ serve(async (req) => {
     const extraRules = [
       `SUBJECT FOCUS: ${subject || "general"}`,
       `- Produce a complete lecture outline with exactly ${paragraphCount} body paragraphs.`,
+      "- Each body paragraph must be textbook-rich: 180-280 words for basic/intermediate, 220-340 words for advanced/expert. Do NOT compress the lecture into captions.",
       "- Each paragraph: focused on ONE specific concept that builds on the previous one.",
+      "- The PowerPoint exporter will use EVERY sentence you write. Therefore divide information across paragraph bodies cleanly; do not hide important content only in bullets or takeaways.",
       "- For math/science, output RAW LaTeX delimited as $...$ inline or $$...$$ display. DO NOT pre-render LaTeX.",
       "- Title must be specific to the topic, not generic.",
       "- key_takeaways: 5-7 short bullet sentences distilling the essential information.",
       "- bullet_points (per paragraph): 2-3 ultra-concise bullets (max 9 words each). NEVER copy body sentences verbatim.",
       "- concept_keyword (per paragraph): 1-3 word noun phrase naming the core idea.",
       "",
-      "STEP 1 — THINK FIRST. CHOOSE A VISUAL IDENTITY FROM THE LECTURE, NOT FROM A TEMPLATE.",
+      "STEP 1 — THINK FIRST. CHOOSE A VISUAL IDENTITY FROM THE LECTURE AND USER REQUESTS, NOT FROM A TEMPLATE.",
       "Before writing paragraphs, decide what this specific lecture *looks like*. The identity must emerge from the actual subject matter — a chemistry lecture must not look the same as a poetry lecture or a history lecture. Different topics within the same subject should also feel distinct.",
       "",
       "Use these reference identities ONLY as inspiration for how committed an identity should feel. Do NOT pick one verbatim — generate the right one for THIS topic:",
@@ -75,7 +77,7 @@ serve(async (req) => {
       "- theme_tagline: ONE poetic line (max 10 words) capturing the deck's emotional throughline.",
       "- aesthetic: pick ONE from: cinematic_editorial, scholarly_serif, modern_minimal, scientific_grid, humanist_warm, editorial_magazine, technical_blueprint, classical_textbook, vibrant_creative. The choice MUST be defensible from the topic.",
       "- palette: 4 hex colors {primary, secondary, accent, surface} that match the identity. Dark identities → near-black surface (#000000-#0A0A0A) + warm off-white primary. Light identities → near-white surface + deep ink primary. Accent is the single saturated color used for emphasis only.",
-      "- transition: pick ONE PowerPoint transition that fits the topic's motion vocabulary. Choose from: morph, fade, push, wipe, split, reveal, cover, uncover, cut. Prefer 'morph' for anything where the hero subject can rotate/expand/reveal continuously (art, biology, chemistry, geometry, architecture). Use 'fade' for archival/historical. Avoid gimmicks.",
+      "- transition: use 'morph' by default because the PowerPoint exporter explicitly patches native Morph. Only choose another transition if the user specifically requests it.",
       "",
       "STEP 3 — PER-PARAGRAPH SLIDE VISUALS (each slide needs its OWN unique 3-D figure tied to that specific concept):",
       "- image_prompt (per paragraph): a UNIQUE sculpted 3-D object for THIS slide's concept, in the same material/lighting family as the hero so the deck feels cohesive but never repetitive. Example: a lecture about Apollo can have the bust as hero, then per-slide figures of a marble lyre, a laurel wreath, an arrow quiver, a sun disc — all in the same ivory marble + black backdrop language. Always specify: transparent-background cutout, premium museum lighting, dimensional materials, no text, no labels, no watermark, professional presentation asset.",
@@ -93,7 +95,8 @@ serve(async (req) => {
       "CRITICAL: The hero subject is NOT decorative. It is the single 3-D object that visually represents this lecture across every slide, morphing position/scale/rotation between slides. Each slide also has its own unique per-concept 3-D figure. No fake cubes. No stock geometry. Every figure must be defensibly tied to the specific concept it illustrates.",
     ];
     if (design_hint) {
-      extraRules.push(`- USER DESIGN HINT (must follow): "${String(design_hint).slice(0, 240)}"`);
+      extraRules.push(`- USER DESIGN HINT (must follow exactly unless unsafe): "${String(design_hint).slice(0, 500)}"`);
+      extraRules.push("- If the user asks for a named aesthetic, palette, era, material, or mood, make the palette, fonts, image prompts, hero subject, and slide layouts visibly obey that exact request.");
     }
     if (isTeacher) {
       extraRules.push(
@@ -249,8 +252,8 @@ serve(async (req) => {
       },
     };
 
-    const userPrompt = `Generate a complete, professional lecture on: "${topic}"${subject ? ` (subject: ${subject})` : ""}.
-Produce ${paragraphCount} body paragraphs. Then READ YOUR OWN DRAFT and pick the aesthetic, palette, transition, hero subject, theme_tagline, and per-slide layouts/motions that best match what you just wrote. Balance every slide so words and visuals share weight.${isTeacher ? `\nMode: teacher. Grade: ${grade_level || "unspecified"}. Duration: ${duration_minutes} minutes.` : ""}${design_hint ? `\nUser design hint: ${design_hint}` : ""}`;
+    const userPrompt = `Generate a complete, professional textbook-style lecture on: "${topic}"${subject ? ` (subject: ${subject})` : ""}.
+Produce ${paragraphCount} substantial body paragraphs, not a short slideshow summary. Every paragraph body must contain the actual teaching content, definitions, examples, nuance, and explanation because the PowerPoint export will include all of it across balanced continuation slides. Then READ YOUR OWN DRAFT and pick the aesthetic, palette, native Morph transition, hero subject, theme_tagline, and per-slide layouts/motions that best match what you just wrote. Balance every slide so words and visuals share weight.${isTeacher ? `\nMode: teacher. Grade: ${grade_level || "unspecified"}. Duration: ${duration_minutes} minutes.` : ""}${design_hint ? `\nUser design hint that must be followed exactly: ${design_hint}` : ""}`;
 
     const gatewayBody = (model: string) => ({
       model,
@@ -336,6 +339,7 @@ Produce ${paragraphCount} body paragraphs. Then READ YOUR OWN DRAFT and pick the
           };
         }
       });
+      parsed.transition = "morph";
       parsed.paragraphs = paragraphs;
     } catch (e) {
       console.warn("normalize failed", e);
