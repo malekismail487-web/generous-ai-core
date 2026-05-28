@@ -51,10 +51,36 @@ async function flattenOnBackground(dataUrl: string | null, bgHex: string): Promi
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d');
     if (!ctx) return dataUrl;
+    const bg = (bgHex || 'FFFFFF').replace('#', '').padEnd(6, '0').slice(0, 6);
     // Paint solid background first, then composite the image on top.
-    ctx.fillStyle = `#${(bgHex || 'FFFFFF').replace('#', '')}`;
+    ctx.fillStyle = `#${bg}`;
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(img, 0, 0, w, h);
+    // Some image models bake a grey checkerboard into the PNG instead of true alpha.
+    // Replace edge-connected low-chroma checker pixels so PowerPoint never shows it.
+    const data = ctx.getImageData(0, 0, w, h);
+    const px = data.data;
+    const br = parseInt(bg.slice(0, 2), 16), bgc = parseInt(bg.slice(2, 4), 16), bb = parseInt(bg.slice(4, 6), 16);
+    const seen = new Uint8Array(w * h);
+    const stack: number[] = [];
+    const isChecker = (idx: number) => {
+      const o = idx * 4, r = px[o], g = px[o + 1], b = px[o + 2];
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      return max - min < 18 && max > 145;
+    };
+    for (let x = 0; x < w; x++) { stack.push(x, (h - 1) * w + x); }
+    for (let y = 0; y < h; y++) { stack.push(y * w, y * w + w - 1); }
+    while (stack.length) {
+      const idx = stack.pop()!;
+      if (idx < 0 || idx >= w * h || seen[idx] || !isChecker(idx)) continue;
+      seen[idx] = 1;
+      const o = idx * 4; px[o] = br; px[o + 1] = bgc; px[o + 2] = bb; px[o + 3] = 255;
+      const x = idx % w;
+      if (x > 0) stack.push(idx - 1);
+      if (x < w - 1) stack.push(idx + 1);
+      stack.push(idx - w, idx + w);
+    }
+    ctx.putImageData(data, 0, 0);
     return canvas.toDataURL('image/jpeg', 0.92);
   } catch {
     return dataUrl;
