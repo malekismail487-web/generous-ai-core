@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Loader2, Sparkles, ArrowLeft, Download, FileText, Presentation, FileType2, Wand2 } from 'lucide-react';
+import { Loader2, Sparkles, ArrowLeft, Download, FileText, Presentation, FileType2, Wand2, BookMarked, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -123,6 +123,94 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
   const [isExporting, setIsExporting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const cancelRef = useRef(false);
+
+  // My saved lectures
+  interface SavedLecture {
+    id: string;
+    title: string;
+    subject: string | null;
+    topic: string | null;
+    created_at: string;
+  }
+  const [savedLectures, setSavedLectures] = useState<SavedLecture[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+
+  const loadSavedLectures = useCallback(async () => {
+    if (!user) return;
+    setSavedLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('saved_lectures')
+        .select('id,title,subject,topic,created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (!error && data) setSavedLectures(data as SavedLecture[]);
+    } finally { setSavedLoading(false); }
+  }, [user]);
+
+  useEffect(() => { loadSavedLectures(); }, [loadSavedLectures]);
+
+  const openSavedLecture = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('saved_lectures')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (error || !data) throw error || new Error('not found');
+      setOutline(data.outline_json as Outline);
+      const urls = (data.image_urls as (string | null)[]) || [];
+      setImages(urls.map((u) => u ? { status: 'done', url: u } : { status: 'failed' }));
+      setHeroUrl((data.hero_url as string) || null);
+      setSubject(data.subject || '');
+      setTopic(data.topic || '');
+      if (data.expertise) setExpertise(data.expertise as Expertise);
+      if (data.grade_level) setGradeLevel(data.grade_level);
+      if (data.duration_minutes) setDuration(String(data.duration_minutes));
+      setPhase('ready');
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Could not open lecture', description: e?.message });
+    }
+  };
+
+  const deleteSavedLecture = async (id: string) => {
+    try {
+      const { error } = await supabase.from('saved_lectures').delete().eq('id', id);
+      if (error) throw error;
+      setSavedLectures((prev) => prev.filter((l) => l.id !== id));
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Delete failed', description: e?.message });
+    }
+  };
+
+  const saveLecture = async () => {
+    if (!outline || !user) return;
+    setIsSaving(true);
+    try {
+      const image_urls = images.map((i) => i.status === 'done' ? i.url : null);
+      const { error } = await supabase.from('saved_lectures').insert({
+        user_id: user.id,
+        school_id: schoolId || null,
+        mode,
+        title: outline.title,
+        subject: subject || null,
+        topic: topic || null,
+        grade_level: mode === 'teacher' ? gradeLevel : null,
+        duration_minutes: mode === 'teacher' ? Number(duration) : null,
+        expertise,
+        outline_json: outline as any,
+        hero_url: heroUrl,
+        image_urls: image_urls as any,
+      });
+      if (error) throw error;
+      toast({ title: 'Lecture saved' });
+      loadSavedLectures();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Save failed', description: e?.message });
+    } finally { setIsSaving(false); }
+  };
+
 
   const profileSnapshotRef = useRef<Record<string, unknown> | null>(null);
   const readyAtRef = useRef<number | null>(null);
