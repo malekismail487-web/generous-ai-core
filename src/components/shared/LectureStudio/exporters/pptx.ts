@@ -481,6 +481,26 @@ function renderChapter(slide: any, theme: ThemeCtx, label: string, heroData: str
   applyTransition(slide, theme);
 }
 
+function renderNarrativeSlide(slide: any, theme: ThemeCtx, label: string, title: string, body: string, heroData: string | null) {
+  paintMaster(slide, theme, { footer: 'LUMINA' });
+  addHero(slide, heroData, { x: 0.88, y: 0.78, scale: 0.32, rotate: 5, opacity: 0.22 }, 0, 1);
+  slide.addText(label.toUpperCase(), {
+    x: 0.7, y: 0.7, w: 4, h: 0.4, fontSize: 11, color: theme.fg, transparency: 40,
+    fontFace: theme.bodyFace, charSpacing: 6,
+  });
+  slide.addText(strip(title), {
+    x: 0.7, y: 1.2, w: W * 0.52, h: 1.1,
+    fontSize: 34, bold: true, color: theme.fg, fontFace: theme.headingFace, lineSpacingMultiple: 1.0,
+  });
+  const clean = strip(body);
+  slide.addText(clean, {
+    x: 0.7, y: 2.55, w: W * 0.72, h: H - 3.25,
+    fontSize: textSizeFor(clean.length, 15), color: theme.fg, fontFace: theme.bodyFace,
+    valign: 'top', fit: 'shrink', margin: 0.05, lineSpacingMultiple: 1.18,
+  });
+  applyTransition(slide, theme);
+}
+
 function renderTakeaways(slide: any, theme: ThemeCtx, outline: Outline, heroData: string | null) {
   paintMaster(slide, theme);
   addHero(slide, heroData, { x: 0.85, y: 0.5, scale: 0.9, rotate: -4, opacity: 0.35 }, 0, 1);
