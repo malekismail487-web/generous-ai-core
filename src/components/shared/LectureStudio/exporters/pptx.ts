@@ -63,6 +63,7 @@ async function flattenOnBackground(dataUrl: string | null, bgHex: string): Promi
 
 const W = 13.333;
 const H = 7.5;
+const MAX_BODY_CHARS_PER_SLIDE = 720;
 
 interface ThemeCtx {
   headingFace: string;
@@ -222,6 +223,42 @@ function addRing(slide: any, theme: ThemeCtx, cx: number, cy: number, diameter: 
     name: 'lumina_ring',
     altText: 'lumina_ring',
   });
+}
+
+function splitBodyIntoBalancedChunks(body: string): string[] {
+  const clean = strip(body).replace(/\s+/g, ' ');
+  if (!clean) return [''];
+  const sentences = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((s) => s.trim()).filter(Boolean) || [clean];
+  const chunks: string[] = [];
+  let current = '';
+  for (const sentence of sentences) {
+    const next = current ? `${current} ${sentence}` : sentence;
+    if (next.length > MAX_BODY_CHARS_PER_SLIDE && current.length > 180) {
+      chunks.push(current);
+      current = sentence;
+    } else {
+      current = next;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks.length ? chunks : [clean];
+}
+
+function textSizeFor(chars: number, base = 14): number {
+  if (chars > 620) return Math.max(11.5, base - 2.5);
+  if (chars > 480) return Math.max(12, base - 2);
+  if (chars > 340) return Math.max(12.5, base - 1);
+  return base;
+}
+
+function withContinuation(p: Paragraph, body: string, part: number, totalParts: number): Paragraph {
+  return {
+    ...p,
+    body,
+    heading: totalParts > 1 ? `${p.heading} (${part + 1}/${totalParts})` : p.heading,
+    bullet_points: part === 0 ? (p.bullet_points || []) : [],
+    diagram_spec: part === 0 ? p.diagram_spec : undefined,
+  };
 }
 
 // ---------- layout renderers ----------
