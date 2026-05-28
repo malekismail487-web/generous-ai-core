@@ -396,12 +396,13 @@ function renderHalfBleed(slide: any, theme: ThemeCtx, p: Paragraph, idx: number,
     fontSize: 30, bold: true, color: theme.fg, fontFace: theme.headingFace, valign: 'top',
     lineSpacingMultiple: 1.0,
   });
-  const bullets = (p.bullet_points || []).slice(0, 4).map((b) => ({
-    text: strip(b),
-    options: { bullet: { code: '25A0' }, color: theme.fg, fontSize: 15, fontFace: theme.bodyFace, breakLine: true },
-  }));
-  slide.addText(bullets as any, {
-    x: textX, y: 2.8, w: W * 0.45, h: H - 3.5, valign: 'top', paraSpaceAfter: 8,
+  const text = p.bullet_points?.length
+    ? `${strip(p.body)}\n\n${p.bullet_points.map((b) => `• ${strip(b)}`).join('\n')}`
+    : strip(p.body);
+  slide.addText(text, {
+    x: textX, y: 2.8, w: W * 0.45, h: H - 3.5, valign: 'top',
+    fontSize: textSizeFor(text.length, 14), color: theme.fg, fontFace: theme.bodyFace,
+    fit: 'shrink', margin: 0.05, lineSpacingMultiple: 1.18,
   });
   applyTransition(slide, theme);
 }
@@ -420,10 +421,11 @@ function renderStatCallout(slide: any, theme: ThemeCtx, p: Paragraph, idx: numbe
     fontSize: 96, bold: true, color: theme.fg, fontFace: theme.headingFace, valign: 'top',
     lineSpacingMultiple: 0.9,
   });
-  const supporting = (p.bullet_points && p.bullet_points[0]) || strip(p.body).slice(0, 160);
+  const supporting = strip(p.body);
   slide.addText(strip(supporting), {
-    x: 0.7, y: H - 1.7, w: W * 0.55, h: 1.0,
-    fontSize: 16, color: theme.fg, fontFace: theme.bodyFace, valign: 'top', transparency: 15,
+    x: 0.7, y: H - 2.2, w: W * 0.55, h: 1.6,
+    fontSize: textSizeFor(strip(supporting).length, 14), color: theme.fg, fontFace: theme.bodyFace, valign: 'top', transparency: 15,
+    fit: 'shrink', margin: 0.04, lineSpacingMultiple: 1.15,
   });
   applyTransition(slide, theme);
 }
