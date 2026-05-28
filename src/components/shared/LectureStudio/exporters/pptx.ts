@@ -702,7 +702,8 @@ export async function exportLectureAsPPTX(
   // shape name across every slide and is the only thing that needs to morph.
   const arrayBuf = (await pptx.write({ outputType: 'arraybuffer' } as any)) as ArrayBuffer;
 
-  const patched = payload.transition === 'morph'
+  const shouldUseMorph = payload.transition === 'morph' || outline.transition === 'morph';
+  const patched = shouldUseMorph
     ? await patchPptxForMorph(arrayBuf, { skipFirstSlide: true })
     : new Blob([arrayBuf], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
   const fileName = `${strip(outline.title).replace(/[^a-z0-9]+/gi, '_').slice(0, 60) || 'lecture'}.pptx`;
