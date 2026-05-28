@@ -443,10 +443,11 @@ function renderIsoCube(slide: any, theme: ThemeCtx, p: Paragraph, idx: number, t
     x: 0.7, y: 1.2, w: W * 0.42, h: 1.8,
     fontSize: 40, bold: true, color: theme.fg, fontFace: theme.headingFace, lineSpacingMultiple: 1.0,
   });
-  slide.addText(strip(p.body).split('. ').slice(0, 2).join('. ') + '.', {
+  const body = strip(p.body);
+  slide.addText(body, {
     x: 0.7, y: 3.4, w: W * 0.42, h: 3.0,
-    fontSize: 14, color: theme.fg, fontFace: theme.bodyFace, valign: 'top', transparency: 15,
-    lineSpacingMultiple: 1.4,
+    fontSize: textSizeFor(body.length, 14), color: theme.fg, fontFace: theme.bodyFace, valign: 'top', transparency: 15,
+    lineSpacingMultiple: 1.18, fit: 'shrink', margin: 0.05,
   });
   if (p.concept_keyword) {
     slide.addText(strip(p.concept_keyword).toUpperCase(), {
