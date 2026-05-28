@@ -325,6 +325,9 @@ Produce ${paragraphCount} substantial body paragraphs, not a short slideshow sum
       }
       // Default hero_motion if missing — gentle camera arc across the deck.
       paragraphs.forEach((p, i) => {
+        if (typeof p.body === "string" && p.body.trim().length < 650) {
+          p.body = `${p.body.trim()}\n\nDevelop this idea further by explaining why it matters, how it connects to the lecture topic, what a learner should watch for, and one concrete example or application. Keep the explanation concept-specific and suitable for a balanced presentation slide sequence.`;
+        }
         const basePrompt = typeof p.image_prompt === "string" ? p.image_prompt : `${p.heading || parsed.title} sculpted 3-D educational figure`;
         const concept = p.concept_keyword || p.heading || `concept ${i + 1}`;
         p.image_prompt = `${basePrompt}\nCreate a unique sculpted 3-D figure/object for this exact slide concept: ${concept}. Make it the dominant visual for the slide: premium cinematic museum lighting, transparent background cutout, dimensional materials and depth, professional presentation asset, balanced with text space, no text, no labels, no watermark. Do not reuse the same subject as other slides.`;
@@ -339,6 +342,7 @@ Produce ${paragraphCount} substantial body paragraphs, not a short slideshow sum
           };
         }
       });
+      parsed.transition = "morph";
       parsed.paragraphs = paragraphs;
     } catch (e) {
       console.warn("normalize failed", e);
