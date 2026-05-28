@@ -463,6 +463,45 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
             <Sparkles className="w-4 h-4 mr-2" /> Generate Lecture
           </Button>
         </div>
+
+        {/* My saved lectures — available for both students and teachers */}
+        <div className="glass-effect rounded-2xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <BookMarked size={16} className="text-primary" />
+            <h2 className="text-sm font-semibold">My saved lectures</h2>
+            {savedLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
+          </div>
+          {savedLectures.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No saved lectures yet. After generating a lecture, tap <span className="font-medium">Save</span> to keep it here.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border/40">
+              {savedLectures.map((l) => (
+                <li key={l.id} className="flex items-center gap-2 py-2">
+                  <button
+                    onClick={() => openSavedLecture(l.id)}
+                    className="flex-1 text-left min-w-0 hover:opacity-80"
+                  >
+                    <div className="text-sm font-medium truncate">{l.title}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {l.subject ? `${l.subject} · ` : ''}{new Date(l.created_at).toLocaleDateString()}
+                    </div>
+                  </button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 shrink-0"
+                    onClick={() => deleteSavedLecture(l.id)}
+                    aria-label="Delete saved lecture"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     );
   }
@@ -475,11 +514,15 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
           <ArrowLeft size={14} className="mr-1" /> Back
         </Button>
         {outline && phase === 'ready' && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {/* Save into "My saved lectures" — works for both students and teachers */}
+            <Button size="sm" variant="outline" onClick={saveLecture} disabled={isSaving}>
+              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BookMarked className="w-4 h-4 mr-2" />}
+              Save
+            </Button>
             {mode === 'teacher' && schoolId && (
               <Button size="sm" variant="outline" onClick={saveAsLessonPlan} disabled={isSaving}>
-                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Save
+                Save to lesson plans
               </Button>
             )}
             <DropdownMenu>
