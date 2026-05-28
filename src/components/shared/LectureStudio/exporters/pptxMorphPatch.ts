@@ -94,9 +94,12 @@ function injectMorphTransition(xml: string): string {
   // Remove any pre-existing <p:transition>...</p:transition> (pptxgenjs may emit a stub).
   let out = xml.replace(/<p:transition\b[^>]*\/>/g, '')
                .replace(/<p:transition\b[^>]*>[\s\S]*?<\/p:transition>/g, '');
-  // PowerPoint expects <p:transition> AFTER <p:cSld>/<p:clrMapOvr> but before <p:timing>.
-  // Safest universal placement: right before </p:sld>.
-  out = out.replace(/<\/p:sld>\s*$/, `${TRANSITION_XML}</p:sld>`);
+  // PowerPoint expects <p:transition> after <p:cSld>/<p:clrMapOvr> but before timing/extLst.
+  if (/<p:clrMapOvr[\s\S]*?<\/p:clrMapOvr>/.test(out)) {
+    out = out.replace(/(<p:clrMapOvr[\s\S]*?<\/p:clrMapOvr>)/, `$1${TRANSITION_XML}`);
+  } else {
+    out = out.replace(/(<p:cSld[\s\S]*?<\/p:cSld>)/, `$1${TRANSITION_XML}`);
+  }
   return out;
 }
 
