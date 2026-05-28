@@ -252,8 +252,8 @@ serve(async (req) => {
       },
     };
 
-    const userPrompt = `Generate a complete, professional lecture on: "${topic}"${subject ? ` (subject: ${subject})` : ""}.
-Produce ${paragraphCount} body paragraphs. Then READ YOUR OWN DRAFT and pick the aesthetic, palette, transition, hero subject, theme_tagline, and per-slide layouts/motions that best match what you just wrote. Balance every slide so words and visuals share weight.${isTeacher ? `\nMode: teacher. Grade: ${grade_level || "unspecified"}. Duration: ${duration_minutes} minutes.` : ""}${design_hint ? `\nUser design hint: ${design_hint}` : ""}`;
+    const userPrompt = `Generate a complete, professional textbook-style lecture on: "${topic}"${subject ? ` (subject: ${subject})` : ""}.
+Produce ${paragraphCount} substantial body paragraphs, not a short slideshow summary. Every paragraph body must contain the actual teaching content, definitions, examples, nuance, and explanation because the PowerPoint export will include all of it across balanced continuation slides. Then READ YOUR OWN DRAFT and pick the aesthetic, palette, native Morph transition, hero subject, theme_tagline, and per-slide layouts/motions that best match what you just wrote. Balance every slide so words and visuals share weight.${isTeacher ? `\nMode: teacher. Grade: ${grade_level || "unspecified"}. Duration: ${duration_minutes} minutes.` : ""}${design_hint ? `\nUser design hint that must be followed exactly: ${design_hint}` : ""}`;
 
     const gatewayBody = (model: string) => ({
       model,
