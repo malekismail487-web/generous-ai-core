@@ -84,35 +84,26 @@ export function useAdaptiveLevel(subject?: string) {
   }, [user, fetchProfiles]);
 
   /**
-   * Record a chat interaction as a "soft" learning signal.
-   * Every chat message is documented and contributes to level progression.
-   * The progression is conservative: sustained complex questioning moves levels.
+   * Record a chat interaction as a SOFT engagement signal only.
+   *
+   * IMPORTANT: chat messages are NOT graded events. They no longer write to
+   * `student_answer_history` with `is_correct: true` — that was inflating the
+   * accuracy metric and biasing the adaptive level upward. The full message is
+   * still captured by the behavioral logger (`recordChatMessage`) which feeds
+   * the emotional and cognitive subsystems; just not the ability estimate.
+   *
+   * This function is intentionally kept as a no-op stub so existing callers
+   * don't break, but profiles are NOT refetched (nothing changed) and no
+   * accuracy-impacting row is written. If you have a graded chat answer (e.g.
+   * a tutoring quiz), call `recordAnswer` with `source: 'chat_quiz'` and an
+   * actual correctness check instead.
    */
-  const recordChatInteraction = useCallback(async (messageText: string, subject?: string) => {
-    if (!user) return;
+  const recordChatInteraction = useCallback(async (_messageText: string, _subject?: string) => {
+    // Deliberately empty. Behavioral logging happens in the chat hook via
+    // adaptiveIntelligence.recordChatMessage; that path does NOT touch theta.
+    return;
+  }, []);
 
-    const subj = (subject || 'general').toLowerCase();
-
-    // Store the full message in answer history as a chat-type entry
-    // This ensures EVERY message is documented word-for-word in the database
-    await supabase.from('student_answer_history').insert({
-      user_id: user.id,
-      subject: subj,
-      question_text: messageText,
-      student_answer: messageText,
-      correct_answer: null,
-      is_correct: true, // chat interactions count as positive engagement
-      difficulty: 'medium',
-      source: 'chat',
-    });
-
-    // Refresh profiles so the UI updates
-    await fetchProfiles();
-  }, [user, fetchProfiles]);
-
-  const getLevelPrompt = useCallback((subjectName?: string): string => {
-    const level = subjectName
-      ? profiles.find(p => p.subject === subjectName.toLowerCase())?.difficulty_level || currentLevel
       : currentLevel;
 
     const levelDescriptions: Record<DifficultyLevel, string> = {
