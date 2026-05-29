@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      ability_estimates: {
+        Row: {
+          concept_id: string | null
+          created_at: string
+          graded_count: number
+          id: string
+          last_graded_at: string | null
+          provisional: boolean
+          school_id: string | null
+          subject: string
+          theta: number
+          theta_se: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          concept_id?: string | null
+          created_at?: string
+          graded_count?: number
+          id?: string
+          last_graded_at?: string | null
+          provisional?: boolean
+          school_id?: string | null
+          subject: string
+          theta?: number
+          theta_se?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          concept_id?: string | null
+          created_at?: string
+          graded_count?: number
+          id?: string
+          last_graded_at?: string | null
+          provisional?: boolean
+          school_id?: string | null
+          subject?: string
+          theta?: number
+          theta_se?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       activity_logs: {
         Row: {
           action: string
@@ -1130,6 +1175,71 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      graded_events: {
+        Row: {
+          concept_id: string | null
+          created_at: string
+          difficulty_b: number
+          expected_p: number
+          id: string
+          question_id: string | null
+          response_time_ms: number | null
+          school_id: string | null
+          se_after: number
+          se_before: number
+          source: string
+          subject: string
+          theta_after: number
+          theta_before: number
+          user_id: string
+          was_correct: boolean
+        }
+        Insert: {
+          concept_id?: string | null
+          created_at?: string
+          difficulty_b?: number
+          expected_p?: number
+          id?: string
+          question_id?: string | null
+          response_time_ms?: number | null
+          school_id?: string | null
+          se_after?: number
+          se_before?: number
+          source?: string
+          subject: string
+          theta_after?: number
+          theta_before?: number
+          user_id: string
+          was_correct: boolean
+        }
+        Update: {
+          concept_id?: string | null
+          created_at?: string
+          difficulty_b?: number
+          expected_p?: number
+          id?: string
+          question_id?: string | null
+          response_time_ms?: number | null
+          school_id?: string | null
+          se_after?: number
+          se_before?: number
+          source?: string
+          subject?: string
+          theta_after?: number
+          theta_before?: number
+          user_id?: string
+          was_correct?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graded_events_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "question_bank"
             referencedColumns: ["id"]
           },
         ]
@@ -2519,6 +2629,54 @@ export type Database = {
           },
         ]
       }
+      question_bank: {
+        Row: {
+          concept_id: string | null
+          correct_answer: string | null
+          created_at: string
+          difficulty_b: number
+          difficulty_provisional: boolean
+          id: string
+          question_hash: string
+          question_text: string
+          source: string
+          subject: string
+          times_correct: number
+          times_seen: number
+          updated_at: string
+        }
+        Insert: {
+          concept_id?: string | null
+          correct_answer?: string | null
+          created_at?: string
+          difficulty_b?: number
+          difficulty_provisional?: boolean
+          id?: string
+          question_hash: string
+          question_text: string
+          source?: string
+          subject: string
+          times_correct?: number
+          times_seen?: number
+          updated_at?: string
+        }
+        Update: {
+          concept_id?: string | null
+          correct_answer?: string | null
+          created_at?: string
+          difficulty_b?: number
+          difficulty_provisional?: boolean
+          id?: string
+          question_hash?: string
+          question_text?: string
+          source?: string
+          subject?: string
+          times_correct?: number
+          times_seen?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       recall_schedule: {
         Row: {
           concept: string
@@ -3492,6 +3650,7 @@ export type Database = {
             Args: { p_request_id: string; p_session_token?: string }
             Returns: Json
           }
+      derive_level: { Args: { p_theta: number }; Returns: string }
       generate_ministry_invite_code: { Args: never; Returns: Json }
       generate_moderator_invite_code: { Args: never; Returns: Json }
       get_due_reviews:

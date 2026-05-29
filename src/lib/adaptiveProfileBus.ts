@@ -23,7 +23,9 @@ export type BumpReason =
   | 'helpfulness_negative'
   | 'helpfulness_positive'
   | 'manual'
-  | 'cold_start_complete';
+  | 'cold_start_complete'
+  | 'graded_answer';
+
 
 interface BumpRecord {
   reason: BumpReason;

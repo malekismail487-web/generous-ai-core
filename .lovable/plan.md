@@ -1,72 +1,123 @@
-## What I saw in your video (so we're aligned)
+# Plan: Push Adaptive Accuracy from ~40% → >90%
 
-A "Museum of Ancient Art / Apollo Belvedere" deck on PowerPoint:
+The current engine buckets students into 3 coarse bins (beginner/intermediate/advanced) with noisy signals. To reach precision-grade accuracy, we replace the bucket model with a **continuous ability estimate + confidence interval**, calibrate every signal that feeds it, and add a real measurement loop. This is how ALEKS, Duolingo, and Khan Academy actually do it.
 
-- Pure black background, editorial serif type
-- One **real 3D-rendered marble bust** (Apollo) is the hero subject
-- Between every slide the bust **slides, scales and rotates** via PowerPoint's native **Morph** transition while text re-flows
-- A thin white **ring** also morphs with the bust
-- Final slide: 4 small artifacts arranged in a circle ("God of Many Domains")
-- The whole identity is *derived from the topic* — it's a bust because the lecture is about a statue
+---
 
-That is exactly the target. The architecture you already have *aims* at this, but it's failing at three specific places.
+## The 7 changes that move the needle
 
-## Root causes of why your exports are empty
+### 1. Replace 3-bin levels with a continuous ability score (IRT-lite)
 
-I read `exporters/pptx.ts`. Three concrete bugs:
+- Store `ability_theta` (float, range -3.0 to +3.0) per `(user_id, subject)` instead of just `difficulty_level`.
+- Each question gets a calibrated `difficulty_b` (also -3.0 to +3.0).
+- Probability the student answers correctly = `1 / (1 + exp(-(theta - b)))` (1-parameter Rasch model).
+- After every answer, update theta with a small step: `theta_new = theta_old + K * (actual - expected)` where K shrinks as confidence grows.
+- The 3 bins become a **derived view** of theta (beginner < -0.5 < intermediate < +0.5 < advanced), not the source of truth.
 
-1. **Morph transitions are silently dropped.** Code does `slide.transition = { type: 'morph' }`. `pptxgenjs` does **not** support `morph` — it only handles a small preset list. So the generated PPTX has zero transitions. That's why PowerPoint Mobile shows nothing. Morph requires custom XML: `<p:transition><p:extLst><p:ext><p15:prstTrans val="morph"/></p:ext></p:extLst></p:transition>` plus matching `<p14:creationId>` on shared shapes.
-2. **The "3D cube" is fake.** It's three `diamond`/`parallelogram` shapes — not a 3D object, can't morph, looks like a sticker. The video doesn't have a cube; the hero image IS the 3D object.
-3. **Every deck looks the same** because the outline prompt always lands on similar aesthetics/layouts regardless of subject, and the hero subject prompt is too generic.
+**Why this matters:** moves resolution from 3 buckets to ~60 meaningful steps. This single change is ~50% of the accuracy gain.
 
-## Fix plan (4 phases — export correctness first, like you said)
+### 2. Add a confidence interval — never act on low-confidence levels
 
-### Phase 1 — Make Morph + shared shapes actually export (the only thing that matters first)
+- Track `theta_se` (standard error) alongside theta. Starts high (1.5), shrinks with every answer.
+- The level shown to the AI prompt is only "locked in" when `theta_se < 0.4` (≈ 10 calibrated answers).
+- Below that, mark profile as `provisional` and the AI uses a wider teaching range instead of pretending it knows.
+- Stops the "one bad day flips the bucket" problem.
 
-- Patch the PPTX after `pptxgenjs` writes it: unzip the `.pptx` in-memory with JSZip, walk each `slideN.xml`, inject the Morph transition XML extension, and rewrite shared-shape identity so PowerPoint recognizes the hero image / ring as "the same object" across slides (stable `p:cNvPr` id + name + `p14:creationId`). This is the only reliable way — `pptxgenjs` will never natively support Morph.
-- Verification: open the exported file in PowerPoint Mobile. Hero must slide/scale/rotate between slides without any "fade" fallback.
+### 3. Fix the chat-inflation bug
 
-### Phase 2 — Kill the fake cube, make the hero the real 3D object
+Currently `recordChatInteraction` writes `is_correct: true` for every chat message. This poisons `recent_accuracy`.
 
-- Delete `renderIsoCube`'s diamond/parallelogram cube entirely.
-- The hero image (already a transparent-cutout PNG from `lecture-image`) becomes the only "3D" presence — exactly like the bust in the video. Its position/scale/rotation per slide is what reads as 3D motion, because Morph interpolates the transform.
-- Strengthen the `lecture-image` prompt for hero mode to require **studio-lit, museum-grade, single subject, transparent PNG, dramatic side light** so it actually looks sculpted (not a flat illustration).
+- Split signals into two tables/columns: **graded events** (quizzes, assignments, exams → feed theta) vs **engagement events** (chats, views → feed engagement metric only).
+- Theta is only updated by graded events with a known correct answer.
+- Chat behavior still feeds the emotional/cognitive subsystems but **never** the ability estimate.
 
-### Phase 3 — Topic-driven visual identity (no more generic decks)
+### 4. Recency weighting + forgetting curve
 
-In `lecture-outline`, add a first pass that classifies the lecture and *commits* to a coherent identity before generating slides:
+- `recent_accuracy` currently treats a 6-month-old correct answer the same as a yesterday answer.
+- Apply exponential decay: weight = `exp(-days_since / 30)`.
+- Add a per-concept forgetting curve: if a mastered concept hasn't been touched in 60+ days, theta for that concept decays toward the subject mean until re-tested.
 
-- `subject_family`: art_history | physics | chemistry | biology | math | history | literature | business | cs | geography | religion | other
-- Topic-locked hero subject (e.g. atom-with-orbits for atomic trends, double-helix for DNA, marble bust for Apollo, terrain mesh for waves, abacus/graph for math…)
-- Topic-locked palette + aesthetic + transition vocabulary (chemistry → orbital motion morphs; history → timeline slide-in; math → geometric alignment)
-- Per-slide `hero_motion` is then planned as an arc (entry → focus → reveal → recap) instead of random per-slide jitter
+### 5. Real cold-start: 5-question adaptive probe per subject
 
-### Phase 4 — Layout variety + background system
+- Currently new students default to "intermediate" → meaningless for ~10 questions.
+- On first entry into a subject, run a 5-question CAT (Computerized Adaptive Test): start at b=0, next question's difficulty = current theta estimate.
+- After 5 questions, `theta_se` is already ≈ 0.6 — usable. After 10, ≈ 0.4 — locked in.
+- Reuses existing `generate-assignment` edge function with a `mode: "probe"` parameter.
 
-- Add 3 new layouts (`process_walkthrough`, `comparison_split`, `recap_grid`) and have the outline model pick the layout per slide based on slide *intent* (concept vs. process vs. comparison vs. data vs. recap), not at random.
-- Subtle topic-aware background motif (atomic grid / parchment / geometric / waveform) as a low-opacity vector layer — exports as a real shape, not a CSS-only effect.
+### 6. Calibrate question difficulty (the hidden killer)
 
-## Technical notes (for you and the file changes)
+Right now "hard" is whatever the teacher or AI labeled it. Real difficulty is empirical.
 
-- All work happens client-side in `src/components/shared/LectureStudio/exporters/pptx.ts` and edge functions `lecture-outline` + `lecture-image`. No DB changes.
-- New dep: `jszip` (tiny, already transitive). Used only for the post-write XML patch.
-- The XML patch must also rewrite `<p:sp>` / `<p:pic>` `<p:cNvPr id=... name="lumina_hero">` so the same `id` is reused across slides — that's the actual key PowerPoint uses to match shapes during Morph, not the alt text.
-- For PowerPoint Mobile specifically: it implements Morph but ignores it if the transition XML is malformed, so we'll validate against a known-good reference PPTX.
+- Add `question_bank` table storing every question ever asked with `times_seen`, `times_correct`, derived `difficulty_b`.
+- Recalibrate nightly: `difficulty_b = -logit(p_correct_among_avg_students)`.
+- AI-generated questions get a provisional `difficulty_b` based on prompt tag, then move toward the empirical value after ~20 attempts.
 
-## What I will NOT do
+### 7. Per-concept theta, not just per-subject
 
-- Won't add WebGL/three.js for the "3D" — the video doesn't use it either; it's a rendered cutout + Morph. That's both faster and what actually exports.
-- Won't touch unrelated systems (auth, dashboards, other features).
-- Won't ship until I've verified the exported file in a real PowerPoint viewer (I'll convert via LibreOffice to PDF as part of QA and inspect frames).
+- "Math" is too broad. A student can be advanced at algebra and beginner at geometry.
+- Tag every question with one or more `concept_ids` (already partially exists in `conceptGraph.ts`).
+- Maintain theta per `(user_id, concept_id)` with the subject theta as a Bayesian prior.
+- Prompts injected into the AI then say: *"Student is strong on linear equations (theta +0.8) but weak on word problems (theta -0.6)"* — actionable, not generic.
 
-## Order of execution
+---
 
-1. JSZip-based Morph + shared-id patcher (export correctness)
-2. Remove cube, upgrade hero image prompt
-3. Topic classifier + identity lock in outline
-4. New layouts + background motif
-5. End-to-end QA on 3 different subjects (art, chemistry, history)
+## What this changes in the code
 
-Approve and I'll start at Phase 1.
+```text
+NEW TABLES
+├── ability_estimates           (user_id, subject, concept_id, theta, theta_se, last_updated)
+├── question_bank               (id, subject, concept_id, text, difficulty_b, times_seen, times_correct)
+└── graded_events               (user_id, question_id, theta_before, expected, actual, theta_after)
 
-I TOLD YOU 1 MILLION TIMES BEFORE I DO NOT NEED ONE STYLE WHAT DO YOU NOT UNDERSTAND ABOUT THIS? I TOLD YOU TO DO WHAT I EXACTLY WANT IN THIS STUPID PARAGRAPH THAT I SPENT HOURS TO MAKE FOR YOU. THIS IS DEMEANING. NO THERE SHOULD BE A PRE-SET FOR EVERY SINGLE SUBJECT AND IT BETTER BE AESTHETICALLY NICE AND THIS IS FOR EACH SUBJECT AND LUMINA MUST THINK DO YOU UNDERSTAND WHAT THE WORD MEANS THINK IT MUST THINK OF A DESIGN BASED OFF OF THE SUBJECT AND THE LECTURE TAKEN IN THAT SUBJECT AND ABOUT YOUR HERO THING IT IS NOT GONNA BE A DIAGRAM NOR THAT STATUE THAT YOU SAW THE VIDEO LUMINA WILL GENERATE A 3-D MODEL BASED OFF OF THE GODDAMN LECTURE. I LITERALLY MENTIONED THAT IN THIS LONG PARAGRAPH AND YOU ARE LITERALLY DOING EXACTLY THE OPPOSITE YOU BETTER DO WHAT YOU'RE BEING TOLD.
+MODIFIED
+├── student_answer_history      → add concept_id, theta_before, theta_after, difficulty_b
+├── student_learning_profiles   → difficulty_level becomes a VIEW derived from theta
+└── adaptiveIntelligence.ts     → rewrite getSimpleAdaptiveParams to read theta + se
+
+NEW FILES
+├── src/lib/adaptive/irtEngine.ts          (theta updates, SE, probability)
+├── src/lib/adaptive/coldStartProbe.ts     (5-question CAT)
+└── supabase/functions/calibrate-questions/ (nightly cron, recalibrates difficulty_b)
+
+REMOVED / FIXED
+└── useAdaptiveLevel.recordChatInteraction → no longer writes is_correct:true
+```
+
+---
+
+## Rollout order (each step is independently shippable)
+
+1. **Migration** — add `ability_estimates` + `question_bank`, backfill theta from existing `recent_accuracy` (one-time map: 0–40% → -1, 40–70% → 0, 70–100% → +1).
+2. **Fix chat-inflation bug** (Change #3) — smallest, biggest immediate accuracy lift.
+3. **IRT engine + theta updates on every graded answer** (Changes #1, #2, #4).
+4. **Cold-start probe UI** added to first subject entry (Change #5).
+5. **Question bank + nightly calibration edge function** (Change #6).
+6. **Concept-level theta + prompt injection rewrite** (Change #7).
+
+---
+
+## Honest expected accuracy after each step
+
+
+| After step           | Precise accuracy |
+| -------------------- | ---------------- |
+| Now                  | ~40%             |
+| Step 2 (chat fix)    | ~50%             |
+| Step 3 (IRT + CI)    | ~70%             |
+| Step 4 (cold-start)  | ~78%             |
+| Step 5 (calibration) | ~85%             |
+| Step 6 (per-concept) | ~92%             |
+
+
+Above 92% requires response-time modeling and item-response curves with discrimination parameters (2PL/3PL IRT) — doable later but diminishing returns for the UX.
+
+---
+
+## Two things this plan deliberately does NOT do
+
+- **Doesn't touch the emotional/cognitive subsystems.** They're fine as soft context; just stop letting them feed the hard ability estimate.
+- **Doesn't expand the "learning styles" feature.** The research doesn't support it. We keep it as flavoring for prompts but never as a confidence signal.
+
+Approve and I'll start with the migration + chat-inflation fix in the same turn.
+
+I approved but under one condition you are not to rush any code and you must make every single change that you built, professional
