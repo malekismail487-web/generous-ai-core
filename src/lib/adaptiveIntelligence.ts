@@ -1241,6 +1241,17 @@ export async function generateAdaptiveContext(
   const effectiveLevel = subjectPerf?.difficultyLevel || profile.overallLevel;
   sections.push(getDifficultyInstruction(effectiveLevel));
 
+  // 1b. Calibrated IRT ability snapshot (precision layer on top of the bucket).
+  if (subject) {
+    try {
+      const { getAbilitySnapshot, buildAbilityPromptFragment } = await import('@/lib/adaptive/irtEngine');
+      const snap = await getAbilitySnapshot(userId, subject);
+      const fragment = buildAbilityPromptFragment(snap);
+      if (fragment) sections.push(`CALIBRATED ABILITY: ${fragment}`);
+    } catch { /* non-fatal */ }
+  }
+
+
   // 2. Learning style
   sections.push(getStyleInstruction(
     profile.dominantStyle,
