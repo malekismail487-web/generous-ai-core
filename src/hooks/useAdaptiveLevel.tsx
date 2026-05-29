@@ -104,7 +104,11 @@ export function useAdaptiveLevel(subject?: string) {
     return;
   }, []);
 
+  const getLevelPrompt = useCallback((subjectName?: string): string => {
+    const level = subjectName
+      ? profiles.find(p => p.subject === subjectName.toLowerCase())?.difficulty_level || currentLevel
       : currentLevel;
+
 
     const levelDescriptions: Record<DifficultyLevel, string> = {
       beginner: 'The student is at a BEGINNER level. Use simple vocabulary, short sentences, basic examples, and explain concepts step-by-step from the ground up. Avoid jargon. Use analogies and real-world comparisons.',
