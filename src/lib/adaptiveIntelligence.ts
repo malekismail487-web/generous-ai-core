@@ -40,6 +40,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { getStoredBehavior, classifyQuestion as classifyQuestionModality, type BehavioralDataPoint, type ContentModality } from '@/hooks/useActivityTracker';
 import { bumpProfile } from '@/lib/adaptiveProfileBus';
 import { fetchColdStartSeed, shouldApplyColdStart, type ColdStartSeed } from '@/lib/coldStartBootstrap';
+import { recordGradedAnswer } from '@/lib/adaptive/irtEngine';
+
 
 // === Subsystem Imports ===
 import { computeCognitiveState, getCognitiveContextPrompt, recordCognitiveEventByType, type CognitiveState } from '@/lib/adaptive/cognitiveModel';
@@ -1426,7 +1428,7 @@ export async function recordIntelligentAnswer(params: {
   source: string;
   responseTimeSec?: number;
 }): Promise<void> {
-  // 1. Insert into answer history (DB)
+  // 1. Insert into answer history (DB) — full audit trail for legacy analytics.
   await supabase.from('student_answer_history').insert({
     user_id: params.userId,
     subject: params.subject.toLowerCase(),
@@ -1437,6 +1439,35 @@ export async function recordIntelligentAnswer(params: {
     difficulty: params.difficulty,
     source: params.source,
   });
+
+  // 1b. Feed the IRT engine (server-side Rasch update on ability_estimates).
+  //     Skip when the source is a chat or non-graded surface; this is the
+  //     single source of truth for the student's measured ability.
+  if (params.source !== 'chat') {
+    try {
+      await recordGradedAnswer({
+        subject: params.subject,
+        questionText: params.questionText,
+        correctAnswer: params.correctAnswer,
+        studentAnswer: params.studentAnswer,
+        isCorrect: params.isCorrect,
+        source: (['quiz', 'assignment', 'exam', 'probe'].includes(params.source)
+          ? params.source
+          : 'quiz') as 'quiz' | 'assignment' | 'exam' | 'probe',
+        responseTimeMs:
+          typeof params.responseTimeSec === 'number'
+            ? Math.round(params.responseTimeSec * 1000)
+            : undefined,
+        difficultyHint:
+          params.difficulty === 'easy' || params.difficulty === 'hard'
+            ? params.difficulty
+            : 'medium',
+      });
+    } catch (err) {
+      console.warn('[adaptiveIntelligence] IRT update failed (non-fatal):', err);
+    }
+  }
+
 
   // 2. Feed into Spaced Repetition
   try {
