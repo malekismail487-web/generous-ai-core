@@ -1244,10 +1244,20 @@ export async function generateAdaptiveContext(
   // 1b. Calibrated IRT ability snapshot (precision layer on top of the bucket).
   if (subject) {
     try {
-      const { getAbilitySnapshot, buildAbilityPromptFragment } = await import('@/lib/adaptive/irtEngine');
-      const snap = await getAbilitySnapshot(userId, subject);
+      const {
+        getAbilitySnapshot,
+        buildAbilityPromptFragment,
+        getConceptAbilities,
+        buildConceptAbilitiesFragment,
+      } = await import('@/lib/adaptive/irtEngine');
+      const [snap, conceptSnaps] = await Promise.all([
+        getAbilitySnapshot(userId, subject),
+        getConceptAbilities(userId, subject),
+      ]);
       const fragment = buildAbilityPromptFragment(snap);
       if (fragment) sections.push(`CALIBRATED ABILITY: ${fragment}`);
+      const conceptFragment = buildConceptAbilitiesFragment(conceptSnaps, snap?.theta ?? null);
+      if (conceptFragment) sections.push(`PER-CONCEPT ABILITY: ${conceptFragment}`);
     } catch { /* non-fatal */ }
   }
 
