@@ -1466,12 +1466,19 @@ export async function recordIntelligentAnswer(params: {
   //     single source of truth for the student's measured ability.
   if (params.source !== 'chat') {
     try {
+      // Per-concept theta requires every graded answer to be tagged with a
+      // concept. We infer it from the question text against the curriculum
+      // graph so callers don't need to thread this through manually.
+      const { inferConceptId } = await import('@/lib/adaptive/conceptInference');
+      const conceptId = inferConceptId(params.subject, params.questionText);
+
       await recordGradedAnswer({
         subject: params.subject,
         questionText: params.questionText,
         correctAnswer: params.correctAnswer,
         studentAnswer: params.studentAnswer,
         isCorrect: params.isCorrect,
+        conceptId,
         source: (['quiz', 'assignment', 'exam', 'probe'].includes(params.source)
           ? params.source
           : 'quiz') as 'quiz' | 'assignment' | 'exam' | 'probe',
