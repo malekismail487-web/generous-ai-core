@@ -1244,10 +1244,20 @@ export async function generateAdaptiveContext(
   // 1b. Calibrated IRT ability snapshot (precision layer on top of the bucket).
   if (subject) {
     try {
-      const { getAbilitySnapshot, buildAbilityPromptFragment } = await import('@/lib/adaptive/irtEngine');
-      const snap = await getAbilitySnapshot(userId, subject);
+      const {
+        getAbilitySnapshot,
+        buildAbilityPromptFragment,
+        getConceptAbilities,
+        buildConceptAbilitiesFragment,
+      } = await import('@/lib/adaptive/irtEngine');
+      const [snap, conceptSnaps] = await Promise.all([
+        getAbilitySnapshot(userId, subject),
+        getConceptAbilities(userId, subject),
+      ]);
       const fragment = buildAbilityPromptFragment(snap);
       if (fragment) sections.push(`CALIBRATED ABILITY: ${fragment}`);
+      const conceptFragment = buildConceptAbilitiesFragment(conceptSnaps, snap?.theta ?? null);
+      if (conceptFragment) sections.push(`PER-CONCEPT ABILITY: ${conceptFragment}`);
     } catch { /* non-fatal */ }
   }
 
@@ -1456,12 +1466,19 @@ export async function recordIntelligentAnswer(params: {
   //     single source of truth for the student's measured ability.
   if (params.source !== 'chat') {
     try {
+      // Per-concept theta requires every graded answer to be tagged with a
+      // concept. We infer it from the question text against the curriculum
+      // graph so callers don't need to thread this through manually.
+      const { inferConceptId } = await import('@/lib/adaptive/conceptInference');
+      const conceptId = inferConceptId(params.subject, params.questionText);
+
       await recordGradedAnswer({
         subject: params.subject,
         questionText: params.questionText,
         correctAnswer: params.correctAnswer,
         studentAnswer: params.studentAnswer,
         isCorrect: params.isCorrect,
+        conceptId,
         source: (['quiz', 'assignment', 'exam', 'probe'].includes(params.source)
           ? params.source
           : 'quiz') as 'quiz' | 'assignment' | 'exam' | 'probe',
