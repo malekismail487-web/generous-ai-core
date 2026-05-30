@@ -157,77 +157,143 @@ Deno.serve(async (req) => {
       .maybeSingle();
     const schoolId = profile?.school_id ?? null;
 
-    // ── load ability estimate (subject-level for now; concept-level later) ──
-    let { data: estimate } = await admin
-      .from("ability_estimates")
-      .select("id, theta, theta_se, graded_count, provisional, last_graded_at")
-      .eq("user_id", user.id)
-      .eq("subject", subject)
-      .is("concept_id", null)
-      .maybeSingle();
+    // ── Rasch update helper (runs for subject-level and optionally concept) ─
+    interface EstimateRow {
+      id: string;
+      theta: number;
+      theta_se: number;
+      graded_count: number;
+      provisional: boolean;
+    }
 
-    if (!estimate) {
+    async function loadOrSeedEstimate(
+      conceptKey: string | null,
+      seed: { theta: number; se: number },
+    ): Promise<EstimateRow> {
+      let query = admin
+        .from("ability_estimates")
+        .select("id, theta, theta_se, graded_count, provisional")
+        .eq("user_id", user.id)
+        .eq("subject", subject);
+      query = conceptKey === null
+        ? query.is("concept_id", null)
+        : query.eq("concept_id", conceptKey);
+
+      const { data: existing } = await query.maybeSingle();
+      if (existing) {
+        return {
+          id: existing.id,
+          theta: Number(existing.theta),
+          theta_se: Number(existing.theta_se),
+          graded_count: existing.graded_count ?? 0,
+          provisional: Boolean(existing.provisional),
+        };
+      }
+
       const { data: created, error: createErr } = await admin
         .from("ability_estimates")
         .insert({
           user_id: user.id,
           school_id: schoolId,
           subject,
-          concept_id: null,
-          theta: 0.0,
-          theta_se: SE_INITIAL,
+          concept_id: conceptKey,
+          theta: Number(seed.theta.toFixed(3)),
+          theta_se: Number(seed.se.toFixed(3)),
           graded_count: 0,
           provisional: true,
         })
-        .select("id, theta, theta_se, graded_count, provisional, last_graded_at")
+        .select("id, theta, theta_se, graded_count, provisional")
         .single();
       if (createErr) throw createErr;
-      estimate = created!;
+      return {
+        id: created!.id,
+        theta: Number(created!.theta),
+        theta_se: Number(created!.theta_se),
+        graded_count: created!.graded_count ?? 0,
+        provisional: Boolean(created!.provisional),
+      };
     }
 
-    const thetaBefore = Number(estimate.theta);
-    const seBefore = Number(estimate.theta_se);
+    function runRasch(prior: EstimateRow): {
+      thetaAfter: number;
+      seAfter: number;
+      gradedCount: number;
+      provisional: boolean;
+      expected: number;
+    } {
+      const expected = sigmoid(prior.theta - b);
+      const actual = body.isCorrect ? 1 : 0;
+      const expK = 0.4 * (prior.theta_se / SE_INITIAL);
+      const k = clamp(expK, 0.08, 0.55);
+      const thetaAfter = clamp(prior.theta + k * (actual - expected), -3.0, 3.0);
+      const info = expected * (1 - expected);
+      const seAfter = clamp(
+        1 / Math.sqrt(1 / (prior.theta_se * prior.theta_se) + info),
+        SE_FLOOR,
+        SE_INITIAL,
+      );
+      const gradedCount = prior.graded_count + 1;
+      return {
+        thetaAfter,
+        seAfter,
+        gradedCount,
+        provisional: seAfter >= SE_LOCK_IN,
+        expected,
+      };
+    }
+
+    async function persistEstimate(
+      row: EstimateRow,
+      next: ReturnType<typeof runRasch>,
+    ) {
+      const { error: updErr } = await admin
+        .from("ability_estimates")
+        .update({
+          theta: Number(next.thetaAfter.toFixed(3)),
+          theta_se: Number(next.seAfter.toFixed(3)),
+          graded_count: next.gradedCount,
+          provisional: next.provisional,
+          last_graded_at: new Date().toISOString(),
+          school_id: schoolId ?? undefined,
+        })
+        .eq("id", row.id);
+      if (updErr) throw updErr;
+    }
+
     const b = Number(question.difficulty_b);
 
-    // ── Rasch update ────────────────────────────────────────────────────
-    const expected = sigmoid(thetaBefore - b);
-    const actual = body.isCorrect ? 1 : 0;
+    // ── subject-level update (always) ──────────────────────────────────
+    const subjectPrior = await loadOrSeedEstimate(null, { theta: 0, se: SE_INITIAL });
+    const subjectNext = runRasch(subjectPrior);
+    await persistEstimate(subjectPrior, subjectNext);
 
-    // K shrinks with experience but never below 0.08. SE-aware: a less-certain
-    // estimate moves faster, a confident one moves slowly.
-    const baseK = 0.4;
-    const expK = baseK * (seBefore / SE_INITIAL);
-    const k = clamp(expK, 0.08, 0.55);
+    // ── concept-level update (when concept is known) ───────────────────
+    // The subject estimate is used as the Bayesian prior for a new concept:
+    // we start at the student's subject ability with a slightly narrower SE
+    // (we already know *something* about them) rather than from zero.
+    let conceptNext: ReturnType<typeof runRasch> | null = null;
+    let conceptRow: EstimateRow | null = null;
+    if (conceptId) {
+      const conceptSeedSe = Math.max(
+        SE_LOCK_IN + 0.1,
+        Math.min(SE_INITIAL, subjectPrior.theta_se * 0.85),
+      );
+      conceptRow = await loadOrSeedEstimate(conceptId, {
+        theta: subjectPrior.theta,
+        se: conceptSeedSe,
+      });
+      conceptNext = runRasch(conceptRow);
+      await persistEstimate(conceptRow, conceptNext);
+    }
 
-    let thetaAfter = thetaBefore + k * (actual - expected);
-    thetaAfter = clamp(thetaAfter, -3.0, 3.0);
-
-    // Standard error update via Fisher information for 1PL:
-    //   I = p * (1 - p)
-    //   se_new = 1 / sqrt( 1/se_old^2 + I )
-    const info = expected * (1 - expected);
-    const seNew = clamp(
-      1 / Math.sqrt(1 / (seBefore * seBefore) + info),
-      SE_FLOOR,
-      SE_INITIAL,
-    );
-
-    const gradedCountNew = (estimate.graded_count ?? 0) + 1;
-    const provisionalNew = seNew >= SE_LOCK_IN;
-
-    // ── persist ability ─────────────────────────────────────────────────
-    const { error: updErr } = await admin
-      .from("ability_estimates")
-      .update({
-        theta: Number(thetaAfter.toFixed(3)),
-        theta_se: Number(seNew.toFixed(3)),
-        graded_count: gradedCountNew,
-        provisional: provisionalNew,
-        last_graded_at: new Date().toISOString(),
-        school_id: schoolId ?? undefined,
-      })
-      .eq("id", estimate.id);
-    if (updErr) throw updErr;
+    // Use subject-level numbers for the response + audit log (back-compat).
+    const thetaBefore = subjectPrior.theta;
+    const seBefore = subjectPrior.theta_se;
+    const thetaAfter = subjectNext.thetaAfter;
+    const seNew = subjectNext.seAfter;
+    const gradedCountNew = subjectNext.gradedCount;
+    const provisionalNew = subjectNext.provisional;
+    const expected = subjectNext.expected;
 
     // ── log graded event ────────────────────────────────────────────────
     await admin.from("graded_events").insert({
@@ -246,6 +312,7 @@ Deno.serve(async (req) => {
       response_time_ms: body.responseTimeMs ?? null,
       source,
     });
+
 
     // ── update question stats + recalibrate difficulty if mature ─────────
     const seenNew = (question.times_seen ?? 0) + 1;
