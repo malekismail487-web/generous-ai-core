@@ -352,6 +352,15 @@ Deno.serve(async (req) => {
         level: thetaAfter < -0.5 ? "beginner" : thetaAfter > 0.5 ? "advanced" : "intermediate",
         expected_p: Number(expected.toFixed(4)),
         question_id: question.id,
+        concept: conceptId && conceptNext
+          ? {
+              concept_id: conceptId,
+              theta: Number(conceptNext.thetaAfter.toFixed(3)),
+              theta_se: Number(conceptNext.seAfter.toFixed(3)),
+              provisional: conceptNext.provisional,
+              graded_count: conceptNext.gradedCount,
+            }
+          : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
