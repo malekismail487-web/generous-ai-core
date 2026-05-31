@@ -39,8 +39,11 @@ interface UpdateInput {
   isCorrect: boolean;
   correctAnswer?: string | null;
   studentAnswer?: string | null;
+  /** Legacy single-concept tag. Prefer `conceptDistribution` for multi-skill questions. */
   conceptId?: string | null;
-  source?: "quiz" | "assignment" | "exam" | "probe";
+  /** Soft concept distribution from `inferConceptDistribution`. Wins over `conceptId` when set. */
+  conceptDistribution?: Array<{ conceptId: string; weight: number }>;
+  source?: "quiz" | "assignment" | "exam" | "probe" | "ai_practice" | "self_graded";
   responseTimeMs?: number;
   difficultyHint?: "easy" | "medium" | "hard";
 }
@@ -71,6 +74,7 @@ export async function recordGradedAnswer(
           studentAnswer: input.studentAnswer ?? null,
           isCorrect: input.isCorrect,
           conceptId: input.conceptId ?? null,
+          conceptDistribution: input.conceptDistribution ?? null,
           source: input.source ?? "quiz",
           responseTimeMs: input.responseTimeMs,
           difficultyHint: input.difficultyHint ?? "medium",
