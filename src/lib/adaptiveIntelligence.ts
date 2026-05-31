@@ -1469,8 +1469,8 @@ export async function recordIntelligentAnswer(params: {
       // Per-concept theta requires every graded answer to be tagged with the
       // concepts it actually exercises. v2.1 uses a soft distribution so
       // multi-skill questions credit each concept proportionally.
-      const { inferConceptDistribution } = await import('@/lib/adaptive/conceptInference');
-      const distribution = inferConceptDistribution(params.subject, params.questionText, 2);
+      const { inferConceptDistributionHybrid } = await import('@/lib/adaptive/conceptInferenceHybrid');
+      const distribution = await inferConceptDistributionHybrid(params.subject, params.questionText, 2);
 
       await recordGradedAnswer({
         subject: params.subject,
