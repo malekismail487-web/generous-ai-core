@@ -17,6 +17,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { bumpProfile } from "@/lib/adaptiveProfileBus";
+import { applyTemporalDecay } from "@/lib/adaptive/temporalDecay";
 
 export type DerivedLevel = "beginner" | "intermediate" | "advanced";
 
