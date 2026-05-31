@@ -138,24 +138,33 @@ function normaliseSubject(subject: string): string | null {
   return SUBJECT_ALIASES[key] ?? (CONCEPT_KEYWORDS[key] ? key : null);
 }
 
+export interface ConceptWeight {
+  conceptId: string;
+  weight: number;     // 0..1, weights in a distribution sum to 1
+  rawScore: number;   // unnormalised keyword score, useful for debugging / gating
+}
+
 /**
- * Infer the best-matching concept id for a question, or null if no concept
- * scores high enough to commit. Scoring is a simple sum of (keyword length²)
- * for every keyword found — longer matches dominate so "differential equation"
- * beats a stray "x =".
+ * Soft concept distribution (top-K). Real questions are multi-skill; a single
+ * label throws away information and lets one mistake poison the wrong concept
+ * estimate. We return the top-K matching concepts with normalised weights so
+ * the IRT update can credit each one proportionally.
+ *
+ * Returns `[]` when nothing matches above the noise floor — caller should
+ * fall back to subject-level theta only.
  */
-export function inferConceptId(
+export function inferConceptDistribution(
   subject: string,
   questionText: string,
-): string | null {
+  topK = 2,
+): ConceptWeight[] {
   const subj = normaliseSubject(subject);
-  if (!subj) return null;
+  if (!subj) return [];
   const concepts = CONCEPT_KEYWORDS[subj];
-  if (!concepts) return null;
+  if (!concepts) return [];
 
   const text = questionText.toLowerCase();
-  let bestConcept: string | null = null;
-  let bestScore = 0;
+  const scored: { conceptId: string; rawScore: number }[] = [];
 
   for (const [concept, keywords] of Object.entries(concepts)) {
     let score = 0;
@@ -163,19 +172,33 @@ export function inferConceptId(
       if (kw.length < 2) continue;
       if (text.includes(kw)) score += kw.length * kw.length;
     }
-    // The concept name itself is always a valid hit.
     if (text.includes(concept)) score += concept.length * concept.length * 1.5;
-
-    if (score > bestScore) {
-      bestScore = score;
-      bestConcept = concept;
+    if (score >= 9) {
+      scored.push({ conceptId: `${subj}:${concept}`, rawScore: score });
     }
   }
 
-  // Require at least a 3-character keyword's worth of evidence (3² = 9) to
-  // commit. Anything weaker stays unlabelled.
-  if (!bestConcept || bestScore < 9) return null;
-  return `${subj}:${bestConcept}`;
+  if (!scored.length) return [];
+  scored.sort((a, b) => b.rawScore - a.rawScore);
+  const top = scored.slice(0, Math.max(1, topK));
+  const sum = top.reduce((s, c) => s + c.rawScore, 0);
+  return top.map((c) => ({
+    conceptId: c.conceptId,
+    rawScore: c.rawScore,
+    weight: Number((c.rawScore / sum).toFixed(3)),
+  }));
+}
+
+/**
+ * Backwards-compatible single-concept inference. Returns the dominant concept
+ * from the distribution, or null if no concept matches.
+ */
+export function inferConceptId(
+  subject: string,
+  questionText: string,
+): string | null {
+  const dist = inferConceptDistribution(subject, questionText, 1);
+  return dist[0]?.conceptId ?? null;
 }
 
 /** Human-readable concept name from an id like "math:linear equations". */

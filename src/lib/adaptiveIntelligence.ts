@@ -1466,11 +1466,11 @@ export async function recordIntelligentAnswer(params: {
   //     single source of truth for the student's measured ability.
   if (params.source !== 'chat') {
     try {
-      // Per-concept theta requires every graded answer to be tagged with a
-      // concept. We infer it from the question text against the curriculum
-      // graph so callers don't need to thread this through manually.
-      const { inferConceptId } = await import('@/lib/adaptive/conceptInference');
-      const conceptId = inferConceptId(params.subject, params.questionText);
+      // Per-concept theta requires every graded answer to be tagged with the
+      // concepts it actually exercises. v2.1 uses a soft distribution so
+      // multi-skill questions credit each concept proportionally.
+      const { inferConceptDistributionHybrid } = await import('@/lib/adaptive/conceptInferenceHybrid');
+      const distribution = await inferConceptDistributionHybrid(params.subject, params.questionText, 2);
 
       await recordGradedAnswer({
         subject: params.subject,
@@ -1478,10 +1478,13 @@ export async function recordIntelligentAnswer(params: {
         correctAnswer: params.correctAnswer,
         studentAnswer: params.studentAnswer,
         isCorrect: params.isCorrect,
-        conceptId,
-        source: (['quiz', 'assignment', 'exam', 'probe'].includes(params.source)
+        conceptId: distribution[0]?.conceptId ?? null,    // legacy field
+        conceptDistribution: distribution.length
+          ? distribution.map(({ conceptId, weight }) => ({ conceptId, weight }))
+          : undefined,
+        source: (['quiz', 'assignment', 'exam', 'probe', 'ai_practice', 'self_graded'].includes(params.source)
           ? params.source
-          : 'quiz') as 'quiz' | 'assignment' | 'exam' | 'probe',
+          : 'quiz') as 'quiz' | 'assignment' | 'exam' | 'probe' | 'ai_practice' | 'self_graded',
         responseTimeMs:
           typeof params.responseTimeSec === 'number'
             ? Math.round(params.responseTimeSec * 1000)

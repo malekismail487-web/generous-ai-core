@@ -17,6 +17,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { bumpProfile } from "@/lib/adaptiveProfileBus";
+import { applyTemporalDecay } from "@/lib/adaptive/temporalDecay";
 
 export type DerivedLevel = "beginner" | "intermediate" | "advanced";
 
@@ -39,8 +40,11 @@ interface UpdateInput {
   isCorrect: boolean;
   correctAnswer?: string | null;
   studentAnswer?: string | null;
+  /** Legacy single-concept tag. Prefer `conceptDistribution` for multi-skill questions. */
   conceptId?: string | null;
-  source?: "quiz" | "assignment" | "exam" | "probe";
+  /** Soft concept distribution from `inferConceptDistribution`. Wins over `conceptId` when set. */
+  conceptDistribution?: Array<{ conceptId: string; weight: number }>;
+  source?: "quiz" | "assignment" | "exam" | "probe" | "ai_practice" | "self_graded";
   responseTimeMs?: number;
   difficultyHint?: "easy" | "medium" | "hard";
 }
@@ -71,6 +75,7 @@ export async function recordGradedAnswer(
           studentAnswer: input.studentAnswer ?? null,
           isCorrect: input.isCorrect,
           conceptId: input.conceptId ?? null,
+          conceptDistribution: input.conceptDistribution ?? null,
           source: input.source ?? "quiz",
           responseTimeMs: input.responseTimeMs,
           difficultyHint: input.difficultyHint ?? "medium",
@@ -96,6 +101,10 @@ export async function recordGradedAnswer(
  * Read the student's current ability snapshot for a subject.
  * Subject-level estimate (concept_id IS NULL). Returns null if the student
  * has no estimate yet — callers should treat that as cold-start.
+ *
+ * Applies temporal decay: stale estimates are shrunk toward 0 and their SE
+ * is inflated so the prompt layer becomes appropriately less confident.
+ * The stored row is left untouched — decay is a read-time view.
  */
 export async function getAbilitySnapshot(
   userId: string,
@@ -103,7 +112,7 @@ export async function getAbilitySnapshot(
 ): Promise<AbilitySnapshot | null> {
   const { data, error } = await supabase
     .from("ability_estimates")
-    .select("theta, theta_se, provisional, graded_count")
+    .select("theta, theta_se, provisional, graded_count, last_graded_at")
     .eq("user_id", userId)
     .eq("subject", subject.toLowerCase())
     .is("concept_id", null)
@@ -111,35 +120,44 @@ export async function getAbilitySnapshot(
 
   if (error || !data) return null;
 
-  const theta = Number(data.theta);
-  return {
-    theta,
+  const decayed = applyTemporalDecay({
+    theta: Number(data.theta),
     theta_se: Number(data.theta_se),
-    provisional: Boolean(data.provisional),
+    last_graded_at: (data as { last_graded_at?: string }).last_graded_at,
+  });
+
+  return {
+    theta: decayed.theta,
+    theta_se: decayed.theta_se,
+    provisional: Boolean(data.provisional) || decayed.theta_se >= 0.4,
     graded_count: data.graded_count ?? 0,
-    level: deriveLevel(theta),
+    level: deriveLevel(decayed.theta),
   };
 }
 
-/** Pull every subject estimate for a student in one query. */
+/** Pull every subject estimate for a student in one query (decay-aware). */
 export async function getAllAbilitySnapshots(
   userId: string,
 ): Promise<Record<string, AbilitySnapshot>> {
   const { data } = await supabase
     .from("ability_estimates")
-    .select("subject, theta, theta_se, provisional, graded_count, concept_id")
+    .select("subject, theta, theta_se, provisional, graded_count, concept_id, last_graded_at")
     .eq("user_id", userId)
     .is("concept_id", null);
 
   const out: Record<string, AbilitySnapshot> = {};
   for (const row of data ?? []) {
-    const theta = Number(row.theta);
-    out[row.subject] = {
-      theta,
+    const decayed = applyTemporalDecay({
+      theta: Number(row.theta),
       theta_se: Number(row.theta_se),
-      provisional: Boolean(row.provisional),
+      last_graded_at: (row as { last_graded_at?: string }).last_graded_at,
+    });
+    out[row.subject] = {
+      theta: decayed.theta,
+      theta_se: decayed.theta_se,
+      provisional: Boolean(row.provisional) || decayed.theta_se >= 0.4,
       graded_count: row.graded_count ?? 0,
-      level: deriveLevel(theta),
+      level: deriveLevel(decayed.theta),
     };
   }
   return out;
@@ -152,8 +170,8 @@ export interface ConceptAbilitySnapshot extends AbilitySnapshot {
 
 /**
  * Read every concept-level ability estimate the student has in a subject.
- * Returned sorted by graded_count desc so the most-evidenced concepts
- * surface first to the prompt builder.
+ * Sorted by graded_count desc so the most-evidenced concepts surface first.
+ * Temporal decay is applied per concept independently.
  */
 export async function getConceptAbilities(
   userId: string,
@@ -161,7 +179,7 @@ export async function getConceptAbilities(
 ): Promise<ConceptAbilitySnapshot[]> {
   const { data, error } = await supabase
     .from("ability_estimates")
-    .select("concept_id, theta, theta_se, provisional, graded_count")
+    .select("concept_id, theta, theta_se, provisional, graded_count, last_graded_at")
     .eq("user_id", userId)
     .eq("subject", subject.toLowerCase())
     .not("concept_id", "is", null);
@@ -171,18 +189,22 @@ export async function getConceptAbilities(
   const out: ConceptAbilitySnapshot[] = [];
   for (const row of data) {
     const conceptId = row.concept_id as string;
-    const theta = Number(row.theta);
+    const decayed = applyTemporalDecay({
+      theta: Number(row.theta),
+      theta_se: Number(row.theta_se),
+      last_graded_at: (row as { last_graded_at?: string }).last_graded_at,
+    });
     const name = conceptId.includes(":")
       ? conceptId.slice(conceptId.indexOf(":") + 1)
       : conceptId;
     out.push({
       concept_id: conceptId,
       concept_name: name,
-      theta,
-      theta_se: Number(row.theta_se),
-      provisional: Boolean(row.provisional),
+      theta: decayed.theta,
+      theta_se: decayed.theta_se,
+      provisional: Boolean(row.provisional) || decayed.theta_se >= 0.4,
       graded_count: row.graded_count ?? 0,
-      level: deriveLevel(theta),
+      level: deriveLevel(decayed.theta),
     });
   }
   out.sort((a, b) => b.graded_count - a.graded_count);
