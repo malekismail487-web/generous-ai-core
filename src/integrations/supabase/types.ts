@@ -1182,10 +1182,12 @@ export type Database = {
       graded_events: {
         Row: {
           concept_id: string | null
+          concept_weight: number | null
           created_at: string
           difficulty_b: number
           expected_p: number
           id: string
+          k_effective: number | null
           question_id: string | null
           response_time_ms: number | null
           school_id: string | null
@@ -1200,10 +1202,12 @@ export type Database = {
         }
         Insert: {
           concept_id?: string | null
+          concept_weight?: number | null
           created_at?: string
           difficulty_b?: number
           expected_p?: number
           id?: string
+          k_effective?: number | null
           question_id?: string | null
           response_time_ms?: number | null
           school_id?: string | null
@@ -1218,10 +1222,12 @@ export type Database = {
         }
         Update: {
           concept_id?: string | null
+          concept_weight?: number | null
           created_at?: string
           difficulty_b?: number
           expected_p?: number
           id?: string
+          k_effective?: number | null
           question_id?: string | null
           response_time_ms?: number | null
           school_id?: string | null
@@ -2632,11 +2638,13 @@ export type Database = {
       question_bank: {
         Row: {
           concept_id: string | null
+          confidence: number
           correct_answer: string | null
           created_at: string
           difficulty_b: number
           difficulty_provisional: boolean
           id: string
+          is_anchor: boolean
           question_hash: string
           question_text: string
           source: string
@@ -2647,11 +2655,13 @@ export type Database = {
         }
         Insert: {
           concept_id?: string | null
+          confidence?: number
           correct_answer?: string | null
           created_at?: string
           difficulty_b?: number
           difficulty_provisional?: boolean
           id?: string
+          is_anchor?: boolean
           question_hash: string
           question_text: string
           source?: string
@@ -2662,11 +2672,13 @@ export type Database = {
         }
         Update: {
           concept_id?: string | null
+          confidence?: number
           correct_answer?: string | null
           created_at?: string
           difficulty_b?: number
           difficulty_provisional?: boolean
           id?: string
+          is_anchor?: boolean
           question_hash?: string
           question_text?: string
           source?: string
