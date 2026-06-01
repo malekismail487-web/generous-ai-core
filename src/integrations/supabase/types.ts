@@ -255,6 +255,39 @@ export type Database = {
         }
         Relationships: []
       }
+      anchor_recalibrations: {
+        Row: {
+          anchor_count: number
+          created_at: string
+          id: string
+          items_shifted: number
+          mean_drift: number
+          notes: string | null
+          responses_considered: number
+          subject: string
+        }
+        Insert: {
+          anchor_count?: number
+          created_at?: string
+          id?: string
+          items_shifted?: number
+          mean_drift?: number
+          notes?: string | null
+          responses_considered?: number
+          subject: string
+        }
+        Update: {
+          anchor_count?: number
+          created_at?: string
+          id?: string
+          items_shifted?: number
+          mean_drift?: number
+          notes?: string | null
+          responses_considered?: number
+          subject?: string
+        }
+        Relationships: []
+      }
       announcement_reads: {
         Row: {
           announcement_id: string
