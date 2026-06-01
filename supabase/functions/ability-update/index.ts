@@ -191,7 +191,41 @@ Deno.serve(async (req) => {
       body.responseTimeMs < 1500
         ? 0.7
         : 1.0;
-    const baseResponseConfidence = srcTrust * speedPenalty;
+
+    // ── guess / slip detection (3PL-lite) ──────────────────────────────
+    // A "guess" = correct answer on a question far above the student's
+    // current ability with a suspiciously fast response time.
+    // A "slip"  = wrong answer on a question well below the student's
+    // current ability after a recent run of correct answers (fatigue/click).
+    // Both signals get dampened so a single anomalous event doesn't yank theta.
+    const bForGuess = Number(question.difficulty_b);
+    let guessSlipPenalty = 1.0;
+    // We need the prior subject theta to judge guess/slip, so peek now.
+    const { data: priorSubject } = await admin
+      .from("ability_estimates")
+      .select("theta")
+      .eq("user_id", user.id)
+      .eq("subject", subject)
+      .is("concept_id", null)
+      .maybeSingle();
+    const priorTheta = priorSubject ? Number(priorSubject.theta) : 0;
+    const rt = body.responseTimeMs ?? null;
+    if (body.isCorrect && bForGuess - priorTheta >= 1.2 && rt !== null && rt > 0 && rt < 4000) {
+      guessSlipPenalty = 0.45; // very likely a guess
+    } else if (!body.isCorrect && priorTheta - bForGuess >= 1.2) {
+      // Slip — check if the last 3 events on this subject were correct.
+      const { data: recent } = await admin
+        .from("graded_events")
+        .select("was_correct")
+        .eq("user_id", user.id)
+        .eq("subject", subject)
+        .order("created_at", { ascending: false })
+        .limit(3);
+      const lastThreeRight = (recent ?? []).filter((r) => r.was_correct).length >= 3;
+      if (lastThreeRight) guessSlipPenalty = 0.5;
+    }
+
+    const baseResponseConfidence = srcTrust * speedPenalty * guessSlipPenalty;
 
     // ── Rasch update helpers ───────────────────────────────────────────
     interface EstimateRow {
