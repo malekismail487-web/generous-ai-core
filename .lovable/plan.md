@@ -1,4 +1,6 @@
-# Plan: Adaptive Intelligence v2 — Push from ~90% → ~95–98%
+# Plan: Adaptive Intelligence v2.2 — Phases 1–5 SHIPPED + bonus pushes
+
+Phase 5 (nightly anchor recalibration) + guess/slip dampening + info-gain CAT selector are now live on top of the v2.1 stack.
 
 The current engine (subject + concept IRT with keyword inference) is a strong ~90% prototype. To reach production-grade adaptive accuracy, we layer in **7 targeted upgrades** that fix the highest-impact weaknesses: hard labels, brittle keyword matching, static difficulty, fragmented updates, no time decay, equal-weight updates, and no recalibration anchor.
 
