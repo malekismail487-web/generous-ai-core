@@ -771,6 +771,7 @@ export type Database = {
       }
       concept_mastery: {
         Row: {
+          concept_id: string | null
           created_at: string
           ease_factor: number
           id: string
@@ -787,6 +788,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          concept_id?: string | null
           created_at?: string
           ease_factor?: number
           id?: string
@@ -803,6 +805,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          concept_id?: string | null
           created_at?: string
           ease_factor?: number
           id?: string
@@ -818,7 +821,79 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "concept_mastery_concept_id_fkey"
+            columns: ["concept_id"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concepts: {
+        Row: {
+          created_at: string
+          description: string | null
+          difficulty_weight: number
+          id: string
+          is_active: boolean
+          lecture_id: string
+          name: string
+          order_index: number
+          school_id: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          difficulty_weight?: number
+          id?: string
+          is_active?: boolean
+          lecture_id: string
+          name: string
+          order_index?: number
+          school_id: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          difficulty_weight?: number
+          id?: string
+          is_active?: boolean
+          lecture_id?: string
+          name?: string
+          order_index?: number
+          school_id?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concepts_lecture_id_fkey"
+            columns: ["lecture_id"]
+            isOneToOne: false
+            referencedRelation: "lectures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concepts_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concepts_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       confidence_calibration_stats: {
         Row: {
@@ -1021,6 +1096,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "course_materials_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculum_versions: {
+        Row: {
+          changes: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          school_id: string
+          version_label: string | null
+        }
+        Insert: {
+          changes?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          school_id: string
+          version_label?: string | null
+        }
+        Update: {
+          changes?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          school_id?: string
+          version_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_versions_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
@@ -1747,6 +1860,63 @@ export type Database = {
           visual_score?: number | null
         }
         Relationships: []
+      }
+      lectures: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          difficulty_level: number
+          id: string
+          is_active: boolean
+          order_index: number
+          school_id: string
+          subject_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: number
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          school_id: string
+          subject_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: number
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          school_id?: string
+          subject_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lectures_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lectures_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lesson_plans: {
         Row: {
