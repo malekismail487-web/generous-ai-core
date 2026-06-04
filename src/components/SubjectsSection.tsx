@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSchoolSubjects } from '@/hooks/useSchoolSubjects';
 import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2, Bot, BookOpen, Download, Image as ImageIcon, FileText, Presentation, Pencil, Save, Zap, GraduationCap } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-const subjects = [
+// Default tile list used as a fallback if the school's subjects haven't loaded yet.
+// The live source of truth comes from useSchoolSubjects (the per-school `subjects` table).
+const FALLBACK_SUBJECTS: Array<{ id: string; name: string; emoji: string; color: string }> = [
   { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-emerald-500 to-green-600' },
   { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-blue-500 to-cyan-600' },
   { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'from-violet-500 to-purple-600' },
@@ -81,6 +84,24 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   const { getLearningStylePrompt } = useLearningStyle();
   const { trackActivity, trackLectureViewed } = useActivityTracker();
   const { getSimpleParams, recordActivity, recordTeaching } = useAdaptiveIntelligence();
+
+  // Per-school subjects: source of truth for the tiles, replaces the old hardcoded list.
+  const [schoolId, setSchoolId] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id) { setSchoolId(null); return; }
+    supabase.from('profiles').select('school_id').eq('id', user.id).maybeSingle().then(({ data }) => {
+      if (!cancelled) setSchoolId((data as { school_id?: string } | null)?.school_id ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [user?.id]);
+  const { subjects: dbSubjects } = useSchoolSubjects(schoolId);
+  const subjects = (dbSubjects.length > 0 ? dbSubjects : FALLBACK_SUBJECTS).map((s) => ({
+    id: (s as { slug?: string | null }).slug || s.id,
+    name: s.name,
+    emoji: (s as { emoji?: string | null }).emoji || '📘',
+    color: (s as { color?: string | null }).color || 'from-slate-500 to-zinc-600',
+  }));
 
   const containerClass = embedded
     ? "flex-1 min-h-0 overflow-y-auto py-4"

@@ -33,6 +33,7 @@ import {
   Network,
   GitBranch,
   Eye,
+  BookOpen,
 } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
@@ -41,6 +42,8 @@ import { SchoolAdminAppeals } from '@/components/admin/SchoolAdminAppeals';
 import { CurriculumGraphManager } from '@/components/admin/CurriculumGraphManager';
 import { CurriculumVersionsPanel } from '@/components/admin/CurriculumVersionsPanel';
 import { StudentViewSimulator } from '@/components/admin/StudentViewSimulator';
+import { SubjectsManager } from '@/components/admin/SubjectsManager';
+import { useSchoolSubjects } from '@/hooks/useSchoolSubjects';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -145,6 +148,8 @@ export default function SchoolAdminDashboard() {
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [newCodeRole, setNewCodeRole] = useState<'teacher' | 'student'>('student');
+  const [newCodeSubjectId, setNewCodeSubjectId] = useState<string>('');
+  const { subjects: schoolSubjects } = useSchoolSubjects(school?.id);
   const [creatingCode, setCreatingCode] = useState(false);
 
   // Invite requests state
@@ -298,12 +303,17 @@ export default function SchoolAdminDashboard() {
 
   const generateInviteCode = async () => {
     if (!school || !profile) return;
+    if (newCodeRole === 'teacher' && !newCodeSubjectId) {
+      toast({ variant: 'destructive', title: t('error'), description: 'Pick a subject for the teacher invite.' });
+      return;
+    }
     setCreatingCode(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('invite-codes', {
         body: {
           role: newCodeRole,
+          subject_id: newCodeRole === 'teacher' ? newCodeSubjectId : null,
         },
       });
 
@@ -584,6 +594,7 @@ export default function SchoolAdminDashboard() {
               <NavTab value="performance" icon={BarChart3} label="Performance" />
 
               <NavGroup label="Curriculum" />
+              <NavTab value="subjects" icon={BookOpen} label="Subjects" />
               <NavTab value="curriculum-graph" icon={Network} label="Curriculum Graph" />
               <NavTab value="curriculum-versions" icon={GitBranch} label="Versions" />
               <NavTab value="simulator" icon={Eye} label="Student Simulator" />
@@ -639,6 +650,9 @@ export default function SchoolAdminDashboard() {
             </TabsContent>
 
             {/* Curriculum */}
+            <TabsContent value="subjects" className="space-y-4 mt-0">
+              <SubjectsManager schoolId={school.id} />
+            </TabsContent>
             <TabsContent value="curriculum-graph" className="space-y-4 mt-0">
               <CurriculumGraphManager schoolId={school.id} />
             </TabsContent>
@@ -658,7 +672,7 @@ export default function SchoolAdminDashboard() {
             <TabsContent value="codes" className="space-y-4 mt-0">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">{t('inviteCodes')}</h2>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Select value={newCodeRole} onValueChange={(v) => setNewCodeRole(v as 'teacher' | 'student')}>
                     <SelectTrigger className="w-32">
                       <SelectValue />
@@ -666,14 +680,24 @@ export default function SchoolAdminDashboard() {
                     <SelectContent>
                       <SelectItem value="student">{t('student')}</SelectItem>
                       <SelectItem value="teacher">{t('teacher')}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button onClick={generateInviteCode} disabled={creatingCode} className="gap-2">
-                  {creatingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                  {t('generateCode')}
-                </Button>
+                    </SelectContent>
+                  </Select>
+                  {newCodeRole === 'teacher' && (
+                    <Select value={newCodeSubjectId} onValueChange={setNewCodeSubjectId}>
+                      <SelectTrigger className="w-44"><SelectValue placeholder="Subject" /></SelectTrigger>
+                      <SelectContent>
+                        {schoolSubjects.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>{s.emoji} {s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <Button onClick={generateInviteCode} disabled={creatingCode} className="gap-2">
+                    {creatingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    {t('generateCode')}
+                  </Button>
+                </div>
               </div>
-            </div>
 
             <div className="glass-effect rounded-xl overflow-hidden">
               <Table>

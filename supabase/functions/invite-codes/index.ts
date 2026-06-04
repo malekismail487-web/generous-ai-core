@@ -9,6 +9,7 @@ const corsHeaders = {
 
 type CreateInviteCodeBody = {
   role: "teacher" | "student";
+  subject_id?: string | null;
 };
 
 function randomInviteCode(length = 8) {
@@ -54,9 +55,17 @@ serve(async (req) => {
 
     const body = (await req.json()) as Partial<CreateInviteCodeBody>;
     const role = body.role;
+    const subjectId = body.subject_id ?? null;
 
     if (role !== "teacher" && role !== "student") {
       return new Response(JSON.stringify({ error: "Invalid role" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (role === "teacher" && !subjectId) {
+      return new Response(JSON.stringify({ error: "subject_id is required for teacher invites" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -109,6 +118,21 @@ serve(async (req) => {
       });
     }
 
+    // Verify subject belongs to this school (teacher invites only)
+    if (role === "teacher" && subjectId) {
+      const { data: subjRow, error: subjErr } = await admin
+        .from("subjects")
+        .select("id,school_id")
+        .eq("id", subjectId)
+        .maybeSingle();
+      if (subjErr || !subjRow || subjRow.school_id !== schoolAdminRow.school_id) {
+        return new Response(JSON.stringify({ error: "Subject not found in your school" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
 
@@ -122,10 +146,11 @@ serve(async (req) => {
           school_id: schoolAdminRow.school_id,
           code,
           role,
+          subject_id: role === "teacher" ? subjectId : null,
           expires_at: expiresAt.toISOString(),
           created_by: user.id,
         })
-        .select("id,code,role,used,expires_at,created_at")
+        .select("id,code,role,subject_id,used,expires_at,created_at")
         .single();
 
       if (!error) {

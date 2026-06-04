@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Plus,
@@ -110,9 +110,40 @@ export function TeacherMaterials({
   const [content, setContent] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  // Teacher category lock: teachers tied to a subject can only upload for that subject.
+  const [lockedSubjectSlug, setLockedSubjectSlug] = useState<string | null>(null);
+  const [lockedSubjectName, setLockedSubjectName] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('teacher_subject_id')
+        .eq('id', authUserId)
+        .maybeSingle();
+      const sid = (prof as { teacher_subject_id?: string | null } | null)?.teacher_subject_id;
+      if (!sid) { if (!cancelled) { setLockedSubjectSlug(null); setLockedSubjectName(null); } return; }
+      const { data: subj } = await supabase
+        .from('subjects')
+        .select('slug,name')
+        .eq('id', sid)
+        .maybeSingle();
+      if (!cancelled && subj) {
+        const slug = (subj as { slug?: string | null }).slug;
+        if (slug) {
+          setLockedSubjectSlug(slug);
+          setLockedSubjectName((subj as { name: string }).name);
+          setSubject(slug);
+          setFilterSubject(slug);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [authUserId]);
+
   const resetForm = () => {
     setTitle('');
-    setSubject('biology');
+    setSubject(lockedSubjectSlug || 'biology');
     setGradeLevel('All');
     setContent('');
     setSelectedFile(null);
@@ -176,6 +207,13 @@ export function TeacherMaterials({
     }
 
     setUploading(true);
+
+    // Hard guard: locked teachers cannot upload outside their subject category.
+    if (lockedSubjectSlug && subject !== lockedSubjectSlug) {
+      setUploading(false);
+      toast({ variant: 'destructive', title: t('error'), description: `You can only upload materials for ${lockedSubjectName}.` });
+      return;
+    }
 
     let fileUrl: string | null = null;
     if (selectedFile) {
@@ -477,18 +515,28 @@ export function TeacherMaterials({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t('subjectRequired')}</Label>
-                <Select value={subject} onValueChange={setSubject}>
+                <Select value={subject} onValueChange={setSubject} disabled={!!lockedSubjectSlug}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SUBJECTS.map((s) => (
+                    {(lockedSubjectSlug
+                      ? SUBJECTS.filter((s) => s.id === lockedSubjectSlug).concat(
+                          SUBJECTS.find((s) => s.id === lockedSubjectSlug)
+                            ? []
+                            : [{ id: lockedSubjectSlug, emoji: '📘', color: 'from-slate-500 to-zinc-600' }],
+                        )
+                      : SUBJECTS
+                    ).map((s) => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.emoji} {getSubjectName(s.id, language)}
+                        {s.emoji} {lockedSubjectName && s.id === lockedSubjectSlug ? lockedSubjectName : getSubjectName(s.id, language)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {lockedSubjectSlug && (
+                  <p className="text-[10px] text-muted-foreground">You're assigned to {lockedSubjectName}. Other subjects are locked by your school admin.</p>
+                )}
               </div>
 
               <div className="space-y-2">
