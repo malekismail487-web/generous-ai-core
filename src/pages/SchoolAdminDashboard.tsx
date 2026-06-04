@@ -33,7 +33,7 @@ import {
   Network,
   GitBranch,
   Eye,
-} from 'lucide-react';
+  BookOpen,
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
 import { BudgetOptimizationReport } from '@/components/admin/BudgetOptimizationReport';
