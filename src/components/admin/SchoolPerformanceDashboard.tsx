@@ -235,7 +235,7 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
         <div className="glass-effect rounded-xl p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <LuminaLogo size={16} />
-            {t('Teacher Productivity', 'إنتاجية المعلمين')}
+            {t('Assignment Mix', 'توزيع الواجبات')}
           </h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -247,17 +247,16 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
               <span className="text-lg font-bold">{metrics.totalAssignments - metrics.copilotAssignments}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{t('Time Saved (est.)', 'الوقت الموفر (تقديري)')}</span>
-              <span className="text-lg font-bold text-green-500">{metrics.teacherProductivity.timeSaved}</span>
+              <span className="text-sm text-muted-foreground">{t('AI Adoption', 'تبني الذكاء الاصطناعي')}</span>
+              <span className="text-lg font-bold">
+                {metrics.totalAssignments > 0
+                  ? Math.round((metrics.copilotAssignments / metrics.totalAssignments) * 100)
+                  : 0}%
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t(
-                'Based on 18 minutes saved per AI-generated assignment. Only Copilot assignments counted.',
-                'استناداً إلى 18 دقيقة موفرة لكل واجب بالذكاء الاصطناعي فقط.'
-              )}
-            </p>
           </div>
         </div>
+
       </div>
 
       {/* Subject Breakdown */}
