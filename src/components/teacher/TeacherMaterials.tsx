@@ -208,6 +208,13 @@ export function TeacherMaterials({
 
     setUploading(true);
 
+    // Hard guard: locked teachers cannot upload outside their subject category.
+    if (lockedSubjectSlug && subject !== lockedSubjectSlug) {
+      setUploading(false);
+      toast({ variant: 'destructive', title: t('error'), description: `You can only upload materials for ${lockedSubjectName}.` });
+      return;
+    }
+
     let fileUrl: string | null = null;
     if (selectedFile) {
       fileUrl = await uploadFile();
