@@ -34,6 +34,7 @@ import {
   GitBranch,
   Eye,
   BookOpen,
+  GraduationCap,
 } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
