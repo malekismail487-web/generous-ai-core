@@ -41,6 +41,8 @@ import { SchoolAdminAppeals } from '@/components/admin/SchoolAdminAppeals';
 import { CurriculumGraphManager } from '@/components/admin/CurriculumGraphManager';
 import { CurriculumVersionsPanel } from '@/components/admin/CurriculumVersionsPanel';
 import { StudentViewSimulator } from '@/components/admin/StudentViewSimulator';
+import { SubjectsManager } from '@/components/admin/SubjectsManager';
+import { useSchoolSubjects } from '@/hooks/useSchoolSubjects';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
