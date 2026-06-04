@@ -672,7 +672,7 @@ export default function SchoolAdminDashboard() {
             <TabsContent value="codes" className="space-y-4 mt-0">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">{t('inviteCodes')}</h2>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Select value={newCodeRole} onValueChange={(v) => setNewCodeRole(v as 'teacher' | 'student')}>
                     <SelectTrigger className="w-32">
                       <SelectValue />
@@ -680,14 +680,24 @@ export default function SchoolAdminDashboard() {
                     <SelectContent>
                       <SelectItem value="student">{t('student')}</SelectItem>
                       <SelectItem value="teacher">{t('teacher')}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button onClick={generateInviteCode} disabled={creatingCode} className="gap-2">
-                  {creatingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                  {t('generateCode')}
-                </Button>
+                    </SelectContent>
+                  </Select>
+                  {newCodeRole === 'teacher' && (
+                    <Select value={newCodeSubjectId} onValueChange={setNewCodeSubjectId}>
+                      <SelectTrigger className="w-44"><SelectValue placeholder="Subject" /></SelectTrigger>
+                      <SelectContent>
+                        {schoolSubjects.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>{s.emoji} {s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <Button onClick={generateInviteCode} disabled={creatingCode} className="gap-2">
+                    {creatingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    {t('generateCode')}
+                  </Button>
+                </div>
               </div>
-            </div>
 
             <div className="glass-effect rounded-xl overflow-hidden">
               <Table>
