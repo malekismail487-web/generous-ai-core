@@ -302,12 +302,17 @@ export default function SchoolAdminDashboard() {
 
   const generateInviteCode = async () => {
     if (!school || !profile) return;
+    if (newCodeRole === 'teacher' && !newCodeSubjectId) {
+      toast({ variant: 'destructive', title: t('error'), description: 'Pick a subject for the teacher invite.' });
+      return;
+    }
     setCreatingCode(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('invite-codes', {
         body: {
           role: newCodeRole,
+          subject_id: newCodeRole === 'teacher' ? newCodeSubjectId : null,
         },
       });
 
