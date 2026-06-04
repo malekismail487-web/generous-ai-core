@@ -586,6 +586,7 @@ export default function SchoolAdminDashboard() {
               <NavTab value="performance" icon={BarChart3} label="Performance" />
 
               <NavGroup label="Curriculum" />
+              <NavTab value="subjects" icon={BookOpen} label="Subjects" />
               <NavTab value="curriculum-graph" icon={Network} label="Curriculum Graph" />
               <NavTab value="curriculum-versions" icon={GitBranch} label="Versions" />
               <NavTab value="simulator" icon={Eye} label="Student Simulator" />
