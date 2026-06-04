@@ -43,6 +43,7 @@ import { CurriculumGraphManager } from '@/components/admin/CurriculumGraphManage
 import { CurriculumVersionsPanel } from '@/components/admin/CurriculumVersionsPanel';
 import { StudentViewSimulator } from '@/components/admin/StudentViewSimulator';
 import { SubjectsManager } from '@/components/admin/SubjectsManager';
+import { TeacherCategoriesManager } from '@/components/admin/TeacherCategoriesManager';
 import { useSchoolSubjects } from '@/hooks/useSchoolSubjects';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
