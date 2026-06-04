@@ -84,6 +84,24 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   const { trackActivity, trackLectureViewed } = useActivityTracker();
   const { getSimpleParams, recordActivity, recordTeaching } = useAdaptiveIntelligence();
 
+  // Per-school subjects: source of truth for the tiles, replaces the old hardcoded list.
+  const [schoolId, setSchoolId] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id) { setSchoolId(null); return; }
+    supabase.from('profiles').select('school_id').eq('id', user.id).maybeSingle().then(({ data }) => {
+      if (!cancelled) setSchoolId((data as { school_id?: string } | null)?.school_id ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [user?.id]);
+  const { subjects: dbSubjects } = useSchoolSubjects(schoolId);
+  const subjects = (dbSubjects.length > 0 ? dbSubjects : FALLBACK_SUBJECTS).map((s) => ({
+    id: (s as { slug?: string | null }).slug || s.id,
+    name: s.name,
+    emoji: (s as { emoji?: string | null }).emoji || '📘',
+    color: (s as { color?: string | null }).color || 'from-slate-500 to-zinc-600',
+  }));
+
   const containerClass = embedded
     ? "flex-1 min-h-0 overflow-y-auto py-4"
     : "flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20";
