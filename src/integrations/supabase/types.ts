@@ -1426,6 +1426,7 @@ export type Database = {
           id: string
           role: string
           school_id: string
+          subject_id: string | null
           used: boolean
           used_by: string | null
         }
@@ -1437,6 +1438,7 @@ export type Database = {
           id?: string
           role: string
           school_id: string
+          subject_id?: string | null
           used?: boolean
           used_by?: string | null
         }
@@ -1448,6 +1450,7 @@ export type Database = {
           id?: string
           role?: string
           school_id?: string
+          subject_id?: string | null
           used?: boolean
           used_by?: string | null
         }
@@ -1457,6 +1460,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_codes_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
         ]
@@ -2795,6 +2805,7 @@ export type Database = {
           school_id: string | null
           status: string
           student_teacher_id: string | null
+          teacher_subject_id: string | null
           updated_at: string
           user_type: string
         }
@@ -2810,6 +2821,7 @@ export type Database = {
           school_id?: string | null
           status?: string
           student_teacher_id?: string | null
+          teacher_subject_id?: string | null
           updated_at?: string
           user_type: string
         }
@@ -2825,6 +2837,7 @@ export type Database = {
           school_id?: string | null
           status?: string
           student_teacher_id?: string | null
+          teacher_subject_id?: string | null
           updated_at?: string
           user_type?: string
         }
@@ -2834,6 +2847,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_teacher_subject_id_fkey"
+            columns: ["teacher_subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
         ]
@@ -3088,6 +3108,7 @@ export type Database = {
           is_test_data: boolean | null
           name: string
           status: string
+          subjects_sync_enabled: boolean
           updated_at: string
         }
         Insert: {
@@ -3102,6 +3123,7 @@ export type Database = {
           is_test_data?: boolean | null
           name: string
           status?: string
+          subjects_sync_enabled?: boolean
           updated_at?: string
         }
         Update: {
@@ -3116,6 +3138,7 @@ export type Database = {
           is_test_data?: boolean | null
           name?: string
           status?: string
+          subjects_sync_enabled?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -3301,27 +3324,39 @@ export type Database = {
       }
       subjects: {
         Row: {
+          color: string | null
           created_at: string
           description: string | null
+          emoji: string | null
           id: string
+          is_default: boolean
           name: string
           school_id: string
+          slug: string | null
           updated_at: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           description?: string | null
+          emoji?: string | null
           id?: string
+          is_default?: boolean
           name: string
           school_id: string
+          slug?: string | null
           updated_at?: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           description?: string | null
+          emoji?: string | null
           id?: string
+          is_default?: boolean
           name?: string
           school_id?: string
+          slug?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -3961,6 +3996,10 @@ export type Database = {
       resolve_ministry_request: {
         Args: { p_action: string; p_request_id: string }
         Returns: Json
+      }
+      seed_default_subjects: {
+        Args: { p_school_id: string }
+        Returns: undefined
       }
       signup_as_moderator: {
         Args: { p_email: string; p_full_name: string; p_invite_code: string }
