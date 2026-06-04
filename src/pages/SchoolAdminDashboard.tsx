@@ -148,6 +148,7 @@ export default function SchoolAdminDashboard() {
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [newCodeRole, setNewCodeRole] = useState<'teacher' | 'student'>('student');
+  const [newCodeSubjectId, setNewCodeSubjectId] = useState<string>('');
   const [creatingCode, setCreatingCode] = useState(false);
 
   // Invite requests state
