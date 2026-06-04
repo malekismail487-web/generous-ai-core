@@ -1200,3 +1200,42 @@ export default function SchoolAdminDashboard() {
     </div>
   );
 }
+
+function NavGroup({ label }: { label: string }) {
+  return (
+    <div className="hidden md:block px-2 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      {label}
+    </div>
+  );
+}
+
+function NavTab({ value, icon: Icon, label, badge }: {
+  value: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  badge?: number;
+}) {
+  return (
+    <TabsTrigger
+      value={value}
+      className="w-full justify-start gap-2 px-3 py-2 text-sm data-[state=active]:bg-muted data-[state=active]:shadow-none rounded-md whitespace-nowrap"
+    >
+      <Icon className="w-4 h-4 shrink-0" />
+      <span className="truncate">{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <Badge variant="destructive" className="ml-auto h-5 min-w-[20px] px-1.5 text-[10px]">{badge}</Badge>
+      )}
+    </TabsTrigger>
+  );
+}
+
+function StatCard({ label, value, accent }: { label: string; value: number; accent?: 'amber' | 'green' }) {
+  const color = accent === 'amber' ? 'text-amber-500' : accent === 'green' ? 'text-green-500' : '';
+  return (
+    <div className="rounded-xl border border-border bg-card/40 p-4">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
+    </div>
+  );
+}
+
