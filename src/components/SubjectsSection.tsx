@@ -25,7 +25,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-const subjects = [
+// Default tile list used as a fallback if the school's subjects haven't loaded yet.
+// The live source of truth comes from useSchoolSubjects (the per-school `subjects` table).
+const FALLBACK_SUBJECTS: Array<{ id: string; name: string; emoji: string; color: string }> = [
   { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-emerald-500 to-green-600' },
   { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-blue-500 to-cyan-600' },
   { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'from-violet-500 to-purple-600' },
