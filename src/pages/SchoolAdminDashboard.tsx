@@ -601,6 +601,7 @@ export default function SchoolAdminDashboard() {
               <NavTab value="simulator" icon={Eye} label="Student Simulator" />
 
               <NavGroup label="People" />
+              <NavTab value="teacher-categories" icon={GraduationCap} label="Teacher Categories" />
               <NavTab value="users" icon={Users} label={t('users')} />
               <NavTab value="pending" icon={Clock} label={t('pending')} badge={inviteRequests.length} />
               <NavTab value="codes" icon={Key} label={t('codes')} />
