@@ -55,9 +55,17 @@ serve(async (req) => {
 
     const body = (await req.json()) as Partial<CreateInviteCodeBody>;
     const role = body.role;
+    const subjectId = body.subject_id ?? null;
 
     if (role !== "teacher" && role !== "student") {
       return new Response(JSON.stringify({ error: "Invalid role" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (role === "teacher" && !subjectId) {
+      return new Response(JSON.stringify({ error: "subject_id is required for teacher invites" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
