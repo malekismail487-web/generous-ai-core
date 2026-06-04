@@ -60,16 +60,16 @@ export function StudentViewSimulator({ schoolId }: { schoolId: string }) {
       // Pull real adaptive state
       const subj = subjects.find(s => s.id === subjectId)?.name || '';
       const [abilityRes, masteryRes] = await Promise.all([
-        supabase.from('ability_estimates').select('theta,standard_error')
+        supabase.from('ability_estimates').select('theta,theta_se')
           .eq('user_id', studentId).eq('subject', subj).maybeSingle(),
-        supabase.from('concept_mastery').select('mastery_level')
+        supabase.from('concept_mastery').select('mastery_score')
           .eq('user_id', studentId).eq('concept_id', conceptId).maybeSingle(),
       ]);
       const concept = concepts.find(c => c.id === conceptId);
       const derived = deriveTeachingPolicy({
-        theta: abilityRes.data?.theta ?? 0,
-        standardError: abilityRes.data?.standard_error ?? 1,
-        conceptMastery: masteryRes.data?.mastery_level ?? 0.5,
+        theta: Number(abilityRes.data?.theta ?? 0),
+        standardError: Number(abilityRes.data?.theta_se ?? 1),
+        conceptMastery: Number(masteryRes.data?.mastery_score ?? 0.5),
         lectureMastery: 0.5,
         conceptDifficulty: concept ? Number(concept.difficulty_weight) : 1.0,
         recentErrorCount: 0,
