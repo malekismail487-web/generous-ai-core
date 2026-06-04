@@ -34,6 +34,7 @@ import {
   GitBranch,
   Eye,
   BookOpen,
+  GraduationCap,
 } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
@@ -43,6 +44,7 @@ import { CurriculumGraphManager } from '@/components/admin/CurriculumGraphManage
 import { CurriculumVersionsPanel } from '@/components/admin/CurriculumVersionsPanel';
 import { StudentViewSimulator } from '@/components/admin/StudentViewSimulator';
 import { SubjectsManager } from '@/components/admin/SubjectsManager';
+import { TeacherCategoriesManager } from '@/components/admin/TeacherCategoriesManager';
 import { useSchoolSubjects } from '@/hooks/useSchoolSubjects';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -600,6 +602,7 @@ export default function SchoolAdminDashboard() {
               <NavTab value="simulator" icon={Eye} label="Student Simulator" />
 
               <NavGroup label="People" />
+              <NavTab value="teacher-categories" icon={GraduationCap} label="Teacher Categories" />
               <NavTab value="users" icon={Users} label={t('users')} />
               <NavTab value="pending" icon={Clock} label={t('pending')} badge={inviteRequests.length} />
               <NavTab value="codes" icon={Key} label={t('codes')} />
@@ -662,6 +665,10 @@ export default function SchoolAdminDashboard() {
             <TabsContent value="simulator" className="space-y-4 mt-0">
               <StudentViewSimulator schoolId={school.id} />
             </TabsContent>
+            <TabsContent value="teacher-categories" className="space-y-4 mt-0">
+              <TeacherCategoriesManager schoolId={school.id} />
+            </TabsContent>
+
 
             {/* Usage (formerly Budget) */}
             <TabsContent value="budget" className="space-y-4 mt-0">
