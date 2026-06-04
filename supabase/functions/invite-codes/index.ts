@@ -118,6 +118,21 @@ serve(async (req) => {
       });
     }
 
+    // Verify subject belongs to this school (teacher invites only)
+    if (role === "teacher" && subjectId) {
+      const { data: subjRow, error: subjErr } = await admin
+        .from("subjects")
+        .select("id,school_id")
+        .eq("id", subjectId)
+        .maybeSingle();
+      if (subjErr || !subjRow || subjRow.school_id !== schoolAdminRow.school_id) {
+        return new Response(JSON.stringify({ error: "Subject not found in your school" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
 
@@ -131,10 +146,11 @@ serve(async (req) => {
           school_id: schoolAdminRow.school_id,
           code,
           role,
+          subject_id: role === "teacher" ? subjectId : null,
           expires_at: expiresAt.toISOString(),
           created_by: user.id,
         })
-        .select("id,code,role,used,expires_at,created_at")
+        .select("id,code,role,subject_id,used,expires_at,created_at")
         .single();
 
       if (!error) {
