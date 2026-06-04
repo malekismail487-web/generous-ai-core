@@ -508,18 +508,28 @@ export function TeacherMaterials({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t('subjectRequired')}</Label>
-                <Select value={subject} onValueChange={setSubject}>
+                <Select value={subject} onValueChange={setSubject} disabled={!!lockedSubjectSlug}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SUBJECTS.map((s) => (
+                    {(lockedSubjectSlug
+                      ? SUBJECTS.filter((s) => s.id === lockedSubjectSlug).concat(
+                          SUBJECTS.find((s) => s.id === lockedSubjectSlug)
+                            ? []
+                            : [{ id: lockedSubjectSlug, emoji: '📘', color: 'from-slate-500 to-zinc-600' }],
+                        )
+                      : SUBJECTS
+                    ).map((s) => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.emoji} {getSubjectName(s.id, language)}
+                        {s.emoji} {lockedSubjectName && s.id === lockedSubjectSlug ? lockedSubjectName : getSubjectName(s.id, language)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {lockedSubjectSlug && (
+                  <p className="text-[10px] text-muted-foreground">You're assigned to {lockedSubjectName}. Other subjects are locked by your school admin.</p>
+                )}
               </div>
 
               <div className="space-y-2">
