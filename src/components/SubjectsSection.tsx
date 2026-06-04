@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSchoolSubjects } from '@/hooks/useSchoolSubjects';
 import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2, Bot, BookOpen, Download, Image as ImageIcon, FileText, Presentation, Pencil, Save, Zap, GraduationCap } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
