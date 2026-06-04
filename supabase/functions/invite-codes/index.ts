@@ -9,6 +9,7 @@ const corsHeaders = {
 
 type CreateInviteCodeBody = {
   role: "teacher" | "student";
+  subject_id?: string | null;
 };
 
 function randomInviteCode(length = 8) {
