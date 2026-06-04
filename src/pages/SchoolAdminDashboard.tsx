@@ -1194,6 +1194,7 @@ export default function SchoolAdminDashboard() {
           <TabsContent value="appeals">
             <SchoolAdminAppeals schoolId={profile?.school_id || ''} />
           </TabsContent>
+          </section>
         </Tabs>
       </main>
     </div>
