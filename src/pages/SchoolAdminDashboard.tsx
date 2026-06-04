@@ -665,6 +665,10 @@ export default function SchoolAdminDashboard() {
             <TabsContent value="simulator" className="space-y-4 mt-0">
               <StudentViewSimulator schoolId={school.id} />
             </TabsContent>
+            <TabsContent value="teacher-categories" className="space-y-4 mt-0">
+              <TeacherCategoriesManager schoolId={school.id} />
+            </TabsContent>
+
 
             {/* Usage (formerly Budget) */}
             <TabsContent value="budget" className="space-y-4 mt-0">
