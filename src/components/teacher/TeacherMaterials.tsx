@@ -110,9 +110,40 @@ export function TeacherMaterials({
   const [content, setContent] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  // Teacher category lock: teachers tied to a subject can only upload for that subject.
+  const [lockedSubjectSlug, setLockedSubjectSlug] = useState<string | null>(null);
+  const [lockedSubjectName, setLockedSubjectName] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('teacher_subject_id')
+        .eq('id', authUserId)
+        .maybeSingle();
+      const sid = (prof as { teacher_subject_id?: string | null } | null)?.teacher_subject_id;
+      if (!sid) { if (!cancelled) { setLockedSubjectSlug(null); setLockedSubjectName(null); } return; }
+      const { data: subj } = await supabase
+        .from('subjects')
+        .select('slug,name')
+        .eq('id', sid)
+        .maybeSingle();
+      if (!cancelled && subj) {
+        const slug = (subj as { slug?: string | null }).slug;
+        if (slug) {
+          setLockedSubjectSlug(slug);
+          setLockedSubjectName((subj as { name: string }).name);
+          setSubject(slug);
+          setFilterSubject(slug);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [authUserId]);
+
   const resetForm = () => {
     setTitle('');
-    setSubject('biology');
+    setSubject(lockedSubjectSlug || 'biology');
     setGradeLevel('All');
     setContent('');
     setSelectedFile(null);
