@@ -29,12 +29,18 @@ import {
   Settings,
   Globe,
   MapPin,
-  BarChart3
+  BarChart3,
+  Network,
+  GitBranch,
+  Eye,
 } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
 import { BudgetOptimizationReport } from '@/components/admin/BudgetOptimizationReport';
 import { SchoolAdminAppeals } from '@/components/admin/SchoolAdminAppeals';
+import { CurriculumGraphManager } from '@/components/admin/CurriculumGraphManager';
+import { CurriculumVersionsPanel } from '@/components/admin/CurriculumVersionsPanel';
+import { StudentViewSimulator } from '@/components/admin/StudentViewSimulator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -569,119 +575,97 @@ export default function SchoolAdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="glass-effect rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">{t('totalUsers')}</p>
-            <p className="text-2xl font-bold">{users.length}</p>
-          </div>
-          <div className="glass-effect rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">{t('pendingRequests')}</p>
-            <p className="text-2xl font-bold text-amber-500">{inviteRequests.length}</p>
-          </div>
-          <div className="glass-effect rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">{t('activeCodes')}</p>
-            <p className="text-2xl font-bold text-green-500">
-              {inviteCodes.filter(c => !c.used && new Date(c.expires_at) > new Date()).length}
-            </p>
-          </div>
-          <div className="glass-effect rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">{t('announcementsLabel')}</p>
-            <p className="text-2xl font-bold">{announcements.length}</p>
-          </div>
-        </div>
+        <Tabs defaultValue="overview" orientation="vertical" className="flex flex-col md:flex-row gap-6">
+          {/* Sidebar nav */}
+          <aside className="md:w-56 shrink-0">
+            <TabsList className="flex md:flex-col h-auto w-full bg-transparent p-0 gap-1 overflow-x-auto md:overflow-visible">
+              <NavGroup label="Overview" />
+              <NavTab value="overview" icon={BarChart3} label="Overview" />
+              <NavTab value="performance" icon={BarChart3} label="Performance" />
 
-        {/* Pending Summary */}
-        {inviteRequests.length > 0 && (
-          <div className="glass-effect rounded-xl p-4 mb-6 bg-amber-500/10 border border-amber-500/20">
-            <div className="flex items-center gap-2 text-amber-500">
-              <Clock className="w-5 h-5" />
-              <span className="font-medium">
-                {pendingCounts.students} {t('student')}{pendingCounts.students !== 1 ? (language === 'ar' ? '' : 's') : ''}, {pendingCounts.teachers} {t('teacher')}{pendingCounts.teachers !== 1 ? (language === 'ar' ? '' : 's') : ''} {t('pendingApprovalCount')}
-              </span>
-            </div>
-          </div>
-        )}
+              <NavGroup label="Curriculum" />
+              <NavTab value="curriculum-graph" icon={Network} label="Curriculum Graph" />
+              <NavTab value="curriculum-versions" icon={GitBranch} label="Versions" />
+              <NavTab value="simulator" icon={Eye} label="Student Simulator" />
 
-        <Tabs defaultValue="performance" className="space-y-6">
-          <TabsList className="grid grid-cols-12 w-full max-w-6xl">
-            <TabsTrigger value="performance" className="gap-2">
-              <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Performance</span>
-            </TabsTrigger>
-            <TabsTrigger value="budget" className="gap-2">
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Budget</span>
-            </TabsTrigger>
-            <TabsTrigger value="codes" className="gap-2">
-              <Key className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('codes')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="pending" className="gap-2">
-              <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('pending')}</span>
+              <NavGroup label="People" />
+              <NavTab value="users" icon={Users} label={t('users')} />
+              <NavTab value="pending" icon={Clock} label={t('pending')} badge={inviteRequests.length} />
+              <NavTab value="codes" icon={Key} label={t('codes')} />
+
+              <NavGroup label="Content" />
+              <NavTab value="weekly-plans" icon={Calendar} label={t('weekly')} />
+              <NavTab value="report-cards" icon={FileText} label={t('reports')} />
+              <NavTab value="announcements" icon={Megaphone} label={t('announce')} />
+              <NavTab value="trips" icon={MapPin} label={t('trips')} />
+
+              <NavGroup label="System" />
+              <NavTab value="budget" icon={Download} label="Usage" />
+              <NavTab value="logs" icon={Clock} label={t('logs')} />
+              <NavTab value="appeals" icon={Shield} label="Appeals" />
+              <NavTab value="settings" icon={Settings} label={t('settings')} />
+            </TabsList>
+          </aside>
+
+          {/* Content */}
+          <section className="flex-1 min-w-0">
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="space-y-4 mt-0">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <StatCard label={t('totalUsers')} value={users.length} />
+                <StatCard label={t('pendingRequests')} value={inviteRequests.length} accent="amber" />
+                <StatCard label={t('activeCodes')} value={inviteCodes.filter(c => !c.used && new Date(c.expires_at) > new Date()).length} accent="green" />
+                <StatCard label={t('announcementsLabel')} value={announcements.length} />
+              </div>
               {inviteRequests.length > 0 && (
-                <Badge variant="destructive" className="ml-1">{inviteRequests.length}</Badge>
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <Clock className="w-5 h-5" />
+                  <span className="font-medium text-sm">
+                    {pendingCounts.students} {t('student')}{pendingCounts.students !== 1 ? (language === 'ar' ? '' : 's') : ''}, {pendingCounts.teachers} {t('teacher')}{pendingCounts.teachers !== 1 ? (language === 'ar' ? '' : 's') : ''} {t('pendingApprovalCount')}
+                  </span>
+                </div>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="users" className="gap-2">
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('users')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="weekly-plans" className="gap-2">
-              <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('weekly')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="report-cards" className="gap-2">
-              <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('reports')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="announcements" className="gap-2">
-              <Megaphone className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('announce')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="trips" className="gap-2">
-              <MapPin className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('trips')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="logs" className="gap-2">
-              <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('logs')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('settings')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="appeals" className="gap-2">
-              <Shield className="w-4 h-4" />
-              <span className="hidden sm:inline">Appeals</span>
-            </TabsTrigger>
-          </TabsList>
+              <div className="rounded-xl border border-border bg-card/40 p-4">
+                <h3 className="font-semibold text-sm mb-2">Quick start</h3>
+                <p className="text-xs text-muted-foreground">
+                  Build your curriculum in <strong>Curriculum Graph</strong>, approve new accounts under <strong>Pending</strong>, and post school updates from <strong>Announcements</strong>.
+                </p>
+              </div>
+            </TabsContent>
 
-          {/* Performance Dashboard Tab */}
-          <TabsContent value="performance" className="space-y-4">
-            <SchoolPerformanceDashboard schoolId={school.id} />
-          </TabsContent>
+            {/* Performance */}
+            <TabsContent value="performance" className="space-y-4 mt-0">
+              <SchoolPerformanceDashboard schoolId={school.id} />
+            </TabsContent>
 
+            {/* Curriculum */}
+            <TabsContent value="curriculum-graph" className="space-y-4 mt-0">
+              <CurriculumGraphManager schoolId={school.id} />
+            </TabsContent>
+            <TabsContent value="curriculum-versions" className="space-y-4 mt-0">
+              <CurriculumVersionsPanel schoolId={school.id} />
+            </TabsContent>
+            <TabsContent value="simulator" className="space-y-4 mt-0">
+              <StudentViewSimulator schoolId={school.id} />
+            </TabsContent>
 
+            {/* Usage (formerly Budget) */}
+            <TabsContent value="budget" className="space-y-4 mt-0">
+              <BudgetOptimizationReport schoolId={school.id} />
+            </TabsContent>
 
-          {/* Budget Optimization Tab */}
-          <TabsContent value="budget" className="space-y-4">
-            <BudgetOptimizationReport schoolId={school.id} />
-          </TabsContent>
-
-          {/* Invite Codes Tab */}
-          <TabsContent value="codes" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{t('inviteCodes')}</h2>
-              <div className="flex items-center gap-2">
-                <Select value={newCodeRole} onValueChange={(v) => setNewCodeRole(v as 'teacher' | 'student')}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="student">{t('student')}</SelectItem>
-                    <SelectItem value="teacher">{t('teacher')}</SelectItem>
+            {/* Invite Codes Tab */}
+            <TabsContent value="codes" className="space-y-4 mt-0">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">{t('inviteCodes')}</h2>
+                <div className="flex items-center gap-2">
+                  <Select value={newCodeRole} onValueChange={(v) => setNewCodeRole(v as 'teacher' | 'student')}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">{t('student')}</SelectItem>
+                      <SelectItem value="teacher">{t('teacher')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button onClick={generateInviteCode} disabled={creatingCode} className="gap-2">
@@ -1210,8 +1194,48 @@ export default function SchoolAdminDashboard() {
           <TabsContent value="appeals">
             <SchoolAdminAppeals schoolId={profile?.school_id || ''} />
           </TabsContent>
+          </section>
         </Tabs>
       </main>
     </div>
   );
 }
+
+function NavGroup({ label }: { label: string }) {
+  return (
+    <div className="hidden md:block px-2 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      {label}
+    </div>
+  );
+}
+
+function NavTab({ value, icon: Icon, label, badge }: {
+  value: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  badge?: number;
+}) {
+  return (
+    <TabsTrigger
+      value={value}
+      className="w-full justify-start gap-2 px-3 py-2 text-sm data-[state=active]:bg-muted data-[state=active]:shadow-none rounded-md whitespace-nowrap"
+    >
+      <Icon className="w-4 h-4 shrink-0" />
+      <span className="truncate">{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <Badge variant="destructive" className="ml-auto h-5 min-w-[20px] px-1.5 text-[10px]">{badge}</Badge>
+      )}
+    </TabsTrigger>
+  );
+}
+
+function StatCard({ label, value, accent }: { label: string; value: number; accent?: 'amber' | 'green' }) {
+  const color = accent === 'amber' ? 'text-amber-500' : accent === 'green' ? 'text-green-500' : '';
+  return (
+    <div className="rounded-xl border border-border bg-card/40 p-4">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
+    </div>
+  );
+}
+
