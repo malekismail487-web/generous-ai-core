@@ -29,12 +29,18 @@ import {
   Settings,
   Globe,
   MapPin,
-  BarChart3
+  BarChart3,
+  Network,
+  GitBranch,
+  Eye,
 } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
 import { BudgetOptimizationReport } from '@/components/admin/BudgetOptimizationReport';
 import { SchoolAdminAppeals } from '@/components/admin/SchoolAdminAppeals';
+import { CurriculumGraphManager } from '@/components/admin/CurriculumGraphManager';
+import { CurriculumVersionsPanel } from '@/components/admin/CurriculumVersionsPanel';
+import { StudentViewSimulator } from '@/components/admin/StudentViewSimulator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
