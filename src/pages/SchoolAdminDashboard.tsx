@@ -643,6 +643,9 @@ export default function SchoolAdminDashboard() {
             </TabsContent>
 
             {/* Curriculum */}
+            <TabsContent value="subjects" className="space-y-4 mt-0">
+              <SubjectsManager schoolId={school.id} />
+            </TabsContent>
             <TabsContent value="curriculum-graph" className="space-y-4 mt-0">
               <CurriculumGraphManager schoolId={school.id} />
             </TabsContent>
