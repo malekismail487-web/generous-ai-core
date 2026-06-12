@@ -6,7 +6,7 @@
 // ============================================================================
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import type { KtInteraction } from "./aktLite.ts";
+import type { KtInteraction } from "./akt.ts";
 
 export const KT_MAX_SEQ_LEN = 256;
 

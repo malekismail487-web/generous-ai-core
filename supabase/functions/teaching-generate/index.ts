@@ -17,9 +17,10 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { sigmoid as sig2pl, ELO_INITIAL } from "../_shared/irt2pl.ts";
-import { aktLitePredict, AKT_DEFAULTS, type KtInteraction } from "../_shared/aktLite.ts";
+import { aktPredict, AKT_DEFAULTS, type KtInteraction } from "../_shared/akt.ts";
 import { dashPredictFromHistory, type DashInteraction } from "../_shared/dash.ts";
 import { blendPredictions, eloProbability, ENSEMBLE_DEFAULTS, type EnsembleWeights } from "../_shared/ensemble.ts";
+import { applyCalibration } from "../_shared/calibration.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -450,7 +451,7 @@ Deno.serve(async (req) => {
         const interactions: KtInteraction[] = Array.isArray(seqRow?.interactions)
           ? (seqRow!.interactions as KtInteraction[]) : [];
         const cidKey = conceptRow?.id ?? "_subj";
-        const akt = aktLitePredict(
+        const akt = aktPredict(
           interactions, { conceptId: cidKey, a, b, theta }, AKT_DEFAULTS,
         );
         const dashHist: DashInteraction[] = interactions.map(
@@ -479,8 +480,37 @@ Deno.serve(async (req) => {
         const blended = blendPredictions(
           { p_2pl, p_elo, p_akt: akt.p, p_dash }, weights,
         );
-        ensembleP = blended.p;
         ensembleComponents = { p_2pl, p_elo, p_akt: akt.p, p_dash };
+
+        // Stage 3: per-subject calibration. The blender is honest about
+        // discrimination (AUC) but not necessarily about confidence.
+        // Apply (temperature | platt | identity) before downstream use.
+        let calFit = { method: "identity" as const, temperature: 1, platt_a: 1, platt_b: 0 };
+        const { data: calRow } = await admin
+          .from("calibration_state")
+          .select("method, temperature, platt_a, platt_b")
+          .eq("subject", subjectName)
+          .maybeSingle();
+        if (calRow) {
+          calFit = {
+            method: (calRow.method as any) ?? "identity",
+            temperature: Number(calRow.temperature ?? 1),
+            platt_a: Number(calRow.platt_a ?? 1),
+            platt_b: Number(calRow.platt_b ?? 0),
+          };
+        } else {
+          const { data: popCal } = await admin
+            .from("calibration_state")
+            .select("method, temperature, platt_a, platt_b")
+            .eq("subject", "*").maybeSingle();
+          if (popCal) calFit = {
+            method: (popCal.method as any) ?? "identity",
+            temperature: Number(popCal.temperature ?? 1),
+            platt_a: Number(popCal.platt_a ?? 1),
+            platt_b: Number(popCal.platt_b ?? 0),
+          };
+        }
+        ensembleP = applyCalibration(blended.p, calFit);
       } catch (e) {
         // Ensemble is best-effort: a failure must never break teaching.
         console.error("[teaching-generate] ensemble failed, falling back to 2PL:", e);
