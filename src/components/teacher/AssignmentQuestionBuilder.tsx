@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { generateId } from '@/lib/utils';
 import { ArrowLeft, Plus, Save, CheckCircle2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/select';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
+import { useTeacherLockedSubject } from '@/hooks/useTeacherLockedSubject';
+import { RelevanceWarningDialog } from './RelevanceWarningDialog';
 
 const SUBJECTS = [
   { id: 'biology', emoji: '🧬' },
@@ -80,6 +82,18 @@ export function AssignmentQuestionBuilder({
   const [isCreating, setIsCreating] = useState(false);
   const [showMetadataForm, setShowMetadataForm] = useState(true);
 
+  const { categoryName: lockedName, subjectSlug: lockedSlug, locked } = useTeacherLockedSubject(authUserId);
+
+  // Lock subject picker for category-bound teachers
+  useEffect(() => {
+    if (locked && lockedSlug && subject !== lockedSlug) {
+      setSubject(lockedSlug);
+    }
+  }, [locked, lockedSlug]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [showRelevanceDialog, setShowRelevanceDialog] = useState(false);
+  const [relevanceCheck, setRelevanceCheck] = useState<{ detected_topic: string; reason: string } | null>(null);
+
   const resetQuestionForm = () => {
     setQuestionTitle('');
     setOptionA('');
@@ -123,18 +137,7 @@ export function AssignmentQuestionBuilder({
     toast({ title: t('questionRemoved') });
   };
 
-  const createAssignment = async () => {
-    if (!assignmentTitle.trim()) {
-      toast({ variant: 'destructive', title: t('pleaseEnterTitle') });
-      return;
-    }
-    if (questions.length === 0) {
-      toast({ variant: 'destructive', title: t('pleaseAddQuestion') });
-      return;
-    }
-
-    setIsCreating(true);
-
+  const performAssignmentInsert = async (override: boolean) => {
     const insertData = {
       teacher_id: authUserId,
       school_id: schoolId,
@@ -144,7 +147,8 @@ export function AssignmentQuestionBuilder({
       grade_level: gradeLevel,
       due_date: dueDate || null,
       points: questions.length * 10,
-      questions_json: questions as any
+      questions_json: questions as any,
+      relevance_override: override,
     };
 
     const { error } = await supabase
@@ -162,6 +166,52 @@ export function AssignmentQuestionBuilder({
     }
   };
 
+  const createAssignment = async () => {
+    if (!assignmentTitle.trim()) {
+      toast({ variant: 'destructive', title: t('pleaseEnterTitle') });
+      return;
+    }
+    if (questions.length === 0) {
+      toast({ variant: 'destructive', title: t('pleaseAddQuestion') });
+      return;
+    }
+
+    setIsCreating(true);
+
+    // Hard guard: locked teachers cannot post outside their subject category
+    if (locked && lockedSlug && subject !== lockedSlug) {
+      setIsCreating(false);
+      toast({ variant: 'destructive', title: t('error'), description: `You can only create assignments for ${lockedName}.` });
+      return;
+    }
+
+    // Soft AI relevance check (summary based on title + questions)
+    if (lockedName) {
+      try {
+        const sample = questions.slice(0, 8).map((q, i) => `Q${i + 1}: ${q.questionTitle} [${q.optionA} | ${q.optionB} | ${q.optionC} | ${q.optionD}]`).join('\n');
+        const { data: check } = await supabase.functions.invoke('check-content-relevance', {
+          body: {
+            category_name: lockedName,
+            title: assignmentTitle.trim(),
+            description: sample,
+          },
+        });
+        if (check && check.relevant === false && (check.confidence ?? 0) >= 0.7) {
+          setRelevanceCheck({
+            detected_topic: check.detected_topic || '',
+            reason: check.reason || '',
+          });
+          setShowRelevanceDialog(true);
+          return; // keep isCreating=true; dialog action proceeds
+        }
+      } catch (e) {
+        console.warn('Relevance check failed (soft-fail):', e);
+      }
+    }
+
+    await performAssignmentInsert(false);
+  };
+
   const proceedToQuestions = () => {
     if (!assignmentTitle.trim()) {
       toast({ variant: 'destructive', title: t('pleaseEnterTitle') });
@@ -170,9 +220,29 @@ export function AssignmentQuestionBuilder({
     setShowMetadataForm(false);
   };
 
+  const relevanceNode = (
+    <RelevanceWarningDialog
+      open={showRelevanceDialog}
+      onOpenChange={(o) => {
+        setShowRelevanceDialog(o);
+        if (!o) setIsCreating(false);
+      }}
+      categoryName={lockedName || ''}
+      detectedTopic={relevanceCheck?.detected_topic}
+      reason={relevanceCheck?.reason}
+      onConfirm={async () => {
+        setShowRelevanceDialog(false);
+        await performAssignmentInsert(true);
+      }}
+      onCancel={() => setIsCreating(false)}
+    />
+  );
+
   // Step 1: Assignment metadata
   if (showMetadataForm) {
     return (
+      <>
+
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={onBack}>
@@ -251,11 +321,15 @@ export function AssignmentQuestionBuilder({
           </CardContent>
         </Card>
       </div>
+      {relevanceNode}
+      </>
     );
   }
 
   // Step 2: Question builder
   return (
+    <>
+
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -396,5 +470,7 @@ export function AssignmentQuestionBuilder({
         </div>
       )}
     </div>
+    {relevanceNode}
+    </>
   );
 }
