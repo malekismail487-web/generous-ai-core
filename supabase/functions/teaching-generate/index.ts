@@ -50,6 +50,13 @@ interface TeachingStateVector {
   mastery: number; lectureMastery: number;
   errorCount: number; conceptDifficulty: number;
   visualPreference: boolean; fatigue: number;
+  // Stage 1 additions — the 2PL quartet.
+  // `discrimination` is the mean `a` of the concept's items (default 1.0).
+  // `expectedP` is σ(a·(θ − b̄)) using the concept's mean b̄ as a proxy for
+  // the next item's difficulty. Together they let the regime classifier
+  // reason about how diagnostic the next interaction is likely to be.
+  discrimination: number;
+  expectedP: number;
 }
 interface TeachingRegime {
   mode: RegimeMode; intensity: number;
@@ -64,15 +71,24 @@ interface TeachingTrajectory {
 }
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
+const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
 const r2 = (x: number) => Math.round(x * 100) / 100;
 
 function buildStateVector(i: {
   theta?: number; standardError?: number; mastery?: number;
   lectureMastery?: number; errorCount?: number;
   conceptDifficulty?: number; visualPreference?: boolean; fatigue?: number;
+  discrimination?: number; conceptMeanB?: number;
 }): TeachingStateVector {
+  const theta = Number.isFinite(i.theta) ? (i.theta as number) : 0;
+  const discrimination = clamp(i.discrimination ?? 1.0, 0.3, 2.5);
+  const conceptMeanB = clamp(i.conceptMeanB ?? 0, -3, 3);
+  // 2PL expected P(correct) on the average item of the concept. This is the
+  // canonical "how hard is the next interaction going to feel" signal — used
+  // by deriveRegime in place of the v2 ad-hoc effective-score heuristic.
+  const expectedP = clamp(sigmoid(discrimination * (theta - conceptMeanB)), 0.01, 0.99);
   return {
-    theta: Number.isFinite(i.theta) ? (i.theta as number) : 0,
+    theta,
     standardError: clamp(i.standardError ?? 1.0, 0, 3),
     mastery: clamp(i.mastery ?? 0.5, 0, 1),
     lectureMastery: clamp(i.lectureMastery ?? 0.5, 0, 1),
@@ -80,12 +96,16 @@ function buildStateVector(i: {
     conceptDifficulty: clamp(i.conceptDifficulty ?? 1.0, 0, 3),
     visualPreference: !!i.visualPreference,
     fatigue: clamp(i.fatigue ?? 0, 0, 1),
+    discrimination,
+    expectedP,
   };
 }
 
 function derivePolicy(v: TeachingStateVector): TeachingPolicy {
-  const eff = v.theta + (v.mastery - 0.5) * 1.5 - (v.conceptDifficulty - 1.0) * 0.4;
-  const difficulty: Difficulty = eff < -0.4 ? "low" : eff > 0.5 ? "high" : "medium";
+  // Use the 2PL expectedP as the canonical difficulty signal. The 0.45 / 0.75
+  // breakpoints align with the 85% rule: P>0.75 is "too easy → push", P<0.45
+  // is "too hard → step back".
+  const difficulty: Difficulty = v.expectedP > 0.75 ? "low" : v.expectedP < 0.45 ? "high" : "medium";
   const pacing: Pacing =
     (v.standardError > 0.55 || v.errorCount >= 3 || v.mastery < 0.35) ? "slow" :
     (v.standardError < 0.30 && v.mastery > 0.75 && v.errorCount === 0) ? "fast" : "normal";
@@ -104,19 +124,30 @@ function derivePolicy(v: TeachingStateVector): TeachingPolicy {
 }
 
 function deriveRegime(v: TeachingStateVector): TeachingRegime {
-  const eff = v.theta + (v.mastery - 0.5) * 1.5 - (v.conceptDifficulty - 1.0) * 0.4;
+  // 2PL-driven regime: anchor on expectedP, not the v2 effective-score blob.
+  //   < 0.40 → struggle territory → remediate
+  //   < 0.65 → soft ground → consolidate
+  //   < 0.85 → in flow → advance
+  //   ≥ 0.85 → too easy → challenge
   let mode: RegimeMode;
-  if (v.mastery < 0.35 || v.errorCount >= 3)     mode = "remediate";
-  else if (eff < -0.1 || v.mastery < 0.6)        mode = "consolidate";
-  else if (eff < 0.6)                            mode = "advance";
-  else                                           mode = "challenge";
+  if (v.mastery < 0.35 || v.errorCount >= 3) mode = "remediate";
+  else if (v.expectedP < 0.40)               mode = "remediate";
+  else if (v.expectedP < 0.65)               mode = "consolidate";
+  else if (v.expectedP < 0.85)               mode = "advance";
+  else                                       mode = "challenge";
+
+  // Intensity: SE drives exploration breadth; (1−P) drives effort; fatigue
+  // tempers both. Adding a small (a − 1) term means high-discrimination
+  // concepts get slightly more steps — each interaction carries more signal,
+  // so it's worth the verification cost.
   const intensity = clamp(
-    0.4 + v.standardError * 0.35 + (1 - v.mastery) * 0.25 - v.fatigue * 0.3,
+    0.4 + v.standardError * 0.35 + (1 - v.expectedP) * 0.25
+      - v.fatigue * 0.3 + (v.discrimination - 1.0) * 0.05,
     0.2, 1.0,
   );
   const abstractionBias = clamp(v.lectureMastery * 0.7 + v.mastery * 0.3, 0.1, 0.95);
   const verificationBias = clamp(
-    0.25 + v.standardError * 0.4 + (1 - v.mastery) * 0.3, 0.2, 0.95,
+    0.25 + v.standardError * 0.4 + (1 - v.expectedP) * 0.3, 0.2, 0.95,
   );
   return {
     mode,
@@ -125,6 +156,7 @@ function deriveRegime(v: TeachingStateVector): TeachingRegime {
     verificationBias: r2(verificationBias),
   };
 }
+
 
 function mkStep(kind: StepKind, cl: number, dur: number, v: boolean): TeachingStep {
   return { kind, cognitiveLoad: r2(cl), expectedDurationSec: dur, mustVerify: v };
