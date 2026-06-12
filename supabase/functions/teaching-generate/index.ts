@@ -374,6 +374,25 @@ Deno.serve(async (req) => {
     // deterministic teaching pipeline.
     const clientFatigue = clamp(Number(body.fatigue ?? 0), 0, 1);
 
+    // Stage 1: pull the concept's mean (a, b) from question_bank so the
+    // state vector carries a real 2PL signal (`expectedP` and `discrimination`).
+    // We use means rather than picking a single representative item because
+    // the actual next item hasn't been chosen yet — that's a Stage 6 (bandit)
+    // responsibility. Until then, mean(a, b) is the best estimator of what
+    // the next interaction will feel like.
+    let conceptMeanA = 1.0, conceptMeanB = 0.0, conceptItemCount = 0;
+    if (conceptRow) {
+      const { data: items } = await admin
+        .from("question_bank")
+        .select("discrimination_a, difficulty_b")
+        .eq("concept_id", conceptRow.id);
+      if (items && items.length) {
+        conceptItemCount = items.length;
+        conceptMeanA = items.reduce((s: number, r: any) => s + Number(r.discrimination_a ?? 1.0), 0) / items.length;
+        conceptMeanB = items.reduce((s: number, r: any) => s + Number(r.difficulty_b ?? 0), 0) / items.length;
+      }
+    }
+
     // ─── Pure deterministic cascade ────────────────────────────────
     const stateVector = buildStateVector({
       theta, standardError: se,
@@ -382,6 +401,8 @@ Deno.serve(async (req) => {
       conceptDifficulty: conceptRow ? Number(conceptRow.difficulty_weight ?? 1.0) : 1.0,
       visualPreference: visual,
       fatigue: clientFatigue,
+      discrimination: conceptMeanA,
+      conceptMeanB: conceptMeanB,
     });
     const regime = deriveRegime(stateVector);
     const trajectory = buildTrajectory(regime);
