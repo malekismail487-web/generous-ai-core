@@ -55,12 +55,15 @@ interface TeachingStateVector {
   errorCount: number; conceptDifficulty: number;
   visualPreference: boolean; fatigue: number;
   // Stage 1 additions — the 2PL quartet.
-  // `discrimination` is the mean `a` of the concept's items (default 1.0).
-  // `expectedP` is σ(a·(θ − b̄)) using the concept's mean b̄ as a proxy for
-  // the next item's difficulty. Together they let the regime classifier
-  // reason about how diagnostic the next interaction is likely to be.
   discrimination: number;
   expectedP: number;
+  // Stage 2 addition — the calibrated ensemble probability of correct on the
+  // next item. Equals `expectedP` when no KT context is available; otherwise
+  // blends {2PL, Elo, AKT-lite, DASH}. The derive* functions prefer this when
+  // present because it incorporates forgetting, sequence dynamics, and Elo
+  // fast-drift that the 2PL scalar alone cannot see.
+  ensembleP: number;
+  ensembleComponents?: { p_2pl: number; p_elo: number; p_akt: number; p_dash: number };
 }
 interface TeachingRegime {
   mode: RegimeMode; intensity: number;
