@@ -252,7 +252,7 @@ Deno.serve(async (req) => {
       p: pCalibrated,
       p_raw: blended.p,
       logit: blended.logit,
-      components: { p_2pl, p_elo, p_akt, p_dash },
+      components: { p_2pl, p_elo, p_akt, p_dash, p_fsrs, p_hawkes },
       weights: blended.weights,
       calibration: calFit,
       context: {
@@ -260,6 +260,8 @@ Deno.serve(async (req) => {
         seqLen: interactions.length,
         attentionMass: akt.attentionMass,
         residual: akt.residual,
+        fsrs: { S: fsrsCard.S, D: fsrsCard.D, reps: fsrsCard.reps, lapses: fsrsCard.lapses },
+        hawkes: { intensity: hawkes.intensity, contributors: hawkes.contributors },
       },
     });
   } catch (err) {
