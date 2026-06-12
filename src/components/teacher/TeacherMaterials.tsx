@@ -99,6 +99,11 @@ export function TeacherMaterials({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  // Relevance warning state
+  const [showRelevanceDialog, setShowRelevanceDialog] = useState(false);
+  const [relevanceCheck, setRelevanceCheck] = useState<{ detected_topic: string; reason: string } | null>(null);
+  const [pendingInsert, setPendingInsert] = useState<{ fileUrl: string | null } | null>(null);
+
   // Filter state
   const [filterSubject, setFilterSubject] = useState<string>('all');
   const [filterGrade, setFilterGrade] = useState<string>('all');
