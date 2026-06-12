@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Play, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { deriveTeachingPolicy, TeachingPolicy } from '@/lib/adaptive/teachingPolicy';
+import { deriveTeachingPlan } from '@/lib/adaptive/teachingOutputV2';
+import type { TeachingTrajectoryDTO } from '@/lib/adaptive/teachingOutputV2';
 import { listLectures, listConcepts, Concept } from '@/lib/adaptive/curriculumGraph';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,7 +21,7 @@ export function StudentViewSimulator({ schoolId }: { schoolId: string }) {
   const [subjectId, setSubjectId] = useState<string>('');
   const [conceptId, setConceptId] = useState<string>('');
 
-  const [policy, setPolicy] = useState<TeachingPolicy | null>(null);
+  const [plan, setPlan] = useState<TeachingTrajectoryDTO | null>(null);
   const [running, setRunning] = useState(false);
 
   useEffect(() => {
@@ -55,9 +56,8 @@ export function StudentViewSimulator({ schoolId }: { schoolId: string }) {
       return;
     }
     setRunning(true);
-    setPolicy(null);
+    setPlan(null);
     try {
-      // Pull real adaptive state
       const subj = subjects.find(s => s.id === subjectId)?.name || '';
       const [abilityRes, masteryRes] = await Promise.all([
         supabase.from('ability_estimates').select('theta,theta_se')
@@ -66,15 +66,15 @@ export function StudentViewSimulator({ schoolId }: { schoolId: string }) {
           .eq('user_id', studentId).eq('concept_id', conceptId).maybeSingle(),
       ]);
       const concept = concepts.find(c => c.id === conceptId);
-      const derived = deriveTeachingPolicy({
+      const derived = deriveTeachingPlan({
         theta: Number(abilityRes.data?.theta ?? 0),
         standardError: Number(abilityRes.data?.theta_se ?? 1),
-        conceptMastery: Number(masteryRes.data?.mastery_score ?? 0.5),
+        mastery: Number(masteryRes.data?.mastery_score ?? 0.5),
         lectureMastery: 0.5,
         conceptDifficulty: concept ? Number(concept.difficulty_weight) : 1.0,
-        recentErrorCount: 0,
+        errorCount: 0,
       });
-      setPolicy(derived);
+      setPlan(derived);
     } finally {
       setRunning(false);
     }
@@ -102,22 +102,51 @@ export function StudentViewSimulator({ schoolId }: { schoolId: string }) {
 
       <Button onClick={run} disabled={running || !studentId || !conceptId}>
         {running ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
-        Derive Policy
+        Derive Plan
       </Button>
 
-      {policy && (
-        <div className="rounded-xl border border-border bg-card/40 p-4">
-          <h3 className="text-sm font-semibold mb-3">Derived Teaching Policy</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-            <Stat label="Difficulty" value={policy.difficulty} />
-            <Stat label="Pacing" value={policy.pacing} />
-            <Stat label="Strategy" value={policy.strategy} />
-            <Stat label="Cognitive load" value={policy.cognitiveLoad.toFixed(2)} />
-            <Stat label="Remediation" value={policy.remediationLevel.toFixed(2)} />
-            <Stat label="Verification" value={policy.verificationFrequency.toFixed(2)} />
-            <Stat label="Abstraction" value={policy.abstractionLevel.toFixed(2)} />
+      {plan && (
+        <>
+          <div className="rounded-xl border border-border bg-card/40 p-4">
+            <h3 className="text-sm font-semibold mb-3">Teaching Regime</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <Stat label="Mode" value={plan.regime.mode} />
+              <Stat label="Intensity" value={plan.regime.intensity.toFixed(2)} />
+              <Stat label="Abstraction" value={plan.regime.abstractionBias.toFixed(2)} />
+              <Stat label="Verification" value={plan.regime.verificationBias.toFixed(2)} />
+            </div>
           </div>
-        </div>
+
+          <div className="rounded-xl border border-border bg-card/40 p-4">
+            <h3 className="text-sm font-semibold mb-3">
+              Teaching Trajectory · ~{plan.trajectory.totalDurationSec}s
+            </h3>
+            <ol className="space-y-2 text-sm">
+              {plan.trajectory.steps.map((s, i) => (
+                <li key={i} className="rounded-md border border-border bg-background/40 px-3 py-2 flex items-center justify-between">
+                  <span className="font-mono">{i + 1}. {s.kind}</span>
+                  <span className="text-xs text-muted-foreground">
+                    load {s.cognitiveLoad.toFixed(2)} · {s.expectedDurationSec}s
+                    {s.mustVerify ? ' · verify' : ''}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card/40 p-4">
+            <h3 className="text-sm font-semibold mb-3">Derived Teaching Policy</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <Stat label="Difficulty" value={plan.policy.difficulty} />
+              <Stat label="Pacing" value={plan.policy.pacing} />
+              <Stat label="Strategy" value={plan.policy.strategy} />
+              <Stat label="Cognitive load" value={plan.policy.cognitiveLoad.toFixed(2)} />
+              <Stat label="Remediation" value={plan.policy.remediationLevel.toFixed(2)} />
+              <Stat label="Verification" value={plan.policy.verificationFrequency.toFixed(2)} />
+              <Stat label="Abstraction" value={plan.policy.abstractionLevel.toFixed(2)} />
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
