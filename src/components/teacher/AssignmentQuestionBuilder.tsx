@@ -137,18 +137,7 @@ export function AssignmentQuestionBuilder({
     toast({ title: t('questionRemoved') });
   };
 
-  const createAssignment = async () => {
-    if (!assignmentTitle.trim()) {
-      toast({ variant: 'destructive', title: t('pleaseEnterTitle') });
-      return;
-    }
-    if (questions.length === 0) {
-      toast({ variant: 'destructive', title: t('pleaseAddQuestion') });
-      return;
-    }
-
-    setIsCreating(true);
-
+  const performAssignmentInsert = async (override: boolean) => {
     const insertData = {
       teacher_id: authUserId,
       school_id: schoolId,
@@ -158,7 +147,8 @@ export function AssignmentQuestionBuilder({
       grade_level: gradeLevel,
       due_date: dueDate || null,
       points: questions.length * 10,
-      questions_json: questions as any
+      questions_json: questions as any,
+      relevance_override: override,
     };
 
     const { error } = await supabase
@@ -174,6 +164,52 @@ export function AssignmentQuestionBuilder({
       toast({ title: t('assignmentCreatedSuccess') });
       onSuccess();
     }
+  };
+
+  const createAssignment = async () => {
+    if (!assignmentTitle.trim()) {
+      toast({ variant: 'destructive', title: t('pleaseEnterTitle') });
+      return;
+    }
+    if (questions.length === 0) {
+      toast({ variant: 'destructive', title: t('pleaseAddQuestion') });
+      return;
+    }
+
+    setIsCreating(true);
+
+    // Hard guard: locked teachers cannot post outside their subject category
+    if (locked && lockedSlug && subject !== lockedSlug) {
+      setIsCreating(false);
+      toast({ variant: 'destructive', title: t('error'), description: `You can only create assignments for ${lockedName}.` });
+      return;
+    }
+
+    // Soft AI relevance check (summary based on title + questions)
+    if (lockedName) {
+      try {
+        const sample = questions.slice(0, 8).map((q, i) => `Q${i + 1}: ${q.questionTitle} [${q.optionA} | ${q.optionB} | ${q.optionC} | ${q.optionD}]`).join('\n');
+        const { data: check } = await supabase.functions.invoke('check-content-relevance', {
+          body: {
+            category_name: lockedName,
+            title: assignmentTitle.trim(),
+            description: sample,
+          },
+        });
+        if (check && check.relevant === false && (check.confidence ?? 0) >= 0.7) {
+          setRelevanceCheck({
+            detected_topic: check.detected_topic || '',
+            reason: check.reason || '',
+          });
+          setShowRelevanceDialog(true);
+          return; // keep isCreating=true; dialog action proceeds
+        }
+      } catch (e) {
+        console.warn('Relevance check failed (soft-fail):', e);
+      }
+    }
+
+    await performAssignmentInsert(false);
   };
 
   const proceedToQuestions = () => {
