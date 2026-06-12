@@ -264,15 +264,38 @@ Deno.serve(async (req) => {
       lectureRow = l;
     }
 
-    // Adaptive state: θ, SE, masteries — all keyed on studentId only
+    // Adaptive state: θ, SE from ability_estimates (subject-level row, concept_id IS NULL).
+    // NOTE: student_learning_profiles does NOT carry theta/standard_error — the previous
+    // join was a silent bug that ran the whole pipeline with θ=0, SE=1.0 regardless of
+    // the student's real ability. The canonical source is `ability_estimates`.
     const subjectName = lectureRow ? await resolveSubjectName(lectureRow.subject_id) : undefined;
-    let theta = 0, se = 1.0;
+    let theta = 0, se = 1.5;
     if (subjectName) {
-      const { data: prof } = await admin
-        .from("student_learning_profiles")
-        .select("theta, standard_error")
-        .eq("user_id", studentId).eq("subject", subjectName).maybeSingle();
-      if (prof) { theta = Number(prof.theta ?? 0); se = Number(prof.standard_error ?? 1.0); }
+      const { data: subjAbil } = await admin
+        .from("ability_estimates")
+        .select("theta, theta_se")
+        .eq("user_id", studentId)
+        .eq("subject", subjectName)
+        .is("concept_id", null)
+        .maybeSingle();
+      if (subjAbil) {
+        theta = Number(subjAbil.theta ?? 0);
+        se = Number(subjAbil.theta_se ?? 1.5);
+      }
+      // Prefer the concept-level estimate when it exists (hierarchical override).
+      if (conceptRow) {
+        const { data: conceptAbil } = await admin
+          .from("ability_estimates")
+          .select("theta, theta_se")
+          .eq("user_id", studentId)
+          .eq("subject", subjectName)
+          .eq("concept_id", conceptRow.id)
+          .maybeSingle();
+        if (conceptAbil) {
+          theta = Number(conceptAbil.theta ?? theta);
+          se = Number(conceptAbil.theta_se ?? se);
+        }
+      }
     }
 
     let conceptMastery = 0.5, lectureMastery = 0.5;
@@ -295,14 +318,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Recent error count from graded_events (last 20 on this subject)
+    // Recent error count from graded_events (last 20 on this subject).
+    // FIX: column is `was_correct`, not `is_correct`. Previously this always returned 0,
+    // so the pipeline never knew the student was struggling.
     let recentErrorCount = 0;
     if (subjectName) {
       const { data: ge } = await admin
-        .from("graded_events").select("is_correct")
+        .from("graded_events").select("was_correct")
         .eq("user_id", studentId).eq("subject", subjectName)
         .order("created_at", { ascending: false }).limit(20);
-      if (ge) recentErrorCount = ge.filter((r: any) => r.is_correct === false).length;
+      if (ge) recentErrorCount = ge.filter((r: any) => r.was_correct === false).length;
     }
 
     let visual = false;
@@ -311,6 +336,12 @@ Deno.serve(async (req) => {
       .eq("user_id", studentId).maybeSingle();
     if (ls && (ls as any).dominant_style === "visual") visual = true;
 
+    // Client-supplied affect signal: fatigue in 0..1 (cognitiveModel.ts normalizes
+    // its 0..100 fatigueLevel into this range before invoking the function).
+    // Previously hard-zero: the cognitive/emotional engines never reached the
+    // deterministic teaching pipeline.
+    const clientFatigue = clamp(Number(body.fatigue ?? 0), 0, 1);
+
     // ─── Pure deterministic cascade ────────────────────────────────
     const stateVector = buildStateVector({
       theta, standardError: se,
@@ -318,6 +349,7 @@ Deno.serve(async (req) => {
       errorCount: recentErrorCount,
       conceptDifficulty: conceptRow ? Number(conceptRow.difficulty_weight ?? 1.0) : 1.0,
       visualPreference: visual,
+      fatigue: clientFatigue,
     });
     const regime = deriveRegime(stateVector);
     const trajectory = buildTrajectory(regime);
