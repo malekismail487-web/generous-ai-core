@@ -238,6 +238,33 @@ export function TeacherMaterials({
     return publicUrl;
   };
 
+  const performInsert = async (fileUrl: string | null, override: boolean) => {
+    const { error } = await supabase
+      .from('course_materials')
+      .insert({
+        uploaded_by: authUserId,
+        school_id: schoolId,
+        subject: subject,
+        title: title.trim(),
+        content: content.trim() || null,
+        file_url: fileUrl,
+        grade_level: gradeLevel,
+        relevance_override: override,
+      } as any);
+
+    setUploading(false);
+
+    if (error) {
+      console.error('Material creation error:', error);
+      toast({ variant: 'destructive', title: t('error'), description: error.message });
+    } else {
+      toast({ title: t('materialUploadedSuccess') });
+      resetForm();
+      setDialogOpen(false);
+      onRefresh();
+    }
+  };
+
   const createMaterial = async () => {
     if (!title.trim()) {
       toast({ variant: 'destructive', title: t('pleaseEnterTitle') });
@@ -262,29 +289,34 @@ export function TeacherMaterials({
       }
     }
 
-    const { error } = await supabase
-      .from('course_materials')
-      .insert({
-        uploaded_by: authUserId,
-        school_id: schoolId,
-        subject: subject,
-        title: title.trim(),
-        content: content.trim() || null,
-        file_url: fileUrl,
-        grade_level: gradeLevel
-      });
-
-    setUploading(false);
-
-    if (error) {
-      console.error('Material creation error:', error);
-      toast({ variant: 'destructive', title: t('error'), description: error.message });
-    } else {
-      toast({ title: t('materialUploadedSuccess') });
-      resetForm();
-      setDialogOpen(false);
-      onRefresh();
+    // Soft AI relevance check (never blocks; warns the teacher)
+    if (lockedSubjectName) {
+      try {
+        const { data: check } = await supabase.functions.invoke('check-content-relevance', {
+          body: {
+            category_name: lockedSubjectName,
+            title: title.trim(),
+            description: content.trim() || null,
+            file_name: selectedFile?.name,
+            file_url: fileUrl,
+          },
+        });
+        if (check && check.relevant === false && (check.confidence ?? 0) >= 0.7) {
+          setPendingInsert({ fileUrl });
+          setRelevanceCheck({
+            detected_topic: check.detected_topic || '',
+            reason: check.reason || '',
+          });
+          setShowRelevanceDialog(true);
+          // Keep uploading=true: the dialog action proceeds with the final insert.
+          return;
+        }
+      } catch (e) {
+        console.warn('Relevance check failed (soft-fail):', e);
+      }
     }
+
+    await performInsert(fileUrl, false);
   };
 
   const deleteMaterial = async (materialId: string) => {
