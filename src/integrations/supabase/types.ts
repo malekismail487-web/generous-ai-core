@@ -592,6 +592,60 @@ export type Database = {
           },
         ]
       }
+      calibration_state: {
+        Row: {
+          auc_cal: number | null
+          auc_raw: number | null
+          brier_cal: number | null
+          brier_raw: number | null
+          ece_cal: number | null
+          ece_raw: number | null
+          fitted_at: string | null
+          id: string
+          method: string
+          n_events: number
+          platt_a: number
+          platt_b: number
+          subject: string
+          temperature: number
+          updated_at: string
+        }
+        Insert: {
+          auc_cal?: number | null
+          auc_raw?: number | null
+          brier_cal?: number | null
+          brier_raw?: number | null
+          ece_cal?: number | null
+          ece_raw?: number | null
+          fitted_at?: string | null
+          id?: string
+          method?: string
+          n_events?: number
+          platt_a?: number
+          platt_b?: number
+          subject: string
+          temperature?: number
+          updated_at?: string
+        }
+        Update: {
+          auc_cal?: number | null
+          auc_raw?: number | null
+          brier_cal?: number | null
+          brier_raw?: number | null
+          ece_cal?: number | null
+          ece_raw?: number | null
+          fitted_at?: string | null
+          id?: string
+          method?: string
+          n_events?: number
+          platt_a?: number
+          platt_b?: number
+          subject?: string
+          temperature?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           chat_room_id: string
