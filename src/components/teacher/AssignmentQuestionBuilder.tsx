@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/select';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
+import { useTeacherLockedSubject } from '@/hooks/useTeacherLockedSubject';
+import { RelevanceWarningDialog } from './RelevanceWarningDialog';
 
 const SUBJECTS = [
   { id: 'biology', emoji: '🧬' },
