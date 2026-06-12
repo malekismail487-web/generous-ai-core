@@ -166,7 +166,9 @@ Deno.serve(async (req) => {
 
     let { data: question } = await admin
       .from("question_bank")
-      .select("id, difficulty_b, difficulty_provisional, times_seen, times_correct, confidence")
+      .select(
+        "id, difficulty_b, discrimination_a, difficulty_provisional, times_seen, times_correct, confidence, elo_rating, elo_count",
+      )
       .eq("question_hash", questionHash)
       .maybeSingle();
 
@@ -182,8 +184,13 @@ Deno.serve(async (req) => {
           source: source === "probe" ? "probe" : "ai",
           difficulty_b: provisionalB,
           difficulty_provisional: true,
+          // discrimination_a defaults to 1.000 (Rasch-equivalent until the
+          // nightly recalibrator has ≥50 responses to fit a real value).
+          // elo_rating defaults to 1500.
         })
-        .select("id, difficulty_b, difficulty_provisional, times_seen, times_correct, confidence")
+        .select(
+          "id, difficulty_b, discrimination_a, difficulty_provisional, times_seen, times_correct, confidence, elo_rating, elo_count",
+        )
         .single();
       if (insErr) throw insErr;
       question = inserted!;
@@ -218,7 +225,7 @@ Deno.serve(async (req) => {
     // We need the prior subject theta to judge guess/slip, so peek now.
     const { data: priorSubject } = await admin
       .from("ability_estimates")
-      .select("theta")
+      .select("theta, elo_rating, elo_count")
       .eq("user_id", user.id)
       .eq("subject", subject)
       .is("concept_id", null)
@@ -242,13 +249,15 @@ Deno.serve(async (req) => {
 
     const baseResponseConfidence = srcTrust * speedPenalty * guessSlipPenalty;
 
-    // ── Rasch update helpers ───────────────────────────────────────────
+    // ── 2PL update helpers ─────────────────────────────────────────────
     interface EstimateRow {
       id: string;
       theta: number;
       theta_se: number;
       graded_count: number;
       provisional: boolean;
+      elo_rating: number;
+      elo_count: number;
     }
 
     async function loadOrSeedEstimate(
@@ -257,7 +266,7 @@ Deno.serve(async (req) => {
     ): Promise<EstimateRow> {
       let query = admin
         .from("ability_estimates")
-        .select("id, theta, theta_se, graded_count, provisional")
+        .select("id, theta, theta_se, graded_count, provisional, elo_rating, elo_count")
         .eq("user_id", user.id)
         .eq("subject", subject);
       query = conceptKey === null
@@ -272,6 +281,8 @@ Deno.serve(async (req) => {
           theta_se: Number(existing.theta_se),
           graded_count: existing.graded_count ?? 0,
           provisional: Boolean(existing.provisional),
+          elo_rating: Number(existing.elo_rating ?? ELO_INITIAL),
+          elo_count: existing.elo_count ?? 0,
         };
       }
 
@@ -286,8 +297,10 @@ Deno.serve(async (req) => {
           theta_se: Number(seed.se.toFixed(3)),
           graded_count: 0,
           provisional: true,
+          elo_rating: ELO_INITIAL,
+          elo_count: 0,
         })
-        .select("id, theta, theta_se, graded_count, provisional")
+        .select("id, theta, theta_se, graded_count, provisional, elo_rating, elo_count")
         .single();
       if (createErr) throw createErr;
       return {
@@ -296,10 +309,12 @@ Deno.serve(async (req) => {
         theta_se: Number(created!.theta_se),
         graded_count: created!.graded_count ?? 0,
         provisional: Boolean(created!.provisional),
+        elo_rating: Number(created!.elo_rating ?? ELO_INITIAL),
+        elo_count: created!.elo_count ?? 0,
       };
     }
 
-    interface RaschResult {
+    interface IrtResult {
       thetaAfter: number;
       seAfter: number;
       gradedCount: number;
@@ -309,54 +324,82 @@ Deno.serve(async (req) => {
     }
 
     /**
-     * One Rasch step with gating. `quality` ∈ [0,1] scales the step:
-     *   K_effective = K_base * SE_ratio * quality
+     * One online 2PL step with gating. Delegates to the shared `step2pl`,
+     * then adapts the result to this function's persistence model.
+     *
+     * `quality` ∈ [0,1] folds source trust, speed sanity, guess/slip into
+     * the Fisher-information weight so a low-confidence response can never
+     * collapse SE prematurely.
      */
-    function runRasch(prior: EstimateRow, b: number, quality: number): RaschResult {
-      const expected = sigmoid(prior.theta - b);
-      const actual = body.isCorrect ? 1 : 0;
-      const expK = K_BASE * (prior.theta_se / SE_INITIAL);
-      const k = clamp(expK * quality, 0.02, 0.55);
-      const thetaAfter = clamp(prior.theta + k * (actual - expected), -3.0, 3.0);
-      const info = expected * (1 - expected) * quality; // weighted Fisher info
-      const seAfter = clamp(
-        1 / Math.sqrt(1 / (prior.theta_se * prior.theta_se) + info),
-        SE_FLOOR,
-        SE_INITIAL,
+    function runIrt(prior: EstimateRow, a: number, b: number, quality: number): IrtResult {
+      const step = step2pl(
+        { theta: prior.theta, thetaSe: prior.theta_se, gradedCount: prior.graded_count },
+        a,
+        b,
+        body.isCorrect,
+        quality,
+        K_BASE,
       );
-      const gradedCount = prior.graded_count + 1;
       return {
-        thetaAfter,
-        seAfter,
-        gradedCount,
-        provisional: seAfter >= SE_LOCK_IN,
-        expected,
-        kEffective: k,
+        thetaAfter: step.thetaAfter,
+        seAfter: step.seAfter,
+        gradedCount: prior.graded_count + 1,
+        provisional: step.seAfter >= SE_LOCK_IN,
+        expected: step.expected,
+        kEffective: step.kEffective,
       };
     }
 
-    async function persistEstimate(row: EstimateRow, next: RaschResult) {
+    async function persistEstimate(
+      row: EstimateRow,
+      next: IrtResult,
+      eloAfter?: { rating: number; count: number },
+    ) {
+      const update: Record<string, unknown> = {
+        theta: Number(next.thetaAfter.toFixed(3)),
+        theta_se: Number(next.seAfter.toFixed(3)),
+        graded_count: next.gradedCount,
+        provisional: next.provisional,
+        last_graded_at: new Date().toISOString(),
+        school_id: schoolId ?? undefined,
+      };
+      if (eloAfter) {
+        update.elo_rating = Number(eloAfter.rating.toFixed(2));
+        update.elo_count = eloAfter.count;
+      }
       const { error: updErr } = await admin
         .from("ability_estimates")
-        .update({
-          theta: Number(next.thetaAfter.toFixed(3)),
-          theta_se: Number(next.seAfter.toFixed(3)),
-          graded_count: next.gradedCount,
-          provisional: next.provisional,
-          last_graded_at: new Date().toISOString(),
-          school_id: schoolId ?? undefined,
-        })
+        .update(update)
         .eq("id", row.id);
       if (updErr) throw updErr;
     }
 
     const b = Number(question.difficulty_b);
+    const a = clamp(Number(question.discrimination_a ?? 1.0), A_MIN, A_MAX);
+    const itemEloIn = Number(question.elo_rating ?? ELO_INITIAL);
+    const itemEloCountIn = question.elo_count ?? 0;
 
     // ── subject-level update (always, weight = 1.0) ────────────────────
     const subjectQuality = clamp(1.0 * questionConfidence * baseResponseConfidence, 0.15, 1.0);
     const subjectPrior = await loadOrSeedEstimate(null, { theta: 0, se: SE_INITIAL });
-    const subjectNext = runRasch(subjectPrior, b, subjectQuality);
-    await persistEstimate(subjectPrior, subjectNext);
+    const subjectNext = runIrt(subjectPrior, a, b, subjectQuality);
+
+    // Parallel Elo update (subject-level only — Elo is a global skill rating,
+    // not a per-concept signal). Item Elo is shared across all students who
+    // touch this question.
+    const eloOut = eloStep(
+      {
+        studentR: subjectPrior.elo_rating,
+        itemR: itemEloIn,
+        studentCount: subjectPrior.elo_count,
+        itemCount: itemEloCountIn,
+      },
+      body.isCorrect,
+    );
+    await persistEstimate(subjectPrior, subjectNext, {
+      rating: eloOut.studentR,
+      count: subjectPrior.elo_count + 1,
+    });
 
     // ── concept-level updates (weighted, one row per concept in dist) ──
     const conceptResults: Array<{
@@ -379,7 +422,7 @@ Deno.serve(async (req) => {
         theta: subjectPrior.theta,
         se: seedSe,
       });
-      const conceptStep = runRasch(conceptRow, b, quality);
+      const conceptStep = runIrt(conceptRow, a, b, quality);
 
       // Hierarchical Bayesian coupling: pull concept theta gently toward the
       // updated subject theta so single-concept noise doesn't fly away.
@@ -388,7 +431,8 @@ Deno.serve(async (req) => {
         -3.0,
         3.0,
       );
-      const coupledNext: RaschResult = { ...conceptStep, thetaAfter: coupled };
+      const coupledNext: IrtResult = { ...conceptStep, thetaAfter: coupled };
+      // Concept rows don't get Elo (subject-level only) — keep it clean.
       await persistEstimate(conceptRow, coupledNext);
 
       conceptResults.push({
@@ -431,7 +475,9 @@ Deno.serve(async (req) => {
     let provisional = question.difficulty_provisional;
 
     // Per-answer drift correction — fires from the very first answer so that
-    // a wildly mis-tagged question starts converging immediately.
+    // a wildly mis-tagged question starts converging immediately. We use the
+    // 2PL expected probability (which incorporates `a`) so a high-`a` item
+    // converges faster than a flat one — that's the desired behaviour.
     nextB = clamp(nextB + DYNAMIC_B_ALPHA * (actual - subjectNext.expected) * -1, -3.0, 3.0);
     // ↑ Note the −1: if the student got it right but we expected a miss, the
     // question was easier than tagged → b should *decrease*. (Observed > expected
@@ -453,8 +499,11 @@ Deno.serve(async (req) => {
         difficulty_b: Number(nextB.toFixed(3)),
         difficulty_provisional: provisional,
         confidence: Number(newConfidence.toFixed(3)),
+        elo_rating: Number(eloOut.itemR.toFixed(2)),
+        elo_count: itemEloCountIn + 1,
       })
       .eq("id", question.id);
+
 
     return new Response(
       JSON.stringify({
