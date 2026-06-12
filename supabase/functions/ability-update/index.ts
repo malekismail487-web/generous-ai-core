@@ -520,6 +520,14 @@ Deno.serve(async (req) => {
               : "intermediate",
         expected_p: Number(subjectNext.expected.toFixed(4)),
         question_id: question.id,
+        // Stage 1 additions: 2PL discrimination + Elo fast-track results.
+        discrimination_a: Number(a.toFixed(3)),
+        elo: {
+          student_rating: Number(eloOut.studentR.toFixed(2)),
+          item_rating: Number(eloOut.itemR.toFixed(2)),
+          expected: Number(eloOut.expected.toFixed(4)),
+          k: eloOut.k,
+        },
         // Back-compat: dominant concept under `concept`, full breakdown under `concepts`
         concept: conceptResults[0] ?? null,
         concepts: conceptResults,
