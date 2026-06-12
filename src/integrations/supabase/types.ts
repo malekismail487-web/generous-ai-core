@@ -435,6 +435,7 @@ export type Database = {
           id: string
           points: number | null
           questions_json: Json | null
+          relevance_override: boolean
           school_id: string
           source: string
           subject: string
@@ -452,6 +453,7 @@ export type Database = {
           id?: string
           points?: number | null
           questions_json?: Json | null
+          relevance_override?: boolean
           school_id: string
           source?: string
           subject: string
@@ -469,6 +471,7 @@ export type Database = {
           id?: string
           points?: number | null
           questions_json?: Json | null
+          relevance_override?: boolean
           school_id?: string
           source?: string
           subject?: string
@@ -1063,6 +1066,7 @@ export type Database = {
           file_url: string | null
           grade_level: string | null
           id: string
+          relevance_override: boolean
           school_id: string | null
           subject: string
           title: string
@@ -1075,6 +1079,7 @@ export type Database = {
           file_url?: string | null
           grade_level?: string | null
           id?: string
+          relevance_override?: boolean
           school_id?: string | null
           subject: string
           title: string
@@ -1087,6 +1092,7 @@ export type Database = {
           file_url?: string | null
           grade_level?: string | null
           id?: string
+          relevance_override?: boolean
           school_id?: string | null
           subject?: string
           title?: string
@@ -3913,6 +3919,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _slugify_name: { Args: { p: string }; Returns: string }
       activate_school_with_code: {
         Args: { activation_code_input: string; user_uuid: string }
         Returns: Json
