@@ -693,6 +693,32 @@ export function TeacherMaterials({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RelevanceWarningDialog
+        open={showRelevanceDialog}
+        onOpenChange={(o) => {
+          setShowRelevanceDialog(o);
+          if (!o && pendingInsert) {
+            // Closed without confirming → abort
+            setPendingInsert(null);
+            setUploading(false);
+          }
+        }}
+        categoryName={lockedSubjectName || ''}
+        detectedTopic={relevanceCheck?.detected_topic}
+        reason={relevanceCheck?.reason}
+        onConfirm={async () => {
+          setShowRelevanceDialog(false);
+          if (pendingInsert) {
+            await performInsert(pendingInsert.fileUrl, true);
+            setPendingInsert(null);
+          }
+        }}
+        onCancel={() => {
+          setPendingInsert(null);
+          setUploading(false);
+        }}
+      />
     </div>
   );
 }
