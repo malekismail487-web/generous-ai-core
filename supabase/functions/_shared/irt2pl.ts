@@ -184,7 +184,13 @@ export function fitItemParams2pl(
 
   for (let it = 0; it < EM_MAX_ITERS; it++) {
     iters++;
-    // Gradient and Hessian of LL w.r.t. (a, b).
+    // Gradient and Hessian of LL w.r.t. (a, b) for the 2PL model.
+    //   p_i  = σ(a(θ_i − b)),  w_i = p_i(1 − p_i),  r_i = y_i − p_i
+    //   ∂LL/∂a   =  Σ r_i (θ_i − b)
+    //   ∂LL/∂b   = −a · Σ r_i
+    //   ∂²LL/∂a² = −Σ w_i (θ_i − b)²
+    //   ∂²LL/∂a∂b = Σ ( a · w_i (θ_i − b) − r_i )
+    //   ∂²LL/∂b²  = −a² · Σ w_i
     let g_a = 0, g_b = 0;
     let h_aa = 0, h_ab = 0, h_bb = 0;
     for (const s of samples) {
@@ -192,12 +198,13 @@ export function fitItemParams2pl(
       const p = sigmoid(a * diff);
       const w = p * (1 - p);
       const r = s.y - p;
-      g_a += diff * r;
+      g_a +=  diff * r;
       g_b += -a * r;
-      h_aa += -diff * diff * w;
-      h_ab +=  diff * (a * w * diff - r) - r; // mixed partial; conservative form
+      h_aa += -w * diff * diff;
+      h_ab +=  a * w * diff - r;
       h_bb += -a * a * w;
     }
+
 
     // Solve H · Δ = −g for the Newton step, with a tiny ridge for stability.
     const ridge = 1e-3;
