@@ -406,6 +406,87 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ─── Stage 2: ensemble prediction ──────────────────────────────
+    // Compose four component predictors {2PL, Elo, AKT-lite, DASH} and blend
+    // them with user-specific (or population) weights from `ensemble_weights`.
+    // The ensemble drives regime / policy via `stateVector.ensembleP`; pure
+    // 2PL `expectedP` is preserved as a fallback when KT context is missing.
+    let ensembleP: number | undefined;
+    let ensembleComponents:
+      | { p_2pl: number; p_elo: number; p_akt: number; p_dash: number }
+      | undefined;
+    if (subjectName) {
+      try {
+        let studentElo = ELO_INITIAL;
+        const { data: subjElo } = await admin
+          .from("ability_estimates")
+          .select("elo_rating")
+          .eq("user_id", studentId).eq("subject", subjectName).is("concept_id", null)
+          .maybeSingle();
+        if (subjElo) studentElo = Number(subjElo.elo_rating ?? ELO_INITIAL);
+
+        let itemElo = ELO_INITIAL;
+        if (conceptRow) {
+          const { data: itemsElo } = await admin
+            .from("question_bank")
+            .select("elo_rating")
+            .eq("concept_id", conceptRow.id);
+          if (itemsElo && itemsElo.length) {
+            itemElo = itemsElo.reduce(
+              (s: number, r: any) => s + Number(r.elo_rating ?? ELO_INITIAL), 0,
+            ) / itemsElo.length;
+          }
+        }
+
+        const a = conceptMeanA, b = conceptMeanB;
+        const p_2pl = clamp(sig2pl(a * (theta - b)), 0.01, 0.99);
+        const p_elo = clamp(eloProbability(studentElo, itemElo), 0.01, 0.99);
+
+        const { data: seqRow } = await admin
+          .from("kt_sequence_state")
+          .select("interactions")
+          .eq("user_id", studentId).eq("subject", subjectName)
+          .maybeSingle();
+        const interactions: KtInteraction[] = Array.isArray(seqRow?.interactions)
+          ? (seqRow!.interactions as KtInteraction[]) : [];
+        const cidKey = conceptRow?.id ?? "_subj";
+        const akt = aktLitePredict(
+          interactions, { conceptId: cidKey, a, b, theta }, AKT_DEFAULTS,
+        );
+        const dashHist: DashInteraction[] = interactions.map(
+          (iv) => ({ ts: iv.ts, c: iv.c, cid: iv.cid }),
+        );
+        const p_dash = dashPredictFromHistory(
+          dashHist, Date.now(), theta, b, conceptRow?.id,
+        );
+
+        let weights: EnsembleWeights = ENSEMBLE_DEFAULTS;
+        const { data: userW } = await admin
+          .from("ensemble_weights")
+          .select("w_2pl, w_elo, w_akt, w_dash, bias")
+          .eq("user_id", studentId).eq("subject", subjectName)
+          .maybeSingle();
+        if (userW) weights = userW as EnsembleWeights;
+        else {
+          const { data: popW } = await admin
+            .from("ensemble_weights")
+            .select("w_2pl, w_elo, w_akt, w_dash, bias")
+            .is("user_id", null).eq("subject", "*")
+            .maybeSingle();
+          if (popW) weights = popW as EnsembleWeights;
+        }
+
+        const blended = blendPredictions(
+          { p_2pl, p_elo, p_akt: akt.p, p_dash }, weights,
+        );
+        ensembleP = blended.p;
+        ensembleComponents = { p_2pl, p_elo, p_akt: akt.p, p_dash };
+      } catch (e) {
+        // Ensemble is best-effort: a failure must never break teaching.
+        console.error("[teaching-generate] ensemble failed, falling back to 2PL:", e);
+      }
+    }
+
     // ─── Pure deterministic cascade ────────────────────────────────
     const stateVector = buildStateVector({
       theta, standardError: se,
@@ -416,6 +497,8 @@ Deno.serve(async (req) => {
       fatigue: clientFatigue,
       discrimination: conceptMeanA,
       conceptMeanB: conceptMeanB,
+      ensembleP,
+      ensembleComponents,
     });
     const regime = deriveRegime(stateVector);
     const trajectory = buildTrajectory(regime);
@@ -447,7 +530,7 @@ Deno.serve(async (req) => {
       const code = aiResp.status === 429 ? 429 : aiResp.status === 402 ? 402 : 502;
       return json({
         error: "AI generation failed",
-        version: 1, policy, regime, trajectory, stateVector,
+        version: 2, policy, regime, trajectory, stateVector,
       }, code);
     }
     const aiData = await aiResp.json();
@@ -455,7 +538,7 @@ Deno.serve(async (req) => {
     const enforced = enforce(content, regime, trajectory);
 
     return json({
-      version: 1,
+      version: 2,
       policy,                      // legacy field — preserved
       regime,
       trajectory,
@@ -463,13 +546,17 @@ Deno.serve(async (req) => {
       content: enforced.content,
       constrainedBy: enforced.constrainedBy,
       missingSteps: enforced.missingSteps,
-      // Stage 1: surface the 2PL summary for diagnostics + downstream callers.
+      // Stage 1: 2PL summary
       irt: {
         theta, standardError: se,
         discrimination: stateVector.discrimination,
         expectedP: stateVector.expectedP,
         conceptItemCount,
       },
+      // Stage 2: ensemble surface (null when KT context was unavailable).
+      ensemble: ensembleComponents
+        ? { p: ensembleP, components: ensembleComponents }
+        : null,
       // legacy compatibility
       theta, standardError: se, conceptMastery, lectureMastery,
     });
