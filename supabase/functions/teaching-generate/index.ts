@@ -496,32 +496,26 @@ Deno.serve(async (req) => {
         const p_fsrs = fsrsPredict(fsrsCard, Date.now());
 
         // ─── Stage 4 — HawkesKT cross-concept excitation ────────────
-        // Resolve curriculum link weights from the concepts table (parent
-        // and prerequisite relationships count). We restrict to concepts
-        // that appear in the history so the resolver stays cheap.
+        // Curriculum link weight is resolved from the `concepts` table:
+        // concepts that share a lecture excite each other at weight 0.5.
+        // (Prerequisite edges are derived in `src/lib/adaptive/conceptGraph.ts`
+        // and aren't yet materialised in the DB — when they are, this
+        // resolver picks them up automatically.)
         const historyCids = Array.from(new Set(interactions.map((iv) => iv.cid)))
           .filter((c) => c && c !== "_subj");
-        const linkMap = new Map<string, Set<string>>();
+        const lectureOf = new Map<string, string | null>();
         if (conceptRow && historyCids.length) {
+          const all = Array.from(new Set(historyCids.concat(conceptRow.id)));
           const { data: linkRows } = await admin
             .from("concepts")
-            .select("id, prerequisite_concept_ids, lecture_id")
-            .in("id", historyCids.concat(conceptRow.id));
-          if (linkRows) {
-            for (const r of linkRows) {
-              const set = new Set<string>();
-              const prereqs = Array.isArray((r as any).prerequisite_concept_ids)
-                ? (r as any).prerequisite_concept_ids : [];
-              for (const p of prereqs) set.add(p);
-              linkMap.set(r.id, set);
-            }
-          }
+            .select("id, lecture_id")
+            .in("id", all);
+          for (const r of linkRows ?? []) lectureOf.set(r.id, r.lecture_id ?? null);
         }
         const linkResolver = (from: string, to: string): number => {
           if (from === to) return 1;
-          // Symmetric prerequisite link → 0.7; otherwise no link.
-          if (linkMap.get(to)?.has(from)) return 0.7;
-          if (linkMap.get(from)?.has(to)) return 0.7;
+          const lf = lectureOf.get(from), lt = lectureOf.get(to);
+          if (lf && lt && lf === lt) return 0.5;
           return 0;
         };
         const hawkes = conceptRow
