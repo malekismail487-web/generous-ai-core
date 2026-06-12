@@ -57,8 +57,10 @@ export interface KtParams {
   kappa: number;
   /** residual gain into final logit */
   gamma: number;
-  /** response-time anomaly dampener */
+  /** response-time anomaly dampener (events under this RT lose weight) */
   rtPenaltyMs: number;
+  /** attention mass at which the residual reaches ~63% of its bounded value */
+  evidenceScale: number;
 }
 
 export const AKT_DEFAULTS: KtParams = {
