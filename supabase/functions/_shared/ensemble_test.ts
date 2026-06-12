@@ -7,7 +7,7 @@ Deno.test("ensemble: default weights blend close to logit-weighted mean", () => 
   );
   if (!(out.p > 0.5 && out.p < 0.85)) throw new Error(`unexpected blend: ${out.p}`);
   // Weights re-normalize to sum 1.
-  const wsum = out.weights.w_2pl + out.weights.w_elo + out.weights.w_akt + out.weights.w_dash;
+  const wsum = Object.values(out.weights).reduce((s, v) => s + v, 0);
   assertAlmostEquals(wsum, 1.0, 1e-6);
 });
 

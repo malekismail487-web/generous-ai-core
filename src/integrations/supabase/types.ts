@@ -1303,6 +1303,8 @@ export type Database = {
           w_akt: number
           w_dash: number
           w_elo: number
+          w_fsrs: number
+          w_hawkes: number
         }
         Insert: {
           auc?: number | null
@@ -1319,6 +1321,8 @@ export type Database = {
           w_akt?: number
           w_dash?: number
           w_elo?: number
+          w_fsrs?: number
+          w_hawkes?: number
         }
         Update: {
           auc?: number | null
@@ -1335,6 +1339,8 @@ export type Database = {
           w_akt?: number
           w_dash?: number
           w_elo?: number
+          w_fsrs?: number
+          w_hawkes?: number
         }
         Relationships: []
       }
@@ -1438,6 +1444,72 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fsrs_card_state: {
+        Row: {
+          concept_id: string | null
+          created_at: string
+          difficulty: number
+          id: string
+          lapses: number
+          last_review_at: string | null
+          next_review_at: string | null
+          reps: number
+          request_retention: number
+          school_id: string | null
+          stability: number
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          concept_id?: string | null
+          created_at?: string
+          difficulty?: number
+          id?: string
+          lapses?: number
+          last_review_at?: string | null
+          next_review_at?: string | null
+          reps?: number
+          request_retention?: number
+          school_id?: string | null
+          stability?: number
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          concept_id?: string | null
+          created_at?: string
+          difficulty?: number
+          id?: string
+          lapses?: number
+          last_review_at?: string | null
+          next_review_at?: string | null
+          reps?: number
+          request_retention?: number
+          school_id?: string | null
+          stability?: number
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fsrs_card_state_concept_id_fkey"
+            columns: ["concept_id"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fsrs_card_state_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
             referencedColumns: ["id"]
           },
         ]
