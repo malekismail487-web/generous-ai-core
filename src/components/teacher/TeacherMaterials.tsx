@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/select';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
+import { RelevanceWarningDialog } from './RelevanceWarningDialog';
 
 // Hardcoded subjects list
 const SUBJECTS = [
