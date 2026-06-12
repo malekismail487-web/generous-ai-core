@@ -15,6 +15,7 @@
 import { useCallback, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdaptiveIntelligence } from "@/hooks/useAdaptiveIntelligence";
+import { computeCognitiveState } from "@/lib/adaptive/cognitiveModel";
 import type {
   TeachingTrajectoryDTO,
 } from "@/lib/adaptive/teachingOutputV2";
@@ -24,6 +25,8 @@ export interface TeachingGenerateRequest {
   lectureId?: string;
   conceptId?: string;
   context?: string;
+  /** Optional override; if absent the hook reads it from the local cognitive engine. */
+  fatigue?: number;
 }
 
 export interface TeachingGenerateResponse extends TeachingTrajectoryDTO {
@@ -51,9 +54,21 @@ export function useTeachingGenerate() {
     setLoading(true);
     setError(null);
     try {
+      // Read fatigue from the local cognitive engine (0..100 → 0..1) unless
+      // the caller passed an explicit value. This is the bridge that makes
+      // the deterministic teaching pipeline aware of real-time affect.
+      let fatigue = req.fatigue;
+      if (fatigue === undefined) {
+        try {
+          const cog = computeCognitiveState();
+          fatigue = Math.max(0, Math.min(1, (cog.fatigueLevel ?? 0) / 100));
+        } catch {
+          fatigue = 0;
+        }
+      }
       const { data, error: invokeError } = await supabase.functions.invoke(
         "teaching-generate",
-        { body: req },
+        { body: { ...req, fatigue } },
       );
       if (invokeError) {
         setError(invokeError.message || "Teaching generation failed");
