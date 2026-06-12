@@ -86,14 +86,20 @@ function buildStateVector(i: {
   lectureMastery?: number; errorCount?: number;
   conceptDifficulty?: number; visualPreference?: boolean; fatigue?: number;
   discrimination?: number; conceptMeanB?: number;
+  ensembleP?: number;
+  ensembleComponents?: { p_2pl: number; p_elo: number; p_akt: number; p_dash: number };
 }): TeachingStateVector {
   const theta = Number.isFinite(i.theta) ? (i.theta as number) : 0;
   const discrimination = clamp(i.discrimination ?? 1.0, 0.3, 2.5);
   const conceptMeanB = clamp(i.conceptMeanB ?? 0, -3, 3);
-  // 2PL expected P(correct) on the average item of the concept. This is the
-  // canonical "how hard is the next interaction going to feel" signal — used
-  // by deriveRegime in place of the v2 ad-hoc effective-score heuristic.
   const expectedP = clamp(sigmoid(discrimination * (theta - conceptMeanB)), 0.01, 0.99);
+  // Stage 2: ensembleP defaults to expectedP so the pipeline degrades
+  // gracefully to pure 2PL when KT context is unavailable (cold start,
+  // new subject, etc.). When the ensemble fires, it strictly dominates.
+  const ensembleP = clamp(
+    Number.isFinite(i.ensembleP) ? (i.ensembleP as number) : expectedP,
+    0.01, 0.99,
+  );
   return {
     theta,
     standardError: clamp(i.standardError ?? 1.0, 0, 3),
@@ -105,14 +111,18 @@ function buildStateVector(i: {
     fatigue: clamp(i.fatigue ?? 0, 0, 1),
     discrimination,
     expectedP,
+    ensembleP,
+    ensembleComponents: i.ensembleComponents,
   };
 }
 
 function derivePolicy(v: TeachingStateVector): TeachingPolicy {
-  // Use the 2PL expectedP as the canonical difficulty signal. The 0.45 / 0.75
-  // breakpoints align with the 85% rule: P>0.75 is "too easy → push", P<0.45
-  // is "too hard → step back".
-  const difficulty: Difficulty = v.expectedP > 0.75 ? "low" : v.expectedP < 0.45 ? "high" : "medium";
+  // Stage 2: drive policy off the ensemble probability, which incorporates
+  // forgetting (DASH), sequence dynamics (AKT-lite), and fast Elo drift in
+  // addition to the 2PL prior. The 0.45 / 0.75 breakpoints still align with
+  // the 85% rule.
+  const p = v.ensembleP;
+  const difficulty: Difficulty = p > 0.75 ? "low" : p < 0.45 ? "high" : "medium";
   const pacing: Pacing =
     (v.standardError > 0.55 || v.errorCount >= 3 || v.mastery < 0.35) ? "slow" :
     (v.standardError < 0.30 && v.mastery > 0.75 && v.errorCount === 0) ? "fast" : "normal";
@@ -131,30 +141,26 @@ function derivePolicy(v: TeachingStateVector): TeachingPolicy {
 }
 
 function deriveRegime(v: TeachingStateVector): TeachingRegime {
-  // 2PL-driven regime: anchor on expectedP, not the v2 effective-score blob.
-  //   < 0.40 → struggle territory → remediate
-  //   < 0.65 → soft ground → consolidate
-  //   < 0.85 → in flow → advance
-  //   ≥ 0.85 → too easy → challenge
+  // Stage 2: regime selection anchors on the ensemble probability, with the
+  // same 85%-rule breakpoints. Mastery + error-count remain hard overrides
+  // so the regime never advances past a real performance failure regardless
+  // of what the predictor says.
+  const p = v.ensembleP;
   let mode: RegimeMode;
   if (v.mastery < 0.35 || v.errorCount >= 3) mode = "remediate";
-  else if (v.expectedP < 0.40)               mode = "remediate";
-  else if (v.expectedP < 0.65)               mode = "consolidate";
-  else if (v.expectedP < 0.85)               mode = "advance";
+  else if (p < 0.40)                         mode = "remediate";
+  else if (p < 0.65)                         mode = "consolidate";
+  else if (p < 0.85)                         mode = "advance";
   else                                       mode = "challenge";
 
-  // Intensity: SE drives exploration breadth; (1−P) drives effort; fatigue
-  // tempers both. Adding a small (a − 1) term means high-discrimination
-  // concepts get slightly more steps — each interaction carries more signal,
-  // so it's worth the verification cost.
   const intensity = clamp(
-    0.4 + v.standardError * 0.35 + (1 - v.expectedP) * 0.25
+    0.4 + v.standardError * 0.35 + (1 - p) * 0.25
       - v.fatigue * 0.3 + (v.discrimination - 1.0) * 0.05,
     0.2, 1.0,
   );
   const abstractionBias = clamp(v.lectureMastery * 0.7 + v.mastery * 0.3, 0.1, 0.95);
   const verificationBias = clamp(
-    0.25 + v.standardError * 0.4 + (1 - v.expectedP) * 0.3, 0.2, 0.95,
+    0.25 + v.standardError * 0.4 + (1 - p) * 0.3, 0.2, 0.95,
   );
   return {
     mode,
