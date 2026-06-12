@@ -470,5 +470,7 @@ export function AssignmentQuestionBuilder({
         </div>
       )}
     </div>
+    {relevanceNode}
+    </>
   );
 }
