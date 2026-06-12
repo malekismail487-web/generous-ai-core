@@ -29,6 +29,7 @@ import {
   clamp as clamp2,
   sigmoid as sigmoid2,
 } from "../_shared/irt2pl.ts";
+import { pushKtInteraction } from "../_shared/ktSequence.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
