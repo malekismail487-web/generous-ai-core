@@ -118,7 +118,15 @@ export function aktLitePredict(
     residual    += w * r_e;
   }
 
-  const ctxResidual = attentionSum > 0 ? residual / attentionSum : 0;
+  // Direction comes from the attention-weighted residual mean; magnitude is
+  // scaled by an evidence-saturation curve so two streams with the same
+  // direction but different attention mass produce different pulls. This is
+  // what makes cross-concept history (kappa-attenuated) and rt-dampened
+  // history contribute less than full-weight same-concept history, even when
+  // the underlying correctness pattern is identical.
+  const direction = attentionSum > 0 ? residual / attentionSum : 0;
+  const saturation = 1 - Math.exp(-attentionSum / Math.max(params.evidenceScale, 1e-6));
+  const ctxResidual = direction * saturation;
   const p = clamp(sigmoid(eq + params.gamma * ctxResidual), 0.01, 0.99);
   return { p, attentionMass: attentionSum, residual: ctxResidual };
 }
