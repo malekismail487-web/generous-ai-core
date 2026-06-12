@@ -51,3 +51,22 @@ Deno.test("teaching-generate forwards client fatigue to the state vector", () =>
   assertStringIncludes(SRC, "body.fatigue");
   assertStringIncludes(SRC, "fatigue: clientFatigue");
 });
+
+// ── Stage 1 guards: 2PL quartet must reach the state vector ─────────────────
+
+Deno.test("teaching-generate computes 2PL discrimination from question_bank", () => {
+  assertStringIncludes(SRC, "discrimination_a, difficulty_b");
+  assertStringIncludes(SRC, "conceptMeanA");
+  assertStringIncludes(SRC, "conceptMeanB");
+});
+
+Deno.test("teaching-generate state vector passes discrimination + conceptMeanB", () => {
+  assertStringIncludes(SRC, "discrimination: conceptMeanA");
+  assertStringIncludes(SRC, "conceptMeanB: conceptMeanB");
+});
+
+Deno.test("teaching-generate response exposes irt summary", () => {
+  assertStringIncludes(SRC, "irt: {");
+  assertStringIncludes(SRC, "expectedP: stateVector.expectedP");
+});
+

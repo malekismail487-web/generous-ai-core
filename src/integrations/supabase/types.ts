@@ -18,6 +18,8 @@ export type Database = {
         Row: {
           concept_id: string | null
           created_at: string
+          elo_count: number
+          elo_rating: number
           graded_count: number
           id: string
           last_graded_at: string | null
@@ -32,6 +34,8 @@ export type Database = {
         Insert: {
           concept_id?: string | null
           created_at?: string
+          elo_count?: number
+          elo_rating?: number
           graded_count?: number
           id?: string
           last_graded_at?: string | null
@@ -46,6 +50,8 @@ export type Database = {
         Update: {
           concept_id?: string | null
           created_at?: string
+          elo_count?: number
+          elo_rating?: number
           graded_count?: number
           id?: string
           last_graded_at?: string | null
@@ -1588,6 +1594,56 @@ export type Database = {
         }
         Relationships: []
       }
+      item_parameter_history: {
+        Row: {
+          a_after: number
+          a_before: number
+          b_after: number
+          b_before: number
+          created_at: string
+          id: string
+          log_likelihood: number | null
+          method: string
+          question_id: string
+          responses_used: number
+          subject: string
+        }
+        Insert: {
+          a_after: number
+          a_before: number
+          b_after: number
+          b_before: number
+          created_at?: string
+          id?: string
+          log_likelihood?: number | null
+          method?: string
+          question_id: string
+          responses_used: number
+          subject: string
+        }
+        Update: {
+          a_after?: number
+          a_before?: number
+          b_after?: number
+          b_before?: number
+          created_at?: string
+          id?: string
+          log_likelihood?: number | null
+          method?: string
+          question_id?: string
+          responses_used?: number
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_parameter_history_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "question_bank"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_gaps: {
         Row: {
           created_at: string
@@ -2895,6 +2951,9 @@ export type Database = {
           created_at: string
           difficulty_b: number
           difficulty_provisional: boolean
+          discrimination_a: number
+          elo_count: number
+          elo_rating: number
           id: string
           is_anchor: boolean
           question_hash: string
@@ -2912,6 +2971,9 @@ export type Database = {
           created_at?: string
           difficulty_b?: number
           difficulty_provisional?: boolean
+          discrimination_a?: number
+          elo_count?: number
+          elo_rating?: number
           id?: string
           is_anchor?: boolean
           question_hash: string
@@ -2929,6 +2991,9 @@ export type Database = {
           created_at?: string
           difficulty_b?: number
           difficulty_provisional?: boolean
+          discrimination_a?: number
+          elo_count?: number
+          elo_rating?: number
           id?: string
           is_anchor?: boolean
           question_hash?: string
