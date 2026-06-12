@@ -82,6 +82,18 @@ export function AssignmentQuestionBuilder({
   const [isCreating, setIsCreating] = useState(false);
   const [showMetadataForm, setShowMetadataForm] = useState(true);
 
+  const { categoryName: lockedName, subjectSlug: lockedSlug, locked } = useTeacherLockedSubject(authUserId);
+
+  // Lock subject picker for category-bound teachers
+  useEffect(() => {
+    if (locked && lockedSlug && subject !== lockedSlug) {
+      setSubject(lockedSlug);
+    }
+  }, [locked, lockedSlug]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [showRelevanceDialog, setShowRelevanceDialog] = useState(false);
+  const [relevanceCheck, setRelevanceCheck] = useState<{ detected_topic: string; reason: string } | null>(null);
+
   const resetQuestionForm = () => {
     setQuestionTitle('');
     setOptionA('');
