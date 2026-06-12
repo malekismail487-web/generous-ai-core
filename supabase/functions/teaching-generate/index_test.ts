@@ -99,3 +99,22 @@ Deno.test("teaching-generate response exposes ensemble surface", () => {
   assertStringIncludes(SRC, "ensemble:");
   assertStringIncludes(SRC, "components: ensembleComponents");
 });
+
+// ── Stage 3 guards: calibration must be applied to the ensemble output ─────
+
+Deno.test("teaching-generate imports the calibration layer", () => {
+  assertStringIncludes(SRC, '"../_shared/calibration.ts"');
+  assertStringIncludes(SRC, "applyCalibration");
+});
+
+Deno.test("teaching-generate reads calibration_state with population fallback", () => {
+  assertStringIncludes(SRC, 'from("calibration_state")');
+  // Must include both subject-specific lookup and the '*' fallback.
+  assertStringIncludes(SRC, ".eq(\"subject\", subjectName)");
+  assertStringIncludes(SRC, ".eq(\"subject\", \"*\")");
+});
+
+Deno.test("teaching-generate calibrates the blended probability before feeding the state vector", () => {
+  // The calibrated probability must be what populates ensembleP — not the raw blend.
+  assertStringIncludes(SRC, "ensembleP = applyCalibration(blended.p");
+});
