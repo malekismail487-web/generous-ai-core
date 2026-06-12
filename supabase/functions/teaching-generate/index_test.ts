@@ -18,9 +18,14 @@
 import "https://deno.land/std@0.224.0/dotenv/load.ts";
 import { assert, assertStringIncludes } from "https://deno.land/std@0.224.0/assert/mod.ts";
 
-const SRC = await Deno.readTextFile(
+const RAW = await Deno.readTextFile(
   new URL("./index.ts", import.meta.url),
 );
+// Strip // line comments and /* block comments */ before regex checks so that
+// historical "FIX:" notes mentioning the old column names don't trip the guard.
+const SRC = RAW
+  .replace(/\/\*[\s\S]*?\*\//g, "")
+  .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 
 Deno.test("teaching-generate reads theta from ability_estimates", () => {
   assertStringIncludes(SRC, 'from("ability_estimates")');
