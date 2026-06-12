@@ -1,17 +1,34 @@
 // ============================================================================
-//  ability-update edge function  —  Adaptive Intelligence v2.1
+//  ability-update edge function  —  Adaptive Intelligence v3.0 (Stage 1)
 // ----------------------------------------------------------------------------
-//  Server-side IRT (Rasch / 1PL) update with:
-//    • Probabilistic concept assignment (soft distribution, weighted updates)
-//    • Hierarchical Bayesian coupling   (concept theta gently pulled to subject)
-//    • Dynamic difficulty self-healing  (b nudge on every answer)
-//    • Uncertainty-aware update gating  (K scaled by signal quality)
+//  Server-side 2PL IRT update + parallel Elo fast-track, with:
+//    • Per-item discrimination `a` (was implicit a=1 in v2.x).
+//    • Fisher information weighted by quality (source trust × speed sanity ×
+//      guess/slip detection) — preserves all v2 gating, now under 2PL.
+//    • Probabilistic concept assignment (soft distribution, weighted updates).
+//    • Hierarchical Bayesian coupling (concept theta pulled to subject theta).
+//    • Per-answer drift correction on `b` (dynamic difficulty self-healing).
+//    • Parallel Elo rating updates for student and item with adaptive K.
+//      Elo settles new items in ~10 answers; 2PL converges over ~30. The two
+//      coexist; downstream consumers can blend (Stage 2 ensemble).
 //
 //  All writes use the service role so students cannot tamper with their own
 //  ability score by hitting the database directly.
 // ----------------------------------------------------------------------------
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  step2pl,
+  eloStep,
+  A_MIN,
+  A_MAX,
+  SE_INITIAL,
+  SE_LOCK_IN,
+  SE_FLOOR,
+  ELO_INITIAL,
+  clamp as clamp2,
+  sigmoid as sigmoid2,
+} from "../_shared/irt2pl.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,9 +37,6 @@ const corsHeaders = {
 };
 
 // ── tunables ───────────────────────────────────────────────────────────────
-const SE_LOCK_IN = 0.4;
-const SE_FLOOR = 0.18;
-const SE_INITIAL = 1.5;
 const PROVISIONAL_DIFFICULTY_LOCK = 20;
 const DYNAMIC_B_ALPHA = 0.02;         // per-answer drift correction for difficulty_b
 const COUPLING_LAMBDA = 0.05;         // concept→subject pull strength
@@ -38,8 +52,9 @@ const SOURCE_TRUST: Record<string, number> = {
   self_graded: 0.4,
 };
 
-const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
-const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+const sigmoid = sigmoid2;
+const clamp = clamp2;
+
 
 async function sha256Hex(input: string): Promise<string> {
   const data = new TextEncoder().encode(input);
