@@ -450,6 +450,13 @@ Deno.serve(async (req) => {
       content: enforced.content,
       constrainedBy: enforced.constrainedBy,
       missingSteps: enforced.missingSteps,
+      // Stage 1: surface the 2PL summary for diagnostics + downstream callers.
+      irt: {
+        theta, standardError: se,
+        discrimination: stateVector.discrimination,
+        expectedP: stateVector.expectedP,
+        conceptItemCount,
+      },
       // legacy compatibility
       theta, standardError: se, conceptMastery, lectureMastery,
     });
