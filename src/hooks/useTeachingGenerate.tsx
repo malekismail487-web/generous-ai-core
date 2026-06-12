@@ -54,9 +54,21 @@ export function useTeachingGenerate() {
     setLoading(true);
     setError(null);
     try {
+      // Read fatigue from the local cognitive engine (0..100 → 0..1) unless
+      // the caller passed an explicit value. This is the bridge that makes
+      // the deterministic teaching pipeline aware of real-time affect.
+      let fatigue = req.fatigue;
+      if (fatigue === undefined) {
+        try {
+          const cog = computeCognitiveState();
+          fatigue = Math.max(0, Math.min(1, (cog.fatigueLevel ?? 0) / 100));
+        } catch {
+          fatigue = 0;
+        }
+      }
       const { data, error: invokeError } = await supabase.functions.invoke(
         "teaching-generate",
-        { body: req },
+        { body: { ...req, fatigue } },
       );
       if (invokeError) {
         setError(invokeError.message || "Teaching generation failed");
