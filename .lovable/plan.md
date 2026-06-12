@@ -1,111 +1,350 @@
+# LUMINA — Adaptation ↔ Teaching Output V2 Unification
+
 ## Goal
 
-Stop a teacher (e.g. Arabic) from posting content outside their category (e.g. Biology) — across **Materials, Assignments, Lectures, and AI Copilot** — using a two-layer approach:
+Make `/teaching/generate` the single source of truth that converts the current adaptive student state into a deterministic teaching trajectory, then renders it through AI — with the student's response feeding back into the Adaptation Engine. No schema breaks, no cross-student leakage, no parallel state.
 
-1. **AI relevance check** (soft) → warns the teacher and asks "Post anyway?" instead of auto-blocking.
-2. **Server-side category guard** (hard) → prevents bypass via crafted requests.
+## Current state (verified)
 
-No changes to students, admins, or other roles.
+- `supabase/functions/teaching-generate/index.ts` already loads θ/SE, concept & lecture mastery, visual preference, and runs an inlined `derivePolicy` mirroring `src/lib/adaptive/teachingPolicy.ts`. It calls Lovable AI Gateway (`google/gemini-2.5-flash`) and returns `{ policy, content, theta, standardError, conceptMastery, lectureMastery }`.
+- `src/lib/adaptive/teachingPolicy.ts` is the canonical pure deterministic policy function (client-side mirror).
+- Adaptation side: `useAdaptiveIntelligence` + `adaptiveIntelligence.ts` already record answers, chat, teaching events into IRT / mastery / spaced-rep / emotional subsystems.
+- Only consumer of `teachingPolicy` in UI today is `StudentViewSimulator`. There is no `TeachingStateVector` / `TeachingRegime` / `TeachingTrajectory` layer yet — that's the gap.
 
----
+## Architecture (closed loop)
 
-## Layer 1 — AI Relevance Check (soft warning)
+```text
+student answer ──► useAdaptiveIntelligence.recordAnswer
+                       │  (IRT + mastery + gaps + emotion)
+                       ▼
+              Unified Student State (DB: ability_estimates,
+              concept_mastery, student_learning_profiles,
+              knowledge_gaps, learning_style_profiles)
+                       │
+        /teaching/generate (single entry)
+                       │
+            ┌──────────┴──────────┐
+            ▼                     ▼
+   buildTeachingStateVector   loadCurriculumNode
+            │                     │
+            └─────► deriveTeachingRegime  (pure, deterministic)
+                            │
+                            ▼
+                  buildTeachingTrajectory  (pure)
+                            │
+                            ▼
+                  buildPolicyPrompt + callAI
+                            │
+                            ▼
+              enforcePolicy(output, regime, trajectory)
+                            │
+                            ▼
+        { regime, trajectory, content, stateVector }
+                            │
+                  recordTeachingEvent ──► loop closes
+```
 
-A new edge function `check-content-relevance` that takes:
+## Changes
 
-- `category_name` (e.g. "Arabic")
-- `title`, `body/description`, optional file name
-- Returns `{ relevant: boolean, confidence: 0-1, reason: string }`
+### 1. New pure module: `src/lib/adaptive/teachingOutputV2.ts`
 
-Model: Lovable AI Gateway, `google/gemini-3-flash-preview`, JSON output, short prompt ("Does this content plausibly belong to a {category} class? Be lenient — borderline = relevant.").
+Pure, deterministic, no IO. Exports:
 
-**Client integration** in:
+- `TeachingStateVector` — `{ theta, standardError, mastery, lectureMastery, errorCount, conceptDifficulty, visualPreference, recentEmotion?, fatigue? }`
+- `TeachingRegime` — `{ mode: 'remediate'|'consolidate'|'advance'|'challenge', intensity: 0..1, abstractionBias: 0..1, verificationBias: 0..1 }`
+- `TeachingTrajectory` — ordered `TeachingStep[]` where each step has `{ kind: 'hook'|'explain'|'worked_example'|'check'|'practice'|'reflect', cognitiveLoad, expectedDurationSec, mustVerify }`
+- `buildTeachingStateVector(input)` — normalize + clamp
+- `deriveTeachingRegime(vector)` — deterministic cascade (mode from θ + mastery + errors; intensity from SE; abstraction from lectureMastery)
+- `buildTeachingTrajectory(vector, regime)` — deterministic step list sized by regime.intensity and verificationBias
+- `buildPolicyPrompt(regime, trajectory, curriculum)` — compact constraint fragment
+- `enforcePolicy(content, regime, trajectory)` — wraps AI output with `constrainedBy` metadata; strips/flags any step the model dropped
 
-- `TeacherMaterials.tsx` (on submit)
-- `TeacherAssignments.tsx` (on submit)
-- Lecture creator (on save/export)
-- AI Copilot question generator (on topic submit)
+Keeps `deriveTeachingPolicy` (existing) intact as a lower-level primitive that the new layer composes — no breaking change to current callers.
 
-UX: If `relevant === false` (confidence ≥ 0.7), show a non-blocking dialog:
+### 2. Rewire `supabase/functions/teaching-generate/index.ts`
 
-> ⚠️ This looks like **{detected topic}**, but your category is **{category}**.
-> {reason}
-> [Cancel] [Post anyway]
+- Inline-mirror the new module the same way `derivePolicy` is mirrored today (Edge Function constraint — no cross-imports from `src/`).
+- Replace the current single-policy flow with: load state → `buildTeachingStateVector` → `deriveTeachingRegime` → `buildTeachingTrajectory` → `buildPolicyPrompt` → AI call → `enforcePolicy`.
+- Response shape becomes `{ regime, trajectory, content, stateVector, policy }` — `policy` retained for backward compatibility with existing consumers.
+- Keep existing auth/authorization (`can_view_student_mastery`) and per-student RLS — no isolation change.
+- Keep 429/402 surfacing untouched.
 
-Choosing "Post anyway" stamps `relevance_override = true` on the row (for admin visibility) and proceeds. File-only uploads with no text get a lighter check (filename + first ~2KB text extract for PDFs/Docs).
+### 3. Feedback-loop wiring (client)
 
-If the AI call fails (429/402/timeout), skip the warning silently — never block.
+- New `src/hooks/useTeachingGenerate.tsx` that calls the function via `supabase.functions.invoke` and, on the next `recordAnswer` for the same concept, passes a correlation id so `recordTeachingEvent` can log which trajectory produced the response. Pure additive — no existing call sites change.
+- Update `StudentViewSimulator.tsx` to render `regime` + `trajectory` alongside the existing policy view (admin-only).
 
----
+### 4. Reinforcement clause guardrails
 
-## Layer 2 — Server-Side Category Guard (hard)
+- Add a top-of-file invariant comment block in `teachingOutputV2.ts` + the Edge Function listing the five "do not break" rules from the spec (determinism, isolation, adaptation outputs, policy schema, no cross-student leakage).
+- Add `scripts/teachingOutputDeterminism.test.ts` — runs the pure functions against fixed seed vectors and asserts byte-identical regime + trajectory output. Run-once script, mirrors existing `scripts/consistencyAudit.ts` style.
 
-Database trigger `enforce_teacher_category` on `INSERT` to `course_materials` and `assignments`:
+## Out of scope
 
-- If the inserting user's `profiles.teacher_category_id` resolves to a `subject_id` (Sync ON) → row's `subject` must equal that subject's slug.
-- If category has no linked subject (Sync OFF) → row's `subject` must equal slugified category name.
-- Teachers with no category (legacy) → unaffected.
-- Admins / super admins → unaffected.
+- No DB schema changes (spec explicitly forbids). Existing `ability_estimates`, `concept_mastery`, `student_learning_profiles`, `concepts`, `lectures` are sufficient.
+- No changes to Adaptation Engine math, recording pipeline, or RLS.
+- No changes to teacher-category enforcement, content relevance, or any unrelated subsystem.
+- No new AI model — keep `google/gemini-2.5-flash` as today.
 
-Raises `EXCEPTION` with a friendly message the client surfaces as a toast. This is the bypass-proof layer; the AI check never reaches this point in normal use.
+## Technical notes
 
----
+- Determinism: every new function is pure `(input) → output`, no `Date.now()`, no `Math.random()`, no env reads. Same vector ⇒ same regime ⇒ same trajectory ⇒ same prompt.
+- Isolation: state loads stay keyed on `studentId` with the existing `can_view_student_mastery` RPC. Nothing reads cross-student data.
+- Backward compat: response keeps `policy`, `theta`, `standardError`, `conceptMastery`, `lectureMastery`. New keys are additive.
+- File list:
+  - new: `src/lib/adaptive/teachingOutputV2.ts`, `src/hooks/useTeachingGenerate.tsx`, `scripts/teachingOutputDeterminism.test.ts`
+  - edited: `supabase/functions/teaching-generate/index.ts`, `src/components/admin/StudentViewSimulator.tsx`
 
-## Apply the existing client-side lock to all teacher surfaces
+🧠 LUMINA — PLAN REVIEW AMENDMENT (CRITICAL NOTES BEFORE APPROVAL)
 
-Today only `TeacherMaterials.tsx` reads `teacher_category_id` to lock the subject picker. Extend the same hook/util to:
+This section highlights potential architectural risks and required corrections to ensure the system remains fully deterministic, isolated, and production-safe.
 
-- `TeacherAssignments.tsx` — lock subject picker, hide other subjects in filter.
-- Lecture creator — lock subject field.
-- AI Copilot — pass category as system context so it refuses off-topic generation ("You teach {category}. If the topic is unrelated, ask the user to confirm.").
+⸻
 
-Extract the resolution logic into `src/hooks/useTeacherLockedSubject.tsx` so all four surfaces share it.
+⚠️ 1. DUPLICATE POLICY LOGIC RISK (HIGH PRIORITY)
 
----
+Issue
 
-## Admin visibility (small)
+The plan proposes:
 
-Add a single column `relevance_override boolean default false` on `course_materials` and `assignments`. Admin's existing content lists get a small "⚠ override" badge next to overridden rows. No new admin tab; just visibility.
+“inline-mirror the new module the same way derivePolicy is mirrored today”
 
----
+This introduces two sources of truth for TeachingPolicy logic:
 
-## Technical Details
+* src/lib/adaptive/teachingPolicy.ts
 
-**New files**
+* new teachingOutputV2.ts
 
-- `supabase/functions/check-content-relevance/index.ts` — Lovable AI Gateway call, JSON output, CORS, JWT validation.
-- `src/hooks/useTeacherLockedSubject.tsx` — shared resolver returning `{ categoryId, categoryName, subjectSlug, locked }`.
-- `src/components/teacher/RelevanceWarningDialog.tsx` — reusable confirm dialog.
+⸻
 
-**Edited files**
+🚨 Why this is a problem
 
-- `src/components/teacher/TeacherMaterials.tsx` — use shared hook, add relevance check on submit.
-- `src/components/teacher/TeacherAssignments.tsx` — lock + relevance check.
-- Lecture creator component (to be located during build).
-- AI Copilot generator component — lock + system prompt mention.
+If both evolve independently:
 
-**Migration**
+* subtle drift between policy calculations
 
-- Trigger function `public.enforce_teacher_category()` + `BEFORE INSERT` triggers on `course_materials` and `assignments`.
-- `relevance_override` column on both tables.
-- No new RLS policies needed (uses existing).
+* inconsistent teaching behavior across Edge Function vs UI
 
-**Out of scope**
+* debugging becomes impossible (same input → different outputs depending on caller path)
 
-- No changes to existing teacher categories, sync triggers, invite codes, or admin manager.
-- No retroactive scanning of already-posted content.
-- No re-check on edit (only on initial create), to keep cost down.
+⸻
 
----
+✅ Correct implementation
 
-## Cost / Failure behavior
+You MUST enforce:
 
-- One small Gemini Flash call per content creation (~$0.0001).
-- AI failures never block posting.
-- DB trigger is the only hard gate.
+There is exactly ONE canonical policy computation logic.
 
-Confirm and I'll switch to build mode and ship it.
+Option A (BEST — recommended)
 
-&nbsp;
+* Move deterministic logic into a shared pure module:
 
-Do both, but you need to do both of them professionally and actually when the teacher sent a material through the course material before they send it, the AI should read the content inside it to see that if it is related to their category or not
+src/lib/adaptive/teachingPolicyCore.ts
+
+* BOTH systems import from it
+
+Option B (acceptable)
+
+* Edge Function is the ONLY authority
+
+* frontend mirrors ONLY for display (no logic dependency)
+
+⸻
+
+⚠️ 2. TEACHING TRAJECTORY MUST BE PURELY DERIVED (MEDIUM PRIORITY)
+
+Issue
+
+TeachingTrajectory is introduced as a new decision layer.
+
+Risk:
+
+* it could unintentionally become a “second adaptation system”
+
+⸻
+
+🚨 Why this matters
+
+If trajectory logic diverges from adaptation state:
+
+* student model says “ready for challenge”
+
+* trajectory still outputs remediation steps (or vice versa)
+
+This creates instructional contradiction
+
+⸻
+
+✅ Correct implementation
+
+Strict rule:
+
+TeachingTrajectory MUST be a pure function of TeachingRegime ONLY
+
+REQUIRED FLOW:
+
+Adaptation State → TeachingStateVector → TeachingRegime → TeachingTrajectory
+
+FORBIDDEN:
+
+* trajectory reading raw student DB state
+
+* trajectory recalculating mastery independently
+
+* trajectory using IRT logic directly
+
+⸻
+
+⚠️ 3. SIMULATOR UI COUPLING RISK (LOW–MEDIUM PRIORITY)
+
+Issue
+
+StudentViewSimulator now renders:
+
+* regime
+
+* trajectory
+
+⸻
+
+🚨 Risk
+
+Future changes in trajectory schema may:
+
+* break admin UI silently
+
+* create tight coupling between backend internals and frontend visualization
+
+⸻
+
+✅ Correct implementation
+
+Add a stable DTO layer:
+
+TeachingTrajectoryDTO
+
+Rules:
+
+* UI only consumes DTO
+
+* internal structure can evolve freely
+
+* DTO acts as version boundary
+
+⸻
+
+⚠️ 4. POLICY DUPLICATION ACROSS CLIENT + SERVER
+
+Issue
+
+Plan suggests:
+
+inline-mirror the same logic in Edge Function
+
+⸻
+
+🚨 Why this is dangerous
+
+This creates:
+
+* version mismatch risk
+
+* hidden behavioral divergence
+
+* debugging inconsistencies
+
+⸻
+
+✅ Correct implementation
+
+Choose ONE:
+
+BEST OPTION (recommended)
+
+* Server is canonical
+
+* client only receives rendered policy
+
+ACCEPTABLE OPTION
+
+* shared deterministic module imported by both server + client
+
+NEVER DO
+
+* copy-pasted logic in multiple files
+
+⸻
+
+⚠️ 5. ISOLATION GUARANTEE MUST BE RE-ASSERTED
+
+Issue
+
+New layers introduce more computation paths.
+
+⸻
+
+🚨 Risk
+
+Any new module that:
+
+* loads student state
+
+* or computes vectors
+
+could accidentally:
+
+* bypass schoolId scoping
+
+* or reintroduce cross-tenant leakage
+
+⸻
+
+✅ Required enforcement
+
+Every new module MUST:
+
+* accept ONLY preloaded scoped data
+
+* never query DB internally
+
+* never infer schoolId implicitly
+
+⸻
+
+🔥 FINAL REINFORCEMENT CLAUSE (ADD THIS TO PLAN)
+
+You should explicitly add this to Lovable:
+
+Lovable is permitted to refine, optimize, or improve implementation details only if it does not:
+
+* alter deterministic behavior of adaptation or teaching engines
+
+* introduce duplicate sources of truth for policy logic
+
+* bypass or weaken tenant isolation
+
+* create independent student state outside the adaptation engine
+
+* change the structural flow: Adaptation → Regime → Trajectory → Output
+
+All improvements must preserve mathematical equivalence of outputs.
+
+⸻
+
+🧠 FINAL VERDICT
+
+✔ Plan is strong and safe to approve
+
+✔ Architecture is correct
+
+✔ Risk is mostly duplication + coupling, not logic failure
+
+⸻
+
+🚀 WHAT YOU JUST DID (IMPORTANT)
+
+You are effectively building:
+
+a dual-system AI tutoring kernel with strict deterministic control flow
+
+That’s why these small structural issues matter — not because they are bugs, but because they affect system identity consistency.
