@@ -29,6 +29,8 @@ import {
   type EnsembleWeights,
 } from "../_shared/ensemble.ts";
 import { applyCalibration } from "../_shared/calibration.ts";
+import { fsrsPredict, newFsrsCard, type FsrsCard } from "../_shared/fsrs.ts";
+import { hawkesPredict, HAWKES_DEFAULTS } from "../_shared/hawkesKt.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -148,11 +150,62 @@ Deno.serve(async (req) => {
     const dashHistory: DashInteraction[] = interactions.map((iv) => ({ ts: iv.ts, c: iv.c, cid: iv.cid }));
     const p_dash = dashPredictFromHistory(dashHistory, Date.now(), theta, b, body.conceptId);
 
+    // ─── Stage 4 — FSRS-v5 retrievability ────────────────────────────
+    let fsrsCard: FsrsCard = newFsrsCard();
+    if (body.conceptId) {
+      const { data: cRow } = await admin
+        .from("fsrs_card_state")
+        .select("stability, difficulty, reps, lapses, last_review_at")
+        .eq("user_id", studentId).eq("subject", subject).eq("concept_id", body.conceptId)
+        .maybeSingle();
+      if (cRow) fsrsCard = {
+        S: Number(cRow.stability ?? 0), D: Number(cRow.difficulty ?? 0),
+        reps: cRow.reps ?? 0, lapses: cRow.lapses ?? 0,
+        lastReviewMs: cRow.last_review_at ? new Date(cRow.last_review_at).getTime() : 0,
+      };
+    }
+    if (!fsrsCard.lastReviewMs) {
+      const { data: sRow } = await admin
+        .from("fsrs_card_state")
+        .select("stability, difficulty, reps, lapses, last_review_at")
+        .eq("user_id", studentId).eq("subject", subject).is("concept_id", null)
+        .maybeSingle();
+      if (sRow) fsrsCard = {
+        S: Number(sRow.stability ?? 0), D: Number(sRow.difficulty ?? 0),
+        reps: sRow.reps ?? 0, lapses: sRow.lapses ?? 0,
+        lastReviewMs: sRow.last_review_at ? new Date(sRow.last_review_at).getTime() : 0,
+      };
+    }
+    const p_fsrs = fsrsPredict(fsrsCard, Date.now());
+
+    // ─── Stage 4 — HawkesKT cross-concept excitation ────────────
+    const historyCids = Array.from(new Set(interactions.map((iv) => iv.cid)))
+      .filter((c) => c && c !== "_subj");
+    const lectureOf = new Map<string, string | null>();
+    if (body.conceptId && historyCids.length) {
+      const all = Array.from(new Set(historyCids.concat(body.conceptId)));
+      const { data: linkRows } = await admin
+        .from("concepts").select("id, lecture_id").in("id", all);
+      for (const r of linkRows ?? []) lectureOf.set(r.id, r.lecture_id ?? null);
+    }
+    const linkResolver = (from: string, to: string): number => {
+      if (from === to) return 1;
+      const lf = lectureOf.get(from), lt = lectureOf.get(to);
+      if (lf && lt && lf === lt) return 0.5;
+      return 0;
+    };
+    const hawkes = body.conceptId
+      ? hawkesPredict(interactions,
+          { conceptId: body.conceptId, a, b, theta, nowMs: Date.now() },
+          linkResolver, HAWKES_DEFAULTS)
+      : { p: p_2pl, intensity: 0, contributors: 0 };
+    const p_hawkes = hawkes.p;
+
     // ── Load ensemble weights (user-specific → population fallback) ─────
     let weights: EnsembleWeights = ENSEMBLE_DEFAULTS;
     const { data: userW } = await admin
       .from("ensemble_weights")
-      .select("w_2pl, w_elo, w_akt, w_dash, bias")
+      .select("w_2pl, w_elo, w_akt, w_dash, w_fsrs, w_hawkes, bias")
       .eq("user_id", studentId).eq("subject", subject)
       .maybeSingle();
     if (userW) {
@@ -160,13 +213,15 @@ Deno.serve(async (req) => {
     } else {
       const { data: popW } = await admin
         .from("ensemble_weights")
-        .select("w_2pl, w_elo, w_akt, w_dash, bias")
+        .select("w_2pl, w_elo, w_akt, w_dash, w_fsrs, w_hawkes, bias")
         .is("user_id", null).eq("subject", "*")
         .maybeSingle();
       if (popW) weights = popW as EnsembleWeights;
     }
 
-    const blended = blendPredictions({ p_2pl, p_elo, p_akt, p_dash }, weights);
+    const blended = blendPredictions(
+      { p_2pl, p_elo, p_akt, p_dash, p_fsrs, p_hawkes }, weights,
+    );
 
     // Stage 3: subject-level calibration. Apply (temperature | platt | identity).
     let calFit = { method: "identity" as const, temperature: 1, platt_a: 1, platt_b: 0 };
