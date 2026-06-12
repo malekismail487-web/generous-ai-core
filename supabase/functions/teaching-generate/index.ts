@@ -20,6 +20,7 @@ import { sigmoid as sig2pl, ELO_INITIAL } from "../_shared/irt2pl.ts";
 import { aktPredict, AKT_DEFAULTS, type KtInteraction } from "../_shared/akt.ts";
 import { dashPredictFromHistory, type DashInteraction } from "../_shared/dash.ts";
 import { blendPredictions, eloProbability, ENSEMBLE_DEFAULTS, type EnsembleWeights } from "../_shared/ensemble.ts";
+import { applyCalibration } from "../_shared/calibration.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
