@@ -220,9 +220,29 @@ export function AssignmentQuestionBuilder({
     setShowMetadataForm(false);
   };
 
+  const relevanceNode = (
+    <RelevanceWarningDialog
+      open={showRelevanceDialog}
+      onOpenChange={(o) => {
+        setShowRelevanceDialog(o);
+        if (!o) setIsCreating(false);
+      }}
+      categoryName={lockedName || ''}
+      detectedTopic={relevanceCheck?.detected_topic}
+      reason={relevanceCheck?.reason}
+      onConfirm={async () => {
+        setShowRelevanceDialog(false);
+        await performAssignmentInsert(true);
+      }}
+      onCancel={() => setIsCreating(false)}
+    />
+  );
+
   // Step 1: Assignment metadata
   if (showMetadataForm) {
     return (
+      <>
+
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={onBack}>
