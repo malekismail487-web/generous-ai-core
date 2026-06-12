@@ -30,6 +30,7 @@ import {
   sigmoid as sigmoid2,
 } from "../_shared/irt2pl.ts";
 import { pushKtInteraction } from "../_shared/ktSequence.ts";
+import { persistFsrsCard } from "../_shared/fsrsState.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -522,6 +523,24 @@ Deno.serve(async (req) => {
         b: Number(nextB.toFixed(3)),
       },
     });
+
+    // ── Stage 4: roll the FSRS-v5 card state forward. We touch one row per
+    // (user, subject, concept) so every concept the answer touched gets a
+    // refreshed retention curve. Subject-level row (concept_id=null) tracks
+    // global subject retention for cold-start prediction.
+    const fast = typeof body.responseTimeMs === "number"
+      && body.responseTimeMs > 0 && body.responseTimeMs < 4000;
+    await persistFsrsCard(admin, {
+      userId: user.id, schoolId, subject, conceptId: null,
+      isCorrect: body.isCorrect, fastResponse: fast,
+    });
+    for (const cw of distribution) {
+      await persistFsrsCard(admin, {
+        userId: user.id, schoolId, subject, conceptId: cw.conceptId,
+        isCorrect: body.isCorrect, fastResponse: fast,
+      });
+    }
+
 
 
     return new Response(
