@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { generateId } from '@/lib/utils';
 import { ArrowLeft, Plus, Save, CheckCircle2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
