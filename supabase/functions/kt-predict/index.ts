@@ -167,12 +167,38 @@ Deno.serve(async (req) => {
 
     const blended = blendPredictions({ p_2pl, p_elo, p_akt, p_dash }, weights);
 
+    // Stage 3: subject-level calibration. Apply (temperature | platt | identity).
+    let calFit = { method: "identity" as const, temperature: 1, platt_a: 1, platt_b: 0 };
+    const { data: calRow } = await admin
+      .from("calibration_state").select("method, temperature, platt_a, platt_b")
+      .eq("subject", subject).maybeSingle();
+    if (calRow) calFit = {
+      method: (calRow.method as any) ?? "identity",
+      temperature: Number(calRow.temperature ?? 1),
+      platt_a: Number(calRow.platt_a ?? 1),
+      platt_b: Number(calRow.platt_b ?? 0),
+    };
+    else {
+      const { data: popCal } = await admin
+        .from("calibration_state").select("method, temperature, platt_a, platt_b")
+        .eq("subject", "*").maybeSingle();
+      if (popCal) calFit = {
+        method: (popCal.method as any) ?? "identity",
+        temperature: Number(popCal.temperature ?? 1),
+        platt_a: Number(popCal.platt_a ?? 1),
+        platt_b: Number(popCal.platt_b ?? 0),
+      };
+    }
+    const pCalibrated = applyCalibration(blended.p, calFit);
+
     return json({
       ok: true,
-      p: blended.p,
+      p: pCalibrated,
+      p_raw: blended.p,
       logit: blended.logit,
       components: { p_2pl, p_elo, p_akt, p_dash },
       weights: blended.weights,
+      calibration: calFit,
       context: {
         theta, se, a, b, studentElo, itemElo,
         seqLen: interactions.length,
