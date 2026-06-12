@@ -505,6 +505,24 @@ Deno.serve(async (req) => {
       })
       .eq("id", question.id);
 
+    // ── Stage 2: append to the rolling KT sequence so kt-predict has fresh
+    // context next time. Non-fatal: a KT write failure must NEVER bubble up
+    // and fail an otherwise-valid grade.
+    await pushKtInteraction(admin, {
+      userId: user.id,
+      schoolId,
+      subject,
+      interaction: {
+        cid: dominantConcept ?? "_subj",
+        qid: question.id,
+        c: body.isCorrect ? 1 : 0,
+        ts: Date.now(),
+        rt: body.responseTimeMs ?? undefined,
+        a: Number(a.toFixed(3)),
+        b: Number(nextB.toFixed(3)),
+      },
+    });
+
 
     return new Response(
       JSON.stringify({
