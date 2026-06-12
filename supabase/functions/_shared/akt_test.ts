@@ -1,5 +1,5 @@
 import { assertAlmostEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { aktLitePredict, AKT_DEFAULTS } from "./aktLite.ts";
+import { aktLitePredict, AKT_DEFAULTS } from "./akt.ts";
 
 Deno.test("AKT-lite: empty history equals plain 2PL", () => {
   const out = aktLitePredict([], { conceptId: "c1", a: 1, b: 0, theta: 0.5 });

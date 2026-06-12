@@ -17,7 +17,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { sigmoid as sig2pl, ELO_INITIAL } from "../_shared/irt2pl.ts";
-import { aktLitePredict, AKT_DEFAULTS, type KtInteraction } from "../_shared/aktLite.ts";
+import { aktPredict, AKT_DEFAULTS, type KtInteraction } from "../_shared/akt.ts";
 import { dashPredictFromHistory, type DashInteraction } from "../_shared/dash.ts";
 import { blendPredictions, eloProbability, ENSEMBLE_DEFAULTS, type EnsembleWeights } from "../_shared/ensemble.ts";
 
@@ -450,7 +450,7 @@ Deno.serve(async (req) => {
         const interactions: KtInteraction[] = Array.isArray(seqRow?.interactions)
           ? (seqRow!.interactions as KtInteraction[]) : [];
         const cidKey = conceptRow?.id ?? "_subj";
-        const akt = aktLitePredict(
+        const akt = aktPredict(
           interactions, { conceptId: cidKey, a, b, theta }, AKT_DEFAULTS,
         );
         const dashHist: DashInteraction[] = interactions.map(

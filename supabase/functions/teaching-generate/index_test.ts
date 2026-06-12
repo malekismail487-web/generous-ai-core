@@ -74,11 +74,11 @@ Deno.test("teaching-generate response exposes irt summary", () => {
 // ── Stage 2 guards: ensemble (2PL + Elo + AKT-lite + DASH) must wire in ────
 
 Deno.test("teaching-generate imports the four Stage 2 predictors", () => {
-  assertStringIncludes(SRC, '"../_shared/aktLite.ts"');
+  assertStringIncludes(SRC, '"../_shared/akt.ts"');
   assertStringIncludes(SRC, '"../_shared/dash.ts"');
   assertStringIncludes(SRC, '"../_shared/ensemble.ts"');
   assertStringIncludes(SRC, "blendPredictions");
-  assertStringIncludes(SRC, "aktLitePredict");
+  assertStringIncludes(SRC, "aktPredict");
   assertStringIncludes(SRC, "dashPredictFromHistory");
 });
 

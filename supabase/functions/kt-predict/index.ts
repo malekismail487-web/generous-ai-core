@@ -14,10 +14,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { sigmoid as sig2pl, ELO_INITIAL } from "../_shared/irt2pl.ts";
 import {
-  aktLitePredict,
+  aktPredict,
   AKT_DEFAULTS,
   type KtInteraction,
-} from "../_shared/aktLite.ts";
+} from "../_shared/akt.ts";
 import {
   dashPredictFromHistory,
   type DashInteraction,
@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
     // ── Component predictions ───────────────────────────────────────────
     const p_2pl = clamp01(sig2pl(a * (theta - b)));
     const p_elo = clamp01(eloProbability(studentElo, itemElo));
-    const akt   = aktLitePredict(interactions, { conceptId: body.conceptId ?? "_subj", a, b, theta }, AKT_DEFAULTS);
+    const akt   = aktPredict(interactions, { conceptId: body.conceptId ?? "_subj", a, b, theta }, AKT_DEFAULTS);
     const p_akt = akt.p;
     const dashHistory: DashInteraction[] = interactions.map((iv) => ({ ts: iv.ts, c: iv.c, cid: iv.cid }));
     const p_dash = dashPredictFromHistory(dashHistory, Date.now(), theta, b, body.conceptId);
