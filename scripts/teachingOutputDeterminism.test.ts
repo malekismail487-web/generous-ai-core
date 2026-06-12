@@ -39,7 +39,7 @@ const FIXTURES: Fixture[] = [
   },
   {
     name: "advancing learner",
-    input: { theta: 0.6, standardError: 0.25, mastery: 0.75, errorCount: 0, lectureMastery: 0.7 },
+    input: { theta: 0.2, standardError: 0.3, mastery: 0.65, errorCount: 0, lectureMastery: 0.7 },
     expectedMode: "advance",
     expectedFirstStep: "hook",
   },
