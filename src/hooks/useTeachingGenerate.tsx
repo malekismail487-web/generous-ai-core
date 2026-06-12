@@ -15,6 +15,7 @@
 import { useCallback, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdaptiveIntelligence } from "@/hooks/useAdaptiveIntelligence";
+import { computeCognitiveState } from "@/lib/adaptive/cognitiveModel";
 import type {
   TeachingTrajectoryDTO,
 } from "@/lib/adaptive/teachingOutputV2";
@@ -24,6 +25,8 @@ export interface TeachingGenerateRequest {
   lectureId?: string;
   conceptId?: string;
   context?: string;
+  /** Optional override; if absent the hook reads it from the local cognitive engine. */
+  fatigue?: number;
 }
 
 export interface TeachingGenerateResponse extends TeachingTrajectoryDTO {
