@@ -21,6 +21,8 @@ import { aktPredict, AKT_DEFAULTS, type KtInteraction } from "../_shared/akt.ts"
 import { dashPredictFromHistory, type DashInteraction } from "../_shared/dash.ts";
 import { blendPredictions, eloProbability, ENSEMBLE_DEFAULTS, type EnsembleWeights } from "../_shared/ensemble.ts";
 import { applyCalibration } from "../_shared/calibration.ts";
+import { fsrsPredict, newFsrsCard, type FsrsCard } from "../_shared/fsrs.ts";
+import { hawkesPredict, HAWKES_DEFAULTS } from "../_shared/hawkesKt.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -461,26 +463,90 @@ Deno.serve(async (req) => {
           dashHist, Date.now(), theta, b, conceptRow?.id,
         );
 
+        // ─── Stage 4 — FSRS-v5 retention ────────────────────────────
+        // Read the per-concept memory card (falls back to subject-level row,
+        // then to a fresh card if neither exists). P_fsrs = current
+        // retrievability under the power-law forgetting curve.
+        let fsrsCard: FsrsCard = newFsrsCard();
+        const fsrsConceptId = conceptRow?.id ?? null;
+        if (fsrsConceptId) {
+          const { data: cRow } = await admin
+            .from("fsrs_card_state")
+            .select("stability, difficulty, reps, lapses, last_review_at")
+            .eq("user_id", studentId).eq("subject", subjectName).eq("concept_id", fsrsConceptId)
+            .maybeSingle();
+          if (cRow) fsrsCard = {
+            S: Number(cRow.stability ?? 0), D: Number(cRow.difficulty ?? 0),
+            reps: cRow.reps ?? 0, lapses: cRow.lapses ?? 0,
+            lastReviewMs: cRow.last_review_at ? new Date(cRow.last_review_at).getTime() : 0,
+          };
+        }
+        if (!fsrsCard.lastReviewMs) {
+          const { data: subjFsrs } = await admin
+            .from("fsrs_card_state")
+            .select("stability, difficulty, reps, lapses, last_review_at")
+            .eq("user_id", studentId).eq("subject", subjectName).is("concept_id", null)
+            .maybeSingle();
+          if (subjFsrs) fsrsCard = {
+            S: Number(subjFsrs.stability ?? 0), D: Number(subjFsrs.difficulty ?? 0),
+            reps: subjFsrs.reps ?? 0, lapses: subjFsrs.lapses ?? 0,
+            lastReviewMs: subjFsrs.last_review_at ? new Date(subjFsrs.last_review_at).getTime() : 0,
+          };
+        }
+        const p_fsrs = fsrsPredict(fsrsCard, Date.now());
+
+        // ─── Stage 4 — HawkesKT cross-concept excitation ────────────
+        // Curriculum link weight is resolved from the `concepts` table:
+        // concepts that share a lecture excite each other at weight 0.5.
+        // (Prerequisite edges are derived in `src/lib/adaptive/conceptGraph.ts`
+        // and aren't yet materialised in the DB — when they are, this
+        // resolver picks them up automatically.)
+        const historyCids = Array.from(new Set(interactions.map((iv) => iv.cid)))
+          .filter((c) => c && c !== "_subj");
+        const lectureOf = new Map<string, string | null>();
+        if (conceptRow && historyCids.length) {
+          const all = Array.from(new Set(historyCids.concat(conceptRow.id)));
+          const { data: linkRows } = await admin
+            .from("concepts")
+            .select("id, lecture_id")
+            .in("id", all);
+          for (const r of linkRows ?? []) lectureOf.set(r.id, r.lecture_id ?? null);
+        }
+        const linkResolver = (from: string, to: string): number => {
+          if (from === to) return 1;
+          const lf = lectureOf.get(from), lt = lectureOf.get(to);
+          if (lf && lt && lf === lt) return 0.5;
+          return 0;
+        };
+        const hawkes = conceptRow
+          ? hawkesPredict(interactions, {
+              conceptId: conceptRow.id, a, b, theta, nowMs: Date.now(),
+            }, linkResolver, HAWKES_DEFAULTS)
+          : { p: clamp(sig2pl(a * (theta - b)), 0.01, 0.99), intensity: 0, contributors: 0 };
+        const p_hawkes = hawkes.p;
+
         let weights: EnsembleWeights = ENSEMBLE_DEFAULTS;
         const { data: userW } = await admin
           .from("ensemble_weights")
-          .select("w_2pl, w_elo, w_akt, w_dash, bias")
+          .select("w_2pl, w_elo, w_akt, w_dash, w_fsrs, w_hawkes, bias")
           .eq("user_id", studentId).eq("subject", subjectName)
           .maybeSingle();
         if (userW) weights = userW as EnsembleWeights;
         else {
           const { data: popW } = await admin
             .from("ensemble_weights")
-            .select("w_2pl, w_elo, w_akt, w_dash, bias")
+            .select("w_2pl, w_elo, w_akt, w_dash, w_fsrs, w_hawkes, bias")
             .is("user_id", null).eq("subject", "*")
             .maybeSingle();
           if (popW) weights = popW as EnsembleWeights;
         }
 
         const blended = blendPredictions(
-          { p_2pl, p_elo, p_akt: akt.p, p_dash }, weights,
+          { p_2pl, p_elo, p_akt: akt.p, p_dash, p_fsrs, p_hawkes }, weights,
         );
-        ensembleComponents = { p_2pl, p_elo, p_akt: akt.p, p_dash };
+        ensembleComponents = { p_2pl, p_elo, p_akt: akt.p, p_dash } as any;
+        (ensembleComponents as any).p_fsrs = p_fsrs;
+        (ensembleComponents as any).p_hawkes = p_hawkes;
 
         // Stage 3: per-subject calibration. The blender is honest about
         // discrimination (AUC) but not necessarily about confidence.
