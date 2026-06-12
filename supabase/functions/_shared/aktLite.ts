@@ -68,6 +68,7 @@ export const AKT_DEFAULTS: KtParams = {
   kappa:  0.15,
   gamma:  0.85,
   rtPenaltyMs: 1500,
+  evidenceScale: 2.0,
 };
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
