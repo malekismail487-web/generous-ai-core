@@ -16,6 +16,10 @@
 //   - Backward-compat: `policy` field retained for existing callers.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { sigmoid as sig2pl, ELO_INITIAL } from "../_shared/irt2pl.ts";
+import { aktLitePredict, AKT_DEFAULTS, type KtInteraction } from "../_shared/aktLite.ts";
+import { dashPredictFromHistory, type DashInteraction } from "../_shared/dash.ts";
+import { blendPredictions, eloProbability, ENSEMBLE_DEFAULTS, type EnsembleWeights } from "../_shared/ensemble.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,12 +55,15 @@ interface TeachingStateVector {
   errorCount: number; conceptDifficulty: number;
   visualPreference: boolean; fatigue: number;
   // Stage 1 additions — the 2PL quartet.
-  // `discrimination` is the mean `a` of the concept's items (default 1.0).
-  // `expectedP` is σ(a·(θ − b̄)) using the concept's mean b̄ as a proxy for
-  // the next item's difficulty. Together they let the regime classifier
-  // reason about how diagnostic the next interaction is likely to be.
   discrimination: number;
   expectedP: number;
+  // Stage 2 addition — the calibrated ensemble probability of correct on the
+  // next item. Equals `expectedP` when no KT context is available; otherwise
+  // blends {2PL, Elo, AKT-lite, DASH}. The derive* functions prefer this when
+  // present because it incorporates forgetting, sequence dynamics, and Elo
+  // fast-drift that the 2PL scalar alone cannot see.
+  ensembleP: number;
+  ensembleComponents?: { p_2pl: number; p_elo: number; p_akt: number; p_dash: number };
 }
 interface TeachingRegime {
   mode: RegimeMode; intensity: number;
@@ -79,14 +86,20 @@ function buildStateVector(i: {
   lectureMastery?: number; errorCount?: number;
   conceptDifficulty?: number; visualPreference?: boolean; fatigue?: number;
   discrimination?: number; conceptMeanB?: number;
+  ensembleP?: number;
+  ensembleComponents?: { p_2pl: number; p_elo: number; p_akt: number; p_dash: number };
 }): TeachingStateVector {
   const theta = Number.isFinite(i.theta) ? (i.theta as number) : 0;
   const discrimination = clamp(i.discrimination ?? 1.0, 0.3, 2.5);
   const conceptMeanB = clamp(i.conceptMeanB ?? 0, -3, 3);
-  // 2PL expected P(correct) on the average item of the concept. This is the
-  // canonical "how hard is the next interaction going to feel" signal — used
-  // by deriveRegime in place of the v2 ad-hoc effective-score heuristic.
   const expectedP = clamp(sigmoid(discrimination * (theta - conceptMeanB)), 0.01, 0.99);
+  // Stage 2: ensembleP defaults to expectedP so the pipeline degrades
+  // gracefully to pure 2PL when KT context is unavailable (cold start,
+  // new subject, etc.). When the ensemble fires, it strictly dominates.
+  const ensembleP = clamp(
+    Number.isFinite(i.ensembleP) ? (i.ensembleP as number) : expectedP,
+    0.01, 0.99,
+  );
   return {
     theta,
     standardError: clamp(i.standardError ?? 1.0, 0, 3),
@@ -98,14 +111,18 @@ function buildStateVector(i: {
     fatigue: clamp(i.fatigue ?? 0, 0, 1),
     discrimination,
     expectedP,
+    ensembleP,
+    ensembleComponents: i.ensembleComponents,
   };
 }
 
 function derivePolicy(v: TeachingStateVector): TeachingPolicy {
-  // Use the 2PL expectedP as the canonical difficulty signal. The 0.45 / 0.75
-  // breakpoints align with the 85% rule: P>0.75 is "too easy → push", P<0.45
-  // is "too hard → step back".
-  const difficulty: Difficulty = v.expectedP > 0.75 ? "low" : v.expectedP < 0.45 ? "high" : "medium";
+  // Stage 2: drive policy off the ensemble probability, which incorporates
+  // forgetting (DASH), sequence dynamics (AKT-lite), and fast Elo drift in
+  // addition to the 2PL prior. The 0.45 / 0.75 breakpoints still align with
+  // the 85% rule.
+  const p = v.ensembleP;
+  const difficulty: Difficulty = p > 0.75 ? "low" : p < 0.45 ? "high" : "medium";
   const pacing: Pacing =
     (v.standardError > 0.55 || v.errorCount >= 3 || v.mastery < 0.35) ? "slow" :
     (v.standardError < 0.30 && v.mastery > 0.75 && v.errorCount === 0) ? "fast" : "normal";
@@ -124,30 +141,26 @@ function derivePolicy(v: TeachingStateVector): TeachingPolicy {
 }
 
 function deriveRegime(v: TeachingStateVector): TeachingRegime {
-  // 2PL-driven regime: anchor on expectedP, not the v2 effective-score blob.
-  //   < 0.40 → struggle territory → remediate
-  //   < 0.65 → soft ground → consolidate
-  //   < 0.85 → in flow → advance
-  //   ≥ 0.85 → too easy → challenge
+  // Stage 2: regime selection anchors on the ensemble probability, with the
+  // same 85%-rule breakpoints. Mastery + error-count remain hard overrides
+  // so the regime never advances past a real performance failure regardless
+  // of what the predictor says.
+  const p = v.ensembleP;
   let mode: RegimeMode;
   if (v.mastery < 0.35 || v.errorCount >= 3) mode = "remediate";
-  else if (v.expectedP < 0.40)               mode = "remediate";
-  else if (v.expectedP < 0.65)               mode = "consolidate";
-  else if (v.expectedP < 0.85)               mode = "advance";
+  else if (p < 0.40)                         mode = "remediate";
+  else if (p < 0.65)                         mode = "consolidate";
+  else if (p < 0.85)                         mode = "advance";
   else                                       mode = "challenge";
 
-  // Intensity: SE drives exploration breadth; (1−P) drives effort; fatigue
-  // tempers both. Adding a small (a − 1) term means high-discrimination
-  // concepts get slightly more steps — each interaction carries more signal,
-  // so it's worth the verification cost.
   const intensity = clamp(
-    0.4 + v.standardError * 0.35 + (1 - v.expectedP) * 0.25
+    0.4 + v.standardError * 0.35 + (1 - p) * 0.25
       - v.fatigue * 0.3 + (v.discrimination - 1.0) * 0.05,
     0.2, 1.0,
   );
   const abstractionBias = clamp(v.lectureMastery * 0.7 + v.mastery * 0.3, 0.1, 0.95);
   const verificationBias = clamp(
-    0.25 + v.standardError * 0.4 + (1 - v.expectedP) * 0.3, 0.2, 0.95,
+    0.25 + v.standardError * 0.4 + (1 - p) * 0.3, 0.2, 0.95,
   );
   return {
     mode,
@@ -393,6 +406,87 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ─── Stage 2: ensemble prediction ──────────────────────────────
+    // Compose four component predictors {2PL, Elo, AKT-lite, DASH} and blend
+    // them with user-specific (or population) weights from `ensemble_weights`.
+    // The ensemble drives regime / policy via `stateVector.ensembleP`; pure
+    // 2PL `expectedP` is preserved as a fallback when KT context is missing.
+    let ensembleP: number | undefined;
+    let ensembleComponents:
+      | { p_2pl: number; p_elo: number; p_akt: number; p_dash: number }
+      | undefined;
+    if (subjectName) {
+      try {
+        let studentElo = ELO_INITIAL;
+        const { data: subjElo } = await admin
+          .from("ability_estimates")
+          .select("elo_rating")
+          .eq("user_id", studentId).eq("subject", subjectName).is("concept_id", null)
+          .maybeSingle();
+        if (subjElo) studentElo = Number(subjElo.elo_rating ?? ELO_INITIAL);
+
+        let itemElo = ELO_INITIAL;
+        if (conceptRow) {
+          const { data: itemsElo } = await admin
+            .from("question_bank")
+            .select("elo_rating")
+            .eq("concept_id", conceptRow.id);
+          if (itemsElo && itemsElo.length) {
+            itemElo = itemsElo.reduce(
+              (s: number, r: any) => s + Number(r.elo_rating ?? ELO_INITIAL), 0,
+            ) / itemsElo.length;
+          }
+        }
+
+        const a = conceptMeanA, b = conceptMeanB;
+        const p_2pl = clamp(sig2pl(a * (theta - b)), 0.01, 0.99);
+        const p_elo = clamp(eloProbability(studentElo, itemElo), 0.01, 0.99);
+
+        const { data: seqRow } = await admin
+          .from("kt_sequence_state")
+          .select("interactions")
+          .eq("user_id", studentId).eq("subject", subjectName)
+          .maybeSingle();
+        const interactions: KtInteraction[] = Array.isArray(seqRow?.interactions)
+          ? (seqRow!.interactions as KtInteraction[]) : [];
+        const cidKey = conceptRow?.id ?? "_subj";
+        const akt = aktLitePredict(
+          interactions, { conceptId: cidKey, a, b, theta }, AKT_DEFAULTS,
+        );
+        const dashHist: DashInteraction[] = interactions.map(
+          (iv) => ({ ts: iv.ts, c: iv.c, cid: iv.cid }),
+        );
+        const p_dash = dashPredictFromHistory(
+          dashHist, Date.now(), theta, b, conceptRow?.id,
+        );
+
+        let weights: EnsembleWeights = ENSEMBLE_DEFAULTS;
+        const { data: userW } = await admin
+          .from("ensemble_weights")
+          .select("w_2pl, w_elo, w_akt, w_dash, bias")
+          .eq("user_id", studentId).eq("subject", subjectName)
+          .maybeSingle();
+        if (userW) weights = userW as EnsembleWeights;
+        else {
+          const { data: popW } = await admin
+            .from("ensemble_weights")
+            .select("w_2pl, w_elo, w_akt, w_dash, bias")
+            .is("user_id", null).eq("subject", "*")
+            .maybeSingle();
+          if (popW) weights = popW as EnsembleWeights;
+        }
+
+        const blended = blendPredictions(
+          { p_2pl, p_elo, p_akt: akt.p, p_dash }, weights,
+        );
+        ensembleP = blended.p;
+        ensembleComponents = { p_2pl, p_elo, p_akt: akt.p, p_dash };
+      } catch (e) {
+        // Ensemble is best-effort: a failure must never break teaching.
+        console.error("[teaching-generate] ensemble failed, falling back to 2PL:", e);
+      }
+    }
+
     // ─── Pure deterministic cascade ────────────────────────────────
     const stateVector = buildStateVector({
       theta, standardError: se,
@@ -403,6 +497,8 @@ Deno.serve(async (req) => {
       fatigue: clientFatigue,
       discrimination: conceptMeanA,
       conceptMeanB: conceptMeanB,
+      ensembleP,
+      ensembleComponents,
     });
     const regime = deriveRegime(stateVector);
     const trajectory = buildTrajectory(regime);
@@ -434,7 +530,7 @@ Deno.serve(async (req) => {
       const code = aiResp.status === 429 ? 429 : aiResp.status === 402 ? 402 : 502;
       return json({
         error: "AI generation failed",
-        version: 1, policy, regime, trajectory, stateVector,
+        version: 2, policy, regime, trajectory, stateVector,
       }, code);
     }
     const aiData = await aiResp.json();
@@ -442,7 +538,7 @@ Deno.serve(async (req) => {
     const enforced = enforce(content, regime, trajectory);
 
     return json({
-      version: 1,
+      version: 2,
       policy,                      // legacy field — preserved
       regime,
       trajectory,
@@ -450,13 +546,17 @@ Deno.serve(async (req) => {
       content: enforced.content,
       constrainedBy: enforced.constrainedBy,
       missingSteps: enforced.missingSteps,
-      // Stage 1: surface the 2PL summary for diagnostics + downstream callers.
+      // Stage 1: 2PL summary
       irt: {
         theta, standardError: se,
         discrimination: stateVector.discrimination,
         expectedP: stateVector.expectedP,
         conceptItemCount,
       },
+      // Stage 2: ensemble surface (null when KT context was unavailable).
+      ensemble: ensembleComponents
+        ? { p: ensembleP, components: ensembleComponents }
+        : null,
       // legacy compatibility
       theta, standardError: se, conceptMastery, lectureMastery,
     });
