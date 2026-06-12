@@ -1233,6 +1233,57 @@ export type Database = {
           },
         ]
       }
+      ensemble_weights: {
+        Row: {
+          auc: number | null
+          bias: number
+          brier: number | null
+          ece: number | null
+          fitted_at: string | null
+          id: string
+          n_events: number
+          subject: string
+          updated_at: string
+          user_id: string | null
+          w_2pl: number
+          w_akt: number
+          w_dash: number
+          w_elo: number
+        }
+        Insert: {
+          auc?: number | null
+          bias?: number
+          brier?: number | null
+          ece?: number | null
+          fitted_at?: string | null
+          id?: string
+          n_events?: number
+          subject: string
+          updated_at?: string
+          user_id?: string | null
+          w_2pl?: number
+          w_akt?: number
+          w_dash?: number
+          w_elo?: number
+        }
+        Update: {
+          auc?: number | null
+          bias?: number
+          brier?: number | null
+          ece?: number | null
+          fitted_at?: string | null
+          id?: string
+          n_events?: number
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
+          w_2pl?: number
+          w_akt?: number
+          w_dash?: number
+          w_elo?: number
+        }
+        Relationships: []
+      }
       exam_submissions: {
         Row: {
           answers_json: Json
@@ -1678,6 +1729,39 @@ export type Database = {
           severity?: string
           subject?: string
           topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      kt_sequence_state: {
+        Row: {
+          dash_state: Json
+          id: string
+          interactions: Json
+          school_id: string | null
+          seq_len: number
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          dash_state?: Json
+          id?: string
+          interactions?: Json
+          school_id?: string | null
+          seq_len?: number
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          dash_state?: Json
+          id?: string
+          interactions?: Json
+          school_id?: string | null
+          seq_len?: number
+          subject?: string
           updated_at?: string
           user_id?: string
         }
