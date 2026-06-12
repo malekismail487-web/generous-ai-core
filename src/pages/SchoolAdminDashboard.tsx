@@ -46,6 +46,7 @@ import { StudentViewSimulator } from '@/components/admin/StudentViewSimulator';
 import { SubjectsManager } from '@/components/admin/SubjectsManager';
 import { TeacherCategoriesManager } from '@/components/admin/TeacherCategoriesManager';
 import { useSchoolSubjects } from '@/hooks/useSchoolSubjects';
+import { useTeacherCategories } from '@/hooks/useTeacherCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -150,8 +151,9 @@ export default function SchoolAdminDashboard() {
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [newCodeRole, setNewCodeRole] = useState<'teacher' | 'student'>('student');
-  const [newCodeSubjectId, setNewCodeSubjectId] = useState<string>('');
+  const [newCodeCategoryId, setNewCodeCategoryId] = useState<string>('');
   const { subjects: schoolSubjects } = useSchoolSubjects(school?.id);
+  const { categories: teacherCategories } = useTeacherCategories(school?.id);
   const [creatingCode, setCreatingCode] = useState(false);
 
   // Invite requests state
@@ -305,8 +307,8 @@ export default function SchoolAdminDashboard() {
 
   const generateInviteCode = async () => {
     if (!school || !profile) return;
-    if (newCodeRole === 'teacher' && !newCodeSubjectId) {
-      toast({ variant: 'destructive', title: t('error'), description: 'Pick a subject for the teacher invite.' });
+    if (newCodeRole === 'teacher' && !newCodeCategoryId) {
+      toast({ variant: 'destructive', title: t('error'), description: 'Pick a teacher category for the invite.' });
       return;
     }
     setCreatingCode(true);
@@ -315,7 +317,7 @@ export default function SchoolAdminDashboard() {
       const { data, error } = await supabase.functions.invoke('invite-codes', {
         body: {
           role: newCodeRole,
-          subject_id: newCodeRole === 'teacher' ? newCodeSubjectId : null,
+          teacher_category_id: newCodeRole === 'teacher' ? newCodeCategoryId : null,
         },
       });
 
@@ -690,11 +692,11 @@ export default function SchoolAdminDashboard() {
                     </SelectContent>
                   </Select>
                   {newCodeRole === 'teacher' && (
-                    <Select value={newCodeSubjectId} onValueChange={setNewCodeSubjectId}>
-                      <SelectTrigger className="w-44"><SelectValue placeholder="Subject" /></SelectTrigger>
+                    <Select value={newCodeCategoryId} onValueChange={setNewCodeCategoryId}>
+                      <SelectTrigger className="w-48"><SelectValue placeholder="Teacher category" /></SelectTrigger>
                       <SelectContent>
-                        {schoolSubjects.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>{s.emoji} {s.name}</SelectItem>
+                        {teacherCategories.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.emoji} {c.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

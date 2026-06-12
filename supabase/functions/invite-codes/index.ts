@@ -9,6 +9,8 @@ const corsHeaders = {
 
 type CreateInviteCodeBody = {
   role: "teacher" | "student";
+  teacher_category_id?: string | null;
+  // legacy
   subject_id?: string | null;
 };
 
@@ -55,7 +57,8 @@ serve(async (req) => {
 
     const body = (await req.json()) as Partial<CreateInviteCodeBody>;
     const role = body.role;
-    const subjectId = body.subject_id ?? null;
+    let teacherCategoryId = body.teacher_category_id ?? null;
+    const legacySubjectId = body.subject_id ?? null;
 
     if (role !== "teacher" && role !== "student") {
       return new Response(JSON.stringify({ error: "Invalid role" }), {
@@ -64,8 +67,8 @@ serve(async (req) => {
       });
     }
 
-    if (role === "teacher" && !subjectId) {
-      return new Response(JSON.stringify({ error: "subject_id is required for teacher invites" }), {
+    if (role === "teacher" && !teacherCategoryId && !legacySubjectId) {
+      return new Response(JSON.stringify({ error: "teacher_category_id is required for teacher invites" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -118,25 +121,41 @@ serve(async (req) => {
       });
     }
 
-    // Verify subject belongs to this school (teacher invites only)
-    if (role === "teacher" && subjectId) {
-      const { data: subjRow, error: subjErr } = await admin
-        .from("subjects")
-        .select("id,school_id")
-        .eq("id", subjectId)
-        .maybeSingle();
-      if (subjErr || !subjRow || subjRow.school_id !== schoolAdminRow.school_id) {
-        return new Response(JSON.stringify({ error: "Subject not found in your school" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+    // Resolve teacher_category_id. If only legacy subject_id was sent, look up the linked category.
+    let resolvedSubjectId: string | null = null;
+    if (role === "teacher") {
+      if (teacherCategoryId) {
+        const { data: catRow, error: catErr } = await admin
+          .from("teacher_categories")
+          .select("id,school_id,subject_id")
+          .eq("id", teacherCategoryId)
+          .maybeSingle();
+        if (catErr || !catRow || catRow.school_id !== schoolAdminRow.school_id) {
+          return new Response(JSON.stringify({ error: "Teacher category not found in your school" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        resolvedSubjectId = catRow.subject_id as string | null;
+      } else if (legacySubjectId) {
+        const { data: catRow } = await admin
+          .from("teacher_categories")
+          .select("id,school_id,subject_id")
+          .eq("school_id", schoolAdminRow.school_id)
+          .eq("subject_id", legacySubjectId)
+          .maybeSingle();
+        if (catRow) {
+          teacherCategoryId = catRow.id as string;
+          resolvedSubjectId = catRow.subject_id as string | null;
+        } else {
+          resolvedSubjectId = legacySubjectId;
+        }
       }
     }
 
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
 
-    // Try a few times in the rare case of a collision
     let lastError: string | null = null;
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = randomInviteCode(8);
@@ -146,11 +165,12 @@ serve(async (req) => {
           school_id: schoolAdminRow.school_id,
           code,
           role,
-          subject_id: role === "teacher" ? subjectId : null,
+          subject_id: role === "teacher" ? resolvedSubjectId : null,
+          teacher_category_id: role === "teacher" ? teacherCategoryId : null,
           expires_at: expiresAt.toISOString(),
           created_by: user.id,
         })
-        .select("id,code,role,subject_id,used,expires_at,created_at")
+        .select("id,code,role,subject_id,teacher_category_id,used,expires_at,created_at")
         .single();
 
       if (!error) {

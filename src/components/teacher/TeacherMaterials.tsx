@@ -110,7 +110,7 @@ export function TeacherMaterials({
   const [content, setContent] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Teacher category lock: teachers tied to a subject can only upload for that subject.
+  // Teacher category lock: teachers tied to a category can only upload for that subject.
   const [lockedSubjectSlug, setLockedSubjectSlug] = useState<string | null>(null);
   const [lockedSubjectName, setLockedSubjectName] = useState<string | null>(null);
   useEffect(() => {
@@ -118,25 +118,63 @@ export function TeacherMaterials({
     (async () => {
       const { data: prof } = await supabase
         .from('profiles')
-        .select('teacher_subject_id')
+        .select('teacher_category_id,teacher_subject_id')
         .eq('id', authUserId)
         .maybeSingle();
-      const sid = (prof as { teacher_subject_id?: string | null } | null)?.teacher_subject_id;
-      if (!sid) { if (!cancelled) { setLockedSubjectSlug(null); setLockedSubjectName(null); } return; }
-      const { data: subj } = await supabase
-        .from('subjects')
-        .select('slug,name')
-        .eq('id', sid)
-        .maybeSingle();
-      if (!cancelled && subj) {
-        const slug = (subj as { slug?: string | null }).slug;
-        if (slug) {
+      const p = prof as { teacher_category_id?: string | null; teacher_subject_id?: string | null } | null;
+
+      // Prefer the new teacher_category_id; resolve its linked subject (if any).
+      if (p?.teacher_category_id) {
+        const { data: cat } = await supabase
+          .from('teacher_categories')
+          .select('name,subject_id')
+          .eq('id', p.teacher_category_id)
+          .maybeSingle();
+        const c = cat as { name?: string; subject_id?: string | null } | null;
+        if (c?.subject_id) {
+          const { data: subj } = await supabase
+            .from('subjects')
+            .select('slug,name')
+            .eq('id', c.subject_id)
+            .maybeSingle();
+          const s = subj as { slug?: string | null; name?: string } | null;
+          if (!cancelled && s?.slug) {
+            setLockedSubjectSlug(s.slug);
+            setLockedSubjectName(s.name || c.name || null);
+            setSubject(s.slug);
+            setFilterSubject(s.slug);
+            return;
+          }
+        }
+        // Sync OFF / no linked subject — lock by category name's slug
+        if (!cancelled && c?.name) {
+          const slug = c.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
           setLockedSubjectSlug(slug);
-          setLockedSubjectName((subj as { name: string }).name);
+          setLockedSubjectName(c.name);
           setSubject(slug);
           setFilterSubject(slug);
+          return;
         }
       }
+
+      // Legacy fallback
+      if (p?.teacher_subject_id) {
+        const { data: subj } = await supabase
+          .from('subjects')
+          .select('slug,name')
+          .eq('id', p.teacher_subject_id)
+          .maybeSingle();
+        const s = subj as { slug?: string | null; name?: string } | null;
+        if (!cancelled && s?.slug) {
+          setLockedSubjectSlug(s.slug);
+          setLockedSubjectName(s.name || null);
+          setSubject(s.slug);
+          setFilterSubject(s.slug);
+        }
+        return;
+      }
+
+      if (!cancelled) { setLockedSubjectSlug(null); setLockedSubjectName(null); }
     })();
     return () => { cancelled = true; };
   }, [authUserId]);

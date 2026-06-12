@@ -1427,6 +1427,7 @@ export type Database = {
           role: string
           school_id: string
           subject_id: string | null
+          teacher_category_id: string | null
           used: boolean
           used_by: string | null
         }
@@ -1439,6 +1440,7 @@ export type Database = {
           role: string
           school_id: string
           subject_id?: string | null
+          teacher_category_id?: string | null
           used?: boolean
           used_by?: string | null
         }
@@ -1451,6 +1453,7 @@ export type Database = {
           role?: string
           school_id?: string
           subject_id?: string | null
+          teacher_category_id?: string | null
           used?: boolean
           used_by?: string | null
         }
@@ -1467,6 +1470,13 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_codes_teacher_category_id_fkey"
+            columns: ["teacher_category_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -2808,6 +2818,7 @@ export type Database = {
           school_id: string | null
           status: string
           student_teacher_id: string | null
+          teacher_category_id: string | null
           teacher_subject_id: string | null
           updated_at: string
           user_type: string
@@ -2824,6 +2835,7 @@ export type Database = {
           school_id?: string | null
           status?: string
           student_teacher_id?: string | null
+          teacher_category_id?: string | null
           teacher_subject_id?: string | null
           updated_at?: string
           user_type: string
@@ -2840,6 +2852,7 @@ export type Database = {
           school_id?: string | null
           status?: string
           student_teacher_id?: string | null
+          teacher_category_id?: string | null
           teacher_subject_id?: string | null
           updated_at?: string
           user_type?: string
@@ -2850,6 +2863,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_teacher_category_id_fkey"
+            columns: ["teacher_category_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_categories"
             referencedColumns: ["id"]
           },
           {
@@ -3542,6 +3562,60 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          emoji: string | null
+          id: string
+          is_default: boolean
+          name: string
+          permanent_invite_code: string
+          school_id: string
+          subject_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          permanent_invite_code: string
+          school_id: string
+          subject_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          permanent_invite_code?: string
+          school_id?: string
+          subject_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_categories_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_categories_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teacher_requests: {
         Row: {
           admin_notes: string | null
@@ -3904,6 +3978,7 @@ export type Database = {
             Returns: Json
           }
       derive_level: { Args: { p_theta: number }; Returns: string }
+      gen_teacher_category_code: { Args: { p_name: string }; Returns: string }
       generate_ministry_invite_code: { Args: never; Returns: Json }
       generate_moderator_invite_code: { Args: never; Returns: Json }
       get_due_reviews:
@@ -4000,7 +4075,15 @@ export type Database = {
         Args: { p_action: string; p_request_id: string }
         Returns: Json
       }
+      rotate_teacher_category_code: {
+        Args: { p_category_id: string }
+        Returns: string
+      }
       seed_default_subjects: {
+        Args: { p_school_id: string }
+        Returns: undefined
+      }
+      seed_default_teacher_categories: {
         Args: { p_school_id: string }
         Returns: undefined
       }

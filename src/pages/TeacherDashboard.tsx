@@ -81,6 +81,7 @@ export default function TeacherDashboard() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [categoryLabel, setCategoryLabel] = useState<{ name: string; emoji: string } | null>(null);
 
   // Grading dialog states
   const [gradingDialogOpen, setGradingDialogOpen] = useState(false);
@@ -141,6 +142,29 @@ export default function TeacherDashboard() {
     }
   }, [isTeacher, school, profile, fetchData]);
 
+  // Load teacher's category label for header
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('teacher_category_id')
+        .eq('id', user.id)
+        .maybeSingle();
+      const tid = (prof as { teacher_category_id?: string | null } | null)?.teacher_category_id;
+      if (!tid) { if (!cancelled) setCategoryLabel(null); return; }
+      const { data: cat } = await supabase
+        .from('teacher_categories')
+        .select('name,emoji')
+        .eq('id', tid)
+        .maybeSingle();
+      const c = cat as { name?: string; emoji?: string | null } | null;
+      if (!cancelled && c?.name) setCategoryLabel({ name: c.name, emoji: c.emoji || '🎓' });
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
   // Grading
   const gradeSubmission = async () => {
     if (!selectedSubmission || !user) return;
@@ -187,11 +211,13 @@ export default function TeacherDashboard() {
       <header className="glass-effect-strong border-b border-border/30 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <GraduationCap className="w-5 h-5 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-lg">
+              {categoryLabel ? <span>{categoryLabel.emoji}</span> : <GraduationCap className="w-5 h-5 text-primary-foreground" />}
             </div>
             <div>
-              <h1 className="text-xl font-bold">{tr('teacherDashboard', language)}</h1>
+              <h1 className="text-xl font-bold">
+                {categoryLabel ? `${categoryLabel.name} Teacher` : tr('teacherDashboard', language)}
+              </h1>
               <p className="text-xs text-muted-foreground">{school.name}</p>
             </div>
           </div>
