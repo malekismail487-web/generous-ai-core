@@ -1,91 +1,80 @@
-# Subjects ↔ Teacher Categories ↔ Invite Pool — Unified per School
+# Teacher Categories — separate system, synced (optionally) with Subjects
 
-## Goal
+## What's broken today
 
-Make the **subject tiles** in the student Subjects tab, the **teacher upload categories**, and the **teacher invite pool** all come from one source of truth: the per-school `subjects` table. Every change an admin makes (add / delete a subject) propagates to students, teachers, and the invite system in that school only. A **Sync Mode** toggle controls whether the three stay locked together.
+`SubjectsManager` and `TeacherCategoriesManager` both write to the same `subjects` table. So when you add a "Physics" teacher category, it appears as a Physics tile in the student Subjects tab. That's the root cause. We need a real split.
 
-Terminology note: when you say "lecture" in the Subjects tab, you mean the **subject tile** (Biology, Physics, Arabic…). The Curriculum Graph "lecture" (Subject → Lecture → Concept) is a separate layer and is **not** touched here.
+## End state
 
----
+- **Subjects** = student-facing tiles (Subjects tab + lecture studio). Owned by admin in the **Subjects** panel.
+- **Teacher Categories** = teacher-facing roles (upload scope, dashboard label, invite pool). Owned by admin in the **Teacher Categories** panel.
+- **Sync Mode (per school, default ON)**: creating/deleting one mirrors the other and links them. OFF: the two lists are fully independent.
+- **Defaults**: on school activation, seed 12 default subjects AND 12 default teacher categories, linked 1:1. The moment admin edits either list, the defaults on that side are no longer special — admin owns it.
+- **Auto invite pool per category**: every teacher category automatically has its own always-on, multi-use invite code. Using that code → teacher is created locked to that category, lands on a dashboard labeled with the category. Admin can rotate the code; admin can also issue one-off single-use codes from the category card.
+- **No manual role assignment.** Removed from the UI.
+- **Free-text emoji and color**: admin types any character (emoji from their keyboard, letter, symbol) into the emoji field — no preset picker. Color is a hex picker.
 
-## What changes for each role
+## Admin UI — revamped Teacher Categories panel
 
-**School admin**
+Card grid styled like pricing tiers (Pro/Business/Enterprise visual metaphor, not the labels). Each card:
 
-- New "Subjects & Teacher Categories" panel (in the existing Curriculum group).
-- Add subject → creates the tile for students, the teacher category, and a new invite type.
-- Delete subject → removes all three.
-- Sync Mode toggle (default ON). When ON, the three stay aligned automatically. When OFF, admin can manage them independently.
-- Teacher invite generator now asks: "Which subject is this teacher for?" Picks from the school's subjects. The resulting code is bound to that subject.
+```text
+┌──────────────────────────────┐
+│ 🎵  Music Teacher            │  emoji + name (both editable inline)
+│ Linked subject: Music ✓      │  shown only when Sync ON and linked
+│                              │
+│ 4 teachers · 12 uploads      │
+│                              │
+│ Invite code: MUS-7K2QA9      │  always-on, copy + rotate buttons
+│ [Generate one-off code]      │
+│                              │
+│ [Edit]   [Delete]            │
+└──────────────────────────────┘
+```
 
-**Teacher**
-
-- After accepting an invite, the teacher is locked to one subject (their category).
-- The Materials / Upload UI only lets them pick that subject — others are hidden or disabled.
-- Existing teachers without a subject keep working (treated as "all subjects" until admin assigns one).
-
-**Student**
-
-- The Subjects tab tiles are read from their school's `subjects` table instead of the hardcoded list.
-- Default seed = the current 12 tiles, so nothing visually changes on day one. Anything the admin adds/removes shows up immediately.
-
-**Isolation:** all of this is school-scoped via `school_id` + existing RLS. No cross-school leakage.
-
----
-
-## Scope boundaries
-
-- The Curriculum Graph (`lectures`, `concepts`, `curriculum_versions`) is **not** modified.
-- LectureStudio generation flow is unchanged.
-- No new payment, AI, or analytics features.
-- No global UI redesign — only the Subjects tab data source, the admin Subjects panel, the teacher upload guard, and the invite generator.
-
----
+Top of panel: **Sync Mode** switch, **+ New category** button, and a banner explaining what sync does.
 
 ## Technical Details
 
 ### Database (one migration)
 
-1. `subjects` table — already school-scoped. Add:
-  - `slug TEXT` (stable id like `biology`)
-  - `emoji TEXT`, `color TEXT` (for tile rendering)
-  - `is_default BOOLEAN DEFAULT false`
-  - unique (`school_id`, `slug`)
-2. `schools` — add `subjects_sync_enabled BOOLEAN DEFAULT true`.
-3. `invite_codes` — add `subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE` (nullable; required when `role='teacher'` going forward, enforced in the edge function, not as a hard constraint to avoid breaking old rows).
-4. `profiles` — add `teacher_subject_id UUID REFERENCES subjects(id) ON DELETE SET NULL` (only meaningful for `user_type='teacher'`).
-5. Seed function `seed_default_subjects(school_uuid)` that inserts the 12 current tiles with `is_default=true`. Call it:
-  - From `activate_school_with_code` after the school is activated.
-  - As a one-time backfill in the migration for every existing school that has zero subjects.
-6. Trigger `sync_subject_to_invite_pool` on `subjects` delete → if `subjects_sync_enabled`, also delete unused invite_codes for that subject and null out `profiles.teacher_subject_id` for affected teachers in that school.
-7. RLS: school admin can CRUD `subjects` in own school; teachers/students SELECT subjects in own school; invite_codes already restricted.
+1. New table `teacher_categories`:
+  - `id`, `school_id`, `name`, `emoji TEXT` (free text, no preset constraint), `color TEXT` (hex), `is_default BOOLEAN`, `subject_id UUID NULL` (FK → subjects, set when synced/linked), `permanent_invite_code TEXT UNIQUE`, timestamps.
+  - GRANTs for authenticated + service_role; RLS: school admins CRUD own school, teachers SELECT own school.
+2. `profiles.teacher_category_id UUID` (FK → teacher_categories ON DELETE SET NULL) — replaces the misused `teacher_subject_id` for new teachers. Keep `teacher_subject_id` column for back-compat until migrated.
+3. `invite_codes`: add `teacher_category_id UUID NULL` (FK). When a teacher consumes a code that has this set, the new profile gets `teacher_category_id` written.
+4. `seed_default_teacher_categories(p_school_id)` SQL function — inserts the same 12 defaults as subjects, each linked to the matching default subject, each with a freshly generated permanent code. Called from `activate_school_with_code`. Backfill once for existing schools.
+5. Trigger `teacher_categories_after_insert` → if Sync ON and no `subject_id` yet → insert matching subject and link. Trigger `teacher_categories_after_delete` → if Sync ON and linked subject exists → delete subject + cascade unused invites + null out `profiles.teacher_category_id`. Mirror triggers on `subjects` for the other direction.
+6. SQL function `rotate_teacher_category_code(p_category_id)` → admin-only, regenerates the permanent code.
+7. **Cleanup of bad data**: drop the stray "Physics" (and any other admin-created) rows in `subjects` that were meant as teacher categories. Targeted by `is_default=false` in your school; you'll confirm the migration before it runs.
 
-### Edge functions
+### Edge function `invite-codes`
 
-- `invite-codes` (POST) — require `subject_id` when `role='teacher'`, verify the subject belongs to the admin's school, persist it on the code row.
-- Signup-with-invite path (`signup_with_invite_code` SQL function) — when consuming a teacher code, write `teacher_subject_id` onto the new profile.
+- Replace `subject_id` parameter with `teacher_category_id` for `role='teacher'`. Required.
+- Verify the category belongs to caller's school.
+- Single-use codes continue to be 8-char + 24h expiry.
+- "Permanent" codes live on `teacher_categories.permanent_invite_code` and are consumed by the signup flow without expiring or being marked used.
+
+### Signup flow (`signup_with_invite_code` + permanent code path)
+
+- If consumed code has `teacher_category_id`, write it onto the new profile and assign `teacher` role.
+- New code path: if the user enters a permanent category code (matched against `teacher_categories.permanent_invite_code`), create an `invite_request` bound to that category without consuming a row in `invite_codes`.
 
 ### Frontend
 
-- `src/components/SubjectsSection.tsx` — replace the hardcoded `subjects` array with a `useSchoolSubjects()` hook that queries the school's `subjects` table (cached via React Query). Keep the existing tile rendering (emoji + gradient).
-- `src/components/teacher/TeacherMaterials.tsx` (and `CourseMaterialsSection` upload path) — read `teacher_subject_id`; if set, force the subject selector to that subject and hide others. Block backend upload of any other subject (defense in depth in RLS via a policy check).
-- New `src/components/admin/SubjectsManager.tsx` — list subjects with add/delete, color/emoji pickers, the Sync Mode switch, and per-subject "Generate teacher invite" button. Wire into the existing School Admin dashboard sidebar under **Curriculum**.
-- Admin invite generator UI — add a subject dropdown when `role='teacher'`.
-
-### Sync Mode behavior
-
-- ON (default): adding a subject inserts it; deleting cascades to invite codes and teacher assignments via trigger. Renames propagate.
-- OFF: admin can add/remove subjects without touching teacher categories or invite pool. We still prevent generating a teacher invite for a subject that doesn't exist.
+- `**SubjectsManager.tsx**` — keep, but free-text emoji input (no preset grid), remove anything that mentions teachers/invites. It only manages student subject tiles now.
+- `**TeacherCategoriesManager.tsx**` — full rewrite: card grid above, separate `teacher_categories` queries, free-text emoji input, always-on code with copy/rotate, "Generate one-off code" button, Sync Mode switch lives here and in Subjects (same value, mirrored).
+- `**useTeacherCategories.tsx**` — new hook, realtime subscribed.
+- `**TeacherDashboard` header** — read `teacher_category_id` → show "{emoji} {name} Teacher" in the header. Subject lock in `TeacherMaterials` switches from `teacher_subject_id` to the category's linked `subject_id` (falls back to category name if no link).
+- **Admin People sidebar** — remove the manual "assign teacher to subject" UI. Replaced by the per-category invite codes.
 
 ### Backwards compatibility
 
-- Existing teacher profiles keep `teacher_subject_id = NULL` until admin assigns one; upload UI treats NULL as "no restriction" and shows a soft banner asking the admin to set a category.
-- Existing invite codes (no `subject_id`) still consume normally and produce an unrestricted teacher.
+- Existing teachers with `teacher_subject_id` set keep working. A one-time backfill in the migration creates/links a teacher category per used subject and copies the FK over.
+- Existing teacher invite codes with `subject_id` set get `teacher_category_id` filled in via the same backfill.
 
----
+## Out of scope
 
-## Open question
-
-Do you want the **Sync Mode toggle** to also retroactively delete teacher invites and unassign teachers when an admin removes a subject while it's ON, or should it only affect future actions? Default in this plan: yes, cascade retroactively (cleanest — matches "if biology is deleted, biology teacher category is deleted as well").
-
-Yes, I do want this and here are more important rules all about subjects every time the admin creates or delete a subject for students it must appear for all students in the subject tab and it should function exactly the same as the rest of the regular lectures and it should also have its own lecture studio since all the lectures in the subject tab have their own lecture studio, and if the admin ads or delete a teacher category, then it must be visible for all teachers in the school do you perfectly understand?
+- No changes to lecture studio, curriculum graph, AI features, or any non-admin/non-teacher surface.
+- Category-themed dashboard colors — you chose label-only scope.
+- And just so you know the music teacher is an example, but you should not only stop at the music teacher. It should basically be any type of category. The admin will ever create. I'm telling you this, not to take the example literally but to understand the goal and also to understand the example.
