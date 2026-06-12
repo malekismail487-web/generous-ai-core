@@ -70,3 +70,32 @@ Deno.test("teaching-generate response exposes irt summary", () => {
   assertStringIncludes(SRC, "expectedP: stateVector.expectedP");
 });
 
+
+// ── Stage 2 guards: ensemble (2PL + Elo + AKT-lite + DASH) must wire in ────
+
+Deno.test("teaching-generate imports the four Stage 2 predictors", () => {
+  assertStringIncludes(SRC, '"../_shared/aktLite.ts"');
+  assertStringIncludes(SRC, '"../_shared/dash.ts"');
+  assertStringIncludes(SRC, '"../_shared/ensemble.ts"');
+  assertStringIncludes(SRC, "blendPredictions");
+  assertStringIncludes(SRC, "aktLitePredict");
+  assertStringIncludes(SRC, "dashPredictFromHistory");
+});
+
+Deno.test("teaching-generate loads the KT sequence + ensemble weights", () => {
+  assertStringIncludes(SRC, 'from("kt_sequence_state")');
+  assertStringIncludes(SRC, 'from("ensemble_weights")');
+  // Population fallback must be there (user_id IS NULL, subject = '*').
+  assertStringIncludes(SRC, '.is("user_id", null)');
+  assertStringIncludes(SRC, '.eq("subject", "*")');
+});
+
+Deno.test("teaching-generate passes ensembleP into the state vector", () => {
+  assertStringIncludes(SRC, "ensembleP,");
+  assertStringIncludes(SRC, "ensembleComponents,");
+});
+
+Deno.test("teaching-generate response exposes ensemble surface", () => {
+  assertStringIncludes(SRC, "ensemble:");
+  assertStringIncludes(SRC, "components: ensembleComponents");
+});
