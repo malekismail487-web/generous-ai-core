@@ -1453,15 +1453,20 @@ export type Database = {
           concept_id: string | null
           created_at: string
           difficulty: number
+          fuzzed_interval_days: number | null
           id: string
+          is_leech: boolean
           lapses: number
+          last_delivered_at: string | null
           last_review_at: string | null
           next_review_at: string | null
+          priority: number
           reps: number
           request_retention: number
           school_id: string | null
           stability: number
           subject: string
+          suspended_until: string | null
           updated_at: string
           user_id: string
         }
@@ -1469,15 +1474,20 @@ export type Database = {
           concept_id?: string | null
           created_at?: string
           difficulty?: number
+          fuzzed_interval_days?: number | null
           id?: string
+          is_leech?: boolean
           lapses?: number
+          last_delivered_at?: string | null
           last_review_at?: string | null
           next_review_at?: string | null
+          priority?: number
           reps?: number
           request_retention?: number
           school_id?: string | null
           stability?: number
           subject: string
+          suspended_until?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1485,15 +1495,20 @@ export type Database = {
           concept_id?: string | null
           created_at?: string
           difficulty?: number
+          fuzzed_interval_days?: number | null
           id?: string
+          is_leech?: boolean
           lapses?: number
+          last_delivered_at?: string | null
           last_review_at?: string | null
           next_review_at?: string | null
+          priority?: number
           reps?: number
           request_retention?: number
           school_id?: string | null
           stability?: number
           subject?: string
+          suspended_until?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -4284,6 +4299,25 @@ export type Database = {
               topic: string
             }[]
           }
+      get_fsrs_due_cards: {
+        Args: { p_limit?: number; p_school_id?: string; p_user_id: string }
+        Returns: {
+          card_id: string
+          concept_id: string
+          concept_name: string
+          difficulty: number
+          is_leech: boolean
+          lapses: number
+          last_review_at: string
+          next_review_at: string
+          overdue_hours: number
+          priority: number
+          reps: number
+          retrievability: number
+          stability: number
+          subject: string
+        }[]
+      }
       get_ministry_dashboard_data: {
         Args: { p_session_token: string }
         Returns: Json
@@ -4352,6 +4386,10 @@ export type Database = {
       link_profile_after_signup: {
         Args: { p_email: string; p_user_id: string }
         Returns: Json
+      }
+      record_review_delivered: {
+        Args: { p_card_id: string }
+        Returns: undefined
       }
       resolve_ministry_request: {
         Args: { p_action: string; p_request_id: string }
