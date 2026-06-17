@@ -592,6 +592,120 @@ export type Database = {
           },
         ]
       }
+      bandit_arm_state: {
+        Row: {
+          a_inv: Json
+          alpha: number
+          arm_id: string
+          b_vector: Json
+          created_at: string
+          cumulative_reward: number
+          dim: number
+          id: string
+          lambda: number
+          last_decision_at: string | null
+          n_pulls: number
+          scope: string
+          subject: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          a_inv: Json
+          alpha?: number
+          arm_id: string
+          b_vector: Json
+          created_at?: string
+          cumulative_reward?: number
+          dim?: number
+          id?: string
+          lambda?: number
+          last_decision_at?: string | null
+          n_pulls?: number
+          scope?: string
+          subject: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          a_inv?: Json
+          alpha?: number
+          arm_id?: string
+          b_vector?: Json
+          created_at?: string
+          cumulative_reward?: number
+          dim?: number
+          id?: string
+          lambda?: number
+          last_decision_at?: string | null
+          n_pulls?: number
+          scope?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      bandit_decisions: {
+        Row: {
+          alternatives: Json | null
+          arm_id: string
+          bonus: number
+          concept_id: string | null
+          context_vec: Json
+          created_at: string
+          ensemble_p_at_decision: number | null
+          id: string
+          lecture_id: string | null
+          mean: number
+          reward: number | null
+          rewarded: boolean
+          rewarded_at: string | null
+          source: string
+          subject: string
+          ucb: number
+          user_id: string
+        }
+        Insert: {
+          alternatives?: Json | null
+          arm_id: string
+          bonus: number
+          concept_id?: string | null
+          context_vec: Json
+          created_at?: string
+          ensemble_p_at_decision?: number | null
+          id?: string
+          lecture_id?: string | null
+          mean: number
+          reward?: number | null
+          rewarded?: boolean
+          rewarded_at?: string | null
+          source?: string
+          subject: string
+          ucb: number
+          user_id: string
+        }
+        Update: {
+          alternatives?: Json | null
+          arm_id?: string
+          bonus?: number
+          concept_id?: string | null
+          context_vec?: Json
+          created_at?: string
+          ensemble_p_at_decision?: number | null
+          id?: string
+          lecture_id?: string | null
+          mean?: number
+          reward?: number | null
+          rewarded?: boolean
+          rewarded_at?: string | null
+          source?: string
+          subject?: string
+          ucb?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       calibration_state: {
         Row: {
           auc_cal: number | null
@@ -4224,6 +4338,19 @@ export type Database = {
             Args: { p_request_id: string; p_session_token?: string }
             Returns: Json
           }
+      attach_bandit_reward: {
+        Args: {
+          p_concept_id: string
+          p_reward: number
+          p_subject: string
+          p_user_id: string
+        }
+        Returns: {
+          arm_id: string
+          context_vec: Json
+          decision_id: string
+        }[]
+      }
       can_view_student_mastery: {
         Args: { p_student: string; p_viewer: string }
         Returns: boolean
