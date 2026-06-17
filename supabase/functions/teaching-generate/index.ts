@@ -660,6 +660,30 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ─── Stage 7 — log this prediction for ensemble retraining ────────
+    // Fire-and-forget. We log even when the bandit short-circuits so the
+    // training set isn't biased toward only-bandit-served sessions. Outcome
+    // is attached later by `ability-update` via attach_ensemble_outcome.
+    let predictionLogId: string | null = null;
+    if (subjectName && ensembleComponents) {
+      try {
+        predictionLogId = await logEnsemblePrediction(admin, {
+          userId: studentId,
+          subject: subjectName,
+          conceptId: conceptRow?.id ?? null,
+          questionId: null,
+          banditDecisionId: bandit?.decisionId ?? null,
+          components: ensembleComponents as Record<string, number>,
+          blendedP: ensembleP ?? null,
+          calibratedP: ensembleP ?? null,
+          weightsUsed: null,
+          source: "teaching-generate",
+        });
+      } catch (e) {
+        console.warn("[teaching-generate] prediction log failed (non-fatal):", e);
+      }
+    }
+
     const systemPrompt = [
       "You are Lumina, an adaptive tutor. Follow the regime and trajectory below verbatim.",
       buildPrompt(regime, trajectory, {
