@@ -33,6 +33,7 @@ import { pushKtInteraction } from "../_shared/ktSequence.ts";
 import { persistFsrsCard } from "../_shared/fsrsState.ts";
 import { applyReward as applyBanditReward } from "../_shared/banditState.ts";
 import { attachEnsembleOutcome } from "../_shared/ensemblePredictionLog.ts";
+import { fetchHierarchicalPrior } from "../_shared/coldStart.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -385,7 +386,17 @@ Deno.serve(async (req) => {
 
     // ── subject-level update (always, weight = 1.0) ────────────────────
     const subjectQuality = clamp(1.0 * questionConfidence * baseResponseConfidence, 0.15, 1.0);
-    const subjectPrior = await loadOrSeedEstimate(null, { theta: 0, se: SE_INITIAL });
+
+    // Stage 8: warm-start the subject row from the population posterior
+    // instead of flat (θ=0, SE=SE_INITIAL). Best-effort; on any failure
+    // we fall back to the historical flat seed so grading never blocks.
+    const subjectColdStart = await fetchHierarchicalPrior(admin, {
+      schoolId, subject, conceptId: null,
+    });
+    const subjectPrior = await loadOrSeedEstimate(null, {
+      theta: subjectColdStart.theta,
+      se: subjectColdStart.se,
+    });
     const subjectNext = runIrt(subjectPrior, a, b, subjectQuality);
 
     // Parallel Elo update (subject-level only — Elo is a global skill rating,
@@ -418,12 +429,20 @@ Deno.serve(async (req) => {
 
     for (const cw of distribution) {
       const quality = clamp(cw.weight * questionConfidence * baseResponseConfidence, 0.15, 1.0);
-      const seedSe = Math.max(
-        SE_LOCK_IN + 0.1,
-        Math.min(SE_INITIAL, subjectPrior.theta_se * 0.85),
-      );
+      // Stage 8: per-concept cold start (concept_school → concept_global →
+      // subject_* → global). Falls back to the subject prior + shrinkage we
+      // used pre-Stage-8 when the priors table is empty for this concept.
+      const conceptColdStart = await fetchHierarchicalPrior(admin, {
+        schoolId, subject, conceptId: cw.conceptId,
+      });
+      const seedSe = conceptColdStart.isFallback
+        ? Math.max(SE_LOCK_IN + 0.1, Math.min(SE_INITIAL, subjectPrior.theta_se * 0.85))
+        : conceptColdStart.se;
+      const seedTheta = conceptColdStart.isFallback
+        ? subjectPrior.theta
+        : conceptColdStart.theta;
       const conceptRow = await loadOrSeedEstimate(cw.conceptId, {
-        theta: subjectPrior.theta,
+        theta: seedTheta,
         se: seedSe,
       });
       const conceptStep = runIrt(conceptRow, a, b, quality);
