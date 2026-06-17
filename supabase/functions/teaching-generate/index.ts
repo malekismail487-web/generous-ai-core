@@ -658,6 +658,8 @@ Deno.serve(async (req) => {
         }
       }
     }
+
+    const systemPrompt = [
       "You are Lumina, an adaptive tutor. Follow the regime and trajectory below verbatim.",
       buildPrompt(regime, trajectory, {
         conceptName: conceptRow?.name,
