@@ -25,12 +25,12 @@ import {
 import {
   blendPredictions,
   eloProbability,
-  ENSEMBLE_DEFAULTS,
   type EnsembleWeights,
 } from "../_shared/ensemble.ts";
 import { applyCalibration } from "../_shared/calibration.ts";
 import { fsrsPredict, newFsrsCard, type FsrsCard } from "../_shared/fsrs.ts";
 import { hawkesPredict, HAWKES_DEFAULTS } from "../_shared/hawkesKt.ts";
+import { fetchHierarchicalPrior } from "../_shared/coldStart.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,14 +89,26 @@ Deno.serve(async (req) => {
       if (!ok) return json({ error: "Forbidden" }, 403);
     }
 
+    // ── Resolve student school for cold-start scoping ───────────────────
+    const { data: studentProfile } = await admin
+      .from("profiles").select("school_id").eq("id", studentId).maybeSingle();
+    const studentSchoolId = studentProfile?.school_id ?? null;
+
+    // ── Stage 8: hierarchical cold-start prior (subject scope) ──────────
+    // Used both as a θ/SE warm-start when ability_estimates has no row, and
+    // as an ensemble-weight prior when ensemble_weights is empty for the user.
+    const subjectColdStart = await fetchHierarchicalPrior(admin, {
+      schoolId: studentSchoolId, subject, conceptId: null,
+    });
+
     // ── Load (θ, SE, Elo) at subject scope, override at concept scope ────
     const { data: subjAbil } = await admin
       .from("ability_estimates")
       .select("theta, theta_se, elo_rating")
       .eq("user_id", studentId).eq("subject", subject).is("concept_id", null)
       .maybeSingle();
-    let theta = subjAbil ? Number(subjAbil.theta) : 0;
-    let se    = subjAbil ? Number(subjAbil.theta_se) : 1.5;
+    let theta = subjAbil ? Number(subjAbil.theta) : subjectColdStart.theta;
+    let se    = subjAbil ? Number(subjAbil.theta_se) : subjectColdStart.se;
     const studentElo = subjAbil ? Number(subjAbil.elo_rating ?? ELO_INITIAL) : ELO_INITIAL;
 
     if (body.conceptId) {
@@ -106,6 +118,13 @@ Deno.serve(async (req) => {
         .eq("user_id", studentId).eq("subject", subject).eq("concept_id", body.conceptId)
         .maybeSingle();
       if (cAbil) { theta = Number(cAbil.theta); se = Number(cAbil.theta_se); }
+      else {
+        // Concept-scoped cold start (narrower than subject when available).
+        const conceptCold = await fetchHierarchicalPrior(admin, {
+          schoolId: studentSchoolId, subject, conceptId: body.conceptId,
+        });
+        if (!conceptCold.isFallback) { theta = conceptCold.theta; se = conceptCold.se; }
+      }
     }
 
     // ── Resolve candidate item params (a, b, item Elo) ───────────────────
@@ -202,7 +221,9 @@ Deno.serve(async (req) => {
     const p_hawkes = hawkes.p;
 
     // ── Load ensemble weights (user-specific → population fallback) ─────
-    let weights: EnsembleWeights = ENSEMBLE_DEFAULTS;
+    // Stage 8: when neither user nor stored population row exists, fall
+    // back to the hierarchical cold-start prior we already fetched above.
+    let weights: EnsembleWeights = subjectColdStart.ensembleWeights;
     const { data: userW } = await admin
       .from("ensemble_weights")
       .select("w_2pl, w_elo, w_akt, w_dash, w_fsrs, w_hawkes, bias")
