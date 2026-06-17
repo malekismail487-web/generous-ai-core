@@ -600,9 +600,64 @@ Deno.serve(async (req) => {
     });
     const regime = deriveRegime(stateVector);
     const trajectory = buildTrajectory(regime);
-    const policy = derivePolicy(stateVector);
+    let policy = derivePolicy(stateVector);
 
-    const systemPrompt = [
+    // ─── Stage 6 — LinUCB contextual bandit ────────────────────────
+    // The deterministic `policy.strategy` / `policy.difficulty` are the
+    // heuristic baseline. The bandit observes the same context vector and
+    // can override either dimension with a learned choice; the deterministic
+    // path is preserved on any failure. The decision is logged for reward
+    // attribution from the next graded_event.
+    let bandit:
+      | {
+          armId: string;
+          strategy: string;
+          difficulty: string;
+          ucb: number;
+          mean: number;
+          bonus: number;
+          decisionId: string | null;
+          ranking: Array<{ armId: string; ucb: number; mean: number; bonus: number; n: number }>;
+        }
+      | null = null;
+    if (subjectName) {
+      const contextVec = buildBanditContext({
+        theta: stateVector.theta,
+        mastery: stateVector.mastery,
+        lectureMastery: stateVector.lectureMastery,
+        errorCount: stateVector.errorCount,
+        fatigue: stateVector.fatigue,
+        ensembleP: stateVector.ensembleP,
+        visualPreference: stateVector.visualPreference,
+      });
+      const selection = await selectAndLog(admin, {
+        userId: studentId,
+        subject: subjectName,
+        contextVec,
+        conceptId: conceptRow?.id ?? null,
+        lectureId: lectureRow?.id ?? null,
+        ensembleP: ensembleP ?? null,
+        source: "teaching-generate",
+      });
+      if (selection) {
+        const parsed = parseArmId(selection.chosen.armId);
+        if (parsed) {
+          policy = { ...policy, strategy: parsed.strategy, difficulty: parsed.difficulty };
+          bandit = {
+            armId: selection.chosen.armId,
+            strategy: parsed.strategy,
+            difficulty: parsed.difficulty,
+            ucb: selection.chosen.ucb,
+            mean: selection.chosen.mean,
+            bonus: selection.chosen.bonus,
+            decisionId: selection.decisionId,
+            ranking: selection.ranking.slice(0, 5).map((r) => ({
+              armId: r.armId, ucb: r.ucb, mean: r.mean, bonus: r.bonus, n: r.n,
+            })),
+          };
+        }
+      }
+    }
       "You are Lumina, an adaptive tutor. Follow the regime and trajectory below verbatim.",
       buildPrompt(regime, trajectory, {
         conceptName: conceptRow?.name,
