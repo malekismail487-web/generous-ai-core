@@ -542,6 +542,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── Stage 6: attach the graded outcome as the LinUCB reward signal for
+    // the most-recent unrewarded teaching-generate decision on this
+    // (user, subject, dominant-concept). Best-effort — a failure here must
+    // never bubble up and break grading.
+    try {
+      await applyBanditReward(admin, {
+        userId: user.id,
+        subject,
+        conceptId: dominantConcept,
+        isCorrect: body.isCorrect,
+      });
+    } catch (e) {
+      console.warn("[ability-update] bandit reward attach failed:", e);
+    }
+
+
 
 
     return new Response(
