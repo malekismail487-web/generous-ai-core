@@ -23,6 +23,8 @@ import { blendPredictions, eloProbability, ENSEMBLE_DEFAULTS, type EnsembleWeigh
 import { applyCalibration } from "../_shared/calibration.ts";
 import { fsrsPredict, newFsrsCard, type FsrsCard } from "../_shared/fsrs.ts";
 import { hawkesPredict, HAWKES_DEFAULTS } from "../_shared/hawkesKt.ts";
+import { selectAndLog } from "../_shared/banditState.ts";
+import { buildBanditContext, parseArmId } from "../_shared/linucb.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
