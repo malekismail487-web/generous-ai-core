@@ -11,7 +11,6 @@
 //  never block grading or teaching. Errors are logged and swallowed.
 // ============================================================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   ARM_IDS, BANDIT_CONTEXT_DIM, LINUCB_DEFAULTS,
   hydrateArmState, newArmState, selectArm, updateArm,
