@@ -187,11 +187,11 @@ export function updateArm(
   const u = matVec(A_inv, x, d);            // A_inv · x  (d)
   const denom = 1 + dot(x, u);
   if (!isFiniteNum(denom) || Math.abs(denom) < 1e-12) {
-    // Pathological — reseed this arm but keep accumulated b so we don't lose
-    // signal. Ridge λ defaults to 1 (i.e. (1/λ)I).
+    // Pathological denominator — reseed A_inv to ridge prior but still apply
+    // the b update so we don't drop the reward signal.
     const fresh = newArmState({ ...cfg, d });
-    const b = state.b.map((bi) => bi + r * x[Math.min(d - 1, state.b.indexOf(bi))]); // best-effort
-    return { ...fresh, b, n: state.n + 1 };
+    const b = state.b.map((bi, i) => bi + r * x[i]);
+    return { A_inv: fresh.A_inv, b, n: state.n + 1, d };
   }
   // outer product u uᵀ / denom, subtracted from A_inv
   for (let i = 0; i < d; i++) {
