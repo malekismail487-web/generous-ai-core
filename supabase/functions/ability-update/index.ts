@@ -31,6 +31,7 @@ import {
 } from "../_shared/irt2pl.ts";
 import { pushKtInteraction } from "../_shared/ktSequence.ts";
 import { persistFsrsCard } from "../_shared/fsrsState.ts";
+import { applyReward as applyBanditReward } from "../_shared/banditState.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
