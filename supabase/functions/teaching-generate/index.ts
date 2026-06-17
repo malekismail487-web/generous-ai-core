@@ -26,6 +26,7 @@ import { hawkesPredict, HAWKES_DEFAULTS } from "../_shared/hawkesKt.ts";
 import { selectAndLog } from "../_shared/banditState.ts";
 import { buildBanditContext, parseArmId } from "../_shared/linucb.ts";
 import { logEnsemblePrediction } from "../_shared/ensemblePredictionLog.ts";
+import { fetchHierarchicalPrior } from "../_shared/coldStart.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -320,7 +321,23 @@ Deno.serve(async (req) => {
     // join was a silent bug that ran the whole pipeline with θ=0, SE=1.0 regardless of
     // the student's real ability. The canonical source is `ability_estimates`.
     const subjectName = lectureRow ? await resolveSubjectName(lectureRow.subject_id) : undefined;
-    let theta = 0, se = 1.5;
+
+    // Stage 8: resolve student school once so cold-start lookups can scope
+    // by (school, subject, concept). Best-effort — null falls back gracefully.
+    const { data: studentProfile } = await admin
+      .from("profiles").select("school_id").eq("id", studentId).maybeSingle();
+    const studentSchoolId = (studentProfile?.school_id as string | null | undefined) ?? null;
+
+    // Stage 8: hierarchical cold-start (subject scope). Used as the warm-start
+    // for θ/SE/mastery whenever the per-student row hasn't been written yet.
+    const subjectColdStart = subjectName
+      ? await fetchHierarchicalPrior(admin, {
+          schoolId: studentSchoolId, subject: subjectName, conceptId: null,
+        })
+      : null;
+
+    let theta = subjectColdStart ? subjectColdStart.theta : 0;
+    let se    = subjectColdStart ? subjectColdStart.se    : 1.5;
     if (subjectName) {
       const { data: subjAbil } = await admin
         .from("ability_estimates")
@@ -330,8 +347,8 @@ Deno.serve(async (req) => {
         .is("concept_id", null)
         .maybeSingle();
       if (subjAbil) {
-        theta = Number(subjAbil.theta ?? 0);
-        se = Number(subjAbil.theta_se ?? 1.5);
+        theta = Number(subjAbil.theta ?? theta);
+        se = Number(subjAbil.theta_se ?? se);
       }
       // Prefer the concept-level estimate when it exists (hierarchical override).
       if (conceptRow) {
@@ -345,16 +362,36 @@ Deno.serve(async (req) => {
         if (conceptAbil) {
           theta = Number(conceptAbil.theta ?? theta);
           se = Number(conceptAbil.theta_se ?? se);
+        } else {
+          // Stage 8: concept-scoped cold start when no per-student row.
+          const conceptCold = await fetchHierarchicalPrior(admin, {
+            schoolId: studentSchoolId, subject: subjectName, conceptId: conceptRow.id,
+          });
+          if (!conceptCold.isFallback) {
+            theta = conceptCold.theta;
+            se = conceptCold.se;
+          }
         }
       }
     }
 
-    let conceptMastery = 0.5, lectureMastery = 0.5;
+    // Stage 8: mastery defaults likewise inherit the population posterior
+    // (concept_school → concept_global → subject_*), not a flat 0.5.
+    let conceptMastery = subjectColdStart?.mastery ?? 0.5;
+    let lectureMastery = subjectColdStart?.mastery ?? 0.5;
     if (conceptRow) {
       const { data: cm } = await admin
         .from("concept_mastery").select("mastery_score")
         .eq("user_id", studentId).eq("concept_id", conceptRow.id).maybeSingle();
-      if (cm) conceptMastery = Number(cm.mastery_score ?? 0.5);
+      if (cm) conceptMastery = Number(cm.mastery_score ?? conceptMastery);
+      else {
+        const conceptCold = subjectName
+          ? await fetchHierarchicalPrior(admin, {
+              schoolId: studentSchoolId, subject: subjectName, conceptId: conceptRow.id,
+            })
+          : null;
+        if (conceptCold && !conceptCold.isFallback) conceptMastery = conceptCold.mastery;
+      }
     }
     if (lectureRow) {
       const { data: lc } = await admin.from("concepts").select("id").eq("lecture_id", lectureRow.id);
