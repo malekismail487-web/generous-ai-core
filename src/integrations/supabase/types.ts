@@ -1401,6 +1401,143 @@ export type Database = {
           },
         ]
       }
+      ensemble_fit_runs: {
+        Row: {
+          accepted: boolean
+          brier_after: number | null
+          brier_before: number | null
+          created_at: string
+          ece_after: number | null
+          epochs: number
+          id: string
+          logloss_after: number | null
+          logloss_before: number | null
+          n_samples: number
+          notes: string | null
+          scope: string
+          subject: string
+          user_id: string | null
+          weights_after: Json | null
+          weights_before: Json | null
+        }
+        Insert: {
+          accepted?: boolean
+          brier_after?: number | null
+          brier_before?: number | null
+          created_at?: string
+          ece_after?: number | null
+          epochs: number
+          id?: string
+          logloss_after?: number | null
+          logloss_before?: number | null
+          n_samples: number
+          notes?: string | null
+          scope?: string
+          subject: string
+          user_id?: string | null
+          weights_after?: Json | null
+          weights_before?: Json | null
+        }
+        Update: {
+          accepted?: boolean
+          brier_after?: number | null
+          brier_before?: number | null
+          created_at?: string
+          ece_after?: number | null
+          epochs?: number
+          id?: string
+          logloss_after?: number | null
+          logloss_before?: number | null
+          n_samples?: number
+          notes?: string | null
+          scope?: string
+          subject?: string
+          user_id?: string | null
+          weights_after?: Json | null
+          weights_before?: Json | null
+        }
+        Relationships: []
+      }
+      ensemble_predictions: {
+        Row: {
+          bandit_decision_id: string | null
+          blended_p: number | null
+          calibrated_p: number | null
+          concept_id: string | null
+          created_at: string
+          helpfulness_signal: number | null
+          id: string
+          outcome: number | null
+          outcome_attached_at: string | null
+          p_2pl: number | null
+          p_akt: number | null
+          p_dash: number | null
+          p_elo: number | null
+          p_fsrs: number | null
+          p_hawkes: number | null
+          quality_score: number | null
+          question_id: string | null
+          source: string
+          subject: string
+          user_id: string
+          weights_used: Json | null
+        }
+        Insert: {
+          bandit_decision_id?: string | null
+          blended_p?: number | null
+          calibrated_p?: number | null
+          concept_id?: string | null
+          created_at?: string
+          helpfulness_signal?: number | null
+          id?: string
+          outcome?: number | null
+          outcome_attached_at?: string | null
+          p_2pl?: number | null
+          p_akt?: number | null
+          p_dash?: number | null
+          p_elo?: number | null
+          p_fsrs?: number | null
+          p_hawkes?: number | null
+          quality_score?: number | null
+          question_id?: string | null
+          source?: string
+          subject: string
+          user_id: string
+          weights_used?: Json | null
+        }
+        Update: {
+          bandit_decision_id?: string | null
+          blended_p?: number | null
+          calibrated_p?: number | null
+          concept_id?: string | null
+          created_at?: string
+          helpfulness_signal?: number | null
+          id?: string
+          outcome?: number | null
+          outcome_attached_at?: string | null
+          p_2pl?: number | null
+          p_akt?: number | null
+          p_dash?: number | null
+          p_elo?: number | null
+          p_fsrs?: number | null
+          p_hawkes?: number | null
+          quality_score?: number | null
+          question_id?: string | null
+          source?: string
+          subject?: string
+          user_id?: string
+          weights_used?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ensemble_predictions_bandit_decision_id_fkey"
+            columns: ["bandit_decision_id"]
+            isOneToOne: false
+            referencedRelation: "bandit_decisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ensemble_weights: {
         Row: {
           auc: number | null
@@ -4350,6 +4487,15 @@ export type Database = {
           context_vec: Json
           decision_id: string
         }[]
+      }
+      attach_ensemble_outcome: {
+        Args: {
+          p_concept_id: string
+          p_outcome: number
+          p_subject: string
+          p_user_id: string
+        }
+        Returns: string
       }
       can_view_student_mastery: {
         Args: { p_student: string; p_viewer: string }
