@@ -3343,6 +3343,120 @@ export type Database = {
         }
         Relationships: []
       }
+      population_prior_runs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          metrics: Json | null
+          ms_elapsed: number
+          ok: boolean
+          rows_examined: number
+          rows_written: number
+          scope_filter: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metrics?: Json | null
+          ms_elapsed?: number
+          ok?: boolean
+          rows_examined?: number
+          rows_written?: number
+          scope_filter?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metrics?: Json | null
+          ms_elapsed?: number
+          ok?: boolean
+          rows_examined?: number
+          rows_written?: number
+          scope_filter?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
+      population_priors: {
+        Row: {
+          computed_at: string
+          concept_id: string | null
+          created_at: string
+          ensemble_weights: Json | null
+          id: string
+          mastery_mean: number
+          mastery_var: number
+          n_mastery: number
+          n_theta: number
+          n_weights: number
+          school_id: string | null
+          scope: string
+          se_seed: number
+          subject: string | null
+          theta_mean: number
+          theta_var: number
+          updated_at: string
+        }
+        Insert: {
+          computed_at?: string
+          concept_id?: string | null
+          created_at?: string
+          ensemble_weights?: Json | null
+          id?: string
+          mastery_mean?: number
+          mastery_var?: number
+          n_mastery?: number
+          n_theta?: number
+          n_weights?: number
+          school_id?: string | null
+          scope: string
+          se_seed?: number
+          subject?: string | null
+          theta_mean?: number
+          theta_var?: number
+          updated_at?: string
+        }
+        Update: {
+          computed_at?: string
+          concept_id?: string | null
+          created_at?: string
+          ensemble_weights?: Json | null
+          id?: string
+          mastery_mean?: number
+          mastery_var?: number
+          n_mastery?: number
+          n_theta?: number
+          n_weights?: number
+          school_id?: string | null
+          scope?: string
+          se_seed?: number
+          subject?: string | null
+          theta_mean?: number
+          theta_var?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "population_priors_concept_id_fkey"
+            columns: ["concept_id"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "population_priors_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
