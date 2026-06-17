@@ -106,7 +106,7 @@ export function hydrateArmState(
   const r = raw as Partial<LinUcbArmState> | null | undefined;
   if (!r || !Array.isArray(r.A_inv) || !Array.isArray(r.b)) return newArmState(cfg);
   const d = Number.isInteger(r.d) ? (r.d as number) : cfg.d;
-  if (r.A_inv.length !== d * d || r.b.length !== d) return newArmState({ ...cfg, d });
+  if (r.A_inv.length !== d * d || r.b.length !== d) return newArmState(cfg);
   if (!r.A_inv.every(isFiniteNum) || !r.b.every(isFiniteNum)) return newArmState({ ...cfg, d });
   return {
     A_inv: r.A_inv.slice(),
