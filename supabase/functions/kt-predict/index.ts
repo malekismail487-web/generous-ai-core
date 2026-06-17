@@ -25,7 +25,6 @@ import {
 import {
   blendPredictions,
   eloProbability,
-  ENSEMBLE_DEFAULTS,
   type EnsembleWeights,
 } from "../_shared/ensemble.ts";
 import { applyCalibration } from "../_shared/calibration.ts";
