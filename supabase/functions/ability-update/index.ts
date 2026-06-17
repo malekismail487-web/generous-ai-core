@@ -558,6 +558,20 @@ Deno.serve(async (req) => {
       console.warn("[ability-update] bandit reward attach failed:", e);
     }
 
+    // ── Stage 7: attach the observed correctness to the most-recent
+    // unrewarded `ensemble_predictions` row so retrain-ensemble has a
+    // labeled training set. Best-effort — same isolation contract as bandit.
+    try {
+      await attachEnsembleOutcome(admin, {
+        userId: user.id,
+        subject,
+        conceptId: dominantConcept,
+        isCorrect: body.isCorrect,
+      });
+    } catch (e) {
+      console.warn("[ability-update] ensemble outcome attach failed:", e);
+    }
+
 
 
 
