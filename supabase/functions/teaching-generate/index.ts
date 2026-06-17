@@ -565,7 +565,11 @@ Deno.serve(async (req) => {
           : { p: clamp(sig2pl(a * (theta - b)), 0.01, 0.99), intensity: 0, contributors: 0 };
         const p_hawkes = hawkes.p;
 
-        let weights: EnsembleWeights = ENSEMBLE_DEFAULTS;
+        // Stage 8: cold-start prior for ensemble weights when no per-user or
+        // population row exists in `ensemble_weights`.
+        let weights: EnsembleWeights = subjectColdStart
+          ? subjectColdStart.ensembleWeights
+          : ENSEMBLE_DEFAULTS;
         const { data: userW } = await admin
           .from("ensemble_weights")
           .select("w_2pl, w_elo, w_akt, w_dash, w_fsrs, w_hawkes, bias")
