@@ -25,6 +25,7 @@ import { fsrsPredict, newFsrsCard, type FsrsCard } from "../_shared/fsrs.ts";
 import { hawkesPredict, HAWKES_DEFAULTS } from "../_shared/hawkesKt.ts";
 import { selectAndLog } from "../_shared/banditState.ts";
 import { buildBanditContext, parseArmId } from "../_shared/linucb.ts";
+import { logEnsemblePrediction } from "../_shared/ensemblePredictionLog.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -659,6 +660,30 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ─── Stage 7 — log this prediction for ensemble retraining ────────
+    // Fire-and-forget. We log even when the bandit short-circuits so the
+    // training set isn't biased toward only-bandit-served sessions. Outcome
+    // is attached later by `ability-update` via attach_ensemble_outcome.
+    let predictionLogId: string | null = null;
+    if (subjectName && ensembleComponents) {
+      try {
+        predictionLogId = await logEnsemblePrediction(admin, {
+          userId: studentId,
+          subject: subjectName,
+          conceptId: conceptRow?.id ?? null,
+          questionId: null,
+          banditDecisionId: bandit?.decisionId ?? null,
+          components: ensembleComponents as Record<string, number>,
+          blendedP: ensembleP ?? null,
+          calibratedP: ensembleP ?? null,
+          weightsUsed: null,
+          source: "teaching-generate",
+        });
+      } catch (e) {
+        console.warn("[teaching-generate] prediction log failed (non-fatal):", e);
+      }
+    }
+
     const systemPrompt = [
       "You are Lumina, an adaptive tutor. Follow the regime and trajectory below verbatim.",
       buildPrompt(regime, trajectory, {
@@ -714,6 +739,8 @@ Deno.serve(async (req) => {
         : null,
       // Stage 6: contextual bandit selection (null when subject was unknown).
       bandit,
+      // Stage 7: id of the row in `ensemble_predictions` awaiting an outcome.
+      predictionLogId,
       // legacy compatibility
       theta, standardError: se, conceptMastery, lectureMastery,
     });

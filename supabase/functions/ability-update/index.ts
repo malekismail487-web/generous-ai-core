@@ -32,6 +32,7 @@ import {
 import { pushKtInteraction } from "../_shared/ktSequence.ts";
 import { persistFsrsCard } from "../_shared/fsrsState.ts";
 import { applyReward as applyBanditReward } from "../_shared/banditState.ts";
+import { attachEnsembleOutcome } from "../_shared/ensemblePredictionLog.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -555,6 +556,20 @@ Deno.serve(async (req) => {
       });
     } catch (e) {
       console.warn("[ability-update] bandit reward attach failed:", e);
+    }
+
+    // ── Stage 7: attach the observed correctness to the most-recent
+    // unrewarded `ensemble_predictions` row so retrain-ensemble has a
+    // labeled training set. Best-effort — same isolation contract as bandit.
+    try {
+      await attachEnsembleOutcome(admin, {
+        userId: user.id,
+        subject,
+        conceptId: dominantConcept,
+        isCorrect: body.isCorrect,
+      });
+    } catch (e) {
+      console.warn("[ability-update] ensemble outcome attach failed:", e);
     }
 
 
