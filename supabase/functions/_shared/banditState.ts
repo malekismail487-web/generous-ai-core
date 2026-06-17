@@ -18,7 +18,12 @@ import {
   type ArmScore, type LinUcbArmState, type LinUcbConfig,
 } from "./linucb.ts";
 
-type SupabaseAdmin = ReturnType<typeof createClient>;
+// Use the loose runtime client type so callers' typed clients pass through.
+// The edge functions instantiate createClient(SUPABASE_URL, SERVICE_ROLE)
+// which produces SupabaseClient<any, "public", any>; restricting the alias
+// would force every call site to cast.
+// deno-lint-ignore no-explicit-any
+type SupabaseAdmin = any;
 
 const CFG: LinUcbConfig = { ...LINUCB_DEFAULTS, d: BANDIT_CONTEXT_DIM };
 
