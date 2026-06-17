@@ -739,6 +739,8 @@ Deno.serve(async (req) => {
         : null,
       // Stage 6: contextual bandit selection (null when subject was unknown).
       bandit,
+      // Stage 7: id of the row in `ensemble_predictions` awaiting an outcome.
+      predictionLogId,
       // legacy compatibility
       theta, standardError: se, conceptMastery, lectureMastery,
     });
