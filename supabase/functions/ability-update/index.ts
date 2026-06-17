@@ -31,6 +31,7 @@ import {
 } from "../_shared/irt2pl.ts";
 import { pushKtInteraction } from "../_shared/ktSequence.ts";
 import { persistFsrsCard } from "../_shared/fsrsState.ts";
+import { applyReward as applyBanditReward } from "../_shared/banditState.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -540,6 +541,22 @@ Deno.serve(async (req) => {
         isCorrect: body.isCorrect, fastResponse: fast,
       });
     }
+
+    // ── Stage 6: attach the graded outcome as the LinUCB reward signal for
+    // the most-recent unrewarded teaching-generate decision on this
+    // (user, subject, dominant-concept). Best-effort — a failure here must
+    // never bubble up and break grading.
+    try {
+      await applyBanditReward(admin, {
+        userId: user.id,
+        subject,
+        conceptId: dominantConcept,
+        isCorrect: body.isCorrect,
+      });
+    } catch (e) {
+      console.warn("[ability-update] bandit reward attach failed:", e);
+    }
+
 
 
 
