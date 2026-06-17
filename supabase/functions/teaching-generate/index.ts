@@ -712,6 +712,8 @@ Deno.serve(async (req) => {
       ensemble: ensembleComponents
         ? { p: ensembleP, components: ensembleComponents }
         : null,
+      // Stage 6: contextual bandit selection (null when subject was unknown).
+      bandit,
       // legacy compatibility
       theta, standardError: se, conceptMastery, lectureMastery,
     });
