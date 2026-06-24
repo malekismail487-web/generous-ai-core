@@ -886,7 +886,7 @@ Deno.serve(async (req) => {
     const enforced = enforce(content, regime, trajectory);
 
     return json({
-      version: 2,
+      version: 3,
       policy,                      // legacy field — preserved
       regime,
       trajectory,
@@ -909,6 +909,14 @@ Deno.serve(async (req) => {
       bandit,
       // Stage 7: id of the row in `ensemble_predictions` awaiting an outcome.
       predictionLogId,
+      // Stage 9: Output Engine v3 composed recipe + audit.
+      outputV3: {
+        pacingMultiplier: outputV3.pacingMultiplier,
+        totalDurationSec: outputV3.totalDurationSec,
+        recipe: outputV3.recipe,
+        segments: outputV3.segments,
+        audit: outputV3.audit,
+      },
       // legacy compatibility
       theta, standardError: se, conceptMastery, lectureMastery,
     });
