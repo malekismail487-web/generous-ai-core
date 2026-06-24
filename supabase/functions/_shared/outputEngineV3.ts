@@ -331,6 +331,19 @@ export function composeOutputV3(input: OutputV3Inputs): OutputV3Bundle {
       total -= dropped.durationSec;
       truncated = true;
     }
+    // If still over cap with only the structural minimum left, compress
+    // surviving durations proportionally (floor 15s per step).
+    if (total > maxDur) {
+      const floorTotal = recipe.length * 15;
+      const scale = Math.max(0, (maxDur - floorTotal) / Math.max(1, total - floorTotal));
+      let newTotal = 0;
+      for (const r of recipe) {
+        r.durationSec = Math.max(15, Math.round(15 + (r.durationSec - 15) * scale));
+        newTotal += r.durationSec;
+      }
+      total = newTotal;
+      truncated = true;
+    }
   }
 
   // ── Prompt fragments ────────────────────────────────────────────
