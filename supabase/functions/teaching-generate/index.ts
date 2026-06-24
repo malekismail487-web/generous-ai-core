@@ -728,15 +728,139 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ─── Stage 9 — Output Engine v3 ────────────────────────────────
+    // Consume the full adaptive bundle (regime + bandit + FSRS dues +
+    // Hawkes contributors + ensembleP) into one executable recipe.
+    // All loads are best-effort and scoped to this student.
+    const nowMs = Date.now();
+    let reviewDues: ReviewDue[] = [];
+    let prereqHints: PrereqHint[] = [];
+    if (subjectName) {
+      try {
+        const { data: dueRows } = await admin
+          .from("fsrs_card_state")
+          .select("concept_id, stability, difficulty, lapses, last_review_at, next_review_at, is_leech, suspended_until")
+          .eq("user_id", studentId).eq("subject", subjectName)
+          .not("next_review_at", "is", null)
+          .lte("next_review_at", new Date(nowMs).toISOString())
+          .limit(25);
+        const dueList = (dueRows ?? []).filter(
+          (r: any) => !r.suspended_until || new Date(r.suspended_until).getTime() <= nowMs,
+        );
+        const dueCids = Array.from(
+          new Set(dueList.map((r: any) => r.concept_id).filter(Boolean)),
+        );
+        const nameMap = new Map<string, string>();
+        if (dueCids.length) {
+          const { data: nameRows } = await admin
+            .from("concepts").select("id, name").in("id", dueCids);
+          for (const n of nameRows ?? []) nameMap.set(n.id as string, n.name as string);
+        }
+        reviewDues = dueList.map((r: any) => {
+          const S = Number(r.stability ?? 0);
+          const lastMs = r.last_review_at ? new Date(r.last_review_at).getTime() : nowMs;
+          const card: FsrsCard = {
+            S, D: Number(r.difficulty ?? 0),
+            reps: 0, lapses: Number(r.lapses ?? 0),
+            lastReviewMs: lastMs,
+          };
+          const R = fsrsPredict(card, nowMs);
+          const nextMs = r.next_review_at ? new Date(r.next_review_at).getTime() : nowMs;
+          const overdueDays = Math.max(0, (nowMs - nextMs) / 86_400_000);
+          return {
+            conceptId: r.concept_id as string,
+            conceptName: r.concept_id ? nameMap.get(r.concept_id as string) : undefined,
+            retrievability: R,
+            overdueDays,
+            priority: priorityScore({
+              retrievability: R, overdueDays, stability: S,
+              difficulty: Number(r.difficulty ?? 5),
+              lapses: Number(r.lapses ?? 0),
+              isLeech: !!r.is_leech,
+            }),
+            lapses: Number(r.lapses ?? 0),
+            isLeech: !!r.is_leech,
+          } satisfies ReviewDue;
+        });
+
+        // Hawkes-style prereq hints: concepts the student recently
+        // interacted with that share this lecture (curriculum neighbour)
+        // and have weak per-student mastery. Mirrors the link resolver
+        // used by hawkesPredict above.
+        if (conceptRow?.lecture_id) {
+          const { data: neighbours } = await admin
+            .from("concepts")
+            .select("id, name")
+            .eq("lecture_id", conceptRow.lecture_id)
+            .neq("id", conceptRow.id)
+            .limit(20);
+          const neighbourIds = (neighbours ?? []).map((n: any) => n.id as string);
+          if (neighbourIds.length) {
+            const { data: masteryRows } = await admin
+              .from("concept_mastery")
+              .select("concept_id, mastery_score")
+              .eq("user_id", studentId)
+              .in("concept_id", neighbourIds);
+            const masteryMap = new Map<string, number>();
+            for (const m of masteryRows ?? []) {
+              masteryMap.set(m.concept_id as string, Number(m.mastery_score ?? 0.5));
+            }
+            // Excitation proxy: count of recent same-lecture events per cid.
+            const { data: recentEvents } = await admin
+              .from("graded_events")
+              .select("concept_id, was_correct, created_at")
+              .eq("user_id", studentId)
+              .in("concept_id", neighbourIds)
+              .order("created_at", { ascending: false })
+              .limit(50);
+            const excitationMap = new Map<string, number>();
+            for (const ev of recentEvents ?? []) {
+              const cid = ev.concept_id as string;
+              const dtDays = Math.max(0, (nowMs - new Date(ev.created_at).getTime()) / 86_400_000);
+              const decay = Math.exp(-0.25 * dtDays);
+              const sign = ev.was_correct ? 0.4 : 1.0; // wrong answers excite more
+              excitationMap.set(cid, (excitationMap.get(cid) ?? 0) + 0.5 * decay * sign);
+            }
+            prereqHints = (neighbours ?? []).map((n: any) => ({
+              conceptId: n.id as string,
+              conceptName: n.name as string,
+              excitation: excitationMap.get(n.id as string) ?? 0,
+              mastery: masteryMap.get(n.id as string) ?? 0.5,
+            } satisfies PrereqHint));
+          }
+        }
+      } catch (e) {
+        console.warn("[teaching-generate] stage9 bundle load failed (non-fatal):", e);
+      }
+    }
+
+    const outputV3 = composeOutputV3({
+      stateVector: {
+        theta: stateVector.theta,
+        standardError: stateVector.standardError,
+        mastery: stateVector.mastery,
+        ensembleP: stateVector.ensembleP,
+        fatigue: stateVector.fatigue,
+      },
+      regime,
+      baseTrajectory: trajectory,
+      bandit: bandit ? { strategy: bandit.strategy as any, difficulty: bandit.difficulty as any } : null,
+      reviewDues,
+      prereqHints,
+    });
+
     const systemPrompt = [
-      "You are Lumina, an adaptive tutor. Follow the regime and trajectory below verbatim.",
+      "You are Lumina, an adaptive tutor. Follow the recipe below verbatim.",
       buildPrompt(regime, trajectory, {
         conceptName: conceptRow?.name,
         lectureTitle: lectureRow?.title,
         context,
       }),
-      "No meta-commentary about the regime/trajectory.",
-    ].join("\n");
+      outputV3.promptFragments.reviewBlock ?? "",
+      outputV3.promptFragments.prereqBlock ?? "",
+      outputV3.promptFragments.recipeBlock,
+      "No meta-commentary about the regime/trajectory/recipe.",
+    ].filter(Boolean).join("\n\n");
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
