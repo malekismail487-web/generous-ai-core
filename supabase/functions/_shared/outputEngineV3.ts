@@ -355,7 +355,7 @@ export function composeOutputV3(input: OutputV3Inputs): OutputV3Bundle {
       (r, i) =>
         `  ${i + 1}. [${r.segment}/${r.kind}] strategy=${r.strategy} difficulty=${r.difficulty} ~${r.durationSec}s${r.mustVerify ? " (verify)" : ""} — ${r.focus}`,
     ),
-    `Pacing multiplier: ${r2(input.pacingMultiplierOverride ?? pacing) /* eslint-disable-line */}`,
+    `Pacing multiplier: ${pacing} (budget=${total}s${truncated ? ", truncated" : ""}).`,
   ].join("\n");
 
   return {
@@ -373,12 +373,4 @@ export function composeOutputV3(input: OutputV3Inputs): OutputV3Bundle {
       chosenDifficulty: arm.difficulty,
     },
   };
-}
-
-// allow callers to pre-compute pacing for display; the field is intentionally
-// optional and not part of the public interface above.
-declare module "./outputEngineV3.ts" {
-  interface OutputV3Inputs {
-    pacingMultiplierOverride?: number;
-  }
 }
