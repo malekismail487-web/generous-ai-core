@@ -2967,6 +2967,146 @@ export type Database = {
         }
         Relationships: []
       }
+      model_evaluation_metrics: {
+        Row: {
+          accuracy: number
+          auc: number
+          base_rate: number
+          brier: number
+          brier_skill: number
+          channel: string
+          ci_auc_hi: number | null
+          ci_auc_lo: number | null
+          ci_brier_hi: number | null
+          ci_brier_lo: number | null
+          created_at: string
+          ece: number
+          id: string
+          log_loss: number
+          n: number
+          pr_auc: number
+          reliability: number
+          reliability_bins: Json | null
+          resolution: number
+          run_id: string
+          slice_key: string | null
+          slice_kind: string
+          uncertainty: number
+        }
+        Insert: {
+          accuracy: number
+          auc: number
+          base_rate: number
+          brier: number
+          brier_skill: number
+          channel: string
+          ci_auc_hi?: number | null
+          ci_auc_lo?: number | null
+          ci_brier_hi?: number | null
+          ci_brier_lo?: number | null
+          created_at?: string
+          ece: number
+          id?: string
+          log_loss: number
+          n: number
+          pr_auc: number
+          reliability: number
+          reliability_bins?: Json | null
+          resolution: number
+          run_id: string
+          slice_key?: string | null
+          slice_kind?: string
+          uncertainty: number
+        }
+        Update: {
+          accuracy?: number
+          auc?: number
+          base_rate?: number
+          brier?: number
+          brier_skill?: number
+          channel?: string
+          ci_auc_hi?: number | null
+          ci_auc_lo?: number | null
+          ci_brier_hi?: number | null
+          ci_brier_lo?: number | null
+          created_at?: string
+          ece?: number
+          id?: string
+          log_loss?: number
+          n?: number
+          pr_auc?: number
+          reliability?: number
+          reliability_bins?: Json | null
+          resolution?: number
+          run_id?: string
+          slice_key?: string | null
+          slice_kind?: string
+          uncertainty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_evaluation_metrics_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "model_evaluation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      model_evaluation_runs: {
+        Row: {
+          base_rate: number | null
+          bootstrap_iterations: number
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          n_predictions: number
+          n_with_outcome: number
+          notes: string | null
+          scope: string
+          scope_key: string | null
+          status: string
+          triggered_by: string | null
+          window_end: string | null
+          window_start: string | null
+        }
+        Insert: {
+          base_rate?: number | null
+          bootstrap_iterations?: number
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          n_predictions?: number
+          n_with_outcome?: number
+          notes?: string | null
+          scope?: string
+          scope_key?: string | null
+          status?: string
+          triggered_by?: string | null
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          base_rate?: number | null
+          bootstrap_iterations?: number
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          n_predictions?: number
+          n_with_outcome?: number
+          notes?: string | null
+          scope?: string
+          scope_key?: string | null
+          status?: string
+          triggered_by?: string | null
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       moderation_actions: {
         Row: {
           action_type: string
