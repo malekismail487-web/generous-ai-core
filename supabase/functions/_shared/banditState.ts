@@ -133,6 +133,11 @@ export async function selectAndLog(
     const arms = await loadArmsForUser(admin, args.userId, args.subject);
     const { chosen, ranking } = selectArm(arms, args.contextVec, CFG);
 
+    // Stage 11 — log a softmax-over-UCB propensity so every decision is
+    // usable downstream by IPS / SNIPS / DR off-policy estimators.
+    const { softmaxPropensity, DEFAULT_TEMPERATURE } = await import("./propensity.ts");
+    const propDist = softmaxPropensity(ranking, chosen.armId, DEFAULT_TEMPERATURE);
+
     const { data: inserted, error } = await admin
       .from("bandit_decisions")
       .insert({
@@ -154,6 +159,11 @@ export async function selectAndLog(
         })),
         ensemble_p_at_decision: args.ensembleP ?? null,
         source: args.source ?? "teaching-generate",
+        behaviour_prob: Number(propDist.chosenProb.toFixed(6)),
+        softmax_temp: Number(propDist.temperature.toFixed(4)),
+        propensity_dist: propDist.entries.map((e) => ({
+          arm_id: e.armId, prob: Number(e.prob.toFixed(6)),
+        })),
       })
       .select("id")
       .maybeSingle();
