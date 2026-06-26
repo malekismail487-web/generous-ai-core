@@ -650,6 +650,7 @@ export type Database = {
         Row: {
           alternatives: Json | null
           arm_id: string
+          behaviour_prob: number | null
           bonus: number
           concept_id: string | null
           context_vec: Json
@@ -658,9 +659,11 @@ export type Database = {
           id: string
           lecture_id: string | null
           mean: number
+          propensity_dist: Json | null
           reward: number | null
           rewarded: boolean
           rewarded_at: string | null
+          softmax_temp: number | null
           source: string
           subject: string
           ucb: number
@@ -669,6 +672,7 @@ export type Database = {
         Insert: {
           alternatives?: Json | null
           arm_id: string
+          behaviour_prob?: number | null
           bonus: number
           concept_id?: string | null
           context_vec: Json
@@ -677,9 +681,11 @@ export type Database = {
           id?: string
           lecture_id?: string | null
           mean: number
+          propensity_dist?: Json | null
           reward?: number | null
           rewarded?: boolean
           rewarded_at?: string | null
+          softmax_temp?: number | null
           source?: string
           subject: string
           ucb: number
@@ -688,6 +694,7 @@ export type Database = {
         Update: {
           alternatives?: Json | null
           arm_id?: string
+          behaviour_prob?: number | null
           bonus?: number
           concept_id?: string | null
           context_vec?: Json
@@ -696,9 +703,11 @@ export type Database = {
           id?: string
           lecture_id?: string | null
           mean?: number
+          propensity_dist?: Json | null
           reward?: number | null
           rewarded?: boolean
           rewarded_at?: string | null
+          softmax_temp?: number | null
           source?: string
           subject?: string
           ucb?: number
@@ -1869,6 +1878,98 @@ export type Database = {
           description?: string | null
           email?: string
           id?: string
+        }
+        Relationships: []
+      }
+      hyperparameter_settings: {
+        Row: {
+          activated_at: string
+          active: boolean
+          id: string
+          notes: string | null
+          params: Json
+          scope: string
+          source_run_id: string | null
+        }
+        Insert: {
+          activated_at?: string
+          active?: boolean
+          id?: string
+          notes?: string | null
+          params: Json
+          scope?: string
+          source_run_id?: string | null
+        }
+        Update: {
+          activated_at?: string
+          active?: boolean
+          id?: string
+          notes?: string | null
+          params?: Json
+          scope?: string
+          source_run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hyperparameter_settings_source_run_id_fkey"
+            columns: ["source_run_id"]
+            isOneToOne: false
+            referencedRelation: "hyperparameter_tuning_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hyperparameter_tuning_runs: {
+        Row: {
+          algorithm: string
+          best_params: Json
+          best_value: number
+          created_at: string
+          elites: number
+          evaluations: number
+          generations: number
+          id: string
+          notes: string | null
+          population: number
+          promoted: boolean
+          promoted_at: string | null
+          seed: number
+          trace: Json
+          triggered_by: string | null
+        }
+        Insert: {
+          algorithm?: string
+          best_params: Json
+          best_value: number
+          created_at?: string
+          elites: number
+          evaluations: number
+          generations: number
+          id?: string
+          notes?: string | null
+          population: number
+          promoted?: boolean
+          promoted_at?: string | null
+          seed: number
+          trace: Json
+          triggered_by?: string | null
+        }
+        Update: {
+          algorithm?: string
+          best_params?: Json
+          best_value?: number
+          created_at?: string
+          elites?: number
+          evaluations?: number
+          generations?: number
+          id?: string
+          notes?: string | null
+          population?: number
+          promoted?: boolean
+          promoted_at?: string | null
+          seed?: number
+          trace?: Json
+          triggered_by?: string | null
         }
         Relationships: []
       }
@@ -3482,6 +3583,152 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      policy_evaluation_results: {
+        Row: {
+          ci95_hi: number
+          ci95_lo: number
+          created_at: string
+          cumulative_regret: number | null
+          details: Json | null
+          effective_sample_size: number
+          estimator: string
+          id: string
+          n_used: number
+          policy_name: string
+          run_id: string
+          stderr: number
+          value: number
+        }
+        Insert: {
+          ci95_hi: number
+          ci95_lo: number
+          created_at?: string
+          cumulative_regret?: number | null
+          details?: Json | null
+          effective_sample_size: number
+          estimator: string
+          id?: string
+          n_used: number
+          policy_name: string
+          run_id: string
+          stderr: number
+          value: number
+        }
+        Update: {
+          ci95_hi?: number
+          ci95_lo?: number
+          created_at?: string
+          cumulative_regret?: number | null
+          details?: Json | null
+          effective_sample_size?: number
+          estimator?: string
+          id?: string
+          n_used?: number
+          policy_name?: string
+          run_id?: string
+          stderr?: number
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_evaluation_results_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "policy_evaluation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_evaluation_runs: {
+        Row: {
+          created_at: string
+          id: string
+          mean_behaviour_reward: number | null
+          n_decisions: number
+          notes: string | null
+          subject: string | null
+          triggered_by: string | null
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mean_behaviour_reward?: number | null
+          n_decisions: number
+          notes?: string | null
+          subject?: string | null
+          triggered_by?: string | null
+          window_end: string
+          window_start: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mean_behaviour_reward?: number | null
+          n_decisions?: number
+          notes?: string | null
+          subject?: string | null
+          triggered_by?: string | null
+          window_end?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
+      policy_regret_log: {
+        Row: {
+          bucket_key: string
+          created_at: string
+          decision_id: string | null
+          id: string
+          oracle_reward: number
+          realised_reward: number
+          regret: number
+          run_id: string | null
+          subject: string
+          user_id: string | null
+        }
+        Insert: {
+          bucket_key: string
+          created_at?: string
+          decision_id?: string | null
+          id?: string
+          oracle_reward: number
+          realised_reward: number
+          regret: number
+          run_id?: string | null
+          subject: string
+          user_id?: string | null
+        }
+        Update: {
+          bucket_key?: string
+          created_at?: string
+          decision_id?: string | null
+          id?: string
+          oracle_reward?: number
+          realised_reward?: number
+          regret?: number
+          run_id?: string | null
+          subject?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_regret_log_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "bandit_decisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_regret_log_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "policy_evaluation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       population_prior_runs: {
         Row: {
