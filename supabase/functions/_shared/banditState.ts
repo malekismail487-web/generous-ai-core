@@ -213,6 +213,7 @@ export async function applyReward(
   },
 ): Promise<{ armId: string; reward: number } | null> {
   try {
+    const cfg = await resolveCfg(admin);
     const reward = args.isCorrect ? 1 : 0;
     const { data, error } = await admin.rpc("attach_bandit_reward", {
       p_user_id: args.userId,
@@ -239,10 +240,10 @@ export async function applyReward(
     const prior = armRow
       ? hydrateArmState({
           A_inv: armRow.a_inv, b: armRow.b_vector,
-          n: armRow.n_pulls ?? 0, d: armRow.dim ?? CFG.d,
-        }, CFG)
-      : newArmState(CFG);
-    const next = updateArm(prior, row.context_vec as number[], reward, CFG);
+          n: armRow.n_pulls ?? 0, d: armRow.dim ?? cfg.d,
+        }, cfg)
+      : newArmState(cfg);
+    const next = updateArm(prior, row.context_vec as number[], reward, cfg);
     await persistArm(admin, {
       userId: args.userId,
       subject: args.subject,
@@ -250,6 +251,29 @@ export async function applyReward(
       state: next,
       rewardDelta: reward,
     });
+
+    // Stage 12 §4 — emit a per-decision regret observation. Best-effort.
+    try {
+      const decisionId = row.decision_id as string | undefined;
+      if (decisionId) {
+        const { data: dec } = await admin
+          .from("bandit_decisions")
+          .select("alternatives")
+          .eq("id", decisionId)
+          .maybeSingle();
+        await logDecisionRegret(admin, {
+          userId: args.userId,
+          subject: args.subject,
+          decisionId,
+          bucketKey: row.arm_id as string,
+          realisedReward: reward,
+          alternatives: Array.isArray(dec?.alternatives) ? dec.alternatives : [],
+        });
+      }
+    } catch (e) {
+      console.warn("[banditState.applyReward] regret log skipped:", e);
+    }
+
     return { armId: row.arm_id as string, reward };
   } catch (e) {
     console.error("[banditState.applyReward] error:", e);
