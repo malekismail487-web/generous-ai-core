@@ -32,6 +32,7 @@ import {
   expectedCalibrationError,
   type CalibrationEvent,
 } from "../_shared/calibration.ts";
+import { invalidateRuntimeConfig } from "../_shared/runtimeConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
