@@ -303,6 +303,11 @@ Deno.serve(async (req) => {
     const conceptId: string | undefined = body.conceptId;
     const context: string = (body.context || "").toString().slice(0, 2000);
 
+    // Stage 12 §1 — pull the live runtime config snapshot once per request.
+    // Every downstream consumer reads from this object so all decisions
+    // inside this request resolve against the same hyperparameter version.
+    const runtimeCfg = await getRuntimeConfig(admin);
+
     if (studentId !== callerId) {
       const { data: ok } = await admin.rpc("can_view_student_mastery", {
         p_viewer: callerId, p_student: studentId,
