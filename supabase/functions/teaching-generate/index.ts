@@ -896,8 +896,102 @@ Deno.serve(async (req) => {
       }, code);
     }
     const aiData = await aiResp.json();
-    const content = aiData?.choices?.[0]?.message?.content ?? "";
+    let content: string = aiData?.choices?.[0]?.message?.content ?? "";
+
+    // ─── Stage 12 §3 — True output enforcement ─────────────────────
+    // The legacy `enforce()` reports missing steps; we now actively
+    // attempt a single bounded repair pass before returning. If repair
+    // fails to improve integrity, the original content is returned and
+    // `enforcement.status` is set to "degraded" for downstream telemetry.
+    const integritySteps: IntegrityStep[] = trajectory.steps.map((s) => ({
+      kind: s.kind, mustVerify: s.mustVerify,
+    }));
+    let integrity = analyseIntegrity(content, integritySteps, {
+      minMandatory: runtimeCfg.outputMinMandatorySteps,
+    });
+    let enforcementStatus: "ok" | "repaired" | "degraded" = integrity.ok ? "ok" : "degraded";
+    if (!integrity.ok) {
+      try {
+        const repairPrompt = buildRepairPrompt(content, integritySteps, integrity);
+        const repairResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: "You repair lessons to satisfy a deterministic teaching contract." },
+              { role: "user", content: repairPrompt },
+            ],
+          }),
+        });
+        if (repairResp.ok) {
+          const repairData = await repairResp.json();
+          const repaired: string = repairData?.choices?.[0]?.message?.content ?? "";
+          const afterReport = analyseIntegrity(repaired, integritySteps, {
+            minMandatory: runtimeCfg.outputMinMandatorySteps,
+          });
+          if (repairImproved(integrity, afterReport)) {
+            content = repaired;
+            integrity = afterReport;
+            enforcementStatus = afterReport.ok ? "repaired" : "degraded";
+          }
+        }
+      } catch (e) {
+        console.warn("[teaching-generate] repair pass failed (non-fatal):", e);
+      }
+    }
     const enforced = enforce(content, regime, trajectory);
+
+    // ─── Stage 12 §5 — Runtime explainability ──────────────────────
+    const topPrereq = prereqHints
+      .filter((p) => p.mastery < 0.6)
+      .sort((a, b) => b.excitation - a.excitation)[0] ?? null;
+    const explanation: ExplainTrace = buildExplanation({
+      studentId,
+      subject: subjectName,
+      conceptId: conceptRow?.id ?? null,
+      lectureId: lectureRow?.id ?? null,
+      theta, standardError: se,
+      mastery: stateVector.mastery,
+      lectureMastery: stateVector.lectureMastery,
+      ensembleP: stateVector.ensembleP,
+      ensembleComponents: (ensembleComponents as Record<string, number> | undefined) ?? null,
+      regime: {
+        mode: regime.mode, intensity: regime.intensity,
+        verificationBias: regime.verificationBias, abstractionBias: regime.abstractionBias,
+      },
+      policy: { difficulty: policy.difficulty, pacing: policy.pacing, strategy: policy.strategy },
+      bandit: bandit ? {
+        armId: bandit.armId, strategy: bandit.strategy, difficulty: bandit.difficulty,
+        ucb: bandit.ucb, mean: bandit.mean, bonus: bandit.bonus,
+      } : null,
+      reviewDueCount: reviewDues.length,
+      topReviewPriority: reviewDues[0]?.priority,
+      prereqHotspot: topPrereq ? {
+        conceptName: topPrereq.conceptName, excitation: topPrereq.excitation, mastery: topPrereq.mastery,
+      } : null,
+      pacingMultiplier: outputV3.pacingMultiplier,
+      totalDurationSec: outputV3.totalDurationSec,
+      configSnapshotId: runtimeCfg.snapshotId,
+    });
+
+    // Best-effort persistence — adaptation must never block on telemetry.
+    try {
+      await admin.from("lesson_explanations").insert({
+        user_id: studentId,
+        subject: subjectName ?? null,
+        concept_id: conceptRow?.id ?? null,
+        lecture_id: lectureRow?.id ?? null,
+        bandit_decision_id: bandit?.decisionId ?? null,
+        prediction_log_id: predictionLogId,
+        config_snapshot_id: runtimeCfg.snapshotId,
+        enforcement_status: enforcementStatus,
+        integrity_report: integrity,
+        explanation,
+      });
+    } catch (e) {
+      console.warn("[teaching-generate] explanation persist failed (non-fatal):", e);
+    }
 
     return json({
       version: 3,
@@ -908,6 +1002,15 @@ Deno.serve(async (req) => {
       content: enforced.content,
       constrainedBy: enforced.constrainedBy,
       missingSteps: enforced.missingSteps,
+      // Stage 12 §3 — explicit enforcement surface.
+      enforcement: {
+        status: enforcementStatus,
+        integrity,
+      },
+      // Stage 12 §5 — runtime explainability trace (read-only).
+      explanation,
+      // Stage 12 §1 — provenance of the hyperparameter snapshot in effect.
+      configSnapshotId: runtimeCfg.snapshotId,
       // Stage 1: 2PL summary
       irt: {
         theta, standardError: se,
