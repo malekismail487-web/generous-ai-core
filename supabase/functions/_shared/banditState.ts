@@ -47,6 +47,7 @@ export async function loadArmsForUser(
   userId: string,
   subject: string,
 ): Promise<Record<string, LinUcbArmState>> {
+  const cfg = await resolveCfg(admin);
   const { data: userRows } = await admin
     .from("bandit_arm_state")
     .select("arm_id, a_inv, b_vector, n_pulls, dim")
@@ -70,10 +71,10 @@ export async function loadArmsForUser(
     const src = userIdx.get(armId) ?? popIdx.get(armId);
     if (src) {
       arms[armId] = hydrateArmState({
-        A_inv: src.a_inv, b: src.b_vector, n: src.n_pulls ?? 0, d: src.dim ?? CFG.d,
-      }, CFG);
+        A_inv: src.a_inv, b: src.b_vector, n: src.n_pulls ?? 0, d: src.dim ?? cfg.d,
+      }, cfg);
     } else {
-      arms[armId] = newArmState(CFG);
+      arms[armId] = newArmState(cfg);
     }
   }
   return arms;
