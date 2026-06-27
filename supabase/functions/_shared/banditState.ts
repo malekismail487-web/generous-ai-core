@@ -16,6 +16,9 @@ import {
   hydrateArmState, newArmState, selectArm, updateArm,
   type ArmScore, type LinUcbArmState, type LinUcbConfig,
 } from "./linucb.ts";
+import { getRuntimeConfig } from "./runtimeConfig.ts";
+import { softmaxPropensity } from "./propensity.ts";
+import { logDecisionRegret } from "./decisionRegret.ts";
 
 // Use the loose runtime client type so callers' typed clients pass through.
 // The edge functions instantiate createClient(SUPABASE_URL, SERVICE_ROLE)
@@ -24,7 +27,16 @@ import {
 // deno-lint-ignore no-explicit-any
 type SupabaseAdmin = any;
 
-const CFG: LinUcbConfig = { ...LINUCB_DEFAULTS, d: BANDIT_CONTEXT_DIM };
+// Default config — used until the first runtimeConfig load resolves. The
+// runtime path always re-derives CFG from the active snapshot so promoted
+// hyperparameters take effect within one cache window (10s).
+const CFG_DEFAULT: LinUcbConfig = { ...LINUCB_DEFAULTS, d: BANDIT_CONTEXT_DIM };
+
+async function resolveCfg(admin?: SupabaseAdmin): Promise<LinUcbConfig> {
+  if (!admin) return CFG_DEFAULT;
+  const rc = await getRuntimeConfig(admin);
+  return { d: BANDIT_CONTEXT_DIM, alpha: rc.linucbAlpha, lambda: rc.linucbLambda };
+}
 
 /**
  * Load every arm's state for (user, subject). User-scoped rows take priority;
