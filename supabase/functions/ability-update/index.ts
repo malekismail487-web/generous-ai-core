@@ -214,12 +214,17 @@ Deno.serve(async (req) => {
     const seenCurrent = question.times_seen ?? 0;
     const questionConfidence = clamp(seenCurrent / 20, 0.25, 1.0);
     const srcTrust = SOURCE_TRUST[source] ?? 0.7;
-    const speedPenalty =
-      typeof body.responseTimeMs === "number" &&
-      body.responseTimeMs > 0 &&
-      body.responseTimeMs < 1500
-        ? 0.7
-        : 1.0;
+
+    // Stage 12 §2 — smooth, log-normal response-time weighting. Replaces the
+    // legacy <1.5s binary penalty. The hard guess/slip detector below still
+    // applies for the extreme tails; the smooth weight removes the
+    // discontinuity at the threshold and reduces variance everywhere else.
+    const runtimeCfg = await getRuntimeConfig(admin);
+    const rtWeight = rtConfidenceWeight(
+      body.responseTimeMs ?? null,
+      body.isCorrect,
+      { rtMidpointMs: runtimeCfg.rtMidpointMs, rtSpreadLog: runtimeCfg.rtSpreadLog },
+    );
 
     // ── guess / slip detection (3PL-lite) ──────────────────────────────
     // A "guess" = correct answer on a question far above the student's
@@ -254,7 +259,9 @@ Deno.serve(async (req) => {
       if (lastThreeRight) guessSlipPenalty = 0.5;
     }
 
-    const baseResponseConfidence = srcTrust * speedPenalty * guessSlipPenalty;
+    // Stage 12 §2 — replace the binary speedPenalty with the smooth weight,
+    // composed multiplicatively with source trust and the guess/slip signal.
+    const baseResponseConfidence = srcTrust * rtWeight.weight * guessSlipPenalty;
 
     // ── 2PL update helpers ─────────────────────────────────────────────
     interface EstimateRow {
