@@ -144,13 +144,16 @@ export async function selectAndLog(
   },
 ): Promise<{ chosen: ArmScore; ranking: ArmScore[]; decisionId: string | null } | null> {
   try {
+    const cfg = await resolveCfg(admin);
+    const rc = await getRuntimeConfig(admin);
     const arms = await loadArmsForUser(admin, args.userId, args.subject);
-    const { chosen, ranking } = selectArm(arms, args.contextVec, CFG);
+    const { chosen, ranking } = selectArm(arms, args.contextVec, cfg);
 
     // Stage 11 — log a softmax-over-UCB propensity so every decision is
     // usable downstream by IPS / SNIPS / DR off-policy estimators.
-    const { softmaxPropensity, DEFAULT_TEMPERATURE } = await import("./propensity.ts");
-    const propDist = softmaxPropensity(ranking, chosen.armId, DEFAULT_TEMPERATURE);
+    // Stage 12 — temperature is now sourced from the active runtime
+    // config snapshot rather than the hardcoded DEFAULT_TEMPERATURE.
+    const propDist = softmaxPropensity(ranking, chosen.armId, rc.softmaxTau);
 
     const { data: inserted, error } = await admin
       .from("bandit_decisions")
