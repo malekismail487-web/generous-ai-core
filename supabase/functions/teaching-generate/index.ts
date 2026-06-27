@@ -580,10 +580,13 @@ Deno.serve(async (req) => {
         const p_hawkes = hawkes.p;
 
         // Stage 8: cold-start prior for ensemble weights when no per-user or
-        // population row exists in `ensemble_weights`.
+        // population row exists in `ensemble_weights`. Stage 12 §1: the
+        // tuned weights from runtimeConfig take precedence over the
+        // hardcoded defaults whenever neither user nor population row is
+        // present (the cold-start prior, when available, still wins).
         let weights: EnsembleWeights = subjectColdStart
           ? subjectColdStart.ensembleWeights
-          : ENSEMBLE_DEFAULTS;
+          : runtimeCfg.ensembleWeights;
         const { data: userW } = await admin
           .from("ensemble_weights")
           .select("w_2pl, w_elo, w_akt, w_dash, w_fsrs, w_hawkes, bias")
