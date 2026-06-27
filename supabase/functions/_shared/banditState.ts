@@ -94,6 +94,7 @@ export async function persistArm(
     rewardDelta: number;
   },
 ): Promise<void> {
+  const cfg = await resolveCfg(admin);
   const { userId, subject, armId, state, rewardDelta } = args;
   // Read prior cumulative_reward so we can increment monotonically.
   const { data: prior } = await admin
@@ -112,8 +113,8 @@ export async function persistArm(
     subject,
     arm_id: armId,
     dim: state.d,
-    alpha: CFG.alpha,
-    lambda: CFG.lambda,
+    alpha: cfg.alpha,
+    lambda: cfg.lambda,
     a_inv: state.A_inv,
     b_vector: state.b,
     n_pulls: state.n,
