@@ -34,6 +34,8 @@ import { persistFsrsCard } from "../_shared/fsrsState.ts";
 import { applyReward as applyBanditReward } from "../_shared/banditState.ts";
 import { attachEnsembleOutcome } from "../_shared/ensemblePredictionLog.ts";
 import { fetchHierarchicalPrior } from "../_shared/coldStart.ts";
+import { getRuntimeConfig } from "../_shared/runtimeConfig.ts";
+import { rtConfidenceWeight } from "../_shared/responseTime.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
