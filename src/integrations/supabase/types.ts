@@ -1218,6 +1218,63 @@ export type Database = {
           },
         ]
       }
+      continuous_validation_runs: {
+        Row: {
+          alerts: Json
+          base_rate: number | null
+          brier: number | null
+          created_at: string
+          cumulative_regret: number | null
+          ece: number | null
+          ensemble_weight_std: number | null
+          id: string
+          n_decisions: number
+          n_predictions: number
+          reliability: number | null
+          resolution: number | null
+          status: string
+          uncertainty: number | null
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          alerts?: Json
+          base_rate?: number | null
+          brier?: number | null
+          created_at?: string
+          cumulative_regret?: number | null
+          ece?: number | null
+          ensemble_weight_std?: number | null
+          id?: string
+          n_decisions?: number
+          n_predictions?: number
+          reliability?: number | null
+          resolution?: number | null
+          status?: string
+          uncertainty?: number | null
+          window_end: string
+          window_start: string
+        }
+        Update: {
+          alerts?: Json
+          base_rate?: number | null
+          brier?: number | null
+          created_at?: string
+          cumulative_regret?: number | null
+          ece?: number | null
+          ensemble_weight_std?: number | null
+          id?: string
+          n_decisions?: number
+          n_predictions?: number
+          reliability?: number | null
+          resolution?: number | null
+          status?: string
+          uncertainty?: number | null
+          window_end?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string
@@ -1406,6 +1463,47 @@ export type Database = {
             columns: ["concept_mastery_id"]
             isOneToOne: false
             referencedRelation: "concept_mastery"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      engine_drift_alerts: {
+        Row: {
+          baseline: number | null
+          created_at: string
+          id: string
+          message: string
+          metric: string
+          observed: number | null
+          run_id: string | null
+          severity: string
+        }
+        Insert: {
+          baseline?: number | null
+          created_at?: string
+          id?: string
+          message: string
+          metric: string
+          observed?: number | null
+          run_id?: string | null
+          severity: string
+        }
+        Update: {
+          baseline?: number | null
+          created_at?: string
+          id?: string
+          message?: string
+          metric?: string
+          observed?: number | null
+          run_id?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engine_drift_alerts_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "continuous_validation_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -2576,6 +2674,59 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_explanations: {
+        Row: {
+          bandit_decision_id: string | null
+          concept_id: string | null
+          config_snapshot_id: string
+          created_at: string
+          enforcement_status: string
+          explanation: Json
+          id: string
+          integrity_report: Json
+          lecture_id: string | null
+          prediction_log_id: string | null
+          subject: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bandit_decision_id?: string | null
+          concept_id?: string | null
+          config_snapshot_id: string
+          created_at?: string
+          enforcement_status: string
+          explanation: Json
+          id?: string
+          integrity_report: Json
+          lecture_id?: string | null
+          prediction_log_id?: string | null
+          subject?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bandit_decision_id?: string | null
+          concept_id?: string | null
+          config_snapshot_id?: string
+          created_at?: string
+          enforcement_status?: string
+          explanation?: Json
+          id?: string
+          integrity_report?: Json
+          lecture_id?: string | null
+          prediction_log_id?: string | null
+          subject?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_explanations_bandit_decision_id_fkey"
+            columns: ["bandit_decision_id"]
+            isOneToOne: false
+            referencedRelation: "bandit_decisions"
             referencedColumns: ["id"]
           },
         ]
