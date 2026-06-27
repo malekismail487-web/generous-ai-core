@@ -29,6 +29,12 @@ import { logEnsemblePrediction } from "../_shared/ensemblePredictionLog.ts";
 import { fetchHierarchicalPrior } from "../_shared/coldStart.ts";
 import { composeOutputV3, type ReviewDue, type PrereqHint } from "../_shared/outputEngineV3.ts";
 import { priorityScore } from "../_shared/fsrsScheduler.ts";
+import { getRuntimeConfig } from "../_shared/runtimeConfig.ts";
+import {
+  analyseIntegrity, buildRepairPrompt, repairImproved,
+  type IntegrityStep,
+} from "../_shared/outputIntegrity.ts";
+import { buildExplanation, type ExplainTrace } from "../_shared/explain.ts";
 
 
 const corsHeaders = {
