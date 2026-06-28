@@ -1144,6 +1144,26 @@ Deno.serve(async (req) => {
       },
       // legacy compatibility
       theta, standardError: se, conceptMastery, lectureMastery,
+      // Stage 13 — ministry-grade surfaces.
+      curriculumBinding: {
+        conceptKey: binding.conceptKey,
+        standardCode: binding.chosen?.standardCode ?? null,
+        objectiveCode: binding.chosen?.objectiveCode ?? null,
+        framework: binding.chosen?.framework ?? null,
+        textbookReference: binding.chosen?.textbookReference ?? null,
+        alignmentStrength: binding.chosen?.alignmentStrength ?? null,
+        candidateCount: binding.candidates.length,
+      },
+      teacherOverride: {
+        active: overrideProfile.sourceIds.length > 0 || overrideProfile.topicLocked,
+        freezeProgression: overrideProfile.freezeProgression,
+        difficultyLock: overrideProfile.difficultyLock,
+        pacingLock: overrideProfile.pacingLock,
+        strategyLock: overrideProfile.strategyLock,
+        manualLessonRef: overrideProfile.manualLessonRef,
+        topicLocked: overrideProfile.topicLocked,
+        reasons: overrideProfile.reasons,
+      },
     });
   } catch (e) {
     console.error("teaching-generate error", e);
