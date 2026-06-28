@@ -746,13 +746,15 @@ Deno.serve(async (req) => {
           topic: conceptRow?.name ?? null,
         });
         if (overrideProfile.freezeProgression) {
-          policy = applyOverridesToPolicy(policy, {
+          const patched = applyOverridesToPolicy(policy, {
             ...overrideProfile,
             difficultyLock: overrideProfile.difficultyLock ?? policy.difficulty,
             pacingLock: overrideProfile.pacingLock ?? "slow",
           });
+          policy = { ...policy, ...patched };
         } else {
-          policy = applyOverridesToPolicy(policy, overrideProfile);
+          const patched = applyOverridesToPolicy(policy, overrideProfile);
+          policy = { ...policy, ...patched };
         }
       } catch (e) {
         console.warn("[teaching-generate] override projection failed (non-fatal):", e);
