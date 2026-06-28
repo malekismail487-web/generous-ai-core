@@ -721,8 +721,11 @@ Deno.serve(async (req) => {
               armId: r.armId, ucb: r.ucb, mean: r.mean, bonus: r.bonus, n: r.n,
             })),
           };
+        }
       }
     }
+
+
 
     // ─── Stage 13 §3.3 — Teacher Override / Human Control ────────────
     // Resolved AFTER the bandit so manual locks are the ultimate authority.
