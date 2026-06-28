@@ -35,6 +35,13 @@ import {
   type IntegrityStep,
 } from "../_shared/outputIntegrity.ts";
 import { buildExplanation, type ExplainTrace } from "../_shared/explain.ts";
+// Stage 13 — Ministry-Grade Deployment Readiness layers.
+import {
+  loadActiveOverrides, projectOverrides, applyOverridesToPolicy,
+  type OverrideProfile,
+} from "../_shared/teacherOverride.ts";
+import { resolveBinding, recordLessonBinding, type BindingResult } from "../_shared/curriculumBinding.ts";
+import { recordAudit, describeLessonAudit } from "../_shared/auditTrail.ts";
 
 
 const corsHeaders = {
