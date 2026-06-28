@@ -1051,6 +1051,56 @@ Deno.serve(async (req) => {
       console.warn("[teaching-generate] explanation persist failed (non-fatal):", e);
     }
 
+    // ─── Stage 13 §3.2 — Curriculum binding (audit-grade alignment) ──
+    // Resolves the strongest (standard, objective) pair for the concept
+    // being taught and stamps it onto lesson_objective_bindings so every
+    // generated lesson carries a verifiable national-curriculum trace.
+    let binding: BindingResult = { candidates: [], chosen: null, conceptKey: "" };
+    try {
+      if (subjectName) {
+        binding = await resolveBinding(admin, {
+          schoolId: studentSchoolId,
+          subject: subjectName,
+          topic: conceptRow?.name ?? null,
+          conceptId: conceptRow?.id ?? null,
+        });
+        await recordLessonBinding(admin, {
+          schoolId: studentSchoolId,
+          studentId,
+          subject: subjectName,
+          topic: conceptRow?.name ?? null,
+          lessonRef: predictionLogId ?? bandit?.decisionId ?? null,
+          binding,
+          trace: {
+            policy_difficulty: policy.difficulty,
+            policy_strategy: policy.strategy,
+            regime_mode: regime.mode,
+            override_reasons: overrideProfile.reasons,
+          },
+        });
+      }
+    } catch (e) {
+      console.warn("[teaching-generate] curriculum binding failed (non-fatal):", e);
+    }
+
+    // ─── Stage 13 §3.4 — Governance audit trail entry ────────────────
+    try {
+      await recordAudit(admin, describeLessonAudit({
+        studentId,
+        schoolId: studentSchoolId,
+        subject: subjectName ?? "unknown",
+        topic: conceptRow?.name ?? null,
+        policyHash: `${regime.mode}|${policy.difficulty}|${policy.strategy}|${policy.pacing}`,
+        bindingStandardCode: binding.chosen?.standardCode ?? null,
+        bindingObjectiveCode: binding.chosen?.objectiveCode ?? null,
+        overrideReasons: overrideProfile.reasons,
+      }));
+    } catch (e) {
+      console.warn("[teaching-generate] audit trail failed (non-fatal):", e);
+    }
+
+
+
     return json({
       version: 3,
       policy,                      // legacy field — preserved
