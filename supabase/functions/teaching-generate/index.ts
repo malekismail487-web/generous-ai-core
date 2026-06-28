@@ -721,8 +721,59 @@ Deno.serve(async (req) => {
               armId: r.armId, ucb: r.ucb, mean: r.mean, bonus: r.bonus, n: r.n,
             })),
           };
-        }
       }
+    }
+
+    // ─── Stage 13 §3.3 — Teacher Override / Human Control ────────────
+    // Resolved AFTER the bandit so manual locks are the ultimate authority.
+    // If `freezeProgression` is active, we additionally pin difficulty to
+    // its current locked value (or "medium" baseline) and force pacing slow
+    // so the adaptive engine does not advance the student.
+    let overrideProfile: OverrideProfile = {
+      freezeProgression: false, difficultyLock: null, pacingLock: null,
+      strategyLock: null, manualLessonRef: null, curriculumPacingDayIndex: null,
+      topicLocked: false, reasons: [], sourceIds: [],
+    };
+    if (studentSchoolId) {
+      try {
+        const { overrides, locks } = await loadActiveOverrides(admin, studentSchoolId);
+        overrideProfile = projectOverrides(overrides, locks, {
+          studentId,
+          subject: subjectName ?? null,
+          topic: conceptRow?.name ?? null,
+        });
+        if (overrideProfile.freezeProgression) {
+          policy = applyOverridesToPolicy(policy, {
+            ...overrideProfile,
+            difficultyLock: overrideProfile.difficultyLock ?? policy.difficulty,
+            pacingLock: overrideProfile.pacingLock ?? "slow",
+          });
+        } else {
+          policy = applyOverridesToPolicy(policy, overrideProfile);
+        }
+      } catch (e) {
+        console.warn("[teaching-generate] override projection failed (non-fatal):", e);
+      }
+    }
+
+    if (overrideProfile.topicLocked) {
+      // A locked topic must not be taught. Surface a clean, deterministic
+      // response so the client can render a teacher-friendly notice rather
+      // than burning AI credits on suppressed content.
+      await recordAudit(admin, {
+        action: "ai.lesson.generated", actorId: studentId, actorRole: "student",
+        schoolId: studentSchoolId,
+        targetType: "lesson", targetId: "topic_locked",
+        payload: { subject: subjectName ?? null, topic: conceptRow?.name ?? null,
+                   reasons: overrideProfile.reasons },
+      });
+      return json({
+        version: 3, policy, regime, trajectory, stateVector,
+        content: "", suppressed: true, suppression_reason: "topic_locked",
+        override: overrideProfile,
+      }, 200);
+    }
+
     }
 
     // ─── Stage 7 — log this prediction for ensemble retraining ────────
