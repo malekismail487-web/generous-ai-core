@@ -35,6 +35,13 @@ import {
   type IntegrityStep,
 } from "../_shared/outputIntegrity.ts";
 import { buildExplanation, type ExplainTrace } from "../_shared/explain.ts";
+// Stage 13 — Ministry-Grade Deployment Readiness layers.
+import {
+  loadActiveOverrides, projectOverrides, applyOverridesToPolicy,
+  type OverrideProfile,
+} from "../_shared/teacherOverride.ts";
+import { resolveBinding, recordLessonBinding, type BindingResult } from "../_shared/curriculumBinding.ts";
+import { recordAudit, describeLessonAudit } from "../_shared/auditTrail.ts";
 
 
 const corsHeaders = {
@@ -718,6 +725,62 @@ Deno.serve(async (req) => {
       }
     }
 
+
+
+    // ─── Stage 13 §3.3 — Teacher Override / Human Control ────────────
+    // Resolved AFTER the bandit so manual locks are the ultimate authority.
+    // If `freezeProgression` is active, we additionally pin difficulty to
+    // its current locked value (or "medium" baseline) and force pacing slow
+    // so the adaptive engine does not advance the student.
+    let overrideProfile: OverrideProfile = {
+      freezeProgression: false, difficultyLock: null, pacingLock: null,
+      strategyLock: null, manualLessonRef: null, curriculumPacingDayIndex: null,
+      topicLocked: false, reasons: [], sourceIds: [],
+    };
+    if (studentSchoolId) {
+      try {
+        const { overrides, locks } = await loadActiveOverrides(admin, studentSchoolId);
+        overrideProfile = projectOverrides(overrides, locks, {
+          studentId,
+          subject: subjectName ?? null,
+          topic: conceptRow?.name ?? null,
+        });
+        if (overrideProfile.freezeProgression) {
+          const patched = applyOverridesToPolicy(policy, {
+            ...overrideProfile,
+            difficultyLock: overrideProfile.difficultyLock ?? policy.difficulty,
+            pacingLock: overrideProfile.pacingLock ?? "slow",
+          });
+          policy = { ...policy, ...patched };
+        } else {
+          const patched = applyOverridesToPolicy(policy, overrideProfile);
+          policy = { ...policy, ...patched };
+        }
+      } catch (e) {
+        console.warn("[teaching-generate] override projection failed (non-fatal):", e);
+      }
+    }
+
+    if (overrideProfile.topicLocked) {
+      // A locked topic must not be taught. Surface a clean, deterministic
+      // response so the client can render a teacher-friendly notice rather
+      // than burning AI credits on suppressed content.
+      await recordAudit(admin, {
+        action: "ai.lesson.generated", actorId: studentId, actorRole: "student",
+        schoolId: studentSchoolId,
+        targetType: "lesson", targetId: "topic_locked",
+        payload: { subject: subjectName ?? null, topic: conceptRow?.name ?? null,
+                   reasons: overrideProfile.reasons },
+      });
+      return json({
+        version: 3, policy, regime, trajectory, stateVector,
+        content: "", suppressed: true, suppression_reason: "topic_locked",
+        override: overrideProfile,
+      }, 200);
+    }
+
+
+
     // ─── Stage 7 — log this prediction for ensemble retraining ────────
     // Fire-and-forget. We log even when the bandit short-circuits so the
     // training set isn't biased toward only-bandit-served sessions. Outcome
@@ -993,6 +1056,56 @@ Deno.serve(async (req) => {
       console.warn("[teaching-generate] explanation persist failed (non-fatal):", e);
     }
 
+    // ─── Stage 13 §3.2 — Curriculum binding (audit-grade alignment) ──
+    // Resolves the strongest (standard, objective) pair for the concept
+    // being taught and stamps it onto lesson_objective_bindings so every
+    // generated lesson carries a verifiable national-curriculum trace.
+    let binding: BindingResult = { candidates: [], chosen: null, conceptKey: "" };
+    try {
+      if (subjectName) {
+        binding = await resolveBinding(admin, {
+          schoolId: studentSchoolId,
+          subject: subjectName,
+          topic: conceptRow?.name ?? null,
+          conceptId: conceptRow?.id ?? null,
+        });
+        await recordLessonBinding(admin, {
+          schoolId: studentSchoolId,
+          studentId,
+          subject: subjectName,
+          topic: conceptRow?.name ?? null,
+          lessonRef: predictionLogId ?? bandit?.decisionId ?? null,
+          binding,
+          trace: {
+            policy_difficulty: policy.difficulty,
+            policy_strategy: policy.strategy,
+            regime_mode: regime.mode,
+            override_reasons: overrideProfile.reasons,
+          },
+        });
+      }
+    } catch (e) {
+      console.warn("[teaching-generate] curriculum binding failed (non-fatal):", e);
+    }
+
+    // ─── Stage 13 §3.4 — Governance audit trail entry ────────────────
+    try {
+      await recordAudit(admin, describeLessonAudit({
+        studentId,
+        schoolId: studentSchoolId,
+        subject: subjectName ?? "unknown",
+        topic: conceptRow?.name ?? null,
+        policyHash: `${regime.mode}|${policy.difficulty}|${policy.strategy}|${policy.pacing}`,
+        bindingStandardCode: binding.chosen?.standardCode ?? null,
+        bindingObjectiveCode: binding.chosen?.objectiveCode ?? null,
+        overrideReasons: overrideProfile.reasons,
+      }));
+    } catch (e) {
+      console.warn("[teaching-generate] audit trail failed (non-fatal):", e);
+    }
+
+
+
     return json({
       version: 3,
       policy,                      // legacy field — preserved
@@ -1036,6 +1149,26 @@ Deno.serve(async (req) => {
       },
       // legacy compatibility
       theta, standardError: se, conceptMastery, lectureMastery,
+      // Stage 13 — ministry-grade surfaces.
+      curriculumBinding: {
+        conceptKey: binding.conceptKey,
+        standardCode: binding.chosen?.standardCode ?? null,
+        objectiveCode: binding.chosen?.objectiveCode ?? null,
+        framework: binding.chosen?.framework ?? null,
+        textbookReference: binding.chosen?.textbookReference ?? null,
+        alignmentStrength: binding.chosen?.alignmentStrength ?? null,
+        candidateCount: binding.candidates.length,
+      },
+      teacherOverride: {
+        active: overrideProfile.sourceIds.length > 0 || overrideProfile.topicLocked,
+        freezeProgression: overrideProfile.freezeProgression,
+        difficultyLock: overrideProfile.difficultyLock,
+        pacingLock: overrideProfile.pacingLock,
+        strategyLock: overrideProfile.strategyLock,
+        manualLessonRef: overrideProfile.manualLessonRef,
+        topicLocked: overrideProfile.topicLocked,
+        reasons: overrideProfile.reasons,
+      },
     });
   } catch (e) {
     console.error("teaching-generate error", e);
