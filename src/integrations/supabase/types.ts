@@ -358,6 +358,66 @@ export type Database = {
           },
         ]
       }
+      assessment_scores: {
+        Row: {
+          id: string
+          measured_at: string
+          metadata: Json
+          pct: number | null
+          phase: string
+          pilot_id: string | null
+          school_id: string | null
+          score: number
+          source: string
+          student_id: string
+          subject: string
+          total: number
+        }
+        Insert: {
+          id?: string
+          measured_at?: string
+          metadata?: Json
+          pct?: number | null
+          phase: string
+          pilot_id?: string | null
+          school_id?: string | null
+          score: number
+          source?: string
+          student_id: string
+          subject: string
+          total: number
+        }
+        Update: {
+          id?: string
+          measured_at?: string
+          metadata?: Json
+          pct?: number | null
+          phase?: string
+          pilot_id?: string | null
+          school_id?: string | null
+          score?: number
+          source?: string
+          student_id?: string
+          subject?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_scores_pilot_id_fkey"
+            columns: ["pilot_id"]
+            isOneToOne: false
+            referencedRelation: "pilot_studies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_scores_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignment_submissions: {
         Row: {
           assignment_id: string
@@ -1017,6 +1077,64 @@ export type Database = {
           },
         ]
       }
+      concept_standard_map: {
+        Row: {
+          alignment_strength: number
+          concept_key: string
+          created_at: string
+          id: string
+          objective_id: string | null
+          rationale: string | null
+          school_id: string | null
+          standard_id: string
+          subject: string
+        }
+        Insert: {
+          alignment_strength?: number
+          concept_key: string
+          created_at?: string
+          id?: string
+          objective_id?: string | null
+          rationale?: string | null
+          school_id?: string | null
+          standard_id: string
+          subject: string
+        }
+        Update: {
+          alignment_strength?: number
+          concept_key?: string
+          created_at?: string
+          id?: string
+          objective_id?: string | null
+          rationale?: string | null
+          school_id?: string | null
+          standard_id?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_standard_map_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "learning_objectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_standard_map_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_standard_map_standard_id_fkey"
+            columns: ["standard_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_standards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concepts: {
         Row: {
           created_at: string
@@ -1349,6 +1467,63 @@ export type Database = {
           },
         ]
       }
+      curriculum_standards: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          framework: string
+          grade_level: string | null
+          id: string
+          is_active: boolean
+          parent_id: string | null
+          school_id: string | null
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          framework: string
+          grade_level?: string | null
+          id?: string
+          is_active?: boolean
+          parent_id?: string | null
+          school_id?: string | null
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          framework?: string
+          grade_level?: string | null
+          id?: string
+          is_active?: boolean
+          parent_id?: string | null
+          school_id?: string | null
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_standards_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_standards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_standards_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       curriculum_versions: {
         Row: {
           changes: Json
@@ -1416,6 +1591,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      data_export_requests: {
+        Row: {
+          completed_at: string | null
+          error: string | null
+          id: string
+          payload: Json | null
+          requested_at: string
+          requested_by: string
+          school_id: string | null
+          scope: string
+          status: string
+          target_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          requested_at?: string
+          requested_by: string
+          school_id?: string | null
+          scope: string
+          status?: string
+          target_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          requested_at?: string
+          requested_by?: string
+          school_id?: string | null
+          scope?: string
+          status?: string
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_export_requests_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       decay_refreshers: {
         Row: {
@@ -1886,6 +2108,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      governance_audit_trail: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string | null
+          id: number
+          ip_address: string | null
+          occurred_at: string
+          payload: Json
+          school_id: string | null
+          target_id: string | null
+          target_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role?: string | null
+          id?: number
+          ip_address?: string | null
+          occurred_at?: string
+          payload?: Json
+          school_id?: string | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string | null
+          id?: number
+          ip_address?: string | null
+          occurred_at?: string
+          payload?: Json
+          school_id?: string | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
       }
       graded_events: {
         Row: {
@@ -2573,6 +2837,112 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_objectives: {
+        Row: {
+          bloom_level: string
+          code: string
+          created_at: string
+          description: string
+          id: string
+          standard_id: string
+          textbook_reference: string | null
+        }
+        Insert: {
+          bloom_level?: string
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          standard_id: string
+          textbook_reference?: string | null
+        }
+        Update: {
+          bloom_level?: string
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          standard_id?: string
+          textbook_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_objectives_standard_id_fkey"
+            columns: ["standard_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_standards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_outcomes: {
+        Row: {
+          baseline_mastery: number | null
+          baseline_score: number | null
+          computed_at: string
+          current_mastery: number | null
+          current_score: number | null
+          id: string
+          mastery_delta: number | null
+          pilot_arm: string | null
+          retention_14d: number | null
+          retention_30d: number | null
+          retention_7d: number | null
+          school_id: string | null
+          score_delta: number | null
+          student_id: string
+          subject: string
+          time_to_mastery_sec: number | null
+          topic: string | null
+        }
+        Insert: {
+          baseline_mastery?: number | null
+          baseline_score?: number | null
+          computed_at?: string
+          current_mastery?: number | null
+          current_score?: number | null
+          id?: string
+          mastery_delta?: number | null
+          pilot_arm?: string | null
+          retention_14d?: number | null
+          retention_30d?: number | null
+          retention_7d?: number | null
+          school_id?: string | null
+          score_delta?: number | null
+          student_id: string
+          subject: string
+          time_to_mastery_sec?: number | null
+          topic?: string | null
+        }
+        Update: {
+          baseline_mastery?: number | null
+          baseline_score?: number | null
+          computed_at?: string
+          current_mastery?: number | null
+          current_score?: number | null
+          id?: string
+          mastery_delta?: number | null
+          pilot_arm?: string | null
+          retention_14d?: number | null
+          retention_30d?: number | null
+          retention_7d?: number | null
+          school_id?: string | null
+          score_delta?: number | null
+          student_id?: string
+          subject?: string
+          time_to_mastery_sec?: number | null
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_outcomes_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learning_style_profiles: {
         Row: {
           conceptual_score: number | null
@@ -2727,6 +3097,79 @@ export type Database = {
             columns: ["bandit_decision_id"]
             isOneToOne: false
             referencedRelation: "bandit_decisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_objective_bindings: {
+        Row: {
+          alignment_trace: Json
+          framework: string | null
+          generated_at: string
+          id: string
+          lesson_ref: string | null
+          objective_code: string | null
+          objective_id: string | null
+          school_id: string | null
+          standard_code: string | null
+          standard_id: string | null
+          student_id: string
+          subject: string
+          textbook_reference: string | null
+          topic: string | null
+        }
+        Insert: {
+          alignment_trace?: Json
+          framework?: string | null
+          generated_at?: string
+          id?: string
+          lesson_ref?: string | null
+          objective_code?: string | null
+          objective_id?: string | null
+          school_id?: string | null
+          standard_code?: string | null
+          standard_id?: string | null
+          student_id: string
+          subject: string
+          textbook_reference?: string | null
+          topic?: string | null
+        }
+        Update: {
+          alignment_trace?: Json
+          framework?: string | null
+          generated_at?: string
+          id?: string
+          lesson_ref?: string | null
+          objective_code?: string | null
+          objective_id?: string | null
+          school_id?: string | null
+          standard_code?: string | null
+          standard_id?: string | null
+          student_id?: string
+          subject?: string
+          textbook_reference?: string | null
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_objective_bindings_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "learning_objectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_objective_bindings_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_objective_bindings_standard_id_fkey"
+            columns: ["standard_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_standards"
             referencedColumns: ["id"]
           },
         ]
@@ -3704,6 +4147,97 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "parent_students_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pilot_assignments: {
+        Row: {
+          arm: string
+          enrolled_at: string
+          id: string
+          pilot_id: string
+          student_id: string
+        }
+        Insert: {
+          arm: string
+          enrolled_at?: string
+          id?: string
+          pilot_id: string
+          student_id: string
+        }
+        Update: {
+          arm?: string
+          enrolled_at?: string
+          id?: string
+          pilot_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pilot_assignments_pilot_id_fkey"
+            columns: ["pilot_id"]
+            isOneToOne: false
+            referencedRelation: "pilot_studies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pilot_studies: {
+        Row: {
+          control_description: string
+          created_at: string
+          created_by: string
+          ended_at: string | null
+          grade_level: string | null
+          hypothesis: string
+          id: string
+          name: string
+          school_id: string | null
+          started_at: string | null
+          status: string
+          subject: string | null
+          treatment_description: string
+          updated_at: string
+        }
+        Insert: {
+          control_description?: string
+          created_at?: string
+          created_by: string
+          ended_at?: string | null
+          grade_level?: string | null
+          hypothesis: string
+          id?: string
+          name: string
+          school_id?: string | null
+          started_at?: string | null
+          status?: string
+          subject?: string | null
+          treatment_description?: string
+          updated_at?: string
+        }
+        Update: {
+          control_description?: string
+          created_at?: string
+          created_by?: string
+          ended_at?: string | null
+          grade_level?: string | null
+          hypothesis?: string
+          id?: string
+          name?: string
+          school_id?: string | null
+          started_at?: string | null
+          status?: string
+          subject?: string | null
+          treatment_description?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pilot_studies_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
@@ -4815,6 +5349,71 @@ export type Database = {
           },
         ]
       }
+      teacher_overrides: {
+        Row: {
+          active: boolean
+          class_id: string | null
+          created_at: string
+          effective_from: string
+          expires_at: string | null
+          id: string
+          override_type: string
+          payload: Json
+          reason: string | null
+          school_id: string
+          scope: string
+          student_id: string | null
+          subject: string | null
+          teacher_id: string
+          topic: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          class_id?: string | null
+          created_at?: string
+          effective_from?: string
+          expires_at?: string | null
+          id?: string
+          override_type: string
+          payload?: Json
+          reason?: string | null
+          school_id: string
+          scope: string
+          student_id?: string | null
+          subject?: string | null
+          teacher_id: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          class_id?: string | null
+          created_at?: string
+          effective_from?: string
+          expires_at?: string | null
+          id?: string
+          override_type?: string
+          payload?: Json
+          reason?: string | null
+          school_id?: string
+          scope?: string
+          student_id?: string | null
+          subject?: string | null
+          teacher_id?: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_overrides_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teacher_requests: {
         Row: {
           admin_notes: string | null
@@ -4870,6 +5469,59 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_locks: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          school_id: string
+          scope: string
+          state: string
+          student_id: string | null
+          subject: string
+          teacher_id: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          school_id: string
+          scope: string
+          state?: string
+          student_id?: string | null
+          subject: string
+          teacher_id: string
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          school_id?: string
+          scope?: string
+          state?: string
+          student_id?: string | null
+          subject?: string
+          teacher_id?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_locks_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
             referencedColumns: ["id"]
           },
         ]
