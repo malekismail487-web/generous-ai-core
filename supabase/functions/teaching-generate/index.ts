@@ -774,7 +774,7 @@ Deno.serve(async (req) => {
       }, 200);
     }
 
-    }
+
 
     // ─── Stage 7 — log this prediction for ensemble retraining ────────
     // Fire-and-forget. We log even when the bandit short-circuits so the
