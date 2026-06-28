@@ -32,6 +32,7 @@ import {
   expectedCalibrationError,
   type CalibrationEvent,
 } from "../_shared/calibration.ts";
+import { invalidateRuntimeConfig } from "../_shared/runtimeConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -183,6 +184,9 @@ Deno.serve(async (req) => {
       await admin.from("hyperparameter_tuning_runs")
         .update({ promoted: true, promoted_at: new Date().toISOString() })
         .eq("id", runRow.id);
+      // Stage 12 §1 — invalidate the in-process cache so the next
+      // adaptive call resolves the freshly-promoted snapshot immediately.
+      invalidateRuntimeConfig();
     }
 
     return new Response(

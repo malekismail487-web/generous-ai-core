@@ -16,6 +16,9 @@ import {
   hydrateArmState, newArmState, selectArm, updateArm,
   type ArmScore, type LinUcbArmState, type LinUcbConfig,
 } from "./linucb.ts";
+import { getRuntimeConfig } from "./runtimeConfig.ts";
+import { softmaxPropensity } from "./propensity.ts";
+import { logDecisionRegret } from "./decisionRegret.ts";
 
 // Use the loose runtime client type so callers' typed clients pass through.
 // The edge functions instantiate createClient(SUPABASE_URL, SERVICE_ROLE)
@@ -24,7 +27,16 @@ import {
 // deno-lint-ignore no-explicit-any
 type SupabaseAdmin = any;
 
-const CFG: LinUcbConfig = { ...LINUCB_DEFAULTS, d: BANDIT_CONTEXT_DIM };
+// Default config — used until the first runtimeConfig load resolves. The
+// runtime path always re-derives CFG from the active snapshot so promoted
+// hyperparameters take effect within one cache window (10s).
+const CFG_DEFAULT: LinUcbConfig = { ...LINUCB_DEFAULTS, d: BANDIT_CONTEXT_DIM };
+
+async function resolveCfg(admin?: SupabaseAdmin): Promise<LinUcbConfig> {
+  if (!admin) return CFG_DEFAULT;
+  const rc = await getRuntimeConfig(admin);
+  return { d: BANDIT_CONTEXT_DIM, alpha: rc.linucbAlpha, lambda: rc.linucbLambda };
+}
 
 /**
  * Load every arm's state for (user, subject). User-scoped rows take priority;
@@ -35,6 +47,7 @@ export async function loadArmsForUser(
   userId: string,
   subject: string,
 ): Promise<Record<string, LinUcbArmState>> {
+  const cfg = await resolveCfg(admin);
   const { data: userRows } = await admin
     .from("bandit_arm_state")
     .select("arm_id, a_inv, b_vector, n_pulls, dim")
@@ -58,10 +71,10 @@ export async function loadArmsForUser(
     const src = userIdx.get(armId) ?? popIdx.get(armId);
     if (src) {
       arms[armId] = hydrateArmState({
-        A_inv: src.a_inv, b: src.b_vector, n: src.n_pulls ?? 0, d: src.dim ?? CFG.d,
-      }, CFG);
+        A_inv: src.a_inv, b: src.b_vector, n: src.n_pulls ?? 0, d: src.dim ?? cfg.d,
+      }, cfg);
     } else {
-      arms[armId] = newArmState(CFG);
+      arms[armId] = newArmState(cfg);
     }
   }
   return arms;
@@ -81,6 +94,7 @@ export async function persistArm(
     rewardDelta: number;
   },
 ): Promise<void> {
+  const cfg = await resolveCfg(admin);
   const { userId, subject, armId, state, rewardDelta } = args;
   // Read prior cumulative_reward so we can increment monotonically.
   const { data: prior } = await admin
@@ -99,8 +113,8 @@ export async function persistArm(
     subject,
     arm_id: armId,
     dim: state.d,
-    alpha: CFG.alpha,
-    lambda: CFG.lambda,
+    alpha: cfg.alpha,
+    lambda: cfg.lambda,
     a_inv: state.A_inv,
     b_vector: state.b,
     n_pulls: state.n,
@@ -130,13 +144,16 @@ export async function selectAndLog(
   },
 ): Promise<{ chosen: ArmScore; ranking: ArmScore[]; decisionId: string | null } | null> {
   try {
+    const cfg = await resolveCfg(admin);
+    const rc = await getRuntimeConfig(admin);
     const arms = await loadArmsForUser(admin, args.userId, args.subject);
-    const { chosen, ranking } = selectArm(arms, args.contextVec, CFG);
+    const { chosen, ranking } = selectArm(arms, args.contextVec, cfg);
 
     // Stage 11 — log a softmax-over-UCB propensity so every decision is
     // usable downstream by IPS / SNIPS / DR off-policy estimators.
-    const { softmaxPropensity, DEFAULT_TEMPERATURE } = await import("./propensity.ts");
-    const propDist = softmaxPropensity(ranking, chosen.armId, DEFAULT_TEMPERATURE);
+    // Stage 12 — temperature is now sourced from the active runtime
+    // config snapshot rather than the hardcoded DEFAULT_TEMPERATURE.
+    const propDist = softmaxPropensity(ranking, chosen.armId, rc.softmaxTau);
 
     const { data: inserted, error } = await admin
       .from("bandit_decisions")
@@ -196,6 +213,7 @@ export async function applyReward(
   },
 ): Promise<{ armId: string; reward: number } | null> {
   try {
+    const cfg = await resolveCfg(admin);
     const reward = args.isCorrect ? 1 : 0;
     const { data, error } = await admin.rpc("attach_bandit_reward", {
       p_user_id: args.userId,
@@ -222,10 +240,10 @@ export async function applyReward(
     const prior = armRow
       ? hydrateArmState({
           A_inv: armRow.a_inv, b: armRow.b_vector,
-          n: armRow.n_pulls ?? 0, d: armRow.dim ?? CFG.d,
-        }, CFG)
-      : newArmState(CFG);
-    const next = updateArm(prior, row.context_vec as number[], reward, CFG);
+          n: armRow.n_pulls ?? 0, d: armRow.dim ?? cfg.d,
+        }, cfg)
+      : newArmState(cfg);
+    const next = updateArm(prior, row.context_vec as number[], reward, cfg);
     await persistArm(admin, {
       userId: args.userId,
       subject: args.subject,
@@ -233,6 +251,29 @@ export async function applyReward(
       state: next,
       rewardDelta: reward,
     });
+
+    // Stage 12 §4 — emit a per-decision regret observation. Best-effort.
+    try {
+      const decisionId = row.decision_id as string | undefined;
+      if (decisionId) {
+        const { data: dec } = await admin
+          .from("bandit_decisions")
+          .select("alternatives")
+          .eq("id", decisionId)
+          .maybeSingle();
+        await logDecisionRegret(admin, {
+          userId: args.userId,
+          subject: args.subject,
+          decisionId,
+          bucketKey: row.arm_id as string,
+          realisedReward: reward,
+          alternatives: Array.isArray(dec?.alternatives) ? dec.alternatives : [],
+        });
+      }
+    } catch (e) {
+      console.warn("[banditState.applyReward] regret log skipped:", e);
+    }
+
     return { armId: row.arm_id as string, reward };
   } catch (e) {
     console.error("[banditState.applyReward] error:", e);
