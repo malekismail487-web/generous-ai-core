@@ -3662,6 +3662,39 @@ export type Database = {
         }
         Relationships: []
       }
+      misconception_embeddings: {
+        Row: {
+          activation: number
+          concept_id: string
+          embedding: Json
+          id: string
+          last_updated: string
+          misconception_id: string
+          posterior: number
+          user_id: string
+        }
+        Insert: {
+          activation?: number
+          concept_id: string
+          embedding: Json
+          id?: string
+          last_updated?: string
+          misconception_id: string
+          posterior?: number
+          user_id: string
+        }
+        Update: {
+          activation?: number
+          concept_id?: string
+          embedding?: Json
+          id?: string
+          last_updated?: string
+          misconception_id?: string
+          posterior?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       model_evaluation_metrics: {
         Row: {
           accuracy: number
@@ -5295,6 +5328,39 @@ export type Database = {
         }
         Relationships: []
       }
+      symbolic_alignment_matrices: {
+        Row: {
+          created_at: string
+          forward: Json
+          forward_bias: Json
+          id: string
+          inverse: Json
+          is_active: boolean
+          standard_ids: Json
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          forward: Json
+          forward_bias: Json
+          id?: string
+          inverse: Json
+          is_active?: boolean
+          standard_ids: Json
+          version: string
+        }
+        Update: {
+          created_at?: string
+          forward?: Json
+          forward_bias?: Json
+          id?: string
+          inverse?: Json
+          is_active?: boolean
+          standard_ids?: Json
+          version?: string
+        }
+        Relationships: []
+      }
       teacher_categories: {
         Row: {
           color: string | null
@@ -5583,6 +5649,169 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "trips_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unified_objective_runs: {
+        Row: {
+          breakdown_after: Json | null
+          breakdown_before: Json | null
+          candidate_version: string | null
+          finished_at: string | null
+          id: string
+          loss_after: number | null
+          loss_before: number | null
+          notes: string | null
+          promoted: boolean
+          sample_count: number
+          started_at: string
+        }
+        Insert: {
+          breakdown_after?: Json | null
+          breakdown_before?: Json | null
+          candidate_version?: string | null
+          finished_at?: string | null
+          id?: string
+          loss_after?: number | null
+          loss_before?: number | null
+          notes?: string | null
+          promoted?: boolean
+          sample_count?: number
+          started_at?: string
+        }
+        Update: {
+          breakdown_after?: Json | null
+          breakdown_before?: Json | null
+          candidate_version?: string | null
+          finished_at?: string | null
+          id?: string
+          loss_after?: number | null
+          loss_before?: number | null
+          notes?: string | null
+          promoted?: boolean
+          sample_count?: number
+          started_at?: string
+        }
+        Relationships: []
+      }
+      unified_policy_decisions: {
+        Row: {
+          action: Json
+          created_at: string
+          id: string
+          joint_propensity: number
+          probabilities: Json
+          realised_reward: number | null
+          school_id: string | null
+          shadow_mode: boolean
+          user_id: string
+          weights_version: string
+          z_vector: Json
+        }
+        Insert: {
+          action: Json
+          created_at?: string
+          id?: string
+          joint_propensity: number
+          probabilities: Json
+          realised_reward?: number | null
+          school_id?: string | null
+          shadow_mode?: boolean
+          user_id: string
+          weights_version: string
+          z_vector: Json
+        }
+        Update: {
+          action?: Json
+          created_at?: string
+          id?: string
+          joint_propensity?: number
+          probabilities?: Json
+          realised_reward?: number | null
+          school_id?: string | null
+          shadow_mode?: boolean
+          user_id?: string
+          weights_version?: string
+          z_vector?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unified_policy_decisions_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unified_policy_weights: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          lambdas: Json
+          promoted_at: string | null
+          version: string
+          weights: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          lambdas?: Json
+          promoted_at?: string | null
+          version: string
+          weights: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          lambdas?: Json
+          promoted_at?: string | null
+          version?: string
+          weights?: Json
+        }
+        Relationships: []
+      }
+      unified_student_state: {
+        Row: {
+          created_at: string
+          id: string
+          layout_version: number
+          school_id: string | null
+          subject: string
+          subsystem_snapshot: Json
+          user_id: string
+          z_vector: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          layout_version?: number
+          school_id?: string | null
+          subject: string
+          subsystem_snapshot?: Json
+          user_id: string
+          z_vector: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          layout_version?: number
+          school_id?: string | null
+          subject?: string
+          subsystem_snapshot?: Json
+          user_id?: string
+          z_vector?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unified_student_state_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
