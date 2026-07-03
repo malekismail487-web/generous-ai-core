@@ -26,6 +26,7 @@ export function TeachBackMode({ subject, topic, onExit }: TeachBackModeProps) {
   const [scores, setScores] = useState<RubricScores | null>(null);
   const [total, setTotal] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<string>('');
+  const { getSimpleParams, recordChat, recordAnswer, recordActivity } = useAdaptiveIntelligence();
 
   const submit = async () => {
     if (explanation.trim().length < 40) {
@@ -33,9 +34,20 @@ export function TeachBackMode({ subject, topic, onExit }: TeachBackModeProps) {
       return;
     }
     setLoading(true);
+    // The full teach-back explanation IS the interaction — feed it to the
+    // emotional/cognitive engines before the grade returns.
+    recordChat(explanation.trim());
     try {
+      let intel = { adaptiveLevel: 'intermediate', learningStyle: '' };
+      try { intel = await getSimpleParams('learning_mode', subject); } catch { /* fallback */ }
       const { data, error } = await supabase.functions.invoke('teach-back-grade', {
-        body: { subject, topic, explanation: explanation.trim() },
+        body: {
+          subject,
+          topic,
+          explanation: explanation.trim(),
+          adaptiveLevel: intel.adaptiveLevel,
+          learningStyle: intel.learningStyle,
+        },
       });
       if (error) throw error;
       const d = data as any;
@@ -43,6 +55,19 @@ export function TeachBackMode({ subject, topic, onExit }: TeachBackModeProps) {
       setScores(d.scores);
       setTotal(d.total);
       setFeedback(d.feedback ?? '');
+      recordActivity({ subject, topic, feature: 'learning_mode', durationEstimate: 180 });
+      // Close the loop with a graded event (rubric total is 0..100).
+      if (typeof d.total === 'number') {
+        recordAnswer({
+          subject,
+          questionText: `Teach-back: ${topic}`,
+          studentAnswer: explanation.trim(),
+          correctAnswer: d.feedback ?? '',
+          isCorrect: d.total >= 60,
+          difficulty: 'medium',
+          source: 'learning_mode:teach_back',
+        });
+      }
     } catch (e: any) {
       toast.error(`Could not grade: ${e.message ?? 'try again'}`);
     } finally {
