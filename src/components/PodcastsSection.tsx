@@ -15,6 +15,7 @@ import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { format } from 'date-fns';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 const EXPLAIN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/explain-file`;
 
