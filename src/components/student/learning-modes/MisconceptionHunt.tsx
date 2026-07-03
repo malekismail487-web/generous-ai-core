@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Search, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 interface MisconceptionHuntProps {
   subject: string;
