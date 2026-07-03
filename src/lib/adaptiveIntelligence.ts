@@ -1064,6 +1064,14 @@ function getFeatureInstructions(feature: FeatureType): string {
 - Emphasize connections that address knowledge gaps.
 - Use visual structures that match their learning style.
 - Show prerequisite relationships from the concept graph.`,
+
+    learning_mode: `ADAPTIVE LEARNING MODE (Socratic / Teach-Back / Misconception Hunt):
+- Calibrate question depth and probe difficulty to the student's demonstrated ability.
+- For WEAK areas: use more scaffolding, gentler probes, and reveal partial hints.
+- For STRONG areas: press harder — target subtle misconceptions and edge cases.
+- Grade reasoning consistent with the student's typical response length and vocabulary.
+- Reference known knowledge gaps when generating false statements or probing questions.
+- Match tone to detected emotional state (frustrated → warmer; confident → challenging).`,
   };
 
   return instructions[feature] || '';
