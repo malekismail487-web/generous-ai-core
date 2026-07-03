@@ -32,6 +32,7 @@ const STUDENT_AI_SURFACES = [
   "src/components/student/learning-modes/SocraticMode.tsx",
   "src/components/student/learning-modes/TeachBackMode.tsx",
   "src/components/student/learning-modes/MisconceptionHunt.tsx",
+  "src/components/student/DebateTheater.tsx",
   // Reference / already-adaptive callers — audit them too so regressions here
   // fail loudly.
   "src/components/ExaminationSection.tsx",
