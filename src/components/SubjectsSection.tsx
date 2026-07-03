@@ -310,11 +310,16 @@ Use age-appropriate language for ${selectedGrade}.`;
     const messages: Message[] = [{ id: '1', role: 'user', content: prompt }];
     let response = '';
 
+    // Unified adaptive params — pulls from the full 7-subsystem engine
+    // (IRT ability, learning style, knowledge gaps, cognitive state).
+    let intel = { adaptiveLevel: adaptiveLevel as string, learningStyle: getLearningStylePrompt() };
+    try { intel = await getSimpleParams('lecture', subject?.name); } catch { /* fallback */ }
+
     try {
       await streamChat({
         messages,
-        adaptiveLevel,
-        learningStyle: getLearningStylePrompt(),
+        adaptiveLevel: intel.adaptiveLevel,
+        learningStyle: intel.learningStyle,
         onDelta: (chunk) => {
           response += chunk;
           setLectureContent(response);
