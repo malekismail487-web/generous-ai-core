@@ -84,6 +84,12 @@ export function DebateTheater({ question, onClose, onSideWith }: Props) {
                 setVerdict(ev.verdict);
               } else if (ev.phase === "complete") {
                 setPhase("complete");
+                recordActivity({
+                  subject: '',
+                  topic: question.slice(0, 80),
+                  feature: 'chat',
+                  durationEstimate: 120,
+                });
               }
             } catch { /* partial */ }
           }
@@ -94,7 +100,7 @@ export function DebateTheater({ question, onClose, onSideWith }: Props) {
     };
     run();
     return () => { cancel = true; abortRef.current?.abort(); };
-  }, [question]);
+  }, [question, getSimpleParams, recordActivity, recordChat]);
 
   const handleSide = async (id: PaneId, name: string) => {
     setSided(id);
