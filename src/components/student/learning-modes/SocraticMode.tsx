@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Brain, ArrowRight, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 interface SocraticModeProps {
   subject: string;
