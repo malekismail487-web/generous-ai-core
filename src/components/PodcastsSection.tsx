@@ -212,6 +212,14 @@ export function PodcastsSection() {
             setPodcastCount(prev => prev + 1);
             trackPodcastListened(file.name, 100, Math.max(30, Math.round(fullText.length / 12)));
           });
+        // Feed the unified adaptive engine so podcast usage counts toward
+        // feature_usage profiling, streak, and study-activity signals.
+        recordActivity({
+          subject: '',
+          topic: file.name,
+          feature: 'podcast',
+          durationEstimate: Math.max(30, Math.round(fullText.length / 12)),
+        });
       }
     } catch (error) {
       setIsProcessing(false);
@@ -221,7 +229,7 @@ export function PodcastsSection() {
         description: error instanceof Error ? error.message : t('Something went wrong', 'حدث خطأ'),
       });
     }
-  }, [file, language, readFileContent, stop, toast, t, user]);
+  }, [file, language, readFileContent, stop, toast, t, user, adaptiveLevel, getLearningStylePrompt, getSimpleParams, recordActivity, trackPodcastListened]);
 
   const handleVoiceToggle = useCallback(() => {
     if (isSpeaking) {
