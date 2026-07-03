@@ -145,7 +145,8 @@ export type FeatureType =
   | 'chat'
   | 'exam'
   | 'podcast'
-  | 'mind_map';
+  | 'mind_map'
+  | 'learning_mode';
 
 // ============================================================================
 //  DATA COLLECTION — Fetching raw data from all sources
