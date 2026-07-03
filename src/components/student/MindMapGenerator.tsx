@@ -262,6 +262,7 @@ export function MindMapGenerator() {
   const { t, language } = useThemeLanguage();
   const { currentLevel } = useAdaptiveLevel();
   const { getLearningStylePrompt } = useLearningStyle();
+  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
   const [topic, setTopic] = useState('');
   const [mindMap, setMindMap] = useState<MindMapData | null>(null);
   const [loading, setLoading] = useState(false);
