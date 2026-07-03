@@ -28,8 +28,12 @@ export function DebateTheater({ question, onClose, onSideWith }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [sided, setSided] = useState<PaneId | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const { getSimpleParams, recordActivity, recordChat } = useAdaptiveIntelligence();
 
   useEffect(() => {
+    // The question itself is the student's cognitive input — feed the
+    // emotional/cognitive engines on mount.
+    recordChat(question);
     let cancel = false;
     const run = async () => {
       try {
@@ -37,10 +41,16 @@ export function DebateTheater({ question, onClose, onSideWith }: Props) {
         const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         const ac = new AbortController();
         abortRef.current = ac;
+        let intel = { adaptiveLevel: 'intermediate', learningStyle: '' };
+        try { intel = await getSimpleParams('chat'); } catch { /* fallback */ }
         const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/debate`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ question }),
+          body: JSON.stringify({
+            question,
+            adaptiveLevel: intel.adaptiveLevel,
+            learningStyle: intel.learningStyle,
+          }),
           signal: ac.signal,
         });
         if (res.status === 429) {
