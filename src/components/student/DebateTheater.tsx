@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Brain, GraduationCap, ShieldQuestion, Users, Target, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MathRenderer } from "@/components/MathRenderer";
+import { useAdaptiveIntelligence } from "@/hooks/useAdaptiveIntelligence";
 
 const PERSONAS = [
   { id: "prof",    name: "The Professor", icon: GraduationCap, accent: "text-sky-500"   },
