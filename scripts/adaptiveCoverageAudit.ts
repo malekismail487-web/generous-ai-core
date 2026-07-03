@@ -78,6 +78,18 @@ const KNOWN_ADAPTIVE_OR_EXEMPT = new Set<string>([
   "src/components/NoteTimeline.tsx",
   "src/components/student/DecayDashboardCard.tsx",
   "src/components/student/LCTExamScreen.tsx",
+  // Bootstraps the initial IRT profile — precedes personalization; the probe
+  // itself IS the adaptive signal, so the loop is closed server-side by
+  // cold-start-probe writing to student_learning_profiles.
+  "src/components/student/ColdStartProbe.tsx",
+  // Output surfaces: they display AI-generated predictions ABOUT the
+  // student, sourced from adaptive edge functions that already read the
+  // full profile server-side. There's no new student input to condition on.
+  "src/components/student/Leaderboard.tsx",
+  "src/components/student/MirrorRevealCard.tsx",
+  "src/components/student/MorningBriefingCard.tsx",
+  "src/components/student/MorningBriefing.tsx",
+  "src/components/student/CognitiveMirrorCard.tsx",
 ]);
 
 interface Violation {
