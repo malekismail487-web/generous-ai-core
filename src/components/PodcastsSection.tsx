@@ -139,6 +139,13 @@ export function PodcastsSection() {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+      // Unified adaptive params — pulls from the full 7-subsystem engine,
+      // not just the legacy adaptiveLevel/learningStyle hooks.
+      let intel = { adaptiveLevel: adaptiveLevel as string, learningStyle: getLearningStylePrompt() };
+      try {
+        intel = await getSimpleParams('podcast');
+      } catch { /* fallback to legacy hooks */ }
+
       const response = await fetch(EXPLAIN_URL, {
         method: 'POST',
         headers: {
@@ -149,8 +156,8 @@ export function PodcastsSection() {
         body: JSON.stringify({
           fileContent: content.slice(0, 30000),
           fileName: file.name,
-          adaptiveLevel,
-          learningStyle: getLearningStylePrompt(),
+          adaptiveLevel: intel.adaptiveLevel,
+          learningStyle: intel.learningStyle,
         }),
       });
 
