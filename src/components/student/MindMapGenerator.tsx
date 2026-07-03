@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { MathRenderer } from '@/components/MathRenderer';
 import { streamChat, Message } from '@/lib/chat';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { mergeImagesIntoContent, urlsToInlineImages } from '@/lib/imageInsertion';
 
 interface MindMapNode {
