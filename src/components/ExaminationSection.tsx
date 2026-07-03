@@ -365,7 +365,7 @@ export function ExaminationSection() {
   const { getMaterialsBySubjectAndGrade, getMaterialsBySubject } = useMaterials();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
   const { trackExamStarted, trackExamCompleted } = useActivityTracker();
-  const { recordAnswer: intelligentRecordAnswer, recordActivity } = useAdaptiveIntelligence();
+  const { recordAnswer: intelligentRecordAnswer, recordActivity, getSimpleParams } = useAdaptiveIntelligence();
 
   // Get saved materials for the selected subject and grade
   const savedMaterials = useMemo(() => {
@@ -428,6 +428,10 @@ export function ExaminationSection() {
         const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        // Unified adaptive params — feed the exam generator the full profile
+        // signal, not just the legacy adaptiveLevel string.
+        let intel = { adaptiveLevel: adaptiveLevel as string, learningStyle: '' };
+        try { intel = await getSimpleParams('exam', subjectName); } catch { /* fallback */ }
         const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-exam`, {
           method: 'POST',
           headers: {
@@ -442,7 +446,8 @@ export function ExaminationSection() {
             count,
             materials: materialsToSend,
             examType: isFullSAT ? 'SAT_FULL' : undefined,
-            adaptiveLevel,
+            adaptiveLevel: intel.adaptiveLevel,
+            learningStyle: intel.learningStyle,
             weakTopics,
           }),
         });

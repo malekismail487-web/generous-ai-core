@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { MathRenderer } from '@/components/MathRenderer';
 import { streamChat, Message } from '@/lib/chat';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { mergeImagesIntoContent, urlsToInlineImages } from '@/lib/imageInsertion';
 
 interface MindMapNode {
@@ -261,6 +262,7 @@ export function MindMapGenerator() {
   const { t, language } = useThemeLanguage();
   const { currentLevel } = useAdaptiveLevel();
   const { getLearningStylePrompt } = useLearningStyle();
+  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
   const [topic, setTopic] = useState('');
   const [mindMap, setMindMap] = useState<MindMapData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -352,6 +354,13 @@ export function MindMapGenerator() {
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+      // Unified adaptive context — pulls from the full 7-subsystem engine
+      // (IRT ability, learning style, knowledge gaps, cognitive state).
+      let intel = { adaptiveLevel: currentLevel as string, learningStyle: getLearningStylePrompt() };
+      try {
+        intel = await getSimpleParams('mind_map', t_topic);
+      } catch { /* fallback to legacy hooks */ }
+
       const systemPrompt = `You are an educational mind map generator. Given a topic, return ONLY valid JSON (no markdown, no backticks) in this exact format:
 {
   "center": "Main Topic",
@@ -366,7 +375,8 @@ export function MindMapGenerator() {
   ]
 }
 
-Generate 4-6 main branches with 2-4 children each. Keep labels concise (2-5 words). Make it educational and comprehensive for a ${currentLevel} level student.
+Generate 4-6 main branches with 2-4 children each. Keep labels concise (2-5 words). Make it educational and comprehensive for a ${intel.adaptiveLevel} level student.
+${intel.learningStyle ? `Learning style guidance: ${intel.learningStyle}` : ''}
 ${language === 'ar' ? 'Generate all labels in Arabic.' : ''}
 CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fences. Do NOT add any explanatory text before or after.`;
 
@@ -379,6 +389,8 @@ CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fence
             messages: [{ role: 'user', content: `Create a mind map about: ${t_topic}` }],
             systemPrompt,
             language,
+            adaptiveLevel: intel.adaptiveLevel,
+            learningStyle: intel.learningStyle,
           }),
         }
       );
@@ -390,13 +402,15 @@ CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fence
 
       setMindMap(mapData);
       saveMindMap(mapData, t_topic);
+      // Feed the unified adaptive engine.
+      recordActivity({ subject: '', topic: t_topic, feature: 'mind_map', durationEstimate: 60 });
     } catch (e) {
       console.error('Mind map generation error:', e);
       toast.error(t('Failed to generate mind map. Try again!', 'فشل في إنشاء الخريطة الذهنية. حاول مرة أخرى!'));
     }
 
     setLoading(false);
-  }, [topic, user, currentLevel, language, t, saveMindMap]);
+  }, [topic, user, currentLevel, language, t, saveMindMap, getLearningStylePrompt, getSimpleParams, recordActivity]);
 
   // ─── Expand node by path (double tap) ───────────────────────────────────────
 

@@ -15,6 +15,7 @@ import { useAdaptiveLevel } from '@/hooks/useAdaptiveLevel';
 import { format } from 'date-fns';
 import { useLearningStyle } from '@/hooks/useLearningStyle';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 const EXPLAIN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/explain-file`;
 
@@ -42,6 +43,7 @@ export function PodcastsSection() {
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
   const { getLearningStylePrompt } = useLearningStyle();
   const { trackPodcastListened } = useActivityTracker();
+  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
 
   // Fetch podcast count on mount
   useEffect(() => {
@@ -137,6 +139,13 @@ export function PodcastsSection() {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+      // Unified adaptive params — pulls from the full 7-subsystem engine,
+      // not just the legacy adaptiveLevel/learningStyle hooks.
+      let intel = { adaptiveLevel: adaptiveLevel as string, learningStyle: getLearningStylePrompt() };
+      try {
+        intel = await getSimpleParams('podcast');
+      } catch { /* fallback to legacy hooks */ }
+
       const response = await fetch(EXPLAIN_URL, {
         method: 'POST',
         headers: {
@@ -147,8 +156,8 @@ export function PodcastsSection() {
         body: JSON.stringify({
           fileContent: content.slice(0, 30000),
           fileName: file.name,
-          adaptiveLevel,
-          learningStyle: getLearningStylePrompt(),
+          adaptiveLevel: intel.adaptiveLevel,
+          learningStyle: intel.learningStyle,
         }),
       });
 
@@ -203,6 +212,14 @@ export function PodcastsSection() {
             setPodcastCount(prev => prev + 1);
             trackPodcastListened(file.name, 100, Math.max(30, Math.round(fullText.length / 12)));
           });
+        // Feed the unified adaptive engine so podcast usage counts toward
+        // feature_usage profiling, streak, and study-activity signals.
+        recordActivity({
+          subject: '',
+          topic: file.name,
+          feature: 'podcast',
+          durationEstimate: Math.max(30, Math.round(fullText.length / 12)),
+        });
       }
     } catch (error) {
       setIsProcessing(false);
@@ -212,7 +229,7 @@ export function PodcastsSection() {
         description: error instanceof Error ? error.message : t('Something went wrong', 'حدث خطأ'),
       });
     }
-  }, [file, language, readFileContent, stop, toast, t, user]);
+  }, [file, language, readFileContent, stop, toast, t, user, adaptiveLevel, getLearningStylePrompt, getSimpleParams, recordActivity, trackPodcastListened]);
 
   const handleVoiceToggle = useCallback(() => {
     if (isSpeaking) {

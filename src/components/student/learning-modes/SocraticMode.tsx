@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Brain, ArrowRight, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 interface SocraticModeProps {
   subject: string;
@@ -27,12 +28,20 @@ export function SocraticMode({ subject, topic, onExit }: SocraticModeProps) {
   const [completed, setCompleted] = useState(false);
   const [finalScore, setFinalScore] = useState<number | null>(null);
   const [started, setStarted] = useState(false);
+  const { getSimpleParams, recordChat, recordAnswer, recordActivity } = useAdaptiveIntelligence();
 
   const begin = async () => {
     setLoading(true);
     try {
+      let intel = { adaptiveLevel: 'intermediate', learningStyle: '' };
+      try { intel = await getSimpleParams('learning_mode', subject); } catch { /* fallback */ }
       const { data, error } = await supabase.functions.invoke('socratic-next-turn', {
-        body: { subject, topic },
+        body: {
+          subject,
+          topic,
+          adaptiveLevel: intel.adaptiveLevel,
+          learningStyle: intel.learningStyle,
+        },
       });
       if (error) throw error;
       const d = data as any;
@@ -40,6 +49,7 @@ export function SocraticMode({ subject, topic, onExit }: SocraticModeProps) {
       setSessionId(d.session_id);
       setTurns([{ question: d.question }]);
       setStarted(true);
+      recordActivity({ subject, topic, feature: 'learning_mode' });
     } catch (e: any) {
       toast.error(`Could not start: ${e.message ?? 'try again'}`);
     } finally {
@@ -51,14 +61,26 @@ export function SocraticMode({ subject, topic, onExit }: SocraticModeProps) {
     if (!currentAnswer.trim() || !sessionId) return;
     setLoading(true);
     const ans = currentAnswer.trim();
+    // Feed emotional/cognitive engines on every turn.
+    recordChat(ans);
     try {
+      let intel = { adaptiveLevel: 'intermediate', learningStyle: '' };
+      try { intel = await getSimpleParams('learning_mode', subject); } catch { /* fallback */ }
       const { data, error } = await supabase.functions.invoke('socratic-next-turn', {
-        body: { session_id: sessionId, subject, topic, last_response: ans },
+        body: {
+          session_id: sessionId,
+          subject,
+          topic,
+          last_response: ans,
+          adaptiveLevel: intel.adaptiveLevel,
+          learningStyle: intel.learningStyle,
+        },
       });
       if (error) throw error;
       const d = data as any;
       if (d?.error) throw new Error(d.error);
 
+      const priorQuestion = turns[turns.length - 1]?.question ?? '';
       setTurns(prev => {
         const next = [...prev];
         if (next.length > 0) {
@@ -77,6 +99,18 @@ export function SocraticMode({ subject, topic, onExit }: SocraticModeProps) {
         }
         return next;
       });
+      // Close the loop: send each graded turn back into the adaptive engine.
+      if (typeof d.prev_grade === 'number') {
+        recordAnswer({
+          subject,
+          questionText: priorQuestion,
+          studentAnswer: ans,
+          correctAnswer: d.prev_feedback ?? '',
+          isCorrect: d.prev_grade >= 3, // 5-point reasoning rubric
+          difficulty: 'medium',
+          source: 'learning_mode:socratic',
+        });
+      }
       setCurrentAnswer('');
     } catch (e: any) {
       toast.error(`Could not grade: ${e.message ?? 'try again'}`);

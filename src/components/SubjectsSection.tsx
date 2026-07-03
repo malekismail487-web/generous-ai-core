@@ -310,11 +310,16 @@ Use age-appropriate language for ${selectedGrade}.`;
     const messages: Message[] = [{ id: '1', role: 'user', content: prompt }];
     let response = '';
 
+    // Unified adaptive params — pulls from the full 7-subsystem engine
+    // (IRT ability, learning style, knowledge gaps, cognitive state).
+    let intel = { adaptiveLevel: adaptiveLevel as string, learningStyle: getLearningStylePrompt() };
+    try { intel = await getSimpleParams('lecture', subject?.name); } catch { /* fallback */ }
+
     try {
       await streamChat({
         messages,
-        adaptiveLevel,
-        learningStyle: getLearningStylePrompt(),
+        adaptiveLevel: intel.adaptiveLevel,
+        learningStyle: intel.learningStyle,
         onDelta: (chunk) => {
           response += chunk;
           setLectureContent(response);
@@ -331,6 +336,20 @@ Use age-appropriate language for ${selectedGrade}.`;
             details: { topic, grade: selectedGrade },
           });
           trackLectureViewed(selectedSubject, topic, Math.max(30, Math.round(response.length / 12)));
+          // Close the adaptive loop: teaching content was rendered, so log
+          // it into recordActivity + recordTeaching for the profile bus.
+          recordActivity({
+            subject: subject?.name || selectedSubject,
+            topic,
+            feature: 'lecture',
+            durationEstimate: Math.max(60, Math.round(response.length / 12)),
+          });
+          recordTeaching({
+            topic,
+            subject: subject?.name || selectedSubject,
+            feature: 'lecture',
+            content: response.slice(0, 500),
+          });
           setIsLoading(false);
           // Fetch related images and merge inline
           fetchLectureImages(topic, subject?.name || selectedSubject).then(() => {
