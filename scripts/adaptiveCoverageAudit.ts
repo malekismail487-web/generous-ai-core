@@ -136,7 +136,10 @@ for (const rel of STUDENT_AI_SURFACES) {
   const hasRecorder =
     /recordActivity\s*\(|recordChat\s*\(|recordAnswer\s*\(|recordTeaching\s*\(/.test(
       src,
-    );
+    ) ||
+    // Aliased destructure — many files rename recordAnswer to disambiguate
+    // from the legacy useAdaptiveLevel recorder, then call the alias.
+    /record(?:Activity|Chat|Answer|Teaching)\s*:\s*(\w+)/.test(src);
   if (!hasRecorder) {
     violations.push({ file: rel, reason: "no recordActivity/Chat/Answer/Teaching call — feedback loop is open" });
   }
