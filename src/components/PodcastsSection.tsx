@@ -43,6 +43,7 @@ export function PodcastsSection() {
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
   const { getLearningStylePrompt } = useLearningStyle();
   const { trackPodcastListened } = useActivityTracker();
+  const { getSimpleParams, recordActivity } = useAdaptiveIntelligence();
 
   // Fetch podcast count on mount
   useEffect(() => {
