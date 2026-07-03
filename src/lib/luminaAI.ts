@@ -1,6 +1,19 @@
 // luminaAI.ts
 // Pure AI module — all AI calls go through edge functions (Gemini via Lovable AI Gateway)
-// This module provides client-side helpers for AI features
+// This module provides client-side helpers for AI features.
+//
+// @deprecated These helpers call the `chat` edge function WITHOUT injecting
+// adaptive context, so any output is "blind" to the student's IRT ability,
+// learning style, cognitive/emotional state, and knowledge gaps.
+//
+// Do not add new consumers. If you need conversational AI in a student-facing
+// surface, use `useAdaptiveIntelligence().getSimpleParams(feature, subject)`
+// and pass `adaptiveLevel` / `learningStyle` into the edge function body
+// (see PodcastsSection or FlashcardsSection for the canonical pattern).
+//
+// This file is retained only because a small number of dead-code paths still
+// reference it; Stage 15 (Universal Adaptive Wiring) verified zero live
+// callers and marked it deprecated rather than delete it in the same pass.
 
 import { supabase } from '@/integrations/supabase/client';
 
