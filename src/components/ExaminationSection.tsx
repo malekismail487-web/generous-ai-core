@@ -365,7 +365,7 @@ export function ExaminationSection() {
   const { getMaterialsBySubjectAndGrade, getMaterialsBySubject } = useMaterials();
   const { currentLevel: adaptiveLevel } = useAdaptiveLevel();
   const { trackExamStarted, trackExamCompleted } = useActivityTracker();
-  const { recordAnswer: intelligentRecordAnswer, recordActivity } = useAdaptiveIntelligence();
+  const { recordAnswer: intelligentRecordAnswer, recordActivity, getSimpleParams } = useAdaptiveIntelligence();
 
   // Get saved materials for the selected subject and grade
   const savedMaterials = useMemo(() => {
