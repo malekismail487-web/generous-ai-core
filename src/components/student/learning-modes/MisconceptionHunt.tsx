@@ -29,13 +29,21 @@ export function MisconceptionHunt({ subject, topic, onExit }: MisconceptionHuntP
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<ResultItem[] | null>(null);
   const [score, setScore] = useState<number | null>(null);
+  const { getSimpleParams, recordChat, recordAnswer, recordActivity } = useAdaptiveIntelligence();
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        let intel = { adaptiveLevel: 'intermediate', learningStyle: '' };
+        try { intel = await getSimpleParams('learning_mode', subject); } catch { /* fallback */ }
         const { data, error } = await supabase.functions.invoke('misconception-hunt-generate', {
-          body: { subject, topic },
+          body: {
+            subject,
+            topic,
+            adaptiveLevel: intel.adaptiveLevel,
+            learningStyle: intel.learningStyle,
+          },
         });
         if (cancelled) return;
         if (error) throw error;
@@ -50,7 +58,7 @@ export function MisconceptionHunt({ subject, topic, onExit }: MisconceptionHuntP
       }
     })();
     return () => { cancelled = true; };
-  }, [subject, topic]);
+  }, [subject, topic, getSimpleParams]);
 
   const allMarked = statements.length > 0 && statements.every(s => marks[s.id] !== undefined);
   const allExplained = statements.length > 0 && statements.every(s => (explanations[s.id] ?? '').trim().length >= 5);
@@ -58,6 +66,8 @@ export function MisconceptionHunt({ subject, topic, onExit }: MisconceptionHuntP
   const submit = async () => {
     if (!sessionId || !allMarked || !allExplained) return;
     setSubmitting(true);
+    // Feed each written rationale to the emotional/cognitive engines.
+    Object.values(explanations).forEach(txt => { if (txt.trim()) recordChat(txt.trim()); });
     try {
       const { data, error } = await supabase.functions.invoke('misconception-hunt-grade', {
         body: { session_id: sessionId, marks, explanations },
@@ -67,6 +77,20 @@ export function MisconceptionHunt({ subject, topic, onExit }: MisconceptionHuntP
       if (d?.error) throw new Error(d.error);
       setResults(d.results ?? []);
       setScore(d.score ?? 0);
+      recordActivity({ subject, topic, feature: 'learning_mode', durationEstimate: 240 });
+      // Close the loop for every graded statement — one recordAnswer per item.
+      const items = (d.results ?? []) as ResultItem[];
+      for (const r of items) {
+        recordAnswer({
+          subject,
+          questionText: r.text,
+          studentAnswer: r.your_mark ? 'True' : 'False',
+          correctAnswer: r.truth ? 'True' : 'False',
+          isCorrect: !!r.correct,
+          difficulty: 'medium',
+          source: 'learning_mode:misconception_hunt',
+        });
+      }
     } catch (e: any) {
       toast.error(`Could not grade: ${e.message ?? 'try again'}`);
     } finally {
