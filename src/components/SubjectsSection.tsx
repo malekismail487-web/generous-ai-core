@@ -336,6 +336,20 @@ Use age-appropriate language for ${selectedGrade}.`;
             details: { topic, grade: selectedGrade },
           });
           trackLectureViewed(selectedSubject, topic, Math.max(30, Math.round(response.length / 12)));
+          // Close the adaptive loop: teaching content was rendered, so log
+          // it into recordActivity + recordTeaching for the profile bus.
+          recordActivity({
+            subject: subject?.name || selectedSubject,
+            topic,
+            feature: 'lecture',
+            durationEstimate: Math.max(60, Math.round(response.length / 12)),
+          });
+          recordTeaching({
+            topic,
+            subject: subject?.name || selectedSubject,
+            feature: 'lecture',
+            content: response.slice(0, 500),
+          });
           setIsLoading(false);
           // Fetch related images and merge inline
           fetchLectureImages(topic, subject?.name || selectedSubject).then(() => {
