@@ -503,11 +503,18 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
       }
 
       setIsLoading(false);
+      // Close the adaptive loop.
+      recordActivity({
+        subject: '',
+        topic: selectedFile?.name || 'uploaded-file',
+        feature: 'file_analysis',
+        durationEstimate: Math.max(30, Math.round(fullText.length / 12)),
+      });
     } catch (err: any) {
       setIsLoading(false);
       toast({ variant: 'destructive', title: 'Error', description: err.message });
     }
-  }, [fileContent, selectedLength, selectedFile, toast]);
+  }, [fileContent, selectedLength, selectedFile, toast, adaptiveLevel, getLearningStylePrompt, getSimpleParams, recordActivity]);
 
   const handleReset = () => {
     setSelectedFile(null);
