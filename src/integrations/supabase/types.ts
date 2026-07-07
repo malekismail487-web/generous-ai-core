@@ -3048,6 +3048,51 @@ export type Database = {
           },
         ]
       }
+      lesson_events: {
+        Row: {
+          concept_ref: string | null
+          created_at: string
+          id: string
+          kind: string
+          lesson_id: string
+          priority: number
+          school_id: string
+          seq: number
+          teacher_id: string
+          teacher_visible: boolean
+          text: string
+          ts: string
+        }
+        Insert: {
+          concept_ref?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          lesson_id: string
+          priority?: number
+          school_id: string
+          seq?: number
+          teacher_id: string
+          teacher_visible?: boolean
+          text?: string
+          ts?: string
+        }
+        Update: {
+          concept_ref?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          lesson_id?: string
+          priority?: number
+          school_id?: string
+          seq?: number
+          teacher_id?: string
+          teacher_visible?: boolean
+          text?: string
+          ts?: string
+        }
+        Relationships: []
+      }
       lesson_explanations: {
         Row: {
           bandit_decision_id: string | null
@@ -3257,6 +3302,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lesson_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          last_seq: number
+          lesson_id: string
+          school_id: string
+          started_at: string
+          status: string
+          student_id: string
+          summary: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          last_seq?: number
+          lesson_id: string
+          school_id: string
+          started_at?: string
+          status?: string
+          student_id: string
+          summary?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          last_seq?: number
+          lesson_id?: string
+          school_id?: string
+          started_at?: string
+          status?: string
+          student_id?: string
+          summary?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lesson_state_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          lesson_id: string
+          school_id: string
+          seq: number
+          state: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lesson_id: string
+          school_id: string
+          seq: number
+          state: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          school_id?: string
+          seq?: number
+          state?: Json
+        }
+        Relationships: []
       }
       lumina_api_keys: {
         Row: {
