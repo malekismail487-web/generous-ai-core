@@ -41,6 +41,12 @@ export default function LseBench() {
   const [params] = useSearchParams();
   const lessonId = params.get("lesson") ?? "";
   const enabled = params.get("enabled") !== "0";
+  const startSeqParam = params.get("startSeq");
+  const initialLastSeq =
+    startSeqParam !== null && /^\d+$/.test(startSeqParam)
+      ? Math.max(0, parseInt(startSeqParam, 10) - 1)
+      : undefined;
+
 
   // Install the bench surface synchronously on first render so any bench
   // mark emitted during the first `useEffect` cycle is captured.
