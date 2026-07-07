@@ -111,7 +111,18 @@ export interface UseLuminaLiveSessionOptions {
    * different surface should override.
    */
   feature?: string;
+  /**
+   * Seed the A5 intake gate. The gate accepts events strictly at
+   * `lastSeq + 1`; when a lesson already has prior events in
+   * `public.lesson_events` (typical of the A9 benchmark, which does not
+   * truncate between runs) the student would otherwise gap-reject every
+   * new event. Setting this to `startSeq - 1` bridges that gap without
+   * changing production semantics — default `undefined` preserves the
+   * existing behaviour (`lastSeq = 0`).
+   */
+  initialLastSeq?: number;
 }
+
 
 // ---------------------------------------------------------------------------
 // Static config
