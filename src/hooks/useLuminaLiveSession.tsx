@@ -175,8 +175,14 @@ function benchMark(eventId: string, phase: BenchPhase): void {
   const w = window as unknown as { __lseBench?: LseBenchSurface };
   const bench = w.__lseBench;
   if (!bench || typeof bench.mark !== "function") return;
-  try { bench.mark(eventId, phase, performance.now()); } catch { /* never throw */ }
+  // Cross-context comparability (A9 refinement): use wall-clock `Date.now()`
+  // instead of `performance.now()`. `performance.now()` is relative to each
+  // document's `timeOrigin`, so a teacher-page timestamp is not comparable
+  // to a student-page timestamp. Same-host wall-clock skew is negligible;
+  // per-document time-origin skew is arbitrary.
+  try { bench.mark(eventId, phase, Date.now()); } catch { /* never throw */ }
 }
+
 
 // ---------------------------------------------------------------------------
 // Hook
