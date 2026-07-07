@@ -167,22 +167,22 @@ function drainAll(s: PriorityScheduler): LessonEvent[] {
 
 {
   const s = createPriorityScheduler();
-  // Sitting P5, then exactly (threshold - 1) pure P1 enqueue+pop cycles.
+  // Sitting P5, then exactly `threshold` pure P1 enqueue+pop cycles. Each
+  // cycle skips the P5 once, so its skip counter reaches `threshold` and
+  // the NEXT pop must service P5 via the rescue branch.
   s.enqueue(makeEvent(0, 5, "sitting"));
-  for (let i = 1; i < DEFAULT_STARVATION_THRESHOLD; i++) {
+  for (let i = 1; i <= DEFAULT_STARVATION_THRESHOLD; i++) {
     s.enqueue(makeEvent(i, 1));
     s.pop();
   }
-  // Snapshot: sitting P5 should still be pending, skip counter == threshold - 1.
   const snap = s.snapshot();
   assertEq(snap.sizeByPriority[5], 1, "5.a P5 still pending pre-rescue");
-  assertEq(snap.skipCounters[5], DEFAULT_STARVATION_THRESHOLD - 1, "5.b skip counter accurate");
+  assertEq(snap.skipCounters[5], DEFAULT_STARVATION_THRESHOLD, "5.b skip counter at threshold");
   assertEq(snap.starvationRescues, 0, "5.c no rescue below threshold");
 
-  // One more skip should trip the rescue on the next pop.
-  s.enqueue(makeEvent(999, 1));
-  const first = s.pop(); // P5 skip counter now == threshold; rescue triggers.
-  assertEq(first?.priority, 5, "5.d rescue fires exactly at threshold");
+  // Next pop with no new enqueues: starvation branch fires and services P5.
+  const first = s.pop();
+  assertEq(first?.priority, 5, "5.d rescue fires at threshold");
   assertEq(s.snapshot().starvationRescues, 1, "5.e rescue counter recorded");
 }
 
