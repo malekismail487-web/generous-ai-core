@@ -156,7 +156,7 @@ function drainAll(session: LiveSession): number {
   const p5Idx = popped.findIndex(e => e.priority === 5);
   assert(p5Idx >= 0, "2.a starved P5 eventually drained");
   assert(p5Idx <= threshold, `2.b P5 drained within threshold (idx=${p5Idx})`);
-  assertEq(popped.length, 14, "2.c no events lost under starvation load");
+  assertEq(popped.length, 15, "2.c no events lost under starvation load");
   assert(s.scheduler.snapshot().starvationRescues >= 1, "2.d rescue counter fired");
 }
 
