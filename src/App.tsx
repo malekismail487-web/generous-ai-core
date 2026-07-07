@@ -33,6 +33,7 @@ import { AdaptiveDiagnosticsPanel } from "./components/student/AdaptiveDiagnosti
 import ModeratorDashboard from "./pages/ModeratorDashboard";
 import ModeratorPendingPage from "./pages/ModeratorPending";
 import CodeLab from "./pages/CodeLab";
+import LseBench from "./pages/LseBench";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,7 @@ const App = () => (
                     <Route path="/moderator" element={<ModeratorDashboard />} />
                     <Route path="/moderator-pending" element={<ModeratorPendingPage />} />
                     <Route path="/code-lab" element={<CodeLab />} />
+                    <Route path="/lse-bench" element={<LseBench />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
