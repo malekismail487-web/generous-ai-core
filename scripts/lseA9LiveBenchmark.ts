@@ -342,17 +342,22 @@ async function main() {
     console.log("  signing in teacher…");
     await signIn(teacherPage, env.previewUrl, env.teacherEmail, env.teacherPassword);
 
+    // Choose the seq cursor BEFORE opening bench routes so we can seed each
+    // student's A5 intake gate with `startSeq - 1`. Using seconds since epoch
+    // keeps values monotonic across runs and avoids `unique(lesson_id, seq)`
+    // collisions with any prior test rows on the same lesson.
+    let seqCursor = Math.floor(Date.now() / 1000);
+    const initialStartSeq = seqCursor;
+
     const studentPages: PWPage[] = [];
     for (let i = 0; i < studentCtxs.length; i++) {
       const page = await studentCtxs[i].newPage();
       console.log(`  signing in student ${i + 1}…`);
       await signIn(page, env.previewUrl, env.studentEmail, env.studentPassword);
-      console.log(`  student ${i + 1} opening /lse-bench…`);
-      await openBenchRoute(page, env.previewUrl, env.lessonId);
+      console.log(`  student ${i + 1} opening /lse-bench (startSeq=${initialStartSeq})…`);
+      await openBenchRoute(page, env.previewUrl, env.lessonId, initialStartSeq);
       studentPages.push(page);
     }
-
-    let seqCursor = Math.floor(Date.now() / 1000);
 
     // Pass 1 — steady state (SLA claim).
     const steady = await runPass("steady", teacherPage, studentPages, env.lessonId, seqCursor, env.steadyEvents, env.steadyIntervalMs);
@@ -361,6 +366,7 @@ async function main() {
     // Pass 2 — burst.
     const burst = await runPass("burst", teacherPage, studentPages, env.lessonId, seqCursor, env.burstEvents, env.burstIntervalMs);
     seqCursor += env.burstEvents;
+
 
     // Report
     const report: unknown[] = [];
