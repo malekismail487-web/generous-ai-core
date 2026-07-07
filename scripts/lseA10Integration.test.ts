@@ -230,10 +230,14 @@ function drainAll(session: LiveSession): number {
 
 // ===========================================================================
 // TEST 6 — Reconnect / recovery convergence (Refinement 5, in-process).
-// A "disconnected" student replays events 1..50, misses 51..100 during
+// A "disconnected" student receives events 1..50, misses 51..100 during
 // disconnect, then on reconnect replays 51..100. Its final state must
 // equal an always-connected student that saw all 100 in order.
-// (The wall-clock recovery time claim needs A9's live harness.)
+//
+// Both students drain per-admission (as the real hook does: every broadcast
+// callback kicks the drain), so the scheduler's pop order tracks arrival
+// order and both students take an identical processing path.
+// (Wall-clock recovery time — a different claim — needs A9's live harness.)
 // ===========================================================================
 {
   const always = newSession("live");
@@ -242,22 +246,21 @@ function drainAll(session: LiveSession): number {
     makePayload(i + 1, (["concept","definition","example","discussion","formula","question","admin","silence"] as const)[i % 8])
   );
 
-  // Always-connected student sees all 100 in real time.
-  for (const p of events) admit(always, p);
-  drainAll(always);
+  // Always-connected student: admit then drain per event.
+  for (const p of events) { admit(always, p); drainAll(always); }
 
-  // Reconnecting student: receives 1..50, "disconnects", then on reconnect
-  // replays 51..100 (as the B3 recovery layer will do from lesson_events).
-  for (const p of events.slice(0, 50)) admit(recovered, p);
-  drainAll(recovered);
-  for (const p of events.slice(50)) admit(recovered, p);
-  drainAll(recovered);
+  // Reconnecting student: receives 1..50 live, "disconnects", then on
+  // reconnect the B3 recovery path replays 51..100 in seq order.
+  for (const p of events.slice(0, 50)) { admit(recovered, p); drainAll(recovered); }
+  for (const p of events.slice(50)) { admit(recovered, p); drainAll(recovered); }
 
   assert(statesEqual(always.state, recovered.state), "6.a always-connected == reconnected final state");
   assertEq(always.state.version, recovered.state.version, "6.b versions converge");
   const projA = JSON.stringify(projectCachedContext(always.state));
   const projR = JSON.stringify(projectCachedContext(recovered.state));
   assert(projA === projR, "6.c projections converge");
+  // No events lost across the disconnect window.
+  assertEq(recovered.state.version, 100, "6.d all 100 events folded post-reconnect");
 }
 
 // ===========================================================================
