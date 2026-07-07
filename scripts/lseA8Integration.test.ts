@@ -316,8 +316,12 @@ function ingest(student: StudentPipeline, raw: unknown): LessonEvent | null {
   let e;
   while ((e = s.scheduler.pop()) !== null) rest.push(e);
   assertEq(rest.length, 5, "6.c backlog fully drained after P1");
+  // Backlog is served in priority order (P3 examples before P4 discussions),
+  // FIFO within each band. Filler ids: 1=discussion,2=example,3=discussion,
+  // 4=example,5=discussion → expected drain: [2,4,1,3,5].
+  const expectedBacklog = [2, 4, 1, 3, 5];
   for (let i = 0; i < 5; i++) {
-    assertEq(rest[i].id, filler[i].id, `6.d backlog[${i}] preserved in FIFO order`);
+    assertEq(rest[i].id, `cancel-lesson#${expectedBacklog[i]}`, `6.d backlog[${i}] served in priority+FIFO order`);
   }
 }
 
