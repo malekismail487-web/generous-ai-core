@@ -71,7 +71,11 @@ export default function LseBench() {
     };
   }, []);
 
-  const { state, latest, session, subscribeError, lastGap } = useLuminaLiveSession(lessonId, { enabled: enabled && lessonId.length > 0 });
+  const { state, latest, session, subscribeError, lastGap } = useLuminaLiveSession(lessonId, {
+    enabled: enabled && lessonId.length > 0,
+    initialLastSeq,
+  });
+
 
   return (
     <main className="min-h-screen bg-background p-6 font-mono text-xs">
