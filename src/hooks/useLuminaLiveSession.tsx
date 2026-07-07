@@ -111,7 +111,18 @@ export interface UseLuminaLiveSessionOptions {
    * different surface should override.
    */
   feature?: string;
+  /**
+   * Seed the A5 intake gate. The gate accepts events strictly at
+   * `lastSeq + 1`; when a lesson already has prior events in
+   * `public.lesson_events` (typical of the A9 benchmark, which does not
+   * truncate between runs) the student would otherwise gap-reject every
+   * new event. Setting this to `startSeq - 1` bridges that gap without
+   * changing production semantics — default `undefined` preserves the
+   * existing behaviour (`lastSeq = 0`).
+   */
+  initialLastSeq?: number;
 }
+
 
 // ---------------------------------------------------------------------------
 // Static config
@@ -164,8 +175,14 @@ function benchMark(eventId: string, phase: BenchPhase): void {
   const w = window as unknown as { __lseBench?: LseBenchSurface };
   const bench = w.__lseBench;
   if (!bench || typeof bench.mark !== "function") return;
-  try { bench.mark(eventId, phase, performance.now()); } catch { /* never throw */ }
+  // Cross-context comparability (A9 refinement): use wall-clock `Date.now()`
+  // instead of `performance.now()`. `performance.now()` is relative to each
+  // document's `timeOrigin`, so a teacher-page timestamp is not comparable
+  // to a student-page timestamp. Same-host wall-clock skew is negligible;
+  // per-document time-origin skew is arbitrary.
+  try { bench.mark(eventId, phase, Date.now()); } catch { /* never throw */ }
 }
+
 
 // ---------------------------------------------------------------------------
 // Hook
@@ -175,7 +192,7 @@ export function useLuminaLiveSession(
   lessonId: string,
   options: UseLuminaLiveSessionOptions = {},
 ): UseLuminaLiveSessionResult {
-  const { model, enabled = true, feature = "lecture" } = options;
+  const { model, enabled = true, feature = "lecture", initialLastSeq } = options;
   const { getContext } = useAdaptiveIntelligence();
 
   const [state, setState] = useState<LessonState>(() => initialState(lessonId));
@@ -186,7 +203,11 @@ export function useLuminaLiveSession(
 
   // Refs hold the mutable pieces we do NOT want to trigger re-renders on.
   const stateRef = useRef<LessonState>(state);
-  const lastSeqRef = useRef<number>(0);
+  const lastSeqRef = useRef<number>(
+    typeof initialLastSeq === "number" && Number.isFinite(initialLastSeq) && initialLastSeq >= 0
+      ? Math.floor(initialLastSeq)
+      : 0,
+  );
   const abortRef = useRef<AbortController | null>(null);
   // Monotonic stream epoch. Bumping this invalidates any in-flight stream
   // whose closure captured a lower value — a defence in depth against
@@ -211,14 +232,18 @@ export function useLuminaLiveSession(
   // Reset all per-lesson state when `lessonId` changes.
   useEffect(() => {
     stateRef.current = initialState(lessonId);
-    lastSeqRef.current = 0;
+    lastSeqRef.current =
+      typeof initialLastSeq === "number" && Number.isFinite(initialLastSeq) && initialLastSeq >= 0
+        ? Math.floor(initialLastSeq)
+        : 0;
     setState(stateRef.current);
     setLatest(null);
     setLastGap(null);
     firstRenderMarkedRef.current.clear();
     // Scheduler / cache are lesson-scoped; the mount effect creates fresh
     // instances for the new lessonId and cleans up the prior ones.
-  }, [lessonId]);
+  }, [lessonId, initialLastSeq]);
+
 
   const stop = useCallback(() => {
     epochRef.current += 1;

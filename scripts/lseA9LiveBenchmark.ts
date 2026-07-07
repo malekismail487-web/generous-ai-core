@@ -123,14 +123,19 @@ async function signIn(page: PWPage, previewUrl: string, email: string, password:
   await page.waitForURL((url) => !/\/auth$/.test(url.pathname), { timeout: 15_000 });
 }
 
-async function openBenchRoute(page: PWPage, previewUrl: string, lessonId: string): Promise<void> {
-  await page.goto(`${previewUrl}/lse-bench?lesson=${encodeURIComponent(lessonId)}`, { waitUntil: "domcontentloaded" });
-  // Wait until the hook has finished its subscribe handshake.
+async function openBenchRoute(page: PWPage, previewUrl: string, lessonId: string, startSeq: number): Promise<void> {
+  // `startSeq` seeds the A5 intake gate. Without it the student's `lastSeq`
+  // starts at 0 and every emitted event whose seq is not exactly 1 gets
+  // gap-rejected. Passing `startSeq` bridges to the teacher's cursor
+  // without changing production semantics.
+  const url = `${previewUrl}/lse-bench?lesson=${encodeURIComponent(lessonId)}&startSeq=${startSeq}`;
+  await page.goto(url, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(
     () => document.querySelector('[data-testid="bench-session-status"]')?.textContent === "subscribed",
     { timeout: 20_000 },
   );
 }
+
 
 // ---------------------------------------------------------------------------
 // Teacher: emit events via Supabase JS from inside the teacher browser page
@@ -157,7 +162,7 @@ async function emitEvent(page: PWPage, lessonId: string, seq: number, kind: stri
       }
     }
     if (!url || !key || !jwt) throw new Error("teacher session not available in page");
-    const teacherEmitTs = performance.now();
+    const teacherEmitTs = Date.now();
     const resp = await fetch(`${url}/rest/v1/lesson_events`, {
       method: "POST",
       headers: {
@@ -183,6 +188,7 @@ async function emitEvent(page: PWPage, lessonId: string, seq: number, kind: stri
   }, { lessonId, seq, kind, text });
   return record;
 }
+
 
 // ---------------------------------------------------------------------------
 // Student: read bench buffer
@@ -336,17 +342,22 @@ async function main() {
     console.log("  signing in teacher…");
     await signIn(teacherPage, env.previewUrl, env.teacherEmail, env.teacherPassword);
 
+    // Choose the seq cursor BEFORE opening bench routes so we can seed each
+    // student's A5 intake gate with `startSeq - 1`. Using seconds since epoch
+    // keeps values monotonic across runs and avoids `unique(lesson_id, seq)`
+    // collisions with any prior test rows on the same lesson.
+    let seqCursor = Math.floor(Date.now() / 1000);
+    const initialStartSeq = seqCursor;
+
     const studentPages: PWPage[] = [];
     for (let i = 0; i < studentCtxs.length; i++) {
       const page = await studentCtxs[i].newPage();
       console.log(`  signing in student ${i + 1}…`);
       await signIn(page, env.previewUrl, env.studentEmail, env.studentPassword);
-      console.log(`  student ${i + 1} opening /lse-bench…`);
-      await openBenchRoute(page, env.previewUrl, env.lessonId);
+      console.log(`  student ${i + 1} opening /lse-bench (startSeq=${initialStartSeq})…`);
+      await openBenchRoute(page, env.previewUrl, env.lessonId, initialStartSeq);
       studentPages.push(page);
     }
-
-    let seqCursor = Math.floor(Date.now() / 1000);
 
     // Pass 1 — steady state (SLA claim).
     const steady = await runPass("steady", teacherPage, studentPages, env.lessonId, seqCursor, env.steadyEvents, env.steadyIntervalMs);
@@ -355,6 +366,7 @@ async function main() {
     // Pass 2 — burst.
     const burst = await runPass("burst", teacherPage, studentPages, env.lessonId, seqCursor, env.burstEvents, env.burstIntervalMs);
     seqCursor += env.burstEvents;
+
 
     // Report
     const report: unknown[] = [];
