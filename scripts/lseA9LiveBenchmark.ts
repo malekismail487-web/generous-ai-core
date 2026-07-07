@@ -111,7 +111,7 @@ function readEnv(): { ok: true; env: Env } | { ok: false; missing: string[] } {
 // Auth + navigation helpers
 // ---------------------------------------------------------------------------
 
-async function signIn(page: Page, previewUrl: string, email: string, password: string): Promise<void> {
+async function signIn(page: PWPage, previewUrl: string, email: string, password: string): Promise<void> {
   await page.goto(`${previewUrl}/auth`, { waitUntil: "domcontentloaded" });
   // The app's Auth page uses standard email/password inputs. If these
   // selectors drift, update them here — the driver deliberately fails
@@ -123,7 +123,7 @@ async function signIn(page: Page, previewUrl: string, email: string, password: s
   await page.waitForURL((url) => !/\/auth$/.test(url.pathname), { timeout: 15_000 });
 }
 
-async function openBenchRoute(page: Page, previewUrl: string, lessonId: string): Promise<void> {
+async function openBenchRoute(page: PWPage, previewUrl: string, lessonId: string): Promise<void> {
   await page.goto(`${previewUrl}/lse-bench?lesson=${encodeURIComponent(lessonId)}`, { waitUntil: "domcontentloaded" });
   // Wait until the hook has finished its subscribe handshake.
   await page.waitForFunction(
@@ -139,7 +139,7 @@ async function openBenchRoute(page: Page, previewUrl: string, lessonId: string):
 
 interface EmittedRecord { seq: number; kind: string; teacherEmitTs: number }
 
-async function emitEvent(page: Page, lessonId: string, seq: number, kind: string, text: string): Promise<EmittedRecord> {
+async function emitEvent(page: PWPage, lessonId: string, seq: number, kind: string, text: string): Promise<EmittedRecord> {
   const record = await page.evaluate(async ({ lessonId, seq, kind, text }) => {
     // The app's supabase client is not exposed globally by default.
     // Fall back to a raw fetch through the app's REST endpoint using
@@ -190,14 +190,14 @@ async function emitEvent(page: Page, lessonId: string, seq: number, kind: string
 
 interface BenchMark { eventId: string; phase: string; ts: number }
 
-async function readBench(page: Page): Promise<BenchMark[]> {
+async function readBench(page: PWPage): Promise<BenchMark[]> {
   return await page.evaluate(() => {
     const w = window as unknown as { __lseBench?: { read: () => BenchMark[] } };
     return w.__lseBench?.read() ?? [];
   });
 }
 
-async function resetBench(page: Page): Promise<void> {
+async function resetBench(page: PWPage): Promise<void> {
   await page.evaluate(() => {
     const w = window as unknown as { __lseBench?: { reset: () => void } };
     w.__lseBench?.reset();
@@ -260,8 +260,8 @@ function joinRecords(emitted: EmittedRecord[], marks: BenchMark[], lessonId: str
 
 async function runPass(
   passName: string,
-  teacherPage: Page,
-  studentPages: Page[],
+  teacherPage: PWPage,
+  studentPages: PWPage[],
   lessonId: string,
   startSeq: number,
   count: number,
@@ -315,9 +315,9 @@ async function main() {
   console.log(`  lesson:  ${env.lessonId}`);
   console.log(`  students: ${env.studentCount}`);
 
-  const browser: Browser = await chromium.launch({ headless: true });
-  const teacherCtx: BrowserContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-  const studentCtxs: BrowserContext[] = [];
+  const browser: PWBrowser = await chromium.launch({ headless: true });
+  const teacherCtx: PWContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const studentCtxs: PWContext[] = [];
   for (let i = 0; i < env.studentCount; i++) {
     studentCtxs.push(await browser.newContext({ viewport: { width: 1280, height: 900 } }));
   }
@@ -327,7 +327,7 @@ async function main() {
     console.log("  signing in teacher…");
     await signIn(teacherPage, env.previewUrl, env.teacherEmail, env.teacherPassword);
 
-    const studentPages: Page[] = [];
+    const studentPages: PWPage[] = [];
     for (let i = 0; i < studentCtxs.length; i++) {
       const page = await studentCtxs[i].newPage();
       console.log(`  signing in student ${i + 1}…`);
