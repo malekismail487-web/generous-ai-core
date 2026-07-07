@@ -33,6 +33,7 @@ import { AdaptiveDiagnosticsPanel } from "./components/student/AdaptiveDiagnosti
 import ModeratorDashboard from "./pages/ModeratorDashboard";
 import ModeratorPendingPage from "./pages/ModeratorPending";
 import CodeLab from "./pages/CodeLab";
+import LseBench from "./pages/LseBench";
 
 const queryClient = new QueryClient();
 
