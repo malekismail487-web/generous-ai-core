@@ -107,6 +107,15 @@ const RULES: readonly ClassifierRule[] = Object.freeze([
         .test(lower),
   },
   {
+    // Example markers are strong teacher-intent signals and take precedence
+    // over formula detection: "For example, F = ma" is pedagogically an
+    // example, not a formula announcement.
+    kind: "example" as const,
+    match: (_text, lower) =>
+      /^(for\s+(example|instance)\b|e\.?g\.?\b|such as\b|consider\b|let'?s\s+take\b|imagine\b|suppose\b)/i
+        .test(lower),
+  },
+  {
     kind: "formula" as const,
     // Presence of formal math markup or an equation-like `<lhs> = <rhs>` pair.
     match: (text) =>
@@ -122,12 +131,6 @@ const RULES: readonly ClassifierRule[] = Object.freeze([
       /\bis defined as\b/i.test(lower) ||
       /\b(means|refers to)\b/i.test(lower) ||
       /\bwe (call|define)\b/i.test(lower),
-  },
-  {
-    kind: "example" as const,
-    match: (_text, lower) =>
-      /^(for\s+(example|instance)\b|e\.?g\.?\b|such as\b|consider\b|let'?s\s+take\b|imagine\b|suppose\b)/i
-        .test(lower),
   },
   {
     kind: "concept" as const,
