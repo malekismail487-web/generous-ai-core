@@ -192,7 +192,7 @@ export function useLuminaLiveSession(
   lessonId: string,
   options: UseLuminaLiveSessionOptions = {},
 ): UseLuminaLiveSessionResult {
-  const { model, enabled = true, feature = "lecture" } = options;
+  const { model, enabled = true, feature = "lecture", initialLastSeq } = options;
   const { getContext } = useAdaptiveIntelligence();
 
   const [state, setState] = useState<LessonState>(() => initialState(lessonId));
@@ -203,7 +203,11 @@ export function useLuminaLiveSession(
 
   // Refs hold the mutable pieces we do NOT want to trigger re-renders on.
   const stateRef = useRef<LessonState>(state);
-  const lastSeqRef = useRef<number>(0);
+  const lastSeqRef = useRef<number>(
+    typeof initialLastSeq === "number" && Number.isFinite(initialLastSeq) && initialLastSeq >= 0
+      ? Math.floor(initialLastSeq)
+      : 0,
+  );
   const abortRef = useRef<AbortController | null>(null);
   // Monotonic stream epoch. Bumping this invalidates any in-flight stream
   // whose closure captured a lower value — a defence in depth against
@@ -228,14 +232,18 @@ export function useLuminaLiveSession(
   // Reset all per-lesson state when `lessonId` changes.
   useEffect(() => {
     stateRef.current = initialState(lessonId);
-    lastSeqRef.current = 0;
+    lastSeqRef.current =
+      typeof initialLastSeq === "number" && Number.isFinite(initialLastSeq) && initialLastSeq >= 0
+        ? Math.floor(initialLastSeq)
+        : 0;
     setState(stateRef.current);
     setLatest(null);
     setLastGap(null);
     firstRenderMarkedRef.current.clear();
     // Scheduler / cache are lesson-scoped; the mount effect creates fresh
     // instances for the new lessonId and cleans up the prior ones.
-  }, [lessonId]);
+  }, [lessonId, initialLastSeq]);
+
 
   const stop = useCallback(() => {
     epochRef.current += 1;
