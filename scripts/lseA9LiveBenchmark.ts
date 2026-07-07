@@ -315,6 +315,15 @@ async function main() {
   console.log(`  lesson:  ${env.lessonId}`);
   console.log(`  students: ${env.studentCount}`);
 
+  let chromium: typeof import("playwright").chromium;
+  try {
+    ({ chromium } = await import("playwright"));
+  } catch {
+    console.log("\nLSE A9 — playwright not installed.");
+    console.log("Install with:  bun add -D playwright  (and `bunx playwright install chromium` if launching)");
+    console.log("The A9 harness code + /lse-bench route ship regardless. Wall-clock numbers require playwright.");
+    process.exit(0);
+  }
   const browser: PWBrowser = await chromium.launch({ headless: true });
   const teacherCtx: PWContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const studentCtxs: PWContext[] = [];
