@@ -1,310 +1,462 @@
-# Lumina Synchronization Engine (LSE) — AI Layer
+# Stages A9 + A10 — Live Benchmark + Scheduler Wiring
 
-Scope: **the AI synchronization pillar only**. Video, audio, meeting hosting, networking, and auth are explicitly out of scope and will be a later project phase. This plan is the AI-only sibling to the Adaptive Learning Engine (ALE) — same rigor, same "state of the art through integration, not invention" philosophy.
-
-The engine's job: turn a live teacher signal into a personalized, low-latency, always-in-sync parallel lecture from Lumina, tuned per student by the existing ALE (`Z_student`).
+Two independent stages that together promote LSE from "correct in simulation" to "measured in production conditions." A10 is the code change; A9 is the measurement harness that grades it.
 
 ---
 
-## 0. Guiding principles (non-negotiable)
+## Stage A10 — Wire Priority Scheduler into `useLuminaLiveSession`
 
-1. **Plan → verify → build → dossier.** No stage ships without a written dossier that matches the code exactly.
-2. **Deterministic over clever.** Every state transition must be reproducible from the event log.
-3. **Event-sourced, not poll-sourced.** The teacher stream is the source of truth; state is a fold over events.
-4. **Reuse ALE.** LSE never re-implements adaptivity — it *consumes* `getContext` / `recordActivity` from `useAdaptiveIntelligence`.
-5. **Filter ruthlessly.** MUST-HAVE before NICE-TO-HAVE before FUTURE. Nothing gets promoted early.
-6. **No new backend infra until justified.** Prefer Supabase Realtime + Edge Functions + `streamText`. Only introduce a dedicated orchestrator when a benchmark forces it.
+**Only integration.** The scheduler shipped in A7 and is not to be redesigned. Current hook path: `broadcast → gate → reduce → runStreamFor` (one-at-a-time, newest-wins abort). New path: `broadcast → gate → scheduler.enqueue → drain loop → reduce → cache → runStreamFor`.
+
+### Design
+
+- Add a per-hook `PriorityScheduler` instance created inside the mount `useEffect` (lives for one lesson subscription; cleared on unmount).
+- Broadcast handler stops doing reduce/stream directly. On `classifyIntake` accepting an event it calls `scheduler.enqueue(event)` and kicks a drain.
+- Drain loop is a `useRef`-guarded microtask that pops one event at a time:
+  1. `reduce(stateRef.current, event)` → update `stateRef` + `setState`.
+  2. `contextCache.writeFromState(state, lastSeq)` — introduces the Stage A6 cache into the live path for the first time. One `ContextCache` instance per hook, capacity 4 (single lesson + headroom).
+  3. `runStreamFor(event)` — unchanged; still owns the `AbortController` and epoch bump. The drain awaits the stream's *admission* only (i.e., until `runStreamFor` returns after issuing its POST), not its completion, so higher-priority events pending in the queue can still preempt via the existing epoch mechanism.
+- Preemption: unchanged. Scheduler decides admission *order*; the hook's existing `epochRef` still cancels stale streams. The A7 dossier §1 explicitly labels preemption as hook-owned; this stage honours that.
+- Starvation guard: default threshold (8) — unchanged from A7.
+- `stop()` also calls `scheduler.clear()`.
+
+### Files touched
+
+- `src/hooks/useLuminaLiveSession.tsx` — scheduler + cache instantiation, broadcast handler rewrite, drain loop, cleanup.
+
+No new files. No changes to A2–A7 modules. No migrations. No edge-function edits.
+
+### Regression floor
+
+- All Stage A8 in-process assertions still pass (they don't touch the hook, so this is automatic).
+- Existing hook consumers keep the same `UseLuminaLiveSessionResult` shape — no API surface change.
+
+### Dossier
+
+- `.lovable/lse-A10-dossier.md` — what was wired, what was not, and the exact before/after of the broadcast handler.
 
 ---
 
-## 1. The architecture in one diagram
+## Stage A9 — Live Synchronization Benchmark Harness
+
+**Real infrastructure only.** No in-process simulation. Runs from the sandbox via Playwright against the deployed preview URL, with real Realtime, real `lumina-live`, real gateway model calls.
+
+### Prerequisites (blocking — I will confirm before writing code)
+
+1. **Two test accounts** on the preview instance:
+  - A **teacher** with permission to `INSERT` into `public.lesson_events` for a specific `lessonId`.
+  - A **student** enrolled in the same lesson (so RLS on `realtime.messages` from A5 admits them).
+  - Credentials passed via env vars (`LSE_TEACHER_EMAIL`, `LSE_TEACHER_PASSWORD`, `LSE_STUDENT_EMAIL`, `LSE_STUDENT_PASSWORD`) — never hardcoded, never logged.
+2. **A pre-existing `lessonId**` the teacher can post to. Either provided by the user or seeded once via a small SQL migration flagged `is_test_data=true`.
+3. **AI credit consumption acknowledged.** The harness fires ≥100 `lumina-live` calls per run. Each call consumes gateway credits. I will not run the harness without explicit approval per run.
+
+If any prerequisite is missing at build time, A9 ships as **code + docs only** — the harness compiles, exits cleanly with a "prerequisite missing" message, and the dossier records that the wall-clock claim is still unmeasured.
+
+### Test architecture
+
+Two Playwright browser contexts driven from one script in `scripts/lseA9LiveBenchmark.ts`:
 
 ```text
-                    ┌────────────────────────────────────────┐
-                    │        TEACHER SIGNAL (STT/notes)      │
-                    └──────────────────┬─────────────────────┘
-                                       │  raw utterances
-                                       ▼
-                    ┌────────────────────────────────────────┐
-                    │  1. EVENT NORMALIZER                   │
-                    │  raw → typed LessonEvent w/ priority   │
-                    └──────────────────┬─────────────────────┘
-                                       ▼
-                    ┌────────────────────────────────────────┐
-                    │  2. EVENT BUS (Supabase Realtime)      │
-                    │  ordered, replayable, per-lesson topic │
-                    └──────────────────┬─────────────────────┘
-                                       ▼
-        ┌──────────────────────────────┼──────────────────────────────┐
-        ▼                              ▼                              ▼
-┌───────────────┐            ┌───────────────────┐          ┌───────────────────┐
-│ 3. LESSON     │            │ 4. PRIORITY       │          │ 5. PREDICTIVE     │
-│    STATE      │◀───delta───│    SCHEDULER      │─────────▶│    PRECOMPUTE     │
-│  (in-memory   │            │  P1..P5 queues    │          │  next-concept     │
-│   fold)       │            └─────────┬─────────┘          │  warm cache       │
-└──────┬────────┘                      │                    └─────────┬─────────┘
-       │ current node                  │ pop by priority              │ warm answers
-       ▼                               ▼                              │
-┌────────────────────────────────────────────────────────────┐        │
-│  6. CONTEXT CACHE  (per-student, per-lesson RAM)           │◀───────┘
-│  {lessonState, Z_student, recent turns, warm prompts}      │
-└──────────────────────────┬─────────────────────────────────┘
-                           ▼
-┌────────────────────────────────────────────────────────────┐
-│  7. STREAMING INFERENCE (AI SDK streamText, tokens live)   │
-│  input: cached context + delta + ALE getContext()          │
-└──────────────────────────┬─────────────────────────────────┘
-                           ▼
-┌────────────────────────────────────────────────────────────┐
-│  8. STUDENT SESSION (stateful, lifetime = lesson)          │
-│  render tokens · record turns · call ALE.recordChat/Answer │
-└────────────────────────────────────────────────────────────┘
+┌──────────────── Teacher context ────────────────┐    ┌──────────────── Student context ────────────────┐
+│ signs in, opens preview                         │    │ signs in, opens preview                         │
+│ INSERTs one lesson_event per tick               │    │ mounts a route that uses useLuminaLiveSession   │
+│ records teacher_event_created_at (client clock) │    │ instruments window.__lseBench with timestamps:  │
+│                                                 │    │   realtime_received_at                          │
+│                                                 │    │   inference_started_at                          │
+│                                                 │    │   first_token_received_at                       │
+│                                                 │    │   first_render_at                               │
+└─────────────────────────────────────────────────┘    └─────────────────────────────────────────────────┘
 ```
 
-Every arrow is a **delta**, never a full re-render.
+To surface those four timestamps, the hook needs a thin, **opt-in**, **non-behavioural** instrumentation hook:
+
+- If `window.__lseBench` exists, `useLuminaLiveSession` calls `window.__lseBench.mark(eventId, phase, tsMs)` at four points: `realtime_received`, `inference_started`, `first_token`, `first_render` (via `useEffect` on `latest.text` becoming non-empty).
+- No behavioural change; no cost if the sentinel is absent.
+- This is the ONLY additional touch to the hook beyond A10.
+
+### Test route
+
+A dedicated benchmark route (`/lse-bench?lesson=<uuid>`) that mounts `useLuminaLiveSession(lessonId)` and installs `window.__lseBench` from URL query params. Isolated from real student UI. Guarded by the student role.
+
+### Measurements
+
+Per event, compute:
+
+
+| Hop                                 | Formula                                              |
+| ----------------------------------- | ---------------------------------------------------- |
+| Broadcast transit                   | `realtime_received_at − teacher_event_created_at`    |
+| Client pipeline + inference request | `inference_started_at − realtime_received_at`        |
+| Model TTFT                          | `first_token_received_at − inference_started_at`     |
+| Paint                               | `first_render_at − first_token_received_at`          |
+| **Total (SLA)**                     | `first_token_received_at − teacher_event_created_at` |
+
+
+Report **p50, p95, p99** for every hop AND for total. Save the raw table as JSON under `/tmp/browser/lse-a9/` for post-hoc inspection.
+
+Ground-truth honesty: clock skew between the two browser contexts is bounded (same host machine drives Playwright), so cross-context deltas are meaningful. The dossier will state this explicitly.
+
+### Test plan (three passes)
+
+1. **Steady-state pass** — 100 events at 1 event/2s. Primary p95 target: **total < 1.5 s**.
+2. **Burst pass** — 200 events at 5 events/s with mixed priorities (matches A7 acceptance corpus). Asserts: zero loss, per-band FIFO preserved, scheduler starvation rescues observed. Latency reported but not asserted (burst is a stress test, not an SLA).
+3. **Multi-student consistency pass** — 3 student contexts subscribed simultaneously; teacher fires 50 events. Assert: all three students end at identical `state.version`, identical concept stack, identical `lastSeq`. Latency p95 reported per student.
+
+### Files created
+
+- `scripts/lseA9LiveBenchmark.ts` — Playwright harness.
+- `src/pages/LseBench.tsx` — the benchmark route.
+- `src/App.tsx` — one route registration for `/lse-bench` (guarded).
+- Small non-behavioural instrumentation branch in `src/hooks/useLuminaLiveSession.tsx` (bench sentinel).
+- `.lovable/lse-A9-dossier.md` — honest report of what ran, what the numbers actually mean, and any prerequisite that blocked a claim.
+
+### What A9 will NOT do
+
+- No automated CI wiring — the harness burns credits, so it is a manual, per-run tool.
+- No changes to A1–A7 module semantics.
+- No claim about production classroom load; that requires N>3 students on separate hosts and is out of scope.
 
 ---
 
-## 2. The 8 subsystems (need-to-have core)
+## Ship order
 
-Each mirrors an ALE subsystem in style: a small, pure module with a typed API and a deterministic contract.
+1. **A10 first.** The scheduler must be on the live path before we measure the live path — otherwise the numbers describe the pre-A7 architecture, not the one we intend to ship.
+2. **A9 second.** After A10 lands, we build the harness and either produce real p50/p95/p99 numbers or, if credentials/lesson prerequisites are missing, ship the code and clearly state the metric remains unmeasured.
 
-### S1 — Event Normalizer
+## Technical details (reviewer notes)
 
-Converts messy teacher input (STT chunks, slide changes, whiteboard events) into a typed `LessonEvent`:
+- Hook drain loop uses `queueMicrotask` for cheap re-entrancy and to avoid `setTimeout(0)` throttling; a `draining` ref prevents overlapping drains.
+- `ContextCache` in the hook uses `capacity: 4` — one live lesson plus headroom for a lessonId change without immediate eviction pressure.
+- Scheduler cleanup on lessonId change: `scheduler.clear()` before creating a new one, mirroring the existing state reset in the lessonId-change effect.
+- Bench sentinel type: `type LseBenchWindow = { __lseBench?: { mark: (eventId: string, phase: string, ts: number) => void } }` — narrowed via `unknown` cast, no `any`.
+- The scheduler is deliberately per-hook, not module-global, matching the A6/A7 dossier's "one instance per lesson tab" rule.
 
-```ts
-type LessonEvent = {
-  id: string;              // ULID, monotonic
-  lessonId: string;
-  ts: number;              // teacher clock
-  kind: 'concept' | 'definition' | 'formula' | 'example' | 'question'
-      | 'discussion' | 'admin' | 'silence';
-  text: string;
-  conceptRef?: string;     // curriculum_graph node
-  priority: 1|2|3|4|5;     // assigned here, immutable downstream
-}
-```
+## Explicit not-doing list (per user brief)
 
-Deterministic classifier (rules + a small LLM call gated behind a cache key on `text`). Priority table is checked-in config, not learned.
+Predictive precompute, multi-model routing, speculative decoding, cross-lesson memory, teacher co-pilot — **not touched.**
 
-### S2 — Event Bus
+LSE A9 + A10 Review Notes — Required Refinements Before Approval
 
-Supabase Realtime channel per `lessonId`. Server persists events to `lesson_events` (append-only, ordered by `(lessonId, seq)`). Guarantees:
+Overview
 
-- **Replay:** any subscriber can rebuild state from `seq=0`.
-- **Fan-out:** N students subscribe to the same topic; each maintains its own state fold.
-- **No RPC round-trip** for the common case.
+The proposed A9 + A10 plan is approved in direction.
 
-### S3 — Lesson State (persistent, incremental)
+The architecture is correct:
 
-An in-memory reducer keyed by `lessonId`:
+* A10 should wire the validated priority scheduler into the real live session path.
 
-```ts
-type LessonState = {
-  version: number;
-  currentConcept: ConceptNode | null;
-  conceptStack: ConceptNode[];      // breadcrumbs
-  openQuestions: Question[];
-  timeline: LessonEvent[];          // bounded ring buffer
-  prerequisitesCovered: Set<string>;
-}
-```
+* A9 should measure the actual production-style teacher → student → Lumina latency pipeline.
 
-Reducer is **pure**: `(state, event) => state`. Never mutates in place — new state object per event, structural sharing where cheap.
+However, before implementation begins, several refinements are required to make the integration safer, more measurable, and more production-ready.
 
-### S4 — Priority Scheduler
+These changes do not redesign A7, A8, or the existing architecture.
 
-Five FIFO queues (P5..P1). Consumer loop always drains higher priorities first, with **starvation protection**: after N P5 pops, force-drain one P1. This is what stops greetings/admin from ever blocking a definition.
+They only strengthen the integration and validation layer.
 
-### S5 — Predictive Precompute
+⸻
 
-When `currentConcept` changes, speculatively prefetch:
+Required Edit 1 — Increase Context Cache Capacity
 
-- prerequisite refresher (from `curriculum_graph`)
-- 1 analogy tuned to the student's dominant learning style (from ALE)
-- 1 worked example at the student's IRT band
-Results land in the context cache keyed by `(studentId, conceptId, variant)`. Discarded if teacher moves on before use. Budget-capped (`MAX_INFLIGHT_PRECOMPUTE = 2`) to stop cost blowups.
+Current proposal
 
-### S6 — Context Cache
+A10 introduces the Stage A6 cache into the live path with:
 
-Per `(studentId, lessonId)`:
+capacity: 4
 
-- `lessonState` reference
-- last `getContext()` result from ALE (TTL 15s, matches ALE bus)
-- last K turns (K=12)
-- warm precompute slots
-Lives in the student's browser tab (Zustand store) *and* mirrored server-side in a short-TTL KV so a reconnect resumes without a full rebuild.
+Required change
 
-### S7 — Streaming Inference
+Increase this to:
 
-`streamText` (AI SDK) against Lovable AI Gateway. Prompt = `system + cachedContext + delta + ALE fullContext`. Tokens stream to UI immediately. Uses `stopWhen: stepCountIs(50)` if tool-calling is engaged.
+capacity: 8
 
-**Cancellation:** every stream is bound to an `AbortController` scoped to `lessonState.version`. If the teacher moves on (state bumps), in-flight streams cancel — no wasted tokens rendered.
+or use the existing default cache capacity.
 
-### S8 — Stateful Session
+Reason
 
-One long-lived session per student per lesson. Session owns: the abort controllers, the cache handle, the ALE hook binding, the reconnect logic (replay events from last `seq`). Session close writes a final `recordActivity` and a summary row to `lesson_sessions`.
+The cache is already bounded by design.
 
----
+A capacity of 8 provides safer headroom for realistic usage:
 
-## 3. Phased delivery
+* active lesson state
 
-Explicit filter: MUST → NICE → FUTURE. Each phase is multi-stage.
+* lesson transitions
 
-### PHASE A — MUST HAVE (skeleton that actually teaches in sync)
+* reconnect scenarios
 
-**Goal: a student can join a lesson and receive a personalized, streaming, incrementally-updated Lumina lecture that stays within a bounded lag of the teacher.**
+* temporary previous lesson state
 
-- **Stage A1 — Event schema & bus**
-Tables: `lesson_events`, `lesson_sessions`. RLS + GRANTs. Realtime enabled. Ordering contract test.
-- **Stage A2 — Event Normalizer + priority table**
-Rule-based first. LLM-classifier deferred to Phase B. Unit tests on ~50 canonical utterances.
-- **Stage A3 — Lesson State reducer**
-Pure, tested with property-based tests (fold(replay(events)) == state).
-- **Stage A4 — Streaming inference edge function**
-`lumina-live` function. AI SDK `streamText`. Cancellation via `AbortController`.
-- **Stage A5 — Student session hook**
-`useLuminaLiveSession(lessonId)` — subscribes, folds, streams, integrates `useAdaptiveIntelligence`.
-- **Stage A6 — Context cache (client)**
-Zustand store + server-side KV mirror (Supabase table with TTL cleanup cron).
-- **Stage A7 — Priority scheduler**
-With starvation guard. Load test against synthetic 200-event burst.
-- **Stage A8 — End-to-end sync test + dossier**
-Golden lesson script → measured lag histogram → published `phaseA-dossier.md`. Acceptance: p95 delta-to-first-token < 1.5s under nominal load.
+* rapid switching scenarios
 
-### PHASE B — NICE TO HAVE (quality, cost, resilience)
+This does not create an unbounded memory risk.
 
-- **B1** Predictive precompute (S5) with budget cap and hit-rate telemetry.
-- **B2** LLM-assisted event classifier for ambiguous utterances, with rules as fallback.
-- **B3** Reconnect + replay-from-seq with server-side snapshot every 50 events.
-- **B4** Per-student pace control (student can "hold" Lumina while catching up; teacher stream still ingested).
-- **B5** Cost dashboard + per-lesson token budget with graceful degradation to shorter outputs.
-- **B6** Dossier update.
+The cache architecture already has strict LRU eviction.
 
-### PHASE C — FUTURE ENHANCEMENTS
+The goal is preventing unnecessary eviction pressure during realistic student workflows.
 
-- **C1** Speculative decoding / multi-branch precompute (only if B1 telemetry justifies).
-- **C2** Cross-lesson memory (Lumina remembers what this student struggled with last week).
-- **C3** Teacher-side "Lumina co-pilot" hints (bi-directional).
-- **C4** Multi-model routing (fast model for admin events, stronger model for definitions).
-- **C5** Meeting-platform integration handoff (this is where the *next project* picks up).
+⸻
 
----
+Required Edit 2 — Protect Reducer State From Async Stream Completion
 
-## 4. Architectural review (done before Phase A starts)
+Current proposal
 
-Findings and decisions from a pre-build review:
+The drain loop allows:
 
-1. **Do we need a bespoke orchestrator service?** No, not for Phase A. Supabase Realtime + edge functions cover ordering and fan-out. Revisit only if Phase B telemetry shows > 200ms bus latency.
-2. **In-memory state vs DB-backed state?** Both. Client holds hot state; DB is the durable log. Never query DB in the hot path.
-3. **Duplicated responsibility risk:** ALE already tracks student state; LSE tracks lesson state. Kept strictly separate — LSE *reads* `Z_student` and *writes* activity, but does not model the student.
-4. **Streaming cancellation is load-bearing.** If it isn't watertight, precompute becomes cost poison. Cancellation tests are gating for Phase B.
-5. **Priority scheduler starvation** is a real risk (P5 flood from a chatty teacher). Starvation guard is Phase A, not Phase B.
-6. **Reducer purity** enables replay-based testing, which is the cheapest way to catch sync bugs. Non-negotiable.
-7. **No new AI model choices in Phase A.** Reuse the ALE's current gateway model. Model routing is Phase C.
+* scheduler admission
 
----
+* reducer update
 
-## 5. Verification discipline (applies to every stage)
+* stream request execution
 
-- Every stage ships with: unit tests, one integration test, a written dossier (`.lovable/lse-<stageId>-dossier.md`), and a coverage-audit entry (extend `scripts/adaptiveCoverageAudit.ts` with an LSE section).
-- Dossier rule: **describe only what exists in code**. If code and dossier disagree, the stage is not done.
-- No stage is "done" until its acceptance metric is measured, not estimated.
+The stream does not block the scheduler.
 
----
+This is correct.
 
-## 6. Explicit non-goals (this project)
+However, one additional invariant must be documented.
 
-- No video, audio, WebRTC, SFU, TURN, or meeting UI.
-- No new auth surface.
-- No changes to ALE internals (only additive consumers).
-- No speculative model training.
+Required rule
 
----
+Reducer state progression must never depend on inference completion timing.
 
-## 7. Deliverables map
+The authoritative ordering source is:
 
+LessonEvent sequence
 
-| Phase | New files (indicative)                                                                                                               | New tables                                                   | New edge fns           |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------- |
-| A     | `src/lib/lse/{eventNormalizer,lessonReducer,priorityScheduler,contextCache,session}.ts`, `src/hooks/useLuminaLiveSession.tsx`, tests | `lesson_events`, `lesson_sessions`, `lesson_state_snapshots` | `lumina-live`          |
-| B     | `src/lib/lse/{precompute,classifierLLM,budget}.ts`                                                                                   | `lesson_precompute_cache` (TTL)                              | `lumina-live-classify` |
-| C     | routing + memory modules                                                                                                             | `lumina_student_memory`                                      | `lumina-live-route`    |
+        ↓
 
+Scheduler order
 
----
+        ↓
 
-## 8. What I need from you before I start Phase A
+Reducer version
 
-1. Confirm the phased filter (A=must, B=nice, C=future) matches your intent.
-2. Confirm Supabase Realtime is acceptable as the Phase A bus (vs. introducing a dedicated service now).
-3. Confirm the Phase A acceptance metric: **p95 teacher-event → first Lumina token < 1.5s** under a 200-event synthetic burst.
+Not:
 
-Once confirmed, I'll open Stage A1 with the schema migration and the ordering contract test — and nothing else — so we can verify the foundation before building on it.
+AI response completion order
 
-Yes—with one clarification on the third point.
+Example failure scenario to prevent:
 
-**✅ 1. Phased filter**
+Event 1 arrives
 
-**Confirmed.**
+    ↓
 
-I think this prioritization makes sense:
+Lumina inference starts
 
-- **Phase A = Must Have**
-- **Phase B = Nice to Have**
-- **Phase C = Future Enhancements**
+Event 2 arrives
 
-This reduces implementation risk and keeps the focus on getting a working synchronization engine before optimizing it.
+    ↓
 
-&nbsp;
+Reducer advances
 
-**✅ 2. Supabase Realtime as the Phase A bus**
+Event 1 inference finishes later
 
-**Confirmed.**
+The completion of Event 1 must never overwrite or mutate newer state.
 
-Given the architecture you’ve described, I think **Supabase Realtime is a reasonable choice for Phase A**.
+Streaming output belongs to the presentation layer.
 
-I agree with the philosophy of:
+Lesson state belongs to the event pipeline.
 
-Don’t introduce a dedicated orchestration service until measurements show it’s actually needed.
+⸻
 
-That’s a sensible engineering tradeoff. If later benchmarks reveal bottlenecks, you can revisit that decision with evidence rather than assumptions.
+Required Edit 3 — Add A10 Integration Acceptance Tests
 
-&nbsp;
+A7 already proves:
 
-**⚠️ 3. Phase A acceptance metric**
+* priority ordering
 
-**p95 teacher-event → first Lumina token < 1.5 s under a 200-event synthetic burst**
+* FIFO behavior
 
-I would phrase this as:
+* starvation protection
 
-**Confirmed as the target acceptance metric**, not as something I can confirm will definitely be achieved.
+A8 proves:
 
-In other words:
+* pipeline consistency
 
-- ✅ I agree it’s a good engineering target.
-- ✅ I agree it should be the success criterion for Phase A.
-- ⏳ Whether the implementation actually reaches it has to be demonstrated through benchmarking.
+However, A10 changes the actual live execution path.
 
-&nbsp;
+Therefore A10 needs its own integration validation.
 
-**I also agree with this workflow:**
+Add tests covering:
 
-**Open Stage A1 only.**
+Priority ordering
 
-Specifically:
+Example:
 
-- Schema migration
-- Ordering contract test
-- Verify the foundation
-- **Do not** start building later stages until A1 is validated.
+Input:
 
-That’s a disciplined approach that minimizes cascading problems later in development.
+P5
 
-So my confirmation is:
+P5
 
-- ✅ Phase A / B / C structure: **Yes**
-- ✅ Supabase Realtime for Phase A: **Yes**
-- ✅ Use the 1.5-second p95 latency target as the acceptance criterion for Phase A: **Yes, as a benchmark to verify—not as a guaranteed outcome before testing.**
-- **After I approve this plan, don't automatically start building search online for information just like what you did when we wanted to improve the adaptive learning engine we need to search for data on the Internet and when you gather enough data and show me then we can actually start building**
+P3
+
+P1
+
+P4
+
+P2
+
+Expected processing:
+
+P1
+
+P2
+
+P3
+
+P4/P5 according to starvation rules
+
+⸻
+
+Starvation protection
+
+Verify:
+
+* low-priority events are eventually processed
+
+* starvation threshold remains unchanged
+
+* no events disappear
+
+⸻
+
+Stream interaction safety
+
+Verify:
+
+* multiple events can enter the scheduler while inference is active
+
+* state versions always increase correctly
+
+* stale inference completion cannot corrupt state
+
+⸻
+
+Required Edit 4 — Clarify A9 Timing Claims
+
+The benchmark design is correct.
+
+However, the timing interpretation must be precise.
+
+Current wording:
+
+“Clock skew between two browser contexts is bounded.”
+
+Required wording:
+
+“Both browser contexts run on the same benchmark host, reducing clock skew. Measurements represent a controlled local benchmark environment and should not be interpreted as a global internet latency guarantee.”
+
+This keeps the benchmark scientifically honest.
+
+⸻
+
+Required Edit 5 — Add Browser-Level Reconnect Validation
+
+A8 proved replay convergence in-process.
+
+A9 should validate the actual browser experience.
+
+Add an additional benchmark scenario:
+
+Disconnect / reconnect test
+
+Flow:
+
+Student connects
+
+Receives events 1-50
+
+Connection interrupted
+
+Teacher continues producing events 51-100
+
+Student reconnects
+
+Recovery occurs
+
+State converges
+
+Expected result:
+
+Final student state =
+
+Always-connected student state
+
+Measure:
+
+* recovery time
+
+* missing events recovered
+
+* final version equality
+
+This is critical because real classrooms experience:
+
+* WiFi interruptions
+
+* device sleep
+
+* browser suspension
+
+* temporary network failures
+
+⸻
+
+Final Approved Architecture After These Edits
+
+The final sequence becomes:
+
+Realtime Event
+
+      ↓
+
+A5 Intake Validation
+
+      ↓
+
+A7 Priority Scheduler
+
+      ↓
+
+A3 Lesson Reducer
+
+      ↓
+
+A6 Context Cache
+
+      ↓
+
+lumina-live Streaming Inference
+
+      ↓
+
+Student UI
+
+Validation:
+
+A8:
+
+Logical synchronization proven
+
+A10:
+
+Production execution path connected
+
+A9:
+
+Real-world latency measured
+
+⸻
+
+Final Goal
+
+After these refinements, Lumina can move from:
+
+“the synchronization architecture is theoretically correct”
+
+to:
+
+“the synchronization architecture is integrated, measured, and ready for real classroom validation.”
+
+The priority is not adding more AI features yet.
+
+The priority is proving that the foundation can reliably support thousands of live learning interactions.

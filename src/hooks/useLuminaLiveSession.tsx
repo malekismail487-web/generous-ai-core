@@ -1,43 +1,56 @@
 /**
- * LSE Stage A5 — `useLuminaLiveSession(lessonId)`
- * -----------------------------------------------
+ * LSE Stage A5 + A10 — `useLuminaLiveSession(lessonId)`
+ * -----------------------------------------------------
  * The student-side lifecycle hook. One instance per (student, lesson):
  *   1. Subscribes to the private Realtime channel `lesson:<uuid>`.
- *   2. Folds each broadcast payload into a `LessonState` via the Stage A3
- *      pure reducer, using ordered-intake gating to reject duplicates and
- *      surface gaps for future replay recovery.
- *   3. Projects the state into the `cachedContext` shape expected by the
- *      Stage A4 edge function.
- *   4. Fetches a fresh ALE context via `useAdaptiveIntelligence.getContext`
- *      and POSTs to `lumina-live`, consuming the SSE stream.
- *   5. Aborts the in-flight stream the moment a new event arrives — the
- *      Refinement-1 "volatile delta" is always the freshest teacher signal.
- *   6. Cleans up the channel and any in-flight AbortController on unmount
- *      to avoid the leaking-subscription anti-pattern called out in the
- *      cloud-realtime guidance.
+ *   2. Feeds every broadcast payload through the Stage A5 ordering gate,
+ *      then admits accepted events to the Stage A7 priority scheduler.
+ *   3. A microtask drain loop pops events in priority-then-FIFO order,
+ *      folds each into `LessonState` via the Stage A3 pure reducer, and
+ *      refreshes the Stage A6 context cache — this is the first live-path
+ *      use of the A6 cache and the first live-path use of the A7 scheduler.
+ *   4. Fires `runStreamFor(event)` per pop; the stream owns its own
+ *      `AbortController` + epoch. Preemption remains newest-wins on the
+ *      stream layer; the scheduler only orders admissions.
+ *   5. Cleans up channel, abort controllers, scheduler, and cache on
+ *      unmount / lessonId change / disable.
+ *
+ * INVARIANT (A10 refinement 2 — load-bearing): reducer state progression
+ * MUST NEVER depend on inference completion timing. The authoritative
+ * ordering source is:
+ *
+ *     LessonEvent seq → scheduler pop order → reducer version
+ *
+ * NOT:
+ *
+ *     AI response completion order.
+ *
+ * The drain loop enforces this by advancing the reducer synchronously on
+ * each pop, BEFORE issuing (and never `await`ing) `runStreamFor`. A stale
+ * stream that finishes after the reducer has moved on cannot mutate state —
+ * `runStreamFor` only writes to the `latest` presentation slot, guarded by
+ * `event.id` equality and the epoch ref.
  *
  * Deliberate non-goals (deferred by the phased plan):
  *   - No predictive precompute (Phase B1).
  *   - No gap-driven replay from `public.lesson_events` (Phase B3). Gaps are
  *     detected and exposed via `status.lastGap` so a future recovery layer
  *     can act on them.
- *   - No priority-aware scheduling (Stage A7). This hook streams one event
- *     at a time and preempts on the next arrival; A7 will replace the
- *     naive preemption with the P1..P5 queue.
- *   - No writes to `lesson_sessions` / `lesson_state_snapshots` (Stage A6).
+ *   - No writes to `lesson_sessions` / `lesson_state_snapshots`.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdaptiveIntelligence } from "@/hooks/useAdaptiveIntelligence";
-import { fold, reduce, initialState, type LessonState } from "@/lib/lse/lessonReducer";
+import { reduce, initialState, type LessonState } from "@/lib/lse/lessonReducer";
 import type { LessonEvent } from "@/lib/lse/eventNormalizer";
+import { createContextCache } from "@/lib/lse/contextCache";
+import { createPriorityScheduler } from "@/lib/lse/priorityScheduler";
 import {
   classifyIntake,
   parseSseStream,
   payloadToLessonEvent,
   projectCachedContext,
-  seqFromEventId,
   type SseFrame,
 } from "@/lib/lse/sessionInternals";
 
@@ -114,6 +127,46 @@ const PUBLISHABLE_KEY = () =>
   (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
   (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined);
 
+/**
+ * Per-hook cache capacity. Refinement 1 (A10 review): sized to 8 to absorb
+ * lesson transitions, reconnect scenarios, and rapid tab-switching without
+ * eviction pressure. Bounded by strict LRU so this remains safe.
+ */
+const HOOK_CACHE_CAPACITY = 8;
+
+// ---------------------------------------------------------------------------
+// Benchmark instrumentation (opt-in, non-behavioural)
+// ---------------------------------------------------------------------------
+
+/**
+ * A9 benchmark surface. If the page (e.g. `/lse-bench`) installs
+ * `window.__lseBench.mark`, the hook reports four timestamps per event:
+ *
+ *   realtime_received  — broadcast callback fired
+ *   inference_started  — POST /lumina-live issued
+ *   first_token        — first non-empty SSE `token` frame consumed
+ *   first_render       — React commit after `latest.text` first turns non-empty
+ *
+ * Absent the sentinel this is a single truthy check per call site.
+ */
+type BenchPhase =
+  | "realtime_received"
+  | "inference_started"
+  | "first_token"
+  | "first_render";
+
+interface LseBenchSurface {
+  mark: (eventId: string, phase: BenchPhase, ts: number) => void;
+}
+
+function benchMark(eventId: string, phase: BenchPhase): void {
+  if (typeof window === "undefined") return;
+  const w = window as unknown as { __lseBench?: LseBenchSurface };
+  const bench = w.__lseBench;
+  if (!bench || typeof bench.mark !== "function") return;
+  try { bench.mark(eventId, phase, performance.now()); } catch { /* never throw */ }
+}
+
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
@@ -140,6 +193,16 @@ export function useLuminaLiveSession(
   // race conditions where two streams complete out of order.
   const epochRef = useRef<number>(0);
   const mountedRef = useRef<boolean>(true);
+  // Per-hook A7 scheduler + A6 cache. Instantiated in the mount effect
+  // (below) so their lifetime matches the subscription, and both are torn
+  // down deterministically on unmount / lessonId change.
+  const schedulerRef = useRef<ReturnType<typeof createPriorityScheduler> | null>(null);
+  const cacheRef = useRef<ReturnType<typeof createContextCache> | null>(null);
+  // Drain reentrancy guard.
+  const drainingRef = useRef<boolean>(false);
+  // Track events whose first render we've already marked, so the effect
+  // that observes `latest.text` doesn't mark twice.
+  const firstRenderMarkedRef = useRef<Set<string>>(new Set());
 
   // Keep the ref in sync with the reactive state so callbacks that survive
   // renders always project the freshest state without stale closures.
@@ -152,6 +215,9 @@ export function useLuminaLiveSession(
     setState(stateRef.current);
     setLatest(null);
     setLastGap(null);
+    firstRenderMarkedRef.current.clear();
+    // Scheduler / cache are lesson-scoped; the mount effect creates fresh
+    // instances for the new lessonId and cleans up the prior ones.
   }, [lessonId]);
 
   const stop = useCallback(() => {
@@ -160,14 +226,15 @@ export function useLuminaLiveSession(
       abortRef.current.abort();
       abortRef.current = null;
     }
+    if (schedulerRef.current) schedulerRef.current.clear();
   }, []);
 
   // ------------------------------------------------------------------------
-  // Streaming inference call — one per accepted event.
+  // Streaming inference call — one per scheduler pop.
+  // Does NOT mutate reducer state. Only writes to `latest`.
   // ------------------------------------------------------------------------
   const runStreamFor = useCallback(async (event: LessonEvent) => {
-    // Preempt any in-flight stream immediately (Refinement-1: newest signal
-    // wins). Priority-aware preemption arrives with Stage A7.
+    // Preempt any in-flight stream immediately (newest signal wins).
     stop();
     const myEpoch = ++epochRef.current;
 
@@ -185,13 +252,16 @@ export function useLuminaLiveSession(
     }
     if (myEpoch !== epochRef.current || !mountedRef.current) return;
 
-    const cachedContext = projectCachedContext(stateRef.current);
+    // Project from cache when possible (A10: cache is now on the live path).
+    const cached = cacheRef.current?.read(event.lessonId)?.projection;
+    const cachedContext = cached ?? projectCachedContext(stateRef.current);
 
     let response: Response;
     try {
       const key = PUBLISHABLE_KEY();
       const { data: { session: authSession } } = await supabase.auth.getSession();
       const jwt = authSession?.access_token ?? key ?? "";
+      benchMark(event.id, "inference_started");
       response = await fetch(FUNCTIONS_ENDPOINT(), {
         method: "POST",
         headers: {
@@ -234,11 +304,19 @@ export function useLuminaLiveSession(
       ? { ...prev, status: "streaming" }
       : prev);
 
+    let firstTokenMarked = false;
     try {
       for await (const frame of parseSseStream(response.body)) {
         if (myEpoch !== epochRef.current || !mountedRef.current) {
           try { controller.abort(); } catch { /* ignore */ }
           return;
+        }
+        if (!firstTokenMarked && frame.event === "token") {
+          const delta = (frame.data as { delta?: unknown } | null)?.delta;
+          if (typeof delta === "string" && delta.length > 0) {
+            benchMark(event.id, "first_token");
+            firstTokenMarked = true;
+          }
         }
         applyFrame(event, frame, setLatest);
         if (frame.event === "done") return;
@@ -255,7 +333,54 @@ export function useLuminaLiveSession(
   }, [feature, getContext, lessonId, model, stop]);
 
   // ------------------------------------------------------------------------
-  // Realtime subscription lifecycle.
+  // Drain loop — pops the scheduler, folds state, refreshes cache, fires
+  // stream. Runs in microtasks so it never blocks the broadcast handler.
+  // ------------------------------------------------------------------------
+  const drain = useCallback(() => {
+    if (drainingRef.current) return;
+    const scheduler = schedulerRef.current;
+    const cache = cacheRef.current;
+    if (!scheduler || !cache) return;
+    drainingRef.current = true;
+    // Use queueMicrotask so we yield to the event loop between pops — this
+    // keeps the broadcast handler responsive to a burst and lets React
+    // batch state updates.
+    queueMicrotask(() => {
+      try {
+        const event = scheduler.pop();
+        if (!event) return;
+        // 1. Reduce (synchronous, pure).
+        const nextState = reduce(stateRef.current, event);
+        stateRef.current = nextState;
+        setState(nextState);
+        // 2. Refresh cache from the new state (identity-preserving on no-op).
+        cache.writeFromState(nextState, lastSeqRef.current);
+        // 3. Fire stream. Fire-and-forget — the drain does NOT await it.
+        //    Refinement 2: reducer already advanced; stream completion
+        //    order cannot mutate state.
+        void runStreamFor(event);
+      } finally {
+        drainingRef.current = false;
+        // Re-check for pending items admitted during the microtask.
+        if (schedulerRef.current && schedulerRef.current.size() > 0) drain();
+      }
+    });
+  }, [runStreamFor]);
+
+  // ------------------------------------------------------------------------
+  // First-render benchmark mark.
+  // ------------------------------------------------------------------------
+  useEffect(() => {
+    if (!latest) return;
+    if (latest.text.length === 0) return;
+    if (firstRenderMarkedRef.current.has(latest.event.id)) return;
+    firstRenderMarkedRef.current.add(latest.event.id);
+    benchMark(latest.event.id, "first_render");
+  }, [latest]);
+
+  // ------------------------------------------------------------------------
+  // Realtime subscription lifecycle. Also owns the per-lesson scheduler +
+  // cache instances so their lifetime is exactly the subscription's.
   // ------------------------------------------------------------------------
   useEffect(() => {
     mountedRef.current = true;
@@ -263,6 +388,11 @@ export function useLuminaLiveSession(
       setSession("idle");
       return () => { mountedRef.current = false; };
     }
+
+    // Create fresh per-lesson instances. The prior mount's cleanup handler
+    // already discarded the previous instances (see return below).
+    schedulerRef.current = createPriorityScheduler();
+    cacheRef.current = createContextCache({ capacity: HOOK_CACHE_CAPACITY });
 
     setSession("subscribing");
     setSubscribeError(null);
@@ -275,6 +405,7 @@ export function useLuminaLiveSession(
       if (!mountedRef.current) return;
       const event = payloadToLessonEvent(lessonId, msg?.payload);
       if (!event) return;
+      benchMark(event.id, "realtime_received");
 
       const decision = classifyIntake(event, lastSeqRef.current);
       if (decision.reason === "duplicate" || decision.reason === "invalid") return;
@@ -288,12 +419,11 @@ export function useLuminaLiveSession(
       }
 
       lastSeqRef.current = decision.seq!;
-      const nextState = reduce(stateRef.current, event);
-      stateRef.current = nextState;
-      setState(nextState);
-
-      // Void the returned promise — the stream drives its own state updates.
-      void runStreamFor(event);
+      // A10: broadcast handler no longer touches reducer/cache/stream.
+      // It admits to the scheduler and kicks the drain. The drain owns
+      // the authoritative processing order.
+      schedulerRef.current?.enqueue(event);
+      drain();
     });
 
     channel.subscribe((status) => {
@@ -316,9 +446,11 @@ export function useLuminaLiveSession(
         try { abortRef.current.abort(); } catch { /* ignore */ }
         abortRef.current = null;
       }
+      if (schedulerRef.current) { schedulerRef.current.clear(); schedulerRef.current = null; }
+      if (cacheRef.current) { cacheRef.current.clear(); cacheRef.current = null; }
       epochRef.current += 1;
     };
-  }, [enabled, lessonId, runStreamFor]);
+  }, [enabled, lessonId, drain]);
 
   const stableStop = useCallback(() => {
     stop();
