@@ -94,6 +94,7 @@ const App = () => (
                     <Route path="/moderator" element={<ModeratorDashboard />} />
                     <Route path="/moderator-pending" element={<ModeratorPendingPage />} />
                     <Route path="/code-lab" element={<CodeLab />} />
+                    <Route path="/lse-bench" element={<LseBench />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
