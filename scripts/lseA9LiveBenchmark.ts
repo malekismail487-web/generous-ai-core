@@ -162,7 +162,7 @@ async function emitEvent(page: PWPage, lessonId: string, seq: number, kind: stri
       }
     }
     if (!url || !key || !jwt) throw new Error("teacher session not available in page");
-    const teacherEmitTs = performance.now();
+    const teacherEmitTs = Date.now();
     const resp = await fetch(`${url}/rest/v1/lesson_events`, {
       method: "POST",
       headers: {
@@ -188,6 +188,7 @@ async function emitEvent(page: PWPage, lessonId: string, seq: number, kind: stri
   }, { lessonId, seq, kind, text });
   return record;
 }
+
 
 // ---------------------------------------------------------------------------
 // Student: read bench buffer
