@@ -49,9 +49,14 @@
  * Run with:  bun run scripts/lseA9LiveBenchmark.ts
  */
 
-import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+
+// Playwright is loaded dynamically so the prerequisite check + "playwright
+// not installed" message run without requiring the package up front.
+type PWBrowser = import("playwright").Browser;
+type PWContext = import("playwright").BrowserContext;
+type PWPage = import("playwright").Page;
 
 // ---------------------------------------------------------------------------
 // Config
