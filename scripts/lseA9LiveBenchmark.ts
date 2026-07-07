@@ -123,14 +123,19 @@ async function signIn(page: PWPage, previewUrl: string, email: string, password:
   await page.waitForURL((url) => !/\/auth$/.test(url.pathname), { timeout: 15_000 });
 }
 
-async function openBenchRoute(page: PWPage, previewUrl: string, lessonId: string): Promise<void> {
-  await page.goto(`${previewUrl}/lse-bench?lesson=${encodeURIComponent(lessonId)}`, { waitUntil: "domcontentloaded" });
-  // Wait until the hook has finished its subscribe handshake.
+async function openBenchRoute(page: PWPage, previewUrl: string, lessonId: string, startSeq: number): Promise<void> {
+  // `startSeq` seeds the A5 intake gate. Without it the student's `lastSeq`
+  // starts at 0 and every emitted event whose seq is not exactly 1 gets
+  // gap-rejected. Passing `startSeq` bridges to the teacher's cursor
+  // without changing production semantics.
+  const url = `${previewUrl}/lse-bench?lesson=${encodeURIComponent(lessonId)}&startSeq=${startSeq}`;
+  await page.goto(url, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(
     () => document.querySelector('[data-testid="bench-session-status"]')?.textContent === "subscribed",
     { timeout: 20_000 },
   );
 }
+
 
 // ---------------------------------------------------------------------------
 // Teacher: emit events via Supabase JS from inside the teacher browser page
