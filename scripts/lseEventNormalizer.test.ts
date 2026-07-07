@@ -154,18 +154,17 @@ const precedence: Array<{ text: string; expected: LessonEventKind; why: string }
   {
     text: "For example, F = m * a for a 1kg block.",
     expected: "example",
-    // NOTE: rule order puts formula before example, so this asserts our
-    // documented precedence: formula in fact wins here. We pin the actual
-    // behavior to catch drift.
-    why: "documented behavior: formula fires before example on '=' pattern",
+    why: "example marker precedes formula-equation pattern",
+  },
+  {
+    text: "F = m * a",
+    expected: "formula",
+    why: "bare equation with no example/question marker classifies as formula",
   },
 ];
 for (const p of precedence) {
   const got = classifyKind(p.text);
-  const expected = p.text.includes("=") && !p.text.includes("?") && !/^class[,!\s]/i.test(p.text.trim())
-    ? "formula"
-    : p.expected;
-  assert(`precedence: "${p.text.slice(0, 48)}" → ${expected}`, got === expected, `got "${got}" (${p.why})`);
+  assert(`precedence: "${p.text.slice(0, 48)}" → ${p.expected}`, got === p.expected, `got "${got}" (${p.why})`);
 }
 
 // 5. Batch preserves order
