@@ -17,8 +17,10 @@ import {
   Upload,
   Settings,
   Globe,
-  Bot
+  Bot,
+  Radio
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -230,6 +232,11 @@ export default function TeacherDashboard() {
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {profile.full_name}
             </span>
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <Link to="/teacher/live">
+                <Radio className="w-4 h-4 text-red-500" /> Lumina Live
+              </Link>
+            </Button>
             <Button variant="outline" size="icon" onClick={signOut}>
               <LogOut className="w-4 h-4" />
             </Button>
