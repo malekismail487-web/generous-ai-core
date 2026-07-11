@@ -1,8 +1,9 @@
-import { Home, Calendar, User } from 'lucide-react';
+import { Home, Calendar, User, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { useLiveMeetings } from '@/hooks/useLiveMeetings';
 
-export type TabType = 'home' | 'weeklyplan' | 'profile' | 'mindmaps' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'assignments' | 'reports' | 'podcasts' | 'studybuddy' | 'goals' | 'leaderboard' | 'focustimer' | 'aiplans' | 'announcements' | 'trips' | 'graphcalc';
+export type TabType = 'home' | 'weeklyplan' | 'profile' | 'mindmaps' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'assignments' | 'reports' | 'podcasts' | 'studybuddy' | 'goals' | 'leaderboard' | 'focustimer' | 'aiplans' | 'announcements' | 'trips' | 'graphcalc' | 'live';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -12,11 +13,13 @@ interface BottomNavProps {
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   const { t } = useThemeLanguage();
-  const activeBottomTab = ['home', 'weeklyplan', 'profile'].includes(activeTab) ? activeTab : 'home';
+  const { liveCount } = useLiveMeetings();
+  const activeBottomTab = ['home', 'weeklyplan', 'profile', 'live'].includes(activeTab) ? activeTab : 'home';
 
   const bottomTabs = [
     { id: 'weeklyplan' as const, icon: Calendar, label: t('Weekly Plan', 'الخطة الأسبوعية') },
     { id: 'home' as const, icon: Home, label: t('Home', 'الرئيسية') },
+    { id: 'live' as const, icon: Radio, label: t('Live', 'مباشر') },
     { id: 'profile' as const, icon: User, label: t('Profile', 'الملف الشخصي') },
   ];
 
@@ -26,6 +29,8 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         {bottomTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeBottomTab === tab.id;
+          const isLiveTab = tab.id === 'live';
+          const hasLive = isLiveTab && liveCount > 0;
 
           return (
             <button
@@ -37,17 +42,25 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               )}
             >
               <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300",
-                isActive && "bg-muted shadow-sm"
+                "relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
+                !isLiveTab && "rounded-xl",
+                isActive && "bg-muted shadow-sm",
+                isLiveTab && "border border-border/50",
+                hasLive && "border-red-500/50 bg-red-500/5"
               )}>
                 <Icon size={18} className={cn(
                   "transition-transform duration-300",
-                  isActive && "scale-110"
+                  isActive && "scale-110",
+                  hasLive && "text-red-500"
                 )} />
+                {hasLive && (
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-background animate-pulse" />
+                )}
               </div>
               <span className={cn(
                 "text-[10px] font-semibold transition-all",
-                isActive && "text-foreground"
+                isActive && "text-foreground",
+                hasLive && "text-red-500"
               )}>
                 {tab.label}
               </span>

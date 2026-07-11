@@ -3372,6 +3372,65 @@ export type Database = {
         }
         Relationships: []
       }
+      live_meetings: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          grade_level: string
+          id: string
+          lesson_id: string
+          scheduled_at: string | null
+          school_id: string
+          share_code: string
+          started_at: string | null
+          status: string
+          subject: string | null
+          teacher_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          grade_level: string
+          id?: string
+          lesson_id?: string
+          scheduled_at?: string | null
+          school_id: string
+          share_code: string
+          started_at?: string | null
+          status?: string
+          subject?: string | null
+          teacher_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          grade_level?: string
+          id?: string
+          lesson_id?: string
+          scheduled_at?: string | null
+          school_id?: string
+          share_code?: string
+          started_at?: string | null
+          status?: string
+          subject?: string | null
+          teacher_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_meetings_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lumina_api_keys: {
         Row: {
           created_at: string
