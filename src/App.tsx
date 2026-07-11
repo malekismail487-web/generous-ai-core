@@ -34,6 +34,8 @@ import ModeratorDashboard from "./pages/ModeratorDashboard";
 import ModeratorPendingPage from "./pages/ModeratorPending";
 import CodeLab from "./pages/CodeLab";
 import LseBench from "./pages/LseBench";
+import TeacherLiveConsole from "./pages/TeacherLiveConsole";
+import StudentLiveRoom from "./pages/StudentLiveRoom";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +97,8 @@ const App = () => (
                     <Route path="/moderator-pending" element={<ModeratorPendingPage />} />
                     <Route path="/code-lab" element={<CodeLab />} />
                     <Route path="/lse-bench" element={<LseBench />} />
+                    <Route path="/teacher/live" element={<TeacherLiveConsole />} />
+                    <Route path="/live/:meetingId" element={<StudentLiveRoom />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

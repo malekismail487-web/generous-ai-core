@@ -24,6 +24,7 @@ import { StudentHomeGrid, GridAction } from "@/components/StudentHomeGrid";
 import { WeeklyPlanSection } from "@/components/WeeklyPlanSection";
 import { BannerAd } from "@/components/BannerAd";
 import { FloatingTimer } from "@/components/student/FloatingTimer";
+import { StudentLiveList } from "@/components/student/StudentLiveList";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotes } from "@/hooks/useNotes";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
@@ -110,7 +111,7 @@ const Index = () => {
   if (profile?.status === 'pending' || profile?.status === 'rejected') return <Navigate to="/pending-approval" replace />;
 
   // Sub-page header with back button
-  const isSubPage = !['home', 'weeklyplan', 'profile'].includes(activeTab);
+  const isSubPage = !['home', 'weeklyplan', 'profile', 'live'].includes(activeTab);
 
   const renderMainContent = () => {
     switch (activeTab) {
@@ -157,6 +158,8 @@ const Index = () => {
         return <TripsViewer />;
       case 'graphcalc':
         return <GraphCalculator />;
+      case 'live':
+        return <StudentLiveList />;
       default:
         return null;
     }
