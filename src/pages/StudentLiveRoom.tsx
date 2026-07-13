@@ -79,11 +79,37 @@ export default function StudentLiveRoom() {
     return () => { cancelled = true; supabase.removeChannel(channel); };
   }, [meetingId]);
 
+  // Register a lesson_sessions row for this (lesson, student). The Realtime
+  // RLS policy on `realtime.messages` for `lesson:<uuid>` topics requires
+  // this row to exist — without it, broadcast frames are filtered out and
+  // the student sees nothing.
+  const [sessionRegistered, setSessionRegistered] = useState(false);
+  useEffect(() => {
+    if (!meeting?.lesson_id || !meeting?.school_id || !profile?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { error } = await supabase
+        .from('lesson_sessions')
+        .upsert(
+          {
+            lesson_id: meeting.lesson_id,
+            student_id: profile.id,
+            school_id: meeting.school_id,
+            status: 'active',
+          },
+          { onConflict: 'lesson_id,student_id' },
+        );
+      if (!cancelled && !error) setSessionRegistered(true);
+      else if (error) console.error('lesson_sessions upsert failed', error);
+    })();
+    return () => { cancelled = true; };
+  }, [meeting?.lesson_id, meeting?.school_id, profile?.id]);
+
   // Hydrate lecture state before mounting the live session so the student
   // catches up to the current concept instead of gap-rejecting fresh events.
   const backfill = useLessonBackfill(meeting?.lesson_id ?? null);
 
-  const sessionEnabled = !!(meeting && meeting.status === 'live' && backfill.ready);
+  const sessionEnabled = !!(meeting && meeting.status === 'live' && backfill.ready && sessionRegistered);
   const { state, latest, session, lastGap } = useLuminaLiveSession(
     meeting?.lesson_id ?? '',
     { enabled: sessionEnabled, initialLastSeq: backfill.startSeq, feature: 'lecture' },
