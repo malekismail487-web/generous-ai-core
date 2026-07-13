@@ -35,11 +35,14 @@ export function useLessonBackfill(lessonId: string | null | undefined): LessonBa
       return;
     }
     (async () => {
+      // Fetch the LAST N events (by seq desc), then reverse so the reducer
+      // folds them in ascending seq order. Mid-lecture joiners must see the
+      // most recent state, not the beginning of the lesson.
       const { data, error } = await supabase
         .from('lesson_events')
         .select('id,lesson_id,ts,kind,text,concept_ref,priority,teacher_visible,seq')
         .eq('lesson_id', lessonId)
-        .order('seq', { ascending: true })
+        .order('seq', { ascending: false })
         .limit(BACKFILL_LIMIT);
 
       if (cancelled) return;
@@ -47,7 +50,7 @@ export function useLessonBackfill(lessonId: string | null | undefined): LessonBa
         setResult({ hydratedState: initialState(lessonId), startSeq: 0, ready: true, error: error.message });
         return;
       }
-      const rows = data ?? [];
+      const rows = (data ?? []).slice().reverse();
       let state = initialState(lessonId);
       let maxSeq = 0;
       for (const row of rows) {
