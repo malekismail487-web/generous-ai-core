@@ -39,6 +39,25 @@ export default function Auth() {
   const { toast } = useToast();
   const { language } = useThemeLanguage();
   const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
+  const [selectedCountry, setSelectedCountry] = useState(() => getSelectedTenant());
+
+  const applyTenantOverride = (response: {
+    tenant_id?: string | null;
+    tenant_slug?: string | null;
+    tenant_name?: string | null;
+  }) => {
+    const outcome = reconcileTenantFromCode(response);
+    setSelectedCountry(getSelectedTenant());
+    if (outcome.overridden) {
+      toast({
+        title: language === 'ar' ? 'تم تحديث الدولة' : 'Country updated',
+        description:
+          language === 'ar'
+            ? `تم تغيير اختيارك إلى ${outcome.to} لأن الرمز يخص هذه الدولة.`
+            : `Your country was updated to ${outcome.to} because your code belongs there.`,
+      });
+    }
+  };
 
   // Redirect to language selection if not chosen yet
   useEffect(() => {
