@@ -5870,6 +5870,7 @@ export type Database = {
           created_at: string
           curriculum_framework: string | null
           default_language: string
+          default_subjects: Json
           grading_system: Json
           id: string
           is_visible: boolean
@@ -5887,6 +5888,7 @@ export type Database = {
           created_at?: string
           curriculum_framework?: string | null
           default_language?: string
+          default_subjects?: Json
           grading_system?: Json
           id?: string
           is_visible?: boolean
@@ -5904,6 +5906,7 @@ export type Database = {
           created_at?: string
           curriculum_framework?: string | null
           default_language?: string
+          default_subjects?: Json
           grading_system?: Json
           id?: string
           is_visible?: boolean
@@ -6517,6 +6520,7 @@ export type Database = {
         Args: { p_session_token: string }
         Returns: Json
       }
+      get_tenant_config: { Args: never; Returns: Json }
       get_user_school_id: { Args: { user_uuid: string }; Returns: string }
       get_user_tenant_id: { Args: { uid: string }; Returns: string }
       get_weakest_topics:
@@ -6635,6 +6639,18 @@ export type Database = {
           p_was_correct: boolean
         }
         Returns: string
+      }
+      update_tenant_defaults: {
+        Args: {
+          p_academic_calendar?: Json
+          p_curriculum_framework?: string
+          p_default_language?: string
+          p_default_subjects?: Json
+          p_grading_system?: Json
+          p_supported_languages?: string[]
+          p_tenant_id: string
+        }
+        Returns: Json
       }
       verify_admin_access_code: {
         Args: { input_code: string }

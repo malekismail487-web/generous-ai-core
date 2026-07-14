@@ -19,6 +19,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Globe2, Loader2, Plus, Play, Pause } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import TenantDefaultsEditor from '@/components/admin/TenantDefaultsEditor';
 
 interface TenantRow {
   id: string;
@@ -31,6 +32,10 @@ interface TenantRow {
   status: 'active' | 'provisioning' | 'suspended';
   is_visible: boolean;
   created_at: string;
+  default_subjects: unknown;
+  grading_system: unknown;
+  academic_calendar: unknown;
+  curriculum_framework: string | null;
 }
 
 export default function TenantsPanel() {
@@ -138,35 +143,51 @@ export default function TenantsPanel() {
         ) : (
           <div className="space-y-2">
             {tenants.map((t) => (
-              <div key={t.id} className="flex items-center justify-between border border-border/40 rounded-lg p-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium">{t.country_name}</span>
-                    <Badge variant="outline" className="text-[10px]">{t.country_code}</Badge>
-                    <Badge
-                      variant={t.status === 'active' ? 'default' : t.status === 'suspended' ? 'destructive' : 'secondary'}
-                      className="text-[10px] capitalize"
-                    >
-                      {t.status}
-                    </Badge>
-                    {!t.is_visible && <Badge variant="outline" className="text-[10px]">hidden</Badge>}
+              <div key={t.id} className="border border-border/40 rounded-lg p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium">{t.country_name}</span>
+                      <Badge variant="outline" className="text-[10px]">{t.country_code}</Badge>
+                      <Badge
+                        variant={t.status === 'active' ? 'default' : t.status === 'suspended' ? 'destructive' : 'secondary'}
+                        className="text-[10px] capitalize"
+                      >
+                        {t.status}
+                      </Badge>
+                      {!t.is_visible && <Badge variant="outline" className="text-[10px]">hidden</Badge>}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {t.ministry_name} · {t.default_language.toUpperCase()}
+                      {t.curriculum_framework ? ` · ${t.curriculum_framework}` : ''}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t.ministry_name} · {t.default_language.toUpperCase()}
-                  </p>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {t.status !== 'active' && (
+                      <Button size="sm" variant="outline" className="gap-1" onClick={() => activate(t.id)}>
+                        <Play className="w-3 h-3" /> Activate
+                      </Button>
+                    )}
+                    {t.status === 'active' && (
+                      <Button size="sm" variant="outline" className="gap-1" onClick={() => suspend(t.id)}>
+                        <Pause className="w-3 h-3" /> Suspend
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {t.status !== 'active' && (
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => activate(t.id)}>
-                      <Play className="w-3 h-3" /> Activate
-                    </Button>
-                  )}
-                  {t.status === 'active' && (
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => suspend(t.id)}>
-                      <Pause className="w-3 h-3" /> Suspend
-                    </Button>
-                  )}
-                </div>
+
+                <TenantDefaultsEditor
+                  tenantId={t.id}
+                  defaults={{
+                    default_subjects: t.default_subjects,
+                    grading_system: t.grading_system,
+                    academic_calendar: t.academic_calendar,
+                    default_language: t.default_language,
+                    supported_languages: t.supported_languages ?? [],
+                    curriculum_framework: t.curriculum_framework,
+                  }}
+                  onSaved={load}
+                />
               </div>
             ))}
           </div>
