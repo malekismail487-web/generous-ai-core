@@ -76,7 +76,7 @@ serve(async (req) => {
 
     const { data: school, error: schoolError } = await admin
       .from("schools")
-      .select("id,name,activation_code,code_used,status")
+      .select("id,name,activation_code,code_used,status,tenant_id")
       .ilike("name", schoolName)
       .eq("activation_code", activationCode)
       .eq("code_used", false)
@@ -179,7 +179,7 @@ serve(async (req) => {
 
     console.log("activate-school: success", { userId: user.id, schoolId: school.id });
     return new Response(
-      JSON.stringify({ success: true, school_id: school.id, school_name: school.name }),
+      JSON.stringify({ success: true, school_id: school.id, school_name: school.name, tenant_id: (school as any).tenant_id, tenant_slug: tenantRow?.slug ?? null, tenant_name: tenantRow?.country_name ?? null }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
