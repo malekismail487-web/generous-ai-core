@@ -165,6 +165,7 @@ export function useRoleGuard() {
     role,
     profile,
     school,
+    tenantId: school?.tenant_id ?? null,
     loading: authLoading || loading,
     isSuperAdmin,
     isSchoolAdmin,
