@@ -28,7 +28,7 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<'schools' | 'security' | 'ministry' | 'tenants'>('schools');
+  const [activeTab, setActiveTab] = useState<'schools' | 'security' | 'ministry' | 'tenants' | 'observatory'>('schools');
 
   useEffect(() => {
     const checkEmail = async () => {
