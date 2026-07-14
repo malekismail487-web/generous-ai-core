@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, RefreshCw, Building2, Loader2, Shield, KeyRound } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Building2, Loader2, Shield, KeyRound, Globe2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AttackLogsPanel from '@/components/AttackLogsPanel';
 import MinistryCodeGenerator from '@/components/admin/MinistryCodeGenerator';
+import TenantsPanel from '@/components/admin/TenantsPanel';
 
 const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
 
