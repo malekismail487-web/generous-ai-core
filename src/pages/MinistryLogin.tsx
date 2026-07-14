@@ -116,7 +116,7 @@ export default function MinistryLogin() {
       p_device_fingerprint: fp
     });
 
-    const result = data as { success: boolean; error?: string; session_token?: string; banned?: boolean } | null;
+    const result = data as { success: boolean; error?: string; session_token?: string; banned?: boolean; tenant_id?: string } | null;
 
     if (rpcError || !result?.success) {
       if (result?.banned) {
@@ -128,6 +128,9 @@ export default function MinistryLogin() {
       return;
     }
 
+    // Persist the tenant this ministry session belongs to so downstream
+    // views can scope to the correct country without a re-fetch.
+    if (result.tenant_id) sessionStorage.setItem('ministry_tenant_id', result.tenant_id);
     setSessionToken(result.session_token!);
     setStatus('pending');
     setCode('');

@@ -1,108 +1,158 @@
-## Phase B — Lumina Live Meeting Experience
 
-The A1–A10 sync stack (Realtime channel `lesson:<uuid>`, `lesson_events` table, priority scheduler, context cache, `useLuminaLiveSession`, `lumina-live` edge function) is the infrastructure. It is complete and untouched by this phase.
+# Lumina Multi-Tenant Architecture — Foundation Plan (Phase T1)
 
-This phase builds the actual **parallel-live classroom** on top: a teacher meeting console that emits lecture events, a student meeting room that continuously renders Lumina's personalized interpretation of those events, and the session lifecycle that binds the two.
+Goal: make **country** a first-class object (`tenant`) that owns schools, ministry, curriculum, and analytics — without breaking any existing feature. This phase lands the foundation only. Every future ministry / school / teacher / student capability plugs into it afterwards.
 
-### What we build
+Initial active tenant: **Saudi Arabia**. No other country appears anywhere until activated.
 
-**1. `lesson_sessions` lifecycle (data + RLS)**
+---
 
-New rows in the existing `lesson_sessions` table represent an *active meeting*:
-
-- `status`: `scheduled | live | ended`
-- `started_at`, `ended_at`, `teacher_id`, `class_id`, `subject`, `title`
-- RLS: teacher of the class can create/update; enrolled students can read live sessions for their class; strict school isolation.
-- Realtime `postgres_changes` on this table → students see sessions appear/disappear without polling.
-
-**2. Teacher console — "Start Lumina Live"**
-
-New tab on the Teacher Dashboard: **Live Lecture**.
-
-- Pick class + subject + title → **Go Live** button flips a session to `status=live`.
-- Composer to emit lecture events into `public.lesson_events` (the A1 trigger already broadcasts them). Event kinds already supported by A2: `concept | definition | formula | example | question | discussion | admin | silence`.
-- Quick-emit controls: concept chip, definition field, formula (LaTeX), example, "moved on / silence".
-- **Optional voice capture** (Web Speech API, already used in `useTextToSpeech`): teacher speaks → chunks get classified into event kinds via a small helper edge function and inserted. Manual controls remain the source of truth; voice is an assist.
-- **End Meeting** button → `status=ended`, `ended_at=now()`. Triggers automatic termination on student side.
-
-**3. Student meeting room — parallel live stream**
-
-New route `/live/:lessonId` and a **"Join Live"** card that appears on the Student Dashboard whenever a `lesson_sessions` row for one of their classes flips to `live`.
-
-Layout (mobile-first, matches monochromatic system):
+## What lives where
 
 ```text
-┌─────────────────────────────────┐
-│ Live • [Subject] • [Teacher]    │  ← header, ends button
-├─────────────────────────────────┤
-│ Current concept: Newton's 2nd   │  ← from LessonState.currentConcept
-│ Prereqs covered: [chips]        │
-├─────────────────────────────────┤
-│ ── Lumina, teaching you now ──  │
-│                                 │
-│  [streaming personalized        │  ← latest.text from
-│   explanation of the current    │    useLuminaLiveSession,
-│   event, in student's ALE       │    Source Serif 4, MathRenderer
-│   style]                        │
-│                                 │
-├─────────────────────────────────┤
-│ Timeline (recent teacher beats) │  ← LessonState.timeline, collapsed
-├─────────────────────────────────┤
-│ [Ask Lumina about this]         │  ← optional side chat, non-blocking
-└─────────────────────────────────┘
+Global (shared, tenant-agnostic)
+├─ Lumina AI core, ALE, edge functions, auth framework, UI shell
+└─ Super Admin (single global role)
+
+Tenant (one per country — Saudi Arabia today)
+├─ Ministry (codes, sessions, dashboard, curriculum authority)
+├─ Configuration (language, grading, calendar, curriculum versions)
+└─ Schools
+     ├─ Admins, Teachers, Students, Parents
+     ├─ Materials, Assignments, Live meetings, Notes…
+     └─ Analytics
 ```
 
-Behavior:
+---
 
-- Wraps `useLuminaLiveSession(lessonId)` — every accepted event auto-generates a personalized explanation via the existing edge function, which already fuses `cachedContext` (lecture state) + `studentContext` (full ALE).
-- No manual refresh, no re-upload. State evolves continuously.
-- When the parent `lesson_sessions.status` flips to `ended`, the room auto-closes and shows a "Meeting ended" summary card (concepts covered, mastery deltas from `recordTeaching` events already fired during the session).
-- Joining mid-lecture: on mount, hook seeds `initialLastSeq` from `SELECT max(seq) FROM lesson_events WHERE lesson_id=?` so the student catches up cleanly without gap-rejecting the next real event; a one-shot backfill fetches the last N events to hydrate `LessonState` before subscribing.
+## Deliverables
 
-**4. Auto session management**
+### 1. New table: `public.tenants`
+Country-level record. Fields (domain-specific):
+- `slug` (e.g. `sa`, `eg`) — stable identifier
+- `country_name`, `country_code` (ISO-3166 alpha-2)
+- `ministry_name`
+- `default_language`, `supported_languages[]`
+- `grading_system` (jsonb: scale, pass mark, letter map)
+- `academic_calendar` (jsonb: term structure, start month)
+- `curriculum_framework` (text, e.g. `sa-moe-2024`)
+- `ai_config` (jsonb: ministry-approved model behaviour overrides)
+- `status`: `active | provisioning | suspended`
+- `is_visible` (bool) — controls whether the country appears in any picker
 
-- Student join card is driven by Realtime on `lesson_sessions` — appears when live, disappears when ended.
-- Teacher ending the meeting closes all student rooms via the same signal.
-- Reconnect on tab focus / network return is already handled by A5's subscription lifecycle.
+RLS: readable by anyone authenticated for **active + visible** tenants (needed for country selectors); full-row read/write only for Super Admin.
 
-**5. Continuous personalization loop (already wired, made visible)**
+### 2. Add `tenant_id` to existing tables
+Nullable at first, backfilled to the Saudi tenant, then made `NOT NULL`.
 
-The A10 hook already:
+- `schools.tenant_id` → `tenants.id`
+- `curriculum_standards.tenant_id`
+- `curriculum_versions.tenant_id`
+- `ministry_access_codes.tenant_id`
+- `ministry_access_requests.tenant_id`
+- `ministry_sessions.tenant_id`
+- `ministry_ip_bans.tenant_id`
+- `moderator_invite_codes.tenant_id` (moderators are tenant-scoped, not global)
+- `lct_exams.tenant_id`, `lct_exam_students.tenant_id`, `lct_exam_locks.tenant_id`
+- `announcements` / `trips` inherit tenant via school (no direct column needed)
 
-- calls `getContext(feature)` per event → pulls full ALE profile.
-- feeds student interactions back via `recordTeaching` / `recordChat` / `recordAnswer`.
+All other tables already inherit tenant transitively through `school_id`; no new columns needed there, only stricter RLS helpers.
 
-This phase surfaces that loop in the UI: a small "adapting to you" indicator when a new ALE snapshot is folded in, and the optional side-chat routes through `recordChat` so ALE keeps evolving during the meeting.
+### 3. New helpers (SECURITY DEFINER)
+- `public.get_user_tenant_id(uid uuid) → uuid`
+  - resolves via `profiles.school_id → schools.tenant_id`
+  - falls back to `ministry_sessions.tenant_id` when called from a ministry session context
+- `public.is_super_admin(uid uuid) → bool` (thin wrapper over existing check, used in policies)
+- `public.has_tenant_role(uid uuid, tenant uuid, role text) → bool`
+  - `role ∈ {ministry_admin, ministry_analyst, ministry_curriculum}`
+  - reads a new `public.tenant_roles` table (`user_id, tenant_id, role`, unique)
 
-### What we do NOT build (explicit non-goals)
+### 4. RLS updates
+For every table listed above, add a top-level tenant guard:
 
-- No changes to A1–A10 modules (sync, scheduler, cache, hook, reducer, `lumina-live` function).
-- No WebRTC video/audio conferencing. The "meeting" is the teacher's real classroom + the student's Lumina stream. If teachers want video, that's a separate stack (Daily/LiveKit) — not this phase.
-- No AI self-editing. No ministry feature-generation. (Those threads stay closed per prior turns.)
-- No predictive precompute (Phase B1 in the plan doc) and no gap-driven replay (Phase B3) — join-time backfill covers the common case; deep replay stays deferred.
+```sql
+USING (
+  public.is_super_admin(auth.uid())
+  OR tenant_id = public.get_user_tenant_id(auth.uid())
+)
+```
 
-### Technical section
+Ministry-scoped tables also allow rows where the session's ministry token matches (`ministry_sessions.tenant_id = row.tenant_id`).
 
-Files to add:
+Existing school/user policies remain — the tenant guard is an **additional** filter, never a replacement.
 
-- Migration: extend `lesson_sessions` with `status`, `title`, `started_at`, `ended_at` columns if missing; RLS policies; `GRANT` block; realtime publication.
-- `src/pages/TeacherLiveConsole.tsx` — teacher UI, uses `supabase.from('lesson_events').insert(...)`.
-- `src/pages/StudentLiveRoom.tsx` — student UI, uses `useLuminaLiveSession`.
-- `src/components/student/LiveJoinCard.tsx` — dashboard entry point, subscribes to `lesson_sessions` changes.
-- `src/hooks/useLessonSessionLifecycle.tsx` — thin hook to observe/mutate a `lesson_sessions` row.
-- `src/hooks/useLessonBackfill.tsx` — one-shot fetch of `lesson_events` up to current `max(seq)` for mid-lecture joiners; returns `{ hydratedState, startSeq }` to seed the hook.
-- Route registration in `src/App.tsx`; nav entries under the existing Teacher and Student dashboards.
-- Optional: `supabase/functions/lumina-live-classify-speech/index.ts` for voice → event-kind classification (Lovable AI). Deferrable to a sub-phase if you'd rather ship text-only first.
+### 5. Ministry system rewrite (surgical)
+- `ministry_access_codes` gain `tenant_id` — one code family per country.
+- `verify_ministry_code` returns `tenant_id` in its JSON so the client stores it in `ministry_sessions`.
+- `get_ministry_dashboard_data(p_session_token)` filters every sub-query by `tenant_id` from the session row (today it returns global data — this is the biggest correctness fix).
+- New RPC `get_active_tenants()` returns only `status='active' AND is_visible=true` tenants for pickers.
 
-No edits to:
+### 6. Ministry / country pickers in the UI
+- `MinistryLogin.tsx`: no country picker today. After code verification, the response tells the client which tenant they're in — no UI change unless a picker is later needed.
+- Any future country dropdown consumes `get_active_tenants()`. Since only Saudi Arabia is active, the list contains exactly one entry — matches the "clean, no coming-soon" rule.
+- Super Admin panel gets a new **Tenants** tab (list, provision, activate/suspend, edit config).
 
-- `useLuminaLiveSession.tsx`, `lumina-live/index.ts`, or any `src/lib/lse/*` module.
-- `adaptiveIntelligence.ts` — we only *call* it via the existing hook API.
+### 7. Tenant provisioning workflow (Super Admin only)
+New RPC `provision_tenant(payload jsonb)` that in one transaction:
+1. inserts a `tenants` row (`status='provisioning'`, `is_visible=false`),
+2. seeds default curriculum framework record,
+3. reserves a ministry access code slot (empty until Super Admin generates one),
+4. returns the new `tenant_id`.
 
-### Open questions before I write code
+Activation is a separate RPC `activate_tenant(tenant_id)` that flips `status='active'`, `is_visible=true`. This is what makes the country appear in pickers.
 
-1. **Voice capture on the teacher side — in this phase, or a follow-up?** Text-only ships faster and cleaner; voice is a nice second pass.
-2. **Should the student side-chat during a live meeting write to the existing `conversations`/`messages` tables, or stay ephemeral to the session?**
-3. **Who can start a live session — any teacher of the class, or only the class's primary teacher?** (Affects the RLS `WITH CHECK` clause.)
-4. There should be a new tab for students called online meetings but this time it's in the taskbar, not a tab as a circle and it must show a red dot near the icon if there is an ongoing live for this student's grade teachers can schedule a live and when they do so a notification gets sent to all of the students that will get this meeting like if a teacher schedules a meeting for grade 8 every student in grade 8 should be notified and I have noticed that for every zoom meeting a teacher can copy it and paste the meeting link so I think they should be able to do the same thing with Lumina so create your own message and what not
-5. And the most important part is that Lumina must be added, and it should be effective it should always hear what the teacher is saying and the second a student requests Lumina live the meeting switches from the teachers perspective to another teaching perspective as in a parallel, live video where Lumina is speaking, and there are also subtitles for Lumina so we need a transcription system to help Lumina and my suggestion is whisper.cppâ  +Â  whisper.cpp.ts bindingsâ  this is a link you can go look it up and the name of the actual device itself is called whisper.cpp and please know that lumina listens to the teacher with that transcription engine and then like, for example, if I call aluminum live at the very start of the meeting it should shift from the teacher view where I can see what the teacher is saying to Lumina of view, and it cuts audio of the teacher and luminas audio begins, and there should be also an option to view what the teacher is sharing on the screen, but without what the teacher saying, but anyways, Lumina, I should listen to the teacher and whoever calls Lumina Lumina must respond, not at the very start of the lecture, but at the point, they are currently in like if the start of the lecture was talking about photosynthesis and a part comes and it's all about how plans produce sugar and what not then I called Lumina live the live must start at the part where plants make sugar. Then Lumina collect the data that the teacher says, and it gets the adaptive data of the student that called it so it can identify what would be the most great way of explanation be for this student and Lumina should do all of that while keeping great synchronization and low latency and because I really don't feel like testing anything I want you to verify everything by code and I know low latency can only be verified if I physically test it, but I don't feel like it so just verify my code because if you verify my code, they tell us if this should work or not when I actually verify it physically
+### 8. Seed Saudi Arabia
+Insert one row:
+- `slug='sa'`, `country_code='SA'`, `country_name='Kingdom of Saudi Arabia'`
+- `ministry_name='Ministry of Education'`
+- languages `['ar','en']`, default `ar`
+- `status='active'`, `is_visible=true`
+
+Backfill:
+- `UPDATE schools SET tenant_id = <sa>` for every existing school
+- Same for the ministry / curriculum tables listed above
+- Then `ALTER … SET NOT NULL`
+
+### 9. Dossier
+Write `.lovable/tenant-A1-dossier.md` documenting:
+- files added / modified
+- exact RLS pattern chosen and why
+- helper function contracts
+- backfill steps performed
+- what phase T2+ must consume (never bypass)
+
+---
+
+## What this phase intentionally does NOT do
+
+- No ministry-authored feature generation (that's a separate future phase — this only makes it possible).
+- No changes to the AI core, ALE, edge-function orchestration, live-lesson pipeline (A1–A10), or existing student/teacher screens.
+- No new dashboards, no new analytics — only the existing ministry dashboard is corrected to be tenant-scoped.
+- No cross-tenant sharing primitives yet (research consortiums, comparative analytics) — deferred.
+
+---
+
+## Technical section (for reviewers)
+
+**Migration order (single migration file):**
+1. `CREATE TABLE public.tenants` + GRANTs + RLS + policies.
+2. `CREATE TABLE public.tenant_roles` + GRANTs + RLS + policies.
+3. Add nullable `tenant_id` columns to the tables in §2, plus FK to `tenants(id)`.
+4. Insert Saudi tenant.
+5. Backfill `tenant_id = <sa>` on all rows.
+6. `ALTER … SET NOT NULL`.
+7. Create/replace helper functions (`get_user_tenant_id`, `has_tenant_role`, `is_super_admin`).
+8. `DROP POLICY … ; CREATE POLICY …` for each affected table adding the tenant guard.
+9. Replace `get_ministry_dashboard_data`, `verify_ministry_code` with tenant-aware versions.
+10. Create `provision_tenant`, `activate_tenant`, `get_active_tenants` RPCs.
+
+**Frontend touch list (minimum):**
+- `src/hooks/useRoleGuard.tsx` — expose `tenantId` from the profile→school join.
+- `src/pages/MinistryLogin.tsx` — persist `tenant_id` from `verify_ministry_code` response.
+- `src/pages/MinistryDashboard.tsx` — no logic change; already reads whatever `get_ministry_dashboard_data` returns.
+- `src/components/SuperAdminPanel.tsx` — new **Tenants** tab wired to the three new RPCs.
+- New file `src/hooks/useTenant.tsx` — tiny React Query wrapper around `get_active_tenants()` + current tenant.
+
+**Non-goals for code:** no changes to `src/lib/lse/*`, `useLuminaLiveSession`, `lumina-live` edge function, adaptive engine files, or any student-facing screen.
+
+**Approval gates:** the migration is one call and requires user approval before running. Frontend changes ship after the migration succeeds and Supabase types regenerate.

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, RefreshCw, Building2, Loader2, Shield, KeyRound } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Building2, Loader2, Shield, KeyRound, Globe2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AttackLogsPanel from '@/components/AttackLogsPanel';
 import MinistryCodeGenerator from '@/components/admin/MinistryCodeGenerator';
+import TenantsPanel from '@/components/admin/TenantsPanel';
 
 const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
 
@@ -26,7 +27,7 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<'schools' | 'security' | 'ministry'>('schools');
+  const [activeTab, setActiveTab] = useState<'schools' | 'security' | 'ministry' | 'tenants'>('schools');
 
   useEffect(() => {
     const checkEmail = async () => {
@@ -145,6 +146,13 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
             >
               <KeyRound size={14} className="mr-1" /> Ministry
             </Button>
+            <Button
+              variant={activeTab === 'tenants' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('tenants')}
+            >
+              <Globe2 size={14} className="mr-1" /> Tenants
+            </Button>
             {activeTab === 'schools' && (
               <Button variant="outline" size="icon" onClick={fetchSchools} disabled={loading}>
                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
@@ -159,7 +167,9 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
           </div>
         )}
 
-        {activeTab === 'ministry' ? (
+        {activeTab === 'tenants' ? (
+          <TenantsPanel />
+        ) : activeTab === 'ministry' ? (
           <MinistryCodeGenerator />
         ) : activeTab === 'security' ? (
           <AttackLogsPanel />

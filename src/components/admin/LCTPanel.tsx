@@ -504,9 +504,16 @@ export default function LCTPanel() {
     setActionLoading(true);
     setStep('collecting');
     try {
+      const { data: tenant } = await supabase
+        .from('tenants').select('id').eq('slug', 'sa').maybeSingle();
+      if (!tenant?.id) throw new Error('No active tenant configured');
       const { data: newExam, error: createErr } = await supabase
         .from('lct_exams')
-        .insert({ title: 'Luminary Cognitive Test', created_by: (await supabase.auth.getUser()).data.user!.id })
+        .insert({
+          title: 'Luminary Cognitive Test',
+          created_by: (await supabase.auth.getUser()).data.user!.id,
+          tenant_id: tenant.id,
+        })
         .select()
         .single();
       if (createErr) throw createErr;
