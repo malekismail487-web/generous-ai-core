@@ -27,6 +27,7 @@ export interface School {
   code_used: boolean;
   address: string | null;
   created_at: string;
+  tenant_id: string;
 }
 
 export function useRoleGuard() {
