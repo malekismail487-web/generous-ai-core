@@ -1529,6 +1529,13 @@ export type Database = {
             foreignKeyName: "curriculum_standards_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "curriculum_standards_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -1572,6 +1579,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "schools"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_versions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "curriculum_versions_tenant_id_fkey"
@@ -2679,6 +2693,13 @@ export type Database = {
             foreignKeyName: "lct_exam_locks_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "lct_exam_locks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -2785,6 +2806,13 @@ export type Database = {
             foreignKeyName: "lct_exam_students_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "lct_exam_students_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -2828,6 +2856,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "lct_exams_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "lct_exams_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -3796,6 +3831,13 @@ export type Database = {
             foreignKeyName: "ministry_access_codes_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "ministry_access_codes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -3846,6 +3888,67 @@ export type Database = {
             foreignKeyName: "ministry_access_requests_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "ministry_access_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ministry_announcements: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          id: string
+          published: boolean
+          published_at: string
+          severity: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          published?: boolean
+          published_at?: string
+          severity?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          published?: boolean
+          published_at?: string
+          severity?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ministry_announcements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "ministry_announcements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -3880,6 +3983,13 @@ export type Database = {
           tenant_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ministry_ip_bans_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "ministry_ip_bans_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -3921,6 +4031,13 @@ export type Database = {
           tenant_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ministry_sessions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "ministry_sessions_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -4201,6 +4318,13 @@ export type Database = {
           used_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "moderator_invite_codes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "moderator_invite_codes_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -5217,6 +5341,13 @@ export type Database = {
             foreignKeyName: "schools_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "schools_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -5829,6 +5960,54 @@ export type Database = {
           },
         ]
       }
+      tenant_feature_flags: {
+        Row: {
+          config: Json
+          created_at: string
+          description: string | null
+          enabled: boolean
+          flag_key: string
+          id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          flag_key: string
+          id?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          flag_key?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_feature_flags_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_feature_flags_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_roles: {
         Row: {
           created_at: string
@@ -5852,6 +6031,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tenant_roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "tenant_roles_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -6369,7 +6555,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      tenant_analytics_view: {
+        Row: {
+          active_users_7d: number | null
+          assignments_30d: number | null
+          avg_grade_30d: number | null
+          computed_at: string | null
+          country_name: string | null
+          school_count: number | null
+          status: string | null
+          student_count: number | null
+          submissions_30d: number | null
+          teacher_count: number | null
+          tenant_id: string | null
+          tenant_slug: string | null
+          user_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _slugify_name: { Args: { p: string }; Returns: string }
@@ -6476,6 +6679,30 @@ export type Database = {
           supported_languages: string[]
         }[]
       }
+      get_cross_tenant_observatory: {
+        Args: never
+        Returns: {
+          active_users_7d: number | null
+          assignments_30d: number | null
+          avg_grade_30d: number | null
+          computed_at: string | null
+          country_name: string | null
+          school_count: number | null
+          status: string | null
+          student_count: number | null
+          submissions_30d: number | null
+          teacher_count: number | null
+          tenant_id: string | null
+          tenant_slug: string | null
+          user_count: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "tenant_analytics_view"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_due_reviews:
         | {
             Args: { p_limit?: number; p_user_id: string }
@@ -6520,6 +6747,7 @@ export type Database = {
         Args: { p_session_token: string }
         Returns: Json
       }
+      get_tenant_analytics: { Args: { p_tenant_id?: string }; Returns: Json }
       get_tenant_config: { Args: never; Returns: Json }
       get_user_school_id: { Args: { user_uuid: string }; Returns: string }
       get_user_tenant_id: { Args: { uid: string }; Returns: string }
@@ -6566,6 +6794,10 @@ export type Database = {
         Args: { role_name: string; tenant: string; uid: string }
         Returns: boolean
       }
+      is_feature_enabled: {
+        Args: { p_flag_key: string; p_tenant_id: string }
+        Returns: boolean
+      }
       is_hardcoded_admin: { Args: { check_email: string }; Returns: boolean }
       is_moderator: { Args: { user_uuid: string }; Returns: boolean }
       is_parent_of: {
@@ -6592,6 +6824,25 @@ export type Database = {
         Args: { p_email: string; p_user_id: string }
         Returns: Json
       }
+      list_feature_flags: {
+        Args: { p_tenant_id?: string }
+        Returns: {
+          config: Json
+          created_at: string
+          description: string | null
+          enabled: boolean
+          flag_key: string
+          id: string
+          tenant_id: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "tenant_feature_flags"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       provision_tenant: { Args: { payload: Json }; Returns: Json }
       record_review_delivered: {
         Args: { p_card_id: string }
@@ -6612,6 +6863,16 @@ export type Database = {
       seed_default_teacher_categories: {
         Args: { p_school_id: string }
         Returns: undefined
+      }
+      set_feature_flag: {
+        Args: {
+          p_config?: Json
+          p_description?: string
+          p_enabled: boolean
+          p_flag_key: string
+          p_tenant_id: string
+        }
+        Returns: Json
       }
       signup_as_moderator: {
         Args: { p_email: string; p_full_name: string; p_invite_code: string }

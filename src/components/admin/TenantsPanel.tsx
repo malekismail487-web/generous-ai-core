@@ -20,6 +20,8 @@ import { Badge } from '@/components/ui/badge';
 import { Globe2, Loader2, Plus, Play, Pause } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import TenantDefaultsEditor from '@/components/admin/TenantDefaultsEditor';
+import FeatureFlagsEditor from '@/components/admin/FeatureFlagsEditor';
+import MinistryAnnouncementsEditor from '@/components/admin/MinistryAnnouncementsEditor';
 
 interface TenantRow {
   id: string;
@@ -188,6 +190,9 @@ export default function TenantsPanel() {
                   }}
                   onSaved={load}
                 />
+
+                <FeatureFlagsEditor tenantId={t.id} />
+                <MinistryAnnouncementsEditor tenantId={t.id} />
               </div>
             ))}
           </div>
