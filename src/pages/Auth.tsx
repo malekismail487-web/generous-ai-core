@@ -845,7 +845,14 @@ export default function Auth() {
                   p_full_name: name.trim(),
                 });
 
-                const result = data as { success: boolean; error?: string; school_name?: string } | null;
+                const result = data as {
+                  success: boolean;
+                  error?: string;
+                  school_name?: string;
+                  tenant_id?: string;
+                  tenant_slug?: string;
+                  tenant_name?: string;
+                } | null;
 
                 if (error || !result?.success) {
                   toast({ variant: 'destructive', title: 'Error', description: result?.error || error?.message || 'Invalid parent code.' });
@@ -853,6 +860,8 @@ export default function Auth() {
                   return;
                 }
 
+                // Parent codes carry a tenant — reconcile with the pre-auth pick.
+                if (result) applyTenantOverride(result);
                 toast({ title: 'Welcome!', description: `You're now linked as a parent at ${result.school_name}.` });
                 navigate('/parent');
               } catch (err) {
