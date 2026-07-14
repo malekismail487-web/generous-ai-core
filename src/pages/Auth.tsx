@@ -8,11 +8,12 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr } from '@/lib/translations';
-import { Mail, Lock, Loader2, KeyRound, Users, UserPlus, Heart, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Loader2, KeyRound, Users, UserPlus, Heart, ShieldCheck, Globe } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
+import { getSelectedTenant, reconcileTenantFromCode, setSelectedTenant } from '@/lib/selectedTenant';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -38,6 +39,25 @@ export default function Auth() {
   const { toast } = useToast();
   const { language } = useThemeLanguage();
   const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
+  const [selectedCountry, setSelectedCountry] = useState(() => getSelectedTenant());
+
+  const applyTenantOverride = (response: {
+    tenant_id?: string | null;
+    tenant_slug?: string | null;
+    tenant_name?: string | null;
+  }) => {
+    const outcome = reconcileTenantFromCode(response);
+    setSelectedCountry(getSelectedTenant());
+    if (outcome.overridden) {
+      toast({
+        title: language === 'ar' ? 'تم تحديث الدولة' : 'Country updated',
+        description:
+          language === 'ar'
+            ? `تم تغيير اختيارك إلى ${outcome.to} لأن الرمز يخص هذه الدولة.`
+            : `Your country was updated to ${outcome.to} because your code belongs there.`,
+      });
+    }
+  };
 
   // Redirect to language selection if not chosen yet
   useEffect(() => {
@@ -244,7 +264,7 @@ export default function Auth() {
           p_user_agent: navigator.userAgent,
           p_device_fingerprint: fp
         });
-        const result = data as { success: boolean; error?: string; session_token?: string; banned?: boolean } | null;
+        const result = data as { success: boolean; error?: string; session_token?: string; banned?: boolean; tenant_id?: string } | null;
 
         if (rpcError || !result?.success) {
           toast({ variant: 'destructive', title: 'Sign in failed', description: 'Invalid email or password. Please try again.' });
@@ -252,6 +272,8 @@ export default function Auth() {
           return;
         }
 
+        // Ministry codes are tenant-bound — reconcile with the pre-auth pick.
+        if (result.tenant_id) applyTenantOverride({ tenant_id: result.tenant_id });
         sessionStorage.setItem('ministry_pending_token', result.session_token!);
         navigate('/ministry-pending');
         setIsSubmitting(false);
@@ -384,7 +406,14 @@ export default function Auth() {
         return;
       }
 
-      const result = data as { success: boolean; error?: string; message?: string };
+      const result = data as {
+        success: boolean;
+        error?: string;
+        message?: string;
+        tenant_id?: string;
+        tenant_slug?: string;
+        tenant_name?: string;
+      };
       
       if (!result.success) {
         toast({
@@ -395,6 +424,9 @@ export default function Auth() {
         setIsSubmitting(false);
         return;
       }
+
+      // School codes carry a tenant — reconcile with the pre-auth pick.
+      applyTenantOverride(result);
 
       // Request created successfully, now create the auth account
       const { error: signUpError } = await signUp(email.trim().toLowerCase(), password);
@@ -462,6 +494,22 @@ export default function Auth() {
             <span className="gradient-text">Lumina</span>
           </h1>
         </div>
+
+        {selectedCountry.name && (
+          <button
+            type="button"
+            onClick={() => navigate('/country')}
+            className="w-full mb-3 flex items-center justify-between px-4 py-2 rounded-xl bg-muted/40 border border-border/50 hover:bg-muted transition text-xs"
+          >
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <Globe className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'الدولة:' : 'Country:'}</span>
+              <span className="font-medium text-foreground">{selectedCountry.name}</span>
+            </span>
+            <span className="text-primary">{language === 'ar' ? 'تغيير' : 'Change'}</span>
+          </button>
+        )}
+
 
         <Tabs value={authMode} onValueChange={(v) => { setAuthMode(v as 'login' | 'signup' | 'join' | 'parent'); setErrors({}); }}>
           <TabsList className="grid w-full grid-cols-4 mb-4">
@@ -813,7 +861,14 @@ export default function Auth() {
                   p_full_name: name.trim(),
                 });
 
-                const result = data as { success: boolean; error?: string; school_name?: string } | null;
+                const result = data as {
+                  success: boolean;
+                  error?: string;
+                  school_name?: string;
+                  tenant_id?: string;
+                  tenant_slug?: string;
+                  tenant_name?: string;
+                } | null;
 
                 if (error || !result?.success) {
                   toast({ variant: 'destructive', title: 'Error', description: result?.error || error?.message || 'Invalid parent code.' });
@@ -821,6 +876,8 @@ export default function Auth() {
                   return;
                 }
 
+                // Parent codes carry a tenant — reconcile with the pre-auth pick.
+                if (result) applyTenantOverride(result);
                 toast({ title: 'Welcome!', description: `You're now linked as a parent at ${result.school_name}.` });
                 navigate('/parent');
               } catch (err) {

@@ -22,7 +22,8 @@ export default function LanguageSelect() {
     setBuildMode(mode);
     localStorage.setItem('language-selected', 'true');
     sessionStorage.setItem('language-selected-tab', 'true');
-    navigate('/auth');
+    // Route through country selection before the auth page.
+    navigate('/country');
   };
 
   const isArabic = selectedLang === 'ar' || language === 'ar';

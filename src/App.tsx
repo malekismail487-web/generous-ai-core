@@ -12,6 +12,7 @@ import LCTExamGuard from "@/components/LCTExamGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import LanguageSelect from "./pages/LanguageSelect";
+import CountrySelect from "./pages/CountrySelect";
 import NotFound from "./pages/NotFound";
 import SuperAdmin from "./pages/SuperAdmin";
 import ParentDashboard from "./pages/ParentDashboard";
@@ -39,17 +40,27 @@ import StudentLiveRoom from "./pages/StudentLiveRoom";
 
 const queryClient = new QueryClient();
 
-// Gate: every new tab must go through /language first
+// Gate: every new tab must go through /language then /country before /auth.
+// Once authenticated, both selections are no-ops — the country is determined by
+// the user's tenant (profile.school_id → schools.tenant_id).
 function LanguageGate({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const hasSelectedThisTab = sessionStorage.getItem('language-selected-tab');
+  const hasLanguage = sessionStorage.getItem('language-selected-tab');
+  const hasCountry = sessionStorage.getItem('selected_tenant_id');
 
-  // Allow /language route through always
-  if (location.pathname === '/language') return <>{children}</>;
+  // Always allow the selection pages through.
+  if (location.pathname === '/language' || location.pathname === '/country') {
+    return <>{children}</>;
+  }
 
-  // If this tab hasn't gone through language selection, redirect
-  if (!hasSelectedThisTab) {
-    return <Navigate to="/language" replace />;
+  if (!hasLanguage) return <Navigate to="/language" replace />;
+
+  // Country selection is a pre-auth gate. Once the user is signed in the
+  // tenant is derived server-side, so we only gate the unauthenticated funnel
+  // (auth / activate-school / ministry entry).
+  const preAuthRoutes = ['/auth', '/activate-school', '/ministry'];
+  if (!hasCountry && preAuthRoutes.includes(location.pathname)) {
+    return <Navigate to="/country" replace />;
   }
 
   return <>{children}</>;
@@ -75,6 +86,7 @@ const App = () => (
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/language" element={<LanguageSelect />} />
+                    <Route path="/country" element={<CountrySelect />} />
                     <Route path="/super-admin" element={<SuperAdmin />} />
                     <Route path="/super-admin-verify" element={<SuperAdminVerify />} />
                     <Route path="/parent" element={<ParentDashboard />} />
