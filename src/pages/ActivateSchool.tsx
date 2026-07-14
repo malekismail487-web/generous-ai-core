@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { reconcileTenantFromCode } from '@/lib/selectedTenant';
 
 export default function ActivateSchool() {
   const { user, loading: authLoading } = useAuth();
@@ -53,7 +54,14 @@ export default function ActivateSchool() {
         return;
       }
 
-      const result = data as { success?: boolean; error?: string; school_name?: string };
+      const result = data as {
+        success?: boolean;
+        error?: string;
+        school_name?: string;
+        tenant_id?: string;
+        tenant_slug?: string;
+        tenant_name?: string;
+      };
       if (!result?.success) {
         toast({
           variant: 'destructive',
@@ -63,8 +71,16 @@ export default function ActivateSchool() {
         return;
       }
 
+      // Activation codes carry a tenant — reconcile with the pre-auth pick.
+      const outcome = reconcileTenantFromCode(result);
+      if (outcome.overridden) {
+        toast({
+          title: 'Country updated',
+          description: `Your country was updated to ${outcome.to} because this activation code belongs there.`,
+        });
+      }
+
       toast({ title: 'School activated successfully!' });
-      // Force full page reload so the admin dashboard fetches fresh profile/school data
       window.location.href = '/admin';
     } catch (err) {
       toast({ variant: 'destructive', title: 'An error occurred during activation' });
