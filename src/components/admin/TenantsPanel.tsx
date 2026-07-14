@@ -190,6 +190,9 @@ export default function TenantsPanel() {
                   }}
                   onSaved={load}
                 />
+
+                <FeatureFlagsEditor tenantId={t.id} />
+                <MinistryAnnouncementsEditor tenantId={t.id} />
               </div>
             ))}
           </div>
