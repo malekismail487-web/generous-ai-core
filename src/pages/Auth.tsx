@@ -495,6 +495,22 @@ export default function Auth() {
           </h1>
         </div>
 
+        {selectedCountry.name && (
+          <button
+            type="button"
+            onClick={() => navigate('/country')}
+            className="w-full mb-3 flex items-center justify-between px-4 py-2 rounded-xl bg-muted/40 border border-border/50 hover:bg-muted transition text-xs"
+          >
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <Globe className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'الدولة:' : 'Country:'}</span>
+              <span className="font-medium text-foreground">{selectedCountry.name}</span>
+            </span>
+            <span className="text-primary">{language === 'ar' ? 'تغيير' : 'Change'}</span>
+          </button>
+        )}
+
+
         <Tabs value={authMode} onValueChange={(v) => { setAuthMode(v as 'login' | 'signup' | 'join' | 'parent'); setErrors({}); }}>
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="login" className="gap-1 text-[10px] px-1">
