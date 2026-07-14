@@ -406,7 +406,14 @@ export default function Auth() {
         return;
       }
 
-      const result = data as { success: boolean; error?: string; message?: string };
+      const result = data as {
+        success: boolean;
+        error?: string;
+        message?: string;
+        tenant_id?: string;
+        tenant_slug?: string;
+        tenant_name?: string;
+      };
       
       if (!result.success) {
         toast({
@@ -417,6 +424,9 @@ export default function Auth() {
         setIsSubmitting(false);
         return;
       }
+
+      // School codes carry a tenant — reconcile with the pre-auth pick.
+      applyTenantOverride(result);
 
       // Request created successfully, now create the auth account
       const { error: signUpError } = await signUp(email.trim().toLowerCase(), password);
