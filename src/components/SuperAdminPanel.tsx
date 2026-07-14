@@ -167,7 +167,9 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
           </div>
         )}
 
-        {activeTab === 'ministry' ? (
+        {activeTab === 'tenants' ? (
+          <TenantsPanel />
+        ) : activeTab === 'ministry' ? (
           <MinistryCodeGenerator />
         ) : activeTab === 'security' ? (
           <AttackLogsPanel />
