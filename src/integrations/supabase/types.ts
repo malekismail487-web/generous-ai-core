@@ -1479,6 +1479,7 @@ export type Database = {
           parent_id: string | null
           school_id: string | null
           subject: string
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -1492,6 +1493,7 @@ export type Database = {
           parent_id?: string | null
           school_id?: string | null
           subject: string
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -1505,6 +1507,7 @@ export type Database = {
           parent_id?: string | null
           school_id?: string | null
           subject?: string
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -1522,6 +1525,13 @@ export type Database = {
             referencedRelation: "schools"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "curriculum_standards_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
         ]
       }
       curriculum_versions: {
@@ -1532,6 +1542,7 @@ export type Database = {
           id: string
           is_active: boolean
           school_id: string
+          tenant_id: string
           version_label: string | null
         }
         Insert: {
@@ -1541,6 +1552,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           school_id: string
+          tenant_id: string
           version_label?: string | null
         }
         Update: {
@@ -1550,6 +1562,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           school_id?: string
+          tenant_id?: string
           version_label?: string | null
         }
         Relationships: [
@@ -1558,6 +1571,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_versions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -2629,6 +2649,7 @@ export type Database = {
           id: string
           locked_until: string
           student_id: string
+          tenant_id: string
         }
         Insert: {
           created_at?: string
@@ -2636,6 +2657,7 @@ export type Database = {
           id?: string
           locked_until: string
           student_id: string
+          tenant_id: string
         }
         Update: {
           created_at?: string
@@ -2643,6 +2665,7 @@ export type Database = {
           id?: string
           locked_until?: string
           student_id?: string
+          tenant_id?: string
         }
         Relationships: [
           {
@@ -2650,6 +2673,13 @@ export type Database = {
             columns: ["exam_id"]
             isOneToOne: false
             referencedRelation: "lct_exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lct_exam_locks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -2703,6 +2733,7 @@ export type Database = {
           status: string
           student_id: string
           submitted_at: string | null
+          tenant_id: string
           translated_questions_json: Json
         }
         Insert: {
@@ -2717,6 +2748,7 @@ export type Database = {
           status?: string
           student_id: string
           submitted_at?: string | null
+          tenant_id: string
           translated_questions_json?: Json
         }
         Update: {
@@ -2731,6 +2763,7 @@ export type Database = {
           status?: string
           student_id?: string
           submitted_at?: string | null
+          tenant_id?: string
           translated_questions_json?: Json
         }
         Relationships: [
@@ -2748,6 +2781,13 @@ export type Database = {
             referencedRelation: "schools"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lct_exam_students_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lct_exams: {
@@ -2760,6 +2800,7 @@ export type Database = {
           questions_json: Json
           started_at: string | null
           status: string
+          tenant_id: string
           title: string
         }
         Insert: {
@@ -2771,6 +2812,7 @@ export type Database = {
           questions_json?: Json
           started_at?: string | null
           status?: string
+          tenant_id: string
           title?: string
         }
         Update: {
@@ -2782,9 +2824,18 @@ export type Database = {
           questions_json?: Json
           started_at?: string | null
           status?: string
+          tenant_id?: string
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "lct_exams_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       learning_mode_sessions: {
         Row: {
@@ -3720,6 +3771,7 @@ export type Database = {
           expires_at: string | null
           id: string
           is_active: boolean
+          tenant_id: string
         }
         Insert: {
           code_hash: string
@@ -3728,6 +3780,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean
+          tenant_id: string
         }
         Update: {
           code_hash?: string
@@ -3736,8 +3789,17 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean
+          tenant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ministry_access_codes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ministry_access_requests: {
         Row: {
@@ -3750,6 +3812,7 @@ export type Database = {
           resolved_by: string | null
           session_token: string
           status: string
+          tenant_id: string
           user_agent: string | null
         }
         Insert: {
@@ -3762,6 +3825,7 @@ export type Database = {
           resolved_by?: string | null
           session_token: string
           status?: string
+          tenant_id: string
           user_agent?: string | null
         }
         Update: {
@@ -3774,9 +3838,18 @@ export type Database = {
           resolved_by?: string | null
           session_token?: string
           status?: string
+          tenant_id?: string
           user_agent?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ministry_access_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ministry_ip_bans: {
         Row: {
@@ -3786,6 +3859,7 @@ export type Database = {
           id: string
           ip_address: string
           reason: string | null
+          tenant_id: string
         }
         Insert: {
           banned_at?: string
@@ -3794,6 +3868,7 @@ export type Database = {
           id?: string
           ip_address: string
           reason?: string | null
+          tenant_id: string
         }
         Update: {
           banned_at?: string
@@ -3802,8 +3877,17 @@ export type Database = {
           id?: string
           ip_address?: string
           reason?: string | null
+          tenant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ministry_ip_bans_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ministry_sessions: {
         Row: {
@@ -3814,6 +3898,7 @@ export type Database = {
           is_active: boolean
           last_activity: string
           session_token: string
+          tenant_id: string
         }
         Insert: {
           created_at?: string
@@ -3823,6 +3908,7 @@ export type Database = {
           is_active?: boolean
           last_activity?: string
           session_token: string
+          tenant_id: string
         }
         Update: {
           created_at?: string
@@ -3832,8 +3918,17 @@ export type Database = {
           is_active?: boolean
           last_activity?: string
           session_token?: string
+          tenant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ministry_sessions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       misconception_embeddings: {
         Row: {
@@ -4083,6 +4178,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          tenant_id: string
           used: boolean
           used_by: string | null
         }
@@ -4091,6 +4187,7 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
+          tenant_id: string
           used?: boolean
           used_by?: string | null
         }
@@ -4099,10 +4196,19 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          tenant_id?: string
           used?: boolean
           used_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "moderator_invite_codes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       moderator_requests: {
         Row: {
@@ -5071,6 +5177,7 @@ export type Database = {
           name: string
           status: string
           subjects_sync_enabled: boolean
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -5086,6 +5193,7 @@ export type Database = {
           name: string
           status?: string
           subjects_sync_enabled?: boolean
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -5101,9 +5209,18 @@ export type Database = {
           name?: string
           status?: string
           subjects_sync_enabled?: boolean
+          tenant_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "schools_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_answer_history: {
         Row: {
@@ -5712,6 +5829,92 @@ export type Database = {
           },
         ]
       }
+      tenant_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          academic_calendar: Json
+          ai_config: Json
+          country_code: string
+          country_name: string
+          created_at: string
+          curriculum_framework: string | null
+          default_language: string
+          grading_system: Json
+          id: string
+          is_visible: boolean
+          ministry_name: string
+          slug: string
+          status: string
+          supported_languages: string[]
+          updated_at: string
+        }
+        Insert: {
+          academic_calendar?: Json
+          ai_config?: Json
+          country_code: string
+          country_name: string
+          created_at?: string
+          curriculum_framework?: string | null
+          default_language?: string
+          grading_system?: Json
+          id?: string
+          is_visible?: boolean
+          ministry_name: string
+          slug: string
+          status?: string
+          supported_languages?: string[]
+          updated_at?: string
+        }
+        Update: {
+          academic_calendar?: Json
+          ai_config?: Json
+          country_code?: string
+          country_name?: string
+          created_at?: string
+          curriculum_framework?: string | null
+          default_language?: string
+          grading_system?: Json
+          id?: string
+          is_visible?: boolean
+          ministry_name?: string
+          slug?: string
+          status?: string
+          supported_languages?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       topic_locks: {
         Row: {
           class_id: string | null
@@ -6171,6 +6374,7 @@ export type Database = {
         Args: { activation_code_input: string; user_uuid: string }
         Returns: Json
       }
+      activate_tenant: { Args: { p_tenant_id: string }; Returns: Json }
       approve_invite_request: {
         Args: { p_grade?: string; p_request_id: string }
         Returns: Json
@@ -6257,6 +6461,18 @@ export type Database = {
       gen_teacher_category_code: { Args: { p_name: string }; Returns: string }
       generate_ministry_invite_code: { Args: never; Returns: Json }
       generate_moderator_invite_code: { Args: never; Returns: Json }
+      get_active_tenants: {
+        Args: never
+        Returns: {
+          country_code: string
+          country_name: string
+          default_language: string
+          id: string
+          ministry_name: string
+          slug: string
+          supported_languages: string[]
+        }[]
+      }
       get_due_reviews:
         | {
             Args: { p_limit?: number; p_user_id: string }
@@ -6302,6 +6518,7 @@ export type Database = {
         Returns: Json
       }
       get_user_school_id: { Args: { user_uuid: string }; Returns: string }
+      get_user_tenant_id: { Args: { uid: string }; Returns: string }
       get_weakest_topics:
         | {
             Args: { p_limit?: number; p_subject?: string; p_user_id: string }
@@ -6341,6 +6558,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_tenant_role: {
+        Args: { role_name: string; tenant: string; uid: string }
+        Returns: boolean
+      }
       is_hardcoded_admin: { Args: { check_email: string }; Returns: boolean }
       is_moderator: { Args: { user_uuid: string }; Returns: boolean }
       is_parent_of: {
@@ -6356,6 +6577,7 @@ export type Database = {
         Returns: boolean
       }
       is_student: { Args: { user_uuid: string }; Returns: boolean }
+      is_super_admin: { Args: { uid: string }; Returns: boolean }
       is_super_admin_user: { Args: { uid: string }; Returns: boolean }
       is_teacher: { Args: { user_uuid: string }; Returns: boolean }
       link_moderator_after_signup: {
@@ -6366,6 +6588,7 @@ export type Database = {
         Args: { p_email: string; p_user_id: string }
         Returns: Json
       }
+      provision_tenant: { Args: { payload: Json }; Returns: Json }
       record_review_delivered: {
         Args: { p_card_id: string }
         Returns: undefined
@@ -6402,6 +6625,7 @@ export type Database = {
         Args: { p_email: string; p_full_name: string; p_invite_code: string }
         Returns: Json
       }
+      suspend_tenant: { Args: { p_tenant_id: string }; Returns: Json }
       update_concept_mastery: {
         Args: {
           p_school_id: string
