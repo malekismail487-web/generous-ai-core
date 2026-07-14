@@ -146,6 +146,13 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
             >
               <KeyRound size={14} className="mr-1" /> Ministry
             </Button>
+            <Button
+              variant={activeTab === 'tenants' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('tenants')}
+            >
+              <Globe2 size={14} className="mr-1" /> Tenants
+            </Button>
             {activeTab === 'schools' && (
               <Button variant="outline" size="icon" onClick={fetchSchools} disabled={loading}>
                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
