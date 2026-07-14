@@ -116,12 +116,24 @@ export function useSuperAdmin() {
 
   // Create a new school
   const createSchool = useCallback(async (name: string, code: string, address?: string) => {
+    // Every school belongs to a tenant. Default to the active Saudi tenant
+    // for now; when a country picker ships this becomes a parameter.
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', 'sa')
+      .maybeSingle();
+    if (!tenant?.id) {
+      toast({ variant: 'destructive', title: 'No active tenant configured' });
+      return null;
+    }
     const { data, error } = await supabase
       .from('schools')
       .insert({
         name,
         code: code.toUpperCase(),
-        address: address || null
+        address: address || null,
+        tenant_id: tenant.id,
       })
       .select()
       .single();
