@@ -86,6 +86,7 @@ const App = () => (
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/language" element={<LanguageSelect />} />
+                    <Route path="/country" element={<CountrySelect />} />
                     <Route path="/super-admin" element={<SuperAdmin />} />
                     <Route path="/super-admin-verify" element={<SuperAdminVerify />} />
                     <Route path="/parent" element={<ParentDashboard />} />
