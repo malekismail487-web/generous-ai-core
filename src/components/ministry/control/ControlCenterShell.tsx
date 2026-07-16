@@ -154,9 +154,15 @@ export function ControlCenterShell() {
           {active === 'publishing' && <PublishingPanel />}
           {active === 'permissions' && <PermissionsPanel />}
           {active === 'audit' && <AuditLogPanel />}
-          {active !== 'publishing' && active !== 'permissions' && active !== 'audit' && (
-            <PlaceholderPanel tool={activeTool.label} phase={activeTool.phase} description={activeTool.description} />
-          )}
+          {active === 'curriculum' && <CurriculumPanel />}
+          {active === 'policies' && <PoliciesPanel />}
+          {active === 'schools' && <SchoolsPanel />}
+          {active === 'users' && <UsersPanel />}
+          {active === 'regions' && <RegionsPanel />}
+          {active === 'lumina' && <LuminaConfigPanel />}
+          {active === 'features' && <FeaturesPanel />}
+          {active === 'communications' && <CommunicationsPanel />}
+          {active === 'security' && <SecurityPanel />}
         </div>
       </section>
     </div>
