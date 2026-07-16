@@ -8,6 +8,15 @@ import { PublishingPanel } from './PublishingPanel';
 import { PermissionsPanel } from './PermissionsPanel';
 import { AuditLogPanel } from './AuditLogPanel';
 import { PlaceholderPanel } from './PlaceholderPanel';
+import { CurriculumPanel } from './CurriculumPanel';
+import { PoliciesPanel } from './PoliciesPanel';
+import { SchoolsPanel } from './SchoolsPanel';
+import { UsersPanel } from './UsersPanel';
+import { RegionsPanel } from './RegionsPanel';
+import { LuminaConfigPanel } from './LuminaConfigPanel';
+import { FeaturesPanel } from './FeaturesPanel';
+import { CommunicationsPanel } from './CommunicationsPanel';
+import { SecurityPanel } from './SecurityPanel';
 
 export type ControlToolId =
   | 'publishing'
