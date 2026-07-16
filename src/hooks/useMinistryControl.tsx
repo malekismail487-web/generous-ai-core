@@ -85,7 +85,6 @@ export function useMinistryControl() {
 
   const listChangeRequests = useCallback(
     async (status?: ChangeStatus): Promise<ChangeRequest[]> => {
-      // @ts-expect-error RPC not yet in generated types until regen
       const { data, error } = await supabase.rpc('list_change_requests', {
         p_status: status ?? null,
         p_session_token: token,
@@ -106,14 +105,13 @@ export function useMinistryControl() {
       summary?: string;
       payload: Record<string, unknown>;
     }): Promise<string> => {
-      // @ts-expect-error RPC not yet in generated types
       const { data, error } = await supabase.rpc('submit_change_request', {
         p_tenant_id: args.tenantId,
         p_entity_type: args.entityType,
         p_entity_id: args.entityId ?? null,
         p_title: args.title,
         p_summary: args.summary ?? null,
-        p_payload: args.payload,
+        p_payload: args.payload as any,
         p_session_token: token,
         p_author_label: 'Ministry Session',
       });
@@ -125,7 +123,6 @@ export function useMinistryControl() {
 
   const reviewChangeRequest = useCallback(
     async (id: string, decision: 'approve' | 'reject', notes?: string) => {
-      // @ts-expect-error RPC not yet in generated types
       const { error } = await supabase.rpc('review_change_request', {
         p_request_id: id,
         p_decision: decision,
@@ -140,7 +137,6 @@ export function useMinistryControl() {
 
   const publishChangeRequest = useCallback(
     async (id: string) => {
-      // @ts-expect-error RPC not yet in generated types
       const { data, error } = await supabase.rpc('publish_change_request', {
         p_request_id: id,
         p_session_token: token,
@@ -154,7 +150,6 @@ export function useMinistryControl() {
 
   const withdrawChangeRequest = useCallback(
     async (id: string) => {
-      // @ts-expect-error RPC not yet in generated types
       const { error } = await supabase.rpc('withdraw_change_request', {
         p_request_id: id,
         p_session_token: token,
@@ -166,7 +161,6 @@ export function useMinistryControl() {
   );
 
   const listAudit = useCallback(async (): Promise<AuditEntry[]> => {
-    // @ts-expect-error RPC not yet in generated types
     const { data, error } = await supabase.rpc('list_ministry_audit', {
       p_session_token: token,
       p_limit: 200,
@@ -176,7 +170,6 @@ export function useMinistryControl() {
   }, [token]);
 
   const listRoleAssignments = useCallback(async (): Promise<RoleAssignment[]> => {
-    // @ts-expect-error RPC not yet in generated types
     const { data, error } = await supabase.rpc('list_ministry_role_assignments', {
       p_session_token: token,
     });
@@ -186,7 +179,6 @@ export function useMinistryControl() {
 
   const assignRole = useCallback(
     async (tenantId: string, userId: string, role: MinistryRole) => {
-      // @ts-expect-error RPC not yet in generated types
       const { error } = await supabase.rpc('assign_ministry_role', {
         p_tenant_id: tenantId,
         p_user_id: userId,
@@ -201,7 +193,6 @@ export function useMinistryControl() {
 
   const revokeRole = useCallback(
     async (assignmentId: string) => {
-      // @ts-expect-error RPC not yet in generated types
       const { error } = await supabase.rpc('revoke_ministry_role', {
         p_assignment_id: assignmentId,
         p_session_token: token,
