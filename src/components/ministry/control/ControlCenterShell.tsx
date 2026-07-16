@@ -7,7 +7,15 @@ import {
 import { PublishingPanel } from './PublishingPanel';
 import { PermissionsPanel } from './PermissionsPanel';
 import { AuditLogPanel } from './AuditLogPanel';
-import { PlaceholderPanel } from './PlaceholderPanel';
+import { CurriculumPanel } from './CurriculumPanel';
+import { PoliciesPanel } from './PoliciesPanel';
+import { SchoolsPanel } from './SchoolsPanel';
+import { UsersPanel } from './UsersPanel';
+import { RegionsPanel } from './RegionsPanel';
+import { LuminaConfigPanel } from './LuminaConfigPanel';
+import { FeaturesPanel } from './FeaturesPanel';
+import { CommunicationsPanel } from './CommunicationsPanel';
+import { SecurityPanel } from './SecurityPanel';
 
 export type ControlToolId =
   | 'publishing'
@@ -145,9 +153,15 @@ export function ControlCenterShell() {
           {active === 'publishing' && <PublishingPanel />}
           {active === 'permissions' && <PermissionsPanel />}
           {active === 'audit' && <AuditLogPanel />}
-          {active !== 'publishing' && active !== 'permissions' && active !== 'audit' && (
-            <PlaceholderPanel tool={activeTool.label} phase={activeTool.phase} description={activeTool.description} />
-          )}
+          {active === 'curriculum' && <CurriculumPanel />}
+          {active === 'policies' && <PoliciesPanel />}
+          {active === 'schools' && <SchoolsPanel />}
+          {active === 'users' && <UsersPanel />}
+          {active === 'regions' && <RegionsPanel />}
+          {active === 'lumina' && <LuminaConfigPanel />}
+          {active === 'features' && <FeaturesPanel />}
+          {active === 'communications' && <CommunicationsPanel />}
+          {active === 'security' && <SecurityPanel />}
         </div>
       </section>
     </div>
