@@ -1,158 +1,100 @@
+# Ministry Control System — Phased Roadmap
 
-# Lumina Multi-Tenant Architecture — Foundation Plan (Phase T1)
-
-Goal: make **country** a first-class object (`tenant`) that owns schools, ministry, curriculum, and analytics — without breaking any existing feature. This phase lands the foundation only. Every future ministry / school / teacher / student capability plugs into it afterwards.
-
-Initial active tenant: **Saudi Arabia**. No other country appears anywhere until activated.
-
----
-
-## What lives where
+Built on the T1–T5 tenant foundation. All 12 tools live inside the existing `/ministry` portal (same auth, same RLS, same session), split into two workspaces:
 
 ```text
-Global (shared, tenant-agnostic)
-├─ Lumina AI core, ALE, edge functions, auth framework, UI shell
-└─ Super Admin (single global role)
-
-Tenant (one per country — Saudi Arabia today)
-├─ Ministry (codes, sessions, dashboard, curriculum authority)
-├─ Configuration (language, grading, calendar, curriculum versions)
-└─ Schools
-     ├─ Admins, Teachers, Students, Parents
-     ├─ Materials, Assignments, Live meetings, Notes…
-     └─ Analytics
+/ministry
+├── Dashboard        (existing insights — unchanged)
+└── Control Center   (new — 12 governance tools)
+    ├── Curriculum
+    ├── Policies
+    ├── Schools
+    ├── Users & Roles
+    ├── Regions
+    ├── Lumina Config
+    ├── Features
+    ├── Communications
+    ├── Publishing (Draft & Publish queue)
+    ├── Permissions
+    ├── Audit Log
+    └── Security
 ```
 
----
+No new auth surface, no new route protection. Control Center is a nested section inside the current ministry app shell.
 
-## Deliverables
+## Phase list (MC1 → MC12)
 
-### 1. New table: `public.tenants`
-Country-level record. Fields (domain-specific):
-- `slug` (e.g. `sa`, `eg`) — stable identifier
-- `country_name`, `country_code` (ISO-3166 alpha-2)
-- `ministry_name`
-- `default_language`, `supported_languages[]`
-- `grading_system` (jsonb: scale, pass mark, letter map)
-- `academic_calendar` (jsonb: term structure, start month)
-- `curriculum_framework` (text, e.g. `sa-moe-2024`)
-- `ai_config` (jsonb: ministry-approved model behaviour overrides)
-- `status`: `active | provisioning | suspended`
-- `is_visible` (bool) — controls whether the country appears in any picker
 
-RLS: readable by anyone authenticated for **active + visible** tenants (needed for country selectors); full-row read/write only for Super Admin.
+| Phase    | Name                                     | What it delivers                                                                                                                                                                     |
+| -------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **MC1**  | Portal shell & navigation                | Two-workspace layout inside `/ministry`, sidebar for Control Center, empty tool routes, breadcrumb, capability gate wired to existing ministry session                               |
+| **MC2**  | Draft & Publish + Permissions (backbone) | Generic change-request pipeline every later tool plugs into. Ministry roles (Minister, Deputy Minister, Curriculum Officer, Regional Supervisor, Ministry Admin) + capability matrix |
+| **MC3**  | Curriculum Management                    | Official subjects, curriculum versions, grade assignment, auto-propagation to schools, auto teacher-role generation, retirement (soft)                                               |
+| **MC4**  | Educational Policy                       | Grading systems, calendars, thresholds, promotion/graduation, per-policy school-override toggle                                                                                      |
+| **MC5**  | School Management                        | Lifecycle (Requested → Activated → Suspended → Archived), regional assignment, ministry-side approvals                                                                               |
+| **MC6**  | User Governance                          | Ministry admins, curriculum officers, regional supervisors; teacher visibility (governance-only, not operational control)                                                            |
+| **MC7**  | Regional Structure                       | Regions / districts / educational zones; school assignment; feeds later analytics                                                                                                    |
+| **MC8**  | Lumina Configuration                     | Terminology, explanation style, vocabulary, pacing, accessibility — policy-only, never overrides reasoning/factuality                                                                |
+| **MC9**  | Feature Management                       | Per-tenant modules with Disabled / Optional / Required tri-state (upgrades existing feature flags)                                                                                   |
+| **MC10** | National Communication                   | Announcements, curriculum updates, teacher/admin notices with targeting + read receipts (upgrades existing ministry_announcements)                                                   |
+| **MC11** | Audit & Security                         | Full audit history of every ministry action, session log, permission changes, verification status                                                                                    |
+| **MC12** | Hardening & Deprecation                  | Consolidate legacy ministry pages, remove duplication, formal ownership boundaries, docs                                                                                             |
 
-### 2. Add `tenant_id` to existing tables
-Nullable at first, backfilled to the Saudi tenant, then made `NOT NULL`.
 
-- `schools.tenant_id` → `tenants.id`
-- `curriculum_standards.tenant_id`
-- `curriculum_versions.tenant_id`
-- `ministry_access_codes.tenant_id`
-- `ministry_access_requests.tenant_id`
-- `ministry_sessions.tenant_id`
-- `ministry_ip_bans.tenant_id`
-- `moderator_invite_codes.tenant_id` (moderators are tenant-scoped, not global)
-- `lct_exams.tenant_id`, `lct_exam_students.tenant_id`, `lct_exam_locks.tenant_id`
-- `announcements` / `trips` inherit tenant via school (no direct column needed)
-
-All other tables already inherit tenant transitively through `school_id`; no new columns needed there, only stricter RLS helpers.
-
-### 3. New helpers (SECURITY DEFINER)
-- `public.get_user_tenant_id(uid uuid) → uuid`
-  - resolves via `profiles.school_id → schools.tenant_id`
-  - falls back to `ministry_sessions.tenant_id` when called from a ministry session context
-- `public.is_super_admin(uid uuid) → bool` (thin wrapper over existing check, used in policies)
-- `public.has_tenant_role(uid uuid, tenant uuid, role text) → bool`
-  - `role ∈ {ministry_admin, ministry_analyst, ministry_curriculum}`
-  - reads a new `public.tenant_roles` table (`user_id, tenant_id, role`, unique)
-
-### 4. RLS updates
-For every table listed above, add a top-level tenant guard:
-
-```sql
-USING (
-  public.is_super_admin(auth.uid())
-  OR tenant_id = public.get_user_tenant_id(auth.uid())
-)
-```
-
-Ministry-scoped tables also allow rows where the session's ministry token matches (`ministry_sessions.tenant_id = row.tenant_id`).
-
-Existing school/user policies remain — the tenant guard is an **additional** filter, never a replacement.
-
-### 5. Ministry system rewrite (surgical)
-- `ministry_access_codes` gain `tenant_id` — one code family per country.
-- `verify_ministry_code` returns `tenant_id` in its JSON so the client stores it in `ministry_sessions`.
-- `get_ministry_dashboard_data(p_session_token)` filters every sub-query by `tenant_id` from the session row (today it returns global data — this is the biggest correctness fix).
-- New RPC `get_active_tenants()` returns only `status='active' AND is_visible=true` tenants for pickers.
-
-### 6. Ministry / country pickers in the UI
-- `MinistryLogin.tsx`: no country picker today. After code verification, the response tells the client which tenant they're in — no UI change unless a picker is later needed.
-- Any future country dropdown consumes `get_active_tenants()`. Since only Saudi Arabia is active, the list contains exactly one entry — matches the "clean, no coming-soon" rule.
-- Super Admin panel gets a new **Tenants** tab (list, provision, activate/suspend, edit config).
-
-### 7. Tenant provisioning workflow (Super Admin only)
-New RPC `provision_tenant(payload jsonb)` that in one transaction:
-1. inserts a `tenants` row (`status='provisioning'`, `is_visible=false`),
-2. seeds default curriculum framework record,
-3. reserves a ministry access code slot (empty until Super Admin generates one),
-4. returns the new `tenant_id`.
-
-Activation is a separate RPC `activate_tenant(tenant_id)` that flips `status='active'`, `is_visible=true`. This is what makes the country appear in pickers.
-
-### 8. Seed Saudi Arabia
-Insert one row:
-- `slug='sa'`, `country_code='SA'`, `country_name='Kingdom of Saudi Arabia'`
-- `ministry_name='Ministry of Education'`
-- languages `['ar','en']`, default `ar`
-- `status='active'`, `is_visible=true`
-
-Backfill:
-- `UPDATE schools SET tenant_id = <sa>` for every existing school
-- Same for the ministry / curriculum tables listed above
-- Then `ALTER … SET NOT NULL`
-
-### 9. Dossier
-Write `.lovable/tenant-A1-dossier.md` documenting:
-- files added / modified
-- exact RLS pattern chosen and why
-- helper function contracts
-- backfill steps performed
-- what phase T2+ must consume (never bypass)
+Each phase = its own approval + dossier at `.lovable/ministry-control-MC*-dossier.md`. Nothing in A1–A10 (live lessons / adaptive engine) is touched. T6 tenant lifecycle stays deferred.
 
 ---
 
-## What this phase intentionally does NOT do
+## This approval covers MC1 + MC2 only
 
-- No ministry-authored feature generation (that's a separate future phase — this only makes it possible).
-- No changes to the AI core, ALE, edge-function orchestration, live-lesson pipeline (A1–A10), or existing student/teacher screens.
-- No new dashboards, no new analytics — only the existing ministry dashboard is corrected to be tenant-scoped.
-- No cross-tenant sharing primitives yet (research consortiums, comparative analytics) — deferred.
+MC1 is a shell (no governance behavior), so it makes no sense to ship alone. MC2 is the backbone every later tool depends on — building any tool before MC2 would mean rewriting each tool once Draft & Publish arrives.
 
----
+### MC1 — Portal shell
 
-## Technical section (for reviewers)
+- New route tree under `/ministry/control/*` inside the existing ministry app (same guard as `/ministry`).
+- Left sidebar with the 12 tool entries, collapsible, active-route highlighting.
+- Top nav switcher: **Dashboard** ↔ **Control Center** (both under `/ministry`).
+- Each tool route renders a placeholder "Coming in phase MCx" panel — no fake controls, no non-functional buttons (respects the no-placeholders core rule; these are explicit phase markers, not fake features).
+- Capability hook `useMinistryCapability(cap)` reading from MC2's permission matrix; in MC1 it defaults to "Minister sees everything" until MC2 lands the real roles.
 
-**Migration order (single migration file):**
-1. `CREATE TABLE public.tenants` + GRANTs + RLS + policies.
-2. `CREATE TABLE public.tenant_roles` + GRANTs + RLS + policies.
-3. Add nullable `tenant_id` columns to the tables in §2, plus FK to `tenants(id)`.
-4. Insert Saudi tenant.
-5. Backfill `tenant_id = <sa>` on all rows.
-6. `ALTER … SET NOT NULL`.
-7. Create/replace helper functions (`get_user_tenant_id`, `has_tenant_role`, `is_super_admin`).
-8. `DROP POLICY … ; CREATE POLICY …` for each affected table adding the tenant guard.
-9. Replace `get_ministry_dashboard_data`, `verify_ministry_code` with tenant-aware versions.
-10. Create `provision_tenant`, `activate_tenant`, `get_active_tenants` RPCs.
+### MC2 — Draft & Publish + Permissions
 
-**Frontend touch list (minimum):**
-- `src/hooks/useRoleGuard.tsx` — expose `tenantId` from the profile→school join.
-- `src/pages/MinistryLogin.tsx` — persist `tenant_id` from `verify_ministry_code` response.
-- `src/pages/MinistryDashboard.tsx` — no logic change; already reads whatever `get_ministry_dashboard_data` returns.
-- `src/components/SuperAdminPanel.tsx` — new **Tenants** tab wired to the three new RPCs.
-- New file `src/hooks/useTenant.tsx` — tiny React Query wrapper around `get_active_tenants()` + current tenant.
+**Permissions (ownership-driven, not click-driven):**
 
-**Non-goals for code:** no changes to `src/lib/lse/*`, `useLuminaLiveSession`, `lumina-live` edge function, adaptive engine files, or any student-facing screen.
+- New enum `ministry_role`: `minister`, `deputy_minister`, `curriculum_officer`, `regional_supervisor`, `ministry_admin`, `viewer`.
+- `ministry_role_assignments (tenant_id, user_id, role)` — separate from `user_roles`, tenant-scoped, unique per (tenant, user).
+- `ministry_capabilities` seed table mapping role → capability keys (e.g. `curriculum.publish`, `policy.draft`, `school.suspend`, `permissions.assign`). Editable only by Minister of that tenant + Super Admin.
+- `has_ministry_capability(_user, _tenant, _cap)` SECURITY DEFINER function used by RLS/RPCs from MC3 onward.
 
-**Approval gates:** the migration is one call and requires user approval before running. Frontend changes ship after the migration succeeds and Supabase types regenerate.
+**Draft & Publish (single generic pipeline for every future tool):**
+
+- `ministry_change_requests` table — polymorphic (`entity_type`, `entity_id`, `tenant_id`, `payload jsonb`, `status`, `author_id`, `reviewer_id`, `published_at`, `notes`).
+- Status machine: `draft → in_review → approved → published` (+ `rejected`, `withdrawn`). No timestamps skipped; every transition audited.
+- RPCs: `submit_change_request`, `review_change_request`, `publish_change_request`, `withdraw_change_request`, `list_change_requests`.
+- On `publish`, an entity-specific applier function (registered per entity_type) writes the payload to the real table. MC3+ each register their own applier; the pipeline itself is entity-agnostic.
+- Publishing capability defaults: Minister + Deputy Minister; drafting: any officer for their domain.
+- **Audit log** table `ministry_audit_log (tenant_id, actor, action, entity_type, entity_id, before, after, at)` written from every status transition and from role assignments. Read-only from the UI; deletions forbidden.
+
+**UI in Control Center:**
+
+- `Publishing` tab — inbox-style queue: Drafts / In Review / Approved / Published / Rejected, filtered by tenant, with diff view (before → after JSON).
+- `Permissions` tab — role assignment table, per-tenant, gated by `permissions.assign`.
+- `Audit Log` tab — chronological filterable log.
+
+**Explicit non-goals in MC2:** no curriculum editor, no policy editor, no school lifecycle — those are MC3+. MC2 ships an empty pipeline plus the two roles/audit tabs, provable by drafting a dummy "test" entity_type.
+
+### Dossier
+
+`.lovable/ministry-control-MC1-MC2-dossier.md` covering: portal layout, permission enum + capability matrix, change-request lifecycle diagram, applier registration contract, migration list, integration points reserved for MC3–MC12.
+
+### Out of scope for this approval
+
+MC3–MC12 (planned but not built), any change to `/dashboard`, A1–A10 live lesson engine, T6 lifecycle automation, real data mutations to schools/curriculum tables (those come with their respective phases).
+
+### Technical notes
+
+- No changes to `src/integrations/supabase/client.ts` or auto-gen types beyond what the migrations regenerate.
+- All new tables get GRANTs + RLS in the same migration; `service_role` on every table, `authenticated` scoped through `has_ministry_capability`.
+- Change requests carry `tenant_id`; RLS restricts visibility to users with a `ministry_role_assignments` row for that tenant (Super Admin bypass through existing hardcoded-admin path).
+- Applier functions registered in a `ministry_change_appliers` lookup so MC3+ migrations can INSERT their entry without editing MC2 code.
+- Don't forget to write a dossier after each edition
