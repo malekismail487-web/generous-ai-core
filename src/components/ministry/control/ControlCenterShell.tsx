@@ -7,7 +7,6 @@ import {
 import { PublishingPanel } from './PublishingPanel';
 import { PermissionsPanel } from './PermissionsPanel';
 import { AuditLogPanel } from './AuditLogPanel';
-import { PlaceholderPanel } from './PlaceholderPanel';
 import { CurriculumPanel } from './CurriculumPanel';
 import { PoliciesPanel } from './PoliciesPanel';
 import { SchoolsPanel } from './SchoolsPanel';
