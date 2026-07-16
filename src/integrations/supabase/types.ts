@@ -3739,6 +3739,398 @@ export type Database = {
         }
         Relationships: []
       }
+      mc_curriculum_subjects: {
+        Row: {
+          applies_grades: number[]
+          created_at: string
+          description: string | null
+          id: string
+          is_official: boolean
+          language: string | null
+          learning_standards: Json
+          name: string
+          retired_at: string | null
+          status: string
+          subject_code: string
+          tenant_id: string
+          updated_at: string
+          version_id: string | null
+        }
+        Insert: {
+          applies_grades?: number[]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_official?: boolean
+          language?: string | null
+          learning_standards?: Json
+          name: string
+          retired_at?: string | null
+          status?: string
+          subject_code: string
+          tenant_id: string
+          updated_at?: string
+          version_id?: string | null
+        }
+        Update: {
+          applies_grades?: number[]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_official?: boolean
+          language?: string | null
+          learning_standards?: Json
+          name?: string
+          retired_at?: string | null
+          status?: string
+          subject_code?: string
+          tenant_id?: string
+          updated_at?: string
+          version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mc_curriculum_subjects_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "mc_curriculum_subjects_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mc_curriculum_subjects_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "mc_curriculum_version_defs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mc_curriculum_version_defs: {
+        Row: {
+          created_at: string
+          effective_from: string | null
+          effective_to: string | null
+          id: string
+          label: string
+          notes: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          effective_from?: string | null
+          effective_to?: string | null
+          id?: string
+          label: string
+          notes?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          effective_from?: string | null
+          effective_to?: string | null
+          id?: string
+          label?: string
+          notes?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mc_curriculum_version_defs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "mc_curriculum_version_defs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mc_educational_policies: {
+        Row: {
+          allows_school_override: boolean
+          config: Json
+          created_at: string
+          effective_from: string | null
+          id: string
+          policy_key: string
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          allows_school_override?: boolean
+          config?: Json
+          created_at?: string
+          effective_from?: string | null
+          id?: string
+          policy_key: string
+          status?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          allows_school_override?: boolean
+          config?: Json
+          created_at?: string
+          effective_from?: string | null
+          id?: string
+          policy_key?: string
+          status?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mc_educational_policies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "mc_educational_policies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mc_lumina_config: {
+        Row: {
+          accessibility: Json
+          created_at: string
+          explanation_style: Json
+          id: string
+          pacing: Json
+          tenant_id: string
+          terminology: Json
+          updated_at: string
+          vocabulary: Json
+        }
+        Insert: {
+          accessibility?: Json
+          created_at?: string
+          explanation_style?: Json
+          id?: string
+          pacing?: Json
+          tenant_id: string
+          terminology?: Json
+          updated_at?: string
+          vocabulary?: Json
+        }
+        Update: {
+          accessibility?: Json
+          created_at?: string
+          explanation_style?: Json
+          id?: string
+          pacing?: Json
+          tenant_id?: string
+          terminology?: Json
+          updated_at?: string
+          vocabulary?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mc_lumina_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "mc_lumina_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mc_regions: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          parent_id: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          name: string
+          parent_id?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          parent_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mc_regions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "mc_regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mc_regions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "mc_regions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mc_school_lifecycle_events: {
+        Row: {
+          actor_label: string | null
+          created_at: string
+          id: string
+          new_status: string
+          previous_status: string | null
+          reason: string | null
+          school_id: string
+          tenant_id: string
+        }
+        Insert: {
+          actor_label?: string | null
+          created_at?: string
+          id?: string
+          new_status: string
+          previous_status?: string | null
+          reason?: string | null
+          school_id: string
+          tenant_id: string
+        }
+        Update: {
+          actor_label?: string | null
+          created_at?: string
+          id?: string
+          new_status?: string
+          previous_status?: string | null
+          reason?: string | null
+          school_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mc_school_lifecycle_events_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mc_school_lifecycle_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "mc_school_lifecycle_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mc_school_region_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          region_id: string
+          school_id: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          region_id: string
+          school_id: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          region_id?: string
+          school_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mc_school_region_assignments_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "mc_regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mc_school_region_assignments_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mc_school_region_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "mc_school_region_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           attachments: Json | null
@@ -5539,6 +5931,7 @@ export type Database = {
           code_used_at: string | null
           code_used_by: string | null
           created_at: string
+          governance_status: string | null
           id: string
           is_test_data: boolean | null
           name: string
@@ -5555,6 +5948,7 @@ export type Database = {
           code_used_at?: string | null
           code_used_by?: string | null
           created_at?: string
+          governance_status?: string | null
           id?: string
           is_test_data?: boolean | null
           name: string
@@ -5571,6 +5965,7 @@ export type Database = {
           code_used_at?: string | null
           code_used_by?: string | null
           created_at?: string
+          governance_status?: string | null
           id?: string
           is_test_data?: boolean | null
           name?: string
@@ -6211,6 +6606,7 @@ export type Database = {
           enabled: boolean
           flag_key: string
           id: string
+          mode: string | null
           tenant_id: string
           updated_at: string
         }
@@ -6221,6 +6617,7 @@ export type Database = {
           enabled?: boolean
           flag_key: string
           id?: string
+          mode?: string | null
           tenant_id: string
           updated_at?: string
         }
@@ -6231,6 +6628,7 @@ export type Database = {
           enabled?: boolean
           flag_key?: string
           id?: string
+          mode?: string | null
           tenant_id?: string
           updated_at?: string
         }
@@ -6824,7 +7222,47 @@ export type Database = {
         Returns: Json
       }
       activate_tenant: { Args: { p_tenant_id: string }; Returns: Json }
+      apply_curriculum_subject_change: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
+      apply_curriculum_version_change: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
+      apply_educational_policy_change: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
+      apply_feature_mode_change: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
+      apply_lumina_config_change: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
+      apply_national_notice_change: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
+      apply_region_change: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
+      apply_school_lifecycle_change: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
+      apply_school_region_assignment: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
       apply_test_change: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
+      apply_user_role_change: {
         Args: { p_payload: Json; p_request_id: string }
         Returns: Json
       }
@@ -7140,6 +7578,7 @@ export type Database = {
           enabled: boolean
           flag_key: string
           id: string
+          mode: string | null
           tenant_id: string
           updated_at: string
         }[]
@@ -7149,6 +7588,164 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      list_mc_curriculum_subjects: {
+        Args: { p_session_token?: string }
+        Returns: {
+          applies_grades: number[]
+          created_at: string
+          description: string | null
+          id: string
+          is_official: boolean
+          language: string | null
+          learning_standards: Json
+          name: string
+          retired_at: string | null
+          status: string
+          subject_code: string
+          tenant_id: string
+          updated_at: string
+          version_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "mc_curriculum_subjects"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_mc_curriculum_versions: {
+        Args: { p_session_token?: string }
+        Returns: {
+          created_at: string
+          effective_from: string | null
+          effective_to: string | null
+          id: string
+          label: string
+          notes: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "mc_curriculum_version_defs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_mc_feature_flags: {
+        Args: { p_session_token?: string }
+        Returns: {
+          config: Json
+          created_at: string
+          description: string | null
+          enabled: boolean
+          flag_key: string
+          id: string
+          mode: string | null
+          tenant_id: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "tenant_feature_flags"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_mc_lumina_config: {
+        Args: { p_session_token?: string }
+        Returns: {
+          accessibility: Json
+          created_at: string
+          explanation_style: Json
+          id: string
+          pacing: Json
+          tenant_id: string
+          terminology: Json
+          updated_at: string
+          vocabulary: Json
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "mc_lumina_config"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_mc_notices: {
+        Args: { p_session_token?: string }
+        Returns: {
+          author_id: string | null
+          body: string
+          created_at: string
+          id: string
+          published: boolean
+          published_at: string
+          severity: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "ministry_announcements"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_mc_policies: {
+        Args: { p_session_token?: string }
+        Returns: {
+          allows_school_override: boolean
+          config: Json
+          created_at: string
+          effective_from: string | null
+          id: string
+          policy_key: string
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "mc_educational_policies"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_mc_regions: {
+        Args: { p_session_token?: string }
+        Returns: {
+          code: string | null
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          parent_id: string | null
+          tenant_id: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "mc_regions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_mc_schools: {
+        Args: { p_session_token?: string }
+        Returns: {
+          code: string
+          created_at: string
+          governance_status: string
+          id: string
+          name: string
+          status: string
+          tenant_id: string
+        }[]
       }
       list_ministry_audit: {
         Args: {
@@ -7194,6 +7791,19 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      list_ministry_sessions: {
+        Args: { p_limit?: number; p_session_token?: string }
+        Returns: {
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: string
+          is_active: boolean
+          last_activity: string
+          tenant_id: string
+        }[]
+      }
+      mc_can_govern_tenant: { Args: { p_tenant: string }; Returns: boolean }
       ministry_audit: {
         Args: {
           p_action: string
