@@ -264,7 +264,7 @@ export default function Auth() {
           p_user_agent: navigator.userAgent,
           p_device_fingerprint: fp
         });
-        const result = data as { success: boolean; error?: string; session_token?: string; banned?: boolean; tenant_id?: string } | null;
+        const result = data as { success: boolean; error?: string; session_token?: string; banned?: boolean; tenant_id?: string; tenant_slug?: string; tenant_name?: string } | null;
 
         if (rpcError || !result?.success) {
           toast({ variant: 'destructive', title: 'Sign in failed', description: 'Invalid email or password. Please try again.' });
@@ -273,7 +273,7 @@ export default function Auth() {
         }
 
         // Ministry codes are tenant-bound — reconcile with the pre-auth pick.
-        if (result.tenant_id) applyTenantOverride({ tenant_id: result.tenant_id });
+        if (result.tenant_id) applyTenantOverride({ tenant_id: result.tenant_id, tenant_slug: result.tenant_slug, tenant_name: result.tenant_name });
         sessionStorage.setItem('ministry_pending_token', result.session_token!);
         navigate('/ministry-pending');
         setIsSubmitting(false);
