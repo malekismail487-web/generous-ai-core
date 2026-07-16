@@ -412,7 +412,7 @@ export default function MinistryDashboard() {
           </div>
         )}
 
-        {activeTab === 'schools' && (
+        {workspace === 'dashboard' && activeTab === 'schools' && (
           <div className="space-y-6">
             <h2 className="text-xl font-bold text-emerald-400">🏫 School Performance Rankings</h2>
             <div className="bg-gray-950 border border-gray-800 rounded-xl overflow-hidden">
@@ -475,7 +475,7 @@ export default function MinistryDashboard() {
           </div>
         )}
 
-        {activeTab === 'compliance' && (
+        {workspace === 'dashboard' && activeTab === 'compliance' && (
           <div className="space-y-6">
             <h2 className="text-xl font-bold text-emerald-400">📋 Compliance & Readiness Reports</h2>
             <div className="grid gap-4">
@@ -522,11 +522,11 @@ export default function MinistryDashboard() {
           </div>
         )}
 
-        {activeTab === 'atrisk' && sessionValid && (
+        {workspace === 'dashboard' && activeTab === 'atrisk' && sessionValid && (
           <AtRiskTab sessionToken={sessionStorage.getItem('ministry_session_token') || ''} />
         )}
 
-        {activeTab === 'moderators' && (
+        {workspace === 'dashboard' && activeTab === 'moderators' && (
           <div className="space-y-6">
             <h2 className="text-xl font-bold text-emerald-400">🛡️ Moderator Management</h2>
             
