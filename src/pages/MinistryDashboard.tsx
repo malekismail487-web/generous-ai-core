@@ -330,7 +330,32 @@ export default function MinistryDashboard() {
         </div>
       </header>
 
-      {/* Tabs */}
+      {/* Workspace switcher */}
+      <div className="border-b border-gray-900 bg-black/60">
+        <div className="max-w-7xl mx-auto px-6 flex gap-1">
+          {([
+            { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, hint: 'Observe the ecosystem' },
+            { id: 'control', label: 'Control Center', icon: ClipboardList, hint: 'Govern the ecosystem' },
+          ] as const).map((ws) => (
+            <button
+              key={ws.id}
+              onClick={() => setWorkspace(ws.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm border-b-2 transition-colors ${
+                workspace === ws.id
+                  ? 'border-emerald-500 text-emerald-300'
+                  : 'border-transparent text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              <ws.icon className="w-4 h-4" />
+              {ws.label}
+              <span className="hidden md:inline text-[10px] text-gray-600 ml-1">· {ws.hint}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tabs (dashboard workspace only) */}
+      {workspace === 'dashboard' && (
       <div className="border-b border-gray-900">
         <div className="max-w-7xl mx-auto px-6 flex gap-1">
           {tabs.map(tab => (
@@ -349,10 +374,12 @@ export default function MinistryDashboard() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {activeTab === 'overview' && (
+        {workspace === 'control' && <ControlCenterShell />}
+        {workspace === 'dashboard' && activeTab === 'overview' && (
           <div className="space-y-8">
             <h2 className="text-xl font-bold text-emerald-400">🏛️ National Education Overview</h2>
             {!nationalStats ? (
