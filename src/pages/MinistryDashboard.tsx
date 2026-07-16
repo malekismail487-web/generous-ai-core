@@ -5,12 +5,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { 
   Shield, LogOut, Loader2, Building2, Users, GraduationCap, 
   BarChart3, AlertTriangle, FileText, TrendingUp, TrendingDown,
-  BookOpen, Award
+  BookOpen, Award, ClipboardList, LayoutDashboard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
+import { ControlCenterShell } from '@/components/ministry/control/ControlCenterShell';
 
 type SchoolStats = {
   id: string;
