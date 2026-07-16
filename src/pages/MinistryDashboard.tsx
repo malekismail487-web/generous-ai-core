@@ -44,6 +44,11 @@ export default function MinistryDashboard() {
   const [schoolStats, setSchoolStats] = useState<SchoolStats[]>([]);
   const [nationalStats, setNationalStats] = useState<NationalStats | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'schools' | 'compliance' | 'atrisk' | 'moderators'>('overview');
+  const [workspace, setWorkspace] = useState<'dashboard' | 'control'>(() => {
+    if (typeof window === 'undefined') return 'dashboard';
+    return (sessionStorage.getItem('ministry_workspace') as 'dashboard' | 'control') || 'dashboard';
+  });
+  useEffect(() => { sessionStorage.setItem('ministry_workspace', workspace); }, [workspace]);
   const [modRequests, setModRequests] = useState<any[]>([]);
   const [generatingModCode, setGeneratingModCode] = useState(false);
   const [latestModCode, setLatestModCode] = useState<string | null>(null);
