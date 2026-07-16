@@ -5,12 +5,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { 
   Shield, LogOut, Loader2, Building2, Users, GraduationCap, 
   BarChart3, AlertTriangle, FileText, TrendingUp, TrendingDown,
-  BookOpen, Award
+  BookOpen, Award, ClipboardList, LayoutDashboard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
+import { ControlCenterShell } from '@/components/ministry/control/ControlCenterShell';
 
 type SchoolStats = {
   id: string;
@@ -43,6 +44,11 @@ export default function MinistryDashboard() {
   const [schoolStats, setSchoolStats] = useState<SchoolStats[]>([]);
   const [nationalStats, setNationalStats] = useState<NationalStats | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'schools' | 'compliance' | 'atrisk' | 'moderators'>('overview');
+  const [workspace, setWorkspace] = useState<'dashboard' | 'control'>(() => {
+    if (typeof window === 'undefined') return 'dashboard';
+    return (sessionStorage.getItem('ministry_workspace') as 'dashboard' | 'control') || 'dashboard';
+  });
+  useEffect(() => { sessionStorage.setItem('ministry_workspace', workspace); }, [workspace]);
   const [modRequests, setModRequests] = useState<any[]>([]);
   const [generatingModCode, setGeneratingModCode] = useState(false);
   const [latestModCode, setLatestModCode] = useState<string | null>(null);
@@ -324,7 +330,32 @@ export default function MinistryDashboard() {
         </div>
       </header>
 
-      {/* Tabs */}
+      {/* Workspace switcher */}
+      <div className="border-b border-gray-900 bg-black/60">
+        <div className="max-w-7xl mx-auto px-6 flex gap-1">
+          {([
+            { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, hint: 'Observe the ecosystem' },
+            { id: 'control', label: 'Control Center', icon: ClipboardList, hint: 'Govern the ecosystem' },
+          ] as const).map((ws) => (
+            <button
+              key={ws.id}
+              onClick={() => setWorkspace(ws.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm border-b-2 transition-colors ${
+                workspace === ws.id
+                  ? 'border-emerald-500 text-emerald-300'
+                  : 'border-transparent text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              <ws.icon className="w-4 h-4" />
+              {ws.label}
+              <span className="hidden md:inline text-[10px] text-gray-600 ml-1">· {ws.hint}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tabs (dashboard workspace only) */}
+      {workspace === 'dashboard' && (
       <div className="border-b border-gray-900">
         <div className="max-w-7xl mx-auto px-6 flex gap-1">
           {tabs.map(tab => (
@@ -343,10 +374,12 @@ export default function MinistryDashboard() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {activeTab === 'overview' && (
+        {workspace === 'control' && <ControlCenterShell />}
+        {workspace === 'dashboard' && activeTab === 'overview' && (
           <div className="space-y-8">
             <h2 className="text-xl font-bold text-emerald-400">🏛️ National Education Overview</h2>
             {!nationalStats ? (
@@ -379,7 +412,7 @@ export default function MinistryDashboard() {
           </div>
         )}
 
-        {activeTab === 'schools' && (
+        {workspace === 'dashboard' && activeTab === 'schools' && (
           <div className="space-y-6">
             <h2 className="text-xl font-bold text-emerald-400">🏫 School Performance Rankings</h2>
             <div className="bg-gray-950 border border-gray-800 rounded-xl overflow-hidden">
@@ -442,7 +475,7 @@ export default function MinistryDashboard() {
           </div>
         )}
 
-        {activeTab === 'compliance' && (
+        {workspace === 'dashboard' && activeTab === 'compliance' && (
           <div className="space-y-6">
             <h2 className="text-xl font-bold text-emerald-400">📋 Compliance & Readiness Reports</h2>
             <div className="grid gap-4">
@@ -489,11 +522,11 @@ export default function MinistryDashboard() {
           </div>
         )}
 
-        {activeTab === 'atrisk' && sessionValid && (
+        {workspace === 'dashboard' && activeTab === 'atrisk' && sessionValid && (
           <AtRiskTab sessionToken={sessionStorage.getItem('ministry_session_token') || ''} />
         )}
 
-        {activeTab === 'moderators' && (
+        {workspace === 'dashboard' && activeTab === 'moderators' && (
           <div className="space-y-6">
             <h2 className="text-xl font-bold text-emerald-400">🛡️ Moderator Management</h2>
             

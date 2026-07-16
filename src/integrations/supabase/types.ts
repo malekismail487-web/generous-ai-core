@@ -3954,6 +3954,204 @@ export type Database = {
           },
         ]
       }
+      ministry_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_label: string
+          after_state: Json | null
+          before_state: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          metadata: Json | null
+          tenant_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_label: string
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json | null
+          tenant_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_label?: string
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ministry_audit_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "ministry_audit_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ministry_capabilities: {
+        Row: {
+          capability: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["ministry_role"]
+        }
+        Insert: {
+          capability: string
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["ministry_role"]
+        }
+        Update: {
+          capability?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["ministry_role"]
+        }
+        Relationships: []
+      }
+      ministry_change_appliers: {
+        Row: {
+          applier_function: string
+          created_at: string
+          description: string | null
+          entity_type: string
+          registered_by_phase: string | null
+        }
+        Insert: {
+          applier_function: string
+          created_at?: string
+          description?: string | null
+          entity_type: string
+          registered_by_phase?: string | null
+        }
+        Update: {
+          applier_function?: string
+          created_at?: string
+          description?: string | null
+          entity_type?: string
+          registered_by_phase?: string | null
+        }
+        Relationships: []
+      }
+      ministry_change_requests: {
+        Row: {
+          approved_at: string | null
+          author_id: string | null
+          author_label: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          payload: Json
+          previous_snapshot: Json | null
+          published_at: string | null
+          publisher_id: string | null
+          publisher_label: string | null
+          reject_reason: string | null
+          rejected_at: string | null
+          review_notes: string | null
+          reviewer_id: string | null
+          reviewer_label: string | null
+          status: Database["public"]["Enums"]["ministry_change_status"]
+          submitted_at: string | null
+          summary: string | null
+          tenant_id: string
+          title: string
+          updated_at: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          author_id?: string | null
+          author_label?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          payload?: Json
+          previous_snapshot?: Json | null
+          published_at?: string | null
+          publisher_id?: string | null
+          publisher_label?: string | null
+          reject_reason?: string | null
+          rejected_at?: string | null
+          review_notes?: string | null
+          reviewer_id?: string | null
+          reviewer_label?: string | null
+          status?: Database["public"]["Enums"]["ministry_change_status"]
+          submitted_at?: string | null
+          summary?: string | null
+          tenant_id: string
+          title: string
+          updated_at?: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          author_id?: string | null
+          author_label?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          payload?: Json
+          previous_snapshot?: Json | null
+          published_at?: string | null
+          publisher_id?: string | null
+          publisher_label?: string | null
+          reject_reason?: string | null
+          rejected_at?: string | null
+          review_notes?: string | null
+          reviewer_id?: string | null
+          reviewer_label?: string | null
+          status?: Database["public"]["Enums"]["ministry_change_status"]
+          submitted_at?: string | null
+          summary?: string | null
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ministry_change_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "ministry_change_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ministry_ip_bans: {
         Row: {
           banned_at: string
@@ -3992,6 +4190,51 @@ export type Database = {
           },
           {
             foreignKeyName: "ministry_ip_bans_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ministry_role_assignments: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["ministry_role"]
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["ministry_role"]
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["ministry_role"]
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ministry_role_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "ministry_role_assignments_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -6581,6 +6824,10 @@ export type Database = {
         Returns: Json
       }
       activate_tenant: { Args: { p_tenant_id: string }; Returns: Json }
+      apply_test_change: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
       approve_invite_request: {
         Args: { p_grade?: string; p_request_id: string }
         Returns: Json
@@ -6591,6 +6838,16 @@ export type Database = {
             Args: { p_request_id: string; p_session_token?: string }
             Returns: Json
           }
+      assign_ministry_role: {
+        Args: {
+          p_actor_label?: string
+          p_role: Database["public"]["Enums"]["ministry_role"]
+          p_session_token?: string
+          p_tenant_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       attach_bandit_reward: {
         Args: {
           p_concept_id: string
@@ -6783,6 +7040,15 @@ export type Database = {
         Args: { input_code: string; target_user_id: string }
         Returns: boolean
       }
+      has_ministry_capability: {
+        Args: {
+          p_capability: string
+          p_session_token?: string
+          p_tenant_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -6814,6 +7080,7 @@ export type Database = {
       }
       is_student: { Args: { user_uuid: string }; Returns: boolean }
       is_super_admin: { Args: { uid: string }; Returns: boolean }
+      is_super_admin_caller: { Args: never; Returns: boolean }
       is_super_admin_user: { Args: { uid: string }; Returns: boolean }
       is_teacher: { Args: { user_uuid: string }; Returns: boolean }
       link_moderator_after_signup: {
@@ -6823,6 +7090,46 @@ export type Database = {
       link_profile_after_signup: {
         Args: { p_email: string; p_user_id: string }
         Returns: Json
+      }
+      list_change_requests: {
+        Args: {
+          p_limit?: number
+          p_session_token?: string
+          p_status?: Database["public"]["Enums"]["ministry_change_status"]
+          p_tenant_id?: string
+        }
+        Returns: {
+          approved_at: string | null
+          author_id: string | null
+          author_label: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          payload: Json
+          previous_snapshot: Json | null
+          published_at: string | null
+          publisher_id: string | null
+          publisher_label: string | null
+          reject_reason: string | null
+          rejected_at: string | null
+          review_notes: string | null
+          reviewer_id: string | null
+          reviewer_label: string | null
+          status: Database["public"]["Enums"]["ministry_change_status"]
+          submitted_at: string | null
+          summary: string | null
+          tenant_id: string
+          title: string
+          updated_at: string
+          withdrawn_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "ministry_change_requests"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       list_feature_flags: {
         Args: { p_tenant_id?: string }
@@ -6843,7 +7150,77 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      list_ministry_audit: {
+        Args: {
+          p_limit?: number
+          p_session_token?: string
+          p_tenant_id?: string
+        }
+        Returns: {
+          action: string
+          actor_id: string | null
+          actor_label: string
+          after_state: Json | null
+          before_state: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          metadata: Json | null
+          tenant_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "ministry_audit_log"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_ministry_role_assignments: {
+        Args: { p_session_token?: string; p_tenant_id?: string }
+        Returns: {
+          assigned_by: string | null
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["ministry_role"]
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "ministry_role_assignments"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      ministry_audit: {
+        Args: {
+          p_action: string
+          p_actor_id: string
+          p_actor_label: string
+          p_after: Json
+          p_before: Json
+          p_entity_id: string
+          p_entity_type: string
+          p_metadata?: Json
+          p_tenant_id: string
+        }
+        Returns: string
+      }
+      ministry_session_tenant: {
+        Args: { p_session_token: string }
+        Returns: string
+      }
       provision_tenant: { Args: { payload: Json }; Returns: Json }
+      publish_change_request: {
+        Args: {
+          p_publisher_label?: string
+          p_request_id: string
+          p_session_token?: string
+        }
+        Returns: Json
+      }
       record_review_delivered: {
         Args: { p_card_id: string }
         Returns: undefined
@@ -6851,6 +7228,24 @@ export type Database = {
       resolve_ministry_request: {
         Args: { p_action: string; p_request_id: string }
         Returns: Json
+      }
+      review_change_request: {
+        Args: {
+          p_decision: string
+          p_notes?: string
+          p_request_id: string
+          p_reviewer_label?: string
+          p_session_token?: string
+        }
+        Returns: undefined
+      }
+      revoke_ministry_role: {
+        Args: {
+          p_actor_label?: string
+          p_assignment_id: string
+          p_session_token?: string
+        }
+        Returns: undefined
       }
       rotate_teacher_category_code: {
         Args: { p_category_id: string }
@@ -6889,6 +7284,19 @@ export type Database = {
       signup_with_invite_code: {
         Args: { p_email: string; p_full_name: string; p_invite_code: string }
         Returns: Json
+      }
+      submit_change_request: {
+        Args: {
+          p_author_label?: string
+          p_entity_id: string
+          p_entity_type: string
+          p_payload: Json
+          p_session_token?: string
+          p_summary: string
+          p_tenant_id: string
+          p_title: string
+        }
+        Returns: string
       }
       suspend_tenant: { Args: { p_tenant_id: string }; Returns: Json }
       update_concept_mastery: {
@@ -6935,9 +7343,31 @@ export type Database = {
         }
         Returns: Json
       }
+      withdraw_change_request: {
+        Args: {
+          p_actor_label?: string
+          p_request_id: string
+          p_session_token?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "teacher" | "student" | "admin"
+      ministry_change_status:
+        | "draft"
+        | "in_review"
+        | "approved"
+        | "published"
+        | "rejected"
+        | "withdrawn"
+      ministry_role:
+        | "minister"
+        | "deputy_minister"
+        | "curriculum_officer"
+        | "regional_supervisor"
+        | "ministry_admin"
+        | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -7066,6 +7496,22 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["teacher", "student", "admin"],
+      ministry_change_status: [
+        "draft",
+        "in_review",
+        "approved",
+        "published",
+        "rejected",
+        "withdrawn",
+      ],
+      ministry_role: [
+        "minister",
+        "deputy_minister",
+        "curriculum_officer",
+        "regional_supervisor",
+        "ministry_admin",
+        "viewer",
+      ],
     },
   },
 } as const
