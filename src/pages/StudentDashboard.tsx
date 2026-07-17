@@ -28,6 +28,7 @@ import { StudentAssignments } from '@/components/student/StudentAssignments';
 import { StudentReportCards } from '@/components/student/StudentReportCards';
 import { CalibrationCurve } from '@/components/student/CalibrationCurve';
 import { DecayDashboardCard } from '@/components/student/DecayDashboardCard';
+import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
 import { LearningModesHub } from '@/components/student/learning-modes/LearningModesHub';
 import { MasteryMap } from '@/components/student/MasteryMap';
 
@@ -244,6 +245,7 @@ export default function StudentDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
+        <TenantExtensionsSection className="mb-6" />
         {/* Welcome Section */}
         <div className="glass-effect rounded-xl p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

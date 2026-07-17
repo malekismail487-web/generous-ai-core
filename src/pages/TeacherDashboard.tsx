@@ -32,6 +32,7 @@ import { TeacherCopilot } from '@/components/teacher/TeacherCopilot';
 import { SubjectsSection } from '@/components/SubjectsSection';
 import { AssignmentPerformanceAnalytics } from '@/components/teacher/AssignmentPerformanceAnalytics';
 import { TeacherLearningStyleReports } from '@/components/teacher/TeacherLearningStyleReports';
+import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
 
 interface CourseMaterial {
   id: string;
@@ -245,6 +246,7 @@ export default function TeacherDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
+        <TenantExtensionsSection className="mb-6" />
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card>
