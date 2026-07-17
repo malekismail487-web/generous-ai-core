@@ -90,6 +90,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { ReportCardCreator } from '@/components/admin/ReportCardCreator';
+import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
 
 interface InviteCode {
   id: string;
