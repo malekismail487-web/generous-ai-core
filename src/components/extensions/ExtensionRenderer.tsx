@@ -476,7 +476,7 @@ export function ExtensionRenderer({
       </div>
       <div className="space-y-3">
         {surface.widgets.map((w, i) => (
-          <WidgetRenderer key={i} widget={w} data={dataSource} />
+          <WidgetRenderer key={i} widget={w as Widget} data={dataSource} />
         ))}
       </div>
     </div>

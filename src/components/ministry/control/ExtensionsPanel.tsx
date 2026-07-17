@@ -71,7 +71,7 @@ export function ExtensionsPanel() {
   const refreshConversations = useCallback(async () => {
     if (!sessionToken) return;
     setLoadingConvs(true);
-    const { data, error } = await supabase.rpc("ext_list_conversations", {
+    const { data, error } = await (supabase as any).rpc("ext_list_conversations", {
       p_session_token: sessionToken,
     });
     if (error) {
@@ -87,11 +87,11 @@ export function ExtensionsPanel() {
   // ---------- Load a specific conversation ----------
   const loadConversation = useCallback(async (id: string) => {
     if (!sessionToken) return;
-    const { data, error } = await supabase.rpc("ext_load_conversation", {
+    const { data, error } = await (supabase as any).rpc("ext_load_conversation", {
       p_session_token: sessionToken, p_conversation_id: id,
     });
     if (error) { toast({ title: "Load failed", description: error.message, variant: "destructive" }); return; }
-    const payload = data as { success: boolean; messages?: StoredMessage[]; blueprints?: Blueprint[] } | null;
+    const payload = data as unknown as { success: boolean; messages?: StoredMessage[]; blueprints?: Blueprint[] } | null;
     if (!payload?.success) return;
     setMessages(payload.messages ?? []);
     setBlueprints(payload.blueprints ?? []);
@@ -109,11 +109,11 @@ export function ExtensionsPanel() {
   // ---------- New conversation ----------
   const startConversation = useCallback(async () => {
     if (!sessionToken) return;
-    const { data, error } = await supabase.rpc("ext_create_conversation", {
+    const { data, error } = await (supabase as any).rpc("ext_create_conversation", {
       p_session_token: sessionToken, p_title: "New extension design",
     });
     if (error) { toast({ title: "Failed", description: error.message, variant: "destructive" }); return; }
-    const payload = data as { success: boolean; id?: string } | null;
+    const payload = data as unknown as { success: boolean; id?: string } | null;
     if (payload?.success && payload.id) {
       await refreshConversations();
       setActiveConvId(payload.id);
@@ -145,7 +145,7 @@ export function ExtensionsPanel() {
         },
       });
       if (error) throw error;
-      const payload = data as {
+      const payload = data as unknown as {
         mode: string; message: string;
         blueprint_id?: string | null; blueprint_version?: number | null;
         refusal_reason?: string | null;
@@ -172,11 +172,11 @@ export function ExtensionsPanel() {
   const pushForward = useCallback(async (blueprintId: string) => {
     if (!sessionToken) return;
     if (!confirm("Push this blueprint to Super Admin for review? Nothing deploys until they approve.")) return;
-    const { data, error } = await supabase.rpc("ext_push_forward", {
+    const { data, error } = await (supabase as any).rpc("ext_push_forward", {
       p_session_token: sessionToken, p_blueprint_id: blueprintId,
     });
     if (error) { toast({ title: "Failed", description: error.message, variant: "destructive" }); return; }
-    const payload = data as { success: boolean; error?: string } | null;
+    const payload = data as unknown as { success: boolean; error?: string } | null;
     if (!payload?.success) {
       toast({ title: "Cannot push", description: payload?.error ?? "unknown", variant: "destructive" });
       return;

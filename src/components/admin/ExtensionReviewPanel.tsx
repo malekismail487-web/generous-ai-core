@@ -57,7 +57,7 @@ export function ExtensionReviewPanel() {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.rpc("ext_list_pending_requests");
+    const { data, error } = await (supabase as any).rpc("ext_list_pending_requests");
     if (error) toast({ title: "Load failed", description: error.message, variant: "destructive" });
     else setRequests((data ?? []) as PendingRequest[]);
     setLoading(false);
@@ -68,7 +68,7 @@ export function ExtensionReviewPanel() {
   const active = requests.find((r) => r.request_id === activeId);
 
   const loadAudit = useCallback(async (reqId: string) => {
-    const { data, error } = await supabase.rpc("ext_load_audit_chat", { p_request_id: reqId });
+    const { data, error } = await (supabase as any).rpc("ext_load_audit_chat", { p_request_id: reqId });
     if (!error) setAuditMessages((data ?? []) as AuditMessage[]);
   }, []);
 
@@ -91,12 +91,12 @@ export function ExtensionReviewPanel() {
     if (!active) return;
     if (!confirm(`Approve and deploy "${active.blueprint_name}" to ${active.tenant_name}?`)) return;
     setBusy(true);
-    const { data, error } = await supabase.rpc("ext_approve_request", {
+    const { data, error } = await (supabase as any).rpc("ext_approve_request", {
       p_request_id: active.request_id, p_notes: notes || null,
     });
     setBusy(false);
     if (error) return toast({ title: "Approve failed", description: error.message, variant: "destructive" });
-    const p = data as { success: boolean; error?: string; signature?: string } | null;
+    const p = data as unknown as { success: boolean; error?: string; signature?: string } | null;
     if (!p?.success) return toast({ title: "Cannot approve", description: p?.error ?? "unknown", variant: "destructive" });
     toast({ title: "Deployed", description: `Signature ${p.signature?.slice(0, 12)}…` });
     setNotes(""); setActiveId(null); await refresh();
@@ -106,12 +106,12 @@ export function ExtensionReviewPanel() {
     if (!active) return;
     if (!notes.trim()) return toast({ title: "Add rejection notes first", variant: "destructive" });
     setBusy(true);
-    const { data, error } = await supabase.rpc("ext_reject_request", {
+    const { data, error } = await (supabase as any).rpc("ext_reject_request", {
       p_request_id: active.request_id, p_notes: notes,
     });
     setBusy(false);
     if (error) return toast({ title: "Reject failed", description: error.message, variant: "destructive" });
-    const p = data as { success: boolean; error?: string } | null;
+    const p = data as unknown as { success: boolean; error?: string } | null;
     if (!p?.success) return toast({ title: "Cannot reject", description: p?.error ?? "unknown", variant: "destructive" });
     toast({ title: "Rejected" });
     setNotes(""); setActiveId(null); await refresh();
@@ -132,7 +132,7 @@ export function ExtensionReviewPanel() {
         body: { request_id: active.request_id, manifest: active.manifest, user_message: text, history: historyForModel },
       });
       if (error) throw error;
-      const payload = data as { message: string };
+      const payload = data as unknown as { message: string };
       await loadAudit(active.request_id);
       void payload; // message will be reloaded from server
     } catch (e: unknown) {

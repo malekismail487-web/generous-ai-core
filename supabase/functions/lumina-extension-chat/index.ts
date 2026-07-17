@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
         p_manifest: parsed.blueprint,
         p_capabilities: bp.capabilities_required ?? [],
       });
-      const save = saveResult.data as { success?: boolean; id?: string; version?: number } | null;
+      const save = saveResult.data as unknown as { success?: boolean; id?: string; version?: number } | null;
       if (save?.success) {
         savedBlueprintId = save.id ?? null;
         savedVersion = save.version ?? null;
