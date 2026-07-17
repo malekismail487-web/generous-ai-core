@@ -28,6 +28,7 @@ import { StudentAssignments } from '@/components/student/StudentAssignments';
 import { StudentReportCards } from '@/components/student/StudentReportCards';
 import { CalibrationCurve } from '@/components/student/CalibrationCurve';
 import { DecayDashboardCard } from '@/components/student/DecayDashboardCard';
+import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
 import { LearningModesHub } from '@/components/student/learning-modes/LearningModesHub';
 import { MasteryMap } from '@/components/student/MasteryMap';
 
