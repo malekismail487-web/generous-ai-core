@@ -245,6 +245,7 @@ export default function StudentDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
+        <TenantExtensionsSection className="mb-6" />
         {/* Welcome Section */}
         <div className="glass-effect rounded-xl p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
