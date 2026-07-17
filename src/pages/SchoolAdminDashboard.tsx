@@ -590,6 +590,7 @@ export default function SchoolAdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
+        <TenantExtensionsSection className="mb-6" />
         <Tabs defaultValue="overview" orientation="vertical" className="flex flex-col md:flex-row gap-6">
           {/* Sidebar nav */}
           <aside className="md:w-56 shrink-0">
