@@ -29,22 +29,29 @@ export default function ExtensionView() {
   useEffect(() => {
     let alive = true;
     (async () => {
+      // deno-lint-ignore no-explicit-any
+      const sb: any = supabase;
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/auth"); return; }
 
-      // Discover role from profile
       const { data: profile } = await supabase
-        .from("profiles").select("role, school_id").eq("id", user.id).maybeSingle();
-      if (profile?.role && ["student","teacher","parent","school_admin","ministry"].includes(profile.role)) {
-        setRole(profile.role as SurfaceRole);
+        .from("profiles").select("user_type, school_id").eq("id", user.id).maybeSingle();
+      const map: Record<string, SurfaceRole> = {
+        student: "student", teacher: "teacher", parent: "parent",
+        school_admin: "school_admin", admin: "school_admin", ministry: "ministry",
+      };
+      if (profile?.user_type && map[profile.user_type]) {
+        setRole(map[profile.user_type]);
       }
       if (profile?.school_id) {
         const { data: school } = await supabase
           .from("schools").select("tenant_id").eq("id", profile.school_id).maybeSingle();
-        if (school?.tenant_id) setTenantId(school.tenant_id);
+        if ((school as { tenant_id?: string } | null)?.tenant_id) {
+          setTenantId((school as { tenant_id: string }).tenant_id);
+        }
       }
 
-      const { data, error } = await supabase.rpc("ext_list_active_for_me");
+      const { data, error } = await sb.rpc("ext_list_active_for_me");
       if (!alive) return;
       if (error) { setLoading(false); return; }
       const found = ((data ?? []) as ActiveVersion[]).find((v) => v.version_id === versionId);

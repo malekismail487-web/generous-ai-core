@@ -23,7 +23,9 @@ export function TenantExtensionsSection() {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { data, error } = await supabase.rpc("ext_list_active_for_me");
+      // deno-lint-ignore no-explicit-any
+      const sb: any = supabase;
+      const { data, error } = await sb.rpc("ext_list_active_for_me");
       if (!alive) return;
       if (!error) setItems((data ?? []) as ActiveVersion[]);
       setLoading(false);

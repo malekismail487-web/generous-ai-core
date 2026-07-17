@@ -43,11 +43,15 @@ interface DataSource {
 // Data sources — the real one (deployed) and the sandbox one (preview)
 // -----------------------------------------------------------------------------
 
+// Extension tables aren't in the generated Supabase types yet — cast the client.
+// deno-lint-ignore no-explicit-any
+const sb: any = supabase;
+
 function useDeployedDataSource(versionId: string, tenantId: string): DataSource {
   return useMemo(
     () => ({
       async read(dataKey) {
-        const { data, error } = await supabase
+        const { data, error } = await sb
           .from("extension_data")
           .select("id, row, owner_user_id")
           .eq("version_id", versionId)
@@ -57,10 +61,8 @@ function useDeployedDataSource(versionId: string, tenantId: string): DataSource 
         return (data ?? []) as Row[];
       },
       async write(dataKey, row) {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        const { error } = await supabase.from("extension_data").insert({
+        const { data: { user } } = await supabase.auth.getUser();
+        const { error } = await sb.from("extension_data").insert({
           version_id: versionId,
           tenant_id: tenantId,
           table_key: dataKey,
@@ -78,21 +80,19 @@ function useSandboxDataSource(blueprintId: string, tenantId: string): DataSource
   return useMemo(
     () => ({
       async read(dataKey) {
-        const { data, error } = await supabase
+        const { data, error } = await sb
           .from("extension_sandbox_data")
           .select("id, row")
           .eq("blueprint_id", blueprintId)
           .eq("table_key", dataKey)
           .order("created_at", { ascending: false });
         if (error) throw error;
-        return (data ?? []).map((r) => ({
-          id: r.id,
-          row: r.row as Record<string, unknown>,
-          owner_user_id: null,
+        return (data ?? []).map((r: { id: string; row: Record<string, unknown> }) => ({
+          id: r.id, row: r.row, owner_user_id: null,
         }));
       },
       async write(dataKey, row) {
-        const { error } = await supabase.from("extension_sandbox_data").insert({
+        const { error } = await sb.from("extension_sandbox_data").insert({
           blueprint_id: blueprintId,
           tenant_id: tenantId,
           table_key: dataKey,

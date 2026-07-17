@@ -99,49 +99,47 @@ const columnSchema = z.object({
   required: z.boolean().optional(),
 });
 
-const widgetSchema: z.ZodType<Widget> = z.lazy(() =>
-  z.discriminatedUnion("type", [
-    z.object({ type: z.literal("heading"), text: z.string() }),
-    z.object({ type: z.literal("text"), text: z.string() }),
-    z.object({ type: z.literal("stat"), label: z.string(), value: z.string() }),
-    z.object({
-      type: z.literal("table"),
-      title: z.string(),
-      dataKey: z.string(),
-      columns: z.array(columnSchema),
-    }),
-    z.object({
-      type: z.literal("form"),
-      title: z.string(),
-      dataKey: z.string(),
-      submitLabel: z.string().default("Submit"),
-      fields: z.array(columnSchema),
-    }),
-    z.object({
-      type: z.literal("list"),
-      title: z.string(),
-      dataKey: z.string(),
-      titleField: z.string(),
-      subtitleField: z.string().optional(),
-    }),
-    z.object({
-      type: z.literal("chart"),
-      title: z.string(),
-      dataKey: z.string(),
-      xField: z.string(),
-      yField: z.string(),
-      kind: z.enum(["bar", "line"]),
-    }),
-    z.object({
-      type: z.literal("kanban"),
-      title: z.string(),
-      dataKey: z.string(),
-      titleField: z.string(),
-      statusField: z.string(),
-      statuses: z.array(z.string()),
-    }),
-  ]),
-);
+const widgetSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("heading"), text: z.string() }),
+  z.object({ type: z.literal("text"), text: z.string() }),
+  z.object({ type: z.literal("stat"), label: z.string(), value: z.string() }),
+  z.object({
+    type: z.literal("table"),
+    title: z.string(),
+    dataKey: z.string(),
+    columns: z.array(columnSchema),
+  }),
+  z.object({
+    type: z.literal("form"),
+    title: z.string(),
+    dataKey: z.string(),
+    submitLabel: z.string().default("Submit"),
+    fields: z.array(columnSchema),
+  }),
+  z.object({
+    type: z.literal("list"),
+    title: z.string(),
+    dataKey: z.string(),
+    titleField: z.string(),
+    subtitleField: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal("chart"),
+    title: z.string(),
+    dataKey: z.string(),
+    xField: z.string(),
+    yField: z.string(),
+    kind: z.enum(["bar", "line"]),
+  }),
+  z.object({
+    type: z.literal("kanban"),
+    title: z.string(),
+    dataKey: z.string(),
+    titleField: z.string(),
+    statusField: z.string(),
+    statuses: z.array(z.string()),
+  }),
+]);
 
 export const surfaceSchema = z.object({
   role: z.enum(ALLOWED_ROLES),
