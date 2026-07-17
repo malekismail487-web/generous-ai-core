@@ -32,6 +32,7 @@ import { TeacherCopilot } from '@/components/teacher/TeacherCopilot';
 import { SubjectsSection } from '@/components/SubjectsSection';
 import { AssignmentPerformanceAnalytics } from '@/components/teacher/AssignmentPerformanceAnalytics';
 import { TeacherLearningStyleReports } from '@/components/teacher/TeacherLearningStyleReports';
+import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
 
 interface CourseMaterial {
   id: string;
