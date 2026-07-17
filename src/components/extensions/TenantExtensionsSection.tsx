@@ -16,7 +16,7 @@ interface ActiveVersion {
   deployed_at: string;
 }
 
-export function TenantExtensionsSection() {
+export function TenantExtensionsSection({ className }: { className?: string }) {
   const [items, setItems] = useState<ActiveVersion[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +36,7 @@ export function TenantExtensionsSection() {
   if (loading || items.length === 0) return null;
 
   return (
-    <section className="mt-6">
+    <section className={className ?? "mt-6"}>
       <div className="flex items-center gap-2 mb-2">
         <Sparkles className="w-4 h-4 text-primary" />
         <h3 className="text-sm font-semibold">Ministry Extensions</h3>
