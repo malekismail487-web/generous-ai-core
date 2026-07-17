@@ -37,6 +37,7 @@ import CodeLab from "./pages/CodeLab";
 import LseBench from "./pages/LseBench";
 import TeacherLiveConsole from "./pages/TeacherLiveConsole";
 import StudentLiveRoom from "./pages/StudentLiveRoom";
+import ExtensionView from "./pages/ExtensionView";
 
 const queryClient = new QueryClient();
 
@@ -111,6 +112,7 @@ const App = () => (
                     <Route path="/lse-bench" element={<LseBench />} />
                     <Route path="/teacher/live" element={<TeacherLiveConsole />} />
                     <Route path="/live/:meetingId" element={<StudentLiveRoom />} />
+                    <Route path="/extensions/:versionId" element={<ExtensionView />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

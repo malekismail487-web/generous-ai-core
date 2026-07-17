@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   BookOpen, Building2, ClipboardList, FileText, GitBranch, Globe2,
   History, Megaphone, ScrollText, Settings2, ShieldCheck, ToggleRight,
-  Users,
+  Users, Sparkles,
 } from 'lucide-react';
 import { PublishingPanel } from './PublishingPanel';
 import { PermissionsPanel } from './PermissionsPanel';
@@ -16,6 +16,7 @@ import { LuminaConfigPanel } from './LuminaConfigPanel';
 import { FeaturesPanel } from './FeaturesPanel';
 import { CommunicationsPanel } from './CommunicationsPanel';
 import { SecurityPanel } from './SecurityPanel';
+import { ExtensionsPanel } from './ExtensionsPanel';
 
 export type ControlToolId =
   | 'publishing'
@@ -29,14 +30,15 @@ export type ControlToolId =
   | 'lumina'
   | 'features'
   | 'communications'
-  | 'security';
+  | 'security'
+  | 'extensions';
 
 interface ToolDef {
   id: ControlToolId;
   label: string;
   icon: typeof BookOpen;
   group: 'governance' | 'administration' | 'configuration';
-  phase: 'MC2' | 'MC3' | 'MC4' | 'MC5' | 'MC6' | 'MC7' | 'MC8' | 'MC9' | 'MC10' | 'MC11';
+  phase: 'MC2' | 'MC3' | 'MC4' | 'MC5' | 'MC6' | 'MC7' | 'MC8' | 'MC9' | 'MC10' | 'MC11' | 'EX';
   description: string;
 }
 
@@ -65,6 +67,8 @@ const TOOLS: ToolDef[] = [
     description: 'Announcements, curriculum updates, teacher & admin notices.' },
   { id: 'security', label: 'Security & Sessions', icon: FileText, group: 'configuration', phase: 'MC11',
     description: 'Session logs, permission changes, verification status.' },
+  { id: 'extensions', label: 'Extensions', icon: Sparkles, group: 'governance', phase: 'EX',
+    description: 'Design new educational tools with Lumina, push to Super Admin for review.' },
 ];
 
 const GROUPS: Record<string, string> = {
@@ -162,6 +166,7 @@ export function ControlCenterShell() {
           {active === 'features' && <FeaturesPanel />}
           {active === 'communications' && <CommunicationsPanel />}
           {active === 'security' && <SecurityPanel />}
+          {active === 'extensions' && <ExtensionsPanel />}
         </div>
       </section>
     </div>

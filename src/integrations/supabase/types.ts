@@ -2062,6 +2062,422 @@ export type Database = {
           },
         ]
       }
+      extension_audit_chats: {
+        Row: {
+          created_at: string
+          id: string
+          parts: Json
+          request_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          parts?: Json
+          request_id: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          parts?: Json
+          request_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extension_audit_chats_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "extension_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extension_blueprints: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          manifest: Json
+          name: string
+          requested_capabilities: string[]
+          status: Database["public"]["Enums"]["extension_blueprint_status"]
+          summary: string | null
+          tenant_id: string
+          version: number
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          manifest: Json
+          name: string
+          requested_capabilities?: string[]
+          status?: Database["public"]["Enums"]["extension_blueprint_status"]
+          summary?: string | null
+          tenant_id: string
+          version?: number
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          manifest?: Json
+          name?: string
+          requested_capabilities?: string[]
+          status?: Database["public"]["Enums"]["extension_blueprint_status"]
+          summary?: string | null
+          tenant_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extension_blueprints_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "extension_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extension_blueprints_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "extension_blueprints_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extension_conversations: {
+        Row: {
+          archived: boolean
+          created_at: string
+          created_by_session: string | null
+          id: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          created_at?: string
+          created_by_session?: string | null
+          id?: string
+          tenant_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          created_at?: string
+          created_by_session?: string | null
+          id?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extension_conversations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "extension_conversations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extension_data: {
+        Row: {
+          created_at: string
+          id: string
+          owner_user_id: string | null
+          row: Json
+          table_key: string
+          tenant_id: string
+          updated_at: string
+          version_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_user_id?: string | null
+          row: Json
+          table_key: string
+          tenant_id: string
+          updated_at?: string
+          version_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_user_id?: string | null
+          row?: Json
+          table_key?: string
+          tenant_id?: string
+          updated_at?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extension_data_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "extension_data_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extension_data_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "extension_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extension_messages: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          parts: Json
+          role: string
+          tenant_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          parts?: Json
+          role: string
+          tenant_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          parts?: Json
+          role?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extension_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "extension_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extension_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "extension_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extension_requests: {
+        Row: {
+          blueprint_id: string
+          decided_at: string | null
+          decision_notes: string | null
+          id: string
+          reviewer_user_id: string | null
+          status: Database["public"]["Enums"]["extension_request_status"]
+          submitted_at: string
+          submitted_by_session: string | null
+          tenant_id: string
+        }
+        Insert: {
+          blueprint_id: string
+          decided_at?: string | null
+          decision_notes?: string | null
+          id?: string
+          reviewer_user_id?: string | null
+          status?: Database["public"]["Enums"]["extension_request_status"]
+          submitted_at?: string
+          submitted_by_session?: string | null
+          tenant_id: string
+        }
+        Update: {
+          blueprint_id?: string
+          decided_at?: string | null
+          decision_notes?: string | null
+          id?: string
+          reviewer_user_id?: string | null
+          status?: Database["public"]["Enums"]["extension_request_status"]
+          submitted_at?: string
+          submitted_by_session?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extension_requests_blueprint_id_fkey"
+            columns: ["blueprint_id"]
+            isOneToOne: false
+            referencedRelation: "extension_blueprints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extension_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "extension_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extension_sandbox_data: {
+        Row: {
+          blueprint_id: string
+          created_at: string
+          id: string
+          row: Json
+          table_key: string
+          tenant_id: string
+        }
+        Insert: {
+          blueprint_id: string
+          created_at?: string
+          id?: string
+          row: Json
+          table_key: string
+          tenant_id: string
+        }
+        Update: {
+          blueprint_id?: string
+          created_at?: string
+          id?: string
+          row?: Json
+          table_key?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extension_sandbox_data_blueprint_id_fkey"
+            columns: ["blueprint_id"]
+            isOneToOne: false
+            referencedRelation: "extension_blueprints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extension_sandbox_data_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "extension_sandbox_data_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extension_versions: {
+        Row: {
+          active: boolean
+          blueprint_id: string
+          deployed_at: string
+          deployed_by_user_id: string | null
+          id: string
+          manifest: Json
+          name: string
+          rolled_back_at: string | null
+          rolled_back_by: string | null
+          signature: string
+          tenant_id: string
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          blueprint_id: string
+          deployed_at?: string
+          deployed_by_user_id?: string | null
+          id?: string
+          manifest: Json
+          name: string
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
+          signature: string
+          tenant_id: string
+          version: number
+        }
+        Update: {
+          active?: boolean
+          blueprint_id?: string
+          deployed_at?: string
+          deployed_by_user_id?: string | null
+          id?: string
+          manifest?: Json
+          name?: string
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
+          signature?: string
+          tenant_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extension_versions_blueprint_id_fkey"
+            columns: ["blueprint_id"]
+            isOneToOne: false
+            referencedRelation: "extension_blueprints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extension_versions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "extension_versions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fsrs_card_state: {
         Row: {
           concept_id: string | null
@@ -7359,6 +7775,106 @@ export type Database = {
             Returns: Json
           }
       derive_level: { Args: { p_theta: number }; Returns: string }
+      ext_append_audit_message: {
+        Args: { p_parts: Json; p_request_id: string; p_role: string }
+        Returns: Json
+      }
+      ext_append_message: {
+        Args: {
+          p_conversation_id: string
+          p_parts: Json
+          p_role: string
+          p_session_token: string
+        }
+        Returns: Json
+      }
+      ext_approve_request: {
+        Args: { p_notes?: string; p_request_id: string }
+        Returns: Json
+      }
+      ext_create_conversation: {
+        Args: { p_session_token: string; p_title?: string }
+        Returns: Json
+      }
+      ext_list_active_for_me: {
+        Args: never
+        Returns: {
+          deployed_at: string
+          manifest: Json
+          name: string
+          version: number
+          version_id: string
+        }[]
+      }
+      ext_list_conversations: {
+        Args: { p_session_token: string }
+        Returns: {
+          archived: boolean
+          created_at: string
+          id: string
+          latest_blueprint_status: Database["public"]["Enums"]["extension_blueprint_status"]
+          message_count: number
+          title: string
+          updated_at: string
+        }[]
+      }
+      ext_list_pending_requests: {
+        Args: never
+        Returns: {
+          blueprint_id: string
+          blueprint_name: string
+          blueprint_summary: string
+          blueprint_version: number
+          manifest: Json
+          request_id: string
+          requested_capabilities: string[]
+          status: Database["public"]["Enums"]["extension_request_status"]
+          submitted_at: string
+          tenant_id: string
+          tenant_name: string
+        }[]
+      }
+      ext_load_audit_chat: {
+        Args: { p_request_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          parts: Json
+          role: string
+        }[]
+      }
+      ext_load_conversation: {
+        Args: { p_conversation_id: string; p_session_token: string }
+        Returns: Json
+      }
+      ext_push_forward: {
+        Args: { p_blueprint_id: string; p_session_token: string }
+        Returns: Json
+      }
+      ext_reject_request: {
+        Args: { p_notes: string; p_request_id: string }
+        Returns: Json
+      }
+      ext_rollback_version: { Args: { p_version_id: string }; Returns: Json }
+      ext_save_blueprint: {
+        Args: {
+          p_capabilities: string[]
+          p_conversation_id: string
+          p_manifest: Json
+          p_name: string
+          p_session_token: string
+          p_summary: string
+        }
+        Returns: Json
+      }
+      ext_tenant_from_session: {
+        Args: { p_session_token: string }
+        Returns: string
+      }
+      ext_withdraw_request: {
+        Args: { p_request_id: string; p_session_token: string }
+        Returns: Json
+      }
       gen_teacher_category_code: { Args: { p_name: string }; Returns: string }
       generate_ministry_invite_code: { Args: never; Returns: Json }
       generate_moderator_invite_code: { Args: never; Returns: Json }
@@ -7964,6 +8480,19 @@ export type Database = {
     }
     Enums: {
       app_role: "teacher" | "student" | "admin"
+      extension_blueprint_status:
+        | "draft"
+        | "preview"
+        | "pushed"
+        | "approved"
+        | "rejected"
+        | "deployed"
+        | "rolled_back"
+      extension_request_status:
+        | "in_review"
+        | "approved"
+        | "rejected"
+        | "withdrawn"
       ministry_change_status:
         | "draft"
         | "in_review"
@@ -8106,6 +8635,21 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["teacher", "student", "admin"],
+      extension_blueprint_status: [
+        "draft",
+        "preview",
+        "pushed",
+        "approved",
+        "rejected",
+        "deployed",
+        "rolled_back",
+      ],
+      extension_request_status: [
+        "in_review",
+        "approved",
+        "rejected",
+        "withdrawn",
+      ],
       ministry_change_status: [
         "draft",
         "in_review",
