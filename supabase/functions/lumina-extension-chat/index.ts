@@ -192,9 +192,30 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Fetch the latest saved blueprint for this conversation so Lumina
+    // revises from the current version instead of rebuilding from zero.
+    const { data: currentBp } = await admin
+      .from("extension_blueprints")
+      .select("name, display_name, version, status, manifest")
+      .eq("conversation_id", conversation_id)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const currentBlueprintContext = currentBp
+      ? `# CURRENT BLUEPRINT (version ${currentBp.version}, status: ${currentBp.status})
+This extension already exists in this conversation. When the ministry asks for changes, you MUST revise THIS manifest — do not start from scratch. Preserve widgets, data keys, and permissions unless the ministry explicitly asks to change them. Only emit a new blueprint after presenting a short revision plan and getting approval.
+
+\`\`\`json
+${JSON.stringify(currentBp.manifest, null, 2)}
+\`\`\``
+      : `# CURRENT BLUEPRINT
+None yet. This is a new design conversation — begin with a plan.`;
+
     // Build message history for the model
     const modelMessages = [
       { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: currentBlueprintContext },
       ...history.slice(-30).map((m) => ({ role: m.role, content: messageText(m) })),
       { role: "user", content: user_message },
     ];
