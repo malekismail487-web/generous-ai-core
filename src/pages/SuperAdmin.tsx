@@ -641,9 +641,7 @@ export default function SuperAdmin() {
 
         {activeTab === 'extensions' ? (
           <ExtensionReviewPanel />
-        ) : (
-
-        {activeTab === 'api' ? (
+        ) : activeTab === 'api' ? (
           <LuminaApiPanel />
         ) : activeTab === 'lct' ? (
           <LCTPanel />
@@ -897,7 +895,6 @@ export default function SuperAdmin() {
           )}
         </div>
         </>
-        )}
         )}
       </main>
     </div>
