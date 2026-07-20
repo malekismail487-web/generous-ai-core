@@ -117,7 +117,14 @@ const Index = () => {
   const renderMainContent = () => {
     switch (activeTab) {
       case 'home':
-        return <StudentHomeGrid onNavigate={handleGridNavigate} hasSchool={!!school} />;
+        return (
+          <div className="h-full overflow-y-auto pb-24">
+            <StudentHomeGrid onNavigate={handleGridNavigate} hasSchool={!!school} />
+            <div className="px-4">
+              <TenantExtensionsSection />
+            </div>
+          </div>
+        );
 
       case 'weeklyplan':
         return <WeeklyPlanSection />;
