@@ -4582,6 +4582,87 @@ export type Database = {
           },
         ]
       }
+      mi_educational_events: {
+        Row: {
+          concept_ref: string | null
+          created_at: string
+          event_type: Database["public"]["Enums"]["mi_event_type"]
+          grade_level: string | null
+          id: string
+          occurred_at: string
+          payload: Json
+          region_id: string | null
+          school_id: string | null
+          student_hash: string | null
+          subject_id: string | null
+          tenant_id: string
+        }
+        Insert: {
+          concept_ref?: string | null
+          created_at?: string
+          event_type: Database["public"]["Enums"]["mi_event_type"]
+          grade_level?: string | null
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          region_id?: string | null
+          school_id?: string | null
+          student_hash?: string | null
+          subject_id?: string | null
+          tenant_id: string
+        }
+        Update: {
+          concept_ref?: string | null
+          created_at?: string
+          event_type?: Database["public"]["Enums"]["mi_event_type"]
+          grade_level?: string | null
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          region_id?: string | null
+          school_id?: string | null
+          student_hash?: string | null
+          subject_id?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mi_educational_events_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "mc_regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_educational_events_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_educational_events_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_educational_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "mi_educational_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mind_map_history: {
         Row: {
           created_at: string | null
@@ -8320,6 +8401,24 @@ export type Database = {
         }[]
       }
       mc_can_govern_tenant: { Args: { p_tenant: string }; Returns: boolean }
+      mi_emit_event: {
+        Args: {
+          _concept_ref: string
+          _event_type: Database["public"]["Enums"]["mi_event_type"]
+          _grade_level: string
+          _payload: Json
+          _school_id: string
+          _student_id: string
+          _subject_id: string
+          _tenant_id: string
+        }
+        Returns: undefined
+      }
+      mi_hash_student: {
+        Args: { _student_id: string; _tenant_id: string }
+        Returns: string
+      }
+      mi_school_region: { Args: { _school_id: string }; Returns: string }
       ministry_audit: {
         Args: {
           p_action: string
@@ -8493,6 +8592,14 @@ export type Database = {
         | "approved"
         | "rejected"
         | "withdrawn"
+      mi_event_type:
+        | "homework_submission"
+        | "exam_submission"
+        | "material_view"
+        | "lesson_event"
+        | "tutor_interaction"
+        | "lecture_generated"
+        | "material_uploaded"
       ministry_change_status:
         | "draft"
         | "in_review"
@@ -8649,6 +8756,15 @@ export const Constants = {
         "approved",
         "rejected",
         "withdrawn",
+      ],
+      mi_event_type: [
+        "homework_submission",
+        "exam_submission",
+        "material_view",
+        "lesson_event",
+        "tutor_interaction",
+        "lecture_generated",
+        "material_uploaded",
       ],
       ministry_change_status: [
         "draft",
