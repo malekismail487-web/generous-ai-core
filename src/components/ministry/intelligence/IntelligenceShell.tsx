@@ -88,9 +88,9 @@ export function IntelligenceShell() {
       if (nat.error) throw nat.error;
       if (reg.error) throw reg.error;
       if (ins.error) throw ins.error;
-      setNational(nat.data as NationalOverview);
-      setRegions((reg.data as RegionRow[]) ?? []);
-      setInsights((ins.data as InsightRow[]) ?? []);
+      setNational(nat.data as unknown as NationalOverview);
+      setRegions((reg.data as unknown as RegionRow[]) ?? []);
+      setInsights((ins.data as unknown as InsightRow[]) ?? []);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load intelligence data');
     } finally {
@@ -121,7 +121,7 @@ export function IntelligenceShell() {
         p_days: days,
       });
       if (err) throw err;
-      setSchoolSnap(data as SchoolSnapshot);
+      setSchoolSnap(data as unknown as SchoolSnapshot);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load school snapshot');
     } finally {
