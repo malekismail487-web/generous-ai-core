@@ -4582,6 +4582,90 @@ export type Database = {
           },
         ]
       }
+      mi_daily_rollups: {
+        Row: {
+          avg_score: number | null
+          computed_at: string
+          day: string
+          distinct_actors: number
+          event_count: number
+          event_type: Database["public"]["Enums"]["mi_event_type"]
+          grade_level: string | null
+          id: string
+          region_id: string | null
+          school_id: string | null
+          subject_id: string | null
+          sum_signal: number
+          tenant_id: string
+        }
+        Insert: {
+          avg_score?: number | null
+          computed_at?: string
+          day: string
+          distinct_actors?: number
+          event_count?: number
+          event_type: Database["public"]["Enums"]["mi_event_type"]
+          grade_level?: string | null
+          id?: string
+          region_id?: string | null
+          school_id?: string | null
+          subject_id?: string | null
+          sum_signal?: number
+          tenant_id: string
+        }
+        Update: {
+          avg_score?: number | null
+          computed_at?: string
+          day?: string
+          distinct_actors?: number
+          event_count?: number
+          event_type?: Database["public"]["Enums"]["mi_event_type"]
+          grade_level?: string | null
+          id?: string
+          region_id?: string | null
+          school_id?: string | null
+          subject_id?: string | null
+          sum_signal?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mi_daily_rollups_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "mc_regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_daily_rollups_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_daily_rollups_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_daily_rollups_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "mi_daily_rollups_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mi_educational_events: {
         Row: {
           concept_ref: string | null
@@ -4656,6 +4740,93 @@ export type Database = {
           },
           {
             foreignKeyName: "mi_educational_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mi_insights: {
+        Row: {
+          acknowledged_at: string | null
+          created_at: string
+          evidence: Json
+          id: string
+          region_id: string | null
+          school_id: string | null
+          scope: Database["public"]["Enums"]["mi_insight_scope"]
+          severity: Database["public"]["Enums"]["mi_insight_severity"]
+          subject_id: string | null
+          summary: string
+          tenant_id: string
+          title: string
+          window_end: string | null
+          window_start: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          created_at?: string
+          evidence?: Json
+          id?: string
+          region_id?: string | null
+          school_id?: string | null
+          scope: Database["public"]["Enums"]["mi_insight_scope"]
+          severity: Database["public"]["Enums"]["mi_insight_severity"]
+          subject_id?: string | null
+          summary: string
+          tenant_id: string
+          title: string
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          created_at?: string
+          evidence?: Json
+          id?: string
+          region_id?: string | null
+          school_id?: string | null
+          scope?: Database["public"]["Enums"]["mi_insight_scope"]
+          severity?: Database["public"]["Enums"]["mi_insight_severity"]
+          subject_id?: string | null
+          summary?: string
+          tenant_id?: string
+          title?: string
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mi_insights_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "mc_regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_insights_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_insights_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_insights_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_analytics_view"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "mi_insights_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -8418,7 +8589,27 @@ export type Database = {
         Args: { _student_id: string; _tenant_id: string }
         Returns: string
       }
+      mi_list_insights: {
+        Args: { p_limit?: number; p_session_token: string }
+        Returns: Json
+      }
+      mi_national_overview: {
+        Args: { p_days?: number; p_session_token: string }
+        Returns: Json
+      }
+      mi_regional_breakdown: {
+        Args: { p_days?: number; p_session_token: string }
+        Returns: Json
+      }
+      mi_run_daily_aggregation: {
+        Args: { _target_day?: string }
+        Returns: Json
+      }
       mi_school_region: { Args: { _school_id: string }; Returns: string }
+      mi_school_snapshot: {
+        Args: { p_days?: number; p_school_id: string; p_session_token: string }
+        Returns: Json
+      }
       ministry_audit: {
         Args: {
           p_action: string
@@ -8600,6 +8791,8 @@ export type Database = {
         | "tutor_interaction"
         | "lecture_generated"
         | "material_uploaded"
+      mi_insight_scope: "national" | "regional" | "school"
+      mi_insight_severity: "info" | "watch" | "concern" | "urgent"
       ministry_change_status:
         | "draft"
         | "in_review"
@@ -8766,6 +8959,8 @@ export const Constants = {
         "lecture_generated",
         "material_uploaded",
       ],
+      mi_insight_scope: ["national", "regional", "school"],
+      mi_insight_severity: ["info", "watch", "concern", "urgent"],
       ministry_change_status: [
         "draft",
         "in_review",
