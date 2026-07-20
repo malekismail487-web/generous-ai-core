@@ -12,6 +12,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
 import { ControlCenterShell } from '@/components/ministry/control/ControlCenterShell';
+import { IntelligenceShell } from '@/components/ministry/intelligence/IntelligenceShell';
+import { Radar } from 'lucide-react';
 
 type SchoolStats = {
   id: string;
