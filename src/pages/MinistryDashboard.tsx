@@ -382,6 +382,7 @@ export default function MinistryDashboard() {
       {/* Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {workspace === 'control' && <ControlCenterShell />}
+        {workspace === 'intelligence' && <IntelligenceShell />}
         {workspace === 'dashboard' && activeTab === 'overview' && (
           <div className="space-y-8">
             <h2 className="text-xl font-bold text-emerald-400">🏛️ National Education Overview</h2>
