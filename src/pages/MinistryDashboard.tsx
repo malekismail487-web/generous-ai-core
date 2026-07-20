@@ -12,6 +12,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
 import { ControlCenterShell } from '@/components/ministry/control/ControlCenterShell';
+import { IntelligenceShell } from '@/components/ministry/intelligence/IntelligenceShell';
+import { Radar } from 'lucide-react';
 
 type SchoolStats = {
   id: string;
@@ -44,9 +46,9 @@ export default function MinistryDashboard() {
   const [schoolStats, setSchoolStats] = useState<SchoolStats[]>([]);
   const [nationalStats, setNationalStats] = useState<NationalStats | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'schools' | 'compliance' | 'atrisk' | 'moderators'>('overview');
-  const [workspace, setWorkspace] = useState<'dashboard' | 'control'>(() => {
+  const [workspace, setWorkspace] = useState<'dashboard' | 'control' | 'intelligence'>(() => {
     if (typeof window === 'undefined') return 'dashboard';
-    return (sessionStorage.getItem('ministry_workspace') as 'dashboard' | 'control') || 'dashboard';
+    return (sessionStorage.getItem('ministry_workspace') as 'dashboard' | 'control' | 'intelligence') || 'dashboard';
   });
   useEffect(() => { sessionStorage.setItem('ministry_workspace', workspace); }, [workspace]);
   const [modRequests, setModRequests] = useState<any[]>([]);
@@ -336,6 +338,7 @@ export default function MinistryDashboard() {
           {([
             { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, hint: 'Observe the ecosystem' },
             { id: 'control', label: 'Control Center', icon: ClipboardList, hint: 'Govern the ecosystem' },
+            { id: 'intelligence', label: 'Intelligence', icon: Radar, hint: 'Insight from evidence' },
           ] as const).map((ws) => (
             <button
               key={ws.id}
@@ -379,6 +382,7 @@ export default function MinistryDashboard() {
       {/* Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {workspace === 'control' && <ControlCenterShell />}
+        {workspace === 'intelligence' && <IntelligenceShell />}
         {workspace === 'dashboard' && activeTab === 'overview' && (
           <div className="space-y-8">
             <h2 className="text-xl font-bold text-emerald-400">🏛️ National Education Overview</h2>
