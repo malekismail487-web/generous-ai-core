@@ -10,6 +10,7 @@ import { ProfileSection } from "@/components/ProfileSection";
 import { PodcastsSection } from "@/components/PodcastsSection";
 
 import { AssignmentsSection } from "@/components/AssignmentsSection";
+import { TenantExtensionsSection } from "@/components/extensions/TenantExtensionsSection";
 import { StudentReportCards } from "@/components/student/StudentReportCards";
 import { AnnouncementsViewer } from "@/components/AnnouncementsViewer";
 import { TripsViewer } from "@/components/TripsViewer";
