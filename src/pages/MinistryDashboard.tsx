@@ -338,6 +338,7 @@ export default function MinistryDashboard() {
           {([
             { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, hint: 'Observe the ecosystem' },
             { id: 'control', label: 'Control Center', icon: ClipboardList, hint: 'Govern the ecosystem' },
+            { id: 'intelligence', label: 'Intelligence', icon: Radar, hint: 'Insight from evidence' },
           ] as const).map((ws) => (
             <button
               key={ws.id}
