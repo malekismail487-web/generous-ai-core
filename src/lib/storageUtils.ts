@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { dbLogger } from '@/lib/logger';
 
 /**
  * Extracts the bucket name and file path from a Supabase storage public URL.
@@ -30,7 +31,7 @@ export async function getSignedUrl(storedUrl: string, expiresIn = 3600): Promise
     .createSignedUrl(parsed.path, expiresIn);
 
   if (error || !data?.signedUrl) {
-    console.warn('Failed to create signed URL, falling back to original:', error?.message);
+    dbLogger.warn('Failed to create signed URL, falling back to original', undefined, { originalUrl: storedUrl, errorMessage: error?.message });
     return storedUrl;
   }
 

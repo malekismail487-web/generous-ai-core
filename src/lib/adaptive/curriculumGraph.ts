@@ -5,6 +5,7 @@
  * school_id is passed explicitly so inserts succeed even if triggers are absent.
  */
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export interface Lecture {
   id: string;
@@ -44,7 +45,10 @@ export async function listLectures(subjectId: string): Promise<Lecture[]> {
     .select('*')
     .eq('subject_id', subjectId)
     .order('order_index', { ascending: true });
-  if (error) { console.warn('[curriculum] listLectures', error.message); return []; }
+  if (error) { 
+    logger.warn('curriculum', 'listLectures failed', error); 
+    return []; 
+  }
   return (data || []) as unknown as Lecture[];
 }
 
@@ -54,7 +58,10 @@ export async function listConcepts(lectureId: string): Promise<Concept[]> {
     .select('*')
     .eq('lecture_id', lectureId)
     .order('order_index', { ascending: true });
-  if (error) { console.warn('[curriculum] listConcepts', error.message); return []; }
+  if (error) { 
+    logger.warn('curriculum', 'listConcepts failed', error); 
+    return []; 
+  }
   return (data || []) as unknown as Concept[];
 }
 
@@ -74,7 +81,10 @@ export async function createLecture(input: {
     })
     .select()
     .maybeSingle();
-  if (error) { console.warn('[curriculum] createLecture', error.message); return null; }
+  if (error) { 
+    logger.warn('curriculum', 'createLecture failed', error); 
+    return null; 
+  }
   return (data as unknown as Lecture) ?? null;
 }
 
@@ -95,19 +105,28 @@ export async function createConcept(input: {
     })
     .select()
     .maybeSingle();
-  if (error) { console.warn('[curriculum] createConcept', error.message); return null; }
+  if (error) { 
+    logger.warn('curriculum', 'createConcept failed', error); 
+    return null; 
+  }
   return (data as unknown as Concept) ?? null;
 }
 
 export async function updateLecture(id: string, patch: Partial<Lecture>): Promise<boolean> {
   const { error } = await supabase.from('lectures' as any).update(patch).eq('id', id);
-  if (error) { console.warn('[curriculum] updateLecture', error.message); return false; }
+  if (error) { 
+    logger.warn('curriculum', 'updateLecture failed', error); 
+    return false; 
+  }
   return true;
 }
 
 export async function updateConcept(id: string, patch: Partial<Concept>): Promise<boolean> {
   const { error } = await supabase.from('concepts' as any).update(patch).eq('id', id);
-  if (error) { console.warn('[curriculum] updateConcept', error.message); return false; }
+  if (error) { 
+    logger.warn('curriculum', 'updateConcept failed', error); 
+    return false; 
+  }
   return true;
 }
 
@@ -127,7 +146,10 @@ export async function listCurriculumVersions(schoolId: string): Promise<Curricul
     .select('*')
     .eq('school_id', schoolId)
     .order('created_at', { ascending: false });
-  if (error) { console.warn('[curriculum] listVersions', error.message); return []; }
+  if (error) { 
+    logger.warn('curriculum', 'listVersions failed', error); 
+    return []; 
+  }
   return (data || []) as unknown as CurriculumVersion[];
 }
 
@@ -142,5 +164,7 @@ export async function recordCurriculumChange(
     changes,
     is_active: true,
   });
-  if (error) console.warn('[curriculum] recordCurriculumChange', error.message);
+  if (error) {
+    logger.warn('curriculum', 'recordCurriculumChange failed', error);
+  }
 }

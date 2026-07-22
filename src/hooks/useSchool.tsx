@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { authLogger } from '@/lib/logger';
 
 export type School = {
   id: string;
@@ -49,7 +50,7 @@ export function useSchool() {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching profile:', error);
+      authLogger.error('Error fetching profile', error as Error);
     }
     
     setProfile(data as Profile | null);
@@ -130,7 +131,7 @@ export function useSchool() {
       .single();
 
     if (error) {
-      console.error('Error creating profile:', error);
+      authLogger.error('Error creating profile', error as Error);
       toast({ variant: 'destructive', title: 'Error creating profile' });
       return null;
     }
