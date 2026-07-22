@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { apiLogger } from '@/lib/logger';
 
 export interface Conversation {
   id: string;
@@ -34,7 +35,7 @@ export function useConversations() {
       .order('updated_at', { ascending: false });
     
     if (error) {
-      console.error('Error fetching conversations:', error);
+      apiLogger.error('Error fetching conversations', error as Error);
     } else {
       setConversations(data || []);
     }
@@ -50,7 +51,7 @@ export function useConversations() {
       .order('created_at', { ascending: true });
     
     if (error) {
-      console.error('Error fetching messages:', error);
+      apiLogger.error('Error fetching messages', error as Error);
     } else {
       setMessages((data || []).map(m => ({
         ...m,
@@ -70,7 +71,7 @@ export function useConversations() {
       .single();
     
     if (error) {
-      console.error('Error creating conversation:', error);
+      apiLogger.error('Error creating conversation', error as Error);
       return null;
     }
     
@@ -92,7 +93,7 @@ export function useConversations() {
       .single();
     
     if (error) {
-      console.error('Error adding message:', error);
+      apiLogger.error('Error adding message', error as Error);
       return null;
     }
     
@@ -133,7 +134,7 @@ export function useConversations() {
       .eq('id', conversationId);
     
     if (error) {
-      console.error('Error deleting conversation:', error);
+      apiLogger.error('Error deleting conversation', error as Error);
       return false;
     }
     

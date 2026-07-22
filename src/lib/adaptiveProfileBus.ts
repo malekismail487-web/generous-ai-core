@@ -13,6 +13,8 @@
  *     file ONLY signals "the profile changed enough to be worth re-reading."
  */
 
+import { logger } from './logger';
+
 export type BumpReason =
   | 'consecutive_wrong'
   | 'streak_break'
@@ -65,8 +67,7 @@ function flush() {
 
   if (typeof window !== 'undefined' && (window as any).__LUMINA_DEBUG_ADAPTIVE) {
     const last = history[history.length - 1];
-    // eslint-disable-next-line no-console
-    console.info('[adaptiveProfileBus] bump v', version, last);
+    logger.info('adaptiveProfileBus', `bump v${version}`, { last });
   }
 
   emit();

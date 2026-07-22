@@ -18,6 +18,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { bumpProfile } from "@/lib/adaptiveProfileBus";
 import { applyTemporalDecay } from "@/lib/adaptive/temporalDecay";
+import { logger } from "@/lib/logger";
 
 export type DerivedLevel = "beginner" | "intermediate" | "advanced";
 
@@ -84,7 +85,7 @@ export async function recordGradedAnswer(
     );
 
     if (!res.ok) {
-      console.warn("[irtEngine] non-2xx from ability-update:", res.status);
+      logger.warn('irtEngine', `non-2xx from ability-update: ${res.status}`);
       return null;
     }
 
@@ -92,7 +93,8 @@ export async function recordGradedAnswer(
     bumpProfile("graded_answer", input.subject);
     return json;
   } catch (err) {
-    console.warn("[irtEngine] update failed:", err);
+    const error = err instanceof Error ? err : new Error(String(err));
+    logger.warn('irtEngine', 'update failed', error);
     return null;
   }
 }

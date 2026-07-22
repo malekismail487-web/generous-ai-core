@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { authLogger } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           p_email: user.email
         });
       } catch (error) {
-        console.log('Profile link check completed');
+        authLogger.debug('Profile link check completed', { userId: user.id });
       }
     };
 

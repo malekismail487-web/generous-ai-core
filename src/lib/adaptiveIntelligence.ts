@@ -40,6 +40,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getStoredBehavior, classifyQuestion as classifyQuestionModality, type BehavioralDataPoint, type ContentModality } from '@/hooks/useActivityTracker';
 import { bumpProfile } from '@/lib/adaptiveProfileBus';
 import { fetchColdStartSeed, shouldApplyColdStart, type ColdStartSeed } from '@/lib/coldStartBootstrap';
+import { logger } from '@/lib/logger';
 import { recordGradedAnswer } from '@/lib/adaptive/irtEngine';
 
 
@@ -1504,7 +1505,8 @@ export async function recordIntelligentAnswer(params: {
             : 'medium',
       });
     } catch (err) {
-      console.warn('[adaptiveIntelligence] IRT update failed (non-fatal):', err);
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.warn('adaptiveIntelligence', 'IRT update failed (non-fatal)', error);
     }
   }
 

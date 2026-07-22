@@ -4,6 +4,7 @@ import { useAuth } from './useAuth';
 import { useSchool } from './useSchool';
 import { useUserRole } from './useUserRole';
 import { useToast } from './use-toast';
+import { apiLogger } from '@/lib/logger';
 
 export interface Assignment {
   id: string;
@@ -58,7 +59,7 @@ export function useAssignments() {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching assignments:', error);
+      apiLogger.error('Error fetching assignments', error as Error);
       setAssignments([]);
     } else {
       let filteredAssignments = data || [];
@@ -89,7 +90,7 @@ export function useAssignments() {
       .order('submitted_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching submissions:', error);
+      apiLogger.error('Error fetching submissions', error as Error);
     } else {
       setMySubmissions(data || []);
     }
@@ -120,7 +121,7 @@ export function useAssignments() {
       .single();
 
     if (error) {
-      console.error('Error creating assignment:', error);
+      apiLogger.error('Error creating assignment', error as Error);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -150,7 +151,7 @@ export function useAssignments() {
         .single();
 
       if (error) {
-        console.error('Error updating submission:', error);
+        apiLogger.error('Error updating submission', error as Error);
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -176,7 +177,7 @@ export function useAssignments() {
       .single();
 
     if (error) {
-      console.error('Error submitting assignment:', error);
+      apiLogger.error('Error submitting assignment', error as Error);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -209,7 +210,7 @@ export function useAssignments() {
       .eq('id', submissionId);
 
     if (error) {
-      console.error('Error grading submission:', error);
+      apiLogger.error('Error grading submission', error as Error);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -231,7 +232,7 @@ export function useAssignments() {
       .order('submitted_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching submissions:', error);
+      apiLogger.error('Error fetching submissions', error as Error);
       return [];
     }
 
@@ -246,7 +247,7 @@ export function useAssignments() {
       .eq('id', assignmentId);
 
     if (error) {
-      console.error('Error deleting assignment:', error);
+      apiLogger.error('Error deleting assignment', error as Error);
       toast({
         variant: 'destructive',
         title: 'Error',
