@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { apiLogger } from '@/lib/logger';
 
 // Type declarations for Web Speech API
 interface SpeechRecognitionEvent extends Event {
@@ -87,7 +88,7 @@ export function useVoiceRecording({
       };
 
       recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
+        apiLogger.error('Speech recognition error', new Error(event.error));
         if (event.error === 'not-allowed') {
           onError?.('Microphone access denied. Please enable microphone permissions.');
           setIsListening(false);
@@ -140,7 +141,7 @@ export function useVoiceRecording({
         setIsListening(true);
         setInterimText('');
       } catch (error) {
-        console.error('Failed to start recognition:', error);
+        apiLogger.error('Failed to start recognition', error instanceof Error ? error : new Error(String(error)));
         onError?.('Failed to start voice recognition');
       }
     }

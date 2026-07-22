@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole, TeacherRequest } from '@/hooks/useUserRole';
 import { useToast } from '@/hooks/use-toast';
+import { apiLogger } from '@/lib/logger';
 
 export function useAdminPanel() {
   const [pendingRequests, setPendingRequests] = useState<TeacherRequest[]>([]);
@@ -24,7 +25,7 @@ export function useAdminPanel() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching requests:', error);
+      apiLogger.error('Error fetching requests', error);
     } else {
       const requests = (data || []) as TeacherRequest[];
       setAllRequests(requests);

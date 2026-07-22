@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { apiLogger } from '@/lib/logger';
 
 export interface TeacherCategory {
   id: string;
@@ -29,7 +30,7 @@ export function useTeacherCategories(schoolId: string | null | undefined) {
       .eq('school_id', schoolId)
       .order('is_default', { ascending: false })
       .order('name', { ascending: true });
-    if (error) console.warn('[useTeacherCategories]', error.message);
+    if (error) apiLogger.warn('[useTeacherCategories]', error);
     setCategories((data || []) as TeacherCategory[]);
     setLoading(false);
   }, [schoolId]);

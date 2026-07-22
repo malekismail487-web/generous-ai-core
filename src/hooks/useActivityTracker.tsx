@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { apiLogger } from '@/lib/logger';
 
 export type ActivityType =
   | 'quiz_answer'
@@ -155,7 +156,7 @@ export function useActivityTracker() {
         duration_seconds: params.durationSeconds || 0,
       }]);
     } catch (err) {
-      console.error('Activity tracking error:', err);
+      apiLogger.error('Activity tracking error', err instanceof Error ? err : new Error(String(err)));
     }
   }, [user]);
 

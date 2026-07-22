@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { authLogger } from '@/lib/logger';
 
 export type AppRole = 'student' | 'teacher' | 'admin';
 
@@ -36,7 +37,7 @@ export function useUserRole() {
       });
       
       if (error) {
-        console.error('Error checking hardcoded admin:', error);
+        authLogger.error('Error checking hardcoded admin', error);
         setIsHardcodedAdmin(false);
         return false;
       }
@@ -72,7 +73,7 @@ export function useUserRole() {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Error fetching roles:', error);
+      authLogger.error('Error fetching roles', error);
     } else {
       setRoles((data || []).map(r => r.role as AppRole));
     }
@@ -90,7 +91,7 @@ export function useUserRole() {
       });
 
       if (error) {
-        console.error('Error verifying admin code:', error);
+        authLogger.error('Error verifying admin code', error);
         toast({ variant: 'destructive', title: 'Invalid access code' });
         return false;
       }
@@ -105,7 +106,8 @@ export function useUserRole() {
         return false;
       }
     } catch (err) {
-      console.error('Error verifying admin code:', err);
+      const error = err instanceof Error ? err : new Error(String(err));
+      authLogger.error('Error verifying admin code', error);
       toast({ variant: 'destructive', title: 'Error verifying code' });
       return false;
     }

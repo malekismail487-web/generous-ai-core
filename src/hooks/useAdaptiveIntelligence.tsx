@@ -34,6 +34,7 @@
 
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { adaptiveLogger } from '@/lib/logger';
 import {
   generateAdaptiveContext,
   getSimpleAdaptiveParams,
