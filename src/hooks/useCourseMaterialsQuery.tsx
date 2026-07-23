@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useToast } from '@/hooks/use-toast';
 import { useCallback, useMemo } from 'react';
+import { apiLogger } from '@/lib/logger';
 
 export type CourseMaterial = {
   id: string;
@@ -63,7 +64,7 @@ export function useCourseMaterialsQuery() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading materials:', error);
+        apiLogger.error('Error loading materials', error);
         return [];
       }
 
@@ -187,7 +188,7 @@ export function useCourseMaterialsQuery() {
       toast({ title: 'Material uploaded successfully!' });
     },
     onError: (error) => {
-      console.error('Error uploading material:', error);
+      apiLogger.error('Error uploading material', error);
       toast({ variant: 'destructive', title: 'Error uploading material' });
     },
   });

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useSchool } from './useSchool';
 import { useToast } from './use-toast';
+import { apiLogger } from '@/lib/logger';
 
 export interface Strike {
   id: string;
@@ -37,7 +38,7 @@ export function useStrikes() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching strikes:', error);
+      apiLogger.error('Error fetching strikes', error);
     } else {
       setMyStrikes(data || []);
     }
@@ -58,7 +59,7 @@ export function useStrikes() {
       });
 
     if (error) {
-      console.error('Error issuing strike:', error);
+      apiLogger.error('Error issuing strike', error);
       toast({
         variant: 'destructive',
         title: 'Error',

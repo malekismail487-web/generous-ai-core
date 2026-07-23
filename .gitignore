@@ -1,84 +1,45 @@
 ```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.out
+dist/
+build/
+target/
+
 # Dependencies
 node_modules/
-
-# Logs
-*.log
-
-# Environment variables
+venv/
+.venv/
 .env
 .env.local
 .env.*
 
-# IDE
-.vscode/
-.idea/
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Build outputs
-dist/
-build/
-target/
-coverage/
-htmlcov/
-*.out
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.pytest_cache/
-.mypy_cache/
-*.so
-
-# Compressed archives
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-
-# Temporary files
+# Logs and temp files
+*.log
 *.tmp
-*.temp
 *.swp
 *.swo
 
-# Runtime
-*.dll
-*.so
-*.dylib
-*.exe
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# Package managers
-julia-*/
-zig*/
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
 
-# Bundler
-vendor/bundle/
+# MyPy cache
+.mypy_cache/
+# Pytest cache
+.pytest_cache/
 
-# Yarn
-.yarn/
-pnp-*
-
+# OS specific
+.DS_Store
+Thumbs.db
 ```

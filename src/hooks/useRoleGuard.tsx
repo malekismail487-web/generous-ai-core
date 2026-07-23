@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { SUPER_ADMIN_EMAIL } from '@/lib/config';
+import { authLogger } from '@/lib/logger';
 
 export type UserRole = 'super_admin' | 'school_admin' | 'teacher' | 'student' | 'parent' | 'none';
 
@@ -68,7 +69,7 @@ export function useRoleGuard() {
       .maybeSingle();
 
     if (profileError) {
-      console.error('Error fetching profile by ID:', profileError);
+      authLogger.error('Error fetching profile by ID', profileError);
     }
 
     profileData = idProfileData;
@@ -144,7 +145,7 @@ export function useRoleGuard() {
     });
 
     if (error) {
-      console.error('Error activating school:', error);
+      authLogger.error('Error activating school', error);
       return { success: false, error: error.message };
     }
 

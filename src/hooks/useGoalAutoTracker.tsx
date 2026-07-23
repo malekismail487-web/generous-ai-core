@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { dbLogger } from '@/lib/logger';
 
 /**
  * Auto-tracks student goals by checking actual activity counts in the database.
@@ -131,7 +132,8 @@ export function useGoalAutoTracker(goals: { id: string; goal_type: string; curre
           anyUpdated = true;
         }
       } catch (err) {
-        console.error(`Goal auto-track error for ${goal.goal_type}:`, err);
+        const error = err instanceof Error ? err : new Error(String(err));
+        dbLogger.error(`Goal auto-track error for ${goal.goal_type}`, error);
       }
     }
 
