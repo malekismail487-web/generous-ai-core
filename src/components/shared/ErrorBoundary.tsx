@@ -25,7 +25,13 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    // Log to structured logger instead of console
+    import('@/lib/logger').then(({ appLogger }) => {
+      appLogger.error('Uncaught error caught by ErrorBoundary', error, {
+        componentStack: errorInfo.componentStack,
+      });
+    });
+    
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
