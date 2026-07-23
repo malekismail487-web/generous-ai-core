@@ -1,13 +1,12 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { generateId } from '@/lib/utils';
-import { Bot, Loader2, CheckCircle2, Trash2, X, Paperclip, MessageSquare, RefreshCw } from 'lucide-react';
+import { Bot, Loader2, CheckCircle2, Trash2, X } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -51,12 +50,7 @@ interface Question {
   correctAnswer: 'A' | 'B' | 'C' | 'D';
 }
 
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-type Step = 'configure' | 'generating' | 'preview' | 'refining' | 'publishing';
+type Step = 'configure' | 'generating' | 'preview' | 'publishing';
 
 interface TeacherCopilotProps {
   schoolId: string;
@@ -80,10 +74,6 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
 
   const [generatedTitle, setGeneratedTitle] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState('');
-  const [isRefining, setIsRefining] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const reset = () => {
     setStep('configure');
@@ -95,9 +85,6 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
     setDueDate('');
     setGeneratedTitle('');
     setQuestions([]);
-    setChatMessages([]);
-    setChatInput('');
-    setIsRefining(false);
   };
 
   const handleGenerate = async () => {
@@ -128,11 +115,6 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
           id: generateId(),
         }))
       );
-      // Initialize chat with system message
-      setChatMessages([{
-        role: 'assistant',
-        content: `I've generated ${data.questions?.length || 0} questions about "${title.trim()}". You can ask me to modify, replace, or add questions. For example: "Make question 3 harder" or "Replace question 5 with a diagram-based question."`
-      }]);
       setStep('preview');
     } catch (err: any) {
       console.error('Generate error:', err);
@@ -142,85 +124,6 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
         description: err.message || t('couldNotGenerate'),
       });
       setStep('configure');
-    }
-  };
-
-  const handleChatSubmit = async () => {
-    if (!chatInput.trim() || questions.length === 0) return;
-
-    const userMessage: ChatMessage = { role: 'user', content: chatInput.trim() };
-    setChatMessages(prev => [...prev, userMessage]);
-    setChatInput('');
-    setIsRefining(true);
-
-    try {
-      // Build context from current questions
-      const questionsContext = questions.map((q, i) => 
-        `Q${i+1}: ${q.questionTitle}\nOptions: A) ${q.optionA} B) ${q.optionB} C) ${q.optionC} D) ${q.optionD}\nCorrect: ${q.correctAnswer}\n`
-      ).join('\n');
-
-      const { data, error } = await supabase.functions.invoke('chat', {
-        body: {
-          messages: [
-            ...chatMessages,
-            userMessage,
-            {
-              role: 'system',
-              content: `You are helping a teacher refine assignment questions. Current assignment: "${generatedTitle}"\nSubject: ${getSubjectName(subject, 'en')}\nGrade: ${gradeLevel}\n\nCurrent Questions:\n${questionsContext}\n\nThe teacher wants to modify these questions based on their request. Respond with specific suggestions and offer to regenerate specific questions. Be concise and helpful.`
-            }
-          ],
-          schoolId,
-        },
-      });
-
-      if (error) throw error;
-      
-      // For now, just show the response - full regeneration logic would go here
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        content: data?.message || 'I understand your request. Let me help you refine these questions.'
-      }]);
-    } catch (err: any) {
-      console.error('Chat error:', err);
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Sorry, I encountered an error processing your request. Please try again.'
-      }]);
-    } finally {
-      setIsRefining(false);
-    }
-  };
-
-  const regenerateQuestion = async (questionIndex: number, instruction: string) => {
-    if (!generatedTitle || questionIndex < 0 || questionIndex >= questions.length) return;
-    
-    setIsRefining(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-assignment', {
-        body: {
-          title: `${generatedTitle} - Regenerate Question ${questionIndex + 1}`,
-          description: `Original: ${questions[questionIndex].questionTitle}\nInstruction: ${instruction}\nKeep other questions unchanged.`,
-          subject: getSubjectName(subject, 'en'),
-          questionCount: 1,
-          gradeLevel,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.questions && data.questions.length > 0) {
-        const newQuestions = [...questions];
-        newQuestions[questionIndex] = {
-          ...data.questions[0],
-          id: generateId(),
-        };
-        setQuestions(newQuestions);
-        toast({ title: 'Question updated successfully' });
-      }
-    } catch (err: any) {
-      console.error('Regenerate error:', err);
-      toast({ variant: 'destructive', title: 'Failed to regenerate question', description: err.message });
-    } finally {
-      setIsRefining(false);
     }
   };
 
@@ -397,7 +300,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
           </div>
         )}
 
-        {/* Step 3: Preview & Refine */}
+        {/* Step 3: Preview */}
         {step === 'preview' && (
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
@@ -417,8 +320,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
               </Button>
             </div>
 
-            {/* Questions List */}
-            <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-1">
+            <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1">
               {questions.map((q, index) => (
                 <Card key={q.id} className="bg-muted/30">
                   <CardContent className="p-4">
@@ -439,29 +341,6 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
                             );
                           })}
                         </div>
-                        {/* Quick regenerate options */}
-                        <div className="flex gap-2 mt-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => regenerateQuestion(index, 'Make this question easier')}
-                            disabled={isRefining}
-                          >
-                            <RefreshCw className="w-3 h-3 mr-1" />
-                            Easier
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => regenerateQuestion(index, 'Make this question harder')}
-                            disabled={isRefining}
-                          >
-                            <RefreshCw className="w-3 h-3 mr-1" />
-                            Harder
-                          </Button>
-                        </div>
                       </div>
                       <Button
                         variant="ghost"
@@ -476,69 +355,6 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
                 </Card>
               ))}
             </div>
-
-            {/* Chat Interface for Refinement */}
-            <Card className="border-primary/20">
-              <CardHeader className="py-3 px-4 border-b border-border">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-primary" />
-                  Refine with AI Chat
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 space-y-3">
-                {/* Chat Messages */}
-                <div className="max-h-[200px] overflow-y-auto space-y-2 text-sm">
-                  {chatMessages.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[85%] rounded-lg px-3 py-2 ${
-                          msg.role === 'user'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
-                        }`}
-                      >
-                        {msg.content}
-                      </div>
-                    </div>
-                  ))}
-                  {isRefining && (
-                    <div className="flex justify-start">
-                      <div className="bg-muted rounded-lg px-3 py-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      </div>
-                    </div>
-                  )}
-                  <div ref={chatEndRef} />
-                </div>
-
-                {/* Chat Input */}
-                <div className="flex gap-2">
-                  <Textarea
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleChatSubmit();
-                      }
-                    }}
-                    placeholder="Ask AI to modify questions... (e.g., 'Make Q3 more challenging' or 'Add a real-world example to Q5')"
-                    className="flex-1 min-h-[40px] resize-none text-sm"
-                    disabled={isRefining}
-                  />
-                  <Button
-                    onClick={handleChatSubmit}
-                    disabled={!chatInput.trim() || isRefining}
-                    size="sm"
-                  >
-                    <Bot className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
 
             <div className="flex gap-3 pt-2">
               <Button variant="outline" onClick={() => { reset(); }} className="flex-1">

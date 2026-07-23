@@ -31,7 +31,7 @@ export async function getSignedUrl(storedUrl: string, expiresIn = 3600): Promise
     .createSignedUrl(parsed.path, expiresIn);
 
   if (error || !data?.signedUrl) {
-    dbLogger.warn('Failed to create signed URL, falling back to original', undefined, { originalUrl: storedUrl, errorMessage: error?.message });
+    dbLogger.warn('Failed to create signed URL, falling back to original', { originalUrl: storedUrl, errorMessage: error?.message });
     return storedUrl;
   }
 
