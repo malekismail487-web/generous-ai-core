@@ -14,6 +14,7 @@ import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 import { normalizeStyle } from '@/lib/promptTemplates';
 import { HelpfulnessFeedback } from '@/components/student/HelpfulnessFeedback';
 import { recordHelpfulness } from '@/lib/helpfulnessSignal';
+import { apiLogger } from '@/lib/logger';
 
 type Expertise = 'basic' | 'intermediate' | 'advanced' | 'expert';
 
@@ -271,7 +272,7 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
 
       if (!cancelRef.current) setPhase('ready');
     } catch (e: any) {
-      console.error(e);
+      apiLogger.error('Lecture generation failed', e);
       toast({ variant: 'destructive', title: 'Lecture failed', description: e.message || 'Try again' });
       setPhase('idle');
     }
