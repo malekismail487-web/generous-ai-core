@@ -14,13 +14,11 @@ import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 import { getSelectedTenant, reconcileTenantFromCode, setSelectedTenant } from '@/lib/selectedTenant';
+import { SUPER_ADMIN_EMAIL } from '@/lib/config';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const codeSchema = z.string().min(6, 'Invite code must be at least 6 characters');
-
-// Hardcoded admin email - uses admin key as password
-const HARDCODED_ADMIN_EMAIL = 'malekismail487@gmail.com';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -78,7 +76,7 @@ export default function Auth() {
 
       if (user && !loading) {
         // IMPORTANT: Super admin should go to verification page first, then super-admin panel
-        if (user.email?.toLowerCase() === HARDCODED_ADMIN_EMAIL.toLowerCase()) {
+        if (user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
           // Check if already verified in this session
           const isVerified = sessionStorage.getItem('superAdminVerified');
           if (isVerified === 'true') {
@@ -290,7 +288,7 @@ export default function Auth() {
     setIsSubmitting(true);
     
     try {
-      const isHardcodedAdmin = email.toLowerCase() === HARDCODED_ADMIN_EMAIL.toLowerCase();
+      const isHardcodedAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
       
       // If this is the hardcoded admin email, check if password is the admin key
       if (isHardcodedAdmin) {

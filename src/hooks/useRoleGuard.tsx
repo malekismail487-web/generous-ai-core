@@ -1,10 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { SUPER_ADMIN_EMAIL } from '@/lib/config';
 
 export type UserRole = 'super_admin' | 'school_admin' | 'teacher' | 'student' | 'parent' | 'none';
-
-const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
 
 export interface UserProfile {
   id: string;

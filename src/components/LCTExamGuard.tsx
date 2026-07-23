@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import LCTExamScreen from '@/components/student/LCTExamScreen';
 import { Loader2, Brain, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SUPER_ADMIN_EMAIL } from '@/lib/config';
 
 // ─── Constants ──────────────────────────────────────────────────────────────────
 
@@ -25,8 +26,6 @@ interface LCTExamGuardProps {
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────────
-
-const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
 
 export default function LCTExamGuard({ children }: LCTExamGuardProps) {
   const { user, loading: authLoading } = useAuth();

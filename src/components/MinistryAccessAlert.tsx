@@ -4,8 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Shield, CheckCircle, Ban, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-
-const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
+import { SUPER_ADMIN_EMAIL } from '@/lib/config';
 
 type MinistryRequest = {
   id: string;

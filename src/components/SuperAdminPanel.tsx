@@ -6,8 +6,7 @@ import AttackLogsPanel from '@/components/AttackLogsPanel';
 import MinistryCodeGenerator from '@/components/admin/MinistryCodeGenerator';
 import TenantsPanel from '@/components/admin/TenantsPanel';
 import TenantObservatory from '@/components/admin/TenantObservatory';
-
-const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
+import { SUPER_ADMIN_EMAIL } from '@/lib/config';
 
 type School = {
   id: string;

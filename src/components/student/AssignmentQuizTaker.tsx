@@ -199,7 +199,9 @@ export function AssignmentQuizTaker({
                   source: 'assignment',
                 },
               }),
-            }).catch(() => {});
+            }).catch((err) => {
+              console.warn('Failed to extract memories from wrong answers:', err);
+            });
           }
         });
       }

@@ -132,7 +132,9 @@ export function MorningBriefingCard() {
         isCorrect: ci === q.answer_index,
         difficulty: "intermediate",
         source: "morning_briefing",
-      }).catch(() => {});
+      }).catch((err) => {
+        console.warn('Failed to record intelligent answer:', err);
+      });
     }
   };
 

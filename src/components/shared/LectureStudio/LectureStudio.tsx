@@ -231,7 +231,9 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
       output: lastOutputTextRef.current,
       signal,
       profileSnapshot: profileSnapshotRef.current ?? undefined,
-    }).catch(() => {});
+    }).catch((err) => {
+      console.warn('Failed to record helpfulness signal:', err);
+    });
     signalGivenRef.current = true;
   }, [mode, subject, topic]);
 

@@ -412,7 +412,9 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
       for (const att of attachments) {
         const ext = att.file.name.split('.').pop() || 'bin';
         const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-        supabase.storage.from('chat-attachments').upload(path, att.file).catch(() => {});
+        supabase.storage.from('chat-attachments').upload(path, att.file).catch((err) => {
+          console.warn('Failed to upload attachment:', err);
+        });
       }
     }
 
@@ -583,8 +585,12 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
               body: JSON.stringify({
                 messages: allMsgs.slice(-10).map(m => ({ role: m.role, content: m.content })),
               }),
-            }).catch(() => {});
-          } catch {}
+            }).catch((err) => {
+              console.warn('Failed to extract memories:', err);
+            });
+          } catch (innerErr) {
+            console.warn('Memory extraction failed:', innerErr);
+          }
         }
       }
     } catch (e) {

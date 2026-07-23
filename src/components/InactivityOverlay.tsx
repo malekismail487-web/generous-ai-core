@@ -83,7 +83,9 @@ export function InactivityOverlay() {
         audio.loop = true;
         audio.volume = 0;
         audioRef.current = audio;
-        audio.play().catch(() => {});
+        audio.play().catch((err) => {
+          console.warn('Failed to play ambient music:', err);
+        });
         // Fade in volume
         let vol = 0;
         const fadeIn = setInterval(() => {
