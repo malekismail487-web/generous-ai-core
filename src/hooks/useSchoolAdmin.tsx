@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useSchool, Profile, School } from '@/hooks/useSchool';
 import { useToast } from '@/hooks/use-toast';
+import { dbLogger } from '@/lib/logger';
 
 export function useSchoolAdmin() {
   const [pendingUsers, setPendingUsers] = useState<Profile[]>([]);
@@ -27,7 +28,12 @@ export function useSchoolAdmin() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching users:', error);
+      dbLogger.error('Failed to fetch school users', error, { schoolId: school?.id });
+      toast({
+        title: 'Error',
+        description: 'Failed to load users. Please try again.',
+        variant: 'destructive',
+      });
     } else {
       const users = (data || []) as Profile[];
       setAllUsers(users);

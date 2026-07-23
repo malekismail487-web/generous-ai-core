@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useToast } from '@/hooks/use-toast';
+import { apiLogger } from '@/lib/logger';
 
 export type CourseMaterial = {
   id: string;
@@ -59,7 +60,12 @@ export function useCourseMaterials() {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error loading materials:', error);
+      apiLogger.error('Failed to load course materials', error, { schoolId: school?.id });
+      toast({
+        title: 'Error',
+        description: 'Failed to load materials. Please try again.',
+        variant: 'destructive',
+      });
       setMaterials([]);
     } else {
       // Filter by grade level for students
@@ -157,8 +163,12 @@ export function useCourseMaterials() {
       .single();
 
     if (error) {
-      console.error('Error uploading material:', error);
-      toast({ variant: 'destructive', title: 'Error uploading material' });
+      apiLogger.error('Failed to upload course material', error, { subject, title, schoolId: school?.id });
+      toast({ 
+        variant: 'destructive', 
+        title: 'Error uploading material',
+        description: error.message 
+      });
       return null;
     }
 

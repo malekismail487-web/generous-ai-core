@@ -158,7 +158,8 @@ export function useAdaptiveIntelligence() {
     try {
       await recordIntelligentAnswer({ userId, ...params });
     } catch (err) {
-      console.warn('[AdaptiveIntelligence] recordAnswer error:', err);
+      const error = err instanceof Error ? err : new Error(String(err));
+      adaptiveLogger.warn('recordAnswer failed', error, { userId, questionId: params.questionId });
     }
   }, [user?.id]);
 
