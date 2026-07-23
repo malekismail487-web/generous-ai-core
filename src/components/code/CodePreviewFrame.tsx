@@ -29,7 +29,7 @@ export function isPreviewable(lang: string): boolean {
 // Build the LUMINA_AI runtime that lives inside the sandbox
 function buildAIRuntime(ai?: AIConfig): string {
   if (!ai) {
-    return `window.LUMINA_AI = async () => { throw new Error('AI is disabled in this preview. Open Code Lab → AI Settings to enable it.'); };`;
+    return `window.LUMINA_AI = async () => { throw new Error('AI features require configuration. Please go to Code Lab settings and configure your AI provider to enable this feature.'); };`;
   }
 
   // We pass config via window.__LUMINA_AI_CFG so we don't have to escape it inline
