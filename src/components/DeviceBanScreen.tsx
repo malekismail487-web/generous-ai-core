@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 import { ShieldOff } from 'lucide-react';
+import { authLogger } from '@/lib/logger';
 
 export default function DeviceBanScreen({ children }: { children: React.ReactNode }) {
   const [banned, setBanned] = useState(false);
@@ -21,7 +22,7 @@ export default function DeviceBanScreen({ children }: { children: React.ReactNod
           setMessage(result.message || 'Your device has been permanently banned.');
         }
       } catch (err) {
-        console.error('Ban check error:', err);
+        authLogger.error('Ban check error', err);
       }
       setChecking(false);
     };

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Moon, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { authLogger } from '@/lib/logger';
 
 const INACTIVITY_TIMEOUT = 30_000; // 30 seconds
 const MUSIC_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-ambient-music`;
@@ -84,7 +85,7 @@ export function InactivityOverlay() {
         audio.volume = 0;
         audioRef.current = audio;
         audio.play().catch((err) => {
-          console.warn('Failed to play ambient music:', err);
+          authLogger.warn('Failed to play ambient music', err);
         });
         // Fade in volume
         let vol = 0;
