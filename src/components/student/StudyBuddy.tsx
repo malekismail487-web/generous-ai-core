@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { getWeakestTopics, getDueReviews, buildMasteryPromptBlock, getCurrentSchoolId } from '@/lib/mastery';
+import { apiLogger } from '@/lib/logger';
 
 type Msg = { id: string; role: 'user' | 'assistant'; content: string; images?: { src: string; alt?: string }[]; attachments?: { name: string; type: string; url?: string; preview?: string; base64?: string }[]; mirrorSnapshotId?: string; mirrorPrediction?: { predicted_answer: string; predicted_misconception: string }; mirrorActualAnswer?: string };
 
@@ -413,7 +414,7 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
         const ext = att.file.name.split('.').pop() || 'bin';
         const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
         supabase.storage.from('chat-attachments').upload(path, att.file).catch((err) => {
-          console.warn('Failed to upload attachment:', err);
+          apiLogger.warn('Failed to upload attachment', err);
         });
       }
     }
@@ -586,15 +587,15 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
                 messages: allMsgs.slice(-10).map(m => ({ role: m.role, content: m.content })),
               }),
             }).catch((err) => {
-              console.warn('Failed to extract memories:', err);
+              apiLogger.warn('Failed to extract memories', err);
             });
           } catch (innerErr) {
-            console.warn('Memory extraction failed:', innerErr);
+            apiLogger.warn('Memory extraction failed', innerErr);
           }
         }
       }
     } catch (e) {
-      console.error('Lumina error:', e);
+      apiLogger.error('Lumina error', e);
       const errorMsg = t('Sorry, I had trouble connecting. Please try again!', 'عذرًا، واجهت مشكلة في الاتصال. حاول مرة أخرى!');
       setLocalMessages(prev => [...prev, {
         id: assistantId,
