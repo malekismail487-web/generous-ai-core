@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { apiLogger } from '@/lib/logger';
 
 export interface Note {
   id: string;
@@ -27,7 +28,7 @@ export function useNotes() {
       .order('updated_at', { ascending: false });
     
     if (error) {
-      console.error('Error fetching notes:', error);
+      apiLogger.error('Error fetching notes', error);
     } else {
       setNotes(data || []);
     }
@@ -49,7 +50,7 @@ export function useNotes() {
       .single();
     
     if (error) {
-      console.error('Error creating note:', error);
+      apiLogger.error('Error creating note', error);
       return null;
     }
     
@@ -68,7 +69,7 @@ export function useNotes() {
       .single();
     
     if (error) {
-      console.error('Error updating note:', error);
+      apiLogger.error('Error updating note', error);
       return null;
     }
     
@@ -87,7 +88,7 @@ export function useNotes() {
       .eq('id', noteId);
     
     if (error) {
-      console.error('Error deleting note:', error);
+      apiLogger.error('Error deleting note', error);
       return false;
     }
     

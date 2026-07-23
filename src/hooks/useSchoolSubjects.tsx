@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { apiLogger } from '@/lib/logger';
 
 export interface SchoolSubject {
   id: string;
@@ -31,7 +32,7 @@ export function useSchoolSubjects(schoolId: string | null | undefined) {
       .eq('school_id', schoolId)
       .order('is_default', { ascending: false })
       .order('name', { ascending: true });
-    if (error) console.warn('[useSchoolSubjects]', error.message);
+    if (error) apiLogger.warn('[useSchoolSubjects] Failed to fetch subjects', error);
     setSubjects(
       ((data || []) as SchoolSubject[]).map((s) => ({
         ...s,

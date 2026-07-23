@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useSchool } from './useSchool';
 import { useToast } from './use-toast';
+import { apiLogger } from '@/lib/logger';
 
 export interface ChatRoom {
   id: string;
@@ -45,7 +46,7 @@ export function useSchoolChat() {
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('Error fetching chat rooms:', error);
+      apiLogger.error('Error fetching chat rooms', error);
     } else {
       setChatRooms(data || []);
       // Auto-select first room if none selected
@@ -71,7 +72,7 @@ export function useSchoolChat() {
       .limit(100);
 
     if (error) {
-      console.error('Error fetching messages:', error);
+      apiLogger.error('Error fetching messages', error);
     } else {
       setMessages(data || []);
     }
@@ -92,7 +93,7 @@ export function useSchoolChat() {
       .single();
 
     if (error) {
-      console.error('Error sending message:', error);
+      apiLogger.error('Error sending message', error);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -119,7 +120,7 @@ export function useSchoolChat() {
       .single();
 
     if (error) {
-      console.error('Error creating chat room:', error);
+      apiLogger.error('Error creating chat room', error);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -140,7 +141,7 @@ export function useSchoolChat() {
       .eq('id', messageId);
 
     if (error) {
-      console.error('Error deleting message:', error);
+      apiLogger.error('Error deleting message', error);
       return false;
     }
 

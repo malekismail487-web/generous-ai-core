@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { apiLogger } from '@/lib/logger';
 
 export interface Material {
   id: string;
@@ -31,7 +32,7 @@ export function useMaterials() {
       .order('updated_at', { ascending: false });
     
     if (error) {
-      console.error('Error fetching materials:', error);
+      apiLogger.error('Error fetching materials', error);
     } else {
       setMaterials(data || []);
     }
@@ -70,7 +71,7 @@ export function useMaterials() {
       .single();
     
     if (error) {
-      console.error('Error creating material:', error);
+      apiLogger.error('Error creating material', error);
       return null;
     }
     
@@ -91,7 +92,7 @@ export function useMaterials() {
       .single();
     
     if (error) {
-      console.error('Error updating material:', error);
+      apiLogger.error('Error updating material', error);
       return null;
     }
     
@@ -107,7 +108,7 @@ export function useMaterials() {
       .eq('id', materialId);
     
     if (error) {
-      console.error('Error deleting material:', error);
+      apiLogger.error('Error deleting material', error);
       return false;
     }
     

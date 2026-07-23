@@ -5,6 +5,7 @@ import { Sparkles, Moon, Check, X, Heart } from "lucide-react";
 import { MathRenderer } from "@/components/MathRenderer";
 import { recordIntelligentAnswer } from "@/lib/adaptiveIntelligence";
 import { cn } from "@/lib/utils";
+import { apiLogger } from "@/lib/logger";
 
 interface QuizQ { q: string; choices: string[]; answer_index: number; explanation: string; }
 interface Briefing {
