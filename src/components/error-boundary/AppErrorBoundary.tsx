@@ -26,13 +26,10 @@ class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to structured logging system
-    console.error('AppErrorBoundary caught an error:', {
-      message: error.message,
-      stack: error.stack,
+    componentLogger.error('AppErrorBoundary caught an error', error, {
       componentStack: errorInfo.componentStack,
     });
-    
+
     this.setState({ error, errorInfo });
   }
 
