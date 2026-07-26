@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { componentLogger } from '@/lib/logger';
 
 interface Props {
   children: ReactNode;
@@ -25,13 +26,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log to structured logger instead of console
-    import('@/lib/logger').then(({ appLogger }) => {
-      appLogger.error('Uncaught error caught by ErrorBoundary', error, {
-        componentStack: errorInfo.componentStack,
-      });
+    componentLogger.error('Uncaught error caught by ErrorBoundary', error, {
+      componentStack: errorInfo.componentStack,
     });
-    
+
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
