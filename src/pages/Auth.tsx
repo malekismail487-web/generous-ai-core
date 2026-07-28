@@ -609,6 +609,9 @@ export default function Auth() {
               <p className="text-center text-muted-foreground mb-4">
                 {t('signInToAccount')}
               </p>
+
+              <SocialAuthButtons />
+              
               
               <div className="space-y-2">
                 <Label htmlFor="login-email">{t('email')}</Label>
