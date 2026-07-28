@@ -17,7 +17,9 @@ import { getSelectedTenant, reconcileTenantFromCode, setSelectedTenant } from '@
 import { SUPER_ADMIN_EMAIL } from '@/lib/config';
 
 const emailSchema = z.string().email('Please enter a valid email address');
-const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
+const passwordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters');
 const codeSchema = z.string().min(6, 'Invite code must be at least 6 characters');
 
 export default function Auth() {
