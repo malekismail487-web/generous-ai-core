@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 import { getSelectedTenant, reconcileTenantFromCode, setSelectedTenant } from '@/lib/selectedTenant';
 import { SUPER_ADMIN_EMAIL } from '@/lib/config';
+import { lovable } from '@/integrations/lovable/index';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z
