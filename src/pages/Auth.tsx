@@ -35,7 +35,7 @@ export default function Auth() {
   const [parentCode, setParentCode] = useState('');
   const [modCode, setModCode] = useState('');
   
-  const { signIn, signUp, user, loading } = useAuth();
+  const { signIn, signUp, signOut, user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { language } = useThemeLanguage();
@@ -78,8 +78,22 @@ export default function Auth() {
       }
 
       if (user && !loading) {
-        // IMPORTANT: Super admin should go to verification page first, then super-admin panel
+        // Super Admin verification is only reachable after the dedicated admin-code login path.
+        // Social OAuth and normal sessions for the reserved email must not expose the verifier.
         if (user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+          const hasAdminLoginIntent = sessionStorage.getItem('superAdminLoginIntent') === 'true';
+
+          if (!hasAdminLoginIntent) {
+            sessionStorage.removeItem('superAdminVerified');
+            await signOut();
+            toast({
+              variant: 'destructive',
+              title: 'Admin access protected',
+              description: 'Use the dedicated admin code flow to access Super Admin verification.',
+            });
+            return;
+          }
+
           // Check if already verified in this session
           const isVerified = sessionStorage.getItem('superAdminVerified');
           if (isVerified === 'true') {
@@ -143,7 +157,7 @@ export default function Auth() {
     };
     
     checkUserAndRedirect();
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, signOut, toast]);
 
   const clearForm = () => {
     setEmail('');
@@ -157,8 +171,18 @@ export default function Auth() {
   const handleSocialSignIn = async (provider: 'google' | 'apple') => {
     setIsSubmitting(true);
     try {
+      sessionStorage.removeItem('superAdminLoginIntent');
+      sessionStorage.removeItem('superAdminVerified');
+
+      if (user) {
+        await signOut();
+      }
+
       const result = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: window.location.origin,
+        ...(provider === 'google'
+          ? { extraParams: { prompt: 'select_account' } }
+          : {}),
       });
       if (result.error) {
         toast({
@@ -369,6 +393,9 @@ export default function Auth() {
         const isAdminKey = await verifyAdminCode(password);
         
         if (isAdminKey) {
+          sessionStorage.setItem('superAdminLoginIntent', 'true');
+          sessionStorage.removeItem('superAdminVerified');
+
           // Try to sign in with the admin key as password
           const { error } = await signIn(email, password);
           
@@ -377,12 +404,14 @@ export default function Auth() {
             const { error: signUpError } = await signUp(email, password);
             
             if (signUpError && !signUpError.message.includes('User already registered')) {
+              sessionStorage.removeItem('superAdminLoginIntent');
               toast({
                 variant: 'destructive',
                 title: 'Admin setup failed',
                 description: signUpError.message,
               });
             } else if (signUpError?.message.includes('User already registered')) {
+              sessionStorage.removeItem('superAdminLoginIntent');
               toast({
                 variant: 'destructive',
                 title: 'Password mismatch',
@@ -402,6 +431,8 @@ export default function Auth() {
       }
       
       // Normal login flow
+      sessionStorage.removeItem('superAdminLoginIntent');
+      sessionStorage.removeItem('superAdminVerified');
       const { error } = await signIn(email, password);
       
       if (error) {
