@@ -174,10 +174,6 @@ export default function Auth() {
       sessionStorage.removeItem('superAdminLoginIntent');
       sessionStorage.removeItem('superAdminVerified');
 
-      if (user) {
-        await signOut();
-      }
-
       const result = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: window.location.origin,
         ...(provider === 'google'
