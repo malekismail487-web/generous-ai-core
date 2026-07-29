@@ -80,6 +80,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    sessionStorage.removeItem('superAdminLoginIntent');
+    sessionStorage.removeItem('superAdminVerified');
     await supabase.auth.signOut();
   };
 

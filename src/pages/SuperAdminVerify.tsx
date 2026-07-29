@@ -46,6 +46,13 @@ export default function SuperAdminVerify() {
       if (!user) { navigate('/auth'); return; }
       if (user.email?.toLowerCase() !== SUPER_ADMIN_EMAIL) { navigate('/'); return; }
 
+      if (sessionStorage.getItem('superAdminLoginIntent') !== 'true') {
+        sessionStorage.removeItem('superAdminVerified');
+        await signOut();
+        navigate('/auth');
+        return;
+      }
+
       try {
         const { data, error } = await supabase.rpc('check_super_admin_lock_status', {
           p_email: user.email,
