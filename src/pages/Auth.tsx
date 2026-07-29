@@ -769,6 +769,10 @@ export default function Auth() {
                 {t('joinSchoolDesc')}
               </p>
 
+              <SocialAuthButtons />
+
+
+
               <div className="space-y-2">
                 <Label htmlFor="join-name">{t('fullName')}</Label>
                 <Input
@@ -967,6 +971,10 @@ export default function Auth() {
               <p className="text-center text-muted-foreground mb-4">
                 {language === 'ar' ? 'سجّل كولي أمر لمتابعة أداء طفلك' : 'Sign up as a parent to track your child\'s progress'}
               </p>
+
+              <SocialAuthButtons />
+
+
 
               <div className="space-y-2">
                 <Label htmlFor="parent-name">{t('fullName')}</Label>
