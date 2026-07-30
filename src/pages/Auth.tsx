@@ -879,7 +879,17 @@ export default function Auth() {
         )}
 
 
-        <Tabs value={authMode} onValueChange={(v) => { setAuthMode(v as 'login' | 'signup' | 'join' | 'parent'); setErrors({}); }}>
+        <Tabs
+          value={authMode}
+          onValueChange={(v) => {
+            const nextMode = v as AuthMode;
+            if (nextMode === 'login' || nextMode === 'signup' || nextMode === 'join' || nextMode === 'parent') {
+              clearSocialOnboarding();
+              setAuthMode(nextMode);
+              setErrors({});
+            }
+          }}
+        >
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="login" className="gap-1 text-[10px] px-1">
               <Lock className="w-3 h-3" />
@@ -906,7 +916,7 @@ export default function Auth() {
                 {t('signInToAccount')}
               </p>
 
-              <SocialAuthButtons />
+              <SocialAuthButtons flow="account" />
               
               
               <div className="space-y-2">
@@ -977,7 +987,7 @@ export default function Auth() {
                 {t('createAccount')}
               </p>
 
-              <SocialAuthButtons />
+              <SocialAuthButtons flow="account" />
               
               
               <div className="space-y-2">
@@ -1065,7 +1075,7 @@ export default function Auth() {
                 {t('joinSchoolDesc')}
               </p>
 
-              <SocialAuthButtons />
+              <SocialAuthButtons flow="join" />
 
 
 
@@ -1268,7 +1278,7 @@ export default function Auth() {
                 {language === 'ar' ? 'سجّل كولي أمر لمتابعة أداء طفلك' : 'Sign up as a parent to track your child\'s progress'}
               </p>
 
-              <SocialAuthButtons />
+              <SocialAuthButtons flow="parent" />
 
 
 
@@ -1319,6 +1329,156 @@ export default function Auth() {
                   {t('signIn')}
                 </button>
               </p>
+            </form>
+          </TabsContent>
+          <TabsContent value="social-verify">
+            <form onSubmit={handleVerifySocialCode} className="glass-effect rounded-2xl p-6 space-y-4">
+              <div className="text-center space-y-2">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <ShieldCheck className="h-6 w-6" />
+                </div>
+                <h2 className="text-xl font-bold">
+                  {language === 'ar' ? 'تحقق من بريدك الإلكتروني' : 'Verify your email'}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar'
+                    ? `أرسلنا رمز تحقق إلى ${user?.email ?? 'بريدك الإلكتروني'}.`
+                    : `We sent a verification code to ${user?.email ?? 'your email'}.`}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="social-verification-code">
+                  {language === 'ar' ? 'رمز التحقق' : 'Verification code'}
+                </Label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="social-verification-code"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder={language === 'ar' ? 'أدخل الرمز' : 'Enter the code'}
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\s/g, ''))}
+                    className="pl-10 tracking-wider font-mono"
+                  />
+                </div>
+                {errors.verificationCode && <p className="text-sm text-destructive">{errors.verificationCode}</p>}
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isVerifyingCode || !verificationCode.trim()}>
+                {isVerifyingCode && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {language === 'ar' ? 'تحقق' : 'Verify'}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={isSendingCode || verificationCooldown > 0}
+                onClick={() => requestSocialVerificationCode(false)}
+              >
+                {isSendingCode && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {verificationCooldown > 0
+                  ? (language === 'ar' ? `إعادة الإرسال خلال ${verificationCooldown}ث` : `Resend in ${verificationCooldown}s`)
+                  : (language === 'ar' ? 'إرسال رمز جديد' : 'Send a new code')}
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={async () => {
+                  clearSocialOnboarding();
+                  await signOut();
+                  setAuthMode('login');
+                }}
+              >
+                {language === 'ar' ? 'استخدام حساب آخر' : 'Use another account'}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="social-details">
+            <form onSubmit={handleSocialDetailsSubmit} className="glass-effect rounded-2xl p-6 space-y-4">
+              <div className="text-center space-y-2">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  {socialFlow === 'parent' ? <Heart className="h-6 w-6" /> : <Users className="h-6 w-6" />}
+                </div>
+                <h2 className="text-xl font-bold">
+                  {socialFlow === 'parent'
+                    ? (language === 'ar' ? 'ربط حساب ولي الأمر' : 'Link parent account')
+                    : (language === 'ar' ? 'الانضمام إلى المدرسة' : 'Join your school')}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar'
+                    ? `تم التحقق من ${user?.email ?? 'بريدك الإلكتروني'}.`
+                    : `${user?.email ?? 'Your email'} is verified.`}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="social-name">{t('fullName')}</Label>
+                <Input
+                  id="social-name"
+                  type="text"
+                  placeholder={language === 'ar' ? 'الاسم الكامل' : 'Your full name'}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="social-onboarding-code">
+                  {socialFlow === 'parent'
+                    ? (language === 'ar' ? 'رمز ولي الأمر' : 'Parent Invite Code')
+                    : t('inviteCode')}
+                </Label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="social-onboarding-code"
+                    type="text"
+                    placeholder={socialFlow === 'parent'
+                      ? (language === 'ar' ? 'أدخل رمز ولي الأمر' : 'Enter parent code')
+                      : (language === 'ar' ? 'أدخل رمز الدعوة' : 'Enter your invite code')}
+                    value={socialFlow === 'parent' ? parentCode : inviteCode}
+                    onChange={(e) => {
+                      const value = e.target.value.toUpperCase();
+                      if (socialFlow === 'parent') setParentCode(value);
+                      else setInviteCode(value);
+                    }}
+                    className="pl-10 tracking-wider uppercase font-mono"
+                  />
+                </div>
+                {errors.code && <p className="text-sm text-destructive">{errors.code}</p>}
+                <p className="text-xs text-muted-foreground">
+                  {socialFlow === 'parent'
+                    ? (language === 'ar' ? 'يحصل طفلك على هذا الرمز في حسابه بعد الموافقة' : 'Your child receives this code in their account after approval')
+                    : (language === 'ar' ? 'يحدد رمز الدعوة تلقائيًا هل أنت طالب أم معلم.' : 'The invite code automatically determines whether you join as a student or teacher.')}
+                </p>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {socialFlow === 'parent'
+                  ? (language === 'ar' ? 'ربط ولي الأمر' : 'Link Parent')
+                  : t('joinSchool')}
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={async () => {
+                  clearSocialOnboarding();
+                  await signOut();
+                  setAuthMode(socialFlow === 'parent' ? 'parent' : 'join');
+                }}
+              >
+                {language === 'ar' ? 'استخدام حساب آخر' : 'Use another account'}
+              </Button>
             </form>
           </TabsContent>
         </Tabs>
