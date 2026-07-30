@@ -108,7 +108,13 @@ const Index = () => {
   if (isSchoolAdmin && profile?.is_active) return <Navigate to="/admin" replace />;
   if (isTeacher && profile?.is_active) return <Navigate to="/teacher" replace />;
   if (isParent) return <Navigate to="/parent" replace />;
-  if (!hasProfile) return <Navigate to="/activate-school" replace />;
+  if (!hasProfile) {
+    const socialOnboardingFlow = sessionStorage.getItem('luminaSocialOnboardingFlow');
+    if (socialOnboardingFlow === 'join' || socialOnboardingFlow === 'parent') {
+      return <Navigate to="/auth" replace />;
+    }
+    return <Navigate to="/activate-school" replace />;
+  }
   if (profile?.status === 'pending' || profile?.status === 'rejected') return <Navigate to="/pending-approval" replace />;
 
   // Sub-page header with back button
