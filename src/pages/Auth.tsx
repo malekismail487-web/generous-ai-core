@@ -23,6 +23,35 @@ const passwordSchema = z
   .min(8, 'Password must be at least 8 characters');
 const codeSchema = z.string().min(6, 'Invite code must be at least 6 characters');
 
+type AuthMode = 'login' | 'signup' | 'join' | 'parent' | 'social-verify' | 'social-details';
+type SocialOnboardingFlow = 'account' | 'join' | 'parent';
+type AuthErrors = {
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  code?: string;
+  name?: string;
+  verificationCode?: string;
+};
+
+const SOCIAL_FLOW_KEY = 'luminaSocialOnboardingFlow';
+const SOCIAL_VERIFIED_KEY = 'luminaSocialEmailVerified';
+const SOCIAL_LAST_SENT_AT_KEY = 'luminaSocialVerificationLastSentAt';
+const SOCIAL_SENT_EMAIL_KEY = 'luminaSocialVerificationEmail';
+const VERIFICATION_COOLDOWN_SECONDS = 60;
+
+const readSocialFlow = (): SocialOnboardingFlow | null => {
+  const value = sessionStorage.getItem(SOCIAL_FLOW_KEY);
+  return value === 'account' || value === 'join' || value === 'parent' ? value : null;
+};
+
+const getVerificationCooldownSeconds = () => {
+  const sentAt = Number(sessionStorage.getItem(SOCIAL_LAST_SENT_AT_KEY) || '0');
+  if (!Number.isFinite(sentAt) || sentAt <= 0) return 0;
+  const elapsed = Math.floor((Date.now() - sentAt) / 1000);
+  return Math.max(0, VERIFICATION_COOLDOWN_SECONDS - elapsed);
+};
+
 export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,10 +59,20 @@ export default function Auth() {
   const [inviteCode, setInviteCode] = useState('');
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; code?: string; name?: string }>({});
-  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'join' | 'parent'>('login');
+  const [errors, setErrors] = useState<AuthErrors>({});
+  const [authMode, setAuthMode] = useState<AuthMode>(() => {
+    const storedFlow = readSocialFlow();
+    if (!storedFlow) return 'login';
+    return sessionStorage.getItem(SOCIAL_VERIFIED_KEY) === 'true' && storedFlow !== 'account'
+      ? 'social-details'
+      : 'social-verify';
+  });
   const [parentCode, setParentCode] = useState('');
-  const [modCode, setModCode] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [socialFlow, setSocialFlow] = useState<SocialOnboardingFlow | null>(() => readSocialFlow());
+  const [verificationCooldown, setVerificationCooldown] = useState(() => getVerificationCooldownSeconds());
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   
   const { signIn, signUp, signOut, user, loading } = useAuth();
   const navigate = useNavigate();
@@ -60,6 +99,16 @@ export default function Auth() {
     }
   };
 
+  const clearSocialOnboarding = () => {
+    sessionStorage.removeItem(SOCIAL_FLOW_KEY);
+    sessionStorage.removeItem(SOCIAL_VERIFIED_KEY);
+    sessionStorage.removeItem(SOCIAL_LAST_SENT_AT_KEY);
+    sessionStorage.removeItem(SOCIAL_SENT_EMAIL_KEY);
+    setSocialFlow(null);
+    setVerificationCode('');
+    setVerificationCooldown(0);
+  };
+
   // Redirect to language selection if not chosen yet
   useEffect(() => {
     const hasSelectedThisTab = sessionStorage.getItem('language-selected-tab');
@@ -78,6 +127,20 @@ export default function Auth() {
       }
 
       if (user && !loading) {
+        const activeSocialFlow = readSocialFlow();
+        const socialEmailVerified = sessionStorage.getItem(SOCIAL_VERIFIED_KEY) === 'true';
+        if (activeSocialFlow) {
+          setSocialFlow(activeSocialFlow);
+          if (!socialEmailVerified) {
+            setAuthMode('social-verify');
+            return;
+          }
+          if (activeSocialFlow === 'join' || activeSocialFlow === 'parent') {
+            setAuthMode('social-details');
+            return;
+          }
+        }
+
         // Super Admin verification is only reachable after the dedicated admin-code login path.
         // Social OAuth and normal sessions for the reserved email must not expose the verifier.
         if (user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
@@ -165,17 +228,223 @@ export default function Auth() {
     setConfirmPassword('');
     setInviteCode('');
     setName('');
+    setParentCode('');
+    setVerificationCode('');
     setErrors({});
   };
 
-  const handleSocialSignIn = async (provider: 'google' | 'apple') => {
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setVerificationCooldown(getVerificationCooldownSeconds());
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const requestSocialVerificationCode = async (silent = false) => {
+    const currentEmail = user?.email?.toLowerCase();
+    if (!currentEmail) {
+      if (!silent) {
+        toast({
+          variant: 'destructive',
+          title: 'Verification unavailable',
+          description: 'Please finish signing in with Google or Apple first.',
+        });
+      }
+      return;
+    }
+
+    const remaining = getVerificationCooldownSeconds();
+    if (remaining > 0) {
+      setVerificationCooldown(remaining);
+      if (!silent) {
+        toast({
+          title: 'Please wait',
+          description: `You can request another code in ${remaining} seconds.`,
+        });
+      }
+      return;
+    }
+
+    setIsSendingCode(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: currentEmail,
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: `${window.location.origin}/auth`,
+        },
+      });
+
+      if (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Code not sent',
+          description: error.message,
+        });
+        return;
+      }
+
+      sessionStorage.setItem(SOCIAL_LAST_SENT_AT_KEY, String(Date.now()));
+      sessionStorage.setItem(SOCIAL_SENT_EMAIL_KEY, currentEmail);
+      setVerificationCooldown(VERIFICATION_COOLDOWN_SECONDS);
+      if (!silent) {
+        toast({
+          title: 'Verification code sent',
+          description: `Check ${currentEmail} for the code.`,
+        });
+      }
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
+  useEffect(() => {
+    const currentEmail = user?.email?.toLowerCase();
+    if (authMode !== 'social-verify' || !currentEmail) return;
+    if (sessionStorage.getItem(SOCIAL_VERIFIED_KEY) === 'true') return;
+    const sentEmail = sessionStorage.getItem(SOCIAL_SENT_EMAIL_KEY);
+    if (sentEmail === currentEmail && getVerificationCooldownSeconds() > 0) return;
+    void requestSocialVerificationCode(true);
+  }, [authMode, user?.email]);
+
+  const handleVerifySocialCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const currentEmail = user?.email?.toLowerCase();
+    const token = verificationCode.trim();
+
+    if (!currentEmail) {
+      toast({ variant: 'destructive', title: 'Verification failed', description: 'No signed-in account was found.' });
+      return;
+    }
+    if (token.length < 6) {
+      setErrors({ verificationCode: 'Enter the verification code from your email.' });
+      return;
+    }
+
+    setIsVerifyingCode(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: currentEmail,
+        token,
+        type: 'email',
+      });
+
+      if (error) {
+        setErrors({ verificationCode: error.message });
+        return;
+      }
+
+      setErrors({});
+      sessionStorage.setItem(SOCIAL_VERIFIED_KEY, 'true');
+      const activeFlow = socialFlow ?? readSocialFlow();
+      if (activeFlow === 'join' || activeFlow === 'parent') {
+        setSocialFlow(activeFlow);
+        setAuthMode('social-details');
+        return;
+      }
+
+      clearSocialOnboarding();
+      navigate('/');
+    } finally {
+      setIsVerifyingCode(false);
+    }
+  };
+
+  const handleSocialDetailsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const activeFlow = socialFlow ?? readSocialFlow();
+    const currentEmail = user?.email?.toLowerCase();
+    const currentUserId = user?.id;
+    const code = activeFlow === 'parent' ? parentCode.trim().toUpperCase() : inviteCode.trim().toUpperCase();
+    const newErrors: AuthErrors = {};
+
+    if (!currentEmail || !currentUserId) newErrors.email = 'Please sign in with Google or Apple again.';
+    if (!name.trim()) newErrors.name = 'Full name is required';
+    if (!activeFlow || activeFlow === 'account') newErrors.code = 'Choose Join School or Parent first.';
+    if (!code || code.length < 6) newErrors.code = activeFlow === 'parent' ? 'Parent code is required' : 'Invite code is required';
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0 || !currentEmail || !currentUserId || !activeFlow || activeFlow === 'account') return;
+
+    setIsSubmitting(true);
+    try {
+      if (activeFlow === 'join') {
+        const { data, error } = await supabase.rpc('signup_with_invite_code', {
+          p_email: currentEmail,
+          p_full_name: name.trim(),
+          p_invite_code: code,
+        });
+
+        const result = data as {
+          success: boolean;
+          error?: string;
+          role?: string;
+          tenant_id?: string;
+          tenant_slug?: string;
+          tenant_name?: string;
+        } | null;
+
+        if (error || !result?.success) {
+          toast({ variant: 'destructive', title: 'Request failed', description: result?.error || error?.message || 'Invalid invite code.' });
+          return;
+        }
+
+        applyTenantOverride(result);
+        await supabase.rpc('link_profile_after_signup', { p_user_id: currentUserId, p_email: currentEmail });
+        toast({
+          title: 'Request submitted',
+          description: result.role === 'teacher'
+            ? 'Your teacher request is pending school approval.'
+            : 'Your student request is pending school approval.',
+        });
+        clearSocialOnboarding();
+        navigate('/pending-approval');
+        return;
+      }
+
+      const { data, error } = await supabase.rpc('signup_as_parent', {
+        p_parent_user_id: currentUserId,
+        p_parent_code: code,
+        p_full_name: name.trim(),
+      });
+
+      const result = data as {
+        success: boolean;
+        error?: string;
+        school_name?: string;
+        tenant_id?: string;
+        tenant_slug?: string;
+        tenant_name?: string;
+      } | null;
+
+      if (error || !result?.success) {
+        toast({ variant: 'destructive', title: 'Parent link failed', description: result?.error || error?.message || 'Invalid parent code.' });
+        return;
+      }
+
+      applyTenantOverride(result);
+      toast({ title: 'Welcome!', description: `You're now linked as a parent at ${result.school_name}.` });
+      clearSocialOnboarding();
+      navigate('/parent');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSocialSignIn = async (provider: 'google' | 'apple', flow: SocialOnboardingFlow) => {
     setIsSubmitting(true);
     try {
       sessionStorage.removeItem('superAdminLoginIntent');
       sessionStorage.removeItem('superAdminVerified');
+      sessionStorage.setItem(SOCIAL_FLOW_KEY, flow);
+      sessionStorage.removeItem(SOCIAL_VERIFIED_KEY);
+      sessionStorage.removeItem(SOCIAL_LAST_SENT_AT_KEY);
+      sessionStorage.removeItem(SOCIAL_SENT_EMAIL_KEY);
+      setSocialFlow(flow);
+      setVerificationCode('');
 
       const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/auth`,
         ...(provider === 'google'
           ? { extraParams: { prompt: 'select_account' } }
           : {}),
@@ -190,7 +459,7 @@ export default function Auth() {
         return;
       }
       if (result.redirected) return;
-      // Session set — auth listener + redirect effect will take it from here.
+      setAuthMode('social-verify');
     } catch (err) {
       toast({
         variant: 'destructive',
@@ -201,13 +470,13 @@ export default function Auth() {
     }
   };
 
-  const SocialAuthButtons = () => (
+  const SocialAuthButtons = ({ flow }: { flow: SocialOnboardingFlow }) => (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
         <Button
           type="button"
           variant="outline"
-          onClick={() => handleSocialSignIn('google')}
+          onClick={() => handleSocialSignIn('google', flow)}
           disabled={isSubmitting}
           className="w-full"
         >
@@ -222,7 +491,7 @@ export default function Auth() {
         <Button
           type="button"
           variant="outline"
-          onClick={() => handleSocialSignIn('apple')}
+          onClick={() => handleSocialSignIn('apple', flow)}
           disabled={isSubmitting}
           className="w-full"
         >
