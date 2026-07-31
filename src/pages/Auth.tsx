@@ -21,6 +21,8 @@ const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z
   .string()
   .min(8, 'Password must be at least 8 characters');
+// Existing accounts may predate the 8-char rule; sign-in must not lock them out.
+const loginPasswordSchema = z.string().min(1, 'Please enter your password');
 const codeSchema = z.string().min(6, 'Invite code must be at least 6 characters');
 
 type AuthMode = 'login' | 'signup' | 'join' | 'parent' | 'social-verify' | 'social-details';
