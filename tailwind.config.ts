@@ -100,6 +100,22 @@ export default {
           from: { opacity: "0", transform: "scale(0.95)" },
           to: { opacity: "1", transform: "scale(1)" },
         },
+        "orbit-spin": {
+          from: { transform: "rotateZ(0deg)" },
+          to: { transform: "rotateZ(360deg)" },
+        },
+        "breathe": {
+          "0%, 100%": { transform: "scale(1)", opacity: "0.75" },
+          "50%": { transform: "scale(1.05)", opacity: "1" },
+        },
+        "sheen": {
+          from: { transform: "translateX(-120%) skewX(-12deg)" },
+          to: { transform: "translateX(220%) skewX(-12deg)" },
+        },
+        "rise-in": {
+          from: { opacity: "0", transform: "translate3d(0, 18px, -40px)", filter: "blur(6px)" },
+          to: { opacity: "1", transform: "translate3d(0, 0, 0)", filter: "blur(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -110,7 +126,12 @@ export default {
         "float": "float 4s ease-in-out infinite",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
         "scale-in": "scale-in 0.3s ease-out forwards",
+        "orbit-spin": "orbit-spin 18s linear infinite",
+        "breathe": "breathe 5s ease-in-out infinite",
+        "sheen": "sheen 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite",
+        "rise-in": "rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards",
       },
+
     },
   },
   plugins: [require("tailwindcss-animate")],
