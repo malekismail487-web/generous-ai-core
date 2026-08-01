@@ -6,123 +6,138 @@
 
 @layer base {
   /* ═══════════════════════════════════════════
-     DARK MODE — Monochromatic Charcoal
-     Clean greys + white accent
+     ONYX — the dark half of the two-tone system.
+     One family only: pure carbon surfaces, bone ink.
      ═══════════════════════════════════════════ */
   :root {
-    --background: 0 0% 10%;
-    --foreground: 0 0% 90%;
+    --background: 240 6% 4%;
+    --foreground: 60 4% 95%;
 
-    --card: 0 0% 14%;
-    --card-foreground: 0 0% 90%;
+    --card: 240 5% 7%;
+    --card-foreground: 60 4% 95%;
 
-    --popover: 0 0% 14%;
-    --popover-foreground: 0 0% 90%;
+    --popover: 240 5% 8%;
+    --popover-foreground: 60 4% 95%;
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 10%;
+    --primary: 60 4% 95%;
+    --primary-foreground: 240 6% 4%;
 
-    --secondary: 0 0% 16%;
-    --secondary-foreground: 0 0% 80%;
+    --secondary: 240 5% 11%;
+    --secondary-foreground: 60 3% 82%;
 
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 53%;
+    --muted: 240 4% 14%;
+    --muted-foreground: 240 3% 58%;
 
-    --accent: 0 0% 63%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 240 4% 17%;
+    --accent-foreground: 60 4% 95%;
 
-    --destructive: 0 72% 55%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 6 62% 52%;
+    --destructive-foreground: 60 4% 96%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 100%;
+    --border: 240 4% 15%;
+    --input: 240 4% 15%;
+    --ring: 60 4% 95%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
 
-    --sidebar-background: 0 0% 8%;
-    --sidebar-foreground: 0 0% 80%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 0 0% 10%;
-    --sidebar-accent: 0 0% 16%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 16%;
-    --sidebar-ring: 0 0% 100%;
+    --sidebar-background: 240 6% 3%;
+    --sidebar-foreground: 60 3% 78%;
+    --sidebar-primary: 60 4% 95%;
+    --sidebar-primary-foreground: 240 6% 4%;
+    --sidebar-accent: 240 5% 10%;
+    --sidebar-accent-foreground: 60 4% 95%;
+    --sidebar-border: 240 4% 12%;
+    --sidebar-ring: 60 4% 95%;
 
-    /* Custom tokens — monochromatic */
-    --gradient-primary: linear-gradient(135deg, hsl(0 0% 85%) 0%, hsl(0 0% 60%) 100%);
-    --gradient-warm: linear-gradient(135deg, hsl(0 0% 70%) 0%, hsl(0 0% 50%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 14%) 0%, hsl(0 0% 10%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(0 0% 100% / 0.06) 0%, transparent 70%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 16%) 0%, hsl(0 0% 14%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 14%) 0%, hsl(0 0% 18%) 50%, hsl(0 0% 12%) 100%);
+    /* Depth is built from light, not colour */
+    --ink: 60 4% 95%;
+    --onyx: 240 6% 4%;
 
-    --shadow-glow: 0 0 60px hsl(0 0% 100% / 0.06);
-    --shadow-glow-accent: 0 0 40px hsl(0 0% 80% / 0.05);
-    --shadow-card: 0 8px 32px -8px hsl(0 0% 0% / 0.6);
-    --shadow-elevated: 0 20px 40px -12px hsl(0 0% 0% / 0.7);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--ink)) 0%, hsl(var(--ink) / 0.55) 100%);
+    --gradient-warm: linear-gradient(135deg, hsl(var(--ink) / 0.9) 0%, hsl(var(--ink) / 0.4) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(240 5% 8%) 0%, hsl(240 6% 4%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(var(--ink) / 0.08) 0%, transparent 70%);
+    --gradient-card: linear-gradient(150deg, hsl(240 5% 9%) 0%, hsl(240 5% 6%) 100%);
+    --gradient-hero: radial-gradient(120% 100% at 50% 0%, hsl(240 5% 12%) 0%, hsl(240 6% 4%) 60%);
+    --gradient-edge: linear-gradient(120deg, hsl(var(--ink) / 0.22), hsl(var(--ink) / 0.02) 45%, hsl(var(--ink) / 0.16));
+
+    --shadow-glow: 0 0 80px hsl(var(--ink) / 0.07);
+    --shadow-glow-accent: 0 0 48px hsl(var(--ink) / 0.05);
+    --shadow-card: 0 18px 48px -20px hsl(0 0% 0% / 0.85);
+    --shadow-elevated: 0 40px 80px -32px hsl(0 0% 0% / 0.9);
+    --shadow-inset: inset 0 1px 0 0 hsl(var(--ink) / 0.06);
+
+    --grain-opacity: 0.05;
+    --ease-orbit: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   /* ═══════════════════════════════════════════
-     LIGHT MODE — Clean White/Grey
-     Neutral palette + dark accent
+     BONE — the exact inversion of Onyx.
      ═══════════════════════════════════════════ */
   .light {
-    --background: 0 0% 96%;
-    --foreground: 0 0% 10%;
+    --background: 60 8% 96%;
+    --foreground: 240 6% 6%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card: 60 12% 99%;
+    --card-foreground: 240 6% 6%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover: 60 12% 99%;
+    --popover-foreground: 240 6% 6%;
 
-    --primary: 0 0% 10%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 240 6% 6%;
+    --primary-foreground: 60 8% 97%;
 
-    --secondary: 0 0% 92%;
-    --secondary-foreground: 0 0% 25%;
+    --secondary: 60 6% 91%;
+    --secondary-foreground: 240 5% 22%;
 
-    --muted: 0 0% 88%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 60 5% 88%;
+    --muted-foreground: 240 4% 42%;
 
-    --accent: 0 0% 33%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 60 6% 85%;
+    --accent-foreground: 240 6% 6%;
 
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 6 62% 46%;
+    --destructive-foreground: 60 8% 97%;
 
-    --border: 0 0% 83%;
-    --input: 0 0% 83%;
-    --ring: 0 0% 10%;
+    --border: 60 5% 85%;
+    --input: 60 5% 85%;
+    --ring: 240 6% 6%;
 
-    --sidebar-background: 0 0% 97%;
-    --sidebar-foreground: 0 0% 25%;
-    --sidebar-primary: 0 0% 10%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 92%;
-    --sidebar-accent-foreground: 0 0% 15%;
-    --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 0 0% 10%;
+    --sidebar-background: 60 10% 97%;
+    --sidebar-foreground: 240 5% 24%;
+    --sidebar-primary: 240 6% 6%;
+    --sidebar-primary-foreground: 60 8% 97%;
+    --sidebar-accent: 60 6% 91%;
+    --sidebar-accent-foreground: 240 6% 8%;
+    --sidebar-border: 60 5% 88%;
+    --sidebar-ring: 240 6% 6%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(0 0% 25%) 0%, hsl(0 0% 45%) 100%);
-    --gradient-warm: linear-gradient(135deg, hsl(0 0% 40%) 0%, hsl(0 0% 55%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 96%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(0 0% 10% / 0.04) 0%, transparent 70%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(0 0% 97%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 92%) 0%, hsl(0 0% 88%) 50%, hsl(0 0% 94%) 100%);
+    --ink: 240 6% 6%;
+    --onyx: 60 8% 96%;
 
-    --shadow-glow: 0 0 60px hsl(0 0% 10% / 0.04);
-    --shadow-glow-accent: 0 0 40px hsl(0 0% 30% / 0.03);
-    --shadow-card: 0 8px 32px -8px hsl(0 0% 50% / 0.08);
-    --shadow-elevated: 0 20px 40px -12px hsl(0 0% 50% / 0.12);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--ink)) 0%, hsl(var(--ink) / 0.55) 100%);
+    --gradient-warm: linear-gradient(135deg, hsl(var(--ink) / 0.9) 0%, hsl(var(--ink) / 0.4) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(60 12% 99%) 0%, hsl(60 8% 96%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(var(--ink) / 0.06) 0%, transparent 70%);
+    --gradient-card: linear-gradient(150deg, hsl(60 12% 100%) 0%, hsl(60 8% 97%) 100%);
+    --gradient-hero: radial-gradient(120% 100% at 50% 0%, hsl(60 12% 100%) 0%, hsl(60 8% 94%) 60%);
+    --gradient-edge: linear-gradient(120deg, hsl(var(--ink) / 0.16), hsl(var(--ink) / 0.02) 45%, hsl(var(--ink) / 0.12));
+
+    --shadow-glow: 0 0 80px hsl(var(--ink) / 0.05);
+    --shadow-glow-accent: 0 0 48px hsl(var(--ink) / 0.04);
+    --shadow-card: 0 18px 48px -22px hsl(var(--ink) / 0.18);
+    --shadow-elevated: 0 40px 80px -34px hsl(var(--ink) / 0.24);
+    --shadow-inset: inset 0 1px 0 0 hsl(0 0% 100% / 0.7);
+
+    --grain-opacity: 0.035;
   }
 
   .dark {
-    --background: 0 0% 10%;
-    --foreground: 0 0% 90%;
+    --background: 240 6% 4%;
+    --foreground: 60 4% 95%;
   }
 }
+
 
 @layer base {
   * {
