@@ -144,13 +144,32 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    letter-spacing: -0.011em;
+  }
+
+  /* Editorial headings: oversized, tight, quiet */
+  h1, h2, h3 {
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
   }
 
   code, pre {
     font-family: 'JetBrains Mono', monospace;
+  }
+
+  ::selection {
+    background: hsl(var(--ink) / 0.18);
   }
 }
 
@@ -202,7 +221,177 @@
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
   }
+
+  /* ── ONYX SURFACES ─────────────────────────── */
+  /* A carbon panel: layered light, hairline edge, film grain. */
+  .onyx-surface {
+    position: relative;
+    background: var(--gradient-card);
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-card), var(--shadow-inset);
+    border-radius: var(--radius);
+    isolation: isolate;
+  }
+
+  .onyx-surface::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+
+  /* Light sweeps along the edge like a polished stone */
+  .onyx-edge {
+    position: relative;
+  }
+
+  .onyx-edge::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--gradient-edge);
+    background-size: 220% 220%;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: edge-travel 9s var(--ease-orbit) infinite;
+    pointer-events: none;
+  }
+
+  .grain-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+    animation: grain-shift 7s steps(6) infinite;
+  }
+
+  /* ── DEPTH / 3D ────────────────────────────── */
+  .scene-3d {
+    perspective: 1400px;
+    perspective-origin: 50% 40%;
+  }
+
+  .layer-3d {
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: transform 500ms var(--ease-orbit);
+  }
+
+  .depth-press {
+    transition: transform 350ms var(--ease-orbit), box-shadow 350ms var(--ease-orbit);
+    transform-style: preserve-3d;
+  }
+
+  .depth-press:hover {
+    transform: translateZ(28px) translateY(-4px);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .depth-press:active {
+    transform: translateZ(0) scale(0.985);
+  }
+
+  /* ── ORBITAL LANGUAGE ──────────────────────── */
+  .orbit-ring {
+    border-radius: 50%;
+    border: 1px solid hsl(var(--ink) / 0.16);
+    transform-style: preserve-3d;
+    animation: orbit-spin 18s linear infinite;
+  }
+
+  .nucleus-pulse {
+    animation: nucleus-breathe 4.5s ease-in-out infinite;
+  }
+
+  /* ── REVEAL CHOREOGRAPHY ───────────────────── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(22px) scale(0.985);
+    filter: blur(6px);
+  }
+
+  .reveal.is-visible {
+    animation: reveal-in 780ms var(--ease-orbit) forwards;
+  }
+
+  .stagger > * {
+    opacity: 0;
+    animation: reveal-in 720ms var(--ease-orbit) forwards;
+  }
+
+  .stagger > *:nth-child(1) { animation-delay: 40ms; }
+  .stagger > *:nth-child(2) { animation-delay: 100ms; }
+  .stagger > *:nth-child(3) { animation-delay: 160ms; }
+  .stagger > *:nth-child(4) { animation-delay: 220ms; }
+  .stagger > *:nth-child(5) { animation-delay: 280ms; }
+  .stagger > *:nth-child(6) { animation-delay: 340ms; }
+  .stagger > *:nth-child(7) { animation-delay: 400ms; }
+  .stagger > *:nth-child(8) { animation-delay: 460ms; }
+  .stagger > *:nth-child(n+9) { animation-delay: 520ms; }
+
+  .text-rise > span {
+    display: inline-block;
+    opacity: 0;
+    animation: text-rise 900ms var(--ease-orbit) forwards;
+  }
 }
+
+@keyframes edge-travel {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes grain-shift {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -3%); }
+  60% { transform: translate(-2%, -2%); }
+  80% { transform: translate(3%, 1%); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes orbit-spin {
+  from { transform: rotateX(72deg) rotateZ(0deg); }
+  to { transform: rotateX(72deg) rotateZ(360deg); }
+}
+
+@keyframes nucleus-breathe {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 40px hsl(var(--ink) / 0.18); }
+  50% { transform: scale(1.06); box-shadow: 0 0 72px hsl(var(--ink) / 0.3); }
+}
+
+@keyframes reveal-in {
+  from { opacity: 0; transform: translateY(22px) scale(0.985); filter: blur(6px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes text-rise {
+  from { opacity: 0; transform: translateY(0.5em) rotateX(-40deg); }
+  to { opacity: 1; transform: translateY(0) rotateX(0deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal.is-visible, .stagger > *, .text-rise > span {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    animation: none !important;
+  }
+
+  .onyx-edge::before, .grain-overlay, .orbit-ring, .nucleus-pulse {
+    animation: none !important;
+  }
+}
+
 
 @layer components {
   .message-bubble {
