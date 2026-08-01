@@ -1,16 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
-import { useAuth } from '@/hooks/useAuth';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getGradeName } from '@/lib/translations';
 import { Navigate } from 'react-router-dom';
-import { Loader as Loader2, LogOut, BookOpen, FileText, Megaphone, Clock, CircleAlert as AlertCircle, Star, Settings, Bell, Brain } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BookOpen, FileText, Megaphone, Clock, CircleAlert as AlertCircle, Star, Settings, Bell, Brain, TrendingUp, Award, Flame, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { StudentAssignments } from '@/components/student/StudentAssignments';
 import { StudentReportCards } from '@/components/student/StudentReportCards';
@@ -19,467 +14,295 @@ import { DecayDashboardCard } from '@/components/student/DecayDashboardCard';
 import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
 import { LearningModesHub } from '@/components/student/learning-modes/LearningModesHub';
 import { MasteryMap } from '@/components/student/MasteryMap';
+import { DashboardShell, NavItem } from '@/components/DashboardShell';
+import { LuminaAtom } from '@/components/LuminaAtom';
 
-interface CourseMaterial {
-  id: string;
-  title: string;
-  subject: string;
-  content: string | null;
-  file_url: string | null;
-  grade_level: string | null;
-  created_at: string;
-  uploaded_by: string;
-}
-
-interface TeacherProfile {
-  id: string;
-  full_name: string;
-}
-
-interface Assignment {
-  id: string;
-  title: string;
-  description: string | null;
-  subject: string;
-  subject_id: string | null;
-  grade_level: string;
-  due_date: string | null;
-  points: number;
-  created_at: string;
-}
-
-interface Submission {
-  id: string;
-  assignment_id: string;
-  content: string | null;
-  submitted_at: string;
-  grade: number | null;
-  feedback: string | null;
-}
-
-interface Announcement {
-  id: string;
-  title: string;
-  body: string;
-  created_at: string;
-}
-
-interface Award {
-  id: string;
-  type: string;
-  title: string;
-  description: string | null;
-  created_at: string;
-}
+interface CourseMaterial { id: string; title: string; subject: string; content: string | null; file_url: string | null; grade_level: string | null; created_at: string; uploaded_by: string; }
+interface TeacherProfile { id: string; full_name: string; }
+interface Assignment { id: string; title: string; description: string | null; subject: string; subject_id: string | null; grade_level: string; due_date: string | null; points: number; created_at: string; }
+interface Submission { id: string; assignment_id: string; content: string | null; submitted_at: string; grade: number | null; feedback: string | null; }
+interface Announcement { id: string; title: string; body: string; created_at: string; }
+interface Award { id: string; type: string; title: string; description: string | null; created_at: string; }
 
 export default function StudentDashboard() {
   const { isStudent, school, profile, loading } = useRoleGuard();
-  const { signOut } = useAuth();
-  const { toast } = useToast();
   const { language } = useThemeLanguage();
   const tl = (key: Parameters<typeof tr>[0]) => tr(key, language);
 
-  // State
   const [materials, setMaterials] = useState<CourseMaterial[]>([]);
-  const [teacherProfiles, setTeacherProfiles] = useState<Record<string, TeacherProfile>>({});
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [awards, setAwards] = useState<Award[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const fetchData = useCallback(async () => {
     if (!school || !profile) return;
     setLoadingData(true);
-
-    // Fetch course materials - all materials from school, filter by grade level in code
-    const { data: materialsData } = await supabase
-      .from('course_materials')
-      .select('*')
-      .eq('school_id', school.id)
-      .order('created_at', { ascending: false });
-
-    // Filter by grade level for students
+    const { data: materialsData } = await supabase.from('course_materials').select('*').eq('school_id', school.id).order('created_at', { ascending: false });
     let filteredMaterials = (materialsData || []) as CourseMaterial[];
-    if (profile.grade_level) {
-      filteredMaterials = filteredMaterials.filter(m => {
-        const materialGrade = m.grade_level;
-        return !materialGrade || materialGrade === 'All' || materialGrade === profile.grade_level;
-      });
-    }
+    if (profile.grade_level) filteredMaterials = filteredMaterials.filter(m => !m.grade_level || m.grade_level === 'All' || m.grade_level === profile.grade_level);
     setMaterials(filteredMaterials);
 
-    // Fetch teacher profiles for the materials
-    const teacherIds = [...new Set(filteredMaterials.map(m => m.uploaded_by).filter((id): id is string => Boolean(id)))];
-    if (teacherIds.length > 0) {
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .in('id', teacherIds);
-      
-      if (profilesData) {
-        const profilesMap: Record<string, TeacherProfile> = {};
-        profilesData.forEach(p => {
-          profilesMap[p.id] = { id: p.id, full_name: p.full_name };
-        });
-        setTeacherProfiles(profilesMap);
-      }
-    }
-
-    // Fetch assignments - all from school, filter by grade level in code
-    const { data: assignmentsData } = await supabase
-      .from('assignments')
-      .select('*')
-      .eq('school_id', school.id)
-      .order('due_date', { ascending: true });
-
-    // Filter by grade level for students
+    const { data: assignmentsData } = await supabase.from('assignments').select('*').eq('school_id', school.id).order('due_date', { ascending: true });
     let filteredAssignments = (assignmentsData || []) as Assignment[];
-    if (profile.grade_level) {
-      filteredAssignments = filteredAssignments.filter(a => {
-        return !a.grade_level || a.grade_level === 'All' || a.grade_level === profile.grade_level;
-      });
-    }
+    if (profile.grade_level) filteredAssignments = filteredAssignments.filter(a => !a.grade_level || a.grade_level === 'All' || a.grade_level === profile.grade_level);
     setAssignments(filteredAssignments);
 
-    // Fetch my submissions
-    const { data: submissionsData } = await supabase
-      .from('submissions')
-      .select('*')
-      .eq('student_id', profile.id);
+    const { data: submissionsData } = await supabase.from('submissions').select('*').eq('student_id', profile.id);
     setSubmissions((submissionsData || []) as Submission[]);
 
-    // Fetch announcements
-    const { data: announcementsData } = await supabase
-      .from('announcements')
-      .select('*')
-      .eq('school_id', school.id)
-      .order('created_at', { ascending: false });
+    const { data: announcementsData } = await supabase.from('announcements').select('*').eq('school_id', school.id).order('created_at', { ascending: false });
     setAnnouncements((announcementsData || []) as Announcement[]);
 
-    // Fetch awards
-    const { data: awardsData } = await supabase
-      .from('awards')
-      .select('*')
-      .eq('student_id', profile.id)
-      .order('created_at', { ascending: false });
+    const { data: awardsData } = await supabase.from('awards').select('*').eq('student_id', profile.id).order('created_at', { ascending: false });
     setAwards((awardsData || []) as Award[]);
-
     setLoadingData(false);
   }, [school, profile]);
 
-  useEffect(() => {
-    if (isStudent && school && profile) {
-      fetchData();
-    }
-  }, [isStudent, school, profile, fetchData]);
+  useEffect(() => { if (isStudent && school && profile) fetchData(); }, [isStudent, school, profile, fetchData]);
 
-  const getUpcomingDeadlines = () => {
-    const now = new Date();
-    return assignments
-      .filter(a => a.due_date && new Date(a.due_date) > now)
-      .slice(0, 3);
-  };
+  const getOverdue = () => assignments.filter(a => { if (!a.due_date) return false; const d = new Date(a.due_date); const s = submissions.find(s => s.assignment_id === a.id); return d < new Date() && !s; });
 
-  const getOverdueAssignments = () => {
-    const now = new Date();
-    return assignments.filter(a => {
-      if (!a.due_date) return false;
-      const dueDate = new Date(a.due_date);
-      const submission = submissions.find(s => s.assignment_id === a.id);
-      return dueDate < now && !submission;
-    });
-  };
+  if (loading) return <div className="flex items-center justify-center h-screen bg-black"><LuminaAtom size={64} animate glow /></div>;
+  if (!isStudent || !school || !profile?.is_active) return <Navigate to="/" replace />;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
-          <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-transparent border-b-primary/40 animate-pulse" />
-        </div>
-      </div>
-    );
-  }
+  const overdue = getOverdue();
+  const gradedCount = submissions.filter(s => s.grade !== null).length;
 
-  if (!isStudent || !school || !profile?.is_active) {
-    return <Navigate to="/" replace />;
-  }
-
-  const upcomingDeadlines = getUpcomingDeadlines();
-  const overdueAssignments = getOverdueAssignments();
+  const navItems: NavItem[] = [
+    { id: 'overview',    icon: <TrendingUp size={18} />, label: 'Overview' },
+    { id: 'assignments', icon: <FileText size={18} />,   label: tl('work'), badge: overdue.length },
+    { id: 'modes',       icon: <Brain size={18} />,      label: 'AI Modes' },
+    { id: 'reports',     icon: <BookOpen size={18} />,   label: tl('reports') },
+    { id: 'grades',      icon: <Star size={18} />,       label: tl('grades') },
+    { id: 'news',        icon: <Megaphone size={18} />,  label: tl('news') },
+    { id: 'settings',    icon: <Settings size={18} />,   label: tl('settings') },
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="cosmic-header border-b border-primary/10 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center cosmic-pulse"
-              style={{ background: 'linear-gradient(135deg, hsl(187 92% 52% / 0.25) 0%, hsl(187 92% 52% / 0.05) 100%)', border: '1px solid hsl(187 92% 52% / 0.3)' }}>
-              <BookOpen className="w-5 h-5 text-primary" />
+    <DashboardShell
+      role="Student"
+      name={profile.full_name}
+      org={school.name}
+      navItems={navItems}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      headerRight={profile.grade_level ? <Badge variant="outline" className="border-white/20 text-white/60">{getGradeName(profile.grade_level, language)}</Badge> : undefined}
+    >
+      <div className="p-4 md:p-8 max-w-6xl mx-auto">
+        {/* ───────────────────── OVERVIEW ───────────────────── */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6 tab-enter">
+            {/* Hero banner with atom */}
+            <div className="lumina-card p-8 fade-up relative overflow-hidden">
+              <div className="absolute top-0 right-0 opacity-30 pointer-events-none">
+                <LuminaAtom size={180} animate glow />
+              </div>
+              <div className="relative z-10 max-w-lg">
+                <div className="text-[11px] font-semibold tracking-[0.25em] uppercase text-white/30 mb-2">{tl('welcome')}</div>
+                <h1 className="text-3xl md:text-4xl font-extrabold lumina-text mb-3">{profile.full_name}</h1>
+                <p className="text-white/40 text-sm mb-6">{tl('yourDashboard')} — {school.name}</p>
+                {overdue.length > 0 && (
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm fade-up fade-up-delay-1">
+                    <AlertCircle size={16} />
+                    <span>{tl('youHave')} {overdue.length} {overdue.length > 1 ? tl('overdueWarningPlural') : tl('overdueWarning')}</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold cosmic-glow-text">{tl('welcome')}, {profile.full_name}!</h1>
-              <p className="text-xs text-muted-foreground">{school.name}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {profile.grade_level && (
-              <Badge variant="outline" className="border-primary/30 text-primary">{getGradeName(profile.grade_level, language)}</Badge>
-            )}
-            <Button variant="ghost" size="icon" onClick={signOut} className="hover:bg-destructive/10 hover:text-destructive">
-              <LogOut className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        <TenantExtensionsSection className="mb-6" />
-        {/* Welcome Section */}
-        <div className="cosmic-card p-6 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold mb-2 cosmic-glow-text">{tl('yourDashboard')}</h2>
-              {upcomingDeadlines.length > 0 && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="w-4 h-4 text-primary" />
-                  <span>
-                    {tl('nextDeadline')} <strong className="text-foreground">{upcomingDeadlines[0].title}</strong> {tl('on')}{' '}
-                    {new Date(upcomingDeadlines[0].due_date!).toLocaleDateString()}
-                  </span>
+            {/* Stat grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: tl('materials'), value: materials.length, icon: <BookOpen size={20} />, delay: 'fade-up-delay-1' },
+                { label: tl('submitted'), value: submissions.length, icon: <FileText size={20} />, delay: 'fade-up-delay-2' },
+                { label: tl('grades'), value: gradedCount, icon: <Star size={20} />, delay: 'fade-up-delay-3' },
+                { label: tl('myAwards'), value: awards.length, icon: <Award size={20} />, delay: 'fade-up-delay-4' },
+              ].map((stat) => (
+                <div key={stat.label} className={`lumina-stat p-5 space-y-3 fade-up ${stat.delay}`}>
+                  <div className="lumina-icon-tile w-10 h-10">{stat.icon}</div>
+                  <p className="text-4xl font-extrabold text-white count-up">{stat.value}</p>
+                  <p className="text-xs text-white/35 font-medium">{stat.label}</p>
                 </div>
-              )}
+              ))}
             </div>
-            <div className="flex gap-4">
-              <div className="text-center cosmic-stat px-4 py-3">
-                <p className="text-3xl font-bold text-primary">{materials.length}</p>
-                <p className="text-xs text-muted-foreground">{tl('materials')}</p>
-              </div>
-              <div className="text-center cosmic-stat px-4 py-3">
-                <p className="text-3xl font-bold text-emerald-400">{submissions.length}</p>
-                <p className="text-xs text-muted-foreground">{tl('submitted')}</p>
-              </div>
-              <div className="text-center cosmic-stat px-4 py-3">
-                <p className="text-3xl font-bold text-amber-400">{awards.length}</p>
-                <p className="text-xs text-muted-foreground">{tl('myAwards')}</p>
-              </div>
+
+            {/* Calibration + Decay */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 fade-up fade-up-delay-5">
+              <CalibrationCurve userId={profile.id} />
+              <DecayDashboardCard userId={profile.id} />
             </div>
+
+            <TenantExtensionsSection />
           </div>
+        )}
 
-          {overdueAssignments.length > 0 && (
-            <div className="mt-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-destructive" />
-              <span className="text-destructive font-medium">
-                {tl('youHave')} {overdueAssignments.length} {overdueAssignments.length > 1 ? tl('overdueWarningPlural') : tl('overdueWarning')}!
-              </span>
+        {/* ───────────────────── ASSIGNMENTS ───────────────────── */}
+        {activeTab === 'assignments' && (
+          <div className="space-y-6 tab-enter">
+            <div className="fade-up">
+              <h2 className="text-2xl font-bold lumina-text mb-1">{tl('work')}</h2>
+              <p className="text-white/35 text-sm">{assignments.length} assignments • {submissions.length} submitted • {overdue.length} overdue</p>
             </div>
-          )}
-        </div>
-
-        {/* Phase 1: Calibration + Decay widgets */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <CalibrationCurve userId={profile.id} />
-          <DecayDashboardCard userId={profile.id} />
-        </div>
-
-        <Tabs defaultValue="assignments" className="space-y-6">
-          <TabsList className="grid grid-cols-6 w-full max-w-3xl cosmic-card !rounded-xl">
-
-            <TabsTrigger value="assignments" className="gap-2 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.4)]">
-              <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">{tl('work')}</span>
-              {overdueAssignments.length > 0 && (
-                <Badge variant="destructive" className="ml-1">{overdueAssignments.length}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="learning-modes" className="gap-2 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.4)]">
-              <Brain className="w-4 h-4" />
-              <span className="hidden sm:inline">Modes</span>
-            </TabsTrigger>
-            <TabsTrigger value="report-cards" className="gap-2 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.4)]">
-              <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">{tl('reports')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="grades" className="gap-2 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.4)]">
-              <Star className="w-4 h-4" />
-              <span className="hidden sm:inline">{tl('grades')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="announcements" className="gap-2 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.4)]">
-              <Megaphone className="w-4 h-4" />
-              <span className="hidden sm:inline">{tl('news')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.4)]">
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">{tl('settings')}</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="learning-modes" className="space-y-4">
-            <MasteryMap />
-            <LearningModesHub />
-          </TabsContent>
-
-          {/* Report Cards Tab */}
-          <TabsContent value="report-cards" className="space-y-4">
             {loadingData ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="w-10 h-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
-              </div>
+              <div className="flex items-center justify-center py-16"><LuminaAtom size={48} animate /></div>
             ) : (
-              <StudentReportCards studentId={profile.id} />
+              <div className="fade-up fade-up-delay-1">
+                <StudentAssignments assignments={assignments} submissions={submissions} profileId={profile.id} onRefresh={fetchData} />
+              </div>
             )}
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Assignments Tab - Using new Classera-style component */}
-          <TabsContent value="assignments" className="space-y-4">
+        {/* ───────────────────── LEARNING MODES ───────────────────── */}
+        {activeTab === 'modes' && (
+          <div className="space-y-6 tab-enter">
+            <div className="fade-up">
+              <h2 className="text-2xl font-bold lumina-text mb-1">AI Learning Modes</h2>
+              <p className="text-white/35 text-sm">Choose how you want to learn today</p>
+            </div>
+            <div className="fade-up fade-up-delay-1"><MasteryMap /></div>
+            <div className="fade-up fade-up-delay-2"><LearningModesHub /></div>
+          </div>
+        )}
+
+        {/* ───────────────────── REPORT CARDS ───────────────────── */}
+        {activeTab === 'reports' && (
+          <div className="space-y-6 tab-enter">
+            <div className="fade-up">
+              <h2 className="text-2xl font-bold lumina-text mb-1">{tl('reports')}</h2>
+            </div>
             {loadingData ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="w-10 h-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
-              </div>
+              <div className="flex items-center justify-center py-16"><LuminaAtom size={48} animate /></div>
             ) : (
-              <StudentAssignments
-                assignments={assignments}
-                submissions={submissions}
-                profileId={profile.id}
-                onRefresh={fetchData}
-              />
+              <div className="fade-up fade-up-delay-1"><StudentReportCards studentId={profile.id} /></div>
             )}
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Grades Tab */}
-          <TabsContent value="grades" className="space-y-4">
-            <h2 className="text-lg font-semibold cosmic-glow-text">{tl('myGrades')}</h2>
-
-            <div className="cosmic-card overflow-hidden">
+        {/* ───────────────────── GRADES ───────────────────── */}
+        {activeTab === 'grades' && (
+          <div className="space-y-6 tab-enter">
+            <div className="fade-up">
+              <h2 className="text-2xl font-bold lumina-text mb-1">{tl('myGrades')}</h2>
+            </div>
+            <div className="lumina-card overflow-hidden fade-up fade-up-delay-1">
               <table className="w-full">
-                <thead className="bg-primary/5">
+                <thead className="bg-white/[0.03]">
                   <tr>
-                    <th className="text-left p-4 font-medium text-muted-foreground">{tl('assignment')}</th>
-                    <th className="text-left p-4 font-medium text-muted-foreground">{tl('submitted')}</th>
-                    <th className="text-left p-4 font-medium text-muted-foreground">{tl('grade')}</th>
-                    <th className="text-left p-4 font-medium text-muted-foreground">{tl('feedback')}</th>
+                    <th className="text-left p-4 text-xs font-semibold text-white/35 uppercase tracking-wider">{tl('assignment')}</th>
+                    <th className="text-left p-4 text-xs font-semibold text-white/35 uppercase tracking-wider">{tl('submitted')}</th>
+                    <th className="text-left p-4 text-xs font-semibold text-white/35 uppercase tracking-wider">{tl('grade')}</th>
+                    <th className="text-left p-4 text-xs font-semibold text-white/35 uppercase tracking-wider">{tl('feedback')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {submissions.filter(s => s.grade !== null).length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="text-center py-8 text-muted-foreground">
-                        {tl('noGradesYet')}
-                      </td>
-                    </tr>
+                    <tr><td colSpan={4} className="text-center py-12 text-white/30">{tl('noGradesYet')}</td></tr>
                   ) : (
-                    submissions
-                      .filter(s => s.grade !== null)
-                      .map((submission) => {
-                        const assignment = assignments.find(a => a.id === submission.assignment_id);
-                        return (
-                          <tr key={submission.id} className="border-t border-primary/8 hover:bg-primary/3 transition-colors">
-                            <td className="p-4 font-medium">{assignment?.title || 'Unknown'}</td>
-                            <td className="p-4 text-muted-foreground">
-                              {new Date(submission.submitted_at).toLocaleDateString()}
-                            </td>
-                            <td className="p-4">
-                              <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                {submission.grade}/{assignment?.points || 100}
-                              </Badge>
-                            </td>
-                            <td className="p-4 text-muted-foreground max-w-xs truncate">
-                              {submission.feedback || '-'}
-                            </td>
-                          </tr>
-                        );
-                      })
+                    submissions.filter(s => s.grade !== null).map((submission, i) => {
+                      const assignment = assignments.find(a => a.id === submission.assignment_id);
+                      return (
+                        <tr key={submission.id} className="border-t border-white/[0.05] hover:bg-white/[0.02] transition-colors fade-up" style={{ animationDelay: `${0.1 + i * 0.05}s` }}>
+                          <td className="p-4 font-medium text-white/90">{assignment?.title || 'Unknown'}</td>
+                          <td className="p-4 text-white/40 text-sm">{new Date(submission.submitted_at).toLocaleDateString()}</td>
+                          <td className="p-4"><Badge className="bg-white/10 text-white/80 border border-white/15">{submission.grade}/{assignment?.points || 100}</Badge></td>
+                          <td className="p-4 text-white/40 text-sm max-w-xs truncate">{submission.feedback || '—'}</td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
             </div>
 
             {awards.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-4 cosmic-glow-text">{tl('myAwards')}</h3>
+              <div className="fade-up fade-up-delay-2">
+                <h3 className="text-lg font-semibold lumina-text mb-4">{tl('myAwards')}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {awards.map((award) => (
-                    <div key={award.id} className="cosmic-card p-4 text-center cosmic-float">
-                      <div className="w-12 h-12 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto mb-2">
-                        <Star className="w-6 h-6 text-amber-400" />
-                      </div>
-                      <h4 className="font-semibold text-sm">{award.title}</h4>
-                      <p className="text-xs text-muted-foreground capitalize">{award.type}</p>
+                  {awards.map((award, i) => (
+                    <div key={award.id} className="lumina-card p-5 text-center cosmic-float fade-up" style={{ animationDelay: `${0.1 + i * 0.08}s` }}>
+                      <div className="lumina-icon-tile mx-auto mb-3 w-12 h-12"><Star size={22} /></div>
+                      <h4 className="font-semibold text-sm text-white/85">{award.title}</h4>
+                      <p className="text-xs text-white/30 capitalize mt-1">{award.type}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Announcements Tab */}
-          <TabsContent value="announcements" className="space-y-4">
-            <h2 className="text-lg font-semibold cosmic-glow-text">{tl('announcementsLabel')}</h2>
-
+        {/* ───────────────────── ANNOUNCEMENTS ───────────────────── */}
+        {activeTab === 'news' && (
+          <div className="space-y-6 tab-enter">
+            <div className="fade-up">
+              <h2 className="text-2xl font-bold lumina-text mb-1">{tl('announcementsLabel')}</h2>
+            </div>
             {announcements.length === 0 ? (
-              <div className="cosmic-card p-8 text-center">
-                <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="font-semibold mb-2">{tl('noAnnouncements')}</h3>
-                <p className="text-sm text-muted-foreground">{tl('schoolAnnouncementsWillAppear')}</p>
+              <div className="lumina-card p-12 text-center fade-up fade-up-delay-1">
+                <Megaphone size={32} className="mx-auto mb-4 text-white/15" />
+                <h3 className="font-semibold text-white/50 mb-2">{tl('noAnnouncements')}</h3>
+                <p className="text-sm text-white/25">{tl('schoolAnnouncementsWillAppear')}</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {announcements.map((announcement) => (
-                  <div key={announcement.id} className="cosmic-card p-4">
-                    <h3 className="font-semibold">{announcement.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {new Date(announcement.created_at).toLocaleString()}
-                    </p>
-                    <p className="text-muted-foreground whitespace-pre-wrap">{announcement.body}</p>
+                {announcements.map((ann, i) => (
+                  <div key={ann.id} className="lumina-card p-5 fade-up" style={{ animationDelay: `${0.1 + i * 0.08}s` }}>
+                    <div className="flex items-start gap-3">
+                      <div className="lumina-icon-tile w-10 h-10 flex-shrink-0"><Megaphone size={16} /></div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-white/90 mb-1">{ann.title}</h3>
+                        <p className="text-xs text-white/30 mb-3">{new Date(ann.created_at).toLocaleString()}</p>
+                        <p className="text-white/50 text-sm whitespace-pre-wrap">{ann.body}</p>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-4">
-            <h2 className="text-lg font-semibold cosmic-glow-text">{tl('settings')}</h2>
-
-            <div className="cosmic-card p-6 space-y-6">
+        {/* ───────────────────── SETTINGS ───────────────────── */}
+        {activeTab === 'settings' && (
+          <div className="space-y-6 tab-enter">
+            <div className="fade-up">
+              <h2 className="text-2xl font-bold lumina-text mb-1">{tl('settings')}</h2>
+            </div>
+            <div className="lumina-card p-6 space-y-6 max-w-lg fade-up fade-up-delay-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Bell className="w-5 h-5 text-primary" />
+                  <div className="lumina-icon-tile w-10 h-10"><Bell size={16} /></div>
                   <div>
-                    <p className="font-medium">{tl('notifications')}</p>
-                    <p className="text-sm text-muted-foreground">{tl('notificationsDesc')}</p>
+                    <p className="font-medium text-white/85">{tl('notifications')}</p>
+                    <p className="text-sm text-white/30">{tl('notificationsDesc')}</p>
                   </div>
                 </div>
-                <Switch
-                  checked={notificationsEnabled}
-                  onCheckedChange={setNotificationsEnabled}
-                />
+                <Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />
               </div>
-
-              <div className="border-t border-primary/8 pt-6">
-                <h3 className="font-medium mb-4">{tl('profileInformation')}</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{tl('name')}</span>
-                    <span>{profile.full_name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{tl('grade')}</span>
-                    <span>{profile.grade_level ? getGradeName(profile.grade_level, language) : tl('notSet')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{tl('school')}</span>
-                    <span>{school.name}</span>
-                  </div>
+              <div className="border-t border-white/[0.06] pt-6">
+                <h3 className="font-medium text-white/70 mb-4">{tl('profileInformation')}</h3>
+                <div className="space-y-3 text-sm">
+                  {[
+                    { label: tl('name'), value: profile.full_name },
+                    { label: tl('grade'), value: profile.grade_level ? getGradeName(profile.grade_level, language) : tl('notSet') },
+                    { label: tl('school'), value: school.name },
+                  ].map((row) => (
+                    <div key={row.label} className="flex justify-between">
+                      <span className="text-white/35">{row.label}</span>
+                      <span className="text-white/80">{row.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
+          </div>
+        )}
+      </div>
+    </DashboardShell>
   );
 }

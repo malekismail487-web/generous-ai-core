@@ -10,9 +10,9 @@ import * as THREE from 'three';
    The whole scene reacts gently to pointer movement.
    ============================================================ */
 
-const ACCENT = new THREE.Color('#22d3ee'); // cyan
-const SILVER = new THREE.Color('#e2e8f0'); // silver-white
-const DEEP = new THREE.Color('#0a0f1e');   // near-black blue
+const ACCENT = new THREE.Color('#e8e8e8'); // silver-white (primary)
+const SILVER = new THREE.Color('#b0b0b0'); // dimmer silver
+const DEEP = new THREE.Color('#0a0a0a');   // near-black
 
 /* ---------- Nucleus: glowing core sphere ---------- */
 function Nucleus() {
@@ -194,8 +194,8 @@ function NebulaBackdrop() {
       <shaderMaterial
         uniforms={{
           uColorA: { value: DEEP },
-          uColorB: { value: new THREE.Color('#062c3a') },
-          uColorC: { value: new THREE.Color('#02050a') },
+          uColorB: { value: new THREE.Color('#1a1a1a') },
+          uColorC: { value: new THREE.Color('#000000') },
           uTime: { value: 0 },
         }}
         vertexShader={`

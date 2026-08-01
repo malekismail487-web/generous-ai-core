@@ -3,8 +3,8 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import * as THREE from 'three';
 
-const ACCENT = new THREE.Color('#22d3ee');
-const SILVER = new THREE.Color('#e2e8f0');
+const ACCENT = new THREE.Color('#e8e8e8'); // silver-white
+const SILVER = new THREE.Color('#b0b0b0'); // dimmer silver
 
 function AtomCore() {
   const group = useRef<THREE.Group>(null!);
