@@ -629,9 +629,25 @@
   box-shadow: none !important;
 }
 
-.lite-mode .ambient-glow {
+.lite-mode .ambient-glow,
+.lite-mode .grain-overlay,
+.lite-mode .orbit-field {
   display: none !important;
 }
+
+.lite-mode .onyx-surface::after,
+.lite-mode .onyx-edge::before {
+  display: none !important;
+}
+
+.lite-mode .reveal,
+.lite-mode .stagger > *,
+.lite-mode .text-rise > span {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+}
+
 
 .lite-mode .gradient-text {
   background: none !important;
