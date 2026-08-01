@@ -6,10 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Shield, LogOut, Loader2, AlertTriangle, Eye, Ban, Trash2,
-  MessageSquare, FileText, BookOpen, RefreshCw, CheckCircle, XCircle
-} from 'lucide-react';
+import { Shield, LogOut, Loader as Loader2, TriangleAlert as AlertTriangle, Eye, Ban, Trash2, MessageSquare, FileText, BookOpen, RefreshCw, CircleCheck as CheckCircle, Circle as XCircle } from 'lucide-react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table';

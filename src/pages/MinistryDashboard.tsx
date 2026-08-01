@@ -2,11 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Shield, LogOut, Loader2, Building2, Users, GraduationCap, 
-  BarChart3, AlertTriangle, FileText, TrendingUp, TrendingDown,
-  BookOpen, Award, ClipboardList, LayoutDashboard
-} from 'lucide-react';
+import { Shield, LogOut, Loader as Loader2, Building2, Users, GraduationCap, ChartBar as BarChart3, TriangleAlert as AlertTriangle, FileText, TrendingUp, TrendingDown, BookOpen, Award, ClipboardList, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 

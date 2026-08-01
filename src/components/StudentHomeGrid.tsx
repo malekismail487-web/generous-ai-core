@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { useStreak } from '@/hooks/useStreak';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import {
-  Brain, Layers, BookOpen, FlipHorizontal, ClipboardList,
-  FileText, GraduationCap, Flame, Calendar, Podcast,
-  Target, Trophy, Timer, BookOpenCheck, Megaphone, MapPin, LineChart,
-} from 'lucide-react';
+import { Brain, Layers, BookOpen, FlipHorizontal, ClipboardList, FileText, GraduationCap, Flame, Calendar, Podcast, Target, Trophy, Timer, BookOpenCheck, Megaphone, MapPin, ChartLine as LineChart } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { SmartNudges } from '@/components/student/SmartNudges';
 import { MorningBriefing } from '@/components/student/MorningBriefing';

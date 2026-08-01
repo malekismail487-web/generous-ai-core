@@ -5,37 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getGradeName } from '@/lib/translations';
 import { Navigate } from 'react-router-dom';
-import {
-  Loader2,
-  RefreshCw,
-  LogOut,
-  Users,
-  UserPlus,
-  Clock,
-  Megaphone,
-  Download,
-  Search,
-  Plus,
-  Check,
-  X,
-  Ban,
-  Play,
-  Trash2,
-  Building2,
-  Key,
-  Shield,
-  FileText,
-  Calendar,
-  Settings,
-  Globe,
-  MapPin,
-  BarChart3,
-  Network,
-  GitBranch,
-  Eye,
-  BookOpen,
-  GraduationCap,
-} from 'lucide-react';
+import { Loader as Loader2, RefreshCw, LogOut, Users, UserPlus, Clock, Megaphone, Download, Search, Plus, Check, X, Ban, Play, Trash2, Building2, Key, Shield, FileText, Calendar, Settings, Globe, MapPin, ChartBar as BarChart3, Network, GitBranch, Eye, BookOpen, GraduationCap } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
 import { BudgetOptimizationReport } from '@/components/admin/BudgetOptimizationReport';

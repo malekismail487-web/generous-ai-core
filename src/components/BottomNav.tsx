@@ -1,4 +1,4 @@
-import { Home, Calendar, User, Radio } from 'lucide-react';
+import { Chrome as Home, Calendar, User, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { useLiveMeetings } from '@/hooks/useLiveMeetings';

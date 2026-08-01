@@ -5,19 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getGradeName } from '@/lib/translations';
 import { Navigate } from 'react-router-dom';
-import {
-  Loader2,
-  LogOut,
-  BookOpen,
-  FileText,
-  Megaphone,
-  Clock,
-  AlertCircle,
-  Star,
-  Settings,
-  Bell,
-  Brain
-} from 'lucide-react';
+import { Loader as Loader2, LogOut, BookOpen, FileText, Megaphone, Clock, CircleAlert as AlertCircle, Star, Settings, Bell, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

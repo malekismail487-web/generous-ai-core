@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Heart, BookOpen, ClipboardCheck, Trophy, Bell, LogOut, Flame, TrendingUp } from 'lucide-react';
+import { Loader as Loader2, Heart, BookOpen, ClipboardCheck, Trophy, Bell, LogOut, Flame, TrendingUp } from 'lucide-react';
 import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
 
 type ChildInfo = {

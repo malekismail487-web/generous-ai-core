@@ -2,27 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard, School } from '@/hooks/useRoleGuard';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { 
-  Building2, 
-  Loader2, 
-  RefreshCw, 
-  Trash2, 
-  PauseCircle, 
-  PlayCircle,
-  Plus,
-  ShieldAlert,
-  LogOut,
-  Copy,
-  FlaskConical,
-  GraduationCap,
-  Users,
-  UserCog,
-  Check,
-  X,
-  BarChart3,
-  KeyRound,
-  Brain
-} from 'lucide-react';
+import { Building2, Loader as Loader2, RefreshCw, Trash2, CirclePause as PauseCircle, CirclePlay as PlayCircle, Plus, ShieldAlert, LogOut, Copy, FlaskConical, GraduationCap, Users, UserCog, Check, X, ChartBar as BarChart3, KeyRound, Brain } from 'lucide-react';
 import { StudentAppPreview } from '@/components/StudentAppPreview';
 import LCTPanel from '@/components/admin/LCTPanel';
 import { GlobalAnalyticsDashboard } from '@/components/admin/GlobalAnalyticsDashboard';
