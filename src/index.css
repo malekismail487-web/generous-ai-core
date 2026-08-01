@@ -395,33 +395,28 @@
 
 @layer components {
   .message-bubble {
-    @apply rounded-2xl px-5 py-3.5 max-w-[85%] animate-fade-in shadow-lg;
+    @apply rounded-[1.375rem] px-5 py-3.5 max-w-[85%];
+    animation: reveal-in 520ms var(--ease-orbit) forwards;
   }
 
+  /* The reader's own voice: solid ink, inverted type. Highest contrast pair. */
   .message-user {
-    @apply ml-auto rounded-br-lg;
-    background: linear-gradient(135deg, hsl(0 0% 25%) 0%, hsl(0 0% 35%) 100%);
-    color: hsl(0 0% 95%);
+    @apply ml-auto rounded-br-md bg-primary text-primary-foreground;
+    box-shadow: var(--shadow-card);
   }
 
+  /* Lumina speaks on the page itself — no bubble, no colour. */
   .message-assistant {
-    @apply glass-effect-strong mr-auto rounded-bl-lg;
+    @apply mr-auto bg-transparent text-foreground px-0;
   }
 
   .difficulty-card {
-    @apply relative overflow-hidden rounded-2xl p-6 transition-all duration-300 cursor-pointer;
-    @apply border border-border/50 hover:border-primary/50;
-    background: var(--gradient-card);
-  }
-
-  .difficulty-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-glow);
+    @apply relative overflow-hidden p-6 cursor-pointer onyx-surface depth-press;
   }
 
   .difficulty-card::before {
     content: '';
-    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    @apply absolute inset-0 opacity-0 transition-opacity duration-500;
     background: var(--gradient-glow);
   }
 
@@ -430,15 +425,16 @@
   }
 
   .tab-button {
-    @apply relative px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300;
+    @apply relative px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300;
     @apply text-muted-foreground hover:text-foreground;
   }
 
   .tab-button.active {
     @apply text-primary-foreground bg-primary;
-    box-shadow: 0 4px 20px -4px hsl(var(--primary) / 0.3);
+    box-shadow: 0 8px 28px -10px hsl(var(--ink) / 0.5);
   }
 }
+
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
