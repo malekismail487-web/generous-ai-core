@@ -243,22 +243,23 @@ export default function ModeratorDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-background/95 sticky top-0 z-50">
+      <header className="cosmic-header border-b border-primary/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center cosmic-pulse"
+              style={{ background: 'linear-gradient(135deg, hsl(187 92% 52% / 0.25) 0%, hsl(187 92% 52% / 0.05) 100%)', border: '1px solid hsl(187 92% 52% / 0.3)' }}>
               <Shield className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">Content Moderation</h1>
+              <h1 className="text-lg font-bold cosmic-glow-text">Content Moderation</h1>
               <p className="text-[10px] text-muted-foreground">Global Content Safety Monitor</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button size="sm" variant="outline" onClick={() => { fetchFlags(); fetchActions(); }} className="gap-1">
+            <Button size="sm" variant="outline" onClick={() => { fetchFlags(); fetchActions(); }} className="gap-1 cosmic-button">
               <RefreshCw className="w-3 h-3" /> Refresh
             </Button>
-            <Button size="sm" variant="outline" onClick={() => signOut()} className="gap-1">
+            <Button size="sm" variant="outline" onClick={() => signOut()} className="gap-1 hover:bg-destructive/10 hover:text-destructive">
               <LogOut className="w-3 h-3" /> Sign Out
             </Button>
           </div>
@@ -269,12 +270,12 @@ export default function ModeratorDashboard() {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="grid grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Pending Flags', value: flags.filter(f => f.status === 'pending').length, color: 'text-red-400' },
-            { label: 'Total Actions', value: actions.length, color: 'text-amber-400' },
-            { label: 'Active Bans', value: actions.filter(a => a.is_active && (a.action_type === 'temp_ban' || a.action_type === 'terminate')).length, color: 'text-orange-400' },
-            { label: 'Pending Appeals', value: appeals.length, color: 'text-blue-400' },
+            { label: 'Pending Flags', value: flags.filter(f => f.status === 'pending').length, color: 'text-red-400', glow: 'hsl(0 72% 52% / 0.15)' },
+            { label: 'Total Actions', value: actions.length, color: 'text-amber-400', glow: 'hsl(38 92% 50% / 0.15)' },
+            { label: 'Active Bans', value: actions.filter(a => a.is_active && (a.action_type === 'temp_ban' || a.action_type === 'terminate')).length, color: 'text-orange-400', glow: 'hsl(25 90% 50% / 0.15)' },
+            { label: 'Pending Appeals', value: appeals.length, color: 'text-cyan-400', glow: 'hsl(187 92% 52% / 0.15)' },
           ].map((stat, i) => (
-            <div key={i} className="rounded-xl border p-4">
+            <div key={i} className="cosmic-stat p-4" onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 32px -8px ${stat.glow}`; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = ''; }}>
               <p className="text-xs text-muted-foreground">{stat.label}</p>
               <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
             </div>
@@ -305,7 +306,7 @@ export default function ModeratorDashboard() {
               <Button size="sm" variant={statusFilter === 'all' ? 'default' : 'outline'} onClick={() => setStatusFilter('all')}>All</Button>
             </div>
 
-            <div className="rounded-xl border overflow-hidden">
+            <div className="cosmic-card overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>

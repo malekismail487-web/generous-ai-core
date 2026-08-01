@@ -72,23 +72,23 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
         <CognitiveMirrorGauge />
       </div>
 
-      {/* Hero greeting — monochromatic */}
-      <div className="mx-3 mb-5 rounded-3xl overflow-hidden opacity-0 animate-[slideUpFade_0.6s_ease-out_forwards]" style={{ background: 'var(--gradient-hero)' }}>
+      {/* Hero greeting — cosmic */}
+      <div className="mx-3 mb-5 cosmic-card overflow-hidden opacity-0 animate-[slideUpFade_0.6s_ease-out_forwards]">
         <div className="px-5 pt-5 pb-6 relative">
-          <div className="absolute top-4 right-4 opacity-10">
-            <LuminaLogo size={80} className="opacity-20" />
+          <div className="absolute top-4 right-4 opacity-20">
+            <LuminaLogo size={80} className="opacity-30" />
           </div>
           <div className="flex items-center justify-between mb-5 relative z-10">
             <div>
-              <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
+              <h1 className="text-2xl font-extrabold cosmic-glow-text tracking-tight">
                 {t(`Hello ${firstName} 👋`, `مرحباً ${firstName} 👋`)}
               </h1>
               <p className="text-muted-foreground text-sm mt-1">
                 {t('Ready to learn something new today?', 'مستعد لتعلم شيء جديد اليوم؟')}
               </p>
             </div>
-            <div className="flex items-center gap-2 bg-muted/50 backdrop-blur-sm rounded-2xl px-3.5 py-2.5 border border-border/30">
-              <Flame className="w-5 h-5 text-muted-foreground" />
+            <div className="flex items-center gap-2 bg-primary/8 backdrop-blur-sm rounded-2xl px-3.5 py-2.5 border border-primary/20">
+              <Flame className="w-5 h-5 text-orange-400" />
               <span className="text-foreground font-bold text-lg">{streakLoading ? '...' : currentStreak}</span>
             </div>
           </div>
@@ -97,10 +97,10 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
               <span>{t('Daily Streak', 'السلسلة اليومية')}</span>
               <span>{currentStreak} / {MAX_STREAK} {t('days', 'يوم')}</span>
             </div>
-            <div className="w-full bg-muted/50 backdrop-blur-sm rounded-full h-3.5 overflow-hidden border border-border/20">
+            <div className="w-full bg-muted/30 backdrop-blur-sm rounded-full h-3.5 overflow-hidden border border-primary/10">
               <div
-                className="h-full rounded-full transition-all duration-700 ease-out bg-foreground/60"
-                style={{ width: `${streakPercentage}%` }}
+                className="h-full rounded-full transition-all duration-700 ease-out"
+                style={{ width: `${streakPercentage}%`, background: 'linear-gradient(90deg, hsl(187 92% 52%), hsl(210 20% 88%))' }}
               />
             </div>
             <div className="flex justify-between text-[10px] text-muted-foreground">
@@ -118,7 +118,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
           <div className="absolute inset-0">
             {/* SVG connection lines */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="28" fill="none" stroke="hsl(var(--border))" strokeWidth="0.3" strokeDasharray="2 1" opacity="0.5" />
+              <circle cx="50" cy="50" r="28" fill="none" stroke="hsl(187 92% 52% / 0.15)" strokeWidth="0.3" strokeDasharray="2 1" opacity="0.5" />
               {filteredBranches.map((_, idx) => {
                 const total = filteredBranches.length;
                 const angle = (idx / total) * 360 - 90;
@@ -129,7 +129,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
                 const outerY = 50 + 44 * Math.sin(rad);
                 return (
                   <line key={idx} x1={innerX} y1={innerY} x2={outerX} y2={outerY}
-                    stroke="hsl(var(--border))" strokeWidth="0.25" opacity="0.4" />
+                    stroke="hsl(187 92% 52% / 0.1)" strokeWidth="0.25" opacity="0.4" />
                 );
               })}
             </svg>
@@ -139,7 +139,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
               onClick={() => onNavigate('studybuddy')}
               onMouseEnter={() => setHoveredId('studybuddy')}
               onMouseLeave={() => setHoveredId(null)}
-              className="absolute z-20 flex flex-col items-center justify-center rounded-full bg-card border border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards] group"
+              className="absolute z-20 flex flex-col items-center justify-center rounded-full cosmic-card hover:shadow-[0_0_40px_-8px_hsl(187_92%_52%_/_0.4)] transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards] group"
               style={{
                 width: '22%', height: '22%',
                 left: '39%', top: '39%',
@@ -169,15 +169,15 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
                   onClick={() => onNavigate(item.id)}
                   onMouseEnter={() => setHoveredId(item.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  className="absolute z-10 flex flex-col items-center justify-center rounded-full border border-border/50 bg-card shadow-md hover:shadow-lg hover:border-foreground/20 transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards] group overflow-visible"
+                  className="absolute z-10 flex flex-col items-center justify-center rounded-full border border-primary/15 bg-card/80 backdrop-blur-md shadow-md hover:shadow-[0_0_24px_-4px_hsl(187_92%_52%_/_0.3)] hover:border-primary/40 transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards] group overflow-visible"
                   style={{
                     width: '14%', height: '14%',
                     left: `${cx - 7}%`, top: `${cy - 7}%`,
                     animationDelay: `${idx * 60 + 200}ms`,
                   }}
                 >
-                  <div className={`w-6 h-6 rounded-lg bg-muted flex items-center justify-center mb-0.5 transition-transform duration-300 ${isHovered ? 'scale-125' : ''}`}>
-                    <Icon className={`w-3 h-3 text-foreground transition-transform duration-300 ${isHovered ? getIconAnimation(item.id) : ''}`} />
+                  <div className={`w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center mb-0.5 transition-transform duration-300 ${isHovered ? 'scale-125' : ''}`}>
+                    <Icon className={`w-3 h-3 text-primary transition-transform duration-300 ${isHovered ? getIconAnimation(item.id) : ''}`} />
                   </div>
                   <span className="text-[7px] font-semibold text-foreground leading-tight text-center">
                     {t(item.label, item.labelAr)}
@@ -202,14 +202,14 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
                   onClick={() => onNavigate(item.id)}
                   onMouseEnter={() => setHoveredId(item.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  className="absolute z-10 flex flex-col items-center justify-center rounded-full border border-border/30 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:border-foreground/15 transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards] group overflow-visible"
+                  className="absolute z-10 flex flex-col items-center justify-center rounded-full border border-primary/10 bg-card/60 backdrop-blur-md shadow-sm hover:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.2)] hover:border-primary/30 transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards] group overflow-visible"
                   style={{
                     width: '11%', height: '11%',
                     left: `${cx - 5.5}%`, top: `${cy - 5.5}%`,
                     animationDelay: `${idx * 50 + 700}ms`,
                   }}
                 >
-                  <Icon className={`w-3.5 h-3.5 text-foreground mb-0.5 transition-transform duration-300 ${isHovered ? getIconAnimation(item.id) : ''}`} />
+                  <Icon className={`w-3.5 h-3.5 text-primary/80 mb-0.5 transition-transform duration-300 ${isHovered ? getIconAnimation(item.id) : ''}`} />
                   <span className="text-[6px] font-semibold text-foreground leading-tight text-center">
                     {t(item.label, item.labelAr)}
                   </span>

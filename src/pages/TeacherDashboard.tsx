@@ -197,7 +197,10 @@ export default function TeacherDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+          <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-transparent border-b-primary/40 animate-pulse" />
+        </div>
       </div>
     );
   }

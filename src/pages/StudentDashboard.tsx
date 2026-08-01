@@ -207,7 +207,10 @@ export default function StudentDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+          <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-transparent border-b-primary/40 animate-pulse" />
+        </div>
       </div>
     );
   }
@@ -222,22 +225,23 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="glass-effect-strong border-b border-border/30 sticky top-0 z-50">
+      <header className="cosmic-header border-b border-primary/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-primary-foreground" />
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center cosmic-pulse"
+              style={{ background: 'linear-gradient(135deg, hsl(187 92% 52% / 0.25) 0%, hsl(187 92% 52% / 0.05) 100%)', border: '1px solid hsl(187 92% 52% / 0.3)' }}>
+              <BookOpen className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">{tl('welcome')}, {profile.full_name}!</h1>
+              <h1 className="text-xl font-bold cosmic-glow-text">{tl('welcome')}, {profile.full_name}!</h1>
               <p className="text-xs text-muted-foreground">{school.name}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {profile.grade_level && (
-              <Badge variant="outline">{getGradeName(profile.grade_level, language)}</Badge>
+              <Badge variant="outline" className="border-primary/30 text-primary">{getGradeName(profile.grade_level, language)}</Badge>
             )}
-            <Button variant="outline" size="icon" onClick={signOut}>
+            <Button variant="ghost" size="icon" onClick={signOut} className="hover:bg-destructive/10 hover:text-destructive">
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
@@ -247,38 +251,38 @@ export default function StudentDashboard() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <TenantExtensionsSection className="mb-6" />
         {/* Welcome Section */}
-        <div className="glass-effect rounded-xl p-6 mb-6">
+        <div className="cosmic-card p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold mb-2">{tl('yourDashboard')}</h2>
+              <h2 className="text-2xl font-bold mb-2 cosmic-glow-text">{tl('yourDashboard')}</h2>
               {upcomingDeadlines.length > 0 && (
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="w-4 h-4" />
+                  <Clock className="w-4 h-4 text-primary" />
                   <span>
-                    {tl('nextDeadline')} <strong>{upcomingDeadlines[0].title}</strong> {tl('on')}{' '}
+                    {tl('nextDeadline')} <strong className="text-foreground">{upcomingDeadlines[0].title}</strong> {tl('on')}{' '}
                     {new Date(upcomingDeadlines[0].due_date!).toLocaleDateString()}
                   </span>
                 </div>
               )}
             </div>
             <div className="flex gap-4">
-              <div className="text-center">
+              <div className="text-center cosmic-stat px-4 py-3">
                 <p className="text-3xl font-bold text-primary">{materials.length}</p>
                 <p className="text-xs text-muted-foreground">{tl('materials')}</p>
               </div>
-              <div className="text-center">
-                <p className="text-3xl font-bold text-green-500">{submissions.length}</p>
+              <div className="text-center cosmic-stat px-4 py-3">
+                <p className="text-3xl font-bold text-emerald-400">{submissions.length}</p>
                 <p className="text-xs text-muted-foreground">{tl('submitted')}</p>
               </div>
-              <div className="text-center">
-                <p className="text-3xl font-bold text-amber-500">{awards.length}</p>
+              <div className="text-center cosmic-stat px-4 py-3">
+                <p className="text-3xl font-bold text-amber-400">{awards.length}</p>
                 <p className="text-xs text-muted-foreground">{tl('myAwards')}</p>
               </div>
             </div>
           </div>
 
           {overdueAssignments.length > 0 && (
-            <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
+            <div className="mt-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-destructive" />
               <span className="text-destructive font-medium">
                 {tl('youHave')} {overdueAssignments.length} {overdueAssignments.length > 1 ? tl('overdueWarningPlural') : tl('overdueWarning')}!
@@ -294,32 +298,32 @@ export default function StudentDashboard() {
         </div>
 
         <Tabs defaultValue="assignments" className="space-y-6">
-          <TabsList className="grid grid-cols-6 w-full max-w-3xl">
+          <TabsList className="grid grid-cols-6 w-full max-w-3xl cosmic-card !rounded-xl">
 
-            <TabsTrigger value="assignments" className="gap-2">
+            <TabsTrigger value="assignments" className="gap-2 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.4)]">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">{tl('work')}</span>
               {overdueAssignments.length > 0 && (
                 <Badge variant="destructive" className="ml-1">{overdueAssignments.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="learning-modes" className="gap-2">
+            <TabsTrigger value="learning-modes" className="gap-2 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.4)]">
               <Brain className="w-4 h-4" />
               <span className="hidden sm:inline">Modes</span>
             </TabsTrigger>
-            <TabsTrigger value="report-cards" className="gap-2">
+            <TabsTrigger value="report-cards" className="gap-2 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.4)]">
               <BookOpen className="w-4 h-4" />
               <span className="hidden sm:inline">{tl('reports')}</span>
             </TabsTrigger>
-            <TabsTrigger value="grades" className="gap-2">
+            <TabsTrigger value="grades" className="gap-2 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.4)]">
               <Star className="w-4 h-4" />
               <span className="hidden sm:inline">{tl('grades')}</span>
             </TabsTrigger>
-            <TabsTrigger value="announcements" className="gap-2">
+            <TabsTrigger value="announcements" className="gap-2 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.4)]">
               <Megaphone className="w-4 h-4" />
               <span className="hidden sm:inline">{tl('news')}</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
+            <TabsTrigger value="settings" className="gap-2 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_20px_-4px_hsl(187_92%_52%_/_0.4)]">
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">{tl('settings')}</span>
             </TabsTrigger>
@@ -334,7 +338,7 @@ export default function StudentDashboard() {
           <TabsContent value="report-cards" className="space-y-4">
             {loadingData ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <div className="w-10 h-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
               </div>
             ) : (
               <StudentReportCards studentId={profile.id} />
@@ -345,7 +349,7 @@ export default function StudentDashboard() {
           <TabsContent value="assignments" className="space-y-4">
             {loadingData ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <div className="w-10 h-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
               </div>
             ) : (
               <StudentAssignments
@@ -359,16 +363,16 @@ export default function StudentDashboard() {
 
           {/* Grades Tab */}
           <TabsContent value="grades" className="space-y-4">
-            <h2 className="text-lg font-semibold">{tl('myGrades')}</h2>
+            <h2 className="text-lg font-semibold cosmic-glow-text">{tl('myGrades')}</h2>
 
-            <div className="glass-effect rounded-xl overflow-hidden">
+            <div className="cosmic-card overflow-hidden">
               <table className="w-full">
-                <thead className="bg-muted/50">
+                <thead className="bg-primary/5">
                   <tr>
-                    <th className="text-left p-4 font-medium">{tl('assignment')}</th>
-                    <th className="text-left p-4 font-medium">{tl('submitted')}</th>
-                    <th className="text-left p-4 font-medium">{tl('grade')}</th>
-                    <th className="text-left p-4 font-medium">{tl('feedback')}</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground">{tl('assignment')}</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground">{tl('submitted')}</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground">{tl('grade')}</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground">{tl('feedback')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -384,13 +388,13 @@ export default function StudentDashboard() {
                       .map((submission) => {
                         const assignment = assignments.find(a => a.id === submission.assignment_id);
                         return (
-                          <tr key={submission.id} className="border-t border-border/50">
+                          <tr key={submission.id} className="border-t border-primary/8 hover:bg-primary/3 transition-colors">
                             <td className="p-4 font-medium">{assignment?.title || 'Unknown'}</td>
                             <td className="p-4 text-muted-foreground">
                               {new Date(submission.submitted_at).toLocaleDateString()}
                             </td>
                             <td className="p-4">
-                              <Badge className="bg-green-500">
+                              <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                                 {submission.grade}/{assignment?.points || 100}
                               </Badge>
                             </td>
@@ -407,12 +411,12 @@ export default function StudentDashboard() {
 
             {awards.length > 0 && (
               <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-4">{tl('myAwards')}</h3>
+                <h3 className="text-lg font-semibold mb-4 cosmic-glow-text">{tl('myAwards')}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {awards.map((award) => (
-                    <div key={award.id} className="glass-effect rounded-xl p-4 text-center">
-                      <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-2">
-                        <Star className="w-6 h-6 text-amber-500" />
+                    <div key={award.id} className="cosmic-card p-4 text-center cosmic-float">
+                      <div className="w-12 h-12 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto mb-2">
+                        <Star className="w-6 h-6 text-amber-400" />
                       </div>
                       <h4 className="font-semibold text-sm">{award.title}</h4>
                       <p className="text-xs text-muted-foreground capitalize">{award.type}</p>
@@ -425,10 +429,10 @@ export default function StudentDashboard() {
 
           {/* Announcements Tab */}
           <TabsContent value="announcements" className="space-y-4">
-            <h2 className="text-lg font-semibold">{tl('announcementsLabel')}</h2>
+            <h2 className="text-lg font-semibold cosmic-glow-text">{tl('announcementsLabel')}</h2>
 
             {announcements.length === 0 ? (
-              <div className="glass-effect rounded-xl p-8 text-center">
+              <div className="cosmic-card p-8 text-center">
                 <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="font-semibold mb-2">{tl('noAnnouncements')}</h3>
                 <p className="text-sm text-muted-foreground">{tl('schoolAnnouncementsWillAppear')}</p>
@@ -436,7 +440,7 @@ export default function StudentDashboard() {
             ) : (
               <div className="space-y-4">
                 {announcements.map((announcement) => (
-                  <div key={announcement.id} className="glass-effect rounded-xl p-4">
+                  <div key={announcement.id} className="cosmic-card p-4">
                     <h3 className="font-semibold">{announcement.title}</h3>
                     <p className="text-sm text-muted-foreground mb-2">
                       {new Date(announcement.created_at).toLocaleString()}
@@ -450,12 +454,12 @@ export default function StudentDashboard() {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">
-            <h2 className="text-lg font-semibold">{tl('settings')}</h2>
+            <h2 className="text-lg font-semibold cosmic-glow-text">{tl('settings')}</h2>
 
-            <div className="glass-effect rounded-xl p-6 space-y-6">
+            <div className="cosmic-card p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Bell className="w-5 h-5 text-muted-foreground" />
+                  <Bell className="w-5 h-5 text-primary" />
                   <div>
                     <p className="font-medium">{tl('notifications')}</p>
                     <p className="text-sm text-muted-foreground">{tl('notificationsDesc')}</p>
@@ -467,9 +471,7 @@ export default function StudentDashboard() {
                 />
               </div>
 
-
-
-              <div className="border-t pt-6">
+              <div className="border-t border-primary/8 pt-6">
                 <h3 className="font-medium mb-4">{tl('profileInformation')}</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">

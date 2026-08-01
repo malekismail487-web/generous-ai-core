@@ -10,64 +10,66 @@
      One family only: pure carbon surfaces, bone ink.
      ═══════════════════════════════════════════ */
   :root {
-    --background: 240 6% 4%;
-    --foreground: 60 4% 95%;
+    /* ══ COSMIC ONYX — pure jet-black with cyan/silver luminance ══ */
+    --background: 0 0% 0%;
+    --foreground: 210 20% 92%;
 
-    --card: 240 5% 7%;
-    --card-foreground: 60 4% 95%;
+    --card: 200 20% 5%;
+    --card-foreground: 210 20% 92%;
 
-    --popover: 240 5% 8%;
-    --popover-foreground: 60 4% 95%;
+    --popover: 200 22% 4%;
+    --popover-foreground: 210 20% 92%;
 
-    --primary: 60 4% 95%;
-    --primary-foreground: 240 6% 4%;
+    --primary: 187 92% 52%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 5% 11%;
-    --secondary-foreground: 60 3% 82%;
+    --secondary: 200 15% 10%;
+    --secondary-foreground: 210 15% 75%;
 
-    --muted: 240 4% 14%;
-    --muted-foreground: 240 3% 58%;
+    --muted: 200 12% 9%;
+    --muted-foreground: 200 10% 50%;
 
-    --accent: 240 4% 17%;
-    --accent-foreground: 60 4% 95%;
+    --accent: 187 90% 45%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 6 62% 52%;
-    --destructive-foreground: 60 4% 96%;
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 240 4% 15%;
-    --input: 240 4% 15%;
-    --ring: 60 4% 95%;
+    --border: 200 20% 14%;
+    --input: 200 20% 12%;
+    --ring: 187 92% 52%;
 
     --radius: 1.25rem;
 
-    --sidebar-background: 240 6% 3%;
-    --sidebar-foreground: 60 3% 78%;
-    --sidebar-primary: 60 4% 95%;
-    --sidebar-primary-foreground: 240 6% 4%;
-    --sidebar-accent: 240 5% 10%;
-    --sidebar-accent-foreground: 60 4% 95%;
-    --sidebar-border: 240 4% 12%;
-    --sidebar-ring: 60 4% 95%;
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 210 15% 68%;
+    --sidebar-primary: 187 92% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 200 20% 8%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 200 20% 12%;
+    --sidebar-ring: 187 92% 52%;
 
-    /* Depth is built from light, not colour */
-    --ink: 60 4% 95%;
-    --onyx: 240 6% 4%;
+    --ink: 210 20% 92%;
+    --onyx: 0 0% 0%;
+    --cyan: 187 92% 52%;
+    --silver: 210 20% 88%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(var(--ink)) 0%, hsl(var(--ink) / 0.55) 100%);
-    --gradient-warm: linear-gradient(135deg, hsl(var(--ink) / 0.9) 0%, hsl(var(--ink) / 0.4) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(240 5% 8%) 0%, hsl(240 6% 4%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(var(--ink) / 0.08) 0%, transparent 70%);
-    --gradient-card: linear-gradient(150deg, hsl(240 5% 9%) 0%, hsl(240 5% 6%) 100%);
-    --gradient-hero: radial-gradient(120% 100% at 50% 0%, hsl(240 5% 12%) 0%, hsl(240 6% 4%) 60%);
-    --gradient-edge: linear-gradient(120deg, hsl(var(--ink) / 0.22), hsl(var(--ink) / 0.02) 45%, hsl(var(--ink) / 0.16));
+    --gradient-primary: linear-gradient(135deg, hsl(187 92% 52%) 0%, hsl(210 20% 88%) 100%);
+    --gradient-warm: linear-gradient(135deg, hsl(187 92% 52% / 0.9) 0%, hsl(187 92% 52% / 0.3) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(200 20% 5%) 0%, hsl(0 0% 0%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(187 92% 52% / 0.12) 0%, transparent 70%);
+    --gradient-card: linear-gradient(150deg, hsl(200 25% 7%) 0%, hsl(200 20% 3%) 100%);
+    --gradient-hero: radial-gradient(120% 100% at 50% 0%, hsl(200 30% 8%) 0%, hsl(0 0% 0%) 60%);
+    --gradient-edge: linear-gradient(120deg, hsl(187 92% 52% / 0.3), hsl(187 92% 52% / 0.03) 45%, hsl(210 20% 88% / 0.18));
 
-    --shadow-glow: 0 0 80px hsl(var(--ink) / 0.07);
-    --shadow-glow-accent: 0 0 48px hsl(var(--ink) / 0.05);
-    --shadow-card: 0 18px 48px -20px hsl(0 0% 0% / 0.85);
-    --shadow-elevated: 0 40px 80px -32px hsl(0 0% 0% / 0.9);
-    --shadow-inset: inset 0 1px 0 0 hsl(var(--ink) / 0.06);
+    --shadow-glow: 0 0 80px hsl(187 92% 52% / 0.15);
+    --shadow-glow-accent: 0 0 48px hsl(187 92% 52% / 0.12);
+    --shadow-card: 0 18px 48px -20px hsl(0 0% 0% / 0.9), 0 0 0 1px hsl(187 92% 52% / 0.05);
+    --shadow-elevated: 0 40px 80px -32px hsl(0 0% 0% / 0.95), 0 0 60px -20px hsl(187 92% 52% / 0.1);
+    --shadow-inset: inset 0 1px 0 0 hsl(187 92% 52% / 0.08);
 
-    --grain-opacity: 0.05;
+    --grain-opacity: 0.03;
     --ease-orbit: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
@@ -133,8 +135,8 @@
   }
 
   .dark {
-    --background: 240 6% 4%;
-    --foreground: 60 4% 95%;
+    --background: 0 0% 0%;
+    --foreground: 210 20% 92%;
   }
 }
 
@@ -631,8 +633,102 @@
 
 .lite-mode .ambient-glow,
 .lite-mode .grain-overlay,
-.lite-mode .orbit-field {
+.lite-mode .orbit-field,
+.lite-mode .cosmic-bg {
   display: none !important;
+}
+
+/* ═══════════════════════════════════════════
+   COSMIC THEME — premium glass surfaces
+   ═══════════════════════════════════════════ */
+.cosmic-card {
+  position: relative;
+  background: linear-gradient(150deg, hsl(200 25% 7% / 0.72) 0%, hsl(200 20% 3% / 0.55) 100%);
+  border: 1px solid hsl(187 92% 52% / 0.12);
+  border-radius: var(--radius);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: var(--shadow-card), var(--shadow-inset);
+  overflow: hidden;
+}
+
+.cosmic-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(120deg, hsl(187 92% 52% / 0.06), transparent 40%, hsl(210 20% 88% / 0.04));
+  pointer-events: none;
+  opacity: 0.6;
+  transition: opacity 0.4s ease;
+}
+
+.cosmic-card:hover::before {
+  opacity: 1;
+}
+
+.cosmic-glow-text {
+  background: linear-gradient(135deg, hsl(187 92% 52%) 0%, hsl(210 20% 88%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.cosmic-button {
+  position: relative;
+  background: linear-gradient(135deg, hsl(187 92% 52% / 0.15) 0%, hsl(187 92% 52% / 0.05) 100%);
+  border: 1px solid hsl(187 92% 52% / 0.3);
+  color: hsl(187 92% 65%);
+  border-radius: 0.75rem;
+  transition: all 0.3s var(--ease-orbit);
+}
+
+.cosmic-button:hover {
+  background: linear-gradient(135deg, hsl(187 92% 52% / 0.25) 0%, hsl(187 92% 52% / 0.1) 100%);
+  border-color: hsl(187 92% 52% / 0.5);
+  box-shadow: 0 0 24px -4px hsl(187 92% 52% / 0.4);
+  transform: translateY(-1px);
+}
+
+.cosmic-stat {
+  position: relative;
+  background: linear-gradient(150deg, hsl(200 25% 7% / 0.6) 0%, hsl(200 20% 3% / 0.4) 100%);
+  border: 1px solid hsl(187 92% 52% / 0.08);
+  border-radius: 1rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: all 0.4s var(--ease-orbit);
+}
+
+.cosmic-stat:hover {
+  border-color: hsl(187 92% 52% / 0.2);
+  box-shadow: 0 0 32px -8px hsl(187 92% 52% / 0.2);
+  transform: translateY(-2px);
+}
+
+.cosmic-header {
+  background: linear-gradient(180deg, hsl(0 0% 0% / 0.85) 0%, hsl(0 0% 0% / 0.4) 100%);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border-bottom: 1px solid hsl(187 92% 52% / 0.1);
+}
+
+@keyframes cosmic-pulse {
+  0%, 100% { box-shadow: 0 0 20px -4px hsl(187 92% 52% / 0.3); }
+  50% { box-shadow: 0 0 40px -4px hsl(187 92% 52% / 0.5); }
+}
+
+.cosmic-pulse {
+  animation: cosmic-pulse 3s ease-in-out infinite;
+}
+
+@keyframes cosmic-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.cosmic-float {
+  animation: cosmic-float 6s ease-in-out infinite;
 }
 
 .lite-mode .onyx-surface::after,

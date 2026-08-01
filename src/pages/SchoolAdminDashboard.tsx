@@ -570,19 +570,20 @@ export default function SchoolAdminDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="glass-effect-strong border-b border-border/30 sticky top-0 z-50">
+      <header className="cosmic-header border-b border-primary/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <Shield className="w-5 h-5 text-primary-foreground" />
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center cosmic-pulse"
+              style={{ background: 'linear-gradient(135deg, hsl(187 92% 52% / 0.25) 0%, hsl(187 92% 52% / 0.05) 100%)', border: '1px solid hsl(187 92% 52% / 0.3)' }}>
+              <Shield className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">{school.name}</h1>
+              <h1 className="text-xl font-bold cosmic-glow-text">{school.name}</h1>
               <p className="text-xs text-muted-foreground">{t('schoolAdminDashboard')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={signOut}>
+            <Button variant="ghost" size="icon" onClick={signOut} className="hover:bg-destructive/10 hover:text-destructive">
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
@@ -710,7 +711,7 @@ export default function SchoolAdminDashboard() {
                 </div>
               </div>
 
-            <div className="glass-effect rounded-xl overflow-hidden">
+            <div className="cosmic-card overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -774,7 +775,7 @@ export default function SchoolAdminDashboard() {
               </Button>
             </div>
 
-            <div className="glass-effect rounded-xl overflow-hidden">
+            <div className="cosmic-card overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -922,7 +923,7 @@ export default function SchoolAdminDashboard() {
               </div>
             </div>
 
-            <div className="glass-effect rounded-xl overflow-hidden">
+            <div className="cosmic-card overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -1009,7 +1010,7 @@ export default function SchoolAdminDashboard() {
             <h2 className="text-lg font-semibold">{t('announcementsLabel')}</h2>
 
             {/* Create Announcement Form */}
-            <div className="glass-effect rounded-xl p-4 space-y-4">
+            <div className="cosmic-card p-4 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="announcement-title">{t('title')}</Label>
                 <Input
@@ -1041,13 +1042,13 @@ export default function SchoolAdminDashboard() {
             {/* Announcements List */}
             <div className="space-y-4">
               {announcements.length === 0 ? (
-                <div className="glass-effect rounded-xl p-8 text-center">
+                <div className="cosmic-card p-8 text-center">
                   <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                   <p className="text-muted-foreground">{t('noAnnouncementsYet')}</p>
                 </div>
               ) : (
                 announcements.map((announcement) => (
-                  <div key={announcement.id} className="glass-effect rounded-xl p-4">
+                  <div key={announcement.id} className="cosmic-card p-4">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-semibold">{announcement.title}</h3>
@@ -1076,7 +1077,7 @@ export default function SchoolAdminDashboard() {
             <h2 className="text-lg font-semibold">{t('trips')}</h2>
 
             {/* Create Trip Form */}
-            <div className="glass-effect rounded-xl p-4 space-y-4">
+            <div className="cosmic-card p-4 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="trip-title">{t('title')}</Label>
                 <Input
@@ -1108,13 +1109,13 @@ export default function SchoolAdminDashboard() {
             {/* Trips List */}
             <div className="space-y-4">
               {trips.length === 0 ? (
-                <div className="glass-effect rounded-xl p-8 text-center">
+                <div className="cosmic-card p-8 text-center">
                   <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                   <p className="text-muted-foreground">{t('noTripsYet')}</p>
                 </div>
               ) : (
                 trips.map((trip) => (
-                  <div key={trip.id} className="glass-effect rounded-xl p-4">
+                  <div key={trip.id} className="cosmic-card p-4">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-semibold">{trip.title}</h3>
@@ -1156,7 +1157,7 @@ export default function SchoolAdminDashboard() {
               </Button>
             </div>
 
-            <div className="glass-effect rounded-xl overflow-hidden">
+            <div className="cosmic-card overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -1194,7 +1195,7 @@ export default function SchoolAdminDashboard() {
           <TabsContent value="settings" className="space-y-4">
             <h2 className="text-lg font-semibold">{t('settings')}</h2>
 
-            <div className="glass-effect rounded-xl p-6 space-y-6 max-w-lg">
+            <div className="cosmic-card p-6 space-y-6 max-w-lg">
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Globe className="w-4 h-4" />

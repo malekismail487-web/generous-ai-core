@@ -300,22 +300,23 @@ export default function MinistryDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-gray-200">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="border-b border-emerald-900/30 bg-black/90 sticky top-0 z-50">
+      <header className="cosmic-header border-b border-primary/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-900/30 border border-emerald-700/30 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-emerald-500" />
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center cosmic-pulse"
+              style={{ background: 'linear-gradient(135deg, hsl(187 92% 52% / 0.25) 0%, hsl(187 92% 52% / 0.05) 100%)', border: '1px solid hsl(187 92% 52% / 0.3)' }}>
+              <Shield className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-emerald-400">Ministry of Education</h1>
-              <p className="text-[10px] text-gray-600 font-mono">CLASSIFIED ACCESS • SESSION ACTIVE</p>
+              <h1 className="text-lg font-bold cosmic-glow-text">Ministry of Education</h1>
+              <p className="text-[10px] text-muted-foreground font-mono">CLASSIFIED ACCESS • SESSION ACTIVE</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className={`text-xs font-mono px-3 py-1 rounded-full border ${
-              timeLeft < 120 ? 'border-red-700 text-red-400 bg-red-950/30' : 'border-emerald-700/30 text-emerald-500 bg-emerald-950/20'
+              timeLeft < 120 ? 'border-destructive/50 text-destructive bg-destructive/10' : 'border-primary/30 text-primary bg-primary/5'
             }`}>
               ⏱ {formatTime(timeLeft)}
             </div>
@@ -323,7 +324,7 @@ export default function MinistryDashboard() {
               size="sm"
               variant="outline"
               onClick={handleLogout}
-              className="border-red-800/50 text-red-400 hover:bg-red-950/50 gap-1"
+              className="border-destructive/30 text-destructive hover:bg-destructive/10 gap-1"
             >
               <LogOut className="w-3 h-3" />
               End Session
@@ -333,7 +334,7 @@ export default function MinistryDashboard() {
       </header>
 
       {/* Workspace switcher */}
-      <div className="border-b border-gray-900 bg-black/60">
+      <div className="border-b border-primary/8 bg-background/60">
         <div className="max-w-7xl mx-auto px-6 flex gap-1">
           {([
             { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, hint: 'Observe the ecosystem' },
@@ -343,15 +344,15 @@ export default function MinistryDashboard() {
             <button
               key={ws.id}
               onClick={() => setWorkspace(ws.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm border-b-2 transition-all ${
                 workspace === ws.id
-                  ? 'border-emerald-500 text-emerald-300'
-                  : 'border-transparent text-gray-500 hover:text-gray-300'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               <ws.icon className="w-4 h-4" />
               {ws.label}
-              <span className="hidden md:inline text-[10px] text-gray-600 ml-1">· {ws.hint}</span>
+              <span className="hidden md:inline text-[10px] text-muted-foreground/50 ml-1">· {ws.hint}</span>
             </button>
           ))}
         </div>
@@ -359,16 +360,16 @@ export default function MinistryDashboard() {
 
       {/* Tabs (dashboard workspace only) */}
       {workspace === 'dashboard' && (
-      <div className="border-b border-gray-900">
+      <div className="border-b border-primary/8">
         <div className="max-w-7xl mx-auto px-6 flex gap-1">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-3 text-sm border-b-2 transition-all ${
                 activeTab === tab.id
-                  ? 'border-emerald-500 text-emerald-400'
-                  : 'border-transparent text-gray-600 hover:text-gray-400'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -385,30 +386,30 @@ export default function MinistryDashboard() {
         {workspace === 'intelligence' && <IntelligenceShell />}
         {workspace === 'dashboard' && activeTab === 'overview' && (
           <div className="space-y-8">
-            <h2 className="text-xl font-bold text-emerald-400">🏛️ National Education Overview</h2>
+            <h2 className="text-xl font-bold cosmic-glow-text">🏛️ National Education Overview</h2>
             {!nationalStats ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
-                <span className="ml-3 text-gray-500">Loading national data...</span>
+                <div className="w-10 h-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                <span className="ml-3 text-muted-foreground">Loading national data...</span>
               </div>
             ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: 'Total Schools', value: nationalStats.totalSchools, icon: Building2, color: 'emerald' },
-                { label: 'Total Students', value: nationalStats.totalStudents, icon: GraduationCap, color: 'blue' },
-                { label: 'Total Teachers', value: nationalStats.totalTeachers, icon: Users, color: 'purple' },
-                { label: 'Total Assignments', value: nationalStats.totalAssignments, icon: BookOpen, color: 'amber' },
-                { label: 'Total Submissions', value: nationalStats.totalSubmissions, icon: FileText, color: 'cyan' },
-                { label: 'Avg Completion', value: `${nationalStats.avgCompletionRate}%`, icon: TrendingUp, color: 'green' },
-                { label: 'Total Materials', value: nationalStats.totalMaterials, icon: BookOpen, color: 'orange' },
-                { label: 'Teacher:Student Ratio', value: nationalStats.totalTeachers > 0 ? `1:${Math.round(nationalStats.totalStudents / nationalStats.totalTeachers)}` : 'N/A', icon: Users, color: 'pink' },
+                { label: 'Total Schools', value: nationalStats.totalSchools, icon: Building2, color: 'primary' },
+                { label: 'Total Students', value: nationalStats.totalStudents, icon: GraduationCap, color: 'primary' },
+                { label: 'Total Teachers', value: nationalStats.totalTeachers, icon: Users, color: 'primary' },
+                { label: 'Total Assignments', value: nationalStats.totalAssignments, icon: BookOpen, color: 'warning' },
+                { label: 'Total Submissions', value: nationalStats.totalSubmissions, icon: FileText, color: 'primary' },
+                { label: 'Avg Completion', value: `${nationalStats.avgCompletionRate}%`, icon: TrendingUp, color: 'success' },
+                { label: 'Total Materials', value: nationalStats.totalMaterials, icon: BookOpen, color: 'warning' },
+                { label: 'Teacher:Student Ratio', value: nationalStats.totalTeachers > 0 ? `1:${Math.round(nationalStats.totalStudents / nationalStats.totalTeachers)}` : 'N/A', icon: Users, color: 'silver' },
               ].map((stat, i) => (
-                <div key={i} className="bg-gray-950 border border-gray-800 rounded-xl p-4 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <stat.icon className={`w-4 h-4 text-${stat.color}-500`} />
-                    <span className="text-xs text-gray-500">{stat.label}</span>
+                <div key={i} className="cosmic-stat p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-primary">
+                    <stat.icon className="w-4 h-4" />
+                    <span className="text-xs text-muted-foreground">{stat.label}</span>
                   </div>
-                  <p className="text-2xl font-bold text-gray-200">{stat.value}</p>
+                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                 </div>
               ))}
             </div>
@@ -418,35 +419,35 @@ export default function MinistryDashboard() {
 
         {workspace === 'dashboard' && activeTab === 'schools' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-emerald-400">🏫 School Performance Rankings</h2>
-            <div className="bg-gray-950 border border-gray-800 rounded-xl overflow-hidden">
+            <h2 className="text-xl font-bold cosmic-glow-text">🏫 School Performance Rankings</h2>
+            <div className="cosmic-card overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-gray-800 hover:bg-transparent">
-                    <TableHead className="text-gray-500">Rank</TableHead>
-                    <TableHead className="text-gray-500">School</TableHead>
-                    <TableHead className="text-gray-500">Students</TableHead>
-                    <TableHead className="text-gray-500">Teachers</TableHead>
-                    <TableHead className="text-gray-500">Assignments</TableHead>
-                    <TableHead className="text-gray-500">Completion Rate</TableHead>
-                    <TableHead className="text-gray-500">Avg Accuracy</TableHead>
-                    <TableHead className="text-gray-500">Status</TableHead>
+                  <TableRow className="border-primary/8 hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">Rank</TableHead>
+                    <TableHead className="text-muted-foreground">School</TableHead>
+                    <TableHead className="text-muted-foreground">Students</TableHead>
+                    <TableHead className="text-muted-foreground">Teachers</TableHead>
+                    <TableHead className="text-muted-foreground">Assignments</TableHead>
+                    <TableHead className="text-muted-foreground">Completion Rate</TableHead>
+                    <TableHead className="text-muted-foreground">Avg Accuracy</TableHead>
+                    <TableHead className="text-muted-foreground">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {[...schoolStats]
                     .sort((a, b) => b.completionRate - a.completionRate)
                     .map((school, i) => (
-                    <TableRow key={school.id} className="border-gray-800/50">
-                      <TableCell className="font-mono text-emerald-500">
+                    <TableRow key={school.id} className="border-primary/5">
+                      <TableCell className="font-mono text-primary">
                         {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                       </TableCell>
-                      <TableCell className="font-medium text-gray-200">{school.name}</TableCell>
+                      <TableCell className="font-medium text-foreground">{school.name}</TableCell>
                       <TableCell>{school.studentCount}</TableCell>
                       <TableCell>{school.teacherCount}</TableCell>
                       <TableCell>{school.assignmentCount}</TableCell>
                       <TableCell>
-                        <span className={school.completionRate >= 50 ? 'text-emerald-400' : 'text-red-400'}>
+                        <span className={school.completionRate >= 50 ? 'text-emerald-400' : 'text-destructive'}>
                           {school.completionRate}%
                         </span>
                       </TableCell>
@@ -458,8 +459,8 @@ export default function MinistryDashboard() {
                       <TableCell>
                         <span className={`px-2 py-0.5 rounded-full text-xs ${
                           school.status === 'active' 
-                            ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-700/30' 
-                            : 'bg-red-950/50 text-red-400 border border-red-700/30'
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' 
+                            : 'bg-destructive/15 text-destructive border border-destructive/30'
                         }`}>
                           {school.status}
                         </span>
@@ -468,7 +469,7 @@ export default function MinistryDashboard() {
                   ))}
                   {schoolStats.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-gray-600 py-8">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                         No schools registered in the system
                       </TableCell>
                     </TableRow>
@@ -481,7 +482,7 @@ export default function MinistryDashboard() {
 
         {workspace === 'dashboard' && activeTab === 'compliance' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-emerald-400">📋 Compliance & Readiness Reports</h2>
+            <h2 className="text-xl font-bold cosmic-glow-text">📋 Compliance & Readiness Reports</h2>
             <div className="grid gap-4">
               {schoolStats.map(school => {
                 const hasTeachers = school.teacherCount > 0;
@@ -491,16 +492,16 @@ export default function MinistryDashboard() {
                 const score = [hasTeachers, hasMaterials, hasAssignments, goodRatio].filter(Boolean).length;
                 
                 return (
-                  <div key={school.id} className="bg-gray-950 border border-gray-800 rounded-xl p-5 space-y-4">
+                  <div key={school.id} className="cosmic-card p-5 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-semibold text-gray-200">{school.name}</h3>
-                        <p className="text-xs text-gray-600">{school.studentCount} students, {school.teacherCount} teachers</p>
+                        <h3 className="font-semibold text-foreground">{school.name}</h3>
+                        <p className="text-xs text-muted-foreground">{school.studentCount} students, {school.teacherCount} teachers</p>
                       </div>
                       <div className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        score >= 4 ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-700/30' :
-                        score >= 2 ? 'bg-amber-950/50 text-amber-400 border border-amber-700/30' :
-                        'bg-red-950/50 text-red-400 border border-red-700/30'
+                        score >= 4 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' :
+                        score >= 2 ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' :
+                        'bg-destructive/15 text-destructive border border-destructive/30'
                       }`}>
                         {score}/4 Compliant
                       </div>
@@ -513,7 +514,7 @@ export default function MinistryDashboard() {
                         { label: 'Student:Teacher ≤ 25:1', ok: goodRatio },
                       ].map((item, i) => (
                         <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
-                          item.ok ? 'bg-emerald-950/20 text-emerald-400' : 'bg-red-950/20 text-red-400'
+                          item.ok ? 'bg-emerald-500/10 text-emerald-400' : 'bg-destructive/10 text-destructive'
                         }`}>
                           {item.ok ? '✅' : '❌'} {item.label}
                         </div>
@@ -532,26 +533,26 @@ export default function MinistryDashboard() {
 
         {workspace === 'dashboard' && activeTab === 'moderators' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-emerald-400">🛡️ Moderator Management</h2>
+            <h2 className="text-xl font-bold cosmic-glow-text">🛡️ Moderator Management</h2>
             
             {/* Generate Code */}
-            <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 space-y-4">
-              <h3 className="font-semibold text-gray-200">Generate Moderator Invite Code</h3>
-              <p className="text-xs text-gray-500">Generate a code for a new content moderator. Codes expire in 48 hours.</p>
+            <div className="cosmic-card p-5 space-y-4">
+              <h3 className="font-semibold text-foreground">Generate Moderator Invite Code</h3>
+              <p className="text-xs text-muted-foreground">Generate a code for a new content moderator. Codes expire in 48 hours.</p>
               <div className="flex items-center gap-3">
                 <button
                   onClick={generateModeratorCode}
                   disabled={generatingModCode}
-                  className="px-4 py-2 rounded-lg bg-emerald-700/30 border border-emerald-600/30 text-emerald-400 text-sm hover:bg-emerald-700/50 disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg cosmic-button text-sm disabled:opacity-50"
                 >
                   {generatingModCode ? '⏳ Generating...' : '🔑 Generate Code'}
                 </button>
                 {latestModCode && (
                   <div className="flex items-center gap-2">
-                    <code className="bg-gray-900 px-4 py-2 rounded-lg text-emerald-300 font-mono text-lg tracking-wider border border-emerald-700/30">
+                    <code className="bg-primary/10 px-4 py-2 rounded-lg text-primary font-mono text-lg tracking-wider border border-primary/30">
                       {latestModCode}
                     </code>
-                    <button onClick={() => { navigator.clipboard.writeText(latestModCode); }} className="text-xs text-gray-500 hover:text-gray-300">
+                    <button onClick={() => { navigator.clipboard.writeText(latestModCode); }} className="text-xs text-muted-foreground hover:text-foreground">
                       📋 Copy
                     </button>
                   </div>
@@ -560,31 +561,31 @@ export default function MinistryDashboard() {
             </div>
 
             {/* Pending Requests */}
-            <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 space-y-4">
-              <h3 className="font-semibold text-gray-200">Moderator Requests</h3>
+            <div className="cosmic-card p-5 space-y-4">
+              <h3 className="font-semibold text-foreground">Moderator Requests</h3>
               {modRequests.length === 0 ? (
-                <p className="text-sm text-gray-600">No moderator requests</p>
+                <p className="text-sm text-muted-foreground">No moderator requests</p>
               ) : (
                 <div className="space-y-3">
                   {modRequests.map(req => (
-                    <div key={req.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-900/50 border border-gray-800">
+                    <div key={req.id} className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/10">
                       <div>
-                        <p className="text-sm text-gray-200 font-medium">{req.name}</p>
-                        <p className="text-xs text-gray-500">{req.email}</p>
+                        <p className="text-sm text-foreground font-medium">{req.name}</p>
+                        <p className="text-xs text-muted-foreground">{req.email}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         {req.status === 'pending' ? (
                           <>
-                            <button onClick={() => handleModRequest(req.id, 'approve')} className="px-3 py-1 rounded bg-emerald-800/40 text-emerald-400 text-xs border border-emerald-700/30 hover:bg-emerald-800/60">
+                            <button onClick={() => handleModRequest(req.id, 'approve')} className="px-3 py-1 rounded cosmic-button text-xs">
                               ✅ Approve
                             </button>
-                            <button onClick={() => handleModRequest(req.id, 'deny')} className="px-3 py-1 rounded bg-red-800/40 text-red-400 text-xs border border-red-700/30 hover:bg-red-800/60">
+                            <button onClick={() => handleModRequest(req.id, 'deny')} className="px-3 py-1 rounded bg-destructive/15 border border-destructive/30 text-destructive text-xs hover:bg-destructive/25">
                               ❌ Deny
                             </button>
                           </>
                         ) : (
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            req.status === 'approved' ? 'bg-emerald-950/50 text-emerald-400' : 'bg-red-950/50 text-red-400'
+                            req.status === 'approved' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-destructive/15 text-destructive'
                           }`}>{req.status}</span>
                         )}
                       </div>

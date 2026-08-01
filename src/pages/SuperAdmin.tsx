@@ -382,25 +382,25 @@ export default function SuperAdmin() {
             {testingRole === 'teacher' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="cosmic-card p-4">
                     <p className="text-sm text-muted-foreground">My Classes</p>
                     <p className="text-2xl font-bold">4</p>
                   </div>
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="cosmic-card p-4">
                     <p className="text-sm text-muted-foreground">Total Students</p>
                     <p className="text-2xl font-bold">87</p>
                   </div>
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="cosmic-card p-4">
                     <p className="text-sm text-muted-foreground">Active Assignments</p>
                     <p className="text-2xl font-bold text-primary">5</p>
                   </div>
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="cosmic-card p-4">
                     <p className="text-sm text-muted-foreground">To Grade</p>
                     <p className="text-2xl font-bold text-warning">12</p>
                   </div>
                 </div>
 
-                <div className="glass-effect rounded-xl p-6">
+                <div className="cosmic-card p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">📚 My Subjects</h2>
                     <Button size="sm" className="gap-2">
@@ -418,7 +418,7 @@ export default function SuperAdmin() {
                   </div>
                 </div>
 
-                <div className="glass-effect rounded-xl p-6">
+                <div className="cosmic-card p-6">
                   <h2 className="text-lg font-semibold mb-4">📋 Submissions to Grade</h2>
                   <Table>
                     <TableHeader>
@@ -453,25 +453,25 @@ export default function SuperAdmin() {
             {testingRole === 'school_admin' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="cosmic-card p-4">
                     <p className="text-sm text-muted-foreground">Total Teachers</p>
                     <p className="text-2xl font-bold">15</p>
                   </div>
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="cosmic-card p-4">
                     <p className="text-sm text-muted-foreground">Total Students</p>
                     <p className="text-2xl font-bold">342</p>
                   </div>
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="cosmic-card p-4">
                     <p className="text-sm text-muted-foreground">Pending Requests</p>
                     <p className="text-2xl font-bold text-warning">4</p>
                   </div>
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="cosmic-card p-4">
                     <p className="text-sm text-muted-foreground">Active Codes</p>
                     <p className="text-2xl font-bold text-primary">8</p>
                   </div>
                 </div>
 
-                <div className="glass-effect rounded-xl p-6">
+                <div className="cosmic-card p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">⏳ Pending Requests</h2>
                   </div>
@@ -520,7 +520,7 @@ export default function SuperAdmin() {
                   </Table>
                 </div>
 
-                <div className="glass-effect rounded-xl p-6">
+                <div className="cosmic-card p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">🔑 Invite Codes</h2>
                     <Button size="sm" className="gap-2">
@@ -572,21 +572,22 @@ export default function SuperAdmin() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="glass-effect-strong border-b border-border/30 sticky top-0 z-50">
+      <header className="cosmic-header border-b border-primary/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <ShieldAlert className="w-5 h-5 text-primary-foreground" />
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center cosmic-pulse"
+              style={{ background: 'linear-gradient(135deg, hsl(187 92% 52% / 0.25) 0%, hsl(187 92% 52% / 0.05) 100%)', border: '1px solid hsl(187 92% 52% / 0.3)' }}>
+              <ShieldAlert className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Super Admin Panel</h1>
+              <h1 className="text-xl font-bold cosmic-glow-text">Super Admin Panel</h1>
               <p className="text-xs text-muted-foreground">Manage all schools</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
+                <Button variant="outline" className="gap-2 cosmic-button">
                   <FlaskConical className="w-4 h-4" />
                   Testing
                 </Button>
@@ -619,7 +620,7 @@ export default function SuperAdmin() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-6 flex-wrap">
-          <Button variant={activeTab === 'schools' ? 'default' : 'outline'} onClick={() => setActiveTab('schools')} className="gap-2">
+          <Button variant={activeTab === 'schools' ? 'default' : 'outline'} onClick={() => setActiveTab('schools')} className="gap-2 data-[state=active]:cosmic-button">
             <Building2 className="w-4 h-4" /> Schools
           </Button>
           <Button variant={activeTab === 'analytics' ? 'default' : 'outline'} onClick={() => setActiveTab('analytics')} className="gap-2">
@@ -657,17 +658,17 @@ export default function SuperAdmin() {
         <>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="glass-effect rounded-xl p-4">
+          <div className="cosmic-card p-4">
             <p className="text-sm text-muted-foreground">Total Schools</p>
             <p className="text-2xl font-bold">{schools.length}</p>
           </div>
-          <div className="glass-effect rounded-xl p-4">
+          <div className="cosmic-card p-4">
             <p className="text-sm text-muted-foreground">Active Schools</p>
             <p className="text-2xl font-bold text-green-500">
               {schools.filter(s => s.status === 'active').length}
             </p>
           </div>
-          <div className="glass-effect rounded-xl p-4">
+          <div className="cosmic-card p-4">
             <p className="text-sm text-muted-foreground">Suspended Schools</p>
             <p className="text-2xl font-bold text-destructive">
               {schools.filter(s => s.status === 'suspended').length}
@@ -748,7 +749,7 @@ export default function SuperAdmin() {
         </div>
 
         {/* Schools Table */}
-        <div className="glass-effect rounded-xl overflow-hidden">
+        <div className="cosmic-card overflow-hidden">
           {loadingSchools ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
