@@ -19,7 +19,7 @@ export function AnimatedBackground({ density = 14, className = '' }: AnimatedBac
       <div className="absolute inset-0 bg-background" />
       <div
         className="absolute inset-0"
-        style={{ background: 'var(--gradient-horizon)' }}
+        style={{ background: 'var(--gradient-hero)' }}
       />
       <OrbitField density={density} />
       <div className="grain-overlay absolute inset-0" />
