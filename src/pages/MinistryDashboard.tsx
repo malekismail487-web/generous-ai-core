@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, LogOut, Building2, Users, GraduationCap, ChartBar as BarChart3, TriangleAlert as AlertTriangle, FileText, TrendingUp, BookOpen, Award, ClipboardList, LayoutDashboard, Radar } from 'lucide-react';
+import { Shield, LogOut, Building2, Users, GraduationCap, ChartBar as BarChart3, TriangleAlert as AlertTriangle, FileText, TrendingUp, BookOpen, Award, ClipboardList, LayoutDashboard, Radar, Terminal, Activity, Lock } from 'lucide-react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -10,6 +10,7 @@ import { DashboardShell, NavItem } from '@/components/DashboardShell';
 import { LuminaAtom } from '@/components/LuminaAtom';
 import { ControlCenterShell } from '@/components/ministry/control/ControlCenterShell';
 import { IntelligenceShell } from '@/components/ministry/intelligence/IntelligenceShell';
+import { cn } from '@/lib/utils';
 
 type SchoolStats = {
   id: string;
@@ -40,6 +41,9 @@ type TabId = 'overview' | 'schools' | 'compliance' | 'atrisk' | 'moderators';
 const SESSION_KEY = 'ministry_session_token';
 const WORKSPACE_KEY = 'ministry_workspace';
 const SESSION_MS = 15 * 60 * 1000;
+
+/** Zero-pad a number to 3 digits for terminal readouts. */
+const pad3 = (n: number) => Math.max(0, Math.round(n)).toString().padStart(3, '0');
 
 function getStoredWorkspace(): Workspace {
   if (typeof window === 'undefined') return 'dashboard';
@@ -278,16 +282,39 @@ export default function MinistryDashboard() {
     }
   };
 
+  // ── Derived terminal readouts ──
+  const activeSchoolCount = schoolStats.filter((s) => s.status === 'active').length;
+  const alertCount = schoolStats.filter((s) => s.completionRate < 50).length;
+  const tickerSchools = [...schoolStats].sort((a, b) => b.completionRate - a.completionRate).slice(0, 8);
+
+  const terminalStats = nationalStats ? [
+    { field: 'SCHOOLS', value: pad3(nationalStats.totalSchools), sub: 'registered nodes', icon: Building2 },
+    { field: 'STUDENTS', value: nationalStats.totalStudents.toLocaleString(), sub: 'enrolled subjects', icon: GraduationCap },
+    { field: 'TEACHERS', value: nationalStats.totalTeachers.toLocaleString(), sub: 'active instructors', icon: Users },
+    { field: 'ASSIGNMENTS', value: nationalStats.totalAssignments.toLocaleString(), sub: 'deployed tasks', icon: BookOpen },
+    { field: 'SUBMISSIONS', value: nationalStats.totalSubmissions.toLocaleString(), sub: 'packets received', icon: FileText },
+    { field: 'COMPLETION', value: `${nationalStats.avgCompletionRate}%`, sub: 'avg compliance', icon: TrendingUp },
+    { field: 'MATERIALS', value: nationalStats.totalMaterials.toLocaleString(), sub: 'resource files', icon: BookOpen },
+    {
+      field: 'RATIO',
+      value: nationalStats.totalTeachers > 0
+        ? `1:${Math.round(nationalStats.totalStudents / nationalStats.totalTeachers)}`
+        : 'N/A',
+      sub: 'teacher:student',
+      icon: Users,
+    },
+  ] : [];
+
   // ── Nav items ──
   const navItems: NavItem[] = [
     { id: 'overview', label: 'Overview', icon: <BarChart3 size={18} /> },
     { id: 'schools', label: 'Schools', icon: <Building2 size={18} /> },
     { id: 'compliance', label: 'Compliance', icon: <FileText size={18} /> },
-    { id: 'atrisk', label: 'At-Risk', icon: <AlertTriangle size={18} /> },
+    { id: 'atrisk', label: 'At-Risk', icon: <AlertTriangle size={18} />, badge: alertCount || undefined },
     { id: 'moderators', label: 'Moderators', icon: <Shield size={18} /> },
   ];
 
-  // ── Workspace switch (sidebarBottom) ──
+  // ── Workspace switch (sidebarBottom) — small icon buttons ──
   const workspaces: { id: Workspace; label: string; icon: typeof LayoutDashboard; hint: string }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, hint: 'Observe' },
     { id: 'control', label: 'Control', icon: ClipboardList, hint: 'Govern' },
@@ -295,27 +322,21 @@ export default function MinistryDashboard() {
   ];
 
   const sidebarBottom = (
-    <div className="space-y-1.5">
-      <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 px-1 mb-1">Workspace</div>
-      <div className="grid grid-cols-3 gap-1.5">
-        {workspaces.map((ws) => {
-          const isActive = workspace === ws.id;
-          return (
-            <button
-              key={ws.id}
-              onClick={() => setWorkspace(ws.id)}
-              title={ws.hint}
-              className={[
-                'lumina-btn flex flex-col items-center gap-1 py-2 px-1 text-[10px] rounded-lg',
-                isActive ? 'opacity-100' : 'opacity-45 hover:opacity-80',
-              ].join(' ')}
-            >
-              <ws.icon size={15} className={isActive ? 'text-white' : 'text-white/60'} />
-              <span className="font-medium tracking-wide">{ws.label}</span>
-            </button>
-          );
-        })}
-      </div>
+    <div className="flex flex-col items-center gap-1.5 w-full">
+      <div className="text-[9px] uppercase tracking-[0.25em] text-white/25 font-mono mb-0.5">WS</div>
+      {workspaces.map((ws) => {
+        const isActive = workspace === ws.id;
+        return (
+          <button
+            key={ws.id}
+            onClick={() => setWorkspace(ws.id)}
+            title={`${ws.label} — ${ws.hint}`}
+            className={cn('lumina-btn-icon w-9 h-9', isActive && 'active')}
+          >
+            <ws.icon size={15} className={isActive ? 'text-white' : 'text-white/55'} />
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -323,18 +344,19 @@ export default function MinistryDashboard() {
   const headerRight = (
     <div className="flex items-center gap-2 md:gap-3">
       <div
-        className={[
-          'text-xs font-mono px-3 py-1 rounded-full border',
+        className={cn(
+          'text-xs font-mono px-3 py-1 rounded-full border tabular-nums flex items-center gap-1.5',
           timeLeft < 120
             ? 'border-red-500/40 text-red-400 bg-red-500/10'
             : 'border-white/15 text-white/60 bg-white/[0.04]',
-        ].join(' ')}
+        )}
       >
-        ⏱ {formatTime(timeLeft)}
+        <span className="text-white/30 hidden sm:inline">SESSION</span>
+        <span>{formatTime(timeLeft)}</span>
       </div>
-      <button onClick={handleLogout} className="lumina-btn text-xs px-3 py-1.5 flex items-center gap-1.5">
+      <button onClick={handleLogout} className="lumina-btn-glass text-xs px-3 py-1.5 flex items-center gap-1.5">
         <LogOut size={13} />
-        <span className="hidden sm:inline">End Session</span>
+        <span className="hidden sm:inline">END</span>
       </button>
     </div>
   );
@@ -353,6 +375,7 @@ export default function MinistryDashboard() {
     return (
       <DashboardShell
         role="Ministry"
+        roleAccent="rgba(232,232,232,0.4)"
         navItems={navItems}
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as TabId)}
@@ -369,6 +392,7 @@ export default function MinistryDashboard() {
     return (
       <DashboardShell
         role="Ministry"
+        roleAccent="rgba(232,232,232,0.4)"
         navItems={navItems}
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as TabId)}
@@ -386,133 +410,249 @@ export default function MinistryDashboard() {
   return (
     <DashboardShell
       role="Ministry"
+      roleAccent="rgba(232,232,232,0.4)"
       navItems={navItems}
       activeTab={activeTab}
       onTabChange={(id) => setActiveTab(id as TabId)}
       headerRight={headerRight}
       sidebarBottom={sidebarBottom}
     >
-      {/* ───────────────────── Overview ───────────────────── */}
+      {/* ───────────────────── Overview — Classified Terminal ───────────────────── */}
       {activeTab === 'overview' && (
-        <div className="tab-enter px-4 md:px-8 py-8 max-w-7xl mx-auto space-y-8">
-          {/* Hero with LuminaAtom */}
-          <div className="lumina-card p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 fade-up">
-            <div className="lumina-icon-tile !w-20 !h-20 shrink-0">
-              <LuminaAtom size={56} animate glow />
-            </div>
-            <div className="flex-1 text-center md:text-left">
-              <h2 className="lumina-text text-2xl md:text-3xl font-bold">National Education Overview</h2>
-              <p className="text-sm text-white/40 mt-1">
-                Live ecosystem telemetry across all registered schools.
-              </p>
-            </div>
-            <div className="text-right hidden md:block">
-              <div className="text-[10px] uppercase tracking-[0.25em] text-white/25">Session</div>
-              <div className="text-sm font-mono text-white/60">Active</div>
-            </div>
-          </div>
+        <div className="relative tab-enter px-4 md:px-8 py-8 max-w-7xl mx-auto">
+          {/* Scanline overlay — classified terminal */}
+          <div className="scanline-overlay pointer-events-none absolute inset-0 z-0" />
 
-          {!nationalStats ? (
-            <div className="flex items-center justify-center py-16">
-              <LuminaAtom size={48} animate />
+          {/* Terminal blink + cursor keyframes (scoped to this view) */}
+          <style>{`
+            @keyframes terminal-blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0.12; } }
+            .terminal-blink { animation: terminal-blink 1.1s steps(1,end) infinite; }
+            @keyframes cursor-blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+            .terminal-cursor { animation: cursor-blink 1s steps(1,end) infinite; margin-left: 2px; }
+          `}</style>
+
+          <div className="relative z-10 space-y-8">
+            {/* Classification banner */}
+            <div className="lumina-card px-4 py-2.5 fade-up flex items-center justify-between">
+              <div className="flex items-center gap-2 font-mono text-[10px] md:text-[11px] tracking-[0.25em] text-white/60">
+                <Lock size={12} className="text-amber-400/80" />
+                <span>CLASSIFIED</span>
+                <span className="text-white/20">//</span>
+                <span className="hidden sm:inline">MINISTRY OF EDUCATION</span>
+                <span className="text-white/20 hidden sm:inline">//</span>
+                <span>EYES ONLY</span>
+              </div>
+              <div className="flex items-center gap-2 font-mono text-[10px] text-white/40">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400/60 animate-ping" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+                </span>
+                <span className="hidden sm:inline">LINK ACTIVE</span>
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: 'Total Schools', value: nationalStats.totalSchools, icon: Building2 },
-                { label: 'Total Students', value: nationalStats.totalStudents, icon: GraduationCap },
-                { label: 'Total Teachers', value: nationalStats.totalTeachers, icon: Users },
-                { label: 'Total Assignments', value: nationalStats.totalAssignments, icon: BookOpen },
-                { label: 'Total Submissions', value: nationalStats.totalSubmissions, icon: FileText },
-                { label: 'Avg Completion', value: `${nationalStats.avgCompletionRate}%`, icon: TrendingUp },
-                { label: 'Total Materials', value: nationalStats.totalMaterials, icon: BookOpen },
-                {
-                  label: 'Teacher : Student',
-                  value: nationalStats.totalTeachers > 0
-                    ? `1 : ${Math.round(nationalStats.totalStudents / nationalStats.totalTeachers)}`
-                    : 'N/A',
-                  icon: Users,
-                },
-              ].map((stat, i) => (
-                <div key={i} className={`lumina-stat p-4 space-y-3 fade-up fade-up-delay-${Math.min(i + 1, 6)}`}>
-                  <div className="lumina-icon-tile !w-9 !h-9">
-                    <stat.icon size={16} className="text-white/70" />
+
+            {/* Terminal hero */}
+            <div className="lumina-card p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 fade-up fade-up-delay-1">
+              <LuminaAtom size={100} animate glow />
+              <div className="flex-1 text-center md:text-left">
+                <div className="font-mono text-[11px] tracking-[0.25em] text-white/35 uppercase">
+                  &gt; National Intelligence Terminal
+                </div>
+                <h2 className="lumina-text text-2xl md:text-3xl font-bold font-mono mt-1">
+                  EDUCATION_OVERVIEW
+                </h2>
+                <p className="text-sm text-white/40 mt-1 font-mono">
+                  // Live ecosystem telemetry across all registered schools
+                </p>
+              </div>
+              <div className="text-right hidden md:block font-mono">
+                <div className="text-[10px] uppercase tracking-[0.25em] text-white/25">UPLINK</div>
+                <div className="text-sm text-emerald-400/80 mt-0.5">
+                  <span className="terminal-blink">●</span> SECURE
+                </div>
+              </div>
+            </div>
+
+            {!nationalStats ? (
+              <div className="flex items-center justify-center py-16">
+                <LuminaAtom size={48} animate />
+              </div>
+            ) : (
+              <>
+                {/* System readout line */}
+                <div className="lumina-card p-4 fade-up fade-up-delay-2">
+                  <div className="flex items-center gap-2 text-[11px] text-white/35 mb-2 font-mono uppercase tracking-[0.2em]">
+                    <Terminal size={13} /> <span>SYSTEM_READOUT</span>
                   </div>
-                  <div>
-                    <div className="text-2xl font-bold text-white/90">{stat.value}</div>
-                    <div className="text-xs text-white/40 mt-0.5">{stat.label}</div>
+                  <div className="text-sm md:text-base text-white/85 tracking-wide font-mono break-all">
+                    SCHOOLS_ONLINE: <span className="text-emerald-400/90">{pad3(activeSchoolCount)}</span>
+                    <span className="text-white/20"> | </span>
+                    COMPLIANCE: <span className="text-white/90">{nationalStats.avgCompletionRate}%</span>
+                    <span className="text-white/20"> | </span>
+                    ALERTS:{' '}
+                    <span className={alertCount > 0 ? 'text-red-400' : 'text-white/90'}>
+                      {pad3(alertCount)}
+                    </span>
+                    <span className="terminal-cursor text-emerald-400/80">█</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+
+                {/* National stats grid — terminal readouts */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {terminalStats.map((stat, i) => (
+                    <div key={i} className={`lumina-card p-4 space-y-2 fade-up fade-up-delay-${Math.min(i + 1, 6)}`}>
+                      <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/35 font-mono">
+                        <stat.icon size={13} /> {stat.field}
+                      </div>
+                      <div className="text-2xl font-bold text-white/90 font-mono tabular-nums">
+                        {stat.value}
+                      </div>
+                      <div className="text-[10px] text-white/30 font-mono">// {stat.sub}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="lumina-divider" />
+
+                {/* Live compliance ticker */}
+                <div className="lumina-card p-5 fade-up fade-up-delay-3">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 font-mono text-[11px] tracking-[0.2em] uppercase text-white/50">
+                      <Activity size={14} /> Compliance Ticker
+                    </div>
+                    <div className="font-mono text-[10px] text-white/30 flex items-center gap-1.5">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400/50 animate-ping" />
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400/80" />
+                      </span>
+                      LIVE_FEED
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {tickerSchools.length === 0 && (
+                      <div className="font-mono text-xs text-white/30 py-4 text-center">
+                        // NO_NODES_ONLINE — awaiting uplink
+                      </div>
+                    )}
+                    {tickerSchools.map((s, i) => {
+                      const pct = s.completionRate;
+                      const barColor =
+                        pct >= 75 ? 'bg-emerald-400/70' : pct >= 50 ? 'bg-amber-400/70' : 'bg-red-400/70';
+                      const isActive = s.status === 'active';
+                      return (
+                        <div key={s.id} className="flex items-center gap-2 md:gap-3 font-mono text-xs">
+                          <span className="text-white/30 w-12 shrink-0">SCH_{pad3(i + 1)}</span>
+                          <span className="text-white/70 w-32 md:w-52 shrink-0 truncate">{s.name}</span>
+                          <span className="flex-1 h-2.5 rounded-sm bg-white/[0.06] overflow-hidden border border-white/10">
+                            <span
+                              className={cn('block h-full rounded-sm transition-all duration-500', barColor)}
+                              style={{ width: `${Math.min(100, pct)}%` }}
+                            />
+                          </span>
+                          <span
+                            className={cn(
+                              'w-14 text-right tabular-nums',
+                              pct >= 50 ? 'text-white/85' : 'text-red-400',
+                            )}
+                          >
+                            {pct}%
+                          </span>
+                          <span className="flex items-center gap-1.5 w-24 shrink-0 justify-end">
+                            <span className={cn('relative flex h-2 w-2', isActive && 'terminal-blink')}>
+                              {isActive ? (
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                              ) : (
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-400/70" />
+                              )}
+                            </span>
+                            <span className={cn('text-[10px]', isActive ? 'text-emerald-400/80' : 'text-red-400/80')}>
+                              {isActive ? 'ONLINE' : 'OFFLINE'}
+                            </span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 
-      {/* ───────────────────── Schools ───────────────────── */}
+      {/* ───────────────────── Schools — Terminal Registry ───────────────────── */}
       {activeTab === 'schools' && (
         <div className="tab-enter px-4 md:px-8 py-8 max-w-7xl mx-auto space-y-6">
           <div className="flex items-center gap-3 fade-up">
             <div className="lumina-icon-tile">
               <Building2 size={18} className="text-white/70" />
             </div>
-            <h2 className="lumina-text text-xl font-bold">School Performance Rankings</h2>
+            <div>
+              <h2 className="lumina-text text-xl font-bold font-mono">SCHOOL_REGISTRY</h2>
+              <p className="text-xs text-white/40 mt-0.5 font-mono">// Performance rankings by completion rate</p>
+            </div>
           </div>
 
           <div className="lumina-card overflow-hidden fade-up fade-up-delay-1">
             <Table>
               <TableHeader>
                 <TableRow className="border-white/5 hover:bg-transparent">
-                  <TableHead className="text-white/40">Rank</TableHead>
-                  <TableHead className="text-white/40">School</TableHead>
-                  <TableHead className="text-white/40">Students</TableHead>
-                  <TableHead className="text-white/40">Teachers</TableHead>
-                  <TableHead className="text-white/40">Assignments</TableHead>
-                  <TableHead className="text-white/40">Completion</TableHead>
-                  <TableHead className="text-white/40">Avg Accuracy</TableHead>
-                  <TableHead className="text-white/40">Status</TableHead>
+                  <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Rank</TableHead>
+                  <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">School</TableHead>
+                  <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Students</TableHead>
+                  <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Teachers</TableHead>
+                  <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Assignments</TableHead>
+                  <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Completion</TableHead>
+                  <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Accuracy</TableHead>
+                  <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {[...schoolStats]
                   .sort((a, b) => b.completionRate - a.completionRate)
-                  .map((school, i) => (
-                    <TableRow key={school.id} className="border-white/[0.04]">
-                      <TableCell className="font-mono text-white/70">
-                        {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
-                      </TableCell>
-                      <TableCell className="font-medium text-white/90">{school.name}</TableCell>
-                      <TableCell className="text-white/60">{school.studentCount}</TableCell>
-                      <TableCell className="text-white/60">{school.teacherCount}</TableCell>
-                      <TableCell className="text-white/60">{school.assignmentCount}</TableCell>
-                      <TableCell>
-                        <span className={school.completionRate >= 50 ? 'text-white/90' : 'text-red-400'}>
-                          {school.completionRate}%
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className={school.avgAccuracy >= 60 ? 'text-white/90' : 'text-amber-400'}>
-                          {school.avgAccuracy}%
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={[
-                            'px-2 py-0.5 rounded-full text-xs border',
-                            school.status === 'active'
-                              ? 'bg-white/[0.06] text-white/70 border-white/15'
-                              : 'bg-red-500/10 text-red-400 border-red-500/30',
-                          ].join(' ')}
-                        >
-                          {school.status}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  .map((school, i) => {
+                    const isActive = school.status === 'active';
+                    return (
+                      <TableRow key={school.id} className="border-white/[0.04]">
+                        <TableCell className="font-mono text-white/70 tabular-nums">
+                          {i === 0 ? '01*' : String(i + 1).padStart(2, '0')}
+                        </TableCell>
+                        <TableCell className="font-mono font-medium text-white/90">{school.name}</TableCell>
+                        <TableCell className="font-mono text-white/60 tabular-nums">{school.studentCount}</TableCell>
+                        <TableCell className="font-mono text-white/60 tabular-nums">{school.teacherCount}</TableCell>
+                        <TableCell className="font-mono text-white/60 tabular-nums">{school.assignmentCount}</TableCell>
+                        <TableCell className="font-mono">
+                          <span className={school.completionRate >= 50 ? 'text-white/90' : 'text-red-400'}>
+                            {school.completionRate}%
+                          </span>
+                        </TableCell>
+                        <TableCell className="font-mono">
+                          <span className={school.avgAccuracy >= 60 ? 'text-white/90' : 'text-amber-400'}>
+                            {school.avgAccuracy}%
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="flex items-center gap-2 font-mono text-xs">
+                            <span className={cn('relative flex h-2 w-2', isActive && 'terminal-blink')}>
+                              {isActive ? (
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                              ) : (
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-400/70" />
+                              )}
+                            </span>
+                            <span className={isActive ? 'text-emerald-400/80' : 'text-red-400/80'}>
+                              {school.status}
+                            </span>
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 {schoolStats.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-white/40 py-8">
-                      No schools registered in the system
+                    <TableCell colSpan={8} className="text-center text-white/40 py-8 font-mono">
+                      // NO_SCHOOLS_REGISTERED
                     </TableCell>
                   </TableRow>
                 )}
@@ -522,14 +662,19 @@ export default function MinistryDashboard() {
         </div>
       )}
 
-      {/* ───────────────────── Compliance ───────────────────── */}
+      {/* ───────────────────── Compliance — Readiness Matrix ───────────────────── */}
       {activeTab === 'compliance' && (
         <div className="tab-enter px-4 md:px-8 py-8 max-w-7xl mx-auto space-y-6">
           <div className="flex items-center gap-3 fade-up">
             <div className="lumina-icon-tile">
               <FileText size={18} className="text-white/70" />
             </div>
-            <h2 className="lumina-text text-xl font-bold">Compliance &amp; Readiness Reports</h2>
+            <div>
+              <h2 className="lumina-text text-xl font-bold font-mono">COMPLIANCE_REPORT</h2>
+              <p className="text-xs text-white/40 mt-0.5 font-mono">
+                // Readiness evaluation per registered node
+              </p>
+            </div>
           </div>
 
           <div className="grid gap-4">
@@ -549,32 +694,34 @@ export default function MinistryDashboard() {
                 <div key={school.id} className={`lumina-card p-5 space-y-4 fade-up fade-up-delay-${Math.min(i + 1, 6)}`}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-white/90">{school.name}</h3>
-                      <p className="text-xs text-white/40 mt-0.5">
+                      <h3 className="lumina-text font-semibold font-mono">{school.name}</h3>
+                      <p className="text-xs text-white/40 mt-0.5 font-mono">
                         {school.studentCount} students · {school.teacherCount} teachers
                       </p>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-bold border ${scoreClass}`}>
-                      {score}/4 Compliant
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold border font-mono ${scoreClass}`}>
+                      {score}/4 COMPLIANT
                     </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {[
-                      { label: 'Teachers Assigned', ok: hasTeachers },
-                      { label: 'Materials Uploaded', ok: hasMaterials },
-                      { label: 'Assignments Created', ok: hasAssignments },
-                      { label: 'Student:Teacher ≤ 25:1', ok: goodRatio },
+                      { label: 'TEACHERS_ASSIGNED', ok: hasTeachers },
+                      { label: 'MATERIALS_UPLOADED', ok: hasMaterials },
+                      { label: 'ASSIGNMENTS_LIVE', ok: hasAssignments },
+                      { label: 'RATIO_LE_25:1', ok: goodRatio },
                     ].map((item, j) => (
                       <div
                         key={j}
-                        className={[
-                          'flex items-center gap-2 px-3 py-2 rounded-lg text-xs border',
+                        className={cn(
+                          'flex items-center gap-2 px-3 py-2 rounded-lg text-xs border font-mono',
                           item.ok
                             ? 'bg-white/[0.04] text-white/70 border-white/10'
                             : 'bg-red-500/10 text-red-400 border-red-500/20',
-                        ].join(' ')}
+                        )}
                       >
-                        <span>{item.ok ? '✅' : '❌'}</span>
+                        <span className={item.ok ? 'text-emerald-400/80' : 'text-red-400'}>
+                          {item.ok ? '[✓]' : '[✗]'}
+                        </span>
                         <span>{item.label}</span>
                       </div>
                     ))}
@@ -583,7 +730,9 @@ export default function MinistryDashboard() {
               );
             })}
             {schoolStats.length === 0 && (
-              <div className="lumina-card p-8 text-center text-white/40">No schools to evaluate.</div>
+              <div className="lumina-card p-8 text-center text-white/40 font-mono">
+                // NO_NODES_TO_EVALUATE
+              </div>
             )}
           </div>
         </div>
@@ -601,7 +750,10 @@ export default function MinistryDashboard() {
             <div className="lumina-icon-tile">
               <Shield size={18} className="text-white/70" />
             </div>
-            <h2 className="lumina-text text-xl font-bold">Moderator Management</h2>
+            <div>
+              <h2 className="lumina-text text-xl font-bold font-mono">MODERATOR_CONTROL</h2>
+              <p className="text-xs text-white/40 mt-0.5 font-mono">// Invite codes &amp; pending access requests</p>
+            </div>
           </div>
 
           {/* Generate Code */}
@@ -611,9 +763,9 @@ export default function MinistryDashboard() {
                 <Shield size={15} className="text-white/70" />
               </div>
               <div>
-                <h3 className="font-semibold text-white/90">Generate Moderator Invite Code</h3>
-                <p className="text-xs text-white/40 mt-0.5">
-                  Generate a code for a new content moderator. Codes expire in 48 hours.
+                <h3 className="lumina-text font-semibold font-mono">GENERATE_INVITE_CODE</h3>
+                <p className="text-xs text-white/40 mt-0.5 font-mono">
+                  // Generate a code for a new content moderator. Codes expire in 48h.
                 </p>
               </div>
             </div>
@@ -621,9 +773,9 @@ export default function MinistryDashboard() {
               <button
                 onClick={generateModeratorCode}
                 disabled={generatingModCode}
-                className="lumina-btn text-sm px-4 py-2 flex items-center gap-2 disabled:opacity-50"
+                className="lumina-btn-glass text-sm px-4 py-2 flex items-center gap-2 font-mono disabled:opacity-50"
               >
-                {generatingModCode ? '⏳ Generating...' : '🔑 Generate Code'}
+                {generatingModCode ? '// GENERATING...' : '> GENERATE CODE'}
               </button>
               {latestModCode && (
                 <div className="flex items-center gap-2">
@@ -632,9 +784,9 @@ export default function MinistryDashboard() {
                   </code>
                   <button
                     onClick={() => navigator.clipboard.writeText(latestModCode)}
-                    className="text-xs text-white/40 hover:text-white/70 transition-colors"
+                    className="lumina-btn-glass text-xs px-2.5 py-1.5 font-mono"
                   >
-                    📋 Copy
+                    COPY
                   </button>
                 </div>
               )}
@@ -643,9 +795,9 @@ export default function MinistryDashboard() {
 
           {/* Pending Requests */}
           <div className="lumina-card p-5 space-y-4 fade-up fade-up-delay-2">
-            <h3 className="font-semibold text-white/90">Moderator Requests</h3>
+            <h3 className="lumina-text font-semibold font-mono">ACCESS_REQUESTS</h3>
             {modRequests.length === 0 ? (
-              <p className="text-sm text-white/40">No moderator requests</p>
+              <p className="text-sm text-white/40 font-mono">// No pending moderator requests</p>
             ) : (
               <div className="space-y-3">
                 {modRequests.map((req) => (
@@ -653,7 +805,7 @@ export default function MinistryDashboard() {
                     key={req.id}
                     className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-white/[0.03] border border-white/[0.08]"
                   >
-                    <div>
+                    <div className="font-mono">
                       <p className="text-sm text-white/90 font-medium">{req.name}</p>
                       <p className="text-xs text-white/40">{req.email}</p>
                     </div>
@@ -663,26 +815,26 @@ export default function MinistryDashboard() {
                           <button
                             onClick={() => handleModRequest(req.id, 'approve')}
                             disabled={modActionLoading === req.id}
-                            className="lumina-btn text-xs px-3 py-1.5 disabled:opacity-50"
+                            className="lumina-btn-glass text-xs px-3 py-1.5 font-mono disabled:opacity-50"
                           >
-                            {modActionLoading === req.id ? '…' : '✅ Approve'}
+                            {modActionLoading === req.id ? '…' : '✓ APPROVE'}
                           </button>
                           <button
                             onClick={() => handleModRequest(req.id, 'deny')}
                             disabled={modActionLoading === req.id}
-                            className="text-xs px-3 py-1.5 rounded bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                            className="lumina-btn-glass text-xs px-3 py-1.5 font-mono text-red-400 hover:bg-red-500/15 disabled:opacity-50"
                           >
-                            {modActionLoading === req.id ? '…' : '❌ Deny'}
+                            {modActionLoading === req.id ? '…' : '✗ DENY'}
                           </button>
                         </>
                       ) : (
                         <span
-                          className={[
-                            'text-xs px-2 py-0.5 rounded-full border',
+                          className={cn(
+                            'text-xs px-2 py-0.5 rounded-full border font-mono',
                             req.status === 'approved'
                               ? 'bg-white/[0.06] text-white/70 border-white/15'
                               : 'bg-red-500/10 text-red-400 border-red-500/30',
-                          ].join(' ')}
+                          )}
                         >
                           {req.status}
                         </span>
@@ -702,6 +854,7 @@ export default function MinistryDashboard() {
 /* ─────────────────────────────────────────────────────────────
    At-Risk tab — fetches learning profiles, flags students with
    < 40% recent accuracy after 5+ answered questions.
+   Terminal aesthetic with monospace data + blinking alert indicators.
    ───────────────────────────────────────────────────────────── */
 function AtRiskTab({ sessionToken }: { sessionToken: string }) {
   const [loading, setLoading] = useState(true);
@@ -753,14 +906,19 @@ function AtRiskTab({ sessionToken }: { sessionToken: string }) {
 
   return (
     <div className="tab-enter px-4 md:px-8 py-8 max-w-7xl mx-auto space-y-6">
+      <style>{`
+        @keyframes alert-blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0.2; } }
+        .alert-blink { animation: alert-blink 1.05s steps(1,end) infinite; }
+      `}</style>
+
       <div className="flex items-center gap-3 fade-up">
         <div className="lumina-icon-tile">
           <AlertTriangle size={18} className="text-white/70" />
         </div>
         <div>
-          <h2 className="lumina-text text-xl font-bold">At-Risk Student Alerts</h2>
-          <p className="text-sm text-white/40 mt-0.5">
-            Students with less than 40% accuracy after 5+ questions answered. Data sourced from adaptive learning profiles.
+          <h2 className="lumina-text text-xl font-bold font-mono">AT_RISK_ALERTS</h2>
+          <p className="text-sm text-white/40 mt-0.5 font-mono">
+            // Students with &lt;40% accuracy after 5+ questions. Sourced from adaptive learning profiles.
           </p>
         </div>
       </div>
@@ -770,37 +928,44 @@ function AtRiskTab({ sessionToken }: { sessionToken: string }) {
           <div className="lumina-icon-tile mx-auto mb-3">
             <Award size={20} className="text-white/70" />
           </div>
-          <p className="text-white/50">No at-risk students detected. All students are performing adequately.</p>
+          <p className="text-white/50 font-mono">// NO_THREATS_DETECTED — all students performing adequately</p>
         </div>
       ) : (
         <div className="lumina-card overflow-hidden fade-up fade-up-delay-1">
           <Table>
             <TableHeader>
               <TableRow className="border-white/5 hover:bg-transparent">
-                <TableHead className="text-white/40">Student</TableHead>
-                <TableHead className="text-white/40">School</TableHead>
-                <TableHead className="text-white/40">Grade</TableHead>
-                <TableHead className="text-white/40">Subject</TableHead>
-                <TableHead className="text-white/40">Accuracy</TableHead>
-                <TableHead className="text-white/40">Questions</TableHead>
-                <TableHead className="text-white/40">Level</TableHead>
+                <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Student</TableHead>
+                <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">School</TableHead>
+                <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Grade</TableHead>
+                <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Subject</TableHead>
+                <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Accuracy</TableHead>
+                <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Questions</TableHead>
+                <TableHead className="text-white/40 font-mono text-xs uppercase tracking-wider">Level</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {atRiskStudents.map((student, i) => (
                 <TableRow key={i} className="border-white/[0.04]">
-                  <TableCell className="font-medium text-white/90">{student.studentName}</TableCell>
-                  <TableCell className="text-white/60">{student.schoolName}</TableCell>
-                  <TableCell className="text-white/60">{student.gradeLevel}</TableCell>
-                  <TableCell className="text-white/60">{student.subject}</TableCell>
-                  <TableCell>
-                    <span className="text-red-400 font-mono">
+                  <TableCell className="font-mono font-medium text-white/90">
+                    <span className="flex items-center gap-2">
+                      <span className="alert-blink text-red-400">●</span>
+                      {student.studentName}
+                    </span>
+                  </TableCell>
+                  <TableCell className="font-mono text-white/60">{student.schoolName}</TableCell>
+                  <TableCell className="font-mono text-white/60">{student.gradeLevel}</TableCell>
+                  <TableCell className="font-mono text-white/60">{student.subject}</TableCell>
+                  <TableCell className="font-mono">
+                    <span className="text-red-400 tabular-nums">
                       {Math.round(student.recent_accuracy || 0)}%
                     </span>
                   </TableCell>
-                  <TableCell className="text-white/60">{student.total_questions_answered}</TableCell>
+                  <TableCell className="font-mono text-white/60 tabular-nums">
+                    {student.total_questions_answered}
+                  </TableCell>
                   <TableCell>
-                    <span className="px-2 py-0.5 rounded-full text-xs bg-red-500/10 text-red-400 border border-red-500/25">
+                    <span className="px-2 py-0.5 rounded-full text-xs bg-red-500/10 text-red-400 border border-red-500/25 font-mono">
                       {student.difficulty_level}
                     </span>
                   </TableCell>

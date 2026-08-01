@@ -2,7 +2,27 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard, School } from '@/hooks/useRoleGuard';
 import { useNavigate } from 'react-router-dom';
-import { Building2, RefreshCw, Trash2, Plus, ShieldAlert, Copy, FlaskConical, GraduationCap, Users, UserCog, Check, X, ChartBar as BarChart3, KeyRound, Brain, Code, Puzzle, CirclePause as PauseCircle, CirclePlay as PlayCircle } from 'lucide-react';
+import {
+  Building2,
+  RefreshCw,
+  Trash2,
+  Plus,
+  ShieldAlert,
+  Copy,
+  FlaskConical,
+  GraduationCap,
+  Users,
+  UserCog,
+  Check,
+  X,
+  ChartBar as BarChart3,
+  KeyRound,
+  Brain,
+  Code,
+  Puzzle,
+  CirclePause as PauseCircle,
+  CirclePlay as PlayCircle,
+} from 'lucide-react';
 import { DashboardShell, NavItem } from '@/components/DashboardShell';
 import { LuminaAtom } from '@/components/LuminaAtom';
 import { StudentAppPreview } from '@/components/StudentAppPreview';
@@ -13,7 +33,6 @@ import { MinistryReadinessReport } from '@/components/admin/MinistryReadinessRep
 import MinistryCodeGenerator from '@/components/admin/MinistryCodeGenerator';
 import LuminaApiPanel from '@/components/admin/LuminaApiPanel';
 import { ExtensionReviewPanel } from '@/components/admin/ExtensionReviewPanel';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -55,12 +74,15 @@ import {
 type TestingRole = 'none' | 'student' | 'teacher' | 'school_admin';
 type TabId = 'schools' | 'analytics' | 'ministry' | 'lct' | 'api' | 'extensions' | 'testing';
 
+const STAGGER = ['fade-up-delay-1', 'fade-up-delay-2', 'fade-up-delay-3', 'fade-up-delay-4'] as const;
+
 export default function SuperAdmin() {
   const navigate = useNavigate();
   const { isSuperAdmin, loading } = useRoleGuard();
   const { toast } = useToast();
 
   const [schools, setSchools] = useState<School[]>([]);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [loadingSchools, setLoadingSchools] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [testingRole, setTestingRole] = useState<TestingRole>('none');
@@ -74,6 +96,10 @@ export default function SuperAdmin() {
   const [newActivationCode, setNewActivationCode] = useState('');
   const [newSchoolAddress, setNewSchoolAddress] = useState('');
   const [creating, setCreating] = useState(false);
+
+  // ── Derived stats ──
+  const activeCount = schools.filter((s) => s.status === 'active').length;
+  const suspendedCount = schools.filter((s) => s.status === 'suspended').length;
 
   // Clean up sessionStorage on unmount (covers sign-out via shell)
   useEffect(() => {
@@ -112,6 +138,13 @@ export default function SuperAdmin() {
     } else {
       setSchools((data || []) as School[]);
     }
+
+    // Fetch total user count
+    const { count } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true });
+    setTotalUsers(count ?? 0);
+
     setLoadingSchools(false);
   }, [toast]);
 
@@ -242,7 +275,9 @@ export default function SuperAdmin() {
     }
   };
 
-  // ── Loading state ──
+  // ════════════════════════════════════════════════════════════════
+  //  Loading state
+  // ════════════════════════════════════════════════════════════════
   if (loading || isVerified === null) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -260,7 +295,9 @@ export default function SuperAdmin() {
     );
   }
 
-  // ── Access denied ──
+  // ════════════════════════════════════════════════════════════════
+  //  Access denied
+  // ════════════════════════════════════════════════════════════════
   if (!isSuperAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-black p-4">
@@ -277,19 +314,20 @@ export default function SuperAdmin() {
             You do not have permission to access this page. This area is restricted to super
             administrators only.
           </p>
-          <Button
+          <button
             onClick={() => (window.location.href = '/')}
-            variant="outline"
-            className="lumina-btn"
+            className="lumina-btn-glass px-5 h-10 text-sm"
           >
             Go to Home
-          </Button>
+          </button>
         </div>
       </div>
     );
   }
 
-  // ── Nav items ──
+  // ════════════════════════════════════════════════════════════════
+  //  Nav items
+  // ════════════════════════════════════════════════════════════════
   const navItems: NavItem[] = [
     { id: 'schools', icon: <Building2 size={18} />, label: 'Schools' },
     { id: 'analytics', icon: <BarChart3 size={18} />, label: 'Analytics' },
@@ -300,33 +338,37 @@ export default function SuperAdmin() {
     { id: 'testing', icon: <FlaskConical size={18} />, label: 'Testing' },
   ];
 
-  // ── Header right: testing role simulator + refresh ──
+  // ════════════════════════════════════════════════════════════════
+  //  Header right — compact testing role simulator + refresh
+  // ════════════════════════════════════════════════════════════════
   const headerRight = (
     <div className="flex items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="lumina-btn gap-2">
+          <button className="lumina-btn-glass h-9 px-3 gap-2 text-sm flex items-center">
             <FlaskConical className="w-4 h-4" />
-            {testingRole !== 'none' ? `Testing: ${testingRole.replace('_', ' ')}` : 'Testing'}
-          </Button>
+            <span className="hidden sm:inline">
+              {testingRole !== 'none' ? `Test: ${testingRole.replace('_', ' ')}` : 'Simulate'}
+            </span>
+          </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => handleTestingRole('student')} className="gap-2">
+        <DropdownMenuContent align="end" className="lumina-card border-white/10 p-1 min-w-[180px]">
+          <DropdownMenuItem onClick={() => handleTestingRole('student')} className="gap-2 cursor-pointer">
             <GraduationCap className="w-4 h-4" />
             Test as Student
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleTestingRole('teacher')} className="gap-2">
+          <DropdownMenuItem onClick={() => handleTestingRole('teacher')} className="gap-2 cursor-pointer">
             <Users className="w-4 h-4" />
             Test as Teacher
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleTestingRole('school_admin')} className="gap-2">
+          <DropdownMenuItem onClick={() => handleTestingRole('school_admin')} className="gap-2 cursor-pointer">
             <UserCog className="w-4 h-4" />
             Test as School Admin
           </DropdownMenuItem>
           {testingRole !== 'none' && (
             <DropdownMenuItem
               onClick={() => setTestingRole('none')}
-              className="gap-2 text-red-400 focus:text-red-400"
+              className="gap-2 text-red-400 focus:text-red-400 cursor-pointer"
             >
               <ShieldAlert className="w-4 h-4" />
               Exit Testing Mode
@@ -334,15 +376,13 @@ export default function SuperAdmin() {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      <Button
-        variant="outline"
-        size="icon"
+      <button
         onClick={fetchSchools}
         disabled={loadingSchools}
-        className="lumina-btn"
+        className="lumina-btn-icon h-9 w-9"
       >
         <RefreshCw className={`w-4 h-4 ${loadingSchools ? 'animate-spin' : ''}`} />
-      </Button>
+      </button>
     </div>
   );
 
@@ -352,58 +392,120 @@ export default function SuperAdmin() {
   return (
     <DashboardShell
       role="Super Admin"
+      roleAccent="rgba(232,232,232,0.5)"
       navItems={navItems}
       activeTab={activeTab}
       onTabChange={(id) => setActiveTab(id as TabId)}
       headerRight={headerRight}
     >
-      {/* ──────────────────────────────────────────────
-          Schools Tab
-         ────────────────────────────────────────────── */}
+      {/* ════════════════════════════════════════════════════════════
+          Schools Tab — Control Room Layout
+         ════════════════════════════════════════════════════════════ */}
       {activeTab === 'schools' && (
         <div className="tab-enter p-4 md:p-6 space-y-6">
-          {/* Hero with LuminaAtom */}
-          <div className="lumina-card p-6 md:p-8 flex items-center gap-6 fade-up">
-            <LuminaAtom size={72} animate glow />
-            <div className="flex-1 min-w-0">
-              <h2 className="lumina-text text-2xl font-bold">Schools Management</h2>
-              <p className="text-white/40 text-sm mt-1">
-                Create, suspend, activate, and delete schools across the Lumina platform.
-              </p>
+          {/* ── Control Room Hero: atom behind glass command panel ── */}
+          <div className="relative fade-up">
+            {/* Large animated atom positioned behind the panel */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+              <LuminaAtom size={140} animate glow className="opacity-40" />
+            </div>
+
+            {/* Glass command panel */}
+            <div className="relative lumina-card p-6 md:p-8">
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="lumina-icon-tile">
+                  <Building2 className="w-6 h-6 text-white/60" />
+                </div>
+                <div>
+                  <h2 className="lumina-text text-2xl font-bold">Schools Management</h2>
+                  <p className="text-white/40 text-sm mt-1">
+                    Create, suspend, activate, and delete schools across the Lumina platform.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Floating stat orbs — arranged around the central content */}
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
+              {/* Total Schools orb */}
+              <div className="lumina-card rounded-full px-4 py-2.5 flex items-center gap-3 transition-transform hover:scale-105 fade-up fade-up-delay-1">
+                <div className="lumina-icon-tile w-9 h-9 rounded-full flex items-center justify-center">
+                  <Building2 className="w-4 h-4 text-white/60" />
+                </div>
+                <div className="pr-1">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-white/35">Schools</p>
+                  <p className="text-lg font-bold lumina-text font-mono leading-tight">
+                    {schools.length}
+                  </p>
+                </div>
+              </div>
+
+              {/* Active orb */}
+              <div
+                className="lumina-card rounded-full px-4 py-2.5 flex items-center gap-3 transition-transform hover:scale-105 fade-up fade-up-delay-2"
+                style={{ borderColor: 'rgba(34,197,94,0.15)' }}
+              >
+                <div
+                  className="lumina-icon-tile w-9 h-9 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(34,197,94,0.08)', borderColor: 'rgba(34,197,94,0.2)' }}
+                >
+                  <Check className="w-4 h-4 text-green-400" />
+                </div>
+                <div className="pr-1">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-white/35">Active</p>
+                  <p className="text-lg font-bold text-green-400 font-mono leading-tight">
+                    {activeCount}
+                  </p>
+                </div>
+              </div>
+
+              {/* Suspended orb */}
+              <div
+                className="lumina-card rounded-full px-4 py-2.5 flex items-center gap-3 transition-transform hover:scale-105 fade-up fade-up-delay-3"
+                style={{ borderColor: 'rgba(239,68,68,0.15)' }}
+              >
+                <div
+                  className="lumina-icon-tile w-9 h-9 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.2)' }}
+                >
+                  <PauseCircle className="w-4 h-4 text-red-400" />
+                </div>
+                <div className="pr-1">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-white/35">Suspended</p>
+                  <p className="text-lg font-bold text-red-400 font-mono leading-tight">
+                    {suspendedCount}
+                  </p>
+                </div>
+              </div>
+
+              {/* Total Users orb */}
+              <div className="lumina-card rounded-full px-4 py-2.5 flex items-center gap-3 transition-transform hover:scale-105 fade-up fade-up-delay-4">
+                <div className="lumina-icon-tile w-9 h-9 rounded-full flex items-center justify-center">
+                  <Users className="w-4 h-4 text-white/60" />
+                </div>
+                <div className="pr-1">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-white/35">Users</p>
+                  <p className="text-lg font-bold lumina-text font-mono leading-tight">
+                    {totalUsers}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="lumina-stat p-4 fade-up">
-              <p className="text-sm text-white/40">Total Schools</p>
-              <p className="text-2xl font-bold lumina-text">{schools.length}</p>
-            </div>
-            <div className="lumina-stat p-4 fade-up fade-up-delay-1">
-              <p className="text-sm text-white/40">Active Schools</p>
-              <p className="text-2xl font-bold text-green-400">
-                {schools.filter((s) => s.status === 'active').length}
-              </p>
-            </div>
-            <div className="lumina-stat p-4 fade-up fade-up-delay-2">
-              <p className="text-sm text-white/40">Suspended Schools</p>
-              <p className="text-2xl font-bold text-red-400">
-                {schools.filter((s) => s.status === 'suspended').length}
-              </p>
-            </div>
-          </div>
+          <div className="lumina-divider" />
 
-          {/* Actions bar */}
-          <div className="flex items-center justify-between fade-up fade-up-delay-3">
+          {/* ── Actions bar ── */}
+          <div className="flex items-center justify-between fade-up fade-up-delay-1">
             <h2 className="text-lg font-semibold lumina-text">All Schools</h2>
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="lumina-btn gap-2">
+                <button className="lumina-btn-primary gap-2 flex items-center h-9 px-4 text-sm">
                   <Plus className="w-4 h-4" />
                   Create School
-                </Button>
+                </button>
               </DialogTrigger>
-              <DialogContent className="bg-black border-white/10">
+              <DialogContent className="lumina-card border-white/10">
                 <DialogHeader>
                   <DialogTitle className="lumina-text">Create New School</DialogTitle>
                   <DialogDescription className="text-white/40">
@@ -434,7 +536,7 @@ export default function SuperAdmin() {
                       onChange={(e) => setNewSchoolCode(e.target.value.toUpperCase())}
                       placeholder="e.g., SPE"
                       maxLength={10}
-                      className="bg-white/5 border-white/10 text-white"
+                      className="bg-white/5 border-white/10 text-white font-mono"
                     />
                   </div>
                   <div className="space-y-2">
@@ -446,7 +548,7 @@ export default function SuperAdmin() {
                       value={newActivationCode}
                       onChange={(e) => setNewActivationCode(e.target.value.toUpperCase())}
                       placeholder="e.g., SPE001"
-                      className="bg-white/5 border-white/10 text-white"
+                      className="bg-white/5 border-white/10 text-white font-mono"
                     />
                     <p className="text-xs text-white/30">
                       This code is given to the school admin to activate the school
@@ -466,252 +568,326 @@ export default function SuperAdmin() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button
-                    variant="outline"
+                  <button
                     onClick={() => setCreateDialogOpen(false)}
-                    className="lumina-btn"
+                    className="lumina-btn-glass h-9 px-4 text-sm"
                   >
                     Cancel
-                  </Button>
-                  <Button onClick={createSchool} disabled={creating} className="lumina-btn gap-2">
+                  </button>
+                  <button
+                    onClick={createSchool}
+                    disabled={creating}
+                    className="lumina-btn-primary gap-2 flex items-center justify-center h-9 px-4 text-sm"
+                  >
                     {creating && <LuminaAtom size={16} animate />}
                     Create School
-                  </Button>
+                  </button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
 
-          {/* Schools Table */}
-          <div className="lumina-card overflow-hidden fade-up fade-up-delay-4">
-            {loadingSchools ? (
-              <div className="flex items-center justify-center py-16">
-                <LuminaAtom size={48} animate />
+          {/* ── School cards grid with animated metallic border ── */}
+          {loadingSchools ? (
+            <div className="flex items-center justify-center py-24 fade-up">
+              <LuminaAtom size={48} animate />
+            </div>
+          ) : schools.length === 0 ? (
+            <div className="lumina-card p-12 text-center fade-up">
+              <div className="lumina-icon-tile mx-auto mb-4">
+                <Building2 className="w-6 h-6 text-white/40" />
               </div>
-            ) : schools.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="lumina-icon-tile mx-auto mb-4">
-                  <Building2 className="w-6 h-6 text-white/40" />
-                </div>
-                <h3 className="font-semibold lumina-text mb-2">No Schools Yet</h3>
-                <p className="text-sm text-white/40">Create a school to get started</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/5 hover:bg-transparent">
-                    <TableHead className="text-white/40">School Name</TableHead>
-                    <TableHead className="text-white/40">Short ID</TableHead>
-                    <TableHead className="text-white/40">Activation Code</TableHead>
-                    <TableHead className="text-white/40">Status</TableHead>
-                    <TableHead className="text-white/40">Code Status</TableHead>
-                    <TableHead className="text-white/40">Created</TableHead>
-                    <TableHead className="text-white/40 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {schools.map((school) => (
-                    <TableRow key={school.id} className="border-white/5">
-                      <TableCell className="font-medium text-white/90">{school.name}</TableCell>
-                      <TableCell>
-                        <code className="bg-white/5 px-2 py-1 rounded text-xs text-white/60">
-                          {school.code}
-                        </code>
-                      </TableCell>
-                      <TableCell>
+              <h3 className="lumina-text font-semibold mb-2">No Schools Yet</h3>
+              <p className="text-sm text-white/40">Create a school to get started</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {schools.map((school, i) => (
+                <div
+                  key={school.id}
+                  className={`lumina-card lumina-border-sweep p-5 fade-up ${STAGGER[i % STAGGER.length]}`}
+                >
+                  {/* Card header */}
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="lumina-icon-tile shrink-0">
+                        <Building2 className="w-5 h-5 text-white/60" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="lumina-text font-semibold truncate">{school.name}</h3>
+                        <p className="text-xs text-white/35 font-mono">{school.code}</p>
+                      </div>
+                    </div>
+                    <span
+                      className={`shrink-0 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        school.status === 'active'
+                          ? 'bg-green-500/10 text-green-400'
+                          : 'bg-red-500/10 text-red-400'
+                      }`}
+                    >
+                      {school.status}
+                    </span>
+                  </div>
+
+                  <div className="lumina-divider mb-4" />
+
+                  {/* Card details */}
+                  <div className="space-y-2.5 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-white/40 text-xs">Activation Code</span>
+                      <div className="flex items-center gap-2">
                         {school.activation_code ? (
-                          <div className="flex items-center gap-2">
-                            <code className="bg-white/5 px-2 py-1 rounded text-xs text-white/60">
+                          <>
+                            <code className="font-mono text-xs text-white/60">
                               {school.activation_code}
                             </code>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 hover:bg-white/5"
+                            <button
+                              className="lumina-btn-icon h-6 w-6"
                               onClick={() => copyCode(school.activation_code!)}
                             >
-                              <Copy className="w-3 h-3 text-white/40" />
-                            </Button>
-                          </div>
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          </>
                         ) : (
-                          <span className="text-white/30">-</span>
+                          <span className="text-white/25 font-mono text-xs">—</span>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            school.status === 'active'
-                              ? 'bg-green-500/10 text-green-400'
-                              : 'bg-red-500/10 text-red-400'
-                          }`}
-                        >
-                          {school.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            school.code_used
-                              ? 'bg-blue-500/10 text-blue-400'
-                              : 'bg-amber-500/10 text-amber-400'
-                          }`}
-                        >
-                          {school.code_used ? 'Used' : 'Available'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-white/30 text-sm">
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-white/40 text-xs">Code Status</span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          school.code_used
+                            ? 'bg-blue-500/10 text-blue-400'
+                            : 'bg-amber-500/10 text-amber-400'
+                        }`}
+                      >
+                        {school.code_used ? 'Used' : 'Available'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-white/40 text-xs">Created</span>
+                      <span className="text-white/30 font-mono text-xs">
                         {new Date(school.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {school.status === 'active' ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => suspendSchool(school.id)}
-                              disabled={actionLoading === school.id}
-                              className="lumina-btn gap-1"
-                            >
-                              <PauseCircle className="w-4 h-4" />
-                              Suspend
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => activateSchool(school.id)}
-                              disabled={actionLoading === school.id}
-                              className="lumina-btn gap-1"
-                            >
-                              <PlayCircle className="w-4 h-4" />
-                              Activate
-                            </Button>
-                          )}
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="lumina-btn gap-1 text-red-400 hover:text-red-300"
-                                disabled={actionLoading === school.id}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Delete
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="bg-black border-white/10">
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="lumina-text">
-                                  Delete School?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription className="text-white/40">
-                                  This will permanently delete{' '}
-                                  <strong className="text-white/70">{school.name}</strong> and ALL
-                                  related data including:
-                                  <ul className="list-disc ml-4 mt-2">
-                                    <li>All user profiles</li>
-                                    <li>All lesson plans</li>
-                                    <li>All assignments and submissions</li>
-                                    <li>All course materials</li>
-                                  </ul>
-                                  <br />
-                                  This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel className="lumina-btn">
-                                  Cancel
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteSchool(school.id)}
-                                  className="bg-red-600 text-white hover:bg-red-700"
-                                >
-                                  Delete Permanently
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </div>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="lumina-divider my-4" />
+
+                  {/* Card actions */}
+                  <div className="flex items-center gap-2">
+                    {school.status === 'active' ? (
+                      <button
+                        onClick={() => suspendSchool(school.id)}
+                        disabled={actionLoading === school.id}
+                        className="lumina-btn-glass gap-1.5 flex-1 h-9 text-sm flex items-center justify-center"
+                      >
+                        <PauseCircle className="w-4 h-4" />
+                        Suspend
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => activateSchool(school.id)}
+                        disabled={actionLoading === school.id}
+                        className="lumina-btn-glass gap-1.5 flex-1 h-9 text-sm flex items-center justify-center"
+                      >
+                        <PlayCircle className="w-4 h-4" />
+                        Activate
+                      </button>
+                    )}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          disabled={actionLoading === school.id}
+                          className="lumina-btn-glass gap-1.5 h-9 px-3 text-sm text-red-400 hover:text-red-300 flex items-center justify-center"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="lumina-card border-white/10">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="lumina-text">
+                            Delete School?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="text-white/40">
+                            This will permanently delete{' '}
+                            <strong className="text-white/70">{school.name}</strong> and ALL
+                            related data including:
+                            <ul className="list-disc ml-4 mt-2">
+                              <li>All user profiles</li>
+                              <li>All lesson plans</li>
+                              <li>All assignments and submissions</li>
+                              <li>All course materials</li>
+                            </ul>
+                            <br />
+                            This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="lumina-btn-glass h-9 px-4 text-sm">
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteSchool(school.id)}
+                            className="lumina-btn-primary h-9 px-4 text-sm"
+                            style={{ background: 'rgba(220,38,38,0.9)' }}
+                          >
+                            Delete Permanently
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* ──────────────────────────────────────────────
+      {/* ════════════════════════════════════════════════════════════
           Analytics Tab
-         ────────────────────────────────────────────── */}
+         ════════════════════════════════════════════════════════════ */}
       {activeTab === 'analytics' && (
-        <div className="tab-enter p-4 md:p-6 space-y-8">
-          <div className="fade-up">
+        <div className="tab-enter p-4 md:p-6 space-y-6">
+          {/* Hero */}
+          <div className="lumina-card p-5 flex items-center gap-4 fade-up">
+            <div className="lumina-icon-tile">
+              <BarChart3 className="w-5 h-5 text-white/60" />
+            </div>
+            <div>
+              <h2 className="lumina-text text-xl font-bold">Analytics</h2>
+              <p className="text-white/40 text-sm">Platform-wide analytics, excellence programs, and ministry readiness</p>
+            </div>
+          </div>
+
+          <div className="fade-up fade-up-delay-1">
             <GlobalAnalyticsDashboard />
           </div>
-          <div className="fade-up fade-up-delay-1">
+
+          <div className="lumina-divider" />
+
+          <div className="fade-up fade-up-delay-2">
             <TeacherExcellenceProgram />
           </div>
-          <div className="fade-up fade-up-delay-2">
+
+          <div className="lumina-divider" />
+
+          <div className="fade-up fade-up-delay-3">
             <MinistryReadinessReport />
           </div>
         </div>
       )}
 
-      {/* ──────────────────────────────────────────────
+      {/* ════════════════════════════════════════════════════════════
           Ministry Tab
-         ────────────────────────────────────────────── */}
+         ════════════════════════════════════════════════════════════ */}
       {activeTab === 'ministry' && (
-        <div className="tab-enter p-4 md:p-6">
-          <div className="fade-up">
+        <div className="tab-enter p-4 md:p-6 space-y-6">
+          {/* Hero */}
+          <div className="lumina-card p-5 flex items-center gap-4 fade-up">
+            <div className="lumina-icon-tile">
+              <KeyRound className="w-5 h-5 text-white/60" />
+            </div>
+            <div>
+              <h2 className="lumina-text text-xl font-bold">Ministry</h2>
+              <p className="text-white/40 text-sm">Generate and manage ministry compliance codes</p>
+            </div>
+          </div>
+
+          <div className="fade-up fade-up-delay-1">
             <MinistryCodeGenerator />
           </div>
         </div>
       )}
 
-      {/* ──────────────────────────────────────────────
+      {/* ════════════════════════════════════════════════════════════
           LCT Tab
-         ────────────────────────────────────────────── */}
+         ════════════════════════════════════════════════════════════ */}
       {activeTab === 'lct' && (
-        <div className="tab-enter p-4 md:p-6">
-          <div className="fade-up">
+        <div className="tab-enter p-4 md:p-6 space-y-6">
+          {/* Hero */}
+          <div className="lumina-card p-5 flex items-center gap-4 fade-up">
+            <div className="lumina-icon-tile">
+              <Brain className="w-5 h-5 text-white/60" />
+            </div>
+            <div>
+              <h2 className="lumina-text text-xl font-bold">LCT</h2>
+              <p className="text-white/40 text-sm">Lumina Cognitive Training panel</p>
+            </div>
+          </div>
+
+          <div className="fade-up fade-up-delay-1">
             <LCTPanel />
           </div>
         </div>
       )}
 
-      {/* ──────────────────────────────────────────────
+      {/* ════════════════════════════════════════════════════════════
           Lumina API Tab
-         ────────────────────────────────────────────── */}
+         ════════════════════════════════════════════════════════════ */}
       {activeTab === 'api' && (
-        <div className="tab-enter p-4 md:p-6">
-          <div className="fade-up">
+        <div className="tab-enter p-4 md:p-6 space-y-6">
+          {/* Hero */}
+          <div className="lumina-card p-5 flex items-center gap-4 fade-up">
+            <div className="lumina-icon-tile">
+              <Code className="w-5 h-5 text-white/60" />
+            </div>
+            <div>
+              <h2 className="lumina-text text-xl font-bold">Lumina API</h2>
+              <p className="text-white/40 text-sm">API keys, endpoints, and integration management</p>
+            </div>
+          </div>
+
+          <div className="fade-up fade-up-delay-1">
             <LuminaApiPanel />
           </div>
         </div>
       )}
 
-      {/* ──────────────────────────────────────────────
+      {/* ════════════════════════════════════════════════════════════
           Extensions Tab
-         ────────────────────────────────────────────── */}
+         ════════════════════════════════════════════════════════════ */}
       {activeTab === 'extensions' && (
-        <div className="tab-enter p-4 md:p-6">
-          <div className="fade-up">
+        <div className="tab-enter p-4 md:p-6 space-y-6">
+          {/* Hero */}
+          <div className="lumina-card p-5 flex items-center gap-4 fade-up">
+            <div className="lumina-icon-tile">
+              <Puzzle className="w-5 h-5 text-white/60" />
+            </div>
+            <div>
+              <h2 className="lumina-text text-xl font-bold">Extensions</h2>
+              <p className="text-white/40 text-sm">Review and manage platform extensions</p>
+            </div>
+          </div>
+
+          <div className="fade-up fade-up-delay-1">
             <ExtensionReviewPanel />
           </div>
         </div>
       )}
 
-      {/* ──────────────────────────────────────────────
+      {/* ════════════════════════════════════════════════════════════
           Testing Tab — Role Simulator
-         ────────────────────────────────────────────── */}
+         ════════════════════════════════════════════════════════════ */}
       {activeTab === 'testing' && (
         <div className="tab-enter p-4 md:p-6 space-y-6">
+          {/* Hero */}
+          <div className="lumina-card p-5 flex items-center gap-4 fade-up">
+            <div className="lumina-icon-tile">
+              <FlaskConical className="w-5 h-5 text-white/60" />
+            </div>
+            <div>
+              <h2 className="lumina-text text-xl font-bold">Testing</h2>
+              <p className="text-white/40 text-sm">Role simulator and preview mode</p>
+            </div>
+          </div>
+
           {testingRole === 'none' ? (
             /* ── Role selection ── */
             <div className="space-y-6">
-              <div className="lumina-card p-6 md:p-8 flex items-center gap-6 fade-up">
+              <div className="lumina-card p-6 md:p-8 flex items-center gap-6 fade-up fade-up-delay-1">
                 <div className="lumina-icon-tile">
                   <FlaskConical className="w-6 h-6 text-white/60" />
                 </div>
@@ -781,15 +957,13 @@ export default function SuperAdmin() {
                     — Preview Mode
                   </span>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
                   onClick={() => setTestingRole('none')}
-                  className="lumina-btn gap-2"
+                  className="lumina-btn-glass gap-2 flex items-center h-9 px-3 text-sm"
                 >
                   <ShieldAlert className="w-4 h-4" />
                   Done Testing
-                </Button>
+                </button>
               </div>
 
               {/* ── Student preview ── */}
@@ -803,31 +977,31 @@ export default function SuperAdmin() {
               {testingRole === 'teacher' && (
                 <div className="space-y-6 fade-up fade-up-delay-1">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="lumina-stat p-4">
+                    <div className="lumina-card p-4 fade-up">
                       <p className="text-sm text-white/40">My Classes</p>
-                      <p className="text-2xl font-bold lumina-text">4</p>
+                      <p className="text-2xl font-bold lumina-text font-mono">4</p>
                     </div>
-                    <div className="lumina-stat p-4">
+                    <div className="lumina-card p-4 fade-up fade-up-delay-1">
                       <p className="text-sm text-white/40">Total Students</p>
-                      <p className="text-2xl font-bold lumina-text">87</p>
+                      <p className="text-2xl font-bold lumina-text font-mono">87</p>
                     </div>
-                    <div className="lumina-stat p-4">
+                    <div className="lumina-card p-4 fade-up fade-up-delay-2">
                       <p className="text-sm text-white/40">Active Assignments</p>
-                      <p className="text-2xl font-bold text-white/80">5</p>
+                      <p className="text-2xl font-bold text-white/80 font-mono">5</p>
                     </div>
-                    <div className="lumina-stat p-4">
+                    <div className="lumina-card p-4 fade-up fade-up-delay-3">
                       <p className="text-sm text-white/40">To Grade</p>
-                      <p className="text-2xl font-bold text-amber-400">12</p>
+                      <p className="text-2xl font-bold text-amber-400 font-mono">12</p>
                     </div>
                   </div>
 
-                  <div className="lumina-card p-6">
+                  <div className="lumina-card p-6 fade-up fade-up-delay-1">
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-lg font-semibold lumina-text">My Subjects</h2>
-                      <Button size="sm" className="lumina-btn gap-2">
+                      <button className="lumina-btn-primary gap-2 flex items-center h-9 px-4 text-sm">
                         <Plus className="w-4 h-4" />
                         Create Assignment
-                      </Button>
+                      </button>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {['Grade 9 Math', 'Grade 10 Math', 'Grade 11 Algebra', 'Grade 12 Calculus'].map(
@@ -837,14 +1011,14 @@ export default function SuperAdmin() {
                             className="p-4 border border-white/5 rounded-lg hover:bg-white/5 cursor-pointer transition-colors"
                           >
                             <p className="font-medium text-white/80">{subject}</p>
-                            <p className="text-xs text-white/40">24 students</p>
+                            <p className="text-xs text-white/40 font-mono">24 students</p>
                           </div>
                         ),
                       )}
                     </div>
                   </div>
 
-                  <div className="lumina-card p-6">
+                  <div className="lumina-card p-6 fade-up fade-up-delay-2">
                     <h2 className="text-lg font-semibold lumina-text mb-4">Submissions to Grade</h2>
                     <Table>
                       <TableHeader>
@@ -868,9 +1042,9 @@ export default function SuperAdmin() {
                             <TableCell className="text-white/60">{submission.assignment}</TableCell>
                             <TableCell className="text-white/30">{submission.date}</TableCell>
                             <TableCell>
-                              <Button size="sm" variant="outline" className="lumina-btn">
+                              <button className="lumina-btn-glass h-8 px-3 text-sm">
                                 Grade
-                              </Button>
+                              </button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -884,25 +1058,25 @@ export default function SuperAdmin() {
               {testingRole === 'school_admin' && (
                 <div className="space-y-6 fade-up fade-up-delay-1">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="lumina-stat p-4">
+                    <div className="lumina-card p-4 fade-up">
                       <p className="text-sm text-white/40">Total Teachers</p>
-                      <p className="text-2xl font-bold lumina-text">15</p>
+                      <p className="text-2xl font-bold lumina-text font-mono">15</p>
                     </div>
-                    <div className="lumina-stat p-4">
+                    <div className="lumina-card p-4 fade-up fade-up-delay-1">
                       <p className="text-sm text-white/40">Total Students</p>
-                      <p className="text-2xl font-bold lumina-text">342</p>
+                      <p className="text-2xl font-bold lumina-text font-mono">342</p>
                     </div>
-                    <div className="lumina-stat p-4">
+                    <div className="lumina-card p-4 fade-up fade-up-delay-2">
                       <p className="text-sm text-white/40">Pending Requests</p>
-                      <p className="text-2xl font-bold text-amber-400">4</p>
+                      <p className="text-2xl font-bold text-amber-400 font-mono">4</p>
                     </div>
-                    <div className="lumina-stat p-4">
+                    <div className="lumina-card p-4 fade-up fade-up-delay-3">
                       <p className="text-sm text-white/40">Active Codes</p>
-                      <p className="text-2xl font-bold text-white/80">8</p>
+                      <p className="text-2xl font-bold text-white/80 font-mono">8</p>
                     </div>
                   </div>
 
-                  <div className="lumina-card p-6">
+                  <div className="lumina-card p-6 fade-up fade-up-delay-1">
                     <h2 className="text-lg font-semibold lumina-text mb-4">Pending Requests</h2>
                     <Table>
                       <TableHeader>
@@ -933,18 +1107,14 @@ export default function SuperAdmin() {
                             <TableCell className="text-white/30">{request.date}</TableCell>
                             <TableCell>
                               <div className="flex gap-2">
-                                <Button size="sm" variant="outline" className="lumina-btn gap-1">
+                                <button className="lumina-btn-glass gap-1 flex items-center h-8 px-3 text-sm">
                                   <Check className="w-3 h-3" />
                                   Approve
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="lumina-btn gap-1 text-red-400"
-                                >
+                                </button>
+                                <button className="lumina-btn-glass gap-1 flex items-center h-8 px-3 text-sm text-red-400">
                                   <X className="w-3 h-3" />
                                   Deny
-                                </Button>
+                                </button>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -953,13 +1123,13 @@ export default function SuperAdmin() {
                     </Table>
                   </div>
 
-                  <div className="lumina-card p-6">
+                  <div className="lumina-card p-6 fade-up fade-up-delay-2">
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-lg font-semibold lumina-text">Invite Codes</h2>
-                      <Button size="sm" className="lumina-btn gap-2">
+                      <button className="lumina-btn-primary gap-2 flex items-center h-9 px-4 text-sm">
                         <Plus className="w-4 h-4" />
                         Generate Code
-                      </Button>
+                      </button>
                     </div>
                     <Table>
                       <TableHeader>
@@ -978,7 +1148,7 @@ export default function SuperAdmin() {
                         ].map((code, i) => (
                           <TableRow key={i} className="border-white/5">
                             <TableCell>
-                              <code className="bg-white/5 px-2 py-1 rounded text-xs text-white/60">
+                              <code className="bg-white/5 px-2 py-1 rounded text-xs text-white/60 font-mono">
                                 {code.code}
                               </code>
                             </TableCell>

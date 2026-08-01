@@ -34,6 +34,9 @@ import {
   GraduationCap,
   TrendingUp,
   Activity as ActivityIcon,
+  Zap,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
@@ -162,6 +165,51 @@ function SubTabButton({
       {icon}
       {label}
     </button>
+  );
+}
+
+/* ────────────────── Bento widget primitives ────────────────── */
+
+/**
+ * A single glass widget panel sized for the bento grid.
+ * `span` controls grid footprint via col-span / row-span utilities.
+ */
+function BentoWidget({
+  className = '',
+  span = 'col-span-1 row-span-1',
+  float = false,
+  pulse = false,
+  children,
+}: {
+  className?: string;
+  span?: string;
+  float?: boolean;
+  pulse?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        'lumina-card relative overflow-hidden p-5 flex flex-col',
+        span,
+        float && 'cosmic-float',
+        pulse && 'cosmic-pulse',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Small orbit-ring decoration rendered behind a widget for the mini-animation. */
+function OrbitRing({ className = '' }: { className?: string }) {
+  return (
+    <div className={cn('pointer-events-none absolute -right-10 -top-10 opacity-[0.12]', className)}>
+      <div className="w-40 h-40 rounded-full border border-white/30" />
+      <div className="absolute inset-4 rounded-full border border-white/20" />
+      <div className="absolute inset-8 rounded-full border border-white/10" />
+    </div>
   );
 }
 
@@ -583,6 +631,8 @@ export default function SchoolAdminDashboard() {
     teachers: inviteRequests.filter((r) => (r.invite_codes as unknown as InviteCode)?.role === 'teacher').length,
   };
 
+  const activeCodesCount = inviteCodes.filter((c) => !c.used && new Date(c.expires_at) > new Date()).length;
+
   const exportUsersCSV = () => {
     const csvContent = [
       [t('name'), t('role'), t('grade'), t('status')].join(','),
@@ -618,7 +668,7 @@ export default function SchoolAdminDashboard() {
   const navItems: NavItem[] = [
     { id: 'overview', icon: <BarChart3 size={18} />, label: 'Overview' },
     { id: 'users', icon: <Users size={18} />, label: t('users') },
-    { id: 'codes', icon: <Key size={18} />, label: 'Invite Codes' },
+    { id: 'codes', icon: <Key size={18} />, label: 'Invites' },
     { id: 'requests', icon: <Clock size={18} />, label: 'Requests', badge: inviteRequests.length },
     { id: 'announcements', icon: <Megaphone size={18} />, label: t('announce') },
     { id: 'trips', icon: <MapPin size={18} />, label: t('trips') },
@@ -640,6 +690,40 @@ export default function SchoolAdminDashboard() {
     </div>
   );
 
+  /** Bento stat tile used in the overview hero grid. */
+  const StatTile = ({
+    label,
+    value,
+    icon,
+    delay,
+    span = 'col-span-1 row-span-1',
+    accent,
+  }: {
+    label: string;
+    value: number | string;
+    icon: React.ReactNode;
+    delay: number;
+    span?: string;
+    accent?: string;
+  }) => (
+    <BentoWidget span={span} pulse className={cn('fade-up', `fade-up-delay-${Math.min(delay, 5)}`)}>
+      <OrbitRing />
+      <div className="relative flex items-start justify-between">
+        <div className="lumina-icon-tile">{icon}</div>
+        <span
+          className="text-[10px] font-bold tracking-[0.2em] uppercase"
+          style={{ color: accent || 'rgba(232,232,232,0.3)' }}
+        >
+          live
+        </span>
+      </div>
+      <div className="relative mt-auto">
+        <p className="text-xs text-white/40">{label}</p>
+        <p className="text-3xl font-bold mt-1 text-white/90 font-mono">{value}</p>
+      </div>
+    </BentoWidget>
+  );
+
   /* ═══════════════════════════════════════════════════════════════
    *  RENDER
    * ═══════════════════════════════════════════════════════════════ */
@@ -655,92 +739,222 @@ export default function SchoolAdminDashboard() {
       headerRight={
         <button
           onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white/80 hover:bg-white/5 transition-all"
+          className="lumina-btn-glass flex items-center gap-1.5"
         >
           <Globe className="w-3.5 h-3.5" />
           {language === 'en' ? 'AR' : 'EN'}
         </button>
       }
     >
-      {/* ════════════ Overview ════════════ */}
+      {/* ════════════ Overview — Bento Grid ════════════ */}
       {activeTab === 'overview' && (
         <div className="tab-enter">
           {/* Hero banner with LuminaAtom */}
           <div className="relative overflow-hidden border-b border-white/10">
             <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] via-white/[0.01] to-transparent" />
-            <div className="relative max-w-5xl mx-auto px-6 py-14 flex items-center gap-8">
-              <LuminaAtom size={96} animate glow />
+            <div className="relative max-w-6xl mx-auto px-6 py-14 flex items-center gap-8">
+              <div className="cosmic-float">
+                <LuminaAtom size={120} animate glow />
+              </div>
               <div className="space-y-2">
                 <h1 className="lumina-text text-3xl font-bold">{school.name}</h1>
                 <p className="text-white/40 text-sm">{t('schoolAdminDashboard')}</p>
+                <div className="flex items-center gap-2 pt-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400/40 animate-ping opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400/70" />
+                  </span>
+                  <span className="text-xs text-white/40 font-mono">systems nominal</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-            <TenantExtensionsSection />
-
-            {/* Stat cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="lumina-stat fade-up p-4">
-                <p className="text-xs text-white/40">{t('totalUsers')}</p>
-                <p className="text-2xl font-bold mt-1 text-white/90">{users.length}</p>
-              </div>
-              <div className="lumina-stat fade-up fade-up-delay-1 p-4">
-                <p className="text-xs text-white/40">{t('pendingRequests')}</p>
-                <p className="text-2xl font-bold mt-1 text-white/90">{inviteRequests.length}</p>
-              </div>
-              <div className="lumina-stat fade-up fade-up-delay-2 p-4">
-                <p className="text-xs text-white/40">{t('activeCodes')}</p>
-                <p className="text-2xl font-bold mt-1 text-white/90">
-                  {inviteCodes.filter((c) => !c.used && new Date(c.expires_at) > new Date()).length}
+          <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+            {/* ─── BENTO GRID ─── */}
+            <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[140px] gap-4">
+              {/* Hero / command widget — 2x2 */}
+              <BentoWidget
+                span="col-span-2 row-span-2"
+                float
+                className="fade-up"
+              >
+                <OrbitRing />
+                <div className="relative flex items-center gap-3">
+                  <div className="lumina-icon-tile">
+                    <Sparkles className="w-5 h-5 text-white/70" />
+                  </div>
+                  <h3 className="lumina-text font-semibold">Command Center</h3>
+                </div>
+                <p className="relative text-sm text-white/40 mt-3">
+                  {school.name} — manage every facet of your institution from a single vantage.
                 </p>
-              </div>
-              <div className="lumina-stat fade-up fade-up-delay-3 p-4">
-                <p className="text-xs text-white/40">{t('announcementsLabel')}</p>
-                <p className="text-2xl font-bold mt-1 text-white/90">{announcements.length}</p>
-              </div>
+                <div className="relative mt-auto grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setActiveTab('curriculum')}
+                    className="lumina-btn-glass flex items-center justify-between text-xs"
+                  >
+                    <span className="flex items-center gap-2"><Network className="w-3.5 h-3.5" /> Curriculum</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('requests')}
+                    className="lumina-btn-glass flex items-center justify-between text-xs"
+                  >
+                    <span className="flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> Requests</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('announcements')}
+                    className="lumina-btn-glass flex items-center justify-between text-xs"
+                  >
+                    <span className="flex items-center gap-2"><Megaphone className="w-3.5 h-3.5" /> Announce</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('performance')}
+                    className="lumina-btn-glass flex items-center justify-between text-xs"
+                  >
+                    <span className="flex items-center gap-2"><TrendingUp className="w-3.5 h-3.5" /> Performance</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </BentoWidget>
+
+              {/* Stat tiles — 1x1 each */}
+              <StatTile
+                label={t('totalUsers')}
+                value={users.length}
+                icon={<Users className="w-5 h-5 text-white/70" />}
+                delay={1}
+              />
+              <StatTile
+                label={t('pendingRequests')}
+                value={inviteRequests.length}
+                icon={<Clock className="w-5 h-5 text-white/70" />}
+                delay={2}
+                accent="rgba(251,191,36,0.5)"
+              />
+
+              {/* Active codes — 2x1 wide */}
+              <StatTile
+                label={t('activeCodes')}
+                value={activeCodesCount}
+                icon={<Key className="w-5 h-5 text-white/70" />}
+                delay={3}
+                span="col-span-2 row-span-1"
+              />
+
+              {/* Announcements count — 1x1 */}
+              <StatTile
+                label={t('announcementsLabel')}
+                value={announcements.length}
+                icon={<Megaphone className="w-5 h-5 text-white/70" />}
+                delay={1}
+              />
+
+              {/* Trips count — 1x1 */}
+              <StatTile
+                label={t('trips')}
+                value={trips.length}
+                icon={<MapPin className="w-5 h-5 text-white/70" />}
+                delay={2}
+              />
+
+              {/* Pending requests banner — 2x1 wide */}
+              {inviteRequests.length > 0 && (
+                <BentoWidget
+                  span="col-span-2 row-span-1"
+                  pulse
+                  className="fade-up fade-up-delay-3"
+                >
+                  <div className="flex items-center gap-3 h-full">
+                    <div className="lumina-icon-tile">
+                      <Clock className="w-5 h-5 text-white/70" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-white/40">{t('pendingRequests')}</p>
+                      <p className="text-sm font-medium text-white/70 mt-0.5">
+                        <span className="font-mono text-white/90">{pendingCounts.students}</span> {t('student')}
+                        {pendingCounts.students !== 1 ? (language === 'ar' ? '' : 's') : ''},{' '}
+                        <span className="font-mono text-white/90">{pendingCounts.teachers}</span> {t('teacher')}
+                        {pendingCounts.teachers !== 1 ? (language === 'ar' ? '' : 's') : ''}{' '}
+                        {t('pendingApprovalCount')}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('requests')}
+                      className="lumina-btn-icon"
+                      aria-label="View requests"
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </BentoWidget>
+              )}
+
+              {/* Quick start — 2x1 wide */}
+              <BentoWidget
+                span="col-span-2 row-span-1"
+                className="fade-up fade-up-delay-3"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="lumina-icon-tile">
+                    <BookOpen className="w-5 h-5 text-white/70" />
+                  </div>
+                  <h3 className="lumina-text font-semibold text-sm">Quick start</h3>
+                </div>
+                <p className="text-sm text-white/40">
+                  Build your curriculum in{' '}
+                  <button onClick={() => setActiveTab('curriculum')} className="text-white/70 underline underline-offset-2 hover:text-white">
+                    Curriculum
+                  </button>
+                  , approve new accounts under{' '}
+                  <button onClick={() => setActiveTab('requests')} className="text-white/70 underline underline-offset-2 hover:text-white">
+                    Requests
+                  </button>
+                  , and post school updates from{' '}
+                  <button onClick={() => setActiveTab('announcements')} className="text-white/70 underline underline-offset-2 hover:text-white">
+                    Announcements
+                  </button>
+                  .
+                </p>
+              </BentoWidget>
+
+              {/* Activity pulse — 1x1 */}
+              <BentoWidget pulse className="fade-up fade-up-delay-4">
+                <div className="lumina-icon-tile">
+                  <ActivityIcon className="w-5 h-5 text-white/70" />
+                </div>
+                <div className="mt-auto">
+                  <p className="text-xs text-white/40">Activity</p>
+                  <p className="text-2xl font-bold text-white/90 font-mono">{activityLogs.length}</p>
+                </div>
+              </BentoWidget>
+
+              {/* Extensions tile — 1x1 */}
+              <BentoWidget float className="fade-up fade-up-delay-4">
+                <div className="lumina-icon-tile">
+                  <Zap className="w-5 h-5 text-white/70" />
+                </div>
+                <div className="mt-auto">
+                  <p className="text-xs text-white/40">Extensions</p>
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className="text-sm text-white/70 hover:text-white mt-0.5 flex items-center gap-1"
+                  >
+                    Manage <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
+              </BentoWidget>
             </div>
 
-            {/* Pending requests banner */}
-            {inviteRequests.length > 0 && (
-              <div className="lumina-card fade-up fade-up-delay-2 p-4 flex items-center gap-3">
-                <div className="lumina-icon-tile">
-                  <Clock className="w-5 h-5 text-white/70" />
-                </div>
-                <span className="font-medium text-sm text-white/60">
-                  {pendingCounts.students} {t('student')}
-                  {pendingCounts.students !== 1 ? (language === 'ar' ? '' : 's') : ''},{' '}
-                  {pendingCounts.teachers} {t('teacher')}
-                  {pendingCounts.teachers !== 1 ? (language === 'ar' ? '' : 's') : ''}{' '}
-                  {t('pendingApprovalCount')}
-                </span>
-              </div>
-            )}
+            {/* Divider */}
+            <div className="lumina-divider" />
 
-            {/* Quick start */}
-            <div className="lumina-card fade-up fade-up-delay-3 p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="lumina-icon-tile">
-                  <BookOpen className="w-5 h-5 text-white/70" />
-                </div>
-                <h3 className="lumina-text font-semibold">Quick start</h3>
-              </div>
-              <p className="text-sm text-white/40">
-                Build your curriculum in{' '}
-                <button onClick={() => setActiveTab('curriculum')} className="text-white/70 underline underline-offset-2 hover:text-white">
-                  Curriculum
-                </button>
-                , approve new accounts under{' '}
-                <button onClick={() => setActiveTab('requests')} className="text-white/70 underline underline-offset-2 hover:text-white">
-                  Requests
-                </button>
-                , and post school updates from{' '}
-                <button onClick={() => setActiveTab('announcements')} className="text-white/70 underline underline-offset-2 hover:text-white">
-                  Announcements
-                </button>
-                .
-              </p>
+            {/* Extensions section (full width) */}
+            <div className="fade-up fade-up-delay-2">
+              <TenantExtensionsSection />
             </div>
           </div>
         </div>
@@ -782,14 +996,9 @@ export default function SchoolAdminDashboard() {
                   <SelectItem value="suspended">{t('suspended')}</SelectItem>
                 </SelectContent>
               </Select>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={exportUsersCSV}
-                className="border-white/10 bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/10"
-              >
+              <button onClick={exportUsersCSV} className="lumina-btn-icon" aria-label="Export CSV">
                 <Download className="w-4 h-4" />
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -840,35 +1049,27 @@ export default function SchoolAdminDashboard() {
                         {user.id !== profile?.id && (
                           <div className="flex items-center justify-end gap-2">
                             {user.is_active ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
+                              <button
                                 onClick={() => suspendUser(user.id)}
-                                className="gap-1 border-white/10 bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/10"
+                                className="lumina-btn-glass flex items-center gap-1 text-xs"
                               >
-                                <Ban className="w-4 h-4" />
+                                <Ban className="w-3.5 h-3.5" />
                                 {t('suspend')}
-                              </Button>
+                              </button>
                             ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
+                              <button
                                 onClick={() => activateUser(user.id)}
-                                className="gap-1 border-white/10 bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/10"
+                                className="lumina-btn-glass flex items-center gap-1 text-xs"
                               >
-                                <Play className="w-4 h-4" />
+                                <Play className="w-3.5 h-3.5" />
                                 {t('activate')}
-                              </Button>
+                              </button>
                             )}
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="gap-1 text-red-400/70 hover:text-red-400 border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
-                                >
+                                <button className="lumina-btn-icon text-red-400/70 hover:text-red-400 border-red-500/20 bg-red-500/5 hover:bg-red-500/10">
                                   <Trash2 className="w-4 h-4" />
-                                </Button>
+                                </button>
                               </AlertDialogTrigger>
                               <AlertDialogContent className="bg-black border-white/10 text-white">
                                 <AlertDialogHeader>
@@ -934,14 +1135,14 @@ export default function SchoolAdminDashboard() {
                   </SelectContent>
                 </Select>
               )}
-              <Button
+              <button
                 onClick={generateInviteCode}
                 disabled={creatingCode}
-                className="gap-2 bg-white/15 text-white border border-white/20 hover:bg-white/25"
+                className="lumina-btn-primary flex items-center gap-2"
               >
                 {creatingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 {t('generateCode')}
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -996,14 +1197,12 @@ export default function SchoolAdminDashboard() {
                         </TableCell>
                         <TableCell className="text-right">
                           {!code.used && !isExpired && (
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <button
                               onClick={() => revokeInviteCode(code.id)}
-                              className="border-white/10 bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/10"
+                              className="lumina-btn-glass text-xs"
                             >
                               {t('revoke')}
-                            </Button>
+                            </button>
                           )}
                         </TableCell>
                       </TableRow>
@@ -1021,15 +1220,14 @@ export default function SchoolAdminDashboard() {
         <div className="tab-enter max-w-5xl mx-auto px-6 py-8 space-y-6">
           <div className="flex items-center justify-between fade-up">
             {sectionHeader(<Clock className="w-5 h-5 text-white/70" />, t('pendingRequests'))}
-            <Button
-              variant="outline"
-              size="icon"
+            <button
               onClick={fetchInviteRequests}
               disabled={loadingRequests}
-              className="border-white/10 bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/10"
+              className="lumina-btn-icon"
+              aria-label="Refresh"
             >
               <RefreshCw className={cn('w-4 h-4', loadingRequests && 'animate-spin')} />
-            </Button>
+            </button>
           </div>
 
           <div className="lumina-card fade-up fade-up-delay-1 overflow-hidden">
@@ -1071,10 +1269,8 @@ export default function SchoolAdminDashboard() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1 text-white/70 hover:text-white border-white/15 bg-white/[0.06] hover:bg-white/15"
+                            <button
+                              className="lumina-btn-glass flex items-center gap-1 text-xs"
                               onClick={() => {
                                 if (inviteCode?.role === 'student') {
                                   setSelectedRequest(request);
@@ -1084,18 +1280,15 @@ export default function SchoolAdminDashboard() {
                                 }
                               }}
                             >
-                              <Check className="w-4 h-4" />
+                              <Check className="w-3.5 h-3.5" />
                               {t('accept')}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1 text-red-400/70 hover:text-red-400 border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
+                            </button>
+                            <button
+                              className="lumina-btn-icon text-red-400/70 hover:text-red-400 border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
                               onClick={() => denyInviteRequest(request.id)}
                             >
                               <X className="w-4 h-4" />
-                              {t('deny')}
-                            </Button>
+                            </button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1135,20 +1328,19 @@ export default function SchoolAdminDashboard() {
                 </Select>
               </div>
               <DialogFooter>
-                <Button
-                  variant="outline"
+                <button
                   onClick={() => setGradeModalOpen(false)}
-                  className="border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/10"
+                  className="lumina-btn-glass"
                 >
                   {t('cancel')}
-                </Button>
-                <Button
+                </button>
+                <button
                   onClick={() => selectedRequest && acceptInviteRequest(selectedRequest, studentGrade)}
                   disabled={!studentGrade}
-                  className="bg-white/15 text-white border border-white/20 hover:bg-white/25"
+                  className="lumina-btn-primary"
                 >
                   {t('acceptStudent')}
-                </Button>
+                </button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -1187,10 +1379,10 @@ export default function SchoolAdminDashboard() {
                 className="bg-white/[0.04] border-white/10 text-white/80 placeholder:text-white/30"
               />
             </div>
-            <Button
+            <button
               onClick={createAnnouncement}
               disabled={creatingAnnouncement || !newAnnouncementTitle || !newAnnouncementBody}
-              className="gap-2 bg-white/15 text-white border border-white/20 hover:bg-white/25"
+              className="lumina-btn-primary flex items-center gap-2"
             >
               {creatingAnnouncement ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -1198,8 +1390,10 @@ export default function SchoolAdminDashboard() {
                 <Megaphone className="w-4 h-4" />
               )}
               {t('postAnnouncement')}
-            </Button>
+            </button>
           </div>
+
+          <div className="lumina-divider" />
 
           {/* Announcements list */}
           <div className="space-y-4">
@@ -1221,14 +1415,13 @@ export default function SchoolAdminDashboard() {
                         {new Date(announcement.created_at).toLocaleString()}
                       </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                    <button
                       onClick={() => deleteAnnouncement(announcement.id)}
-                      className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
+                      className="lumina-btn-icon text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
+                      aria-label="Delete"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </Button>
+                    </button>
                   </div>
                   <p className="mt-2 text-white/50 whitespace-pre-wrap">{announcement.body}</p>
                 </div>
@@ -1270,15 +1463,17 @@ export default function SchoolAdminDashboard() {
                 className="bg-white/[0.04] border-white/10 text-white/80 placeholder:text-white/30"
               />
             </div>
-            <Button
+            <button
               onClick={createTrip}
               disabled={creatingTrip || !newTripTitle || !newTripBody}
-              className="gap-2 bg-white/15 text-white border border-white/20 hover:bg-white/25"
+              className="lumina-btn-primary flex items-center gap-2"
             >
               {creatingTrip ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
               {t('postTrip')}
-            </Button>
+            </button>
           </div>
+
+          <div className="lumina-divider" />
 
           {/* Trips list */}
           <div className="space-y-4">
@@ -1300,14 +1495,13 @@ export default function SchoolAdminDashboard() {
                         {new Date(trip.created_at).toLocaleString()}
                       </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                    <button
                       onClick={() => deleteTrip(trip.id)}
-                      className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
+                      className="lumina-btn-icon text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
+                      aria-label="Delete"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </Button>
+                    </button>
                   </div>
                   <p className="mt-2 text-white/50 whitespace-pre-wrap">{trip.body}</p>
                 </div>
@@ -1322,15 +1516,14 @@ export default function SchoolAdminDashboard() {
         <div className="tab-enter max-w-5xl mx-auto px-6 py-8 space-y-6">
           <div className="flex items-center justify-between fade-up">
             {sectionHeader(<ActivityIcon className="w-5 h-5 text-white/70" />, t('activityLogs'))}
-            <Button
-              variant="outline"
-              size="icon"
+            <button
               onClick={fetchActivityLogs}
               disabled={loadingLogs}
-              className="border-white/10 bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/10"
+              className="lumina-btn-icon"
+              aria-label="Refresh"
             >
               <RefreshCw className={cn('w-4 h-4', loadingLogs && 'animate-spin')} />
-            </Button>
+            </button>
           </div>
 
           <div className="lumina-card fade-up fade-up-delay-1 overflow-hidden">
@@ -1443,6 +1636,8 @@ export default function SchoolAdminDashboard() {
             />
           </div>
 
+          <div className="lumina-divider" />
+
           {/* Sub-tab content */}
           <div className="fade-up fade-up-delay-2">
             {curriculumSub === 'subjects' && <SubjectsManager schoolId={school.id} />}
@@ -1475,6 +1670,8 @@ export default function SchoolAdminDashboard() {
             />
           </div>
 
+          <div className="lumina-divider" />
+
           {/* Sub-tab content */}
           <div className="fade-up fade-up-delay-2">
             {reportsSub === 'report-cards' && (
@@ -1492,7 +1689,7 @@ export default function SchoolAdminDashboard() {
 
           <div className="lumina-card fade-up fade-up-delay-1 p-6 space-y-6 max-w-lg">
             <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-white/80">
+              <h3 className="lumina-text font-semibold mb-3 flex items-center gap-2">
                 <Globe className="w-4 h-4 text-white/60" />
                 {language === 'ar' ? 'اللغة' : 'Language'}
               </h3>
@@ -1500,10 +1697,8 @@ export default function SchoolAdminDashboard() {
                 <button
                   onClick={() => setLanguage('en')}
                   className={cn(
-                    'flex-1 py-3 rounded-xl text-sm font-medium transition-all border',
-                    language === 'en'
-                      ? 'bg-white/15 text-white border-white/20'
-                      : 'bg-white/[0.03] text-white/40 border-white/5 hover:border-white/15 hover:text-white/70',
+                    'lumina-btn-glass flex-1',
+                    language === 'en' && 'bg-white/15 text-white border-white/20',
                   )}
                 >
                   English
@@ -1511,10 +1706,8 @@ export default function SchoolAdminDashboard() {
                 <button
                   onClick={() => setLanguage('ar')}
                   className={cn(
-                    'flex-1 py-3 rounded-xl text-sm font-medium transition-all border',
-                    language === 'ar'
-                      ? 'bg-white/15 text-white border-white/20'
-                      : 'bg-white/[0.03] text-white/40 border-white/5 hover:border-white/15 hover:text-white/70',
+                    'lumina-btn-glass flex-1',
+                    language === 'ar' && 'bg-white/15 text-white border-white/20',
                   )}
                 >
                   العربية
@@ -1522,6 +1715,8 @@ export default function SchoolAdminDashboard() {
               </div>
             </div>
           </div>
+
+          <div className="lumina-divider" />
 
           <div className="fade-up fade-up-delay-2">
             <TenantExtensionsSection />

@@ -229,7 +229,7 @@ function NebulaBackdrop() {
 /* ---------- Main exported scene ---------- */
 export function CosmicBackground({ className = '' }: { className?: string }) {
   return (
-    <div className={`fixed inset-0 -z-10 ${className}`} aria-hidden="true">
+    <div className={`fixed inset-0 z-0 ${className}`} aria-hidden="true" style={{ pointerEvents: 'none' }}>
       <Canvas
         camera={{ position: [0, 0, 8], fov: 55 }}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
