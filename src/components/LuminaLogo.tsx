@@ -1,5 +1,4 @@
-import luminaLogoDark from '@/assets/lumina-logo-dark.jpeg';
-import luminaLogoLight from '@/assets/lumina-logo-light.jpeg';
+import luminaAtom from '@/assets/lumina-atom.jpeg.asset.json';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 
 interface LuminaLogoProps {
@@ -7,18 +6,25 @@ interface LuminaLogoProps {
   className?: string;
 }
 
+/**
+ * The Lumina mark. The source art is white-on-onyx, so in the Bone (light)
+ * palette we invert it — the two-tone system stays exactly two tones.
+ */
 export function LuminaLogo({ size = 32, className = '' }: LuminaLogoProps) {
   const { theme } = useThemeLanguage();
-  const src = theme === 'light' ? luminaLogoDark : luminaLogoLight;
+  const isLight = theme === 'light';
 
   return (
     <img
-      src={src}
+      src={luminaAtom.url}
       alt="Lumina"
       width={size}
       height={size}
-      className={`object-cover rounded-lg ${className}`}
-      style={{ mixBlendMode: theme === 'light' ? 'darken' : 'lighten' }}
+      className={`object-contain select-none ${className}`}
+      style={{
+        filter: isLight ? 'invert(1) contrast(1.05)' : 'none',
+        mixBlendMode: isLight ? 'multiply' : 'screen',
+      }}
     />
   );
 }
