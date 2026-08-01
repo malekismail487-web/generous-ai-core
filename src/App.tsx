@@ -9,6 +9,7 @@ import { ThemeLanguageProvider } from "@/hooks/useThemeLanguage";
 import { WallpaperProvider } from "@/hooks/useWallpaper";
 import DeviceBanScreen from "@/components/DeviceBanScreen";
 import LCTExamGuard from "@/components/LCTExamGuard";
+import AtomScene from "@/components/AtomScene";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import LanguageSelect from "./pages/LanguageSelect";
@@ -75,6 +76,7 @@ const App = () => (
           <WallpaperProvider>
           <FocusTimerProvider>
             <TooltipProvider>
+              <AtomScene />
               <Toaster />
               <Sonner />
               <MinistryAccessAlert />

@@ -107,13 +107,13 @@ export function Sidebar({
               size={collapsed ? 'icon' : 'sm'}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "w-full justify-start transition-all duration-200",
+                "w-full justify-start rounded-xl transition-all duration-300",
                 collapsed ? "h-10 w-10 p-0 justify-center" : "h-10",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-lg" 
+                isActive
+                  ? "text-foreground bg-[radial-gradient(120%_120%_at_50%_0%,hsl(var(--glow)/0.22),hsl(var(--glow)/0.03))] [&_svg]:text-[hsl(var(--glow-soft))]"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
-              style={isActive ? { boxShadow: '0 4px 20px -4px hsl(var(--primary) / 0.4)' } : undefined}
+              style={isActive ? { boxShadow: '0 0 0 1px hsl(var(--glow) / 0.35), 0 8px 26px -10px hsl(var(--glow) / 0.5)' } : undefined}
             >
               <Icon size={18} className={collapsed ? "" : "mr-2"} />
               {!collapsed && <span>{tab.label}</span>}

@@ -24,8 +24,12 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-effect-strong border-t border-border/30" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+    <nav
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-3"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      aria-label="Primary"
+    >
+      <div className="dock">
         {bottomTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeBottomTab === tab.id;
@@ -36,32 +40,24 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={cn(
-                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all duration-300",
-                isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
+              data-active={isActive}
+              aria-current={isActive ? 'page' : undefined}
+              className="dock-item flex-col !gap-0.5 !px-4 !py-1.5"
             >
-              <div className={cn(
-                "relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
-                !isLiveTab && "rounded-xl",
-                isActive && "bg-muted shadow-sm",
-                isLiveTab && "border border-border/50",
-                hasLive && "border-red-500/50 bg-red-500/5"
-              )}>
-                <Icon size={18} className={cn(
-                  "transition-transform duration-300",
-                  isActive && "scale-110",
-                  hasLive && "text-red-500"
-                )} />
+              <span className="relative flex items-center justify-center">
+                <Icon
+                  size={19}
+                  className={cn(
+                    'transition-transform duration-300',
+                    isActive && 'scale-110',
+                    hasLive && '!text-red-500',
+                  )}
+                />
                 {hasLive && (
-                  <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-background animate-pulse" />
+                  <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-background animate-pulse" />
                 )}
-              </div>
-              <span className={cn(
-                "text-[10px] font-semibold transition-all",
-                isActive && "text-foreground",
-                hasLive && "text-red-500"
-              )}>
+              </span>
+              <span className={cn('text-[10px] font-semibold leading-none', hasLive && '!text-red-500')}>
                 {tab.label}
               </span>
             </button>

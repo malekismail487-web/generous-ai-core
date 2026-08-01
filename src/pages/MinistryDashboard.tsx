@@ -300,7 +300,7 @@ export default function MinistryDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-gray-200">
+    <div className="min-h-screen bg-transparent text-gray-200">
       {/* Header */}
       <header className="border-b border-emerald-900/30 bg-black/90 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">

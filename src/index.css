@@ -10,48 +10,53 @@
      One family only: pure carbon surfaces, bone ink.
      ═══════════════════════════════════════════ */
   :root {
-    --background: 240 6% 4%;
-    --foreground: 60 4% 95%;
+    /* ── Pure jet black, matching the mark's onyx field ── */
+    --background: 240 6% 2.5%;
+    --foreground: 0 0% 96%;
 
-    --card: 240 5% 7%;
-    --card-foreground: 60 4% 95%;
+    --card: 240 5% 5%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 240 5% 8%;
-    --popover-foreground: 60 4% 95%;
+    --popover: 240 6% 4%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 60 4% 95%;
-    --primary-foreground: 240 6% 4%;
+    --primary: 0 0% 97%;
+    --primary-foreground: 240 6% 3%;
 
-    --secondary: 240 5% 11%;
-    --secondary-foreground: 60 3% 82%;
+    --secondary: 240 5% 9%;
+    --secondary-foreground: 0 0% 84%;
 
-    --muted: 240 4% 14%;
-    --muted-foreground: 240 3% 58%;
+    --muted: 240 4% 12%;
+    --muted-foreground: 240 3% 60%;
 
-    --accent: 240 4% 17%;
-    --accent-foreground: 60 4% 95%;
+    --accent: 187 70% 12%;
+    --accent-foreground: 187 90% 88%;
 
-    --destructive: 6 62% 52%;
-    --destructive-foreground: 60 4% 96%;
+    --destructive: 6 72% 54%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 240 4% 15%;
-    --input: 240 4% 15%;
-    --ring: 60 4% 95%;
+    --border: 240 4% 13%;
+    --input: 240 4% 14%;
+    --ring: 187 92% 60%;
 
     --radius: 1.25rem;
 
-    --sidebar-background: 240 6% 3%;
-    --sidebar-foreground: 60 3% 78%;
-    --sidebar-primary: 60 4% 95%;
-    --sidebar-primary-foreground: 240 6% 4%;
-    --sidebar-accent: 240 5% 10%;
-    --sidebar-accent-foreground: 60 4% 95%;
-    --sidebar-border: 240 4% 12%;
-    --sidebar-ring: 60 4% 95%;
+    --sidebar-background: 240 8% 2%;
+    --sidebar-foreground: 0 0% 80%;
+    --sidebar-primary: 0 0% 97%;
+    --sidebar-primary-foreground: 240 6% 3%;
+    --sidebar-accent: 240 5% 8%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 240 4% 10%;
+    --sidebar-ring: 187 92% 60%;
 
     /* Depth is built from light, not colour */
-    --ink: 60 4% 95%;
-    --onyx: 240 6% 4%;
+    --ink: 0 0% 96%;
+    --onyx: 240 6% 2.5%;
+
+    /* ── The premium signature: an iced-ion glow ── */
+    --glow: 187 92% 60%;
+    --glow-soft: 187 80% 66%;
 
     --gradient-primary: linear-gradient(135deg, hsl(var(--ink)) 0%, hsl(var(--ink) / 0.55) 100%);
     --gradient-warm: linear-gradient(135deg, hsl(var(--ink) / 0.9) 0%, hsl(var(--ink) / 0.4) 100%);
@@ -115,6 +120,9 @@
     --ink: 240 6% 6%;
     --onyx: 60 8% 96%;
 
+    --glow: 187 82% 42%;
+    --glow-soft: 187 70% 50%;
+
     --gradient-primary: linear-gradient(135deg, hsl(var(--ink)) 0%, hsl(var(--ink) / 0.55) 100%);
     --gradient-warm: linear-gradient(135deg, hsl(var(--ink) / 0.9) 0%, hsl(var(--ink) / 0.4) 100%);
     --gradient-subtle: linear-gradient(180deg, hsl(60 12% 99%) 0%, hsl(60 8% 96%) 100%);
@@ -133,8 +141,8 @@
   }
 
   .dark {
-    --background: 240 6% 4%;
-    --foreground: 60 4% 95%;
+    --background: 240 6% 2.5%;
+    --foreground: 0 0% 96%;
   }
 }
 
@@ -146,10 +154,12 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    @apply bg-background;
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply text-foreground font-sans antialiased;
+    background: transparent;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     letter-spacing: -0.011em;
   }
@@ -726,4 +736,121 @@
 @keyframes tick {
   0%, 50% { transform: rotate(0deg); }
   50.1%, 100% { transform: rotate(30deg); }
+}
+
+/* ═══════════════════════════════════════════
+   PREMIUM SYSTEM — jet black + iced ion glow
+   Floating docks, holographic edges, glowing type
+   ═══════════════════════════════════════════ */
+
+/* A frosted panel that floats over the WebGL field */
+.holo-panel {
+  position: relative;
+  background: linear-gradient(155deg, hsl(240 6% 8% / 0.72) 0%, hsl(240 8% 4% / 0.66) 100%);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  border: 1px solid hsl(0 0% 100% / 0.07);
+  box-shadow:
+    0 24px 60px -28px hsl(0 0% 0% / 0.9),
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
+}
+.light .holo-panel {
+  background: linear-gradient(155deg, hsl(0 0% 100% / 0.72) 0%, hsl(60 8% 96% / 0.66) 100%);
+  border-color: hsl(240 6% 6% / 0.08);
+}
+
+/* Iced-ion accents */
+.ion-text {
+  color: hsl(var(--glow-soft));
+  text-shadow: 0 0 18px hsl(var(--glow) / 0.5);
+}
+.ion-glow {
+  box-shadow: 0 0 0 1px hsl(var(--glow) / 0.4), 0 0 28px -4px hsl(var(--glow) / 0.55);
+}
+.ion-ring {
+  border: 1px solid hsl(var(--glow) / 0.55);
+  box-shadow: 0 0 24px -6px hsl(var(--glow) / 0.5), inset 0 0 18px -10px hsl(var(--glow) / 0.5);
+}
+
+/* The floating command dock used across every role */
+.dock {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem;
+  border-radius: 999px;
+  background: linear-gradient(155deg, hsl(240 6% 9% / 0.8) 0%, hsl(240 8% 4% / 0.72) 100%);
+  backdrop-filter: blur(24px) saturate(1.25);
+  -webkit-backdrop-filter: blur(24px) saturate(1.25);
+  border: 1px solid hsl(0 0% 100% / 0.08);
+  box-shadow:
+    0 20px 50px -24px hsl(0 0% 0% / 0.95),
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
+}
+.light .dock {
+  background: linear-gradient(155deg, hsl(0 0% 100% / 0.82) 0%, hsl(60 8% 95% / 0.74) 100%);
+  border-color: hsl(240 6% 6% / 0.1);
+}
+
+.dock-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: hsl(var(--muted-foreground));
+  transition: color 0.3s var(--ease-orbit), transform 0.3s var(--ease-orbit), background 0.3s var(--ease-orbit);
+  white-space: nowrap;
+}
+.dock-item:hover {
+  color: hsl(var(--foreground));
+  transform: translateY(-1px);
+}
+.dock-item[data-active='true'] {
+  color: hsl(var(--foreground));
+  background:
+    radial-gradient(120% 120% at 50% 0%, hsl(var(--glow) / 0.22) 0%, hsl(var(--glow) / 0.04) 60%, transparent 100%),
+    hsl(0 0% 100% / 0.05);
+  box-shadow:
+    0 0 0 1px hsl(var(--glow) / 0.35),
+    0 8px 26px -10px hsl(var(--glow) / 0.5),
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.08);
+}
+.dock-item[data-active='true'] svg {
+  color: hsl(var(--glow-soft));
+  filter: drop-shadow(0 0 8px hsl(var(--glow) / 0.7));
+}
+
+/* Editorial glow headline */
+.title-glow {
+  text-shadow: 0 0 40px hsl(var(--glow) / 0.18);
+}
+
+/* Give the primary buttons an ion sheen on hover */
+.btn-ion {
+  transition: box-shadow 0.35s var(--ease-orbit), transform 0.2s var(--ease-orbit);
+}
+.btn-ion:hover {
+  box-shadow: 0 0 0 1px hsl(var(--glow) / 0.4), 0 10px 34px -12px hsl(var(--glow) / 0.6);
+  transform: translateY(-1px);
+}
+
+/* Restyle shadcn Tabs globally into a premium ion dock */
+[role='tablist'] {
+  gap: 0.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-item:hover, .btn-ion:hover { transform: none; }
+}
+
+.lite-mode .holo-panel,
+.lite-mode .dock {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }

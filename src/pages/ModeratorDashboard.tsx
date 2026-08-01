@@ -232,7 +232,7 @@ export default function ModeratorDashboard() {
 
   if (loading || authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex items-center justify-center min-h-screen bg-transparent">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -241,9 +241,9 @@ export default function ModeratorDashboard() {
   const appeals = actions.filter(a => a.appeal_status === 'appealed');
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       {/* Header */}
-      <header className="border-b bg-background/95 sticky top-0 z-50">
+      <header className="border-b border-border/40 glass-effect-strong sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">

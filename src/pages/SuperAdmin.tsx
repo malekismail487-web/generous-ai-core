@@ -256,7 +256,7 @@ export default function SuperAdmin() {
 
   if (loading || isVerified === null) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex items-center justify-center min-h-screen bg-transparent">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -265,7 +265,7 @@ export default function SuperAdmin() {
   if (!isVerified) {
     // Will redirect via useEffect, show loading
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex items-center justify-center min-h-screen bg-transparent">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -273,7 +273,7 @@ export default function SuperAdmin() {
 
   if (!isSuperAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-transparent p-4">
         <div className="glass-effect rounded-2xl p-8 max-w-md w-full text-center">
           <ShieldAlert className="w-16 h-16 mx-auto mb-4 text-destructive" />
           <h1 className="text-2xl font-bold text-destructive mb-2">Access Denied</h1>
@@ -300,7 +300,7 @@ export default function SuperAdmin() {
     if (testingRole === 'student') {
       // Import and render the actual student experience
       return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-transparent">
           {/* Testing Mode Banner */}
           <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-amber-950">
             <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
@@ -339,7 +339,7 @@ export default function SuperAdmin() {
     const RoleIcon = roleIcons[testingRole as 'teacher' | 'school_admin'];
 
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-transparent">
         {/* Testing Mode Banner */}
         <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-amber-950">
           <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
@@ -570,7 +570,7 @@ export default function SuperAdmin() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       {/* Header */}
       <header className="glass-effect-strong border-b border-border/30 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">

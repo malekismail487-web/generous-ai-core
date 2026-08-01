@@ -113,7 +113,7 @@ export default function ParentDashboard() {
     : null;
 
   return (
-    <div className="min-h-screen bg-background" dir={isAr ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-transparent" dir={isAr ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">

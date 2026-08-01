@@ -196,7 +196,7 @@ export default function TeacherDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex items-center justify-center min-h-screen bg-transparent">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -209,7 +209,7 @@ export default function TeacherDashboard() {
   const pendingGrading = submissions.filter(s => s.grade === null).length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       {/* Header */}
       <header className="glass-effect-strong border-b border-border/30 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
