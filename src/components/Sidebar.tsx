@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LuminaLogo } from '@/components/LuminaLogo';
-import {
-  MessageSquare,
-  FileText,
-  Plus,
-  Trash2,
-  LogOut,
+import { 
+  MessageSquare, 
+  FileText, 
+  Plus, 
+  Trash2, 
+  LogOut, 
   ChevronLeft,
   ChevronRight,
   BookOpen,
-  GraduationCap,
+  GraduationCap
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
@@ -67,21 +67,20 @@ export function Sidebar({
   const showNewButton = activeTab === 'chat' || activeTab === 'notes';
 
   return (
-    <div
-      className={cn(
-        'h-full flex flex-col transition-all duration-500 cosmic-header border-r',
-        collapsed ? 'w-16' : 'w-72',
-      )}
-    >
+    <div className={cn(
+      "h-full flex flex-col border-r border-sidebar-border transition-all duration-300",
+      "bg-gradient-to-b from-sidebar-background to-background",
+      collapsed ? "w-16" : "w-72"
+    )}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-primary/10">
+      <div className="flex items-center justify-between p-4 border-b border-sidebar-border/50">
         {!collapsed && (
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl overflow-hidden cosmic-pulse">
+            <div className="w-10 h-10 rounded-xl overflow-hidden">
               <LuminaLogo size={40} />
             </div>
             <div>
-              <span className="font-bold cosmic-glow-text">Lumina</span>
+              <span className="font-bold text-sidebar-foreground">Lumina</span>
               <span className="block text-xs text-muted-foreground">{t('aiLearning')}</span>
             </div>
           </div>
@@ -90,14 +89,14 @@ export function Sidebar({
           variant="ghost"
           size="icon"
           onClick={() => setCollapsed(!collapsed)}
-          className="h-8 w-8 text-sidebar-foreground hover:bg-primary/10 hover:text-primary"
+          className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </Button>
       </div>
 
       {/* Tab Navigation */}
-      <div className={cn('p-2 space-y-1', collapsed ? 'px-1' : 'px-2')}>
+      <div className={cn("p-2 space-y-1", collapsed ? "px-1" : "px-2")}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -108,29 +107,22 @@ export function Sidebar({
               size={collapsed ? 'icon' : 'sm'}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                'w-full justify-start transition-all duration-300 group',
-                collapsed ? 'h-10 w-10 p-0 justify-center' : 'h-10',
-                isActive
-                  ? 'cosmic-button'
-                  : 'text-sidebar-foreground hover:bg-primary/8 hover:text-primary',
+                "w-full justify-start transition-all duration-200",
+                collapsed ? "h-10 w-10 p-0 justify-center" : "h-10",
+                isActive 
+                  ? "bg-primary text-primary-foreground shadow-lg" 
+                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
-              style={isActive ? { boxShadow: '0 0 20px -4px hsl(187 92% 52% / 0.4)' } : undefined}
+              style={isActive ? { boxShadow: '0 4px 20px -4px hsl(var(--primary) / 0.4)' } : undefined}
             >
-              <Icon
-                size={18}
-                className={cn(
-                  'transition-transform duration-300',
-                  !collapsed && 'mr-2',
-                  isActive && 'scale-110',
-                )}
-              />
+              <Icon size={18} className={collapsed ? "" : "mr-2"} />
               {!collapsed && <span>{tab.label}</span>}
             </Button>
           );
         })}
       </div>
 
-      <div className="mx-3 border-t border-primary/8" />
+      <div className="mx-3 border-t border-sidebar-border/50" />
 
       {/* New Button */}
       {showNewButton && (
@@ -140,11 +132,12 @@ export function Sidebar({
             size={collapsed ? 'icon' : 'sm'}
             onClick={activeTab === 'chat' ? onNewChat : onNewNote}
             className={cn(
-              'w-full border-dashed border-primary/25 hover:border-primary/60 hover:bg-primary/8 transition-all duration-300 text-primary',
-              collapsed && 'h-10 w-10 p-0',
+              "w-full border-dashed border-sidebar-border/50 hover:border-primary/50",
+              "hover:bg-primary/5 transition-all duration-200",
+              collapsed && "h-10 w-10 p-0"
             )}
           >
-            <Plus size={16} className={cn(!collapsed && 'mr-2')} />
+            <Plus size={16} className={collapsed ? "" : "mr-2"} />
             {!collapsed && <span>{activeTab === 'chat' ? t('newChatLabel') : t('newNote')}</span>}
           </Button>
         </div>
@@ -156,7 +149,7 @@ export function Sidebar({
           {activeTab === 'chat' ? (
             <div className="space-y-1 py-2">
               {conversations.length === 0 ? (
-                <p className={cn('text-xs text-muted-foreground text-center py-4', collapsed && 'hidden')}>
+                <p className={cn("text-xs text-muted-foreground text-center py-4", collapsed && "hidden")}>
                   {t('noConversationsYet')}
                 </p>
               ) : (
@@ -164,10 +157,10 @@ export function Sidebar({
                   <div
                     key={conv.id}
                     className={cn(
-                      'group flex items-center gap-2 p-2.5 rounded-xl cursor-pointer transition-all duration-300',
+                      "group flex items-center gap-2 p-2.5 rounded-xl cursor-pointer transition-all duration-200",
                       currentConversationId === conv.id
-                        ? 'bg-primary/12 text-primary border border-primary/20'
-                        : 'hover:bg-primary/5 text-sidebar-foreground',
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                        : "hover:bg-sidebar-accent/50 text-sidebar-foreground"
                     )}
                     onClick={() => onSelectConversation(conv)}
                   >
@@ -179,10 +172,7 @@ export function Sidebar({
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteConversation(conv.id);
-                          }}
+                          onClick={(e) => { e.stopPropagation(); onDeleteConversation(conv.id); }}
                         >
                           <Trash2 size={12} />
                         </Button>
@@ -195,7 +185,7 @@ export function Sidebar({
           ) : activeTab === 'notes' ? (
             <div className="space-y-1 py-2">
               {notes.length === 0 ? (
-                <p className={cn('text-xs text-muted-foreground text-center py-4', collapsed && 'hidden')}>
+                <p className={cn("text-xs text-muted-foreground text-center py-4", collapsed && "hidden")}>
                   {t('noNotesYet')}
                 </p>
               ) : (
@@ -203,10 +193,10 @@ export function Sidebar({
                   <div
                     key={note.id}
                     className={cn(
-                      'group flex items-center gap-2 p-2.5 rounded-xl cursor-pointer transition-all duration-300',
+                      "group flex items-center gap-2 p-2.5 rounded-xl cursor-pointer transition-all duration-200",
                       currentNoteId === note.id
-                        ? 'bg-primary/12 text-primary border border-primary/20'
-                        : 'hover:bg-primary/5 text-sidebar-foreground',
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                        : "hover:bg-sidebar-accent/50 text-sidebar-foreground"
                     )}
                     onClick={() => onSelectNote(note)}
                   >
@@ -218,10 +208,7 @@ export function Sidebar({
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteNote(note.id);
-                          }}
+                          onClick={(e) => { e.stopPropagation(); onDeleteNote(note.id); }}
                         >
                           <Trash2 size={12} />
                         </Button>
@@ -238,26 +225,30 @@ export function Sidebar({
       {!showList && (
         <div className="flex-1 flex items-center justify-center p-4">
           {!collapsed && (
-            <p className="text-xs text-muted-foreground text-center">{t('selectDifficultyToStart')}</p>
+            <p className="text-xs text-muted-foreground text-center">
+              {t('selectDifficultyToStart')}
+            </p>
           )}
         </div>
       )}
 
       {/* User Section */}
-      <div className="p-2 border-t border-primary/8 mt-auto">
+      <div className="p-2 border-t border-sidebar-border/50 mt-auto">
         {!collapsed && user && (
-          <p className="text-xs text-sidebar-foreground/50 truncate mb-2 px-2">{user.email}</p>
+          <p className="text-xs text-sidebar-foreground/50 truncate mb-2 px-2">
+            {user.email}
+          </p>
         )}
         <Button
           variant="ghost"
           size={collapsed ? 'icon' : 'sm'}
           onClick={() => signOut()}
           className={cn(
-            'w-full text-sidebar-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-300',
-            collapsed && 'h-10 w-10 p-0',
+            "w-full text-sidebar-foreground hover:text-destructive hover:bg-destructive/10",
+            collapsed && "h-10 w-10 p-0"
           )}
         >
-          <LogOut size={16} className={collapsed ? '' : 'mr-2'} />
+          <LogOut size={16} className={collapsed ? "" : "mr-2"} />
           {!collapsed && <span>{t('signOut')}</span>}
         </Button>
       </div>

@@ -6,9 +6,11 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getGradeName } from '@/lib/translations';
 import { Navigate } from 'react-router-dom';
 import {
-  Loader as Loader2,
+  Loader2,
   RefreshCw,
+  LogOut,
   Users,
+  UserPlus,
   Clock,
   Megaphone,
   Download,
@@ -19,6 +21,7 @@ import {
   Ban,
   Play,
   Trash2,
+  Building2,
   Key,
   Shield,
   FileText,
@@ -26,17 +29,12 @@ import {
   Settings,
   Globe,
   MapPin,
-  ChartBar as BarChart3,
+  BarChart3,
   Network,
   GitBranch,
   Eye,
   BookOpen,
   GraduationCap,
-  TrendingUp,
-  Activity as ActivityIcon,
-  Zap,
-  Sparkles,
-  ArrowRight,
 } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
@@ -54,6 +52,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -76,6 +75,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -91,11 +91,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { ReportCardCreator } from '@/components/admin/ReportCardCreator';
 import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
-import { DashboardShell, NavItem } from '@/components/DashboardShell';
-import { LuminaAtom } from '@/components/LuminaAtom';
-import { cn } from '@/lib/utils';
-
-/* ────────────────── Types ────────────────── */
 
 interface InviteCode {
   id: string;
@@ -139,82 +134,6 @@ interface ActivityLog {
   created_at: string;
 }
 
-/* ────────────────── Sub-tab helper ────────────────── */
-
-function SubTabButton({
-  active,
-  onClick,
-  icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border',
-        active
-          ? 'bg-white/15 text-white border-white/20'
-          : 'bg-white/[0.03] text-white/40 border-white/5 hover:text-white/70 hover:bg-white/[0.06] hover:border-white/10',
-      )}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
-
-/* ────────────────── Bento widget primitives ────────────────── */
-
-/**
- * A single glass widget panel sized for the bento grid.
- * `span` controls grid footprint via col-span / row-span utilities.
- */
-function BentoWidget({
-  className = '',
-  span = 'col-span-1 row-span-1',
-  float = false,
-  pulse = false,
-  children,
-}: {
-  className?: string;
-  span?: string;
-  float?: boolean;
-  pulse?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        'lumina-card relative overflow-hidden p-5 flex flex-col',
-        span,
-        float && 'cosmic-float',
-        pulse && 'cosmic-pulse',
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-/** Small orbit-ring decoration rendered behind a widget for the mini-animation. */
-function OrbitRing({ className = '' }: { className?: string }) {
-  return (
-    <div className={cn('pointer-events-none absolute -right-10 -top-10 opacity-[0.12]', className)}>
-      <div className="w-40 h-40 rounded-full border border-white/30" />
-      <div className="absolute inset-4 rounded-full border border-white/20" />
-      <div className="absolute inset-8 rounded-full border border-white/10" />
-    </div>
-  );
-}
-
-/* ────────────────── Main component ────────────────── */
-
 export default function SchoolAdminDashboard() {
   const { isSchoolAdmin, school, profile, loading } = useRoleGuard();
   const { signOut } = useAuth();
@@ -222,19 +141,14 @@ export default function SchoolAdminDashboard() {
   const { language, setLanguage } = useThemeLanguage();
   const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
 
-  /* ── Tab state (replaces Radix Tabs) ── */
-  const [activeTab, setActiveTab] = useState('overview');
-  const [curriculumSub, setCurriculumSub] = useState<'subjects' | 'graph' | 'versions' | 'simulator' | 'categories'>('subjects');
-  const [reportsSub, setReportsSub] = useState<'report-cards' | 'usage'>('report-cards');
-
-  /* ── Users state ── */
+  // Users state
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('all');
   const [userStatusFilter, setUserStatusFilter] = useState('all');
 
-  /* ── Invite codes state ── */
+  // Invite codes state
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [newCodeRole, setNewCodeRole] = useState<'teacher' | 'student'>('student');
@@ -243,37 +157,35 @@ export default function SchoolAdminDashboard() {
   const { categories: teacherCategories } = useTeacherCategories(school?.id);
   const [creatingCode, setCreatingCode] = useState(false);
 
-  /* ── Invite requests state ── */
+  // Invite requests state
   const [inviteRequests, setInviteRequests] = useState<InviteRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [gradeModalOpen, setGradeModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<InviteRequest | null>(null);
   const [studentGrade, setStudentGrade] = useState('');
 
-  /* ── Announcements state ── */
+  // Announcements state
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
   const [newAnnouncementTitle, setNewAnnouncementTitle] = useState('');
   const [newAnnouncementBody, setNewAnnouncementBody] = useState('');
   const [creatingAnnouncement, setCreatingAnnouncement] = useState(false);
 
-  /* ── Trips state ── */
+  // Trips state
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loadingTrips, setLoadingTrips] = useState(false);
   const [newTripTitle, setNewTripTitle] = useState('');
   const [newTripBody, setNewTripBody] = useState('');
   const [creatingTrip, setCreatingTrip] = useState(false);
 
-  /* ── Activity logs state ── */
+  // Activity logs state
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
-
-  /* ────────────────── Fetch functions ────────────────── */
 
   const fetchUsers = useCallback(async () => {
     if (!school) return;
     setLoadingUsers(true);
-
+    
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -291,7 +203,7 @@ export default function SchoolAdminDashboard() {
   const fetchInviteCodes = useCallback(async () => {
     if (!school) return;
     setLoadingCodes(true);
-
+    
     const { data, error } = await supabase
       .from('invite_codes')
       .select('*')
@@ -309,7 +221,7 @@ export default function SchoolAdminDashboard() {
   const fetchInviteRequests = useCallback(async () => {
     if (!school) return;
     setLoadingRequests(true);
-
+    
     const { data, error } = await supabase
       .from('invite_requests')
       .select('*, invite_codes(*)')
@@ -319,10 +231,9 @@ export default function SchoolAdminDashboard() {
     if (error) {
       console.error('Error fetching invite requests:', error);
     } else {
-      const filtered = (data || []).filter(
-        (r: InviteRequest) =>
-          r.invite_codes &&
-          (r.invite_codes as unknown as { school_id: string }).school_id === school.id,
+      // Filter to only show requests for this school
+      const filtered = (data || []).filter((r: InviteRequest) => 
+        r.invite_codes && (r.invite_codes as unknown as { school_id: string }).school_id === school.id
       );
       setInviteRequests(filtered as InviteRequest[]);
     }
@@ -332,7 +243,7 @@ export default function SchoolAdminDashboard() {
   const fetchAnnouncements = useCallback(async () => {
     if (!school) return;
     setLoadingAnnouncements(true);
-
+    
     const { data, error } = await supabase
       .from('announcements')
       .select('*')
@@ -350,7 +261,7 @@ export default function SchoolAdminDashboard() {
   const fetchTrips = useCallback(async () => {
     if (!school) return;
     setLoadingTrips(true);
-
+    
     const { data, error } = await supabase
       .from('trips')
       .select('*')
@@ -368,7 +279,7 @@ export default function SchoolAdminDashboard() {
   const fetchActivityLogs = useCallback(async () => {
     if (!school) return;
     setLoadingLogs(true);
-
+    
     const { data, error } = await supabase
       .from('activity_logs')
       .select('*')
@@ -393,27 +304,12 @@ export default function SchoolAdminDashboard() {
       fetchTrips();
       fetchActivityLogs();
     }
-  }, [
-    isSchoolAdmin,
-    school,
-    fetchUsers,
-    fetchInviteCodes,
-    fetchInviteRequests,
-    fetchAnnouncements,
-    fetchTrips,
-    fetchActivityLogs,
-  ]);
-
-  /* ────────────────── Action functions ────────────────── */
+  }, [isSchoolAdmin, school, fetchUsers, fetchInviteCodes, fetchInviteRequests, fetchAnnouncements, fetchTrips, fetchActivityLogs]);
 
   const generateInviteCode = async () => {
     if (!school || !profile) return;
     if (newCodeRole === 'teacher' && !newCodeCategoryId) {
-      toast({
-        variant: 'destructive',
-        title: t('error'),
-        description: 'Pick a teacher category for the invite.',
-      });
+      toast({ variant: 'destructive', title: t('error'), description: 'Pick a teacher category for the invite.' });
       return;
     }
     setCreatingCode(true);
@@ -433,11 +329,7 @@ export default function SchoolAdminDashboard() {
 
       const result = data as { success?: boolean; error?: string };
       if (!result?.success) {
-        toast({
-          variant: 'destructive',
-          title: t('error'),
-          description: result?.error || 'Failed',
-        });
+        toast({ variant: 'destructive', title: t('error'), description: result?.error || 'Failed' });
         return;
       }
 
@@ -464,10 +356,11 @@ export default function SchoolAdminDashboard() {
 
   const acceptInviteRequest = async (request: InviteRequest, grade?: string) => {
     if (!school) return;
-
+    
+    // Use the RPC function for proper approval
     const { data, error } = await supabase.rpc('approve_invite_request', {
       p_request_id: request.id,
-      p_grade: grade || null,
+      p_grade: grade || null
     });
 
     if (error) {
@@ -492,7 +385,7 @@ export default function SchoolAdminDashboard() {
 
   const denyInviteRequest = async (requestId: string) => {
     const { data, error } = await supabase.rpc('deny_invite_request', {
-      p_request_id: requestId,
+      p_request_id: requestId
     });
 
     if (error) {
@@ -532,7 +425,10 @@ export default function SchoolAdminDashboard() {
   };
 
   const deleteUser = async (userId: string) => {
-    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
 
     if (error) {
       toast({ variant: 'destructive', title: t('error') });
@@ -549,12 +445,14 @@ export default function SchoolAdminDashboard() {
     }
 
     setCreatingAnnouncement(true);
-    const { error } = await supabase.from('announcements').insert({
-      school_id: school.id,
-      title: newAnnouncementTitle,
-      body: newAnnouncementBody,
-      created_by: profile.id,
-    });
+    const { error } = await supabase
+      .from('announcements')
+      .insert({
+        school_id: school.id,
+        title: newAnnouncementTitle,
+        body: newAnnouncementBody,
+        created_by: profile.id
+      });
 
     if (error) {
       toast({ variant: 'destructive', title: t('error') });
@@ -568,7 +466,10 @@ export default function SchoolAdminDashboard() {
   };
 
   const deleteAnnouncement = async (announcementId: string) => {
-    const { error } = await supabase.from('announcements').delete().eq('id', announcementId);
+    const { error } = await supabase
+      .from('announcements')
+      .delete()
+      .eq('id', announcementId);
 
     if (error) {
       toast({ variant: 'destructive', title: t('error') });
@@ -585,12 +486,14 @@ export default function SchoolAdminDashboard() {
     }
 
     setCreatingTrip(true);
-    const { error } = await supabase.from('trips').insert({
-      school_id: school.id,
-      title: newTripTitle,
-      body: newTripBody,
-      created_by: profile.id,
-    });
+    const { error } = await supabase
+      .from('trips')
+      .insert({
+        school_id: school.id,
+        title: newTripTitle,
+        body: newTripBody,
+        created_by: profile.id
+      });
 
     if (error) {
       toast({ variant: 'destructive', title: t('error') });
@@ -604,7 +507,10 @@ export default function SchoolAdminDashboard() {
   };
 
   const deleteTrip = async (tripId: string) => {
-    const { error } = await supabase.from('trips').delete().eq('id', tripId);
+    const { error } = await supabase
+      .from('trips')
+      .delete()
+      .eq('id', tripId);
 
     if (error) {
       toast({ variant: 'destructive', title: t('error') });
@@ -614,31 +520,15 @@ export default function SchoolAdminDashboard() {
     }
   };
 
-  /* ── Derived data ── */
-
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch = u.full_name.toLowerCase().includes(userSearch.toLowerCase());
-    const matchesRole = userRoleFilter === 'all' || u.user_type === userRoleFilter;
-    const matchesStatus =
-      userStatusFilter === 'all' ||
-      (userStatusFilter === 'active' && u.is_active) ||
-      (userStatusFilter === 'suspended' && !u.is_active);
-    return matchesSearch && matchesRole && matchesStatus;
-  });
-
-  const pendingCounts = {
-    students: inviteRequests.filter((r) => (r.invite_codes as unknown as InviteCode)?.role === 'student').length,
-    teachers: inviteRequests.filter((r) => (r.invite_codes as unknown as InviteCode)?.role === 'teacher').length,
-  };
-
-  const activeCodesCount = inviteCodes.filter((c) => !c.used && new Date(c.expires_at) > new Date()).length;
-
   const exportUsersCSV = () => {
     const csvContent = [
       [t('name'), t('role'), t('grade'), t('status')].join(','),
-      ...filteredUsers.map((u) =>
-        [u.full_name, u.user_type, u.grade_level || '', u.is_active ? t('active') : t('suspended')].join(','),
-      ),
+      ...filteredUsers.map(u => [
+        u.full_name,
+        u.user_type,
+        u.grade_level || '',
+        u.is_active ? t('active') : t('suspended')
+      ].join(','))
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -649,12 +539,26 @@ export default function SchoolAdminDashboard() {
     a.click();
   };
 
-  /* ────────────────── Guards ────────────────── */
+  // Filter users
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = u.full_name.toLowerCase().includes(userSearch.toLowerCase());
+    const matchesRole = userRoleFilter === 'all' || u.user_type === userRoleFilter;
+    const matchesStatus = userStatusFilter === 'all' || 
+      (userStatusFilter === 'active' && u.is_active) ||
+      (userStatusFilter === 'suspended' && !u.is_active);
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  // Count pending
+  const pendingCounts = {
+    students: inviteRequests.filter(r => (r.invite_codes as unknown as InviteCode)?.role === 'student').length,
+    teachers: inviteRequests.filter(r => (r.invite_codes as unknown as InviteCode)?.role === 'teacher').length,
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <LuminaAtom size={48} animate />
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -663,1066 +567,710 @@ export default function SchoolAdminDashboard() {
     return <Navigate to="/" replace />;
   }
 
-  /* ────────────────── Nav items ────────────────── */
-
-  const navItems: NavItem[] = [
-    { id: 'overview', icon: <BarChart3 size={18} />, label: 'Overview' },
-    { id: 'users', icon: <Users size={18} />, label: t('users') },
-    { id: 'codes', icon: <Key size={18} />, label: 'Invites' },
-    { id: 'requests', icon: <Clock size={18} />, label: 'Requests', badge: inviteRequests.length },
-    { id: 'announcements', icon: <Megaphone size={18} />, label: t('announce') },
-    { id: 'trips', icon: <MapPin size={18} />, label: t('trips') },
-    { id: 'activity', icon: <ActivityIcon size={18} />, label: 'Activity' },
-    { id: 'weekly-plan', icon: <Calendar size={18} />, label: 'Weekly Plan' },
-    { id: 'performance', icon: <TrendingUp size={18} />, label: 'Performance' },
-    { id: 'appeals', icon: <Shield size={18} />, label: 'Appeals' },
-    { id: 'curriculum', icon: <Network size={18} />, label: 'Curriculum' },
-    { id: 'reports', icon: <FileText size={18} />, label: 'Reports' },
-    { id: 'settings', icon: <Settings size={18} />, label: t('settings') },
-  ];
-
-  /* ────────────────── Shared UI bits ────────────────── */
-
-  const sectionHeader = (icon: React.ReactNode, title: string) => (
-    <div className="flex items-center gap-3">
-      <div className="lumina-icon-tile">{icon}</div>
-      <h2 className="lumina-text text-xl font-semibold">{title}</h2>
-    </div>
-  );
-
-  /** Bento stat tile used in the overview hero grid. */
-  const StatTile = ({
-    label,
-    value,
-    icon,
-    delay,
-    span = 'col-span-1 row-span-1',
-    accent,
-  }: {
-    label: string;
-    value: number | string;
-    icon: React.ReactNode;
-    delay: number;
-    span?: string;
-    accent?: string;
-  }) => (
-    <BentoWidget span={span} pulse className={cn('fade-up', `fade-up-delay-${Math.min(delay, 5)}`)}>
-      <OrbitRing />
-      <div className="relative flex items-start justify-between">
-        <div className="lumina-icon-tile">{icon}</div>
-        <span
-          className="text-[10px] font-bold tracking-[0.2em] uppercase"
-          style={{ color: accent || 'rgba(232,232,232,0.3)' }}
-        >
-          live
-        </span>
-      </div>
-      <div className="relative mt-auto">
-        <p className="text-xs text-white/40">{label}</p>
-        <p className="text-3xl font-bold mt-1 text-white/90 font-mono">{value}</p>
-      </div>
-    </BentoWidget>
-  );
-
-  /* ═══════════════════════════════════════════════════════════════
-   *  RENDER
-   * ═══════════════════════════════════════════════════════════════ */
-
   return (
-    <DashboardShell
-      role="School Admin"
-      name={profile?.full_name}
-      org={school.name}
-      navItems={navItems}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      headerRight={
-        <button
-          onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-          className="lumina-btn-glass flex items-center gap-1.5"
-        >
-          <Globe className="w-3.5 h-3.5" />
-          {language === 'en' ? 'AR' : 'EN'}
-        </button>
-      }
-    >
-      {/* ════════════ Overview — Bento Grid ════════════ */}
-      {activeTab === 'overview' && (
-        <div className="tab-enter">
-          {/* Hero banner with LuminaAtom */}
-          <div className="relative overflow-hidden border-b border-white/10">
-            <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] via-white/[0.01] to-transparent" />
-            <div className="relative max-w-6xl mx-auto px-6 py-14 flex items-center gap-8">
-              <div className="cosmic-float">
-                <LuminaAtom size={120} animate glow />
-              </div>
-              <div className="space-y-2">
-                <h1 className="lumina-text text-3xl font-bold">{school.name}</h1>
-                <p className="text-white/40 text-sm">{t('schoolAdminDashboard')}</p>
-                <div className="flex items-center gap-2 pt-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400/40 animate-ping opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400/70" />
-                  </span>
-                  <span className="text-xs text-white/40 font-mono">systems nominal</span>
-                </div>
-              </div>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="glass-effect-strong border-b border-border/30 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <Shield className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">{school.name}</h1>
+              <p className="text-xs text-muted-foreground">{t('schoolAdminDashboard')}</p>
             </div>
           </div>
-
-          <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
-            {/* ─── BENTO GRID ─── */}
-            <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[140px] gap-4">
-              {/* Hero / command widget — 2x2 */}
-              <BentoWidget
-                span="col-span-2 row-span-2"
-                float
-                className="fade-up"
-              >
-                <OrbitRing />
-                <div className="relative flex items-center gap-3">
-                  <div className="lumina-icon-tile">
-                    <Sparkles className="w-5 h-5 text-white/70" />
-                  </div>
-                  <h3 className="lumina-text font-semibold">Command Center</h3>
-                </div>
-                <p className="relative text-sm text-white/40 mt-3">
-                  {school.name} — manage every facet of your institution from a single vantage.
-                </p>
-                <div className="relative mt-auto grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setActiveTab('curriculum')}
-                    className="lumina-btn-glass flex items-center justify-between text-xs"
-                  >
-                    <span className="flex items-center gap-2"><Network className="w-3.5 h-3.5" /> Curriculum</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('requests')}
-                    className="lumina-btn-glass flex items-center justify-between text-xs"
-                  >
-                    <span className="flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> Requests</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('announcements')}
-                    className="lumina-btn-glass flex items-center justify-between text-xs"
-                  >
-                    <span className="flex items-center gap-2"><Megaphone className="w-3.5 h-3.5" /> Announce</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('performance')}
-                    className="lumina-btn-glass flex items-center justify-between text-xs"
-                  >
-                    <span className="flex items-center gap-2"><TrendingUp className="w-3.5 h-3.5" /> Performance</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </BentoWidget>
-
-              {/* Stat tiles — 1x1 each */}
-              <StatTile
-                label={t('totalUsers')}
-                value={users.length}
-                icon={<Users className="w-5 h-5 text-white/70" />}
-                delay={1}
-              />
-              <StatTile
-                label={t('pendingRequests')}
-                value={inviteRequests.length}
-                icon={<Clock className="w-5 h-5 text-white/70" />}
-                delay={2}
-                accent="rgba(251,191,36,0.5)"
-              />
-
-              {/* Active codes — 2x1 wide */}
-              <StatTile
-                label={t('activeCodes')}
-                value={activeCodesCount}
-                icon={<Key className="w-5 h-5 text-white/70" />}
-                delay={3}
-                span="col-span-2 row-span-1"
-              />
-
-              {/* Announcements count — 1x1 */}
-              <StatTile
-                label={t('announcementsLabel')}
-                value={announcements.length}
-                icon={<Megaphone className="w-5 h-5 text-white/70" />}
-                delay={1}
-              />
-
-              {/* Trips count — 1x1 */}
-              <StatTile
-                label={t('trips')}
-                value={trips.length}
-                icon={<MapPin className="w-5 h-5 text-white/70" />}
-                delay={2}
-              />
-
-              {/* Pending requests banner — 2x1 wide */}
-              {inviteRequests.length > 0 && (
-                <BentoWidget
-                  span="col-span-2 row-span-1"
-                  pulse
-                  className="fade-up fade-up-delay-3"
-                >
-                  <div className="flex items-center gap-3 h-full">
-                    <div className="lumina-icon-tile">
-                      <Clock className="w-5 h-5 text-white/70" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-white/40">{t('pendingRequests')}</p>
-                      <p className="text-sm font-medium text-white/70 mt-0.5">
-                        <span className="font-mono text-white/90">{pendingCounts.students}</span> {t('student')}
-                        {pendingCounts.students !== 1 ? (language === 'ar' ? '' : 's') : ''},{' '}
-                        <span className="font-mono text-white/90">{pendingCounts.teachers}</span> {t('teacher')}
-                        {pendingCounts.teachers !== 1 ? (language === 'ar' ? '' : 's') : ''}{' '}
-                        {t('pendingApprovalCount')}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setActiveTab('requests')}
-                      className="lumina-btn-icon"
-                      aria-label="View requests"
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </BentoWidget>
-              )}
-
-              {/* Quick start — 2x1 wide */}
-              <BentoWidget
-                span="col-span-2 row-span-1"
-                className="fade-up fade-up-delay-3"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="lumina-icon-tile">
-                    <BookOpen className="w-5 h-5 text-white/70" />
-                  </div>
-                  <h3 className="lumina-text font-semibold text-sm">Quick start</h3>
-                </div>
-                <p className="text-sm text-white/40">
-                  Build your curriculum in{' '}
-                  <button onClick={() => setActiveTab('curriculum')} className="text-white/70 underline underline-offset-2 hover:text-white">
-                    Curriculum
-                  </button>
-                  , approve new accounts under{' '}
-                  <button onClick={() => setActiveTab('requests')} className="text-white/70 underline underline-offset-2 hover:text-white">
-                    Requests
-                  </button>
-                  , and post school updates from{' '}
-                  <button onClick={() => setActiveTab('announcements')} className="text-white/70 underline underline-offset-2 hover:text-white">
-                    Announcements
-                  </button>
-                  .
-                </p>
-              </BentoWidget>
-
-              {/* Activity pulse — 1x1 */}
-              <BentoWidget pulse className="fade-up fade-up-delay-4">
-                <div className="lumina-icon-tile">
-                  <ActivityIcon className="w-5 h-5 text-white/70" />
-                </div>
-                <div className="mt-auto">
-                  <p className="text-xs text-white/40">Activity</p>
-                  <p className="text-2xl font-bold text-white/90 font-mono">{activityLogs.length}</p>
-                </div>
-              </BentoWidget>
-
-              {/* Extensions tile — 1x1 */}
-              <BentoWidget float className="fade-up fade-up-delay-4">
-                <div className="lumina-icon-tile">
-                  <Zap className="w-5 h-5 text-white/70" />
-                </div>
-                <div className="mt-auto">
-                  <p className="text-xs text-white/40">Extensions</p>
-                  <button
-                    onClick={() => setActiveTab('settings')}
-                    className="text-sm text-white/70 hover:text-white mt-0.5 flex items-center gap-1"
-                  >
-                    Manage <ArrowRight className="w-3 h-3" />
-                  </button>
-                </div>
-              </BentoWidget>
-            </div>
-
-            {/* Divider */}
-            <div className="lumina-divider" />
-
-            {/* Extensions section (full width) */}
-            <div className="fade-up fade-up-delay-2">
-              <TenantExtensionsSection />
-            </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={signOut}>
+              <LogOut className="w-4 h-4" />
+            </Button>
           </div>
         </div>
-      )}
+      </header>
 
-      {/* ════════════ Users ════════════ */}
-      {activeTab === 'users' && (
-        <div className="tab-enter max-w-5xl mx-auto px-6 py-8 space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 fade-up">
-            {sectionHeader(<Users className="w-5 h-5 text-white/70" />, t('users'))}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        <TenantExtensionsSection className="mb-6" />
+        <Tabs defaultValue="overview" orientation="vertical" className="flex flex-col md:flex-row gap-6">
+          {/* Sidebar nav */}
+          <aside className="md:w-56 shrink-0">
+            <TabsList className="flex md:flex-col h-auto w-full bg-transparent p-0 gap-1 overflow-x-auto md:overflow-visible">
+              <NavGroup label="Overview" />
+              <NavTab value="overview" icon={BarChart3} label="Overview" />
+              <NavTab value="performance" icon={BarChart3} label="Performance" />
+
+              <NavGroup label="Curriculum" />
+              <NavTab value="subjects" icon={BookOpen} label="Subjects" />
+              <NavTab value="curriculum-graph" icon={Network} label="Curriculum Graph" />
+              <NavTab value="curriculum-versions" icon={GitBranch} label="Versions" />
+              <NavTab value="simulator" icon={Eye} label="Student Simulator" />
+
+              <NavGroup label="People" />
+              <NavTab value="teacher-categories" icon={GraduationCap} label="Teacher Categories" />
+              <NavTab value="users" icon={Users} label={t('users')} />
+              <NavTab value="pending" icon={Clock} label={t('pending')} badge={inviteRequests.length} />
+              <NavTab value="codes" icon={Key} label={t('codes')} />
+
+              <NavGroup label="Content" />
+              <NavTab value="weekly-plans" icon={Calendar} label={t('weekly')} />
+              <NavTab value="report-cards" icon={FileText} label={t('reports')} />
+              <NavTab value="announcements" icon={Megaphone} label={t('announce')} />
+              <NavTab value="trips" icon={MapPin} label={t('trips')} />
+
+              <NavGroup label="System" />
+              <NavTab value="budget" icon={Download} label="Usage" />
+              <NavTab value="logs" icon={Clock} label={t('logs')} />
+              <NavTab value="appeals" icon={Shield} label="Appeals" />
+              <NavTab value="settings" icon={Settings} label={t('settings')} />
+            </TabsList>
+          </aside>
+
+          {/* Content */}
+          <section className="flex-1 min-w-0">
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="space-y-4 mt-0">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <StatCard label={t('totalUsers')} value={users.length} />
+                <StatCard label={t('pendingRequests')} value={inviteRequests.length} accent="amber" />
+                <StatCard label={t('activeCodes')} value={inviteCodes.filter(c => !c.used && new Date(c.expires_at) > new Date()).length} accent="green" />
+                <StatCard label={t('announcementsLabel')} value={announcements.length} />
+              </div>
+              {inviteRequests.length > 0 && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <Clock className="w-5 h-5" />
+                  <span className="font-medium text-sm">
+                    {pendingCounts.students} {t('student')}{pendingCounts.students !== 1 ? (language === 'ar' ? '' : 's') : ''}, {pendingCounts.teachers} {t('teacher')}{pendingCounts.teachers !== 1 ? (language === 'ar' ? '' : 's') : ''} {t('pendingApprovalCount')}
+                  </span>
+                </div>
+              )}
+              <div className="rounded-xl border border-border bg-card/40 p-4">
+                <h3 className="font-semibold text-sm mb-2">Quick start</h3>
+                <p className="text-xs text-muted-foreground">
+                  Build your curriculum in <strong>Curriculum Graph</strong>, approve new accounts under <strong>Pending</strong>, and post school updates from <strong>Announcements</strong>.
+                </p>
+              </div>
+            </TabsContent>
+
+            {/* Performance */}
+            <TabsContent value="performance" className="space-y-4 mt-0">
+              <SchoolPerformanceDashboard schoolId={school.id} />
+            </TabsContent>
+
+            {/* Curriculum */}
+            <TabsContent value="subjects" className="space-y-4 mt-0">
+              <SubjectsManager schoolId={school.id} />
+            </TabsContent>
+            <TabsContent value="curriculum-graph" className="space-y-4 mt-0">
+              <CurriculumGraphManager schoolId={school.id} />
+            </TabsContent>
+            <TabsContent value="curriculum-versions" className="space-y-4 mt-0">
+              <CurriculumVersionsPanel schoolId={school.id} />
+            </TabsContent>
+            <TabsContent value="simulator" className="space-y-4 mt-0">
+              <StudentViewSimulator schoolId={school.id} />
+            </TabsContent>
+            <TabsContent value="teacher-categories" className="space-y-4 mt-0">
+              <TeacherCategoriesManager schoolId={school.id} />
+            </TabsContent>
+
+
+            {/* Usage (formerly Budget) */}
+            <TabsContent value="budget" className="space-y-4 mt-0">
+              <BudgetOptimizationReport schoolId={school.id} />
+            </TabsContent>
+
+            {/* Invite Codes Tab */}
+            <TabsContent value="codes" className="space-y-4 mt-0">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">{t('inviteCodes')}</h2>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Select value={newCodeRole} onValueChange={(v) => setNewCodeRole(v as 'teacher' | 'student')}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">{t('student')}</SelectItem>
+                      <SelectItem value="teacher">{t('teacher')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {newCodeRole === 'teacher' && (
+                    <Select value={newCodeCategoryId} onValueChange={setNewCodeCategoryId}>
+                      <SelectTrigger className="w-48"><SelectValue placeholder="Teacher category" /></SelectTrigger>
+                      <SelectContent>
+                        {teacherCategories.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.emoji} {c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <Button onClick={generateInviteCode} disabled={creatingCode} className="gap-2">
+                    {creatingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    {t('generateCode')}
+                  </Button>
+                </div>
+              </div>
+
+            <div className="glass-effect rounded-xl overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('code')}</TableHead>
+                    <TableHead>{t('role')}</TableHead>
+                    <TableHead>{t('status')}</TableHead>
+                    <TableHead>{t('expires')}</TableHead>
+                    <TableHead className="text-right">{t('actions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {inviteCodes.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        {t('noInviteCodesYet')}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    inviteCodes.map((code) => {
+                      const isExpired = new Date(code.expires_at) < new Date();
+                      return (
+                        <TableRow key={code.id}>
+                          <TableCell>
+                            <code className="bg-muted px-2 py-1 rounded font-mono">{code.code}</code>
+                          </TableCell>
+                          <TableCell className="capitalize">{code.role === 'student' ? t('student') : t('teacher')}</TableCell>
+                          <TableCell>
+                            {code.used ? (
+                              <Badge variant="secondary">{t('used')}</Badge>
+                            ) : isExpired ? (
+                              <Badge variant="destructive">{t('expired')}</Badge>
+                            ) : (
+                              <Badge variant="default" className="bg-green-500">{t('active')}</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(code.expires_at).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {!code.used && !isExpired && (
+                              <Button variant="outline" size="sm" onClick={() => revokeInviteCode(code.id)}>
+                                {t('revoke')}
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          {/* Pending Requests Tab */}
+          <TabsContent value="pending" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">{t('pendingRequests')}</h2>
+              <Button variant="outline" size="icon" onClick={fetchInviteRequests} disabled={loadingRequests}>
+                <RefreshCw className={`w-4 h-4 ${loadingRequests ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+
+            <div className="glass-effect rounded-xl overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('name')}</TableHead>
+                    <TableHead>{t('email')}</TableHead>
+                    <TableHead>{t('role')}</TableHead>
+                    <TableHead>{t('code')}</TableHead>
+                    <TableHead>{t('requested')}</TableHead>
+                    <TableHead className="text-right">{t('actions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {inviteRequests.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        {t('noPendingRequests')}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    inviteRequests.map((request) => {
+                      const inviteCode = request.invite_codes as unknown as InviteCode;
+                      return (
+                        <TableRow key={request.id}>
+                          <TableCell className="font-medium">{request.name}</TableCell>
+                          <TableCell>{request.email}</TableCell>
+                          <TableCell className="capitalize">{inviteCode?.role === 'student' ? t('student') : t('teacher')}</TableCell>
+                          <TableCell>
+                            <code className="bg-muted px-2 py-1 rounded text-xs">{inviteCode?.code}</code>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(request.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1 text-green-500 hover:text-green-600"
+                                onClick={() => {
+                                  if (inviteCode?.role === 'student') {
+                                    setSelectedRequest(request);
+                                    setGradeModalOpen(true);
+                                  } else {
+                                    acceptInviteRequest(request);
+                                  }
+                                }}
+                              >
+                                <Check className="w-4 h-4" />
+                                {t('accept')}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1 text-destructive hover:text-destructive"
+                                onClick={() => denyInviteRequest(request.id)}
+                              >
+                                <X className="w-4 h-4" />
+                                {t('deny')}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Grade Modal for Students */}
+            <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t('assignStudentGrade')}</DialogTitle>
+                  <DialogDescription>
+                    {t('selectGradeFor')} {selectedRequest?.name}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                  <Label htmlFor="grade">{t('gradeLevel')}</Label>
+                  <Select value={studentGrade} onValueChange={setStudentGrade}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('selectGradeLabel')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['KG1', 'KG2', ...Array.from({length: 12}, (_, i) => `Grade ${i+1}`)].map(g => (
+                        <SelectItem key={g} value={g}>{getGradeName(g, language)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setGradeModalOpen(false)}>
+                    {t('cancel')}
+                  </Button>
+                  <Button 
+                    onClick={() => selectedRequest && acceptInviteRequest(selectedRequest, studentGrade)}
+                    disabled={!studentGrade}
+                  >
+                    {t('acceptStudent')}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users" className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h2 className="text-lg font-semibold">{t('users')}</h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder={t('searchUsers')}
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className="pl-9 w-40"
+                  />
+                </div>
+                <Select value={userRoleFilter} onValueChange={setUserRoleFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder={t('role')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('allRoles')}</SelectItem>
+                    <SelectItem value="school_admin">{t('admin')}</SelectItem>
+                    <SelectItem value="teacher">{t('teacher')}</SelectItem>
+                    <SelectItem value="student">{t('student')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={userStatusFilter} onValueChange={setUserStatusFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder={t('status')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('allStatus')}</SelectItem>
+                    <SelectItem value="active">{t('active')}</SelectItem>
+                    <SelectItem value="suspended">{t('suspended')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="icon" onClick={exportUsersCSV}>
+                  <Download className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="glass-effect rounded-xl overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('name')}</TableHead>
+                    <TableHead>{t('role')}</TableHead>
+                    <TableHead>{t('grade')}</TableHead>
+                    <TableHead>{t('status')}</TableHead>
+                    <TableHead className="text-right">{t('actions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        {t('noUsersFound')}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.full_name}</TableCell>
+                        <TableCell className="capitalize">
+                          {user.user_type === 'student' ? t('student') : user.user_type === 'teacher' ? t('teacher') : t('schoolAdmin')}
+                        </TableCell>
+                        <TableCell>{user.grade_level ? getGradeName(user.grade_level, language) : '-'}</TableCell>
+                        <TableCell>
+                          {user.is_active ? (
+                            <Badge variant="default" className="bg-green-500">{t('active')}</Badge>
+                          ) : (
+                            <Badge variant="destructive">{t('suspended')}</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {user.id !== profile?.id && (
+                            <div className="flex items-center justify-end gap-2">
+                              {user.is_active ? (
+                                <Button variant="outline" size="sm" onClick={() => suspendUser(user.id)} className="gap-1">
+                                  <Ban className="w-4 h-4" />
+                                  {t('suspend')}
+                                </Button>
+                              ) : (
+                                <Button variant="outline" size="sm" onClick={() => activateUser(user.id)} className="gap-1">
+                                  <Play className="w-4 h-4" />
+                                  {t('activate')}
+                                </Button>
+                              )}
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm" className="gap-1 text-destructive hover:text-destructive">
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>{t('deleteUser')}</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      {t('deleteUserDesc')} {user.full_name} {t('andAllData')}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteUser(user.id)}
+                                      className="bg-destructive hover:bg-destructive/90"
+                                    >
+                                      {t('delete')}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          {/* Announcements Tab */}
+          <TabsContent value="announcements" className="space-y-4">
+            <h2 className="text-lg font-semibold">{t('announcementsLabel')}</h2>
+
+            {/* Create Announcement Form */}
+            <div className="glass-effect rounded-xl p-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="announcement-title">{t('title')}</Label>
                 <Input
-                  placeholder={t('searchUsers')}
-                  value={userSearch}
-                  onChange={(e) => setUserSearch(e.target.value)}
-                  className="pl-9 w-40 bg-white/[0.04] border-white/10 text-white/80 placeholder:text-white/30"
+                  id="announcement-title"
+                  value={newAnnouncementTitle}
+                  onChange={(e) => setNewAnnouncementTitle(e.target.value)}
+                  placeholder={t('announcementTitle')}
                 />
               </div>
-              <Select value={userRoleFilter} onValueChange={setUserRoleFilter}>
-                <SelectTrigger className="w-32 bg-white/[0.04] border-white/10 text-white/70">
-                  <SelectValue placeholder={t('role')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('allRoles')}</SelectItem>
-                  <SelectItem value="school_admin">{t('admin')}</SelectItem>
-                  <SelectItem value="teacher">{t('teacher')}</SelectItem>
-                  <SelectItem value="student">{t('student')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={userStatusFilter} onValueChange={setUserStatusFilter}>
-                <SelectTrigger className="w-32 bg-white/[0.04] border-white/10 text-white/70">
-                  <SelectValue placeholder={t('status')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('allStatus')}</SelectItem>
-                  <SelectItem value="active">{t('active')}</SelectItem>
-                  <SelectItem value="suspended">{t('suspended')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <button onClick={exportUsersCSV} className="lumina-btn-icon" aria-label="Export CSV">
-                <Download className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="lumina-card fade-up fade-up-delay-1 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableHead className="text-white/40">{t('name')}</TableHead>
-                  <TableHead className="text-white/40">{t('role')}</TableHead>
-                  <TableHead className="text-white/40">{t('grade')}</TableHead>
-                  <TableHead className="text-white/40">{t('status')}</TableHead>
-                  <TableHead className="text-white/40 text-right">{t('actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.length === 0 ? (
-                  <TableRow className="border-white/5">
-                    <TableCell colSpan={5} className="text-center py-8 text-white/30">
-                      {t('noUsersFound')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id} className="border-white/5">
-                      <TableCell className="font-medium text-white/80">{user.full_name}</TableCell>
-                      <TableCell className="capitalize text-white/60">
-                        {user.user_type === 'student'
-                          ? t('student')
-                          : user.user_type === 'teacher'
-                            ? t('teacher')
-                            : t('schoolAdmin')}
-                      </TableCell>
-                      <TableCell className="text-white/60">
-                        {user.grade_level ? getGradeName(user.grade_level, language) : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {user.is_active ? (
-                          <Badge className="bg-white/15 text-white/80 border border-white/10">
-                            {t('active')}
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-red-500/15 text-red-400/80 border border-red-500/20">
-                            {t('suspended')}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {user.id !== profile?.id && (
-                          <div className="flex items-center justify-end gap-2">
-                            {user.is_active ? (
-                              <button
-                                onClick={() => suspendUser(user.id)}
-                                className="lumina-btn-glass flex items-center gap-1 text-xs"
-                              >
-                                <Ban className="w-3.5 h-3.5" />
-                                {t('suspend')}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => activateUser(user.id)}
-                                className="lumina-btn-glass flex items-center gap-1 text-xs"
-                              >
-                                <Play className="w-3.5 h-3.5" />
-                                {t('activate')}
-                              </button>
-                            )}
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <button className="lumina-btn-icon text-red-400/70 hover:text-red-400 border-red-500/20 bg-red-500/5 hover:bg-red-500/10">
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent className="bg-black border-white/10 text-white">
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle className="text-white">{t('deleteUser')}</AlertDialogTitle>
-                                  <AlertDialogDescription className="text-white/40">
-                                    {t('deleteUserDesc')} {user.full_name} {t('andAllData')}
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel className="border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/10">
-                                    {t('cancel')}
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => deleteUser(user.id)}
-                                    className="bg-red-500/80 text-white hover:bg-red-500"
-                                  >
-                                    {t('delete')}
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      )}
-
-      {/* ════════════ Invite Codes ════════════ */}
-      {activeTab === 'codes' && (
-        <div className="tab-enter max-w-5xl mx-auto px-6 py-8 space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 fade-up">
-            {sectionHeader(<Key className="w-5 h-5 text-white/70" />, t('inviteCodes'))}
-            <div className="flex items-center gap-2 flex-wrap">
-              <Select
-                value={newCodeRole}
-                onValueChange={(v) => setNewCodeRole(v as 'teacher' | 'student')}
-              >
-                <SelectTrigger className="w-32 bg-white/[0.04] border-white/10 text-white/70">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">{t('student')}</SelectItem>
-                  <SelectItem value="teacher">{t('teacher')}</SelectItem>
-                </SelectContent>
-              </Select>
-              {newCodeRole === 'teacher' && (
-                <Select value={newCodeCategoryId} onValueChange={setNewCodeCategoryId}>
-                  <SelectTrigger className="w-48 bg-white/[0.04] border-white/10 text-white/70">
-                    <SelectValue placeholder="Teacher category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teacherCategories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.emoji} {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <button
-                onClick={generateInviteCode}
-                disabled={creatingCode}
-                className="lumina-btn-primary flex items-center gap-2"
-              >
-                {creatingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                {t('generateCode')}
-              </button>
-            </div>
-          </div>
-
-          <div className="lumina-card fade-up fade-up-delay-1 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableHead className="text-white/40">{t('code')}</TableHead>
-                  <TableHead className="text-white/40">{t('role')}</TableHead>
-                  <TableHead className="text-white/40">{t('status')}</TableHead>
-                  <TableHead className="text-white/40">{t('expires')}</TableHead>
-                  <TableHead className="text-white/40 text-right">{t('actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {inviteCodes.length === 0 ? (
-                  <TableRow className="border-white/5">
-                    <TableCell colSpan={5} className="text-center py-8 text-white/30">
-                      {t('noInviteCodesYet')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  inviteCodes.map((code) => {
-                    const isExpired = new Date(code.expires_at) < new Date();
-                    return (
-                      <TableRow key={code.id} className="border-white/5">
-                        <TableCell>
-                          <code className="bg-white/10 px-2 py-1 rounded font-mono text-white/80">
-                            {code.code}
-                          </code>
-                        </TableCell>
-                        <TableCell className="capitalize text-white/60">
-                          {code.role === 'student' ? t('student') : t('teacher')}
-                        </TableCell>
-                        <TableCell>
-                          {code.used ? (
-                            <Badge className="bg-white/5 text-white/40 border border-white/10">
-                              {t('used')}
-                            </Badge>
-                          ) : isExpired ? (
-                            <Badge className="bg-red-500/15 text-red-400/80 border border-red-500/20">
-                              {t('expired')}
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-white/15 text-white/80 border border-white/10">
-                              {t('active')}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-white/40">
-                          {new Date(code.expires_at).toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {!code.used && !isExpired && (
-                            <button
-                              onClick={() => revokeInviteCode(code.id)}
-                              className="lumina-btn-glass text-xs"
-                            >
-                              {t('revoke')}
-                            </button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      )}
-
-      {/* ════════════ Requests ════════════ */}
-      {activeTab === 'requests' && (
-        <div className="tab-enter max-w-5xl mx-auto px-6 py-8 space-y-6">
-          <div className="flex items-center justify-between fade-up">
-            {sectionHeader(<Clock className="w-5 h-5 text-white/70" />, t('pendingRequests'))}
-            <button
-              onClick={fetchInviteRequests}
-              disabled={loadingRequests}
-              className="lumina-btn-icon"
-              aria-label="Refresh"
-            >
-              <RefreshCw className={cn('w-4 h-4', loadingRequests && 'animate-spin')} />
-            </button>
-          </div>
-
-          <div className="lumina-card fade-up fade-up-delay-1 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableHead className="text-white/40">{t('name')}</TableHead>
-                  <TableHead className="text-white/40">{t('email')}</TableHead>
-                  <TableHead className="text-white/40">{t('role')}</TableHead>
-                  <TableHead className="text-white/40">{t('code')}</TableHead>
-                  <TableHead className="text-white/40">{t('requested')}</TableHead>
-                  <TableHead className="text-white/40 text-right">{t('actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {inviteRequests.length === 0 ? (
-                  <TableRow className="border-white/5">
-                    <TableCell colSpan={6} className="text-center py-8 text-white/30">
-                      {t('noPendingRequests')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  inviteRequests.map((request) => {
-                    const inviteCode = request.invite_codes as unknown as InviteCode;
-                    return (
-                      <TableRow key={request.id} className="border-white/5">
-                        <TableCell className="font-medium text-white/80">{request.name}</TableCell>
-                        <TableCell className="text-white/60">{request.email}</TableCell>
-                        <TableCell className="capitalize text-white/60">
-                          {inviteCode?.role === 'student' ? t('student') : t('teacher')}
-                        </TableCell>
-                        <TableCell>
-                          <code className="bg-white/10 px-2 py-1 rounded text-xs text-white/70">
-                            {inviteCode?.code}
-                          </code>
-                        </TableCell>
-                        <TableCell className="text-white/40">
-                          {new Date(request.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              className="lumina-btn-glass flex items-center gap-1 text-xs"
-                              onClick={() => {
-                                if (inviteCode?.role === 'student') {
-                                  setSelectedRequest(request);
-                                  setGradeModalOpen(true);
-                                } else {
-                                  acceptInviteRequest(request);
-                                }
-                              }}
-                            >
-                              <Check className="w-3.5 h-3.5" />
-                              {t('accept')}
-                            </button>
-                            <button
-                              className="lumina-btn-icon text-red-400/70 hover:text-red-400 border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
-                              onClick={() => denyInviteRequest(request.id)}
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Grade modal for students */}
-          <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-            <DialogContent className="bg-black border-white/10 text-white">
-              <DialogHeader>
-                <DialogTitle className="lumina-text">{t('assignStudentGrade')}</DialogTitle>
-                <DialogDescription className="text-white/40">
-                  {t('selectGradeFor')} {selectedRequest?.name}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-4">
-                <Label htmlFor="grade" className="text-white/60">
-                  {t('gradeLevel')}
-                </Label>
-                <Select value={studentGrade} onValueChange={setStudentGrade}>
-                  <SelectTrigger className="bg-white/[0.04] border-white/10 text-white/70">
-                    <SelectValue placeholder={t('selectGradeLabel')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {['KG1', 'KG2', ...Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`)].map(
-                      (g) => (
-                        <SelectItem key={g} value={g}>
-                          {getGradeName(g, language)}
-                        </SelectItem>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-2">
+                <Label htmlFor="announcement-body">{t('message')}</Label>
+                <Textarea
+                  id="announcement-body"
+                  value={newAnnouncementBody}
+                  onChange={(e) => setNewAnnouncementBody(e.target.value)}
+                  placeholder={t('writeAnnouncement')}
+                  rows={4}
+                />
               </div>
-              <DialogFooter>
-                <button
-                  onClick={() => setGradeModalOpen(false)}
-                  className="lumina-btn-glass"
-                >
-                  {t('cancel')}
-                </button>
-                <button
-                  onClick={() => selectedRequest && acceptInviteRequest(selectedRequest, studentGrade)}
-                  disabled={!studentGrade}
-                  className="lumina-btn-primary"
-                >
-                  {t('acceptStudent')}
-                </button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
-
-      {/* ════════════ Announcements ════════════ */}
-      {activeTab === 'announcements' && (
-        <div className="tab-enter max-w-5xl mx-auto px-6 py-8 space-y-6">
-          <div className="fade-up">{sectionHeader(<Megaphone className="w-5 h-5 text-white/70" />, t('announcementsLabel'))}</div>
-
-          {/* Create announcement form */}
-          <div className="lumina-card fade-up fade-up-delay-1 p-5 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="announcement-title" className="text-white/60">
-                {t('title')}
-              </Label>
-              <Input
-                id="announcement-title"
-                value={newAnnouncementTitle}
-                onChange={(e) => setNewAnnouncementTitle(e.target.value)}
-                placeholder={t('announcementTitle')}
-                className="bg-white/[0.04] border-white/10 text-white/80 placeholder:text-white/30"
-              />
+              <Button
+                onClick={createAnnouncement}
+                disabled={creatingAnnouncement || !newAnnouncementTitle || !newAnnouncementBody}
+              >
+                {creatingAnnouncement ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Megaphone className="w-4 h-4 mr-2" />}
+                {t('postAnnouncement')}
+              </Button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="announcement-body" className="text-white/60">
-                {t('message')}
-              </Label>
-              <Textarea
-                id="announcement-body"
-                value={newAnnouncementBody}
-                onChange={(e) => setNewAnnouncementBody(e.target.value)}
-                placeholder={t('writeAnnouncement')}
-                rows={4}
-                className="bg-white/[0.04] border-white/10 text-white/80 placeholder:text-white/30"
-              />
-            </div>
-            <button
-              onClick={createAnnouncement}
-              disabled={creatingAnnouncement || !newAnnouncementTitle || !newAnnouncementBody}
-              className="lumina-btn-primary flex items-center gap-2"
-            >
-              {creatingAnnouncement ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+
+            {/* Announcements List */}
+            <div className="space-y-4">
+              {announcements.length === 0 ? (
+                <div className="glass-effect rounded-xl p-8 text-center">
+                  <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">{t('noAnnouncementsYet')}</p>
+                </div>
               ) : (
-                <Megaphone className="w-4 h-4" />
+                announcements.map((announcement) => (
+                  <div key={announcement.id} className="glass-effect rounded-xl p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold">{announcement.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(announcement.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteAnnouncement(announcement.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <p className="mt-2 text-muted-foreground whitespace-pre-wrap">{announcement.body}</p>
+                  </div>
+                ))
               )}
-              {t('postAnnouncement')}
-            </button>
-          </div>
-
-          <div className="lumina-divider" />
-
-          {/* Announcements list */}
-          <div className="space-y-4">
-            {announcements.length === 0 ? (
-              <div className="lumina-card fade-up fade-up-delay-2 p-8 text-center">
-                <Megaphone className="w-12 h-12 mx-auto mb-4 text-white/20" />
-                <p className="text-white/30">{t('noAnnouncementsYet')}</p>
-              </div>
-            ) : (
-              announcements.map((announcement, i) => (
-                <div
-                  key={announcement.id}
-                  className={cn('lumina-card p-5', 'fade-up', `fade-up-delay-${Math.min(i + 1, 5)}`)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold text-white/80">{announcement.title}</h3>
-                      <p className="text-sm text-white/40">
-                        {new Date(announcement.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => deleteAnnouncement(announcement.id)}
-                      className="lumina-btn-icon text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
-                      aria-label="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <p className="mt-2 text-white/50 whitespace-pre-wrap">{announcement.body}</p>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ════════════ Trips ════════════ */}
-      {activeTab === 'trips' && (
-        <div className="tab-enter max-w-5xl mx-auto px-6 py-8 space-y-6">
-          <div className="fade-up">{sectionHeader(<MapPin className="w-5 h-5 text-white/70" />, t('trips'))}</div>
-
-          {/* Create trip form */}
-          <div className="lumina-card fade-up fade-up-delay-1 p-5 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="trip-title" className="text-white/60">
-                {t('title')}
-              </Label>
-              <Input
-                id="trip-title"
-                value={newTripTitle}
-                onChange={(e) => setNewTripTitle(e.target.value)}
-                placeholder={t('tripTitle')}
-                className="bg-white/[0.04] border-white/10 text-white/80 placeholder:text-white/30"
-              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="trip-body" className="text-white/60">
-                {t('message')}
-              </Label>
-              <Textarea
-                id="trip-body"
-                value={newTripBody}
-                onChange={(e) => setNewTripBody(e.target.value)}
-                placeholder={t('writeTrip')}
-                rows={4}
-                className="bg-white/[0.04] border-white/10 text-white/80 placeholder:text-white/30"
-              />
-            </div>
-            <button
-              onClick={createTrip}
-              disabled={creatingTrip || !newTripTitle || !newTripBody}
-              className="lumina-btn-primary flex items-center gap-2"
-            >
-              {creatingTrip ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
-              {t('postTrip')}
-            </button>
-          </div>
+          </TabsContent>
 
-          <div className="lumina-divider" />
+          {/* Trips Tab */}
+          <TabsContent value="trips" className="space-y-4">
+            <h2 className="text-lg font-semibold">{t('trips')}</h2>
 
-          {/* Trips list */}
-          <div className="space-y-4">
-            {trips.length === 0 ? (
-              <div className="lumina-card fade-up fade-up-delay-2 p-8 text-center">
-                <MapPin className="w-12 h-12 mx-auto mb-4 text-white/20" />
-                <p className="text-white/30">{t('noTripsYet')}</p>
+            {/* Create Trip Form */}
+            <div className="glass-effect rounded-xl p-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="trip-title">{t('title')}</Label>
+                <Input
+                  id="trip-title"
+                  value={newTripTitle}
+                  onChange={(e) => setNewTripTitle(e.target.value)}
+                  placeholder={t('tripTitle')}
+                />
               </div>
-            ) : (
-              trips.map((trip, i) => (
-                <div
-                  key={trip.id}
-                  className={cn('lumina-card p-5', 'fade-up', `fade-up-delay-${Math.min(i + 1, 5)}`)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold text-white/80">{trip.title}</h3>
-                      <p className="text-sm text-white/40">
-                        {new Date(trip.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => deleteTrip(trip.id)}
-                      className="lumina-btn-icon text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
-                      aria-label="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <p className="mt-2 text-white/50 whitespace-pre-wrap">{trip.body}</p>
+              <div className="space-y-2">
+                <Label htmlFor="trip-body">{t('message')}</Label>
+                <Textarea
+                  id="trip-body"
+                  value={newTripBody}
+                  onChange={(e) => setNewTripBody(e.target.value)}
+                  placeholder={t('writeTrip')}
+                  rows={4}
+                />
+              </div>
+              <Button
+                onClick={createTrip}
+                disabled={creatingTrip || !newTripTitle || !newTripBody}
+              >
+                {creatingTrip ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MapPin className="w-4 h-4 mr-2" />}
+                {t('postTrip')}
+              </Button>
+            </div>
+
+            {/* Trips List */}
+            <div className="space-y-4">
+              {trips.length === 0 ? (
+                <div className="glass-effect rounded-xl p-8 text-center">
+                  <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">{t('noTripsYet')}</p>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+              ) : (
+                trips.map((trip) => (
+                  <div key={trip.id} className="glass-effect rounded-xl p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold">{trip.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(trip.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteTrip(trip.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <p className="mt-2 text-muted-foreground whitespace-pre-wrap">{trip.body}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </TabsContent>
 
-      {/* ════════════ Activity ════════════ */}
-      {activeTab === 'activity' && (
-        <div className="tab-enter max-w-5xl mx-auto px-6 py-8 space-y-6">
-          <div className="flex items-center justify-between fade-up">
-            {sectionHeader(<ActivityIcon className="w-5 h-5 text-white/70" />, t('activityLogs'))}
-            <button
-              onClick={fetchActivityLogs}
-              disabled={loadingLogs}
-              className="lumina-btn-icon"
-              aria-label="Refresh"
-            >
-              <RefreshCw className={cn('w-4 h-4', loadingLogs && 'animate-spin')} />
-            </button>
-          </div>
+          <TabsContent value="report-cards" className="space-y-4">
+            <ReportCardCreator schoolId={school.id} adminId={profile.id} />
+          </TabsContent>
 
-          <div className="lumina-card fade-up fade-up-delay-1 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableHead className="text-white/40">{t('action')}</TableHead>
-                  <TableHead className="text-white/40">{t('details')}</TableHead>
-                  <TableHead className="text-white/40">{t('time')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {activityLogs.length === 0 ? (
-                  <TableRow className="border-white/5">
-                    <TableCell colSpan={3} className="text-center py-8 text-white/30">
-                      {t('noActivityLogs')}
-                    </TableCell>
+          {/* Weekly Plans Tab */}
+          <TabsContent value="weekly-plans" className="space-y-4">
+            <WeeklyPlanBuilder />
+          </TabsContent>
+
+          {/* Activity Logs Tab */}
+          <TabsContent value="logs" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">{t('activityLogs')}</h2>
+              <Button variant="outline" size="icon" onClick={fetchActivityLogs} disabled={loadingLogs}>
+                <RefreshCw className={`w-4 h-4 ${loadingLogs ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+
+            <div className="glass-effect rounded-xl overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('action')}</TableHead>
+                    <TableHead>{t('details')}</TableHead>
+                    <TableHead>{t('time')}</TableHead>
                   </TableRow>
-                ) : (
-                  activityLogs.map((log) => (
-                    <TableRow key={log.id} className="border-white/5">
-                      <TableCell className="font-medium text-white/80">{log.action}</TableCell>
-                      <TableCell className="text-white/40 text-sm">
-                        {JSON.stringify(log.details)}
-                      </TableCell>
-                      <TableCell className="text-white/40">
-                        {new Date(log.created_at).toLocaleString()}
+                </TableHeader>
+                <TableBody>
+                  {activityLogs.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                        {t('noActivityLogs')}
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      )}
-
-      {/* ════════════ Weekly Plan ════════════ */}
-      {activeTab === 'weekly-plan' && (
-        <div className="tab-enter max-w-5xl mx-auto px-6 py-8">
-          <div className="mb-6 fade-up">
-            {sectionHeader(<Calendar className="w-5 h-5 text-white/70" />, t('weekly'))}
-          </div>
-          <div className="fade-up fade-up-delay-1">
-            <WeeklyPlanBuilder />
-          </div>
-        </div>
-      )}
-
-      {/* ════════════ Performance ════════════ */}
-      {activeTab === 'performance' && (
-        <div className="tab-enter max-w-5xl mx-auto px-6 py-8">
-          <div className="mb-6 fade-up">
-            {sectionHeader(<TrendingUp className="w-5 h-5 text-white/70" />, 'Performance')}
-          </div>
-          <div className="fade-up fade-up-delay-1">
-            <SchoolPerformanceDashboard schoolId={school.id} />
-          </div>
-        </div>
-      )}
-
-      {/* ════════════ Appeals ════════════ */}
-      {activeTab === 'appeals' && (
-        <div className="tab-enter max-w-5xl mx-auto px-6 py-8">
-          <div className="mb-6 fade-up">
-            {sectionHeader(<Shield className="w-5 h-5 text-white/70" />, 'Appeals')}
-          </div>
-          <div className="fade-up fade-up-delay-1">
-            <SchoolAdminAppeals schoolId={profile?.school_id || ''} />
-          </div>
-        </div>
-      )}
-
-      {/* ════════════ Curriculum ════════════ */}
-      {activeTab === 'curriculum' && (
-        <div className="tab-enter max-w-6xl mx-auto px-6 py-8 space-y-6">
-          <div className="fade-up">{sectionHeader(<Network className="w-5 h-5 text-white/70" />, 'Curriculum')}</div>
-
-          {/* Sub-tab navigation */}
-          <div className="flex gap-2 flex-wrap fade-up fade-up-delay-1">
-            <SubTabButton
-              active={curriculumSub === 'subjects'}
-              onClick={() => setCurriculumSub('subjects')}
-              icon={<BookOpen className="w-4 h-4" />}
-              label="Subjects"
-            />
-            <SubTabButton
-              active={curriculumSub === 'graph'}
-              onClick={() => setCurriculumSub('graph')}
-              icon={<Network className="w-4 h-4" />}
-              label="Curriculum Graph"
-            />
-            <SubTabButton
-              active={curriculumSub === 'versions'}
-              onClick={() => setCurriculumSub('versions')}
-              icon={<GitBranch className="w-4 h-4" />}
-              label="Versions"
-            />
-            <SubTabButton
-              active={curriculumSub === 'simulator'}
-              onClick={() => setCurriculumSub('simulator')}
-              icon={<Eye className="w-4 h-4" />}
-              label="Student Simulator"
-            />
-            <SubTabButton
-              active={curriculumSub === 'categories'}
-              onClick={() => setCurriculumSub('categories')}
-              icon={<GraduationCap className="w-4 h-4" />}
-              label="Teacher Categories"
-            />
-          </div>
-
-          <div className="lumina-divider" />
-
-          {/* Sub-tab content */}
-          <div className="fade-up fade-up-delay-2">
-            {curriculumSub === 'subjects' && <SubjectsManager schoolId={school.id} />}
-            {curriculumSub === 'graph' && <CurriculumGraphManager schoolId={school.id} />}
-            {curriculumSub === 'versions' && <CurriculumVersionsPanel schoolId={school.id} />}
-            {curriculumSub === 'simulator' && <StudentViewSimulator schoolId={school.id} />}
-            {curriculumSub === 'categories' && <TeacherCategoriesManager schoolId={school.id} />}
-          </div>
-        </div>
-      )}
-
-      {/* ════════════ Reports ════════════ */}
-      {activeTab === 'reports' && (
-        <div className="tab-enter max-w-5xl mx-auto px-6 py-8 space-y-6">
-          <div className="fade-up">{sectionHeader(<FileText className="w-5 h-5 text-white/70" />, 'Reports')}</div>
-
-          {/* Sub-tab navigation */}
-          <div className="flex gap-2 flex-wrap fade-up fade-up-delay-1">
-            <SubTabButton
-              active={reportsSub === 'report-cards'}
-              onClick={() => setReportsSub('report-cards')}
-              icon={<FileText className="w-4 h-4" />}
-              label="Report Cards"
-            />
-            <SubTabButton
-              active={reportsSub === 'usage'}
-              onClick={() => setReportsSub('usage')}
-              icon={<Download className="w-4 h-4" />}
-              label="Usage & Budget"
-            />
-          </div>
-
-          <div className="lumina-divider" />
-
-          {/* Sub-tab content */}
-          <div className="fade-up fade-up-delay-2">
-            {reportsSub === 'report-cards' && (
-              <ReportCardCreator schoolId={school.id} adminId={profile.id} />
-            )}
-            {reportsSub === 'usage' && <BudgetOptimizationReport schoolId={school.id} />}
-          </div>
-        </div>
-      )}
-
-      {/* ════════════ Settings ════════════ */}
-      {activeTab === 'settings' && (
-        <div className="tab-enter max-w-3xl mx-auto px-6 py-8 space-y-6">
-          <div className="fade-up">{sectionHeader(<Settings className="w-5 h-5 text-white/70" />, t('settings'))}</div>
-
-          <div className="lumina-card fade-up fade-up-delay-1 p-6 space-y-6 max-w-lg">
-            <div>
-              <h3 className="lumina-text font-semibold mb-3 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-white/60" />
-                {language === 'ar' ? 'اللغة' : 'Language'}
-              </h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setLanguage('en')}
-                  className={cn(
-                    'lumina-btn-glass flex-1',
-                    language === 'en' && 'bg-white/15 text-white border-white/20',
+                  ) : (
+                    activityLogs.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="font-medium">{log.action}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {JSON.stringify(log.details)}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(log.created_at).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))
                   )}
-                >
-                  English
-                </button>
-                <button
-                  onClick={() => setLanguage('ar')}
-                  className={cn(
-                    'lumina-btn-glass flex-1',
-                    language === 'ar' && 'bg-white/15 text-white border-white/20',
-                  )}
-                >
-                  العربية
-                </button>
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-4">
+            <h2 className="text-lg font-semibold">{t('settings')}</h2>
+
+            <div className="glass-effect rounded-xl p-6 space-y-6 max-w-lg">
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  {language === 'ar' ? 'اللغة' : 'Language'}
+                </h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setLanguage('en')}
+                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all border ${
+                      language === 'en'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30'
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    onClick={() => setLanguage('ar')}
+                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all border ${
+                      language === 'ar'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30'
+                    }`}
+                  >
+                    العربية
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className="lumina-divider" />
-
-          <div className="fade-up fade-up-delay-2">
-            <TenantExtensionsSection />
-          </div>
-        </div>
-      )}
-    </DashboardShell>
+          </TabsContent>
+          {/* Appeals Tab */}
+          <TabsContent value="appeals">
+            <SchoolAdminAppeals schoolId={profile?.school_id || ''} />
+          </TabsContent>
+          </section>
+        </Tabs>
+      </main>
+    </div>
   );
 }
+
+function NavGroup({ label }: { label: string }) {
+  return (
+    <div className="hidden md:block px-2 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      {label}
+    </div>
+  );
+}
+
+function NavTab({ value, icon: Icon, label, badge }: {
+  value: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  badge?: number;
+}) {
+  return (
+    <TabsTrigger
+      value={value}
+      className="w-full justify-start gap-2 px-3 py-2 text-sm data-[state=active]:bg-muted data-[state=active]:shadow-none rounded-md whitespace-nowrap"
+    >
+      <Icon className="w-4 h-4 shrink-0" />
+      <span className="truncate">{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <Badge variant="destructive" className="ml-auto h-5 min-w-[20px] px-1.5 text-[10px]">{badge}</Badge>
+      )}
+    </TabsTrigger>
+  );
+}
+
+function StatCard({ label, value, accent }: { label: string; value: number; accent?: 'amber' | 'green' }) {
+  const color = accent === 'amber' ? 'text-amber-500' : accent === 'green' ? 'text-green-500' : '';
+  return (
+    <div className="rounded-xl border border-border bg-card/40 p-4">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
+    </div>
+  );
+}
+

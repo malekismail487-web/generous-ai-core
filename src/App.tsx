@@ -38,7 +38,6 @@ import LseBench from "./pages/LseBench";
 import TeacherLiveConsole from "./pages/TeacherLiveConsole";
 import StudentLiveRoom from "./pages/StudentLiveRoom";
 import ExtensionView from "./pages/ExtensionView";
-import { CosmicBackground } from "./components/three/CosmicBackground";
 
 const queryClient = new QueryClient();
 
@@ -80,7 +79,7 @@ const App = () => (
               <Sonner />
               <MinistryAccessAlert />
               <AdaptiveDiagnosticsPanel />
-              <CosmicBackground />
+              
               <BrowserRouter>
                 <LCTExamGuard>
                 <LanguageGate>

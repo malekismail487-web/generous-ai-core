@@ -2,34 +2,23 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Shield,
-  TriangleAlert as AlertTriangle,
-  Eye,
-  Ban,
-  MessageSquare,
-  FileText,
-  BookOpen,
-  RefreshCw,
-  CircleCheck as CheckCircle,
-  Circle as XCircle,
-  Loader as Loader2,
-  LayoutGrid,
-  Gavel,
-  Inbox,
-  Clock,
-  CircleDot,
+  Shield, LogOut, Loader2, AlertTriangle, Eye, Ban, Trash2,
+  MessageSquare, FileText, BookOpen, RefreshCw, CheckCircle, XCircle
 } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+} from '@/components/ui/table';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from '@/components/ui/dialog';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
-import { DashboardShell, NavItem } from '@/components/DashboardShell';
-import { LuminaAtom } from '@/components/LuminaAtom';
 
 type ContentFlag = {
   id: string;
@@ -57,102 +46,25 @@ type ModerationAction = {
   expires_at: string | null;
   is_active: boolean;
   appeal_status: string;
-  appeal_reason?: string | null;
   created_at: string;
 };
 
-/* ──────────────────────────────────────────────────────────────
- * Severity badge — red / amber / white per spec
- * ────────────────────────────────────────────────────────────── */
-function SeverityBadge({ severity }: { severity: string }) {
-  const cfg = (() => {
-    switch (severity) {
-      case 'critical':
-      case 'high':
-        return {
-          ring: 'border-red-500/40',
-          bg: 'bg-red-500/15',
-          text: 'text-red-300',
-          dot: 'bg-red-400',
-        };
-      case 'medium':
-        return {
-          ring: 'border-amber-500/40',
-          bg: 'bg-amber-500/15',
-          text: 'text-amber-300',
-          dot: 'bg-amber-400',
-        };
-      default:
-        return {
-          ring: 'border-white/25',
-          bg: 'bg-white/10',
-          text: 'text-white/70',
-          dot: 'bg-white/60',
-        };
-    }
-  })();
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider font-mono border ${cfg.ring} ${cfg.bg} ${cfg.text}`}
-    >
-      <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-      {severity}
-    </span>
-  );
-}
-
-/* ──────────────────────────────────────────────────────────────
- * Action-type badge
- * ────────────────────────────────────────────────────────────── */
-function ActionBadge({ type }: { type: string }) {
-  const cfg = (() => {
-    switch (type) {
-      case 'terminate':
-        return { ring: 'border-red-500/40', bg: 'bg-red-500/15', text: 'text-red-300' };
-      case 'temp_ban':
-        return { ring: 'border-amber-500/40', bg: 'bg-amber-500/15', text: 'text-amber-300' };
-      default:
-        return { ring: 'border-white/25', bg: 'bg-white/10', text: 'text-white/70' };
-    }
-  })();
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider font-mono border ${cfg.ring} ${cfg.bg} ${cfg.text}`}
-    >
-      {type.replace('_', ' ')}
-    </span>
-  );
-}
-
-function contentTypeIcon(t: string) {
-  switch (t) {
-    case 'chat_message':    return <MessageSquare className="w-4 h-4" />;
-    case 'course_material': return <FileText className="w-4 h-4" />;
-    case 'assignment':      return <BookOpen className="w-4 h-4" />;
-    default:                return <AlertTriangle className="w-4 h-4" />;
-  }
-}
-
-/* ──────────────────────────────────────────────────────────────
- * ModeratorDashboard — Kanban Triage Board
- * Three glass columns: Pending Flags | Actions Taken | Appeals
- * ────────────────────────────────────────────────────────────── */
 export default function ModeratorDashboard() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [isModerator, setIsModerator] = useState(false);
   const [flags, setFlags] = useState<ContentFlag[]>([]);
   const [actions, setActions] = useState<ModerationAction[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'board'>('overview');
+  const [activeTab, setActiveTab] = useState<'flags' | 'actions' | 'appeals'>('flags');
   const [actionDialog, setActionDialog] = useState<{ open: boolean; flag: ContentFlag | null }>({ open: false, flag: null });
   const [actionType, setActionType] = useState<'warning' | 'temp_ban' | 'terminate'>('warning');
   const [actionMessage, setActionMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'pending' | 'all'>('pending');
 
-  /* ── Check moderator status — preserve gate ── */
+  // Check moderator status
   useEffect(() => {
     if (authLoading) return;
     if (!user) { navigate('/auth'); return; }
@@ -180,7 +92,7 @@ export default function ModeratorDashboard() {
       .from('content_flags')
       .select('*')
       .order('created_at', { ascending: false });
-
+    
     if (statusFilter === 'pending') {
       query.eq('status', 'pending');
     }
@@ -210,6 +122,7 @@ export default function ModeratorDashboard() {
 
     const flag = actionDialog.flag;
 
+    // Insert moderation action
     const expiresAt = actionType === 'temp_ban'
       ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       : null;
@@ -232,11 +145,13 @@ export default function ModeratorDashboard() {
       return;
     }
 
+    // Mark flag as reviewed
     await supabase
       .from('content_flags')
       .update({ status: 'reviewed', reviewed_by: user.id, reviewed_at: new Date().toISOString() })
       .eq('id', flag.id);
 
+    // If terminate, deactivate the user profile
     if (actionType === 'terminate') {
       await supabase
         .from('profiles')
@@ -244,6 +159,7 @@ export default function ModeratorDashboard() {
         .eq('id', flag.user_id);
     }
 
+    // If temp_ban, deactivate temporarily
     if (actionType === 'temp_ban') {
       await supabase
         .from('profiles')
@@ -281,6 +197,7 @@ export default function ModeratorDashboard() {
       })
       .eq('id', actionId);
 
+    // If overturned, reactivate the user
     if (decision === 'overturned') {
       const action = actions.find(a => a.id === actionId);
       if (action) {
@@ -295,420 +212,237 @@ export default function ModeratorDashboard() {
     fetchActions();
   };
 
-  /* ── Loading state uses LuminaAtom ── */
+  const severityColor = (s: string) => {
+    switch (s) {
+      case 'critical': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'high': return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+      case 'medium': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      default: return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+    }
+  };
+
+  const contentTypeIcon = (t: string) => {
+    switch (t) {
+      case 'chat_message': return <MessageSquare className="w-4 h-4" />;
+      case 'course_material': return <FileText className="w-4 h-4" />;
+      case 'assignment': return <BookOpen className="w-4 h-4" />;
+      default: return <AlertTriangle className="w-4 h-4" />;
+    }
+  };
+
   if (loading || authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <div className="flex flex-col items-center gap-4">
-          <LuminaAtom size={72} animate glow />
-          <p className="lumina-text text-xs tracking-[0.3em] uppercase font-mono text-white/40">Loading Triage</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  /* ── Derived data ── */
-  const pendingFlags = flags.filter(f => f.status === 'pending');
-  const reviewedFlags = flags.filter(f => f.status !== 'pending');
   const appeals = actions.filter(a => a.appeal_status === 'appealed');
-  const activeBansCount = actions.filter(
-    a => a.is_active && (a.action_type === 'temp_ban' || a.action_type === 'terminate'),
-  ).length;
-
-  const pendingFlagsCount = pendingFlags.length;
-
-  const navItems: NavItem[] = [
-    { id: 'overview', icon: <LayoutGrid size={18} />, label: 'Overview' },
-    { id: 'board',    icon: <Gavel size={18} />,      label: 'Triage Board', badge: pendingFlagsCount },
-  ];
-
-  const stats = [
-    { label: 'Pending Flags',   value: pendingFlagsCount, icon: <AlertTriangle size={20} />, delay: 'fade-up-delay-1', tone: 'text-red-300' },
-    { label: 'Total Actions',   value: actions.length,    icon: <Ban size={20} />,           delay: 'fade-up-delay-2', tone: 'text-white' },
-    { label: 'Active Bans',     value: activeBansCount,   icon: <Shield size={20} />,        delay: 'fade-up-delay-3', tone: 'text-amber-300' },
-    { label: 'Pending Appeals', value: appeals.length,    icon: <Eye size={20} />,           delay: 'fade-up-delay-4', tone: 'text-white/80' },
-  ];
-
-  /* ── Kanban column config ── */
-  const columns = [
-    {
-      key: 'pending',
-      title: 'Pending Flags',
-      icon: <Inbox size={16} />,
-      count: pendingFlags.length,
-      accent: 'text-red-300',
-      ring: 'border-red-500/20',
-      glow: 'shadow-[0_0_40px_-12px_rgba(239,68,68,0.25)]',
-      empty: 'No pending flags — queue is clear',
-    },
-    {
-      key: 'actions',
-      title: 'Actions Taken',
-      icon: <Ban size={16} />,
-      count: actions.length,
-      accent: 'text-amber-300',
-      ring: 'border-amber-500/20',
-      glow: 'shadow-[0_0_40px_-12px_rgba(245,158,11,0.2)]',
-      empty: 'No actions recorded yet',
-    },
-    {
-      key: 'appeals',
-      title: 'Appeals',
-      icon: <Shield size={16} />,
-      count: appeals.length,
-      accent: 'text-white/80',
-      ring: 'border-white/15',
-      glow: 'shadow-[0_0_40px_-12px_rgba(232,232,232,0.15)]',
-      empty: 'No pending appeals',
-    },
-  ] as const;
 
   return (
-    <DashboardShell
-      role="Moderator"
-      roleAccent="rgba(232,232,232,0.35)"
-      navItems={navItems}
-      activeTab={activeTab}
-      onTabChange={(id) => setActiveTab(id as 'overview' | 'board')}
-      headerRight={
-        <button
-          onClick={() => { fetchFlags(); fetchActions(); }}
-          className="lumina-btn-glass gap-1.5 text-xs"
-        >
-          <RefreshCw className="w-3 h-3" />
-          <span className="hidden sm:inline">Refresh</span>
-        </button>
-      }
-    >
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 space-y-6">
-        {/* ════════════ Stat bar ════════════ */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {stats.map((stat, i) => (
-            <div key={i} className={`lumina-stat fade-up ${stat.delay}`}>
-              <div className="lumina-icon-tile mb-3">{stat.icon}</div>
-              <p className={`text-2xl font-bold font-mono ${stat.tone}`}>{stat.value}</p>
-              <p className="text-xs text-white/40 mt-1">{stat.label}</p>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b bg-background/95 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-foreground">Content Moderation</h1>
+              <p className="text-[10px] text-muted-foreground">Global Content Safety Monitor</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button size="sm" variant="outline" onClick={() => { fetchFlags(); fetchActions(); }} className="gap-1">
+              <RefreshCw className="w-3 h-3" /> Refresh
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => signOut()} className="gap-1">
+              <LogOut className="w-3 h-3" /> Sign Out
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Stats */}
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          {[
+            { label: 'Pending Flags', value: flags.filter(f => f.status === 'pending').length, color: 'text-red-400' },
+            { label: 'Total Actions', value: actions.length, color: 'text-amber-400' },
+            { label: 'Active Bans', value: actions.filter(a => a.is_active && (a.action_type === 'temp_ban' || a.action_type === 'terminate')).length, color: 'text-orange-400' },
+            { label: 'Pending Appeals', value: appeals.length, color: 'text-blue-400' },
+          ].map((stat, i) => (
+            <div key={i} className="rounded-xl border p-4">
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
             </div>
           ))}
         </div>
 
-        <div className="lumina-divider fade-up" />
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6 border-b">
+          {[
+            { id: 'flags' as const, label: 'Flagged Content', icon: AlertTriangle },
+            { id: 'actions' as const, label: 'Actions Taken', icon: Ban },
+            { id: 'appeals' as const, label: `Appeals (${appeals.length})`, icon: Shield },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2 text-sm border-b-2 -mb-px transition-colors ${
+                activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}>
+              <tab.icon className="w-4 h-4" /> {tab.label}
+            </button>
+          ))}
+        </div>
 
-        {/* ════════════ Overview Tab ════════════ */}
-        {activeTab === 'overview' && (
-          <div className="tab-enter space-y-6">
-            {/* Atom hero */}
-            <div className="lumina-card p-6 flex flex-col md:flex-row items-center gap-6 fade-up fade-up-delay-1">
-              <LuminaAtom size={80} animate glow />
-              <div className="flex-1 text-center md:text-left">
-                <h2 className="lumina-text text-lg font-semibold mb-1">Moderation Triage</h2>
-                <p className="text-sm text-white/40 max-w-md">
-                  Review flagged content, take moderation actions, and resolve user appeals.
-                  Use the Triage Board for a kanban-style workflow.
-                </p>
-              </div>
-              <button
-                onClick={() => setActiveTab('board')}
-                className="lumina-btn-glass gap-2 text-sm"
-              >
-                <Gavel className="w-4 h-4" />
-                Open Board
-              </button>
+        {/* Flags Tab */}
+        {activeTab === 'flags' && (
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Button size="sm" variant={statusFilter === 'pending' ? 'default' : 'outline'} onClick={() => setStatusFilter('pending')}>Pending</Button>
+              <Button size="sm" variant={statusFilter === 'all' ? 'default' : 'outline'} onClick={() => setStatusFilter('all')}>All</Button>
             </div>
 
-            {/* Column summaries */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 fade-up fade-up-delay-2">
-              {columns.map((col) => (
-                <button
-                  key={col.key}
-                  onClick={() => setActiveTab('board')}
-                  className={`lumina-card p-5 text-left transition-all duration-300 hover:scale-[1.02] hover:${col.glow}`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className={col.accent}>{col.icon}</span>
-                      <h3 className="lumina-text text-sm font-semibold">{col.title}</h3>
-                    </div>
-                    <span className={`text-2xl font-bold font-mono ${col.accent}`}>{col.count}</span>
-                  </div>
-                  <p className="text-xs text-white/30">{col.empty}</p>
-                </button>
-              ))}
-            </div>
-
-            <div className="lumina-divider" />
-
-            {/* Recent activity */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 fade-up fade-up-delay-3">
-              <div className="lumina-card p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <Clock className="w-4 h-4 text-white/40" />
-                  <h3 className="lumina-text text-sm font-semibold">Recent Flags</h3>
-                </div>
-                <div className="space-y-2">
-                  {flags.slice(0, 4).map((f) => (
-                    <div key={f.id} className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
-                      <span className="text-white/40">{contentTypeIcon(f.content_type)}</span>
-                      <p className="text-xs text-white/60 truncate flex-1 font-mono">{f.content_text}</p>
-                      <SeverityBadge severity={f.severity} />
-                    </div>
+            <div className="rounded-xl border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Content</TableHead>
+                    <TableHead>Severity</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {flags.map(flag => (
+                    <TableRow key={flag.id}>
+                      <TableCell><div className="flex items-center gap-2">{contentTypeIcon(flag.content_type)}<span className="text-xs capitalize">{flag.content_type.replace('_', ' ')}</span></div></TableCell>
+                      <TableCell><p className="max-w-[300px] truncate text-xs">{flag.content_text}</p></TableCell>
+                      <TableCell><Badge className={severityColor(flag.severity)}>{flag.severity}</Badge></TableCell>
+                      <TableCell><p className="text-xs max-w-[200px] truncate">{flag.reason || '-'}</p></TableCell>
+                      <TableCell><span className="text-xs text-muted-foreground">{new Date(flag.created_at).toLocaleDateString()}</span></TableCell>
+                      <TableCell>
+                        {flag.status === 'pending' ? (
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => { setActionDialog({ open: true, flag }); setActionType('warning'); }}>
+                              <Eye className="w-3 h-3" /> Review
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => dismissFlag(flag.id)}>
+                              <XCircle className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">{flag.status}</Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
                   ))}
                   {flags.length === 0 && (
-                    <p className="text-xs text-white/30 text-center py-4">No flags</p>
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No flagged content</TableCell></TableRow>
                   )}
-                </div>
-              </div>
-
-              <div className="lumina-card p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <Gavel className="w-4 h-4 text-white/40" />
-                  <h3 className="lumina-text text-sm font-semibold">Recent Actions</h3>
-                </div>
-                <div className="space-y-2">
-                  {actions.slice(0, 4).map((a) => (
-                    <div key={a.id} className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
-                      <ActionBadge type={a.action_type} />
-                      <p className="text-xs text-white/60 truncate flex-1 font-mono">{a.message || '—'}</p>
-                      <span className="text-xs text-white/30 font-mono">{new Date(a.created_at).toLocaleDateString()}</span>
-                    </div>
-                  ))}
-                  {actions.length === 0 && (
-                    <p className="text-xs text-white/30 text-center py-4">No actions</p>
-                  )}
-                </div>
-              </div>
+                </TableBody>
+              </Table>
             </div>
           </div>
         )}
 
-        {/* ════════════ Triage Board (Kanban) ════════════ */}
-        {activeTab === 'board' && (
-          <div className="tab-enter space-y-5">
-            {/* Filter row */}
-            <div className="flex items-center justify-between flex-wrap gap-3 fade-up">
-              <h2 className="lumina-text text-lg font-semibold">Triage Board</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setStatusFilter('pending')}
-                  className={`lumina-btn-glass text-xs ${statusFilter === 'pending' ? 'ring-1 ring-white/30' : ''}`}
-                >
-                  <CircleDot className="w-3 h-3" /> Pending Only
-                </button>
-                <button
-                  onClick={() => setStatusFilter('all')}
-                  className={`lumina-btn-glass text-xs ${statusFilter === 'all' ? 'ring-1 ring-white/30' : ''}`}
-                >
-                  <LayoutGrid className="w-3 h-3" /> All
-                </button>
-              </div>
-            </div>
+        {/* Actions Tab */}
+        {activeTab === 'actions' && (
+          <div className="rounded-xl border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Message</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Appeal</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {actions.map(action => (
+                  <TableRow key={action.id}>
+                    <TableCell>
+                      <Badge className={
+                        action.action_type === 'terminate' ? 'bg-red-500/20 text-red-400' :
+                        action.action_type === 'temp_ban' ? 'bg-orange-500/20 text-orange-400' :
+                        'bg-yellow-500/20 text-yellow-400'
+                      }>{action.action_type.replace('_', ' ')}</Badge>
+                    </TableCell>
+                    <TableCell><p className="text-xs max-w-[300px] truncate">{action.message || '-'}</p></TableCell>
+                    <TableCell>{action.is_active ? <Badge>Active</Badge> : <Badge variant="outline">Inactive</Badge>}</TableCell>
+                    <TableCell><span className="text-xs capitalize">{action.appeal_status}</span></TableCell>
+                    <TableCell><span className="text-xs text-muted-foreground">{new Date(action.created_at).toLocaleDateString()}</span></TableCell>
+                  </TableRow>
+                ))}
+                {actions.length === 0 && (
+                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No actions taken yet</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
 
-            {/* ── Three-column kanban ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 fade-up fade-up-delay-1">
-              {/* ───── Column: Pending Flags ───── */}
-              <div className={`lumina-card p-4 flex flex-col min-h-[400px] ${columns[0].ring} ${columns[0].glow} cosmic-float`}>
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <span className={columns[0].accent}><Inbox size={16} /></span>
-                    <h3 className="lumina-text text-sm font-semibold">Pending Flags</h3>
-                  </div>
-                  <span className={`text-sm font-bold font-mono ${columns[0].accent}`}>{pendingFlags.length}</span>
-                </div>
-                <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-                  {pendingFlags.map((flag, idx) => (
-                    <div
-                      key={flag.id}
-                      className="lumina-card p-3 cursor-grab active:cursor-grabbing transition-transform hover:scale-[1.02] hover:-translate-y-0.5"
-                      style={{ animationDelay: `${idx * 60}ms` }}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-1.5 text-white/60">
-                          {contentTypeIcon(flag.content_type)}
-                          <span className="text-[10px] uppercase tracking-wider font-mono text-white/40">
-                            {flag.content_type.replace('_', ' ')}
-                          </span>
-                        </div>
-                        <SeverityBadge severity={flag.severity} />
-                      </div>
-                      <p className="text-xs text-white/70 font-mono leading-relaxed mb-2 line-clamp-3">
-                        {flag.content_text}
-                      </p>
-                      {flag.reason && (
-                        <p className="text-[10px] text-white/40 mb-3 truncate">↳ {flag.reason}</p>
-                      )}
-                      <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                        <span className="text-[10px] text-white/30 font-mono">
-                          {new Date(flag.created_at).toLocaleDateString()}
-                        </span>
-                        <div className="flex gap-1.5">
-                          <button
-                            onClick={() => { setActionDialog({ open: true, flag }); setActionType('warning'); }}
-                            className="lumina-btn-icon w-7 h-7"
-                            title="Review / Take action"
-                          >
-                            <Eye className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => dismissFlag(flag.id)}
-                            className="lumina-btn-icon w-7 h-7 text-white/40 hover:text-red-300"
-                            title="Dismiss flag"
-                          >
-                            <XCircle className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {pendingFlags.length === 0 && (
-                    <div className="flex-1 flex items-center justify-center py-12">
-                      <p className="text-xs text-white/30 text-center">{columns[0].empty}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ───── Column: Actions Taken ───── */}
-              <div className={`lumina-card p-4 flex flex-col min-h-[400px] ${columns[1].ring} ${columns[1].glow} cosmic-float`} style={{ animationDelay: '0.4s' }}>
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <span className={columns[1].accent}><Ban size={16} /></span>
-                    <h3 className="lumina-text text-sm font-semibold">Actions Taken</h3>
-                  </div>
-                  <span className={`text-sm font-bold font-mono ${columns[1].accent}`}>{actions.length}</span>
-                </div>
-                <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-                  {actions.map((action, idx) => (
-                    <div
-                      key={action.id}
-                      className="lumina-card p-3 transition-transform hover:scale-[1.02] hover:-translate-y-0.5"
-                      style={{ animationDelay: `${idx * 60}ms` }}
-                    >
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <ActionBadge type={action.action_type} />
-                        <span className={`text-[10px] font-mono ${action.is_active ? 'text-emerald-300' : 'text-white/30'}`}>
-                          {action.is_active ? '● ACTIVE' : '○ INACTIVE'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-white/60 font-mono leading-relaxed mb-2 line-clamp-3">
-                        {action.message || 'No message recorded'}
-                      </p>
-                      <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                        <span className="text-[10px] text-white/30 font-mono">
-                          {new Date(action.created_at).toLocaleDateString()}
-                        </span>
-                        <span className="text-[10px] text-white/40 font-mono capitalize">
-                          appeal: {action.appeal_status}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                  {actions.length === 0 && (
-                    <div className="flex-1 flex items-center justify-center py-12">
-                      <p className="text-xs text-white/30 text-center">{columns[1].empty}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ───── Column: Appeals ───── */}
-              <div className={`lumina-card p-4 flex flex-col min-h-[400px] ${columns[2].ring} ${columns[2].glow} cosmic-float`} style={{ animationDelay: '0.8s' }}>
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <span className={columns[2].accent}><Shield size={16} /></span>
-                    <h3 className="lumina-text text-sm font-semibold">Appeals</h3>
-                  </div>
-                  <span className={`text-sm font-bold font-mono ${columns[2].accent}`}>{appeals.length}</span>
-                </div>
-                <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-                  {appeals.map((appeal, idx) => (
-                    <div
-                      key={appeal.id}
-                      className="lumina-card p-3 transition-transform hover:scale-[1.02] hover:-translate-y-0.5"
-                      style={{ animationDelay: `${idx * 60}ms` }}
-                    >
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <ActionBadge type={appeal.action_type} />
-                        <span className="text-[10px] text-white/30 font-mono">
-                          {new Date(appeal.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-xs text-white/60 font-mono leading-relaxed mb-3 line-clamp-3">
-                        {appeal.appeal_reason || 'No reason provided'}
-                      </p>
-                      <div className="flex gap-2 pt-2 border-t border-white/5">
-                        <button
-                          onClick={() => resolveAppeal(appeal.id, 'upheld')}
-                          className="lumina-btn-glass flex-1 text-[10px] gap-1 justify-center"
-                        >
+        {/* Appeals Tab */}
+        {activeTab === 'appeals' && (
+          <div className="rounded-xl border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Action Type</TableHead>
+                  <TableHead>Appeal Reason</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Decision</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {appeals.map(appeal => (
+                  <TableRow key={appeal.id}>
+                    <TableCell><Badge>{appeal.action_type.replace('_', ' ')}</Badge></TableCell>
+                    <TableCell><p className="text-xs max-w-[300px]">{(appeal as any).appeal_reason || 'No reason provided'}</p></TableCell>
+                    <TableCell><span className="text-xs text-muted-foreground">{new Date(appeal.created_at).toLocaleDateString()}</span></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => resolveAppeal(appeal.id, 'upheld')}>
                           <CheckCircle className="w-3 h-3" /> Uphold
-                        </button>
-                        <button
-                          onClick={() => resolveAppeal(appeal.id, 'overturned')}
-                          className="lumina-btn-glass flex-1 text-[10px] gap-1 justify-center text-amber-300"
-                        >
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-orange-400" onClick={() => resolveAppeal(appeal.id, 'overturned')}>
                           <XCircle className="w-3 h-3" /> Overturn
-                        </button>
+                        </Button>
                       </div>
-                    </div>
-                  ))}
-                  {appeals.length === 0 && (
-                    <div className="flex-1 flex items-center justify-center py-12">
-                      <p className="text-xs text-white/30 text-center">{columns[2].empty}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Reviewed flags footer */}
-            {reviewedFlags.length > 0 && (
-              <>
-                <div className="lumina-divider" />
-                <div className="fade-up">
-                  <h3 className="lumina-text text-sm font-semibold mb-3 text-white/50">
-                    Recently Reviewed ({reviewedFlags.length})
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {reviewedFlags.slice(0, 6).map((f) => (
-                      <div key={f.id} className="lumina-card p-3 opacity-70">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] uppercase tracking-wider font-mono text-white/40">
-                            {f.content_type.replace('_', ' ')}
-                          </span>
-                          <span className="text-[10px] font-mono text-white/40 capitalize">{f.status}</span>
-                        </div>
-                        <p className="text-xs text-white/50 font-mono truncate">{f.content_text}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {appeals.length === 0 && (
+                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No pending appeals</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>
 
-      {/* ──────────────────────────────────────────────
-       * Action Dialog — preserved
-       * ────────────────────────────────────────────── */}
+      {/* Action Dialog */}
       <Dialog open={actionDialog.open} onOpenChange={(o) => { if (!o) setActionDialog({ open: false, flag: null }); }}>
-        <DialogContent className="bg-black border-white/10 text-white">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="lumina-text">Take Moderation Action</DialogTitle>
+            <DialogTitle>Take Moderation Action</DialogTitle>
           </DialogHeader>
           {actionDialog.flag && (
             <div className="space-y-4">
-              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                <p className="text-xs text-white/40 mb-1 font-mono">Flagged Content:</p>
-                <p className="text-sm text-white/80 font-mono">{actionDialog.flag.content_text.substring(0, 500)}</p>
+              <div className="bg-muted rounded-lg p-3">
+                <p className="text-xs text-muted-foreground mb-1">Flagged Content:</p>
+                <p className="text-sm">{actionDialog.flag.content_text.substring(0, 500)}</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-white/70">Action Type</label>
-                <Select value={actionType} onValueChange={(v) => setActionType(v as 'warning' | 'temp_ban' | 'terminate')}>
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-black border-white/10">
+                <label className="text-sm font-medium">Action Type</label>
+                <Select value={actionType} onValueChange={(v) => setActionType(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
                     <SelectItem value="warning">⚠️ Warning</SelectItem>
                     <SelectItem value="temp_ban">🚫 Temporary Ban (24h)</SelectItem>
                     <SelectItem value="terminate">💀 Terminate Account</SelectItem>
@@ -716,34 +450,20 @@ export default function ModeratorDashboard() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-white/70">Message to User / School Admin</label>
-                <Textarea
-                  placeholder="Explain the reason for this action..."
-                  value={actionMessage}
-                  onChange={(e) => setActionMessage(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                />
+                <label className="text-sm font-medium">Message to User / School Admin</label>
+                <Textarea placeholder="Explain the reason for this action..." value={actionMessage} onChange={(e) => setActionMessage(e.target.value)} />
               </div>
             </div>
           )}
           <DialogFooter>
-            <button
-              onClick={() => setActionDialog({ open: false, flag: null })}
-              className="lumina-btn-glass text-white/60"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleTakeAction}
-              disabled={submitting}
-              className={`lumina-btn-glass gap-2 ${actionType === 'terminate' ? 'ring-1 ring-red-500/40 text-red-300' : ''}`}
-            >
-              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            <Button variant="outline" onClick={() => setActionDialog({ open: false, flag: null })}>Cancel</Button>
+            <Button onClick={handleTakeAction} disabled={submitting} className={actionType === 'terminate' ? 'bg-red-600 hover:bg-red-700' : ''}>
+              {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               {actionType === 'warning' ? 'Send Warning' : actionType === 'temp_ban' ? 'Ban 24h' : 'Terminate'}
-            </button>
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardShell>
+    </div>
   );
 }
