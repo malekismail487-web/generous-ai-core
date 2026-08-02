@@ -359,6 +359,7 @@ Deno.serve(async (req) => {
       payload.studentId = payload.studentId ?? resolved.userId;
     } else {
       headers.Authorization = `Bearer ${SERVICE_ROLE}`;
+      headers.apikey = SERVICE_ROLE;
     }
 
     // 5 ── Forward to the real ALE edge function — no engine logic is duplicated here
