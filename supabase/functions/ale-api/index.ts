@@ -341,30 +341,26 @@ Deno.serve(async (req) => {
 
     const requestedStudent = (body as { student_id?: string }).student_id;
     const requestedExternal = (body as { external_student_id?: string }).external_student_id;
-    // Learner actions always run as a learner. Non-learner actions (analytics,
-    // ops) run as a supplied acting user when one is given — several of those
-    // engine functions authorise on the caller's Lumina profile — otherwise
-    // they run with service scope.
-    const actAsUser = cap.learner || !!requestedStudent || !!requestedExternal;
-
-    if (actAsUser) {
-      const resolved = await resolveLearner(key.id, requestedStudent, requestedExternal);
-      if ("error" in resolved) {
-        await logUsage(key.id, action, resolved.status, Date.now() - startedAt, resolved.error);
-        return json({ error: resolved.error }, resolved.status);
-      }
-      learnerId = resolved.userId;
-      const learnerToken = await mintLearnerToken(resolved.userId, resolved.email);
-      if (!learnerToken) {
-        await logUsage(key.id, action, 500, Date.now() - startedAt, "Could not mint learner session");
-        return json({ error: "Could not establish a learner session for this request" }, 500);
-      }
-      headers.Authorization = `Bearer ${learnerToken}`;
-      if (cap.learner) payload.studentId = payload.studentId ?? resolved.userId;
-    } else {
-      headers.Authorization = `Bearer ${SERVICE_ROLE}`;
-      headers.apikey = SERVICE_ROLE;
+    // Every ALE edge function authenticates its caller, so the gateway always
+    // acts as a real Lumina account: the requested learner when one is given,
+    // otherwise this key's own dedicated service account.
+    const resolved = await resolveLearner(
+      key.id,
+      requestedStudent,
+      requestedExternal ?? (cap.learner ? undefined : "__service_account__"),
+    );
+    if ("error" in resolved) {
+      await logUsage(key.id, action, resolved.status, Date.now() - startedAt, resolved.error);
+      return json({ error: resolved.error }, resolved.status);
     }
+    learnerId = resolved.userId;
+    const actorToken = await mintLearnerToken(resolved.userId, resolved.email);
+    if (!actorToken) {
+      await logUsage(key.id, action, 500, Date.now() - startedAt, "Could not mint session");
+      return json({ error: "Could not establish a session for this request" }, 500);
+    }
+    headers.Authorization = `Bearer ${actorToken}`;
+    if (cap.learner) payload.studentId = payload.studentId ?? resolved.userId;
 
     // 5 ── Forward to the real ALE edge function — no engine logic is duplicated here
     const upstream = await fetch(`${SUPABASE_URL}/functions/v1/${cap.fn}`, {
