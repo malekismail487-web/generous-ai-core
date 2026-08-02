@@ -339,12 +339,16 @@ Deno.serve(async (req) => {
     const headers: Record<string, string> = { "Content-Type": "application/json", apikey: ANON_KEY };
     let learnerId: string | null = null;
 
-    if (cap.learner) {
-      const resolved = await resolveLearner(
-        key.id,
-        (body as { student_id?: string }).student_id,
-        (body as { external_student_id?: string }).external_student_id,
-      );
+    const requestedStudent = (body as { student_id?: string }).student_id;
+    const requestedExternal = (body as { external_student_id?: string }).external_student_id;
+    // Learner actions always run as a learner. Non-learner actions (analytics,
+    // ops) run as a supplied acting user when one is given — several of those
+    // engine functions authorise on the caller's Lumina profile — otherwise
+    // they run with service scope.
+    const actAsUser = cap.learner || !!requestedStudent || !!requestedExternal;
+
+    if (actAsUser) {
+      const resolved = await resolveLearner(key.id, requestedStudent, requestedExternal);
       if ("error" in resolved) {
         await logUsage(key.id, action, resolved.status, Date.now() - startedAt, resolved.error);
         return json({ error: resolved.error }, resolved.status);
@@ -356,7 +360,7 @@ Deno.serve(async (req) => {
         return json({ error: "Could not establish a learner session for this request" }, 500);
       }
       headers.Authorization = `Bearer ${learnerToken}`;
-      payload.studentId = payload.studentId ?? resolved.userId;
+      if (cap.learner) payload.studentId = payload.studentId ?? resolved.userId;
     } else {
       headers.Authorization = `Bearer ${SERVICE_ROLE}`;
       headers.apikey = SERVICE_ROLE;
