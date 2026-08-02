@@ -261,6 +261,127 @@ export type Database = {
         }
         Relationships: []
       }
+      ale_api_keys: {
+        Row: {
+          allow_admin_ops: boolean
+          created_at: string
+          id: string
+          is_active: boolean
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_used_at: string | null
+          monthly_request_quota: number
+          partner_name: string
+          quota_reset_at: string
+          rate_limit_per_minute: number
+          requests_this_month: number
+          revoked_at: string | null
+        }
+        Insert: {
+          allow_admin_ops?: boolean
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_used_at?: string | null
+          monthly_request_quota?: number
+          partner_name?: string
+          quota_reset_at?: string
+          rate_limit_per_minute?: number
+          requests_this_month?: number
+          revoked_at?: string | null
+        }
+        Update: {
+          allow_admin_ops?: boolean
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          key_prefix?: string
+          label?: string
+          last_used_at?: string | null
+          monthly_request_quota?: number
+          partner_name?: string
+          quota_reset_at?: string
+          rate_limit_per_minute?: number
+          requests_this_month?: number
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
+      ale_api_students: {
+        Row: {
+          api_key_id: string
+          created_at: string
+          external_ref: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          api_key_id: string
+          created_at?: string
+          external_ref: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          api_key_id?: string
+          created_at?: string
+          external_ref?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ale_api_students_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "ale_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ale_api_usage: {
+        Row: {
+          action: string
+          api_key_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          latency_ms: number | null
+          status_code: number
+        }
+        Insert: {
+          action: string
+          api_key_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          status_code: number
+        }
+        Update: {
+          action?: string
+          api_key_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          status_code?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ale_api_usage_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "ale_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       anchor_recalibrations: {
         Row: {
           anchor_count: number
