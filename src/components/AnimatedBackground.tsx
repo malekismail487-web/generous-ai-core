@@ -14,7 +14,7 @@ export function AnimatedBackground({ density = 14, className = '' }: AnimatedBac
   return (
     <div
       aria-hidden="true"
-      className={`pointer-events-none fixed inset-0 -z-10 overflow-hidden ${className}`}
+      className={`pointer-events-none fixed inset-0 z-0 overflow-hidden ${className}`}
     >
       <div className="absolute inset-0 bg-background" />
       <div
