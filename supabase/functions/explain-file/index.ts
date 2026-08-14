@@ -78,8 +78,8 @@ ${learningStyle ? `\n## Learning Style Personalization\n${learningStyle}` : ''}`
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        reasoning_effort: "low",
+        model: "openai/gpt-5.6-sol",
+        reasoning_effort: "none",
         messages: aiMessages,
         temperature: 0.7,
         stream: true,

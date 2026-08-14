@@ -37,7 +37,7 @@ async function gradeExplanation(item: any, studentMark: boolean, studentExpl: st
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey || !studentExpl?.trim()) return 0;
   const body = {
-    model: "google/gemini-2.5-flash",
+    model: "openai/gpt-5.6-sol",
     messages: [
       { role: "system", content: "Score how well a student's one-sentence reasoning matches the actual rationale. 0=wrong reasoning, 5=clearly correct reasoning. Return only an integer 0-5." },
       { role: "user", content: `Statement: ${item.text}\nActual truth: ${item.truth}\nActual rationale: ${item.rationale}\nStudent marked: ${studentMark}\nStudent reasoning: ${studentExpl}` },

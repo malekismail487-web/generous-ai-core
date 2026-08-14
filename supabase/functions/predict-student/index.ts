@@ -17,7 +17,7 @@ const corsHeaders = {
 };
 
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "openai/gpt-5.6-sol";
 
 function admin() {
   return createClient(

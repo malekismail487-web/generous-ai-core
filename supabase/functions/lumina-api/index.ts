@@ -108,8 +108,8 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        reasoning_effort: "low",
+        model: "openai/gpt-5.6-sol",
+        reasoning_effort: "none",
         messages: [{ role: "system", content: LUMINA_SYSTEM_PROMPT }, ...messages],
         stream,
       }),

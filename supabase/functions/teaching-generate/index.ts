@@ -943,7 +943,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5.6-sol",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: context || "Teach me this concept now." },
@@ -980,7 +980,7 @@ Deno.serve(async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
+            model: "openai/gpt-5.6-sol",
             messages: [
               { role: "system", content: "You repair lessons to satisfy a deterministic teaching contract." },
               { role: "user", content: repairPrompt },

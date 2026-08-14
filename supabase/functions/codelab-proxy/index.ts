@@ -54,7 +54,7 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const prompt: string = String(body?.prompt ?? "").slice(0, 8000);
     const system: string = String(body?.system ?? "You are a helpful assistant inside a student's code preview.").slice(0, 2000);
-    const model: string = String(body?.model ?? "google/gemini-2.5-flash");
+    const model: string = String(body?.model ?? "openai/gpt-5.6-sol");
     if (!prompt) {
       return new Response(JSON.stringify({ error: "Missing prompt" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

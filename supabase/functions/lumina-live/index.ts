@@ -62,7 +62,7 @@ const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 // Chosen for Stage A4: balanced Gemini model — low latency suits the p95
 // < 1.5s Phase A acceptance target; multimodal capacity is unused here but
 // harmless. Model routing is deliberately out of scope until Phase C4.
-const DEFAULT_MODEL = "google/gemini-2.5-flash";
+const DEFAULT_MODEL = "openai/gpt-5.6-sol";
 
 // Bounded input caps. These exist to protect the gateway request size and
 // to keep the prompt within predictable token bounds; oversize inputs are
@@ -277,7 +277,7 @@ interface UpstreamOptions {
 async function openUpstreamStream(opts: UpstreamOptions): Promise<Response> {
   const body = {
     model: opts.model,
-    reasoning_effort: "low",
+    reasoning_effort: "none",
     stream: true,
     messages: [
       { role: "system", content: opts.system },

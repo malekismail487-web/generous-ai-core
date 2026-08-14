@@ -11,7 +11,7 @@
 //    action="next"   → records the just-answered question via ability-update
 //                       semantics, then returns the next question (or finish)
 //
-//  Questions are produced by the Lovable AI Gateway using google/gemini-2.5-flash
+//  Questions are produced by the Lovable AI Gateway using openai/gpt-5.6-sol
 //  and are tagged with a difficulty hint that maps to a starting `difficulty_b`.
 //  The adaptive engine then refines each question's empirical difficulty over
 //  time (see ability-update inline calibration).
@@ -73,7 +73,7 @@ Return ONLY a JSON object — no markdown, no commentary — matching:
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model: "openai/gpt-5.6-sol",
       messages: [
         { role: "system", content: "You output valid JSON only. No prose." },
         { role: "user", content: prompt },

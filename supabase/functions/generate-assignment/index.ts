@@ -85,7 +85,7 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5.6-sol",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

@@ -267,7 +267,7 @@ Produce ${paragraphCount} substantial body paragraphs, not a short slideshow sum
 
     let aiRes: Response | null = null;
     let lastGatewayText = "";
-    for (const model of ["google/gemini-3.5-flash", "google/gemini-2.5-flash", "openai/gpt-5-mini"]) {
+    for (const model of ["openai/gpt-5.6-sol", "openai/gpt-5.6-sol", "openai/gpt-5-mini"]) {
       aiRes = await fetch(AI_GATEWAY_URL, {
         method: "POST",
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },

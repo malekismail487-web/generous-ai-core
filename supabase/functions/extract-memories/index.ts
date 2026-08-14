@@ -70,8 +70,8 @@ Respond with ONLY a JSON array, no markdown:`;
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash-lite",
-            reasoning_effort: "low",
+            model: "openai/gpt-5.6-sol",
+            reasoning_effort: "none",
             messages: [{ role: "user", content: extractionPrompt }],
             temperature: 0.1,
           }),

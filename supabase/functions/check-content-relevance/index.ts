@@ -2,7 +2,7 @@
 // The hard guard lives in the DB trigger `enforce_teacher_category`.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
-const MODEL = 'google/gemini-2.5-flash-lite';
+const MODEL = 'openai/gpt-5.6-sol';
 const GATEWAY = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 const MAX_TEXT = 8000; // chars sent to the model
 
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: MODEL,
-        reasoning_effort: 'low',
+        reasoning_effort: "none",
         messages: [
           { role: 'system', content: 'You classify whether educational content matches a teacher subject category. Reply ONLY with JSON.' },
           { role: 'user', content: prompt },

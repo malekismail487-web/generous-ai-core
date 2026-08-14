@@ -354,7 +354,7 @@ QUESTION COUNT ENFORCEMENT:
       }
 
       const response = await gatewayFetch({
-        model: "google/gemini-3-flash-preview",
+        model: "openai/gpt-5.6-sol",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

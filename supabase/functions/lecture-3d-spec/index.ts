@@ -70,7 +70,7 @@ serve(async (req) => {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5.6-sol",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: user },
