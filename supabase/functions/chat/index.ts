@@ -8,53 +8,37 @@ const corsHeaders = {
 
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-async function getAdaptiveProfile(authHeader: string | null): Promise<{ learningPace?: string; iqData?: any; learningStylePrompt?: string } | null> {
-  if (!authHeader) return null;
-  try {
-    const supabase = createClient(
+// Single shared admin client (module scope) — avoids re-creating a client per request.
+let _admin: ReturnType<typeof createClient> | null = null;
+function admin() {
+  if (!_admin) {
+    _admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { persistSession: false, autoRefreshToken: false } },
     );
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user) return null;
-
-    const { data: iq } = await supabase
-      .from("iq_test_results")
-      .select("estimated_iq, learning_pace, processing_speed_score, logical_reasoning_score, pattern_recognition_score, verbal_reasoning_score, mathematical_ability_score")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    const { data: style } = await supabase
-      .from("learning_style_profiles")
-      .select("dominant_style, secondary_style, visual_score, logical_score, verbal_score, kinesthetic_score, conceptual_score")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    let learningStylePrompt = '';
-    if (style && style.dominant_style && style.dominant_style !== 'balanced') {
-      const prompts: Record<string, string> = {
-        visual: 'This student is a VISUAL learner. Use diagrams, charts, structured layouts, and vivid imagery.',
-        logical: 'This student is a LOGICAL learner. Use step-by-step proofs, cause-and-effect, systematic breakdowns.',
-        verbal: 'This student is a VERBAL learner. Use rich explanations, storytelling, analogies, mnemonics.',
-        kinesthetic: 'This student is a KINESTHETIC learner. Focus on hands-on problems, real-world applications, exercises.',
-        conceptual: 'This student is a CONCEPTUAL learner. Start with big picture, show connections between concepts.',
-      };
-      learningStylePrompt = prompts[style.dominant_style] || '';
-      if (style.secondary_style) {
-        learningStylePrompt += ` Secondary style: ${style.secondary_style}.`;
-      }
-    }
-
-    return {
-      learningPace: iq?.learning_pace,
-      iqData: iq,
-      learningStylePrompt,
-    };
-  } catch {
-    return null;
   }
+  return _admin;
 }
+
+function buildLearningStylePrompt(style: any): string {
+  let learningStylePrompt = '';
+  if (style && style.dominant_style && style.dominant_style !== 'balanced') {
+    const prompts: Record<string, string> = {
+      visual: 'This student is a VISUAL learner. Use diagrams, charts, structured layouts, and vivid imagery.',
+      logical: 'This student is a LOGICAL learner. Use step-by-step proofs, cause-and-effect, systematic breakdowns.',
+      verbal: 'This student is a VERBAL learner. Use rich explanations, storytelling, analogies, mnemonics.',
+      kinesthetic: 'This student is a KINESTHETIC learner. Focus on hands-on problems, real-world applications, exercises.',
+      conceptual: 'This student is a CONCEPTUAL learner. Start with big picture, show connections between concepts.',
+    };
+    learningStylePrompt = prompts[style.dominant_style] || '';
+    if (style.secondary_style) {
+      learningStylePrompt += ` Secondary style: ${style.secondary_style}.`;
+    }
+  }
+  return learningStylePrompt;
+}
+
 
 async function scanContentAsync(content: string, userId: string, schoolId: string | null) {
   try {
@@ -78,26 +62,78 @@ async function scanContentAsync(content: string, userId: string, schoolId: strin
   }
 }
 
-async function getUserInfo(authHeader: string | null): Promise<{ userId: string; schoolId: string | null } | null> {
-  if (!authHeader) return null;
+/**
+ * Resolves the user ONCE and loads every piece of personalization context in
+ * parallel. Previously this was 7 sequential round-trips (two auth.getUser
+ * calls + five queries) executed before the AI gateway was even contacted,
+ * which dominated time-to-first-token.
+ */
+async function loadRequestContext(authHeader: string | null, includeStudentContext: boolean) {
+  const empty = {
+    userInfo: null as { userId: string; schoolId: string | null } | null,
+    adaptiveProfile: null as { learningPace?: string; iqData?: any; learningStylePrompt?: string } | null,
+    studentName: '',
+    memories: [] as any[],
+    gaps: [] as any[],
+    learningProfiles: [] as any[],
+  };
+  if (!authHeader) return empty;
+
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const db = admin();
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user) return null;
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("school_id")
-      .eq("id", user.id)
-      .maybeSingle();
-    return { userId: user.id, schoolId: profile?.school_id || null };
+    const { data: { user } } = await db.auth.getUser(token);
+    if (!user) return empty;
+
+    const uid = user.id;
+    const queries: Promise<any>[] = [
+      db.from("profiles").select("school_id, full_name").eq("id", uid).maybeSingle(),
+      db.from("iq_test_results")
+        .select("estimated_iq, learning_pace, processing_speed_score, logical_reasoning_score, pattern_recognition_score, verbal_reasoning_score, mathematical_ability_score")
+        .eq("user_id", uid).maybeSingle(),
+      db.from("learning_style_profiles")
+        .select("dominant_style, secondary_style, visual_score, logical_score, verbal_score, kinesthetic_score, conceptual_score")
+        .eq("user_id", uid).maybeSingle(),
+    ];
+
+    if (includeStudentContext) {
+      queries.push(
+        db.from("student_memory")
+          .select("memory_type, content, subject, confidence")
+          .eq("user_id", uid).order("confidence", { ascending: false }).limit(20),
+        db.from("knowledge_gaps")
+          .select("subject, topic, gap_description, severity")
+          .eq("user_id", uid).eq("resolved", false).order("severity", { ascending: false }).limit(10),
+        db.from("student_learning_profiles")
+          .select("subject, difficulty_level, recent_accuracy")
+          .eq("user_id", uid),
+      );
+    }
+
+    const settled = await Promise.allSettled(queries);
+    const val = (i: number) => (settled[i]?.status === "fulfilled" ? (settled[i] as any).value?.data : null);
+
+    const profile = val(0);
+    const iq = val(1);
+    const style = val(2);
+
+    return {
+      userInfo: { userId: uid, schoolId: profile?.school_id || null },
+      adaptiveProfile: {
+        learningPace: iq?.learning_pace,
+        iqData: iq,
+        learningStylePrompt: buildLearningStylePrompt(style),
+      },
+      studentName: profile?.full_name?.split(' ')[0] || '',
+      memories: (includeStudentContext ? val(3) : null) || [],
+      gaps: (includeStudentContext ? val(4) : null) || [],
+      learningProfiles: (includeStudentContext ? val(5) : null) || [],
+    };
   } catch {
-    return null;
+    return empty;
   }
 }
+
 
 const SYSTEM_PROMPT = `You are Lumina, an educational AI integrated into a structured study app.
 
@@ -287,9 +323,14 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Scan the latest user message for malicious content (fire-and-forget)
     const authHeader = req.headers.get("authorization");
-    const userInfo = await getUserInfo(authHeader);
+
+    // One auth resolution + all personalization queries in parallel.
+    const ctx = await loadRequestContext(authHeader, !customSystemPrompt);
+    const { userInfo, adaptiveProfile } = ctx;
+    const studentName = ctx.studentName;
+
+    // Scan the latest user message for malicious content (fire-and-forget)
     if (userInfo && messages && messages.length > 0) {
       const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user');
       if (lastUserMsg) {
@@ -297,72 +338,27 @@ serve(async (req) => {
       }
     }
 
-    // Fetch adaptive profile from DB for deeper personalization
-    const adaptiveProfile = await getAdaptiveProfile(authHeader);
-
-    // Fetch long-term memories and knowledge gaps for context injection
     let memoryContext = '';
     let knowledgeGapContext = '';
-    let studentName = '';
-    if (!customSystemPrompt && userInfo) {
-      try {
-        const supabaseAdmin = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-        );
 
-        // Get student name
-        const { data: profileData } = await supabaseAdmin
-          .from("profiles")
-          .select("full_name")
-          .eq("id", userInfo.userId)
-          .maybeSingle();
-        studentName = profileData?.full_name?.split(' ')[0] || '';
-
-        // Get top 20 memories sorted by confidence
-        const { data: memories } = await supabaseAdmin
-          .from("student_memory")
-          .select("memory_type, content, subject, confidence")
-          .eq("user_id", userInfo.userId)
-          .order("confidence", { ascending: false })
-          .limit(20);
-
-        if (memories && memories.length > 0) {
-          memoryContext = `\n\n## LONG-TERM STUDENT MEMORY\nYou remember the following about this student from past interactions:\n` +
-            memories.map(m => `- [${m.memory_type}${m.subject ? `/${m.subject}` : ''}] ${m.content} (confidence: ${m.confidence})`).join('\n') +
-            `\nUse these memories naturally in your responses. Reference past struggles, acknowledge progress, and personalize your teaching.`;
-        }
-
-        // Get unresolved knowledge gaps
-        const { data: gaps } = await supabaseAdmin
-          .from("knowledge_gaps")
-          .select("subject, topic, gap_description, severity")
-          .eq("user_id", userInfo.userId)
-          .eq("resolved", false)
-          .order("severity", { ascending: false })
-          .limit(10);
-
-        if (gaps && gaps.length > 0) {
-          knowledgeGapContext = `\n\n## KNOWN KNOWLEDGE GAPS\nThis student has the following identified weak areas:\n` +
-            gaps.map(g => `- [${g.severity.toUpperCase()}] ${g.subject} > ${g.topic}: ${g.gap_description}`).join('\n') +
-            `\nReference these gaps when relevant. If the student asks about a gap topic, focus extra attention on building understanding from the ground up.`;
-        }
-
-        // Get learning profiles for cross-subject context
-        const { data: learningProfiles } = await supabaseAdmin
-          .from("student_learning_profiles")
-          .select("subject, difficulty_level, recent_accuracy")
-          .eq("user_id", userInfo.userId);
-
-        if (learningProfiles && learningProfiles.length > 0) {
-          knowledgeGapContext += `\n\n## ACTIVE SUBJECTS & PERFORMANCE\n` +
-            learningProfiles.map(lp => `- ${lp.subject}: ${lp.difficulty_level} level (${lp.recent_accuracy ?? '?'}% accuracy)`).join('\n') +
-            `\nUse this to make cross-subject connections when relevant.`;
-        }
-      } catch (e) {
-        console.warn("Memory fetch failed (non-blocking):", e);
-      }
+    if (ctx.memories.length > 0) {
+      memoryContext = `\n\n## LONG-TERM STUDENT MEMORY\nYou remember the following about this student from past interactions:\n` +
+        ctx.memories.map((m: any) => `- [${m.memory_type}${m.subject ? `/${m.subject}` : ''}] ${m.content} (confidence: ${m.confidence})`).join('\n') +
+        `\nUse these memories naturally in your responses. Reference past struggles, acknowledge progress, and personalize your teaching.`;
     }
+
+    if (ctx.gaps.length > 0) {
+      knowledgeGapContext = `\n\n## KNOWN KNOWLEDGE GAPS\nThis student has the following identified weak areas:\n` +
+        ctx.gaps.map((g: any) => `- [${String(g.severity).toUpperCase()}] ${g.subject} > ${g.topic}: ${g.gap_description}`).join('\n') +
+        `\nReference these gaps when relevant. If the student asks about a gap topic, focus extra attention on building understanding from the ground up.`;
+    }
+
+    if (ctx.learningProfiles.length > 0) {
+      knowledgeGapContext += `\n\n## ACTIVE SUBJECTS & PERFORMANCE\n` +
+        ctx.learningProfiles.map((lp: any) => `- ${lp.subject}: ${lp.difficulty_level} level (${lp.recent_accuracy ?? '?'}% accuracy)`).join('\n') +
+        `\nUse this to make cross-subject connections when relevant.`;
+    }
+
 
     let systemPrompt = customSystemPrompt || SYSTEM_PROMPT;
 
@@ -463,7 +459,13 @@ Provide answers with citations when referencing external information.`;
         messages: allMessages,
         stream: true,
         temperature: 0.2,
+        // Gemini 2.5 Flash burns hidden thinking tokens before the first token
+        // is emitted. Lumina already produces its own visible <thinking> block,
+        // so hidden reasoning is redundant latency — keep it low, not off, so
+        // multi-step math/science accuracy is preserved.
+        reasoning_effort: "low",
       }),
+
     });
 
     if (!response.ok) {

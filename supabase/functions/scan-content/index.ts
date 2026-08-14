@@ -69,6 +69,7 @@ Be strict about content safety since this is a K-12 platform.`,
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-lite",
+        reasoning_effort: "low",
         messages: moderationMessages,
         temperature: 0.1,
         max_tokens: 200,

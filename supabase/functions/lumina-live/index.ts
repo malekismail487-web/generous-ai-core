@@ -277,6 +277,7 @@ interface UpstreamOptions {
 async function openUpstreamStream(opts: UpstreamOptions): Promise<Response> {
   const body = {
     model: opts.model,
+    reasoning_effort: "low",
     stream: true,
     messages: [
       { role: "system", content: opts.system },

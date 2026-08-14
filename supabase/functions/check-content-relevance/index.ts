@@ -87,6 +87,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: MODEL,
+        reasoning_effort: 'low',
         messages: [
           { role: 'system', content: 'You classify whether educational content matches a teacher subject category. Reply ONLY with JSON.' },
           { role: 'user', content: prompt },

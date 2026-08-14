@@ -41,6 +41,7 @@ async function callAIWithRetry(messages: any[], schema: any) {
   if (!apiKey) throw new Error("missing_api_key");
   const body = {
     model: "google/gemini-2.5-flash",
+    reasoning_effort: "low",
     messages,
     tools: [{ type: "function", function: schema }],
     tool_choice: { type: "function", function: { name: schema.name } },

@@ -109,6 +109,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
+        reasoning_effort: "low",
         messages: [{ role: "system", content: LUMINA_SYSTEM_PROMPT }, ...messages],
         stream,
       }),
