@@ -12,7 +12,7 @@ const corsHeaders = {
 };
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "openai/gpt-5.6-sol";
 
 function admin() {
   return createClient(
@@ -147,8 +147,7 @@ serve(async (req) => {
 
   const aiRes = await callAIWithRetry({
     model: MODEL,
-    reasoning_effort: "low",
-    temperature: 0.6,
+    reasoning_effort: "none",
     messages: [
       {
         role: "system",

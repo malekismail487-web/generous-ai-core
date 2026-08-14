@@ -40,12 +40,11 @@ async function callAIWithRetry(messages: any[], schema: any) {
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) throw new Error("missing_api_key");
   const body = {
-    model: "google/gemini-2.5-flash",
-    reasoning_effort: "low",
+    model: "openai/gpt-5.6-sol",
+    reasoning_effort: "none",
     messages,
     tools: [{ type: "function", function: schema }],
     tool_choice: { type: "function", function: { name: schema.name } },
-    temperature: 0.8,
   };
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await fetch(LOVABLE_AI_URL, {

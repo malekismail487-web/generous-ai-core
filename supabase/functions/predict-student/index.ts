@@ -17,7 +17,7 @@ const corsHeaders = {
 };
 
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "openai/gpt-5.6-sol";
 
 function admin() {
   return createClient(
@@ -106,8 +106,8 @@ async function callAIJson(messages: any[], maxRetry = 2): Promise<any | null> {
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: MODEL,
+          reasoning_effort: "none",
           messages,
-          temperature: 0.5,
           response_format: { type: "json_object" },
         }),
       });

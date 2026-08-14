@@ -16,7 +16,7 @@ const corsHeaders = {
 
 const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 // Fast + cheap; we only need a small structured judgment, not deep reasoning.
-const VALIDATOR_MODEL = "google/gemini-2.5-flash-lite";
+const VALIDATOR_MODEL = "openai/gpt-5.6-sol";
 const SCORE_THRESHOLD = 0.85;
 const OUTPUT_SAMPLE_CHARS = 4000; // cap forwarded text to keep validator fast
 
@@ -161,6 +161,7 @@ async function callValidator(
 
   const body = {
     model: VALIDATOR_MODEL,
+    reasoning_effort: "none",
     messages: [
       { role: "system", content: systemPrompt },
       {
@@ -170,7 +171,6 @@ async function callValidator(
     ],
     tools: [VALIDATOR_TOOL],
     tool_choice: { type: "function", function: { name: "score_adaptation" } },
-    temperature: 0.2,
   };
 
   // One retry on 429 with backoff (per project edge-function convention)

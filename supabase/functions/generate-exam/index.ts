@@ -354,16 +354,15 @@ QUESTION COUNT ENFORCEMENT:
       }
 
       const response = await gatewayFetch({
-        model: "google/gemini-3-flash-preview",
+        model: "openai/gpt-5.6-sol",
+        reasoning_effort: "none",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
         tools: [examTool],
         tool_choice: { type: "function", function: { name: "create_exam" } },
-        temperature: 0.9 + Math.random() * 0.1,
-        max_tokens: Math.min(Math.max(batchCount * 260, 2500), 8500),
-      }, LOVABLE_API_KEY);
+        }, LOVABLE_API_KEY);
 
       if (!response.ok) {
         if (response.status === 429) throw new Error("RATE_LIMITED");

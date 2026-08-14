@@ -85,14 +85,14 @@ ${description ? `- Additional context from the teacher: "${description}"` : ''}`
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5.6-sol",
+        reasoning_effort: "none",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
         tools: toolDef,
         tool_choice: { type: "function", function: { name: "create_assignment_questions" } },
-        temperature: 0.85,
       }),
     });
 

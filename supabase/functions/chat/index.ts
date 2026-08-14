@@ -455,15 +455,14 @@ Provide answers with citations when referencing external information.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5.6-sol",
         messages: allMessages,
         stream: true,
-        temperature: 0.2,
         // Gemini 2.5 Flash burns hidden thinking tokens before the first token
         // is emitted. Lumina already produces its own visible <thinking> block,
         // so hidden reasoning is redundant latency — keep it low, not off, so
         // multi-step math/science accuracy is preserved.
-        reasoning_effort: "low",
+        reasoning_effort: "none",
       }),
 
     });

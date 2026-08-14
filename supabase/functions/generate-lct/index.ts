@@ -41,8 +41,8 @@
  *   - Lock survives logout/login (database-driven, not session-based)
  * 
  * AI Models:
- *   - Primary: google/gemini-2.5-flash (generation + translation)
- *   - Validation: google/gemini-2.5-flash-lite (answer key verification)
+ *   - Primary: openai/gpt-5.6-sol (generation + translation)
+ *   - Validation: openai/gpt-5.6-sol (answer key verification)
  * 
  * Rate Limiting:
  *   - Exponential backoff on 429/402 errors (15s → 60s)
@@ -69,8 +69,8 @@ const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const SUPER_ADMIN_EMAIL = "malekismail487@gmail.com";
 
 // AI Model configuration
-const PRIMARY_MODEL = "google/gemini-2.5-flash";
-const VALIDATION_MODEL = "google/gemini-2.5-flash-lite";
+const PRIMARY_MODEL = "openai/gpt-5.6-sol";
+const VALIDATION_MODEL = "openai/gpt-5.6-sol";
 
 // Exam configuration
 const EXAM_DURATION_MS = 2 * 60 * 60 * 1000; // 2 hours
@@ -327,12 +327,11 @@ async function callAI(prompt: string, systemPrompt: string, options: AICallOptio
         },
         body: JSON.stringify({
           model,
+          reasoning_effort: "none",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: prompt },
           ],
-          temperature,
-          max_tokens: maxTokens,
         }),
       });
 

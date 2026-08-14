@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "openai/gpt-5.6-sol";
 
 interface Persona { id: string; name: string; system: string; }
 
@@ -93,9 +93,8 @@ async function streamPersona(
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
-        reasoning_effort: "low",
+        reasoning_effort: "none",
         stream: true,
-        temperature: 0.6,
         messages: [
           { role: "system", content: persona.system },
           { role: "user", content: `SUBJECT: ${subject ?? "(general)"}\nTOPIC: ${topic ?? "(unspecified)"}\n\nSTUDENT'S QUESTION:\n${question}\n\nNow respond as ${persona.name}.` },
@@ -150,8 +149,8 @@ async function buildVerdict(
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
+        reasoning_effort: "none",
         stream: false,
-        temperature: 0.3,
         messages: [
           {
             role: "system",
