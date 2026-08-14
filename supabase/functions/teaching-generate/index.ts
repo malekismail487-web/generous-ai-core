@@ -944,6 +944,7 @@ Deno.serve(async (req) => {
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "openai/gpt-5.6-sol",
+        reasoning_effort: "none",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: context || "Teach me this concept now." },
@@ -981,6 +982,7 @@ Deno.serve(async (req) => {
           headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "openai/gpt-5.6-sol",
+            reasoning_effort: "none",
             messages: [
               { role: "system", content: "You repair lessons to satisfy a deterministic teaching contract." },
               { role: "user", content: repairPrompt },
