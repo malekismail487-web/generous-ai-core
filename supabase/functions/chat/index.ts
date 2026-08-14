@@ -323,9 +323,14 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Scan the latest user message for malicious content (fire-and-forget)
     const authHeader = req.headers.get("authorization");
-    const userInfo = await getUserInfo(authHeader);
+
+    // One auth resolution + all personalization queries in parallel.
+    const ctx = await loadRequestContext(authHeader, !customSystemPrompt);
+    const { userInfo, adaptiveProfile } = ctx;
+    const studentName = ctx.studentName;
+
+    // Scan the latest user message for malicious content (fire-and-forget)
     if (userInfo && messages && messages.length > 0) {
       const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user');
       if (lastUserMsg) {
@@ -333,72 +338,27 @@ serve(async (req) => {
       }
     }
 
-    // Fetch adaptive profile from DB for deeper personalization
-    const adaptiveProfile = await getAdaptiveProfile(authHeader);
-
-    // Fetch long-term memories and knowledge gaps for context injection
     let memoryContext = '';
     let knowledgeGapContext = '';
-    let studentName = '';
-    if (!customSystemPrompt && userInfo) {
-      try {
-        const supabaseAdmin = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-        );
 
-        // Get student name
-        const { data: profileData } = await supabaseAdmin
-          .from("profiles")
-          .select("full_name")
-          .eq("id", userInfo.userId)
-          .maybeSingle();
-        studentName = profileData?.full_name?.split(' ')[0] || '';
-
-        // Get top 20 memories sorted by confidence
-        const { data: memories } = await supabaseAdmin
-          .from("student_memory")
-          .select("memory_type, content, subject, confidence")
-          .eq("user_id", userInfo.userId)
-          .order("confidence", { ascending: false })
-          .limit(20);
-
-        if (memories && memories.length > 0) {
-          memoryContext = `\n\n## LONG-TERM STUDENT MEMORY\nYou remember the following about this student from past interactions:\n` +
-            memories.map(m => `- [${m.memory_type}${m.subject ? `/${m.subject}` : ''}] ${m.content} (confidence: ${m.confidence})`).join('\n') +
-            `\nUse these memories naturally in your responses. Reference past struggles, acknowledge progress, and personalize your teaching.`;
-        }
-
-        // Get unresolved knowledge gaps
-        const { data: gaps } = await supabaseAdmin
-          .from("knowledge_gaps")
-          .select("subject, topic, gap_description, severity")
-          .eq("user_id", userInfo.userId)
-          .eq("resolved", false)
-          .order("severity", { ascending: false })
-          .limit(10);
-
-        if (gaps && gaps.length > 0) {
-          knowledgeGapContext = `\n\n## KNOWN KNOWLEDGE GAPS\nThis student has the following identified weak areas:\n` +
-            gaps.map(g => `- [${g.severity.toUpperCase()}] ${g.subject} > ${g.topic}: ${g.gap_description}`).join('\n') +
-            `\nReference these gaps when relevant. If the student asks about a gap topic, focus extra attention on building understanding from the ground up.`;
-        }
-
-        // Get learning profiles for cross-subject context
-        const { data: learningProfiles } = await supabaseAdmin
-          .from("student_learning_profiles")
-          .select("subject, difficulty_level, recent_accuracy")
-          .eq("user_id", userInfo.userId);
-
-        if (learningProfiles && learningProfiles.length > 0) {
-          knowledgeGapContext += `\n\n## ACTIVE SUBJECTS & PERFORMANCE\n` +
-            learningProfiles.map(lp => `- ${lp.subject}: ${lp.difficulty_level} level (${lp.recent_accuracy ?? '?'}% accuracy)`).join('\n') +
-            `\nUse this to make cross-subject connections when relevant.`;
-        }
-      } catch (e) {
-        console.warn("Memory fetch failed (non-blocking):", e);
-      }
+    if (ctx.memories.length > 0) {
+      memoryContext = `\n\n## LONG-TERM STUDENT MEMORY\nYou remember the following about this student from past interactions:\n` +
+        ctx.memories.map((m: any) => `- [${m.memory_type}${m.subject ? `/${m.subject}` : ''}] ${m.content} (confidence: ${m.confidence})`).join('\n') +
+        `\nUse these memories naturally in your responses. Reference past struggles, acknowledge progress, and personalize your teaching.`;
     }
+
+    if (ctx.gaps.length > 0) {
+      knowledgeGapContext = `\n\n## KNOWN KNOWLEDGE GAPS\nThis student has the following identified weak areas:\n` +
+        ctx.gaps.map((g: any) => `- [${String(g.severity).toUpperCase()}] ${g.subject} > ${g.topic}: ${g.gap_description}`).join('\n') +
+        `\nReference these gaps when relevant. If the student asks about a gap topic, focus extra attention on building understanding from the ground up.`;
+    }
+
+    if (ctx.learningProfiles.length > 0) {
+      knowledgeGapContext += `\n\n## ACTIVE SUBJECTS & PERFORMANCE\n` +
+        ctx.learningProfiles.map((lp: any) => `- ${lp.subject}: ${lp.difficulty_level} level (${lp.recent_accuracy ?? '?'}% accuracy)`).join('\n') +
+        `\nUse this to make cross-subject connections when relevant.`;
+    }
+
 
     let systemPrompt = customSystemPrompt || SYSTEM_PROMPT;
 
