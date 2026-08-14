@@ -332,7 +332,6 @@ async function callAI(prompt: string, systemPrompt: string, options: AICallOptio
             { role: "system", content: systemPrompt },
             { role: "user", content: prompt },
           ],
-          temperature,
         }),
       });
 
