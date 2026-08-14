@@ -71,6 +71,7 @@ Respond with ONLY a JSON array, no markdown:`;
           },
           body: JSON.stringify({
             model: "google/gemini-2.5-flash-lite",
+            reasoning_effort: "low",
             messages: [{ role: "user", content: extractionPrompt }],
             temperature: 0.1,
           }),

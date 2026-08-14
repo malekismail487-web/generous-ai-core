@@ -79,6 +79,7 @@ ${learningStyle ? `\n## Learning Style Personalization\n${learningStyle}` : ''}`
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
+        reasoning_effort: "low",
         messages: aiMessages,
         temperature: 0.7,
         stream: true,
