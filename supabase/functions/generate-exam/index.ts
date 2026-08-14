@@ -363,7 +363,6 @@ QUESTION COUNT ENFORCEMENT:
         tools: [examTool],
         tool_choice: { type: "function", function: { name: "create_exam" } },
         }, LOVABLE_API_KEY);
-      }, LOVABLE_API_KEY);
 
       if (!response.ok) {
         if (response.status === 429) throw new Error("RATE_LIMITED");
