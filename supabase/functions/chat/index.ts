@@ -8,53 +8,37 @@ const corsHeaders = {
 
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-async function getAdaptiveProfile(authHeader: string | null): Promise<{ learningPace?: string; iqData?: any; learningStylePrompt?: string } | null> {
-  if (!authHeader) return null;
-  try {
-    const supabase = createClient(
+// Single shared admin client (module scope) — avoids re-creating a client per request.
+let _admin: ReturnType<typeof createClient> | null = null;
+function admin() {
+  if (!_admin) {
+    _admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { persistSession: false, autoRefreshToken: false } },
     );
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user) return null;
-
-    const { data: iq } = await supabase
-      .from("iq_test_results")
-      .select("estimated_iq, learning_pace, processing_speed_score, logical_reasoning_score, pattern_recognition_score, verbal_reasoning_score, mathematical_ability_score")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    const { data: style } = await supabase
-      .from("learning_style_profiles")
-      .select("dominant_style, secondary_style, visual_score, logical_score, verbal_score, kinesthetic_score, conceptual_score")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    let learningStylePrompt = '';
-    if (style && style.dominant_style && style.dominant_style !== 'balanced') {
-      const prompts: Record<string, string> = {
-        visual: 'This student is a VISUAL learner. Use diagrams, charts, structured layouts, and vivid imagery.',
-        logical: 'This student is a LOGICAL learner. Use step-by-step proofs, cause-and-effect, systematic breakdowns.',
-        verbal: 'This student is a VERBAL learner. Use rich explanations, storytelling, analogies, mnemonics.',
-        kinesthetic: 'This student is a KINESTHETIC learner. Focus on hands-on problems, real-world applications, exercises.',
-        conceptual: 'This student is a CONCEPTUAL learner. Start with big picture, show connections between concepts.',
-      };
-      learningStylePrompt = prompts[style.dominant_style] || '';
-      if (style.secondary_style) {
-        learningStylePrompt += ` Secondary style: ${style.secondary_style}.`;
-      }
-    }
-
-    return {
-      learningPace: iq?.learning_pace,
-      iqData: iq,
-      learningStylePrompt,
-    };
-  } catch {
-    return null;
   }
+  return _admin;
 }
+
+function buildLearningStylePrompt(style: any): string {
+  let learningStylePrompt = '';
+  if (style && style.dominant_style && style.dominant_style !== 'balanced') {
+    const prompts: Record<string, string> = {
+      visual: 'This student is a VISUAL learner. Use diagrams, charts, structured layouts, and vivid imagery.',
+      logical: 'This student is a LOGICAL learner. Use step-by-step proofs, cause-and-effect, systematic breakdowns.',
+      verbal: 'This student is a VERBAL learner. Use rich explanations, storytelling, analogies, mnemonics.',
+      kinesthetic: 'This student is a KINESTHETIC learner. Focus on hands-on problems, real-world applications, exercises.',
+      conceptual: 'This student is a CONCEPTUAL learner. Start with big picture, show connections between concepts.',
+    };
+    learningStylePrompt = prompts[style.dominant_style] || '';
+    if (style.secondary_style) {
+      learningStylePrompt += ` Secondary style: ${style.secondary_style}.`;
+    }
+  }
+  return learningStylePrompt;
+}
+
 
 async function scanContentAsync(content: string, userId: string, schoolId: string | null) {
   try {
