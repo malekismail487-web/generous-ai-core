@@ -290,7 +290,6 @@ async function openUpstreamStream(opts: UpstreamOptions): Promise<Response> {
     ],
     // Temperature intentionally low: the teacher signal is authoritative,
     // Lumina reinforces it. Adaptive temperature is a Phase B/C concern.
-    temperature: 0.4,
   };
   return await fetch(LOVABLE_AI_URL, {
     method: "POST",
@@ -424,6 +423,7 @@ serve(async (req) => {
     upstream = await openUpstreamStream({
       apiKey,
       model: chosenModel,
+      reasoning_effort: "none",
       system: SYSTEM_PROMPT,
       stablePrefix,
       volatileDelta,

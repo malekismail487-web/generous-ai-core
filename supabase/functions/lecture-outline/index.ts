@@ -257,6 +257,7 @@ Produce ${paragraphCount} substantial body paragraphs, not a short slideshow sum
 
     const gatewayBody = (model: string) => ({
       model,
+      reasoning_effort: "none",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },

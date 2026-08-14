@@ -73,7 +73,6 @@ Respond with ONLY a JSON array, no markdown:`;
             model: "openai/gpt-5.6-sol",
             reasoning_effort: "none",
             messages: [{ role: "user", content: extractionPrompt }],
-            temperature: 0.1,
           }),
         });
 

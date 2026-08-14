@@ -73,6 +73,7 @@ serve(async (req) => {
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model,
+        reasoning_effort: "none",
         messages: [
           { role: "system", content: system },
           { role: "user", content: prompt },

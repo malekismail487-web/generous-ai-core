@@ -148,7 +148,6 @@ serve(async (req) => {
   const aiRes = await callAIWithRetry({
     model: MODEL,
     reasoning_effort: "none",
-    temperature: 0.6,
     messages: [
       {
         role: "system",

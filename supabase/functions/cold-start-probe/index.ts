@@ -74,11 +74,11 @@ Return ONLY a JSON object — no markdown, no commentary — matching:
     },
     body: JSON.stringify({
       model: "openai/gpt-5.6-sol",
+      reasoning_effort: "none",
       messages: [
         { role: "system", content: "You output valid JSON only. No prose." },
         { role: "user", content: prompt },
       ],
-      temperature: 0.7,
     }),
   });
 

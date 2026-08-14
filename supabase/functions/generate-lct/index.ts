@@ -327,12 +327,12 @@ async function callAI(prompt: string, systemPrompt: string, options: AICallOptio
         },
         body: JSON.stringify({
           model,
+          reasoning_effort: "none",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: prompt },
           ],
           temperature,
-          max_tokens: maxTokens,
         }),
       });
 

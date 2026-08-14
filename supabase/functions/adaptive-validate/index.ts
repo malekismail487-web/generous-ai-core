@@ -161,6 +161,7 @@ async function callValidator(
 
   const body = {
     model: VALIDATOR_MODEL,
+    reasoning_effort: "none",
     messages: [
       { role: "system", content: systemPrompt },
       {
@@ -170,7 +171,6 @@ async function callValidator(
     ],
     tools: [VALIDATOR_TOOL],
     tool_choice: { type: "function", function: { name: "score_adaptation" } },
-    temperature: 0.2,
   };
 
   // One retry on 429 with backoff (per project edge-function convention)

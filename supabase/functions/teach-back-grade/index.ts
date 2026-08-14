@@ -37,10 +37,10 @@ async function callAIWithRetry(messages: any[], schema: any) {
   if (!apiKey) throw new Error("missing_api_key");
   const body = {
     model: "openai/gpt-5.6-sol",
+    reasoning_effort: "none",
     messages,
     tools: [{ type: "function", function: schema }],
     tool_choice: { type: "function", function: { name: schema.name } },
-    temperature: 0.4,
   };
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await fetch(LOVABLE_AI_URL, {

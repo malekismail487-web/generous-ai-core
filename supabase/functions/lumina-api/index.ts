@@ -143,6 +143,7 @@ Deno.serve(async (req) => {
     return json({
       id: data.id,
       model: "lumina-1",
+      reasoning_effort: "none",
       choices: data.choices,
       usage: data.usage,
     }, 200);

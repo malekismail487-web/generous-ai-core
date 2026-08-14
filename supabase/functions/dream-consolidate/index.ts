@@ -99,7 +99,7 @@ Today is ${today}. Produce the JSON briefing now.`;
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
-        temperature: 0.6,
+        reasoning_effort: "none",
         response_format: { type: "json_object" },
         messages: [{ role: "system", content: sys }, { role: "user", content: userPrompt }],
       }),

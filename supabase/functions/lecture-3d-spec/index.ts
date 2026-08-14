@@ -71,12 +71,12 @@ serve(async (req) => {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
       body: JSON.stringify({
         model: "openai/gpt-5.6-sol",
+        reasoning_effort: "none",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: user },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.7,
       }),
     });
 

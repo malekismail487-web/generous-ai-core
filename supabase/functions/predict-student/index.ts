@@ -106,8 +106,8 @@ async function callAIJson(messages: any[], maxRetry = 2): Promise<any | null> {
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: MODEL,
+          reasoning_effort: "none",
           messages,
-          temperature: 0.5,
           response_format: { type: "json_object" },
         }),
       });

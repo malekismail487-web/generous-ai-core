@@ -45,7 +45,6 @@ async function callAIWithRetry(messages: any[], schema: any) {
     messages,
     tools: [{ type: "function", function: schema }],
     tool_choice: { type: "function", function: { name: schema.name } },
-    temperature: 0.8,
   };
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await fetch(LOVABLE_AI_URL, {

@@ -71,8 +71,6 @@ Be strict about content safety since this is a K-12 platform.`,
         model: "openai/gpt-5.6-sol",
         reasoning_effort: "none",
         messages: moderationMessages,
-        temperature: 0.1,
-        max_tokens: 200,
       }),
     });
 
