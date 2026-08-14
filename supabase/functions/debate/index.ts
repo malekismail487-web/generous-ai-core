@@ -93,6 +93,7 @@ async function streamPersona(
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
+        reasoning_effort: "low",
         stream: true,
         temperature: 0.6,
         messages: [
