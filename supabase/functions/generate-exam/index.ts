@@ -362,7 +362,7 @@ QUESTION COUNT ENFORCEMENT:
         ],
         tools: [examTool],
         tool_choice: { type: "function", function: { name: "create_exam" } },
-        2500), 8500),
+        }, LOVABLE_API_KEY);
       }, LOVABLE_API_KEY);
 
       if (!response.ok) {
