@@ -57,7 +57,7 @@ window.LUMINA_AI = async function(prompt, options) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.lovableKey },
       body: JSON.stringify({
-        model: options.model || 'google/gemini-2.5-flash',
+        model: options.model || 'openai/gpt-5.6-sol',
         messages: [{ role: 'system', content: system }, { role: 'user', content: prompt }],
       }),
     });
