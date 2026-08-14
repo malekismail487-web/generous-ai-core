@@ -62,26 +62,78 @@ async function scanContentAsync(content: string, userId: string, schoolId: strin
   }
 }
 
-async function getUserInfo(authHeader: string | null): Promise<{ userId: string; schoolId: string | null } | null> {
-  if (!authHeader) return null;
+/**
+ * Resolves the user ONCE and loads every piece of personalization context in
+ * parallel. Previously this was 7 sequential round-trips (two auth.getUser
+ * calls + five queries) executed before the AI gateway was even contacted,
+ * which dominated time-to-first-token.
+ */
+async function loadRequestContext(authHeader: string | null, includeStudentContext: boolean) {
+  const empty = {
+    userInfo: null as { userId: string; schoolId: string | null } | null,
+    adaptiveProfile: null as { learningPace?: string; iqData?: any; learningStylePrompt?: string } | null,
+    studentName: '',
+    memories: [] as any[],
+    gaps: [] as any[],
+    learningProfiles: [] as any[],
+  };
+  if (!authHeader) return empty;
+
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const db = admin();
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user) return null;
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("school_id")
-      .eq("id", user.id)
-      .maybeSingle();
-    return { userId: user.id, schoolId: profile?.school_id || null };
+    const { data: { user } } = await db.auth.getUser(token);
+    if (!user) return empty;
+
+    const uid = user.id;
+    const queries: Promise<any>[] = [
+      db.from("profiles").select("school_id, full_name").eq("id", uid).maybeSingle(),
+      db.from("iq_test_results")
+        .select("estimated_iq, learning_pace, processing_speed_score, logical_reasoning_score, pattern_recognition_score, verbal_reasoning_score, mathematical_ability_score")
+        .eq("user_id", uid).maybeSingle(),
+      db.from("learning_style_profiles")
+        .select("dominant_style, secondary_style, visual_score, logical_score, verbal_score, kinesthetic_score, conceptual_score")
+        .eq("user_id", uid).maybeSingle(),
+    ];
+
+    if (includeStudentContext) {
+      queries.push(
+        db.from("student_memory")
+          .select("memory_type, content, subject, confidence")
+          .eq("user_id", uid).order("confidence", { ascending: false }).limit(20),
+        db.from("knowledge_gaps")
+          .select("subject, topic, gap_description, severity")
+          .eq("user_id", uid).eq("resolved", false).order("severity", { ascending: false }).limit(10),
+        db.from("student_learning_profiles")
+          .select("subject, difficulty_level, recent_accuracy")
+          .eq("user_id", uid),
+      );
+    }
+
+    const settled = await Promise.allSettled(queries);
+    const val = (i: number) => (settled[i]?.status === "fulfilled" ? (settled[i] as any).value?.data : null);
+
+    const profile = val(0);
+    const iq = val(1);
+    const style = val(2);
+
+    return {
+      userInfo: { userId: uid, schoolId: profile?.school_id || null },
+      adaptiveProfile: {
+        learningPace: iq?.learning_pace,
+        iqData: iq,
+        learningStylePrompt: buildLearningStylePrompt(style),
+      },
+      studentName: profile?.full_name?.split(' ')[0] || '',
+      memories: (includeStudentContext ? val(3) : null) || [],
+      gaps: (includeStudentContext ? val(4) : null) || [],
+      learningProfiles: (includeStudentContext ? val(5) : null) || [],
+    };
   } catch {
-    return null;
+    return empty;
   }
 }
+
 
 const SYSTEM_PROMPT = `You are Lumina, an educational AI integrated into a structured study app.
 
