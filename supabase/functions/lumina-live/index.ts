@@ -423,7 +423,6 @@ serve(async (req) => {
     upstream = await openUpstreamStream({
       apiKey,
       model: chosenModel,
-      reasoning_effort: "none",
       system: SYSTEM_PROMPT,
       stablePrefix,
       volatileDelta,
