@@ -371,7 +371,7 @@ serve(async (req) => {
     const authHeader = req.headers.get("authorization");
 
     // One auth resolution + all personalization queries in parallel.
-    const ctx = await loadRequestContext(authHeader, !customSystemPrompt);
+    const ctx = await loadRequestContextFast(authHeader, !customSystemPrompt);
     const { userInfo, adaptiveProfile } = ctx;
     const studentName = ctx.studentName;
 
