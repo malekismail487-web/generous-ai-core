@@ -233,10 +233,12 @@ Now produce the JSON prediction.`;
 }
 
 async function handleReveal(req: Request, user: { id: string }) {
-  const body = await req.json();
-  const snapshot_id: string = body.snapshot_id;
-  const actual_answer: string = (body.actual_answer ?? "").toString().slice(0, 4000);
-  const was_correct: boolean | null = typeof body.was_correct === "boolean" ? body.was_correct : null;
+  let body: any = {};
+  try { body = await req.json(); } catch { body = {}; }
+  const snapshot_id: string = body?.snapshot_id;
+  const actual_answer: string = (body?.actual_answer ?? "").toString().slice(0, 4000);
+  const was_correct: boolean | null = typeof body?.was_correct === "boolean" ? body.was_correct : null;
+
 
   if (!snapshot_id || !actual_answer) {
     return new Response(JSON.stringify({ error: "snapshot_id + actual_answer required" }), {
