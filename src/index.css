@@ -150,15 +150,17 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-family: 'Manrope', system-ui, sans-serif;
     letter-spacing: -0.011em;
   }
 
   /* Editorial headings: oversized, tight, quiet */
-  h1, h2, h3 {
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Sora', 'Manrope', system-ui, sans-serif;
     letter-spacing: -0.035em;
     text-wrap: balance;
   }
+
 
   p {
     text-wrap: pretty;
