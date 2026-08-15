@@ -118,7 +118,11 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           return (
             <button
               key={tab.id}
-              onClick={() => onTabChange(tab.id)}
+              onClick={() => {
+                // A slide isn't a tap — ignore the click that ends a drag.
+                if (travelled.current > 6) return;
+                onTabChange(tab.id);
+              }}
               className={cn(
                 "liquid-tab flex flex-col items-center justify-center gap-0.5 flex-1 h-full rounded-2xl transition-all duration-300",
                 isActive ? "text-foreground is-active" : "text-muted-foreground hover:text-foreground"
