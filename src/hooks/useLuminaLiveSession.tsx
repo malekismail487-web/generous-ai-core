@@ -547,6 +547,8 @@ export function useLuminaLiveSession(
     return () => {
       mountedRef.current = false;
       try { supabase.removeChannel(channel); } catch { /* ignore */ }
+      try { authSub?.subscription?.unsubscribe(); } catch { /* ignore */ }
+      window.clearInterval(aleTimer);
       if (abortRef.current) {
         try { abortRef.current.abort(); } catch { /* ignore */ }
         abortRef.current = null;
@@ -555,7 +557,8 @@ export function useLuminaLiveSession(
       if (cacheRef.current) { cacheRef.current.clear(); cacheRef.current = null; }
       epochRef.current += 1;
     };
-  }, [enabled, lessonId, drain]);
+  }, [enabled, lessonId, drain, refreshAleContext, refreshJwt]);
+
 
   const stableStop = useCallback(() => {
     stop();
