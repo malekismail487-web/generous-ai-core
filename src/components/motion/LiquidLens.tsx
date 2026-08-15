@@ -86,6 +86,9 @@ export function LiquidLens({
       `scale(${stretch}, ${squash})`,
       `rotate(${-angle}deg)`,
     ].join(' ');
+    // Mirror the satellite fan when the lens is parked on the left half,
+    // so the arc always opens into the screen rather than off it.
+    el.style.setProperty('--dir', pos.current.x + LENS_W / 2 < window.innerWidth / 2 ? '-1' : '1');
     el.style.setProperty('--tilt-x', `${(vx / 60) * 8}deg`);
     el.style.setProperty('--tilt-y', `${(vy / 60) * -8}deg`);
   }, []);

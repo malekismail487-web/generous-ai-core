@@ -1261,9 +1261,9 @@
   .liquid-lens-fan.is-visible .liquid-lens-satellite {
     opacity: 1;
     transform:
-      rotate(calc(-90deg - 62deg + (124deg / max(var(--n) - 1, 1)) * var(--i)))
-      translateX(78px)
-      rotate(calc(90deg + 62deg - (124deg / max(var(--n) - 1, 1)) * var(--i)))
+      rotate(calc((-90deg - 62deg + (124deg / max(var(--n) - 1, 1)) * var(--i)) * var(--dir, 1)))
+      translateX(calc(78px * var(--dir, 1)))
+      rotate(calc((90deg + 62deg - (124deg / max(var(--n) - 1, 1)) * var(--i)) * var(--dir, 1)))
       scale(1);
   }
 
