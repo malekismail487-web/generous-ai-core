@@ -853,17 +853,27 @@ export default function Auth() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-      <div className="w-full max-w-md">
+    <div className="relative flex flex-col items-center justify-center min-h-screen bg-background p-4 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute -top-1/4 left-1/3 w-[60vw] h-[60vw] rounded-full blur-[130px] animate-aurora-drift"
+          style={{ background: 'radial-gradient(circle, hsl(var(--ink) / 0.08), transparent 65%)' }}
+        />
+      </div>
+      <div className="grain-overlay" />
+
+      <div className="relative z-10 w-full max-w-md">
         {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-8 animate-rise-in">
           <div className="w-28 h-28 rounded-3xl overflow-hidden mb-4">
             <LuminaLogo size={112} />
           </div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'Caveat, cursive' }}>
-            <span className="gradient-text">Lumina</span>
-          </h1>
+          <h1 className="font-display text-4xl font-extrabold tracking-tighter">Lumina</h1>
+          <p className="mt-2 text-[10px] uppercase tracking-[0.36em] text-muted-foreground text-center">
+            {language === 'ar' ? 'محرك تعلّم يتكيّف معك' : 'A learning engine that adapts to you'}
+          </p>
         </div>
+
 
         {selectedCountry.name && (
           <button
