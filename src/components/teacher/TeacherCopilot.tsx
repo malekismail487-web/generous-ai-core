@@ -193,32 +193,64 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
 
   const regenerateQuestion = async (questionIndex: number, instruction: string) => {
     if (!generatedTitle || questionIndex < 0 || questionIndex >= questions.length) return;
-    
-    setIsRefining(true);
+
+    const target = questions[questionIndex];
+    setBusyId(target.id);
     try {
       const { data, error } = await supabase.functions.invoke('generate-assignment', {
         body: {
-          title: `${generatedTitle} - Regenerate Question ${questionIndex + 1}`,
-          description: `Original: ${questions[questionIndex].questionTitle}\nInstruction: ${instruction}\nKeep other questions unchanged.`,
+          title: generatedTitle,
+          description: description.trim() || undefined,
           subject: getSubjectName(subject, 'en'),
           questionCount: 1,
           gradeLevel,
+          instruction: `${instruction}. Replace this rejected question: "${target.questionTitle}"`,
+          existingQuestions: questions.map((q) => q.questionTitle),
         },
       });
 
       if (error) throw error;
-      if (data?.questions && data.questions.length > 0) {
-        const newQuestions = [...questions];
-        newQuestions[questionIndex] = {
-          ...data.questions[0],
-          id: generateId(),
-        };
-        setQuestions(newQuestions);
-        toast({ title: 'Question updated successfully' });
+      if (data?.error) throw new Error(data.error);
+      if (data?.questions?.length) {
+        setQuestions((prev) =>
+          prev.map((q, i) => (i === questionIndex ? { ...data.questions[0], id: generateId() } : q)),
+        );
+        setRewriteFor(null);
+        setRewriteText('');
+        toast({ title: t2('Question rewritten by Lumina', 'أعادت لومينا صياغة السؤال') });
+      } else {
+        throw new Error('No question returned');
       }
     } catch (err: any) {
       console.error('Regenerate error:', err);
-      toast({ variant: 'destructive', title: 'Failed to regenerate question', description: err.message });
+      toast({ variant: 'destructive', title: t2('Rewrite failed', 'فشلت إعادة الصياغة'), description: err.message });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const addQuestions = async (count: number) => {
+    if (!generatedTitle) return;
+    setIsRefining(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-assignment', {
+        body: {
+          title: generatedTitle,
+          description: description.trim() || undefined,
+          subject: getSubjectName(subject, 'en'),
+          questionCount: count,
+          gradeLevel,
+          existingQuestions: questions.map((q) => q.questionTitle),
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setQuestions((prev) => [
+        ...prev,
+        ...(data.questions || []).map((q: any) => ({ ...q, id: generateId() })),
+      ]);
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: t2('Could not add questions', 'تعذر إضافة أسئلة'), description: err.message });
     } finally {
       setIsRefining(false);
     }
