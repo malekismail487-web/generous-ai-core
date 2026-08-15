@@ -99,20 +99,24 @@ export default function SuperAdmin() {
 
   // Check if super admin is verified
   useEffect(() => {
-    const checkVerification = () => {
-      const verified = sessionStorage.getItem('superAdminVerified');
-      if (verified === 'true') {
-        setIsVerified(true);
-      } else {
-        setIsVerified(false);
-        navigate('/super-admin-verify');
-      }
-    };
+    if (loading) return;
 
-    if (!loading && isSuperAdmin) {
-      checkVerification();
+    // Non super admins never sit on a spinner: resolve the gate immediately so
+    // the access-denied screen renders instead of hanging forever.
+    if (!isSuperAdmin) {
+      setIsVerified(false);
+      return;
+    }
+
+    const verified = sessionStorage.getItem('superAdminVerified');
+    if (verified === 'true') {
+      setIsVerified(true);
+    } else {
+      setIsVerified(false);
+      navigate('/super-admin-verify');
     }
   }, [loading, isSuperAdmin, navigate]);
+
 
   const fetchSchools = useCallback(async () => {
     setLoadingSchools(true);
@@ -266,15 +270,6 @@ export default function SuperAdmin() {
     );
   }
 
-  if (!isVerified) {
-    // Will redirect via useEffect, show loading
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   if (!isSuperAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
@@ -291,6 +286,16 @@ export default function SuperAdmin() {
       </div>
     );
   }
+
+  if (!isVerified) {
+    // Will redirect via useEffect, show loading
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
 
   // Render testing mode UI - navigate to actual dashboards with a banner
   if (testingRole !== 'none') {
