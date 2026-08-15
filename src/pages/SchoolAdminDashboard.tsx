@@ -42,7 +42,6 @@ import { BudgetOptimizationReport } from '@/components/admin/BudgetOptimizationR
 import { SchoolAdminAppeals } from '@/components/admin/SchoolAdminAppeals';
 import { CurriculumGraphManager } from '@/components/admin/CurriculumGraphManager';
 import { CurriculumVersionsPanel } from '@/components/admin/CurriculumVersionsPanel';
-import { StudentViewSimulator } from '@/components/admin/StudentViewSimulator';
 import { SubjectsManager } from '@/components/admin/SubjectsManager';
 import { TeacherCategoriesManager } from '@/components/admin/TeacherCategoriesManager';
 import { useSchoolSubjects } from '@/hooks/useSchoolSubjects';
@@ -603,7 +602,6 @@ export default function SchoolAdminDashboard() {
               <NavTab value="subjects" icon={BookOpen} label="Subjects" />
               <NavTab value="curriculum-graph" icon={Network} label="Curriculum Graph" />
               <NavTab value="curriculum-versions" icon={GitBranch} label="Versions" />
-              <NavTab value="simulator" icon={Eye} label="Student Simulator" />
 
               <NavGroup label="People" />
               <NavTab value="teacher-categories" icon={GraduationCap} label="Teacher Categories" />
@@ -665,9 +663,6 @@ export default function SchoolAdminDashboard() {
             </TabsContent>
             <TabsContent value="curriculum-versions" className="space-y-4 mt-0">
               <CurriculumVersionsPanel schoolId={school.id} />
-            </TabsContent>
-            <TabsContent value="simulator" className="space-y-4 mt-0">
-              <StudentViewSimulator schoolId={school.id} />
             </TabsContent>
             <TabsContent value="teacher-categories" className="space-y-4 mt-0">
               <TeacherCategoriesManager schoolId={school.id} />
