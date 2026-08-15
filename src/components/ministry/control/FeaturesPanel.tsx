@@ -16,7 +16,7 @@ interface Flag {
 const MODE_STYLE: Record<string, string> = {
   required: 'text-emerald-300 bg-emerald-950/50 border-emerald-800/50',
   optional: 'text-foreground bg-foreground/[0.07] border-foreground/20',
-  disabled: 'text-gray-500 bg-gray-950 border-gray-800',
+  disabled: 'text-muted-foreground bg-gray-950 border-gray-800',
 };
 
 export function FeaturesPanel() {
@@ -44,10 +44,10 @@ export function FeaturesPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-gray-600">Feature availability</p>
-          <p className="text-xs text-gray-500">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Feature availability</p>
+          <p className="text-xs text-muted-foreground">
             Each module has three modes:
-            <span className="text-gray-400"> Disabled</span> (no school receives it),
+            <span className="text-muted-foreground"> Disabled</span> (no school receives it),
             <span className="text-foreground"> Optional</span> (schools choose), or
             <span className="text-emerald-300"> Required</span> (every school receives it automatically).
           </p>
@@ -77,27 +77,27 @@ export function FeaturesPanel() {
         <Table>
           <TableHeader>
             <TableRow className="border-gray-800 hover:bg-transparent">
-              <TableHead className="text-gray-500">Feature</TableHead>
-              <TableHead className="text-gray-500">Mode</TableHead>
-              <TableHead className="text-gray-500">Enabled?</TableHead>
-              <TableHead className="text-gray-500">Description</TableHead>
-              <TableHead className="text-gray-500">Updated</TableHead>
+              <TableHead className="text-muted-foreground">Feature</TableHead>
+              <TableHead className="text-muted-foreground">Mode</TableHead>
+              <TableHead className="text-muted-foreground">Enabled?</TableHead>
+              <TableHead className="text-muted-foreground">Description</TableHead>
+              <TableHead className="text-muted-foreground">Updated</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && <TableRow><TableCell colSpan={5} className="text-center py-6"><Loader2 className="w-4 h-4 animate-spin inline text-emerald-500" /></TableCell></TableRow>}
-            {!loading && items.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-gray-600 py-6">No feature flags configured for this tenant.</TableCell></TableRow>}
+            {!loading && items.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No feature flags configured for this tenant.</TableCell></TableRow>}
             {items.map((f) => (
               <TableRow key={f.id} className="border-gray-800/50">
-                <TableCell className="font-mono text-xs text-gray-300">{f.flag_key}</TableCell>
+                <TableCell className="font-mono text-xs text-foreground">{f.flag_key}</TableCell>
                 <TableCell>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full border ${MODE_STYLE[f.mode ?? 'optional'] ?? MODE_STYLE.optional}`}>
                     {f.mode ?? 'optional'}
                   </span>
                 </TableCell>
                 <TableCell className="text-xs">{f.enabled ? '✓' : '—'}</TableCell>
-                <TableCell className="text-xs text-gray-500">{f.description ?? '—'}</TableCell>
-                <TableCell className="text-[10px] text-gray-600">{new Date(f.updated_at).toLocaleString()}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{f.description ?? '—'}</TableCell>
+                <TableCell className="text-[10px] text-muted-foreground">{new Date(f.updated_at).toLocaleString()}</TableCell>
               </TableRow>
             ))}
           </TableBody>

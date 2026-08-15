@@ -300,7 +300,7 @@ export default function MinistryDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-gray-200">
+    <div className="min-h-screen bg-black text-foreground">
       {/* Header */}
       <header className="border-b border-emerald-900/30 bg-black/90 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
@@ -310,7 +310,7 @@ export default function MinistryDashboard() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-emerald-400">Ministry of Education</h1>
-              <p className="text-[10px] text-gray-600 font-mono">CLASSIFIED ACCESS • SESSION ACTIVE</p>
+              <p className="text-[10px] text-muted-foreground font-mono">CLASSIFIED ACCESS • SESSION ACTIVE</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -346,12 +346,12 @@ export default function MinistryDashboard() {
               className={`flex items-center gap-2 px-4 py-2.5 text-sm border-b-2 transition-colors ${
                 workspace === ws.id
                   ? 'border-emerald-500 text-emerald-300'
-                  : 'border-transparent text-gray-500 hover:text-gray-300'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               <ws.icon className="w-4 h-4" />
               {ws.label}
-              <span className="hidden md:inline text-[10px] text-gray-600 ml-1">· {ws.hint}</span>
+              <span className="hidden md:inline text-[10px] text-muted-foreground ml-1">· {ws.hint}</span>
             </button>
           ))}
         </div>
@@ -368,7 +368,7 @@ export default function MinistryDashboard() {
               className={`flex items-center gap-2 px-4 py-3 text-sm border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? 'border-emerald-500 text-emerald-400'
-                  : 'border-transparent text-gray-600 hover:text-gray-400'
+                  : 'border-transparent text-muted-foreground hover:text-muted-foreground'
               }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -389,7 +389,7 @@ export default function MinistryDashboard() {
             {!nationalStats ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
-                <span className="ml-3 text-gray-500">Loading national data...</span>
+                <span className="ml-3 text-muted-foreground">Loading national data...</span>
               </div>
             ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -406,9 +406,9 @@ export default function MinistryDashboard() {
                 <div key={i} className="bg-gray-950 border border-gray-800 rounded-xl p-4 space-y-2">
                   <div className="flex items-center gap-2">
                     <stat.icon className={`w-4 h-4 text-${stat.color}-500`} />
-                    <span className="text-xs text-gray-500">{stat.label}</span>
+                    <span className="text-xs text-muted-foreground">{stat.label}</span>
                   </div>
-                  <p className="text-2xl font-bold text-gray-200">{stat.value}</p>
+                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                 </div>
               ))}
             </div>
@@ -423,14 +423,14 @@ export default function MinistryDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-gray-800 hover:bg-transparent">
-                    <TableHead className="text-gray-500">Rank</TableHead>
-                    <TableHead className="text-gray-500">School</TableHead>
-                    <TableHead className="text-gray-500">Students</TableHead>
-                    <TableHead className="text-gray-500">Teachers</TableHead>
-                    <TableHead className="text-gray-500">Assignments</TableHead>
-                    <TableHead className="text-gray-500">Completion Rate</TableHead>
-                    <TableHead className="text-gray-500">Avg Accuracy</TableHead>
-                    <TableHead className="text-gray-500">Status</TableHead>
+                    <TableHead className="text-muted-foreground">Rank</TableHead>
+                    <TableHead className="text-muted-foreground">School</TableHead>
+                    <TableHead className="text-muted-foreground">Students</TableHead>
+                    <TableHead className="text-muted-foreground">Teachers</TableHead>
+                    <TableHead className="text-muted-foreground">Assignments</TableHead>
+                    <TableHead className="text-muted-foreground">Completion Rate</TableHead>
+                    <TableHead className="text-muted-foreground">Avg Accuracy</TableHead>
+                    <TableHead className="text-muted-foreground">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -441,7 +441,7 @@ export default function MinistryDashboard() {
                       <TableCell className="font-mono text-emerald-500">
                         {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                       </TableCell>
-                      <TableCell className="font-medium text-gray-200">{school.name}</TableCell>
+                      <TableCell className="font-medium text-foreground">{school.name}</TableCell>
                       <TableCell>{school.studentCount}</TableCell>
                       <TableCell>{school.teacherCount}</TableCell>
                       <TableCell>{school.assignmentCount}</TableCell>
@@ -468,7 +468,7 @@ export default function MinistryDashboard() {
                   ))}
                   {schoolStats.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-gray-600 py-8">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                         No schools registered in the system
                       </TableCell>
                     </TableRow>
@@ -494,8 +494,8 @@ export default function MinistryDashboard() {
                   <div key={school.id} className="bg-gray-950 border border-gray-800 rounded-xl p-5 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-semibold text-gray-200">{school.name}</h3>
-                        <p className="text-xs text-gray-600">{school.studentCount} students, {school.teacherCount} teachers</p>
+                        <h3 className="font-semibold text-foreground">{school.name}</h3>
+                        <p className="text-xs text-muted-foreground">{school.studentCount} students, {school.teacherCount} teachers</p>
                       </div>
                       <div className={`px-3 py-1 rounded-full text-xs font-bold ${
                         score >= 4 ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-700/30' :
@@ -536,8 +536,8 @@ export default function MinistryDashboard() {
             
             {/* Generate Code */}
             <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 space-y-4">
-              <h3 className="font-semibold text-gray-200">Generate Moderator Invite Code</h3>
-              <p className="text-xs text-gray-500">Generate a code for a new content moderator. Codes expire in 48 hours.</p>
+              <h3 className="font-semibold text-foreground">Generate Moderator Invite Code</h3>
+              <p className="text-xs text-muted-foreground">Generate a code for a new content moderator. Codes expire in 48 hours.</p>
               <div className="flex items-center gap-3">
                 <button
                   onClick={generateModeratorCode}
@@ -551,7 +551,7 @@ export default function MinistryDashboard() {
                     <code className="bg-gray-900 px-4 py-2 rounded-lg text-emerald-300 font-mono text-lg tracking-wider border border-emerald-700/30">
                       {latestModCode}
                     </code>
-                    <button onClick={() => { navigator.clipboard.writeText(latestModCode); }} className="text-xs text-gray-500 hover:text-gray-300">
+                    <button onClick={() => { navigator.clipboard.writeText(latestModCode); }} className="text-xs text-muted-foreground hover:text-foreground">
                       📋 Copy
                     </button>
                   </div>
@@ -561,16 +561,16 @@ export default function MinistryDashboard() {
 
             {/* Pending Requests */}
             <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 space-y-4">
-              <h3 className="font-semibold text-gray-200">Moderator Requests</h3>
+              <h3 className="font-semibold text-foreground">Moderator Requests</h3>
               {modRequests.length === 0 ? (
-                <p className="text-sm text-gray-600">No moderator requests</p>
+                <p className="text-sm text-muted-foreground">No moderator requests</p>
               ) : (
                 <div className="space-y-3">
                   {modRequests.map(req => (
                     <div key={req.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-900/50 border border-gray-800">
                       <div>
-                        <p className="text-sm text-gray-200 font-medium">{req.name}</p>
-                        <p className="text-xs text-gray-500">{req.email}</p>
+                        <p className="text-sm text-foreground font-medium">{req.name}</p>
+                        <p className="text-xs text-muted-foreground">{req.email}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         {req.status === 'pending' ? (
@@ -651,34 +651,34 @@ function AtRiskTab({ sessionToken }: { sessionToken: string }) {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-emerald-400">🚨 At-Risk Student Alerts</h2>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-muted-foreground">
         Students with less than 40% accuracy after 5+ questions answered. Data sourced from adaptive learning profiles.
       </p>
 
       {atRiskStudents.length === 0 ? (
         <div className="bg-gray-950 border border-gray-800 rounded-xl p-8 text-center">
           <Award className="w-10 h-10 mx-auto mb-3 text-emerald-500" />
-          <p className="text-gray-400">No at-risk students detected. All students are performing adequately.</p>
+          <p className="text-muted-foreground">No at-risk students detected. All students are performing adequately.</p>
         </div>
       ) : (
         <div className="bg-gray-950 border border-gray-800 rounded-xl overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="border-gray-800 hover:bg-transparent">
-                <TableHead className="text-gray-500">Student</TableHead>
-                <TableHead className="text-gray-500">School</TableHead>
-                <TableHead className="text-gray-500">Grade</TableHead>
-                <TableHead className="text-gray-500">Subject</TableHead>
-                <TableHead className="text-gray-500">Accuracy</TableHead>
-                <TableHead className="text-gray-500">Questions</TableHead>
-                <TableHead className="text-gray-500">Level</TableHead>
+                <TableHead className="text-muted-foreground">Student</TableHead>
+                <TableHead className="text-muted-foreground">School</TableHead>
+                <TableHead className="text-muted-foreground">Grade</TableHead>
+                <TableHead className="text-muted-foreground">Subject</TableHead>
+                <TableHead className="text-muted-foreground">Accuracy</TableHead>
+                <TableHead className="text-muted-foreground">Questions</TableHead>
+                <TableHead className="text-muted-foreground">Level</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {atRiskStudents.map((student, i) => (
                 <TableRow key={i} className="border-gray-800/50">
-                  <TableCell className="font-medium text-gray-200">{student.studentName}</TableCell>
-                  <TableCell className="text-gray-400">{student.schoolName}</TableCell>
+                  <TableCell className="font-medium text-foreground">{student.studentName}</TableCell>
+                  <TableCell className="text-muted-foreground">{student.schoolName}</TableCell>
                   <TableCell>{student.gradeLevel}</TableCell>
                   <TableCell>{student.subject}</TableCell>
                   <TableCell>

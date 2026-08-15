@@ -49,8 +49,8 @@ export function LuminaConfigPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-gray-600">Presentation configuration</p>
-          <p className="text-xs text-gray-500">Policy configures Lumina's <em>presentation</em>. It never overrides reasoning, factual correctness, or safety systems — those remain protected platform infrastructure.</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Presentation configuration</p>
+          <p className="text-xs text-muted-foreground">Policy configures Lumina's <em>presentation</em>. It never overrides reasoning, factual correctness, or safety systems — those remain protected platform infrastructure.</p>
         </div>
         <DraftChangeButton
           entityType="lumina.config"
@@ -77,7 +77,7 @@ export function LuminaConfigPanel() {
 
       {loading && <div className="text-center py-6"><Loader2 className="w-4 h-4 animate-spin inline text-emerald-500" /></div>}
       {!loading && !config && (
-        <p className="text-center text-gray-600 py-8 border border-dashed border-gray-800 rounded-lg">
+        <p className="text-center text-muted-foreground py-8 border border-dashed border-gray-800 rounded-lg">
           No Lumina configuration published for this tenant yet. Defaults apply.
         </p>
       )}
@@ -85,8 +85,8 @@ export function LuminaConfigPanel() {
         <div className="grid gap-3 md:grid-cols-2">
           {SECTIONS.map((s) => (
             <div key={String(s.key)} className="border border-gray-800 rounded-lg p-3 bg-gray-950">
-              <p className="text-xs font-semibold text-gray-200 mb-1">{s.label}</p>
-              <p className="text-[10px] text-gray-600 mb-2">{s.help}</p>
+              <p className="text-xs font-semibold text-foreground mb-1">{s.label}</p>
+              <p className="text-[10px] text-muted-foreground mb-2">{s.help}</p>
               <pre className="text-[11px] bg-black/40 border border-gray-800 p-2 rounded max-h-40 overflow-auto">
                 {JSON.stringify(config[s.key], null, 2)}
               </pre>

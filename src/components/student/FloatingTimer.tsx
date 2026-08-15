@@ -26,7 +26,7 @@ export function FloatingTimer({ onNavigate }: FloatingTimerProps) {
     >
       <div
         className={cn(
-          "flex items-center justify-between px-4 py-2.5 text-white cursor-pointer",
+          "flex items-center justify-between px-4 py-2.5 text-foreground cursor-pointer",
           mode === 'focus'
             ? "bg-gradient-to-r from-foreground/[0.14] to-foreground/[0.04]"
             : mode === 'shortBreak'
@@ -47,13 +47,13 @@ export function FloatingTimer({ onNavigate }: FloatingTimerProps) {
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={toggleTimer}
-            className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+            className="w-8 h-8 rounded-full bg-foreground/20 backdrop-blur-sm flex items-center justify-center hover:bg-foreground/30 transition-colors"
           >
             {isRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
           </button>
           <button
             onClick={stopAndClear}
-            className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-red-500/50 transition-colors"
+            className="w-8 h-8 rounded-full bg-foreground/20 backdrop-blur-sm flex items-center justify-center hover:bg-red-500/50 transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>

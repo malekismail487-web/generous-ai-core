@@ -46,7 +46,7 @@ export default function MinistryPending() {
           </div>
           <h1 className="text-3xl font-bold text-red-500 tracking-tight">ACCESS TERMINATED</h1>
           <div className="w-16 h-0.5 bg-red-800 mx-auto" />
-          <p className="text-gray-400 text-sm leading-relaxed max-w-md mx-auto">
+          <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto">
             Your IP address and device have been permanently banned from accessing this portal.
             All activity has been logged and reported.
           </p>
@@ -62,7 +62,7 @@ export default function MinistryPending() {
           <Lock className="w-10 h-10 text-amber-500 animate-pulse" />
         </div>
         <h1 className="text-2xl font-bold text-amber-400">Verification Pending</h1>
-        <p className="text-gray-400 text-sm">
+        <p className="text-muted-foreground text-sm">
           Your access request has been submitted. The system administrator has been notified
           and must manually verify your identity before access is granted.
         </p>
@@ -71,7 +71,7 @@ export default function MinistryPending() {
           <span className="text-xs">Waiting for administrator approval...</span>
         </div>
         <div className="pt-4 border-t border-gray-800">
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-muted-foreground">
             Do not close this window. Your session will expire if not approved.
           </p>
         </div>

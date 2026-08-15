@@ -103,13 +103,13 @@ export function ControlCenterShell() {
         <div className="flex items-center gap-2 px-2 py-3 mb-2 border-b border-gray-800">
           <ClipboardList className="w-4 h-4 text-emerald-500" />
           <div>
-            <p className="text-[11px] uppercase tracking-wider text-gray-500">Ministry</p>
-            <p className="text-sm font-semibold text-gray-200">Control Center</p>
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Ministry</p>
+            <p className="text-sm font-semibold text-foreground">Control Center</p>
           </div>
         </div>
         {grouped.map((group) => (
           <div key={group.key} className="mb-3">
-            <p className="px-2 py-1 text-[10px] uppercase tracking-wider text-gray-600">
+            <p className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
               {group.label}
             </p>
             <div className="space-y-0.5">
@@ -123,13 +123,13 @@ export function ControlCenterShell() {
                     className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm transition-colors ${
                       isActive
                         ? 'bg-emerald-950/50 text-emerald-300 border-l-2 border-emerald-500'
-                        : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200 border-l-2 border-transparent'
+                        : 'text-muted-foreground hover:bg-gray-900 hover:text-foreground border-l-2 border-transparent'
                     }`}
                   >
                     <Icon className="w-4 h-4 shrink-0" />
                     <span className="truncate">{tool.label}</span>
                     {tool.phase !== 'MC2' && (
-                      <span className="ml-auto text-[9px] font-mono text-gray-600">{tool.phase}</span>
+                      <span className="ml-auto text-[9px] font-mono text-muted-foreground">{tool.phase}</span>
                     )}
                   </button>
                 );
@@ -145,11 +145,11 @@ export function ControlCenterShell() {
           <div className="flex items-center gap-3">
             <activeTool.icon className="w-5 h-5 text-emerald-500" />
             <div>
-              <h2 className="text-lg font-semibold text-gray-100">{activeTool.label}</h2>
-              <p className="text-xs text-gray-500">{activeTool.description}</p>
+              <h2 className="text-lg font-semibold text-foreground">{activeTool.label}</h2>
+              <p className="text-xs text-muted-foreground">{activeTool.description}</p>
             </div>
           </div>
-          <span className="text-[10px] font-mono px-2 py-1 rounded border border-gray-800 text-gray-500">
+          <span className="text-[10px] font-mono px-2 py-1 rounded border border-gray-800 text-muted-foreground">
             {activeTool.phase}
           </span>
         </header>

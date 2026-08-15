@@ -46,8 +46,8 @@ export function PoliciesPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-gray-600">National policies</p>
-          <p className="text-xs text-gray-500">Rules every school inherits. Grant `allows_school_override` per policy to permit local variance.</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">National policies</p>
+          <p className="text-xs text-muted-foreground">Rules every school inherits. Grant `allows_school_override` per policy to permit local variance.</p>
         </div>
         <DraftChangeButton
           entityType="policy.set"
@@ -79,22 +79,22 @@ export function PoliciesPanel() {
         <Table>
           <TableHeader>
             <TableRow className="border-gray-800 hover:bg-transparent">
-              <TableHead className="text-gray-500">Key</TableHead>
-              <TableHead className="text-gray-500">Title</TableHead>
-              <TableHead className="text-gray-500">Override?</TableHead>
-              <TableHead className="text-gray-500">Status</TableHead>
-              <TableHead className="text-gray-500">Config</TableHead>
+              <TableHead className="text-muted-foreground">Key</TableHead>
+              <TableHead className="text-muted-foreground">Title</TableHead>
+              <TableHead className="text-muted-foreground">Override?</TableHead>
+              <TableHead className="text-muted-foreground">Status</TableHead>
+              <TableHead className="text-muted-foreground">Config</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && <TableRow><TableCell colSpan={5} className="text-center py-6"><Loader2 className="w-4 h-4 animate-spin inline text-emerald-500" /></TableCell></TableRow>}
-            {!loading && items.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-gray-600 py-6">No policies published yet.</TableCell></TableRow>}
+            {!loading && items.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No policies published yet.</TableCell></TableRow>}
             {items.map((p) => (
               <TableRow key={p.id} className="border-gray-800/50 align-top">
-                <TableCell className="font-mono text-xs text-gray-300">{p.policy_key}</TableCell>
-                <TableCell className="text-gray-200">{p.title}</TableCell>
+                <TableCell className="font-mono text-xs text-foreground">{p.policy_key}</TableCell>
+                <TableCell className="text-foreground">{p.title}</TableCell>
                 <TableCell className="text-xs">
-                  <span className={p.allows_school_override ? 'text-amber-300' : 'text-gray-500'}>
+                  <span className={p.allows_school_override ? 'text-amber-300' : 'text-muted-foreground'}>
                     {p.allows_school_override ? 'schools may override' : 'strict'}
                   </span>
                 </TableCell>

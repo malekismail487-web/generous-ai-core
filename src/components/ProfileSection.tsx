@@ -89,11 +89,11 @@ export function ProfileSection() {
                 : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
           )}>
             {isAdmin ? (
-              <Shield className="w-8 h-8 text-white" />
+              <Shield className="w-8 h-8 text-foreground" />
             ) : isTeacher ? (
-              <User className="w-8 h-8 text-white" />
+              <User className="w-8 h-8 text-foreground" />
             ) : (
-              <GraduationCap className="w-8 h-8 text-white" />
+              <GraduationCap className="w-8 h-8 text-foreground" />
             )}
           </div>
           <h1 className="text-2xl font-bold mb-1">{profile?.full_name || tl('profile')}</h1>
@@ -111,7 +111,7 @@ export function ProfileSection() {
         {school && (
           <div className="liquid-glass rounded-2xl p-5 mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary to-accent text-white">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary to-accent text-foreground">
                 <School className="w-5 h-5" />
               </div>
               <div>
@@ -158,7 +158,7 @@ export function ProfileSection() {
           <div className="liquid-glass rounded-2xl p-5 mb-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">
-                <Heart className="w-5 h-5 text-white" />
+                <Heart className="w-5 h-5 text-foreground" />
               </div>
               <div>
                 <h3 className="font-semibold">{t('Parent Access Code', 'رمز ولي الأمر')}</h3>
@@ -181,7 +181,7 @@ export function ProfileSection() {
             className="w-full liquid-glass rounded-2xl p-5 mb-4 text-left hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground">
                 <Users className="w-5 h-5" />
               </div>
               <div className="flex-1">
@@ -200,7 +200,7 @@ export function ProfileSection() {
             className="w-full liquid-glass rounded-2xl p-5 mb-4 text-left hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground">
                 <Building2 className="w-5 h-5" />
               </div>
               <div className="flex-1">
@@ -353,7 +353,7 @@ function WallpaperCircleSelector() {
                 }}
               >
                 {isActive && (
-                  <Check className="w-5 h-5 text-white drop-shadow-md" />
+                  <Check className="w-5 h-5 text-foreground drop-shadow-md" />
                 )}
               </div>
               <span className={cn(

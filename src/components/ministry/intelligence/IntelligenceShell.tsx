@@ -55,7 +55,7 @@ const EVENT_LABELS: Record<string, string> = {
 };
 
 const SEVERITY_STYLE: Record<InsightRow['severity'], string> = {
-  info: 'border-gray-800 text-gray-300 bg-gray-900/40',
+  info: 'border-gray-800 text-foreground bg-gray-900/40',
   watch: 'border-amber-900/60 text-amber-300 bg-amber-950/30',
   concern: 'border-orange-900/60 text-orange-300 bg-orange-950/30',
   urgent: 'border-red-900/60 text-red-300 bg-red-950/30',
@@ -134,7 +134,7 @@ export function IntelligenceShell() {
   useEffect(() => { if (selectedSchool) void loadSchoolSnapshot(selectedSchool); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [selectedSchool, days]);
 
   if (!token) {
-    return <div className="text-sm text-gray-500">Ministry session required.</div>;
+    return <div className="text-sm text-muted-foreground">Ministry session required.</div>;
   }
 
   return (
@@ -143,13 +143,13 @@ export function IntelligenceShell() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-emerald-300">National Intelligence</h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Aggregated, PII-free educational activity across your tenant. No teacher evaluation. No student identification.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <select
-            className="bg-black border border-gray-800 text-gray-300 text-xs px-2 py-1.5 rounded"
+            className="bg-black border border-gray-800 text-foreground text-xs px-2 py-1.5 rounded"
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
           >
@@ -174,7 +174,7 @@ export function IntelligenceShell() {
             key={v.id}
             onClick={() => setView(v.id)}
             className={`flex items-center gap-2 px-4 py-2 text-sm border-b-2 transition-colors ${
-              view === v.id ? 'border-emerald-500 text-emerald-300' : 'border-transparent text-gray-500 hover:text-gray-300'
+              view === v.id ? 'border-emerald-500 text-emerald-300' : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             <v.icon className="w-4 h-4" />
@@ -189,7 +189,7 @@ export function IntelligenceShell() {
         </div>
       )}
       {loading && (
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="w-3 h-3 animate-spin" /> Loading…
         </div>
       )}
@@ -208,16 +208,16 @@ export function IntelligenceShell() {
           </div>
 
           <div>
-            <div className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Totals by event</div>
+            <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Totals by event</div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {Object.entries(national.totals_by_event ?? {}).map(([k, v]) => (
                 <div key={k} className="flex items-center justify-between border border-gray-900 px-3 py-2 rounded bg-black/60">
-                  <span className="text-sm text-gray-300">{EVENT_LABELS[k] ?? k}</span>
+                  <span className="text-sm text-foreground">{EVENT_LABELS[k] ?? k}</span>
                   <span className="text-sm font-mono text-emerald-300">{Number(v).toLocaleString()}</span>
                 </div>
               ))}
               {Object.keys(national.totals_by_event ?? {}).length === 0 && (
-                <div className="text-xs text-gray-600 italic">No activity in this window yet. The nightly aggregator runs at 02:15 UTC.</div>
+                <div className="text-xs text-muted-foreground italic">No activity in this window yet. The nightly aggregator runs at 02:15 UTC.</div>
               )}
             </div>
           </div>
@@ -230,16 +230,16 @@ export function IntelligenceShell() {
       {view === 'regional' && (
         <div className="space-y-2">
           {regions.length === 0 && (
-            <div className="text-xs text-gray-600 italic">No regional rollups yet.</div>
+            <div className="text-xs text-muted-foreground italic">No regional rollups yet.</div>
           )}
           {regions.map((r) => (
             <div key={r.region_id} className="flex items-center justify-between border border-gray-900 px-3 py-2 rounded bg-black/60">
               <div className="flex items-center gap-2">
                 <MapPin className="w-3 h-3 text-emerald-500" />
-                <span className="text-sm text-gray-200">{r.region_name}</span>
+                <span className="text-sm text-foreground">{r.region_name}</span>
               </div>
               <div className="flex items-center gap-4 text-xs">
-                <span className="text-gray-500">{r.school_count} schools</span>
+                <span className="text-muted-foreground">{r.school_count} schools</span>
                 <span className="font-mono text-emerald-300">{Number(r.event_count).toLocaleString()} events</span>
               </div>
             </div>
@@ -251,9 +251,9 @@ export function IntelligenceShell() {
       {view === 'school' && (
         <div className="space-y-4">
           <div>
-            <label className="text-xs text-gray-500 uppercase tracking-wide">Pick a school</label>
+            <label className="text-xs text-muted-foreground uppercase tracking-wide">Pick a school</label>
             <select
-              className="w-full mt-1 bg-black border border-gray-800 text-gray-300 text-sm px-3 py-2 rounded"
+              className="w-full mt-1 bg-black border border-gray-800 text-foreground text-sm px-3 py-2 rounded"
               value={selectedSchool ?? ''}
               onChange={(e) => setSelectedSchool(e.target.value || null)}
             >
@@ -267,30 +267,30 @@ export function IntelligenceShell() {
           {schoolSnap && selectedSchool && (
             <div className="space-y-4">
               <div>
-                <div className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Totals by event</div>
+                <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Totals by event</div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {Object.entries(schoolSnap.totals_by_event ?? {}).map(([k, v]) => (
                     <div key={k} className="flex items-center justify-between border border-gray-900 px-3 py-2 rounded bg-black/60">
-                      <span className="text-sm text-gray-300">{EVENT_LABELS[k] ?? k}</span>
+                      <span className="text-sm text-foreground">{EVENT_LABELS[k] ?? k}</span>
                       <span className="text-sm font-mono text-emerald-300">{Number(v).toLocaleString()}</span>
                     </div>
                   ))}
                   {Object.keys(schoolSnap.totals_by_event ?? {}).length === 0 && (
-                    <div className="text-xs text-gray-600 italic">No activity for this school in the window.</div>
+                    <div className="text-xs text-muted-foreground italic">No activity for this school in the window.</div>
                   )}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Top subjects</div>
+                <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Top subjects</div>
                 <div className="space-y-1">
                   {(schoolSnap.by_subject ?? []).slice(0, 8).map((s) => (
                     <div key={s.subject_id} className="flex items-center justify-between text-xs border border-gray-900 px-3 py-1.5 rounded bg-black/60">
-                      <span className="text-gray-400 font-mono truncate">{s.subject_id}</span>
+                      <span className="text-muted-foreground font-mono truncate">{s.subject_id}</span>
                       <span className="font-mono text-emerald-300">{Number(s.events).toLocaleString()}</span>
                     </div>
                   ))}
                   {(schoolSnap.by_subject ?? []).length === 0 && (
-                    <div className="text-xs text-gray-600 italic">No subject-tagged activity yet.</div>
+                    <div className="text-xs text-muted-foreground italic">No subject-tagged activity yet.</div>
                   )}
                 </div>
               </div>
@@ -304,10 +304,10 @@ export function IntelligenceShell() {
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="w-4 h-4 text-emerald-400" />
           <h3 className="text-sm font-semibold text-emerald-300">Insights</h3>
-          <span className="text-[10px] text-gray-600">Evidence-based, tenant-scoped. No teacher evaluation.</span>
+          <span className="text-[10px] text-muted-foreground">Evidence-based, tenant-scoped. No teacher evaluation.</span>
         </div>
         {insights.length === 0 ? (
-          <div className="text-xs text-gray-600 italic">
+          <div className="text-xs text-muted-foreground italic">
             No insights recorded yet. The MI4 alerts and MI5 recommendation engines will write here once shipped.
           </div>
         ) : (
@@ -334,7 +334,7 @@ export function IntelligenceShell() {
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="border border-gray-900 bg-black/60 rounded p-3">
-      <div className="text-[10px] uppercase text-gray-500 tracking-wide">{label}</div>
+      <div className="text-[10px] uppercase text-muted-foreground tracking-wide">{label}</div>
       <div className="text-2xl font-mono text-emerald-300 mt-1">{typeof value === 'number' ? value.toLocaleString() : value}</div>
     </div>
   );
@@ -345,7 +345,7 @@ function ActivitySparkline({ series }: { series: { day: string; events: number }
   const max = Math.max(...series.map((s) => Number(s.events) || 0), 1);
   return (
     <div>
-      <div className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Daily activity</div>
+      <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Daily activity</div>
       <div className="flex items-end gap-0.5 h-24 border border-gray-900 bg-black/60 rounded px-2 py-2">
         {series.map((s) => (
           <div

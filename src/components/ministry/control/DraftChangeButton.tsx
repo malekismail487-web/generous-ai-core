@@ -115,17 +115,17 @@ export function DraftChangeButton({
           <PlusCircle className="w-3.5 h-3.5 mr-1.5" /> {buttonLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-gray-950 border-gray-800 text-gray-200 max-w-lg">
+      <DialogContent className="bg-gray-950 border-gray-800 text-foreground max-w-lg">
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
           {dialogDescription && (
-            <p className="text-xs text-gray-500 mt-1">{dialogDescription}</p>
+            <p className="text-xs text-muted-foreground mt-1">{dialogDescription}</p>
           )}
         </DialogHeader>
         <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
           {fields.map((f) => (
             <div key={f.key} className="space-y-1">
-              <Label className="text-xs text-gray-500">
+              <Label className="text-xs text-muted-foreground">
                 {f.label}{f.required && <span className="text-red-400"> *</span>}
               </Label>
               {f.type === 'textarea' || f.type === 'json' ? (
@@ -145,7 +145,7 @@ export function DraftChangeButton({
                   className="bg-gray-900 border-gray-800"
                 />
               )}
-              {f.help && <p className="text-[10px] text-gray-600">{f.help}</p>}
+              {f.help && <p className="text-[10px] text-muted-foreground">{f.help}</p>}
             </div>
           ))}
         </div>

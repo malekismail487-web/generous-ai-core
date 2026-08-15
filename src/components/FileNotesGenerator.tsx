@@ -541,7 +541,7 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
           </div>
 
           <div className="flex items-center gap-3 mb-4">
-            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br text-white", lengthConfig[selectedLength!]?.color)}>
+            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br text-foreground", lengthConfig[selectedLength!]?.color)}>
               <FileText size={16} />
             </div>
             <div>
@@ -598,7 +598,7 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
                 style={{ animationDelay: `${idx * 80}ms` }}
               >
                 <div className="flex items-center gap-4">
-                  <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br text-white", config.color)}>
+                  <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br text-foreground", config.color)}>
                     {config.icon}
                   </div>
                   <div className="flex-1">

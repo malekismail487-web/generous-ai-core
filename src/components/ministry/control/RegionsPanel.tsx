@@ -42,8 +42,8 @@ export function RegionsPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-gray-600">Educational geography</p>
-          <p className="text-xs text-gray-500">Regions contain districts; districts contain zones. Schools are assigned to any level.</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Educational geography</p>
+          <p className="text-xs text-muted-foreground">Regions contain districts; districts contain zones. Schools are assigned to any level.</p>
         </div>
         <div className="flex gap-2">
           <DraftChangeButton
@@ -88,7 +88,7 @@ export function RegionsPanel() {
 
       {loading && <div className="text-center py-6"><Loader2 className="w-4 h-4 animate-spin inline text-emerald-500" /></div>}
       {!loading && items.length === 0 && (
-        <p className="text-center text-gray-600 py-6 border border-dashed border-gray-800 rounded-lg">
+        <p className="text-center text-muted-foreground py-6 border border-dashed border-gray-800 rounded-lg">
           No regions defined for this tenant yet.
         </p>
       )}
@@ -97,24 +97,24 @@ export function RegionsPanel() {
         if (rows.length === 0) return null;
         return (
           <section key={kind}>
-            <p className="text-[10px] uppercase tracking-widest text-gray-600 mb-2">{kind}s</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{kind}s</p>
             <div className="border border-gray-800 rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="border-gray-800 hover:bg-transparent">
-                    <TableHead className="text-gray-500">Name</TableHead>
-                    <TableHead className="text-gray-500">Code</TableHead>
-                    <TableHead className="text-gray-500">Parent</TableHead>
-                    <TableHead className="text-gray-500">Region ID</TableHead>
+                    <TableHead className="text-muted-foreground">Name</TableHead>
+                    <TableHead className="text-muted-foreground">Code</TableHead>
+                    <TableHead className="text-muted-foreground">Parent</TableHead>
+                    <TableHead className="text-muted-foreground">Region ID</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.map((r) => (
                     <TableRow key={r.id} className="border-gray-800/50">
-                      <TableCell className="text-gray-200">{r.name}</TableCell>
-                      <TableCell className="text-gray-500 text-xs">{r.code ?? '—'}</TableCell>
-                      <TableCell className="text-gray-500 text-[10px] font-mono">{r.parent_id?.slice(0, 8) ?? '—'}</TableCell>
-                      <TableCell className="font-mono text-[10px] text-gray-600">{r.id}</TableCell>
+                      <TableCell className="text-foreground">{r.name}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs">{r.code ?? '—'}</TableCell>
+                      <TableCell className="text-muted-foreground text-[10px] font-mono">{r.parent_id?.slice(0, 8) ?? '—'}</TableCell>
+                      <TableCell className="font-mono text-[10px] text-muted-foreground">{r.id}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

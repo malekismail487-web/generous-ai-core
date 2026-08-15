@@ -41,8 +41,8 @@ export function CommunicationsPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-gray-600">National notices</p>
-          <p className="text-xs text-gray-500">Ministry-wide announcements propagate to every school user in this tenant. Every publish is captured in the audit log.</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">National notices</p>
+          <p className="text-xs text-muted-foreground">Ministry-wide announcements propagate to every school user in this tenant. Every publish is captured in the audit log.</p>
         </div>
         <DraftChangeButton
           entityType="communication.notice"
@@ -65,7 +65,7 @@ export function CommunicationsPanel() {
 
       {loading && <div className="text-center py-6"><Loader2 className="w-4 h-4 animate-spin inline text-emerald-500" /></div>}
       {!loading && items.length === 0 && (
-        <p className="text-center text-gray-600 py-8 border border-dashed border-gray-800 rounded-lg">
+        <p className="text-center text-muted-foreground py-8 border border-dashed border-gray-800 rounded-lg">
           No notices published yet.
         </p>
       )}
@@ -77,13 +77,13 @@ export function CommunicationsPanel() {
                 <span className={`text-[10px] px-2 py-0.5 rounded-full border ${SEVERITY_STYLE[n.severity] ?? SEVERITY_STYLE.info}`}>
                   {n.severity}
                 </span>
-                <h3 className="text-sm font-semibold text-gray-200">{n.title}</h3>
+                <h3 className="text-sm font-semibold text-foreground">{n.title}</h3>
               </div>
-              <span className="text-[10px] text-gray-600">
+              <span className="text-[10px] text-muted-foreground">
                 {n.published_at ? new Date(n.published_at).toLocaleString() : 'draft'}
               </span>
             </header>
-            <p className="text-xs text-gray-400 whitespace-pre-wrap">{n.body}</p>
+            <p className="text-xs text-muted-foreground whitespace-pre-wrap">{n.body}</p>
           </article>
         ))}
       </div>

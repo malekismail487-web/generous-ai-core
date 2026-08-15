@@ -49,7 +49,7 @@ export function AuditLogPanel() {
         <Button size="sm" variant="outline" onClick={load} disabled={loading}>
           <RefreshCcw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
         </Button>
-        <span className="ml-auto text-xs text-gray-600">
+        <span className="ml-auto text-xs text-muted-foreground">
           {filtered.length} of {items.length} entries · immutable
         </span>
       </div>
@@ -58,10 +58,10 @@ export function AuditLogPanel() {
         <Table>
           <TableHeader>
             <TableRow className="border-gray-800 hover:bg-transparent">
-              <TableHead className="text-gray-500 w-40">When</TableHead>
-              <TableHead className="text-gray-500">Action</TableHead>
-              <TableHead className="text-gray-500">Entity</TableHead>
-              <TableHead className="text-gray-500">Actor</TableHead>
+              <TableHead className="text-muted-foreground w-40">When</TableHead>
+              <TableHead className="text-muted-foreground">Action</TableHead>
+              <TableHead className="text-muted-foreground">Entity</TableHead>
+              <TableHead className="text-muted-foreground">Actor</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -71,22 +71,22 @@ export function AuditLogPanel() {
               </TableCell></TableRow>
             )}
             {!loading && filtered.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="text-center text-gray-600 py-10">
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-10">
                 No audit entries.
               </TableCell></TableRow>
             )}
             {!loading && filtered.map((entry) => (
               <TableRow key={entry.id} className="border-gray-800/50 cursor-pointer hover:bg-gray-900/40"
                 onClick={() => setSelected(entry)}>
-                <TableCell className="text-gray-500 text-xs whitespace-nowrap">
+                <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
                   {new Date(entry.created_at).toLocaleString()}
                 </TableCell>
-                <TableCell className="text-gray-200 font-mono text-xs">{entry.action}</TableCell>
-                <TableCell className="text-gray-400 text-xs">
+                <TableCell className="text-foreground font-mono text-xs">{entry.action}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">
                   {entry.entity_type ?? '—'}
-                  {entry.entity_id && <span className="text-gray-600"> · {entry.entity_id.slice(0, 8)}</span>}
+                  {entry.entity_id && <span className="text-muted-foreground"> · {entry.entity_id.slice(0, 8)}</span>}
                 </TableCell>
-                <TableCell className="text-gray-400 text-xs">{entry.actor_label}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">{entry.actor_label}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -96,20 +96,20 @@ export function AuditLogPanel() {
       {selected && (
         <div className="border border-gray-800 rounded-lg p-4 bg-gray-950 space-y-3">
           <div className="flex items-baseline justify-between">
-            <p className="text-sm text-gray-200 font-mono">{selected.action}</p>
-            <button className="text-xs text-gray-500 hover:text-gray-300" onClick={() => setSelected(null)}>
+            <p className="text-sm text-foreground font-mono">{selected.action}</p>
+            <button className="text-xs text-muted-foreground hover:text-foreground" onClick={() => setSelected(null)}>
               close
             </button>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-gray-600 mb-1">Before</p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Before</p>
               <pre className="text-[11px] bg-black/40 border border-gray-800 p-2 rounded max-h-56 overflow-auto">
                 {selected.before_state ? JSON.stringify(selected.before_state, null, 2) : '—'}
               </pre>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-gray-600 mb-1">After</p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">After</p>
               <pre className="text-[11px] bg-black/40 border border-gray-800 p-2 rounded max-h-56 overflow-auto">
                 {selected.after_state ? JSON.stringify(selected.after_state, null, 2) : '—'}
               </pre>
@@ -117,7 +117,7 @@ export function AuditLogPanel() {
           </div>
           {selected.metadata && (
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-gray-600 mb-1">Metadata</p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Metadata</p>
               <pre className="text-[11px] bg-black/40 border border-gray-800 p-2 rounded max-h-40 overflow-auto">
                 {JSON.stringify(selected.metadata, null, 2)}
               </pre>

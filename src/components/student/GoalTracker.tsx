@@ -85,7 +85,7 @@ export function GoalTracker() {
         <div className="liquid-glass rounded-2xl p-5">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-white" />
+              <Trophy className="w-6 h-6 text-foreground" />
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-bold">{t('Weekly Goals', 'أهداف الأسبوع')}</h2>

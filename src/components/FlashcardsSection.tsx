@@ -287,7 +287,7 @@ export function FlashcardsSection() {
               </div>
             </button>
             <button onClick={() => setViewState('input')} className="w-full liquid-glass rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white"><BookOpen size={24} /></div>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground"><BookOpen size={24} /></div>
               <div>
                 <h3 className="font-semibold">{tr('customTopic', language)}</h3>
                 <p className="text-xs text-muted-foreground">{tr('customTopicDesc', language)}</p>
@@ -358,7 +358,7 @@ export function FlashcardsSection() {
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="text-center mb-8 animate-fade-in">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">
-            <BookOpen className="w-7 h-7 text-white" />
+            <BookOpen className="w-7 h-7 text-foreground" />
           </div>
           <h1 className="text-2xl font-bold mb-2 gradient-text">{tr('flashcards', language)}</h1>
           <p className="text-muted-foreground text-sm">{tr('clickSubject', language)}</p>

@@ -343,8 +343,8 @@ Make sure the question directly relates to topics from their learning history. B
                       <span className={cn(
                         "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-medium flex-shrink-0",
                         "bg-secondary text-secondary-foreground",
-                        showCorrect && "bg-emerald-500 text-white",
-                        showWrong && "bg-destructive text-white"
+                        showCorrect && "bg-emerald-500 text-foreground",
+                        showWrong && "bg-destructive text-foreground"
                       )}>
                         {showCorrect ? <CheckCircle2 size={14} /> : 
                          showWrong ? <XCircle size={14} /> : 

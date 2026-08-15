@@ -115,7 +115,7 @@ export function WeeklyPlanSection() {
               <button key={plan.id} onClick={() => setSelectedPlan(plan)} className="w-full text-left liquid-glass rounded-xl p-4 hover:border-primary/30 transition-all">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] flex items-center justify-center flex-shrink-0">
-                    {plan.plan_type === 'file' ? <FileText className="w-5 h-5 text-white" /> : <Calendar className="w-5 h-5 text-white" />}
+                    {plan.plan_type === 'file' ? <FileText className="w-5 h-5 text-foreground" /> : <Calendar className="w-5 h-5 text-foreground" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-sm truncate">{plan.title}</h3>

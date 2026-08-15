@@ -121,7 +121,7 @@ export function PracticeSection({ type, onStartPractice, hasLearningHistory }: P
                       isHovered && "scale-110"
                     )}
                   >
-                    <Icon className="w-6 h-6 text-white" />
+                    <Icon className="w-6 h-6 text-foreground" />
                   </div>
 
                   {/* Content */}

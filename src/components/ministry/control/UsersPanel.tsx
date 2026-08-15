@@ -41,8 +41,8 @@ export function UsersPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-gray-600">Ministry personnel</p>
-          <p className="text-xs text-gray-500">Named role holders for this tenant. Teachers and school administrators are governed by their schools; only ministry-level roles appear here.</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Ministry personnel</p>
+          <p className="text-xs text-muted-foreground">Named role holders for this tenant. Teachers and school administrators are governed by their schools; only ministry-level roles appear here.</p>
         </div>
         <DraftChangeButton
           entityType="user.role_assign"
@@ -68,19 +68,19 @@ export function UsersPanel() {
         <Table>
           <TableHeader>
             <TableRow className="border-gray-800 hover:bg-transparent">
-              <TableHead className="text-gray-500">User ID</TableHead>
-              <TableHead className="text-gray-500">Role</TableHead>
-              <TableHead className="text-gray-500">Assigned</TableHead>
+              <TableHead className="text-muted-foreground">User ID</TableHead>
+              <TableHead className="text-muted-foreground">Role</TableHead>
+              <TableHead className="text-muted-foreground">Assigned</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && <TableRow><TableCell colSpan={3} className="text-center py-6"><Loader2 className="w-4 h-4 animate-spin inline text-emerald-500" /></TableCell></TableRow>}
-            {!loading && items.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-gray-600 py-6">No named ministry personnel yet. Session-token operators act as Minister by default.</TableCell></TableRow>}
+            {!loading && items.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-6">No named ministry personnel yet. Session-token operators act as Minister by default.</TableCell></TableRow>}
             {items.map((r) => (
               <TableRow key={r.id} className="border-gray-800/50">
-                <TableCell className="font-mono text-[11px] text-gray-300">{r.user_id}</TableCell>
+                <TableCell className="font-mono text-[11px] text-foreground">{r.user_id}</TableCell>
                 <TableCell className="text-emerald-300">{r.role}</TableCell>
-                <TableCell className="text-gray-500 text-xs">{new Date(r.created_at).toLocaleString()}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">{new Date(r.created_at).toLocaleString()}</TableCell>
               </TableRow>
             ))}
           </TableBody>

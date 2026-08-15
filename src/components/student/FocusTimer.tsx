@@ -23,7 +23,7 @@ export function FocusTimer() {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] mb-3 shadow-lg">
-            <Timer className="w-8 h-8 text-white" />
+            <Timer className="w-8 h-8 text-foreground" />
           </div>
           <h2 className="text-xl font-bold">{t('Focus Timer', 'مؤقت التركيز')}</h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -91,7 +91,7 @@ export function FocusTimer() {
           </button>
           <button
             onClick={toggleTimer}
-            className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transition-all active:scale-95", `bg-gradient-to-br ${preset.color} text-white`)}
+            className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transition-all active:scale-95", `bg-gradient-to-br ${preset.color} text-foreground`)}
           >
             {isRunning ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
           </button>

@@ -51,8 +51,8 @@ export function CurriculumPanel() {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-gray-600">Curriculum versions</p>
-            <p className="text-xs text-gray-500">Named editions students are enrolled under (e.g. "Saudi 2028").</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Curriculum versions</p>
+            <p className="text-xs text-muted-foreground">Named editions students are enrolled under (e.g. "Saudi 2028").</p>
           </div>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={load}>
@@ -86,19 +86,19 @@ export function CurriculumPanel() {
           <Table>
             <TableHeader>
               <TableRow className="border-gray-800 hover:bg-transparent">
-                <TableHead className="text-gray-500">Label</TableHead>
-                <TableHead className="text-gray-500">Status</TableHead>
-                <TableHead className="text-gray-500">Effective</TableHead>
+                <TableHead className="text-muted-foreground">Label</TableHead>
+                <TableHead className="text-muted-foreground">Status</TableHead>
+                <TableHead className="text-muted-foreground">Effective</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && <TableRow><TableCell colSpan={3} className="text-center py-6"><Loader2 className="w-4 h-4 animate-spin inline text-emerald-500" /></TableCell></TableRow>}
-              {!loading && versions.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-gray-600 py-6">No versions yet.</TableCell></TableRow>}
+              {!loading && versions.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-6">No versions yet.</TableCell></TableRow>}
               {versions.map((v) => (
                 <TableRow key={v.id} className="border-gray-800/50">
-                  <TableCell className="text-gray-200">{v.label}</TableCell>
+                  <TableCell className="text-foreground">{v.label}</TableCell>
                   <TableCell className="text-emerald-300 text-xs">{v.status}</TableCell>
-                  <TableCell className="text-gray-500 text-xs">
+                  <TableCell className="text-muted-foreground text-xs">
                     {v.effective_from ?? '—'} → {v.effective_to ?? '—'}
                   </TableCell>
                 </TableRow>
@@ -112,8 +112,8 @@ export function CurriculumPanel() {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-gray-600">Official subjects</p>
-            <p className="text-xs text-gray-500">Nationally recognized subjects. Automatically propagate to every school in the tenant.</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Official subjects</p>
+            <p className="text-xs text-muted-foreground">Nationally recognized subjects. Automatically propagate to every school in the tenant.</p>
           </div>
           <DraftChangeButton
             entityType="curriculum.subject"
@@ -153,27 +153,27 @@ export function CurriculumPanel() {
           <Table>
             <TableHeader>
               <TableRow className="border-gray-800 hover:bg-transparent">
-                <TableHead className="text-gray-500">Code</TableHead>
-                <TableHead className="text-gray-500">Name</TableHead>
-                <TableHead className="text-gray-500">Grades</TableHead>
-                <TableHead className="text-gray-500">Language</TableHead>
-                <TableHead className="text-gray-500">Status</TableHead>
+                <TableHead className="text-muted-foreground">Code</TableHead>
+                <TableHead className="text-muted-foreground">Name</TableHead>
+                <TableHead className="text-muted-foreground">Grades</TableHead>
+                <TableHead className="text-muted-foreground">Language</TableHead>
+                <TableHead className="text-muted-foreground">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && <TableRow><TableCell colSpan={5} className="text-center py-6"><Loader2 className="w-4 h-4 animate-spin inline text-emerald-500" /></TableCell></TableRow>}
-              {!loading && subjects.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-gray-600 py-6">No official subjects yet. Draft one to seed the tenant curriculum.</TableCell></TableRow>}
+              {!loading && subjects.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No official subjects yet. Draft one to seed the tenant curriculum.</TableCell></TableRow>}
               {subjects.map((s) => (
                 <TableRow key={s.id} className="border-gray-800/50">
-                  <TableCell className="font-mono text-xs text-gray-300">{s.subject_code}</TableCell>
-                  <TableCell className="text-gray-200">{s.name}</TableCell>
-                  <TableCell className="text-gray-500 text-xs">{(s.applies_grades ?? []).join(', ') || '—'}</TableCell>
-                  <TableCell className="text-gray-500 text-xs">{s.language ?? '—'}</TableCell>
+                  <TableCell className="font-mono text-xs text-foreground">{s.subject_code}</TableCell>
+                  <TableCell className="text-foreground">{s.name}</TableCell>
+                  <TableCell className="text-muted-foreground text-xs">{(s.applies_grades ?? []).join(', ') || '—'}</TableCell>
+                  <TableCell className="text-muted-foreground text-xs">{s.language ?? '—'}</TableCell>
                   <TableCell>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
                       s.status === 'active'
                         ? 'text-emerald-300 bg-emerald-950/50 border-emerald-800/50'
-                        : 'text-gray-500 bg-gray-950 border-gray-800'
+                        : 'text-muted-foreground bg-gray-950 border-gray-800'
                     }`}>{s.status}</span>
                   </TableCell>
                 </TableRow>

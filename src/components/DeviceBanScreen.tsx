@@ -45,12 +45,12 @@ export default function DeviceBanScreen({ children }: { children: React.ReactNod
               ACCESS TERMINATED
             </h1>
             <div className="w-16 h-0.5 bg-red-800 mx-auto" />
-            <p className="text-gray-400 text-sm leading-relaxed max-w-md mx-auto">
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto">
               {message}
             </p>
           </div>
           <div className="pt-4 border-t border-red-950">
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               ⚠️ This action was taken by a system moderator. Your device fingerprint and all associated activity have been logged and permanently recorded.
             </p>
           </div>

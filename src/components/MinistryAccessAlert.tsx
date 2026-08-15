@@ -136,15 +136,15 @@ export default function MinistryAccessAlert() {
 
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">IP Address:</span>
+                  <span className="text-muted-foreground">IP Address:</span>
                   <span className="text-red-300 font-mono">{req.ip_address || 'Unknown'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Time:</span>
+                  <span className="text-muted-foreground">Time:</span>
                   <span className="text-red-300">{new Date(req.created_at).toLocaleTimeString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Device:</span>
+                  <span className="text-muted-foreground">Device:</span>
                   <span className="text-red-300 truncate ml-2 max-w-[180px]">
                     {req.device_fingerprint?.slice(0, 20) || 'Unknown'}
                   </span>

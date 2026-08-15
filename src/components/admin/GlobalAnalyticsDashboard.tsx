@@ -258,7 +258,7 @@ export function GlobalAnalyticsDashboard() {
           {metrics.schoolMetrics.map(school => (
             <div key={school.id} className="flex items-center gap-4 p-3 rounded-lg border border-foreground/10 hover:bg-muted/30 transition-colors">
               <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0",
+                "w-10 h-10 rounded-xl flex items-center justify-center text-foreground font-bold text-sm shrink-0",
                 school.status === 'active' ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]" : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
               )}>
                 {school.name.charAt(0)}

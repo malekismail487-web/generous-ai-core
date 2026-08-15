@@ -111,16 +111,16 @@ export function PermissionsPanel() {
   return (
     <div className="space-y-6">
       <section className="bg-gray-900/40 border border-gray-800 rounded-lg p-4">
-        <p className="text-[10px] uppercase tracking-widest text-gray-600 mb-2">Assign role</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Assign role</p>
         <div className="grid gap-3 md:grid-cols-[1fr_220px_auto] items-end">
           <div className="space-y-1">
-            <Label className="text-xs text-gray-500">User ID (auth.uid)</Label>
+            <Label className="text-xs text-muted-foreground">User ID (auth.uid)</Label>
             <Input value={userId} onChange={(e) => setUserId(e.target.value)}
               placeholder="00000000-0000-0000-0000-000000000000"
               className="bg-gray-900 border-gray-800 font-mono text-xs" />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-gray-500">Role</Label>
+            <Label className="text-xs text-muted-foreground">Role</Label>
             <Select value={role} onValueChange={(v) => setRole(v as MinistryRole)}>
               <SelectTrigger className="bg-gray-900 border-gray-800"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -137,15 +137,15 @@ export function PermissionsPanel() {
       </section>
 
       <section>
-        <p className="text-[10px] uppercase tracking-widest text-gray-600 mb-2">Active assignments</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Active assignments</p>
         <div className="border border-gray-800 rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="border-gray-800 hover:bg-transparent">
-                <TableHead className="text-gray-500">User ID</TableHead>
-                <TableHead className="text-gray-500">Role</TableHead>
-                <TableHead className="text-gray-500">Assigned</TableHead>
-                <TableHead className="text-gray-500 text-right">Actions</TableHead>
+                <TableHead className="text-muted-foreground">User ID</TableHead>
+                <TableHead className="text-muted-foreground">Role</TableHead>
+                <TableHead className="text-muted-foreground">Assigned</TableHead>
+                <TableHead className="text-muted-foreground text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -155,16 +155,16 @@ export function PermissionsPanel() {
                 </TableCell></TableRow>
               )}
               {!loading && assignments.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="text-center text-gray-600 py-8">
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                   No named ministry role assignments yet. The active ministry session
                   currently acts as Minister for this tenant (bootstrap).
                 </TableCell></TableRow>
               )}
               {!loading && assignments.map((a) => (
                 <TableRow key={a.id} className="border-gray-800/50">
-                  <TableCell className="font-mono text-[11px] text-gray-300">{a.user_id}</TableCell>
+                  <TableCell className="font-mono text-[11px] text-foreground">{a.user_id}</TableCell>
                   <TableCell className="text-emerald-300 text-sm">{a.role}</TableCell>
-                  <TableCell className="text-gray-500 text-xs">{new Date(a.created_at).toLocaleString()}</TableCell>
+                  <TableCell className="text-muted-foreground text-xs">{new Date(a.created_at).toLocaleString()}</TableCell>
                   <TableCell className="text-right">
                     <Button size="sm" variant="outline" className="h-7 text-xs border-red-800/50 text-red-300"
                       onClick={() => revoke(a.id)}>
@@ -179,22 +179,22 @@ export function PermissionsPanel() {
       </section>
 
       <section>
-        <p className="text-[10px] uppercase tracking-widest text-gray-600 mb-2">Capability matrix</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Capability matrix</p>
         <div className="grid gap-3 md:grid-cols-2">
           {ROLES.map((r) => (
             <div key={r.id} className="border border-gray-800 rounded-lg p-3 bg-gray-950">
               <div className="flex items-baseline justify-between mb-2">
-                <p className="text-sm font-semibold text-gray-200">{r.label}</p>
-                <p className="text-[10px] text-gray-600">{r.blurb}</p>
+                <p className="text-sm font-semibold text-foreground">{r.label}</p>
+                <p className="text-[10px] text-muted-foreground">{r.blurb}</p>
               </div>
               <div className="flex flex-wrap gap-1">
                 {(capsByRole[r.id] ?? []).map((cap) => (
-                  <span key={cap} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-900 border border-gray-800 text-gray-400">
+                  <span key={cap} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-900 border border-gray-800 text-muted-foreground">
                     {cap}
                   </span>
                 ))}
                 {(capsByRole[r.id] ?? []).length === 0 && (
-                  <span className="text-[10px] text-gray-600">no capabilities</span>
+                  <span className="text-[10px] text-muted-foreground">no capabilities</span>
                 )}
               </div>
             </div>
