@@ -119,12 +119,47 @@ interface AuthenticatedUser {
   schoolId: string;
 }
 
+/**
+ * Per-token authentication cache (latency).
+ *
+ * A live lesson issues one request per teacher utterance, each previously
+ * paying two blocking round-trips (`auth.getUser` + a `profiles` select)
+ * BEFORE the gateway call could even start. Both answers are stable for the
+ * lifetime of a lesson, so we memoize them per access token with a short TTL.
+ * Security is unchanged: an unverified token is never cached, and the cache
+ * key is the token itself, so a revoked/rotated token simply misses.
+ */
+const AUTH_TTL_MS = 300_000; // 5 minutes
+const AUTH_CACHE_MAX = 500;
+const authCache = new Map<string, { user: AuthenticatedUser; at: number }>();
+
+function readAuthCache(token: string): AuthenticatedUser | null {
+  const hit = authCache.get(token);
+  if (!hit) return null;
+  if (Date.now() - hit.at > AUTH_TTL_MS) { authCache.delete(token); return null; }
+  return hit.user;
+}
+
+function writeAuthCache(token: string, user: AuthenticatedUser): void {
+  if (authCache.size >= AUTH_CACHE_MAX) {
+    const oldest = authCache.keys().next().value;
+    if (oldest) authCache.delete(oldest);
+  }
+  authCache.set(token, { user, at: Date.now() });
+}
+
 async function authenticate(req: Request): Promise<AuthenticatedUser | null> {
   const auth = req.headers.get("authorization");
   if (!auth) return null;
+  const token = auth.replace("Bearer ", "").trim();
+  if (!token) return null;
+
+  const cached = readAuthCache(token);
+  if (cached) return cached;
+
   try {
     const supa = adminClient();
-    const { data: { user } } = await supa.auth.getUser(auth.replace("Bearer ", ""));
+    const { data: { user } } = await supa.auth.getUser(token);
     if (!user) return null;
     const { data: profile } = await supa
       .from("profiles")
@@ -132,11 +167,14 @@ async function authenticate(req: Request): Promise<AuthenticatedUser | null> {
       .eq("id", user.id)
       .maybeSingle();
     if (!profile?.school_id) return null;
-    return { id: user.id, schoolId: profile.school_id };
+    const resolved = { id: user.id, schoolId: profile.school_id };
+    writeAuthCache(token, resolved);
+    return resolved;
   } catch {
     return null;
   }
 }
+
 
 // ----- Request validation ----------------------------------------------------
 
@@ -359,7 +397,14 @@ serve(async (req) => {
     });
   }
 
-  const user = await authenticate(req);
+  // Auth verification and body parsing are independent — run them
+  // concurrently so a cold auth check never serializes ahead of the parse.
+  const INVALID_JSON = Symbol("invalid_json");
+  const [user, rawBody] = await Promise.all([
+    authenticate(req),
+    req.json().catch(() => INVALID_JSON as unknown),
+  ]);
+
   if (!user) {
     return new Response(JSON.stringify({ error: "unauthorized" }), {
       status: 401,
@@ -367,13 +412,13 @@ serve(async (req) => {
     });
   }
 
-  let rawBody: unknown;
-  try { rawBody = await req.json(); } catch {
+  if (rawBody === INVALID_JSON) {
     return new Response(JSON.stringify({ error: "invalid_json" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
 
   const parsed = validate(rawBody);
   if (!parsed.ok) {

@@ -145,6 +145,16 @@ const PUBLISHABLE_KEY = () =>
  */
 const HOOK_CACHE_CAPACITY = 8;
 
+/**
+ * Warm-path timings (latency budget). The ALE snapshot is personalization
+ * data with minute-scale volatility, so serving it from a short-lived cache
+ * costs nothing in fidelity while removing a blocking round-trip per event.
+ */
+const ALE_CTX_REVALIDATE_MS = 45_000;
+/** Maximum blocking wait for the very first (cold) ALE fetch. */
+const ALE_COLD_WAIT_MS = 400;
+
+
 // ---------------------------------------------------------------------------
 // Benchmark instrumentation (opt-in, non-behavioural)
 // ---------------------------------------------------------------------------
@@ -224,6 +234,18 @@ export function useLuminaLiveSession(
   // Track events whose first render we've already marked, so the effect
   // that observes `latest.text` doesn't mark twice.
   const firstRenderMarkedRef = useRef<Set<string>>(new Set());
+  // --- Warm-path caches (latency) ---------------------------------------
+  // ALE student context is personalization data that changes on the order of
+  // minutes, not milliseconds — but fetching it inline added a full network
+  // round-trip BEFORE the inference POST on every single teacher event.
+  // We keep a stale-while-revalidate cache so the POST fires immediately with
+  // the student's real ALE snapshot, and refresh it in the background.
+  const aleCtxRef = useRef<{ value: unknown; at: number } | null>(null);
+  const aleInflightRef = useRef<Promise<unknown> | null>(null);
+  // Access token cache — `supabase.auth.getSession()` can await a token
+  // refresh, which is another blocking hop on the hot path.
+  const jwtRef = useRef<string | null>(null);
+
 
   // Keep the ref in sync with the reactive state so callbacks that survive
   // renders always project the freshest state without stale closures.
@@ -255,6 +277,57 @@ export function useLuminaLiveSession(
   }, []);
 
   // ------------------------------------------------------------------------
+  // Warm-path helpers. Both preserve the exact same payload the edge function
+  // received before — they only remove blocking round-trips from the hot path.
+  // ------------------------------------------------------------------------
+  const refreshAleContext = useCallback((): Promise<unknown> => {
+    if (aleInflightRef.current) return aleInflightRef.current;
+    const p = (async () => {
+      try {
+        const value = await getContext(feature as never);
+        aleCtxRef.current = { value, at: Date.now() };
+        return value;
+      } catch {
+        return aleCtxRef.current?.value ?? null;
+      } finally {
+        aleInflightRef.current = null;
+      }
+    })();
+    aleInflightRef.current = p;
+    return p;
+  }, [feature, getContext]);
+
+  /**
+   * Stale-while-revalidate read of the ALE snapshot.
+   *  - Fresh cache  → returned synchronously (0ms), no network.
+   *  - Stale cache  → returned immediately, refreshed in the background.
+   *  - Cold (first event only) → bounded wait, so we never trade the
+   *    student's personalization for latency on a cold start, but also never
+   *    stall the stream if ALE is slow.
+   */
+  const getAleContextFast = useCallback(async (): Promise<unknown> => {
+    const cached = aleCtxRef.current;
+    if (cached) {
+      const age = Date.now() - cached.at;
+      if (age > ALE_CTX_REVALIDATE_MS) void refreshAleContext();
+      return cached.value;
+    }
+    const p = refreshAleContext();
+    return await Promise.race([
+      p,
+      new Promise<unknown>((resolve) => setTimeout(() => resolve(null), ALE_COLD_WAIT_MS)),
+    ]);
+  }, [refreshAleContext]);
+
+  const refreshJwt = useCallback(async (): Promise<string | null> => {
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      jwtRef.current = authSession?.access_token ?? null;
+    } catch { /* keep previous token */ }
+    return jwtRef.current;
+  }, []);
+
+  // ------------------------------------------------------------------------
   // Streaming inference call — one per scheduler pop.
   // Does NOT mutate reducer state. Only writes to `latest`.
   // ------------------------------------------------------------------------
@@ -268,24 +341,19 @@ export function useLuminaLiveSession(
 
     setLatest({ event, text: "", status: "requesting", errorMessage: null });
 
-    let studentContext: unknown = null;
-    try {
-      // Best-effort — an ALE failure must not block streaming.
-      studentContext = await getContext(feature as never);
-    } catch {
-      studentContext = null;
-    }
-    if (myEpoch !== epochRef.current || !mountedRef.current) return;
-
     // Project from cache when possible (A10: cache is now on the live path).
     const cached = cacheRef.current?.read(event.lessonId)?.projection;
     const cachedContext = cached ?? projectCachedContext(stateRef.current);
 
+    // ALE snapshot: warm cache means this resolves without a network hop.
+    const studentContext = await getAleContextFast();
+    if (myEpoch !== epochRef.current || !mountedRef.current) return;
+
     let response: Response;
     try {
       const key = PUBLISHABLE_KEY();
-      const { data: { session: authSession } } = await supabase.auth.getSession();
-      const jwt = authSession?.access_token ?? key ?? "";
+      const jwt = jwtRef.current ?? (await refreshJwt()) ?? key ?? "";
+
       benchMark(event.id, "inference_started");
       response = await fetch(FUNCTIONS_ENDPOINT(), {
         method: "POST",
@@ -355,7 +423,7 @@ export function useLuminaLiveSession(
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
     }
-  }, [feature, getContext, lessonId, model, stop]);
+  }, [getAleContextFast, refreshJwt, lessonId, model, stop]);
 
   // ------------------------------------------------------------------------
   // Drain loop — pops the scheduler, folds state, refreshes cache, fires
@@ -419,8 +487,20 @@ export function useLuminaLiveSession(
     schedulerRef.current = createPriorityScheduler();
     cacheRef.current = createContextCache({ capacity: HOOK_CACHE_CAPACITY });
 
+    // Pre-warm the hot path while the channel is still handshaking: the ALE
+    // snapshot and the access token are both fetched here so the first
+    // teacher event streams without any preparatory round-trip.
+    void refreshAleContext();
+    void refreshJwt();
+    const { data: authSub } = supabase.auth.onAuthStateChange((_evt, s) => {
+      jwtRef.current = s?.access_token ?? jwtRef.current;
+    });
+    // Keep the ALE snapshot warm for the duration of the lesson.
+    const aleTimer = window.setInterval(() => { void refreshAleContext(); }, ALE_CTX_REVALIDATE_MS);
+
     setSession("subscribing");
     setSubscribeError(null);
+
 
     const channel = supabase.channel(`lesson:${lessonId}`, {
       config: { private: true, broadcast: { self: false, ack: false } },
@@ -467,6 +547,8 @@ export function useLuminaLiveSession(
     return () => {
       mountedRef.current = false;
       try { supabase.removeChannel(channel); } catch { /* ignore */ }
+      try { authSub?.subscription?.unsubscribe(); } catch { /* ignore */ }
+      window.clearInterval(aleTimer);
       if (abortRef.current) {
         try { abortRef.current.abort(); } catch { /* ignore */ }
         abortRef.current = null;
@@ -475,7 +557,8 @@ export function useLuminaLiveSession(
       if (cacheRef.current) { cacheRef.current.clear(); cacheRef.current = null; }
       epochRef.current += 1;
     };
-  }, [enabled, lessonId, drain]);
+  }, [enabled, lessonId, drain, refreshAleContext, refreshJwt]);
+
 
   const stableStop = useCallback(() => {
     stop();
