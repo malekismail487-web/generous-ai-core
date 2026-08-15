@@ -1,4 +1,4 @@
-import luminaAtom from '@/assets/lumina-atom.jpeg.asset.json';
+import luminaMark from '@/assets/lumina-mark.png';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 
 interface LuminaLogoProps {
@@ -7,8 +7,9 @@ interface LuminaLogoProps {
 }
 
 /**
- * The Lumina mark. The source art is white-on-onyx, so in the Bone (light)
- * palette we invert it — the two-tone system stays exactly two tones.
+ * The Lumina mark — a transparent-background PNG (white line art, no plate).
+ * In the Bone (light) palette we invert it so the mark reads black on light.
+ * No mix-blend-mode: blending broke against the liquid-glass surfaces.
  */
 export function LuminaLogo({ size = 32, className = '' }: LuminaLogoProps) {
   const { theme } = useThemeLanguage();
@@ -16,14 +17,15 @@ export function LuminaLogo({ size = 32, className = '' }: LuminaLogoProps) {
 
   return (
     <img
-      src={luminaAtom.url}
+      src={luminaMark}
       alt="Lumina"
       width={size}
       height={size}
-      className={`object-contain select-none ${className}`}
+      loading="eager"
+      decoding="async"
+      className={`object-contain select-none pointer-events-none ${className}`}
       style={{
-        filter: isLight ? 'invert(1) contrast(1.05)' : 'none',
-        mixBlendMode: isLight ? 'multiply' : 'screen',
+        filter: isLight ? 'invert(1)' : 'none',
       }}
     />
   );
