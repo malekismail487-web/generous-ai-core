@@ -119,6 +119,7 @@ export function MorningBriefing({ onNavigate, onCount }: { onNavigate: (action: 
     }
 
     setItems(briefing);
+    onCount?.(briefing.length);
     setLoading(false);
     sessionStorage.setItem(`briefing-${new Date().toDateString()}`, 'shown');
   };

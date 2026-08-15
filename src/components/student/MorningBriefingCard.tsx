@@ -37,7 +37,7 @@ function stamp(key: string, userId: string) {
   try { localStorage.setItem(`${key}:${userId}`, String(Date.now())); } catch { /* ignore */ }
 }
 
-export function MorningBriefingCard() {
+export function MorningBriefingCard({ onCount }: { onCount?: (n: number) => void } = {}) {
   const { user } = useAuth();
   const [briefing, setBriefing] = useState<Briefing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,6 +51,7 @@ export function MorningBriefingCard() {
     if (isWithin24h(COMPLETION_KEY, user.id) || isWithin24h(DISMISS_KEY, user.id)) {
       setLoading(false);
       setDismissed(true);
+      onCount?.(0);
       return;
     }
     let cancel = false;
@@ -65,6 +66,7 @@ export function MorningBriefingCard() {
       if (cancel) return;
       if (data) {
         setBriefing(data as unknown as Briefing);
+        onCount?.(1);
         setLoading(false);
         if (!data.opened_at) {
           supabase.from("morning_briefings").update({ opened_at: new Date().toISOString() }).eq("id", data.id).then(() => {});
@@ -82,7 +84,7 @@ export function MorningBriefingCard() {
           });
           if (res.ok) {
             const j = await res.json();
-            if (!cancel) setBriefing(j.briefing as Briefing);
+            if (!cancel) { setBriefing(j.briefing as Briefing); onCount?.(1); }
           }
         } catch { /* silent */ }
         if (!cancel) { setGenerating(false); setLoading(false); }
@@ -95,6 +97,7 @@ export function MorningBriefingCard() {
   const dismissNow = () => {
     if (user?.id) stamp(DISMISS_KEY, user.id);
     setDismissed(true);
+    onCount?.(0);
   };
 
   if (loading || generating) {
