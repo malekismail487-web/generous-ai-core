@@ -24,6 +24,7 @@ import {
   Brain
 } from 'lucide-react';
 import LCTPanel from '@/components/admin/LCTPanel';
+import { StudentAppPreview } from '@/components/StudentAppPreview';
 import { GlobalAnalyticsDashboard } from '@/components/admin/GlobalAnalyticsDashboard';
 import { TeacherExcellenceProgram } from '@/components/admin/TeacherExcellenceProgram';
 import { MinistryReadinessReport } from '@/components/admin/MinistryReadinessReport';
