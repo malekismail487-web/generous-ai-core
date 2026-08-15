@@ -88,7 +88,10 @@ export function LiquidLens({
     ].join(' ');
     // Mirror the satellite fan when the lens is parked on the left half,
     // so the arc always opens into the screen rather than off it.
-    el.style.setProperty('--dir', pos.current.x + LENS_W / 2 < window.innerWidth / 2 ? '-1' : '1');
+    el.style.setProperty(
+      '--fan-base',
+      pos.current.x + LENS_W / 2 < window.innerWidth / 2 ? '-30deg' : '-150deg',
+    );
     el.style.setProperty('--tilt-x', `${(vx / 60) * 8}deg`);
     el.style.setProperty('--tilt-y', `${(vy / 60) * -8}deg`);
   }, []);
