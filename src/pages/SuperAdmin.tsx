@@ -563,10 +563,8 @@ export default function SuperAdmin() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setTestingRole('student')} className="gap-2">
-                  <GraduationCap className="w-4 h-4" />
-                  Test as Student
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTestingRole('teacher')} className="gap-2">
+
                 <DropdownMenuItem onClick={() => setTestingRole('teacher')} className="gap-2">
                   <Users className="w-4 h-4" />
                   Test as Teacher
