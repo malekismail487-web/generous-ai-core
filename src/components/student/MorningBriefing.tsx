@@ -10,7 +10,7 @@ interface BriefingItem {
   text: string;
 }
 
-export function MorningBriefing({ onNavigate }: { onNavigate: (action: string & {}) => void }) {
+export function MorningBriefing({ onNavigate, onCount }: { onNavigate: (action: string & {}) => void; onCount?: (n: number) => void }) {
   const { user } = useAuth();
   const { t } = useThemeLanguage();
   const [items, setItems] = useState<BriefingItem[]>([]);
