@@ -14,6 +14,7 @@ import { useWallpaper } from '@/hooks/useWallpaper';
 import { supabase } from '@/integrations/supabase/client';
 import { SchoolAdminPanel } from '@/components/SchoolAdminPanel';
 import SuperAdminPanel from '@/components/SuperAdminPanel';
+import { EffortSelector } from '@/components/ai/EffortSelector';
 import { LearningProfileCard } from '@/components/student/LearningProfileCard';
 import { LuminaMemoryViewer } from '@/components/student/LuminaMemoryViewer';
 import { cn } from '@/lib/utils';
