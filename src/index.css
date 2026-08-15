@@ -886,8 +886,16 @@
     opacity: 1;
     transform: scale(1);
   }
-  .liquid-tab:hover::before { opacity: 0.45; transform: scale(0.96); }
+  .liquid-tab:hover::before { opacity: 0.5; transform: scale(0.965); }
   .liquid-tab[data-state='active'] { transform: translateY(-1px); }
+  .liquid-tab:active { transform: translateY(0.5px) scale(0.975); }
+  .liquid-tab svg {
+    transition: transform 320ms var(--ease-orbit), opacity 320ms var(--ease-orbit);
+    opacity: 0.7;
+  }
+  .liquid-tab:hover svg { transform: translateY(-1px) scale(1.08); opacity: 0.95; }
+  .liquid-tab[data-state='active'] svg { opacity: 1; transform: scale(1.06); }
+
 
   /* Droplet under the active tab */
   .liquid-tab::after {
