@@ -99,7 +99,15 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         className="pointer-events-none absolute inset-x-0 top-0 h-10 opacity-60"
         style={{ background: 'linear-gradient(180deg, hsl(var(--ink) / 0.08), transparent)' }}
       />
-      <div className="relative flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+      <div
+        ref={railRef}
+        onPointerDown={onDockPointerDown}
+        className={cn(
+          'relative flex items-center justify-around h-16 max-w-lg mx-auto px-2 touch-pan-y select-none',
+          sliding ? 'cursor-grabbing' : 'cursor-grab transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
+        )}
+        style={{ transform: `translateX(${offset}px)` }}
+      >
 
         {bottomTabs.map((tab) => {
           const Icon = tab.icon;
