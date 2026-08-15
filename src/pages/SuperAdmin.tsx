@@ -23,7 +23,6 @@ import {
   KeyRound,
   Brain
 } from 'lucide-react';
-import { StudentAppPreview } from '@/components/StudentAppPreview';
 import LCTPanel from '@/components/admin/LCTPanel';
 import { GlobalAnalyticsDashboard } from '@/components/admin/GlobalAnalyticsDashboard';
 import { TeacherExcellenceProgram } from '@/components/admin/TeacherExcellenceProgram';
