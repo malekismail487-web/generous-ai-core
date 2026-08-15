@@ -224,6 +224,18 @@ export function useLuminaLiveSession(
   // Track events whose first render we've already marked, so the effect
   // that observes `latest.text` doesn't mark twice.
   const firstRenderMarkedRef = useRef<Set<string>>(new Set());
+  // --- Warm-path caches (latency) ---------------------------------------
+  // ALE student context is personalization data that changes on the order of
+  // minutes, not milliseconds — but fetching it inline added a full network
+  // round-trip BEFORE the inference POST on every single teacher event.
+  // We keep a stale-while-revalidate cache so the POST fires immediately with
+  // the student's real ALE snapshot, and refresh it in the background.
+  const aleCtxRef = useRef<{ value: unknown; at: number } | null>(null);
+  const aleInflightRef = useRef<Promise<unknown> | null>(null);
+  // Access token cache — `supabase.auth.getSession()` can await a token
+  // refresh, which is another blocking hop on the hot path.
+  const jwtRef = useRef<string | null>(null);
+
 
   // Keep the ref in sync with the reactive state so callbacks that survive
   // renders always project the freshest state without stale closures.
