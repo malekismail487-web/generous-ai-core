@@ -2,46 +2,29 @@
  * Lumina motion layer.
  *
  * One shared vocabulary for every role surface: orbit, depth, reveal, magnetism.
- * Everything here degrades gracefully — reduced-motion users and Lite Mode
- * devices get the same layout with the movement removed, never a broken screen.
+ * Everything here degrades gracefully — reduced-motion users get the same
+ * layout with the movement removed, never a broken screen.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-/** True when the OS asks for calmer interfaces, or Lite Mode is on. */
+/** True when the OS asks for calmer interfaces. */
 export function useCalmMotion(): boolean {
   const [calm, setCalm] = useState(() => {
     if (typeof window === 'undefined') return true;
-    return (
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-      document.documentElement.classList.contains('lite-mode') ||
-      document.body.classList.contains('lite-mode')
-    );
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   });
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const evaluate = () =>
-      setCalm(
-        media.matches ||
-          document.documentElement.classList.contains('lite-mode') ||
-          document.body.classList.contains('lite-mode'),
-      );
-
+    const evaluate = () => setCalm(media.matches);
     evaluate();
     media.addEventListener('change', evaluate);
-
-    const observer = new MutationObserver(evaluate);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-
-    return () => {
-      media.removeEventListener('change', evaluate);
-      observer.disconnect();
-    };
+    return () => media.removeEventListener('change', evaluate);
   }, []);
 
   return calm;
 }
+
 
 /** Tracks whether the current palette is the Onyx (dark) half. */
 export function useIsOnyx(): boolean {
