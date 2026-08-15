@@ -158,7 +158,7 @@ export default function StudentLiveRoom() {
               <span className="text-sm font-semibold truncate">{meeting.title}</span>
             </div>
             <p className="text-xs text-muted-foreground truncate">
-              {meeting.subject ?? 'Class'} · Grade {meeting.grade_level}
+              {meeting.subject ?? 'Class'} · {meeting.grade_level}
             </p>
           </div>
           {ttsSupported && (
