@@ -139,7 +139,7 @@ export function StudentInsights({ schoolId }: StudentInsightsProps) {
           <p className="text-xs text-muted-foreground">{t('Total Students', 'إجمالي الطلاب')}</p>
         </div>
         <div className="liquid-glass rounded-xl p-4 text-center">
-          <Brain className="w-6 h-6 mx-auto mb-2 text-violet-500" />
+          <Brain className="w-6 h-6 mx-auto mb-2 text-foreground" />
           <p className="text-2xl font-bold">{activeStudents}</p>
           <p className="text-xs text-muted-foreground">{t('Active Learners', 'المتعلمين النشطين')}</p>
         </div>

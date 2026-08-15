@@ -85,8 +85,8 @@ export function ProfileSection() {
             isAdmin 
               ? "bg-gradient-to-br from-amber-500 to-orange-600"
               : isTeacher 
-                ? "bg-gradient-to-br from-violet-500 to-purple-600"
-                : "bg-gradient-to-br from-blue-500 to-cyan-600"
+                ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
+                : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
           )}>
             {isAdmin ? (
               <Shield className="w-8 h-8 text-white" />
@@ -157,7 +157,7 @@ export function ProfileSection() {
         {isStudent && parentCode && (
           <div className="liquid-glass rounded-2xl p-5 mb-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-pink-500 to-rose-500">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-rose-500">
                 <Heart className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -200,7 +200,7 @@ export function ProfileSection() {
             className="w-full liquid-glass rounded-2xl p-5 mb-4 text-left hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
                 <Building2 className="w-5 h-5" />
               </div>
               <div className="flex-1">

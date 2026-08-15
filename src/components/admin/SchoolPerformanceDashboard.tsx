@@ -165,13 +165,13 @@ export function SchoolPerformanceDashboard({ schoolId }: Props) {
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard
-          icon={<Users className="w-5 h-5 text-blue-500" />}
+          icon={<Users className="w-5 h-5 text-foreground" />}
           value={metrics.totalStudents}
           label={t('Total Students', 'إجمالي الطلاب')}
           sub={`${metrics.activeStudents} ${t('active (7d)', 'نشط (7 أيام)')}`}
         />
         <MetricCard
-          icon={<GraduationCap className="w-5 h-5 text-violet-500" />}
+          icon={<GraduationCap className="w-5 h-5 text-foreground" />}
           value={metrics.totalTeachers}
           label={t('Teachers', 'المعلمين')}
         />

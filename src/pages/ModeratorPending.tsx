@@ -94,7 +94,7 @@ export default function ModeratorPending() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-black">
       <div className="w-full max-w-md text-center">
         {/* Pulsing shield icon */}
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6 bg-gradient-to-br from-emerald-600 to-teal-700 shadow-lg shadow-emerald-900/30 animate-pulse">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6 bg-gradient-to-br from-emerald-600 to-foreground/[0.04] shadow-lg shadow-emerald-900/30 animate-pulse">
           <Shield className="w-10 h-10 text-white" />
         </div>
 

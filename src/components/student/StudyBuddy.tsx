@@ -648,7 +648,7 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
           {/* Lumina Header — style picker */}
           {localMessages.length === 0 && showStylePicker && (
             <div className="text-center py-6 animate-fade-in">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-500 to-purple-600 mb-4 shadow-lg">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] mb-4 shadow-lg">
                 <Brain className="w-10 h-10 text-white" />
               </div>
               <h2 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Caveat, cursive' }}>{t('Lumina', 'لومينا')}</h2>

@@ -118,12 +118,12 @@ export function FocusTimer() {
             <p className="text-[11px] text-muted-foreground">{t('Today', 'اليوم')}</p>
           </div>
           <div className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 rounded-xl border border-foreground/10 p-4 text-center">
-            <Timer className="w-5 h-5 mx-auto mb-1 text-blue-500" />
+            <Timer className="w-5 h-5 mx-auto mb-1 text-foreground" />
             <p className="text-xl font-bold">{stats.totalFocusMinutes}</p>
             <p className="text-[11px] text-muted-foreground">{t('Total min', 'إجمالي دق')}</p>
           </div>
           <div className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 rounded-xl border border-foreground/10 p-4 text-center">
-            <Brain className="w-5 h-5 mx-auto mb-1 text-purple-500" />
+            <Brain className="w-5 h-5 mx-auto mb-1 text-foreground" />
             <p className="text-xl font-bold">{stats.sessionsCompleted}</p>
             <p className="text-[11px] text-muted-foreground">{t('Sessions', 'جلسات')}</p>
           </div>

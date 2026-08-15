@@ -60,7 +60,7 @@ export function StudentReportCards({ studentId }: StudentReportCardsProps) {
 
   const getGradeColor = (percentage: number) => {
     if (percentage >= 90) return 'text-emerald-500';
-    if (percentage >= 80) return 'text-blue-500';
+    if (percentage >= 80) return 'text-foreground';
     if (percentage >= 70) return 'text-amber-500';
     if (percentage >= 60) return 'text-orange-500';
     return 'text-red-500';

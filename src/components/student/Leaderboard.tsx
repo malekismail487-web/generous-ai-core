@@ -147,7 +147,7 @@ export function Leaderboard() {
                         <Flame className="w-3 h-3 text-orange-500" /> {entry.streak}
                       </span>
                       <span className="flex items-center gap-0.5">
-                        <Brain className="w-3 h-3 text-blue-500" /> {accuracy}%
+                        <Brain className="w-3 h-3 text-foreground" /> {accuracy}%
                       </span>
                       <span className="flex items-center gap-0.5">
                         <Target className="w-3 h-3 text-green-500" /> {entry.goalsCompleted}

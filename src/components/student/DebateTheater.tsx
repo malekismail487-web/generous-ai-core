@@ -6,7 +6,7 @@ import { MathRenderer } from "@/components/MathRenderer";
 import { useAdaptiveIntelligence } from "@/hooks/useAdaptiveIntelligence";
 
 const PERSONAS = [
-  { id: "prof",    name: "The Professor", icon: GraduationCap, accent: "text-sky-500"   },
+  { id: "prof",    name: "The Professor", icon: GraduationCap, accent: "text-foreground"   },
   { id: "skeptic", name: "The Skeptic",   icon: ShieldQuestion, accent: "text-rose-500" },
   { id: "peer",    name: "The Peer",      icon: Users,          accent: "text-emerald-500" },
   { id: "coach",   name: "The Coach",     icon: Target,         accent: "text-amber-500"   },

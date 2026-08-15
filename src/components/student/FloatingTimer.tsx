@@ -31,7 +31,7 @@ export function FloatingTimer({ onNavigate }: FloatingTimerProps) {
             ? "bg-gradient-to-r from-red-500 to-orange-500"
             : mode === 'shortBreak'
             ? "bg-gradient-to-r from-green-500 to-emerald-500"
-            : "bg-gradient-to-r from-blue-500 to-cyan-500"
+            : "bg-gradient-to-r from-foreground/[0.14] to-foreground/[0.04]"
         )}
         onClick={onNavigate}
       >

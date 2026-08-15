@@ -51,7 +51,7 @@ export function WeeklyPlanSection() {
   }
 
   const materialViewerElement = (
-    <MaterialViewer open={viewerOpen} onOpenChange={setViewerOpen} material={viewerPlan ? { id: viewerPlan.id, title: viewerPlan.title, subject: tr('weeklyPlan', language), content: null, file_url: viewerPlan.file_url, grade_level: viewerPlan.grade_level, created_at: viewerPlan.created_at } : null} subjectInfo={{ name: tr('weeklyPlan', language), emoji: '📅', color: 'from-blue-500 to-blue-600' }} teacherName={tr('schoolAdmin', language)} />
+    <MaterialViewer open={viewerOpen} onOpenChange={setViewerOpen} material={viewerPlan ? { id: viewerPlan.id, title: viewerPlan.title, subject: tr('weeklyPlan', language), content: null, file_url: viewerPlan.file_url, grade_level: viewerPlan.grade_level, created_at: viewerPlan.created_at } : null} subjectInfo={{ name: tr('weeklyPlan', language), emoji: '📅', color: 'from-foreground/[0.14] to-foreground/[0.04]' }} teacherName={tr('schoolAdmin', language)} />
   );
 
   if (selectedPlan) {
@@ -114,7 +114,7 @@ export function WeeklyPlanSection() {
             {plans.map(plan => (
               <button key={plan.id} onClick={() => setSelectedPlan(plan)} className="w-full text-left liquid-glass rounded-xl p-4 hover:border-primary/30 transition-all">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] flex items-center justify-center flex-shrink-0">
                     {plan.plan_type === 'file' ? <FileText className="w-5 h-5 text-white" /> : <Calendar className="w-5 h-5 text-white" />}
                   </div>
                   <div className="flex-1 min-w-0">

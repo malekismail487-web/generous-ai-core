@@ -42,12 +42,12 @@ import { RelevanceWarningDialog } from './RelevanceWarningDialog';
 // Hardcoded subjects list
 const SUBJECTS = [
   { id: 'biology', emoji: '🧬', color: 'from-green-500 to-emerald-600' },
-  { id: 'physics', emoji: '⚛️', color: 'from-blue-500 to-cyan-600' },
-  { id: 'mathematics', emoji: '📐', color: 'from-purple-500 to-violet-600' },
+  { id: 'physics', emoji: '⚛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'mathematics', emoji: '📐', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: 'chemistry', emoji: '🧪', color: 'from-orange-500 to-amber-600' },
   { id: 'english', emoji: '📚', color: 'from-red-500 to-rose-600' },
-  { id: 'social_studies', emoji: '🌍', color: 'from-teal-500 to-cyan-600' },
-  { id: 'technology', emoji: '💻', color: 'from-indigo-500 to-blue-600' },
+  { id: 'social_studies', emoji: '🌍', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'technology', emoji: '💻', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: 'arabic', emoji: '🕌', color: 'from-amber-500 to-yellow-600' },
 ];
 
@@ -351,7 +351,7 @@ export function TeacherMaterials({
     if (!fileUrl) return <FileText className="w-6 h-6" />;
     if (fileUrl.includes('.pdf')) return <File className="w-6 h-6 text-red-500" />;
     if (fileUrl.includes('.ppt') || fileUrl.includes('.pptx')) return <File className="w-6 h-6 text-orange-500" />;
-    if (fileUrl.includes('.doc') || fileUrl.includes('.docx')) return <File className="w-6 h-6 text-blue-500" />;
+    if (fileUrl.includes('.doc') || fileUrl.includes('.docx')) return <File className="w-6 h-6 text-foreground" />;
     if (fileUrl.match(/\.(jpg|jpeg|png|gif)$/i)) return <Image className="w-6 h-6 text-green-500" />;
     return <File className="w-6 h-6" />;
   };

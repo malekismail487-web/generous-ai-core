@@ -32,16 +32,16 @@ import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 
 const SUBJECTS = [
   { id: 'biology', emoji: '🧬', color: 'bg-green-500' },
-  { id: 'physics', emoji: '⚛️', color: 'bg-blue-500' },
-  { id: 'mathematics', emoji: '📐', color: 'bg-purple-500' },
+  { id: 'physics', emoji: '⚛️', color: 'bg-foreground/[0.07]' },
+  { id: 'mathematics', emoji: '📐', color: 'bg-foreground/[0.07]' },
   { id: 'chemistry', emoji: '🧪', color: 'bg-orange-500' },
   { id: 'english', emoji: '📚', color: 'bg-red-500' },
-  { id: 'social_studies', emoji: '🌍', color: 'bg-teal-500' },
-  { id: 'technology', emoji: '💻', color: 'bg-indigo-500' },
+  { id: 'social_studies', emoji: '🌍', color: 'bg-foreground/[0.07]' },
+  { id: 'technology', emoji: '💻', color: 'bg-foreground/[0.07]' },
   { id: 'arabic', emoji: '🕌', color: 'bg-amber-500' },
   { id: 'islamic_studies', emoji: '☪️', color: 'bg-green-600' },
   { id: 'ksa_history', emoji: '🏛️', color: 'bg-amber-600' },
-  { id: 'art_design', emoji: '🎨', color: 'bg-pink-500' },
+  { id: 'art_design', emoji: '🎨', color: 'bg-foreground/[0.07]' },
 ];
 
 const GRADES = [

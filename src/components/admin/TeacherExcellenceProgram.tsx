@@ -136,11 +136,11 @@ export function TeacherExcellenceProgram() {
                   <p className="text-[10px] text-muted-foreground">Assignments</p>
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-violet-500">{teacher.copilotAssignments}</p>
+                  <p className="text-sm font-bold text-foreground">{teacher.copilotAssignments}</p>
                   <p className="text-[10px] text-muted-foreground">AI</p>
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-blue-500">{teacher.totalMaterials}</p>
+                  <p className="text-sm font-bold text-foreground">{teacher.totalMaterials}</p>
                   <p className="text-[10px] text-muted-foreground">Materials</p>
                 </div>
                 <div>

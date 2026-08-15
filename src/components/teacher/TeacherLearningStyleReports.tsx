@@ -59,11 +59,11 @@ const STYLE_ICONS: Record<string, typeof Eye> = {
 };
 
 const STYLE_COLORS: Record<string, string> = {
-  visual: 'text-blue-500',
-  logical: 'text-purple-500',
+  visual: 'text-foreground',
+  logical: 'text-foreground',
   verbal: 'text-green-500',
   kinesthetic: 'text-orange-500',
-  conceptual: 'text-cyan-500',
+  conceptual: 'text-foreground',
 };
 
 function getTeachingRecommendation(style: LearningStyleData | null): string {
@@ -210,7 +210,7 @@ export function TeacherLearningStyleReports({ schoolId }: Props) {
           <p className="text-xs text-muted-foreground">{t('Total Students', 'إجمالي الطلاب')}</p>
         </div>
         <div className="liquid-glass rounded-xl p-4 text-center">
-          <Brain className="w-6 h-6 mx-auto mb-2 text-violet-500" />
+          <Brain className="w-6 h-6 mx-auto mb-2 text-foreground" />
           <p className="text-2xl font-bold">{profiledStudents}</p>
           <p className="text-xs text-muted-foreground">{t('Profiled', 'تم تحليلهم')}</p>
         </div>
@@ -230,7 +230,7 @@ export function TeacherLearningStyleReports({ schoolId }: Props) {
       {classStyleAggregate && (
         <div className="liquid-glass rounded-xl p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Brain className="w-5 h-5 text-violet-500" />
+            <Brain className="w-5 h-5 text-foreground" />
             {t('Class Learning Style Distribution', 'توزيع أنماط التعلم للصف')}
             <Badge variant="secondary" className="ml-auto text-xs">{classStyleAggregate.count} {t('students profiled', 'طالب تم تحليلهم')}</Badge>
           </h3>

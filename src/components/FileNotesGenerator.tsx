@@ -24,13 +24,13 @@ const lengthConfig: Record<NoteLength, { icon: React.ReactNode; label: { en: str
     icon: <BookOpen className="w-5 h-5" />,
     label: { en: 'Detailed Notes', ar: 'ملاحظات مفصلة' },
     desc: { en: '12-18 pages — deep explanations, 3+ diagrams & practice', ar: '12-18 صفحة — شرح عميق، 3+ رسوم وتمارين' },
-    color: 'from-blue-500 to-cyan-500',
+    color: 'from-foreground/[0.14] to-foreground/[0.04]',
   },
   long: {
     icon: <GraduationCap className="w-5 h-5" />,
     label: { en: 'Colossal Textbook', ar: 'مرجع شامل ضخم' },
     desc: { en: '30-50 pages — full textbook chapter with 8+ diagrams', ar: '30-50 صفحة — فصل كتاب كامل مع 8+ رسوم بيانية' },
-    color: 'from-violet-500 to-purple-600',
+    color: 'from-foreground/[0.14] to-foreground/[0.04]',
   },
 };
 

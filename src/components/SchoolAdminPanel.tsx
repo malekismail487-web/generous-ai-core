@@ -112,8 +112,8 @@ export function SchoolAdminPanel({ onBack }: SchoolAdminPanelProps) {
                   <div className={cn(
                     "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
                     user.user_type === 'student'
-                      ? "bg-gradient-to-br from-blue-500 to-cyan-600 text-white"
-                      : "bg-gradient-to-br from-violet-500 to-purple-600 text-white"
+                      ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white"
+                      : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white"
                   )}>
                     {user.user_type === 'student' ? (
                       <GraduationCap size={18} />

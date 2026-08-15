@@ -142,7 +142,7 @@ export function SchoolRegistration() {
               className="w-full liquid-glass rounded-2xl p-6 text-left hover:shadow-lg transition-all group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-blue-500 to-cyan-600 text-white">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
                   <GraduationCap className="w-7 h-7" />
                 </div>
                 <div>
@@ -157,7 +157,7 @@ export function SchoolRegistration() {
               className="w-full liquid-glass rounded-2xl p-6 text-left hover:shadow-lg transition-all group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
                   <User className="w-7 h-7" />
                 </div>
                 <div>
@@ -189,8 +189,8 @@ export function SchoolRegistration() {
           <div className={cn(
             "inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4",
             userType === 'student' 
-              ? "bg-gradient-to-br from-blue-500 to-cyan-600" 
-              : "bg-gradient-to-br from-violet-500 to-purple-600"
+              ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]" 
+              : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
           )}>
             {userType === 'student' ? <GraduationCap className="w-8 h-8 text-white" /> : <User className="w-8 h-8 text-white" />}
           </div>

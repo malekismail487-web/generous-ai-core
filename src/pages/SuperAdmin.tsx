@@ -811,7 +811,7 @@ export default function SuperAdmin() {
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                           school.code_used
-                            ? 'bg-blue-500/10 text-blue-500'
+                            ? 'bg-foreground/[0.07] text-foreground'
                             : 'bg-amber-500/10 text-amber-500'
                         }`}
                       >

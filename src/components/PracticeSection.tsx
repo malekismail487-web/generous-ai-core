@@ -17,7 +17,7 @@ const difficultyConfig = {
     icon: Zap,
     title: 'Beginner',
     description: 'Start with foundational concepts from your learning',
-    color: 'from-emerald-500 to-teal-500',
+    color: 'from-emerald-500 to-foreground/[0.04]',
     bgGlow: 'hsl(160 80% 50% / 0.15)',
     questions: '5 questions',
     time: '10 mins',
@@ -35,7 +35,7 @@ const difficultyConfig = {
     icon: Target,
     title: 'Advanced',
     description: 'Master difficult concepts with expert-level questions',
-    color: 'from-rose-500 to-pink-500',
+    color: 'from-rose-500 to-foreground/[0.04]',
     bgGlow: 'hsl(350 85% 55% / 0.15)',
     questions: '10 questions',
     time: '20 mins',
@@ -53,7 +53,7 @@ const typeConfig = {
     icon: GraduationCap,
     title: 'SAT Practice',
     subtitle: 'SAT-style questions based on your learning',
-    gradient: 'from-violet-500 to-purple-600',
+    gradient: 'from-foreground/[0.14] to-foreground/[0.04]',
   },
 };
 

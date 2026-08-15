@@ -11,7 +11,7 @@ interface Notice {
 }
 
 const SEVERITY_STYLE: Record<string, string> = {
-  info: 'text-sky-300 bg-sky-950/50 border-sky-800/50',
+  info: 'text-foreground bg-foreground/[0.07] border-foreground/20',
   warning: 'text-amber-300 bg-amber-950/50 border-amber-800/50',
   critical: 'text-red-300 bg-red-950/50 border-red-800/50',
 };

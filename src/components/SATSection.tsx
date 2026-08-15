@@ -14,9 +14,9 @@ import { useLearningStyle } from '@/hooks/useLearningStyle';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 const satSections = [
-  { id: 'sat_math', emoji: '🔢', color: 'from-blue-500 to-cyan-600' },
+  { id: 'sat_math', emoji: '🔢', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: 'sat_reading', emoji: '📖', color: 'from-emerald-500 to-green-600' },
-  { id: 'sat_writing', emoji: '✍️', color: 'from-violet-500 to-purple-600' },
+  { id: 'sat_writing', emoji: '✍️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
 ];
 
 const satGrades = ['Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];

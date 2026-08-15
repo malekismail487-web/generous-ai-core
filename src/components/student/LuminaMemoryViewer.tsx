@@ -70,7 +70,7 @@ export function LuminaMemoryViewer() {
   const severityColors: Record<string, string> = {
     critical: 'border-red-500/50 bg-red-500/10',
     moderate: 'border-yellow-500/50 bg-yellow-500/10',
-    minor: 'border-blue-500/50 bg-blue-500/10',
+    minor: 'border-foreground/20 bg-foreground/[0.07]',
   };
 
   if (loading) {
@@ -162,7 +162,7 @@ export function LuminaMemoryViewer() {
                       "text-[10px] px-1.5 py-0.5 rounded font-medium",
                       gap.severity === 'critical' ? 'bg-red-500/20 text-red-600' :
                       gap.severity === 'moderate' ? 'bg-yellow-500/20 text-yellow-600' :
-                      'bg-blue-500/20 text-blue-600'
+                      'bg-foreground/[0.07] text-foreground'
                     )}>{gap.severity}</span>
                   </div>
                 </div>
