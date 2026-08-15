@@ -442,16 +442,19 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
     // === COGNITIVE MIRROR — fire silent prediction in parallel with AI call ===
     const mirrorPromise: Promise<{ snapshot_id: string; predicted_answer: string; predicted_misconception: string; predicted_reasoning: string } | null> = (async () => {
       try {
+        if (!content || content.trim().length < 3) return null;
         const { data: { session: ms } } = await supabase.auth.getSession();
         const mt = ms?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/predict-student`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mt}` },
-          body: JSON.stringify({ question: content, source: 'chat' }),
+          body: JSON.stringify({ question: content.trim(), source: 'chat' }),
         });
         if (!r.ok) return null;
-        return await r.json();
+        const j = await r.json();
+        return j?.snapshot_id ? j : null;
       } catch { return null; }
+
     })();
 
     // Save user message to DB
