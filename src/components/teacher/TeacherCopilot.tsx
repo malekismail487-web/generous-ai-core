@@ -468,9 +468,17 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
               <p className="text-sm text-muted-foreground">
                 {questions.length} {t('questionsAdded')} • {questions.length * 10} {t('pointsLabel')} • {getGradeName(gradeLevel, language)}
               </p>
-              <Button variant="outline" size="sm" onClick={() => setStep('configure')}>
-                {t('regenerate')}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" disabled={isRefining || !!busyId} onClick={() => addQuestions(1)}>
+                  {isRefining ? <Loader2 className="w-3 h-3 animate-spin" /> : `+1 ${t('qsLabel')}`}
+                </Button>
+                <Button variant="outline" size="sm" disabled={isRefining || !!busyId} onClick={() => addQuestions(5)}>
+                  +5 {t('qsLabel')}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setStep('configure')}>
+                  {t('regenerate')}
+                </Button>
+              </div>
             </div>
 
             {/* Questions List */}
