@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import LCTPanel from '@/components/admin/LCTPanel';
 import { StudentAppPreview } from '@/components/StudentAppPreview';
+import { RolePreviewPanel } from '@/components/admin/RolePreviewPanel';
 import { GlobalAnalyticsDashboard } from '@/components/admin/GlobalAnalyticsDashboard';
 import { TeacherExcellenceProgram } from '@/components/admin/TeacherExcellenceProgram';
 import { MinistryReadinessReport } from '@/components/admin/MinistryReadinessReport';
