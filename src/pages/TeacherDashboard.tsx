@@ -87,6 +87,8 @@ export default function TeacherDashboard() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  // student_id -> full name, so the grading table shows who actually submitted
+  const [studentNames, setStudentNames] = useState<Record<string, string>>({});
   const [loadingData, setLoadingData] = useState(true);
   const [categoryLabel, setCategoryLabel] = useState<{ name: string; emoji: string } | null>(null);
 
@@ -127,9 +129,27 @@ export default function TeacherDashboard() {
         .from('submissions')
         .select('*')
         .in('assignment_id', assignmentIds);
-      setSubmissions((submissionsData || []) as Submission[]);
+      const subs = (submissionsData || []) as Submission[];
+      setSubmissions(subs);
+
+      // Resolve submitter names for the grading table.
+      const studentIds = [...new Set(subs.map(s => s.student_id).filter(Boolean))];
+      if (studentIds.length > 0) {
+        const { data: studentProfiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', studentIds);
+        setStudentNames(
+          Object.fromEntries(
+            (studentProfiles || []).map(p => [p.id as string, (p.full_name as string) || 'Unknown student'])
+          )
+        );
+      } else {
+        setStudentNames({});
+      }
     } else {
       setSubmissions([]);
+      setStudentNames({});
     }
 
     // Fetch announcements
@@ -411,7 +431,7 @@ export default function TeacherDashboard() {
                       return (
                         <tr key={submission.id} className="border-t border-foreground/10">
                           <td className="p-4 font-medium">{assignment?.title || 'Unknown'}</td>
-                          <td className="p-4 text-muted-foreground">Student</td>
+                          <td className="p-4 text-muted-foreground">{studentNames[submission.student_id] || 'Unknown student'}</td>
                           <td className="p-4 text-muted-foreground">
                             {new Date(submission.submitted_at).toLocaleDateString()}
                           </td>

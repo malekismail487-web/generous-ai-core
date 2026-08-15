@@ -61,7 +61,7 @@ export function useGoalAutoTracker(goals: { id: string; goal_type: string; curre
           }
           case 'assignments': {
             const { count } = await supabase
-              .from('assignment_submissions')
+              .from('submissions')
               .select('*', { count: 'exact', head: true })
               .eq('student_id', user.id)
               .gte('submitted_at', createdAt);

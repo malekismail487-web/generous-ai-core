@@ -78,11 +78,9 @@ export function AssignmentPerformanceAnalytics({ schoolId, teacherId }: Props) {
 
     const profileMap = new Map((profiles || []).map(p => [p.id, p.full_name]));
 
-    // Get assignment_submissions (quiz answers) for question-level breakdown
-    const { data: quizSubmissions } = await supabase
-      .from('assignment_submissions')
-      .select('assignment_id, student_id, content, grade')
-      .in('assignment_id', assignmentIds);
+    // Quiz answers live in the same canonical `submissions` rows fetched above,
+    // so the question-level breakdown reads from that single source of truth.
+    const quizSubmissions = submissions || [];
 
     const result: AssignmentAnalytics[] = assignments.map(assignment => {
       const questions = Array.isArray(assignment.questions_json) ? assignment.questions_json : [];
