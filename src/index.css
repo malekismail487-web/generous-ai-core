@@ -685,3 +685,287 @@
   0%, 50% { transform: rotate(0deg); }
   50.1%, 100% { transform: rotate(30deg); }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   LIQUID GLASS — an optical layer over Onyx.
+   Real glass is three things: a blur, a specular edge, and a
+   caustic that moves. Every utility below builds one of those.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --lg-blur: 26px;
+  --lg-sat: 175%;
+  --lg-tint: var(--ink);
+  --lg-film: 0.055;
+  --lg-edge: 0.16;
+  --lg-speed: 14s;
+}
+
+@layer utilities {
+
+  /* ── Core pane ─────────────────────────────── */
+  .liquid-glass {
+    position: relative;
+    isolation: isolate;
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--lg-tint) / var(--lg-edge));
+    background:
+      linear-gradient(158deg,
+        hsl(var(--lg-tint) / calc(var(--lg-film) * 1.9)) 0%,
+        hsl(var(--lg-tint) / calc(var(--lg-film) * 0.5)) 38%,
+        hsl(var(--onyx) / 0.35) 100%);
+    backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat));
+    -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat));
+    box-shadow:
+      inset 0 1px 0 0 hsl(var(--lg-tint) / 0.22),
+      inset 0 -1px 0 0 hsl(var(--lg-tint) / 0.05),
+      inset 0 0 34px -12px hsl(var(--lg-tint) / 0.16),
+      var(--shadow-card);
+    overflow: hidden;
+  }
+
+  /* Specular crescent — the light caught on the top curve */
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: -40% -12% auto -12%;
+    height: 78%;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: -1;
+    background: radial-gradient(60% 100% at 50% 100%,
+      hsl(var(--lg-tint) / 0.14) 0%,
+      hsl(var(--lg-tint) / 0.04) 45%,
+      transparent 72%);
+    filter: blur(6px);
+  }
+
+  /* Caustic — slow refracted light wandering under the pane */
+  .liquid-glass::after {
+    content: '';
+    position: absolute;
+    inset: -30%;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.5;
+    background:
+      radial-gradient(28% 34% at 22% 28%, hsl(var(--lg-tint) / 0.10), transparent 65%),
+      radial-gradient(26% 30% at 78% 68%, hsl(var(--lg-tint) / 0.075), transparent 68%),
+      radial-gradient(40% 22% at 55% 105%, hsl(var(--lg-tint) / 0.06), transparent 70%);
+    filter: blur(22px);
+    animation: liquid-caustic var(--lg-speed) var(--ease-orbit) infinite alternate;
+  }
+
+  .liquid-glass-strong {
+    --lg-blur: 40px;
+    --lg-film: 0.085;
+    --lg-edge: 0.2;
+  }
+
+  .liquid-glass-soft {
+    --lg-blur: 16px;
+    --lg-film: 0.032;
+    --lg-edge: 0.1;
+  }
+
+  /* Panes that must not clip children (dropdowns, popovers) */
+  .liquid-glass-open { overflow: visible; }
+
+  /* ── Rim light: a travelling highlight on the border ── */
+  .liquid-rim::after,
+  .liquid-rim > .rim {
+    pointer-events: none;
+  }
+  .liquid-rim {
+    position: relative;
+  }
+  .liquid-rim > .liquid-rim-line {
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from 180deg,
+      transparent 0deg,
+      hsl(var(--lg-tint) / 0.42) 40deg,
+      transparent 110deg,
+      transparent 250deg,
+      hsl(var(--lg-tint) / 0.22) 300deg,
+      transparent 360deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: liquid-rim-spin 11s linear infinite;
+    pointer-events: none;
+  }
+
+  /* ── Wet sheen sweep on hover ───────────────── */
+  .liquid-sheen {
+    position: relative;
+    overflow: hidden;
+  }
+  .liquid-sheen > .liquid-sheen-band {
+    position: absolute;
+    top: -60%;
+    bottom: -60%;
+    width: 42%;
+    left: -60%;
+    pointer-events: none;
+    background: linear-gradient(100deg,
+      transparent, hsl(var(--lg-tint) / 0.14), transparent);
+    filter: blur(8px);
+    transform: skewX(-14deg);
+    transition: left 900ms var(--ease-orbit);
+  }
+  .liquid-sheen:hover > .liquid-sheen-band { left: 130%; }
+
+  /* ── Interactive lift ───────────────────────── */
+  .liquid-press {
+    transition:
+      transform 420ms var(--ease-orbit),
+      box-shadow 420ms var(--ease-orbit),
+      border-color 420ms var(--ease-orbit),
+      backdrop-filter 420ms var(--ease-orbit);
+  }
+  .liquid-press:hover {
+    transform: translateY(-3px);
+    border-color: hsl(var(--lg-tint) / 0.3);
+    box-shadow:
+      inset 0 1px 0 0 hsl(var(--lg-tint) / 0.3),
+      inset 0 0 44px -14px hsl(var(--lg-tint) / 0.24),
+      var(--shadow-elevated);
+  }
+  .liquid-press:active {
+    transform: translateY(0) scale(0.988);
+  }
+
+  /* ── Tab rail ───────────────────────────────── */
+  .liquid-tablist {
+    position: relative;
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--lg-tint) / 0.12);
+    background:
+      linear-gradient(180deg,
+        hsl(var(--lg-tint) / 0.07) 0%,
+        hsl(var(--onyx) / 0.5) 100%);
+    backdrop-filter: blur(22px) saturate(170%);
+    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    box-shadow:
+      inset 0 1px 0 0 hsl(var(--lg-tint) / 0.16),
+      inset 0 -8px 20px -14px hsl(var(--lg-tint) / 0.28),
+      0 14px 34px -22px hsl(0 0% 0% / 0.9);
+  }
+
+  .liquid-tab {
+    position: relative;
+    isolation: isolate;
+    transition: color 320ms var(--ease-orbit), transform 320ms var(--ease-orbit);
+  }
+  .liquid-tab::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: 9999px;
+    opacity: 0;
+    transform: scale(0.82);
+    transition: opacity 340ms var(--ease-orbit), transform 340ms var(--ease-orbit);
+    background:
+      linear-gradient(180deg,
+        hsl(var(--lg-tint) / 0.2) 0%,
+        hsl(var(--lg-tint) / 0.07) 55%,
+        hsl(var(--lg-tint) / 0.02) 100%);
+    border: 1px solid hsl(var(--lg-tint) / 0.22);
+    box-shadow:
+      inset 0 1px 0 0 hsl(var(--lg-tint) / 0.4),
+      inset 0 -6px 14px -10px hsl(var(--lg-tint) / 0.4),
+      0 8px 22px -14px hsl(0 0% 0% / 1);
+  }
+  .liquid-tab[data-state='active']::before,
+  .liquid-tab[aria-selected='true']::before,
+  .liquid-tab.is-active::before {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .liquid-tab:hover::before { opacity: 0.45; transform: scale(0.96); }
+  .liquid-tab[data-state='active'] { transform: translateY(-1px); }
+
+  /* Droplet under the active tab */
+  .liquid-tab::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -3px;
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    background: hsl(var(--lg-tint) / 0.75);
+    transform: translate(-50%, 6px) scale(0);
+    opacity: 0;
+    transition: transform 380ms var(--ease-orbit), opacity 380ms var(--ease-orbit);
+  }
+  .liquid-tab[data-state='active']::after {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+
+  /* ── Ambient field behind everything ────────── */
+  .liquid-field {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .liquid-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(72px);
+    mix-blend-mode: screen;
+    opacity: 0.55;
+    background: radial-gradient(circle at 35% 35%,
+      hsl(var(--lg-tint) / 0.14), hsl(var(--lg-tint) / 0.03) 55%, transparent 72%);
+    animation: liquid-wander 26s var(--ease-orbit) infinite alternate;
+  }
+
+  /* Hairline divider that reads like a meniscus */
+  .liquid-hairline {
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      hsl(var(--lg-tint) / 0.22) 18%,
+      hsl(var(--lg-tint) / 0.42) 50%,
+      hsl(var(--lg-tint) / 0.22) 82%,
+      transparent);
+  }
+
+  /* Etched micro-label */
+  .liquid-label {
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: hsl(var(--lg-tint) / 0.42);
+  }
+}
+
+@keyframes liquid-caustic {
+  0%   { transform: translate3d(-4%, -3%, 0) scale(1) rotate(0deg); }
+  50%  { transform: translate3d(5%, 4%, 0) scale(1.14) rotate(6deg); }
+  100% { transform: translate3d(-3%, 6%, 0) scale(0.96) rotate(-5deg); }
+}
+
+@keyframes liquid-rim-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes liquid-wander {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(6vw, -5vh, 0) scale(1.25); }
+  100% { transform: translate3d(-5vw, 7vh, 0) scale(0.9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass::after,
+  .liquid-rim > .liquid-rim-line,
+  .liquid-blob { animation: none !important; }
+}
