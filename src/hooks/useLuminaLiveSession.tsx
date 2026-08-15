@@ -487,8 +487,20 @@ export function useLuminaLiveSession(
     schedulerRef.current = createPriorityScheduler();
     cacheRef.current = createContextCache({ capacity: HOOK_CACHE_CAPACITY });
 
+    // Pre-warm the hot path while the channel is still handshaking: the ALE
+    // snapshot and the access token are both fetched here so the first
+    // teacher event streams without any preparatory round-trip.
+    void refreshAleContext();
+    void refreshJwt();
+    const { data: authSub } = supabase.auth.onAuthStateChange((_evt, s) => {
+      jwtRef.current = s?.access_token ?? jwtRef.current;
+    });
+    // Keep the ALE snapshot warm for the duration of the lesson.
+    const aleTimer = window.setInterval(() => { void refreshAleContext(); }, ALE_CTX_REVALIDATE_MS);
+
     setSession("subscribing");
     setSubscribeError(null);
+
 
     const channel = supabase.channel(`lesson:${lessonId}`, {
       config: { private: true, broadcast: { self: false, ack: false } },
