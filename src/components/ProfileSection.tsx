@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Loader2, Sun, Moon, Globe, Heart, Copy, Check } from 'lucide-react';
+import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Loader2, Sun, Moon, Globe, Heart, Copy, Check, Droplet } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { useToast } from '@/hooks/use-toast';
 import { tr } from '@/lib/translations';
 import { useWallpaper } from '@/hooks/useWallpaper';
+import { useLensPreference } from '@/hooks/useLensPreference';
 import { supabase } from '@/integrations/supabase/client';
 import { SchoolAdminPanel } from '@/components/SchoolAdminPanel';
 import SuperAdminPanel from '@/components/SuperAdminPanel';
@@ -30,6 +31,7 @@ export function ProfileSection() {
   const { isAdmin, isHardcodedAdmin, verifyAdminCode } = useUserRole();
   const { profile, school, isSchoolAdmin, loading } = useSchool();
   const { theme, language, setTheme, setLanguage, t } = useThemeLanguage();
+  const { lensEnabled, setLensEnabled } = useLensPreference();
   
   const { toast } = useToast();
   const tl = (key: Parameters<typeof tr>[0]) => tr(key, language);
@@ -255,6 +257,42 @@ export function ProfileSection() {
               'هذا هو الإعداد الافتراضي في كل مكان. يمكن تغيير أي شاشة ذكاء اصطناعي بشكل منفصل.',
             )}
           </p>
+        </div>
+
+        {/* Liquid lens — the draggable glass oval */}
+        <div className="liquid-glass rounded-2xl p-5 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Droplet size={16} />
+                {t('Liquid lens', 'العدسة السائلة')}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t(
+                  'The draggable glass oval with quick shortcuts.',
+                  'الشكل البيضاوي الزجاجي القابل للسحب مع الاختصارات السريعة.',
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={lensEnabled}
+              aria-label={t('Liquid lens', 'العدسة السائلة')}
+              onClick={() => setLensEnabled(!lensEnabled)}
+              className={cn(
+                'relative h-7 w-12 shrink-0 rounded-full border transition-colors duration-300',
+                lensEnabled ? 'bg-primary border-primary' : 'bg-secondary/60 border-foreground/15',
+              )}
+            >
+              <span
+                className={cn(
+                  'absolute top-0.5 h-6 w-6 rounded-full bg-background shadow transition-transform duration-300',
+                  lensEnabled ? 'translate-x-[22px]' : 'translate-x-0.5',
+                )}
+              />
+            </button>
+          </div>
         </div>
 
         {/* Wallpaper */}

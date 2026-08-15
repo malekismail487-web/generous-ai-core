@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCalmMotion } from '@/lib/motion';
+import { useLensPreference } from '@/hooks/useLensPreference';
 
 /**
  * LiquidLens — the draggable glass oval.
@@ -56,6 +57,7 @@ export function LiquidLens({
 }: LiquidLensProps) {
   const lensRef = useRef<HTMLDivElement>(null);
   const calm = useCalmMotion();
+  const { lensEnabled } = useLensPreference();
   const [open, setOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
 
@@ -218,6 +220,9 @@ export function LiquidLens({
     el.style.setProperty('--gx', `${((event.clientX - rect.left) / rect.width) * 100}%`);
     el.style.setProperty('--gy', `${((event.clientY - rect.top) / rect.height) * 100}%`);
   };
+
+  // Turned off from Settings → the lens simply isn't part of the surface.
+  if (!lensEnabled) return null;
 
   return (
     <div

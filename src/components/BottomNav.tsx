@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Home, Calendar, User, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
@@ -23,6 +24,69 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
     { id: 'profile' as const, icon: User, label: t('Profile', 'الملف الشخصي') },
   ];
 
+  // The dock blob slides sideways only — grab it anywhere and it follows the
+  // finger on the X axis, clamped to whatever slack the viewport leaves.
+  const railRef = useRef<HTMLDivElement>(null);
+  const [offset, setOffset] = useState(0);
+  const [sliding, setSliding] = useState(false);
+  const startX = useRef(0);
+  const startOffset = useRef(0);
+  const travelled = useRef(0);
+
+  const clampOffset = useCallback((value: number) => {
+    const el = railRef.current;
+    if (!el) return value;
+    const slack = Math.max(0, (window.innerWidth - el.offsetWidth) / 2);
+    return Math.min(Math.max(value, -slack), slack);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('lumina.dock.x');
+      if (raw) setOffset(clampOffset(Number(raw) || 0));
+    } catch {
+      /* a corrupt entry just means the dock stays centred */
+    }
+    const onResize = () => setOffset((v) => clampOffset(v));
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [clampOffset]);
+
+  useEffect(() => {
+    if (!sliding) return;
+    const onMove = (event: PointerEvent) => {
+      travelled.current = Math.max(travelled.current, Math.abs(event.clientX - startX.current));
+      setOffset(clampOffset(startOffset.current + (event.clientX - startX.current)));
+    };
+    const onUp = () => {
+      setSliding(false);
+      setOffset((v) => {
+        try {
+          localStorage.setItem('lumina.dock.x', String(v));
+        } catch {
+          /* storage is best-effort */
+        }
+        return v;
+      });
+    };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+    };
+  }, [sliding, clampOffset]);
+
+  const onDockPointerDown = (event: React.PointerEvent) => {
+    startX.current = event.clientX;
+    startOffset.current = offset;
+    travelled.current = 0;
+    setSliding(true);
+  };
+
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-foreground/10 bg-background/45 backdrop-blur-2xl backdrop-saturate-150"
@@ -35,7 +99,15 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         className="pointer-events-none absolute inset-x-0 top-0 h-10 opacity-60"
         style={{ background: 'linear-gradient(180deg, hsl(var(--ink) / 0.08), transparent)' }}
       />
-      <div className="relative flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+      <div
+        ref={railRef}
+        onPointerDown={onDockPointerDown}
+        className={cn(
+          'relative flex items-center justify-around h-16 max-w-lg mx-auto px-2 touch-pan-y select-none',
+          sliding ? 'cursor-grabbing' : 'cursor-grab transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
+        )}
+        style={{ transform: `translateX(${offset}px)` }}
+      >
 
         {bottomTabs.map((tab) => {
           const Icon = tab.icon;
@@ -46,7 +118,11 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           return (
             <button
               key={tab.id}
-              onClick={() => onTabChange(tab.id)}
+              onClick={() => {
+                // A slide isn't a tap — ignore the click that ends a drag.
+                if (travelled.current > 6) return;
+                onTabChange(tab.id);
+              }}
               className={cn(
                 "liquid-tab flex flex-col items-center justify-center gap-0.5 flex-1 h-full rounded-2xl transition-all duration-300",
                 isActive ? "text-foreground is-active" : "text-muted-foreground hover:text-foreground"
