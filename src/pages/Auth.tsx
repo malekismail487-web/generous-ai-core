@@ -1494,7 +1494,10 @@ export default function Auth() {
             </form>
           </TabsContent>
         </Tabs>
+
+        <Manifesto compact className="mt-12" />
       </div>
+
     </div>
   );
 }
