@@ -154,18 +154,21 @@ function similarity(a: string, b: string): number {
 }
 
 async function handlePredict(req: Request, user: { id: string; schoolId: string | null; name: string; grade: string | null }) {
-  const body = await req.json();
-  const question: string = (body.question ?? "").toString().slice(0, 4000);
-  const subject: string | null = body.subject ?? null;
-  const topic: string | null = body.topic ?? null;
-  const context = body.context ?? {};
-  const source: string = (body.source ?? "chat").toString().slice(0, 32);
+  let body: any = {};
+  try { body = await req.json(); } catch { body = {}; }
+  const question: string = (body?.question ?? "").toString().trim().slice(0, 4000);
+  const subject: string | null = body?.subject ?? null;
+  const topic: string | null = body?.topic ?? null;
+  const context = body?.context ?? {};
+  const source: string = (body?.source ?? "chat").toString().slice(0, 32);
 
-  if (!question || question.length < 3) {
-    return new Response(JSON.stringify({ error: "question required" }), {
-      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+  // Prediction is an optional, silent background enhancement — never fail the caller.
+  if (question.length < 3) {
+    return new Response(JSON.stringify({ skipped: true, reason: "question too short" }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
 
   const dossier = await buildStudentDossier(user.id);
 
