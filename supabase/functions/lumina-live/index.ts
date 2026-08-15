@@ -397,7 +397,14 @@ serve(async (req) => {
     });
   }
 
-  const user = await authenticate(req);
+  // Auth verification and body parsing are independent — run them
+  // concurrently so a cold auth check never serializes ahead of the parse.
+  const INVALID_JSON = Symbol("invalid_json");
+  const [user, rawBody] = await Promise.all([
+    authenticate(req),
+    req.json().catch(() => INVALID_JSON as unknown),
+  ]);
+
   if (!user) {
     return new Response(JSON.stringify({ error: "unauthorized" }), {
       status: 401,
@@ -405,13 +412,13 @@ serve(async (req) => {
     });
   }
 
-  let rawBody: unknown;
-  try { rawBody = await req.json(); } catch {
+  if (rawBody === INVALID_JSON) {
     return new Response(JSON.stringify({ error: "invalid_json" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
 
   const parsed = validate(rawBody);
   if (!parsed.ok) {
