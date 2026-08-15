@@ -92,7 +92,10 @@ export async function streamChat({
 
         try {
           const parsed = JSON.parse(jsonStr);
-          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          const delta = parsed.choices?.[0]?.delta;
+          const reasoning = (delta?.reasoning_content ?? delta?.reasoning) as string | undefined;
+          if (reasoning && onReasoning) onReasoning(reasoning);
+          const content = delta?.content as string | undefined;
           if (content) onDelta(content);
         } catch {
           textBuffer = line + "\n" + textBuffer;
@@ -112,7 +115,10 @@ export async function streamChat({
         if (jsonStr === "[DONE]") continue;
         try {
           const parsed = JSON.parse(jsonStr);
-          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          const delta = parsed.choices?.[0]?.delta;
+          const reasoning = (delta?.reasoning_content ?? delta?.reasoning) as string | undefined;
+          if (reasoning && onReasoning) onReasoning(reasoning);
+          const content = delta?.content as string | undefined;
           if (content) onDelta(content);
         } catch {
           /* ignore */
