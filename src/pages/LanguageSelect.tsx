@@ -42,12 +42,12 @@ export default function LanguageSelect() {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
           className="absolute -top-1/3 left-1/4 w-[70vw] h-[70vw] rounded-full blur-[120px] animate-aurora-drift"
-          style={{ background: 'radial-gradient(circle, hsl(var(--ink) / 0.10), transparent 65%)' }}
+          style={{ background: 'radial-gradient(circle, hsl(var(--ink) / 0.035), transparent 60%)' }}
         />
         <div
           className="absolute -bottom-1/3 right-1/4 w-[60vw] h-[60vw] rounded-full blur-[120px] animate-aurora-drift"
           style={{
-            background: 'radial-gradient(circle, hsl(var(--ink) / 0.07), transparent 65%)',
+            background: 'radial-gradient(circle, hsl(var(--ink) / 0.025), transparent 60%)',
             animationDelay: '-8s',
           }}
         />

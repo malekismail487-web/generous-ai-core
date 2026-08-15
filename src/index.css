@@ -67,7 +67,7 @@
     --shadow-elevated: 0 40px 80px -32px hsl(0 0% 0% / 1);
     --shadow-inset: inset 0 1px 0 0 hsl(var(--ink) / 0.06);
 
-    --grain-opacity: 0.04;
+    --grain-opacity: 0.025;
     --ease-orbit: cubic-bezier(0.16, 1, 0.3, 1);
   }
 

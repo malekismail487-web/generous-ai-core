@@ -858,7 +858,7 @@ export default function Auth() {
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-1/4 left-1/3 w-[60vw] h-[60vw] rounded-full blur-[130px] animate-aurora-drift"
-          style={{ background: 'radial-gradient(circle, hsl(var(--ink) / 0.08), transparent 65%)' }}
+          style={{ background: 'radial-gradient(circle, hsl(var(--ink) / 0.03), transparent 60%)' }}
         />
       </div>
       <div className="grain-overlay" />
