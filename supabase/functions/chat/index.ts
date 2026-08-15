@@ -448,6 +448,16 @@ Provide answers with citations when referencing external information.`;
     // The AI Gateway accepts OpenAI-compatible format with image_url parts
     const allMessages = [{ role: "system", content: systemPrompt }, ...messages];
 
+    // Effort tiers: Quick answers instantly, Balanced is the everyday default,
+    // Thinking deliberates on every answer, Maximum uses the model's full depth.
+    const EFFORT_MAP: Record<string, "none" | "low" | "medium" | "high"> = {
+      low: "none",
+      medium: "low",
+      high: "medium",
+      extreme: "high",
+    };
+    const reasoningEffort = EFFORT_MAP[String(effort ?? "medium")] ?? "low";
+
     const response = await fetch(AI_GATEWAY_URL, {
       method: "POST",
       headers: {
@@ -458,14 +468,11 @@ Provide answers with citations when referencing external information.`;
         model: "openai/gpt-5.6-sol",
         messages: allMessages,
         stream: true,
-        // Gemini 2.5 Flash burns hidden thinking tokens before the first token
-        // is emitted. Lumina already produces its own visible <thinking> block,
-        // so hidden reasoning is redundant latency — keep it low, not off, so
-        // multi-step math/science accuracy is preserved.
-        reasoning_effort: "none",
+        reasoning_effort: reasoningEffort,
       }),
 
     });
+
 
     if (!response.ok) {
       if (response.status === 429) {
