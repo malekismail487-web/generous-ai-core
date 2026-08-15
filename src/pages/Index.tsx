@@ -37,6 +37,9 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { LuminaLogo } from "@/components/LuminaLogo";
 import { Button } from "@/components/ui/button";
+import { DesktopShell } from "@/components/shell/DesktopShell";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
