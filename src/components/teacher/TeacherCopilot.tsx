@@ -103,6 +103,9 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
     setChatMessages([]);
     setChatInput('');
     setIsRefining(false);
+    setBusyId(null);
+    setRewriteFor(null);
+    setRewriteText('');
   };
 
   const handleGenerate = async () => {
