@@ -134,9 +134,10 @@
   }
 
   .dark {
-    --background: 240 6% 4%;
-    --foreground: 60 4% 95%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 96%;
   }
+
 }
 
 
