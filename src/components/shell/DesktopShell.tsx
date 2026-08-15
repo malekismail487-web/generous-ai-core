@@ -214,7 +214,7 @@ export function DesktopShell({ activeTab, onTabChange, title, subtitle, children
 
       {/* Workspace */}
       <div className="relative z-10 flex-1 min-w-0 flex flex-col">
-        <header className="relative z-20 h-16 shrink-0 flex items-center gap-4 px-8 border-b border-foreground/10 bg-background/45 backdrop-blur-2xl backdrop-saturate-150">
+        <header className="relative z-20 min-h-16 shrink-0 flex items-center gap-4 px-8 py-2 border-b border-foreground/10 bg-background/45 backdrop-blur-2xl backdrop-saturate-150">
           <span aria-hidden className="liquid-hairline pointer-events-none absolute inset-x-8 -bottom-px opacity-60" />
           <span
             aria-hidden
