@@ -75,7 +75,7 @@ export default function ParentDashboard() {
     // Load all data in parallel
     const [assignmentsRes, submissionsRes, announcementsRes, streakRes, learningRes] = await Promise.all([
       supabase.from('assignments').select('*').eq('school_id', link.school_id).order('created_at', { ascending: false }).limit(20),
-      supabase.from('assignment_submissions').select('*, assignments(title, subject)').eq('student_id', link.student_id).order('submitted_at', { ascending: false }).limit(20),
+      supabase.from('submissions').select('*, assignments(title, subject)').eq('student_id', link.student_id).order('submitted_at', { ascending: false }).limit(20),
       supabase.from('announcements').select('*').eq('school_id', link.school_id).order('created_at', { ascending: false }).limit(10),
       supabase.from('daily_streaks').select('current_streak, max_streak').eq('user_id', link.student_id).maybeSingle(),
       supabase.from('student_learning_profiles').select('*').eq('user_id', link.student_id),

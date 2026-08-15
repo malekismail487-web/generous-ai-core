@@ -27,7 +27,8 @@ export interface AssignmentSubmission {
   student_id: string;
   content: string | null;
   submitted_at: string;
-  grade: string | null;
+  /** Canonical `submissions.grade` is an integer point score (null = ungraded). */
+  grade: number | null;
   feedback: string | null;
   graded_at: string | null;
   graded_by: string | null;
@@ -84,7 +85,7 @@ export function useAssignments() {
     }
 
     const { data, error } = await supabase
-      .from('assignment_submissions')
+      .from('submissions')
       .select('*')
       .eq('student_id', user.id)
       .order('submitted_at', { ascending: false });
@@ -144,7 +145,7 @@ export function useAssignments() {
     if (existing) {
       // Update existing submission
       const { data, error } = await supabase
-        .from('assignment_submissions')
+        .from('submissions')
         .update({ content, submitted_at: new Date().toISOString() })
         .eq('id', existing.id)
         .select()
@@ -167,7 +168,7 @@ export function useAssignments() {
 
     // Create new submission
     const { data, error } = await supabase
-      .from('assignment_submissions')
+      .from('submissions')
       .insert({
         assignment_id: assignmentId,
         student_id: user.id,
@@ -194,13 +195,13 @@ export function useAssignments() {
   // Grade submission (teachers)
   const gradeSubmission = useCallback(async (
     submissionId: string,
-    grade: string,
+    grade: number,
     feedback: string | null
   ) => {
     if (!user) return false;
 
     const { error } = await supabase
-      .from('assignment_submissions')
+      .from('submissions')
       .update({
         grade,
         feedback,
@@ -226,7 +227,7 @@ export function useAssignments() {
   // Get submissions for an assignment (teachers)
   const getSubmissionsForAssignment = useCallback(async (assignmentId: string) => {
     const { data, error } = await supabase
-      .from('assignment_submissions')
+      .from('submissions')
       .select('*')
       .eq('assignment_id', assignmentId)
       .order('submitted_at', { ascending: false });
