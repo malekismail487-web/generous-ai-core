@@ -47,39 +47,37 @@ export function useSchoolAdmin() {
   }, [fetchUsers]);
 
   // Approve a user
+  // Both approval paths must produce identical side effects, so this defers to
+  // the same server-side logic the /admin invite-request flow uses.
   const approveUser = useCallback(async (userId: string) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ status: 'approved' })
-      .eq('id', userId);
+    const { data, error } = await supabase.rpc('approve_school_profile', { p_profile_id: userId });
+    const result = data as { success?: boolean; error?: string } | null;
 
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error approving user' });
+    if (error || !result?.success) {
+      toast({
+        variant: 'destructive',
+        title: 'Error approving user',
+        description: result?.error || error?.message,
+      });
       return false;
-    }
-
-    // If user is a teacher, add teacher role
-    const user = allUsers.find(u => u.id === userId);
-    if (user?.user_type === 'teacher') {
-      await supabase
-        .from('user_roles')
-        .insert({ user_id: userId, role: 'teacher' });
     }
 
     toast({ title: 'User approved!' });
     fetchUsers();
     return true;
-  }, [toast, fetchUsers, allUsers]);
+  }, [toast, fetchUsers]);
 
   // Reject a user
   const rejectUser = useCallback(async (userId: string) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ status: 'rejected' })
-      .eq('id', userId);
+    const { data, error } = await supabase.rpc('reject_school_profile', { p_profile_id: userId });
+    const result = data as { success?: boolean; error?: string } | null;
 
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error rejecting user' });
+    if (error || !result?.success) {
+      toast({
+        variant: 'destructive',
+        title: 'Error rejecting user',
+        description: result?.error || error?.message,
+      });
       return false;
     }
 
