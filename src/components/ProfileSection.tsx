@@ -245,8 +245,20 @@ export function ProfileSection() {
           </div>
         </div>
 
+        {/* AI effort — the workspace-wide default for every Lumina surface */}
+        <div className="glass-effect rounded-2xl p-5 mb-4">
+          <EffortSelector variant="panel" />
+          <p className="mt-3 text-xs text-muted-foreground">
+            {t(
+              'This is your default everywhere. Any AI screen can be turned up or down on its own.',
+              'هذا هو الإعداد الافتراضي في كل مكان. يمكن تغيير أي شاشة ذكاء اصطناعي بشكل منفصل.',
+            )}
+          </p>
+        </div>
+
         {/* Wallpaper */}
         <WallpaperCircleSelector />
+
 
         {/* Language */}
         <div className="glass-effect rounded-2xl p-5 mb-4">
