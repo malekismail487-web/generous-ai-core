@@ -83,7 +83,12 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isRefining, setIsRefining] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [rewriteFor, setRewriteFor] = useState<string | null>(null);
+  const [rewriteText, setRewriteText] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const t2 = (en: string, ar: string) => (language === 'ar' ? ar : en);
 
   const reset = () => {
     setStep('configure');
