@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCalmMotion } from '@/lib/motion';
+import { useLensPreference } from '@/hooks/useLensPreference';
 
 /**
  * LiquidLens — the draggable glass oval.
