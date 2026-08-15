@@ -6,18 +6,23 @@ import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
   [
-    "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium",
+    "group relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium tracking-[-0.01em]",
     "ring-offset-background overflow-hidden isolate select-none",
-    "transition-[transform,background-color,border-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-    "hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.98]",
+    "transition-[transform,background-color,border-color,color,box-shadow,letter-spacing] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+    "hover:-translate-y-[1.5px] active:translate-y-[0.5px] active:scale-[0.985]",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
     "disabled:pointer-events-none disabled:opacity-40 disabled:translate-y-0",
     "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:transition-transform [&_svg]:duration-300",
+    "hover:[&_svg]:scale-110",
     // Sheen sweep on hover — the shared Onyx button gesture.
     "before:content-[''] before:absolute before:inset-y-0 before:-left-1/2 before:w-1/2 before:skew-x-[18deg]",
     "before:bg-gradient-to-r before:from-transparent before:via-white/15 before:to-transparent",
     "before:opacity-0 before:transition-opacity before:duration-200 before:-z-10",
     "hover:before:opacity-100 hover:before:animate-sheen",
+    // Top edge highlight — a single filament of light across the crown.
+    "after:content-[''] after:absolute after:inset-x-3 after:top-0 after:h-px after:-z-10",
+    "after:bg-gradient-to-r after:from-transparent after:via-white/25 after:to-transparent",
+    "after:opacity-0 after:transition-opacity after:duration-300 hover:after:opacity-100",
   ].join(" "),
   {
     variants: {
@@ -31,14 +36,25 @@ const buttonVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:
-          "before:hidden hover:bg-accent hover:text-accent-foreground",
+          "before:hidden after:hidden hover:bg-accent hover:text-accent-foreground",
         link:
-          "before:hidden hover:-translate-y-0 text-primary underline-offset-4 hover:underline",
+          "before:hidden after:hidden hover:-translate-y-0 text-primary underline-offset-4 hover:underline",
+        // Onyx signature: a carved slab of black with a lit rim.
+        onyx:
+          "border border-white/10 bg-[hsl(0_0%_5%)] text-foreground shadow-[var(--shadow-card),var(--shadow-inset)] hover:border-white/25 hover:bg-[hsl(0_0%_8%)] hover:shadow-[var(--shadow-elevated)]",
+        // Hero: inverted ink, the one action that matters on a screen.
+        hero:
+          "bg-foreground text-background font-semibold shadow-[var(--shadow-elevated)] hover:shadow-[0_0_60px_-12px_hsl(var(--ink)/0.45)] hover:tracking-[0.01em]",
+        // Quiet: present, but never competing.
+        quiet:
+          "before:hidden text-muted-foreground hover:text-foreground hover:bg-white/[0.04]",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-lg px-3",
         lg: "h-12 rounded-2xl px-8 text-base",
+        xl: "h-14 rounded-[1.35rem] px-10 text-base",
+        pill: "h-11 rounded-full px-6",
         icon: "h-10 w-10 rounded-xl",
       },
     },
@@ -48,6 +64,7 @@ const buttonVariants = cva(
     },
   },
 );
+
 
 
 export interface ButtonProps

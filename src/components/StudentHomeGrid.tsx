@@ -80,13 +80,20 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
           </div>
           <div className="flex items-center justify-between mb-5 relative z-10">
             <div>
-              <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
-                {t(`Hello ${firstName} 👋`, `مرحباً ${firstName} 👋`)}
+              <p className="text-[9px] uppercase tracking-[0.34em] text-muted-foreground mb-2">
+                {t('Your engine is listening', 'محرّكك يتابعك')}
+              </p>
+              <h1 className="font-display text-2xl font-extrabold text-foreground tracking-tight">
+                {t(`Hello ${firstName}`, `مرحباً ${firstName}`)}
               </h1>
-              <p className="text-muted-foreground text-sm mt-1">
-                {t('Ready to learn something new today?', 'مستعد لتعلم شيء جديد اليوم؟')}
+              <p className="text-muted-foreground text-sm mt-1 leading-relaxed max-w-[22rem]">
+                {t(
+                  'Everything below is one surface of the same tutor — it remembers what you got wrong last time and teaches around it.',
+                  'كل ما تراه أدناه وجه واحد لنفس المعلّم — يتذكر أخطاءك السابقة ويبني الشرح حولها.',
+                )}
               </p>
             </div>
+
             <div className="flex items-center gap-2 bg-muted/50 backdrop-blur-sm rounded-2xl px-3.5 py-2.5 border border-border/30">
               <Flame className="w-5 h-5 text-muted-foreground" />
               <span className="text-foreground font-bold text-lg">{streakLoading ? '...' : currentStreak}</span>
@@ -219,7 +226,24 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
           </div>
         </div>
       </div>
+
+      {/* Closing note — the map explained in plain words */}
+      <div className="mx-4 mb-6 rounded-3xl border border-border/50 bg-white/[0.02] p-5">
+        <div className="relative h-px w-full overflow-hidden bg-border/60 mb-4">
+          <span className="absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-foreground/40 to-transparent animate-sheen" />
+        </div>
+        <p className="text-[9px] uppercase tracking-[0.34em] text-muted-foreground">
+          {t('How to read this map', 'كيف تقرأ هذه الخريطة')}
+        </p>
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          {t(
+            'The centre is Lumina itself — ask it anything, in your own words, with a photo or a PDF if that is easier. The inner ring is how you learn: mind maps, exams, subjects, cards, podcasts, plans and notes. The outer ring is your school life: assignments, the weekly plan, ranking, goals, news, trips, reports and tools. Every tap teaches the engine a little more about you.',
+            'المركز هو لومينا نفسها — اسأل بأي صيغة، بصورة أو ملف إن كان أسهل. الحلقة الداخلية هي طريقة تعلّمك: الخرائط الذهنية والاختبارات والمواد والبطاقات والبودكاست والخطط والملاحظات. الحلقة الخارجية هي حياتك المدرسية: الواجبات والخطة الأسبوعية والترتيب والأهداف والإعلانات والرحلات والتقارير والأدوات. كل نقرة تعلّم المحرك المزيد عنك.',
+          )}
+        </p>
+      </div>
     </div>
+
   );
 }
 

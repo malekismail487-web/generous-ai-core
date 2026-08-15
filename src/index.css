@@ -10,66 +10,67 @@
      One family only: pure carbon surfaces, bone ink.
      ═══════════════════════════════════════════ */
   :root {
-    --background: 240 6% 4%;
-    --foreground: 60 4% 95%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 96%;
 
-    --card: 240 5% 7%;
-    --card-foreground: 60 4% 95%;
+    --card: 0 0% 3.5%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 240 5% 8%;
-    --popover-foreground: 60 4% 95%;
+    --popover: 0 0% 4.5%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 60 4% 95%;
-    --primary-foreground: 240 6% 4%;
+    --primary: 0 0% 96%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 240 5% 11%;
-    --secondary-foreground: 60 3% 82%;
+    --secondary: 0 0% 8%;
+    --secondary-foreground: 0 0% 82%;
 
-    --muted: 240 4% 14%;
-    --muted-foreground: 240 3% 58%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 56%;
 
-    --accent: 240 4% 17%;
-    --accent-foreground: 60 4% 95%;
+    --accent: 0 0% 13%;
+    --accent-foreground: 0 0% 96%;
 
     --destructive: 6 62% 52%;
-    --destructive-foreground: 60 4% 96%;
+    --destructive-foreground: 0 0% 96%;
 
-    --border: 240 4% 15%;
-    --input: 240 4% 15%;
-    --ring: 60 4% 95%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 96%;
 
     --radius: 1.25rem;
 
-    --sidebar-background: 240 6% 3%;
-    --sidebar-foreground: 60 3% 78%;
-    --sidebar-primary: 60 4% 95%;
-    --sidebar-primary-foreground: 240 6% 4%;
-    --sidebar-accent: 240 5% 10%;
-    --sidebar-accent-foreground: 60 4% 95%;
-    --sidebar-border: 240 4% 12%;
-    --sidebar-ring: 60 4% 95%;
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 0 0% 78%;
+    --sidebar-primary: 0 0% 96%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 8%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 0 0% 11%;
+    --sidebar-ring: 0 0% 96%;
 
     /* Depth is built from light, not colour */
-    --ink: 60 4% 95%;
-    --onyx: 240 6% 4%;
+    --ink: 0 0% 96%;
+    --onyx: 0 0% 0%;
 
     --gradient-primary: linear-gradient(135deg, hsl(var(--ink)) 0%, hsl(var(--ink) / 0.55) 100%);
     --gradient-warm: linear-gradient(135deg, hsl(var(--ink) / 0.9) 0%, hsl(var(--ink) / 0.4) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(240 5% 8%) 0%, hsl(240 6% 4%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(var(--ink) / 0.08) 0%, transparent 70%);
-    --gradient-card: linear-gradient(150deg, hsl(240 5% 9%) 0%, hsl(240 5% 6%) 100%);
-    --gradient-hero: radial-gradient(120% 100% at 50% 0%, hsl(240 5% 12%) 0%, hsl(240 6% 4%) 60%);
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 5%) 0%, hsl(0 0% 0%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(var(--ink) / 0.07) 0%, transparent 70%);
+    --gradient-card: linear-gradient(150deg, hsl(0 0% 6%) 0%, hsl(0 0% 2.5%) 100%);
+    --gradient-hero: radial-gradient(120% 100% at 50% 0%, hsl(0 0% 4%) 0%, hsl(0 0% 0%) 55%);
     --gradient-edge: linear-gradient(120deg, hsl(var(--ink) / 0.22), hsl(var(--ink) / 0.02) 45%, hsl(var(--ink) / 0.16));
 
     --shadow-glow: 0 0 80px hsl(var(--ink) / 0.07);
     --shadow-glow-accent: 0 0 48px hsl(var(--ink) / 0.05);
-    --shadow-card: 0 18px 48px -20px hsl(0 0% 0% / 0.85);
-    --shadow-elevated: 0 40px 80px -32px hsl(0 0% 0% / 0.9);
+    --shadow-card: 0 18px 48px -20px hsl(0 0% 0% / 0.95);
+    --shadow-elevated: 0 40px 80px -32px hsl(0 0% 0% / 1);
     --shadow-inset: inset 0 1px 0 0 hsl(var(--ink) / 0.06);
 
-    --grain-opacity: 0.05;
+    --grain-opacity: 0.025;
     --ease-orbit: cubic-bezier(0.16, 1, 0.3, 1);
   }
+
 
   /* ═══════════════════════════════════════════
      BONE — the exact inversion of Onyx.
@@ -133,9 +134,10 @@
   }
 
   .dark {
-    --background: 240 6% 4%;
-    --foreground: 60 4% 95%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 96%;
   }
+
 }
 
 

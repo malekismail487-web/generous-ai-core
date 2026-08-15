@@ -4,6 +4,7 @@ import { LuminaLogo } from '@/components/LuminaLogo';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Manifesto } from '@/components/brand/Manifesto';
 
 const OPTIONS = [
   {
@@ -41,12 +42,12 @@ export default function LanguageSelect() {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
           className="absolute -top-1/3 left-1/4 w-[70vw] h-[70vw] rounded-full blur-[120px] animate-aurora-drift"
-          style={{ background: 'radial-gradient(circle, hsl(var(--ink) / 0.10), transparent 65%)' }}
+          style={{ background: 'radial-gradient(circle, hsl(var(--ink) / 0.035), transparent 60%)' }}
         />
         <div
           className="absolute -bottom-1/3 right-1/4 w-[60vw] h-[60vw] rounded-full blur-[120px] animate-aurora-drift"
           style={{
-            background: 'radial-gradient(circle, hsl(var(--ink) / 0.07), transparent 65%)',
+            background: 'radial-gradient(circle, hsl(var(--ink) / 0.025), transparent 60%)',
             animationDelay: '-8s',
           }}
         />
@@ -55,10 +56,11 @@ export default function LanguageSelect() {
 
       <div
         className={cn(
-          'relative z-10 w-full max-w-md scene-3d transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
+          'relative z-10 w-full max-w-3xl scene-3d transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
           leaving && 'opacity-0 -translate-y-4 blur-sm',
         )}
       >
+
         <div className="flex flex-col items-center mb-12 animate-rise-in">
           <div className="relative mb-6">
             <div className="absolute inset-0 rounded-full blur-2xl opacity-40 nucleus-pulse" />
@@ -70,7 +72,7 @@ export default function LanguageSelect() {
           </p>
         </div>
 
-        <div className="stagger space-y-3">
+        <div className="stagger space-y-3 max-w-md mx-auto">
           {OPTIONS.map((opt) => (
             <button
               key={opt.id}
@@ -104,6 +106,9 @@ export default function LanguageSelect() {
             </button>
           ))}
         </div>
+
+        <Manifesto className="mt-14 animate-rise-in" />
+
       </div>
     </div>
   );
