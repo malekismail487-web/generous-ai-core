@@ -13,7 +13,10 @@ serve(async (req) => {
   }
 
   try {
-    const { title, description, subject, questionCount, gradeLevel, adaptiveLevel } = await req.json();
+    const {
+      title, description, subject, questionCount, gradeLevel, adaptiveLevel,
+      instruction, existingQuestions,
+    } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
