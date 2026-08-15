@@ -24,8 +24,19 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-effect-strong border-t border-border/30" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-foreground/10 bg-background/45 backdrop-blur-2xl backdrop-saturate-150"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
+      {/* meniscus + specular lip */}
+      <span aria-hidden className="liquid-hairline absolute inset-x-6 -top-px opacity-70" />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-10 opacity-60"
+        style={{ background: 'linear-gradient(180deg, hsl(var(--ink) / 0.08), transparent)' }}
+      />
+      <div className="relative flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+
         {bottomTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeBottomTab === tab.id;
