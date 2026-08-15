@@ -47,7 +47,7 @@ export function StudentLiveList() {
                       <span className="font-medium truncate">{m.title}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {m.subject ?? 'Class'} · Grade {m.grade_level} · Code {m.share_code}
+                      {m.subject ?? 'Class'} · {m.grade_level} · Code {m.share_code}
                     </p>
                   </div>
                   <Button onClick={() => navigate(`/live/${m.id}`)} className="gap-2">
@@ -74,7 +74,7 @@ export function StudentLiveList() {
                   <div className="min-w-0 flex-1">
                     <div className="font-medium truncate">{m.title}</div>
                     <p className="text-xs text-muted-foreground">
-                      {m.subject ?? 'Class'} · Grade {m.grade_level} · Code {m.share_code}
+                      {m.subject ?? 'Class'} · {m.grade_level} · Code {m.share_code}
                     </p>
                   </div>
                   <Badge variant="secondary">Scheduled</Badge>

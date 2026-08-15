@@ -47,7 +47,13 @@ interface LiveMeeting {
   ended_at: string | null;
 }
 
-const GRADES = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+// Must match the exact strings stored on profiles.grade_level ("Grade 8"),
+// otherwise the student-side grade filter in useLiveMeetings never matches.
+const GRADES = [
+  'KG1', 'KG2', 'KG3',
+  'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
+  'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12',
+];
 const EVENT_KINDS: { kind: LessonEventKind; label: string }[] = [
   { kind: 'concept', label: 'Concept' },
   { kind: 'definition', label: 'Definition' },
@@ -75,7 +81,7 @@ export default function TeacherLiveConsole() {
 
   const [newTitle, setNewTitle] = useState('');
   const [newSubject, setNewSubject] = useState('');
-  const [newGrade, setNewGrade] = useState('9');
+  const [newGrade, setNewGrade] = useState('Grade 9');
 
   const [kind, setKind] = useState<LessonEventKind>('concept');
   const [text, setText] = useState('');
@@ -253,7 +259,7 @@ export default function TeacherLiveConsole() {
           <h1 className="text-lg font-semibold">Lumina Live</h1>
           {active && (
             <Badge variant="destructive" className="ml-2 animate-pulse">
-              LIVE · Grade {active.grade_level}
+              LIVE · {active.grade_level}
             </Badge>
           )}
         </div>
@@ -279,7 +285,7 @@ export default function TeacherLiveConsole() {
                     <Select value={newGrade} onValueChange={setNewGrade}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {GRADES.map((g) => <SelectItem key={g} value={g}>Grade {g}</SelectItem>)}
+                        {GRADES.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -293,7 +299,7 @@ export default function TeacherLiveConsole() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Every student in Grade {newGrade} at {school.name} will see the join card the moment you go live.
+                  Every student in {newGrade} at {school.name} will see the join card the moment you go live.
                 </p>
               </CardContent>
             </Card>
@@ -314,7 +320,7 @@ export default function TeacherLiveConsole() {
                         {m.status === 'ended' && <Badge variant="outline">Ended</Badge>}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {m.subject ?? '—'} · Grade {m.grade_level} · Code {m.share_code}
+                        {m.subject ?? '—'} · {m.grade_level} · Code {m.share_code}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -406,7 +412,7 @@ export default function TeacherLiveConsole() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Every send hits <code>lesson_events</code>. Students in Grade {active.grade_level} who have joined Lumina Live receive a personalized explanation streamed to them in real time.
+                  Every send hits <code>lesson_events</code>. Students in {active.grade_level} who have joined Lumina Live receive a personalized explanation streamed to them in real time.
                 </p>
               </CardContent>
             </Card>
