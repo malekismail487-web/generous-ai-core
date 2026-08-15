@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard, School } from '@/hooks/useRoleGuard';
 import { Navigate, useNavigate } from 'react-router-dom';
@@ -65,7 +66,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
-import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,

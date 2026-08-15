@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,7 +18,6 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from '@/components/ui/dialog';
 import {
-import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 
