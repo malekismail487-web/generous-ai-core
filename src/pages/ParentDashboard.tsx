@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Heart, BookOpen, ClipboardCheck, Trophy, Bell, LogOut, Flame, TrendingUp } from 'lucide-react';
 import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
+import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 
 type ChildInfo = {
   student_id: string;
@@ -113,7 +114,8 @@ export default function ParentDashboard() {
     : null;
 
   return (
-    <div className="min-h-screen bg-background" dir={isAr ? 'rtl' : 'ltr'}>
+    <div className="relative min-h-screen" dir={isAr ? 'rtl' : 'ltr'}>
+      <ActorBackdrop variant="ambient" />
       {/* Header */}
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">

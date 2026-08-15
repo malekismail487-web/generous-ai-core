@@ -90,6 +90,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { ReportCardCreator } from '@/components/admin/ReportCardCreator';
 import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
+import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 
 interface InviteCode {
   id: string;
@@ -567,7 +568,8 @@ export default function SchoolAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen">
+      <ActorBackdrop variant="ambient" />
       {/* Header */}
       <header className="liquid-glass liquid-sheen liquid-rim border-b border-foreground/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">

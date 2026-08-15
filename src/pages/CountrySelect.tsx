@@ -4,6 +4,7 @@ import { Globe, Loader2, Check } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { supabase } from '@/integrations/supabase/client';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
+import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 
 type ActiveTenant = {
   id: string;
@@ -52,7 +53,8 @@ export default function CountrySelect() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+    <div className="relative flex flex-col items-center justify-center min-h-screen p-4">
+      <ActorBackdrop variant="landing" />
       <div className="w-full max-w-sm animate-fade-in">
         <div className="flex flex-col items-center mb-10">
           <div className="w-20 h-20 rounded-3xl overflow-hidden mb-5">

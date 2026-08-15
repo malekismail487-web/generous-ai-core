@@ -17,6 +17,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from '@/components/ui/dialog';
 import {
+import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 
@@ -241,7 +242,8 @@ export default function ModeratorDashboard() {
   const appeals = actions.filter(a => a.appeal_status === 'appealed');
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen">
+      <ActorBackdrop variant="ambient" />
       {/* Header */}
       <header className="border-b bg-background/95 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
