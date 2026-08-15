@@ -75,14 +75,14 @@ export function LuminaMemoryViewer() {
 
   if (loading) {
     return (
-      <div className="glass-effect rounded-2xl p-5 mb-4 flex items-center justify-center py-8">
+      <div className="liquid-glass rounded-2xl p-5 mb-4 flex items-center justify-center py-8">
         <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="glass-effect rounded-2xl p-5 mb-4">
+    <div className="liquid-glass rounded-2xl p-5 mb-4">
       <div className="flex items-center gap-2 mb-4">
         <Brain size={18} className="text-primary" />
         <h3 className="font-semibold">{t("Lumina's Brain", "دماغ لومينا")}</h3>
@@ -94,7 +94,7 @@ export function LuminaMemoryViewer() {
           onClick={() => setActiveTab('memories')}
           className={cn(
             "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all",
-            activeTab === 'memories' ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+            activeTab === 'memories' ? "bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 shadow-sm text-foreground" : "text-muted-foreground"
           )}
         >
           {t(`Memories (${memories.length})`, `ذكريات (${memories.length})`)}
@@ -103,7 +103,7 @@ export function LuminaMemoryViewer() {
           onClick={() => setActiveTab('gaps')}
           className={cn(
             "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all",
-            activeTab === 'gaps' ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+            activeTab === 'gaps' ? "bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 shadow-sm text-foreground" : "text-muted-foreground"
           )}
         >
           {t(`Knowledge Gaps (${gaps.filter(g => !g.resolved).length})`, `فجوات (${gaps.filter(g => !g.resolved).length})`)}
@@ -118,7 +118,7 @@ export function LuminaMemoryViewer() {
             </p>
           ) : (
             memories.map(mem => (
-              <div key={mem.id} className="flex items-start gap-2 p-2.5 rounded-xl bg-muted/30 border border-border/20 group">
+              <div key={mem.id} className="flex items-start gap-2 p-2.5 rounded-xl bg-muted/30 border border-foreground/10 group">
                 <span className="text-sm mt-0.5">{typeIcons[mem.memory_type] || '📝'}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-foreground">{mem.content}</p>

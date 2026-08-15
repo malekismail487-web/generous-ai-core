@@ -385,7 +385,7 @@ Rules:
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      <header className="h-14 border-b border-border/40 flex items-center px-3 gap-2 flex-shrink-0">
+      <header className="h-14 border-b border-foreground/10 flex items-center px-3 gap-2 flex-shrink-0">
         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
           <ArrowLeft size={18} />
         </Button>
@@ -430,8 +430,8 @@ Rules:
 
       <div className="relative flex-1 grid grid-cols-1 md:grid-cols-[200px_minmax(0,1fr)_minmax(360px,1fr)] min-h-0">
         {showFiles && (
-          <aside className="absolute inset-x-2 top-2 bottom-2 z-20 rounded-lg border border-border/40 bg-background shadow-2xl flex flex-col min-h-0 md:static md:inset-auto md:z-auto md:rounded-none md:border-y-0 md:border-l-0 md:shadow-none md:bg-muted/20">
-            <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/40">
+          <aside className="absolute inset-x-2 top-2 bottom-2 z-20 rounded-lg border border-foreground/10 bg-background shadow-2xl flex flex-col min-h-0 md:static md:inset-auto md:z-auto md:rounded-none md:border-y-0 md:border-l-0 md:shadow-none md:bg-muted/20">
+            <div className="flex items-center justify-between px-2 py-1.5 border-b border-foreground/10">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Files</span>
               <div className="flex items-center gap-1">
                 <button onClick={addFile} className="p-1 rounded hover:bg-background transition-colors" title="New file"><Plus size={13} /></button>
@@ -472,8 +472,8 @@ Rules:
           </aside>
         )}
 
-        <section className={`flex-col min-h-0 border-r border-border/40 ${mobilePane === 'editor' ? 'flex' : 'hidden'} md:flex`}>
-          <div className="px-3 py-1.5 border-b border-border/40 text-[11px] font-mono text-muted-foreground flex items-center justify-between">
+        <section className={`flex-col min-h-0 border-r border-foreground/10 ${mobilePane === 'editor' ? 'flex' : 'hidden'} md:flex`}>
+          <div className="px-3 py-1.5 border-b border-foreground/10 text-[11px] font-mono text-muted-foreground flex items-center justify-between">
             <span>{activeFile?.path}</span>
             <span className="uppercase tracking-wide">{languageFromPath(activeFile?.path ?? '')}</span>
           </div>
@@ -499,7 +499,7 @@ Rules:
         </section>
 
         <section className={`flex-col min-h-0 bg-muted/20 ${mobilePane === 'preview' ? 'flex' : 'hidden'} md:flex`}>
-          <div className="px-3 py-1.5 border-b border-border/40 text-[11px] font-mono text-muted-foreground flex items-center justify-between">
+          <div className="px-3 py-1.5 border-b border-foreground/10 text-[11px] font-mono text-muted-foreground flex items-center justify-between">
             <span>Preview</span>
             <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] md:hidden" onClick={() => setMobilePane('editor')}>Edit</Button>
           </div>
@@ -532,7 +532,7 @@ Rules:
         </section>
       </div>
 
-      <div className="border-t border-border/40 p-2 flex items-end gap-2 flex-shrink-0 pb-[calc(env(safe-area-inset-bottom,0px)+8px)] max-h-24 overflow-hidden">
+      <div className="border-t border-foreground/10 p-2 flex items-end gap-2 flex-shrink-0 pb-[calc(env(safe-area-inset-bottom,0px)+8px)] max-h-24 overflow-hidden">
         <Button variant="ghost" size="sm" className="h-10 md:hidden" onClick={() => setMobilePane((pane) => pane === 'editor' ? 'preview' : 'editor')}>
           {mobilePane === 'editor' ? 'Preview' : 'Editor'}
         </Button>

@@ -56,7 +56,7 @@ export function DiffModal({ open, onOpenChange, diffs, onApply, onDiscard }: Pro
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="px-4 py-3 border-b border-border/40 flex-shrink-0">
+        <DialogHeader className="px-4 py-3 border-b border-foreground/10 flex-shrink-0">
           <DialogTitle className="text-sm flex items-center gap-2">
             Lumina's proposed changes
             <span className="text-[11px] font-normal text-green-600">+{totalAdds}</span>
@@ -94,7 +94,7 @@ export function DiffModal({ open, onOpenChange, diffs, onApply, onDiscard }: Pro
           ))}
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-border/40 flex-shrink-0">
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-foreground/10 flex-shrink-0">
           <Button variant="ghost" size="sm" onClick={onDiscard}>
             <X size={14} /> <span className="ml-1">Discard</span>
           </Button>

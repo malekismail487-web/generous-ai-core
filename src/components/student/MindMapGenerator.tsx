@@ -804,7 +804,7 @@ IMPORTANT FORMATTING:
               <button
                 key={i}
                 onClick={() => { setTopic(q); generateMindMap(q); }}
-                className="px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50 text-xs hover:border-primary/40 transition-all"
+                className="px-3 py-1.5 rounded-full bg-secondary/50 border border-foreground/10 text-xs hover:border-primary/40 transition-all"
               >
                 {q}
               </button>
@@ -891,7 +891,7 @@ IMPORTANT FORMATTING:
       {/* ─── Lecture Sheet ─────────────────────────────────────────────────── */}
       <Sheet open={lectureOpen} onOpenChange={setLectureOpen}>
         <SheetContent side="bottom" className="h-[85vh] overflow-y-auto rounded-t-2xl">
-          <SheetHeader className="sticky top-0 bg-background/95 backdrop-blur z-10 pb-3 border-b border-border/50">
+          <SheetHeader className="sticky top-0 bg-background/95 backdrop-blur z-10 pb-3 border-b border-foreground/10">
             <SheetTitle className="text-lg flex items-center gap-2">
               <Brain size={18} className="text-primary" />
               {lectureLabel}
@@ -933,7 +933,7 @@ IMPORTANT FORMATTING:
       {/* ─── History Sheet ────────────────────────────────────────────────── */}
       <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
         <SheetContent side="bottom" className="h-[60vh] overflow-y-auto rounded-t-2xl">
-          <SheetHeader className="pb-3 border-b border-border/50">
+          <SheetHeader className="pb-3 border-b border-foreground/10">
             <SheetTitle className="flex items-center gap-2">
               <Clock size={18} className="text-primary" />
               {t('Mind Map History', 'سجل الخرائط الذهنية')}
@@ -948,7 +948,7 @@ IMPORTANT FORMATTING:
             )}
             {history.map(item => (
               <div key={item.id}
-                className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border/30 hover:bg-secondary/50 transition-all"
+                className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-foreground/10 hover:bg-secondary/50 transition-all"
               >
                 <button
                   className="flex-1 text-left"

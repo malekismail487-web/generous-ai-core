@@ -65,18 +65,18 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 mb-6">
-          <div className="glass-effect rounded-xl p-4 text-center">
+          <div className="liquid-glass rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-amber-500">{pendingRequests.length}</div>
             <div className="text-xs text-muted-foreground">Pending</div>
           </div>
-          <div className="glass-effect rounded-xl p-4 text-center">
+          <div className="liquid-glass rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-primary">{allRequests.length}</div>
             <div className="text-xs text-muted-foreground">Total Requests</div>
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="glass-effect rounded-xl p-2 mb-4 flex gap-2">
+        <div className="liquid-glass rounded-xl p-2 mb-4 flex gap-2">
           <button
             onClick={() => setFilter('pending')}
             className={cn(
@@ -107,7 +107,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : displayedRequests.length === 0 ? (
-          <div className="glass-effect rounded-2xl p-8 text-center">
+          <div className="liquid-glass rounded-2xl p-8 text-center">
             <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="font-semibold mb-2">No requests</h3>
             <p className="text-sm text-muted-foreground">
@@ -117,7 +117,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
         ) : (
           <div className="space-y-3">
             {displayedRequests.map((request) => (
-              <div key={request.id} className="glass-effect rounded-xl p-4">
+              <div key={request.id} className="liquid-glass rounded-xl p-4">
                 <div className="flex items-start gap-3">
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",

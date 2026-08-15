@@ -64,7 +64,7 @@ export function Leaderboard() {
     if (index === 0) return 'bg-yellow-500/10 border-yellow-500/30';
     if (index === 1) return 'bg-gray-400/10 border-gray-400/30';
     if (index === 2) return 'bg-amber-600/10 border-amber-600/30';
-    return 'bg-card border-border/50';
+    return 'bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border-foreground/10';
   };
 
   if (loading) {
@@ -99,7 +99,7 @@ export function Leaderboard() {
         </div>
 
         {entries.length === 0 ? (
-          <div className="text-center py-12 bg-card rounded-2xl border border-border/50">
+          <div className="text-center py-12 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 rounded-2xl border border-foreground/10">
             <Trophy className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
             <p className="font-medium">{t('No rankings yet', 'لا يوجد تصنيف بعد')}</p>
             <p className="text-sm text-muted-foreground mt-1">

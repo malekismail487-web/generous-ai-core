@@ -109,7 +109,7 @@ export function DebateTheater({ question, onClose, onSideWith }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col">
-      <header className="flex items-center justify-between px-4 py-3 border-b border-border/40">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-foreground/10">
         <div className="flex items-center gap-2 min-w-0">
           <Sparkles size={16} className="text-primary shrink-0" />
           <span className="text-sm font-semibold truncate">Debate Theater</span>
@@ -130,12 +130,12 @@ export function DebateTheater({ question, onClose, onSideWith }: Props) {
               <div
                 key={p.id}
                 className={cn(
-                  "rounded-2xl border bg-card/70 backdrop-blur-sm overflow-hidden flex flex-col",
+                  "rounded-2xl border bg-foreground/[0.04] backdrop-blur-2xl backdrop-blur-sm overflow-hidden flex flex-col",
                   "min-h-[180px] max-h-[40vh] sm:max-h-[55vh]",
-                  isSided ? "border-primary ring-2 ring-primary/30" : "border-border/40",
+                  isSided ? "border-primary ring-2 ring-primary/30" : "border-foreground/10",
                 )}
               >
-                <div className="flex items-center justify-between px-3 py-2 border-b border-border/30 shrink-0">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-foreground/10 shrink-0">
                   <div className="flex items-center gap-2">
                     <Icon size={14} className={p.accent} />
                     <span className="text-xs font-semibold">{p.name}</span>
@@ -147,7 +147,7 @@ export function DebateTheater({ question, onClose, onSideWith }: Props) {
                       "text-[10px] px-2 py-0.5 rounded-full border transition-all",
                       isSided
                         ? "bg-primary text-primary-foreground border-primary"
-                        : "border-border/60 hover:border-primary/50 text-muted-foreground hover:text-foreground",
+                        : "border-foreground/10 hover:border-primary/50 text-muted-foreground hover:text-foreground",
                     )}
                   >
                     {isSided ? "Sided ✓" : "Side with"}
@@ -167,7 +167,7 @@ export function DebateTheater({ question, onClose, onSideWith }: Props) {
 
         {/* Verdict */}
         <div className="max-w-5xl mx-auto mt-4">
-          <div className="rounded-2xl border border-primary/40 bg-card/80 p-4">
+          <div className="rounded-2xl border border-primary/40 bg-foreground/[0.04] backdrop-blur-2xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <Brain size={16} className="text-primary" />
               <span className="text-sm font-semibold">Lumina's Verdict</span>

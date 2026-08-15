@@ -172,7 +172,7 @@ export default function PendingApprovalPage() {
         </p>
 
         {profile && (
-          <div className="glass-effect rounded-2xl p-5 mb-6 text-left">
+          <div className="liquid-glass rounded-2xl p-5 mb-6 text-left">
             <h3 className="font-semibold mb-3">Your Details</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">

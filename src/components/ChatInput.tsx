@@ -103,9 +103,9 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           {attachments.map((att, i) => (
             <div key={i} className="relative group">
               {att.type === 'image' && att.preview ? (
-                <img src={att.preview} alt="" className="w-14 h-14 rounded-lg object-cover border border-border/30" />
+                <img src={att.preview} alt="" className="w-14 h-14 rounded-lg object-cover border border-foreground/10" />
               ) : (
-                <div className="w-14 h-14 rounded-lg bg-muted flex flex-col items-center justify-center border border-border/30">
+                <div className="w-14 h-14 rounded-lg bg-muted flex flex-col items-center justify-center border border-foreground/10">
                   {att.type === 'pdf' ? <FileText size={16} className="text-muted-foreground" /> : <Film size={16} className="text-muted-foreground" />}
                   <span className="text-[8px] text-muted-foreground mt-0.5 truncate max-w-[50px]">{att.file.name.split('.').pop()}</span>
                 </div>
@@ -131,7 +131,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         className="hidden"
       />
 
-      <div className="glass-effect rounded-2xl p-1.5 flex items-end gap-1.5">
+      <div className="liquid-glass rounded-2xl p-1.5 flex items-end gap-1.5">
         {/* Paperclip button */}
         <Button
           type="button"

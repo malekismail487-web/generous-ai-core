@@ -33,8 +33,8 @@ export function ChatHistoryDrawer({
     <div className="fixed inset-0 z-[60] flex">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       
-      <div className="relative w-72 max-w-[80vw] h-full bg-background border-r border-border/30 animate-slide-in-right flex flex-col" style={{ animationDirection: 'reverse', transform: 'translateX(0)' }}>
-        <div className="flex items-center justify-between p-4 border-b border-border/30">
+      <div className="relative w-72 max-w-[80vw] h-full bg-background border-r border-foreground/10 animate-slide-in-right flex flex-col" style={{ animationDirection: 'reverse', transform: 'translateX(0)' }}>
+        <div className="flex items-center justify-between p-4 border-b border-foreground/10">
           <h2 className="font-semibold text-foreground text-sm">{t('Chat History', 'سجل المحادثات')}</h2>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
             <X size={16} />

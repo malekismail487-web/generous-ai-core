@@ -161,7 +161,7 @@ export function AssignmentPerformanceAnalytics({ schoolId, teacherId }: Props) {
 
   if (analytics.length === 0) {
     return (
-      <div className="glass-effect rounded-xl p-8 text-center">
+      <div className="liquid-glass rounded-xl p-8 text-center">
         <BarChart3 className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
         <h3 className="font-semibold mb-2">{t('No Assignment Data', 'لا توجد بيانات')}</h3>
         <p className="text-sm text-muted-foreground">
@@ -183,7 +183,7 @@ export function AssignmentPerformanceAnalytics({ schoolId, teacherId }: Props) {
         const problemQuestions = a.questionBreakdown.filter(q => q.successRate < 50 && q.totalAttempts >= 2);
 
         return (
-          <div key={a.id} className="glass-effect rounded-xl overflow-hidden">
+          <div key={a.id} className="liquid-glass rounded-xl overflow-hidden">
             <button
               onClick={() => setExpandedId(isExpanded ? null : a.id)}
               className="w-full p-4 text-left flex items-center gap-3"
@@ -216,7 +216,7 @@ export function AssignmentPerformanceAnalytics({ schoolId, teacherId }: Props) {
             </button>
 
             {isExpanded && (
-              <div className="px-4 pb-4 border-t border-border/30 pt-3 space-y-4">
+              <div className="px-4 pb-4 border-t border-foreground/10 pt-3 space-y-4">
                 {/* Question Breakdown */}
                 {a.questionBreakdown.length > 0 && (
                   <div>

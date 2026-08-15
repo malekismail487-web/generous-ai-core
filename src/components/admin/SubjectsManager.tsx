@@ -121,7 +121,7 @@ export function SubjectsManager({ schoolId }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-border bg-card/40 p-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
           <h2 className="text-base font-semibold flex items-center gap-2"><BookOpen className="w-4 h-4" /> Subjects</h2>
           <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
@@ -140,7 +140,7 @@ export function SubjectsManager({ schoolId }: Props) {
       </div>
 
       {/* Add new subject */}
-      <div className="rounded-xl border border-border bg-card/40 p-4 space-y-3">
+      <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4 space-y-3">
         <h3 className="text-sm font-semibold">Add a subject</h3>
         <div className="flex flex-wrap gap-2 items-end">
           <div className="flex-1 min-w-[180px]">
@@ -165,7 +165,7 @@ export function SubjectsManager({ schoolId }: Props) {
       </div>
 
       {/* List */}
-      <div className="rounded-xl border border-border bg-card/40 p-4">
+      <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold">Subjects in your school ({subjects.length})</h3>
           <Button variant="ghost" size="sm" onClick={refresh}><RefreshCw className="w-4 h-4" /></Button>
@@ -180,7 +180,7 @@ export function SubjectsManager({ schoolId }: Props) {
               const isEditing = editingId === s.id;
               const accent = isHexColor(s.color) ? s.color! : DEFAULT_COLOR;
               return (
-                <li key={s.id} className="flex items-center gap-3 p-2 rounded-lg border border-border/60 bg-background/40">
+                <li key={s.id} className="flex items-center gap-3 p-2 rounded-lg border border-foreground/10 bg-background/40">
                   <div
                     className="w-10 h-10 rounded-md flex items-center justify-center text-lg shrink-0"
                     style={isHexColor(s.color)

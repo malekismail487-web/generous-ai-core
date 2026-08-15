@@ -98,7 +98,7 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
               <ArrowLeft size={16} /> Back
             </Button>
           )}
-          <div className="glass-effect rounded-2xl p-6 text-center">
+          <div className="liquid-glass rounded-2xl p-6 text-center">
             <p className="text-destructive font-semibold">
               Access denied. Super admin only.
             </p>
@@ -169,7 +169,7 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
         </div>
 
         {error && (
-          <div className="glass-effect rounded-2xl p-4 mb-4 bg-destructive/10 text-destructive">
+          <div className="liquid-glass rounded-2xl p-4 mb-4 bg-destructive/10 text-destructive">
             {error}
           </div>
         )}
@@ -187,7 +187,7 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : schools.length === 0 ? (
-          <div className="glass-effect rounded-2xl p-8 text-center">
+          <div className="liquid-glass rounded-2xl p-8 text-center">
             <Building2 className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="font-semibold mb-2">No Schools Yet</h3>
             <p className="text-sm text-muted-foreground">
@@ -199,7 +199,7 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
             {schools.map((school) => (
               <div
                 key={school.id}
-                className="glass-effect rounded-2xl p-5 hover:shadow-lg transition-all"
+                className="liquid-glass rounded-2xl p-5 hover:shadow-lg transition-all"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex items-start gap-4">

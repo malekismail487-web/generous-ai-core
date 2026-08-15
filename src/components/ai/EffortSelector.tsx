@@ -52,7 +52,7 @@ function TierList({ surface }: { surface?: string }) {
               'opacity-0 animate-tile-in',
               isActive
                 ? 'bg-primary text-primary-foreground border-transparent shadow-[var(--shadow-card)]'
-                : 'bg-card/60 border-border/50 hover:border-foreground/25 hover:-translate-y-0.5',
+                : 'bg-foreground/[0.04] backdrop-blur-2xl border-foreground/10 hover:border-foreground/25 hover:-translate-y-0.5',
             )}
             style={{ animationDelay: `${idx * 55}ms` }}
           >
@@ -123,7 +123,7 @@ export function EffortSelector({ surface, variant = 'compact', className }: Effo
         <button
           type="button"
           className={cn(
-            'group inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/70 backdrop-blur-xl',
+            'group inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl backdrop-blur-xl',
             'px-3 py-1.5 text-xs font-medium transition-all duration-300',
             'hover:border-foreground/25 hover:-translate-y-px active:scale-[0.97]',
             className,

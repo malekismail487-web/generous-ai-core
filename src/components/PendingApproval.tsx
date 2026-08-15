@@ -45,7 +45,7 @@ export function PendingApproval() {
           {tr('yourRequestSubmitted', language)} <strong>{school?.name || (language === 'ar' ? 'مدرستك' : 'your school')}</strong> {tr('hasBeenSubmitted', language)}
         </p>
         <p className="text-sm text-muted-foreground mb-6">{tr('adminWillReview', language)}</p>
-        <div className="glass-effect rounded-2xl p-5 mb-6 text-left">
+        <div className="liquid-glass rounded-2xl p-5 mb-6 text-left">
           <h3 className="font-semibold mb-3">{tr('yourDetails', language)}</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">{tr('name', language)}</span><span>{profile?.full_name}</span></div>

@@ -80,7 +80,7 @@ export default function CountrySelect() {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : tenants.length === 0 ? (
-          <div className="glass-effect rounded-2xl p-6 text-center text-sm text-muted-foreground">
+          <div className="liquid-glass rounded-2xl p-6 text-center text-sm text-muted-foreground">
             {isArabic ? 'لا توجد دول متاحة حاليًا.' : 'No countries are available yet.'}
           </div>
         ) : (
@@ -91,9 +91,9 @@ export default function CountrySelect() {
                 <button
                   key={t.id}
                   onClick={() => handleSelect(t)}
-                  className={`w-full glass-effect rounded-2xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4 ${active ? 'ring-2 ring-primary' : ''}`}
+                  className={`w-full liquid-glass rounded-2xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4 ${active ? 'ring-2 ring-primary' : ''}`}
                 >
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-muted border border-border/50 text-2xl">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-muted border border-foreground/10 text-2xl">
                     {flagFor(t.country_code)}
                   </div>
                   <div className="flex-1 min-w-0">

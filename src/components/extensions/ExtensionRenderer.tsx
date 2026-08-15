@@ -123,7 +123,7 @@ function WidgetRenderer({
       return <p className="text-sm text-muted-foreground leading-relaxed">{widget.text}</p>;
     case "stat":
       return (
-        <div className="rounded-lg border border-border bg-card p-4">
+        <div className="rounded-lg border border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 p-4">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">{widget.label}</p>
           <p className="text-2xl font-semibold text-foreground">{widget.value}</p>
         </div>
@@ -169,7 +169,7 @@ function TableWidget({
 }) {
   const { rows, loading } = useRows(data, widget.dataKey);
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="rounded-lg border border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150">
       <div className="border-b border-border px-4 py-2 text-sm font-medium">{widget.title}</div>
       <Table>
         <TableHeader>
@@ -254,7 +254,7 @@ function FormWidget({
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-lg border border-border bg-card p-4 space-y-3">
+    <form onSubmit={onSubmit} className="rounded-lg border border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 p-4 space-y-3">
       <p className="text-sm font-medium">{widget.title}</p>
       {widget.fields.map((f) => (
         <FieldInput
@@ -329,7 +329,7 @@ function ListWidget({
 }) {
   const { rows, loading } = useRows(data, widget.dataKey);
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="rounded-lg border border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150">
       <div className="border-b border-border px-4 py-2 text-sm font-medium">{widget.title}</div>
       <div className="divide-y divide-border">
         {loading ? (
@@ -367,7 +367,7 @@ function ChartWidget({
   }));
   const max = Math.max(1, ...points.map((p) => p.y));
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <div className="rounded-lg border border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 p-4">
       <p className="text-sm font-medium mb-3">{widget.title}</p>
       {loading ? (
         <p className="text-xs text-muted-foreground">Loading…</p>
@@ -402,7 +402,7 @@ function KanbanWidget({
 }) {
   const { rows, loading } = useRows(data, widget.dataKey);
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <div className="rounded-lg border border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 p-4">
       <p className="text-sm font-medium mb-3">{widget.title}</p>
       {loading ? (
         <p className="text-xs text-muted-foreground">Loading…</p>
@@ -417,7 +417,7 @@ function KanbanWidget({
                 </p>
                 <div className="space-y-1">
                   {cards.map((c) => (
-                    <div key={c.id} className="text-xs bg-card border border-border rounded px-2 py-1">
+                    <div key={c.id} className="text-xs bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border border-border rounded px-2 py-1">
                       {String(c.row[widget.titleField] ?? "—")}
                     </div>
                   ))}

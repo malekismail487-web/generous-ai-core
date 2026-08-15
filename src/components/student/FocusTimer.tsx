@@ -44,7 +44,7 @@ export function FocusTimer() {
                   "px-4 py-2 rounded-xl text-sm font-medium border transition-all",
                   mode === m
                     ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card border-border/50 text-muted-foreground hover:border-primary/40 disabled:opacity-50"
+                    : "bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border-foreground/10 text-muted-foreground hover:border-primary/40 disabled:opacity-50"
                 )}
               >
                 {m === 'focus' && <Brain className="w-3.5 h-3.5 inline mr-1" />}
@@ -86,7 +86,7 @@ export function FocusTimer() {
 
         {/* Controls */}
         <div className="flex items-center justify-center gap-4 mb-8">
-          <button onClick={resetTimer} className="w-12 h-12 rounded-xl bg-card border border-border/50 flex items-center justify-center hover:bg-secondary/50 transition-all">
+          <button onClick={resetTimer} className="w-12 h-12 rounded-xl bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border border-foreground/10 flex items-center justify-center hover:bg-secondary/50 transition-all">
             <RotateCcw className="w-5 h-5 text-muted-foreground" />
           </button>
           <button
@@ -95,7 +95,7 @@ export function FocusTimer() {
           >
             {isRunning ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
           </button>
-          <div className="w-12 h-12 rounded-xl bg-card border border-border/50 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border border-foreground/10 flex items-center justify-center">
             <span className="text-sm font-bold">{pomodoroCount}</span>
           </div>
         </div>
@@ -112,17 +112,17 @@ export function FocusTimer() {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-card rounded-xl border border-border/50 p-4 text-center">
+          <div className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 rounded-xl border border-foreground/10 p-4 text-center">
             <Zap className="w-5 h-5 mx-auto mb-1 text-orange-500" />
             <p className="text-xl font-bold">{stats.todaySessions}</p>
             <p className="text-[11px] text-muted-foreground">{t('Today', 'اليوم')}</p>
           </div>
-          <div className="bg-card rounded-xl border border-border/50 p-4 text-center">
+          <div className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 rounded-xl border border-foreground/10 p-4 text-center">
             <Timer className="w-5 h-5 mx-auto mb-1 text-blue-500" />
             <p className="text-xl font-bold">{stats.totalFocusMinutes}</p>
             <p className="text-[11px] text-muted-foreground">{t('Total min', 'إجمالي دق')}</p>
           </div>
-          <div className="bg-card rounded-xl border border-border/50 p-4 text-center">
+          <div className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 rounded-xl border border-foreground/10 p-4 text-center">
             <Brain className="w-5 h-5 mx-auto mb-1 text-purple-500" />
             <p className="text-xl font-bold">{stats.sessionsCompleted}</p>
             <p className="text-[11px] text-muted-foreground">{t('Sessions', 'جلسات')}</p>

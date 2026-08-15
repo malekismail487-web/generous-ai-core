@@ -340,7 +340,7 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
           <p className="text-sm text-muted-foreground">Type a topic — get a richly illustrated lecture in ~45s.</p>
         </div>
 
-        <div className="glass-effect rounded-2xl p-5 space-y-4">
+        <div className="liquid-glass rounded-2xl p-5 space-y-4">
           <div className="space-y-1">
             <Label htmlFor="lg-topic">Topic</Label>
             <Input
@@ -401,7 +401,7 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
       </div>
 
       {phase === 'outlining' && (
-        <div className="glass-effect rounded-2xl p-8 text-center">
+        <div className="liquid-glass rounded-2xl p-8 text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-primary" />
           <p className="text-sm font-medium">Writing lecture…</p>
           <p className="text-xs text-muted-foreground mt-1">Drafting intro, body, and image prompts.</p>
@@ -439,7 +439,7 @@ export function LectureGenerator({ defaultSubject = '', defaultTopic = '', onBac
                     <img
                       src={img.url}
                       alt={p.heading}
-                      className="w-full max-w-3xl mx-auto rounded-xl border border-border bg-card"
+                      className="w-full max-w-3xl mx-auto rounded-xl border border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150"
                       loading="lazy"
                     />
                   )}

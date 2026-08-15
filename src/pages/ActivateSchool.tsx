@@ -102,7 +102,7 @@ export default function ActivateSchool() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background p-4">
         <div className="ambient-glow" />
-        <div className="glass-effect rounded-2xl p-8 max-w-md w-full text-center">
+        <div className="liquid-glass rounded-2xl p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-4">
             <Building2 className="w-8 h-8 text-primary-foreground" />
           </div>
@@ -146,7 +146,7 @@ export default function ActivateSchool() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <div className="ambient-glow" />
-      <div className="glass-effect rounded-2xl p-8 max-w-md w-full">
+      <div className="liquid-glass rounded-2xl p-8 max-w-md w-full">
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-4">
             <Building2 className="w-8 h-8 text-primary-foreground" />

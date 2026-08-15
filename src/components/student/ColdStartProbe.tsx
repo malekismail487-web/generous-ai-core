@@ -138,7 +138,7 @@ export function ColdStartProbe({
   // ─── Completion view ──────────────────────────────────────────────────
   if (done) {
     return (
-      <div className="rounded-2xl border border-border/50 bg-card p-6 space-y-4">
+      <div className="rounded-2xl border border-foreground/10 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 p-6 space-y-4">
         <div className="flex items-center gap-3">
           <CheckCircle2 className="w-5 h-5 text-foreground" />
           <h3 className="font-semibold">Calibration complete</h3>
@@ -169,7 +169,7 @@ export function ColdStartProbe({
   // ─── Loading state ────────────────────────────────────────────────────
   if (loading || !current) {
     return (
-      <div className="rounded-2xl border border-border/50 bg-card p-6 flex items-center gap-3">
+      <div className="rounded-2xl border border-foreground/10 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 p-6 flex items-center gap-3">
         <Loader2 className="w-4 h-4 animate-spin" />
         <span className="text-sm text-muted-foreground">Preparing your calibration question…</span>
       </div>
@@ -178,7 +178,7 @@ export function ColdStartProbe({
 
   // ─── Active question ──────────────────────────────────────────────────
   return (
-    <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-4">
+    <div className="rounded-2xl border border-foreground/10 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Sparkles className="w-3.5 h-3.5" />
@@ -201,11 +201,11 @@ export function ColdStartProbe({
         {current.choices.map((choice, i) => {
           const isSelected = selected === i;
           const isCorrect = i === current.correctIndex;
-          let cls = "border-border/60 hover:border-foreground/40";
+          let cls = "border-foreground/10 hover:border-foreground/40";
           if (revealed) {
             if (isCorrect) cls = "border-foreground bg-foreground/5";
             else if (isSelected) cls = "border-destructive/60 bg-destructive/5";
-            else cls = "border-border/40 opacity-60";
+            else cls = "border-foreground/10 opacity-60";
           } else if (isSelected) {
             cls = "border-foreground bg-foreground/5";
           }

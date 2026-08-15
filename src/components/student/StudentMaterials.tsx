@@ -202,7 +202,7 @@ function StudentMaterialsComponent({ materials, teacherProfiles = {}, loading = 
 
       {/* Materials List - Classera Style */}
       {filteredMaterials.length === 0 ? (
-        <div className="glass-effect rounded-xl p-12 text-center">
+        <div className="liquid-glass rounded-xl p-12 text-center">
           <FolderOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
           <h3 className="text-lg font-semibold mb-2">No Materials Found</h3>
           <p className="text-muted-foreground">
@@ -313,7 +313,7 @@ function StudentMaterialsComponent({ materials, teacherProfiles = {}, loading = 
                   {subjectMaterials.map((material) => (
                     <div
                       key={material.id}
-                      className="group flex items-center gap-3 p-4 bg-card border rounded-xl hover:shadow-md transition-all cursor-pointer"
+                      className="group flex items-center gap-3 p-4 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border rounded-xl hover:shadow-md transition-all cursor-pointer"
                       onClick={() => handleOpenMaterial(material)}
                     >
                       <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center">

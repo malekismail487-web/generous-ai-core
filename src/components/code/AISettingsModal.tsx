@@ -110,7 +110,7 @@ export function AISettingsModal({ open, onOpenChange, initial, onSave }: Props) 
 
           {/* Mode-specific fields */}
           {mode === 'lumina' && (
-            <div className="text-xs text-muted-foreground p-3 rounded-lg bg-muted/40 border border-border/40">
+            <div className="text-xs text-muted-foreground p-3 rounded-lg bg-muted/40 border border-foreground/10">
               Your code can call <code className="font-mono">await LUMINA_AI("prompt")</code>. Requests are routed through Lumina's secure backend — no key needed. Rate-limited per user.
             </div>
           )}

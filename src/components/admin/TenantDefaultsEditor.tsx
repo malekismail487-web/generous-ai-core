@@ -78,7 +78,7 @@ export default function TenantDefaultsEditor({ tenantId, defaults, onSaved }: Pr
   };
 
   return (
-    <div className="mt-2 border-t border-border/30 pt-2">
+    <div className="mt-2 border-t border-foreground/10 pt-2">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

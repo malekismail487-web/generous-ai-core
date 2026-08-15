@@ -194,7 +194,7 @@ export function MaterialViewer({
             {fileType === 'image' && (
               <div className="relative h-full">
                 {/* Zoom controls */}
-                <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-background/90 backdrop-blur-sm rounded-lg p-1 shadow-sm border border-border/50">
+                <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-background/90 backdrop-blur-sm rounded-lg p-1 shadow-sm border border-foreground/10">
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setImageZoom(z => Math.max(0.5, z - 0.25))} disabled={imageZoom <= 0.5}>
                     <ZoomOut className="w-3.5 h-3.5" />
                   </Button>
@@ -301,7 +301,7 @@ export function MaterialViewer({
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Clean top bar */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border/50 bg-background">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-foreground/10 bg-background">
         <button
           onClick={handleClose}
           className="flex items-center gap-1.5 text-primary font-medium text-sm hover:opacity-80 transition-opacity"
@@ -336,7 +336,7 @@ export function MaterialViewer({
       {renderContent()}
 
       {/* Minimal footer */}
-      <div className="shrink-0 px-4 py-2 border-t border-border/30 bg-muted/20 text-center">
+      <div className="shrink-0 px-4 py-2 border-t border-foreground/10 bg-muted/20 text-center">
         <p className="text-xs text-muted-foreground">
           {teacherName} · {new Date(material.created_at).toLocaleDateString()}
           {material.file_url && ` · ${getFileTypeName(fileType)}`}

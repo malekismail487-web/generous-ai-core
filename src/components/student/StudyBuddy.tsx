@@ -677,7 +677,7 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
                       onClick={() => handleStyleSelect(style.id)}
                       className={cn(
                         "p-3 rounded-xl border text-left transition-all text-sm hover:scale-[1.02] active:scale-95",
-                        "border-border/50 hover:border-primary/60 hover:bg-primary/5 hover:shadow-md"
+                        "border-foreground/10 hover:border-primary/60 hover:bg-primary/5 hover:shadow-md"
                       )}
                     >
                       <span className="font-medium">{style.label}</span>
@@ -702,7 +702,7 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
                         if (!thinkingStyle) setThinkingStyle('logical');
                         sendMessage(prompt);
                       }}
-                      className="px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50 text-xs hover:border-primary/40 transition-all"
+                      className="px-3 py-1.5 rounded-full bg-secondary/50 border border-foreground/10 text-xs hover:border-primary/40 transition-all"
                     >
                       {prompt}
                     </button>
@@ -756,7 +756,7 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
                     {msg.role === 'user' && msg.content.length > 6 && (
                       <button
                         onClick={() => setDebateOpen(msg.content)}
-                        className="mt-1 ml-1 text-[10px] px-2 py-0.5 rounded-full border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
+                        className="mt-1 ml-1 text-[10px] px-2 py-0.5 rounded-full border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
                         title={t('Open Debate Theater on this question', 'افتح مسرح المناظرة على هذا السؤال')}
                       >
                         🎭 {t('Debate this', 'ناقش هذا')}
@@ -781,7 +781,7 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
         </div>
       </main>
 
-      <footer className="fixed bottom-16 left-0 right-0 glass-effect-strong border-t border-border/30 z-40">
+      <footer className="fixed bottom-16 left-0 right-0 liquid-glass liquid-sheen liquid-rim border-t border-foreground/10 z-40">
         <div className="max-w-2xl mx-auto px-4 py-3">
           <div className="flex justify-end pb-2">
             <EffortSelector surface="study-buddy" />

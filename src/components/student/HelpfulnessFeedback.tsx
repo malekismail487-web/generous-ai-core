@@ -96,7 +96,7 @@ export function HelpfulnessFeedback({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-2 py-2 border-t border-border/50",
+        "flex flex-wrap items-center gap-2 py-2 border-t border-foreground/10",
         className,
       )}
     >

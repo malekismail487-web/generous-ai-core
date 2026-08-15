@@ -219,7 +219,7 @@ export function InteractiveGraph({ equations, width = 300, height = 200, onExpan
   };
 
   return (
-    <div className="relative rounded-xl overflow-hidden border border-border/30 bg-card/50 group" style={{ width, height }}>
+    <div className="relative rounded-xl overflow-hidden border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl group" style={{ width, height }}>
       <canvas
         ref={canvasRef}
         style={{ width, height, cursor: 'grab' }}
@@ -233,7 +233,7 @@ export function InteractiveGraph({ equations, width = 300, height = 200, onExpan
       {onExpand && (
         <button
           onClick={onExpand}
-          className="absolute top-1.5 right-1.5 p-1 rounded-md bg-background/70 backdrop-blur-sm border border-border/30 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-1.5 right-1.5 p-1 rounded-md bg-background/70 backdrop-blur-sm border border-foreground/10 opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <Maximize2 size={12} className="text-foreground" />
         </button>

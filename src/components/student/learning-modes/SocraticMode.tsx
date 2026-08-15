@@ -121,7 +121,7 @@ export function SocraticMode({ subject, topic, onExit }: SocraticModeProps) {
 
   if (!started) {
     return (
-      <Card className="bg-card border-border">
+      <Card className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5" /> Socratic Mode — {subject} · {topic}
@@ -147,7 +147,7 @@ export function SocraticMode({ subject, topic, onExit }: SocraticModeProps) {
   const awaitingAnswer = currentTurn && currentTurn.answer === undefined;
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border-border">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2"><Brain className="w-5 h-5" /> Socratic — {topic}</span>

@@ -150,7 +150,7 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
               {message.attachments.map((att, i) => (
                 <div key={i}>
                   {att.preview ? (
-                    <img src={att.preview} alt={att.name} className="w-20 h-20 rounded-lg object-cover border border-border/20" />
+                    <img src={att.preview} alt={att.name} className="w-20 h-20 rounded-lg object-cover border border-foreground/10" />
                   ) : (
                     <div className="px-2 py-1 rounded-lg bg-primary/10 text-[10px] text-primary flex items-center gap-1">
                       📎 {att.name}
@@ -204,7 +204,7 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
               <span className="text-[10px]">▾</span>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="mt-1.5 p-3 rounded-xl bg-muted/50 border border-border/30 text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+              <div className="mt-1.5 p-3 rounded-xl bg-muted/50 border border-foreground/10 text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
                 {parsed.thinking}
               </div>
             </CollapsibleContent>

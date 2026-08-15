@@ -241,7 +241,7 @@ export function StudentAssignments({
 
       {/* Assignments Grid */}
       {filteredAssignments.length === 0 ? (
-        <div className="glass-effect rounded-xl p-12 text-center">
+        <div className="liquid-glass rounded-xl p-12 text-center">
           <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
           <h3 className="text-lg font-semibold mb-2">No Assignments Found</h3>
           <p className="text-muted-foreground">

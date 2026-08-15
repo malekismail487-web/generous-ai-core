@@ -41,7 +41,7 @@ export function LearningModesHub() {
 
   return (
     <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto pb-24">
-      <Card className="bg-card border-border">
+      <Card className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border-border">
         <CardHeader>
           <CardTitle>Choose subject and topic</CardTitle>
         </CardHeader>
@@ -69,7 +69,7 @@ export function LearningModesHub() {
         {modes.map(m => {
           const Icon = m.icon;
           return (
-            <Card key={m.id} className="bg-card border-border flex flex-col">
+            <Card key={m.id} className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border-border flex flex-col">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Icon className="w-5 h-5" /> {m.title}

@@ -170,7 +170,7 @@ RECOMMENDATION
 
   return (
     <div className="space-y-6">
-      <div className="glass-effect rounded-xl p-5 bg-gradient-to-r from-primary/10 to-violet-500/10 flex items-center justify-between">
+      <div className="liquid-glass rounded-xl p-5 bg-gradient-to-r from-primary/10 to-violet-500/10 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
@@ -187,7 +187,7 @@ RECOMMENDATION
       </div>
 
       {/* Deployment */}
-      <div className="glass-effect rounded-xl p-5">
+      <div className="liquid-glass rounded-xl p-5">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <Building2 className="w-4 h-4 text-blue-500" />
           Deployment Overview
@@ -213,7 +213,7 @@ RECOMMENDATION
       </div>
 
       {/* Productivity */}
-      <div className="glass-effect rounded-xl p-5">
+      <div className="liquid-glass rounded-xl p-5">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <Clock className="w-4 h-4 text-green-500" />
           Teacher Productivity Impact
@@ -240,7 +240,7 @@ RECOMMENDATION
 
       {/* Top Subjects */}
       {data.topSubjects.length > 0 && (
-        <div className="glass-effect rounded-xl p-5">
+        <div className="liquid-glass rounded-xl p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <LuminaLogo size={16} />
             Subject Performance
@@ -271,7 +271,7 @@ RECOMMENDATION
 
       {/* Learning Style */}
       {data.learningStyleDist && (
-        <div className="glass-effect rounded-xl p-5">
+        <div className="liquid-glass rounded-xl p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <Brain className="w-4 h-4 text-violet-500" />
             Global Learning Style Distribution

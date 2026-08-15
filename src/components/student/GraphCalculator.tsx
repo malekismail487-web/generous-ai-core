@@ -85,7 +85,7 @@ export function GraphCalculator() {
         <div className="space-y-2">
           <h3 className="text-sm font-semibold">{t('Equations', 'المعادلات')}</h3>
           {equations.map((eq, i) => (
-            <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-card border border-border/30">
+            <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border border-foreground/10">
               <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % 6] }} />
               <span className="flex-1 font-mono text-sm">{eq}</span>
               <button onClick={() => removeEquation(i)} className="text-muted-foreground hover:text-destructive p-1">
@@ -135,7 +135,7 @@ export function GraphCalculator() {
                   }
                 }}
                 disabled={equations.includes(preset.eq) || equations.length >= 6}
-                className="px-3 py-1.5 rounded-full text-xs font-mono border border-border/50 bg-card hover:bg-primary/10 hover:border-primary/30 transition-all disabled:opacity-40"
+                className="px-3 py-1.5 rounded-full text-xs font-mono border border-foreground/10 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 hover:bg-primary/10 hover:border-primary/30 transition-all disabled:opacity-40"
               >
                 {preset.label}
               </button>

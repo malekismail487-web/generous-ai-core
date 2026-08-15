@@ -76,7 +76,7 @@ export function PracticeSection({ type, onStartPractice, hasLearningHistory }: P
 
         {/* No history warning */}
         {!hasLearningHistory && (
-          <div className="glass-effect rounded-2xl p-4 mb-6 animate-fade-in flex items-start gap-3">
+          <div className="liquid-glass rounded-2xl p-4 mb-6 animate-fade-in flex items-start gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
               <AlertCircle className="w-5 h-5 text-amber-500" />
             </div>
@@ -151,7 +151,7 @@ export function PracticeSection({ type, onStartPractice, hasLearningHistory }: P
         </div>
 
         {/* Tips */}
-        <div className="mt-8 glass-effect rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '300ms' }}>
+        <div className="mt-8 liquid-glass rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '300ms' }}>
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
               <LuminaLogo size={36} />

@@ -98,7 +98,7 @@ export function TeacherExcellenceProgram() {
 
   return (
     <div className="space-y-6">
-      <div className="glass-effect rounded-xl p-5 bg-gradient-to-r from-amber-500/10 to-orange-500/10">
+      <div className="liquid-glass rounded-xl p-5 bg-gradient-to-r from-amber-500/10 to-orange-500/10">
         <h2 className="text-lg font-bold flex items-center gap-2">
           <Trophy className="w-5 h-5 text-amber-500" />
           Teacher Excellence Program
@@ -109,14 +109,14 @@ export function TeacherExcellenceProgram() {
       </div>
 
       {topTeachers.length === 0 ? (
-        <div className="glass-effect rounded-xl p-8 text-center">
+        <div className="liquid-glass rounded-xl p-8 text-center">
           <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">No teacher data available yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {topTeachers.map((teacher, idx) => (
-            <div key={teacher.id} className="glass-effect rounded-xl p-4 flex items-center gap-4">
+            <div key={teacher.id} className="liquid-glass rounded-xl p-4 flex items-center gap-4">
               <div className="shrink-0 text-center w-10">
                 {idx < 3 ? (
                   <Award className={cn("w-6 h-6 mx-auto", medalColors[idx])} />

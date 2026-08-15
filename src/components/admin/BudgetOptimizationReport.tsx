@@ -85,7 +85,7 @@ export function BudgetOptimizationReport({ schoolId }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="glass-effect rounded-xl p-5">
+      <div className="liquid-glass rounded-xl p-5">
         <h2 className="text-lg font-bold flex items-center gap-2">
           <BarChart3 className="w-5 h-5" />
           {t('Usage Report', 'تقرير الاستخدام')}
@@ -96,7 +96,7 @@ export function BudgetOptimizationReport({ schoolId }: Props) {
       </div>
 
       {/* Assignment Mix */}
-      <div className="glass-effect rounded-xl p-5">
+      <div className="liquid-glass rounded-xl p-5">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <LuminaLogo size={16} />
           {t('Assignment Mix', 'توزيع الواجبات')}
@@ -118,7 +118,7 @@ export function BudgetOptimizationReport({ schoolId }: Props) {
       </div>
 
       {/* Engagement & Adoption */}
-      <div className="glass-effect rounded-xl p-5">
+      <div className="liquid-glass rounded-xl p-5">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <TrendingUp className="w-4 h-4" />
           {t('Engagement & Adoption', 'المشاركة والتبني')}
@@ -147,7 +147,7 @@ export function BudgetOptimizationReport({ schoolId }: Props) {
       </div>
 
       {/* Content Created */}
-      <div className="glass-effect rounded-xl p-5">
+      <div className="liquid-glass rounded-xl p-5">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <Users className="w-4 h-4" />
           {t('Roster & Content', 'القوائم والمحتوى')}

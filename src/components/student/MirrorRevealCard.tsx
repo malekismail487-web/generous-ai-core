@@ -60,7 +60,7 @@ export function MirrorRevealCard({
   const Icon = reveal.matched ? Check : X;
 
   return (
-    <div className="mt-2 rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden">
+    <div className="mt-2 rounded-xl border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl backdrop-blur-sm overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/40 transition-colors"

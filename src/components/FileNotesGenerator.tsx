@@ -550,7 +550,7 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
             </div>
           </div>
 
-          <div className="glass-effect rounded-2xl p-5 overflow-y-auto max-h-[65vh]">
+          <div className="liquid-glass rounded-2xl p-5 overflow-y-auto max-h-[65vh]">
             {isLoading && !notesContent && (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -594,7 +594,7 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
               <button
                 key={key}
                 onClick={() => { setSelectedLength(key); }}
-                className="w-full glass-effect rounded-2xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] group"
+                className="w-full liquid-glass rounded-2xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] group"
                 style={{ animationDelay: `${idx * 80}ms` }}
               >
                 <div className="flex items-center gap-4">
@@ -663,10 +663,10 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
           className={cn(
-            "glass-effect rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 border-2 border-dashed animate-fade-in",
+            "liquid-glass rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 border-2 border-dashed animate-fade-in",
             dragActive
               ? "border-primary bg-primary/5 scale-[1.02]"
-              : "border-border/50 hover:border-primary/50 hover:bg-secondary/30",
+              : "border-foreground/10 hover:border-primary/50 hover:bg-secondary/30",
             isExtracting && "pointer-events-none opacity-60"
           )}
         >

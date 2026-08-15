@@ -96,7 +96,7 @@ export function StudentReportCards({ studentId }: StudentReportCardsProps) {
 
   if (reportCards.length === 0) {
     return (
-      <div className="glass-effect rounded-xl p-8 text-center">
+      <div className="liquid-glass rounded-xl p-8 text-center">
         <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
         <h3 className="text-lg font-semibold mb-2">No Report Cards Yet</h3>
         <p className="text-muted-foreground">Your report cards will appear here once they are created by your school admin</p>
@@ -171,7 +171,7 @@ export function StudentReportCards({ studentId }: StudentReportCardsProps) {
             </CardContent>
           </Card>
 
-          <div className="glass-effect rounded-xl p-5">
+          <div className="liquid-glass rounded-xl p-5">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
               Subject Breakdown
@@ -196,7 +196,7 @@ export function StudentReportCards({ studentId }: StudentReportCardsProps) {
           </div>
 
           {selectedReport.comments && (
-            <div className="glass-effect rounded-xl p-5">
+            <div className="liquid-glass rounded-xl p-5">
               <h3 className="font-semibold mb-2">Teacher Comments</h3>
               <p className="text-muted-foreground whitespace-pre-wrap">{selectedReport.comments}</p>
             </div>

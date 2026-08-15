@@ -569,7 +569,7 @@ export default function SchoolAdminDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="glass-effect-strong border-b border-border/30 sticky top-0 z-50">
+      <header className="liquid-glass liquid-sheen liquid-rim border-b border-foreground/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
@@ -641,7 +641,7 @@ export default function SchoolAdminDashboard() {
                   </span>
                 </div>
               )}
-              <div className="rounded-xl border border-border bg-card/40 p-4">
+              <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4">
                 <h3 className="font-semibold text-sm mb-2">Quick start</h3>
                 <p className="text-xs text-muted-foreground">
                   Build your curriculum in <strong>Curriculum Graph</strong>, approve new accounts under <strong>Pending</strong>, and post school updates from <strong>Announcements</strong>.
@@ -705,7 +705,7 @@ export default function SchoolAdminDashboard() {
                 </div>
               </div>
 
-            <div className="glass-effect rounded-xl overflow-hidden">
+            <div className="liquid-glass rounded-xl overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -769,7 +769,7 @@ export default function SchoolAdminDashboard() {
               </Button>
             </div>
 
-            <div className="glass-effect rounded-xl overflow-hidden">
+            <div className="liquid-glass rounded-xl overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -917,7 +917,7 @@ export default function SchoolAdminDashboard() {
               </div>
             </div>
 
-            <div className="glass-effect rounded-xl overflow-hidden">
+            <div className="liquid-glass rounded-xl overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -1004,7 +1004,7 @@ export default function SchoolAdminDashboard() {
             <h2 className="text-lg font-semibold">{t('announcementsLabel')}</h2>
 
             {/* Create Announcement Form */}
-            <div className="glass-effect rounded-xl p-4 space-y-4">
+            <div className="liquid-glass rounded-xl p-4 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="announcement-title">{t('title')}</Label>
                 <Input
@@ -1036,13 +1036,13 @@ export default function SchoolAdminDashboard() {
             {/* Announcements List */}
             <div className="space-y-4">
               {announcements.length === 0 ? (
-                <div className="glass-effect rounded-xl p-8 text-center">
+                <div className="liquid-glass rounded-xl p-8 text-center">
                   <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                   <p className="text-muted-foreground">{t('noAnnouncementsYet')}</p>
                 </div>
               ) : (
                 announcements.map((announcement) => (
-                  <div key={announcement.id} className="glass-effect rounded-xl p-4">
+                  <div key={announcement.id} className="liquid-glass rounded-xl p-4">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-semibold">{announcement.title}</h3>
@@ -1071,7 +1071,7 @@ export default function SchoolAdminDashboard() {
             <h2 className="text-lg font-semibold">{t('trips')}</h2>
 
             {/* Create Trip Form */}
-            <div className="glass-effect rounded-xl p-4 space-y-4">
+            <div className="liquid-glass rounded-xl p-4 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="trip-title">{t('title')}</Label>
                 <Input
@@ -1103,13 +1103,13 @@ export default function SchoolAdminDashboard() {
             {/* Trips List */}
             <div className="space-y-4">
               {trips.length === 0 ? (
-                <div className="glass-effect rounded-xl p-8 text-center">
+                <div className="liquid-glass rounded-xl p-8 text-center">
                   <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                   <p className="text-muted-foreground">{t('noTripsYet')}</p>
                 </div>
               ) : (
                 trips.map((trip) => (
-                  <div key={trip.id} className="glass-effect rounded-xl p-4">
+                  <div key={trip.id} className="liquid-glass rounded-xl p-4">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-semibold">{trip.title}</h3>
@@ -1151,7 +1151,7 @@ export default function SchoolAdminDashboard() {
               </Button>
             </div>
 
-            <div className="glass-effect rounded-xl overflow-hidden">
+            <div className="liquid-glass rounded-xl overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -1189,7 +1189,7 @@ export default function SchoolAdminDashboard() {
           <TabsContent value="settings" className="space-y-4">
             <h2 className="text-lg font-semibold">{t('settings')}</h2>
 
-            <div className="glass-effect rounded-xl p-6 space-y-6 max-w-lg">
+            <div className="liquid-glass rounded-xl p-6 space-y-6 max-w-lg">
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Globe className="w-4 h-4" />
@@ -1201,7 +1201,7 @@ export default function SchoolAdminDashboard() {
                     className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all border ${
                       language === 'en'
                         ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30'
+                        : 'bg-secondary/50 text-muted-foreground border-foreground/10 hover:border-primary/30'
                     }`}
                   >
                     English
@@ -1211,7 +1211,7 @@ export default function SchoolAdminDashboard() {
                     className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all border ${
                       language === 'ar'
                         ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30'
+                        : 'bg-secondary/50 text-muted-foreground border-foreground/10 hover:border-primary/30'
                     }`}
                   >
                     العربية
@@ -1262,7 +1262,7 @@ function NavTab({ value, icon: Icon, label, badge }: {
 function StatCard({ label, value, accent }: { label: string; value: number; accent?: 'amber' | 'green' }) {
   const color = accent === 'amber' ? 'text-amber-500' : accent === 'green' ? 'text-green-500' : '';
   return (
-    <div className="rounded-xl border border-border bg-card/40 p-4">
+    <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
     </div>

@@ -422,7 +422,7 @@ export function TeacherMaterials({
 
       {/* Materials by Subject */}
       {filteredMaterials.length === 0 ? (
-        <div className="glass-effect rounded-xl p-12 text-center">
+        <div className="liquid-glass rounded-xl p-12 text-center">
           <FolderOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
           <h3 className="text-lg font-semibold mb-2">{t('noMaterialsFound')}</h3>
           <p className="text-muted-foreground mb-4">
@@ -522,7 +522,7 @@ export function TeacherMaterials({
                   {subjectMaterials.map((material) => (
                     <div
                       key={material.id}
-                      className="group flex items-center gap-3 p-3 bg-card border rounded-lg hover:shadow-md transition-all"
+                      className="group flex items-center gap-3 p-3 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border rounded-lg hover:shadow-md transition-all"
                     >
                       <div className="flex-shrink-0">
                         {getFileIcon(material.file_url)}

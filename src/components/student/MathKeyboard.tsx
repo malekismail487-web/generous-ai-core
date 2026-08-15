@@ -54,7 +54,7 @@ export function MathKeyboard({ onInsert, onBackspace, onClear, onSubmit, classNa
   const { t } = useThemeLanguage();
 
   return (
-    <div className={cn('rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm p-2 space-y-1.5', className)}>
+    <div className={cn('rounded-xl border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl backdrop-blur-sm p-2 space-y-1.5', className)}>
       {ROWS.map((row, ri) => (
         <div key={ri} className="grid grid-cols-6 gap-1.5">
           {row.map((k) => (

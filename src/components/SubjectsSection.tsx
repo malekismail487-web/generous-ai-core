@@ -546,7 +546,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           </div>
 
           {/* Material Tabs */}
-          <div className="glass-effect rounded-xl p-3 mb-4">
+          <div className="liquid-glass rounded-xl p-3 mb-4">
             <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
               {savedMaterials.map((material) => (
                 <div
@@ -583,7 +583,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           </div>
 
           {/* Lecture Content with Math Rendering or Editor */}
-          <div className="glass-effect rounded-2xl p-5">
+          <div className="liquid-glass rounded-2xl p-5">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -611,7 +611,7 @@ Use age-appropriate language for ${selectedGrade}.`;
 
           {/* Loading indicator for images being generated */}
           {!isLoading && isGeneratingImages && lectureImages.length === 0 && (
-            <div className="mt-4 flex items-center gap-2 px-4 py-3 glass-effect rounded-xl justify-center">
+            <div className="mt-4 flex items-center gap-2 px-4 py-3 liquid-glass rounded-xl justify-center">
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
               <span className="text-xs text-muted-foreground">{language === 'ar' ? 'جاري إنشاء الرسوم البيانية...' : 'Loading diagrams...'}</span>
             </div>
@@ -659,7 +659,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           {/* NEW: Visual Lecture entrypoint */}
           <button
             onClick={() => setShowVisualLecture(true)}
-            className="w-full glass-effect rounded-2xl p-4 mb-3 text-left transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.99] flex items-center gap-3 border-2 border-primary/30"
+            className="w-full liquid-glass rounded-2xl p-4 mb-3 text-left transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.99] flex items-center gap-3 border-2 border-primary/30"
           >
             <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary to-accent text-primary-foreground">
               <ImageIcon size={20} />
@@ -672,7 +672,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           </button>
 
           {/* Topic Input */}
-          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-2 text-center text-lg">
               {tl('whatTopic')}
             </h3>
@@ -683,7 +683,7 @@ Use age-appropriate language for ${selectedGrade}.`;
               onChange={(e) => setMaterialInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleMaterialSubmit()}
               placeholder={tl('topicPlaceholder')}
-              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
+              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
               autoFocus
             />
 
@@ -769,7 +769,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           </div>
 
           {/* Grade Selection */}
-          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-4 text-center">{tl('selectGrade')}</h3>
             <div className="grid grid-cols-4 gap-2 overflow-y-auto max-h-[50vh]">
               {grades.map((grade) => {
@@ -811,7 +811,7 @@ Use age-appropriate language for ${selectedGrade}.`;
             {/* AI Lectures Menu */}
             <button
               onClick={() => setMenuType('ai')}
-              className="glass-effect rounded-2xl p-6 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+              className="liquid-glass rounded-2xl p-6 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
             >
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white">
@@ -828,7 +828,7 @@ Use age-appropriate language for ${selectedGrade}.`;
             {/* Course Materials Menu */}
             <button
               onClick={() => setMenuType('course')}
-              className="glass-effect rounded-2xl p-6 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+              className="liquid-glass rounded-2xl p-6 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
               style={{ animationDelay: '50ms' }}
             >
               <div className="flex items-center gap-4">
@@ -885,7 +885,7 @@ Use age-appropriate language for ${selectedGrade}.`;
                 key={subj.id}
                 onClick={() => handleSubjectClick(subj.id)}
                 className={cn(
-                  "glass-effect rounded-xl p-3 text-center transition-all duration-200 animate-fade-in group",
+                  "liquid-glass rounded-xl p-3 text-center transition-all duration-200 animate-fade-in group",
                   "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
                 )}
                 style={{ animationDelay: `${index * 30}ms` }}

@@ -82,7 +82,7 @@ export function StudentViewSimulator({ schoolId }: { schoolId: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-border bg-card/40 p-4">
+      <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4">
         <h2 className="text-base font-semibold flex items-center gap-2">
           <Eye className="w-4 h-4" /> Student View Simulator
         </h2>
@@ -91,7 +91,7 @@ export function StudentViewSimulator({ schoolId }: { schoolId: string }) {
         </p>
       </div>
 
-      <div className="rounded-xl border border-border bg-card/40 p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
         <Picker label="Student" value={studentId} onChange={setStudentId}
           options={students.map(s => ({ value: s.id, label: `${s.full_name}${s.grade_level ? ` · ${s.grade_level}` : ''}` }))} />
         <Picker label="Subject" value={subjectId} onChange={setSubjectId}
@@ -107,7 +107,7 @@ export function StudentViewSimulator({ schoolId }: { schoolId: string }) {
 
       {plan && (
         <>
-          <div className="rounded-xl border border-border bg-card/40 p-4">
+          <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4">
             <h3 className="text-sm font-semibold mb-3">Teaching Regime</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
               <Stat label="Mode" value={plan.regime.mode} />
@@ -117,7 +117,7 @@ export function StudentViewSimulator({ schoolId }: { schoolId: string }) {
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-card/40 p-4">
+          <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4">
             <h3 className="text-sm font-semibold mb-3">
               Teaching Trajectory · ~{plan.trajectory.totalDurationSec}s
             </h3>
@@ -134,7 +134,7 @@ export function StudentViewSimulator({ schoolId }: { schoolId: string }) {
             </ol>
           </div>
 
-          <div className="rounded-xl border border-border bg-card/40 p-4">
+          <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4">
             <h3 className="text-sm font-semibold mb-3">Derived Teaching Policy</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
               <Stat label="Difficulty" value={plan.policy.difficulty} />

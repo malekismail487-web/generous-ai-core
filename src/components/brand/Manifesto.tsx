@@ -98,7 +98,7 @@ export function Manifesto({
           {PILLARS.map((p) => (
             <article
               key={p.k}
-              className="group relative overflow-hidden rounded-2xl border border-border/60 bg-white/[0.02] p-5 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:border-foreground/20 hover:bg-white/[0.045]"
+              className="group relative overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-5 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:border-foreground/20 hover:bg-foreground/[0.045]"
             >
               <span className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-foreground/30 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
               <span className="font-mono text-[10px] tracking-[0.3em] text-muted-foreground">

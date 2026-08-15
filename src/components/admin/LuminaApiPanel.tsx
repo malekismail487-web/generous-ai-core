@@ -171,11 +171,11 @@ export default function LuminaApiPanel() {
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>
           ) : keys.length === 0 ? (
-            <div className="glass-effect rounded-xl p-8 text-center text-muted-foreground">
+            <div className="liquid-glass rounded-xl p-8 text-center text-muted-foreground">
               No API keys yet. Click "New API Key" to issue one.
             </div>
           ) : keys.map((k) => (
-            <div key={k.id} className="glass-effect rounded-xl p-4 space-y-3">
+            <div key={k.id} className="liquid-glass rounded-xl p-4 space-y-3">
               <div className="flex items-start justify-between flex-wrap gap-2">
                 <div>
                   <div className="font-semibold flex items-center gap-2">
@@ -212,11 +212,11 @@ export default function LuminaApiPanel() {
 
         <TabsContent value="usage" className="space-y-3 mt-4">
           <div className="grid grid-cols-3 gap-3">
-            <div className="glass-effect rounded-xl p-4"><div className="text-xs text-muted-foreground">Recent requests</div><div className="text-2xl font-bold">{totalRequests}</div></div>
-            <div className="glass-effect rounded-xl p-4"><div className="text-xs text-muted-foreground">Errors</div><div className="text-2xl font-bold text-destructive">{errorCount}</div></div>
-            <div className="glass-effect rounded-xl p-4"><div className="text-xs text-muted-foreground">Avg latency</div><div className="text-2xl font-bold">{avgLatency}ms</div></div>
+            <div className="liquid-glass rounded-xl p-4"><div className="text-xs text-muted-foreground">Recent requests</div><div className="text-2xl font-bold">{totalRequests}</div></div>
+            <div className="liquid-glass rounded-xl p-4"><div className="text-xs text-muted-foreground">Errors</div><div className="text-2xl font-bold text-destructive">{errorCount}</div></div>
+            <div className="liquid-glass rounded-xl p-4"><div className="text-xs text-muted-foreground">Avg latency</div><div className="text-2xl font-bold">{avgLatency}ms</div></div>
           </div>
-          <div className="glass-effect rounded-xl overflow-hidden">
+          <div className="liquid-glass rounded-xl overflow-hidden">
             <div className="px-4 py-2 border-b text-sm font-semibold flex items-center gap-2">
               <Activity className="w-4 h-4" /> Last 100 requests
             </div>
@@ -239,7 +239,7 @@ export default function LuminaApiPanel() {
                     {usage.map((u) => {
                       const k = keys.find((kk) => kk.id === u.api_key_id);
                       return (
-                        <tr key={u.id} className="border-t border-border/50">
+                        <tr key={u.id} className="border-t border-foreground/10">
                           <td className="px-3 py-2">{new Date(u.created_at).toLocaleTimeString()}</td>
                           <td className="px-3 py-2">{k?.label || '—'}</td>
                           <td className={`px-3 py-2 font-semibold ${u.status_code >= 400 ? 'text-destructive' : 'text-emerald-500'}`}>{u.status_code}</td>
@@ -257,7 +257,7 @@ export default function LuminaApiPanel() {
         </TabsContent>
 
         <TabsContent value="docs" className="mt-4">
-          <div className="glass-effect rounded-xl p-5 space-y-4">
+          <div className="liquid-glass rounded-xl p-5 space-y-4">
             <div className="flex items-center gap-2 font-semibold"><Code2 className="w-5 h-5" /> Lumina API — Quick Start</div>
             <div>
               <div className="text-sm font-semibold mb-1">Endpoint</div>

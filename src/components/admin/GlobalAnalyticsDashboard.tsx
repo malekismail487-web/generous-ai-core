@@ -205,7 +205,7 @@ export function GlobalAnalyticsDashboard() {
   return (
     <div className="space-y-6">
       {/* Hero Header */}
-      <div className="glass-effect rounded-xl p-6 bg-gradient-to-r from-primary/10 via-accent/10 to-violet-500/10">
+      <div className="liquid-glass rounded-xl p-6 bg-gradient-to-r from-primary/10 via-accent/10 to-violet-500/10">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <Globe className="w-6 h-6 text-primary" />
           Global Analytics Dashboard
@@ -217,7 +217,7 @@ export function GlobalAnalyticsDashboard() {
 
       {/* Health Alerts */}
       {metrics.healthAlerts.length > 0 && (
-        <div className="glass-effect rounded-xl p-5 border border-red-500/20 bg-red-500/5">
+        <div className="liquid-glass rounded-xl p-5 border border-red-500/20 bg-red-500/5">
           <h3 className="font-semibold text-red-600 flex items-center gap-2 mb-3">
             <AlertTriangle className="w-5 h-5" />
             Health Alerts ({metrics.healthAlerts.length})
@@ -249,14 +249,14 @@ export function GlobalAnalyticsDashboard() {
       </div>
 
       {/* School-by-School */}
-      <div className="glass-effect rounded-xl p-5">
+      <div className="liquid-glass rounded-xl p-5">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <Building2 className="w-5 h-5 text-primary" />
           School Performance Breakdown
         </h3>
         <div className="space-y-3">
           {metrics.schoolMetrics.map(school => (
-            <div key={school.id} className="flex items-center gap-4 p-3 rounded-lg border border-border/30 hover:bg-muted/30 transition-colors">
+            <div key={school.id} className="flex items-center gap-4 p-3 rounded-lg border border-foreground/10 hover:bg-muted/30 transition-colors">
               <div className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0",
                 school.status === 'active' ? "bg-gradient-to-br from-green-500 to-emerald-600" : "bg-gradient-to-br from-red-500 to-rose-600"
@@ -286,7 +286,7 @@ export function GlobalAnalyticsDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Subject Performance */}
         {metrics.subjectPerformance.length > 0 && (
-          <div className="glass-effect rounded-xl p-5">
+          <div className="liquid-glass rounded-xl p-5">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
               <LuminaLogo size={16} />
               Subject Performance (Global)
@@ -313,7 +313,7 @@ export function GlobalAnalyticsDashboard() {
 
         {/* Learning Style Distribution */}
         {metrics.learningStyleDistribution && (
-          <div className="glass-effect rounded-xl p-5">
+          <div className="liquid-glass rounded-xl p-5">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
               <Brain className="w-4 h-4 text-violet-500" />
               Global Learning Style Distribution
@@ -339,7 +339,7 @@ export function GlobalAnalyticsDashboard() {
       </div>
 
       {/* Platform Impact Summary */}
-      <div className="glass-effect rounded-xl p-5">
+      <div className="liquid-glass rounded-xl p-5">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-green-500" />
           Platform Impact Summary
@@ -371,7 +371,7 @@ export function GlobalAnalyticsDashboard() {
 
 function KPI({ icon, value, label, sub }: { icon: React.ReactNode; value: number | string; label: string; sub?: string }) {
   return (
-    <div className="glass-effect rounded-xl p-3 text-center">
+    <div className="liquid-glass rounded-xl p-3 text-center">
       <div className="flex justify-center mb-1">{icon}</div>
       <p className="text-xl font-bold">{value}</p>
       <p className="text-[10px] text-muted-foreground">{label}</p>

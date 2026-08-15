@@ -56,7 +56,7 @@ export function LearningProfileCard() {
 
   if (loading || !profile) {
     return (
-      <div className="glass-effect rounded-2xl p-5 space-y-3 animate-fade-in">
+      <div className="liquid-glass rounded-2xl p-5 space-y-3 animate-fade-in">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-slate-400 to-gray-500 text-white">
             <Brain className="w-5 h-5" />
@@ -86,7 +86,7 @@ export function LearningProfileCard() {
   const dominant = profile.dominant_style;
 
   return (
-    <div className="glass-effect rounded-2xl p-5 space-y-4 animate-fade-in">
+    <div className="liquid-glass rounded-2xl p-5 space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className={cn(

@@ -880,7 +880,7 @@ export default function Auth() {
           <button
             type="button"
             onClick={() => navigate('/country')}
-            className="w-full mb-3 flex items-center justify-between px-4 py-2 rounded-xl bg-muted/40 border border-border/50 hover:bg-muted transition text-xs"
+            className="w-full mb-3 flex items-center justify-between px-4 py-2 rounded-xl bg-muted/40 border border-foreground/10 hover:bg-muted transition text-xs"
           >
             <span className="flex items-center gap-2 text-muted-foreground">
               <Globe className="w-3.5 h-3.5" />
@@ -924,7 +924,7 @@ export default function Auth() {
 
           {/* Login Tab */}
           <TabsContent value="login">
-            <form onSubmit={handleLogin} className="glass-effect rounded-2xl p-6 space-y-4">
+            <form onSubmit={handleLogin} className="liquid-glass rounded-2xl p-6 space-y-4">
               <p className="text-center text-muted-foreground mb-4">
                 {t('signInToAccount')}
               </p>
@@ -995,7 +995,7 @@ export default function Auth() {
 
           {/* Sign Up Tab */}
           <TabsContent value="signup">
-            <form onSubmit={handleSignUp} className="glass-effect rounded-2xl p-6 space-y-4">
+            <form onSubmit={handleSignUp} className="liquid-glass rounded-2xl p-6 space-y-4">
               <p className="text-center text-muted-foreground mb-4">
                 {t('createAccount')}
               </p>
@@ -1083,7 +1083,7 @@ export default function Auth() {
 
           {/* Join School Tab */}
           <TabsContent value="join">
-            <form onSubmit={handleJoinWithCode} className="glass-effect rounded-2xl p-6 space-y-4">
+            <form onSubmit={handleJoinWithCode} className="liquid-glass rounded-2xl p-6 space-y-4">
               <p className="text-center text-muted-foreground mb-4">
                 {t('joinSchoolDesc')}
               </p>
@@ -1286,7 +1286,7 @@ export default function Auth() {
               } finally {
                 setIsSubmitting(false);
               }
-            }} className="glass-effect rounded-2xl p-6 space-y-4">
+            }} className="liquid-glass rounded-2xl p-6 space-y-4">
               <p className="text-center text-muted-foreground mb-4">
                 {language === 'ar' ? 'سجّل كولي أمر لمتابعة أداء طفلك' : 'Sign up as a parent to track your child\'s progress'}
               </p>
@@ -1345,7 +1345,7 @@ export default function Auth() {
             </form>
           </TabsContent>
           <TabsContent value="social-verify">
-            <form onSubmit={handleVerifySocialCode} className="glass-effect rounded-2xl p-6 space-y-4">
+            <form onSubmit={handleVerifySocialCode} className="liquid-glass rounded-2xl p-6 space-y-4">
               <div className="text-center space-y-2">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <ShieldCheck className="h-6 w-6" />
@@ -1413,7 +1413,7 @@ export default function Auth() {
           </TabsContent>
 
           <TabsContent value="social-details">
-            <form onSubmit={handleSocialDetailsSubmit} className="glass-effect rounded-2xl p-6 space-y-4">
+            <form onSubmit={handleSocialDetailsSubmit} className="liquid-glass rounded-2xl p-6 space-y-4">
               <div className="text-center space-y-2">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   {socialFlow === 'parent' ? <Heart className="h-6 w-6" /> : <Users className="h-6 w-6" />}

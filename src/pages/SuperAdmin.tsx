@@ -274,7 +274,7 @@ export default function SuperAdmin() {
   if (!isSuperAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-        <div className="glass-effect rounded-2xl p-8 max-w-md w-full text-center">
+        <div className="liquid-glass rounded-2xl p-8 max-w-md w-full text-center">
           <ShieldAlert className="w-16 h-16 mx-auto mb-4 text-destructive" />
           <h1 className="text-2xl font-bold text-destructive mb-2">Access Denied</h1>
           <p className="text-muted-foreground mb-6">
@@ -358,7 +358,7 @@ export default function SuperAdmin() {
         </div>
 
         <div className="pt-12">
-          <header className="glass-effect-strong border-b border-border/30 sticky top-10 z-40">
+          <header className="liquid-glass liquid-sheen liquid-rim border-b border-foreground/10 sticky top-10 z-40">
             <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
@@ -378,25 +378,25 @@ export default function SuperAdmin() {
             {testingRole === 'teacher' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">My Classes</p>
                     <p className="text-2xl font-bold">4</p>
                   </div>
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">Total Students</p>
                     <p className="text-2xl font-bold">87</p>
                   </div>
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">Active Assignments</p>
                     <p className="text-2xl font-bold text-primary">5</p>
                   </div>
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">To Grade</p>
                     <p className="text-2xl font-bold text-warning">12</p>
                   </div>
                 </div>
 
-                <div className="glass-effect rounded-xl p-6">
+                <div className="liquid-glass rounded-xl p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">📚 My Subjects</h2>
                     <Button size="sm" className="gap-2">
@@ -414,7 +414,7 @@ export default function SuperAdmin() {
                   </div>
                 </div>
 
-                <div className="glass-effect rounded-xl p-6">
+                <div className="liquid-glass rounded-xl p-6">
                   <h2 className="text-lg font-semibold mb-4">📋 Submissions to Grade</h2>
                   <Table>
                     <TableHeader>
@@ -449,25 +449,25 @@ export default function SuperAdmin() {
             {testingRole === 'school_admin' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">Total Teachers</p>
                     <p className="text-2xl font-bold">15</p>
                   </div>
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">Total Students</p>
                     <p className="text-2xl font-bold">342</p>
                   </div>
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">Pending Requests</p>
                     <p className="text-2xl font-bold text-warning">4</p>
                   </div>
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">Active Codes</p>
                     <p className="text-2xl font-bold text-primary">8</p>
                   </div>
                 </div>
 
-                <div className="glass-effect rounded-xl p-6">
+                <div className="liquid-glass rounded-xl p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">⏳ Pending Requests</h2>
                   </div>
@@ -516,7 +516,7 @@ export default function SuperAdmin() {
                   </Table>
                 </div>
 
-                <div className="glass-effect rounded-xl p-6">
+                <div className="liquid-glass rounded-xl p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">🔑 Invite Codes</h2>
                     <Button size="sm" className="gap-2">
@@ -568,7 +568,7 @@ export default function SuperAdmin() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="glass-effect-strong border-b border-border/30 sticky top-0 z-50">
+      <header className="liquid-glass liquid-sheen liquid-rim border-b border-foreground/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
@@ -655,17 +655,17 @@ export default function SuperAdmin() {
         <>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="glass-effect rounded-xl p-4">
+          <div className="liquid-glass rounded-xl p-4">
             <p className="text-sm text-muted-foreground">Total Schools</p>
             <p className="text-2xl font-bold">{schools.length}</p>
           </div>
-          <div className="glass-effect rounded-xl p-4">
+          <div className="liquid-glass rounded-xl p-4">
             <p className="text-sm text-muted-foreground">Active Schools</p>
             <p className="text-2xl font-bold text-green-500">
               {schools.filter(s => s.status === 'active').length}
             </p>
           </div>
-          <div className="glass-effect rounded-xl p-4">
+          <div className="liquid-glass rounded-xl p-4">
             <p className="text-sm text-muted-foreground">Suspended Schools</p>
             <p className="text-2xl font-bold text-destructive">
               {schools.filter(s => s.status === 'suspended').length}
@@ -746,7 +746,7 @@ export default function SuperAdmin() {
         </div>
 
         {/* Schools Table */}
-        <div className="glass-effect rounded-xl overflow-hidden">
+        <div className="liquid-glass rounded-xl overflow-hidden">
           {loadingSchools ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />

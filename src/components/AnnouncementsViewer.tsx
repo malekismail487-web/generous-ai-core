@@ -82,7 +82,7 @@ export function AnnouncementsViewer() {
     return (
       <div className="flex-1 overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="glass-effect rounded-2xl p-8 text-center">
+          <div className="liquid-glass rounded-2xl p-8 text-center">
             <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="font-semibold mb-2">{t('noAnnouncements')}</h3>
             <p className="text-sm text-muted-foreground">{t('announcementsWillAppear')}</p>
@@ -96,7 +96,7 @@ export function AnnouncementsViewer() {
     <div className="flex-1 overflow-y-auto pt-16 pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
         {announcements.map((announcement) => (
-          <div key={announcement.id} className="glass-effect rounded-xl p-4">
+          <div key={announcement.id} className="liquid-glass rounded-xl p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">

@@ -140,7 +140,7 @@ export function CurriculumGraphManager({ schoolId }: Props) {
   // -- render --------------------------------------------------------------
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-border bg-card/40 p-4">
+      <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4">
         <h2 className="text-base font-semibold">Curriculum Graph</h2>
         <p className="text-xs text-muted-foreground mt-1">
           Subject → Lecture → Concept. This hierarchy is what the adaptive engine uses to decide what to teach next.
@@ -295,10 +295,10 @@ function Column({ title, icon, count, disabled, children }: {
 }) {
   return (
     <div className={cn(
-      "rounded-xl border border-border bg-card/40 p-4 flex flex-col min-h-[360px]",
+      "rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4 flex flex-col min-h-[360px]",
       disabled && "opacity-60"
     )}>
-      <div className="flex items-center justify-between mb-3 pb-2 border-b border-border/60">
+      <div className="flex items-center justify-between mb-3 pb-2 border-b border-foreground/10">
         <div className="flex items-center gap-2 text-sm font-semibold">
           {icon}
           {title}

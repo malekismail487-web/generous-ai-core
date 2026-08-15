@@ -12,7 +12,7 @@ export function TeacherRequestCard() {
   // Already a teacher or admin
   if (isTeacher || isAdmin) {
     return (
-      <div className="glass-effect rounded-2xl p-5">
+      <div className="liquid-glass rounded-2xl p-5">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-green-600 text-white">
             <GraduationCap className="w-5 h-5" />
@@ -29,7 +29,7 @@ export function TeacherRequestCard() {
   // Has pending request
   if (teacherRequest?.status === 'pending') {
     return (
-      <div className="glass-effect rounded-2xl p-5">
+      <div className="liquid-glass rounded-2xl p-5">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-amber-500 to-orange-600 text-white">
             <Clock className="w-5 h-5" />
@@ -51,7 +51,7 @@ export function TeacherRequestCard() {
   // Request was rejected
   if (teacherRequest?.status === 'rejected') {
     return (
-      <div className="glass-effect rounded-2xl p-5">
+      <div className="liquid-glass rounded-2xl p-5">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-red-500 to-rose-600 text-white">
             <XCircle className="w-5 h-5" />
@@ -78,7 +78,7 @@ export function TeacherRequestCard() {
   };
 
   return (
-    <div className="glass-effect rounded-2xl p-5">
+    <div className="liquid-glass rounded-2xl p-5">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white">
           <GraduationCap className="w-5 h-5" />
@@ -94,7 +94,7 @@ export function TeacherRequestCard() {
         onChange={(e) => setReason(e.target.value)}
         placeholder="Why do you want teacher access? (optional)"
         rows={3}
-        className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none mb-3"
+        className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none mb-3"
       />
 
       <Button 

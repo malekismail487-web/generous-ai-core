@@ -181,7 +181,7 @@ export function WeeklyPlanBuilder() {
       </h2>
 
       {/* Create new plan */}
-      <div className="glass-effect rounded-xl p-5 space-y-4">
+      <div className="liquid-glass rounded-xl p-5 space-y-4">
         <h3 className="font-semibold">Create New Weekly Plan</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -239,7 +239,7 @@ export function WeeklyPlanBuilder() {
             </TabsContent>
 
             <TabsContent value="file" className="mt-4">
-              <div className="glass-effect rounded-xl p-6 text-center">
+              <div className="liquid-glass rounded-xl p-6 text-center">
                 {fileName ? (
                   <div className="flex items-center gap-2 justify-center">
                     <FileText className="w-5 h-5 text-primary" />
@@ -279,7 +279,7 @@ export function WeeklyPlanBuilder() {
           <p className="text-sm text-muted-foreground text-center py-8">No weekly plans created yet</p>
         ) : (
           plans.map(plan => (
-            <div key={plan.id} className="glass-effect rounded-xl p-4 flex items-center justify-between">
+            <div key={plan.id} className="liquid-glass rounded-xl p-4 flex items-center justify-between">
               <div>
                 <h4 className="font-semibold text-sm">{plan.title}</h4>
                 <p className="text-xs text-muted-foreground">

@@ -69,7 +69,7 @@ export function SchoolChatSection({ onBack }: SchoolChatSectionProps) {
   if (isBricked()) {
     return (
       <div className="flex-1 flex items-center justify-center pt-16 pb-20 px-4">
-        <div className="text-center glass-effect rounded-2xl p-6 max-w-sm">
+        <div className="text-center liquid-glass rounded-2xl p-6 max-w-sm">
           <div className="text-4xl mb-4">🚫</div>
           <h2 className="text-xl font-bold text-destructive mb-2">Account Disabled</h2>
           <p className="text-muted-foreground text-sm">
@@ -83,7 +83,7 @@ export function SchoolChatSection({ onBack }: SchoolChatSectionProps) {
   if (isSuspended()) {
     return (
       <div className="flex-1 flex items-center justify-center pt-16 pb-20 px-4">
-        <div className="text-center glass-effect rounded-2xl p-6 max-w-sm">
+        <div className="text-center liquid-glass rounded-2xl p-6 max-w-sm">
           <div className="text-4xl mb-4">⚠️</div>
           <h2 className="text-xl font-bold text-amber-500 mb-2">Account Suspended</h2>
           <p className="text-muted-foreground text-sm">
@@ -97,7 +97,7 @@ export function SchoolChatSection({ onBack }: SchoolChatSectionProps) {
   return (
     <div className="flex-1 h-[calc(100vh-120px)] flex flex-col pt-14 pb-16 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 p-3 border-b border-border/30">
+      <div className="flex items-center gap-3 p-3 border-b border-foreground/10">
         {onBack && (
           <Button variant="ghost" size="sm" onClick={onBack}>
             <ArrowLeft size={16} />
@@ -111,7 +111,7 @@ export function SchoolChatSection({ onBack }: SchoolChatSectionProps) {
       </div>
 
       {/* Chat Room Tabs */}
-      <div className="flex items-center gap-2 p-2 border-b border-border/30 overflow-x-auto">
+      <div className="flex items-center gap-2 p-2 border-b border-foreground/10 overflow-x-auto">
         {chatRooms.map((room) => (
           <button
             key={room.id}
@@ -207,7 +207,7 @@ export function SchoolChatSection({ onBack }: SchoolChatSectionProps) {
 
       {/* Input */}
       {currentRoom && (
-        <div className="p-3 border-t border-border/30">
+        <div className="p-3 border-t border-foreground/10">
           <div className="flex items-center gap-2 max-w-2xl mx-auto">
             <Input
               value={newMessage}

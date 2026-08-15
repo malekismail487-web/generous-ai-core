@@ -686,7 +686,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
   return (
     <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
       {/* ═══ Header ═══ */}
-      <div className="border-b border-border bg-card px-4 py-2.5 shrink-0">
+      <div className="border-b border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 px-4 py-2.5 shrink-0">
         <div className="max-w-3xl mx-auto">
           {/* Top row */}
           <div className="flex items-center justify-between mb-1.5">
@@ -753,7 +753,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
 
           {/* Subject Navigation Panel */}
           {showSubjectNav && (
-            <div className="mt-2 p-2 bg-muted/30 rounded-lg border border-border/50">
+            <div className="mt-2 p-2 bg-muted/30 rounded-lg border border-foreground/10">
               <div className="space-y-1">
                 {Object.entries(subjectProgress).map(([subject, data]) => (
                   <SubjectProgressBar
@@ -771,7 +771,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
 
           {/* Question Grid */}
           {showNav && (
-            <div className="mt-2 p-2 bg-muted/30 rounded-lg border border-border/50">
+            <div className="mt-2 p-2 bg-muted/30 rounded-lg border border-foreground/10">
               <ExamLegend />
               <div className="mt-1.5">
                 <QuestionNavGrid
@@ -787,7 +787,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
 
           {/* Keyboard Help */}
           {showKeyboardHelp && (
-            <div className="mt-2 p-2 bg-muted/30 rounded-lg border border-border/50 text-[10px] text-muted-foreground">
+            <div className="mt-2 p-2 bg-muted/30 rounded-lg border border-foreground/10 text-[10px] text-muted-foreground">
               <p className="font-medium text-foreground mb-1">Keyboard Shortcuts</p>
               <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                 <span>← / p → Previous</span>
@@ -830,7 +830,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
 
               <p className="text-base font-medium mb-6 leading-relaxed">{question.question}</p>
 
-              <div className="mb-5 rounded-xl border border-border/60 bg-muted/30 p-3">
+              <div className="mb-5 rounded-xl border border-foreground/10 bg-muted/30 p-3">
                 <ConfidencePicker
                   value={confidences[String(question.id)] ?? null}
                   onChange={(level) => setConfidenceFor(question.id, level)}
@@ -872,7 +872,7 @@ export default function LCTExamScreen({ examId, lockedUntil, userId }: LCTExamSc
       </div>
 
       {/* ═══ Footer ═══ */}
-      <div className="border-t border-border bg-card px-4 py-3 shrink-0">
+      <div className="border-t border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 px-4 py-3 shrink-0">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Button
             variant="outline"

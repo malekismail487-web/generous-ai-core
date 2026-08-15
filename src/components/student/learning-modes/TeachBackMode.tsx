@@ -76,7 +76,7 @@ export function TeachBackMode({ subject, topic, onExit }: TeachBackModeProps) {
   };
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border-border">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <GraduationCap className="w-5 h-5" /> Teach-Back — {subject} · {topic}

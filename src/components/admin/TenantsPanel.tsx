@@ -145,7 +145,7 @@ export default function TenantsPanel() {
         ) : (
           <div className="space-y-2">
             {tenants.map((t) => (
-              <div key={t.id} className="border border-border/40 rounded-lg p-3">
+              <div key={t.id} className="border border-foreground/10 rounded-lg p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
