@@ -607,55 +607,9 @@
   }
 }
 
-/* ═══════════════════════════════════════════
-   LITE MODE — Disable animations & effects
-   for older/slower devices (Old Build)
-   ═══════════════════════════════════════════ */
-.lite-mode *,
-.lite-mode *::before,
-.lite-mode *::after {
-  animation-duration: 0.01ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
-}
+/* Lite Mode has been retired — Lumina now ships a single, full-fidelity build.
+   Motion still yields to `prefers-reduced-motion` (see the media query above). */
 
-.lite-mode .glass-effect,
-.lite-mode .glass-effect-strong {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-.lite-mode .glow-effect {
-  box-shadow: none !important;
-}
-
-.lite-mode .ambient-glow,
-.lite-mode .grain-overlay,
-.lite-mode .orbit-field {
-  display: none !important;
-}
-
-.lite-mode .onyx-surface::after,
-.lite-mode .onyx-edge::before {
-  display: none !important;
-}
-
-.lite-mode .reveal,
-.lite-mode .stagger > *,
-.lite-mode .text-rise > span {
-  opacity: 1 !important;
-  transform: none !important;
-  filter: none !important;
-}
-
-
-.lite-mode .gradient-text {
-  background: none !important;
-  -webkit-background-clip: unset !important;
-  background-clip: unset !important;
-  -webkit-text-fill-color: unset !important;
-  color: hsl(var(--primary)) !important;
-}
 
 /* ═══════════════════════════════════════════
    KaTeX — Ensure math renders with proper fonts
