@@ -145,6 +145,16 @@ const PUBLISHABLE_KEY = () =>
  */
 const HOOK_CACHE_CAPACITY = 8;
 
+/**
+ * Warm-path timings (latency budget). The ALE snapshot is personalization
+ * data with minute-scale volatility, so serving it from a short-lived cache
+ * costs nothing in fidelity while removing a blocking round-trip per event.
+ */
+const ALE_CTX_REVALIDATE_MS = 45_000;
+/** Maximum blocking wait for the very first (cold) ALE fetch. */
+const ALE_COLD_WAIT_MS = 400;
+
+
 // ---------------------------------------------------------------------------
 // Benchmark instrumentation (opt-in, non-behavioural)
 // ---------------------------------------------------------------------------
