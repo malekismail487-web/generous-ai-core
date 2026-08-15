@@ -83,7 +83,12 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isRefining, setIsRefining] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [rewriteFor, setRewriteFor] = useState<string | null>(null);
+  const [rewriteText, setRewriteText] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const t2 = (en: string, ar: string) => (language === 'ar' ? ar : en);
 
   const reset = () => {
     setStep('configure');
@@ -98,6 +103,9 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
     setChatMessages([]);
     setChatInput('');
     setIsRefining(false);
+    setBusyId(null);
+    setRewriteFor(null);
+    setRewriteText('');
   };
 
   const handleGenerate = async () => {
@@ -193,32 +201,64 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
 
   const regenerateQuestion = async (questionIndex: number, instruction: string) => {
     if (!generatedTitle || questionIndex < 0 || questionIndex >= questions.length) return;
-    
-    setIsRefining(true);
+
+    const target = questions[questionIndex];
+    setBusyId(target.id);
     try {
       const { data, error } = await supabase.functions.invoke('generate-assignment', {
         body: {
-          title: `${generatedTitle} - Regenerate Question ${questionIndex + 1}`,
-          description: `Original: ${questions[questionIndex].questionTitle}\nInstruction: ${instruction}\nKeep other questions unchanged.`,
+          title: generatedTitle,
+          description: description.trim() || undefined,
           subject: getSubjectName(subject, 'en'),
           questionCount: 1,
           gradeLevel,
+          instruction: `${instruction}. Replace this rejected question: "${target.questionTitle}"`,
+          existingQuestions: questions.map((q) => q.questionTitle),
         },
       });
 
       if (error) throw error;
-      if (data?.questions && data.questions.length > 0) {
-        const newQuestions = [...questions];
-        newQuestions[questionIndex] = {
-          ...data.questions[0],
-          id: generateId(),
-        };
-        setQuestions(newQuestions);
-        toast({ title: 'Question updated successfully' });
+      if (data?.error) throw new Error(data.error);
+      if (data?.questions?.length) {
+        setQuestions((prev) =>
+          prev.map((q, i) => (i === questionIndex ? { ...data.questions[0], id: generateId() } : q)),
+        );
+        setRewriteFor(null);
+        setRewriteText('');
+        toast({ title: t2('Question rewritten by Lumina', 'أعادت لومينا صياغة السؤال') });
+      } else {
+        throw new Error('No question returned');
       }
     } catch (err: any) {
       console.error('Regenerate error:', err);
-      toast({ variant: 'destructive', title: 'Failed to regenerate question', description: err.message });
+      toast({ variant: 'destructive', title: t2('Rewrite failed', 'فشلت إعادة الصياغة'), description: err.message });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const addQuestions = async (count: number) => {
+    if (!generatedTitle) return;
+    setIsRefining(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-assignment', {
+        body: {
+          title: generatedTitle,
+          description: description.trim() || undefined,
+          subject: getSubjectName(subject, 'en'),
+          questionCount: count,
+          gradeLevel,
+          existingQuestions: questions.map((q) => q.questionTitle),
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setQuestions((prev) => [
+        ...prev,
+        ...(data.questions || []).map((q: any) => ({ ...q, id: generateId() })),
+      ]);
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: t2('Could not add questions', 'تعذر إضافة أسئلة'), description: err.message });
     } finally {
       setIsRefining(false);
     }
@@ -362,6 +402,22 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
                   </Button>
                 ))}
               </div>
+              <div className="flex items-center gap-3 pt-1">
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {t2('Or choose any number (1–50)', 'أو اختر أي عدد (1-50)')}
+                </span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={questionCount}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    if (Number.isFinite(n)) setQuestionCount(Math.min(50, Math.max(1, n)));
+                  }}
+                  className="h-9 w-24"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -412,9 +468,17 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
               <p className="text-sm text-muted-foreground">
                 {questions.length} {t('questionsAdded')} • {questions.length * 10} {t('pointsLabel')} • {getGradeName(gradeLevel, language)}
               </p>
-              <Button variant="outline" size="sm" onClick={() => setStep('configure')}>
-                {t('regenerate')}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" disabled={isRefining || !!busyId} onClick={() => addQuestions(1)}>
+                  {isRefining ? <Loader2 className="w-3 h-3 animate-spin" /> : `+1 ${t('qsLabel')}`}
+                </Button>
+                <Button variant="outline" size="sm" disabled={isRefining || !!busyId} onClick={() => addQuestions(5)}>
+                  +5 {t('qsLabel')}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setStep('configure')}>
+                  {t('regenerate')}
+                </Button>
+              </div>
             </div>
 
             {/* Questions List */}
@@ -439,29 +503,74 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
                             );
                           })}
                         </div>
-                        {/* Quick regenerate options */}
-                        <div className="flex gap-2 mt-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => regenerateQuestion(index, 'Make this question easier')}
-                            disabled={isRefining}
-                          >
-                            <RefreshCw className="w-3 h-3 mr-1" />
-                            Easier
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => regenerateQuestion(index, 'Make this question harder')}
-                            disabled={isRefining}
-                          >
-                            <RefreshCw className="w-3 h-3 mr-1" />
-                            Harder
-                          </Button>
+                        {/* Ask Lumina to change this question */}
+                        <div className="flex flex-wrap gap-2 mt-2 items-center">
+                          {busyId === q.id ? (
+                            <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              {t2('Lumina is rewriting…', 'لومينا تعيد الصياغة…')}
+                            </span>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost" size="sm" className="h-7 text-xs"
+                                onClick={() => regenerateQuestion(index, 'Make this question easier')}
+                                disabled={!!busyId}
+                              >
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                {t2('Easier', 'أسهل')}
+                              </Button>
+                              <Button
+                                variant="ghost" size="sm" className="h-7 text-xs"
+                                onClick={() => regenerateQuestion(index, 'Make this question harder')}
+                                disabled={!!busyId}
+                              >
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                {t2('Harder', 'أصعب')}
+                              </Button>
+                              <Button
+                                variant="ghost" size="sm" className="h-7 text-xs"
+                                onClick={() => regenerateQuestion(index, 'Replace this question entirely with a different one on the same topic')}
+                                disabled={!!busyId}
+                              >
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                {t2('Replace', 'استبدال')}
+                              </Button>
+                              <Button
+                                variant="ghost" size="sm" className="h-7 text-xs"
+                                onClick={() => {
+                                  setRewriteFor(rewriteFor === q.id ? null : q.id);
+                                  setRewriteText('');
+                                }}
+                                disabled={!!busyId}
+                              >
+                                <MessageSquare className="w-3 h-3 mr-1" />
+                                {t2("I don't like this — tell Lumina why", 'لا يعجبني — أخبر لومينا')}
+                              </Button>
+                            </>
+                          )}
                         </div>
+                        {rewriteFor === q.id && (
+                          <div className="flex gap-2 mt-2">
+                            <Input
+                              autoFocus
+                              value={rewriteText}
+                              onChange={(e) => setRewriteText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && rewriteText.trim()) regenerateQuestion(index, rewriteText.trim());
+                              }}
+                              placeholder={t2('e.g. too wordy, use a real-world example instead', 'مثال: طويل جدًا، استخدم مثالًا واقعيًا')}
+                              className="h-8 text-xs"
+                            />
+                            <Button
+                              size="sm" className="h-8 text-xs"
+                              disabled={!rewriteText.trim() || !!busyId}
+                              onClick={() => regenerateQuestion(index, rewriteText.trim())}
+                            >
+                              {t2('Rewrite', 'أعد الصياغة')}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                       <Button
                         variant="ghost"
