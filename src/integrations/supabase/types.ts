@@ -8065,6 +8065,7 @@ export type Database = {
             Args: { p_request_id: string; p_session_token?: string }
             Returns: Json
           }
+      approve_school_profile: { Args: { p_profile_id: string }; Returns: Json }
       assign_ministry_role: {
         Args: {
           p_actor_label?: string
@@ -8762,6 +8763,7 @@ export type Database = {
         Args: { p_card_id: string }
         Returns: undefined
       }
+      reject_school_profile: { Args: { p_profile_id: string }; Returns: Json }
       resolve_ministry_request: {
         Args: { p_action: string; p_request_id: string }
         Returns: Json
