@@ -134,6 +134,51 @@ async function loadRequestContext(authHeader: string | null, includeStudentConte
   }
 }
 
+/**
+ * Latency layer around loadRequestContext.
+ *
+ * 1. Warm cache — personalization context (profile, IQ, learning style,
+ *    memories, gaps) changes on the order of minutes, not seconds, so we
+ *    reuse it for 90s per user within the isolate. Follow-up turns in a
+ *    conversation then skip every database round-trip entirely.
+ * 2. Soft deadline — if the database is slow, we stop waiting after 700ms
+ *    and call the model with whatever context we already have rather than
+ *    holding time-to-first-token hostage. Nothing is lost: the resolved
+ *    context is written into the cache and used by the very next turn.
+ */
+const CTX_TTL_MS = 90_000;
+const CTX_DEADLINE_MS = 700;
+const ctxCache = new Map<string, { at: number; ctx: any }>();
+
+async function loadRequestContextFast(authHeader: string | null, includeStudentContext: boolean) {
+  const empty = {
+    userInfo: null, adaptiveProfile: null, studentName: '',
+    memories: [] as any[], gaps: [] as any[], learningProfiles: [] as any[],
+  };
+  if (!authHeader) return empty;
+
+  const key = `${authHeader}:${includeStudentContext ? 1 : 0}`;
+  const hit = ctxCache.get(key);
+  if (hit && Date.now() - hit.at < CTX_TTL_MS) return hit.ctx;
+
+  const pending = loadRequestContext(authHeader, includeStudentContext).then((ctx) => {
+    ctxCache.set(key, { at: Date.now(), ctx });
+    if (ctxCache.size > 500) {
+      for (const [k, v] of ctxCache) if (Date.now() - v.at > CTX_TTL_MS) ctxCache.delete(k);
+    }
+    return ctx;
+  });
+
+  // Race the load against the soft deadline; the promise keeps running and
+  // populates the cache even when we proceed without it.
+  const timeout = new Promise<typeof empty>((resolve) =>
+    setTimeout(() => resolve(hit?.ctx ?? empty), CTX_DEADLINE_MS),
+  );
+  return await Promise.race([pending, timeout]);
+}
+
+
+
 
 const SYSTEM_PROMPT = `You are Lumina, an educational AI integrated into a structured study app.
 
