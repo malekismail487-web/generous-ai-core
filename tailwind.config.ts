@@ -14,9 +14,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        sans: ['Manrope', 'system-ui', 'sans-serif'],
+        display: ['Sora', 'Manrope', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
+
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -116,6 +118,27 @@ export default {
           from: { opacity: "0", transform: "translate3d(0, 18px, -40px)", filter: "blur(6px)" },
           to: { opacity: "1", transform: "translate3d(0, 0, 0)", filter: "blur(0)" },
         },
+        "tile-in": {
+          from: { opacity: "0", transform: "perspective(1200px) translate3d(0, 28px, -80px) rotateX(8deg)" },
+          to: { opacity: "1", transform: "perspective(1200px) translate3d(0, 0, 0) rotateX(0deg)" },
+        },
+        "aurora-drift": {
+          "0%, 100%": { transform: "translate3d(-6%, -4%, 0) scale(1)" },
+          "33%": { transform: "translate3d(8%, 6%, 0) scale(1.12)" },
+          "66%": { transform: "translate3d(-4%, 9%, 0) scale(0.94)" },
+        },
+        "think-pulse": {
+          "0%, 100%": { transform: "scaleY(0.35)", opacity: "0.4" },
+          "50%": { transform: "scaleY(1)", opacity: "1" },
+        },
+        "marquee-line": {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(-50%)" },
+        },
+        "ring-trace": {
+          from: { strokeDashoffset: "260" },
+          to: { strokeDashoffset: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -130,7 +153,13 @@ export default {
         "breathe": "breathe 5s ease-in-out infinite",
         "sheen": "sheen 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite",
         "rise-in": "rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "tile-in": "tile-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "aurora-drift": "aurora-drift 24s ease-in-out infinite",
+        "think-pulse": "think-pulse 1.1s ease-in-out infinite",
+        "marquee-line": "marquee-line 26s linear infinite",
+        "ring-trace": "ring-trace 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
       },
+
 
     },
   },

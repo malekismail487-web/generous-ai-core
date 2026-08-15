@@ -9,6 +9,9 @@ import { useLearningStyle } from '@/hooks/useLearningStyle';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput, ChatAttachment } from '@/components/ChatInput';
+import { EffortSelector } from '@/components/ai/EffortSelector';
+import { ThinkingTrace } from '@/components/ai/ThinkingTrace';
+import { useAiEffort } from '@/hooks/useAiEffort';
 import { ChatHistoryDrawer } from '@/components/ChatHistoryDrawer';
 import { TypingIndicator } from '@/components/TypingIndicator';
 import { EmptyState } from '@/components/EmptyState';
@@ -114,6 +117,9 @@ export function StudyBuddy() {
 
   const [localMessages, setLocalMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [thinking, setThinking] = useState('');
+  const { effort, spec } = useAiEffort('study-buddy');
+
   const [thinkingStyle, setThinkingStyle] = useState<string | null>(null);
   const [showStylePicker, setShowStylePicker] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -464,7 +470,9 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
     recalculateLearningStyle();
 
     let assistantContent = '';
+    let reasoningText = '';
     const assistantId = crypto.randomUUID();
+    setThinking('');
 
     try {
       // Fetch background context from past conversations
@@ -504,6 +512,7 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
             systemPrompt,
             language,
             adaptiveLevel: currentLevel,
+            effort,
           }),
         }
       );
@@ -529,7 +538,13 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
           if (jsonStr === '[DONE]') break;
           try {
             const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
+            const deltaObj = parsed.choices?.[0]?.delta;
+            const reasoningDelta = deltaObj?.reasoning_content ?? deltaObj?.reasoning;
+            if (reasoningDelta && spec.showsThinking) {
+              reasoningText += reasoningDelta;
+              setThinking(reasoningText);
+            }
+            const delta = deltaObj?.content;
             if (delta) {
               assistantContent += delta;
               setLocalMessages(prev => {
@@ -752,7 +767,10 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
                     )}
                   </div>
                 ))}
-                {isLoading && localMessages[localMessages.length - 1]?.role === 'user' && <TypingIndicator />}
+                {spec.showsThinking && (thinking || (isLoading && spec.showsThinking)) && (
+                  <ThinkingTrace text={thinking} active={isLoading} className="mb-2" />
+                )}
+                {isLoading && !thinking && localMessages[localMessages.length - 1]?.role === 'user' && <TypingIndicator />}
                 <div ref={messagesEndRef} />
               </div>
             </>
@@ -762,6 +780,9 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
 
       <footer className="fixed bottom-16 left-0 right-0 glass-effect-strong border-t border-border/30 z-40">
         <div className="max-w-2xl mx-auto px-4 py-3">
+          <div className="flex justify-end pb-2">
+            <EffortSelector surface="study-buddy" />
+          </div>
           <ChatInput
             onSend={sendMessage}
             disabled={isLoading}

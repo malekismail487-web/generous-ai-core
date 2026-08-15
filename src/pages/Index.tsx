@@ -37,10 +37,15 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { LuminaLogo } from "@/components/LuminaLogo";
 import { Button } from "@/components/ui/button";
+import { DesktopShell } from "@/components/shell/DesktopShell";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const navigate = useNavigate();
+  const isDesktop = !useIsMobile();
+
   
   const { user, loading: authLoading } = useAuth();
   const { 
@@ -179,6 +184,52 @@ const Index = () => {
     }
   };
 
+  const tabTitle = activeTab === 'sat' ? t('SAT Prep', 'تحضير SAT')
+    : activeTab === 'mindmaps' ? t('Mind Maps', 'خرائط ذهنية')
+    : activeTab === 'studybuddy' ? t('Lumina', 'لومينا')
+    : activeTab === 'goals' ? t('My Goals', 'أهدافي')
+    : activeTab === 'leaderboard' ? t('Leaderboard', 'المتصدرين')
+    : activeTab === 'focustimer' ? t('Focus Timer', 'مؤقت التركيز')
+    : activeTab === 'aiplans' ? t('AI Study Plan', 'خطة دراسة AI')
+    : activeTab === 'subjects' ? t('Subjects', 'المواد')
+    : activeTab === 'notes' ? t('Notes', 'الملاحظات')
+    : activeTab === 'flashcards' ? t('Flashcards', 'البطاقات التعليمية')
+    : activeTab === 'examination' ? t('Exams', 'الاختبارات')
+    : activeTab === 'assignments' ? t('Assignments', 'الواجبات')
+    : activeTab === 'reports' ? t('Report Cards', 'كشوف الدرجات')
+    : activeTab === 'podcasts' ? t('AI Podcasts', 'بودكاست AI')
+    : activeTab === 'announcements' ? t('Announcements', 'الإعلانات')
+    : activeTab === 'trips' ? t('Trips', 'الرحلات')
+    : activeTab === 'graphcalc' ? t('Graph Calculator', 'حاسبة الرسوم')
+    : activeTab === 'weeklyplan' ? t('Weekly Plan', 'الخطة الأسبوعية')
+    : activeTab === 'live' ? t('Live Rooms', 'الغرف المباشرة')
+    : activeTab === 'profile' ? t('Profile', 'الملف الشخصي')
+    : t('Home', 'الرئيسية');
+
+  // Desktop gets the bento workspace; phones keep the circular home grid.
+  if (isDesktop) {
+    return (
+      <>
+        <AnimatedBackground />
+        {activeTab !== 'focustimer' && (
+          <FloatingTimer onNavigate={() => setActiveTab('focustimer')} />
+        )}
+        <DesktopShell
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          title={tabTitle}
+          subtitle={
+            profile?.full_name
+              ? t(`Signed in as ${profile.full_name}`, `تم تسجيل الدخول باسم ${profile.full_name}`)
+              : undefined
+          }
+        >
+          <div className="h-full overflow-hidden">{renderMainContent()}</div>
+        </DesktopShell>
+      </>
+    );
+  }
+
   return (
     <div className="h-screen bg-background relative flex flex-col overflow-hidden">
       <AnimatedBackground />
@@ -188,10 +239,6 @@ const Index = () => {
         <FloatingTimer onNavigate={() => setActiveTab('focustimer')} />
       )}
 
-      {/* Code Lab entry point hidden: the coding feature is unreliable for now.
-          The /code-lab route still exists for direct access from other surfaces
-          (e.g. CodeBlock "Open in Code Lab"), but it's no longer surfaced
-          from the home screen. */}
       {/* Top bar - only show on sub-pages for back navigation */}
       {isSubPage && (
         <header className="fixed top-0 left-0 right-0 z-50 h-14 glass-effect-strong border-b border-border/30">
@@ -203,26 +250,7 @@ const Index = () => {
               <div className="w-7 h-7 rounded-lg overflow-hidden">
                 <LuminaLogo size={28} />
               </div>
-              <span className="font-bold text-foreground text-sm capitalize">
-                {activeTab === 'sat' ? t('SAT Prep', 'تحضير SAT') 
-                  : activeTab === 'mindmaps' ? t('Mind Maps', 'خرائط ذهنية')
-                  : activeTab === 'studybuddy' ? t('Lumina', 'لومينا')
-                   : activeTab === 'goals' ? t('My Goals', 'أهدافي')
-                   : activeTab === 'leaderboard' ? t('Leaderboard', 'المتصدرين')
-                   : activeTab === 'focustimer' ? t('Focus Timer', 'مؤقت التركيز')
-                   : activeTab === 'aiplans' ? t('AI Study Plan', 'خطة دراسة AI')
-                  : activeTab === 'subjects' ? t('Subjects', 'المواد')
-                  : activeTab === 'notes' ? t('Notes', 'الملاحظات')
-                  : activeTab === 'flashcards' ? t('Flashcards', 'البطاقات التعليمية')
-                  : activeTab === 'examination' ? t('Exams', 'الاختبارات')
-                  : activeTab === 'assignments' ? t('Assignments', 'الواجبات')
-                   : activeTab === 'reports' ? t('Report Cards', 'كشوف الدرجات')
-                   : activeTab === 'podcasts' ? t('AI Podcasts', 'بودكاست AI')
-                   : activeTab === 'announcements' ? t('Announcements', 'الإعلانات')
-                   : activeTab === 'trips' ? t('Trips', 'الرحلات')
-                   : activeTab === 'graphcalc' ? t('Graph Calculator', 'حاسبة الرسوم')
-                   : activeTab}
-              </span>
+              <span className="font-display font-bold text-foreground text-sm">{tabTitle}</span>
             </div>
           </div>
         </header>
@@ -240,5 +268,6 @@ const Index = () => {
     </div>
   );
 };
+
 
 export default Index;

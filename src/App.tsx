@@ -6,7 +6,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeLanguageProvider } from "@/hooks/useThemeLanguage";
+import { AiEffortProvider } from "@/hooks/useAiEffort";
 import { WallpaperProvider } from "@/hooks/useWallpaper";
+
 import DeviceBanScreen from "@/components/DeviceBanScreen";
 import LCTExamGuard from "@/components/LCTExamGuard";
 import Index from "./pages/Index";
@@ -72,8 +74,10 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ThemeLanguageProvider>
+          <AiEffortProvider>
           <WallpaperProvider>
           <FocusTimerProvider>
+
             <TooltipProvider>
               <Toaster />
               <Sonner />
@@ -122,6 +126,8 @@ const App = () => (
             </TooltipProvider>
           </FocusTimerProvider>
           </WallpaperProvider>
+          </AiEffortProvider>
+
         </ThemeLanguageProvider>
       </AuthProvider>
     </QueryClientProvider>

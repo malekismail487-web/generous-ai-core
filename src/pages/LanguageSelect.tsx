@@ -1,137 +1,108 @@
 import { useState } from 'react';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
-import { Globe, Zap, Feather } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { useNavigate } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-type Step = 'language' | 'build';
+const OPTIONS = [
+  {
+    id: 'en' as const,
+    name: 'English',
+    native: 'English',
+    caption: 'Continue in English',
+    glyph: 'Aa',
+  },
+  {
+    id: 'ar' as const,
+    name: 'Arabic',
+    native: 'العربية',
+    caption: 'المتابعة بالعربية',
+    glyph: 'أب',
+  },
+];
 
 export default function LanguageSelect() {
-  const { setLanguage, setBuildMode, language } = useThemeLanguage();
+  const { setLanguage } = useThemeLanguage();
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>('language');
-  const [selectedLang, setSelectedLang] = useState<'en' | 'ar' | null>(null);
+  const [leaving, setLeaving] = useState<'en' | 'ar' | null>(null);
 
-  const handleSelectLanguage = (lang: 'en' | 'ar') => {
-    setSelectedLang(lang);
+  const handleSelect = (lang: 'en' | 'ar') => {
+    setLeaving(lang);
     setLanguage(lang);
-    setStep('build');
-  };
-
-  const handleSelectBuild = (mode: 'new' | 'old') => {
-    setBuildMode(mode);
     localStorage.setItem('language-selected', 'true');
     sessionStorage.setItem('language-selected-tab', 'true');
-    // Route through country selection before the auth page.
-    navigate('/country');
+    window.setTimeout(() => navigate('/country'), 380);
   };
 
-  const isArabic = selectedLang === 'ar' || language === 'ar';
-
-  if (step === 'build') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-        <div className="w-full max-w-sm animate-fade-in">
-          <div className="flex flex-col items-center mb-10">
-            <div className="w-20 h-20 rounded-3xl overflow-hidden mb-5">
-              <LuminaLogo size={80} />
-            </div>
-            <h1 className="text-3xl font-bold gradient-text" style={{ fontFamily: 'Caveat, cursive' }}>
-              Lumina
-            </h1>
-          </div>
-
-          <div className="flex flex-col items-center mb-8">
-            <Zap className="w-6 h-6 text-muted-foreground mb-3" />
-            <p className="text-muted-foreground text-sm mb-1">
-              {isArabic ? 'اختر إصدار التطبيق' : 'Choose app version'}
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <button
-              onClick={() => handleSelectBuild('new')}
-              className="w-full glass-effect rounded-2xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4 group"
-            >
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-foreground text-background">
-                <Zap className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-foreground">
-                  {isArabic ? 'الإصدار الجديد' : 'New Build'}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {isArabic ? 'تجربة كاملة مع الرسوم المتحركة والتأثيرات' : 'Full experience with animations & effects'}
-                </p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => handleSelectBuild('old')}
-              className="w-full glass-effect rounded-2xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4 group"
-            >
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-secondary border border-border">
-                <Feather className="w-6 h-6 text-muted-foreground" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-foreground">
-                  {isArabic ? 'الإصدار القديم' : 'Old Build'}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {isArabic ? 'نسخة خفيفة للأجهزة القديمة - بدون رسوم متحركة' : 'Lightweight for older devices — no animations'}
-                </p>
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-      <div className="w-full max-w-sm animate-fade-in">
-        <div className="flex flex-col items-center mb-10">
-          <div className="w-20 h-20 rounded-3xl overflow-hidden mb-5">
-            <LuminaLogo size={80} />
+    <div className="relative min-h-screen bg-background overflow-hidden flex items-center justify-center p-6">
+      {/* Aurora depth field */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute -top-1/3 left-1/4 w-[70vw] h-[70vw] rounded-full blur-[120px] animate-aurora-drift"
+          style={{ background: 'radial-gradient(circle, hsl(var(--ink) / 0.10), transparent 65%)' }}
+        />
+        <div
+          className="absolute -bottom-1/3 right-1/4 w-[60vw] h-[60vw] rounded-full blur-[120px] animate-aurora-drift"
+          style={{
+            background: 'radial-gradient(circle, hsl(var(--ink) / 0.07), transparent 65%)',
+            animationDelay: '-8s',
+          }}
+        />
+      </div>
+      <div className="grain-overlay" />
+
+      <div
+        className={cn(
+          'relative z-10 w-full max-w-md scene-3d transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
+          leaving && 'opacity-0 -translate-y-4 blur-sm',
+        )}
+      >
+        <div className="flex flex-col items-center mb-12 animate-rise-in">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 rounded-full blur-2xl opacity-40 nucleus-pulse" />
+            <LuminaLogo size={72} />
           </div>
-          <h1 className="text-3xl font-bold gradient-text" style={{ fontFamily: 'Caveat, cursive' }}>
-            Lumina
-          </h1>
+          <h1 className="font-display text-5xl font-extrabold tracking-tighter">Lumina</h1>
+          <p className="mt-3 text-xs uppercase tracking-[0.34em] text-muted-foreground">
+            Choose your language · اختر لغتك
+          </p>
         </div>
 
-        <div className="flex flex-col items-center mb-8">
-          <Globe className="w-6 h-6 text-muted-foreground mb-3" />
-          <p className="text-muted-foreground text-sm mb-1">Choose your language</p>
-          <p className="text-muted-foreground text-sm font-arabic">اختر لغتك</p>
-        </div>
+        <div className="stagger space-y-3">
+          {OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => handleSelect(opt.id)}
+              className={cn(
+                'group relative w-full onyx-surface onyx-edge depth-press layer-3d overflow-hidden',
+                'flex items-center gap-5 px-5 py-5 text-left',
+                opt.id === 'ar' && 'flex-row-reverse text-right',
+              )}
+            >
+              <span className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 skew-x-12 bg-gradient-to-r from-transparent via-foreground/10 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-sheen" />
 
-        <div className="space-y-3">
-          <button
-            onClick={() => handleSelectLanguage('en')}
-            className="w-full glass-effect rounded-2xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4 group"
-          >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-muted border border-border/50 text-2xl">
-              🇺🇸
-            </div>
-            <div>
-              <h3 className="font-bold text-lg text-foreground">English</h3>
-              <p className="text-sm text-muted-foreground">Continue in English</p>
-            </div>
-          </button>
+              <span className="flex items-center justify-center w-14 h-14 rounded-2xl bg-muted/60 border border-border/50 font-display text-xl font-bold transition-transform duration-500 group-hover:scale-110">
+                {opt.glyph}
+              </span>
 
-          <button
-            onClick={() => handleSelectLanguage('ar')}
-            className="w-full glass-effect rounded-2xl p-5 text-right transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4 group flex-row-reverse"
-          >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-muted border border-border/50 text-2xl">
-              🇸🇦
-            </div>
-            <div>
-              <h3 className="font-bold text-lg text-foreground font-arabic">العربية</h3>
-              <p className="text-sm text-muted-foreground font-arabic">المتابعة بالعربية</p>
-            </div>
-          </button>
+              <span className="flex-1 min-w-0">
+                <span className="block font-display text-xl font-bold">{opt.native}</span>
+                <span className="block text-sm text-muted-foreground">{opt.caption}</span>
+              </span>
+
+              <ArrowRight
+                className={cn(
+                  'w-5 h-5 text-muted-foreground transition-all duration-500',
+                  opt.id === 'ar'
+                    ? 'rotate-180 group-hover:-translate-x-1'
+                    : 'group-hover:translate-x-1',
+                  'group-hover:text-foreground',
+                )}
+              />
+            </button>
+          ))}
         </div>
       </div>
     </div>
