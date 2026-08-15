@@ -99,20 +99,24 @@ export default function SuperAdmin() {
 
   // Check if super admin is verified
   useEffect(() => {
-    const checkVerification = () => {
-      const verified = sessionStorage.getItem('superAdminVerified');
-      if (verified === 'true') {
-        setIsVerified(true);
-      } else {
-        setIsVerified(false);
-        navigate('/super-admin-verify');
-      }
-    };
+    if (loading) return;
 
-    if (!loading && isSuperAdmin) {
-      checkVerification();
+    // Non super admins never sit on a spinner: resolve the gate immediately so
+    // the access-denied screen renders instead of hanging forever.
+    if (!isSuperAdmin) {
+      setIsVerified(false);
+      return;
+    }
+
+    const verified = sessionStorage.getItem('superAdminVerified');
+    if (verified === 'true') {
+      setIsVerified(true);
+    } else {
+      setIsVerified(false);
+      navigate('/super-admin-verify');
     }
   }, [loading, isSuperAdmin, navigate]);
+
 
   const fetchSchools = useCallback(async () => {
     setLoadingSchools(true);
