@@ -10,6 +10,7 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr } from '@/lib/translations';
 import { Mail, Lock, Loader2, KeyRound, Users, UserPlus, Heart, ShieldCheck, Globe } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
+import { Manifesto } from '@/components/brand/Manifesto';
 import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
