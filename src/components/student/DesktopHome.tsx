@@ -54,7 +54,7 @@ function TileButton({ tile, index, onNavigate }: { tile: Tile; index: number; on
       style={{ animationDelay: `${index * 35 + 120}ms` }}
       className={cn(
         tile.span,
-        'group relative overflow-hidden rounded-[1.4rem] border border-border/45 bg-white/[0.02]',
+        'group relative overflow-hidden rounded-[1.4rem] border border-foreground/12 bg-foreground/[0.03] backdrop-blur-2xl backdrop-saturate-150',
         'p-4 text-left opacity-0 animate-[slideUpFade_0.6s_cubic-bezier(0.16,1,0.3,1)_forwards]',
         'transition-[transform,border-color,background-color] duration-500',
         'hover:-translate-y-1 hover:border-foreground/25 hover:bg-white/[0.05]',
@@ -105,7 +105,7 @@ export function DesktopHome({ onNavigate, hasSchool }: { onNavigate: (a: GridAct
         <BriefingDock onNavigate={onNavigate as (a: string & {}) => void} />
 
         {/* Masthead */}
-        <div className="relative mb-8 overflow-hidden rounded-[2rem] border border-border/45 bg-white/[0.015]">
+        <div className="relative mb-8 overflow-hidden rounded-[2rem] border border-foreground/12 bg-foreground/[0.025] backdrop-blur-2xl backdrop-saturate-150">
           <span
             aria-hidden
             className="pointer-events-none absolute inset-0 opacity-[0.07]"
@@ -176,7 +176,7 @@ export function DesktopHome({ onNavigate, hasSchool }: { onNavigate: (a: GridAct
           <div className="col-span-4">
             <CognitiveMirrorGauge />
           </div>
-          <div className="col-span-8 relative overflow-hidden rounded-[1.4rem] border border-border/45 bg-white/[0.02] p-6">
+          <div className="col-span-8 relative overflow-hidden rounded-[1.4rem] border border-foreground/12 bg-foreground/[0.03] backdrop-blur-2xl backdrop-saturate-150 p-6">
             <div className="relative mb-4 h-px w-full overflow-hidden bg-border/60">
               <span className="absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-foreground/40 to-transparent animate-sheen" />
             </div>

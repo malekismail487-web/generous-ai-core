@@ -24,8 +24,19 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-effect-strong border-t border-border/30" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-foreground/10 bg-background/45 backdrop-blur-2xl backdrop-saturate-150"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
+      {/* meniscus + specular lip */}
+      <span aria-hidden className="liquid-hairline absolute inset-x-6 -top-px opacity-70" />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-10 opacity-60"
+        style={{ background: 'linear-gradient(180deg, hsl(var(--ink) / 0.08), transparent)' }}
+      />
+      <div className="relative flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+
         {bottomTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeBottomTab === tab.id;
@@ -37,19 +48,25 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all duration-300",
-                isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                "liquid-tab flex flex-col items-center justify-center gap-0.5 flex-1 h-full rounded-2xl transition-all duration-300",
+                isActive ? "text-foreground is-active" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className={cn(
-                "relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
-                !isLiveTab && "rounded-xl",
-                isActive && "bg-muted shadow-sm",
-                isLiveTab && "border border-border/50",
-                hasLive && "border-red-500/50 bg-red-500/5"
+                "relative w-11 h-11 rounded-2xl flex items-center justify-center overflow-hidden transition-all duration-500",
+                isLiveTab && "rounded-full",
+                isActive && "liquid-glass liquid-glass-soft border-foreground/25",
+                hasLive && "border-red-500/50"
               )}>
+                {isActive && (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-2 top-0 h-1/2 rounded-b-full opacity-70"
+                    style={{ background: 'radial-gradient(60% 100% at 50% 0%, hsl(var(--ink) / 0.28), transparent 70%)' }}
+                  />
+                )}
                 <Icon size={18} className={cn(
-                  "transition-transform duration-300",
+                  "relative transition-transform duration-500",
                   isActive && "scale-110",
                   hasLive && "text-red-500"
                 )} />
@@ -57,6 +74,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                   <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-background animate-pulse" />
                 )}
               </div>
+
               <span className={cn(
                 "text-[10px] font-semibold transition-all",
                 isActive && "text-foreground",

@@ -1,6 +1,8 @@
 import { ReactNode, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { LuminaLogo } from '@/components/LuminaLogo';
+import { LiquidField } from '@/components/shell/LiquidField';
+
 import { EffortSelector } from '@/components/ai/EffortSelector';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { useMagnetic } from '@/lib/motion';
@@ -102,15 +104,21 @@ function NavButton({
     >
       {active && (
         <>
-          <span className="absolute inset-0 rounded-2xl bg-white/[0.06] border border-foreground/15" />
+          <span className="liquid-glass liquid-glass-soft absolute inset-0 rounded-2xl border-foreground/20" />
           <span
             aria-hidden
             className="absolute inset-0 rounded-2xl opacity-[0.12]"
             style={{ backgroundImage: 'repeating-linear-gradient(135deg, hsl(var(--foreground)) 0 1px, transparent 1px 8px)' }}
           />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-3 top-0 h-1/2 rounded-b-full opacity-70"
+            style={{ background: 'radial-gradient(60% 100% at 50% 0%, hsl(var(--ink) / 0.24), transparent 72%)' }}
+          />
         </>
       )}
-      <span className="absolute inset-0 rounded-2xl border border-transparent transition-colors duration-300 group-hover:border-foreground/10" />
+      <span className="absolute inset-0 rounded-2xl border border-transparent transition-colors duration-300 group-hover:border-foreground/10 group-hover:bg-foreground/[0.03] group-hover:backdrop-blur-xl" />
+
       <span
         className={cn(
           'absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-full bg-foreground transition-all duration-500',
@@ -151,16 +159,20 @@ export function DesktopShell({ activeTab, onTabChange, title, subtitle, children
   const groups = useMemo(() => GROUPS, []);
 
   return (
-    <div className="h-screen w-full bg-background text-foreground flex overflow-hidden">
+    <div className="relative h-screen w-full bg-background text-foreground flex overflow-hidden">
+      <LiquidField dense />
+
       {/* Rail */}
       <aside
         className={cn(
-          'relative shrink-0 h-full border-r border-border/40 bg-card/40 backdrop-blur-2xl',
+          'relative z-10 shrink-0 h-full border-r border-foreground/10 bg-background/40 backdrop-blur-2xl backdrop-saturate-150',
           'transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
           collapsed ? 'w-[76px]' : 'w-[264px]',
         )}
       >
-        <div className="flex items-center gap-3 h-16 px-4 border-b border-border/40">
+        <span aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-foreground/25 to-transparent" />
+        <div className="relative flex items-center gap-3 h-16 px-4 border-b border-foreground/10">
+
           <button
             onClick={() => setCollapsed((v) => !v)}
             className="shrink-0 transition-transform duration-500 hover:rotate-90"
@@ -201,9 +213,16 @@ export function DesktopShell({ activeTab, onTabChange, title, subtitle, children
       </aside>
 
       {/* Workspace */}
-      <div className="relative flex-1 min-w-0 flex flex-col">
-        <header className="relative z-20 h-16 shrink-0 flex items-center gap-4 px-8 border-b border-border/40 bg-background/70 backdrop-blur-2xl">
-          <div className="min-w-0 flex-1">
+      <div className="relative z-10 flex-1 min-w-0 flex flex-col">
+        <header className="relative z-20 min-h-16 shrink-0 flex items-center gap-4 px-8 py-2 border-b border-foreground/10 bg-background/45 backdrop-blur-2xl backdrop-saturate-150">
+          <span aria-hidden className="liquid-hairline pointer-events-none absolute inset-x-8 -bottom-px opacity-60" />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-8 opacity-60"
+            style={{ background: 'linear-gradient(180deg, hsl(var(--ink) / 0.07), transparent)' }}
+          />
+          <div className="relative min-w-0 flex-1">
+            <p className="liquid-label mb-0.5">{t('Lumina', 'لومينا')}</p>
             <h1 className="font-display text-lg font-bold tracking-tight truncate">{title}</h1>
             {subtitle && (
               <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
@@ -211,6 +230,7 @@ export function DesktopShell({ activeTab, onTabChange, title, subtitle, children
           </div>
           <EffortSelector />
         </header>
+
 
         <main
           key={activeTab}
