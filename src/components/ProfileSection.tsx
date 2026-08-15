@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Loader2, Sun, Moon, Globe, Heart, Copy, Check, Droplet } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
@@ -13,17 +14,13 @@ import { tr } from '@/lib/translations';
 import { useWallpaper } from '@/hooks/useWallpaper';
 import { useLensPreference } from '@/hooks/useLensPreference';
 import { supabase } from '@/integrations/supabase/client';
-import { SchoolAdminPanel } from '@/components/SchoolAdminPanel';
-import SuperAdminPanel from '@/components/SuperAdminPanel';
 import { EffortSelector } from '@/components/ai/EffortSelector';
 import { LearningProfileCard } from '@/components/student/LearningProfileCard';
 import { LuminaMemoryViewer } from '@/components/student/LuminaMemoryViewer';
 import { cn } from '@/lib/utils';
 
-type ViewState = 'main' | 'school-admin' | 'super-admin';
-
 export function ProfileSection() {
-  const [viewState, setViewState] = useState<ViewState>('main');
+  const navigate = useNavigate();
   const [showAdminCodeInput, setShowAdminCodeInput] = useState(false);
   const [adminCode, setAdminCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -68,14 +65,6 @@ export function ProfileSection() {
       setAdminCode('');
     }
   };
-
-  if (viewState === 'school-admin') {
-    return <SchoolAdminPanel onBack={() => setViewState('main')} />;
-  }
-
-  if (viewState === 'super-admin') {
-    return <SuperAdminPanel onBack={() => setViewState('main')} />;
-  }
 
   return (
     <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
@@ -179,7 +168,7 @@ export function ProfileSection() {
         {/* School Admin Panel */}
         {isSchoolAdmin && (
           <button
-            onClick={() => setViewState('school-admin')}
+            onClick={() => navigate('/admin')}
             className="w-full liquid-glass rounded-2xl p-5 mb-4 text-left hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-3">
@@ -198,7 +187,7 @@ export function ProfileSection() {
         {/* Super Admin Panel */}
         {isAdmin && (
           <button
-            onClick={() => setViewState('super-admin')}
+            onClick={() => navigate('/super-admin')}
             className="w-full liquid-glass rounded-2xl p-5 mb-4 text-left hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-3">
