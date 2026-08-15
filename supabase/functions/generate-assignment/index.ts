@@ -43,9 +43,13 @@ Rules:
 - Questions should be clear, unambiguous, and educational
 - ${variationHint}
 ${adaptiveLevel ? `- ADAPTIVE LEVEL: Student is "${adaptiveLevel}". ${adaptiveLevel === 'beginner' ? 'Generate simpler questions.' : adaptiveLevel === 'advanced' ? 'Generate challenging questions.' : 'Generate moderate difficulty questions.'}` : ''}
-${description ? `- Additional context from the teacher: "${description}"` : ''}`;
+${description ? `- Additional context from the teacher: "${description}"` : ''}
+${instruction ? `- TEACHER REWRITE REQUEST (highest priority): "${instruction}". The replacement question MUST satisfy this request.` : ''}
+${Array.isArray(existingQuestions) && existingQuestions.length
+  ? `- These questions already exist in the assignment. Do NOT repeat, paraphrase, or overlap with them:\n${existingQuestions.map((q: string, i: number) => `  ${i + 1}. ${q}`).join('\n')}`
+  : ''}`;
 
-    const userPrompt = `The teacher created an assignment titled "${title}" for the subject "${subject}" at the ${gradeLevel || 'general'} level. Generate exactly ${questionCount} multiple-choice questions that are specifically about "${title}". ${variationHint}${description ? ` The teacher also provided this description: "${description}"` : ''}`;
+    const userPrompt = `The teacher created an assignment titled "${title}" for the subject "${subject}" at the ${gradeLevel || 'general'} level. Generate exactly ${questionCount} multiple-choice questions that are specifically about "${title}". ${variationHint}${description ? ` The teacher also provided this description: "${description}"` : ''}${instruction ? ` The teacher rejected a previous question and asked: "${instruction}".` : ''}`;
 
     const toolDef = [
       {
