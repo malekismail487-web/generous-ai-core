@@ -28,27 +28,31 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)]",
+          "border border-foreground/12 bg-foreground/[0.06] backdrop-blur-xl backdrop-saturate-150 text-foreground shadow-[var(--shadow-card)] hover:border-foreground/28 hover:bg-foreground/[0.1] hover:shadow-[var(--shadow-elevated)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-[var(--shadow-card)] hover:bg-destructive/90",
+          "border border-destructive/40 bg-destructive/85 backdrop-blur-xl text-destructive-foreground shadow-[var(--shadow-card)] hover:bg-destructive hover:border-destructive/70",
         outline:
-          "border border-border bg-card/50 backdrop-blur-xl hover:border-foreground/25 hover:bg-accent/60 hover:text-accent-foreground",
+          "border border-foreground/14 bg-foreground/[0.02] backdrop-blur-2xl backdrop-saturate-150 hover:border-foreground/30 hover:bg-foreground/[0.06] hover:text-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border border-foreground/10 bg-foreground/[0.04] backdrop-blur-xl text-secondary-foreground hover:bg-foreground/[0.08] hover:border-foreground/20",
         ghost:
-          "before:hidden after:hidden hover:bg-accent hover:text-accent-foreground",
+          "before:hidden after:hidden hover:bg-foreground/[0.06] hover:text-foreground",
         link:
           "before:hidden after:hidden hover:-translate-y-0 text-primary underline-offset-4 hover:underline",
         // Onyx signature: a carved slab of black with a lit rim.
         onyx:
-          "border border-white/10 bg-[hsl(0_0%_5%)] text-foreground shadow-[var(--shadow-card),var(--shadow-inset)] hover:border-white/25 hover:bg-[hsl(0_0%_8%)] hover:shadow-[var(--shadow-elevated)]",
+          "border border-foreground/10 bg-[hsl(0_0%_4%)]/80 backdrop-blur-2xl text-foreground shadow-[var(--shadow-card),var(--shadow-inset)] hover:border-foreground/28 hover:bg-[hsl(0_0%_7%)]/85 hover:shadow-[var(--shadow-elevated)]",
         // Hero: inverted ink, the one action that matters on a screen.
         hero:
           "bg-foreground text-background font-semibold shadow-[var(--shadow-elevated)] hover:shadow-[0_0_60px_-12px_hsl(var(--ink)/0.45)] hover:tracking-[0.01em]",
         // Quiet: present, but never competing.
         quiet:
-          "before:hidden text-muted-foreground hover:text-foreground hover:bg-white/[0.04]",
+          "before:hidden text-muted-foreground hover:text-foreground hover:bg-foreground/[0.05]",
+        // Glass: fully optical, for actions floating over content.
+        glass:
+          "liquid-glass liquid-sheen text-foreground hover:text-foreground",
       },
+
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-lg px-3",
