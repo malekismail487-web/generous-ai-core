@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { TrendingUp as LensTrend, ClipboardList as LensTask, Megaphone as LensMega } from 'lucide-react';
+import { LiquidLens } from '@/components/motion/LiquidLens';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Heart, BookOpen, ClipboardCheck, Trophy, Bell, LogOut, Flame, TrendingUp } from 'lucide-react';
 import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
+import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 
 type ChildInfo = {
   student_id: string;
@@ -22,6 +25,8 @@ export default function ParentDashboard() {
   const navigate = useNavigate();
   const { language } = useThemeLanguage();
   const isAr = language === 'ar';
+
+  const [tab, setTab] = useState('performance');
 
   const [loading, setLoading] = useState(true);
   const [child, setChild] = useState<ChildInfo | null>(null);
@@ -113,7 +118,17 @@ export default function ParentDashboard() {
     : null;
 
   return (
-    <div className="min-h-screen bg-background" dir={isAr ? 'rtl' : 'ltr'}>
+    <div className="relative min-h-screen" dir={isAr ? 'rtl' : 'ltr'}>
+      <ActorBackdrop variant="ambient" />
+      <LiquidLens
+        storageKey="lumina.lens.parent"
+        label="Parent lens"
+        actions={[
+          { icon: LensTrend, label: 'Performance', onSelect: () => setTab('performance') },
+          { icon: LensTask, label: 'Assignments', onSelect: () => setTab('assignments') },
+          { icon: LensMega, label: 'Announcements', onSelect: () => setTab('announcements') },
+        ]}
+      />
       {/* Header */}
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -170,7 +185,7 @@ export default function ParentDashboard() {
         </div>
 
         {/* Main Tabs */}
-        <Tabs defaultValue="performance">
+        <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="performance" className="gap-1 text-xs">
               <TrendingUp className="w-3.5 h-3.5" />

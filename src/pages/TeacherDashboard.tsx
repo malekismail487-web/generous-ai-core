@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { FileText as LensFile, ClipboardList as LensTask, BarChart3 as LensChart, Sparkles as LensSpark } from 'lucide-react';
+import { LiquidLens } from '@/components/motion/LiquidLens';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,6 +35,7 @@ import { SubjectsSection } from '@/components/SubjectsSection';
 import { AssignmentPerformanceAnalytics } from '@/components/teacher/AssignmentPerformanceAnalytics';
 import { TeacherLearningStyleReports } from '@/components/teacher/TeacherLearningStyleReports';
 import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
+import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 
 interface CourseMaterial {
   id: string;
@@ -79,6 +82,7 @@ export default function TeacherDashboard() {
   const { language, setLanguage } = useThemeLanguage();
 
   // State
+  const [tab, setTab] = useState('materials');
   const [courseMaterials, setCourseMaterials] = useState<CourseMaterial[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -209,7 +213,18 @@ export default function TeacherDashboard() {
   const pendingGrading = submissions.filter(s => s.grade === null).length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen">
+      <ActorBackdrop variant="ambient" />
+      <LiquidLens
+        storageKey="lumina.lens.teacher"
+        label="Teacher lens"
+        actions={[
+          { icon: LensFile, label: 'Materials', onSelect: () => setTab('materials') },
+          { icon: LensTask, label: 'Assignments', onSelect: () => setTab('assignments') },
+          { icon: LensChart, label: 'Analytics', onSelect: () => setTab('analytics') },
+          { icon: LensSpark, label: 'AI lectures', onSelect: () => setTab('ai-lectures') },
+        ]}
+      />
       {/* Header */}
       <header className="liquid-glass liquid-sheen liquid-rim border-b border-foreground/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -283,7 +298,7 @@ export default function TeacherDashboard() {
           </Card>
         </div>
 
-        <Tabs defaultValue="materials" className="space-y-6">
+        <Tabs value={tab} onValueChange={setTab} className="space-y-6">
           <TabsList className="grid grid-cols-8 w-full max-w-6xl">
             <TabsTrigger value="materials" className="gap-2">
               <Upload className="w-4 h-4" />

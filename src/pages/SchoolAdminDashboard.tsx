@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { LayoutDashboard as LensHome, Users as LensUsers, BookOpen as LensBook, Megaphone as LensMega } from 'lucide-react';
+import { LiquidLens } from '@/components/motion/LiquidLens';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard, UserProfile } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/hooks/useAuth';
@@ -90,6 +92,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { ReportCardCreator } from '@/components/admin/ReportCardCreator';
 import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
+import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 
 interface InviteCode {
   id: string;
@@ -141,6 +144,7 @@ export default function SchoolAdminDashboard() {
   const t = (key: Parameters<typeof tr>[0]) => tr(key, language);
 
   // Users state
+  const [tab, setTab] = useState('overview');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userSearch, setUserSearch] = useState('');
@@ -567,7 +571,18 @@ export default function SchoolAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen">
+      <ActorBackdrop variant="ambient" />
+      <LiquidLens
+        storageKey="lumina.lens.admin"
+        label="Admin lens"
+        actions={[
+          { icon: LensHome, label: 'Overview', onSelect: () => setTab('overview') },
+          { icon: LensUsers, label: 'Users', onSelect: () => setTab('users') },
+          { icon: LensBook, label: 'Subjects', onSelect: () => setTab('subjects') },
+          { icon: LensMega, label: 'Announcements', onSelect: () => setTab('announcements') },
+        ]}
+      />
       {/* Header */}
       <header className="liquid-glass liquid-sheen liquid-rim border-b border-foreground/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -590,7 +605,7 @@ export default function SchoolAdminDashboard() {
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         <TenantExtensionsSection className="mb-6" />
-        <Tabs defaultValue="overview" orientation="vertical" className="flex flex-col md:flex-row gap-6">
+        <Tabs value={tab} onValueChange={setTab} orientation="vertical" className="flex flex-col md:flex-row gap-6">
           {/* Sidebar nav */}
           <aside className="md:w-56 shrink-0">
             <TabsList className="liquid-rail flex-row md:flex-col h-auto w-full overflow-x-auto md:overflow-visible md:sticky md:top-20">

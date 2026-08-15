@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { School as LensSchool, BarChart3 as LensChart, Landmark as LensGov, Puzzle as LensPuzzle } from 'lucide-react';
+import { LiquidLens } from '@/components/motion/LiquidLens';
+import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard, School } from '@/hooks/useRoleGuard';
 import { Navigate, useNavigate } from 'react-router-dom';
@@ -566,7 +569,18 @@ export default function SuperAdmin() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen">
+      <ActorBackdrop variant="ambient" />
+      <LiquidLens
+        storageKey="lumina.lens.superadmin"
+        label="Super admin lens"
+        actions={[
+          { icon: LensSchool, label: 'Schools', onSelect: () => setActiveTab('schools') },
+          { icon: LensChart, label: 'Analytics', onSelect: () => setActiveTab('analytics') },
+          { icon: LensGov, label: 'Ministry', onSelect: () => setActiveTab('ministry') },
+          { icon: LensPuzzle, label: 'Extensions', onSelect: () => setActiveTab('extensions') },
+        ]}
+      />
       {/* Header */}
       <header className="liquid-glass liquid-sheen liquid-rim border-b border-foreground/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">

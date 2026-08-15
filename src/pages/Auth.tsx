@@ -17,6 +17,7 @@ import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 import { getSelectedTenant, reconcileTenantFromCode, setSelectedTenant } from '@/lib/selectedTenant';
 import { SUPER_ADMIN_EMAIL } from '@/lib/config';
 import { lovable } from '@/integrations/lovable/index';
+import { AbstractField } from '@/components/motion/AbstractField';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z
@@ -855,6 +856,7 @@ export default function Auth() {
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen bg-background p-4 overflow-hidden">
+      <AbstractField variant="landing" />
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-1/4 left-1/3 w-[60vw] h-[60vw] rounded-full blur-[130px] animate-aurora-drift"

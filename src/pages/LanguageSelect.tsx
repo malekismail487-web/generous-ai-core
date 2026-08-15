@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Manifesto } from '@/components/brand/Manifesto';
+import { AbstractField } from '@/components/motion/AbstractField';
 
 const OPTIONS = [
   {
@@ -39,6 +40,7 @@ export default function LanguageSelect() {
   return (
     <div className="relative min-h-screen bg-background overflow-hidden flex items-center justify-center p-6">
       {/* Aurora depth field */}
+      <AbstractField variant="landing" />
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
           className="absolute -top-1/3 left-1/4 w-[70vw] h-[70vw] rounded-full blur-[120px] animate-aurora-drift"

@@ -1,4 +1,5 @@
 import { OrbitField } from '@/components/motion/OrbitField';
+import { AbstractField } from '@/components/motion/AbstractField';
 
 interface AnimatedBackgroundProps {
   /** Fewer electrons for dense screens, more for hero moments. */
@@ -22,6 +23,7 @@ export function AnimatedBackground({ density = 14, className = '' }: AnimatedBac
         style={{ background: 'var(--gradient-hero)' }}
       />
       <OrbitField density={density} />
+      <AbstractField variant="ambient" reactivity={0.85} />
       <div className="grain-overlay absolute inset-0" />
     </div>
   );
