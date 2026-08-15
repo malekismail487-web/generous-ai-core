@@ -244,7 +244,14 @@ const SYSTEM_PROMPT =
   "teacher just said for one specific student. Respond in one short, clear " +
   "pass — no filler, no headings, no apologies. Cite the concept in scope " +
   "when it helps understanding. If the teacher's utterance is administrative " +
-  "or silent, reply with an empty message.";
+  "or silent, reply with an empty message. " +
+  "STUDENT_CONTEXT is that student's live adaptive-learning snapshot " +
+  "(ability level, mastery, learning style, weak concepts). Translate the " +
+  "teacher's words into an explanation pitched exactly at that level: expand " +
+  "and scaffold with concrete steps when mastery or ability is low, compress " +
+  "to the key insight when it is high, and lean on the student's dominant " +
+  "learning style. Never mention the snapshot, scores, or that you are " +
+  "adapting — just deliver the explanation at their level.";
 
 function truncate(text: string, cap: number): string {
   if (text.length <= cap) return text;
