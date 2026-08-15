@@ -118,7 +118,28 @@ export default {
           from: { opacity: "0", transform: "translate3d(0, 18px, -40px)", filter: "blur(6px)" },
           to: { opacity: "1", transform: "translate3d(0, 0, 0)", filter: "blur(0)" },
         },
-      },
+        "tile-in": {
+          from: { opacity: "0", transform: "perspective(1200px) translate3d(0, 28px, -80px) rotateX(8deg)" },
+          to: { opacity: "1", transform: "perspective(1200px) translate3d(0, 0, 0) rotateX(0deg)" },
+        },
+        "aurora-drift": {
+          "0%, 100%": { transform: "translate3d(-6%, -4%, 0) scale(1)" },
+          "33%": { transform: "translate3d(8%, 6%, 0) scale(1.12)" },
+          "66%": { transform: "translate3d(-4%, 9%, 0) scale(0.94)" },
+        },
+        "think-pulse": {
+          "0%, 100%": { transform: "scaleY(0.35)", opacity: "0.4" },
+          "50%": { transform: "scaleY(1)", opacity: "1" },
+        },
+        "marquee-line": {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(-50%)" },
+        },
+        "ring-trace": {
+          from: { strokeDashoffset: "260" },
+          to: { strokeDashoffset: "0" },
+        },
+
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
