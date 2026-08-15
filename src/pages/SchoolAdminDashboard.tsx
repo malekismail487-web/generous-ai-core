@@ -593,7 +593,7 @@ export default function SchoolAdminDashboard() {
         <Tabs defaultValue="overview" orientation="vertical" className="flex flex-col md:flex-row gap-6">
           {/* Sidebar nav */}
           <aside className="md:w-56 shrink-0">
-            <TabsList className="flex md:flex-col h-auto w-full bg-transparent p-0 gap-1 overflow-x-auto md:overflow-visible">
+            <TabsList className="liquid-rail flex-row md:flex-col h-auto w-full overflow-x-auto md:overflow-visible md:sticky md:top-20">
               <NavGroup label="Overview" />
               <NavTab value="overview" icon={BarChart3} label="Overview" />
               <NavTab value="performance" icon={BarChart3} label="Performance" />
