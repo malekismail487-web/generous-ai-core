@@ -4,6 +4,7 @@ import { LuminaLogo } from '@/components/LuminaLogo';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Manifesto } from '@/components/brand/Manifesto';
 
 const OPTIONS = [
   {
