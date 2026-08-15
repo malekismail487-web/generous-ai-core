@@ -30,6 +30,7 @@ export function ProfileSection() {
   const { isAdmin, isHardcodedAdmin, verifyAdminCode } = useUserRole();
   const { profile, school, isSchoolAdmin, loading } = useSchool();
   const { theme, language, setTheme, setLanguage, t } = useThemeLanguage();
+  const { lensEnabled, setLensEnabled } = useLensPreference();
   
   const { toast } = useToast();
   const tl = (key: Parameters<typeof tr>[0]) => tr(key, language);
