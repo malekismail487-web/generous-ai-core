@@ -129,7 +129,7 @@ export function MorningBriefing({ onNavigate, onCount }: { onNavigate: (action: 
   return (
     <div className="mx-3 mb-4 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 animate-fade-in relative">
       <button
-        onClick={() => setDismissed(true)}
+        onClick={() => { setDismissed(true); onCount?.(0); }}
         className="absolute top-2 right-2 p-1 rounded-lg hover:bg-muted/50 text-muted-foreground"
       >
         <X size={14} />
