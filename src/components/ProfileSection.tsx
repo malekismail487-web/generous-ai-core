@@ -83,7 +83,7 @@ export function ProfileSection() {
           <div className={cn(
             "inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4",
             isAdmin 
-              ? "bg-gradient-to-br from-amber-500 to-orange-600"
+              ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
               : isTeacher 
                 ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
                 : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
@@ -157,7 +157,7 @@ export function ProfileSection() {
         {isStudent && parentCode && (
           <div className="liquid-glass rounded-2xl p-5 mb-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-rose-500">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">
                 <Heart className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -181,7 +181,7 @@ export function ProfileSection() {
             className="w-full liquid-glass rounded-2xl p-5 mb-4 text-left hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
                 <Users className="w-5 h-5" />
               </div>
               <div className="flex-1">

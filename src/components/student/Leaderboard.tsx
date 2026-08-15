@@ -82,7 +82,7 @@ export function Leaderboard() {
       <div className="max-w-lg mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-600 mb-3 shadow-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] mb-3 shadow-lg">
             <Trophy className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-xl font-bold">{t('School Leaderboard', 'لوحة المتصدرين')}</h2>
@@ -129,9 +129,9 @@ export function Leaderboard() {
                   {/* Avatar */}
                   <div className={cn(
                     "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0",
-                    index === 0 ? "bg-gradient-to-br from-yellow-400 to-amber-600"
+                    index === 0 ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
                       : index === 1 ? "bg-gradient-to-br from-gray-300 to-gray-500"
-                      : index === 2 ? "bg-gradient-to-br from-amber-500 to-amber-700"
+                      : index === 2 ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
                       : "bg-gradient-to-br from-primary/60 to-primary"
                   )}>
                     {entry.name.charAt(0).toUpperCase()}

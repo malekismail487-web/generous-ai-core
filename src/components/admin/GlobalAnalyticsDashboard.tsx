@@ -259,7 +259,7 @@ export function GlobalAnalyticsDashboard() {
             <div key={school.id} className="flex items-center gap-4 p-3 rounded-lg border border-foreground/10 hover:bg-muted/30 transition-colors">
               <div className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0",
-                school.status === 'active' ? "bg-gradient-to-br from-green-500 to-emerald-600" : "bg-gradient-to-br from-red-500 to-rose-600"
+                school.status === 'active' ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]" : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
               )}>
                 {school.name.charAt(0)}
               </div>

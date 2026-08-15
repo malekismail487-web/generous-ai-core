@@ -129,7 +129,7 @@ export function SchoolRegistration() {
         <div className="ambient-glow" />
         <div className="w-full max-w-md relative z-10">
           <div className="text-center mb-8 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 bg-gradient-to-br from-emerald-500 to-green-600">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">
               <CheckCircle className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold mb-2">{validatedSchool?.name}</h1>

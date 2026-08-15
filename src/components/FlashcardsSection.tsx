@@ -274,7 +274,7 @@ export function FlashcardsSection() {
             </Button>
           </div>
           <div className="text-center mb-8 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-amber-500 to-orange-600">{subjectEmoji}</div>
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">{subjectEmoji}</div>
             <h1 className="text-2xl font-bold mb-2">{subjectName} {tr('flashcards', language)}</h1>
             <p className="text-sm text-muted-foreground">{getGradeName(selectedGrade, language)}</p>
           </div>
@@ -309,7 +309,7 @@ export function FlashcardsSection() {
             </Button>
           </div>
           <div className="text-center mb-8 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-amber-500 to-orange-600">{subjectEmoji}</div>
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">{subjectEmoji}</div>
             <h1 className="text-2xl font-bold mb-2">{subjectName} {tr('flashcards', language)}</h1>
             <p className="text-sm text-muted-foreground">{getGradeName(selectedGrade, language)}</p>
           </div>
@@ -335,7 +335,7 @@ export function FlashcardsSection() {
             </Button>
           </div>
           <div className="text-center mb-8 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-amber-500 to-orange-600">{subjectEmoji}</div>
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">{subjectEmoji}</div>
             <h1 className="text-2xl font-bold mb-2">{subjectName} {tr('flashcards', language)}</h1>
           </div>
           <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
@@ -357,7 +357,7 @@ export function FlashcardsSection() {
     <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="text-center mb-8 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-amber-500 to-orange-600">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">
             <BookOpen className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold mb-2 gradient-text">{tr('flashcards', language)}</h1>

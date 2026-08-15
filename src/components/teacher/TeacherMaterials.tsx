@@ -41,14 +41,14 @@ import { RelevanceWarningDialog } from './RelevanceWarningDialog';
 
 // Hardcoded subjects list
 const SUBJECTS = [
-  { id: 'biology', emoji: '🧬', color: 'from-green-500 to-emerald-600' },
+  { id: 'biology', emoji: '🧬', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: 'physics', emoji: '⚛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: 'mathematics', emoji: '📐', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'chemistry', emoji: '🧪', color: 'from-orange-500 to-amber-600' },
-  { id: 'english', emoji: '📚', color: 'from-red-500 to-rose-600' },
+  { id: 'chemistry', emoji: '🧪', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'english', emoji: '📚', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: 'social_studies', emoji: '🌍', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: 'technology', emoji: '💻', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'arabic', emoji: '🕌', color: 'from-amber-500 to-yellow-600' },
+  { id: 'arabic', emoji: '🕌', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
 ];
 
 const GRADES = [

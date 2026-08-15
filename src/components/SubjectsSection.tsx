@@ -29,17 +29,17 @@ import {
 // Default tile list used as a fallback if the school's subjects haven't loaded yet.
 // The live source of truth comes from useSchoolSubjects (the per-school `subjects` table).
 const FALLBACK_SUBJECTS: Array<{ id: string; name: string; emoji: string; color: string }> = [
-  { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-emerald-500 to-green-600' },
+  { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'chemistry', name: 'Chemistry', emoji: '🧪', color: 'from-orange-500 to-amber-600' },
-  { id: 'english', name: 'English', emoji: '📚', color: 'from-rose-500 to-foreground/[0.04]' },
-  { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-foreground/[0.14] to-emerald-600' },
+  { id: 'chemistry', name: 'Chemistry', emoji: '🧪', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'english', name: 'English', emoji: '📚', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'arabic', name: 'اللغة العربية', emoji: '🕌', color: 'from-amber-500 to-yellow-600' },
-  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️', color: 'from-green-600 to-emerald-700' },
-  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️', color: 'from-amber-600 to-orange-700' },
-  { id: 'art_design', name: 'Art and Design', emoji: '🎨', color: 'from-foreground/[0.14] to-rose-600' },
+  { id: 'arabic', name: 'اللغة العربية', emoji: '🕌', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'art_design', name: 'Art and Design', emoji: '🎨', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: 'entrepreneurship', name: 'Entrepreneurship', emoji: '💼', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
 ];
 
@@ -694,7 +694,7 @@ Use age-appropriate language for ${selectedGrade}.`;
               </p>
               <div className="grid grid-cols-3 gap-2">
                 {([
-                  { key: 'short' as const, icon: <Zap size={14} />, label: language === 'ar' ? 'قصير' : 'Short', color: 'from-amber-500 to-orange-500' },
+                  { key: 'short' as const, icon: <Zap size={14} />, label: language === 'ar' ? 'قصير' : 'Short', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
                   { key: 'medium' as const, icon: <BookOpen size={14} />, label: language === 'ar' ? 'متوسط' : 'Medium', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
                   { key: 'long' as const, icon: <GraduationCap size={14} />, label: language === 'ar' ? 'طويل' : 'Long', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
                 ]).map((opt) => (
@@ -832,7 +832,7 @@ Use age-appropriate language for ${selectedGrade}.`;
               style={{ animationDelay: '50ms' }}
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-foreground/[0.04] text-white">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
                   <BookOpen className="w-7 h-7" />
                 </div>
                 <div>
@@ -868,7 +868,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           <div className="text-center mb-6 animate-fade-in">
             <div className={cn(
               "inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 glow-effect bg-gradient-to-br",
-              menuType === 'ai' ? 'from-foreground/[0.14] to-foreground/[0.04]' : 'from-emerald-500 to-foreground/[0.04]'
+              menuType === 'ai' ? 'from-foreground/[0.14] to-foreground/[0.04]' : 'from-foreground/[0.14] to-foreground/[0.04]'
             )}>
               {menuType === 'ai' ? <Bot className="w-6 h-6 text-white" /> : <BookOpen className="w-6 h-6 text-white" />}
             </div>

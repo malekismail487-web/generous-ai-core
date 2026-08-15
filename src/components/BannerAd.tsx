@@ -25,7 +25,7 @@ const bannerContent = {
     title: 'Stay On Track',
     subtitle: 'Complete Your Assignments',
     icon: '✏️',
-    color: 'from-emerald-500/10 to-foreground/[0.04]',
+    color: 'from-foreground/[0.14] to-foreground/[0.04]',
     borderColor: 'border-emerald-500/20',
   },
 };

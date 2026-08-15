@@ -15,7 +15,7 @@ import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 const satSections = [
   { id: 'sat_math', emoji: '🔢', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'sat_reading', emoji: '📖', color: 'from-emerald-500 to-green-600' },
+  { id: 'sat_reading', emoji: '📖', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: 'sat_writing', emoji: '✍️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
 ];
 

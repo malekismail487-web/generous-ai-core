@@ -40,7 +40,7 @@ export function SchoolAdminPanel({ onBack }: SchoolAdminPanelProps) {
         </div>
 
         <div className="text-center mb-6 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
             <Users className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold mb-1 gradient-text">School Admin</h1>

@@ -28,9 +28,9 @@ export function FloatingTimer({ onNavigate }: FloatingTimerProps) {
         className={cn(
           "flex items-center justify-between px-4 py-2.5 text-white cursor-pointer",
           mode === 'focus'
-            ? "bg-gradient-to-r from-red-500 to-orange-500"
+            ? "bg-gradient-to-r from-foreground/[0.14] to-foreground/[0.04]"
             : mode === 'shortBreak'
-            ? "bg-gradient-to-r from-green-500 to-emerald-500"
+            ? "bg-gradient-to-r from-foreground/[0.14] to-foreground/[0.04]"
             : "bg-gradient-to-r from-foreground/[0.14] to-foreground/[0.04]"
         )}
         onClick={onNavigate}

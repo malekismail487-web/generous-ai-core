@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const styleColors: Record<string, string> = {
-  visual: 'from-foreground/[0.14] to-rose-500',
+  visual: 'from-foreground/[0.14] to-foreground/[0.04]',
   logical: 'from-foreground/[0.14] to-foreground/[0.04]',
-  verbal: 'from-amber-500 to-orange-500',
-  kinesthetic: 'from-emerald-500 to-green-500',
+  verbal: 'from-foreground/[0.14] to-foreground/[0.04]',
+  kinesthetic: 'from-foreground/[0.14] to-foreground/[0.04]',
   conceptual: 'from-foreground/[0.14] to-foreground/[0.04]',
   balanced: 'from-slate-400 to-gray-500',
 };

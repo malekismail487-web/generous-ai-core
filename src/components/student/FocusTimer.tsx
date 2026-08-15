@@ -22,7 +22,7 @@ export function FocusTimer() {
       <div className="max-w-md mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 mb-3 shadow-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] mb-3 shadow-lg">
             <Timer className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-xl font-bold">{t('Focus Timer', 'مؤقت التركيز')}</h2>

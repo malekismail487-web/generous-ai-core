@@ -337,15 +337,15 @@ const grades = [
 ];
 
 const subjectDifficulties = [
-  { id: SubjectDifficulty.SUBJECT_BEGINNER, name: 'Beginner', questions: 10, color: 'from-emerald-500 to-foreground/[0.04]' },
-  { id: SubjectDifficulty.SUBJECT_INTERMEDIATE, name: 'Intermediate', questions: 20, color: 'from-amber-500 to-orange-500' },
-  { id: SubjectDifficulty.SUBJECT_EXPERT, name: 'Expert', questions: 30, color: 'from-rose-500 to-foreground/[0.04]' },
+  { id: SubjectDifficulty.SUBJECT_BEGINNER, name: 'Beginner', questions: 10, color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: SubjectDifficulty.SUBJECT_INTERMEDIATE, name: 'Intermediate', questions: 20, color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: SubjectDifficulty.SUBJECT_EXPERT, name: 'Expert', questions: 30, color: 'from-foreground/[0.14] to-foreground/[0.04]' },
 ];
 
 const satDifficulties = [
-  { id: SATDifficulty.SAT_BEGINNER, name: 'Beginner', questions: 20, color: 'from-emerald-500 to-foreground/[0.04]' },
-  { id: SATDifficulty.SAT_INTERMEDIATE, name: 'Intermediate', questions: 30, color: 'from-amber-500 to-orange-500' },
-  { id: SATDifficulty.SAT_EXPERT, name: 'Expert', questions: 60, color: 'from-rose-500 to-foreground/[0.04]' },
+  { id: SATDifficulty.SAT_BEGINNER, name: 'Beginner', questions: 20, color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: SATDifficulty.SAT_INTERMEDIATE, name: 'Intermediate', questions: 30, color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: SATDifficulty.SAT_EXPERT, name: 'Expert', questions: 60, color: 'from-foreground/[0.14] to-foreground/[0.04]' },
   { id: SATDifficulty.SAT_FULL, name: 'Full SAT Exam', questions: 140, color: 'from-foreground/[0.14] to-foreground/[0.04]', 
     description: 'Reading/Writing: 70 + Math: 70 questions' },
 ];
@@ -1167,7 +1167,7 @@ export function ExaminationSection() {
             onClick={() => handleExamTypeSelect(ExamMenuType.SUBJECT)}
             className="w-full liquid-glass rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-foreground/[0.04] text-white text-xl">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white text-xl">
               📚
             </div>
             <div>

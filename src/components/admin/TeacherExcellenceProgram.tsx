@@ -98,7 +98,7 @@ export function TeacherExcellenceProgram() {
 
   return (
     <div className="space-y-6">
-      <div className="liquid-glass rounded-xl p-5 bg-gradient-to-r from-amber-500/10 to-orange-500/10">
+      <div className="liquid-glass rounded-xl p-5 bg-gradient-to-r from-foreground/[0.14] to-foreground/[0.04]">
         <h2 className="text-lg font-bold flex items-center gap-2">
           <Trophy className="w-5 h-5 text-amber-500" />
           Teacher Excellence Program

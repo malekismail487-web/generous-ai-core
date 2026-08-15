@@ -18,7 +18,7 @@ const lengthConfig: Record<NoteLength, { icon: React.ReactNode; label: { en: str
     icon: <Zap className="w-5 h-5" />,
     label: { en: 'Concise Notes', ar: 'ملاحظات مختصرة' },
     desc: { en: '4-6 pages — definitions, diagrams & examples', ar: '4-6 صفحات — تعريفات، رسوم بيانية وأمثلة' },
-    color: 'from-amber-500 to-orange-500',
+    color: 'from-foreground/[0.14] to-foreground/[0.04]',
   },
   medium: {
     icon: <BookOpen className="w-5 h-5" />,
