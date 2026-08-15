@@ -270,15 +270,6 @@ export default function SuperAdmin() {
     );
   }
 
-  if (!isVerified) {
-    // Will redirect via useEffect, show loading
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   if (!isSuperAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
@@ -295,6 +286,16 @@ export default function SuperAdmin() {
       </div>
     );
   }
+
+  if (!isVerified) {
+    // Will redirect via useEffect, show loading
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
 
   // Render testing mode UI - navigate to actual dashboards with a banner
   if (testingRole !== 'none') {
