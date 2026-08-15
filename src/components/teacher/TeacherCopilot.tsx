@@ -495,29 +495,74 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
                             );
                           })}
                         </div>
-                        {/* Quick regenerate options */}
-                        <div className="flex gap-2 mt-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => regenerateQuestion(index, 'Make this question easier')}
-                            disabled={isRefining}
-                          >
-                            <RefreshCw className="w-3 h-3 mr-1" />
-                            Easier
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => regenerateQuestion(index, 'Make this question harder')}
-                            disabled={isRefining}
-                          >
-                            <RefreshCw className="w-3 h-3 mr-1" />
-                            Harder
-                          </Button>
+                        {/* Ask Lumina to change this question */}
+                        <div className="flex flex-wrap gap-2 mt-2 items-center">
+                          {busyId === q.id ? (
+                            <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              {t2('Lumina is rewriting…', 'لومينا تعيد الصياغة…')}
+                            </span>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost" size="sm" className="h-7 text-xs"
+                                onClick={() => regenerateQuestion(index, 'Make this question easier')}
+                                disabled={!!busyId}
+                              >
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                {t2('Easier', 'أسهل')}
+                              </Button>
+                              <Button
+                                variant="ghost" size="sm" className="h-7 text-xs"
+                                onClick={() => regenerateQuestion(index, 'Make this question harder')}
+                                disabled={!!busyId}
+                              >
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                {t2('Harder', 'أصعب')}
+                              </Button>
+                              <Button
+                                variant="ghost" size="sm" className="h-7 text-xs"
+                                onClick={() => regenerateQuestion(index, 'Replace this question entirely with a different one on the same topic')}
+                                disabled={!!busyId}
+                              >
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                {t2('Replace', 'استبدال')}
+                              </Button>
+                              <Button
+                                variant="ghost" size="sm" className="h-7 text-xs"
+                                onClick={() => {
+                                  setRewriteFor(rewriteFor === q.id ? null : q.id);
+                                  setRewriteText('');
+                                }}
+                                disabled={!!busyId}
+                              >
+                                <MessageSquare className="w-3 h-3 mr-1" />
+                                {t2("I don't like this — tell Lumina why", 'لا يعجبني — أخبر لومينا')}
+                              </Button>
+                            </>
+                          )}
                         </div>
+                        {rewriteFor === q.id && (
+                          <div className="flex gap-2 mt-2">
+                            <Input
+                              autoFocus
+                              value={rewriteText}
+                              onChange={(e) => setRewriteText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && rewriteText.trim()) regenerateQuestion(index, rewriteText.trim());
+                              }}
+                              placeholder={t2('e.g. too wordy, use a real-world example instead', 'مثال: طويل جدًا، استخدم مثالًا واقعيًا')}
+                              className="h-8 text-xs"
+                            />
+                            <Button
+                              size="sm" className="h-8 text-xs"
+                              disabled={!rewriteText.trim() || !!busyId}
+                              onClick={() => regenerateQuestion(index, rewriteText.trim())}
+                            >
+                              {t2('Rewrite', 'أعد الصياغة')}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                       <Button
                         variant="ghost"
