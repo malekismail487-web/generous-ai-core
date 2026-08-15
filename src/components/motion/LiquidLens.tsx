@@ -57,6 +57,7 @@ export function LiquidLens({
 }: LiquidLensProps) {
   const lensRef = useRef<HTMLDivElement>(null);
   const calm = useCalmMotion();
+  const { lensEnabled } = useLensPreference();
   const [open, setOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
 
