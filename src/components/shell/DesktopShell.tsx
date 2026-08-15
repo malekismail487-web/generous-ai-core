@@ -1,6 +1,8 @@
 import { ReactNode, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { LuminaLogo } from '@/components/LuminaLogo';
+import { LiquidField } from '@/components/shell/LiquidField';
+
 import { EffortSelector } from '@/components/ai/EffortSelector';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { useMagnetic } from '@/lib/motion';
