@@ -176,7 +176,7 @@ export default function ApiKeySetup() {
         </div>
 
         {/* Key cards */}
-        <div className="glass-effect rounded-2xl p-6 space-y-5">
+        <div className="liquid-glass rounded-2xl p-6 space-y-5">
           {existingKeys.primary && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-sm">
               <CheckCircle2 className="w-4 h-4 shrink-0" />

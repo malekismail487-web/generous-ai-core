@@ -15,7 +15,7 @@ interface Flag {
 
 const MODE_STYLE: Record<string, string> = {
   required: 'text-emerald-300 bg-emerald-950/50 border-emerald-800/50',
-  optional: 'text-sky-300 bg-sky-950/50 border-sky-800/50',
+  optional: 'text-foreground bg-foreground/[0.07] border-foreground/20',
   disabled: 'text-gray-500 bg-gray-950 border-gray-800',
 };
 
@@ -48,7 +48,7 @@ export function FeaturesPanel() {
           <p className="text-xs text-gray-500">
             Each module has three modes:
             <span className="text-gray-400"> Disabled</span> (no school receives it),
-            <span className="text-sky-300"> Optional</span> (schools choose), or
+            <span className="text-foreground"> Optional</span> (schools choose), or
             <span className="text-emerald-300"> Required</span> (every school receives it automatically).
           </p>
         </div>

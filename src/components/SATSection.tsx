@@ -14,9 +14,9 @@ import { useLearningStyle } from '@/hooks/useLearningStyle';
 import { useAdaptiveIntelligence } from '@/hooks/useAdaptiveIntelligence';
 
 const satSections = [
-  { id: 'sat_math', emoji: '🔢', color: 'from-blue-500 to-cyan-600' },
-  { id: 'sat_reading', emoji: '📖', color: 'from-emerald-500 to-green-600' },
-  { id: 'sat_writing', emoji: '✍️', color: 'from-violet-500 to-purple-600' },
+  { id: 'sat_math', emoji: '🔢', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'sat_reading', emoji: '📖', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'sat_writing', emoji: '✍️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
 ];
 
 const satGrades = ['Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
@@ -111,7 +111,7 @@ export function SATSection() {
             <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br", section?.color)}>{section?.emoji}</div>
             <div><h1 className="font-bold text-sm">{sectionName}</h1><p className="text-xs text-muted-foreground">{getGradeName(selectedGrade, language)}</p></div>
           </div>
-          <div className="glass-effect rounded-xl p-3 mb-4 overflow-x-auto">
+          <div className="liquid-glass rounded-xl p-3 mb-4 overflow-x-auto">
             <div className="flex flex-wrap gap-2">
               {savedMaterials.map((material) => (
                 <div key={material.id} className={cn("group relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer", activeMaterial?.id === material.id ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground hover:bg-secondary")} onClick={() => handleMaterialClick(material)}>
@@ -124,7 +124,7 @@ export function SATSection() {
               </button>
             </div>
           </div>
-          <div className="glass-effect rounded-2xl p-5 overflow-y-auto max-h-[60vh]">
+          <div className="liquid-glass rounded-2xl p-5 overflow-y-auto max-h-[60vh]">
             {isLoading ? (
               <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /><span className="ml-2 text-sm text-muted-foreground">{tr('generatingSATMaterial', language)}</span></div>
             ) : (
@@ -147,9 +147,9 @@ export function SATSection() {
             <h1 className="text-2xl font-bold mb-2">{sectionName}</h1>
             <p className="text-sm text-muted-foreground">{getGradeName(selectedGrade, language)}</p>
           </div>
-          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-2 text-center text-lg">{tr('satWhatStudying', language)}</h3>
-            <input type="text" value={materialInput} onChange={(e) => setMaterialInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleMaterialSubmit()} placeholder={tr('satPlaceholder', language)} className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4" autoFocus />
+            <input type="text" value={materialInput} onChange={(e) => setMaterialInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleMaterialSubmit()} placeholder={tr('satPlaceholder', language)} className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4" autoFocus />
             <div className="flex gap-2">
               {savedMaterials.length > 0 && (
                 <Button variant="outline" size="sm" onClick={() => { setActiveMaterial(savedMaterials[0]); setLectureContent(savedMaterials[0].content); setViewState('lecture'); }}>{tr('viewSavedMaterials', language)}</Button>
@@ -172,7 +172,7 @@ export function SATSection() {
             <div className={cn("inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br", section?.color)}>{section?.emoji}</div>
             <h1 className="text-2xl font-bold mb-2">{sectionName}</h1>
           </div>
-          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-4 text-center">{tr('selectGrade', language)}</h3>
             <p className="text-xs text-muted-foreground text-center mb-4">{tr('satGradeAvailable', language)}</p>
             <div className="grid grid-cols-5 gap-2 overflow-y-auto">
@@ -205,7 +205,7 @@ export function SATSection() {
         </div>
         <div className="grid grid-cols-1 gap-3 overflow-y-auto">
           {satSections.map((sect, index) => (
-            <button key={sect.id} onClick={() => handleSectionClick(sect.id)} className={cn("glass-effect rounded-xl p-4 text-left transition-all duration-200 animate-fade-in", "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4")} style={{ animationDelay: `${index * 50}ms` }}>
+            <button key={sect.id} onClick={() => handleSectionClick(sect.id)} className={cn("liquid-glass rounded-xl p-4 text-left transition-all duration-200 animate-fade-in", "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4")} style={{ animationDelay: `${index * 50}ms` }}>
               <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br text-white text-xl", sect.color)}>{sect.emoji}</div>
               <div>
                 <h3 className="font-semibold text-foreground">{getSubjectName(sect.id, language)}</h3>

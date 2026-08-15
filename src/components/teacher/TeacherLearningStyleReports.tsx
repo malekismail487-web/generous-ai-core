@@ -59,11 +59,11 @@ const STYLE_ICONS: Record<string, typeof Eye> = {
 };
 
 const STYLE_COLORS: Record<string, string> = {
-  visual: 'text-blue-500',
-  logical: 'text-purple-500',
+  visual: 'text-foreground',
+  logical: 'text-foreground',
   verbal: 'text-green-500',
   kinesthetic: 'text-orange-500',
-  conceptual: 'text-cyan-500',
+  conceptual: 'text-foreground',
 };
 
 function getTeachingRecommendation(style: LearningStyleData | null): string {
@@ -204,22 +204,22 @@ export function TeacherLearningStyleReports({ schoolId }: Props) {
     <div className="space-y-6">
       {/* Overview Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="glass-effect rounded-xl p-4 text-center">
+        <div className="liquid-glass rounded-xl p-4 text-center">
           <Users className="w-6 h-6 mx-auto mb-2 text-primary" />
           <p className="text-2xl font-bold">{totalStudents}</p>
           <p className="text-xs text-muted-foreground">{t('Total Students', 'إجمالي الطلاب')}</p>
         </div>
-        <div className="glass-effect rounded-xl p-4 text-center">
-          <Brain className="w-6 h-6 mx-auto mb-2 text-violet-500" />
+        <div className="liquid-glass rounded-xl p-4 text-center">
+          <Brain className="w-6 h-6 mx-auto mb-2 text-foreground" />
           <p className="text-2xl font-bold">{profiledStudents}</p>
           <p className="text-xs text-muted-foreground">{t('Profiled', 'تم تحليلهم')}</p>
         </div>
-        <div className="glass-effect rounded-xl p-4 text-center">
+        <div className="liquid-glass rounded-xl p-4 text-center">
           <BarChart3 className="w-6 h-6 mx-auto mb-2 text-green-500" />
           <p className="text-2xl font-bold">{avgAccuracy}%</p>
           <p className="text-xs text-muted-foreground">{t('Avg Accuracy', 'متوسط الدقة')}</p>
         </div>
-        <div className="glass-effect rounded-xl p-4 text-center">
+        <div className="liquid-glass rounded-xl p-4 text-center">
           <AlertTriangle className="w-6 h-6 mx-auto mb-2 text-amber-500" />
           <p className="text-2xl font-bold">{struggling.length}</p>
           <p className="text-xs text-muted-foreground">{t('Need Help', 'بحاجة للمساعدة')}</p>
@@ -228,9 +228,9 @@ export function TeacherLearningStyleReports({ schoolId }: Props) {
 
       {/* Class-Wide Learning Style Distribution */}
       {classStyleAggregate && (
-        <div className="glass-effect rounded-xl p-5">
+        <div className="liquid-glass rounded-xl p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Brain className="w-5 h-5 text-violet-500" />
+            <Brain className="w-5 h-5 text-foreground" />
             {t('Class Learning Style Distribution', 'توزيع أنماط التعلم للصف')}
             <Badge variant="secondary" className="ml-auto text-xs">{classStyleAggregate.count} {t('students profiled', 'طالب تم تحليلهم')}</Badge>
           </h3>
@@ -259,7 +259,7 @@ export function TeacherLearningStyleReports({ schoolId }: Props) {
 
       {/* Intervention Alerts */}
       {struggling.length > 0 && (
-        <div className="glass-effect rounded-xl p-4 border border-amber-500/20 bg-amber-500/5">
+        <div className="liquid-glass rounded-xl p-4 border border-amber-500/20 bg-amber-500/5">
           <h3 className="font-semibold text-amber-600 flex items-center gap-2 mb-3">
             <AlertTriangle className="w-5 h-5" />
             {t('Intervention Alerts', 'تنبيهات التدخل')}
@@ -296,7 +296,7 @@ export function TeacherLearningStyleReports({ schoolId }: Props) {
 
       {/* Student List */}
       {filtered.length === 0 ? (
-        <div className="glass-effect rounded-xl p-8 text-center">
+        <div className="liquid-glass rounded-xl p-8 text-center">
           <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="font-semibold mb-2">{t('No Students Found', 'لم يتم العثور على طلاب')}</h3>
         </div>
@@ -307,17 +307,17 @@ export function TeacherLearningStyleReports({ schoolId }: Props) {
             const ls = insight.learningStyle;
 
             return (
-              <div key={insight.profile.id} className="glass-effect rounded-xl overflow-hidden">
+              <div key={insight.profile.id} className="liquid-glass rounded-xl overflow-hidden">
                 <button
                   onClick={() => setExpandedStudent(isExpanded ? null : insight.profile.id)}
                   className="w-full p-4 text-left flex items-center gap-3"
                 >
                   <div className={cn(
                     "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0",
-                    insight.overallAccuracy >= 75 ? "bg-gradient-to-br from-green-500 to-emerald-600"
-                      : insight.overallAccuracy >= 50 ? "bg-gradient-to-br from-amber-500 to-orange-600"
+                    insight.overallAccuracy >= 75 ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
+                      : insight.overallAccuracy >= 50 ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
                       : insight.totalAnswered === 0 ? "bg-gradient-to-br from-slate-400 to-slate-500"
-                      : "bg-gradient-to-br from-red-500 to-rose-600"
+                      : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
                   )}>
                     {insight.profile.full_name.charAt(0).toUpperCase()}
                   </div>
@@ -357,7 +357,7 @@ export function TeacherLearningStyleReports({ schoolId }: Props) {
                 </button>
 
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-border/30 pt-3 space-y-4">
+                  <div className="px-4 pb-4 border-t border-foreground/10 pt-3 space-y-4">
                     {/* Learning Style Profile */}
                     {ls && (ls.total_interactions || 0) >= 20 ? (
                       <div className="space-y-2">
@@ -373,7 +373,7 @@ export function TeacherLearningStyleReports({ schoolId }: Props) {
                             return (
                               <div key={style} className={cn(
                                 "text-center p-2 rounded-lg border",
-                                isDominant ? "border-primary bg-primary/5" : "border-border/30"
+                                isDominant ? "border-primary bg-primary/5" : "border-foreground/10"
                               )}>
                                 <Icon className={cn("w-4 h-4 mx-auto mb-1", STYLE_COLORS[style])} />
                                 <p className="text-lg font-bold">{score}%</p>

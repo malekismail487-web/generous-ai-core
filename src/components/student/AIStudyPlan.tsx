@@ -165,7 +165,7 @@ ${additionalNotes ? `- My Notes: ${additionalNotes}` : ''}`;
         </div>
 
         {/* Form */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-card rounded-2xl border border-border/50 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 rounded-2xl border border-foreground/10 p-4">
           <div>
             <label className="text-sm font-medium mb-1.5 block">{t('Subject', 'المادة')}</label>
             <Select value={subject} onValueChange={setSubject}>
@@ -245,7 +245,7 @@ ${additionalNotes ? `- My Notes: ${additionalNotes}` : ''}`;
 
         {/* Generated Plan */}
         {generatedPlan && (
-          <div className="bg-card rounded-2xl border border-border/50 p-5">
+          <div className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 rounded-2xl border border-foreground/10 p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />

@@ -222,7 +222,7 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="glass-effect-strong border-b border-border/30 sticky top-0 z-50">
+      <header className="liquid-glass liquid-sheen liquid-rim border-b border-foreground/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
@@ -247,7 +247,7 @@ export default function StudentDashboard() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <TenantExtensionsSection className="mb-6" />
         {/* Welcome Section */}
-        <div className="glass-effect rounded-xl p-6 mb-6">
+        <div className="liquid-glass rounded-xl p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold mb-2">{tl('yourDashboard')}</h2>
@@ -361,7 +361,7 @@ export default function StudentDashboard() {
           <TabsContent value="grades" className="space-y-4">
             <h2 className="text-lg font-semibold">{tl('myGrades')}</h2>
 
-            <div className="glass-effect rounded-xl overflow-hidden">
+            <div className="liquid-glass rounded-xl overflow-hidden">
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
@@ -384,7 +384,7 @@ export default function StudentDashboard() {
                       .map((submission) => {
                         const assignment = assignments.find(a => a.id === submission.assignment_id);
                         return (
-                          <tr key={submission.id} className="border-t border-border/50">
+                          <tr key={submission.id} className="border-t border-foreground/10">
                             <td className="p-4 font-medium">{assignment?.title || 'Unknown'}</td>
                             <td className="p-4 text-muted-foreground">
                               {new Date(submission.submitted_at).toLocaleDateString()}
@@ -410,7 +410,7 @@ export default function StudentDashboard() {
                 <h3 className="text-lg font-semibold mb-4">{tl('myAwards')}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {awards.map((award) => (
-                    <div key={award.id} className="glass-effect rounded-xl p-4 text-center">
+                    <div key={award.id} className="liquid-glass rounded-xl p-4 text-center">
                       <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-2">
                         <Star className="w-6 h-6 text-amber-500" />
                       </div>
@@ -428,7 +428,7 @@ export default function StudentDashboard() {
             <h2 className="text-lg font-semibold">{tl('announcementsLabel')}</h2>
 
             {announcements.length === 0 ? (
-              <div className="glass-effect rounded-xl p-8 text-center">
+              <div className="liquid-glass rounded-xl p-8 text-center">
                 <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="font-semibold mb-2">{tl('noAnnouncements')}</h3>
                 <p className="text-sm text-muted-foreground">{tl('schoolAnnouncementsWillAppear')}</p>
@@ -436,7 +436,7 @@ export default function StudentDashboard() {
             ) : (
               <div className="space-y-4">
                 {announcements.map((announcement) => (
-                  <div key={announcement.id} className="glass-effect rounded-xl p-4">
+                  <div key={announcement.id} className="liquid-glass rounded-xl p-4">
                     <h3 className="font-semibold">{announcement.title}</h3>
                     <p className="text-sm text-muted-foreground mb-2">
                       {new Date(announcement.created_at).toLocaleString()}
@@ -452,7 +452,7 @@ export default function StudentDashboard() {
           <TabsContent value="settings" className="space-y-4">
             <h2 className="text-lg font-semibold">{tl('settings')}</h2>
 
-            <div className="glass-effect rounded-xl p-6 space-y-6">
+            <div className="liquid-glass rounded-xl p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Bell className="w-5 h-5 text-muted-foreground" />

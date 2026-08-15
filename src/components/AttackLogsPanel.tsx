@@ -75,7 +75,7 @@ export default function AttackLogsPanel() {
 
   if (logs.length === 0) {
     return (
-      <div className="glass-effect rounded-2xl p-6 text-center">
+      <div className="liquid-glass rounded-2xl p-6 text-center">
         <Shield className="w-10 h-10 mx-auto mb-3 text-green-500" />
         <h3 className="font-semibold mb-1">No Attack Attempts</h3>
         <p className="text-sm text-muted-foreground">Your account is secure. No suspicious activity detected.</p>
@@ -97,7 +97,7 @@ export default function AttackLogsPanel() {
 
           <div className="space-y-3">
             {unreviewed.map((log) => (
-              <div key={log.id} className="glass-effect rounded-xl p-4 border border-destructive/20">
+              <div key={log.id} className="liquid-glass rounded-xl p-4 border border-destructive/20">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -144,7 +144,7 @@ export default function AttackLogsPanel() {
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-muted-foreground">Resolved</h4>
           {resolved.map((log) => (
-            <div key={log.id} className="glass-effect rounded-xl p-3 opacity-70">
+            <div key={log.id} className="liquid-glass rounded-xl p-3 opacity-70">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-sm">{parseUserAgent(log.user_agent)}</span>

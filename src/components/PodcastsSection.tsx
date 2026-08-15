@@ -335,7 +335,7 @@ export function PodcastsSection() {
                   <button
                     key={podcast.id}
                     onClick={() => setViewingPodcast(podcast)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/40 bg-card/50 hover:bg-accent/50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl hover:bg-accent/50 transition-colors text-left"
                   >
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <FileText className="w-5 h-5 text-primary" />
@@ -477,7 +477,7 @@ export function PodcastsSection() {
             )}
 
             {explanation && !isProcessing && (
-              <div className="py-3 border-t border-border/30">
+              <div className="py-3 border-t border-foreground/10">
                 <Button
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}

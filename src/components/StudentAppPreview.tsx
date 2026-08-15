@@ -106,7 +106,7 @@ export function StudentAppPreview() {
               </div>
             </main>
 
-            <footer className="fixed bottom-16 left-0 right-0 glass-effect-strong border-t border-border/30 z-40">
+            <footer className="fixed bottom-16 left-0 right-0 liquid-glass liquid-sheen liquid-rim border-t border-foreground/10 z-40">
               <div className="max-w-2xl mx-auto px-4 py-3">
                 <ChatInput onSend={sendMessage} disabled={isLoading} />
               </div>

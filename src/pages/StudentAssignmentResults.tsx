@@ -183,7 +183,7 @@ export default function StudentAssignmentResults() {
           </div>
 
           {/* Score Summary - Examination Style */}
-          <div className="glass-effect rounded-2xl p-8 text-center">
+          <div className="liquid-glass rounded-2xl p-8 text-center">
             <div
               className={cn(
                 'w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center',
@@ -230,7 +230,7 @@ export default function StudentAssignmentResults() {
                   <div
                     key={result.questionId}
                     className={cn(
-                      'glass-effect rounded-xl p-4 border',
+                      'liquid-glass rounded-xl p-4 border',
                       result.isCorrect
                         ? 'border-emerald-500/50 bg-emerald-500/5'
                         : 'border-destructive/50 bg-destructive/5'

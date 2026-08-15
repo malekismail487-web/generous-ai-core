@@ -41,14 +41,14 @@ import { RelevanceWarningDialog } from './RelevanceWarningDialog';
 
 // Hardcoded subjects list
 const SUBJECTS = [
-  { id: 'biology', emoji: '🧬', color: 'from-green-500 to-emerald-600' },
-  { id: 'physics', emoji: '⚛️', color: 'from-blue-500 to-cyan-600' },
-  { id: 'mathematics', emoji: '📐', color: 'from-purple-500 to-violet-600' },
-  { id: 'chemistry', emoji: '🧪', color: 'from-orange-500 to-amber-600' },
-  { id: 'english', emoji: '📚', color: 'from-red-500 to-rose-600' },
-  { id: 'social_studies', emoji: '🌍', color: 'from-teal-500 to-cyan-600' },
-  { id: 'technology', emoji: '💻', color: 'from-indigo-500 to-blue-600' },
-  { id: 'arabic', emoji: '🕌', color: 'from-amber-500 to-yellow-600' },
+  { id: 'biology', emoji: '🧬', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'physics', emoji: '⚛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'mathematics', emoji: '📐', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'chemistry', emoji: '🧪', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'english', emoji: '📚', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'social_studies', emoji: '🌍', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'technology', emoji: '💻', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'arabic', emoji: '🕌', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
 ];
 
 const GRADES = [
@@ -351,7 +351,7 @@ export function TeacherMaterials({
     if (!fileUrl) return <FileText className="w-6 h-6" />;
     if (fileUrl.includes('.pdf')) return <File className="w-6 h-6 text-red-500" />;
     if (fileUrl.includes('.ppt') || fileUrl.includes('.pptx')) return <File className="w-6 h-6 text-orange-500" />;
-    if (fileUrl.includes('.doc') || fileUrl.includes('.docx')) return <File className="w-6 h-6 text-blue-500" />;
+    if (fileUrl.includes('.doc') || fileUrl.includes('.docx')) return <File className="w-6 h-6 text-foreground" />;
     if (fileUrl.match(/\.(jpg|jpeg|png|gif)$/i)) return <Image className="w-6 h-6 text-green-500" />;
     return <File className="w-6 h-6" />;
   };
@@ -422,7 +422,7 @@ export function TeacherMaterials({
 
       {/* Materials by Subject */}
       {filteredMaterials.length === 0 ? (
-        <div className="glass-effect rounded-xl p-12 text-center">
+        <div className="liquid-glass rounded-xl p-12 text-center">
           <FolderOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
           <h3 className="text-lg font-semibold mb-2">{t('noMaterialsFound')}</h3>
           <p className="text-muted-foreground mb-4">
@@ -522,7 +522,7 @@ export function TeacherMaterials({
                   {subjectMaterials.map((material) => (
                     <div
                       key={material.id}
-                      className="group flex items-center gap-3 p-3 bg-card border rounded-lg hover:shadow-md transition-all"
+                      className="group flex items-center gap-3 p-3 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border rounded-lg hover:shadow-md transition-all"
                     >
                       <div className="flex-shrink-0">
                         {getFileIcon(material.file_url)}

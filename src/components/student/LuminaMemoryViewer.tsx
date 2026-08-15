@@ -70,19 +70,19 @@ export function LuminaMemoryViewer() {
   const severityColors: Record<string, string> = {
     critical: 'border-red-500/50 bg-red-500/10',
     moderate: 'border-yellow-500/50 bg-yellow-500/10',
-    minor: 'border-blue-500/50 bg-blue-500/10',
+    minor: 'border-foreground/20 bg-foreground/[0.07]',
   };
 
   if (loading) {
     return (
-      <div className="glass-effect rounded-2xl p-5 mb-4 flex items-center justify-center py-8">
+      <div className="liquid-glass rounded-2xl p-5 mb-4 flex items-center justify-center py-8">
         <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="glass-effect rounded-2xl p-5 mb-4">
+    <div className="liquid-glass rounded-2xl p-5 mb-4">
       <div className="flex items-center gap-2 mb-4">
         <Brain size={18} className="text-primary" />
         <h3 className="font-semibold">{t("Lumina's Brain", "دماغ لومينا")}</h3>
@@ -94,7 +94,7 @@ export function LuminaMemoryViewer() {
           onClick={() => setActiveTab('memories')}
           className={cn(
             "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all",
-            activeTab === 'memories' ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+            activeTab === 'memories' ? "bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 shadow-sm text-foreground" : "text-muted-foreground"
           )}
         >
           {t(`Memories (${memories.length})`, `ذكريات (${memories.length})`)}
@@ -103,7 +103,7 @@ export function LuminaMemoryViewer() {
           onClick={() => setActiveTab('gaps')}
           className={cn(
             "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all",
-            activeTab === 'gaps' ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+            activeTab === 'gaps' ? "bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 shadow-sm text-foreground" : "text-muted-foreground"
           )}
         >
           {t(`Knowledge Gaps (${gaps.filter(g => !g.resolved).length})`, `فجوات (${gaps.filter(g => !g.resolved).length})`)}
@@ -118,7 +118,7 @@ export function LuminaMemoryViewer() {
             </p>
           ) : (
             memories.map(mem => (
-              <div key={mem.id} className="flex items-start gap-2 p-2.5 rounded-xl bg-muted/30 border border-border/20 group">
+              <div key={mem.id} className="flex items-start gap-2 p-2.5 rounded-xl bg-muted/30 border border-foreground/10 group">
                 <span className="text-sm mt-0.5">{typeIcons[mem.memory_type] || '📝'}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-foreground">{mem.content}</p>
@@ -162,7 +162,7 @@ export function LuminaMemoryViewer() {
                       "text-[10px] px-1.5 py-0.5 rounded font-medium",
                       gap.severity === 'critical' ? 'bg-red-500/20 text-red-600' :
                       gap.severity === 'moderate' ? 'bg-yellow-500/20 text-yellow-600' :
-                      'bg-blue-500/20 text-blue-600'
+                      'bg-foreground/[0.07] text-foreground'
                     )}>{gap.severity}</span>
                   </div>
                 </div>

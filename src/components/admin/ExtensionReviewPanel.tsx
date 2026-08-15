@@ -159,7 +159,7 @@ export function ExtensionReviewPanel() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 h-[calc(100vh-260px)]">
         {/* Queue */}
-        <aside className="border rounded-lg bg-card flex flex-col overflow-hidden">
+        <aside className="border rounded-lg bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 flex flex-col overflow-hidden">
           <div className="px-3 py-2 border-b text-xs uppercase tracking-wider text-muted-foreground">
             Queue ({requests.length})
           </div>
@@ -195,7 +195,7 @@ export function ExtensionReviewPanel() {
         </aside>
 
         {/* Detail */}
-        <section className="border rounded-lg bg-card flex flex-col overflow-hidden">
+        <section className="border rounded-lg bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 flex flex-col overflow-hidden">
           {!active ? (
             <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
               Select a request to review.

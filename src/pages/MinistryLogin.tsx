@@ -244,10 +244,10 @@ export default function MinistryLogin() {
       <div className="fixed inset-0 bg-black flex items-center justify-center p-6 overflow-y-auto">
         <div className="max-w-lg w-full space-y-6 my-8">
           <div className="text-center space-y-4">
-            <div className="w-20 h-20 mx-auto rounded-full bg-blue-950/30 border border-blue-700/30 flex items-center justify-center">
-              <ShieldCheck className="w-10 h-10 text-blue-400" />
+            <div className="w-20 h-20 mx-auto rounded-full bg-foreground/[0.07] border border-foreground/20 flex items-center justify-center">
+              <ShieldCheck className="w-10 h-10 text-foreground" />
             </div>
-            <h1 className="text-2xl font-bold text-blue-400">Moderator Registration</h1>
+            <h1 className="text-2xl font-bold text-foreground">Moderator Registration</h1>
             <p className="text-gray-500 text-xs">
               Sign up as a moderator to oversee content safety across the platform.
             </p>
@@ -257,7 +257,7 @@ export default function MinistryLogin() {
             <div className="space-y-2">
               <Label htmlFor="mod-name" className="text-gray-300 text-sm">Full Name</Label>
               <Input id="mod-name" placeholder="Your full name" value={modName} onChange={(e) => setModName(e.target.value)}
-                className="bg-gray-950 border-gray-800 text-gray-200 focus:border-blue-700 focus:ring-blue-700/50" />
+                className="bg-gray-950 border-gray-800 text-gray-200 focus:border-foreground/20 focus:ring-foreground/25" />
               {modErrors.name && <p className="text-sm text-red-500">{modErrors.name}</p>}
             </div>
 
@@ -266,7 +266,7 @@ export default function MinistryLogin() {
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <Input id="mod-email" type="email" placeholder="you@example.com" value={modEmail} onChange={(e) => setModEmail(e.target.value)}
-                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 focus:border-blue-700 focus:ring-blue-700/50" />
+                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 focus:border-foreground/20 focus:ring-foreground/25" />
               </div>
               {modErrors.email && <p className="text-sm text-red-500">{modErrors.email}</p>}
             </div>
@@ -276,7 +276,7 @@ export default function MinistryLogin() {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <Input id="mod-password" type="password" placeholder="••••••••" value={modPassword} onChange={(e) => setModPassword(e.target.value)}
-                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 focus:border-blue-700 focus:ring-blue-700/50" />
+                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 focus:border-foreground/20 focus:ring-foreground/25" />
               </div>
               {modErrors.password && <p className="text-sm text-red-500">{modErrors.password}</p>}
             </div>
@@ -286,7 +286,7 @@ export default function MinistryLogin() {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <Input id="mod-confirm" type="password" placeholder="••••••••" value={modConfirmPassword} onChange={(e) => setModConfirmPassword(e.target.value)}
-                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 focus:border-blue-700 focus:ring-blue-700/50" />
+                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 focus:border-foreground/20 focus:ring-foreground/25" />
               </div>
               {modErrors.confirmPassword && <p className="text-sm text-red-500">{modErrors.confirmPassword}</p>}
             </div>
@@ -296,14 +296,14 @@ export default function MinistryLogin() {
               <div className="relative">
                 <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <Input id="mod-code" placeholder="MOD-XXXXXXXX" value={modCode} onChange={(e) => setModCode(e.target.value.toUpperCase())}
-                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 tracking-wider uppercase font-mono focus:border-blue-700 focus:ring-blue-700/50" />
+                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 tracking-wider uppercase font-mono focus:border-foreground/20 focus:ring-foreground/25" />
               </div>
               {modErrors.code && <p className="text-sm text-red-500">{modErrors.code}</p>}
               <p className="text-xs text-gray-600">This code is provided by the Ministry of Education</p>
             </div>
 
             <Button type="submit" disabled={modSubmitting}
-              className="w-full bg-blue-900/50 hover:bg-blue-800/50 text-blue-400 border border-blue-700/30">
+              className="w-full bg-foreground/[0.07] hover:bg-foreground/[0.07] text-foreground border border-foreground/20">
               {modSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <UserPlus className="w-4 h-4 mr-2" />}
               Sign Up as Moderator
             </Button>
@@ -371,7 +371,7 @@ export default function MinistryLogin() {
           <Button
             variant="ghost"
             onClick={() => setShowModeratorForm(true)}
-            className="w-full text-blue-400/60 hover:text-blue-400 hover:bg-blue-950/20 text-xs gap-2"
+            className="w-full text-foreground hover:text-foreground hover:bg-foreground/[0.07] text-xs gap-2"
           >
             <ShieldCheck className="w-3 h-3" />
             Sign in as Moderator

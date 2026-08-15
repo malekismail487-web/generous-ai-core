@@ -102,7 +102,7 @@ export function MorningBriefingCard({ onCount }: { onCount?: (n: number) => void
 
   if (loading || generating) {
     return (
-      <div className="mx-3 mb-4 rounded-2xl border border-border/40 bg-card/70 backdrop-blur-sm p-4 flex items-center gap-3">
+      <div className="mx-3 mb-4 rounded-2xl border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl backdrop-blur-sm p-4 flex items-center gap-3">
         <Moon size={18} className="text-muted-foreground animate-pulse" />
         <span className="text-xs text-muted-foreground">
           {generating ? "Lumina is consolidating overnight…" : "Loading briefing…"}
@@ -145,7 +145,7 @@ export function MorningBriefingCard({ onCount }: { onCount?: (n: number) => void
   // Completion screen — shrink and thank the user
   if (allAnswered) {
     return (
-      <div className="mx-3 mb-4 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 animate-fade-in flex items-center gap-3 relative">
+      <div className="mx-3 mb-4 rounded-2xl border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl backdrop-blur-sm p-4 animate-fade-in flex items-center gap-3 relative">
         <button onClick={dismissNow} className="absolute top-2 right-2 p-1 rounded-lg hover:bg-muted/50 text-muted-foreground">
           <X size={14} />
         </button>
@@ -163,7 +163,7 @@ export function MorningBriefingCard({ onCount }: { onCount?: (n: number) => void
   }
 
   return (
-    <div className="mx-3 mb-4 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 animate-fade-in relative">
+    <div className="mx-3 mb-4 rounded-2xl border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl backdrop-blur-sm p-4 animate-fade-in relative">
       <button onClick={dismissNow} className="absolute top-2 right-2 p-1 rounded-lg hover:bg-muted/50 text-muted-foreground" aria-label="Skip briefing">
         <X size={14} />
       </button>
@@ -188,7 +188,7 @@ export function MorningBriefingCard({ onCount }: { onCount?: (n: number) => void
         <div className="mt-3 space-y-3">
           <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">90-second mini quiz</div>
           {quiz.map((q, qi) => (
-            <div key={qi} className="rounded-lg border border-border/40 p-3">
+            <div key={qi} className="rounded-lg border border-foreground/10 p-3">
               <div className="text-[12px] font-medium mb-2">{qi + 1}. {q.q}</div>
               <div className="grid grid-cols-1 gap-1.5">
                 {(q.choices ?? []).map((c, ci) => {
@@ -203,7 +203,7 @@ export function MorningBriefingCard({ onCount }: { onCount?: (n: number) => void
                       onClick={() => handlePick(qi, ci)}
                       className={cn(
                         "text-left text-[12px] px-2.5 py-1.5 rounded-md border transition-colors",
-                        !isAnswered && "border-border/50 hover:border-primary/50",
+                        !isAnswered && "border-foreground/10 hover:border-primary/50",
                         isAnswered && isCorrect && "border-emerald-500/60 bg-emerald-500/10",
                         isAnswered && isPicked && !isCorrect && "border-rose-500/60 bg-rose-500/10",
                       )}

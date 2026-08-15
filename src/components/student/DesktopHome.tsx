@@ -57,7 +57,7 @@ function TileButton({ tile, index, onNavigate }: { tile: Tile; index: number; on
         'group relative overflow-hidden rounded-[1.4rem] border border-foreground/12 bg-foreground/[0.03] backdrop-blur-2xl backdrop-saturate-150',
         'p-4 text-left opacity-0 animate-[slideUpFade_0.6s_cubic-bezier(0.16,1,0.3,1)_forwards]',
         'transition-[transform,border-color,background-color] duration-500',
-        'hover:-translate-y-1 hover:border-foreground/25 hover:bg-white/[0.05]',
+        'hover:-translate-y-1 hover:border-foreground/25 hover:bg-foreground/[0.05]',
       )}
     >
       {/* diagonal hairline field — the abstraction */}

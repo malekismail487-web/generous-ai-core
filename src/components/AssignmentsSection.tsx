@@ -115,7 +115,7 @@ export function AssignmentsSection() {
                 Back
               </Button>
             </div>
-            <div className="glass-effect rounded-2xl p-6 text-center">
+            <div className="liquid-glass rounded-2xl p-6 text-center">
               <p className="text-sm text-muted-foreground">This assignment has no questions yet.</p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export function AssignmentsSection() {
             </Button>
           </div>
 
-          <div className="glass-effect rounded-2xl p-5 mb-4 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-5 mb-4 animate-fade-in">
             <div className="flex items-start gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary to-accent text-primary-foreground">
                 <FileText size={20} />
@@ -178,7 +178,7 @@ export function AssignmentsSection() {
 
            {/* Submission Status (legacy text submission system) */}
           {submission ? (
-            <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+            <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
               <div className="flex items-center gap-2 text-primary mb-3">
                 <Check size={18} />
                 <span className="font-medium">Submitted</span>
@@ -219,7 +219,7 @@ export function AssignmentsSection() {
               )}
             </div>
            ) : (
-            <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+            <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
               <h3 className="font-semibold mb-3">Your Submission</h3>
               <Textarea
                 value={submissionContent}
@@ -279,7 +279,7 @@ export function AssignmentsSection() {
         {/* Assignments List */}
         <div className="space-y-3">
           {assignments.length === 0 ? (
-            <div className="text-center text-muted-foreground text-sm py-10 glass-effect rounded-2xl">
+            <div className="text-center text-muted-foreground text-sm py-10 liquid-glass rounded-2xl">
               No assignments yet
             </div>
           ) : (
@@ -291,7 +291,7 @@ export function AssignmentsSection() {
               return (
                 <div
                   key={assignment.id}
-                  className="glass-effect rounded-xl overflow-hidden animate-fade-in"
+                  className="liquid-glass rounded-xl overflow-hidden animate-fade-in"
                 >
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : assignment.id)}
@@ -332,7 +332,7 @@ export function AssignmentsSection() {
                   </button>
                   
                   {isExpanded && (
-                    <div className="px-4 pb-4 pt-0 border-t border-border/30">
+                    <div className="px-4 pb-4 pt-0 border-t border-foreground/10">
                       {assignment.description && (
                         <p className="text-sm text-muted-foreground mb-3 mt-3">
                           {assignment.description}

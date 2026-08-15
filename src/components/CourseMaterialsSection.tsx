@@ -10,18 +10,18 @@ import { Badge } from '@/components/ui/badge';
 import { MaterialViewer } from '@/components/MaterialViewer';
 
 const subjects = [
-  { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-emerald-500 to-green-600' },
-  { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-blue-500 to-cyan-600' },
-  { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'from-violet-500 to-purple-600' },
-  { id: 'chemistry', name: 'Chemistry', emoji: '🧪', color: 'from-orange-500 to-amber-600' },
-  { id: 'english', name: 'English', emoji: '📚', color: 'from-rose-500 to-pink-600' },
-  { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-teal-500 to-emerald-600' },
-  { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-indigo-500 to-blue-600' },
-  { id: 'arabic', name: 'Arabic', emoji: '🕌', color: 'from-amber-500 to-yellow-600' },
-  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️', color: 'from-green-600 to-emerald-700' },
-  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️', color: 'from-amber-600 to-orange-700' },
-  { id: 'art_design', name: 'Art and Design', emoji: '🎨', color: 'from-pink-500 to-rose-600' },
-  { id: 'entrepreneurship', name: 'Entrepreneurship', emoji: '💼', color: 'from-cyan-500 to-sky-600' },
+  { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'chemistry', name: 'Chemistry', emoji: '🧪', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'english', name: 'English', emoji: '📚', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'arabic', name: 'Arabic', emoji: '🕌', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'art_design', name: 'Art and Design', emoji: '🎨', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'entrepreneurship', name: 'Entrepreneurship', emoji: '💼', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
 ];
 
 const grades = [
@@ -194,7 +194,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
           </div>
 
           {/* Material Header */}
-          <div className="glass-effect rounded-2xl p-5 mb-4">
+          <div className="liquid-glass rounded-2xl p-5 mb-4">
             <div className="flex items-center gap-3 mb-3">
               <div className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br text-lg",
@@ -233,7 +233,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
           </div>
 
           {/* Comments Section */}
-          <div className="glass-effect rounded-2xl p-5">
+          <div className="liquid-glass rounded-2xl p-5">
             <h3 className="font-semibold flex items-center gap-2 mb-4">
               <MessageCircle size={18} />
               Comments ({comments.length})
@@ -262,7 +262,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
                   onChange={(e) => setNewComment(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSubmitComment()}
                   placeholder="Add a comment..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="flex-1 px-4 py-2 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
                 <Button size="sm" onClick={handleSubmitComment} disabled={isSubmittingComment || !newComment.trim()}>
                   {isSubmittingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send size={16} />}
@@ -398,14 +398,14 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
             </h1>
           </div>
 
-          <div className="glass-effect rounded-2xl p-5 animate-fade-in space-y-4">
+          <div className="liquid-glass rounded-2xl p-5 animate-fade-in space-y-4">
             {/* Subject Selection */}
             <div>
               <label className="block text-sm font-medium mb-2">Subject *</label>
               <select
                 value={formSubject}
                 onChange={(e) => setFormSubject(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 {subjects.map((subj) => (
                   <option key={subj.id} value={subj.id}>
@@ -421,7 +421,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
               <select
                 value={formGradeLevel}
                 onChange={(e) => setFormGradeLevel(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 {grades.map((grade) => (
                   <option key={grade} value={grade}>
@@ -442,7 +442,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
                 placeholder="e.g., Chapter 3: Photosynthesis"
-                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
 
@@ -459,7 +459,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
                 />
                 
                 {selectedFile ? (
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border/50">
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-foreground/10">
                     <File size={20} className="text-primary" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{selectedFile.name}</p>
@@ -476,7 +476,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full p-6 rounded-xl border-2 border-dashed border-border/50 hover:border-primary/50 transition-colors text-center"
+                    className="w-full p-6 rounded-xl border-2 border-dashed border-foreground/10 hover:border-primary/50 transition-colors text-center"
                   >
                     <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">Click to upload or drag and drop</p>
@@ -506,7 +506,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
                   value={formFileUrl}
                   onChange={(e) => setFormFileUrl(e.target.value)}
                   placeholder="https://... (link to PDF, document, etc.)"
-                  className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
             )}
@@ -519,7 +519,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
                 onChange={(e) => setFormContent(e.target.value)}
                 placeholder="Add any additional notes or content here..."
                 rows={6}
-                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
               />
             </div>
 
@@ -566,7 +566,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
         )}
 
         {/* Subject Filter */}
-        <div className="glass-effect rounded-xl p-3 mb-4 overflow-x-auto">
+        <div className="liquid-glass rounded-xl p-3 mb-4 overflow-x-auto">
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setSelectedSubject('all')}
@@ -602,7 +602,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : filteredMaterials.length === 0 ? (
-          <div className="glass-effect rounded-2xl p-8 text-center">
+          <div className="liquid-glass rounded-2xl p-8 text-center">
             <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="font-semibold mb-2">No materials yet</h3>
             <p className="text-sm text-muted-foreground">
@@ -619,7 +619,7 @@ export function CourseMaterialsSection({ onBack }: CourseMaterialsSectionProps) 
               return (
                 <div
                   key={material.id}
-                  className="glass-effect rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all group"
+                  className="liquid-glass rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all group"
                   onClick={() => handleOpenMaterial(material)}
                 >
                   <div className="flex items-center gap-3">

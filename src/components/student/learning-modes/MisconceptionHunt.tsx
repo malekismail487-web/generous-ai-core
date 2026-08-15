@@ -100,7 +100,7 @@ export function MisconceptionHunt({ subject, topic, onExit }: MisconceptionHuntP
 
   if (loading) {
     return (
-      <Card className="bg-card border-border">
+      <Card className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border-border">
         <CardContent className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </CardContent>
@@ -109,7 +109,7 @@ export function MisconceptionHunt({ subject, topic, onExit }: MisconceptionHuntP
   }
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border-border">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Search className="w-5 h-5" /> Misconception Hunt — {subject} · {topic}
@@ -136,7 +136,7 @@ export function MisconceptionHunt({ subject, topic, onExit }: MisconceptionHuntP
                         'px-3 py-1.5 rounded-md border text-sm transition-colors',
                         marks[s.id] === v
                           ? 'border-foreground bg-foreground text-background'
-                          : 'border-border bg-card text-foreground hover:border-foreground/40',
+                          : 'border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 text-foreground hover:border-foreground/40',
                       )}
                     >
                       {v ? 'True' : 'False'}

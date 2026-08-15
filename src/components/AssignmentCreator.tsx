@@ -131,7 +131,7 @@ export function AssignmentCreator({ onBack, onSuccess }: AssignmentCreatorProps)
         </div>
 
         {/* Assignment Details */}
-        <div className="glass-effect rounded-2xl p-5 mb-4 space-y-4">
+        <div className="liquid-glass rounded-2xl p-5 mb-4 space-y-4">
           <h2 className="font-semibold">Assignment Details</h2>
           
           <div>
@@ -205,7 +205,7 @@ export function AssignmentCreator({ onBack, onSuccess }: AssignmentCreatorProps)
         </div>
 
         {/* Questions Section */}
-        <div className="glass-effect rounded-2xl p-5 mb-4">
+        <div className="liquid-glass rounded-2xl p-5 mb-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Questions ({questions.length})</h2>
           </div>
@@ -232,7 +232,7 @@ export function AssignmentCreator({ onBack, onSuccess }: AssignmentCreatorProps)
               </div>
             ) : (
               questions.map((q, index) => (
-                <div key={q.id} className="bg-secondary/30 rounded-xl p-4 border border-border/50">
+                <div key={q.id} className="bg-secondary/30 rounded-xl p-4 border border-foreground/10">
                   <div className="flex items-start gap-3">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <GripVertical size={16} />

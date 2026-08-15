@@ -26,7 +26,7 @@ function processMathInText(text: string): string {
   // Process inline images first — protect them from other transformations
   result = result.replace(/\[INLINE_IMG:(.*?):(.*?)\]/g, (_, url, alt) => {
     const cleanAlt = alt.replace(/꞉/g, ':');
-    return `<div class="my-4 rounded-xl overflow-hidden border border-border/30 bg-card/50 shadow-sm inline-block max-w-full"><img src="${url}" alt="${cleanAlt}" class="w-full max-h-64 object-contain bg-white rounded-xl" loading="lazy" onerror="this.parentElement.style.display='none'" />${cleanAlt ? `<p class="text-[11px] text-center text-muted-foreground px-2.5 py-1.5 truncate">${cleanAlt}</p>` : ''}</div>`;
+    return `<div class="my-4 rounded-xl overflow-hidden border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl shadow-sm inline-block max-w-full"><img src="${url}" alt="${cleanAlt}" class="w-full max-h-64 object-contain bg-white rounded-xl" loading="lazy" onerror="this.parentElement.style.display='none'" />${cleanAlt ? `<p class="text-[11px] text-center text-muted-foreground px-2.5 py-1.5 truncate">${cleanAlt}</p>` : ''}</div>`;
   });
   result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => renderLatex(math, true));
   result = result.replace(/\\\[([\s\S]*?)\\\]/g, (_, math) => renderLatex(math, true));

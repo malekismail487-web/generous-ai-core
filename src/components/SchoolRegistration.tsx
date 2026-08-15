@@ -91,13 +91,13 @@ export function SchoolRegistration() {
             <p className="text-muted-foreground">{t('enterSchoolCode')}</p>
           </div>
 
-          <div className="glass-effect rounded-2xl p-6 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-6 animate-fade-in">
             <input
               type="text"
               value={schoolCode}
               onChange={(e) => setSchoolCode(e.target.value.toUpperCase())}
               placeholder={t('enterCode')}
-              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-center text-lg font-mono tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
+              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-center text-lg font-mono tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
               maxLength={20}
             />
 
@@ -129,7 +129,7 @@ export function SchoolRegistration() {
         <div className="ambient-glow" />
         <div className="w-full max-w-md relative z-10">
           <div className="text-center mb-8 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 bg-gradient-to-br from-emerald-500 to-green-600">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">
               <CheckCircle className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold mb-2">{validatedSchool?.name}</h1>
@@ -139,10 +139,10 @@ export function SchoolRegistration() {
           <div className="space-y-3 animate-fade-in">
             <button
               onClick={() => handleSelectType('student')}
-              className="w-full glass-effect rounded-2xl p-6 text-left hover:shadow-lg transition-all group"
+              className="w-full liquid-glass rounded-2xl p-6 text-left hover:shadow-lg transition-all group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-blue-500 to-cyan-600 text-white">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
                   <GraduationCap className="w-7 h-7" />
                 </div>
                 <div>
@@ -154,10 +154,10 @@ export function SchoolRegistration() {
 
             <button
               onClick={() => handleSelectType('teacher')}
-              className="w-full glass-effect rounded-2xl p-6 text-left hover:shadow-lg transition-all group"
+              className="w-full liquid-glass rounded-2xl p-6 text-left hover:shadow-lg transition-all group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
                   <User className="w-7 h-7" />
                 </div>
                 <div>
@@ -189,8 +189,8 @@ export function SchoolRegistration() {
           <div className={cn(
             "inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4",
             userType === 'student' 
-              ? "bg-gradient-to-br from-blue-500 to-cyan-600" 
-              : "bg-gradient-to-br from-violet-500 to-purple-600"
+              ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]" 
+              : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
           )}>
             {userType === 'student' ? <GraduationCap className="w-8 h-8 text-white" /> : <User className="w-8 h-8 text-white" />}
           </div>
@@ -198,7 +198,7 @@ export function SchoolRegistration() {
           <p className="text-sm text-muted-foreground">{validatedSchool?.name}</p>
         </div>
 
-        <div className="glass-effect rounded-2xl p-6 animate-fade-in space-y-4">
+        <div className="liquid-glass rounded-2xl p-6 animate-fade-in space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">{t('fullName')} *</label>
             <input
@@ -206,7 +206,7 @@ export function SchoolRegistration() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder={language === 'ar' ? 'أدخل اسمك الكامل' : 'Enter your full name'}
-              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               maxLength={100}
             />
           </div>
@@ -220,7 +220,7 @@ export function SchoolRegistration() {
               value={studentTeacherId}
               onChange={(e) => setStudentTeacherId(e.target.value)}
               placeholder={language === 'ar' ? 'أدخل رقمك المدرسي' : 'Enter your school ID'}
-              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               maxLength={50}
             />
           </div>
@@ -231,7 +231,7 @@ export function SchoolRegistration() {
               <select
                 value={gradeLevel}
                 onChange={(e) => setGradeLevel(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 <option value="">{t('selectGradeLabel')}</option>
                 {grades.map((grade) => (
@@ -247,7 +247,7 @@ export function SchoolRegistration() {
               <select
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 <option value="">{t('selectDepartment')}</option>
                 {departments.map((dept) => (

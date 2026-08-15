@@ -187,7 +187,7 @@ export function TeacherCategoriesManager({ schoolId }: Props) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="rounded-xl border border-border bg-card/40 p-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
           <h2 className="text-base font-semibold flex items-center gap-2"><GraduationCap className="w-4 h-4" /> Teacher Categories</h2>
           <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
@@ -206,7 +206,7 @@ export function TeacherCategoriesManager({ schoolId }: Props) {
       </div>
 
       {/* Add new category */}
-      <div className="rounded-xl border border-border bg-card/40 p-4 space-y-3">
+      <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4 space-y-3">
         <h3 className="text-sm font-semibold">Add a teacher category</h3>
         <div className="flex flex-wrap gap-2 items-end">
           <div className="flex-1 min-w-[180px]">
@@ -231,7 +231,7 @@ export function TeacherCategoriesManager({ schoolId }: Props) {
       </div>
 
       {/* Card grid */}
-      <div className="rounded-xl border border-border bg-card/40 p-4">
+      <div className="rounded-xl border border-border bg-foreground/[0.04] backdrop-blur-2xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold">Categories ({categories.length})</h3>
           <Button variant="ghost" size="sm" onClick={() => { refresh(); fetchTeachers(); }}><RefreshCw className="w-4 h-4" /></Button>
@@ -285,7 +285,7 @@ export function TeacherCategoriesManager({ schoolId }: Props) {
                   </div>
 
                   {/* Permanent invite code */}
-                  <div className="rounded-lg bg-muted/50 border border-border/60 p-2">
+                  <div className="rounded-lg bg-muted/50 border border-foreground/10 p-2">
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Always-on invite code</div>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 text-sm font-mono font-semibold truncate" style={{ color: accent }}>{c.permanent_invite_code}</code>

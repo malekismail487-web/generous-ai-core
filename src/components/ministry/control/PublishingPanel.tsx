@@ -26,7 +26,7 @@ const STATUSES: Array<{ id: 'all' | ChangeStatus; label: string; hint: string }>
 const STATUS_CLASS: Record<ChangeStatus, string> = {
   draft: 'text-gray-400 bg-gray-900 border-gray-800',
   in_review: 'text-amber-300 bg-amber-950/50 border-amber-800/50',
-  approved: 'text-sky-300 bg-sky-950/50 border-sky-800/50',
+  approved: 'text-foreground bg-foreground/[0.07] border-foreground/20',
   published: 'text-emerald-300 bg-emerald-950/50 border-emerald-800/50',
   rejected: 'text-red-300 bg-red-950/50 border-red-800/50',
   withdrawn: 'text-gray-500 bg-gray-950 border-gray-800',
@@ -196,7 +196,7 @@ function RequestActions({
   if (req.status === 'in_review') {
     return (
       <div className="flex justify-end gap-1">
-        <Button size="sm" variant="outline" className="h-7 text-xs border-sky-800/50 text-sky-300"
+        <Button size="sm" variant="outline" className="h-7 text-xs border-foreground/20 text-foreground"
           onClick={() => onReview('approve')}>
           <CheckCircle2 className="w-3 h-3 mr-1" /> Approve
         </Button>

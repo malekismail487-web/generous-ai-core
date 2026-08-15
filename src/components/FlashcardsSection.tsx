@@ -231,7 +231,7 @@ export function FlashcardsSection() {
               {/* Front */}
               <div
                 className={cn(
-                  "absolute inset-0 glass-effect rounded-2xl p-6 flex flex-col items-center justify-center text-center",
+                  "absolute inset-0 liquid-glass rounded-2xl p-6 flex flex-col items-center justify-center text-center",
                   "bg-gradient-to-br from-primary/5 to-accent/5 overflow-y-auto"
                 )}
                 style={{ backfaceVisibility: 'hidden' }}
@@ -243,7 +243,7 @@ export function FlashcardsSection() {
               {/* Back */}
               <div
                 className={cn(
-                  "absolute inset-0 glass-effect rounded-2xl p-6 flex flex-col items-center justify-center text-center overflow-y-auto",
+                  "absolute inset-0 liquid-glass rounded-2xl p-6 flex flex-col items-center justify-center text-center overflow-y-auto",
                   "bg-gradient-to-br from-accent/10 to-primary/10"
                 )}
                 style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
@@ -274,20 +274,20 @@ export function FlashcardsSection() {
             </Button>
           </div>
           <div className="text-center mb-8 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-amber-500 to-orange-600">{subjectEmoji}</div>
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">{subjectEmoji}</div>
             <h1 className="text-2xl font-bold mb-2">{subjectName} {tr('flashcards', language)}</h1>
             <p className="text-sm text-muted-foreground">{getGradeName(selectedGrade, language)}</p>
           </div>
           <div className="space-y-3 animate-fade-in">
-            <button onClick={handleGenerateFromMaterials} className="w-full glass-effect rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4">
+            <button onClick={handleGenerateFromMaterials} className="w-full liquid-glass rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl overflow-hidden"><LuminaLogo size={48} /></div>
               <div>
                 <h3 className="font-semibold">{tr('fromSavedMaterials', language)}</h3>
                 <p className="text-xs text-muted-foreground">{tr('fromSavedMaterialsDesc', language).replace('your saved material(s)', `${savedMaterials.length} ${tr('saved', language)}`)}</p>
               </div>
             </button>
-            <button onClick={() => setViewState('input')} className="w-full glass-effect rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white"><BookOpen size={24} /></div>
+            <button onClick={() => setViewState('input')} className="w-full liquid-glass rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white"><BookOpen size={24} /></div>
               <div>
                 <h3 className="font-semibold">{tr('customTopic', language)}</h3>
                 <p className="text-xs text-muted-foreground">{tr('customTopicDesc', language)}</p>
@@ -309,13 +309,13 @@ export function FlashcardsSection() {
             </Button>
           </div>
           <div className="text-center mb-8 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-amber-500 to-orange-600">{subjectEmoji}</div>
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">{subjectEmoji}</div>
             <h1 className="text-2xl font-bold mb-2">{subjectName} {tr('flashcards', language)}</h1>
             <p className="text-sm text-muted-foreground">{getGradeName(selectedGrade, language)}</p>
           </div>
-          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-2 text-center text-lg">{tr('flashcardTopic', language)}</h3>
-            <input type="text" value={topicInput} onChange={(e) => setTopicInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleTopicSubmit()} placeholder={tr('flashcardPlaceholder', language)} className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4" autoFocus />
+            <input type="text" value={topicInput} onChange={(e) => setTopicInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleTopicSubmit()} placeholder={tr('flashcardPlaceholder', language)} className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4" autoFocus />
             <Button size="sm" onClick={handleTopicSubmit} disabled={!topicInput.trim()} className="w-full gap-2">
               {tr('generateFlashcards', language)}<ArrowRight size={16} />
             </Button>
@@ -335,10 +335,10 @@ export function FlashcardsSection() {
             </Button>
           </div>
           <div className="text-center mb-8 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-amber-500 to-orange-600">{subjectEmoji}</div>
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">{subjectEmoji}</div>
             <h1 className="text-2xl font-bold mb-2">{subjectName} {tr('flashcards', language)}</h1>
           </div>
-          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-4 text-center">{tr('selectGrade', language)}</h3>
             <div className="grid grid-cols-4 gap-2 overflow-y-auto max-h-[50vh]">
               {grades.map((grade) => (
@@ -357,7 +357,7 @@ export function FlashcardsSection() {
     <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="text-center mb-8 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-amber-500 to-orange-600">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 glow-effect bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">
             <BookOpen className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold mb-2 gradient-text">{tr('flashcards', language)}</h1>
@@ -365,7 +365,7 @@ export function FlashcardsSection() {
         </div>
         <div className="grid grid-cols-2 gap-3 overflow-y-auto">
           {subjects.map((subj, index) => (
-            <button key={subj.id} onClick={() => handleSubjectClick(subj.id)} className={cn("glass-effect rounded-xl p-4 text-left transition-all duration-200 animate-fade-in", "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-3")} style={{ animationDelay: `${index * 30}ms` }}>
+            <button key={subj.id} onClick={() => handleSubjectClick(subj.id)} className={cn("liquid-glass rounded-xl p-4 text-left transition-all duration-200 animate-fade-in", "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-3")} style={{ animationDelay: `${index * 30}ms` }}>
               <span className="text-xl">{subj.emoji}</span>
               <span className="font-medium text-sm">{getSubjectName(subj.id, language)}</span>
             </button>

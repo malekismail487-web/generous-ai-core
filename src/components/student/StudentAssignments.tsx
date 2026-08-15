@@ -23,14 +23,14 @@ import {
 import { Progress } from '@/components/ui/progress';
 
 const SUBJECTS = [
-  { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-green-500 to-emerald-600' },
-  { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-blue-500 to-cyan-600' },
-  { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'from-purple-500 to-violet-600' },
-  { id: 'chemistry', name: 'Chemistry', emoji: '🧪', color: 'from-orange-500 to-amber-600' },
-  { id: 'english', name: 'English', emoji: '📚', color: 'from-red-500 to-rose-600' },
-  { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-teal-500 to-cyan-600' },
-  { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-indigo-500 to-blue-600' },
-  { id: 'arabic', name: 'Arabic', emoji: '🕌', color: 'from-amber-500 to-yellow-600' },
+  { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'chemistry', name: 'Chemistry', emoji: '🧪', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'english', name: 'English', emoji: '📚', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'arabic', name: 'Arabic', emoji: '🕌', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
 ];
 
 interface Assignment {
@@ -241,7 +241,7 @@ export function StudentAssignments({
 
       {/* Assignments Grid */}
       {filteredAssignments.length === 0 ? (
-        <div className="glass-effect rounded-xl p-12 text-center">
+        <div className="liquid-glass rounded-xl p-12 text-center">
           <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
           <h3 className="text-lg font-semibold mb-2">No Assignments Found</h3>
           <p className="text-muted-foreground">

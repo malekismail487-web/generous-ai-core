@@ -370,7 +370,7 @@ export function ReportCardCreator({ schoolId, adminId }: ReportCardCreatorProps)
 
       {/* Students List */}
       {filteredStudents.length === 0 ? (
-        <div className="glass-effect rounded-xl p-8 text-center">
+        <div className="liquid-glass rounded-xl p-8 text-center">
           <User className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="font-semibold mb-2">No Students Found</h3>
           <p className="text-sm text-muted-foreground">
@@ -387,7 +387,7 @@ export function ReportCardCreator({ schoolId, adminId }: ReportCardCreatorProps)
             return (
               <div 
                 key={student.id} 
-                className="glass-effect rounded-xl p-4 hover:shadow-lg transition-all"
+                className="liquid-glass rounded-xl p-4 hover:shadow-lg transition-all"
               >
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">

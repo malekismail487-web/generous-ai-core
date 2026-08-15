@@ -337,16 +337,16 @@ const grades = [
 ];
 
 const subjectDifficulties = [
-  { id: SubjectDifficulty.SUBJECT_BEGINNER, name: 'Beginner', questions: 10, color: 'from-emerald-500 to-teal-500' },
-  { id: SubjectDifficulty.SUBJECT_INTERMEDIATE, name: 'Intermediate', questions: 20, color: 'from-amber-500 to-orange-500' },
-  { id: SubjectDifficulty.SUBJECT_EXPERT, name: 'Expert', questions: 30, color: 'from-rose-500 to-pink-500' },
+  { id: SubjectDifficulty.SUBJECT_BEGINNER, name: 'Beginner', questions: 10, color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: SubjectDifficulty.SUBJECT_INTERMEDIATE, name: 'Intermediate', questions: 20, color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: SubjectDifficulty.SUBJECT_EXPERT, name: 'Expert', questions: 30, color: 'from-foreground/[0.14] to-foreground/[0.04]' },
 ];
 
 const satDifficulties = [
-  { id: SATDifficulty.SAT_BEGINNER, name: 'Beginner', questions: 20, color: 'from-emerald-500 to-teal-500' },
-  { id: SATDifficulty.SAT_INTERMEDIATE, name: 'Intermediate', questions: 30, color: 'from-amber-500 to-orange-500' },
-  { id: SATDifficulty.SAT_EXPERT, name: 'Expert', questions: 60, color: 'from-rose-500 to-pink-500' },
-  { id: SATDifficulty.SAT_FULL, name: 'Full SAT Exam', questions: 140, color: 'from-violet-500 to-purple-600', 
+  { id: SATDifficulty.SAT_BEGINNER, name: 'Beginner', questions: 20, color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: SATDifficulty.SAT_INTERMEDIATE, name: 'Intermediate', questions: 30, color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: SATDifficulty.SAT_EXPERT, name: 'Expert', questions: 60, color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: SATDifficulty.SAT_FULL, name: 'Full SAT Exam', questions: 140, color: 'from-foreground/[0.14] to-foreground/[0.04]', 
     description: 'Reading/Writing: 70 + Math: 70 questions' },
 ];
 
@@ -653,7 +653,7 @@ export function ExaminationSection() {
             <Trophy className="w-10 h-10 text-primary-foreground" />
           </div>
           <h2 className="text-2xl font-bold mb-2">Exam Complete!</h2>
-          <div className="glass-effect rounded-2xl p-5 mb-5">
+          <div className="liquid-glass rounded-2xl p-5 mb-5">
             <div className="text-4xl font-bold gradient-text mb-1">{percentage}%</div>
             <p className="text-muted-foreground text-sm">{correct} out of {total} correct</p>
           </div>
@@ -703,7 +703,7 @@ export function ExaminationSection() {
 
     return (
       <div className="flex-1 h-[calc(100vh-120px)] flex flex-col overflow-hidden pt-14 pb-16">
-        <div className="flex items-center justify-between p-3 border-b border-border/30">
+        <div className="flex items-center justify-between p-3 border-b border-foreground/10">
           <Button variant="ghost" size="sm" onClick={handleReset}>
             <ArrowLeft size={14} className="mr-1" />
             Exit
@@ -732,13 +732,13 @@ export function ExaminationSection() {
 
         <div className="flex-1 overflow-y-auto p-4">
           <div className="max-w-lg mx-auto">
-            <div className="glass-effect rounded-2xl p-5 mb-5">
+            <div className="liquid-glass rounded-2xl p-5 mb-5">
               <div className="flex items-center gap-2 mb-2">
                 <span className={cn(
                   "text-[10px] px-2 py-0.5 rounded-full font-medium",
-                  isMultipleChoice(currentQ) && "bg-blue-500/20 text-blue-500",
+                  isMultipleChoice(currentQ) && "bg-foreground/[0.07] text-foreground",
                   isFillInBlank(currentQ) && "bg-amber-500/20 text-amber-500",
-                  isTypedAnswer(currentQ) && "bg-violet-500/20 text-violet-500"
+                  isTypedAnswer(currentQ) && "bg-foreground/[0.07] text-foreground"
                 )}>
                   {isMultipleChoice(currentQ) ? 'Multiple Choice' : isFillInBlank(currentQ) ? 'Fill in Blank' : 'Written Answer'}
                 </span>
@@ -748,7 +748,7 @@ export function ExaminationSection() {
 
             {/* CONFIDENCE PICKER (required before answering) */}
             {!examState.answered && (
-              <div className="mb-4 rounded-2xl border border-border/50 bg-card/40 p-3">
+              <div className="mb-4 rounded-2xl border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl p-3">
                 <ConfidencePicker
                   value={examState.currentConfidence}
                   onChange={(level) =>
@@ -777,7 +777,7 @@ export function ExaminationSection() {
                       className={cn(
                         "w-full p-3.5 rounded-xl text-left transition-all duration-200 border",
                         "flex items-center gap-3 text-sm",
-                        !examState.answered && "hover:bg-secondary/50 hover:border-primary/50 bg-card/50 border-border/50",
+                        !examState.answered && "hover:bg-secondary/50 hover:border-primary/50 bg-foreground/[0.04] backdrop-blur-2xl border-foreground/10",
                         showCorrect && "bg-emerald-500/20 border-emerald-500",
                         showWrong && "bg-destructive/20 border-destructive",
                         isSelected && !examState.answered && "border-primary bg-primary/10"
@@ -808,7 +808,7 @@ export function ExaminationSection() {
                   disabled={examState.answered}
                   className={cn(
                     "w-full p-4 rounded-xl text-sm border transition-all",
-                    "bg-card/50 border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50",
+                    "bg-foreground/[0.04] backdrop-blur-2xl border-foreground/10 focus:outline-none focus:ring-2 focus:ring-primary/50",
                     examState.answered && isCorrect && "bg-emerald-500/20 border-emerald-500",
                     examState.answered && !isCorrect && "bg-destructive/20 border-destructive"
                   )}
@@ -841,7 +841,7 @@ export function ExaminationSection() {
                   rows={4}
                   className={cn(
                     "w-full p-4 rounded-xl text-sm border transition-all resize-none",
-                    "bg-card/50 border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50",
+                    "bg-foreground/[0.04] backdrop-blur-2xl border-foreground/10 focus:outline-none focus:ring-2 focus:ring-primary/50",
                     examState.answered && isCorrect && "bg-emerald-500/20 border-emerald-500",
                     examState.answered && !isCorrect && "bg-destructive/20 border-destructive"
                   )}
@@ -859,7 +859,7 @@ export function ExaminationSection() {
             )}
 
             {examState.answered && (
-              <div className="glass-effect rounded-2xl p-4 animate-fade-in">
+              <div className="liquid-glass rounded-2xl p-4 animate-fade-in">
                 <div className="flex items-start gap-2.5">
                   <div className={cn(
                     "w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0",
@@ -879,7 +879,7 @@ export function ExaminationSection() {
                           The correct answer is: <MathRenderer content={currentQ.correct_answer} className="inline font-semibold text-emerald-500" />
                         </div>
                         {currentQ.explanation && (
-                          <div className="text-xs text-muted-foreground mt-2 p-2.5 rounded-lg bg-secondary/50 border border-border/30">
+                          <div className="text-xs text-muted-foreground mt-2 p-2.5 rounded-lg bg-secondary/50 border border-foreground/10">
                             <span className="font-medium text-foreground">💡 Why? </span>
                             <MathRenderer content={currentQ.explanation} className="inline" />
                           </div>
@@ -895,7 +895,7 @@ export function ExaminationSection() {
 
         {/* NEXT QUESTION BUTTON (MANDATORY) */}
         {shouldRenderNextButton(examState) && (
-          <div className="p-3 border-t border-border/30">
+          <div className="p-3 border-t border-foreground/10">
             <div className="max-w-lg mx-auto flex justify-end">
               <Button size="sm" onClick={handleNext}>
                 {examState.currentQuestionId >= examState.exam.total_questions ? 'See Results' : 'Next Question'}
@@ -957,7 +957,7 @@ export function ExaminationSection() {
           {/* Show saved materials info for subjects */}
           {examMenuType === ExamMenuType.SUBJECT && (
             <div className={cn(
-              "glass-effect rounded-2xl p-4 mb-4 animate-fade-in",
+              "liquid-glass rounded-2xl p-4 mb-4 animate-fade-in",
               !hasSavedMaterials && "border-amber-500/50"
             )}>
               {hasSavedMaterials ? (
@@ -987,7 +987,7 @@ export function ExaminationSection() {
           {/* Show SAT materials info for SAT exams */}
           {examMenuType === ExamMenuType.SAT && (
             <div className={cn(
-              "glass-effect rounded-2xl p-4 mb-4 animate-fade-in",
+              "liquid-glass rounded-2xl p-4 mb-4 animate-fade-in",
               !hasSatMaterials && "border-amber-500/50"
             )}>
               {hasSatMaterials ? (
@@ -1014,7 +1014,7 @@ export function ExaminationSection() {
             </div>
           )}
 
-          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-3 text-center">Select Difficulty</h3>
             <div className="space-y-2">
               {difficulties.map((diff) => {
@@ -1075,7 +1075,7 @@ export function ExaminationSection() {
             <h1 className="text-2xl font-bold mb-2">{subject?.name} Exam</h1>
           </div>
 
-          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-4 text-center">Select Your Grade Level</h3>
             <div className="grid grid-cols-4 gap-2">
               {grades.map((grade) => {
@@ -1127,7 +1127,7 @@ export function ExaminationSection() {
                   key={subj.id}
                   onClick={() => handleSubjectClick(subj.id)}
                   className={cn(
-                    "glass-effect rounded-xl p-4 text-left transition-all duration-200 animate-fade-in",
+                    "liquid-glass rounded-xl p-4 text-left transition-all duration-200 animate-fade-in",
                     "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-3"
                   )}
                   style={{ animationDelay: `${index * 30}ms` }}
@@ -1165,9 +1165,9 @@ export function ExaminationSection() {
         <div className="space-y-3">
           <button
             onClick={() => handleExamTypeSelect(ExamMenuType.SUBJECT)}
-            className="w-full glass-effect rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
+            className="w-full liquid-glass rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-xl">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white text-xl">
               📚
             </div>
             <div>
@@ -1181,9 +1181,9 @@ export function ExaminationSection() {
 
           <button
             onClick={() => handleExamTypeSelect(ExamMenuType.SAT)}
-            className="w-full glass-effect rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
+            className="w-full liquid-glass rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white text-xl">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white text-xl">
               📝
             </div>
             <div>

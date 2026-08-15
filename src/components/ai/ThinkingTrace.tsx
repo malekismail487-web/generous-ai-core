@@ -46,7 +46,7 @@ export function ThinkingTrace({ text, active, className }: ThinkingTraceProps) {
   return (
     <div
       className={cn(
-        'onyx-surface overflow-hidden rounded-2xl border-border/50 animate-rise-in',
+        'onyx-surface overflow-hidden rounded-2xl border-foreground/10 animate-rise-in',
         className,
       )}
     >
@@ -97,7 +97,7 @@ export function ThinkingTrace({ text, active, className }: ThinkingTraceProps) {
           expanded ? 'max-h-64 pb-4 opacity-100' : 'max-h-0 pb-0 opacity-0',
         )}
       >
-        <div className="border-l border-border/60 pl-3 space-y-2">
+        <div className="border-l border-foreground/10 pl-3 space-y-2">
           {lines.map((line, i) => (
             <p
               key={i}

@@ -18,19 +18,19 @@ const lengthConfig: Record<NoteLength, { icon: React.ReactNode; label: { en: str
     icon: <Zap className="w-5 h-5" />,
     label: { en: 'Concise Notes', ar: 'ملاحظات مختصرة' },
     desc: { en: '4-6 pages — definitions, diagrams & examples', ar: '4-6 صفحات — تعريفات، رسوم بيانية وأمثلة' },
-    color: 'from-amber-500 to-orange-500',
+    color: 'from-foreground/[0.14] to-foreground/[0.04]',
   },
   medium: {
     icon: <BookOpen className="w-5 h-5" />,
     label: { en: 'Detailed Notes', ar: 'ملاحظات مفصلة' },
     desc: { en: '12-18 pages — deep explanations, 3+ diagrams & practice', ar: '12-18 صفحة — شرح عميق، 3+ رسوم وتمارين' },
-    color: 'from-blue-500 to-cyan-500',
+    color: 'from-foreground/[0.14] to-foreground/[0.04]',
   },
   long: {
     icon: <GraduationCap className="w-5 h-5" />,
     label: { en: 'Colossal Textbook', ar: 'مرجع شامل ضخم' },
     desc: { en: '30-50 pages — full textbook chapter with 8+ diagrams', ar: '30-50 صفحة — فصل كتاب كامل مع 8+ رسوم بيانية' },
-    color: 'from-violet-500 to-purple-600',
+    color: 'from-foreground/[0.14] to-foreground/[0.04]',
   },
 };
 
@@ -550,7 +550,7 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
             </div>
           </div>
 
-          <div className="glass-effect rounded-2xl p-5 overflow-y-auto max-h-[65vh]">
+          <div className="liquid-glass rounded-2xl p-5 overflow-y-auto max-h-[65vh]">
             {isLoading && !notesContent && (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -594,7 +594,7 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
               <button
                 key={key}
                 onClick={() => { setSelectedLength(key); }}
-                className="w-full glass-effect rounded-2xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] group"
+                className="w-full liquid-glass rounded-2xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] group"
                 style={{ animationDelay: `${idx * 80}ms` }}
               >
                 <div className="flex items-center gap-4">
@@ -663,10 +663,10 @@ export function FileNotesGenerator({ onBack }: { onBack: () => void }) {
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
           className={cn(
-            "glass-effect rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 border-2 border-dashed animate-fade-in",
+            "liquid-glass rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 border-2 border-dashed animate-fade-in",
             dragActive
               ? "border-primary bg-primary/5 scale-[1.02]"
-              : "border-border/50 hover:border-primary/50 hover:bg-secondary/30",
+              : "border-foreground/10 hover:border-primary/50 hover:bg-secondary/30",
             isExtracting && "pointer-events-none opacity-60"
           )}
         >

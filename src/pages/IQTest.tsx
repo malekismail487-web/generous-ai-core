@@ -248,7 +248,7 @@ export default function IQTest() {
               {t('Your cognitive baseline has been established', 'تم تحديد مستواك المعرفي الأساسي')}
             </p>
           </div>
-          <div className="glass-effect rounded-2xl p-6 space-y-4">
+          <div className="liquid-glass rounded-2xl p-6 space-y-4">
             <div className="text-center">
               <div className="text-4xl font-bold gradient-text">{results.score}/{results.totalQuestions}</div>
               <p className="text-sm text-muted-foreground mt-1">
@@ -269,7 +269,7 @@ export default function IQTest() {
               ))}
             </div>
           </div>
-          <div className="glass-effect rounded-2xl p-4">
+          <div className="liquid-glass rounded-2xl p-4">
             <div className="flex items-start gap-3">
               <LuminaLogo size={20} className="mt-0.5 shrink-0" />
               <p className="text-xs text-muted-foreground">
@@ -324,7 +324,7 @@ export default function IQTest() {
       {/* Question */}
       <div className="flex-1 flex flex-col justify-center p-4">
         <div className="max-w-md mx-auto w-full space-y-5">
-          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
             <p className="text-sm font-medium leading-relaxed">{question.question}</p>
           </div>
 
@@ -342,10 +342,10 @@ export default function IQTest() {
                   disabled={answered}
                   className={cn(
                     "w-full text-left px-4 py-3 rounded-xl text-sm transition-all duration-200 border",
-                    !answered && "hover:bg-secondary/80 border-border/50 bg-card cursor-pointer",
+                    !answered && "hover:bg-secondary/80 border-foreground/10 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 cursor-pointer",
                     showCorrect && "bg-emerald-500/15 border-emerald-500/50 text-emerald-700 dark:text-emerald-400",
                     showWrong && "bg-destructive/15 border-destructive/50 text-destructive",
-                    answered && !showCorrect && !showWrong && "opacity-50 border-border/30 bg-card"
+                    answered && !showCorrect && !showWrong && "opacity-50 border-foreground/10 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150"
                   )}
                 >
                   <span className="flex items-center gap-3">

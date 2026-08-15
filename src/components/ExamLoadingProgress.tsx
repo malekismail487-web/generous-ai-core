@@ -92,7 +92,7 @@ export function ExamLoadingProgress({ questionCount, label, elapsedSeconds: exte
         </div>
 
         {/* Stages */}
-        <div className="glass-effect rounded-xl p-4 mb-4 space-y-2.5">
+        <div className="liquid-glass rounded-xl p-4 mb-4 space-y-2.5">
           {stages.map((stage, i) => {
             const StageIcon = stage.icon;
             const isActive = i === currentStage;

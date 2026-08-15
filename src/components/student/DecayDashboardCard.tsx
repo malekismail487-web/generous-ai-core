@@ -124,7 +124,7 @@ export function DecayDashboardCard({ userId }: { userId: string }) {
                 <button
                   key={c.id}
                   onClick={() => startRefresher(c)}
-                  className="w-full text-left rounded-lg border border-border bg-card hover:border-foreground/40 transition-colors px-3 py-2.5"
+                  className="w-full text-left rounded-lg border border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 hover:border-foreground/40 transition-colors px-3 py-2.5"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
@@ -178,7 +178,7 @@ export function DecayDashboardCard({ userId }: { userId: string }) {
                       onClick={() => setSelected(idx)}
                       className={cn(
                         "w-full text-left rounded-lg border px-3 py-2.5 text-sm transition-colors",
-                        "border-border bg-card hover:border-foreground/40",
+                        "border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 hover:border-foreground/40",
                         isSelected && !result && "border-foreground bg-foreground text-background",
                         result && isCorrect && "border-emerald-500 bg-emerald-500/10",
                         isWrongPicked && "border-red-500 bg-red-500/10",

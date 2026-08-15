@@ -82,9 +82,9 @@ export function GoalTracker() {
     <div className="h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-24 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Weekly Overview */}
-        <div className="glass-effect rounded-2xl p-5">
+        <div className="liquid-glass rounded-2xl p-5">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] flex items-center justify-center">
               <Trophy className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
@@ -134,7 +134,7 @@ export function GoalTracker() {
                 <button
                   key={idx}
                   onClick={() => handleAddSuggested(goal)}
-                  className="w-full glass-effect rounded-xl p-4 text-left hover:border-primary/40 transition-all flex items-center gap-3 border border-border/50"
+                  className="w-full liquid-glass rounded-xl p-4 text-left hover:border-primary/40 transition-all flex items-center gap-3 border border-foreground/10"
                 >
                   <Target size={18} className="text-primary shrink-0" />
                   <span className="text-sm font-medium flex-1">{goal.title}</span>
@@ -161,8 +161,8 @@ function GoalCard({ goal, onDelete }: { goal: StudentGoal; onDelete: () => void 
 
   return (
     <div className={cn(
-      "glass-effect rounded-2xl p-4 transition-all border",
-      goal.completed ? "border-green-500/30 bg-green-500/5" : "border-border/50"
+      "liquid-glass rounded-2xl p-4 transition-all border",
+      goal.completed ? "border-green-500/30 bg-green-500/5" : "border-foreground/10"
     )}>
       <div className="flex items-start gap-3">
         <div className="mt-0.5 shrink-0">

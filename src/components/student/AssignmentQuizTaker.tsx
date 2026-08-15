@@ -256,7 +256,7 @@ export function AssignmentQuizTaker({
       </div>
 
       {/* Progress Bar */}
-      <div className="glass-effect rounded-xl p-4">
+      <div className="liquid-glass rounded-xl p-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium">Progress</span>
           <span className="text-sm text-muted-foreground">
@@ -274,7 +274,7 @@ export function AssignmentQuizTaker({
       {/* Questions - Multiple Choice Only */}
       <div className="space-y-6">
         {questions.map((question, index) => (
-          <div key={question.id} className="glass-effect rounded-2xl p-5">
+          <div key={question.id} className="liquid-glass rounded-2xl p-5">
             {/* Question Header */}
             <div className="flex items-center gap-2 mb-4">
               <Badge className="bg-primary/20 text-primary border-0">
@@ -311,7 +311,7 @@ export function AssignmentQuizTaker({
                       "hover:bg-secondary/50 hover:border-primary/50",
                       isSelected 
                         ? "border-primary bg-primary/10" 
-                        : "bg-card/50 border-border/50"
+                        : "bg-foreground/[0.04] backdrop-blur-2xl border-foreground/10"
                     )}
                   >
                     <span className={cn(
@@ -329,7 +329,7 @@ export function AssignmentQuizTaker({
             </div>
 
             {/* Confidence picker — required before submit */}
-            <div className="mt-5 pt-4 border-t border-border/50">
+            <div className="mt-5 pt-4 border-t border-foreground/10">
               <ConfidencePicker
                 value={confidences[question.id] ?? null}
                 onChange={(lvl) => handleConfidenceChange(question.id, lvl)}

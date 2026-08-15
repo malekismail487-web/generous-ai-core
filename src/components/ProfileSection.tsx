@@ -83,10 +83,10 @@ export function ProfileSection() {
           <div className={cn(
             "inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4",
             isAdmin 
-              ? "bg-gradient-to-br from-amber-500 to-orange-600"
+              ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
               : isTeacher 
-                ? "bg-gradient-to-br from-violet-500 to-purple-600"
-                : "bg-gradient-to-br from-blue-500 to-cyan-600"
+                ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
+                : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
           )}>
             {isAdmin ? (
               <Shield className="w-8 h-8 text-white" />
@@ -109,7 +109,7 @@ export function ProfileSection() {
 
         {/* School Info */}
         {school && (
-          <div className="glass-effect rounded-2xl p-5 mb-4">
+          <div className="liquid-glass rounded-2xl p-5 mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary to-accent text-white">
                 <School className="w-5 h-5" />
@@ -123,7 +123,7 @@ export function ProfileSection() {
         )}
 
         {/* Role & Details */}
-        <div className="glass-effect rounded-2xl p-5 mb-4">
+        <div className="liquid-glass rounded-2xl p-5 mb-4">
           <h3 className="font-semibold mb-3">{tl('yourDetails')}</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -155,9 +155,9 @@ export function ProfileSection() {
 
         {/* Parent Invite Code for Students */}
         {isStudent && parentCode && (
-          <div className="glass-effect rounded-2xl p-5 mb-4">
+          <div className="liquid-glass rounded-2xl p-5 mb-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-pink-500 to-rose-500">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">
                 <Heart className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -178,10 +178,10 @@ export function ProfileSection() {
         {isSchoolAdmin && (
           <button
             onClick={() => setViewState('school-admin')}
-            className="w-full glass-effect rounded-2xl p-5 mb-4 text-left hover:shadow-lg transition-all group"
+            className="w-full liquid-glass rounded-2xl p-5 mb-4 text-left hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
                 <Users className="w-5 h-5" />
               </div>
               <div className="flex-1">
@@ -197,10 +197,10 @@ export function ProfileSection() {
         {isAdmin && (
           <button
             onClick={() => setViewState('super-admin')}
-            className="w-full glass-effect rounded-2xl p-5 mb-4 text-left hover:shadow-lg transition-all group"
+            className="w-full liquid-glass rounded-2xl p-5 mb-4 text-left hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
                 <Building2 className="w-5 h-5" />
               </div>
               <div className="flex-1">
@@ -213,7 +213,7 @@ export function ProfileSection() {
         )}
 
         {/* Appearance */}
-        <div className="glass-effect rounded-2xl p-5 mb-4">
+        <div className="liquid-glass rounded-2xl p-5 mb-4">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
             {t('Appearance', 'المظهر')}
@@ -225,7 +225,7 @@ export function ProfileSection() {
                 "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all border",
                 theme === 'light'
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30"
+                  : "bg-secondary/50 text-muted-foreground border-foreground/10 hover:border-primary/30"
               )}
             >
               <Sun size={16} />
@@ -237,7 +237,7 @@ export function ProfileSection() {
                 "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all border",
                 theme === 'dark'
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30"
+                  : "bg-secondary/50 text-muted-foreground border-foreground/10 hover:border-primary/30"
               )}
             >
               <Moon size={16} />
@@ -247,7 +247,7 @@ export function ProfileSection() {
         </div>
 
         {/* AI effort — the workspace-wide default for every Lumina surface */}
-        <div className="glass-effect rounded-2xl p-5 mb-4">
+        <div className="liquid-glass rounded-2xl p-5 mb-4">
           <EffortSelector variant="panel" />
           <p className="mt-3 text-xs text-muted-foreground">
             {t(
@@ -262,7 +262,7 @@ export function ProfileSection() {
 
 
         {/* Language */}
-        <div className="glass-effect rounded-2xl p-5 mb-4">
+        <div className="liquid-glass rounded-2xl p-5 mb-4">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <Globe size={16} />
             {t('Language', 'اللغة')}
@@ -274,7 +274,7 @@ export function ProfileSection() {
                 "flex-1 py-3 rounded-xl text-sm font-medium transition-all border",
                 language === 'en'
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30"
+                  : "bg-secondary/50 text-muted-foreground border-foreground/10 hover:border-primary/30"
               )}
             >
               English
@@ -285,7 +285,7 @@ export function ProfileSection() {
                 "flex-1 py-3 rounded-xl text-sm font-medium transition-all border font-arabic",
                 language === 'ar'
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30"
+                  : "bg-secondary/50 text-muted-foreground border-foreground/10 hover:border-primary/30"
               )}
             >
               العربية
@@ -327,7 +327,7 @@ function WallpaperCircleSelector() {
   const currentPresets = presets.filter(p => p.category === theme);
 
   return (
-    <div className="glass-effect rounded-2xl p-5 mb-4">
+    <div className="liquid-glass rounded-2xl p-5 mb-4">
       <h3 className="font-semibold mb-3 flex items-center gap-2">
         <LuminaLogo size={16} />
         {t('Wallpaper', 'الخلفية')}

@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const styleColors: Record<string, string> = {
-  visual: 'from-pink-500 to-rose-500',
-  logical: 'from-blue-500 to-indigo-500',
-  verbal: 'from-amber-500 to-orange-500',
-  kinesthetic: 'from-emerald-500 to-green-500',
-  conceptual: 'from-violet-500 to-purple-500',
+  visual: 'from-foreground/[0.14] to-foreground/[0.04]',
+  logical: 'from-foreground/[0.14] to-foreground/[0.04]',
+  verbal: 'from-foreground/[0.14] to-foreground/[0.04]',
+  kinesthetic: 'from-foreground/[0.14] to-foreground/[0.04]',
+  conceptual: 'from-foreground/[0.14] to-foreground/[0.04]',
   balanced: 'from-slate-400 to-gray-500',
 };
 
@@ -56,7 +56,7 @@ export function LearningProfileCard() {
 
   if (loading || !profile) {
     return (
-      <div className="glass-effect rounded-2xl p-5 space-y-3 animate-fade-in">
+      <div className="liquid-glass rounded-2xl p-5 space-y-3 animate-fade-in">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-slate-400 to-gray-500 text-white">
             <Brain className="w-5 h-5" />
@@ -86,7 +86,7 @@ export function LearningProfileCard() {
   const dominant = profile.dominant_style;
 
   return (
-    <div className="glass-effect rounded-2xl p-5 space-y-4 animate-fade-in">
+    <div className="liquid-glass rounded-2xl p-5 space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className={cn(

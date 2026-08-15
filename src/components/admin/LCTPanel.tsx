@@ -107,7 +107,7 @@ function StatCard({ label, value, icon: Icon, color = 'text-foreground', subtext
   label: string; value: string | number; icon: any; color?: string; subtext?: string;
 }) {
   return (
-    <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+    <div className="bg-muted/50 rounded-xl p-4 border border-foreground/10">
       <div className="flex items-center gap-2 mb-1">
         <Icon className={`w-4 h-4 ${color}`} />
         <span className="text-xs text-muted-foreground">{label}</span>
@@ -175,7 +175,7 @@ function StudentDetailModal({ student, answerKey, onClose }: {
 
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card border border-border rounded-xl w-full max-w-2xl max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border border-border rounded-xl w-full max-w-2xl max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="border-b border-border p-4 flex items-center justify-between">
           <div>
@@ -688,7 +688,7 @@ export default function LCTPanel() {
     <div className="space-y-6">
       {/* ════════════════════ Previous Exams ════════════════════ */}
       {step === 'select' && existingExams.length > 0 && (
-        <div className="glass-effect rounded-xl p-4">
+        <div className="liquid-glass rounded-xl p-4">
           <h3 className="font-semibold mb-3 flex items-center gap-2"><FileText className="w-4 h-4" /> Previous LCT Exams</h3>
           <div className="space-y-2">
             {existingExams.map(e => (
@@ -719,7 +719,7 @@ export default function LCTPanel() {
 
       {/* ════════════════════ Select Schools ════════════════════ */}
       {step === 'select' && (
-        <div className="glass-effect rounded-xl p-6">
+        <div className="liquid-glass rounded-xl p-6">
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
             <School className="w-5 h-5" /> Generate LCT — Select Schools
           </h2>
@@ -757,7 +757,7 @@ export default function LCTPanel() {
 
       {/* ════════════════════ Collecting ════════════════════ */}
       {step === 'collecting' && (
-        <div className="glass-effect rounded-xl p-8 text-center">
+        <div className="liquid-glass rounded-xl p-8 text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <h2 className="text-lg font-bold mb-2">Collecting Adaptive Data...</h2>
           <p className="text-sm text-muted-foreground">Gathering learning profiles from eligible students (Grade 9+)</p>
@@ -766,7 +766,7 @@ export default function LCTPanel() {
 
       {/* ════════════════════ Collected ════════════════════ */}
       {step === 'collected' && collectResult && (
-        <div className="glass-effect rounded-xl p-6">
+        <div className="liquid-glass rounded-xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <CheckCircle2 className="w-8 h-8 text-green-500" />
             <div>
@@ -791,7 +791,7 @@ export default function LCTPanel() {
 
       {/* ════════════════════ Generating ════════════════════ */}
       {step === 'generating' && (
-        <div className="glass-effect rounded-xl p-8 text-center">
+        <div className="liquid-glass rounded-xl p-8 text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <h2 className="text-lg font-bold mb-2">Generating LCT Exam...</h2>
           <p className="text-sm text-muted-foreground">Creating 140 challenging questions across 5 subjects with cross-model validation.</p>
@@ -808,7 +808,7 @@ export default function LCTPanel() {
 
       {/* ════════════════════ Preview ════════════════════ */}
       {step === 'preview' && exam?.questions_json && (
-        <div className="glass-effect rounded-xl p-6">
+        <div className="liquid-glass rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold">Exam Preview</h2>
             <span className="text-sm text-muted-foreground">
@@ -885,7 +885,7 @@ export default function LCTPanel() {
 
       {/* ════════════════════ Translating ════════════════════ */}
       {step === 'translating' && (
-        <div className="glass-effect rounded-xl p-8 text-center">
+        <div className="liquid-glass rounded-xl p-8 text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <h2 className="text-lg font-bold mb-2">Translating for Every Student...</h2>
           <p className="text-sm text-muted-foreground mb-4">
@@ -898,7 +898,7 @@ export default function LCTPanel() {
 
       {/* ════════════════════ Translated ════════════════════ */}
       {step === 'translated' && (
-        <div className="glass-effect rounded-xl p-6 text-center">
+        <div className="liquid-glass rounded-xl p-6 text-center">
           <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
           <h2 className="text-lg font-bold mb-2">All Exams Personalized</h2>
           <p className="text-sm text-muted-foreground mb-6">
@@ -931,7 +931,7 @@ export default function LCTPanel() {
 
       {/* ════════════════════ Monitor ════════════════════ */}
       {step === 'monitor' && monitorData && (
-        <div className="glass-effect rounded-xl p-6">
+        <div className="liquid-glass rounded-xl p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold flex items-center gap-2">
               <Eye className="w-5 h-5 animate-pulse" /> Live Exam Monitor
@@ -987,7 +987,7 @@ export default function LCTPanel() {
       {step === 'results' && (
         <div className="space-y-4">
           {/* Header */}
-          <div className="glass-effect rounded-xl p-4 flex items-center justify-between">
+          <div className="liquid-glass rounded-xl p-4 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <BarChart3 className="w-5 h-5" /> LCT Results Dashboard
@@ -1016,7 +1016,7 @@ export default function LCTPanel() {
 
             {/* ──── Leaderboard Tab ──── */}
             <TabsContent value="leaderboard">
-              <div className="glass-effect rounded-xl p-4">
+              <div className="liquid-glass rounded-xl p-4">
                 {/* Search & Sort Controls */}
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex-1 relative">
@@ -1061,7 +1061,7 @@ export default function LCTPanel() {
                           key={student.id}
                           onClick={() => setSelectedStudent(student)}
                           className={`w-full flex items-center gap-2 p-3 rounded-lg border transition-all text-left hover:bg-muted/50 ${
-                            isTop3 ? 'border-primary/30 bg-primary/5' : 'border-border/50'
+                            isTop3 ? 'border-primary/30 bg-primary/5' : 'border-foreground/10'
                           }`}
                         >
                           <span className={`text-xs font-mono w-6 ${isTop3 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
@@ -1092,7 +1092,7 @@ export default function LCTPanel() {
               {analytics ? (
                 <div className="space-y-4">
                   {/* Overview Stats */}
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <h3 className="font-semibold mb-3 text-sm">Overall Statistics</h3>
                     <div className="grid grid-cols-2 gap-2">
                       <StatCard label="Mean Score" value={`${analytics.overall.mean.toFixed(1)}%`} icon={Target} />
@@ -1107,13 +1107,13 @@ export default function LCTPanel() {
                   </div>
 
                   {/* Score Distribution */}
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <h3 className="font-semibold mb-3 text-sm">Score Distribution</h3>
                     <DistributionChart bins={analytics.scoreDistribution} />
                   </div>
 
                   {/* By Subject */}
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <h3 className="font-semibold mb-3 text-sm">Performance by Subject</h3>
                     <div className="space-y-2">
                       {Object.entries(analytics.bySubject)
@@ -1130,7 +1130,7 @@ export default function LCTPanel() {
                   </div>
 
                   {/* By School */}
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <h3 className="font-semibold mb-3 text-sm">Performance by School</h3>
                     <div className="space-y-2">
                       {Object.entries(analytics.bySchool)
@@ -1147,7 +1147,7 @@ export default function LCTPanel() {
                   </div>
 
                   {/* By Learning Style */}
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <h3 className="font-semibold mb-3 text-sm">Performance by Learning Style</h3>
                     <div className="space-y-2">
                       {Object.entries(analytics.byLearningStyle)
@@ -1164,7 +1164,7 @@ export default function LCTPanel() {
                   </div>
 
                   {/* By Grade */}
-                  <div className="glass-effect rounded-xl p-4">
+                  <div className="liquid-glass rounded-xl p-4">
                     <h3 className="font-semibold mb-3 text-sm">Performance by Grade</h3>
                     <div className="space-y-2">
                       {Object.entries(analytics.byGrade)
@@ -1187,12 +1187,12 @@ export default function LCTPanel() {
 
             {/* ──── Answer Key Tab ──── */}
             <TabsContent value="answers">
-              <div className="glass-effect rounded-xl p-4">
+              <div className="liquid-glass rounded-xl p-4">
                 <h3 className="font-semibold mb-3 text-sm">Full Answer Key ({(exam?.answer_key_json as any[] || []).length} questions)</h3>
                 {exam?.answer_key_json && (exam.answer_key_json as any[]).length > 0 ? (
                   <div className="space-y-1.5 max-h-[500px] overflow-y-auto">
                     {(exam.answer_key_json as any[]).map((ak: any) => (
-                      <div key={ak.id} className="flex items-start gap-2 text-xs p-2.5 bg-muted/30 rounded-lg border border-border/30">
+                      <div key={ak.id} className="flex items-start gap-2 text-xs p-2.5 bg-muted/30 rounded-lg border border-foreground/10">
                         <span className="font-mono w-7 shrink-0 text-muted-foreground">Q{ak.id}</span>
                         <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[10px] shrink-0">{ak.subject}</span>
                         <span className="font-bold text-green-600 w-5 shrink-0">{ak.correct_answer}</span>

@@ -170,7 +170,7 @@ RECOMMENDATION
 
   return (
     <div className="space-y-6">
-      <div className="glass-effect rounded-xl p-5 bg-gradient-to-r from-primary/10 to-violet-500/10 flex items-center justify-between">
+      <div className="liquid-glass rounded-xl p-5 bg-gradient-to-r from-primary/10 to-foreground/[0.04] flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
@@ -187,9 +187,9 @@ RECOMMENDATION
       </div>
 
       {/* Deployment */}
-      <div className="glass-effect rounded-xl p-5">
+      <div className="liquid-glass rounded-xl p-5">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-blue-500" />
+          <Building2 className="w-4 h-4 text-foreground" />
           Deployment Overview
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -198,11 +198,11 @@ RECOMMENDATION
             <p className="text-xs text-muted-foreground">Active Schools</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-blue-500">{data.totalStudents.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-foreground">{data.totalStudents.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground">Students</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-violet-500">{data.totalTeachers}</p>
+            <p className="text-2xl font-bold text-foreground">{data.totalTeachers}</p>
             <p className="text-xs text-muted-foreground">Teachers</p>
           </div>
           <div>
@@ -213,7 +213,7 @@ RECOMMENDATION
       </div>
 
       {/* Productivity */}
-      <div className="glass-effect rounded-xl p-5">
+      <div className="liquid-glass rounded-xl p-5">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <Clock className="w-4 h-4 text-green-500" />
           Teacher Productivity Impact
@@ -224,7 +224,7 @@ RECOMMENDATION
             <p className="text-xs text-muted-foreground">Total Assignments</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-violet-500">{data.copilotAssignments}</p>
+            <p className="text-2xl font-bold text-foreground">{data.copilotAssignments}</p>
             <p className="text-xs text-muted-foreground">AI-Generated</p>
           </div>
           <div>
@@ -240,7 +240,7 @@ RECOMMENDATION
 
       {/* Top Subjects */}
       {data.topSubjects.length > 0 && (
-        <div className="glass-effect rounded-xl p-5">
+        <div className="liquid-glass rounded-xl p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <LuminaLogo size={16} />
             Subject Performance
@@ -271,9 +271,9 @@ RECOMMENDATION
 
       {/* Learning Style */}
       {data.learningStyleDist && (
-        <div className="glass-effect rounded-xl p-5">
+        <div className="liquid-glass rounded-xl p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Brain className="w-4 h-4 text-violet-500" />
+            <Brain className="w-4 h-4 text-foreground" />
             Global Learning Style Distribution
           </h3>
           <div className="grid grid-cols-5 gap-3 text-center">

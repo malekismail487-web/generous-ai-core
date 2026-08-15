@@ -211,7 +211,7 @@ export default function TeacherDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="glass-effect-strong border-b border-border/30 sticky top-0 z-50">
+      <header className="liquid-glass liquid-sheen liquid-rim border-b border-foreground/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-lg">
@@ -372,7 +372,7 @@ export default function TeacherDashboard() {
             <h2 className="text-lg font-semibold">{tr('gradeSubmissions', language)}</h2>
 
             {submissions.filter(s => s.grade === null).length === 0 ? (
-              <div className="glass-effect rounded-xl p-8 text-center">
+              <div className="liquid-glass rounded-xl p-8 text-center">
                 <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="font-semibold mb-2">{tr('allCaughtUp', language)}</h3>
                 <p className="text-sm text-muted-foreground">
@@ -380,7 +380,7 @@ export default function TeacherDashboard() {
                 </p>
               </div>
             ) : (
-              <div className="glass-effect rounded-xl overflow-hidden">
+              <div className="liquid-glass rounded-xl overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-muted/50">
                     <tr>
@@ -394,7 +394,7 @@ export default function TeacherDashboard() {
                     {submissions.filter(s => s.grade === null).map((submission) => {
                       const assignment = assignments.find(a => a.id === submission.assignment_id);
                       return (
-                        <tr key={submission.id} className="border-t border-border/50">
+                        <tr key={submission.id} className="border-t border-foreground/10">
                           <td className="p-4 font-medium">{assignment?.title || 'Unknown'}</td>
                           <td className="p-4 text-muted-foreground">Student</td>
                           <td className="p-4 text-muted-foreground">
@@ -430,7 +430,7 @@ export default function TeacherDashboard() {
             <h2 className="text-lg font-semibold">{tr('schoolAnnouncements', language)}</h2>
 
             {announcements.length === 0 ? (
-              <div className="glass-effect rounded-xl p-8 text-center">
+              <div className="liquid-glass rounded-xl p-8 text-center">
                 <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="font-semibold mb-2">{tr('noAnnouncements', language)}</h3>
                 <p className="text-sm text-muted-foreground">
@@ -440,7 +440,7 @@ export default function TeacherDashboard() {
             ) : (
               <div className="space-y-4">
                 {announcements.map((announcement) => (
-                  <div key={announcement.id} className="glass-effect rounded-xl p-4">
+                  <div key={announcement.id} className="liquid-glass rounded-xl p-4">
                     <h3 className="font-semibold">{announcement.title}</h3>
                     <p className="text-sm text-muted-foreground mb-2">
                       {new Date(announcement.created_at).toLocaleString()}
@@ -456,7 +456,7 @@ export default function TeacherDashboard() {
           <TabsContent value="settings" className="space-y-4">
             <h2 className="text-lg font-semibold">{tr('settings', language)}</h2>
 
-            <div className="glass-effect rounded-xl p-6 space-y-6 max-w-lg">
+            <div className="liquid-glass rounded-xl p-6 space-y-6 max-w-lg">
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Globe className="w-4 h-4" />
@@ -468,7 +468,7 @@ export default function TeacherDashboard() {
                     className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all border ${
                       language === 'en'
                         ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30'
+                        : 'bg-secondary/50 text-muted-foreground border-foreground/10 hover:border-primary/30'
                     }`}
                   >
                     English
@@ -478,7 +478,7 @@ export default function TeacherDashboard() {
                     className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all border ${
                       language === 'ar'
                         ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-secondary/50 text-muted-foreground border-border/50 hover:border-primary/30'
+                        : 'bg-secondary/50 text-muted-foreground border-foreground/10 hover:border-primary/30'
                     }`}
                   >
                     العربية

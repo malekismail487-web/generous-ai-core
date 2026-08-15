@@ -39,7 +39,7 @@ export function MaterialsSkeleton() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 p-4 bg-card border rounded-xl"
+                  className="flex items-center gap-3 p-4 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border rounded-xl"
                 >
                   <Skeleton className="w-10 h-10 rounded-lg" />
                   <div className="flex-1 min-w-0">

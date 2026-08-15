@@ -36,7 +36,7 @@ export function EmptyState({ onSuggestionClick }: EmptyStateProps) {
           <button
             key={index}
             onClick={() => onSuggestionClick(suggestion.text)}
-            className="w-full glass-effect rounded-xl p-3 text-left hover:bg-secondary/50 transition-all duration-200 group flex items-center gap-3"
+            className="w-full liquid-glass rounded-xl p-3 text-left hover:bg-secondary/50 transition-all duration-200 group flex items-center gap-3"
           >
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors">
               <suggestion.icon size={18} />

@@ -17,7 +17,7 @@ const difficultyConfig = {
     icon: Zap,
     title: 'Beginner',
     description: 'Start with foundational concepts from your learning',
-    color: 'from-emerald-500 to-teal-500',
+    color: 'from-foreground/[0.14] to-foreground/[0.04]',
     bgGlow: 'hsl(160 80% 50% / 0.15)',
     questions: '5 questions',
     time: '10 mins',
@@ -26,7 +26,7 @@ const difficultyConfig = {
     icon: Brain,
     title: 'Intermediate',
     description: 'Challenge yourself with moderate complexity',
-    color: 'from-amber-500 to-orange-500',
+    color: 'from-foreground/[0.14] to-foreground/[0.04]',
     bgGlow: 'hsl(35 90% 55% / 0.15)',
     questions: '7 questions',
     time: '15 mins',
@@ -35,7 +35,7 @@ const difficultyConfig = {
     icon: Target,
     title: 'Advanced',
     description: 'Master difficult concepts with expert-level questions',
-    color: 'from-rose-500 to-pink-500',
+    color: 'from-foreground/[0.14] to-foreground/[0.04]',
     bgGlow: 'hsl(350 85% 55% / 0.15)',
     questions: '10 questions',
     time: '20 mins',
@@ -53,7 +53,7 @@ const typeConfig = {
     icon: GraduationCap,
     title: 'SAT Practice',
     subtitle: 'SAT-style questions based on your learning',
-    gradient: 'from-violet-500 to-purple-600',
+    gradient: 'from-foreground/[0.14] to-foreground/[0.04]',
   },
 };
 
@@ -76,7 +76,7 @@ export function PracticeSection({ type, onStartPractice, hasLearningHistory }: P
 
         {/* No history warning */}
         {!hasLearningHistory && (
-          <div className="glass-effect rounded-2xl p-4 mb-6 animate-fade-in flex items-start gap-3">
+          <div className="liquid-glass rounded-2xl p-4 mb-6 animate-fade-in flex items-start gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
               <AlertCircle className="w-5 h-5 text-amber-500" />
             </div>
@@ -151,7 +151,7 @@ export function PracticeSection({ type, onStartPractice, hasLearningHistory }: P
         </div>
 
         {/* Tips */}
-        <div className="mt-8 glass-effect rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '300ms' }}>
+        <div className="mt-8 liquid-glass rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '300ms' }}>
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
               <LuminaLogo size={36} />

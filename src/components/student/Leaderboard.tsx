@@ -64,7 +64,7 @@ export function Leaderboard() {
     if (index === 0) return 'bg-yellow-500/10 border-yellow-500/30';
     if (index === 1) return 'bg-gray-400/10 border-gray-400/30';
     if (index === 2) return 'bg-amber-600/10 border-amber-600/30';
-    return 'bg-card border-border/50';
+    return 'bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border-foreground/10';
   };
 
   if (loading) {
@@ -82,7 +82,7 @@ export function Leaderboard() {
       <div className="max-w-lg mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-600 mb-3 shadow-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] mb-3 shadow-lg">
             <Trophy className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-xl font-bold">{t('School Leaderboard', 'لوحة المتصدرين')}</h2>
@@ -99,7 +99,7 @@ export function Leaderboard() {
         </div>
 
         {entries.length === 0 ? (
-          <div className="text-center py-12 bg-card rounded-2xl border border-border/50">
+          <div className="text-center py-12 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 rounded-2xl border border-foreground/10">
             <Trophy className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
             <p className="font-medium">{t('No rankings yet', 'لا يوجد تصنيف بعد')}</p>
             <p className="text-sm text-muted-foreground mt-1">
@@ -129,9 +129,9 @@ export function Leaderboard() {
                   {/* Avatar */}
                   <div className={cn(
                     "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0",
-                    index === 0 ? "bg-gradient-to-br from-yellow-400 to-amber-600"
+                    index === 0 ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
                       : index === 1 ? "bg-gradient-to-br from-gray-300 to-gray-500"
-                      : index === 2 ? "bg-gradient-to-br from-amber-500 to-amber-700"
+                      : index === 2 ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
                       : "bg-gradient-to-br from-primary/60 to-primary"
                   )}>
                     {entry.name.charAt(0).toUpperCase()}
@@ -147,7 +147,7 @@ export function Leaderboard() {
                         <Flame className="w-3 h-3 text-orange-500" /> {entry.streak}
                       </span>
                       <span className="flex items-center gap-0.5">
-                        <Brain className="w-3 h-3 text-blue-500" /> {accuracy}%
+                        <Brain className="w-3 h-3 text-foreground" /> {accuracy}%
                       </span>
                       <span className="flex items-center gap-0.5">
                         <Target className="w-3 h-3 text-green-500" /> {entry.goalsCompleted}

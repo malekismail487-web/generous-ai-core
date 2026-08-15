@@ -54,7 +54,7 @@ export function ConfidencePicker({
               onClick={() => onChange(level)}
               className={cn(
                 "rounded-lg border px-3 py-2 text-left transition-colors",
-                "border-border bg-card text-foreground",
+                "border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 text-foreground",
                 "hover:border-foreground/40",
                 "focus:outline-none focus:ring-2 focus:ring-ring",
                 selected && "border-foreground bg-foreground text-background",

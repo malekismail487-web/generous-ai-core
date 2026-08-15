@@ -73,7 +73,7 @@ export default function MinistryAnnouncementsEditor({ tenantId }: { tenantId: st
   };
 
   return (
-    <div className="mt-3 border-t border-border/40 pt-3">
+    <div className="mt-3 border-t border-foreground/10 pt-3">
       <div className="flex items-center gap-2 mb-2">
         <Megaphone className="w-3.5 h-3.5" />
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

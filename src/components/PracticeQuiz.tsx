@@ -245,7 +245,7 @@ Make sure the question directly relates to topics from their learning history. B
           <h2 className="text-2xl font-bold mb-2">Practice Complete!</h2>
           <p className="text-muted-foreground mb-5 text-sm">You've finished this session</p>
           
-          <div className="glass-effect rounded-2xl p-5 mb-5">
+          <div className="liquid-glass rounded-2xl p-5 mb-5">
             <div className="text-4xl font-bold gradient-text mb-1">{percentage}%</div>
             <p className="text-muted-foreground text-sm">
               {score} out of {maxQuestions} correct
@@ -270,7 +270,7 @@ Make sure the question directly relates to topics from their learning history. B
   return (
     <div className="flex-1 flex flex-col overflow-hidden pt-14 pb-16">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-border/30">
+      <div className="flex items-center justify-between p-3 border-b border-foreground/10">
         <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5 h-8">
           <ArrowLeft size={14} />
           Back
@@ -303,12 +303,12 @@ Make sure the question directly relates to topics from their learning history. B
             </div>
           ) : currentQuestion ? (
             <div className="animate-fade-in">
-              <div className="glass-effect rounded-2xl p-5 mb-5">
+              <div className="liquid-glass rounded-2xl p-5 mb-5">
                 <p className="text-sm font-medium leading-relaxed">{currentQuestion.question}</p>
               </div>
 
               {!showResult && (
-                <div className="mb-4 rounded-2xl border border-border/50 bg-card/40 p-3">
+                <div className="mb-4 rounded-2xl border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl p-3">
                   <ConfidencePicker
                     value={confidence}
                     onChange={setConfidence}
@@ -334,7 +334,7 @@ Make sure the question directly relates to topics from their learning history. B
                         "w-full p-3.5 rounded-xl text-left transition-all duration-200 border",
                         "flex items-center gap-3 group text-sm",
                         !showResult && "hover:bg-secondary/50 hover:border-primary/50",
-                        !showResult && "bg-card/50 border-border/50",
+                        !showResult && "bg-foreground/[0.04] backdrop-blur-2xl border-foreground/10",
                         showCorrect && "bg-emerald-500/20 border-emerald-500",
                         showWrong && "bg-destructive/20 border-destructive",
                         isSelected && !showResult && "border-primary bg-primary/10"
@@ -357,7 +357,7 @@ Make sure the question directly relates to topics from their learning history. B
               </div>
 
               {showResult && (
-                <div className="glass-effect rounded-2xl p-4 animate-fade-in">
+                <div className="liquid-glass rounded-2xl p-4 animate-fade-in">
                   <div className="flex items-start gap-2.5">
                     <div className={cn(
                       "w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0",
@@ -386,7 +386,7 @@ Make sure the question directly relates to topics from their learning history. B
       </div>
 
       {showResult && (
-        <div className="p-3 border-t border-border/30">
+        <div className="p-3 border-t border-foreground/10">
           <div className="max-w-lg mx-auto flex justify-end">
             <Button size="sm" onClick={handleNext}>
               {questionCount + 1 >= maxQuestions ? 'See Results' : 'Next'}

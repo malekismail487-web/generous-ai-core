@@ -36,7 +36,7 @@ export function UserProfileBadge() {
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="end">
-        <div className="p-4 border-b border-border/50">
+        <div className="p-4 border-b border-foreground/10">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12 border border-border">
               <AvatarFallback className="bg-primary/10 text-primary font-medium">{getInitials(profile.full_name)}</AvatarFallback>

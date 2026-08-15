@@ -217,7 +217,7 @@ export default function ModeratorDashboard() {
       case 'critical': return 'bg-red-500/20 text-red-400 border-red-500/30';
       case 'high': return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
       case 'medium': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-      default: return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      default: return 'bg-foreground/[0.07] text-foreground border-foreground/20';
     }
   };
 
@@ -272,7 +272,7 @@ export default function ModeratorDashboard() {
             { label: 'Pending Flags', value: flags.filter(f => f.status === 'pending').length, color: 'text-red-400' },
             { label: 'Total Actions', value: actions.length, color: 'text-amber-400' },
             { label: 'Active Bans', value: actions.filter(a => a.is_active && (a.action_type === 'temp_ban' || a.action_type === 'terminate')).length, color: 'text-orange-400' },
-            { label: 'Pending Appeals', value: appeals.length, color: 'text-blue-400' },
+            { label: 'Pending Appeals', value: appeals.length, color: 'text-foreground' },
           ].map((stat, i) => (
             <div key={i} className="rounded-xl border p-4">
               <p className="text-xs text-muted-foreground">{stat.label}</p>

@@ -28,7 +28,7 @@ export function BriefingDock({ onNavigate }: { onNavigate: (action: string & {})
               onClick={() => setOpen(false)}
               className="absolute inset-0 bg-black/80 backdrop-blur-md animate-fade-in"
             />
-            <div className="relative z-10 w-full sm:max-w-lg max-h-[85vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-border/50 bg-card/95 backdrop-blur-2xl py-4 animate-[slideUpFade_0.35s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+            <div className="relative z-10 w-full sm:max-w-lg max-h-[85vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl backdrop-blur-2xl py-4 animate-[slideUpFade_0.35s_cubic-bezier(0.16,1,0.3,1)_forwards]">
               <div className="flex items-center gap-2 px-5 pb-2">
                 <Moon size={15} className="text-muted-foreground" />
                 <span className="font-display text-sm font-bold tracking-tight">
@@ -59,11 +59,11 @@ export function BriefingDock({ onNavigate }: { onNavigate: (action: string & {})
           onClick={() => setOpen(true)}
           className={cn(
             'group mx-3 mb-4 w-[calc(100%-1.5rem)] flex items-center gap-3 rounded-2xl',
-            'border border-border/50 bg-white/[0.03] px-4 py-3 text-left',
-            'transition-colors duration-300 hover:border-foreground/25 hover:bg-white/[0.06]',
+            'border border-foreground/10 bg-foreground/[0.03] px-4 py-3 text-left',
+            'transition-colors duration-300 hover:border-foreground/25 hover:bg-foreground/[0.06]',
           )}
         >
-          <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background">
+          <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-foreground/10 bg-background">
             <Moon size={13} className="text-muted-foreground" />
             <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[9px] font-bold text-background">
               {total}

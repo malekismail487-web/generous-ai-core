@@ -15,7 +15,7 @@ export function PendingApproval() {
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <div className="ambient-glow" />
         <div className="w-full max-w-md relative z-10 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 bg-gradient-to-br from-red-500 to-rose-600">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">
             <School className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold mb-2">{tr('registrationDeclined', language)}</h1>
@@ -37,7 +37,7 @@ export function PendingApproval() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="ambient-glow" />
       <div className="w-full max-w-md relative z-10 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 bg-gradient-to-br from-amber-500 to-orange-600 animate-pulse">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] animate-pulse">
           <Clock className="w-8 h-8 text-white" />
         </div>
         <h1 className="text-2xl font-bold mb-2">{tr('pendingApproval', language)}</h1>
@@ -45,7 +45,7 @@ export function PendingApproval() {
           {tr('yourRequestSubmitted', language)} <strong>{school?.name || (language === 'ar' ? 'مدرستك' : 'your school')}</strong> {tr('hasBeenSubmitted', language)}
         </p>
         <p className="text-sm text-muted-foreground mb-6">{tr('adminWillReview', language)}</p>
-        <div className="glass-effect rounded-2xl p-5 mb-6 text-left">
+        <div className="liquid-glass rounded-2xl p-5 mb-6 text-left">
           <h3 className="font-semibold mb-3">{tr('yourDetails', language)}</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">{tr('name', language)}</span><span>{profile?.full_name}</span></div>

@@ -92,7 +92,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
               </p>
             </div>
 
-            <div className="flex items-center gap-2 bg-muted/50 backdrop-blur-sm rounded-2xl px-3.5 py-2.5 border border-border/30">
+            <div className="flex items-center gap-2 bg-muted/50 backdrop-blur-sm rounded-2xl px-3.5 py-2.5 border border-foreground/10">
               <Flame className="w-5 h-5 text-muted-foreground" />
               <span className="text-foreground font-bold text-lg">{streakLoading ? '...' : currentStreak}</span>
             </div>
@@ -102,7 +102,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
               <span>{t('Daily Streak', 'السلسلة اليومية')}</span>
               <span>{currentStreak} / {MAX_STREAK} {t('days', 'يوم')}</span>
             </div>
-            <div className="w-full bg-muted/50 backdrop-blur-sm rounded-full h-3.5 overflow-hidden border border-border/20">
+            <div className="w-full bg-muted/50 backdrop-blur-sm rounded-full h-3.5 overflow-hidden border border-foreground/10">
               <div
                 className="h-full rounded-full transition-all duration-700 ease-out bg-foreground/60"
                 style={{ width: `${streakPercentage}%` }}
@@ -144,7 +144,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
               onClick={() => onNavigate('studybuddy')}
               onMouseEnter={() => setHoveredId('studybuddy')}
               onMouseLeave={() => setHoveredId(null)}
-              className="absolute z-20 flex flex-col items-center justify-center rounded-full bg-card border border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards] group"
+              className="absolute z-20 flex flex-col items-center justify-center rounded-full bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 border border-foreground/10 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards] group"
               style={{
                 width: '22%', height: '22%',
                 left: '39%', top: '39%',
@@ -174,7 +174,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
                   onClick={() => onNavigate(item.id)}
                   onMouseEnter={() => setHoveredId(item.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  className="absolute z-10 flex flex-col items-center justify-center rounded-full border border-border/50 bg-card shadow-md hover:shadow-lg hover:border-foreground/20 transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards] group overflow-visible"
+                  className="absolute z-10 flex flex-col items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 shadow-md hover:shadow-lg hover:border-foreground/20 transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards] group overflow-visible"
                   style={{
                     width: '14%', height: '14%',
                     left: `${cx - 7}%`, top: `${cy - 7}%`,
@@ -207,7 +207,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
                   onClick={() => onNavigate(item.id)}
                   onMouseEnter={() => setHoveredId(item.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  className="absolute z-10 flex flex-col items-center justify-center rounded-full border border-border/30 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:border-foreground/15 transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards] group overflow-visible"
+                  className="absolute z-10 flex flex-col items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl backdrop-blur-sm shadow-sm hover:shadow-md hover:border-foreground/15 transition-all duration-300 active:scale-95 opacity-0 animate-[slideUpFade_0.5s_ease-out_forwards] group overflow-visible"
                   style={{
                     width: '11%', height: '11%',
                     left: `${cx - 5.5}%`, top: `${cy - 5.5}%`,
@@ -226,7 +226,7 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
       </div>
 
       {/* Closing note — the map explained in plain words */}
-      <div className="mx-4 mb-6 rounded-3xl border border-border/50 bg-white/[0.02] p-5">
+      <div className="mx-4 mb-6 rounded-3xl border border-foreground/10 bg-foreground/[0.02] p-5">
         <div className="relative h-px w-full overflow-hidden bg-border/60 mb-4">
           <span className="absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-foreground/40 to-transparent animate-sheen" />
         </div>

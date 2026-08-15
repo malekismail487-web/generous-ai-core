@@ -40,7 +40,7 @@ export function SchoolAdminPanel({ onBack }: SchoolAdminPanelProps) {
         </div>
 
         <div className="text-center mb-6 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
             <Users className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold mb-1 gradient-text">School Admin</h1>
@@ -49,24 +49,24 @@ export function SchoolAdminPanel({ onBack }: SchoolAdminPanelProps) {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="glass-effect rounded-xl p-4 text-center">
+          <div className="liquid-glass rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-amber-500">{pendingUsers.length}</div>
             <div className="text-xs text-muted-foreground">Pending</div>
           </div>
-          <div className="glass-effect rounded-xl p-4 text-center">
+          <div className="liquid-glass rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-emerald-500">
               {allUsers.filter(u => u.status === 'approved').length}
             </div>
             <div className="text-xs text-muted-foreground">Approved</div>
           </div>
-          <div className="glass-effect rounded-xl p-4 text-center">
+          <div className="liquid-glass rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-primary">{allUsers.length}</div>
             <div className="text-xs text-muted-foreground">Total</div>
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="glass-effect rounded-xl p-2 mb-4 flex gap-2">
+        <div className="liquid-glass rounded-xl p-2 mb-4 flex gap-2">
           <button
             onClick={() => setFilter('pending')}
             className={cn(
@@ -97,7 +97,7 @@ export function SchoolAdminPanel({ onBack }: SchoolAdminPanelProps) {
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : displayedUsers.length === 0 ? (
-          <div className="glass-effect rounded-2xl p-8 text-center">
+          <div className="liquid-glass rounded-2xl p-8 text-center">
             <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="font-semibold mb-2">No users</h3>
             <p className="text-sm text-muted-foreground">
@@ -107,13 +107,13 @@ export function SchoolAdminPanel({ onBack }: SchoolAdminPanelProps) {
         ) : (
           <div className="space-y-3">
             {displayedUsers.map((user) => (
-              <div key={user.id} className="glass-effect rounded-xl p-4">
+              <div key={user.id} className="liquid-glass rounded-xl p-4">
                 <div className="flex items-start gap-3">
                   <div className={cn(
                     "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
                     user.user_type === 'student'
-                      ? "bg-gradient-to-br from-blue-500 to-cyan-600 text-white"
-                      : "bg-gradient-to-br from-violet-500 to-purple-600 text-white"
+                      ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white"
+                      : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white"
                   )}>
                     {user.user_type === 'student' ? (
                       <GraduationCap size={18} />

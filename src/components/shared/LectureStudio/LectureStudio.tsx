@@ -406,7 +406,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
           </p>
         </div>
 
-        <div className="glass-effect rounded-2xl p-5 space-y-4">
+        <div className="liquid-glass rounded-2xl p-5 space-y-4">
           <div className="space-y-1">
             <Label htmlFor="ls-topic">Topic</Label>
             <Input id="ls-topic" value={topic} onChange={(e) => setTopic(e.target.value)}
@@ -467,7 +467,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
         </div>
 
         {/* My saved lectures — available for both students and teachers */}
-        <div className="glass-effect rounded-2xl p-4 space-y-3">
+        <div className="liquid-glass rounded-2xl p-4 space-y-3">
           <div className="flex items-center gap-2">
             <BookMarked size={16} className="text-primary" />
             <h2 className="text-sm font-semibold">My saved lectures</h2>
@@ -545,7 +545,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
       </div>
 
       {phase === 'outlining' && (
-        <div className="glass-effect rounded-2xl p-8 text-center">
+        <div className="liquid-glass rounded-2xl p-8 text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-primary" />
           <p className="text-sm font-medium">Writing lecture…</p>
           <p className="text-xs text-muted-foreground mt-1">Selecting an aesthetic and drafting sections.</p>
@@ -584,7 +584,7 @@ export function LectureStudio({ defaultSubject = '', defaultTopic = '', onBack, 
                 <div className="text-base leading-relaxed"><MathRenderer content={p.body} /></div>
                 {img?.status === 'done' && img.url && (
                   <figure className="my-4">
-                    <img src={img.url} alt={p.heading} className="w-full max-w-3xl mx-auto rounded-xl border border-border bg-card" loading="lazy" />
+                    <img src={img.url} alt={p.heading} className="w-full max-w-3xl mx-auto rounded-xl border border-border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150" loading="lazy" />
                   </figure>
                 )}
                 {img?.status === 'loading' && (

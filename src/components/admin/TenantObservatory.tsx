@@ -68,7 +68,7 @@ export default function TenantObservatory() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-muted-foreground border-b border-border/40">
+              <tr className="text-left text-xs text-muted-foreground border-b border-foreground/10">
                 <th className="py-2 pr-3">Country</th>
                 <th className="py-2 pr-3">Status</th>
                 <th className="py-2 pr-3 text-right">Schools</th>
@@ -83,7 +83,7 @@ export default function TenantObservatory() {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.tenant_id} className="border-b border-border/20">
+                <tr key={r.tenant_id} className="border-b border-foreground/10">
                   <td className="py-2 pr-3">
                     <div className="flex items-center gap-2">
                       <Globe2 className="w-3.5 h-3.5 text-muted-foreground" />

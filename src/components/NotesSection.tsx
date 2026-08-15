@@ -36,7 +36,7 @@ export function NotesSection() {
               <p className="text-xs text-muted-foreground">{new Date(viewingNote.created_at).toLocaleDateString()}</p>
             </div>
           </div>
-          <div className="glass-effect rounded-2xl p-5 overflow-y-auto max-h-[65vh]">
+          <div className="liquid-glass rounded-2xl p-5 overflow-y-auto max-h-[65vh]">
             <MathRenderer
               content={viewingNote.content}
               className="whitespace-pre-wrap text-sm leading-relaxed"
@@ -73,7 +73,7 @@ export function NotesSection() {
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : notes.length === 0 ? (
-            <div className="text-center py-12 glass-effect rounded-2xl">
+            <div className="text-center py-12 liquid-glass rounded-2xl">
               <FileText className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
               <p className="text-muted-foreground text-sm">
                 {lang === 'ar' ? 'لا توجد ملاحظات محفوظة بعد' : 'No saved notes yet'}
@@ -89,7 +89,7 @@ export function NotesSection() {
                   key={note.id}
                   onClick={() => { setViewingNote(note); setView('view-note'); }}
                   className={cn(
-                    'w-full glass-effect rounded-2xl p-4 text-left transition-all duration-200 group',
+                    'w-full liquid-glass rounded-2xl p-4 text-left transition-all duration-200 group',
                     'hover:scale-[1.01] hover:shadow-lg active:scale-[0.99]'
                   )}
                   style={{ animationDelay: `${idx * 40}ms` }}

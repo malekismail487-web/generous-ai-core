@@ -244,7 +244,7 @@ export default function TeacherLiveConsole() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 glass-effect-strong border-b border-border/30">
+      <header className="sticky top-0 z-40 liquid-glass liquid-sheen liquid-rim border-b border-foreground/10">
         <div className="max-w-5xl mx-auto flex items-center gap-3 px-4 h-14">
           <Button variant="ghost" size="icon" onClick={() => navigate('/teacher')}>
             <ArrowLeft className="w-5 h-5" />
@@ -359,7 +359,7 @@ export default function TeacherLiveConsole() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border border-border/40">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border border-foreground/10">
                   <Button
                     size="sm"
                     variant={micOn ? 'destructive' : 'default'}

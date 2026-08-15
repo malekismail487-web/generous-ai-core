@@ -54,7 +54,7 @@ export function CognitiveMirrorGauge({ className }: { className?: string }) {
 
   return (
     <div className={cn(
-      "rounded-2xl border border-border/40 bg-card/70 backdrop-blur-sm p-4 flex items-center gap-3",
+      "rounded-2xl border border-foreground/10 bg-foreground/[0.04] backdrop-blur-2xl backdrop-blur-sm p-4 flex items-center gap-3",
       className,
     )}>
       <div className="w-12 h-12 rounded-xl bg-secondary/60 flex items-center justify-center shrink-0">

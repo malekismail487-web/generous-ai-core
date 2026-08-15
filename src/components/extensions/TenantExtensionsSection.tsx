@@ -46,7 +46,7 @@ export function TenantExtensionsSection({ className }: { className?: string }) {
           <Link
             key={x.version_id}
             to={`/extensions/${x.version_id}`}
-            className="rounded-lg border bg-card hover:border-primary transition-colors p-3 flex flex-col gap-1"
+            className="rounded-lg border bg-foreground/[0.035] backdrop-blur-2xl backdrop-saturate-150 hover:border-primary transition-colors p-3 flex flex-col gap-1"
           >
             <p className="text-sm font-medium">{x.manifest?.displayName ?? x.name}</p>
             <p className="text-xs text-muted-foreground line-clamp-2">

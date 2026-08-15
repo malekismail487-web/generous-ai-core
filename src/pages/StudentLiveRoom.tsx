@@ -146,7 +146,7 @@ export default function StudentLiveRoom() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 glass-effect-strong border-b border-border/30">
+      <header className="sticky top-0 z-40 liquid-glass liquid-sheen liquid-rim border-b border-foreground/10">
         <div className="max-w-3xl mx-auto flex items-center gap-2 px-3 h-14">
           <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="w-5 h-5" />

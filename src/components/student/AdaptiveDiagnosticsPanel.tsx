@@ -272,7 +272,7 @@ export function AdaptiveDiagnosticsPanel() {
                   </div>
                 );
               })}
-              <div className="flex justify-between gap-2 pt-1 border-t border-border/40 mt-1">
+              <div className="flex justify-between gap-2 pt-1 border-t border-foreground/10 mt-1">
                 <span>regen rate (7d)</span>
                 <span>{formatRate(outcomes.windows.last7.qualityRegenRate, 1)}</span>
               </div>

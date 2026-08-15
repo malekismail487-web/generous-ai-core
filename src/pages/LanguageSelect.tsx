@@ -85,7 +85,7 @@ export default function LanguageSelect() {
             >
               <span className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 skew-x-12 bg-gradient-to-r from-transparent via-foreground/10 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-sheen" />
 
-              <span className="flex items-center justify-center w-14 h-14 rounded-2xl bg-muted/60 border border-border/50 font-display text-xl font-bold transition-transform duration-500 group-hover:scale-110">
+              <span className="flex items-center justify-center w-14 h-14 rounded-2xl bg-muted/60 border border-foreground/10 font-display text-xl font-bold transition-transform duration-500 group-hover:scale-110">
                 {opt.glyph}
               </span>
 

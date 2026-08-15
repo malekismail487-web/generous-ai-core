@@ -118,7 +118,7 @@ export default function ParentDashboard() {
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] flex items-center justify-center">
               <Heart className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -162,7 +162,7 @@ export default function ParentDashboard() {
           </Card>
           <Card>
             <CardContent className="pt-4 pb-3 text-center">
-              <BookOpen className="w-6 h-6 mx-auto mb-1 text-blue-500" />
+              <BookOpen className="w-6 h-6 mx-auto mb-1 text-foreground" />
               <p className="text-2xl font-bold">{assignments.length}</p>
               <p className="text-xs text-muted-foreground">{isAr ? 'واجبات' : 'Assignments'}</p>
             </CardContent>

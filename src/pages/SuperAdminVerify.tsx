@@ -225,7 +225,7 @@ export default function SuperAdminVerify() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-destructive/10 p-4">
         <div className="w-full max-w-md">
-          <div className="glass-effect rounded-3xl p-8 text-center space-y-6 border-2 border-destructive/30">
+          <div className="liquid-glass rounded-3xl p-8 text-center space-y-6 border-2 border-destructive/30">
             <div className="w-20 h-20 mx-auto rounded-full bg-destructive/20 flex items-center justify-center">
               <Lock className="w-10 h-10 text-destructive" />
             </div>
@@ -266,7 +266,7 @@ export default function SuperAdminVerify() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-destructive/5 p-4">
         <div className="w-full max-w-lg">
-          <div className="glass-effect rounded-3xl p-8 space-y-6 border border-destructive/30">
+          <div className="liquid-glass rounded-3xl p-8 space-y-6 border border-destructive/30">
             <div className="text-center space-y-2">
               <div className="w-16 h-16 mx-auto rounded-full bg-destructive/20 flex items-center justify-center">
                 <AlertTriangle className="w-8 h-8 text-destructive" />
@@ -292,7 +292,7 @@ export default function SuperAdminVerify() {
             ) : (
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
                 {attackLogs.map((log) => (
-                  <div key={log.id} className="glass-effect rounded-xl p-4 border border-destructive/20 space-y-3">
+                  <div key={log.id} className="liquid-glass rounded-xl p-4 border border-destructive/20 space-y-3">
                     <div className="flex items-start gap-3">
                       <Monitor className="w-5 h-5 text-destructive mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -349,7 +349,7 @@ export default function SuperAdminVerify() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
       <div className="w-full max-w-md">
-        <div className="glass-effect rounded-3xl p-8 space-y-6">
+        <div className="liquid-glass rounded-3xl p-8 space-y-6">
           <div className="text-center space-y-2">
             <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
               <Shield className="w-8 h-8 text-primary-foreground" />

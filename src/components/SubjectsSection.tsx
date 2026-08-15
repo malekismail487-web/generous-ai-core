@@ -29,18 +29,18 @@ import {
 // Default tile list used as a fallback if the school's subjects haven't loaded yet.
 // The live source of truth comes from useSchoolSubjects (the per-school `subjects` table).
 const FALLBACK_SUBJECTS: Array<{ id: string; name: string; emoji: string; color: string }> = [
-  { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-emerald-500 to-green-600' },
-  { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-blue-500 to-cyan-600' },
-  { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'from-violet-500 to-purple-600' },
-  { id: 'chemistry', name: 'Chemistry', emoji: '🧪', color: 'from-orange-500 to-amber-600' },
-  { id: 'english', name: 'English', emoji: '📚', color: 'from-rose-500 to-pink-600' },
-  { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-teal-500 to-emerald-600' },
-  { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-indigo-500 to-blue-600' },
-  { id: 'arabic', name: 'اللغة العربية', emoji: '🕌', color: 'from-amber-500 to-yellow-600' },
-  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️', color: 'from-green-600 to-emerald-700' },
-  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️', color: 'from-amber-600 to-orange-700' },
-  { id: 'art_design', name: 'Art and Design', emoji: '🎨', color: 'from-pink-500 to-rose-600' },
-  { id: 'entrepreneurship', name: 'Entrepreneurship', emoji: '💼', color: 'from-cyan-500 to-sky-600' },
+  { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'chemistry', name: 'Chemistry', emoji: '🧪', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'english', name: 'English', emoji: '📚', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'arabic', name: 'اللغة العربية', emoji: '🕌', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'art_design', name: 'Art and Design', emoji: '🎨', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+  { id: 'entrepreneurship', name: 'Entrepreneurship', emoji: '💼', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
 ];
 
 const grades = [
@@ -532,7 +532,7 @@ Use age-appropriate language for ${selectedGrade}.`;
                       Export as PDF
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleExport('docx')}>
-                      <FileText className="w-4 h-4 mr-2 text-blue-500" />
+                      <FileText className="w-4 h-4 mr-2 text-foreground" />
                       Export as DOCX (Word)
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleExport('pptx')}>
@@ -546,7 +546,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           </div>
 
           {/* Material Tabs */}
-          <div className="glass-effect rounded-xl p-3 mb-4">
+          <div className="liquid-glass rounded-xl p-3 mb-4">
             <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
               {savedMaterials.map((material) => (
                 <div
@@ -583,7 +583,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           </div>
 
           {/* Lecture Content with Math Rendering or Editor */}
-          <div className="glass-effect rounded-2xl p-5">
+          <div className="liquid-glass rounded-2xl p-5">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -611,7 +611,7 @@ Use age-appropriate language for ${selectedGrade}.`;
 
           {/* Loading indicator for images being generated */}
           {!isLoading && isGeneratingImages && lectureImages.length === 0 && (
-            <div className="mt-4 flex items-center gap-2 px-4 py-3 glass-effect rounded-xl justify-center">
+            <div className="mt-4 flex items-center gap-2 px-4 py-3 liquid-glass rounded-xl justify-center">
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
               <span className="text-xs text-muted-foreground">{language === 'ar' ? 'جاري إنشاء الرسوم البيانية...' : 'Loading diagrams...'}</span>
             </div>
@@ -659,7 +659,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           {/* NEW: Visual Lecture entrypoint */}
           <button
             onClick={() => setShowVisualLecture(true)}
-            className="w-full glass-effect rounded-2xl p-4 mb-3 text-left transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.99] flex items-center gap-3 border-2 border-primary/30"
+            className="w-full liquid-glass rounded-2xl p-4 mb-3 text-left transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.99] flex items-center gap-3 border-2 border-primary/30"
           >
             <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary to-accent text-primary-foreground">
               <ImageIcon size={20} />
@@ -672,7 +672,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           </button>
 
           {/* Topic Input */}
-          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-2 text-center text-lg">
               {tl('whatTopic')}
             </h3>
@@ -683,7 +683,7 @@ Use age-appropriate language for ${selectedGrade}.`;
               onChange={(e) => setMaterialInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleMaterialSubmit()}
               placeholder={tl('topicPlaceholder')}
-              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
+              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-foreground/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
               autoFocus
             />
 
@@ -694,9 +694,9 @@ Use age-appropriate language for ${selectedGrade}.`;
               </p>
               <div className="grid grid-cols-3 gap-2">
                 {([
-                  { key: 'short' as const, icon: <Zap size={14} />, label: language === 'ar' ? 'قصير' : 'Short', color: 'from-amber-500 to-orange-500' },
-                  { key: 'medium' as const, icon: <BookOpen size={14} />, label: language === 'ar' ? 'متوسط' : 'Medium', color: 'from-blue-500 to-cyan-500' },
-                  { key: 'long' as const, icon: <GraduationCap size={14} />, label: language === 'ar' ? 'طويل' : 'Long', color: 'from-violet-500 to-purple-600' },
+                  { key: 'short' as const, icon: <Zap size={14} />, label: language === 'ar' ? 'قصير' : 'Short', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+                  { key: 'medium' as const, icon: <BookOpen size={14} />, label: language === 'ar' ? 'متوسط' : 'Medium', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
+                  { key: 'long' as const, icon: <GraduationCap size={14} />, label: language === 'ar' ? 'طويل' : 'Long', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
                 ]).map((opt) => (
                   <button
                     key={opt.key}
@@ -769,7 +769,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           </div>
 
           {/* Grade Selection */}
-          <div className="glass-effect rounded-2xl p-5 animate-fade-in">
+          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
             <h3 className="font-semibold mb-4 text-center">{tl('selectGrade')}</h3>
             <div className="grid grid-cols-4 gap-2 overflow-y-auto max-h-[50vh]">
               {grades.map((grade) => {
@@ -811,10 +811,10 @@ Use age-appropriate language for ${selectedGrade}.`;
             {/* AI Lectures Menu */}
             <button
               onClick={() => setMenuType('ai')}
-              className="glass-effect rounded-2xl p-6 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+              className="liquid-glass rounded-2xl p-6 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
                   <Bot className="w-7 h-7" />
                 </div>
                 <div>
@@ -828,11 +828,11 @@ Use age-appropriate language for ${selectedGrade}.`;
             {/* Course Materials Menu */}
             <button
               onClick={() => setMenuType('course')}
-              className="glass-effect rounded-2xl p-6 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+              className="liquid-glass rounded-2xl p-6 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
               style={{ animationDelay: '50ms' }}
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
                   <BookOpen className="w-7 h-7" />
                 </div>
                 <div>
@@ -868,7 +868,7 @@ Use age-appropriate language for ${selectedGrade}.`;
           <div className="text-center mb-6 animate-fade-in">
             <div className={cn(
               "inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 glow-effect bg-gradient-to-br",
-              menuType === 'ai' ? 'from-violet-500 to-purple-600' : 'from-emerald-500 to-teal-600'
+              menuType === 'ai' ? 'from-foreground/[0.14] to-foreground/[0.04]' : 'from-foreground/[0.14] to-foreground/[0.04]'
             )}>
               {menuType === 'ai' ? <Bot className="w-6 h-6 text-white" /> : <BookOpen className="w-6 h-6 text-white" />}
             </div>
@@ -885,7 +885,7 @@ Use age-appropriate language for ${selectedGrade}.`;
                 key={subj.id}
                 onClick={() => handleSubjectClick(subj.id)}
                 className={cn(
-                  "glass-effect rounded-xl p-3 text-center transition-all duration-200 animate-fade-in group",
+                  "liquid-glass rounded-xl p-3 text-center transition-all duration-200 animate-fade-in group",
                   "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
                 )}
                 style={{ animationDelay: `${index * 30}ms` }}
