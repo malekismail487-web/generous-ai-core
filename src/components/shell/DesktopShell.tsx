@@ -157,16 +157,20 @@ export function DesktopShell({ activeTab, onTabChange, title, subtitle, children
   const groups = useMemo(() => GROUPS, []);
 
   return (
-    <div className="h-screen w-full bg-background text-foreground flex overflow-hidden">
+    <div className="relative h-screen w-full bg-background text-foreground flex overflow-hidden">
+      <LiquidField dense />
+
       {/* Rail */}
       <aside
         className={cn(
-          'relative shrink-0 h-full border-r border-border/40 bg-card/40 backdrop-blur-2xl',
+          'relative z-10 shrink-0 h-full border-r border-foreground/10 bg-background/40 backdrop-blur-2xl backdrop-saturate-150',
           'transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
           collapsed ? 'w-[76px]' : 'w-[264px]',
         )}
       >
-        <div className="flex items-center gap-3 h-16 px-4 border-b border-border/40">
+        <span aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-foreground/25 to-transparent" />
+        <div className="relative flex items-center gap-3 h-16 px-4 border-b border-foreground/10">
+
           <button
             onClick={() => setCollapsed((v) => !v)}
             className="shrink-0 transition-transform duration-500 hover:rotate-90"
