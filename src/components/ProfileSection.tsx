@@ -257,6 +257,42 @@ export function ProfileSection() {
           </p>
         </div>
 
+        {/* Liquid lens — the draggable glass oval */}
+        <div className="liquid-glass rounded-2xl p-5 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Droplet size={16} />
+                {t('Liquid lens', 'العدسة السائلة')}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t(
+                  'The draggable glass oval with quick shortcuts.',
+                  'الشكل البيضاوي الزجاجي القابل للسحب مع الاختصارات السريعة.',
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={lensEnabled}
+              aria-label={t('Liquid lens', 'العدسة السائلة')}
+              onClick={() => setLensEnabled(!lensEnabled)}
+              className={cn(
+                'relative h-7 w-12 shrink-0 rounded-full border transition-colors duration-300',
+                lensEnabled ? 'bg-primary border-primary' : 'bg-secondary/60 border-foreground/15',
+              )}
+            >
+              <span
+                className={cn(
+                  'absolute top-0.5 h-6 w-6 rounded-full bg-background shadow transition-transform duration-300',
+                  lensEnabled ? 'translate-x-[22px]' : 'translate-x-0.5',
+                )}
+              />
+            </button>
+          </div>
+        </div>
+
         {/* Wallpaper */}
         <WallpaperCircleSelector />
 
