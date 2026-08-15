@@ -15,11 +15,11 @@ export const wallpaperPresets: WallpaperPreset[] = [
   // ─── DARK THEMES ───
   {
     id: 'default-dark',
-    name: 'Charcoal',
-    nameAr: 'فحمي',
+    name: 'Onyx',
+    nameAr: 'أونيكس',
     category: 'dark',
-    backgroundHSL: '0 0% 10%',
-    preview: '#1a1a1a',
+    backgroundHSL: '0 0% 0%',
+    preview: '#000000',
     isDefault: true,
   },
   {
