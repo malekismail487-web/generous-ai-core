@@ -402,6 +402,22 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
                   </Button>
                 ))}
               </div>
+              <div className="flex items-center gap-3 pt-1">
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {t2('Or choose any number (1–50)', 'أو اختر أي عدد (1-50)')}
+                </span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={questionCount}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    if (Number.isFinite(n)) setQuestionCount(Math.min(50, Math.max(1, n)));
+                  }}
+                  className="h-9 w-24"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
