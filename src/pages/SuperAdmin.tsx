@@ -565,7 +565,6 @@ export default function SuperAdmin() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setTestingRole('teacher')} className="gap-2">
 
-                <DropdownMenuItem onClick={() => setTestingRole('teacher')} className="gap-2">
                   <Users className="w-4 h-4" />
                   Test as Teacher
                 </DropdownMenuItem>
