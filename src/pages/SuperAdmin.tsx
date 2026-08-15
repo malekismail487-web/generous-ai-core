@@ -563,6 +563,10 @@ export default function SuperAdmin() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setTestingRole('student')} className="gap-2">
+                  <GraduationCap className="w-4 h-4" />
+                  Test as Student
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTestingRole('teacher')} className="gap-2">
 
                   <Users className="w-4 h-4" />
@@ -573,6 +577,7 @@ export default function SuperAdmin() {
                   Test as School Admin
                 </DropdownMenuItem>
               </DropdownMenuContent>
+
             </DropdownMenu>
             <Button variant="outline" size="icon" onClick={fetchSchools} disabled={loadingSchools}>
               <RefreshCw className={`w-4 h-4 ${loadingSchools ? 'animate-spin' : ''}`} />
