@@ -117,6 +117,9 @@ export function StudyBuddy() {
 
   const [localMessages, setLocalMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [thinking, setThinking] = useState('');
+  const { effort, spec } = useAiEffort('study-buddy');
+
   const [thinkingStyle, setThinkingStyle] = useState<string | null>(null);
   const [showStylePicker, setShowStylePicker] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
