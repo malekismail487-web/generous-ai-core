@@ -36,7 +36,8 @@ import { useAdaptiveLevel } from "@/hooks/useAdaptiveLevel";
 import { useLearningStyle } from "@/hooks/useLearningStyle";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Timer, NotebookPen, Target, Map } from "lucide-react";
+import { LiquidLens } from "@/components/motion/LiquidLens";
 import { LuminaLogo } from "@/components/LuminaLogo";
 import { Button } from "@/components/ui/button";
 import { DesktopShell } from "@/components/shell/DesktopShell";
@@ -268,6 +269,19 @@ const Index = () => {
         </header>
       )}
 
+
+      {/* Draggable liquid lens — a physical shortcut you can park anywhere */}
+      <LiquidLens
+        storageKey="lumina.lens.student"
+        label={t('Quick lens', 'العدسة السريعة')}
+        actions={[
+          { icon: Sparkles, label: t('Ask Lumina', 'اسأل لومينا'), onSelect: () => setActiveTab('studybuddy') },
+          { icon: Timer, label: t('Focus timer', 'مؤقت التركيز'), onSelect: () => setActiveTab('focustimer') },
+          { icon: NotebookPen, label: t('Notes', 'الملاحظات'), onSelect: () => setActiveTab('notes') },
+          { icon: Map, label: t('Mind maps', 'خرائط ذهنية'), onSelect: () => setActiveTab('mindmaps') },
+          { icon: Target, label: t('Goals', 'أهدافي'), onSelect: () => setActiveTab('goals') },
+        ]}
+      />
 
       <BottomNav
         activeTab={activeTab}
