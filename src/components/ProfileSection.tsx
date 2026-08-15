@@ -11,6 +11,7 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { useToast } from '@/hooks/use-toast';
 import { tr } from '@/lib/translations';
 import { useWallpaper } from '@/hooks/useWallpaper';
+import { useLensPreference } from '@/hooks/useLensPreference';
 import { supabase } from '@/integrations/supabase/client';
 import { SchoolAdminPanel } from '@/components/SchoolAdminPanel';
 import SuperAdminPanel from '@/components/SuperAdminPanel';
