@@ -219,9 +219,22 @@ const Index = () => {
     return (
       <>
         <AnimatedBackground />
+        <LiquidField />
         {activeTab !== 'focustimer' && (
           <FloatingTimer onNavigate={() => setActiveTab('focustimer')} />
         )}
+        {/* Same draggable lens on desktop, parked over the bento workspace */}
+        <LiquidLens
+          storageKey="lumina.lens.student.desktop"
+          label={t('Quick lens', 'العدسة السريعة')}
+          actions={[
+            { icon: Sparkles, label: t('Ask Lumina', 'اسأل لومينا'), onSelect: () => setActiveTab('studybuddy') },
+            { icon: Timer, label: t('Focus timer', 'مؤقت التركيز'), onSelect: () => setActiveTab('focustimer') },
+            { icon: NotebookPen, label: t('Notes', 'الملاحظات'), onSelect: () => setActiveTab('notes') },
+            { icon: Map, label: t('Mind maps', 'خرائط ذهنية'), onSelect: () => setActiveTab('mindmaps') },
+            { icon: Target, label: t('Goals', 'أهدافي'), onSelect: () => setActiveTab('goals') },
+          ]}
+        />
         <DesktopShell
           activeTab={activeTab}
           onTabChange={setActiveTab}
