@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Flag as LensFlag, Gavel as LensGavel, MessageSquare as LensAppeal } from 'lucide-react';
+import { LiquidLens } from '@/components/motion/LiquidLens';
 import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -244,6 +246,15 @@ export default function ModeratorDashboard() {
   return (
     <div className="relative min-h-screen">
       <ActorBackdrop variant="ambient" />
+      <LiquidLens
+        storageKey="lumina.lens.moderator"
+        label="Moderator lens"
+        actions={[
+          { icon: LensFlag, label: 'Flags', onSelect: () => setActiveTab('flags') },
+          { icon: LensGavel, label: 'Actions', onSelect: () => setActiveTab('actions') },
+          { icon: LensAppeal, label: 'Appeals', onSelect: () => setActiveTab('appeals') },
+        ]}
+      />
       {/* Header */}
       <header className="border-b bg-background/95 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">

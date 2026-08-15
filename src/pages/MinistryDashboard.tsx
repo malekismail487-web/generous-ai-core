@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Globe as LensGlobe, School as LensSchool, ShieldCheck as LensShield, AlertTriangle as LensAlert } from 'lucide-react';
+import { LiquidLens } from '@/components/motion/LiquidLens';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -303,6 +305,16 @@ export default function MinistryDashboard() {
   return (
     <div className="relative min-h-screen text-foreground">
       <ActorBackdrop variant="landing" />
+      <LiquidLens
+        storageKey="lumina.lens.ministry"
+        label="Ministry lens"
+        actions={[
+          { icon: LensGlobe, label: 'Overview', onSelect: () => setActiveTab('overview') },
+          { icon: LensSchool, label: 'Schools', onSelect: () => setActiveTab('schools') },
+          { icon: LensShield, label: 'Compliance', onSelect: () => setActiveTab('compliance') },
+          { icon: LensAlert, label: 'At risk', onSelect: () => setActiveTab('atrisk') },
+        ]}
+      />
       {/* Header */}
       <header className="border-b border-emerald-900/30 bg-black/90 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
