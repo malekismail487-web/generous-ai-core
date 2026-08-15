@@ -139,7 +139,7 @@ export default {
           from: { strokeDashoffset: "260" },
           to: { strokeDashoffset: "0" },
         },
-
+      },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
@@ -153,7 +153,13 @@ export default {
         "breathe": "breathe 5s ease-in-out infinite",
         "sheen": "sheen 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite",
         "rise-in": "rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "tile-in": "tile-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "aurora-drift": "aurora-drift 24s ease-in-out infinite",
+        "think-pulse": "think-pulse 1.1s ease-in-out infinite",
+        "marquee-line": "marquee-line 26s linear infinite",
+        "ring-trace": "ring-trace 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
       },
+
 
     },
   },
