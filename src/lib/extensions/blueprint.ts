@@ -78,14 +78,32 @@ export const PROTECTED_KEYWORDS = [
   "ministry_sessions",
 ] as const;
 
+/**
+ * Normalises text before keyword matching so trivial obfuscation cannot slip a
+ * protected name past the guard. Casing, accents, zero-width characters and any
+ * run of separators (spaces, underscores, hyphens, dots, slashes) all collapse
+ * to a single space, so `Ability __ Estimates`, `ability-estimates` and
+ * `ABILITY.ESTIMATES` are all seen as `ability estimates`.
+ */
+function normalizeForGuard(text: string): string {
+  return text
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u200b-\u200f\u2060\ufeff]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 /** Returns the first protected keyword mentioned in `text`, or null. */
 export function findProtectedMention(text: string): string | null {
-  const lower = text.toLowerCase();
+  const normalized = normalizeForGuard(text);
   for (const kw of PROTECTED_KEYWORDS) {
-    if (lower.includes(kw)) return kw;
+    if (normalized.includes(normalizeForGuard(kw))) return kw;
   }
   return null;
 }
+
 
 // -----------------------------------------------------------------------------
 // Zod schemas
