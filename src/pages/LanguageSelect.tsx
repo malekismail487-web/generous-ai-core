@@ -71,7 +71,7 @@ export default function LanguageSelect() {
           </p>
         </div>
 
-        <div className="stagger space-y-3">
+        <div className="stagger space-y-3 max-w-md mx-auto">
           {OPTIONS.map((opt) => (
             <button
               key={opt.id}
@@ -105,6 +105,9 @@ export default function LanguageSelect() {
             </button>
           ))}
         </div>
+
+        <Manifesto className="mt-14 animate-rise-in" />
+
       </div>
     </div>
   );
