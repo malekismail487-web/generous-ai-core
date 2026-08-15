@@ -1,5 +1,5 @@
 import { AbstractField } from '@/components/motion/AbstractField';
-import { LiquidField } from '@/components/motion/LiquidField';
+import { LiquidField } from '@/components/shell/LiquidField';
 
 interface ActorBackdropProps {
   /** 'landing' is the dense, theatrical composition; 'ambient' is calmer. */
