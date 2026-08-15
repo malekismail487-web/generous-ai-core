@@ -80,13 +80,20 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
           </div>
           <div className="flex items-center justify-between mb-5 relative z-10">
             <div>
-              <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
-                {t(`Hello ${firstName} 👋`, `مرحباً ${firstName} 👋`)}
+              <p className="text-[9px] uppercase tracking-[0.34em] text-muted-foreground mb-2">
+                {t('Your engine is listening', 'محرّكك يتابعك')}
+              </p>
+              <h1 className="font-display text-2xl font-extrabold text-foreground tracking-tight">
+                {t(`Hello ${firstName}`, `مرحباً ${firstName}`)}
               </h1>
-              <p className="text-muted-foreground text-sm mt-1">
-                {t('Ready to learn something new today?', 'مستعد لتعلم شيء جديد اليوم؟')}
+              <p className="text-muted-foreground text-sm mt-1 leading-relaxed max-w-[22rem]">
+                {t(
+                  'Everything below is one surface of the same tutor — it remembers what you got wrong last time and teaches around it.',
+                  'كل ما تراه أدناه وجه واحد لنفس المعلّم — يتذكر أخطاءك السابقة ويبني الشرح حولها.',
+                )}
               </p>
             </div>
+
             <div className="flex items-center gap-2 bg-muted/50 backdrop-blur-sm rounded-2xl px-3.5 py-2.5 border border-border/30">
               <Flame className="w-5 h-5 text-muted-foreground" />
               <span className="text-foreground font-bold text-lg">{streakLoading ? '...' : currentStreak}</span>
