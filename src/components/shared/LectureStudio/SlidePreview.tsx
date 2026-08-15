@@ -112,13 +112,13 @@ export function SlidePreview({ outline, images, heroUrl }: Props) {
       style={{ height: fullscreen ? '100vh' : 520 }}
     >
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-3 py-2 text-white/70 text-xs">
+      <div className="flex items-center justify-between px-3 py-2 text-foreground/70 text-xs">
         <div className="flex items-center gap-2">
           <span className="uppercase tracking-widest">{outline.aesthetic.replace(/_/g, ' ')}</span>
           <span className="opacity-50">·</span>
           <span>{idx + 1} / {slides.length}</span>
         </div>
-        <Button size="sm" variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10 h-7 px-2"
+        <Button size="sm" variant="ghost" className="text-foreground/70 hover:text-foreground hover:bg-foreground/10 h-7 px-2"
           onClick={() => setFullscreen((f) => !f)}>
           {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
         </Button>
@@ -185,14 +185,14 @@ export function SlidePreview({ outline, images, heroUrl }: Props) {
         <button
           onClick={() => setIdx((i) => Math.max(i - 1, 0))}
           disabled={idx === 0}
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center disabled:opacity-20"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-foreground/10 hover:bg-foreground/20 text-foreground flex items-center justify-center disabled:opacity-20"
         >
           <ChevronLeft size={18} />
         </button>
         <button
           onClick={() => setIdx((i) => Math.min(i + 1, slides.length - 1))}
           disabled={idx === slides.length - 1}
-          className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center disabled:opacity-20"
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-foreground/10 hover:bg-foreground/20 text-foreground flex items-center justify-center disabled:opacity-20"
         >
           <ChevronRight size={18} />
         </button>
@@ -202,7 +202,7 @@ export function SlidePreview({ outline, images, heroUrl }: Props) {
       <div className="flex justify-center gap-1.5 py-2">
         {slides.map((_, i) => (
           <button key={i} onClick={() => setIdx(i)}
-            className={`h-1.5 rounded-full transition-all ${i === idx ? 'w-6 bg-white' : 'w-1.5 bg-white/30 hover:bg-white/50'}`} />
+            className={`h-1.5 rounded-full transition-all ${i === idx ? 'w-6 bg-white' : 'w-1.5 bg-foreground/30 hover:bg-foreground/50'}`} />
         ))}
       </div>
     </div>

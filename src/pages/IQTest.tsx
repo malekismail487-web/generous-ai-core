@@ -351,8 +351,8 @@ export default function IQTest() {
                   <span className="flex items-center gap-3">
                     <span className={cn(
                       "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium border shrink-0",
-                      showCorrect && "bg-emerald-500 text-white border-emerald-500",
-                      showWrong && "bg-destructive text-white border-destructive",
+                      showCorrect && "bg-emerald-500 text-foreground border-emerald-500",
+                      showWrong && "bg-destructive text-foreground border-destructive",
                       !showCorrect && !showWrong && "border-border"
                     )}>
                       {showCorrect ? <CheckCircle2 className="w-3.5 h-3.5" /> : String.fromCharCode(65 + index)}

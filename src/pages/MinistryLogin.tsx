@@ -203,7 +203,7 @@ export default function MinistryLogin() {
           </div>
           <h1 className="text-3xl font-bold text-red-500 tracking-tight">ACCESS TERMINATED</h1>
           <div className="w-16 h-0.5 bg-red-800 mx-auto" />
-          <p className="text-gray-400 text-sm leading-relaxed max-w-md mx-auto">
+          <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto">
             Your IP address and device have been permanently banned from accessing this portal.
             All activity has been logged and reported.
           </p>
@@ -220,7 +220,7 @@ export default function MinistryLogin() {
             <Lock className="w-10 h-10 text-amber-500 animate-pulse" />
           </div>
           <h1 className="text-2xl font-bold text-amber-400">Verification Pending</h1>
-          <p className="text-gray-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             Your access request has been submitted. The system administrator has been notified
             and must manually verify your identity before access is granted.
           </p>
@@ -229,7 +229,7 @@ export default function MinistryLogin() {
             <span className="text-xs">Waiting for administrator approval...</span>
           </div>
           <div className="pt-4 border-t border-gray-800">
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               Do not close this window. Your session will expire in 10 minutes if not approved.
             </p>
           </div>
@@ -248,58 +248,58 @@ export default function MinistryLogin() {
               <ShieldCheck className="w-10 h-10 text-foreground" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">Moderator Registration</h1>
-            <p className="text-gray-500 text-xs">
+            <p className="text-muted-foreground text-xs">
               Sign up as a moderator to oversee content safety across the platform.
             </p>
           </div>
 
           <form onSubmit={handleModeratorSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="mod-name" className="text-gray-300 text-sm">Full Name</Label>
+              <Label htmlFor="mod-name" className="text-foreground text-sm">Full Name</Label>
               <Input id="mod-name" placeholder="Your full name" value={modName} onChange={(e) => setModName(e.target.value)}
-                className="bg-gray-950 border-gray-800 text-gray-200 focus:border-foreground/20 focus:ring-foreground/25" />
+                className="bg-gray-950 border-gray-800 text-foreground focus:border-foreground/20 focus:ring-foreground/25" />
               {modErrors.name && <p className="text-sm text-red-500">{modErrors.name}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mod-email" className="text-gray-300 text-sm">Email</Label>
+              <Label htmlFor="mod-email" className="text-foreground text-sm">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input id="mod-email" type="email" placeholder="you@example.com" value={modEmail} onChange={(e) => setModEmail(e.target.value)}
-                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 focus:border-foreground/20 focus:ring-foreground/25" />
+                  className="pl-10 bg-gray-950 border-gray-800 text-foreground focus:border-foreground/20 focus:ring-foreground/25" />
               </div>
               {modErrors.email && <p className="text-sm text-red-500">{modErrors.email}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mod-password" className="text-gray-300 text-sm">Password</Label>
+              <Label htmlFor="mod-password" className="text-foreground text-sm">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input id="mod-password" type="password" placeholder="••••••••" value={modPassword} onChange={(e) => setModPassword(e.target.value)}
-                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 focus:border-foreground/20 focus:ring-foreground/25" />
+                  className="pl-10 bg-gray-950 border-gray-800 text-foreground focus:border-foreground/20 focus:ring-foreground/25" />
               </div>
               {modErrors.password && <p className="text-sm text-red-500">{modErrors.password}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mod-confirm" className="text-gray-300 text-sm">Confirm Password</Label>
+              <Label htmlFor="mod-confirm" className="text-foreground text-sm">Confirm Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input id="mod-confirm" type="password" placeholder="••••••••" value={modConfirmPassword} onChange={(e) => setModConfirmPassword(e.target.value)}
-                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 focus:border-foreground/20 focus:ring-foreground/25" />
+                  className="pl-10 bg-gray-950 border-gray-800 text-foreground focus:border-foreground/20 focus:ring-foreground/25" />
               </div>
               {modErrors.confirmPassword && <p className="text-sm text-red-500">{modErrors.confirmPassword}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mod-code" className="text-gray-300 text-sm">Moderator Invite Code</Label>
+              <Label htmlFor="mod-code" className="text-foreground text-sm">Moderator Invite Code</Label>
               <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input id="mod-code" placeholder="MOD-XXXXXXXX" value={modCode} onChange={(e) => setModCode(e.target.value.toUpperCase())}
-                  className="pl-10 bg-gray-950 border-gray-800 text-gray-200 tracking-wider uppercase font-mono focus:border-foreground/20 focus:ring-foreground/25" />
+                  className="pl-10 bg-gray-950 border-gray-800 text-foreground tracking-wider uppercase font-mono focus:border-foreground/20 focus:ring-foreground/25" />
               </div>
               {modErrors.code && <p className="text-sm text-red-500">{modErrors.code}</p>}
-              <p className="text-xs text-gray-600">This code is provided by the Ministry of Education</p>
+              <p className="text-xs text-muted-foreground">This code is provided by the Ministry of Education</p>
             </div>
 
             <Button type="submit" disabled={modSubmitting}
@@ -309,7 +309,7 @@ export default function MinistryLogin() {
             </Button>
 
             <button type="button" onClick={() => setShowModeratorForm(false)}
-              className="w-full text-center text-gray-500 text-xs hover:text-gray-300 transition-colors">
+              className="w-full text-center text-muted-foreground text-xs hover:text-foreground transition-colors">
               ← Back to Access Portal
             </button>
           </form>
@@ -332,7 +332,7 @@ export default function MinistryLogin() {
             <Shield className="w-10 h-10 text-emerald-500" />
           </div>
           <h1 className="text-2xl font-bold text-emerald-400">Classified Access Portal</h1>
-          <p className="text-gray-500 text-xs">
+          <p className="text-muted-foreground text-xs">
             Authorized personnel only. All access attempts are monitored and logged.
           </p>
         </div>

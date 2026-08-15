@@ -24,12 +24,12 @@ const STATUSES: Array<{ id: 'all' | ChangeStatus; label: string; hint: string }>
 ];
 
 const STATUS_CLASS: Record<ChangeStatus, string> = {
-  draft: 'text-gray-400 bg-gray-900 border-gray-800',
+  draft: 'text-muted-foreground bg-gray-900 border-gray-800',
   in_review: 'text-amber-300 bg-amber-950/50 border-amber-800/50',
   approved: 'text-foreground bg-foreground/[0.07] border-foreground/20',
   published: 'text-emerald-300 bg-emerald-950/50 border-emerald-800/50',
   rejected: 'text-red-300 bg-red-950/50 border-red-800/50',
-  withdrawn: 'text-gray-500 bg-gray-950 border-gray-800',
+  withdrawn: 'text-muted-foreground bg-gray-950 border-gray-800',
 };
 
 export function PublishingPanel() {
@@ -105,7 +105,7 @@ export function PublishingPanel() {
               className={`px-3 py-1 rounded-full text-xs border transition ${
                 filter === s.id
                   ? 'bg-emerald-950/50 border-emerald-700/50 text-emerald-300'
-                  : 'bg-gray-950 border-gray-800 text-gray-400 hover:border-gray-700'
+                  : 'bg-gray-950 border-gray-800 text-muted-foreground hover:border-gray-700'
               }`}
             >
               {s.label}
@@ -120,12 +120,12 @@ export function PublishingPanel() {
         <Table>
           <TableHeader>
             <TableRow className="border-gray-800 hover:bg-transparent">
-              <TableHead className="text-gray-500">Title</TableHead>
-              <TableHead className="text-gray-500">Entity</TableHead>
-              <TableHead className="text-gray-500">Status</TableHead>
-              <TableHead className="text-gray-500">Author</TableHead>
-              <TableHead className="text-gray-500">Updated</TableHead>
-              <TableHead className="text-gray-500 text-right">Actions</TableHead>
+              <TableHead className="text-muted-foreground">Title</TableHead>
+              <TableHead className="text-muted-foreground">Entity</TableHead>
+              <TableHead className="text-muted-foreground">Status</TableHead>
+              <TableHead className="text-muted-foreground">Author</TableHead>
+              <TableHead className="text-muted-foreground">Updated</TableHead>
+              <TableHead className="text-muted-foreground text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -135,25 +135,25 @@ export function PublishingPanel() {
               </TableCell></TableRow>
             )}
             {!loading && filtered.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-gray-600 py-10">
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-10">
                 No change requests {filter !== 'all' ? `in "${filter}"` : 'yet'}. Use "New draft" to exercise the pipeline.
               </TableCell></TableRow>
             )}
             {!loading && filtered.map((req) => (
               <TableRow key={req.id} className="border-gray-800/50">
-                <TableCell className="font-medium text-gray-200">
+                <TableCell className="font-medium text-foreground">
                   <button className="hover:text-emerald-300 text-left" onClick={() => setSelected(req)}>
                     {req.title}
                   </button>
                 </TableCell>
-                <TableCell className="font-mono text-[11px] text-gray-500">{req.entity_type}</TableCell>
+                <TableCell className="font-mono text-[11px] text-muted-foreground">{req.entity_type}</TableCell>
                 <TableCell>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] border ${STATUS_CLASS[req.status]}`}>
                     {req.status.replace('_', ' ')}
                   </span>
                 </TableCell>
-                <TableCell className="text-gray-400 text-xs">{req.author_label ?? '—'}</TableCell>
-                <TableCell className="text-gray-500 text-xs">
+                <TableCell className="text-muted-foreground text-xs">{req.author_label ?? '—'}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">
                   {new Date(req.updated_at).toLocaleString()}
                 </TableCell>
                 <TableCell className="text-right">
@@ -222,7 +222,7 @@ function RequestActions({
       </div>
     );
   }
-  return <span className="text-[10px] text-gray-600">—</span>;
+  return <span className="text-[10px] text-muted-foreground">—</span>;
 }
 
 function NewDraftDialog({ tenantId, onCreated }: { tenantId: string | null; onCreated: () => void }) {
@@ -274,27 +274,27 @@ function NewDraftDialog({ tenantId, onCreated }: { tenantId: string | null; onCr
           <PlusCircle className="w-3.5 h-3.5 mr-1.5" /> New draft
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-gray-950 border-gray-800 text-gray-200">
+      <DialogContent className="bg-gray-950 border-gray-800 text-foreground">
         <DialogHeader>
           <DialogTitle>Submit change request</DialogTitle>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             MC2 exposes only the generic <code className="font-mono">mc.test</code> entity type. Real
             curriculum, policy, and school entity types are registered in phases MC3+.
           </p>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label className="text-xs text-gray-500">Title</Label>
+            <Label className="text-xs text-muted-foreground">Title</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)}
               placeholder="Pipeline verification" className="bg-gray-900 border-gray-800" />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-gray-500">Summary</Label>
+            <Label className="text-xs text-muted-foreground">Summary</Label>
             <Input value={summary} onChange={(e) => setSummary(e.target.value)}
               placeholder="Optional" className="bg-gray-900 border-gray-800" />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-gray-500">Payload (JSON)</Label>
+            <Label className="text-xs text-muted-foreground">Payload (JSON)</Label>
             <Textarea value={payload} onChange={(e) => setPayload(e.target.value)}
               rows={6} className="bg-gray-900 border-gray-800 font-mono text-xs" />
           </div>
@@ -313,31 +313,31 @@ function NewDraftDialog({ tenantId, onCreated }: { tenantId: string | null; onCr
 function DetailDialog({ request, onClose }: { request: ChangeRequest | null; onClose: () => void }) {
   return (
     <Dialog open={!!request} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-gray-950 border-gray-800 text-gray-200 max-w-2xl">
+      <DialogContent className="bg-gray-950 border-gray-800 text-foreground max-w-2xl">
         {request && (
           <>
             <DialogHeader>
               <DialogTitle>{request.title}</DialogTitle>
-              <p className="text-xs text-gray-500 mt-1 font-mono">
+              <p className="text-xs text-muted-foreground mt-1 font-mono">
                 {request.entity_type} · {request.status} · {new Date(request.created_at).toLocaleString()}
               </p>
             </DialogHeader>
-            {request.summary && <p className="text-sm text-gray-400">{request.summary}</p>}
+            {request.summary && <p className="text-sm text-muted-foreground">{request.summary}</p>}
             <div className="space-y-2">
-              <p className="text-[10px] uppercase tracking-widest text-gray-600">Payload</p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Payload</p>
               <pre className="text-xs bg-black/40 border border-gray-800 p-3 rounded max-h-64 overflow-auto">
                 {JSON.stringify(request.payload, null, 2)}
               </pre>
               {request.previous_snapshot && (
                 <>
-                  <p className="text-[10px] uppercase tracking-widest text-gray-600 mt-3">Previous</p>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-3">Previous</p>
                   <pre className="text-xs bg-black/40 border border-gray-800 p-3 rounded max-h-40 overflow-auto">
                     {JSON.stringify(request.previous_snapshot, null, 2)}
                   </pre>
                 </>
               )}
             </div>
-            <div className="text-[11px] text-gray-500 space-y-1 border-t border-gray-800 pt-3">
+            <div className="text-[11px] text-muted-foreground space-y-1 border-t border-gray-800 pt-3">
               {request.author_label && <div>Author: {request.author_label}</div>}
               {request.reviewer_label && <div>Reviewer: {request.reviewer_label} {request.review_notes ? `— ${request.review_notes}` : ''}</div>}
               {request.publisher_label && <div>Published by: {request.publisher_label} on {request.published_at && new Date(request.published_at).toLocaleString()}</div>}

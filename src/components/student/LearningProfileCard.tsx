@@ -58,7 +58,7 @@ export function LearningProfileCard() {
     return (
       <div className="liquid-glass rounded-2xl p-5 space-y-3 animate-fade-in">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-slate-400 to-gray-500 text-white">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-slate-400 to-gray-500 text-foreground">
             <Brain className="w-5 h-5" />
           </div>
           <div>
@@ -90,7 +90,7 @@ export function LearningProfileCard() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br text-white",
+            "w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br text-foreground",
             styleColors[dominant] || styleColors.balanced
           )}>
             <Brain className="w-5 h-5" />

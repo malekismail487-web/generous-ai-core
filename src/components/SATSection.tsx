@@ -206,7 +206,7 @@ export function SATSection() {
         <div className="grid grid-cols-1 gap-3 overflow-y-auto">
           {satSections.map((sect, index) => (
             <button key={sect.id} onClick={() => handleSectionClick(sect.id)} className={cn("liquid-glass rounded-xl p-4 text-left transition-all duration-200 animate-fade-in", "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4")} style={{ animationDelay: `${index * 50}ms` }}>
-              <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br text-white text-xl", sect.color)}>{sect.emoji}</div>
+              <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br text-foreground text-xl", sect.color)}>{sect.emoji}</div>
               <div>
                 <h3 className="font-semibold text-foreground">{getSubjectName(sect.id, language)}</h3>
                 <p className="text-xs text-muted-foreground">{tr('satClickToStudy', language)}</p>

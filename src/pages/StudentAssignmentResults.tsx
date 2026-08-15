@@ -240,7 +240,7 @@ export default function StudentAssignmentResults() {
                       <div
                         className={cn(
                           'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
-                          result.isCorrect ? 'bg-emerald-500 text-white' : 'bg-destructive text-white'
+                          result.isCorrect ? 'bg-emerald-500 text-foreground' : 'bg-destructive text-foreground'
                         )}
                       >
                         {result.isCorrect ? <CheckCircle2 size={18} /> : <XCircle size={18} />}

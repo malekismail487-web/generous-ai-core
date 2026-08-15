@@ -14,7 +14,7 @@ export function TeacherRequestCard() {
     return (
       <div className="liquid-glass rounded-2xl p-5">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground">
             <GraduationCap className="w-5 h-5" />
           </div>
           <div>
@@ -31,7 +31,7 @@ export function TeacherRequestCard() {
     return (
       <div className="liquid-glass rounded-2xl p-5">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground">
             <Clock className="w-5 h-5" />
           </div>
           <div>
@@ -53,7 +53,7 @@ export function TeacherRequestCard() {
     return (
       <div className="liquid-glass rounded-2xl p-5">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground">
             <XCircle className="w-5 h-5" />
           </div>
           <div>
@@ -80,7 +80,7 @@ export function TeacherRequestCard() {
   return (
     <div className="liquid-glass rounded-2xl p-5">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground">
           <GraduationCap className="w-5 h-5" />
         </div>
         <div>

@@ -159,7 +159,7 @@ function StudentMaterialsComponent({ materials, teacherProfiles = {}, loading = 
             onClick={() => setFilterSubject(filterSubject === subject.id ? 'all' : subject.id)}
           >
             <CardContent className="p-4">
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center text-white text-2xl mb-3`}>
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center text-foreground text-2xl mb-3`}>
                 {subject.emoji}
               </div>
               <h3 className="font-semibold text-sm">{subject.name}</h3>
@@ -223,7 +223,7 @@ function StudentMaterialsComponent({ materials, teacherProfiles = {}, loading = 
                 onClick={() => handleOpenMaterial(material)}
               >
                 <CardHeader className="pb-3">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${subjectInfo.color} flex items-center justify-center text-white text-xl`}>
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${subjectInfo.color} flex items-center justify-center text-foreground text-xl`}>
                     {subjectInfo.emoji}
                   </div>
                   <CardTitle className="text-base line-clamp-2 mt-2">
@@ -298,7 +298,7 @@ function StudentMaterialsComponent({ materials, teacherProfiles = {}, loading = 
             return (
               <div key={subjectInfo.id} className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${subjectInfo.color} flex items-center justify-center text-white text-lg`}>
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${subjectInfo.color} flex items-center justify-center text-foreground text-lg`}>
                     {subjectInfo.emoji}
                   </div>
                   <div>

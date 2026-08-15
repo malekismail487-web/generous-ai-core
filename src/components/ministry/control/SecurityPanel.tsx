@@ -56,8 +56,8 @@ export function SecurityPanel() {
         <div className="flex items-start gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-500 mt-0.5" />
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-gray-600">Ministry sessions</p>
-            <p className="text-xs text-gray-500">Read-only view. Session administration remains with Super Admin.</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Ministry sessions</p>
+            <p className="text-xs text-muted-foreground">Read-only view. Session administration remains with Super Admin.</p>
           </div>
         </div>
         <Button size="sm" variant="outline" onClick={load} disabled={loading}>
@@ -76,32 +76,32 @@ function SessionTable({ label, rows, loading, highlight }: {
 }) {
   return (
     <section>
-      <p className="text-[10px] uppercase tracking-widest text-gray-600 mb-2">{label} ({rows.length})</p>
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{label} ({rows.length})</p>
       <div className={`border rounded-lg overflow-hidden ${highlight ? 'border-emerald-900/40' : 'border-gray-800'}`}>
         <Table>
           <TableHeader>
             <TableRow className="border-gray-800 hover:bg-transparent">
-              <TableHead className="text-gray-500">Started</TableHead>
-              <TableHead className="text-gray-500">Last activity</TableHead>
-              <TableHead className="text-gray-500">Expires</TableHead>
-              <TableHead className="text-gray-500">IP</TableHead>
-              <TableHead className="text-gray-500">Status</TableHead>
+              <TableHead className="text-muted-foreground">Started</TableHead>
+              <TableHead className="text-muted-foreground">Last activity</TableHead>
+              <TableHead className="text-muted-foreground">Expires</TableHead>
+              <TableHead className="text-muted-foreground">IP</TableHead>
+              <TableHead className="text-muted-foreground">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && <TableRow><TableCell colSpan={5} className="text-center py-6"><Loader2 className="w-4 h-4 animate-spin inline text-emerald-500" /></TableCell></TableRow>}
-            {!loading && rows.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-gray-600 py-6">None.</TableCell></TableRow>}
+            {!loading && rows.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">None.</TableCell></TableRow>}
             {rows.map((s) => (
               <TableRow key={s.id} className="border-gray-800/50">
-                <TableCell className="text-xs text-gray-400">{new Date(s.created_at).toLocaleString()}</TableCell>
-                <TableCell className="text-xs text-gray-400">{new Date(s.last_activity).toLocaleString()}</TableCell>
-                <TableCell className="text-xs text-gray-500">{new Date(s.expires_at).toLocaleString()}</TableCell>
-                <TableCell className="text-xs font-mono text-gray-500">{s.ip_address ?? '—'}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{new Date(s.created_at).toLocaleString()}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{new Date(s.last_activity).toLocaleString()}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{new Date(s.expires_at).toLocaleString()}</TableCell>
+                <TableCell className="text-xs font-mono text-muted-foreground">{s.ip_address ?? '—'}</TableCell>
                 <TableCell>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
                     s.is_active && new Date(s.expires_at) > new Date()
                       ? 'text-emerald-300 bg-emerald-950/50 border-emerald-800/50'
-                      : 'text-gray-500 bg-gray-950 border-gray-800'
+                      : 'text-muted-foreground bg-gray-950 border-gray-800'
                   }`}>
                     {s.is_active && new Date(s.expires_at) > new Date() ? 'active' : 'closed'}
                   </span>

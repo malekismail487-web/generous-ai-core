@@ -75,13 +75,13 @@ export default function ModeratorPending() {
       <div className="min-h-screen flex items-center justify-center p-4 bg-black">
         <div className="w-full max-w-md text-center">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6 bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] shadow-lg shadow-red-900/30">
-            <XCircle className="w-10 h-10 text-white" />
+            <XCircle className="w-10 h-10 text-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Request Denied</h1>
-          <p className="text-gray-400 mb-8">
+          <h1 className="text-2xl font-bold text-foreground mb-2">Request Denied</h1>
+          <p className="text-muted-foreground mb-8">
             Your moderator application has been reviewed and was not approved. Contact the Ministry administrator for more information.
           </p>
-          <Button variant="outline" onClick={() => signOut()} className="gap-2 border-gray-700 text-gray-300 hover:bg-gray-900">
+          <Button variant="outline" onClick={() => signOut()} className="gap-2 border-gray-700 text-foreground hover:bg-gray-900">
             <LogOut size={16} />
             Sign Out
           </Button>
@@ -95,38 +95,38 @@ export default function ModeratorPending() {
       <div className="w-full max-w-md text-center">
         {/* Pulsing shield icon */}
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6 bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] shadow-lg shadow-emerald-900/30 animate-pulse">
-          <Shield className="w-10 h-10 text-white" />
+          <Shield className="w-10 h-10 text-foreground" />
         </div>
 
-        <h1 className="text-2xl font-bold text-white mb-2">Moderator Verification Pending</h1>
-        <p className="text-gray-400 mb-2">
+        <h1 className="text-2xl font-bold text-foreground mb-2">Moderator Verification Pending</h1>
+        <p className="text-muted-foreground mb-2">
           Your moderator application has been submitted and is awaiting Ministry approval.
         </p>
-        <p className="text-sm text-gray-500 mb-8">
+        <p className="text-sm text-muted-foreground mb-8">
           The Ministry will review your request and verify your credentials. This page auto-refreshes.
         </p>
 
         {/* Details card */}
         <div className="rounded-2xl border border-gray-800 bg-gray-950/50 p-5 mb-6 text-left">
-          <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+          <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
             <Clock size={16} className="text-emerald-500" />
             Application Details
           </h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">Name</span>
-              <span className="text-gray-300">{name || 'N/A'}</span>
+              <span className="text-muted-foreground">Name</span>
+              <span className="text-foreground">{name || 'N/A'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Email</span>
-              <span className="text-gray-300">{user.email}</span>
+              <span className="text-muted-foreground">Email</span>
+              <span className="text-foreground">{user.email}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Role</span>
+              <span className="text-muted-foreground">Role</span>
               <span className="text-emerald-400 font-medium">Moderator</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Status</span>
+              <span className="text-muted-foreground">Status</span>
               <span className="flex items-center gap-1 text-amber-400">
                 <Clock size={12} />
                 Pending Review
@@ -139,7 +139,7 @@ export default function ModeratorPending() {
           <Button
             variant="outline"
             onClick={checkStatus}
-            className="flex-1 gap-2 border-gray-700 text-gray-300 hover:bg-gray-900"
+            className="flex-1 gap-2 border-gray-700 text-foreground hover:bg-gray-900"
           >
             <RefreshCw size={16} />
             Check Status
@@ -147,7 +147,7 @@ export default function ModeratorPending() {
           <Button
             variant="ghost"
             onClick={() => signOut()}
-            className="gap-2 text-gray-500 hover:text-gray-300"
+            className="gap-2 text-muted-foreground hover:text-foreground"
           >
             <LogOut size={16} />
             Sign Out

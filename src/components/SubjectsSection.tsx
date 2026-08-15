@@ -814,7 +814,7 @@ Use age-appropriate language for ${selectedGrade}.`;
               className="liquid-glass rounded-2xl p-6 text-left transition-all duration-200 animate-fade-in group hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground">
                   <Bot className="w-7 h-7" />
                 </div>
                 <div>
@@ -832,7 +832,7 @@ Use age-appropriate language for ${selectedGrade}.`;
               style={{ animationDelay: '50ms' }}
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground">
                   <BookOpen className="w-7 h-7" />
                 </div>
                 <div>
@@ -870,7 +870,7 @@ Use age-appropriate language for ${selectedGrade}.`;
               "inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 glow-effect bg-gradient-to-br",
               menuType === 'ai' ? 'from-foreground/[0.14] to-foreground/[0.04]' : 'from-foreground/[0.14] to-foreground/[0.04]'
             )}>
-              {menuType === 'ai' ? <Bot className="w-6 h-6 text-white" /> : <BookOpen className="w-6 h-6 text-white" />}
+              {menuType === 'ai' ? <Bot className="w-6 h-6 text-foreground" /> : <BookOpen className="w-6 h-6 text-foreground" />}
             </div>
             <h1 className="text-xl font-bold mb-1 gradient-text">
               {menuType === 'ai' ? tl('aiLectures') : tl('courseMaterials')}
@@ -891,7 +891,7 @@ Use age-appropriate language for ${selectedGrade}.`;
                 style={{ animationDelay: `${index * 30}ms` }}
               >
                 <div className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2 bg-gradient-to-br text-white text-lg",
+                  "w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2 bg-gradient-to-br text-foreground text-lg",
                   subj.color
                 )}>
                   {subj.emoji}

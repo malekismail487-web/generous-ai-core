@@ -183,7 +183,7 @@ export function StudentInsights({ schoolId }: StudentInsightsProps) {
                 >
                   {/* Avatar */}
                   <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0",
+                    "w-10 h-10 rounded-xl flex items-center justify-center text-foreground font-bold text-sm shrink-0",
                     insight.overallAccuracy >= 75 ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
                       : insight.overallAccuracy >= 50 ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
                       : insight.totalAnswered === 0 ? "bg-gradient-to-br from-slate-400 to-slate-500"

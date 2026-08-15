@@ -130,7 +130,7 @@ export function SchoolRegistration() {
         <div className="w-full max-w-md relative z-10">
           <div className="text-center mb-8 animate-fade-in">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]">
-              <CheckCircle className="w-8 h-8 text-white" />
+              <CheckCircle className="w-8 h-8 text-foreground" />
             </div>
             <h1 className="text-2xl font-bold mb-2">{validatedSchool?.name}</h1>
             <p className="text-muted-foreground">{t('areYouStudentOrTeacher')}</p>
@@ -142,7 +142,7 @@ export function SchoolRegistration() {
               className="w-full liquid-glass rounded-2xl p-6 text-left hover:shadow-lg transition-all group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground">
                   <GraduationCap className="w-7 h-7" />
                 </div>
                 <div>
@@ -157,7 +157,7 @@ export function SchoolRegistration() {
               className="w-full liquid-glass rounded-2xl p-6 text-left hover:shadow-lg transition-all group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground">
                   <User className="w-7 h-7" />
                 </div>
                 <div>
@@ -192,7 +192,7 @@ export function SchoolRegistration() {
               ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]" 
               : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
           )}>
-            {userType === 'student' ? <GraduationCap className="w-8 h-8 text-white" /> : <User className="w-8 h-8 text-white" />}
+            {userType === 'student' ? <GraduationCap className="w-8 h-8 text-foreground" /> : <User className="w-8 h-8 text-foreground" />}
           </div>
           <h1 className="text-2xl font-bold mb-1">{t('completeProfile')}</h1>
           <p className="text-sm text-muted-foreground">{validatedSchool?.name}</p>

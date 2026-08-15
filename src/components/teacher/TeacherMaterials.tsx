@@ -446,7 +446,7 @@ export function TeacherMaterials({
               <Card key={material.id} className="group hover:shadow-lg transition-all">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${subjectInfo.color} flex items-center justify-center text-white text-xl`}>
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${subjectInfo.color} flex items-center justify-center text-foreground text-xl`}>
                       {subjectInfo.emoji}
                     </div>
                     <Button
@@ -507,7 +507,7 @@ export function TeacherMaterials({
             return (
               <div key={subjectInfo.id} className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${subjectInfo.color} flex items-center justify-center text-white text-lg`}>
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${subjectInfo.color} flex items-center justify-center text-foreground text-lg`}>
                     {subjectInfo.emoji}
                   </div>
                   <div>

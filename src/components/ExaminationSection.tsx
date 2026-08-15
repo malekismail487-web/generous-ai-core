@@ -785,8 +785,8 @@ export function ExaminationSection() {
                     >
                       <span className={cn(
                         "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-medium flex-shrink-0 bg-secondary text-secondary-foreground",
-                        showCorrect && "bg-emerald-500 text-white",
-                        showWrong && "bg-destructive text-white"
+                        showCorrect && "bg-emerald-500 text-foreground",
+                        showWrong && "bg-destructive text-foreground"
                       )}>
                         {showCorrect ? <CheckCircle2 size={14} /> : showWrong ? <XCircle size={14} /> : String.fromCharCode(65 + index)}
                       </span>
@@ -1031,7 +1031,7 @@ export function ExaminationSection() {
                     )}
                   >
                     <div className={cn(
-                      "w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br text-white text-sm font-bold",
+                      "w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br text-foreground text-sm font-bold",
                       diff.color
                     )}>
                       {diff.questions}
@@ -1167,7 +1167,7 @@ export function ExaminationSection() {
             onClick={() => handleExamTypeSelect(ExamMenuType.SUBJECT)}
             className="w-full liquid-glass rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white text-xl">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground text-xl">
               📚
             </div>
             <div>
@@ -1183,7 +1183,7 @@ export function ExaminationSection() {
             onClick={() => handleExamTypeSelect(ExamMenuType.SAT)}
             className="w-full liquid-glass rounded-xl p-5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] flex items-center gap-4"
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-white text-xl">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground text-xl">
               📝
             </div>
             <div>
