@@ -423,7 +423,7 @@ export function useLuminaLiveSession(
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
     }
-  }, [feature, getContext, lessonId, model, stop]);
+  }, [getAleContextFast, refreshJwt, lessonId, model, stop]);
 
   // ------------------------------------------------------------------------
   // Drain loop — pops the scheduler, folds state, refreshes cache, fires
