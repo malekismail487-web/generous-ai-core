@@ -295,9 +295,33 @@ export default function SuperAdmin() {
       school_admin: 'School Administrator'
     };
 
-    // For student testing, show the actual student app (Index.tsx components)
-    // Student role-play was retired — admins review student data through the
-    // analytics and simulator panels instead of a mirrored student app.
+    // For student testing, show the actual student app experience.
+    if (testingRole === 'student') {
+      return (
+        <div className="min-h-screen bg-background">
+          <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-amber-950">
+            <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FlaskConical className="w-5 h-5" />
+                <span className="font-medium text-sm">🧪 Testing as Student</span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setTestingRole('none')}
+                className="h-7 border-amber-950/30 bg-amber-100/40 text-amber-950 hover:bg-amber-100"
+              >
+                Exit testing
+              </Button>
+            </div>
+          </div>
+          <div className="pt-10">
+            <StudentAppPreview />
+          </div>
+        </div>
+      );
+    }
+
 
 
 
