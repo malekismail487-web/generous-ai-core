@@ -38,6 +38,7 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { LuminaLogo } from "@/components/LuminaLogo";
 import { Button } from "@/components/ui/button";
 import { DesktopShell } from "@/components/shell/DesktopShell";
+import { DesktopHome } from "@/components/student/DesktopHome";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 
@@ -128,7 +129,11 @@ const Index = () => {
   const renderMainContent = () => {
     switch (activeTab) {
       case 'home':
-        return (
+        return isDesktop ? (
+          <div className="h-full overflow-hidden">
+            <DesktopHome onNavigate={handleGridNavigate} hasSchool={!!school} />
+          </div>
+        ) : (
           <div className="h-full overflow-y-auto pb-24">
             <StudentHomeGrid onNavigate={handleGridNavigate} hasSchool={!!school} />
             <div className="px-4">
