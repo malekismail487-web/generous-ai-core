@@ -137,41 +137,18 @@ async function loadRequestContext(authHeader: string | null, includeStudentConte
 /**
  * Latency layer around loadRequestContext.
  *
- * 1. Stale-while-revalidate cache — personalization context (profile, IQ,
- *    learning style, ALE memories, knowledge gaps, subject profiles) changes on
- *    the order of minutes. A cached entry is returned IMMEDIATELY (zero database
- *    wait) and, once it passes the freshness window, is refreshed in the
- *    background so the next turn gets updated ALE data. Nothing is dropped —
- *    the full context is still injected into the system prompt every turn.
- * 2. Single-flight — concurrent turns for the same user share one load instead
- *    of stacking duplicate queries.
- * 3. Short cold deadline — on the very first turn (no cache at all) we wait at
- *    most 400ms for the database, then start the model. The resolved context
- *    lands in the cache and personalizes every subsequent turn.
+ * 1. Warm cache — personalization context (profile, IQ, learning style,
+ *    memories, gaps) changes on the order of minutes, not seconds, so we
+ *    reuse it for 90s per user within the isolate. Follow-up turns in a
+ *    conversation then skip every database round-trip entirely.
+ * 2. Soft deadline — if the database is slow, we stop waiting after 700ms
+ *    and call the model with whatever context we already have rather than
+ *    holding time-to-first-token hostage. Nothing is lost: the resolved
+ *    context is written into the cache and used by the very next turn.
  */
-const CTX_FRESH_MS = 60_000;      // serve without refresh
-const CTX_TTL_MS = 15 * 60_000;   // serve stale (and refresh) up to this age
-const CTX_COLD_DEADLINE_MS = 400; // only applies when nothing is cached
+const CTX_TTL_MS = 90_000;
+const CTX_DEADLINE_MS = 700;
 const ctxCache = new Map<string, { at: number; ctx: any }>();
-const ctxInflight = new Map<string, Promise<any>>();
-
-function loadAndCache(key: string, authHeader: string, includeStudentContext: boolean) {
-  const existing = ctxInflight.get(key);
-  if (existing) return existing;
-
-  const pending = loadRequestContext(authHeader, includeStudentContext)
-    .then((ctx) => {
-      ctxCache.set(key, { at: Date.now(), ctx });
-      if (ctxCache.size > 500) {
-        for (const [k, v] of ctxCache) if (Date.now() - v.at > CTX_TTL_MS) ctxCache.delete(k);
-      }
-      return ctx;
-    })
-    .finally(() => ctxInflight.delete(key));
-
-  ctxInflight.set(key, pending);
-  return pending;
-}
 
 async function loadRequestContextFast(authHeader: string | null, includeStudentContext: boolean) {
   const empty = {
@@ -182,26 +159,23 @@ async function loadRequestContextFast(authHeader: string | null, includeStudentC
 
   const key = `${authHeader}:${includeStudentContext ? 1 : 0}`;
   const hit = ctxCache.get(key);
-  const age = hit ? Date.now() - hit.at : Infinity;
+  if (hit && Date.now() - hit.at < CTX_TTL_MS) return hit.ctx;
 
-  if (hit && age < CTX_TTL_MS) {
-    // Warm path: answer with zero database wait. Refresh behind the response
-    // once the entry is past its freshness window so ALE data stays current.
-    if (age >= CTX_FRESH_MS) {
-      loadAndCache(key, authHeader, includeStudentContext).catch(() => {});
+  const pending = loadRequestContext(authHeader, includeStudentContext).then((ctx) => {
+    ctxCache.set(key, { at: Date.now(), ctx });
+    if (ctxCache.size > 500) {
+      for (const [k, v] of ctxCache) if (Date.now() - v.at > CTX_TTL_MS) ctxCache.delete(k);
     }
-    return hit.ctx;
-  }
+    return ctx;
+  });
 
-  // Cold path: bounded wait, then proceed; the load keeps running and warms
-  // the cache for the next turn.
-  const pending = loadAndCache(key, authHeader, includeStudentContext);
+  // Race the load against the soft deadline; the promise keeps running and
+  // populates the cache even when we proceed without it.
   const timeout = new Promise<typeof empty>((resolve) =>
-    setTimeout(() => resolve(empty), CTX_COLD_DEADLINE_MS),
+    setTimeout(() => resolve(hit?.ctx ?? empty), CTX_DEADLINE_MS),
   );
   return await Promise.race([pending, timeout]);
 }
-
 
 
 
