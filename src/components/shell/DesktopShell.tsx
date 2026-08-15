@@ -213,9 +213,16 @@ export function DesktopShell({ activeTab, onTabChange, title, subtitle, children
       </aside>
 
       {/* Workspace */}
-      <div className="relative flex-1 min-w-0 flex flex-col">
-        <header className="relative z-20 h-16 shrink-0 flex items-center gap-4 px-8 border-b border-border/40 bg-background/70 backdrop-blur-2xl">
-          <div className="min-w-0 flex-1">
+      <div className="relative z-10 flex-1 min-w-0 flex flex-col">
+        <header className="relative z-20 h-16 shrink-0 flex items-center gap-4 px-8 border-b border-foreground/10 bg-background/45 backdrop-blur-2xl backdrop-saturate-150">
+          <span aria-hidden className="liquid-hairline pointer-events-none absolute inset-x-8 -bottom-px opacity-60" />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-8 opacity-60"
+            style={{ background: 'linear-gradient(180deg, hsl(var(--ink) / 0.07), transparent)' }}
+          />
+          <div className="relative min-w-0 flex-1">
+            <p className="liquid-label mb-0.5">{t('Lumina', 'لومينا')}</p>
             <h1 className="font-display text-lg font-bold tracking-tight truncate">{title}</h1>
             {subtitle && (
               <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
@@ -223,6 +230,7 @@ export function DesktopShell({ activeTab, onTabChange, title, subtitle, children
           </div>
           <EffortSelector />
         </header>
+
 
         <main
           key={activeTab}
