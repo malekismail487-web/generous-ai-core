@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
+import { LiquidField } from "@/components/shell/LiquidField";
+
 import { BottomNav, TabType } from "@/components/BottomNav";
 import { SubjectsSection } from "@/components/SubjectsSection";
 import { FlashcardsSection } from "@/components/FlashcardsSection";
