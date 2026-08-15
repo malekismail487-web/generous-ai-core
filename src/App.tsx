@@ -126,6 +126,8 @@ const App = () => (
             </TooltipProvider>
           </FocusTimerProvider>
           </WallpaperProvider>
+          </AiEffortProvider>
+
         </ThemeLanguageProvider>
       </AuthProvider>
     </QueryClientProvider>
