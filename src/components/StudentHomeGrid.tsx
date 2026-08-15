@@ -9,9 +9,8 @@ import {
 } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { SmartNudges } from '@/components/student/SmartNudges';
-import { MorningBriefing } from '@/components/student/MorningBriefing';
 import { CognitiveMirrorGauge } from '@/components/student/CognitiveMirrorCard';
-import { MorningBriefingCard } from '@/components/student/MorningBriefingCard';
+import { BriefingDock } from '@/components/student/BriefingDock';
 
 export type GridAction =
   | 'mindmaps' | 'subjects' | 'examination' | 'flashcards' | 'notes' | 'sat'
@@ -63,9 +62,8 @@ export function StudentHomeGrid({ onNavigate, hasSchool }: StudentHomeGridProps)
       {/* Smart Nudges (toast-based, renders nothing) */}
       <SmartNudges />
 
-      {/* Morning Briefing Card */}
-      <MorningBriefing onNavigate={onNavigate} />
-      <MorningBriefingCard />
+      {/* Morning Briefing — collapsed to a single bar with a count */}
+      <BriefingDock onNavigate={onNavigate} />
 
       {/* Cognitive Mirror gauge */}
       <div className="mx-3 mb-4">

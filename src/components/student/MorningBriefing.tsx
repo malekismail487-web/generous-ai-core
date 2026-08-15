@@ -10,7 +10,7 @@ interface BriefingItem {
   text: string;
 }
 
-export function MorningBriefing({ onNavigate }: { onNavigate: (action: string & {}) => void }) {
+export function MorningBriefing({ onNavigate, onCount }: { onNavigate: (action: string & {}) => void; onCount?: (n: number) => void }) {
   const { user } = useAuth();
   const { t } = useThemeLanguage();
   const [items, setItems] = useState<BriefingItem[]>([]);
@@ -119,6 +119,7 @@ export function MorningBriefing({ onNavigate }: { onNavigate: (action: string & 
     }
 
     setItems(briefing);
+    onCount?.(briefing.length);
     setLoading(false);
     sessionStorage.setItem(`briefing-${new Date().toDateString()}`, 'shown');
   };
@@ -128,7 +129,7 @@ export function MorningBriefing({ onNavigate }: { onNavigate: (action: string & 
   return (
     <div className="mx-3 mb-4 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 animate-fade-in relative">
       <button
-        onClick={() => setDismissed(true)}
+        onClick={() => { setDismissed(true); onCount?.(0); }}
         className="absolute top-2 right-2 p-1 rounded-lg hover:bg-muted/50 text-muted-foreground"
       >
         <X size={14} />

@@ -101,8 +101,16 @@ function NavButton({
       )}
     >
       {active && (
-        <span className="absolute inset-0 rounded-2xl bg-muted/70 border border-border/50 shadow-[var(--shadow-card)]" />
+        <>
+          <span className="absolute inset-0 rounded-2xl bg-white/[0.06] border border-foreground/15" />
+          <span
+            aria-hidden
+            className="absolute inset-0 rounded-2xl opacity-[0.12]"
+            style={{ backgroundImage: 'repeating-linear-gradient(135deg, hsl(var(--foreground)) 0 1px, transparent 1px 8px)' }}
+          />
+        </>
       )}
+      <span className="absolute inset-0 rounded-2xl border border-transparent transition-colors duration-300 group-hover:border-foreground/10" />
       <span
         className={cn(
           'absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-full bg-foreground transition-all duration-500',
