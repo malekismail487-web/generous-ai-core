@@ -22,7 +22,6 @@ import SuperAdminVerify from "./pages/SuperAdminVerify";
 import ActivateSchool from "./pages/ActivateSchool";
 import SchoolAdminDashboard from "./pages/SchoolAdminDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
-import StudentDashboard from "./pages/StudentDashboard";
 import PendingApprovalPage from "./pages/PendingApprovalPage";
 import StudentAssignmentTake from "./pages/StudentAssignmentTake";
 import StudentAssignmentResults from "./pages/StudentAssignmentResults";
