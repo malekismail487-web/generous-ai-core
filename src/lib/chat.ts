@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { AI_EFFORT_DEFAULT, AiEffort } from '@/lib/aiEffort';
 
 export type Message = {
   id: string;
@@ -14,7 +15,9 @@ export async function streamChat({
   backgroundContext,
   adaptiveLevel,
   learningStyle,
+  effort,
   onDelta,
+  onReasoning,
   onDone,
   onError,
 }: {
@@ -23,7 +26,11 @@ export async function streamChat({
   backgroundContext?: { title: string; messages: { role: string; content: string }[] }[];
   adaptiveLevel?: string;
   learningStyle?: string;
+  /** Thinking tier — decides how long Lumina deliberates before answering. */
+  effort?: AiEffort;
   onDelta: (deltaText: string) => void;
+  /** Receives the model's streamed reasoning on the thinking tiers. */
+  onReasoning?: (deltaText: string) => void;
   onDone: () => void;
   onError: (error: Error) => void;
 }) {
@@ -44,8 +51,10 @@ export async function streamChat({
         backgroundContext: backgroundContext || [],
         adaptiveLevel: adaptiveLevel || undefined,
         learningStyle: learningStyle || undefined,
+        effort: effort || AI_EFFORT_DEFAULT,
       }),
     });
+
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
