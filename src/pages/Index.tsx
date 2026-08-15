@@ -44,6 +44,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const navigate = useNavigate();
+  const isDesktop = !useIsMobile();
+
   
   const { user, loading: authLoading } = useAuth();
   const { 
