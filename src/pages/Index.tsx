@@ -238,6 +238,7 @@ const Index = () => {
   return (
     <div className="h-screen bg-background relative flex flex-col overflow-hidden">
       <AnimatedBackground />
+      <LiquidField />
 
       {/* Persistent floating timer - shows when timer is active on any page except focustimer */}
       {activeTab !== 'focustimer' && (
@@ -246,20 +247,25 @@ const Index = () => {
 
       {/* Top bar - only show on sub-pages for back navigation */}
       {isSubPage && (
-        <header className="fixed top-0 left-0 right-0 z-50 h-14 glass-effect-strong border-b border-border/30">
-          <div className="flex items-center h-full px-4 gap-3">
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setActiveTab('home')}>
+        <header className="fixed top-0 left-0 right-0 z-50 h-14 border-b border-foreground/10 bg-background/45 backdrop-blur-2xl backdrop-saturate-150">
+          <span aria-hidden className="liquid-hairline pointer-events-none absolute inset-x-6 -bottom-px opacity-70" />
+          <div className="relative flex items-center h-full px-4 gap-3">
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setActiveTab('home')}>
               <ArrowLeft size={20} />
             </Button>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <div className="w-7 h-7 rounded-lg overflow-hidden">
                 <LuminaLogo size={28} />
               </div>
-              <span className="font-display font-bold text-foreground text-sm">{tabTitle}</span>
+              <div className="min-w-0">
+                <p className="liquid-label leading-none">{t('Lumina', 'لومينا')}</p>
+                <span className="block font-display font-bold text-foreground text-sm truncate">{tabTitle}</span>
+              </div>
             </div>
           </div>
         </header>
       )}
+
 
       <BottomNav
         activeTab={activeTab}
