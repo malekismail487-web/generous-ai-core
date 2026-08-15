@@ -37,8 +37,22 @@ const PROTECTED_KEYWORDS = [
   "ability_estimates", "ensemble_predictions", "lesson_events",
   "kt_sequence_state", "fsrs_card_state",
   "auth.users", "user_roles", "hardcoded_admins",
-  "tenants table", "ministry_sessions",
+  "tenants table", "ministry_sessions", "super_admin",
 ];
+
+/**
+ * Collapses casing, accents, zero-width characters and any separator run so
+ * "Ability __ Estimates" or "ability-estimates" cannot evade the guard.
+ */
+function normalizeForGuard(text: string): string {
+  return text
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u200b-\u200f\u2060\ufeff]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
 
 const ALLOWED_WIDGETS = ["heading","text","stat","table","form","list","chart","kanban"];
 const ALLOWED_CAPS = ["data.read","data.write","file.upload","notification.send","export.csv"];
@@ -114,8 +128,8 @@ Every widget.dataKey MUST match one of data[].key. Never reference real database
 Return ONLY the JSON object. No code fences, no prose outside it.`;
 
 function findProtected(text: string): string | null {
-  const l = text.toLowerCase();
-  for (const k of PROTECTED_KEYWORDS) if (l.includes(k)) return k;
+  const l = normalizeForGuard(text);
+  for (const k of PROTECTED_KEYWORDS) if (l.includes(normalizeForGuard(k))) return k;
   return null;
 }
 
