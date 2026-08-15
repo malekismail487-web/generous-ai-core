@@ -221,6 +221,9 @@ export function LiquidLens({
     el.style.setProperty('--gy', `${((event.clientY - rect.top) / rect.height) * 100}%`);
   };
 
+  // Turned off from Settings → the lens simply isn't part of the surface.
+  if (!lensEnabled) return null;
+
   return (
     <div
       ref={lensRef}
