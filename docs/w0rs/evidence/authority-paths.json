@@ -12,12 +12,7 @@
       "exactAuthority": "Validates a shared pre-authentication code that the client reuses as the reserved identity password; successful reserved-identity authentication receives backend Super Admin authority through email-based trust.",
       "reservedSuperAdminAccess": "indirect-full-access",
       "repositoryReachability": "called-before-authentication",
-      "callers": [
-        {
-          "file": "src/pages/Auth.tsx",
-          "line": 592
-        }
-      ],
+      "callers": [],
       "definitions": [
         {
           "file": "supabase/migrations/20260113003054_9cc6acb7-a80c-4848-9274-69cf22202ba1.sql",
@@ -35,12 +30,7 @@
       "exactAuthority": "Returns verification and lockout state used to set a browser session flag; backend authority already derives from the reserved JWT email.",
       "reservedSuperAdminAccess": "ui-access-not-backend-grant",
       "repositoryReachability": "called-by-authenticated-verification-page",
-      "callers": [
-        {
-          "file": "src/pages/SuperAdminVerify.tsx",
-          "line": 98
-        }
-      ],
+      "callers": [],
       "definitions": [
         {
           "file": "supabase/migrations/20260205222524_e4925930-c863-4624-ab2c-ac99d03e8793.sql",
@@ -68,12 +58,7 @@
       "exactAuthority": "Adds persistent generic admin authority to a caller-supplied target UUID.",
       "reservedSuperAdminAccess": "none-by-itself",
       "repositoryReachability": "RPC definition and generated/client reference found; deployed grants not verified",
-      "callers": [
-        {
-          "file": "src/hooks/useUserRole.tsx",
-          "line": 88
-        }
-      ],
+      "callers": [],
       "definitions": [
         {
           "file": "supabase/migrations/20260113003054_9cc6acb7-a80c-4848-9274-69cf22202ba1.sql",
@@ -91,13 +76,7 @@
       "exactAuthority": "Binds the authenticated user to school/profile state, creates School Admin membership, and also inserts generic admin authority through service-role writes.",
       "reservedSuperAdminAccess": "none",
       "repositoryReachability": "called-by-ActivateSchool-page",
-      "callers": [
-        {
-          "file": "src/pages/ActivateSchool.tsx",
-          "line": 41,
-          "transport": "supabase-js"
-        }
-      ],
+      "callers": [],
       "definitions": [
         {
           "file": "supabase/functions/activate-school/index.ts"

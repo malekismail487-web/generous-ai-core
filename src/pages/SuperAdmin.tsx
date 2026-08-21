@@ -15,7 +15,6 @@ import {
   Plus,
   ShieldAlert,
   LogOut,
-  Copy,
   FlaskConical,
   GraduationCap,
   Users,
@@ -87,7 +86,6 @@ export default function SuperAdmin() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [testingRole, setTestingRole] = useState<TestingRole>('none');
   const [activeTab, setActiveTab] = useState<'schools' | 'analytics' | 'ministry' | 'lct' | 'api' | 'extensions'>('schools');
-  const [isVerified, setIsVerified] = useState<boolean | null>(null);
   
   // Create school form state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -96,26 +94,6 @@ export default function SuperAdmin() {
   const [newActivationCode, setNewActivationCode] = useState('');
   const [newSchoolAddress, setNewSchoolAddress] = useState('');
   const [creating, setCreating] = useState(false);
-
-  // Check if super admin is verified
-  useEffect(() => {
-    if (loading) return;
-
-    // Non super admins never sit on a spinner: resolve the gate immediately so
-    // the access-denied screen renders instead of hanging forever.
-    if (!isSuperAdmin) {
-      setIsVerified(false);
-      return;
-    }
-
-    const verified = sessionStorage.getItem('superAdminVerified');
-    if (verified === 'true') {
-      setIsVerified(true);
-    } else {
-      setIsVerified(false);
-      navigate('/super-admin-verify');
-    }
-  }, [loading, isSuperAdmin, navigate]);
 
 
   const fetchSchools = useCallback(async () => {
@@ -135,14 +113,12 @@ export default function SuperAdmin() {
   }, [toast]);
 
   useEffect(() => {
-    if (isSuperAdmin && isVerified) {
+    if (isSuperAdmin) {
       fetchSchools();
     }
-  }, [isSuperAdmin, isVerified, fetchSchools]);
+  }, [isSuperAdmin, fetchSchools]);
 
-  // Handle sign out and clear verification
   const handleSignOut = async () => {
-    sessionStorage.removeItem('superAdminVerified');
     await signOut();
     navigate('/auth');
   };
@@ -257,12 +233,7 @@ export default function SuperAdmin() {
     fetchSchools();
   };
 
-  const copyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    toast({ title: 'Code copied to clipboard' });
-  };
-
-  if (loading || isVerified === null) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -286,16 +257,6 @@ export default function SuperAdmin() {
       </div>
     );
   }
-
-  if (!isVerified) {
-    // Will redirect via useEffect, show loading
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
 
   // Render testing mode UI - navigate to actual dashboards with a banner
   if (testingRole !== 'none') {
@@ -555,7 +516,7 @@ export default function SuperAdmin() {
                 <TableRow>
                   <TableHead>School Name</TableHead>
                   <TableHead>Short ID</TableHead>
-                  <TableHead>Activation Code</TableHead>
+                  <TableHead>Activation</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Code Status</TableHead>
                   <TableHead>Created</TableHead>
@@ -570,23 +531,9 @@ export default function SuperAdmin() {
                       <code className="bg-muted px-2 py-1 rounded text-xs">{school.code}</code>
                     </TableCell>
                     <TableCell>
-                      {school.activation_code ? (
-                        <div className="flex items-center gap-2">
-                          <code className="bg-muted px-2 py-1 rounded text-xs">
-                            {school.activation_code}
-                          </code>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => copyCode(school.activation_code!)}
-                          >
-                            <Copy className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+                      <span className="text-muted-foreground">
+                        {school.code_used ? 'Consumed' : 'Available'}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <span

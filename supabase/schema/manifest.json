@@ -57,13 +57,13 @@
     },
     {
       "path": "supabase/schema/65_authority_functions.sql",
-      "canonicalLfBytes": 16330,
-      "canonicalLfSha256": "2e6a3ebc66f86c651412ef64ee9b728a514571cf2ef0010aaee30a6fa736f652"
+      "canonicalLfBytes": 20467,
+      "canonicalLfSha256": "a463517dab7f5ff2689e6669cf49525aaa12c4fb1bc4e86555e5a4be64f75c97"
     },
     {
       "path": "supabase/schema/70_rls.sql",
-      "canonicalLfBytes": 138648,
-      "canonicalLfSha256": "c57d647653c87f413b8900e289a2420a853384d357320068fb938355f88c1b07"
+      "canonicalLfBytes": 138653,
+      "canonicalLfSha256": "ecf3f4fb53e36813372d91482c853717ce68fd1222b095414486ceb4f8e1c284"
     },
     {
       "path": "supabase/schema/80_storage_realtime.sql",
@@ -72,12 +72,12 @@
     },
     {
       "path": "supabase/schema/90_grants.sql",
-      "canonicalLfBytes": 5595,
-      "canonicalLfSha256": "76baecc3a25ff7bb6f6ad1cd684c12106fc080c245392c0090de47c222a5aafe"
+      "canonicalLfBytes": 5656,
+      "canonicalLfSha256": "1418e3837f91ca30ae51106283d2703d324bf5652cb65c35185682b7e5bb344b"
     }
   ],
   "baseline": {
-    "canonicalLfBytes": 565820,
-    "canonicalLfSha256": "54ba36aeb877d5464539e2193faf0eb625ff90d66b899d3e8d436a3a95125263"
+    "canonicalLfBytes": 570023,
+    "canonicalLfSha256": "f6a5f5c80f3a5922df41d15f5e73a35c05ca0191f9c8db85dd6c2d222d658443"
   }
 }

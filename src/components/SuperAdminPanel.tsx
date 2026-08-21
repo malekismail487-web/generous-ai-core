@@ -6,7 +6,7 @@ import AttackLogsPanel from '@/components/AttackLogsPanel';
 import MinistryCodeGenerator from '@/components/admin/MinistryCodeGenerator';
 import TenantsPanel from '@/components/admin/TenantsPanel';
 import TenantObservatory from '@/components/admin/TenantObservatory';
-import { SUPER_ADMIN_EMAIL } from '@/lib/config';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 type School = {
   id: string;
@@ -26,23 +26,8 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const { isSuperAdmin, loading: authorityLoading } = useRoleGuard();
   const [activeTab, setActiveTab] = useState<'schools' | 'security' | 'ministry' | 'tenants' | 'observatory'>('schools');
-
-  useEffect(() => {
-    const checkEmail = async () => {
-      const { data, error } = await supabase.auth.getUser();
-
-      if (error || !data.user) {
-        setAuthorized(false);
-        return;
-      }
-
-      setAuthorized(data.user.email === SUPER_ADMIN_EMAIL);
-    };
-
-    checkEmail();
-  }, []);
 
   const fetchSchools = async () => {
     setLoading(true);
@@ -76,12 +61,12 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
   };
 
   useEffect(() => {
-    if (authorized) {
+    if (isSuperAdmin) {
       fetchSchools();
     }
-  }, [authorized]);
+  }, [isSuperAdmin]);
 
-  if (authorized === null) {
+  if (authorityLoading) {
     return (
       <div className="flex-1 flex items-center justify-center pt-16 pb-20">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -89,7 +74,7 @@ export default function SuperAdminPanel({ onBack }: SuperAdminPanelProps) {
     );
   }
 
-  if (!authorized) {
+  if (!isSuperAdmin) {
     return (
       <div className="flex-1 pt-16 pb-20 px-4">
         <div className="max-w-2xl mx-auto">

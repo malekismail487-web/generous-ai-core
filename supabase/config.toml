@@ -1,4 +1,4 @@
-project_id = "ivzltzehosalijmkgzhb"
+project_id = "lumina-local"
 
 [functions.lumina-api]
 verify_jwt = false

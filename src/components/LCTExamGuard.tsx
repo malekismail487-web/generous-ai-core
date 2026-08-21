@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 import LCTExamScreen from '@/components/student/LCTExamScreen';
 import { Loader2, Brain, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SUPER_ADMIN_EMAIL } from '@/lib/config';
 
 // ─── Constants ──────────────────────────────────────────────────────────────────
 
@@ -29,7 +29,7 @@ interface LCTExamGuardProps {
 
 export default function LCTExamGuard({ children }: LCTExamGuardProps) {
   const { user, loading: authLoading } = useAuth();
-  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
+  const { isSuperAdmin, loading: roleLoading } = useRoleGuard();
   const [lockData, setLockData] = useState<LockData | null>(null);
   const [checking, setChecking] = useState(true);
   const [checkFailed, setCheckFailed] = useState(false);
@@ -66,7 +66,7 @@ export default function LCTExamGuard({ children }: LCTExamGuardProps) {
   // ─── Initial Lock Check with Retry ────────────────────────────────────────
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || roleLoading) return;
     if (!user || isSuperAdmin) {
       setLockData(null);
       setChecking(false);
@@ -115,7 +115,7 @@ export default function LCTExamGuard({ children }: LCTExamGuardProps) {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [user, authLoading, checkLock]);
+  }, [user, authLoading, roleLoading, checkLock, isSuperAdmin]);
 
   // ─── Periodic Re-check ───────────────────────────────────────────────────
 
@@ -165,7 +165,7 @@ export default function LCTExamGuard({ children }: LCTExamGuardProps) {
 
   // ─── Render: Auth Loading ─────────────────────────────────────────────────
 
-  if (authLoading) {
+  if (authLoading || roleLoading) {
     return <>{children}</>;
   }
 

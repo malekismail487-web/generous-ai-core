@@ -7,10 +7,10 @@ import { cn } from '@/lib/utils';
 export function TeacherRequestCard() {
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { isTeacher, isAdmin, teacherRequest, requestTeacherAccess } = useUserRole();
+  const { isTeacher, isSchoolAdmin, teacherRequest, requestTeacherAccess } = useUserRole();
 
   // Already a teacher or admin
-  if (isTeacher || isAdmin) {
+  if (isTeacher || isSchoolAdmin) {
     return (
       <div className="liquid-glass rounded-2xl p-5">
         <div className="flex items-center gap-3 mb-3">

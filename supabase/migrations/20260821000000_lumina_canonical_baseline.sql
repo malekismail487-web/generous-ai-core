@@ -14490,7 +14490,9 @@ BEGIN
     'success', true,
     'school_id', school_record.id,
     'school_name', school_record.name,
-    'tenant_id', school_record.tenant_id
+    'tenant_id', school_record.tenant_id,
+    'tenant_slug', (SELECT t.slug FROM public.tenants t WHERE t.id = school_record.tenant_id),
+    'tenant_name', (SELECT t.country_name FROM public.tenants t WHERE t.id = school_record.tenant_id)
   );
 END;
 $$;
@@ -14588,6 +14590,110 @@ BEGIN
     jsonb_build_object('reason_recorded', normalized_reason IS NOT NULL)
   );
   RETURN jsonb_build_object('success', true);
+END;
+$$;
+
+CREATE FUNCTION public.approve_teacher_request(p_request_id uuid, p_admin_notes text DEFAULT NULL) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path TO 'pg_catalog', 'public', 'auth'
+AS $$
+DECLARE
+  actor_id uuid := auth.uid();
+  request_record record;
+BEGIN
+  IF actor_id IS NULL THEN
+    RAISE EXCEPTION 'Authentication required' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT tr.*, p.school_id
+  INTO request_record
+  FROM public.teacher_requests tr
+  JOIN public.profiles p ON p.id = tr.user_id
+  WHERE tr.id = p_request_id
+  FOR UPDATE OF tr;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Teacher request not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF request_record.school_id IS NULL OR NOT public.is_school_admin_of(actor_id, request_record.school_id) THEN
+    RAISE EXCEPTION 'School Admin authority required for this school' USING ERRCODE = '42501';
+  END IF;
+  IF request_record.status = 'approved' THEN
+    RETURN jsonb_build_object('success', true, 'already_approved', true);
+  END IF;
+  IF request_record.status <> 'pending' THEN
+    RAISE EXCEPTION 'Only pending teacher requests can be approved' USING ERRCODE = '55000';
+  END IF;
+
+  UPDATE public.teacher_requests
+  SET status = 'approved',
+      admin_notes = NULLIF(left(btrim(COALESCE(p_admin_notes, '')), 1000), ''),
+      updated_at = now()
+  WHERE id = p_request_id AND status = 'pending';
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Teacher request changed concurrently' USING ERRCODE = '40001';
+  END IF;
+
+  UPDATE public.profiles
+  SET user_type = 'teacher', status = 'approved', is_active = true
+  WHERE id = request_record.user_id AND school_id = request_record.school_id;
+
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (request_record.user_id, 'teacher'::public.app_role)
+  ON CONFLICT (user_id, role) DO NOTHING;
+
+  INSERT INTO public.platform_audit_log (event_type, actor_user_id, target_user_id, school_id, request_id)
+  VALUES ('school.teacher_request_approved', actor_id, request_record.user_id, request_record.school_id, p_request_id);
+
+  RETURN jsonb_build_object('success', true, 'user_id', request_record.user_id);
+END;
+$$;
+
+CREATE FUNCTION public.reject_teacher_request(p_request_id uuid, p_admin_notes text DEFAULT NULL) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path TO 'pg_catalog', 'public', 'auth'
+AS $$
+DECLARE
+  actor_id uuid := auth.uid();
+  request_record record;
+BEGIN
+  IF actor_id IS NULL THEN
+    RAISE EXCEPTION 'Authentication required' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT tr.*, p.school_id
+  INTO request_record
+  FROM public.teacher_requests tr
+  JOIN public.profiles p ON p.id = tr.user_id
+  WHERE tr.id = p_request_id
+  FOR UPDATE OF tr;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Teacher request not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF request_record.school_id IS NULL OR NOT public.is_school_admin_of(actor_id, request_record.school_id) THEN
+    RAISE EXCEPTION 'School Admin authority required for this school' USING ERRCODE = '42501';
+  END IF;
+  IF request_record.status = 'rejected' THEN
+    RETURN jsonb_build_object('success', true, 'already_rejected', true);
+  END IF;
+  IF request_record.status <> 'pending' THEN
+    RAISE EXCEPTION 'Only pending teacher requests can be rejected' USING ERRCODE = '55000';
+  END IF;
+
+  UPDATE public.teacher_requests
+  SET status = 'rejected',
+      admin_notes = NULLIF(left(btrim(COALESCE(p_admin_notes, '')), 1000), ''),
+      updated_at = now()
+  WHERE id = p_request_id AND status = 'pending';
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Teacher request changed concurrently' USING ERRCODE = '40001';
+  END IF;
+
+  INSERT INTO public.platform_audit_log (event_type, actor_user_id, target_user_id, school_id, request_id)
+  VALUES ('school.teacher_request_rejected', actor_id, request_record.user_id, request_record.school_id, p_request_id);
+
+  RETURN jsonb_build_object('success', true, 'user_id', request_record.user_id);
 END;
 $$;
 
@@ -16469,7 +16575,7 @@ CREATE POLICY "Users can delete their own materials" ON public.materials FOR DEL
 -- Canonical replacement for historical policy: chat_messages Users can delete their own messages
 --
 
-CREATE POLICY "Users and School Admin can delete school messages" ON public.chat_messages FOR DELETE TO authenticated USING (user_id = auth.uid() OR EXISTS (SELECT 1 FROM public.chat_rooms cr WHERE cr.id = chat_messages.room_id AND public.is_school_admin_of(auth.uid(), cr.school_id)) OR public.is_super_admin());
+CREATE POLICY "Users and School Admin can delete school messages" ON public.chat_messages FOR DELETE TO authenticated USING (user_id = auth.uid() OR EXISTS (SELECT 1 FROM public.chat_rooms cr WHERE cr.id = chat_messages.chat_room_id AND public.is_school_admin_of(auth.uid(), cr.school_id)) OR public.is_super_admin());
 
 --
 -- Name: notes Users can delete their own notes; Type: POLICY; Schema: public; Owner: -
@@ -19660,6 +19766,7 @@ DECLARE
   function_oid oid;
   authenticated_allowlist constant text[] := ARRAY[
     'activate_school', 'activate_tenant', 'approve_invite_request', 'approve_school_profile',
+    'approve_teacher_request',
     'assign_ministry_role', 'attach_bandit_reward', 'attach_ensemble_outcome',
     'can_view_student_mastery', 'check_and_increment_cost', 'check_lct_lock',
     'check_ministry_ip_ban', 'check_ministry_session', 'create_school_with_code',
@@ -19682,6 +19789,7 @@ DECLARE
     'mi_list_insights', 'mi_national_overview', 'mi_regional_breakdown',
     'mi_run_daily_aggregation', 'mi_school_snapshot', 'provision_tenant',
     'publish_change_request', 'record_review_delivered', 'reject_school_profile',
+    'reject_teacher_request',
     'resolve_ministry_request', 'review_change_request', 'revoke_ministry_role',
     'revoke_platform_role', 'rotate_teacher_category_code', 'set_feature_flag',
     'signup_as_moderator', 'signup_as_parent', 'signup_with_invite_code',

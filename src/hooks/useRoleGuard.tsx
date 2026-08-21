@@ -1,10 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { SUPER_ADMIN_EMAIL } from '@/lib/config';
 import { authLogger } from '@/lib/logger';
 
-export type UserRole = 'super_admin' | 'school_admin' | 'teacher' | 'student' | 'parent' | 'none';
+export type UserRole = 'super_admin' | 'school_admin' | 'teacher' | 'student' | 'parent' | 'moderator' | 'none';
 
 export interface UserProfile {
   id: string;
@@ -22,7 +21,6 @@ export interface School {
   id: string;
   name: string;
   code: string;
-  activation_code: string | null;
   status: string;
   code_used: boolean;
   address: string | null;
@@ -30,135 +28,126 @@ export interface School {
   tenant_id: string;
 }
 
+type AuthorityContext = {
+  user_id: string;
+  aal: 'aal1' | 'aal2';
+  is_super_admin: boolean;
+  school_admin_school_ids: string[];
+};
+
+const emptyAuthority: AuthorityContext = {
+  user_id: '',
+  aal: 'aal1',
+  is_super_admin: false,
+  school_admin_school_ids: [],
+};
+
 export function useRoleGuard() {
   const { user, loading: authLoading } = useAuth();
   const [role, setRole] = useState<UserRole>('none');
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [school, setSchool] = useState<School | null>(null);
+  const [authority, setAuthority] = useState<AuthorityContext>(emptyAuthority);
   const [loading, setLoading] = useState(true);
-
-  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
-  const isSchoolAdmin = role === 'school_admin';
-  const isTeacher = role === 'teacher';
-  const isStudent = role === 'student';
-  const isParent = role === 'parent';
 
   const fetchUserData = useCallback(async () => {
     if (!user) {
       setRole('none');
       setProfile(null);
       setSchool(null);
+      setAuthority(emptyAuthority);
       setLoading(false);
       return;
     }
 
-    // Check if super admin first
-    if (user.email === SUPER_ADMIN_EMAIL) {
+    setLoading(true);
+    const [{ data: authorityData, error: authorityError }, { data: profileData, error: profileError }] = await Promise.all([
+      supabase.rpc('get_authority_context' as never),
+      supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+    ]);
+
+    if (authorityError) authLogger.error('Error fetching server authority context', authorityError);
+    if (profileError) authLogger.error('Error fetching profile by immutable ID', profileError);
+
+    const nextAuthority = authorityError || !authorityData
+      ? { ...emptyAuthority, user_id: user.id }
+      : authorityData as unknown as AuthorityContext;
+    const nextProfile = profileData as UserProfile | null;
+    setAuthority(nextAuthority);
+    setProfile(nextProfile);
+
+    if (nextAuthority.is_super_admin) {
       setRole('super_admin');
-      setLoading(false);
-      return;
-    }
-
-    // Fetch profile - try by ID first, then by email
-    let profileData = null;
-    
-    const { data: idProfileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (profileError) {
-      authLogger.error('Error fetching profile by ID', profileError);
-    }
-
-    profileData = idProfileData;
-
-    // If not found by ID, try by email (for users whose profile was created before auth signup)
-    if (!profileData && user.email) {
-      const { data: emailProfiles } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('email', user.email.toLowerCase())
-        .order('is_active', { ascending: false });
-      
-      if (emailProfiles && emailProfiles.length > 0) {
-        // Prefer approved/active profiles
-        const approvedProfile = emailProfiles.find(p => p.status === 'approved' && p.is_active);
-        profileData = approvedProfile || emailProfiles[0];
-      }
-    }
-
-    if (!profileData) {
-      setRole('none');
-      setProfile(null);
-      setLoading(false);
-      return;
-    }
-
-    setProfile(profileData as UserProfile);
-
-    // Set role based on user_type
-    const userType = profileData.user_type;
-    if (userType === 'school_admin') {
+    } else if (
+      nextProfile?.user_type === 'school_admin'
+      && nextProfile.school_id
+      && nextProfile.status === 'approved'
+      && nextProfile.is_active
+      && nextAuthority.school_admin_school_ids.includes(nextProfile.school_id)
+    ) {
       setRole('school_admin');
-    } else if (userType === 'teacher') {
-      setRole('teacher');
-    } else if (userType === 'student') {
-      setRole('student');
-    } else if (userType === 'parent') {
-      setRole('parent');
+    } else if (
+      nextProfile?.status === 'approved'
+      && nextProfile.is_active
+      && ['teacher', 'student', 'parent', 'moderator'].includes(nextProfile.user_type)
+    ) {
+      setRole(nextProfile.user_type as UserRole);
     } else {
       setRole('none');
     }
 
-    // Fetch school if user has one
-    if (profileData.school_id) {
-      const { data: schoolData } = await supabase
+    if (nextProfile?.school_id) {
+      const { data: schoolData, error: schoolError } = await supabase
         .from('schools')
-        .select('*')
-        .eq('id', profileData.school_id)
-        .single();
-
-      if (schoolData) {
-        setSchool(schoolData as School);
-      }
+        .select('id,name,code,status,code_used,address,created_at,tenant_id')
+        .eq('id', nextProfile.school_id)
+        .maybeSingle();
+      if (schoolError) authLogger.error('Error fetching school', schoolError);
+      setSchool(schoolData as School | null);
+    } else {
+      setSchool(null);
     }
-
     setLoading(false);
   }, [user]);
 
   useEffect(() => {
-    if (!authLoading) {
-      fetchUserData();
-    }
+    if (!authLoading) void fetchUserData();
   }, [authLoading, fetchUserData]);
 
-  const activateSchoolCode = async (code: string): Promise<{ success: boolean; error?: string; schoolName?: string }> => {
-    if (!user) {
-      return { success: false, error: 'Not authenticated' };
-    }
-
-    const { data, error } = await supabase.rpc('activate_school_with_code', {
+  const activateSchoolCode = useCallback(async (
+    code: string,
+  ): Promise<{
+    success: boolean;
+    error?: string;
+    schoolName?: string;
+    tenant_id?: string;
+    tenant_slug?: string;
+    tenant_name?: string;
+  }> => {
+    if (!user) return { success: false, error: 'Not authenticated' };
+    const { data, error } = await supabase.rpc('activate_school' as never, {
       activation_code_input: code,
-      user_uuid: user.id
-    });
-
+    } as never);
     if (error) {
       authLogger.error('Error activating school', error);
       return { success: false, error: error.message };
     }
-
-    const result = data as { success: boolean; error?: string; school_name?: string };
-
-    if (result.success) {
-      // Refresh user data
-      await fetchUserData();
-      return { success: true, schoolName: result.school_name };
-    }
-
-    return { success: false, error: result.error || 'Failed to activate school' };
-  };
+    const result = data as unknown as {
+      success: boolean;
+      school_name?: string;
+      tenant_id?: string;
+      tenant_slug?: string;
+      tenant_name?: string;
+    };
+    await fetchUserData();
+    return {
+      success: result.success,
+      schoolName: result.school_name,
+      tenant_id: result.tenant_id,
+      tenant_slug: result.tenant_slug,
+      tenant_name: result.tenant_name,
+    };
+  }, [fetchUserData, user]);
 
   return {
     user,
@@ -167,13 +156,15 @@ export function useRoleGuard() {
     school,
     tenantId: school?.tenant_id ?? null,
     loading: authLoading || loading,
-    isSuperAdmin,
-    isSchoolAdmin,
-    isTeacher,
-    isStudent,
-    isParent,
+    assuranceLevel: authority.aal,
+    isSuperAdmin: role === 'super_admin',
+    isSchoolAdmin: role === 'school_admin',
+    isTeacher: role === 'teacher',
+    isStudent: role === 'student',
+    isParent: role === 'parent',
+    isModerator: role === 'moderator',
     isActive: profile?.is_active ?? false,
-    hasProfile: !!profile,
+    hasProfile: Boolean(profile),
     activateSchoolCode,
     refresh: fetchUserData,
   };

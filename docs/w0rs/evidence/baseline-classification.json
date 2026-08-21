@@ -44,15 +44,8 @@
           "supabase/legacy/lovable-migrations/20260711001138_dd633da7-0d13-424b-86e3-bc2150d561ca.sql"
         ],
         "highSignalClientAuthorityFiles": [
-          "src/components/AdminPanel.tsx",
-          "src/components/ProfileSection.tsx",
-          "src/components/SchoolChatSection.tsx",
-          "src/components/TeacherRequestCard.tsx",
-          "src/hooks/useAdminPanel.tsx",
-          "src/hooks/useUserRole.tsx",
           "src/integrations/supabase/types.ts",
           "src/lib/extensions/blueprint.ts",
-          "src/pages/Auth.tsx",
           "src/pages/SchoolAdminDashboard.tsx"
         ],
         "interpretation": "Pattern matches are review targets, not proof that each file grants or trusts generic admin."
@@ -210,12 +203,7 @@
           "caller_supplied_uuid"
         ]
       },
-      "callers": [
-        {
-          "file": "src/hooks/useRoleGuard.tsx",
-          "line": 142
-        }
-      ],
+      "callers": [],
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
@@ -829,7 +817,7 @@
       "callers": [
         {
           "file": "src/pages/Auth.tsx",
-          "line": 616
+          "line": 557
         },
         {
           "file": "src/pages/MinistryLogin.tsx",
@@ -897,12 +885,7 @@
           "super_admin_helper"
         ]
       },
-      "callers": [
-        {
-          "file": "src/pages/SuperAdminVerify.tsx",
-          "line": 57
-        }
-      ],
+      "callers": [],
       "recommendation": "retain",
       "confidence": "low",
       "decisionRequired": true,
@@ -953,7 +936,7 @@
       "callers": [
         {
           "file": "src/pages/SuperAdmin.tsx",
-          "line": 230
+          "line": 206
         }
       ],
       "recommendation": "retain",
@@ -981,7 +964,7 @@
       "callers": [
         {
           "file": "src/components/SuperAdminPanel.tsx",
-          "line": 69
+          "line": 54
         }
       ],
       "recommendation": "retain",
@@ -1930,12 +1913,7 @@
           "code_verification"
         ]
       },
-      "callers": [
-        {
-          "file": "src/hooks/useUserRole.tsx",
-          "line": 88
-        }
-      ],
+      "callers": [],
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
@@ -2060,12 +2038,7 @@
         "searchPathPinned": true,
         "authorizationSignals": []
       },
-      "callers": [
-        {
-          "file": "src/hooks/useUserRole.tsx",
-          "line": 35
-        }
-      ],
+      "callers": [],
       "recommendation": "retain",
       "confidence": "low",
       "decisionRequired": true,
@@ -2211,7 +2184,12 @@
           "super_admin_helper"
         ]
       },
-      "callers": [],
+      "callers": [
+        {
+          "file": "supabase/functions/generate-lct/index.ts",
+          "line": 669
+        }
+      ],
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
@@ -2457,7 +2435,7 @@
         },
         {
           "file": "src/pages/Auth.tsx",
-          "line": 397
+          "line": 352
         }
       ],
       "recommendation": "retain",
@@ -3561,7 +3539,7 @@
       "callers": [
         {
           "file": "src/components/MinistryAccessAlert.tsx",
-          "line": 86
+          "line": 83
         }
       ],
       "recommendation": "retain",
@@ -3788,11 +3766,11 @@
       "callers": [
         {
           "file": "src/pages/Auth.tsx",
-          "line": 409
+          "line": 364
         },
         {
           "file": "src/pages/Auth.tsx",
-          "line": 1261
+          "line": 1155
         }
       ],
       "recommendation": "retain",
@@ -3820,11 +3798,11 @@
       "callers": [
         {
           "file": "src/pages/Auth.tsx",
-          "line": 376
+          "line": 331
         },
         {
           "file": "src/pages/Auth.tsx",
-          "line": 765
+          "line": 659
         }
       ],
       "recommendation": "retain",
@@ -4217,12 +4195,7 @@
           "code_verification"
         ]
       },
-      "callers": [
-        {
-          "file": "src/pages/Auth.tsx",
-          "line": 592
-        }
-      ],
+      "callers": [],
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
@@ -4253,7 +4226,7 @@
       "callers": [
         {
           "file": "src/pages/Auth.tsx",
-          "line": 626
+          "line": 567
         },
         {
           "file": "src/pages/MinistryLogin.tsx",
@@ -4285,12 +4258,7 @@
           "code_verification"
         ]
       },
-      "callers": [
-        {
-          "file": "src/pages/SuperAdminVerify.tsx",
-          "line": 98
-        }
-      ],
+      "callers": [],
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
@@ -4542,7 +4510,6 @@
           "src/hooks/useMaterials.tsx",
           "src/hooks/useMinistryAnnouncements.tsx",
           "src/hooks/useMinistryControl.tsx",
-          "src/hooks/useRoleGuard.tsx",
           "src/hooks/useSchool.tsx",
           "src/hooks/useSchoolAdmin.tsx",
           "src/hooks/useSchoolChat.tsx",
@@ -4575,7 +4542,6 @@
           "src/lib/aiEffort.ts",
           "src/lib/chat.ts",
           "src/lib/coldStartBootstrap.ts",
-          "src/lib/config.ts",
           "src/lib/contentScanner.ts",
           "src/lib/deviceFingerprint.ts",
           "src/lib/extensions/blueprint.ts",
@@ -4616,6 +4582,7 @@
           "src/pages/StudentAssignmentTake.tsx",
           "src/pages/StudentLiveRoom.tsx",
           "src/pages/SuperAdmin.tsx",
+          "src/pages/SuperAdminVerify.tsx",
           "src/pages/TeacherDashboard.tsx",
           "src/pages/TeacherLiveConsole.tsx",
           "supabase/functions/_shared/akt.ts",
@@ -7515,8 +7482,7 @@
       ],
       "evidence": {
         "firstPartyCodeReferences": [
-          "src/components/AttackLogsPanel.tsx",
-          "src/pages/SuperAdminVerify.tsx"
+          "src/components/AttackLogsPanel.tsx"
         ]
       }
     },
@@ -7534,8 +7500,7 @@
       ],
       "evidence": {
         "firstPartyCodeReferences": [
-          "src/components/AttackLogsPanel.tsx",
-          "src/pages/SuperAdminVerify.tsx"
+          "src/components/AttackLogsPanel.tsx"
         ]
       }
     },
@@ -7863,8 +7828,6 @@
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
         "firstPartyCodeReferences": [
-          "src/hooks/useAdminPanel.tsx",
-          "src/hooks/useUserRole.tsx",
           "src/lib/extensions/blueprint.ts",
           "supabase/functions/activate-school/index.ts",
           "supabase/functions/calibrate-predictions/index.ts",
@@ -8065,6 +8028,7 @@
           "src/hooks/useActivityTracker.tsx",
           "src/hooks/useAdaptiveIntelligence.tsx",
           "src/hooks/useAdaptiveLevel.tsx",
+          "src/hooks/useAdminPanel.tsx",
           "src/hooks/useAiEffort.tsx",
           "src/hooks/useAssignments.tsx",
           "src/hooks/useAuth.tsx",
@@ -8078,7 +8042,6 @@
           "src/hooks/useLiveMeetings.tsx",
           "src/hooks/useLuminaLiveSession.tsx",
           "src/hooks/useMinistryAnnouncements.tsx",
-          "src/hooks/useRoleGuard.tsx",
           "src/hooks/useSchoolAdmin.tsx",
           "src/hooks/useSchoolChat.tsx",
           "src/hooks/useSchoolSubjects.tsx",

@@ -30,6 +30,7 @@ DECLARE
   function_oid oid;
   authenticated_allowlist constant text[] := ARRAY[
     'activate_school', 'activate_tenant', 'approve_invite_request', 'approve_school_profile',
+    'approve_teacher_request',
     'assign_ministry_role', 'attach_bandit_reward', 'attach_ensemble_outcome',
     'can_view_student_mastery', 'check_and_increment_cost', 'check_lct_lock',
     'check_ministry_ip_ban', 'check_ministry_session', 'create_school_with_code',
@@ -52,6 +53,7 @@ DECLARE
     'mi_list_insights', 'mi_national_overview', 'mi_regional_breakdown',
     'mi_run_daily_aggregation', 'mi_school_snapshot', 'provision_tenant',
     'publish_change_request', 'record_review_delivered', 'reject_school_profile',
+    'reject_teacher_request',
     'resolve_ministry_request', 'review_change_request', 'revoke_ministry_role',
     'revoke_platform_role', 'rotate_teacher_category_code', 'set_feature_flag',
     'signup_as_moderator', 'signup_as_parent', 'signup_with_invite_code',

@@ -66,7 +66,6 @@ const corsHeaders = {
 };
 
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const SUPER_ADMIN_EMAIL = "malekismail487@gmail.com";
 
 // AI Model configuration
 const PRIMARY_MODEL = "openai/gpt-5.6-sol";
@@ -655,9 +654,21 @@ async function verifyAdmin(req: Request, supabase: any): Promise<{ isAdmin: bool
   try {
     const { data: { user }, error } = await supabase.auth.getUser(token);
     if (error || !user) return { isAdmin: false };
-    
-    const isAdmin = user.email?.toLowerCase() === SUPER_ADMIN_EMAIL;
-    return { isAdmin, userId: user.id };
+
+    // The user-scoped RPC derives auth.uid() and requires both an active
+    // immutable-UUID assignment and an AAL2 JWT. The service-role client is
+    // never used to decide the caller's authority.
+    const userScoped = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      {
+        global: { headers: { Authorization: authHeader } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      },
+    );
+    const { data: isAdmin, error: authorityError } = await userScoped.rpc("is_super_admin");
+    if (authorityError || isAdmin !== true) return { isAdmin: false };
+    return { isAdmin: true, userId: user.id };
   } catch {
     return { isAdmin: false };
   }

@@ -31,7 +31,7 @@ export function SchoolChatSection({ onBack }: SchoolChatSectionProps) {
   } = useSchoolChat();
   
   const { isSuspended, isBricked, getStrikeCount } = useStrikes();
-  const { isTeacher, isAdmin } = useUserRole();
+  const { isTeacher, isSchoolAdmin } = useUserRole();
   const { user } = useAuth();
 
   const scrollToBottom = () => {
@@ -127,7 +127,7 @@ export function SchoolChatSection({ onBack }: SchoolChatSectionProps) {
           </button>
         ))}
         
-        {(isTeacher || isAdmin) && (
+        {(isTeacher || isSchoolAdmin) && (
           <>
             {showNewRoom ? (
               <div className="flex items-center gap-1">
@@ -159,7 +159,7 @@ export function SchoolChatSection({ onBack }: SchoolChatSectionProps) {
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {chatRooms.length === 0 ? (
           <div className="text-center text-muted-foreground text-sm py-10">
-            No chat rooms available. {(isTeacher || isAdmin) && 'Create one to get started!'}
+            No chat rooms available. {(isTeacher || isSchoolAdmin) && 'Create one to get started!'}
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center text-muted-foreground text-sm py-10">

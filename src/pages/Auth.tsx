@@ -15,7 +15,6 @@ import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 import { getSelectedTenant, reconcileTenantFromCode, setSelectedTenant } from '@/lib/selectedTenant';
-import { SUPER_ADMIN_EMAIL } from '@/lib/config';
 import { lovable } from '@/integrations/lovable/index';
 import { AbstractField } from '@/components/motion/AbstractField';
 
@@ -145,57 +144,13 @@ export default function Auth() {
           }
         }
 
-        // Super Admin verification is only reachable after the dedicated admin-code login path.
-        // Social OAuth and normal sessions for the reserved email must not expose the verifier.
-        if (user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
-          const hasAdminLoginIntent = sessionStorage.getItem('superAdminLoginIntent') === 'true';
-
-          if (!hasAdminLoginIntent) {
-            sessionStorage.removeItem('superAdminVerified');
-            await signOut();
-            toast({
-              variant: 'destructive',
-              title: 'Admin access protected',
-              description: 'Use the dedicated admin code flow to access Super Admin verification.',
-            });
-            return;
-          }
-
-          // Check if already verified in this session
-          const isVerified = sessionStorage.getItem('superAdminVerified');
-          if (isVerified === 'true') {
-            navigate('/super-admin');
-          } else {
-            navigate('/super-admin-verify');
-          }
-          return;
-        }
-
-        // Check if user has a profile - first by ID, then by email
-        let profile = null;
-        
-        const { data: idProfile } = await supabase
+        // Profiles are bound to the immutable authenticated UUID. Email is
+        // display/contact data only and is never an identity fallback.
+        const { data: profile } = await supabase
           .from('profiles')
           .select('status, is_active, user_type')
           .eq('id', user.id)
           .maybeSingle();
-        
-        profile = idProfile;
-        
-        // If not found by ID, try by email
-        if (!profile && user.email) {
-          const { data: emailProfiles } = await supabase
-            .from('profiles')
-            .select('status, is_active, user_type')
-            .eq('email', user.email.toLowerCase())
-            .order('is_active', { ascending: false });
-          
-          if (emailProfiles && emailProfiles.length > 0) {
-            // Prefer approved/active profiles
-            const approvedProfile = emailProfiles.find(p => p.status === 'approved' && p.is_active);
-            profile = approvedProfile || emailProfiles[0];
-          }
-        }
         
         if (profile) {
             if (profile.status === 'pending' || profile.status === 'rejected') {
@@ -438,8 +393,6 @@ export default function Auth() {
   const handleSocialSignIn = async (provider: 'google' | 'apple', flow: SocialOnboardingFlow) => {
     setIsSubmitting(true);
     try {
-      sessionStorage.removeItem('superAdminLoginIntent');
-      sessionStorage.removeItem('superAdminVerified');
       sessionStorage.setItem(SOCIAL_FLOW_KEY, flow);
       sessionStorage.removeItem(SOCIAL_VERIFIED_KEY);
       sessionStorage.removeItem(SOCIAL_LAST_SENT_AT_KEY);
@@ -586,18 +539,6 @@ export default function Auth() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Check if the password is the admin access code
-  const verifyAdminCode = async (code: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.rpc('verify_admin_access_code', {
-        input_code: code
-      });
-      return data === true && !error;
-    } catch {
-      return false;
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -655,53 +596,6 @@ export default function Auth() {
     setIsSubmitting(true);
     
     try {
-      const isHardcodedAdmin = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-      
-      // If this is the hardcoded admin email, check if password is the admin key
-      if (isHardcodedAdmin) {
-        const isAdminKey = await verifyAdminCode(password);
-        
-        if (isAdminKey) {
-          sessionStorage.setItem('superAdminLoginIntent', 'true');
-          sessionStorage.removeItem('superAdminVerified');
-
-          // Try to sign in with the admin key as password
-          const { error } = await signIn(email, password);
-          
-          if (error) {
-            // If login fails, the account might not exist or has different password
-            const { error: signUpError } = await signUp(email, password);
-            
-            if (signUpError && !signUpError.message.includes('User already registered')) {
-              sessionStorage.removeItem('superAdminLoginIntent');
-              toast({
-                variant: 'destructive',
-                title: 'Admin setup failed',
-                description: signUpError.message,
-              });
-            } else if (signUpError?.message.includes('User already registered')) {
-              sessionStorage.removeItem('superAdminLoginIntent');
-              toast({
-                variant: 'destructive',
-                title: 'Password mismatch',
-                description: 'Admin account exists with a different password.',
-              });
-            } else {
-              toast({
-                title: 'Admin account created!',
-                description: 'You can now sign in with your admin credentials.',
-              });
-              await signIn(email, password);
-            }
-          }
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      
-      // Normal login flow
-      sessionStorage.removeItem('superAdminLoginIntent');
-      sessionStorage.removeItem('superAdminVerified');
       const { error } = await signIn(email, password);
       
       if (error) {

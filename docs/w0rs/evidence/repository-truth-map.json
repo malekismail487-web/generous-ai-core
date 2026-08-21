@@ -1290,12 +1290,22 @@
       {
         "name": "resolve_ministry_request",
         "file": "src/components/MinistryAccessAlert.tsx",
-        "line": 86
+        "line": 83
       },
       {
         "name": "delete_school_cascade",
         "file": "src/components/SuperAdminPanel.tsx",
-        "line": 69
+        "line": 54
+      },
+      {
+        "name": "approve_teacher_request",
+        "file": "src/hooks/useAdminPanel.tsx",
+        "line": 45
+      },
+      {
+        "name": "reject_teacher_request",
+        "file": "src/hooks/useAdminPanel.tsx",
+        "line": 65
       },
       {
         "name": "link_profile_after_signup",
@@ -1348,9 +1358,14 @@
         "line": 196
       },
       {
-        "name": "activate_school_with_code",
+        "name": "get_authority_context",
         "file": "src/hooks/useRoleGuard.tsx",
-        "line": 142
+        "line": 65
+      },
+      {
+        "name": "activate_school",
+        "file": "src/hooks/useRoleGuard.tsx",
+        "line": 128
       },
       {
         "name": "approve_school_profile",
@@ -1373,16 +1388,6 @@
         "line": 93
       },
       {
-        "name": "is_hardcoded_admin",
-        "file": "src/hooks/useUserRole.tsx",
-        "line": 35
-      },
-      {
-        "name": "grant_admin_via_code",
-        "file": "src/hooks/useUserRole.tsx",
-        "line": 88
-      },
-      {
         "name": "get_weakest_topics",
         "file": "src/lib/mastery.ts",
         "line": 35
@@ -1395,42 +1400,37 @@
       {
         "name": "signup_with_invite_code",
         "file": "src/pages/Auth.tsx",
-        "line": 376
+        "line": 331
       },
       {
         "name": "link_profile_after_signup",
         "file": "src/pages/Auth.tsx",
-        "line": 397
+        "line": 352
       },
       {
         "name": "signup_as_parent",
         "file": "src/pages/Auth.tsx",
-        "line": 409
-      },
-      {
-        "name": "verify_admin_access_code",
-        "file": "src/pages/Auth.tsx",
-        "line": 592
+        "line": 364
       },
       {
         "name": "check_ministry_ip_ban",
         "file": "src/pages/Auth.tsx",
-        "line": 616
+        "line": 557
       },
       {
         "name": "verify_ministry_code",
         "file": "src/pages/Auth.tsx",
-        "line": 626
+        "line": 567
       },
       {
         "name": "signup_with_invite_code",
         "file": "src/pages/Auth.tsx",
-        "line": 765
+        "line": 659
       },
       {
         "name": "signup_as_parent",
         "file": "src/pages/Auth.tsx",
-        "line": 1261
+        "line": 1155
       },
       {
         "name": "get_active_tenants",
@@ -1505,17 +1505,7 @@
       {
         "name": "create_school_with_code",
         "file": "src/pages/SuperAdmin.tsx",
-        "line": 230
-      },
-      {
-        "name": "check_super_admin_lock_status",
-        "file": "src/pages/SuperAdminVerify.tsx",
-        "line": 57
-      },
-      {
-        "name": "verify_super_admin_code",
-        "file": "src/pages/SuperAdminVerify.tsx",
-        "line": 98
+        "line": 206
       },
       {
         "name": "attach_bandit_reward",
@@ -1551,6 +1541,11 @@
         "name": "can_view_student_mastery",
         "file": "supabase/functions/evaluate-models/index.ts",
         "line": 203
+      },
+      {
+        "name": "is_super_admin",
+        "file": "supabase/functions/generate-lct/index.ts",
+        "line": 669
       },
       {
         "name": "can_view_student_mastery",
@@ -1982,15 +1977,9 @@
         "transport": "supabase-js"
       },
       {
-        "name": "activate-school",
-        "file": "src/pages/ActivateSchool.tsx",
-        "line": 41,
-        "transport": "supabase-js"
-      },
-      {
         "name": "get-client-ip",
         "file": "src/pages/Auth.tsx",
-        "line": 611,
+        "line": 552,
         "transport": "supabase-js"
       },
       {
@@ -2325,6 +2314,7 @@
       "name": "VITE_SUPABASE_PUBLISHABLE_KEY",
       "files": [
         ".env",
+        ".env.example",
         "src/components/ExaminationSection.tsx",
         "src/components/FileNotesGenerator.tsx",
         "src/components/PodcastsSection.tsx",
@@ -2348,6 +2338,7 @@
       "name": "VITE_SUPABASE_URL",
       "files": [
         ".env",
+        ".env.example",
         "src/components/ExaminationSection.tsx",
         "src/components/FileNotesGenerator.tsx",
         "src/components/PodcastsSection.tsx",
@@ -2376,11 +2367,6 @@
     }
   ],
   "oldBackendCoupling": [
-    {
-      "file": "src/integrations/supabase/client.ts",
-      "kind": "hardcoded-project-or-url",
-      "valueRedacted": true
-    },
     {
       "file": ".env",
       "kind": "environment-project-reference",

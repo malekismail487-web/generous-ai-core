@@ -7,24 +7,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { reconcileTenantFromCode } from '@/lib/selectedTenant';
 
 export default function ActivateSchool() {
   const { user, loading: authLoading } = useAuth();
-  const { loading, profile, isSuperAdmin, refresh } = useRoleGuard();
+  const { loading, profile, isSuperAdmin, activateSchoolCode } = useRoleGuard();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [schoolName, setSchoolName] = useState('');
   const [code, setCode] = useState('');
   const [activating, setActivating] = useState(false);
 
   const handleActivate = async () => {
-    if (!schoolName.trim()) {
-      toast({ variant: 'destructive', title: 'Please enter the school name' });
-      return;
-    }
     if (!code.trim()) {
       toast({ variant: 'destructive', title: 'Please enter the activation code' });
       return;
@@ -38,30 +32,7 @@ export default function ActivateSchool() {
     setActivating(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('activate-school', {
-        body: {
-          schoolName: schoolName.trim(),
-          activationCode: code.trim().toUpperCase(),
-        },
-      });
-
-      if (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Activation failed',
-          description: error.message,
-        });
-        return;
-      }
-
-      const result = data as {
-        success?: boolean;
-        error?: string;
-        school_name?: string;
-        tenant_id?: string;
-        tenant_slug?: string;
-        tenant_name?: string;
-      };
+      const result = await activateSchoolCode(code.trim().toUpperCase());
       if (!result?.success) {
         toast({
           variant: 'destructive',
@@ -153,27 +124,11 @@ export default function ActivateSchool() {
           </div>
           <h1 className="text-2xl font-bold mb-2">Activate Your School</h1>
           <p className="text-muted-foreground">
-            Enter the school name and activation code provided by the super administrator.
+            Enter the one-time activation code provided by the Super Admin.
           </p>
         </div>
 
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="school-name">School Name</Label>
-            <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                id="school-name"
-                type="text"
-                placeholder="Enter school name"
-                value={schoolName}
-                onChange={(e) => setSchoolName(e.target.value)}
-                className="pl-10 h-12"
-                maxLength={100}
-              />
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="activation-code">Activation Code</Label>
             <div className="relative">
@@ -192,7 +147,7 @@ export default function ActivateSchool() {
 
           <Button
             onClick={handleActivate}
-            disabled={activating || !code.trim() || !schoolName.trim()}
+            disabled={activating || !code.trim()}
             className="w-full h-12"
           >
             {activating ? (

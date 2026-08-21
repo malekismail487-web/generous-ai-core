@@ -66,20 +66,14 @@
         69
       ],
       "jwtVerification": "supabase-default",
-      "repositoryCallers": [
-        {
-          "file": "src/pages/ActivateSchool.tsx",
-          "line": 41,
-          "transport": "supabase-js"
-        }
-      ],
+      "repositoryCallers": [],
       "boundaryEvidence": [
         "auth.getUser",
         "authorization-header",
         "api-key-reference"
       ],
-      "classification": "client-reachable-needs-endpoint-review",
-      "confidence": "medium",
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
       "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
@@ -524,7 +518,7 @@
       "function": "generate-lct",
       "file": "supabase/functions/generate-lct/index.ts",
       "serviceRoleReferenceLines": [
-        227
+        226
       ],
       "jwtVerification": "supabase-default",
       "repositoryCallers": [

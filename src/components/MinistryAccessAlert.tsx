@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { Shield, CheckCircle, Ban, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { SUPER_ADMIN_EMAIL } from '@/lib/config';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 type MinistryRequest = {
   id: string;
@@ -17,13 +16,11 @@ type MinistryRequest = {
 };
 
 export default function MinistryAccessAlert() {
-  const { user } = useAuth();
+  const { isSuperAdmin } = useRoleGuard();
   const { toast } = useToast();
   const [requests, setRequests] = useState<MinistryRequest[]>([]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
-
-  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
 
   useEffect(() => {
     if (!isSuperAdmin) return;

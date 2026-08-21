@@ -10,18 +10,18 @@ interface AdminPanelProps {
 }
 
 export function AdminPanel({ onBack }: AdminPanelProps) {
-  const { isAdmin } = useUserRole();
+  const { isSchoolAdmin } = useUserRole();
   const { pendingRequests, allRequests, loading, approveRequest, rejectRequest } = useAdminPanel();
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'pending' | 'all'>('pending');
 
-  if (!isAdmin) {
+  if (!isSchoolAdmin) {
     return (
       <div className="flex-1 overflow-y-auto pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-4 py-6 text-center">
           <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
           <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-          <p className="text-muted-foreground">You need admin privileges to access this panel.</p>
+          <p className="text-muted-foreground">You need active School Admin membership to access this panel.</p>
           <Button variant="outline" onClick={onBack} className="mt-4">
             <ArrowLeft size={16} className="mr-1" />
             Go Back
@@ -59,7 +59,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04] text-foreground">
             <Shield className="w-7 h-7" />
           </div>
-          <h1 className="text-2xl font-bold mb-2 gradient-text">Admin Panel</h1>
+          <h1 className="text-2xl font-bold mb-2 gradient-text">School Admin Panel</h1>
           <p className="text-muted-foreground text-sm">Manage teacher access requests</p>
         </div>
 

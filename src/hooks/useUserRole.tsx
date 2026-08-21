@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useToast } from '@/hooks/use-toast';
-import { authLogger } from '@/lib/logger';
 
-export type AppRole = 'student' | 'teacher' | 'admin';
+export type AppRole = 'student' | 'teacher';
 
 export type TeacherRequest = {
   id: string;
@@ -17,167 +17,58 @@ export type TeacherRequest = {
 };
 
 export function useUserRole() {
-  const [roles, setRoles] = useState<AppRole[]>([]);
   const [teacherRequest, setTeacherRequest] = useState<TeacherRequest | null>(null);
-  const [isHardcodedAdmin, setIsHardcodedAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { isTeacher, isStudent, isSchoolAdmin, isSuperAdmin, loading, refresh } = useRoleGuard();
   const { toast } = useToast();
 
-  // Check if current user is a hardcoded admin via database function
-  const checkHardcodedAdmin = useCallback(async () => {
-    if (!user?.email) {
-      setIsHardcodedAdmin(false);
-      return false;
-    }
-    
-    try {
-      const { data, error } = await supabase.rpc('is_hardcoded_admin', {
-        check_email: user.email
-      });
-      
-      if (error) {
-        authLogger.error('Error checking hardcoded admin', error);
-        setIsHardcodedAdmin(false);
-        return false;
-      }
-      
-      setIsHardcodedAdmin(data === true);
-      return data === true;
-    } catch {
-      setIsHardcodedAdmin(false);
-      return false;
-    }
-  }, [user?.email]);
-
-  const isTeacher = roles.includes('teacher');
-  // isAdmin is true if user has admin role OR is hardcoded admin
-  const isAdmin = roles.includes('admin') || isHardcodedAdmin;
-  const isStudent = !isTeacher && !isAdmin;
-
-  // Fetch user roles
-  const fetchRoles = useCallback(async () => {
-    if (!user) {
-      setRoles([]);
-      setIsHardcodedAdmin(false);
-      setLoading(false);
-      return;
-    }
-
-    // Check hardcoded admin status first
-    await checkHardcodedAdmin();
-
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id);
-
-    if (error) {
-      authLogger.error('Error fetching roles', error);
-    } else {
-      setRoles((data || []).map(r => r.role as AppRole));
-    }
-    setLoading(false);
-  }, [user, checkHardcodedAdmin]);
-
-  // Verify admin access code and grant admin role
-  const verifyAdminCode = useCallback(async (code: string): Promise<boolean> => {
-    if (!user) return false;
-
-    try {
-      const { data, error } = await supabase.rpc('grant_admin_via_code', {
-        input_code: code,
-        target_user_id: user.id
-      });
-
-      if (error) {
-        authLogger.error('Error verifying admin code', error);
-        toast({ variant: 'destructive', title: 'Invalid access code' });
-        return false;
-      }
-
-      if (data === true) {
-        toast({ title: 'Admin access granted!' });
-        // Refresh roles
-        await fetchRoles();
-        return true;
-      } else {
-        toast({ variant: 'destructive', title: 'Invalid access code' });
-        return false;
-      }
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      authLogger.error('Error verifying admin code', error);
-      toast({ variant: 'destructive', title: 'Error verifying code' });
-      return false;
-    }
-  }, [user, toast, fetchRoles]);
-
-  // Fetch existing teacher request
   const fetchTeacherRequest = useCallback(async () => {
     if (!user) {
       setTeacherRequest(null);
       return;
     }
-
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('teacher_requests')
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
-
-    if (!error && data) {
-      setTeacherRequest(data as TeacherRequest);
-    }
+    setTeacherRequest(data as TeacherRequest | null);
   }, [user]);
 
   useEffect(() => {
-    fetchRoles();
-    fetchTeacherRequest();
-  }, [fetchRoles, fetchTeacherRequest]);
+    void fetchTeacherRequest();
+  }, [fetchTeacherRequest]);
 
-  // Request teacher access
   const requestTeacherAccess = useCallback(async (reason: string) => {
-    if (!user) return null;
-
-    // Check if already has a request
-    if (teacherRequest) {
-      toast({ variant: 'destructive', title: 'You already have a pending request' });
+    if (!user || teacherRequest) {
+      if (teacherRequest) toast({ variant: 'destructive', title: 'You already have a teacher request' });
       return null;
     }
-
     const { data, error } = await supabase
       .from('teacher_requests')
-      .insert({
-        user_id: user.id,
-        reason: reason.trim() || null
-      })
+      .insert({ user_id: user.id, reason: reason.trim() || null })
       .select()
       .single();
-
     if (error) {
       toast({ variant: 'destructive', title: 'Error submitting request' });
       return null;
     }
-
     setTeacherRequest(data as TeacherRequest);
     toast({ title: 'Teacher access request submitted!' });
     return data;
-  }, [user, teacherRequest, toast]);
+  }, [teacherRequest, toast, user]);
 
   return {
-    roles,
+    roles: isTeacher ? ['teacher' as const] : isStudent ? ['student' as const] : [],
     isTeacher,
-    isAdmin,
     isStudent,
-    isHardcodedAdmin,
+    isSchoolAdmin,
+    isSuperAdmin,
     teacherRequest,
     loading,
     requestTeacherAccess,
-    verifyAdminCode,
-    refresh: () => {
-      fetchRoles();
-      fetchTeacherRequest();
-    }
+    refresh: async () => {
+      await Promise.all([refresh(), fetchTeacherRequest()]);
+    },
   };
 }

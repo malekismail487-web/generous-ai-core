@@ -1876,7 +1876,7 @@ CREATE POLICY "Users can delete their own materials" ON public.materials FOR DEL
 -- Canonical replacement for historical policy: chat_messages Users can delete their own messages
 --
 
-CREATE POLICY "Users and School Admin can delete school messages" ON public.chat_messages FOR DELETE TO authenticated USING (user_id = auth.uid() OR EXISTS (SELECT 1 FROM public.chat_rooms cr WHERE cr.id = chat_messages.room_id AND public.is_school_admin_of(auth.uid(), cr.school_id)) OR public.is_super_admin());
+CREATE POLICY "Users and School Admin can delete school messages" ON public.chat_messages FOR DELETE TO authenticated USING (user_id = auth.uid() OR EXISTS (SELECT 1 FROM public.chat_rooms cr WHERE cr.id = chat_messages.chat_room_id AND public.is_school_admin_of(auth.uid(), cr.school_id)) OR public.is_super_admin());
 
 --
 -- Name: notes Users can delete their own notes; Type: POLICY; Schema: public; Owner: -

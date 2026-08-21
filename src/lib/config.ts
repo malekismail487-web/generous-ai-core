@@ -1,13 +1,33 @@
-/**
- * Centralized Application Configuration
- * 
- * This module provides a single source of truth for application-wide constants
- * and configuration values, including super admin email and other critical settings.
- */
+/** Browser-safe configuration boundary. Never place service-role or provider secrets here. */
 
-// Super Admin Configuration
-// This email grants super admin privileges when matched during authentication
-export const SUPER_ADMIN_EMAIL = 'malekismail487@gmail.com';
+export type PublicRuntimeConfig = {
+  supabaseUrl: string;
+  supabasePublishableKey: string;
+};
+
+const readRequired = (name: 'VITE_SUPABASE_URL' | 'VITE_SUPABASE_PUBLISHABLE_KEY') => {
+  const value = import.meta.env[name]?.trim();
+  if (!value) throw new Error(`Lumina is not configured: missing ${name}.`);
+  return value;
+};
+
+export const getPublicRuntimeConfig = (): PublicRuntimeConfig => {
+  const supabaseUrl = readRequired('VITE_SUPABASE_URL');
+  const supabasePublishableKey = readRequired('VITE_SUPABASE_PUBLISHABLE_KEY');
+  let parsed: URL;
+  try {
+    parsed = new URL(supabaseUrl);
+  } catch {
+    throw new Error('Lumina is not configured: VITE_SUPABASE_URL must be a valid URL.');
+  }
+  if (parsed.protocol !== 'https:' && parsed.hostname !== '127.0.0.1' && parsed.hostname !== 'localhost') {
+    throw new Error('Lumina is not configured: Supabase must use HTTPS outside local development.');
+  }
+  if (/service[_-]?role/i.test(supabasePublishableKey)) {
+    throw new Error('Unsafe configuration: a service-role credential cannot be used in browser code.');
+  }
+  return { supabaseUrl: parsed.toString().replace(/\/$/, ''), supabasePublishableKey };
+};
 
 // Feature Flags
 export const FEATURE_FLAGS = {
@@ -18,23 +38,17 @@ export const FEATURE_FLAGS = {
 
 // Environment Validation
 export const validateEnvironment = () => {
-  const requiredVars = [
-    'VITE_SUPABASE_URL',
-    'VITE_SUPABASE_PUBLISHABLE_KEY',
-  ];
-  
-  const missing = requiredVars.filter(varName => !import.meta.env[varName]);
-  
-  if (missing.length > 0) {
-    console.error('Missing required environment variables:', missing);
+  try {
+    getPublicRuntimeConfig();
+    return true;
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : 'Lumina configuration is invalid.');
     return false;
   }
-  
-  return true;
 };
 
 export default {
-  SUPER_ADMIN_EMAIL,
   FEATURE_FLAGS,
+  getPublicRuntimeConfig,
   validateEnvironment,
 };

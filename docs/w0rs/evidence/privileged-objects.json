@@ -431,12 +431,7 @@
           "code_verification"
         ]
       },
-      "callers": [
-        {
-          "file": "src/pages/Auth.tsx",
-          "line": 592
-        }
-      ],
+      "callers": [],
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
@@ -461,12 +456,7 @@
           "code_verification"
         ]
       },
-      "callers": [
-        {
-          "file": "src/hooks/useUserRole.tsx",
-          "line": 88
-        }
-      ],
+      "callers": [],
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
@@ -489,12 +479,7 @@
         "searchPathPinned": true,
         "authorizationSignals": []
       },
-      "callers": [
-        {
-          "file": "src/hooks/useUserRole.tsx",
-          "line": 35
-        }
-      ],
+      "callers": [],
       "recommendation": "retain",
       "confidence": "low",
       "decisionRequired": true,
@@ -619,12 +604,7 @@
           "caller_supplied_uuid"
         ]
       },
-      "callers": [
-        {
-          "file": "src/hooks/useRoleGuard.tsx",
-          "line": 142
-        }
-      ],
+      "callers": [],
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
@@ -652,7 +632,7 @@
       "callers": [
         {
           "file": "src/pages/SuperAdmin.tsx",
-          "line": 230
+          "line": 206
         }
       ],
       "recommendation": "retain",
@@ -738,7 +718,7 @@
         },
         {
           "file": "src/pages/Auth.tsx",
-          "line": 397
+          "line": 352
         }
       ],
       "recommendation": "retain",
@@ -766,11 +746,11 @@
       "callers": [
         {
           "file": "src/pages/Auth.tsx",
-          "line": 376
+          "line": 331
         },
         {
           "file": "src/pages/Auth.tsx",
-          "line": 765
+          "line": 659
         }
       ],
       "recommendation": "retain",
@@ -798,12 +778,7 @@
           "code_verification"
         ]
       },
-      "callers": [
-        {
-          "file": "src/pages/SuperAdminVerify.tsx",
-          "line": 98
-        }
-      ],
+      "callers": [],
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
@@ -829,12 +804,7 @@
           "super_admin_helper"
         ]
       },
-      "callers": [
-        {
-          "file": "src/pages/SuperAdminVerify.tsx",
-          "line": 57
-        }
-      ],
+      "callers": [],
       "recommendation": "retain",
       "confidence": "low",
       "decisionRequired": true,
@@ -860,7 +830,7 @@
       "callers": [
         {
           "file": "src/components/SuperAdminPanel.tsx",
-          "line": 69
+          "line": 54
         }
       ],
       "recommendation": "retain",
@@ -962,11 +932,11 @@
       "callers": [
         {
           "file": "src/pages/Auth.tsx",
-          "line": 409
+          "line": 364
         },
         {
           "file": "src/pages/Auth.tsx",
-          "line": 1261
+          "line": 1155
         }
       ],
       "recommendation": "retain",
@@ -996,7 +966,7 @@
       "callers": [
         {
           "file": "src/pages/Auth.tsx",
-          "line": 626
+          "line": 567
         },
         {
           "file": "src/pages/MinistryLogin.tsx",
@@ -1030,7 +1000,7 @@
       "callers": [
         {
           "file": "src/components/MinistryAccessAlert.tsx",
-          "line": 86
+          "line": 83
         }
       ],
       "recommendation": "retain",
@@ -1094,7 +1064,7 @@
       "callers": [
         {
           "file": "src/pages/Auth.tsx",
-          "line": 616
+          "line": 557
         },
         {
           "file": "src/pages/MinistryLogin.tsx",
@@ -2105,7 +2075,12 @@
           "super_admin_helper"
         ]
       },
-      "callers": [],
+      "callers": [
+        {
+          "file": "supabase/functions/generate-lct/index.ts",
+          "line": 669
+        }
+      ],
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { User, Shield, GraduationCap, LogOut, ChevronRight, Building2, Users, School, Loader2, Sun, Moon, Globe, Heart, Copy, Check, Droplet } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSchool } from '@/hooks/useSchool';
@@ -21,11 +20,8 @@ import { cn } from '@/lib/utils';
 
 export function ProfileSection() {
   const navigate = useNavigate();
-  const [showAdminCodeInput, setShowAdminCodeInput] = useState(false);
-  const [adminCode, setAdminCode] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
   const { user, signOut } = useAuth();
-  const { isAdmin, isHardcodedAdmin, verifyAdminCode } = useUserRole();
+  const { isSuperAdmin } = useUserRole();
   const { profile, school, isSchoolAdmin, loading } = useSchool();
   const { theme, language, setTheme, setLanguage, t } = useThemeLanguage();
   const { lensEnabled, setLensEnabled } = useLensPreference();
@@ -55,17 +51,6 @@ export function ProfileSection() {
   }, [user, isStudent]);
 
 
-  const handleVerifyAdminCode = async () => {
-    if (!adminCode.trim()) return;
-    setIsVerifying(true);
-    const success = await verifyAdminCode(adminCode.trim());
-    setIsVerifying(false);
-    if (success) {
-      setShowAdminCodeInput(false);
-      setAdminCode('');
-    }
-  };
-
   return (
     <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto pt-16 pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6">
@@ -73,13 +58,13 @@ export function ProfileSection() {
         <div className="text-center mb-8 animate-fade-in">
           <div className={cn(
             "inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4",
-            isAdmin 
+            isSuperAdmin
               ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
               : isTeacher 
                 ? "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
                 : "bg-gradient-to-br from-foreground/[0.14] to-foreground/[0.04]"
           )}>
-            {isAdmin ? (
+            {isSuperAdmin ? (
               <Shield className="w-8 h-8 text-foreground" />
             ) : isTeacher ? (
               <User className="w-8 h-8 text-foreground" />
@@ -90,11 +75,6 @@ export function ProfileSection() {
           <h1 className="text-2xl font-bold mb-1">{profile?.full_name || tl('profile')}</h1>
           {user && (
             <p className="text-sm text-muted-foreground">{user.email}</p>
-          )}
-          {isHardcodedAdmin && (
-            <span className="inline-flex items-center gap-1 mt-2 px-2 py-1 bg-amber-500/20 text-amber-600 text-xs font-medium rounded-full">
-              <Shield size={12} /> Developer Admin
-            </span>
           )}
         </div>
 
@@ -120,7 +100,7 @@ export function ProfileSection() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">{tl('role')}</span>
               <span className="capitalize">
-                {isAdmin ? 'Super Admin' : isSchoolAdmin ? 'School Admin' : profile?.user_type || 'Student'}
+                {isSuperAdmin ? 'Super Admin' : isSchoolAdmin ? 'School Admin' : profile?.user_type || 'Student'}
               </span>
             </div>
             {profile?.student_teacher_id && (
@@ -185,7 +165,7 @@ export function ProfileSection() {
         )}
 
         {/* Super Admin Panel */}
-        {isAdmin && (
+        {isSuperAdmin && (
           <button
             onClick={() => navigate('/super-admin')}
             className="w-full liquid-glass rounded-2xl p-5 mb-4 text-left hover:shadow-lg transition-all group"
