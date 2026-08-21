@@ -11,6 +11,7 @@ on:
       - "supabase/config.toml"
       - "supabase/migrations/**"
       - "supabase/schema/**"
+      - "supabase/tests/**"
       - "supabase/legacy/lovable-migrations/manifest.json"
       - "supabase/legacy/lovable-migrations/checksums.sha256"
 
@@ -120,6 +121,119 @@ jobs:
           print(json.dumps(result, indent=2))
           PY
 
+      - name: Run canonical database and authority contract
+        if: ${{ steps.replay.outputs.exit_code == '0' }}
+        id: db_contract
+        env:
+          PROJECT_ID: ${{ steps.prepare.outputs.project_id }}
+          REPLAY_ROOT: ${{ steps.prepare.outputs.replay_root }}
+        run: |
+          set -uo pipefail
+          raw_log="$RUNNER_TEMP/w0rs-canonical/database-contract.raw.log"
+          sanitized_log="$RUNNER_TEMP/w0rs-canonical/database-contract.log"
+          db_container="$(docker ps --filter "name=supabase_db_${PROJECT_ID}" --format '{{.Names}}')"
+          test -n "$db_container"
+          set +e
+          docker exec -i "$db_container" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            < "$REPLAY_ROOT/supabase/tests/w0rs_authority.sql" > "$raw_log" 2>&1
+          contract_exit=$?
+          set -e
+          echo "exit_code=$contract_exit" >> "$GITHUB_OUTPUT"
+          python3 - "$raw_log" "$sanitized_log" <<'PY'
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          text = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
+          text = text.replace(os.environ["GITHUB_WORKSPACE"], "<workspace>")
+          text = text.replace(os.environ["RUNNER_TEMP"], "<runner-temp>")
+          text = re.sub(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}", "<redacted-jwt>", text)
+          text = re.sub(r"(?:sbp_|sb_secret_)[A-Za-z0-9_-]{16,}", "<redacted-secret>", text)
+          Path(sys.argv[2]).write_text(text, encoding="utf-8")
+          Path(sys.argv[1]).unlink(missing_ok=True)
+          PY
+
+      - name: Generate canonical types and first catalog fingerprint
+        if: ${{ steps.replay.outputs.exit_code == '0' }}
+        id: first_catalog
+        env:
+          PROJECT_ID: ${{ steps.prepare.outputs.project_id }}
+          REPLAY_ROOT: ${{ steps.prepare.outputs.replay_root }}
+        run: |
+          set -uo pipefail
+          diagnostics="$RUNNER_TEMP/w0rs-canonical"
+          db_container="$(docker ps --filter "name=supabase_db_${PROJECT_ID}" --format '{{.Names}}')"
+          set +e
+          supabase --workdir "$REPLAY_ROOT" gen types typescript --local > "$diagnostics/generated-types.ts"
+          types_exit=$?
+          docker exec -i "$db_container" psql -U postgres -d postgres -qAt -v ON_ERROR_STOP=1 \
+            < "$REPLAY_ROOT/scripts/w0rs/catalog-fingerprint.sql" > "$diagnostics/catalog-first.txt"
+          catalog_exit=$?
+          set -e
+          sha256sum "$diagnostics/catalog-first.txt" > "$diagnostics/catalog-first.sha256"
+          set +e
+          diff -u "$REPLAY_ROOT/src/integrations/supabase/types.ts" "$diagnostics/generated-types.ts" \
+            > "$diagnostics/generated-types.diff"
+          types_match=$?
+          set -e
+          echo "types_exit=$types_exit" >> "$GITHUB_OUTPUT"
+          echo "catalog_exit=$catalog_exit" >> "$GITHUB_OUTPUT"
+          echo "types_match=$types_match" >> "$GITHUB_OUTPUT"
+
+      - name: Replay canonical baseline a second time and compare catalog
+        if: ${{ steps.replay.outputs.exit_code == '0' }}
+        id: second_catalog
+        env:
+          PROJECT_ID: ${{ steps.prepare.outputs.project_id }}
+          REPLAY_ROOT: ${{ steps.prepare.outputs.replay_root }}
+        run: |
+          set -uo pipefail
+          diagnostics="$RUNNER_TEMP/w0rs-canonical"
+          unset SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_ID
+          set +e
+          supabase --workdir "$REPLAY_ROOT" stop --no-backup > /dev/null 2>&1
+          first_stop_exit=$?
+          supabase --workdir "$REPLAY_ROOT" start --debug > "$diagnostics/replay-second.raw.log" 2>&1
+          second_replay_exit=$?
+          set -e
+          if [ "$second_replay_exit" -eq 0 ]; then
+            db_container="$(docker ps --filter "name=supabase_db_${PROJECT_ID}" --format '{{.Names}}')"
+            docker exec -i "$db_container" psql -U postgres -d postgres -qAt -v ON_ERROR_STOP=1 \
+              < "$REPLAY_ROOT/scripts/w0rs/catalog-fingerprint.sql" > "$diagnostics/catalog-second.txt"
+            second_catalog_exit=$?
+            sha256sum "$diagnostics/catalog-second.txt" > "$diagnostics/catalog-second.sha256"
+            set +e
+            cmp -s "$diagnostics/catalog-first.txt" "$diagnostics/catalog-second.txt"
+            fingerprint_match=$?
+            set -e
+          else
+            second_catalog_exit=1
+            fingerprint_match=1
+          fi
+          python3 - "$diagnostics/replay-second.raw.log" "$diagnostics/replay-second.log" <<'PY'
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          text = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
+          text = text.replace(os.environ["GITHUB_WORKSPACE"], "<workspace>")
+          text = text.replace(os.environ["RUNNER_TEMP"], "<runner-temp>")
+          text = re.sub(r"https://[a-z0-9-]+\.supabase\.co", "https://<redacted>.supabase.co", text, flags=re.I)
+          text = re.sub(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}", "<redacted-jwt>", text)
+          text = re.sub(r"(?:sbp_|sb_secret_)[A-Za-z0-9_-]{16,}", "<redacted-secret>", text)
+          Path(sys.argv[2]).write_text(text, encoding="utf-8")
+          Path(sys.argv[1]).unlink(missing_ok=True)
+          PY
+          printf 'first_stop_exit=%s\nsecond_replay_exit=%s\nsecond_catalog_exit=%s\nfingerprint_match=%s\n' \
+            "$first_stop_exit" "$second_replay_exit" "$second_catalog_exit" "$fingerprint_match" \
+            > "$diagnostics/catalog-comparison.txt"
+          echo "first_stop_exit=$first_stop_exit" >> "$GITHUB_OUTPUT"
+          echo "second_replay_exit=$second_replay_exit" >> "$GITHUB_OUTPUT"
+          echo "second_catalog_exit=$second_catalog_exit" >> "$GITHUB_OUTPUT"
+          echo "fingerprint_match=$fingerprint_match" >> "$GITHUB_OUTPUT"
+
       - name: Destroy ephemeral stack
         if: ${{ always() }}
         env:
@@ -156,4 +270,19 @@ jobs:
         if: ${{ always() }}
         env:
           REPLAY_EXIT: ${{ steps.replay.outputs.exit_code }}
-        run: test "${REPLAY_EXIT:-1}" -eq 0
+          DB_CONTRACT_EXIT: ${{ steps.db_contract.outputs.exit_code }}
+          TYPES_EXIT: ${{ steps.first_catalog.outputs.types_exit }}
+          CATALOG_EXIT: ${{ steps.first_catalog.outputs.catalog_exit }}
+          TYPES_MATCH: ${{ steps.first_catalog.outputs.types_match }}
+          SECOND_REPLAY_EXIT: ${{ steps.second_catalog.outputs.second_replay_exit }}
+          SECOND_CATALOG_EXIT: ${{ steps.second_catalog.outputs.second_catalog_exit }}
+          FINGERPRINT_MATCH: ${{ steps.second_catalog.outputs.fingerprint_match }}
+        run: |
+          test "${REPLAY_EXIT:-1}" -eq 0
+          test "${DB_CONTRACT_EXIT:-1}" -eq 0
+          test "${TYPES_EXIT:-1}" -eq 0
+          test "${CATALOG_EXIT:-1}" -eq 0
+          test "${TYPES_MATCH:-1}" -eq 0
+          test "${SECOND_REPLAY_EXIT:-1}" -eq 0
+          test "${SECOND_CATALOG_EXIT:-1}" -eq 0
+          test "${FINGERPRINT_MATCH:-1}" -eq 0

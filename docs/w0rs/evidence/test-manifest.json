@@ -151,6 +151,19 @@
       }
     ]
   },
+  "database": {
+    "files": 1,
+    "declaredChecks": 31,
+    "command": "psql -v ON_ERROR_STOP=1 -f supabase/tests/w0rs_authority.sql",
+    "tests": [
+      {
+        "file": "supabase/tests/w0rs_authority.sql",
+        "group": "database-contract",
+        "declaredChecks": 31,
+        "countBasis": "versioned ASSERT markers executed transactionally in the canonical CI replica"
+      }
+    ]
+  },
   "scripts": {
     "files": 14,
     "fixedDeclaredChecksIncludingAudits": 355,
@@ -244,8 +257,9 @@
   },
   "reconciliation": {
     "priorClaim": 549,
-    "currentFixedAssertionStyleMinimum": 566,
-    "currentFixedIncludingNineSurfaceAudit": 575,
+    "currentFixedAssertionStyleMinimum": 597,
+    "currentFixedIncludingNineSurfaceAudit": 606,
+    "manifestBackedFixedFiles": 49,
     "dynamicOrBenchmarkFilesExcludedFromFixedTotal": [
       "scripts/adaptiveCoverageAudit.ts",
       "scripts/lseA9LiveBenchmark.ts"

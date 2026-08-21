@@ -62,8 +62,8 @@
     },
     {
       "path": "supabase/schema/70_rls.sql",
-      "canonicalLfBytes": 138035,
-      "canonicalLfSha256": "a87427a713d9b2cc2f11949c7560aef2608ad0375514787a28ab9c0ad5f94470"
+      "canonicalLfBytes": 137818,
+      "canonicalLfSha256": "3eacd77e32ebf1f24326ac0e19419870b38522eae3ae294f59e401e92584f597"
     },
     {
       "path": "supabase/schema/80_storage_realtime.sql",
@@ -77,7 +77,7 @@
     }
   ],
   "baseline": {
-    "canonicalLfBytes": 569374,
-    "canonicalLfSha256": "26ff57787c83135bb48fa1292bfc9ab2e2959715836f63dbae87e00389647473"
+    "canonicalLfBytes": 569157,
+    "canonicalLfSha256": "0b735df841c59c2cb1d6e20af86ed2c9c7149c96a3494c7b5d1497359076c4fa"
   }
 }

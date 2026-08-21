@@ -16886,14 +16886,6 @@ CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT TO auth
 
 
 --
-
---
--- Canonical immutable-identity replacement: profiles Users can view own profile by email
---
-
-CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT TO authenticated USING (id = auth.uid());
-
---
 -- Name: subjects Users can view subjects in their school; Type: POLICY; Schema: public; Owner: -
 --
 

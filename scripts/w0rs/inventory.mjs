@@ -538,6 +538,10 @@ const assertionStyleScriptChecks = scriptMetadata
   .filter((item) => item.group !== "static-audit")
   .reduce((total, item) => total + (item.declaredChecks ?? 0), 0);
 const denoCheckCount = denoTests.reduce((total, item) => total + item.declaredChecks, 0);
+const databaseContractPath = join(ROOT, "supabase", "tests", "w0rs_authority.sql");
+const databaseContractChecks = existsSync(databaseContractPath)
+  ? [...canonicalText(read(databaseContractPath)).matchAll(/^-- ASSERT: ([a-z0-9-]+)$/gm)].length
+  : 0;
 
 function definitionLocations(shortName) {
   return [...functionGroups.entries()]
@@ -654,7 +658,7 @@ const outputs = {
   },
   "baseline-classification.json": {
     schemaVersion: 1,
-    status: "Phase A recommendations; no Phase B mutation authorized",
+    status: "Canonical rebaseline decisions with historical evidence retained separately",
     allowedRecommendations: ["retain", "replace", "add", "exclude"],
     safetyConstraints: [
       "Preserve legitimate School Admin onboarding without generic-admin escalation.",
@@ -667,6 +671,14 @@ const outputs = {
     schemaVersion: 1,
     runner: "scripts/w0rs/run-tests.mjs",
     deno: { files: denoTests.length, declaredChecks: denoCheckCount, tests: denoTests },
+    database: {
+      files: databaseContractChecks > 0 ? 1 : 0,
+      declaredChecks: databaseContractChecks,
+      command: "psql -v ON_ERROR_STOP=1 -f supabase/tests/w0rs_authority.sql",
+      tests: databaseContractChecks > 0
+        ? [{ file: "supabase/tests/w0rs_authority.sql", group: "database-contract", declaredChecks: databaseContractChecks, countBasis: "versioned ASSERT markers executed transactionally in the canonical CI replica" }]
+        : [],
+    },
     scripts: {
       files: scriptMetadata.length,
       fixedDeclaredChecksIncludingAudits: fixedScriptChecks,
@@ -675,8 +687,9 @@ const outputs = {
     },
     reconciliation: {
       priorClaim: 549,
-      currentFixedAssertionStyleMinimum: denoCheckCount + assertionStyleScriptChecks,
-      currentFixedIncludingNineSurfaceAudit: denoCheckCount + fixedScriptChecks,
+      currentFixedAssertionStyleMinimum: denoCheckCount + assertionStyleScriptChecks + databaseContractChecks,
+      currentFixedIncludingNineSurfaceAudit: denoCheckCount + fixedScriptChecks + databaseContractChecks,
+      manifestBackedFixedFiles: denoTests.length + scriptMetadata.filter((item) => item.declaredChecks !== null).length + (databaseContractChecks > 0 ? 1 : 0),
       dynamicOrBenchmarkFilesExcludedFromFixedTotal: scriptMetadata.filter((item) => item.declaredChecks === null).map((item) => item.file),
       conclusion: "The prior 549 figure is not reproducible from the current tree and must not be used as a gate until a versioned manifest defines its scope.",
     },
@@ -702,4 +715,4 @@ for (const [name, value] of Object.entries(outputs)) {
 }
 
 if (differences > 0) process.exit(1);
-console.log(`SUMMARY migrations=${migrationRecords.length} functionDefinitions=${functionDefinitions.length} serviceRoleFiles=${serviceRoleBoundaries.length} denoChecks=${denoCheckCount}`);
+console.log(`SUMMARY migrations=${migrationRecords.length} functionDefinitions=${functionDefinitions.length} serviceRoleFiles=${serviceRoleBoundaries.length} denoChecks=${denoCheckCount} databaseChecks=${databaseContractChecks}`);

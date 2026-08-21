@@ -2,6 +2,7 @@
   "name": "vite_react_shadcn_ts",
   "private": true,
   "version": "0.0.0",
+  "packageManager": "bun@1.4.0",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "scripts": {
@@ -16,6 +17,7 @@
     "w0rs:archive:check": "node scripts/w0rs/archive-manifest.mjs --check",
     "w0rs:baseline": "node scripts/w0rs/canonical-baseline.mjs --write",
     "w0rs:baseline:check": "node scripts/w0rs/canonical-baseline.mjs --check",
+    "w0rs:db-contract:check": "node scripts/w0rs/database-contract.mjs",
     "w0rs:reproduce": "node scripts/w0rs/reproduce-migration-failure.mjs --write",
     "w0rs:reproduce:check": "node scripts/w0rs/reproduce-migration-failure.mjs --check",
     "w0rs:tests": "node scripts/w0rs/run-tests.mjs"

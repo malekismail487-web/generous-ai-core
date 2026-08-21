@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "Phase A recommendations; no Phase B mutation authorized",
+  "status": "Canonical rebaseline decisions with historical evidence retained separately",
   "allowedRecommendations": [
     "retain",
     "replace",

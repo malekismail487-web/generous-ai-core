@@ -2148,6 +2148,12 @@
       ]
     },
     {
+      "name": "PERSONA_SEED",
+      "files": [
+        "scripts/personaTest.ts"
+      ]
+    },
+    {
       "name": "SUPABASE_ANON_KEY",
       "files": [
         "supabase/functions/ability-update/index.ts",
@@ -2354,8 +2360,6 @@
     }
   ],
   "lockfiles": [
-    "bun.lock",
-    "bun.lockb",
-    "package-lock.json"
+    "bun.lock"
   ]
 }

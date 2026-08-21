@@ -36,8 +36,26 @@ type BumpReason =
 
 interface Bump { reason: BumpReason; detail?: string; at: number }
 const bumps: Bump[] = [];
+const BASE_SEED = Number.parseInt(process.env.PERSONA_SEED ?? "1597463007", 10) >>> 0;
+let randomState = BASE_SEED || 1;
+let bumpSequence = 0;
+
+function seededRandom() {
+  // xorshift32 is deterministic across Node, Bun, Deno, Windows, and Linux.
+  randomState ^= randomState << 13;
+  randomState ^= randomState >>> 17;
+  randomState ^= randomState << 5;
+  return (randomState >>> 0) / 0x1_0000_0000;
+}
+
+function seedFor(name: string) {
+  let hash = BASE_SEED || 1;
+  for (const char of name) hash = Math.imul(hash ^ char.charCodeAt(0), 16_777_619) >>> 0;
+  randomState = hash || 1;
+}
+
 function bump(reason: BumpReason, detail?: string) {
-  bumps.push({ reason, detail, at: Date.now() });
+  bumps.push({ reason, detail, at: bumpSequence++ });
 }
 
 interface AnswerSignalState {
@@ -89,6 +107,7 @@ function resetSignals() {
   sig.recentTimes.length = 0;
   sig.lastSubject = null;
   bumps.length = 0;
+  bumpSequence = 0;
 }
 
 // --- Personas ---------------------------------------------------------------
@@ -106,8 +125,8 @@ const personas: Persona[] = [
     name: "fast_learner",
     generate: () =>
       Array.from({ length: 20 }, () => ({
-        isCorrect: Math.random() < 0.92, // 92% accuracy
-        responseTimeSec: 4 + Math.random() * 2, // 4–6s, very stable
+        isCorrect: seededRandom() < 0.92, // 92% accuracy
+        responseTimeSec: 4 + seededRandom() * 2, // 4–6s, very stable
       })),
     expect: (e) => {
       const total = e.length;
@@ -119,8 +138,8 @@ const personas: Persona[] = [
     generate: () => {
       // 6 wrong in a row, then mixed
       const out: Array<{ isCorrect: boolean; responseTimeSec: number }> = [];
-      for (let i = 0; i < 6; i++) out.push({ isCorrect: false, responseTimeSec: 8 + Math.random() * 4 });
-      for (let i = 0; i < 14; i++) out.push({ isCorrect: Math.random() < 0.5, responseTimeSec: 7 + Math.random() * 5 });
+      for (let i = 0; i < 6; i++) out.push({ isCorrect: false, responseTimeSec: 8 + seededRandom() * 4 });
+      for (let i = 0; i < 14; i++) out.push({ isCorrect: seededRandom() < 0.5, responseTimeSec: 7 + seededRandom() * 5 });
       return out;
     },
     emotions: ["frustration", "confusion"],
@@ -134,8 +153,8 @@ const personas: Persona[] = [
     generate: () => {
       // Stable times, then increasing slowness — should trigger response_time_spike
       const out: Array<{ isCorrect: boolean; responseTimeSec: number }> = [];
-      for (let i = 0; i < 8; i++) out.push({ isCorrect: true, responseTimeSec: 5 + Math.random() });
-      for (let i = 0; i < 4; i++) out.push({ isCorrect: Math.random() < 0.7, responseTimeSec: 18 + Math.random() * 5 });
+      for (let i = 0; i < 8; i++) out.push({ isCorrect: true, responseTimeSec: 5 + seededRandom() });
+      for (let i = 0; i < 4; i++) out.push({ isCorrect: seededRandom() < 0.7, responseTimeSec: 18 + seededRandom() * 5 });
       return out;
     },
     fatigueBandTrace: ["low", "low", "med", "high"],
@@ -150,7 +169,7 @@ const personas: Persona[] = [
       // Alternating right/wrong — neither streak triggers should fire
       return Array.from({ length: 20 }, (_, i) => ({
         isCorrect: i % 2 === 0,
-        responseTimeSec: 6 + Math.random() * 2,
+        responseTimeSec: 6 + seededRandom() * 2,
       }));
     },
     expect: (e) => {
@@ -162,9 +181,9 @@ const personas: Persona[] = [
     generate: () => {
       // 8 correct hot streak, then 1 wrong (should fire streak_break)
       const out: Array<{ isCorrect: boolean; responseTimeSec: number }> = [];
-      for (let i = 0; i < 8; i++) out.push({ isCorrect: true, responseTimeSec: 3 + Math.random() });
+      for (let i = 0; i < 8; i++) out.push({ isCorrect: true, responseTimeSec: 3 + seededRandom() });
       out.push({ isCorrect: false, responseTimeSec: 12 });
-      for (let i = 0; i < 11; i++) out.push({ isCorrect: Math.random() < 0.6, responseTimeSec: 6 });
+      for (let i = 0; i < 11; i++) out.push({ isCorrect: seededRandom() < 0.6, responseTimeSec: 6 });
       return out;
     },
     expect: (e) => {
@@ -178,6 +197,7 @@ const personas: Persona[] = [
 // --- Runner -----------------------------------------------------------------
 
 function runPersona(p: Persona) {
+  seedFor(p.name);
   resetSignals();
   let prevBand: "low" | "med" | "high" | null = null;
   const trace = p.fatigueBandTrace ?? [];
@@ -201,7 +221,7 @@ function runPersona(p: Persona) {
 }
 
 let failed = 0;
-console.log("\n=== Lumina Phase 3 — Persona Test Harness ===\n");
+console.log(`\n=== Lumina Phase 3 — Persona Test Harness (seed ${BASE_SEED}) ===\n`);
 for (const p of personas) {
   const { name, events, failure } = runPersona(p);
   const summary = events.length
