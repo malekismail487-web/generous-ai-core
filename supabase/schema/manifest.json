@@ -22,8 +22,8 @@
     },
     {
       "path": "supabase/schema/30_functions.sql",
-      "canonicalLfBytes": 146097,
-      "canonicalLfSha256": "4cdd0cf6316cc3d595ba1be3d591ba4a6dd36e322e925ae1f5273bf5a23118a0"
+      "canonicalLfBytes": 138049,
+      "canonicalLfSha256": "2c8646a01da8fb0a3665281c388df89a92c2c12e96f4edd7fd6c6d40a8dabe59"
     },
     {
       "path": "supabase/schema/40_tables.sql",
@@ -34,6 +34,11 @@
       "path": "supabase/schema/45_views_sequences_comments.sql",
       "canonicalLfBytes": 5020,
       "canonicalLfSha256": "4ad7c44a15664a310a7b08e2df3b64f1c27387211e7929596c6ab08bebbf5bb2"
+    },
+    {
+      "path": "supabase/schema/47_view_functions.sql",
+      "canonicalLfBytes": 8880,
+      "canonicalLfSha256": "e30a220ba6fd642d89007da59973713e831d450b1d0c1cd6da29f2f2c7403481"
     },
     {
       "path": "supabase/schema/50_constraints_indexes.sql",
@@ -72,7 +77,7 @@
     }
   ],
   "baseline": {
-    "canonicalLfBytes": 564987,
-    "canonicalLfSha256": "ca99c8e995705428c6b5968868529f8d59c9282d91f4ef0d3f458f7bf46b545c"
+    "canonicalLfBytes": 565820,
+    "canonicalLfSha256": "54ba36aeb877d5464539e2193faf0eb625ff90d66b899d3e8d436a3a95125263"
   }
 }

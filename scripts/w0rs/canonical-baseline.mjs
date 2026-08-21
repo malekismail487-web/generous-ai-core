@@ -16,6 +16,7 @@ const sources = [
   "30_functions.sql",
   "40_tables.sql",
   "45_views_sequences_comments.sql",
+  "47_view_functions.sql",
   "50_constraints_indexes.sql",
   "55_security_constraints.sql",
   "60_triggers.sql",

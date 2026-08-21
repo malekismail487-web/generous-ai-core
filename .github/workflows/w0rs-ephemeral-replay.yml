@@ -8,7 +8,7 @@ on:
     paths:
       - ".github/workflows/w0rs-ephemeral-replay.yml"
       - "supabase/config.toml"
-      - "supabase/migrations/**"
+      - "supabase/legacy/lovable-migrations/**"
 
 permissions:
   contents: read
@@ -49,23 +49,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          migration_count="$(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | wc -l)"
+          source_dir="supabase/legacy/lovable-migrations"
+          migration_count="$(find "$source_dir" -maxdepth 1 -type f -name '*.sql' | wc -l)"
           test "$migration_count" -eq 128
           test ! -e supabase/.temp/project-ref
-          git diff --exit-code -- supabase/migrations
+          git diff --exit-code -- "$source_dir"
 
           replay_root="$RUNNER_TEMP/w0rs-replay"
           project_id="w0rs-2b-${GITHUB_RUN_ID}"
           mkdir -p "$replay_root"
           rsync -a --exclude='.git' ./ "$replay_root/"
+          find "$replay_root/supabase/migrations" -maxdepth 1 -type f -name '*.sql' -delete
+          cp "$source_dir"/*.sql "$replay_root/supabase/migrations/"
 
           (
-            cd "$GITHUB_WORKSPACE"
-            find supabase/migrations -maxdepth 1 -type f -name '*.sql' -print0 | sort -z | xargs -0 sha256sum
+            cd "$GITHUB_WORKSPACE/$source_dir"
+            find . -maxdepth 1 -type f -name '*.sql' -print0 | sort -z | xargs -0 sha256sum
           ) > "$RUNNER_TEMP/source-migrations.sha256"
           (
-            cd "$replay_root"
-            find supabase/migrations -maxdepth 1 -type f -name '*.sql' -print0 | sort -z | xargs -0 sha256sum
+            cd "$replay_root/supabase/migrations"
+            find . -maxdepth 1 -type f -name '*.sql' -print0 | sort -z | xargs -0 sha256sum
           ) > "$RUNNER_TEMP/replay-migrations.sha256"
           diff -u "$RUNNER_TEMP/source-migrations.sha256" "$RUNNER_TEMP/replay-migrations.sha256"
 

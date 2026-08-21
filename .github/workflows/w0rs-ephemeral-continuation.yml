@@ -8,7 +8,7 @@ on:
     paths:
       - ".github/workflows/w0rs-ephemeral-continuation.yml"
       - "supabase/config.toml"
-      - "supabase/migrations/**"
+      - "supabase/legacy/lovable-migrations/**"
 
 permissions:
   contents: read
@@ -42,20 +42,23 @@ jobs:
           diagnostics="$RUNNER_TEMP/w0rs-2c-diagnostics"
           replay_root="$RUNNER_TEMP/w0rs-2c-replay"
           project_id="w0rs-2c-${GITHUB_RUN_ID}"
-          source_count="$(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | wc -l)"
+          source_dir="supabase/legacy/lovable-migrations"
+          source_count="$(find "$source_dir" -maxdepth 1 -type f -name '*.sql' | wc -l)"
           test "$source_count" -eq 128
           test ! -e supabase/.temp/project-ref
-          git diff --exit-code -- supabase/migrations
+          git diff --exit-code -- "$source_dir"
 
           mkdir -p "$replay_root"
           rsync -a --exclude='.git' ./ "$replay_root/"
+          find "$replay_root/supabase/migrations" -maxdepth 1 -type f -name '*.sql' -delete
+          cp "$source_dir"/*.sql "$replay_root/supabase/migrations/"
           (
-            cd "$GITHUB_WORKSPACE"
-            find supabase/migrations -maxdepth 1 -type f -name '*.sql' -print0 | sort -z | xargs -0 sha256sum
+            cd "$GITHUB_WORKSPACE/$source_dir"
+            find . -maxdepth 1 -type f -name '*.sql' -print0 | sort -z | xargs -0 sha256sum
           ) > "$diagnostics/source-migrations.sha256"
           (
-            cd "$replay_root"
-            find supabase/migrations -maxdepth 1 -type f -name '*.sql' -print0 | sort -z | xargs -0 sha256sum
+            cd "$replay_root/supabase/migrations"
+            find . -maxdepth 1 -type f -name '*.sql' -print0 | sort -z | xargs -0 sha256sum
           ) > "$diagnostics/copied-migrations-before-shim.sha256"
           diff -u "$diagnostics/source-migrations.sha256" "$diagnostics/copied-migrations-before-shim.sha256"
 
@@ -81,8 +84,8 @@ jobs:
               "structure": {"object": "public.profiles.email", "type": "text", "nullable": True},
               "authorizationSemantics": False,
               "repositoryEvidence": [
-                  "supabase/migrations/20260112001051_e440cf24-7253-4460-a7b0-0818be9374ae.sql:40-51 creates public.profiles without email",
-                  "supabase/migrations/20260202112822_a61c6b14-58e3-4d54-a6ec-f025d3ae0486.sql:5-10 references public.profiles.email",
+                  "supabase/legacy/lovable-migrations/20260112001051_e440cf24-7253-4460-a7b0-0818be9374ae.sql:40-51 creates public.profiles without email",
+                  "supabase/legacy/lovable-migrations/20260202112822_a61c6b14-58e3-4d54-a6ec-f025d3ae0486.sql:5-10 references public.profiles.email",
                   "scripts/w0rs/reproduce-migration-failure.mjs:27,49-51 confirms no prior ADD COLUMN email and predicts SQLSTATE 42703",
               ],
               "temporaryFilename": sys.argv[2],
