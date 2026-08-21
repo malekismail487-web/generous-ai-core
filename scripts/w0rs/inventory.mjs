@@ -4,7 +4,6 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
-  statSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
@@ -16,6 +15,7 @@ const MODE = process.argv.includes("--check") ? "check" : "write";
 
 const toRepoPath = (path) => relative(ROOT, path).replaceAll("\\", "/");
 const read = (path) => readFileSync(path, "utf8");
+const canonicalText = (value) => value.replace(/\r\n?/g, "\n");
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const lineOf = (value, index) => value.slice(0, index).split(/\r?\n/).length;
 const normalizeName = (name) => name.replaceAll('"', "").toLowerCase();
@@ -151,7 +151,7 @@ const publications = [];
 const privilegeStatements = [];
 
 for (const [index, path] of migrationPaths.entries()) {
-  const content = read(path);
+  const content = canonicalText(read(path));
   const file = toRepoPath(path);
   const version = /^([0-9]+)_/.exec(path.split(/[\\/]/).at(-1))?.[1] ?? null;
   migrationRecords.push({
@@ -159,7 +159,7 @@ for (const [index, path] of migrationPaths.entries()) {
     file,
     version,
     versionDigits: version?.length ?? 0,
-    bytes: statSync(path).size,
+    bytes: Buffer.byteLength(content, "utf8"),
     sha256: sha256(content),
   });
   functionDefinitions.push(...extractFunctionDefinitions(content, file));

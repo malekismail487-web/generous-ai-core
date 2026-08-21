@@ -14,376 +14,376 @@
         "file": "supabase/migrations/20251229134549_ffe6f4f6-5001-4473-8d23-adbf944e9e4f.sql",
         "version": "20251229134549",
         "versionDigits": 14,
-        "bytes": 3646,
-        "sha256": "fc28942ab14d60cd356ce20116cedb06ad1fdc48b712184ae52940813976ca7f"
+        "bytes": 3535,
+        "sha256": "a64884b5016fdb1161f46ed5caf5921580fa7a7537ba0b39d0dcdd8eb9e73d36"
       },
       {
         "order": 2,
         "file": "supabase/migrations/20260103085157_4c17151b-ef5a-43ca-90ca-f2719b92c44e.sql",
         "version": "20260103085157",
         "versionDigits": 14,
-        "bytes": 1399,
-        "sha256": "83c45475cb43244e51b690ef53ca3d98d652d7709bba2b87a01a779ce71b84ad"
+        "bytes": 1356,
+        "sha256": "b9e86b0d0e2afe1f1dfa52ef9b695365054ff755c9bc2ed6e803cfead4a83e1c"
       },
       {
         "order": 3,
         "file": "supabase/migrations/20260110005022_1b2944da-8c0c-4cd9-a112-b2d090e65571.sql",
         "version": "20260110005022",
         "versionDigits": 14,
-        "bytes": 4095,
-        "sha256": "384eb7c89e7e8bbcb9f002571d8a5e100ad9dcad07ab2896118a1a3887441400"
+        "bytes": 3960,
+        "sha256": "e0fbe41ad4885b72c799ff399b9757e44e5ce7d17aff996cfb77de1676921720"
       },
       {
         "order": 4,
         "file": "supabase/migrations/20260111001031_ef2a1cf1-6220-42d7-8c81-775307db9514.sql",
         "version": "20260111001031",
         "versionDigits": 14,
-        "bytes": 121,
-        "sha256": "df6ac42018508fe98e5cfeac2721dd7d2dc93197e06e80d55f860b283e579c33"
+        "bytes": 120,
+        "sha256": "3264c84538c1f7713af46342e9f46e5f4cabea3a526b54806f3aa13295bea11e"
       },
       {
         "order": 5,
         "file": "supabase/migrations/20260111001113_db08bd95-e243-49b2-bed3-4ec66b8ee96d.sql",
         "version": "20260111001113",
         "versionDigits": 14,
-        "bytes": 1775,
-        "sha256": "eb3e111dc0bbb34c2527b3ebd5abb6dffc77291186bc686e28793ab82d33254d"
+        "bytes": 1717,
+        "sha256": "a10fbac8fa6a640785bff0c7f78088bf3628466c7394981cb77e8624f170a44e"
       },
       {
         "order": 6,
         "file": "supabase/migrations/20260112001051_e440cf24-7253-4460-a7b0-0818be9374ae.sql",
         "version": "20260112001051",
         "versionDigits": 14,
-        "bytes": 4804,
-        "sha256": "3e309d9ed5a27e711679892d2cabc521cf3f966957ce0b431a95de014e0cb85f"
+        "bytes": 4642,
+        "sha256": "fe6bd21d20e9612b0eb15086d4656c55ffc823f1d1408ffe85174d22aa0a4951"
       },
       {
         "order": 7,
         "file": "supabase/migrations/20260113003054_9cc6acb7-a80c-4848-9274-69cf22202ba1.sql",
         "version": "20260113003054",
         "versionDigits": 14,
-        "bytes": 4541,
-        "sha256": "d422440cfe3e2cab3f9c41246b7d73412d6f76fcf18f2d2db12923680f1f6336"
+        "bytes": 4398,
+        "sha256": "a36352506acd3b1f6fbd4819747e6a3dd1b6e54a19489fc5e9aeeac1bf45b496"
       },
       {
         "order": 8,
         "file": "supabase/migrations/20260114031014_96142f08-9734-4495-89b8-bab533b6c4ca.sql",
         "version": "20260114031014",
         "versionDigits": 14,
-        "bytes": 6476,
-        "sha256": "a450941d754cd1ed826891b976c69cd4139dd72a6da47e021f6875bc0f8f4996"
+        "bytes": 6277,
+        "sha256": "b4dde1ce1935a80cc324e4055a1a5d9b138732118a99b0292ab1b76151e91672"
       },
       {
         "order": 9,
         "file": "supabase/migrations/20260201203655_5d7c1433-144f-48f2-8274-66bcc9c37bb6.sql",
         "version": "20260201203655",
         "versionDigits": 14,
-        "bytes": 22397,
-        "sha256": "1592360ea196e5e236626a57350083d782696f6bbf1c2854b24a46b09f7cceb5"
+        "bytes": 21786,
+        "sha256": "06e12e84fbbf5e9643932fc0b1f1679293169285628a9c245176166df10d79dd"
       },
       {
         "order": 10,
         "file": "supabase/migrations/20260201203746_98fb600b-2d13-494d-9b49-b8575749bbf3.sql",
         "version": "20260201203746",
         "versionDigits": 14,
-        "bytes": 526,
-        "sha256": "a82f4758abe0d7ef54d54dbc5a48fe0b4f5115b8625d760eba1eaddf837e4893"
+        "bytes": 511,
+        "sha256": "3dd67a8d3b31cac02c1e06255de85c8455cf2f4cf04412f0572fc9b1bf6e6c36"
       },
       {
         "order": 11,
         "file": "supabase/migrations/20260202040407_f482aa67-f3c9-4f32-9e47-ee89d527c928.sql",
         "version": "20260202040407",
         "versionDigits": 14,
-        "bytes": 2531,
-        "sha256": "f5c9babe9988c5855d2ffafec001f60c9ee5ac60e826339e57c85c4f9481b863"
+        "bytes": 2463,
+        "sha256": "fbb4dff65e6374661cbbea8477ca0526a17497b53b3c2da18557d013921aeb47"
       },
       {
         "order": 12,
         "file": "supabase/migrations/20260202040751_81a873e6-7f7f-4489-bda7-a0ddc46890ad.sql",
         "version": "20260202040751",
         "versionDigits": 14,
-        "bytes": 1437,
-        "sha256": "3a33c5ddf07993e3708d97c37c63b4358f69934987a3ef9900631d5c03c362dc"
+        "bytes": 1399,
+        "sha256": "da3df3d3b53aff8550f473517a162556af738a5cbb994fbf4a10aadfdb484d10"
       },
       {
         "order": 13,
         "file": "supabase/migrations/20260202054052_170705c4-3d66-4a76-8580-43037b33b751.sql",
         "version": "20260202054052",
         "versionDigits": 14,
-        "bytes": 331,
-        "sha256": "2c71c1090595b1982984ee85f0b9af1b4edcb7627abb8f7b6595708398f03fcf"
+        "bytes": 325,
+        "sha256": "746f276131e9937495b74ca7eab6f2a10aedd6ab38c9706ef4e1776a45c01285"
       },
       {
         "order": 14,
         "file": "supabase/migrations/20260202065016_636bee2c-c867-402c-95df-fc60c2b82ff3.sql",
         "version": "20260202065016",
         "versionDigits": 14,
-        "bytes": 295,
-        "sha256": "6a3cb78236f40f9236bf1484a3afa170b84616963c7280306d8623ef555d80ab"
+        "bytes": 292,
+        "sha256": "d82d5f5ae8c5a1f6e901c5fd7f7679f66c5ef80b8bed3a3281f8507d1f9c3a27"
       },
       {
         "order": 15,
         "file": "supabase/migrations/20260202065237_ac89dd57-18eb-433e-b439-6745fb4589d8.sql",
         "version": "20260202065237",
         "versionDigits": 14,
-        "bytes": 491,
-        "sha256": "4dac37fe630c5d6744fcb078f48727f854a8b753ddb08d6670a5c9997291bbfb"
+        "bytes": 477,
+        "sha256": "7dfaf2ada3693238eedc0b45d4954a0d28d8536bfb8574fb2538084b2697a513"
       },
       {
         "order": 16,
         "file": "supabase/migrations/20260202070529_30d1c878-541d-4c07-b2cf-d9294351adc3.sql",
         "version": "20260202070529",
         "versionDigits": 14,
-        "bytes": 3173,
-        "sha256": "daa6236d67e85477513b47cc1f8a2dcea991d19b40c432125f53d0056a672bcb"
+        "bytes": 3079,
+        "sha256": "836e755970a3b90a1383e864867f98c94017d546bd73a77f114974ec5bc0b036"
       },
       {
         "order": 17,
         "file": "supabase/migrations/20260202070619_fad2a20b-f18d-427d-816d-b5c00add43a0.sql",
         "version": "20260202070619",
         "versionDigits": 14,
-        "bytes": 3606,
-        "sha256": "dd5d58ec45c89d7db0cdb27ca2e2ea3e9efc1c9df1847eaaf95b73dc77183ed5"
+        "bytes": 3498,
+        "sha256": "1bc31f31c466f063aa70bdbb783260b74bc98b8f2c2c83a13df814df29c7fedc"
       },
       {
         "order": 18,
         "file": "supabase/migrations/20260202071959_929c1bb4-f236-4d14-89fc-d8330759d892.sql",
         "version": "20260202071959",
         "versionDigits": 14,
-        "bytes": 2332,
-        "sha256": "af98894189b3f03790f85f29d2e476a6e88ee8e8501d41a9cc17df25ac6b2d27"
+        "bytes": 2269,
+        "sha256": "641462ff7874b7d14dd012ad36961ab1af15f68ea322237ff2ec8b24ff82c178"
       },
       {
         "order": 19,
         "file": "supabase/migrations/20260202072050_57144b59-00f5-41e2-bdc9-72ac50deee75.sql",
         "version": "20260202072050",
         "versionDigits": 14,
-        "bytes": 1896,
-        "sha256": "49d20c312f89d68ad104754a2e45b5d5c1ca29590d45f9410dfa628e44e4ec25"
+        "bytes": 1837,
+        "sha256": "50694181965b4dc468fe9c24cb1ddcf7f8f7ba229e66795da0aeca8cbb15fea0"
       },
       {
         "order": 20,
         "file": "supabase/migrations/20260202112822_a61c6b14-58e3-4d54-a6ec-f025d3ae0486.sql",
         "version": "20260202112822",
         "versionDigits": 14,
-        "bytes": 407,
-        "sha256": "89d520c82469e5aac7f1c18850a634343be7ee841c67df75a475f7a31d992cbb"
+        "bytes": 397,
+        "sha256": "74152a3eb2f4e74abf94b698f47bfa1624f351400dc85852733758e39e9c90fa"
       },
       {
         "order": 21,
         "file": "supabase/migrations/20260202114359_ff9a5575-f042-425e-81b8-fd787757cf85.sql",
         "version": "20260202114359",
         "versionDigits": 14,
-        "bytes": 1424,
-        "sha256": "99dd12146a48639517a484a3b8f5697fd3a4660128685c5b1adb3089f9dea5a5"
+        "bytes": 1382,
+        "sha256": "3fd95471823333d2f0ee1957151fdc95563a6a94fe617d2a4cbe19492d24c5d9"
       },
       {
         "order": 22,
         "file": "supabase/migrations/20260202125600_08e27647-2e58-49c3-bf8b-cfc372a014b7.sql",
         "version": "20260202125600",
         "versionDigits": 14,
-        "bytes": 860,
-        "sha256": "240bd8a33aa0fe1044cf07335cc8ed5340aeb07fcb486db2769415ac51809b6d"
+        "bytes": 834,
+        "sha256": "d1de2a7ee9d4cae9f43b9957153a6344287a9acacc885fe3a9d03960e66c204c"
       },
       {
         "order": 23,
         "file": "supabase/migrations/20260202130412_87e690a7-358f-4278-8900-5711f0cbdaf3.sql",
         "version": "20260202130412",
         "versionDigits": 14,
-        "bytes": 1752,
-        "sha256": "59d601313b4ab6d3c85092ef700bc7499a0b625065a8016a17fc376a9034dcb2"
+        "bytes": 1705,
+        "sha256": "83e8cafea9d9b941b06ccde65892e572dba0b6bdf448eac35d60109ddaef045c"
       },
       {
         "order": 24,
         "file": "supabase/migrations/20260202132724_c27475ad-dea6-48e3-9e2f-4f048ab8f882.sql",
         "version": "20260202132724",
         "versionDigits": 14,
-        "bytes": 2502,
-        "sha256": "50cd22c50170c357d8b486de4a7e006e25f88cbd2cbb130000cfde0730f844ba"
+        "bytes": 2430,
+        "sha256": "16b48a0f572a38089eb24ca85e510ba91ec9499decf7a1dce3b064f833f4ca7d"
       },
       {
         "order": 25,
         "file": "supabase/migrations/20260202132809_c2b5f9e3-5292-4615-aff5-aa1771fac408.sql",
         "version": "20260202132809",
         "versionDigits": 14,
-        "bytes": 2042,
-        "sha256": "e01356a1e3901b4ee5044e2273eec88581e2f7a66085dee13b27fefebafbbd29"
+        "bytes": 1978,
+        "sha256": "39f5520b159f3a30efef2f1a8596c7494e4e5c4dee1de46416956429e9944646"
       },
       {
         "order": 26,
         "file": "supabase/migrations/20260204225201_b59ddea8-5786-4c5b-b4fd-ad3f6c3ca96c.sql",
         "version": "20260204225201",
         "versionDigits": 14,
-        "bytes": 1371,
-        "sha256": "565e6dc24c98903b5035c90919df6292d06e983162830cb80cf9a70c6066b604"
+        "bytes": 1333,
+        "sha256": "bb2f5e5115a5b9ade622015ae7b114eb1f19ce3a9dee7e17bebe08542d51dbaf"
       },
       {
         "order": 27,
         "file": "supabase/migrations/20260205222524_e4925930-c863-4624-ab2c-ac99d03e8793.sql",
         "version": "20260205222524",
         "versionDigits": 14,
-        "bytes": 4829,
-        "sha256": "9adbd72ec5dd98f0b67d9426e3e80b33b5900246324f01fcafc239b7e758cd69"
+        "bytes": 4675,
+        "sha256": "3ba8adf18ecbeaad97d95f83f2e4e54b296f81759a16f06b1601a6b18d80db92"
       },
       {
         "order": 28,
         "file": "supabase/migrations/20260208025800_337d7300-f363-484e-91a8-985e8304f394.sql",
         "version": "20260208025800",
         "versionDigits": 14,
-        "bytes": 1210,
-        "sha256": "d30c2a52eee39bfb5fc4f578fef3596878ab374a538b03500292b5f2ca842097"
+        "bytes": 1164,
+        "sha256": "9bc497dcebbf2933dabbb77d4efbdf5477fdc1c9983751e60f185c2ff7ea208b"
       },
       {
         "order": 29,
         "file": "supabase/migrations/20260209124029_850e5a9c-ca6b-44b0-90fd-7d13c2d6c592.sql",
         "version": "20260209124029",
         "versionDigits": 14,
-        "bytes": 346,
-        "sha256": "28336f3e234a40a8f3a78c0978907e37af9d98384c4235523162cf3613834612"
+        "bytes": 337,
+        "sha256": "c0e2220577363a00387ce8626c13ffb474749f1d9fd7e04d20cba9ab40954f57"
       },
       {
         "order": 30,
         "file": "supabase/migrations/20260209124504_ad9a6a98-70dc-4574-b90b-0058a2b08ad1.sql",
         "version": "20260209124504",
         "versionDigits": 14,
-        "bytes": 257,
-        "sha256": "b555791a46dd561c7f4074fce787a1a2436cda289ddcf6d25c5d3adac56a52ed"
+        "bytes": 252,
+        "sha256": "81b0123beed754da5ea43919074db3c5d6f7f6e9dabc84b2c269bf50d5edbdc0"
       },
       {
         "order": 31,
         "file": "supabase/migrations/20260210095408_49bed31f-7b06-4964-a06f-469b8f68eba0.sql",
         "version": "20260210095408",
         "versionDigits": 14,
-        "bytes": 285,
-        "sha256": "fd1dcd8c478094fa279c7437e08e84005ba38fba24b5f14d06090117b567a01a"
+        "bytes": 283,
+        "sha256": "31d08c30f8497a5249f7fa019b5fc9f9839bb747d70c76a1bb53ba6df344a8d1"
       },
       {
         "order": 32,
         "file": "supabase/migrations/20260211061109_bd68faaa-6a58-4ada-aa24-d748814cf918.sql",
         "version": "20260211061109",
         "versionDigits": 14,
-        "bytes": 3914,
-        "sha256": "7bcf954fa9f922b3bd8ddd02cf9b684f33a75b36d7c4d3a01d0c429f39b21d07"
+        "bytes": 3839,
+        "sha256": "8667ee575504096751e0d7e9df9599e91435423d695cda94e7a6bf556db84ef3"
       },
       {
         "order": 33,
         "file": "supabase/migrations/20260214102110_8a6c7d8e-6618-45c1-b00b-e03151f5b58a.sql",
         "version": "20260214102110",
         "versionDigits": 14,
-        "bytes": 819,
-        "sha256": "c0e425f8150dc74cfed01a7a0ccc61577b2ba288b0f89587b0e8861075c4f5ec"
+        "bytes": 805,
+        "sha256": "cf44318d75498b30a241b7341d496f65b7ebd85599fdbcdb8ff0d76cd1c6e8f2"
       },
       {
         "order": 34,
         "file": "supabase/migrations/20260214105300_00d87dd3-5424-48f1-b0d6-9262d9b5f457.sql",
         "version": "20260214105300",
         "versionDigits": 14,
-        "bytes": 3379,
-        "sha256": "7b52f82c67e6991ebd3bb3972fe9b7e1193b5aac48a8787010d639831d41de3c"
+        "bytes": 3276,
+        "sha256": "60605611db1cbc7cece9114357c84adf8ecb828aba1f479b3c4432ccccc08f21"
       },
       {
         "order": 35,
         "file": "supabase/migrations/20260214112729_58848686-1800-48ca-9e4a-2147d40bba8b.sql",
         "version": "20260214112729",
         "versionDigits": 14,
-        "bytes": 530,
-        "sha256": "aa2ab53b6dc2c864bdd96dcf9ed9d7eaa6a7a6d39c99136787ea84343b8fb372"
+        "bytes": 511,
+        "sha256": "61cfbc7de726fe208e67419b27930a9f26e615d29e4fad5ec0678be651045ff7"
       },
       {
         "order": 36,
         "file": "supabase/migrations/20260214114919_9915026c-7a72-4ea2-b526-ec7f92518728.sql",
         "version": "20260214114919",
         "versionDigits": 14,
-        "bytes": 6662,
-        "sha256": "dd6ddda5d3f4a54459b1ea883ac02d624417d6a884ecb5ffa5a6d51b750f8be5"
+        "bytes": 6494,
+        "sha256": "02f939ba43074ca7e3bccf649394d49d53e87bcedc121de0e42fc2606bc7256c"
       },
       {
         "order": 37,
         "file": "supabase/migrations/20260214165422_039e2785-b564-44fc-be65-871dec9879d8.sql",
         "version": "20260214165422",
         "versionDigits": 14,
-        "bytes": 5223,
-        "sha256": "8f5a898ef3f5d9afddd7a0e3927da3a9eaf174f62dd503a39ec71ade3290795b"
+        "bytes": 5095,
+        "sha256": "77315cf19a68e355f8c170724666a1002b5e8d28bf50e22ea3cf865d0903815d"
       },
       {
         "order": 38,
         "file": "supabase/migrations/20260214175403_9815e4ed-1575-4366-93be-e6280db24b6e.sql",
         "version": "20260214175403",
         "versionDigits": 14,
-        "bytes": 572,
-        "sha256": "8488374756f0bc9c5235355a5aaedbdb5532c3aaec03a64ff4a46b0c09ca0d6f"
+        "bytes": 557,
+        "sha256": "67d00694b4943ecf93ceffcb661947c13acd665579ebaed9eecf7709d4d2865a"
       },
       {
         "order": 39,
         "file": "supabase/migrations/20260216193141_a4561099-2f59-499b-8a2d-cd09899bc4bc.sql",
         "version": "20260216193141",
         "versionDigits": 14,
-        "bytes": 293,
-        "sha256": "c2fe0f01ecc0675705c341932b66f8c02818881ecbcef0d770021f727fab7a82"
+        "bytes": 289,
+        "sha256": "b9b3feebac47c77d59338e3f5de1adab8f3a87d3effa3f8b539945ecc29110cc"
       },
       {
         "order": 40,
         "file": "supabase/migrations/20260219003042_438a9f74-d065-456e-9291-a6c4e6b60de4.sql",
         "version": "20260219003042",
         "versionDigits": 14,
-        "bytes": 1129,
-        "sha256": "fc43d3f77d126fb7c3c5fca6eb259aabef1a9c7eb40c0d03ea1ac7766e0a5574"
+        "bytes": 1096,
+        "sha256": "9fcf059bb9730d83fd0e3aecc2676ba9b693a9d0ffb3b8cbee89da7f99410485"
       },
       {
         "order": 41,
         "file": "supabase/migrations/20260220194827_650d982a-5049-4d51-9c6a-324a65a42bac.sql",
         "version": "20260220194827",
         "versionDigits": 14,
-        "bytes": 3951,
-        "sha256": "bcb216384830c271fd19142a407ab7bc16be4fcbc1fe5fde2bf2b5630c987bd6"
+        "bytes": 3840,
+        "sha256": "35037f16ceb4f2e2e022d7d038615cd964a90ffd358bef8d8bdc539c497b6b57"
       },
       {
         "order": 42,
         "file": "supabase/migrations/20260220195916_f8a9cb9f-2e6b-4efb-8512-60c152121ce3.sql",
         "version": "20260220195916",
         "versionDigits": 14,
-        "bytes": 1355,
-        "sha256": "b21114e92b52a16f3947d0fcde3da8c7444a8750a2daf2515b1362fc91335afb"
+        "bytes": 1316,
+        "sha256": "40d246d09bcaf69e1eef34a74f93e3c56c4b1cc6f4ab59483c73835c143dc701"
       },
       {
         "order": 43,
         "file": "supabase/migrations/20260220200229_575b9cc5-7952-48c7-bce5-32af085f49dc.sql",
         "version": "20260220200229",
         "versionDigits": 14,
-        "bytes": 534,
-        "sha256": "63174b956f8488d6d7cba456eb907bff7e713881594a6dc8567e8d7afcd97233"
+        "bytes": 520,
+        "sha256": "d433e2277de33e8b8ea338229e676bd155ffedc1867d98fe4f390cb1dd0683a5"
       },
       {
         "order": 44,
         "file": "supabase/migrations/20260222004158_1f97b406-dbe4-4a10-99c3-5daf534e9409.sql",
         "version": "20260222004158",
         "versionDigits": 14,
-        "bytes": 2441,
-        "sha256": "a716bcd60ab75a7a437afad1d3385756ea971025a2d4511cc9385289a918b4d4"
+        "bytes": 2367,
+        "sha256": "9c29cf74581d7174f23636ffdf5b0f3f098a746f964fe4f4f4a60faea49b3353"
       },
       {
         "order": 45,
         "file": "supabase/migrations/20260223020740_c2d966af-85fa-4197-9632-9efe5d399fdb.sql",
         "version": "20260223020740",
         "versionDigits": 14,
-        "bytes": 3438,
-        "sha256": "e339010bd075f499d55481e9f3bcdebebeecc33b4f3e56fd047020e4dbaa3b02"
+        "bytes": 3349,
+        "sha256": "c30201ff507af20701fc533f6adfd1c154b3a0dbd8418a54213421253e172ff7"
       },
       {
         "order": 46,
         "file": "supabase/migrations/20260227030056_7759683a-154f-483e-9ad3-f5c49f7cffe5.sql",
         "version": "20260227030056",
         "versionDigits": 14,
-        "bytes": 1947,
-        "sha256": "16cec0ed130fac24f896ba964632fbb27792cdf5010180483565a33828d31954"
+        "bytes": 1888,
+        "sha256": "d3431de6aaaf7cd51a14ae189da114ea53bc16aa5216869b52527c4ac0198084"
       },
       {
         "order": 47,
         "file": "supabase/migrations/20260227030129_2df88e76-376b-434b-b0ca-1ec56af858e0.sql",
         "version": "20260227030129",
         "versionDigits": 14,
-        "bytes": 299,
-        "sha256": "23afc5d4ba779e601b9bdbf1b127aa6e60bfa715239c83461c399e75a724163e"
+        "bytes": 294,
+        "sha256": "a88766b1cf227ebe2054e273d86b40df7ea2d33dcf79ffae4219b172fe9caefa"
       },
       {
         "order": 48,
@@ -398,8 +398,8 @@
         "file": "supabase/migrations/20260302000538_ad6580bd-1205-449b-8970-e1feb3b06998.sql",
         "version": "20260302000538",
         "versionDigits": 14,
-        "bytes": 2824,
-        "sha256": "e0bafac33077d58734be1aa938f149bfca1271e643373b8cde78b004e8952891"
+        "bytes": 2758,
+        "sha256": "ae21954c80506620a8a6eb660ec94427dc5de7199c23cf8feed41236c70171bb"
       },
       {
         "order": 50,
@@ -414,128 +414,128 @@
         "file": "supabase/migrations/20260302010138_e3685f32-941a-4705-b416-22efac5abbe8.sql",
         "version": "20260302010138",
         "versionDigits": 14,
-        "bytes": 821,
-        "sha256": "8e69b08db1cac3b833ad818178db929b36574feaeb67d88727885c28abbce607"
+        "bytes": 792,
+        "sha256": "8656ac33637ef8bf7df547f7cea36b68986d6e02d4074af96155b6d06063418f"
       },
       {
         "order": 52,
         "file": "supabase/migrations/20260302011716_affd4541-51ec-4698-8d6c-2e2d6a62ee21.sql",
         "version": "20260302011716",
         "versionDigits": 14,
-        "bytes": 6637,
-        "sha256": "833bfc1ab2255b973740a57013c98b02f2af19380550666ea8d66aa48afc3395"
+        "bytes": 6457,
+        "sha256": "cd4ab0752f9d3820e68115837368e8b886bba407796148ecb44b6c28ca877af2"
       },
       {
         "order": 53,
         "file": "supabase/migrations/20260302011948_f481294a-4490-4f39-8e80-91453c8039c3.sql",
         "version": "20260302011948",
         "versionDigits": 14,
-        "bytes": 483,
-        "sha256": "01196727091985244cc9e227b25a4160bc64888b4dd77738a2436c2cf6e646aa"
+        "bytes": 472,
+        "sha256": "56545c8c332e61ed521d817209f0f1187a48bdd24e52e34cf412fe40b2893883"
       },
       {
         "order": 54,
         "file": "supabase/migrations/20260302012430_912bc5f1-1801-4715-be9b-f3f2d794fba4.sql",
         "version": "20260302012430",
         "versionDigits": 14,
-        "bytes": 219,
-        "sha256": "6f8800af49a316bed85d193a1be0aea010deaffed1aa11f25c9774b4dc5b9e76"
+        "bytes": 218,
+        "sha256": "8b69d2eae32b88542b9879b8f68be80643d2227ff9bb42882ebe88d680d7dde6"
       },
       {
         "order": 55,
         "file": "supabase/migrations/20260302012659_72e8adfd-ef3b-4b8c-b6b6-94f5fc1af7bd.sql",
         "version": "20260302012659",
         "versionDigits": 14,
-        "bytes": 180,
-        "sha256": "4465b10ec261ff33b955a85d358c6fa1fdd575c87340193a53bac71d1608365f"
+        "bytes": 177,
+        "sha256": "ffd48313f92268688fc5a5d3aba02377ec70a5456924b9719d58ff73994185dd"
       },
       {
         "order": 56,
         "file": "supabase/migrations/20260302082829_1dd4f0ef-cd74-43ee-874f-42d1dddac0e1.sql",
         "version": "20260302082829",
         "versionDigits": 14,
-        "bytes": 8992,
-        "sha256": "e5eb11590347379f06b30dd7425bcd81f4b0e649961ca06838d8f904fe490680"
+        "bytes": 8735,
+        "sha256": "b6b79b164c7a0fe6d8c2a4cbd9d6163e1750521e7a7a346ce5f6079c9feaa389"
       },
       {
         "order": 57,
         "file": "supabase/migrations/20260302082844_0a3a5bc6-253b-46bb-8b5d-fb158d568cbe.sql",
         "version": "20260302082844",
         "versionDigits": 14,
-        "bytes": 753,
-        "sha256": "686220035ae8ab19af7eb9be730b057820279899baadcf7e9f1ad6ba9085983d"
+        "bytes": 741,
+        "sha256": "e879285365455cc03df338fe62cd2cdffc807c77fe9517a23e09f57ceedb76fe"
       },
       {
         "order": 58,
         "file": "supabase/migrations/20260302083318_2b351917-a268-46c2-b44f-496428ced0cb.sql",
         "version": "20260302083318",
         "versionDigits": 14,
-        "bytes": 2106,
-        "sha256": "e66acd6b5c9b552d2d680d2ca204a11cd2bb05673a08e30726fd8c6e959e2d2e"
+        "bytes": 2057,
+        "sha256": "dadd056d8e84583ceda05680e0899f13efeafae53fc6d60f7bbeac3c0c9f1f7d"
       },
       {
         "order": 59,
         "file": "supabase/migrations/20260302085207_10d3d098-8591-45b8-b046-24c0a4283d01.sql",
         "version": "20260302085207",
         "versionDigits": 14,
-        "bytes": 580,
-        "sha256": "b503c5e0212d6f82411ec887309486f03e6439ccba15fe2a382bc62cb4a44320"
+        "bytes": 574,
+        "sha256": "46ec592dd686df78ce8a699938cff6ef2025a738843a98255a7f9078b2c329ab"
       },
       {
         "order": 60,
         "file": "supabase/migrations/20260302085649_b5cb91a8-a5c2-46a8-8c81-30b8d79956b4.sql",
         "version": "20260302085649",
         "versionDigits": 14,
-        "bytes": 2364,
-        "sha256": "6c94fac360f8dfd2bc0edc339d8f487798d12fd13358944de61ed9f628ed2dbe"
+        "bytes": 2301,
+        "sha256": "ecddd9277f8cd74e909cf3166a62137f6f7ce4d69ebb30aeffa8810f3609e731"
       },
       {
         "order": 61,
         "file": "supabase/migrations/20260302090134_f6b35599-3649-4c53-95c3-215febce9afc.sql",
         "version": "20260302090134",
         "versionDigits": 14,
-        "bytes": 250,
-        "sha256": "f663f11728b1dbc38e3028f29bb139a16ac52b28cbdd039b4e4d8fd8202105f2"
+        "bytes": 248,
+        "sha256": "7d695f54e75ed75e3bdf60f1bae127664276567ac9ff0f7f5f492ca9c76b08fc"
       },
       {
         "order": 62,
         "file": "supabase/migrations/20260303004338_9a0db725-ea34-48fe-8a61-37a656d322ec.sql",
         "version": "20260303004338",
         "versionDigits": 14,
-        "bytes": 12290,
-        "sha256": "fb20056736877317eb416bef4b24fe875ad290577358539d2881caff013ca00b"
+        "bytes": 11975,
+        "sha256": "02eae26de52835e744dd51efb05d00a20d48ec2231dba5515428ba7c1d6f16e5"
       },
       {
         "order": 63,
         "file": "supabase/migrations/20260303004356_f315aaa8-044a-40d7-96a2-00934b732462.sql",
         "version": "20260303004356",
         "versionDigits": 14,
-        "bytes": 631,
-        "sha256": "8e4d5a5228475e92c121335680e555a61b51c6ceafe9b22ddd56c5ddf463100e"
+        "bytes": 617,
+        "sha256": "6d1bcbebebade95a7dbcb53f04d3a95cc1ecd238f8362b0bbc394722fca62fff"
       },
       {
         "order": 64,
         "file": "supabase/migrations/20260305223242_e2999e0d-d99a-47ed-8ffb-1b84dc170672.sql",
         "version": "20260305223242",
         "versionDigits": 14,
-        "bytes": 4362,
-        "sha256": "9e958809344d0c8f5dc7c691254c30b1bcc9e5110c42cf24479cdabceb6ba9f0"
+        "bytes": 4243,
+        "sha256": "73bc603093135cc28d2ec915e490b6158e52056d3841d03f8f67574d0ae7e3ed"
       },
       {
         "order": 65,
         "file": "supabase/migrations/20260306060423_098b8b63-6039-4c8b-9509-5b1dca1066f9.sql",
         "version": "20260306060423",
         "versionDigits": 14,
-        "bytes": 2162,
-        "sha256": "d5f92ce980e6772ce71914a9bfc88c93b1cdc43f52a3ab7cfcc8f23285f876aa"
+        "bytes": 2103,
+        "sha256": "e2a1e7b7d58f746c47b93fa1d21c8644b162cbeedd6d3a469be24c4737b1f032"
       },
       {
         "order": 66,
         "file": "supabase/migrations/20260312104141_b1d811ea-59f6-485c-8590-c3e049ad9541.sql",
         "version": "20260312104141",
         "versionDigits": 14,
-        "bytes": 3190,
-        "sha256": "52ae757fbbb2434dc20d8ba7e5aa8414a51be168ecca6194bdef5409d80c4e86"
+        "bytes": 3091,
+        "sha256": "e5a1627d864eb18cbeb984db2b4e8e33f04b1ada97d64a7b3ade12b2742cbcf8"
       },
       {
         "order": 67,
@@ -558,176 +558,176 @@
         "file": "supabase/migrations/20260330042108_4ef4393d-6aec-4b71-bef9-e735c3fe0ad2.sql",
         "version": "20260330042108",
         "versionDigits": 14,
-        "bytes": 486,
-        "sha256": "083d2b172183d8fd324014e86db2ae65a34a463d14b22840ba3409b232025523"
+        "bytes": 477,
+        "sha256": "c27278cd0596f72891751e2d40b36545ffc4e35bfc0a989768d4aa8272810afa"
       },
       {
         "order": 70,
         "file": "supabase/migrations/20260405121922_1d2c78b0-3412-4491-ac43-25cae46f65c7.sql",
         "version": "20260405121922",
         "versionDigits": 14,
-        "bytes": 3157,
-        "sha256": "08c3c83199ebc04f3f3568c2de4975d38feab91bc84159b06ed3494d6846ce2d"
+        "bytes": 3088,
+        "sha256": "e3ae2417b972015ebe2234366f19cbec3326858fe5b13ab5f6451fa3231af134"
       },
       {
         "order": 71,
         "file": "supabase/migrations/20260409190240_dc78d93d-8c8c-4887-a98b-5f3ffe32a891.sql",
         "version": "20260409190240",
         "versionDigits": 14,
-        "bytes": 4391,
-        "sha256": "e453fca8add65867a80f91765f5650837afc48465b53136139ebafed6fc28f33"
+        "bytes": 4279,
+        "sha256": "7826532a41269d5b703e4c73d9d637723f5533c073d5b89909317678f7bb67a1"
       },
       {
         "order": 72,
         "file": "supabase/migrations/20260414153710_3e7e55d8-6ba6-4cc7-a45c-e585b32aa4da.sql",
         "version": "20260414153710",
         "versionDigits": 14,
-        "bytes": 891,
-        "sha256": "e37e20d4ffe66ce3f331fef309d5b5400ccfee400638dc137997f38f7ec68c86"
+        "bytes": 871,
+        "sha256": "5310cc8ebfa418ca79fc8e1de617224481371a8232cd740f6b85c1a5dac2dc59"
       },
       {
         "order": 73,
         "file": "supabase/migrations/20260430_create_api_infrastructure.sql",
         "version": "20260430",
         "versionDigits": 8,
-        "bytes": 2521,
-        "sha256": "de1587cfbfc1a82802a27e535e4f1e5f66ded48febd5bc9e2659a7aa4dc93a57"
+        "bytes": 2453,
+        "sha256": "3e79e5ccf671340aa2a75f3a8e15a2f3288766ae0d4666da238e6e53814d96da"
       },
       {
         "order": 74,
         "file": "supabase/migrations/20260503165307_3f9d4e07-abf3-4b69-a69d-01ca340f9320.sql",
         "version": "20260503165307",
         "versionDigits": 14,
-        "bytes": 2244,
-        "sha256": "bf40397bb69815d097682413fae5ab55c506e6a68737d6f78014c0e0097dd89f"
+        "bytes": 2187,
+        "sha256": "90e1ccb5bbcc12eae18b7766c920d5984923c4fdc98ba73ecae458acb14536a6"
       },
       {
         "order": 75,
         "file": "supabase/migrations/20260503170510_676e3794-6ab2-4e5f-9522-8cf1afb004af.sql",
         "version": "20260503170510",
         "versionDigits": 14,
-        "bytes": 4313,
-        "sha256": "5d9578f4f0bb2383e735b6684cda2bd164d340ef51da600a1f922259bbfb7f57"
+        "bytes": 4190,
+        "sha256": "8cac9212b00329817af11d0cb34f03029423a280bc5ca14c08a1bc797016a7a9"
       },
       {
         "order": 76,
         "file": "supabase/migrations/20260503171037_f462ba85-9acd-41a6-842c-422094a14880.sql",
         "version": "20260503171037",
         "versionDigits": 14,
-        "bytes": 2134,
-        "sha256": "57ca5494315f97384be5433fa548cfa70d3a338e28405b04a04927cae11a95e3"
+        "bytes": 2085,
+        "sha256": "a0b94edf2ee6796ba02c8f1e38c4de504c3d72d774c9c2a8814f9748abfbee42"
       },
       {
         "order": 77,
         "file": "supabase/migrations/20260503171841_ad59bd55-fdf6-416b-b8b1-52b722ef1b35.sql",
         "version": "20260503171841",
         "versionDigits": 14,
-        "bytes": 2445,
-        "sha256": "dbb166bb696271691e38a8dd5e3e683ae15e7d03569091d1c557ec61b6f8063f"
+        "bytes": 2382,
+        "sha256": "c2030cd0d41806b50ec79406a356d11389736509de34a104e68da8e0454ba9c8"
       },
       {
         "order": 78,
         "file": "supabase/migrations/20260504090617_fbbf9a18-6116-4d81-a7d8-21b6f84f1e2d.sql",
         "version": "20260504090617",
         "versionDigits": 14,
-        "bytes": 13402,
-        "sha256": "f5a48b0968df1bfc648c834f369ca4c7817d1fa864e3b516e6f9f83b03cf2315"
+        "bytes": 13054,
+        "sha256": "37e2693a0f695f691e76c9940e256c092935b2c187650d7a041123acfe0edc9b"
       },
       {
         "order": 79,
         "file": "supabase/migrations/20260504093443_ad2db392-aca4-4da3-899a-ab1557d67958.sql",
         "version": "20260504093443",
         "versionDigits": 14,
-        "bytes": 2068,
-        "sha256": "94ea83d55f07d95bec685936351542c14a8e72875ebdbc6e9244aa46a30c5580"
+        "bytes": 2022,
+        "sha256": "b969b1e4ddb8fa3ed0d2f0914466ac02c96c50801f1ab566eed73dbbe04ff310"
       },
       {
         "order": 80,
         "file": "supabase/migrations/20260504094427_b08bf889-6956-410c-8999-f496f06b15a9.sql",
         "version": "20260504094427",
         "versionDigits": 14,
-        "bytes": 3284,
-        "sha256": "840b14afd3fcea8e0d32423de96978ded8cf66617e2e5a4d6219fb886d0650ca"
+        "bytes": 3166,
+        "sha256": "14c2e7e098acdd63d83457260aa83d8e7b69e65b8a0be5ad29e984ccd25bbd4a"
       },
       {
         "order": 81,
         "file": "supabase/migrations/20260504094924_7118b3d4-d44c-458a-b773-2e0683ecb1d0.sql",
         "version": "20260504094924",
         "versionDigits": 14,
-        "bytes": 2187,
-        "sha256": "9e6991f96056c1a20ca2b3c30cc5ddc77f8686b9f3de7da6b6f1def7901b36f1"
+        "bytes": 2117,
+        "sha256": "e5698642fae510afda189524729781b6ff214b23677946d31dff39d8e73f8d89"
       },
       {
         "order": 82,
         "file": "supabase/migrations/20260512175820_03a0b5c8-ac46-46b6-947a-942cef1a2640.sql",
         "version": "20260512175820",
         "versionDigits": 14,
-        "bytes": 1867,
-        "sha256": "ba48a14015e02f9610faf2dfc385a572ff3360e0facb19509c625edcd4d234f1"
+        "bytes": 1818,
+        "sha256": "7f4bebfd211b6a07be0ad9d7bde09960323e55bbfee82d457c85b74ca768272f"
       },
       {
         "order": 83,
         "file": "supabase/migrations/20260515202521_791c1998-f03c-45a0-a4ca-737376aed902.sql",
         "version": "20260515202521",
         "versionDigits": 14,
-        "bytes": 1743,
-        "sha256": "f6c2aeaa3b31a3374cc7ac1051a367bdc6facd060c239e90b65502a6e5dcb0a4"
+        "bytes": 1693,
+        "sha256": "6ce8e6ba378517e3c008ecb1671cc8dc8f4699a4fcd9750c4ea94e81662199ad"
       },
       {
         "order": 84,
         "file": "supabase/migrations/20260528012933_5331b609-f851-42af-866d-03b715afeb4c.sql",
         "version": "20260528012933",
         "versionDigits": 14,
-        "bytes": 1559,
-        "sha256": "8bf0f5e9e8022e73cf21185f6d40331a34eecd0a9570f366b04cfe9f1e8cd773"
+        "bytes": 1516,
+        "sha256": "38ff905e2b26ec7d098ca4c19e973623471642d419557dffbe501d80d700c9bf"
       },
       {
         "order": 85,
         "file": "supabase/migrations/20260529023536_3b11e5fd-b155-4aef-b109-fa1902e49ca3.sql",
         "version": "20260529023536",
         "versionDigits": 14,
-        "bytes": 5836,
-        "sha256": "121601b07614614e4758c76b92d004c23db441d64480c393445ccefe6fa72d2b"
+        "bytes": 5693,
+        "sha256": "2aa9c954978af79c9c7d489a2f7f8a696c60bc48f60d89fed94f544f1e2b3f14"
       },
       {
         "order": 86,
         "file": "supabase/migrations/20260531001828_b9d654a5-f8da-41af-ab92-f053f5b151aa.sql",
         "version": "20260531001828",
         "versionDigits": 14,
-        "bytes": 413,
-        "sha256": "b269309c6c707b648d59813768b5778e2847055687e1e1c3ed17b3797b726b75"
+        "bytes": 405,
+        "sha256": "ebbbe0ad4dc6c549e62812f62de845aa4efe215973715276412f2842ce7172da"
       },
       {
         "order": 87,
         "file": "supabase/migrations/20260601013318_addd674c-ed21-4a7e-9a3b-8cf370b38cad.sql",
         "version": "20260601013318",
         "versionDigits": 14,
-        "bytes": 983,
-        "sha256": "24f09f5995748f2ee904d9f475c8e88ee678dc4d085a09f1e3b6ef18bb93fab0"
+        "bytes": 955,
+        "sha256": "cf19ea5acd9dfa04575e3b906b5563d56e2dbeedfc35f5c1533af1709cfdd923"
       },
       {
         "order": 88,
         "file": "supabase/migrations/20260603074946_faccdaaf-8037-41af-bb17-1ddaa3ed638c.sql",
         "version": "20260603074946",
         "versionDigits": 14,
-        "bytes": 6889,
-        "sha256": "3dcbda62a93bf7838d5a3518733c9f1406236ccf0bff043f50db8842b724cec4"
+        "bytes": 6727,
+        "sha256": "fcedc7ebd4d2c284c92c2a87a8e43ffa3a1270eb267e46cac2c9e7a01ffdbb7b"
       },
       {
         "order": 89,
         "file": "supabase/migrations/20260604005004_22a35f6c-5281-4146-9f48-468b3706172a.sql",
         "version": "20260604005004",
         "versionDigits": 14,
-        "bytes": 6490,
-        "sha256": "67e3e182de1bb1b0ce0675b30e72391dc8fd3ca328f596335f9fa10ce67b153c"
+        "bytes": 6340,
+        "sha256": "7a8981399846da9b207db7b2097107860c4953a33ecf4bae6f115f3fab8b07e9"
       },
       {
         "order": 90,
         "file": "supabase/migrations/20260604005037_10f2a572-c91f-4a28-ac65-3f045d0c133d.sql",
         "version": "20260604005037",
         "versionDigits": 14,
-        "bytes": 2844,
-        "sha256": "8caff3f96fc25710e9f10280e87970db9f8b5837f91f48b7039ac21f93ca8903"
+        "bytes": 2770,
+        "sha256": "a168c022ccc90b6913091482160a3ac29a3f81e98cc15208f723e8a45e8f10dd"
       },
       {
         "order": 91,
@@ -742,296 +742,296 @@
         "file": "supabase/migrations/20260612012233_b235e0b6-2ea7-4394-b9a1-312a8849e7c9.sql",
         "version": "20260612012233",
         "versionDigits": 14,
-        "bytes": 14979,
-        "sha256": "c0c042e345a309c889571e9d2a031ae65c39c9ef5c873f9d86df22dd17db889b"
+        "bytes": 14556,
+        "sha256": "7a3eaca8a50b6f4244b9000688f287daabe76b4f8100e5c71cad93816e0afcbe"
       },
       {
         "order": 93,
         "file": "supabase/migrations/20260612013407_db0bd635-014a-4b2a-889a-3b2f41f89ed4.sql",
         "version": "20260612013407",
         "versionDigits": 14,
-        "bytes": 2426,
-        "sha256": "8de76301b5b2a31edfb92331cec68cc3a49228c43e9402a7d435e315f0d2d024"
+        "bytes": 2359,
+        "sha256": "55a2bd7a25131eb1e7045faa3d5e401c0081432963befcf9c423f2e4dd3e8ee0"
       },
       {
         "order": 94,
         "file": "supabase/migrations/20260612043740_88d22c70-cc50-4a5f-9938-1c0e18209986.sql",
         "version": "20260612043740",
         "versionDigits": 14,
-        "bytes": 2676,
-        "sha256": "da9c4562829f3a7b8bb84c04e6be8c2fbbd50910730442aa71dddb1aa077998e"
+        "bytes": 2620,
+        "sha256": "a501695e01c6dc5a2f2ab9cb852822bf585aa7162c5a425b6d31b20c8a25ffaf"
       },
       {
         "order": 95,
         "file": "supabase/migrations/20260612044803_96b2b5d3-abef-4bf4-a182-2bc768c69a99.sql",
         "version": "20260612044803",
         "versionDigits": 14,
-        "bytes": 4105,
-        "sha256": "546365cec0df95f22c77569df29b6a6e7688201c7f38ac12e9a65e91fd51527d"
+        "bytes": 4024,
+        "sha256": "7ebdea3c6bca2e32ffd807e12c5d3833cdc627a38e5f4236712859f8c60edecd"
       },
       {
         "order": 96,
         "file": "supabase/migrations/20260612045829_e1fcae9e-6697-4979-b471-c2b777fc9582.sql",
         "version": "20260612045829",
         "versionDigits": 14,
-        "bytes": 1629,
-        "sha256": "5b286a3329cedb2fbe1f0e68eab494ce3624ddb2792f751e0e8af7d8fec4d6f8"
+        "bytes": 1591,
+        "sha256": "4ed85e8a696665b20f0a8db85726d7da8e6e514ebaa85151717fbb1cb935c11a"
       },
       {
         "order": 97,
         "file": "supabase/migrations/20260612051033_e684c32b-3429-4144-8ff0-9f0c4a18a3de.sql",
         "version": "20260612051033",
         "versionDigits": 14,
-        "bytes": 1600,
-        "sha256": "691d74317014b90a6ff23efd2c3c2376961264e69de86f2930f3cc4d364c006c"
+        "bytes": 1566,
+        "sha256": "494de9ccd0986f05a8a2f848b8b5d9fb21ed29282e033bfb4c96718faea70a4a"
       },
       {
         "order": 98,
         "file": "supabase/migrations/20260616031403_0439d3aa-7f19-423e-907a-de04532ff759.sql",
         "version": "20260616031403",
         "versionDigits": 14,
-        "bytes": 3637,
-        "sha256": "3ade4988a3f801263b09f8522f7ebf74c5c959bbc21e3ea858a96cbb874ee18a"
+        "bytes": 3531,
+        "sha256": "f9c690aea837449d2bad0633712b1a618af52f3345911b2e1e6ab7b8d84c25ca"
       },
       {
         "order": 99,
         "file": "supabase/migrations/20260617211726_1461e3e5-d610-4294-8350-c00b40ceaedb.sql",
         "version": "20260617211726",
         "versionDigits": 14,
-        "bytes": 6432,
-        "sha256": "621b92f2dcc5e2c850e66fa5d026432e3c283b6f53b53517900aff6ce1087086"
+        "bytes": 6257,
+        "sha256": "25d2ba359e291d14578f947c6e7e74aceba1c29434db34b37f03253d25d46c09"
       },
       {
         "order": 100,
         "file": "supabase/migrations/20260617212421_310d667b-da6e-4d4c-a36f-17eb21a63eeb.sql",
         "version": "20260617212421",
         "versionDigits": 14,
-        "bytes": 5658,
-        "sha256": "0c21e79652cd431f966980c61650cc8797ee9abfd360f464a3d44ae7694203ce"
+        "bytes": 5516,
+        "sha256": "ebac406e8a821f18341e7e6f4a77464007bddedf9c772f7f374b45f0acfd4c0a"
       },
       {
         "order": 101,
         "file": "supabase/migrations/20260617213329_a7cee2b2-79ee-4fef-93f8-f9ec44ff65d8.sql",
         "version": "20260617213329",
         "versionDigits": 14,
-        "bytes": 4166,
-        "sha256": "50607f902164b26fb93699a0d1b82dc811975de5e799d4151080adecae3448c8"
+        "bytes": 4078,
+        "sha256": "637f7d3fb1a43a33e259198917e07c28f416dbede0f0e9c5d9349be7ab9a9bc3"
       },
       {
         "order": 102,
         "file": "supabase/migrations/20260625223255_7d440c81-97eb-4077-bc03-b3fd486735d1.sql",
         "version": "20260625223255",
         "versionDigits": 14,
-        "bytes": 2817,
-        "sha256": "ed39f9e5f8ba3f021dbaff37bdbbd066828e05d5de25707bc65bc56cfd3b8a30"
+        "bytes": 2755,
+        "sha256": "23c9579dcde10fe3c05c62fc0d1727d1704b32152c4cea25e3303f15b41d799a"
       },
       {
         "order": 103,
         "file": "supabase/migrations/20260626174708_976696ea-9cde-49bc-85e2-8d730dc0b723.sql",
         "version": "20260626174708",
         "versionDigits": 14,
-        "bytes": 5169,
-        "sha256": "b783a42a71531e3330d8b6082f34467acc5b552876c8bd5fcff167352a609754"
+        "bytes": 5054,
+        "sha256": "6ef24c487e2f5b9fc25c0f8abfde9e1865cfe469949274c69f63d04c0084c3ec"
       },
       {
         "order": 104,
         "file": "supabase/migrations/20260627235835_cb9eb6ad-2316-4bbf-ba1a-e49f116bdc44.sql",
         "version": "20260627235835",
         "versionDigits": 14,
-        "bytes": 3552,
-        "sha256": "2423a778b864ad3dbc329d17b42197fec214f68e1b094aabe8fd90b51391a6c5"
+        "bytes": 3476,
+        "sha256": "2f875300623bfcd7b9e412c506d8b53fabd37ff7f60359434a349652a9b17312"
       },
       {
         "order": 105,
         "file": "supabase/migrations/20260628000746_1d608391-c47f-418a-b17c-fafd2622422a.sql",
         "version": "20260628000746",
         "versionDigits": 14,
-        "bytes": 18763,
-        "sha256": "89ab4b970faf8f153ad1a1016be7f3dcb3184a4ebb4bc49d12caa64fd67198e8"
+        "bytes": 18366,
+        "sha256": "9274fd12cb3fb6b7b9c8283223ff48054b11ae8b457bd385ea8a8c098e79af73"
       },
       {
         "order": 106,
         "file": "supabase/migrations/20260630002025_1112d094-b731-4a77-8b10-37efc86d9db1.sql",
         "version": "20260630002025",
         "versionDigits": 14,
-        "bytes": 5353,
-        "sha256": "3b949db741e5669edd33808fd73f480d1d3643d65214ee9605a4e3bdbacf7a50"
+        "bytes": 5254,
+        "sha256": "4e8f87866e6d92dd502abacb8cea7e9f222813537747251ba35279f24550d33a"
       },
       {
         "order": 107,
         "file": "supabase/migrations/20260707001536_18883c6d-7bf4-4124-97d2-491bb9d7731e.sql",
         "version": "20260707001536",
         "versionDigits": 14,
-        "bytes": 7647,
-        "sha256": "e2254be8ea403517eaaccb6ab58f34b1df547e0eab3e47814d612dcf08c2dbba"
+        "bytes": 7395,
+        "sha256": "91221597389db54ad435871a19360856ba25d27c34b837d3b23745f7e0b5b3e6"
       },
       {
         "order": 108,
         "file": "supabase/migrations/20260707001552_6812d8d6-e8cb-467a-b4c2-aa20279742cb.sql",
         "version": "20260707001552",
         "versionDigits": 14,
-        "bytes": 152,
-        "sha256": "0807300b4ddb4e1c66a003365c9b967a648f414126cbb404e2064b44acac3a16"
+        "bytes": 149,
+        "sha256": "c6f1b2158247a287041b30289897f3755f03318eec1c661d1e866ec96200f33e"
       },
       {
         "order": 109,
         "file": "supabase/migrations/20260707004506_806f5221-1faa-4d5a-950f-59e52686b278.sql",
         "version": "20260707004506",
         "versionDigits": 14,
-        "bytes": 2347,
-        "sha256": "cdfa6147a96b370bda010ef94644bcef7fb8530347308eec44da634233f64729"
+        "bytes": 2290,
+        "sha256": "d26f22d20f44f4a73bb487dffe0024bbc099d799178262e26cef95219a4860d2"
       },
       {
         "order": 110,
         "file": "supabase/migrations/20260711001138_dd633da7-0d13-424b-86e3-bc2150d561ca.sql",
         "version": "20260711001138",
         "versionDigits": 14,
-        "bytes": 3810,
-        "sha256": "04c6e830148708153753dc5e1a71da9994ba4557b820d9f5c1c47cb365068beb"
+        "bytes": 3704,
+        "sha256": "dd3f535258ddf211bdcfaf82aa0b9dee820820774d1260b12541d30c40e24a07"
       },
       {
         "order": 111,
         "file": "supabase/migrations/20260714000058_1abbb0e6-6ba1-4fd1-ab02-21f735d24d8c.sql",
         "version": "20260714000058",
         "versionDigits": 14,
-        "bytes": 17168,
-        "sha256": "30f2ef3b6e78054896b078b61943124a3329424c4a107b73da405daf6c0c4b14"
+        "bytes": 16727,
+        "sha256": "9611cb8f992c388a8f3f4f5cc45b11ec758317459775d06257f4d9245ed8b9b9"
       },
       {
         "order": 112,
         "file": "supabase/migrations/20260714000854_711f4937-9db3-4b7a-9203-c674cf51f922.sql",
         "version": "20260714000854",
         "versionDigits": 14,
-        "bytes": 7397,
-        "sha256": "20da033895bc799d00d9c612389466ece1f62a77d94fa0408436c6ed1a0346dd"
+        "bytes": 7188,
+        "sha256": "41783bccec9ef63e609723428dc1bcc57aba8099b50aec9ac546e08d9942c9bd"
       },
       {
         "order": 113,
         "file": "supabase/migrations/20260714001821_c8477af6-5f17-4016-9421-fb37d69ff51f.sql",
         "version": "20260714001821",
         "versionDigits": 14,
-        "bytes": 8586,
-        "sha256": "ad07caa2fbf2382265c98048e9127115622ec0490b0561bf47cdacedb36661ce"
+        "bytes": 8385,
+        "sha256": "d305b99b06404c9f2e526b7ae689ba76bf1332152dae07f5ac37a2bebb2ee5d3"
       },
       {
         "order": 114,
         "file": "supabase/migrations/20260714002554_3a06afd3-789e-43eb-bbcf-bb32191462ad.sql",
         "version": "20260714002554",
         "versionDigits": 14,
-        "bytes": 10020,
-        "sha256": "9303a4f616a256bf3e481ee731e47f1bec9eb82b589d212658f58ca5f734f45d"
+        "bytes": 9806,
+        "sha256": "afe3119bcdf8b8ae4e69d577034c27d2ef548d5ada5911689e1c4c1785d6ba7c"
       },
       {
         "order": 115,
         "file": "supabase/migrations/20260714002607_e691992b-4564-424e-bdda-ad1ee53e18e9.sql",
         "version": "20260714002607",
         "versionDigits": 14,
-        "bytes": 74,
-        "sha256": "dc0130f5007042ebb280485c8cb10eb6f956ea2713a5f791a79b78c0afaedcea"
+        "bytes": 72,
+        "sha256": "0b306ffcbbd9a1924af5a7e1d08607f62a9e3bf8c6f6ad3d1a661df05461a185"
       },
       {
         "order": 116,
         "file": "supabase/migrations/20260716011827_3b89b83b-326e-414d-93e1-dbc7e37a7cfe.sql",
         "version": "20260716011827",
         "versionDigits": 14,
-        "bytes": 3833,
-        "sha256": "d9fd472f0a0e47cd38703ceb6337f73550740af5bb4b196bb644fd958b1b61e0"
+        "bytes": 3717,
+        "sha256": "cd1fd50dfec9848162a3d48c26a2065a094a5b144be936b9015de80ddd38c2bd"
       },
       {
         "order": 117,
         "file": "supabase/migrations/20260716014039_e562a1b2-5597-4953-bf6c-caa7852ff59a.sql",
         "version": "20260716014039",
         "versionDigits": 14,
-        "bytes": 26576,
-        "sha256": "1e97c4e5b14697f8351fa597fe017dcad8cb1e14b93ce53a7dd21bd4b3a7bcec"
+        "bytes": 25938,
+        "sha256": "a502ad46893662f6e60da30bb8e5bcfd535c9de234dd6a19656e8b7efede8415"
       },
       {
         "order": 118,
         "file": "supabase/migrations/20260716014906_7e43f52c-05eb-4a2f-8199-573ba990bd5b.sql",
         "version": "20260716014906",
         "versionDigits": 14,
-        "bytes": 31552,
-        "sha256": "1dfdb2849c854dd344a2c3cfa9a352be650132315fbe3fe2f106fad463e6335e"
+        "bytes": 30951,
+        "sha256": "271c19bb7ecb821e2f091686c7120ce706f624f1cb695838fb3d904ad328df6c"
       },
       {
         "order": 119,
         "file": "supabase/migrations/20260717213531_0db2e10b-e1f5-4cb3-86dd-498a4e9cd5b6.sql",
         "version": "20260717213531",
         "versionDigits": 14,
-        "bytes": 184,
-        "sha256": "5179ca8bbd5f54208437c363fe6fbf6881dffa5a5ebd7a68c8d53a136d5cc825"
+        "bytes": 183,
+        "sha256": "9012e053d9e3c7a6831917d738f5b31d4f529b608936bf626dba366cfb3cf63c"
       },
       {
         "order": 120,
         "file": "supabase/migrations/20260717215336_84d21faa-8c8a-4105-b593-2b121145a6a0.sql",
         "version": "20260717215336",
         "versionDigits": 14,
-        "bytes": 23623,
-        "sha256": "c042148a0fcd24cc4cb0ffdf9c9fa76939639b2ba00b135cc47d3d1fa3bf74b9"
+        "bytes": 23159,
+        "sha256": "4c600c34901ad831c0ac4ea4e8e39b0108453cf668fc610fae0a7b4cc0104526"
       },
       {
         "order": 121,
         "file": "supabase/migrations/20260720110653_b4e74627-339a-46bf-b2b4-7f1924a2d657.sql",
         "version": "20260720110653",
         "versionDigits": 14,
-        "bytes": 8857,
-        "sha256": "650b10bf980df894c0b882af26443b748d6642a6a87073d5012b03bb6aad0917"
+        "bytes": 8671,
+        "sha256": "1b22b32eb922d7a8eeb173baf5993f063e5c34fcc18097e9078a3b1e7f089f81"
       },
       {
         "order": 122,
         "file": "supabase/migrations/20260720110711_cc49139d-e5b1-41d8-93d4-16ac1206ed07.sql",
         "version": "20260720110711",
         "versionDigits": 14,
-        "bytes": 857,
-        "sha256": "bdf57394e35ce64f7dab9c1df0679633c13f1b692e6016bc58b2bd9aa7d095f8"
+        "bytes": 847,
+        "sha256": "de2f7e3f047200fbd23e03ec7fcec59127074bb583f99c527d3cb4bd7d06726c"
       },
       {
         "order": 123,
         "file": "supabase/migrations/20260720110911_f9ac1fed-4a99-4a94-a4b5-bcb5aea17dc8.sql",
         "version": "20260720110911",
         "versionDigits": 14,
-        "bytes": 11371,
-        "sha256": "542d2c40c8cdfa9e6cb30985b2a40a3b3aa5d166f80e22d05e6c27de3f8c51ad"
+        "bytes": 11097,
+        "sha256": "72b7110345a97edb0e02c6416dc04bb64f358f7b83478e6b2512cd9d27c135c6"
       },
       {
         "order": 124,
         "file": "supabase/migrations/20260721210837_421b4a21-cf25-46f3-a524-5a30c0ea7cc4.sql",
         "version": "20260721210837",
         "versionDigits": 14,
-        "bytes": 723,
-        "sha256": "bcdf63e86c9c3e59efcc16c84cfd1155b763f8d4e05c8412dd238f03a0bffbf5"
+        "bytes": 706,
+        "sha256": "c318cf85b6f5267bc620722f35e7cf73967ff95a5dc1ff9ec4992fc40cedc9ef"
       },
       {
         "order": 125,
         "file": "supabase/migrations/20260730001730_2d0d14cb-8e90-484f-8272-84c83600e575.sql",
         "version": "20260730001730",
         "versionDigits": 14,
-        "bytes": 2804,
-        "sha256": "48e29989f57152a41a7bbf5d9efa5b83330b255001f17742a3cc4816cf77a73a"
+        "bytes": 2714,
+        "sha256": "a926c5c36d7c9424fb86ad9b3129256d8e22b673ade4d84c9e4f52903b0c1d92"
       },
       {
         "order": 126,
         "file": "supabase/migrations/20260802002518_5030b615-1f85-4c95-b05d-bbe2b814f541.sql",
         "version": "20260802002518",
         "versionDigits": 14,
-        "bytes": 2404,
-        "sha256": "83076436194a616bb5db7e8dcecb8ef485acb05d1f12aedfb5d6dfdb3d35f902"
+        "bytes": 2350,
+        "sha256": "a910376971df0b806ff5350b53002cee32942a7a9517a2728eea68da90808b87"
       },
       {
         "order": 127,
         "file": "supabase/migrations/20260815153005_4fd1bd73-1bca-4558-8e0a-f2cb55bfb8ce.sql",
         "version": "20260815153005",
         "versionDigits": 14,
-        "bytes": 909,
-        "sha256": "e9bb131c0f6bc545e8e18cd31ccb32192f699021b4748a75acb32ef6dd80142b"
+        "bytes": 891,
+        "sha256": "913bd5be209fd8fba00bb426c1c85c66d73e132145785176c0579cca1d573740"
       },
       {
         "order": 128,
         "file": "supabase/migrations/20260815153144_0411e760-658b-40ac-9f1b-24530a9b1395.sql",
         "version": "20260815153144",
         "versionDigits": 14,
-        "bytes": 2607,
-        "sha256": "dedd3e9e8b440c4e2ab1eb84618e37ef2935ed76810857ea0a41ce4d244f2ef9"
+        "bytes": 2534,
+        "sha256": "340e12aab2d3cfc2bedac2306ae5b279426dbe0d85d4bae4247565ee43622024"
       }
     ]
   },
