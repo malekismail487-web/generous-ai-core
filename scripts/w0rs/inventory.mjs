@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -12,6 +13,13 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const EVIDENCE_DIR = join(ROOT, "docs", "w0rs", "evidence");
 const MODE = process.argv.includes("--check") ? "check" : "write";
+const TRACKED_FILES = new Set(
+  execFileSync(
+    "git",
+    ["-c", `safe.directory=${ROOT.replaceAll("\\", "/")}`, "ls-files", "-z"],
+    { cwd: ROOT, encoding: "utf8" },
+  ).split("\0").filter(Boolean).map((path) => path.replaceAll("\\", "/")),
+);
 
 const toRepoPath = (path) => relative(ROOT, path).replaceAll("\\", "/");
 const read = (path) => readFileSync(path, "utf8");
@@ -222,6 +230,9 @@ for (const path of codePaths) {
 
 for (const envPath of walk(ROOT, (path) => /(^|[\\/])\.env(?:\..+)?$/.test(path))) {
   const file = toRepoPath(envPath);
+  // Repository evidence is a property of the Git tree. Local ignored files
+  // (especially a developer's .env) must never change a generated manifest.
+  if (!TRACKED_FILES.has(file)) continue;
   const content = read(envPath);
   for (const line of content.split(/\r?\n/)) {
     const match = /^\s*([A-Z][A-Z0-9_]*)\s*=/.exec(line);
@@ -284,6 +295,28 @@ for (const path of walk(join(ROOT, "supabase", "functions"), (candidate) => /\.[
       ? "Prove intended callers, authentication, authorization, tenant scope, and audit contract."
       : null,
     conclusionLimit: "Static evidence does not prove the deployed endpoint is reachable or vulnerable.",
+    deploymentEligible: true,
+  });
+}
+
+const disabledServiceRoleBoundaries = [];
+for (const path of walk(join(ROOT, "supabase", "functions-disabled"), (candidate) => /index\.[jt]s$/.test(candidate))) {
+  const content = read(path);
+  if (!content.includes("SUPABASE_SERVICE_ROLE_KEY")) continue;
+  const file = toRepoPath(path);
+  const functionName = file.split("/")[2];
+  disabledServiceRoleBoundaries.push({
+    function: functionName,
+    file,
+    serviceRoleReferenceLines: [...content.matchAll(/SUPABASE_SERVICE_ROLE_KEY/g)].map((match) => lineOf(content, match.index)),
+    jwtVerification: "not-deployable",
+    repositoryCallers: edgeCallers.get(functionName) ?? [],
+    boundaryEvidence: ["preserved-outside-supabase-functions"],
+    classification: "excluded-from-deployment",
+    confidence: "high",
+    requiredBeforeEnablement: "Complete a reviewed caller, authentication, authorization, tenant-scope, idempotency, and audit contract before moving this code into the deployable function tree.",
+    conclusionLimit: "Preserved repository evidence is not a deployable Edge Function.",
+    deploymentEligible: false,
   });
 }
 
@@ -515,50 +548,51 @@ function definitionLocations(shortName) {
 const authorityPaths = [
   {
     path: "verify_admin_access_code",
-    authorityClass: "Super Admin entry path",
-    exactAuthority: "Validates a shared pre-authentication code that the client reuses as the reserved identity password; successful reserved-identity authentication receives backend Super Admin authority through email-based trust.",
-    reservedSuperAdminAccess: "indirect-full-access",
-    repositoryReachability: "called-before-authentication",
+    authorityClass: "retired legacy Super Admin entry path",
+    exactAuthority: "Historical evidence validates a shared pre-authentication code that was reused as the reserved identity password. It is absent from the canonical executable schema and active client.",
+    reservedSuperAdminAccess: "historical-only",
+    repositoryReachability: "not-reachable-in-canonical-system",
     callers: rpcCallerMap.get("verify_admin_access_code") ?? [],
     definitions: definitionLocations("verify_admin_access_code"),
-    disablementImpact: "Breaks the current reserved Super Admin sign-in/sign-up entry path; ordinary authentication is not expected to depend on it.",
-    recommendation: "replace",
+    disablementImpact: "None in the canonical application; the replacement uses normal authentication plus immutable UUID assignment and AAL2.",
+    recommendation: "retired-after-replacement",
     confidence: "high",
   },
   {
     path: "verify_super_admin_code",
-    authorityClass: "Super Admin UI verification path",
-    exactAuthority: "Returns verification and lockout state used to set a browser session flag; backend authority already derives from the reserved JWT email.",
-    reservedSuperAdminAccess: "ui-access-not-backend-grant",
-    repositoryReachability: "called-by-authenticated-verification-page",
+    authorityClass: "retired legacy Super Admin UI verification path",
+    exactAuthority: "Historical evidence returned code-verification state used for a browser session flag. It is absent from the canonical executable schema and active client.",
+    reservedSuperAdminAccess: "historical-only",
+    repositoryReachability: "not-reachable-in-canonical-system",
     callers: rpcCallerMap.get("verify_super_admin_code") ?? [],
     definitions: definitionLocations("verify_super_admin_code"),
-    disablementImpact: "Breaks the current Super Admin verification page but does not revoke reserved-email backend authority.",
-    recommendation: "replace",
+    disablementImpact: "None in the canonical application; the replacement trusts only server-confirmed assignment plus AAL2.",
+    recommendation: "retired-after-replacement",
     confidence: "high",
   },
   {
     path: "grant_admin_via_code",
-    authorityClass: "generic admin grant",
-    exactAuthority: "Adds persistent generic admin authority to a caller-supplied target UUID.",
-    reservedSuperAdminAccess: "none-by-itself",
-    repositoryReachability: "RPC definition and generated/client reference found; deployed grants not verified",
+    authorityClass: "retired legacy generic admin grant",
+    exactAuthority: "Historical evidence added persistent generic admin authority to a caller-supplied target UUID. Generic admin is absent from the canonical role enum and executable schema.",
+    reservedSuperAdminAccess: "historical-only",
+    repositoryReachability: "not-reachable-in-canonical-system",
     callers: rpcCallerMap.get("grant_admin_via_code") ?? [],
     definitions: definitionLocations("grant_admin_via_code"),
-    disablementImpact: "No confirmed active UI dependency; direct or external code-based generic-admin provisioning would stop.",
-    recommendation: "replace",
+    disablementImpact: "None in the canonical application; platform and School Admin assignments use distinct reviewed boundaries.",
+    recommendation: "retired-after-replacement",
     confidence: "high",
   },
   {
-    path: "activate-school",
-    authorityClass: "School Admin activation plus generic admin side effect",
-    exactAuthority: "Binds the authenticated user to school/profile state, creates School Admin membership, and also inserts generic admin authority through service-role writes.",
+    path: "activate-school / activate_school",
+    authorityClass: "retired Edge path plus canonical School Admin activation",
+    exactAuthority: "The legacy service-role Edge Function is preserved outside the deployable tree. The canonical authenticated RPC derives auth.uid(), atomically consumes a hashed code, creates only an active school-scoped membership, and never creates generic admin.",
     reservedSuperAdminAccess: "none",
-    repositoryReachability: "called-by-ActivateSchool-page",
-    callers: edgeCallers.get("activate-school") ?? [],
-    definitions: [{ file: "supabase/functions/activate-school/index.ts" }],
-    disablementImpact: "Breaks new school activation; existing School Admin records remain.",
-    recommendation: "replace",
+    repositoryReachability: "canonical-RPC-called-by-ActivateSchool-page; legacy-edge-excluded",
+    callers: rpcCallerMap.get("activate_school") ?? [],
+    definitions: definitionLocations("activate_school"),
+    historicalDefinition: "supabase/functions-disabled/activate-school/index.ts",
+    disablementImpact: "Disabling the canonical RPC blocks new School Admin onboarding. The retired Edge Function has no active caller.",
+    recommendation: "replacement-active-legacy-excluded",
     confidence: "high",
   },
 ];
@@ -566,7 +600,7 @@ const authorityPaths = [
 const outputs = {
   "repository-truth-map.json": {
     schemaVersion: 1,
-    scope: "W0-RS-1 read-only repository evidence",
+    scope: "W0-RS canonical repository evidence",
     migrations: {
       count: migrationRecords.length,
       fourteenDigitVersions: migrationRecords.filter((item) => item.versionDigits === 14).length,
@@ -604,17 +638,19 @@ const outputs = {
   "authority-paths.json": {
     schemaVersion: 1,
     roleDefinitions: {
-      superAdmin: "Platform-wide authority; currently reserved-email based and targeted for immutable-ID plus MFA replacement.",
-      genericAdmin: "user_roles admin authority; distinct from Super Admin and targeted for trust-site-by-trust-site replacement pending decisions.",
-      schoolAdmin: "School/tenant-scoped authority; must not imply generic admin or Super Admin.",
+      superAdmin: "Platform-wide authority requiring an active immutable auth.users.id assignment and an AAL2 JWT.",
+      genericAdmin: "Retired legacy user_roles authority; absent from the canonical role enum and never equivalent to Super Admin.",
+      schoolAdmin: "Active, approved School Admin profile plus active membership for one school; never implies generic admin or Super Admin.",
     },
     paths: authorityPaths,
   },
   "service-role-boundaries.json": {
     schemaVersion: 1,
-    count: serviceRoleBoundaries.length,
-    interpretation: "Static boundary evidence only; absence of a first-party caller or auth signal is not proof of safety, reachability, or vulnerability.",
-    boundaries: serviceRoleBoundaries,
+    count: serviceRoleBoundaries.length + disabledServiceRoleBoundaries.length,
+    deployableCount: serviceRoleBoundaries.length,
+    excludedCount: disabledServiceRoleBoundaries.length,
+    interpretation: "Static boundary evidence plus explicit deployability. Absence of a first-party caller or auth signal is not proof of safety, reachability, or vulnerability.",
+    boundaries: [...serviceRoleBoundaries, ...disabledServiceRoleBoundaries].sort((a, b) => a.file.localeCompare(b.file)),
   },
   "baseline-classification.json": {
     schemaVersion: 1,

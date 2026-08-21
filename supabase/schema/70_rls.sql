@@ -622,11 +622,7 @@ CREATE POLICY "School admins can manage trips" ON public.trips USING (public.is_
 -- Name: weekly_plans School admins can manage weekly plans; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "School admins can manage weekly plans" ON public.weekly_plans USING ((EXISTS ( SELECT 1
-   FROM public.school_admins sa
-  WHERE ((sa.school_id = weekly_plans.school_id) AND (sa.user_id = auth.uid()))))) WITH CHECK ((EXISTS ( SELECT 1
-   FROM public.school_admins sa
-  WHERE ((sa.school_id = weekly_plans.school_id) AND (sa.user_id = auth.uid())))));
+CREATE POLICY "School admins can manage weekly plans" ON public.weekly_plans USING (public.is_school_admin_of(auth.uid(), school_id)) WITH CHECK (public.is_school_admin_of(auth.uid(), school_id));
 
 
 --
@@ -635,9 +631,7 @@ CREATE POLICY "School admins can manage weekly plans" ON public.weekly_plans USI
 -- Name: mi_educational_events School admins can read own-school events; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "School admins can read own-school events" ON public.mi_educational_events FOR SELECT TO authenticated USING (((school_id IS NOT NULL) AND (EXISTS ( SELECT 1
-   FROM public.school_admins sa
-  WHERE ((sa.school_id = mi_educational_events.school_id) AND (sa.user_id = auth.uid()))))));
+CREATE POLICY "School admins can read own-school events" ON public.mi_educational_events FOR SELECT TO authenticated USING (school_id IS NOT NULL AND public.is_school_admin_of(auth.uid(), school_id));
 
 
 --
@@ -646,9 +640,7 @@ CREATE POLICY "School admins can read own-school events" ON public.mi_educationa
 -- Name: profiles School admins can update school profiles; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "School admins can update school profiles" ON public.profiles FOR UPDATE TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.school_admins sa
-  WHERE ((sa.user_id = auth.uid()) AND (sa.school_id = profiles.school_id)))));
+CREATE POLICY "School admins can update school profiles" ON public.profiles FOR UPDATE TO authenticated USING (public.is_school_admin_of(auth.uid(), school_id)) WITH CHECK (public.is_school_admin_of(auth.uid(), school_id));
 
 
 --
@@ -744,9 +736,7 @@ CREATE POLICY "School admins can view school activity" ON public.activity_logs F
 -- Name: profiles School admins can view school profiles; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "School admins can view school profiles" ON public.profiles FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.school_admins sa
-  WHERE ((sa.user_id = auth.uid()) AND (sa.school_id = profiles.school_id)))));
+CREATE POLICY "School admins can view school profiles" ON public.profiles FOR SELECT TO authenticated USING (public.is_school_admin_of(auth.uid(), school_id));
 
 
 --
@@ -755,9 +745,7 @@ CREATE POLICY "School admins can view school profiles" ON public.profiles FOR SE
 -- Name: user_strikes School admins can view school strikes; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "School admins can view school strikes" ON public.user_strikes FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM public.school_admins
-  WHERE ((school_admins.user_id = auth.uid()) AND (school_admins.school_id = user_strikes.school_id)))));
+CREATE POLICY "School admins can view school strikes" ON public.user_strikes FOR SELECT USING (public.is_school_admin_of(auth.uid(), school_id));
 
 
 --
@@ -766,10 +754,7 @@ CREATE POLICY "School admins can view school strikes" ON public.user_strikes FOR
 -- Name: student_learning_profiles School admins can view student learning profiles; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "School admins can view student learning profiles" ON public.student_learning_profiles FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM (public.profiles student_p
-     JOIN public.profiles admin_p ON ((admin_p.id = auth.uid())))
-  WHERE ((student_p.id = student_learning_profiles.user_id) AND (student_p.school_id = admin_p.school_id) AND (admin_p.user_type = 'school_admin'::text) AND (admin_p.is_active = true)))));
+CREATE POLICY "School admins can view student learning profiles" ON public.student_learning_profiles FOR SELECT USING ((EXISTS (SELECT 1 FROM public.profiles student_p WHERE student_p.id = student_learning_profiles.user_id AND public.is_school_admin_of(auth.uid(), student_p.school_id))));
 
 
 --
@@ -778,10 +763,7 @@ CREATE POLICY "School admins can view student learning profiles" ON public.stude
 -- Name: submissions School admins can view submissions in their school; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "School admins can view submissions in their school" ON public.submissions FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM (public.assignments a
-     JOIN public.profiles p ON ((p.id = auth.uid())))
-  WHERE ((a.id = submissions.assignment_id) AND (a.school_id = p.school_id) AND (p.user_type = 'school_admin'::text) AND (p.is_active = true)))));
+CREATE POLICY "School admins can view submissions in their school" ON public.submissions FOR SELECT USING ((EXISTS (SELECT 1 FROM public.assignments a WHERE a.id = submissions.assignment_id AND public.is_school_admin_of(auth.uid(), a.school_id))));
 
 
 --
@@ -808,9 +790,7 @@ CREATE POLICY "School admins manage teacher_categories" ON public.teacher_catego
 -- Name: mi_insights School admins read own-school insights; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "School admins read own-school insights" ON public.mi_insights FOR SELECT TO authenticated USING (((scope = 'school'::public.mi_insight_scope) AND (school_id IS NOT NULL) AND (EXISTS ( SELECT 1
-   FROM public.school_admins sa
-  WHERE ((sa.school_id = mi_insights.school_id) AND (sa.user_id = auth.uid()))))));
+CREATE POLICY "School admins read own-school insights" ON public.mi_insights FOR SELECT TO authenticated USING (scope = 'school'::public.mi_insight_scope AND school_id IS NOT NULL AND public.is_school_admin_of(auth.uid(), school_id));
 
 
 --
@@ -819,9 +799,7 @@ CREATE POLICY "School admins read own-school insights" ON public.mi_insights FOR
 -- Name: mi_daily_rollups School admins read own-school rollups; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "School admins read own-school rollups" ON public.mi_daily_rollups FOR SELECT TO authenticated USING (((school_id IS NOT NULL) AND (EXISTS ( SELECT 1
-   FROM public.school_admins sa
-  WHERE ((sa.school_id = mi_daily_rollups.school_id) AND (sa.user_id = auth.uid()))))));
+CREATE POLICY "School admins read own-school rollups" ON public.mi_daily_rollups FOR SELECT TO authenticated USING (school_id IS NOT NULL AND public.is_school_admin_of(auth.uid(), school_id));
 
 
 --
@@ -866,9 +844,7 @@ CREATE POLICY "Service role full access memory" ON public.student_memory TO serv
 -- Name: lesson_events Staff read school lesson events; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Staff read school lesson events" ON public.lesson_events FOR SELECT TO authenticated USING (((school_id = public.get_user_school_id(auth.uid())) AND (EXISTS ( SELECT 1
-   FROM public.profiles p
-  WHERE ((p.id = auth.uid()) AND (p.user_type = ANY (ARRAY['teacher'::text, 'school_admin'::text])))))));
+CREATE POLICY "Staff read school lesson events" ON public.lesson_events FOR SELECT TO authenticated USING (school_id = public.get_user_school_id(auth.uid()) AND EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'approved' AND p.is_active AND (p.user_type = 'teacher' OR public.is_school_admin_of(auth.uid(), lesson_events.school_id))));
 
 
 --
@@ -877,9 +853,7 @@ CREATE POLICY "Staff read school lesson events" ON public.lesson_events FOR SELE
 -- Name: lesson_sessions Staff read school sessions; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Staff read school sessions" ON public.lesson_sessions FOR SELECT TO authenticated USING (((school_id = public.get_user_school_id(auth.uid())) AND (EXISTS ( SELECT 1
-   FROM public.profiles p
-  WHERE ((p.id = auth.uid()) AND (p.user_type = ANY (ARRAY['teacher'::text, 'school_admin'::text])))))));
+CREATE POLICY "Staff read school sessions" ON public.lesson_sessions FOR SELECT TO authenticated USING (school_id = public.get_user_school_id(auth.uid()) AND EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'approved' AND p.is_active AND (p.user_type = 'teacher' OR public.is_school_admin_of(auth.uid(), lesson_sessions.school_id))));
 
 
 --
@@ -888,9 +862,7 @@ CREATE POLICY "Staff read school sessions" ON public.lesson_sessions FOR SELECT 
 -- Name: lesson_state_snapshots Staff write snapshots; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Staff write snapshots" ON public.lesson_state_snapshots FOR INSERT TO authenticated WITH CHECK (((school_id = public.get_user_school_id(auth.uid())) AND (EXISTS ( SELECT 1
-   FROM public.profiles p
-  WHERE ((p.id = auth.uid()) AND (p.user_type = ANY (ARRAY['teacher'::text, 'school_admin'::text])))))));
+CREATE POLICY "Staff write snapshots" ON public.lesson_state_snapshots FOR INSERT TO authenticated WITH CHECK (school_id = public.get_user_school_id(auth.uid()) AND EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'approved' AND p.is_active AND (p.user_type = 'teacher' OR public.is_school_admin_of(auth.uid(), lesson_state_snapshots.school_id))));
 
 
 --
@@ -1657,9 +1629,7 @@ CREATE POLICY "Teachers insert events into own meetings" ON public.lesson_events
 -- Name: lesson_events Teachers insert own lesson events; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Teachers insert own lesson events" ON public.lesson_events FOR INSERT TO authenticated WITH CHECK (((teacher_id = auth.uid()) AND (school_id = public.get_user_school_id(auth.uid())) AND (EXISTS ( SELECT 1
-   FROM public.profiles p
-  WHERE ((p.id = auth.uid()) AND (p.user_type = ANY (ARRAY['teacher'::text, 'school_admin'::text])))))));
+CREATE POLICY "Teachers insert own lesson events" ON public.lesson_events FOR INSERT TO authenticated WITH CHECK (teacher_id = auth.uid() AND school_id = public.get_user_school_id(auth.uid()) AND EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'approved' AND p.is_active AND (p.user_type = 'teacher' OR public.is_school_admin_of(auth.uid(), lesson_events.school_id))));
 
 
 --
@@ -4170,9 +4140,7 @@ CREATE POLICY "school staff read same-school stats" ON public.cognitive_mirror_s
 -- Name: adaptive_quality_scores school staff view scores in school; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "school staff view scores in school" ON public.adaptive_quality_scores FOR SELECT USING (((school_id IS NOT NULL) AND (EXISTS ( SELECT 1
-   FROM public.profiles p
-  WHERE ((p.id = auth.uid()) AND (p.school_id = adaptive_quality_scores.school_id) AND (p.user_type = ANY (ARRAY['teacher'::text, 'school_admin'::text])) AND (p.is_active = true))))));
+CREATE POLICY "school staff view scores in school" ON public.adaptive_quality_scores FOR SELECT USING (school_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.school_id = adaptive_quality_scores.school_id AND p.status = 'approved' AND p.is_active AND (p.user_type = 'teacher' OR public.is_school_admin_of(auth.uid(), adaptive_quality_scores.school_id))));
 
 
 --
@@ -4181,9 +4149,7 @@ CREATE POLICY "school staff view scores in school" ON public.adaptive_quality_sc
 -- Name: ai_output_signals school staff view signals in school; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "school staff view signals in school" ON public.ai_output_signals FOR SELECT USING (((school_id IS NOT NULL) AND (EXISTS ( SELECT 1
-   FROM public.profiles p
-  WHERE ((p.id = auth.uid()) AND (p.school_id = ai_output_signals.school_id) AND (p.user_type = ANY (ARRAY['teacher'::text, 'school_admin'::text])) AND (p.is_active = true))))));
+CREATE POLICY "school staff view signals in school" ON public.ai_output_signals FOR SELECT USING (school_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.school_id = ai_output_signals.school_id AND p.status = 'approved' AND p.is_active AND (p.user_type = 'teacher' OR public.is_school_admin_of(auth.uid(), ai_output_signals.school_id))));
 
 
 --

@@ -665,12 +665,12 @@ CREATE FUNCTION public.can_view_student_mastery(p_viewer uuid, p_student uuid) R
     SET search_path TO 'pg_catalog', 'public', 'auth', 'extensions'
     AS $$
 DECLARE
+  v_actor uuid := auth.uid();
   v_viewer_school uuid;
   v_student_school uuid;
   v_viewer_type text;
-  v_viewer_email text;
 BEGIN
-  IF p_viewer IS NULL OR p_student IS NULL THEN
+  IF v_actor IS NULL OR p_viewer IS NULL OR p_student IS NULL OR p_viewer <> v_actor THEN
     RETURN false;
   END IF;
 
@@ -680,8 +680,7 @@ BEGIN
   END IF;
 
   -- Super admin
-  SELECT email INTO v_viewer_email FROM auth.users WHERE id = p_viewer;
-  IF public.is_super_admin(p_viewer) THEN
+  IF public.is_super_admin() THEN
     RETURN true;
   END IF;
 

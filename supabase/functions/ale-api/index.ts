@@ -112,8 +112,6 @@ const CAPABILITIES: Record<string, Capability> = {
     summary: "Recalibrate anchor items on the IRT scale." },
   "ops.retrain_ensemble": { fn: "retrain-ensemble", group: "ops", learner: false, admin: true,
     summary: "Retrain the KT ensemble blend weights." },
-  "ops.unified_optimize": { fn: "unified-optimize", group: "ops", learner: false, admin: true,
-    summary: "Optimise the unified latent-state policy." },
   "ops.evaluate_models": { fn: "evaluate-models", group: "ops", learner: false, admin: true,
     summary: "Score all KT/IRT models against held-out interactions." },
   "ops.auto_tune": { fn: "auto-tune-hyperparams", group: "ops", learner: false, admin: true,

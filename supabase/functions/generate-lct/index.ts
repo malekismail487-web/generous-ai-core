@@ -20,7 +20,7 @@
  * 
  * Architecture:
  * ┌─────────────────────────────────────────────────────┐
- * │  Super Admin (malekismail487@gmail.com)              │
+ * │  Super Admin (immutable UUID assignment + AAL2)       │
  * │  ├── collect_data → profiles + learning_style_profiles│
  * │  ├── generate_exam → AI Gateway (Gemini 2.5 Flash)  │
  * │  ├── validate_exam → AI Gateway (Gemini Flash Lite) │
@@ -35,7 +35,7 @@
  * └─────────────────────────────────────────────────────┘
  * 
  * Security:
- *   - All admin actions require verified super admin email
+ *   - All privileged actions require server-confirmed Super Admin + AAL2
  *   - Student actions require authenticated user + exam assignment verification
  *   - Timer is server-authoritative (locked_until timestamp)
  *   - Lock survives logout/login (database-driven, not session-based)

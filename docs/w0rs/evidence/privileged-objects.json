@@ -4000,12 +4000,7 @@
         "searchPathPinned": true,
         "authorizationSignals": []
       },
-      "callers": [
-        {
-          "file": "supabase/functions/mi-aggregate/index.ts",
-          "line": 23
-        }
-      ],
+      "callers": [],
       "recommendation": "retain",
       "confidence": "low",
       "decisionRequired": true,

@@ -3056,12 +3056,7 @@
         "searchPathPinned": true,
         "authorizationSignals": []
       },
-      "callers": [
-        {
-          "file": "supabase/functions/mi-aggregate/index.ts",
-          "line": 23
-        }
-      ],
+      "callers": [],
       "recommendation": "retain",
       "confidence": "low",
       "decisionRequired": true,
@@ -5752,8 +5747,7 @@
           "supabase/functions/data-export/index.ts",
           "supabase/functions/recalibrate-anchors/index.ts",
           "supabase/functions/teaching-generate/index.ts",
-          "supabase/functions/teaching-generate/index_test.ts",
-          "supabase/functions/unified-optimize/index.ts"
+          "supabase/functions/teaching-generate/index_test.ts"
         ]
       }
     },
@@ -6499,9 +6493,7 @@
       "decisionRequired": true,
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
-        "firstPartyCodeReferences": [
-          "supabase/functions/mi-aggregate/index.ts"
-        ]
+        "firstPartyCodeReferences": []
       }
     },
     {
@@ -6514,9 +6506,7 @@
       "decisionRequired": true,
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
-        "firstPartyCodeReferences": [
-          "supabase/functions/mi-aggregate/index.ts"
-        ]
+        "firstPartyCodeReferences": []
       }
     },
     {
@@ -6883,8 +6873,7 @@
           "supabase/functions/policy-evaluate/index.ts",
           "supabase/functions/recalibrate-anchors/index.ts",
           "supabase/functions/retrain-ensemble/index.ts",
-          "supabase/functions/teaching-generate/index_test.ts",
-          "supabase/functions/unified-optimize/index.ts"
+          "supabase/functions/teaching-generate/index_test.ts"
         ]
       }
     },
@@ -7097,7 +7086,6 @@
           "src/pages/TeacherDashboard.tsx",
           "src/pages/TeacherLiveConsole.tsx",
           "supabase/functions/ability-update/index.ts",
-          "supabase/functions/activate-school/index.ts",
           "supabase/functions/adaptive-validate/index.ts",
           "supabase/functions/audit-log/index.ts",
           "supabase/functions/chat/index.ts",
@@ -7206,7 +7194,6 @@
         "firstPartyCodeReferences": [
           "src/hooks/useSchool.tsx",
           "src/hooks/useSchoolAdmin.tsx",
-          "supabase/functions/activate-school/index.ts",
           "supabase/functions/invite-codes/index.ts"
         ]
       }
@@ -7249,7 +7236,6 @@
           "src/pages/MinistryDashboard.tsx",
           "src/pages/PendingApprovalPage.tsx",
           "src/pages/SuperAdmin.tsx",
-          "supabase/functions/activate-school/index.ts",
           "supabase/functions/generate-lct/index.ts",
           "supabase/functions/lumina-extension-chat/index.ts"
         ]
@@ -7546,9 +7532,7 @@
       "decisionRequired": true,
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
-        "firstPartyCodeReferences": [
-          "supabase/functions/unified-optimize/index.ts"
-        ]
+        "firstPartyCodeReferences": []
       }
     },
     {
@@ -7663,7 +7647,6 @@
           "src/hooks/useTenant.tsx",
           "src/lib/extensions/blueprint.ts",
           "src/pages/CountrySelect.tsx",
-          "supabase/functions/activate-school/index.ts",
           "supabase/functions/lumina-extension-chat/index.ts"
         ]
       }
@@ -7734,9 +7717,7 @@
       "decisionRequired": true,
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
-        "firstPartyCodeReferences": [
-          "supabase/functions/unified-optimize/index.ts"
-        ]
+        "firstPartyCodeReferences": []
       }
     },
     {
@@ -7749,9 +7730,7 @@
       "decisionRequired": true,
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
-        "firstPartyCodeReferences": [
-          "supabase/functions/unified-optimize/index.ts"
-        ]
+        "firstPartyCodeReferences": []
       }
     },
     {
@@ -7765,8 +7744,7 @@
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
         "firstPartyCodeReferences": [
-          "supabase/functions/_shared/unifiedPolicy.ts",
-          "supabase/functions/unified-optimize/index.ts"
+          "supabase/functions/_shared/unifiedPolicy.ts"
         ]
       }
     },
@@ -7829,7 +7807,6 @@
       "evidence": {
         "firstPartyCodeReferences": [
           "src/lib/extensions/blueprint.ts",
-          "supabase/functions/activate-school/index.ts",
           "supabase/functions/calibrate-predictions/index.ts",
           "supabase/functions/evaluate-models/index.ts",
           "supabase/functions/lumina-extension-audit/index.ts",
@@ -8175,7 +8152,6 @@
           "supabase/functions/_shared/unifiedState.ts",
           "supabase/functions/ability-update/index.ts",
           "supabase/functions/ability-update/index_test.ts",
-          "supabase/functions/activate-school/index.ts",
           "supabase/functions/adaptive-validate/index.ts",
           "supabase/functions/ale-api/index.ts",
           "supabase/functions/audit-log/index.ts",
@@ -8216,8 +8192,7 @@
           "supabase/functions/review-schedule/index.ts",
           "supabase/functions/scan-content/index.ts",
           "supabase/functions/teaching-generate/index.ts",
-          "supabase/functions/teaching-generate/index_test.ts",
-          "supabase/functions/unified-optimize/index.ts"
+          "supabase/functions/teaching-generate/index_test.ts"
         ]
       }
     }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "scope": "W0-RS-1 read-only repository evidence",
+  "scope": "W0-RS canonical repository evidence",
   "migrations": {
     "count": 128,
     "fourteenDigitVersions": 127,
@@ -1583,11 +1583,6 @@
         "line": 316
       },
       {
-        "name": "mi_run_daily_aggregation",
-        "file": "supabase/functions/mi-aggregate/index.ts",
-        "line": 23
-      },
-      {
         "name": "update_concept_mastery",
         "file": "supabase/functions/misconception-hunt-grade/index.ts",
         "line": 142
@@ -2009,7 +2004,7 @@
       {
         "name": "ale-api",
         "file": "supabase/functions/ale-api/index.ts",
-        "line": 307,
+        "line": 305,
         "transport": "raw-url"
       },
       {
@@ -2156,7 +2151,6 @@
       "name": "SUPABASE_ANON_KEY",
       "files": [
         "supabase/functions/ability-update/index.ts",
-        "supabase/functions/activate-school/index.ts",
         "supabase/functions/ale-api/index.ts",
         "supabase/functions/audit-log/index.ts",
         "supabase/functions/calibrate-predictions/index.ts",
@@ -2193,7 +2187,6 @@
       "files": [
         "supabase/functions/_shared/curriculumBinding.ts",
         "supabase/functions/ability-update/index.ts",
-        "supabase/functions/activate-school/index.ts",
         "supabase/functions/adaptive-validate/index.ts",
         "supabase/functions/ale-api/index.ts",
         "supabase/functions/audit-log/index.ts",
@@ -2220,7 +2213,6 @@
         "supabase/functions/lumina-extension-audit/index.ts",
         "supabase/functions/lumina-extension-chat/index.ts",
         "supabase/functions/lumina-live/index.ts",
-        "supabase/functions/mi-aggregate/index.ts",
         "supabase/functions/misconception-hunt-generate/index.ts",
         "supabase/functions/misconception-hunt-grade/index.ts",
         "supabase/functions/note-timeline-summary/index.ts",
@@ -2238,8 +2230,7 @@
         "supabase/functions/socratic-next-turn/index.ts",
         "supabase/functions/teach-back-grade/index.ts",
         "supabase/functions/teacher-override/index.ts",
-        "supabase/functions/teaching-generate/index.ts",
-        "supabase/functions/unified-optimize/index.ts"
+        "supabase/functions/teaching-generate/index.ts"
       ]
     },
     {
@@ -2247,7 +2238,6 @@
       "files": [
         "supabase/functions/_shared/curriculumBinding.ts",
         "supabase/functions/ability-update/index.ts",
-        "supabase/functions/activate-school/index.ts",
         "supabase/functions/adaptive-validate/index.ts",
         "supabase/functions/ale-api/index.ts",
         "supabase/functions/audit-log/index.ts",
@@ -2276,7 +2266,6 @@
         "supabase/functions/lumina-extension-audit/index.ts",
         "supabase/functions/lumina-extension-chat/index.ts",
         "supabase/functions/lumina-live/index.ts",
-        "supabase/functions/mi-aggregate/index.ts",
         "supabase/functions/misconception-hunt-generate/index.ts",
         "supabase/functions/misconception-hunt-grade/index.ts",
         "supabase/functions/note-timeline-summary/index.ts",
@@ -2294,8 +2283,7 @@
         "supabase/functions/socratic-next-turn/index.ts",
         "supabase/functions/teach-back-grade/index.ts",
         "supabase/functions/teacher-override/index.ts",
-        "supabase/functions/teaching-generate/index.ts",
-        "supabase/functions/unified-optimize/index.ts"
+        "supabase/functions/teaching-generate/index.ts"
       ]
     },
     {
@@ -2305,15 +2293,8 @@
       ]
     },
     {
-      "name": "VITE_SUPABASE_PROJECT_ID",
-      "files": [
-        ".env"
-      ]
-    },
-    {
       "name": "VITE_SUPABASE_PUBLISHABLE_KEY",
       "files": [
-        ".env",
         ".env.example",
         "src/components/ExaminationSection.tsx",
         "src/components/FileNotesGenerator.tsx",
@@ -2337,7 +2318,6 @@
     {
       "name": "VITE_SUPABASE_URL",
       "files": [
-        ".env",
         ".env.example",
         "src/components/ExaminationSection.tsx",
         "src/components/FileNotesGenerator.tsx",
@@ -2367,11 +2347,6 @@
     }
   ],
   "oldBackendCoupling": [
-    {
-      "file": ".env",
-      "kind": "environment-project-reference",
-      "valueRedacted": true
-    },
     {
       "file": "supabase/config.toml",
       "kind": "supabase-config-project-id",
