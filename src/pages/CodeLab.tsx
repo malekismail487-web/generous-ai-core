@@ -204,18 +204,14 @@ export default function CodeLab() {
     let cancelled = false;
     (async () => {
       if (!aiConfig) { setAiRuntime(undefined); return; }
-      if (aiConfig.mode === 'lumina') {
-        const { data } = await supabase.auth.getSession();
-        const jwt = data.session?.access_token;
-        if (!jwt) { setAiRuntime(undefined); return; }
-        if (!cancelled) setAiRuntime({
-          mode: 'lumina',
-          proxyUrl: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/codelab-proxy`,
-          proxyAuth: jwt,
-        });
-      } else {
-        setAiRuntime(aiConfig);
-      }
+      const { data } = await supabase.auth.getSession();
+      const jwt = data.session?.access_token;
+      if (!jwt) { setAiRuntime(undefined); return; }
+      if (!cancelled) setAiRuntime({
+        mode: 'lumina',
+        proxyUrl: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/codelab-proxy`,
+        proxyAuth: jwt,
+      });
     })();
     return () => { cancelled = true; };
   }, [aiConfig]);
@@ -402,7 +398,7 @@ Rules:
         >
           <Settings size={14} />
           <span className="ml-1 text-xs hidden sm:inline">
-            AI: {aiConfig ? (aiConfig.mode === 'custom' ? aiConfig.provider : aiConfig.mode) : 'off'}
+            AI: {aiConfig ? 'lumina' : 'off'}
           </span>
         </Button>
         <Button variant="ghost" size="sm" onClick={downloadProject} className="h-8 hidden sm:inline-flex">
@@ -508,11 +504,12 @@ Rules:
               Press <span className="font-mono mx-1">Run</span> to preview your project.
             </div>
           ) : runSnapshot.doc ? (
-            <iframe
+            <CodePreviewFrame
               key={`proj-${previewKey}`}
-              title="Project preview"
-              sandbox="allow-scripts"
+              language="html"
+              code=""
               srcDoc={runSnapshot.doc}
+              ai={aiRuntime}
               className="flex-1 w-full bg-white border-0"
             />
           ) : isPreviewable(runSnapshot.lang) ? (
