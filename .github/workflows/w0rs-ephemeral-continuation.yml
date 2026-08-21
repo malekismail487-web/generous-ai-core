@@ -1,0 +1,210 @@
+name: W0-RS ephemeral diagnostic continuation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "sol/w0-rs-1-truth-map"
+    paths:
+      - ".github/workflows/w0rs-ephemeral-continuation.yml"
+      - "supabase/config.toml"
+      - "supabase/migrations/**"
+
+permissions:
+  contents: read
+
+jobs:
+  continuation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Verify Docker-compatible runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          diagnostics="$RUNNER_TEMP/w0rs-2c-diagnostics"
+          mkdir -p "$diagnostics"
+          docker version > "$diagnostics/docker-version.txt" 2>&1
+          docker info > "$diagnostics/docker-info.txt" 2>&1
+
+      - name: Install pinned Supabase CLI
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: 2.115.0
+
+      - name: Prepare isolated migration workspace and runner-only shim
+        id: prepare
+        shell: bash
+        run: |
+          set -euo pipefail
+          diagnostics="$RUNNER_TEMP/w0rs-2c-diagnostics"
+          replay_root="$RUNNER_TEMP/w0rs-2c-replay"
+          project_id="w0rs-2c-${GITHUB_RUN_ID}"
+          source_count="$(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | wc -l)"
+          test "$source_count" -eq 128
+          test ! -e supabase/.temp/project-ref
+          git diff --exit-code -- supabase/migrations
+
+          mkdir -p "$replay_root"
+          rsync -a --exclude='.git' ./ "$replay_root/"
+          (
+            cd "$GITHUB_WORKSPACE"
+            find supabase/migrations -maxdepth 1 -type f -name '*.sql' -print0 | sort -z | xargs -0 sha256sum
+          ) > "$diagnostics/source-migrations.sha256"
+          (
+            cd "$replay_root"
+            find supabase/migrations -maxdepth 1 -type f -name '*.sql' -print0 | sort -z | xargs -0 sha256sum
+          ) > "$diagnostics/copied-migrations-before-shim.sha256"
+          diff -u "$diagnostics/source-migrations.sha256" "$diagnostics/copied-migrations-before-shim.sha256"
+
+          shim_name="20260202110000_w0rs2c_noncanonical_profiles_email.sql"
+          shim_path="$replay_root/supabase/migrations/$shim_name"
+          printf '%s\n' \
+            '-- W0-RS-2C NONCANONICAL RUNNER-ONLY DIAGNOSTIC SHIM.' \
+            '-- Evidence: migration 20 creates a policy that references public.profiles.email,' \
+            '-- while migrations 1-19 never add that column.' \
+            '-- Nullable text only; intentionally carries no authorization semantics.' \
+            'ALTER TABLE public.profiles ADD COLUMN email text;' \
+            > "$shim_path"
+
+          python3 - "$diagnostics/shims.json" "$shim_name" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          ledger = [{
+              "id": "profiles-email-before-migration-20",
+              "classification": "noncanonical-runner-only-diagnostic-shim",
+              "sql": "ALTER TABLE public.profiles ADD COLUMN email text;",
+              "structure": {"object": "public.profiles.email", "type": "text", "nullable": True},
+              "authorizationSemantics": False,
+              "repositoryEvidence": [
+                  "supabase/migrations/20260112001051_e440cf24-7253-4460-a7b0-0818be9374ae.sql:40-51 creates public.profiles without email",
+                  "supabase/migrations/20260202112822_a61c6b14-58e3-4d54-a6ec-f025d3ae0486.sql:5-10 references public.profiles.email",
+                  "scripts/w0rs/reproduce-migration-failure.mjs:27,49-51 confirms no prior ADD COLUMN email and predicts SQLSTATE 42703",
+              ],
+              "temporaryFilename": sys.argv[2],
+          }]
+          Path(sys.argv[1]).write_text(json.dumps(ledger, indent=2) + "\n", encoding="utf-8")
+          PY
+
+          copied_count="$(find "$replay_root/supabase/migrations" -maxdepth 1 -type f -name '*.sql' | wc -l)"
+          test "$copied_count" -eq 129
+          sed -i -E "s/^project_id = .*/project_id = \"${project_id}\"/" "$replay_root/supabase/config.toml"
+          printf 'source_migration_count=%s\ntemporary_workspace_migration_count=%s\nproject_id=%s\n' \
+            "$source_count" "$copied_count" "$project_id" > "$diagnostics/replay-input.txt"
+          echo "replay_root=$replay_root" >> "$GITHUB_OUTPUT"
+          echo "project_id=$project_id" >> "$GITHUB_OUTPUT"
+
+      - name: Replay with noncanonical runner-only shim
+        id: replay
+        shell: bash
+        env:
+          REPLAY_ROOT: ${{ steps.prepare.outputs.replay_root }}
+        run: |
+          set -uo pipefail
+          unset SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_ID
+          raw_log="$RUNNER_TEMP/w0rs-2c-replay.raw.log"
+          sanitized_log="$RUNNER_TEMP/w0rs-2c-diagnostics/replay.log"
+
+          set +e
+          supabase --workdir "$REPLAY_ROOT" start --debug > "$raw_log" 2>&1
+          replay_exit=$?
+          set -e
+          echo "exit_code=$replay_exit" >> "$GITHUB_OUTPUT"
+
+          python3 - "$raw_log" "$sanitized_log" <<'PY'
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          text = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
+          text = text.replace(os.environ["GITHUB_WORKSPACE"], "<workspace>")
+          text = text.replace(os.environ["RUNNER_TEMP"], "<runner-temp>")
+          text = re.sub(r"https://[a-z0-9-]+\.supabase\.co", "https://<redacted>.supabase.co", text, flags=re.I)
+          text = re.sub(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}", "<redacted-jwt>", text)
+          text = re.sub(r"(?:sbp_|sb_secret_)[A-Za-z0-9_-]{16,}", "<redacted-secret>", text)
+          Path(sys.argv[2]).write_text(text, encoding="utf-8")
+          PY
+          rm -f "$raw_log"
+
+      - name: Catalogue next authentic PostgreSQL outcome
+        shell: bash
+        env:
+          REPLAY_EXIT_CODE: ${{ steps.replay.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          diagnostics = Path(os.environ["RUNNER_TEMP"]) / "w0rs-2c-diagnostics"
+          log = (diagnostics / "replay.log").read_text(encoding="utf-8", errors="replace")
+          lines = log.splitlines()
+          applied = re.findall(r"Applying migration\s+([^\s]+\.sql)", log, flags=re.I)
+          states = re.findall(r"SQLSTATE[\s:()]+([0-9A-Z]{5})", log, flags=re.I)
+          error_index = next((i for i, line in enumerate(lines) if "SQLSTATE" in line or "ERROR:" in line), None)
+          diagnostic = [] if error_index is None else lines[max(0, error_index - 3):error_index + 12]
+          replay_exit = int(os.environ["REPLAY_EXIT_CODE"])
+          failure = None if replay_exit == 0 else {
+              "migration": applied[-1] if applied else None,
+              "sqlstate": states[0].upper() if states else None,
+              "diagnostic": diagnostic,
+          }
+          summary = {
+              "schemaVersion": 1,
+              "scope": "W0-RS-2C ephemeral diagnostic continuation",
+              "repositoryMigrationsModified": False,
+              "canonicalRepairApplied": False,
+              "noncanonicalRunnerOnlyShimsApplied": 1,
+              "replayExitCode": replay_exit,
+              "reachedZeroToHead": replay_exit == 0,
+              "nextAuthenticFailure": failure,
+          }
+          (diagnostics / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+          rendered = json.dumps(summary, indent=2)
+          print(rendered)
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as output:
+              output.write("## W0-RS-2C diagnostic outcome\n\n```json\n" + rendered + "\n```\n")
+          if failure:
+              annotation = " | ".join(diagnostic[-6:])[:1500].replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              print(f"::notice title=W0-RS-2C next failure::{failure['migration']} SQLSTATE {failure['sqlstate']} | {annotation}")
+          PY
+
+      - name: Destroy ephemeral stack
+        if: ${{ always() }}
+        shell: bash
+        env:
+          PROJECT_ID: ${{ steps.prepare.outputs.project_id }}
+          REPLAY_ROOT: ${{ steps.prepare.outputs.replay_root }}
+        run: |
+          set -uo pipefail
+          unset SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_ID
+          stop_exit="not-attempted"
+          remaining=0
+          if command -v supabase >/dev/null 2>&1 && [ -n "${REPLAY_ROOT:-}" ] && [ -d "$REPLAY_ROOT" ]; then
+            set +e
+            supabase --workdir "$REPLAY_ROOT" stop --no-backup >/dev/null 2>&1
+            stop_exit=$?
+            set -e
+          fi
+          if [ -n "${PROJECT_ID:-}" ]; then
+            remaining="$(docker ps -a --format '{{.Names}}' | grep -F -c "$PROJECT_ID" || true)"
+          fi
+          printf 'stop_exit=%s\nremaining_project_containers=%s\n' "$stop_exit" "$remaining" \
+            > "$RUNNER_TEMP/w0rs-2c-diagnostics/cleanup.txt"
+          test "$remaining" -eq 0
+
+      - name: Upload sanitized continuation diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: w0rs-2c-ephemeral-continuation-${{ github.run_id }}
+          path: ${{ runner.temp }}/w0rs-2c-diagnostics
+          if-no-files-found: error
+          retention-days: 7
