@@ -1,0 +1,159 @@
+name: W0-RS canonical release gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "sol/w0-rs-1-truth-map"
+    paths:
+      - ".github/workflows/w0rs-canonical-release.yml"
+      - "scripts/w0rs/**"
+      - "supabase/config.toml"
+      - "supabase/migrations/**"
+      - "supabase/schema/**"
+      - "supabase/legacy/lovable-migrations/manifest.json"
+      - "supabase/legacy/lovable-migrations/checksums.sha256"
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Use pinned Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.0
+
+      - name: Verify deterministic repository inputs
+        run: |
+          set -euo pipefail
+          node scripts/w0rs/archive-manifest.mjs --check
+          node scripts/w0rs/canonical-baseline.mjs --check
+          node scripts/w0rs/inventory.mjs --check
+
+      - name: Verify Docker-compatible runtime
+        run: |
+          set -euo pipefail
+          diagnostics="$RUNNER_TEMP/w0rs-canonical"
+          mkdir -p "$diagnostics"
+          docker version > "$diagnostics/docker-version.txt" 2>&1
+          docker info > "$diagnostics/docker-info.txt" 2>&1
+
+      - name: Install pinned Supabase CLI
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: 2.115.0
+
+      - name: Prepare isolated canonical workspace
+        id: prepare
+        run: |
+          set -euo pipefail
+          replay_root="$RUNNER_TEMP/w0rs-canonical-replay"
+          project_id="w0rs-canonical-${GITHUB_RUN_ID}"
+          test "$(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | wc -l)" -eq 1
+          test "$(find supabase/legacy/lovable-migrations -maxdepth 1 -type f -name '*.sql' | wc -l)" -eq 128
+          test ! -e supabase/.temp/project-ref
+          mkdir -p "$replay_root"
+          rsync -a --exclude='.git' ./ "$replay_root/"
+          sed -i -E "s/^project_id = .*/project_id = \"${project_id}\"/" "$replay_root/supabase/config.toml"
+          printf 'project_id=%s\ncanonical_migration_count=1\nlegacy_archive_count=128\n' "$project_id" \
+            > "$RUNNER_TEMP/w0rs-canonical/replay-input.txt"
+          echo "replay_root=$replay_root" >> "$GITHUB_OUTPUT"
+          echo "project_id=$project_id" >> "$GITHUB_OUTPUT"
+
+      - name: Replay canonical baseline without shim
+        id: replay
+        env:
+          REPLAY_ROOT: ${{ steps.prepare.outputs.replay_root }}
+        run: |
+          set -uo pipefail
+          unset SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_ID
+          raw_log="$RUNNER_TEMP/w0rs-canonical/replay.raw.log"
+          sanitized_log="$RUNNER_TEMP/w0rs-canonical/replay.log"
+          set +e
+          supabase --workdir "$REPLAY_ROOT" start --debug > "$raw_log" 2>&1
+          replay_exit=$?
+          set -e
+          echo "exit_code=$replay_exit" >> "$GITHUB_OUTPUT"
+          python3 - "$raw_log" "$sanitized_log" <<'PY'
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          text = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
+          text = text.replace(os.environ["GITHUB_WORKSPACE"], "<workspace>")
+          text = text.replace(os.environ["RUNNER_TEMP"], "<runner-temp>")
+          text = re.sub(r"https://[a-z0-9-]+\.supabase\.co", "https://<redacted>.supabase.co", text, flags=re.I)
+          text = re.sub(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}", "<redacted-jwt>", text)
+          text = re.sub(r"(?:sbp_|sb_secret_)[A-Za-z0-9_-]{16,}", "<redacted-secret>", text)
+          Path(sys.argv[2]).write_text(text, encoding="utf-8")
+          Path(sys.argv[1]).unlink(missing_ok=True)
+          PY
+
+      - name: Record canonical replay result
+        env:
+          REPLAY_EXIT: ${{ steps.replay.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          diagnostics = Path(os.environ["RUNNER_TEMP"]) / "w0rs-canonical"
+          result = {
+              "schemaVersion": 1,
+              "scope": "canonical fresh-backend replay",
+              "legacyMigrationsExecuted": False,
+              "runnerShimApplied": False,
+              "remoteProjectContacted": False,
+              "exitCode": int(os.environ["REPLAY_EXIT"]),
+              "reachedCanonicalHead": int(os.environ["REPLAY_EXIT"]) == 0,
+          }
+          (diagnostics / "summary.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+          print(json.dumps(result, indent=2))
+          PY
+
+      - name: Destroy ephemeral stack
+        if: ${{ always() }}
+        env:
+          PROJECT_ID: ${{ steps.prepare.outputs.project_id }}
+          REPLAY_ROOT: ${{ steps.prepare.outputs.replay_root }}
+        run: |
+          set -uo pipefail
+          unset SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_ID
+          stop_exit="not-attempted"
+          remaining=0
+          if command -v supabase >/dev/null 2>&1 && [ -n "${REPLAY_ROOT:-}" ] && [ -d "$REPLAY_ROOT" ]; then
+            set +e
+            supabase --workdir "$REPLAY_ROOT" stop --no-backup >/dev/null 2>&1
+            stop_exit=$?
+            set -e
+          fi
+          if [ -n "${PROJECT_ID:-}" ]; then
+            remaining="$(docker ps -a --format '{{.Names}}' | grep -F -c "$PROJECT_ID" || true)"
+          fi
+          printf 'stop_exit=%s\nremaining_project_containers=%s\n' "$stop_exit" "$remaining" \
+            > "$RUNNER_TEMP/w0rs-canonical/cleanup.txt"
+          test "$remaining" -eq 0
+
+      - name: Upload sanitized canonical diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: w0rs-canonical-${{ github.run_id }}
+          path: ${{ runner.temp }}/w0rs-canonical
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Require successful canonical replay
+        if: ${{ always() }}
+        env:
+          REPLAY_EXIT: ${{ steps.replay.outputs.exit_code }}
+        run: test "${REPLAY_EXIT:-1}" -eq 0

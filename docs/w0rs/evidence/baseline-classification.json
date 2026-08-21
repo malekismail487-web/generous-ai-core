@@ -30,18 +30,18 @@
       "rationale": "Replace generic admin, but do not remove it until every trust site has a reviewed Super Admin, School Admin, ordinary-role, or narrow-capability replacement.",
       "evidence": {
         "migrationTrustSites": [
-          "supabase/migrations/20260111001113_db08bd95-e243-49b2-bed3-4ec66b8ee96d.sql",
-          "supabase/migrations/20260112001051_e440cf24-7253-4460-a7b0-0818be9374ae.sql",
-          "supabase/migrations/20260113003054_9cc6acb7-a80c-4848-9274-69cf22202ba1.sql",
-          "supabase/migrations/20260114031014_96142f08-9734-4495-89b8-bab533b6c4ca.sql",
-          "supabase/migrations/20260214165422_039e2785-b564-44fc-be65-871dec9879d8.sql",
-          "supabase/migrations/20260617213329_a7cee2b2-79ee-4fef-93f8-f9ec44ff65d8.sql",
-          "supabase/migrations/20260625223255_7d440c81-97eb-4077-bc03-b3fd486735d1.sql",
-          "supabase/migrations/20260626174708_976696ea-9cde-49bc-85e2-8d730dc0b723.sql",
-          "supabase/migrations/20260627235835_cb9eb6ad-2316-4bbf-ba1a-e49f116bdc44.sql",
-          "supabase/migrations/20260707001536_18883c6d-7bf4-4124-97d2-491bb9d7731e.sql",
-          "supabase/migrations/20260707004506_806f5221-1faa-4d5a-950f-59e52686b278.sql",
-          "supabase/migrations/20260711001138_dd633da7-0d13-424b-86e3-bc2150d561ca.sql"
+          "supabase/legacy/lovable-migrations/20260111001113_db08bd95-e243-49b2-bed3-4ec66b8ee96d.sql",
+          "supabase/legacy/lovable-migrations/20260112001051_e440cf24-7253-4460-a7b0-0818be9374ae.sql",
+          "supabase/legacy/lovable-migrations/20260113003054_9cc6acb7-a80c-4848-9274-69cf22202ba1.sql",
+          "supabase/legacy/lovable-migrations/20260114031014_96142f08-9734-4495-89b8-bab533b6c4ca.sql",
+          "supabase/legacy/lovable-migrations/20260214165422_039e2785-b564-44fc-be65-871dec9879d8.sql",
+          "supabase/legacy/lovable-migrations/20260617213329_a7cee2b2-79ee-4fef-93f8-f9ec44ff65d8.sql",
+          "supabase/legacy/lovable-migrations/20260625223255_7d440c81-97eb-4077-bc03-b3fd486735d1.sql",
+          "supabase/legacy/lovable-migrations/20260626174708_976696ea-9cde-49bc-85e2-8d730dc0b723.sql",
+          "supabase/legacy/lovable-migrations/20260627235835_cb9eb6ad-2316-4bbf-ba1a-e49f116bdc44.sql",
+          "supabase/legacy/lovable-migrations/20260707001536_18883c6d-7bf4-4124-97d2-491bb9d7731e.sql",
+          "supabase/legacy/lovable-migrations/20260707004506_806f5221-1faa-4d5a-950f-59e52686b278.sql",
+          "supabase/legacy/lovable-migrations/20260711001138_dd633da7-0d13-424b-86e3-bc2150d561ca.sql"
         ],
         "highSignalClientAuthorityFiles": [
           "src/components/AdminPanel.tsx",

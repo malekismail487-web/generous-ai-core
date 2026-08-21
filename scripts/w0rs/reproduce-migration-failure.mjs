@@ -3,7 +3,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const MIGRATIONS = join(ROOT, "supabase", "migrations");
+const MIGRATIONS = join(ROOT, "supabase", "legacy", "lovable-migrations");
 const REPORT = join(ROOT, "docs", "w0rs", "evidence", "migration-failure-reproduction.json");
 const MODE = process.argv.includes("--check") ? "check" : "write";
 const toRepoPath = (path) => relative(ROOT, path).replaceAll("\\", "/");

@@ -139,7 +139,7 @@ function extractPolicies(sql, file) {
   });
 }
 
-const migrationPaths = walk(join(ROOT, "supabase", "migrations"), (path) => path.endsWith(".sql"));
+const migrationPaths = walk(join(ROOT, "supabase", "legacy", "lovable-migrations"), (path) => path.endsWith(".sql"));
 const migrationRecords = [];
 const functionDefinitions = [];
 const tables = [];
@@ -152,7 +152,9 @@ const privilegeStatements = [];
 
 for (const [index, path] of migrationPaths.entries()) {
   const content = canonicalText(read(path));
-  const file = toRepoPath(path);
+  // Preserve the original discovery path in the W0-RS historical evidence so
+  // prior hashes and findings remain comparable after the non-executable move.
+  const file = `supabase/migrations/${path.split(/[\\/]/).at(-1)}`;
   const version = /^([0-9]+)_/.exec(path.split(/[\\/]/).at(-1))?.[1] ?? null;
   migrationRecords.push({
     order: index + 1,

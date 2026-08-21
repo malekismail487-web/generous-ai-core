@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "status": "canonical fresh-backend baseline",
+  "provenance": "reviewed rebaseline from repository evidence; not recovered deployment history",
+  "executableMigration": "supabase/migrations/20260821000000_lumina_canonical_baseline.sql",
+  "legacyArchive": "supabase/legacy/lovable-migrations",
+  "sources": [
+    {
+      "path": "supabase/schema/00_extensions.sql",
+      "canonicalLfBytes": 422,
+      "canonicalLfSha256": "cbdf04ec22c6051c22b97e5a6044e66f98a798b4ab75e1134f3b69bd552f82a8"
+    },
+    {
+      "path": "supabase/schema/10_types.sql",
+      "canonicalLfBytes": 1846,
+      "canonicalLfSha256": "95d10771c96e5b2db8f7f3888003329799d326ffe0eb6ab399ec0ff3a91cd6d6"
+    },
+    {
+      "path": "supabase/schema/20_platform_authority.sql",
+      "canonicalLfBytes": 2792,
+      "canonicalLfSha256": "993e384db3df5bf024f7fb6a7377e7a298f026e614e4e5eb73a26043951cd7aa"
+    },
+    {
+      "path": "supabase/schema/30_functions.sql",
+      "canonicalLfBytes": 146097,
+      "canonicalLfSha256": "4cdd0cf6316cc3d595ba1be3d591ba4a6dd36e322e925ae1f5273bf5a23118a0"
+    },
+    {
+      "path": "supabase/schema/40_tables.sql",
+      "canonicalLfBytes": 91336,
+      "canonicalLfSha256": "208e148f11cb67371da9aaa60d99e44f4602a39da810914009efb185a4d3862e"
+    },
+    {
+      "path": "supabase/schema/45_views_sequences_comments.sql",
+      "canonicalLfBytes": 5020,
+      "canonicalLfSha256": "4ad7c44a15664a310a7b08e2df3b64f1c27387211e7929596c6ab08bebbf5bb2"
+    },
+    {
+      "path": "supabase/schema/50_constraints_indexes.sql",
+      "canonicalLfBytes": 133791,
+      "canonicalLfSha256": "049b2ed3933b9ab25a61bee603d77e7d9fe0dc9593504460fdedd21051bd1264"
+    },
+    {
+      "path": "supabase/schema/55_security_constraints.sql",
+      "canonicalLfBytes": 775,
+      "canonicalLfSha256": "02b396a16c086f2d80e0d907f30a8812f5e7c95aa384c0c1b1b941d98b9b991f"
+    },
+    {
+      "path": "supabase/schema/60_triggers.sql",
+      "canonicalLfBytes": 16047,
+      "canonicalLfSha256": "47bf3fc761489dd6b318abf225113595f851d6ad735ac16ec7bb89bcdb411ecf"
+    },
+    {
+      "path": "supabase/schema/65_authority_functions.sql",
+      "canonicalLfBytes": 16330,
+      "canonicalLfSha256": "2e6a3ebc66f86c651412ef64ee9b728a514571cf2ef0010aaee30a6fa736f652"
+    },
+    {
+      "path": "supabase/schema/70_rls.sql",
+      "canonicalLfBytes": 138648,
+      "canonicalLfSha256": "c57d647653c87f413b8900e289a2420a853384d357320068fb938355f88c1b07"
+    },
+    {
+      "path": "supabase/schema/80_storage_realtime.sql",
+      "canonicalLfBytes": 5912,
+      "canonicalLfSha256": "802deafd475926a07b333983ebb5ce219cd4682fc22aff51b646d9bbf197b098"
+    },
+    {
+      "path": "supabase/schema/90_grants.sql",
+      "canonicalLfBytes": 5595,
+      "canonicalLfSha256": "76baecc3a25ff7bb6f6ad1cd684c12106fc080c245392c0090de47c222a5aafe"
+    }
+  ],
+  "baseline": {
+    "canonicalLfBytes": 564987,
+    "canonicalLfSha256": "ca99c8e995705428c6b5968868529f8d59c9282d91f4ef0d3f458f7bf46b545c"
+  }
+}
