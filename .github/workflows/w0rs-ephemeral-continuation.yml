@@ -176,6 +176,50 @@ jobs:
               print(f"::notice title=W0-RS-2C next failure::{failure['migration']} SQLSTATE {failure['sqlstate']} | {annotation}")
           PY
 
+      - name: Capture sanitized schema-only reconstruction evidence
+        if: ${{ steps.replay.outputs.exit_code == '0' }}
+        shell: bash
+        env:
+          PROJECT_ID: ${{ steps.prepare.outputs.project_id }}
+        run: |
+          set -euo pipefail
+          diagnostics="$RUNNER_TEMP/w0rs-2c-diagnostics"
+          container="$(docker ps --format '{{.Names}}' | grep -F "supabase_db_${PROJECT_ID}" | head -n 1)"
+          test -n "$container"
+          raw_dump="$RUNNER_TEMP/w0rs-2c-public-schema.raw.sql"
+          sanitized_dump="$diagnostics/public-schema-reconstruction-evidence.sql"
+
+          docker exec "$container" pg_dump \
+            --username postgres \
+            --dbname postgres \
+            --schema-only \
+            --schema public \
+            --no-owner \
+            --no-privileges \
+            > "$raw_dump"
+
+          python3 - "$raw_dump" "$sanitized_dump" <<'PY'
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          text = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
+          text = text.replace(os.environ["GITHUB_WORKSPACE"], "<workspace>")
+          text = text.replace(os.environ["RUNNER_TEMP"], "<runner-temp>")
+          text = re.sub(r"https://[a-z0-9-]+\.supabase\.co", "https://<redacted>.supabase.co", text, flags=re.I)
+          text = re.sub(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}", "<redacted-jwt>", text)
+          text = re.sub(r"(?:sbp_|sb_secret_)[A-Za-z0-9_-]{16,}", "<redacted-secret>", text)
+          Path(sys.argv[2]).write_text(text, encoding="utf-8")
+          PY
+          rm -f "$raw_dump"
+          test -s "$sanitized_dump"
+
+          printf 'source=ephemeral legacy replay plus one noncanonical profiles.email shim\n' \
+            > "$diagnostics/public-schema-reconstruction-evidence.txt"
+          printf 'canonical=false\nrelease_migration=false\nreview_input_only=true\n' \
+            >> "$diagnostics/public-schema-reconstruction-evidence.txt"
+
       - name: Destroy ephemeral stack
         if: ${{ always() }}
         shell: bash
