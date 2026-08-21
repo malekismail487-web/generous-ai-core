@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "requestedGroups": [
+    "node-dependencies"
+  ],
+  "allowLive": false,
+  "summary": {
+    "files": 2,
+    "passed": 0,
+    "failed": 0,
+    "blocked": 2,
+    "skipped": 0,
+    "passedDeclaredChecks": 0
+  },
+  "results": [
+    {
+      "file": "scripts/coldStartTest.ts",
+      "group": "node-dependencies",
+      "declaredChecks": 4,
+      "countBasis": "source assertion calls",
+      "runtime": "node",
+      "status": "blocked",
+      "exitCode": 1,
+      "reason": "repository dependencies are not installed",
+      "stdout": "",
+      "stderr": "node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\nError [ERR_MODULE_NOT_FOUND]: Cannot find package '@supabase/supabase-js' imported from <repo>\\src\\integrations\\supabase\\client.ts\r\n    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)\r\n    at packageResolve (node:internal/modules/esm/resolve:768:81)\r\n    at moduleResolve (node:internal/modules/esm/resolve:859:18)\r\n    at defaultResolve (node:internal/modules/esm/resolve:991:11)\r\n    at nextResolve (node:internal/modules/esm/hooks:785:28)\r\n    at resolve (file:///<repo>/scripts/w0rs/typescript-extension-loader.mjs:24:18)\r\n    at nextResolve (node:internal/modules/esm/hooks:785:28)\r\n    at AsyncLoaderHooksOnLoaderHookWorker.resolve (node:internal/modules/esm/hooks:269:30)\r\n    at MessagePort.handleMessage (node:internal/modules/esm/worker:251:24)\r\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20) {\r\n  code: 'ERR_MODULE_NOT_FOUND'\r\n}\r\n\r\nNode.js v24.14.0"
+    },
+    {
+      "file": "scripts/outcomeMetricsTest.ts",
+      "group": "node-dependencies",
+      "declaredChecks": 8,
+      "countBasis": "source assertion calls",
+      "runtime": "node",
+      "status": "blocked",
+      "exitCode": 1,
+      "reason": "repository dependencies are not installed",
+      "stdout": "",
+      "stderr": "node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\nError [ERR_MODULE_NOT_FOUND]: Cannot find package '@supabase/supabase-js' imported from <repo>\\src\\integrations\\supabase\\client.ts\r\n    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)\r\n    at packageResolve (node:internal/modules/esm/resolve:768:81)\r\n    at moduleResolve (node:internal/modules/esm/resolve:859:18)\r\n    at defaultResolve (node:internal/modules/esm/resolve:991:11)\r\n    at nextResolve (node:internal/modules/esm/hooks:785:28)\r\n    at resolve (file:///<repo>/scripts/w0rs/typescript-extension-loader.mjs:24:18)\r\n    at nextResolve (node:internal/modules/esm/hooks:785:28)\r\n    at AsyncLoaderHooksOnLoaderHookWorker.resolve (node:internal/modules/esm/hooks:269:30)\r\n    at MessagePort.handleMessage (node:internal/modules/esm/worker:251:24)\r\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20) {\r\n  code: 'ERR_MODULE_NOT_FOUND'\r\n}\r\n\r\nNode.js v24.14.0"
+    }
+  ]
+}

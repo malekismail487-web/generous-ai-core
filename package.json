@@ -9,7 +9,12 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "w0rs:inventory": "node scripts/w0rs/inventory.mjs --write",
+    "w0rs:inventory:check": "node scripts/w0rs/inventory.mjs --check",
+    "w0rs:reproduce": "node scripts/w0rs/reproduce-migration-failure.mjs --write",
+    "w0rs:reproduce:check": "node scripts/w0rs/reproduce-migration-failure.mjs --check",
+    "w0rs:tests": "node scripts/w0rs/run-tests.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

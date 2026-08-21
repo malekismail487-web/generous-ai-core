@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "roleDefinitions": {
+    "superAdmin": "Platform-wide authority; currently reserved-email based and targeted for immutable-ID plus MFA replacement.",
+    "genericAdmin": "user_roles admin authority; distinct from Super Admin and targeted for trust-site-by-trust-site replacement pending decisions.",
+    "schoolAdmin": "School/tenant-scoped authority; must not imply generic admin or Super Admin."
+  },
+  "paths": [
+    {
+      "path": "verify_admin_access_code",
+      "authorityClass": "Super Admin entry path",
+      "exactAuthority": "Validates a shared pre-authentication code that the client reuses as the reserved identity password; successful reserved-identity authentication receives backend Super Admin authority through email-based trust.",
+      "reservedSuperAdminAccess": "indirect-full-access",
+      "repositoryReachability": "called-before-authentication",
+      "callers": [
+        {
+          "file": "src/pages/Auth.tsx",
+          "line": 592
+        }
+      ],
+      "definitions": [
+        {
+          "file": "supabase/migrations/20260113003054_9cc6acb7-a80c-4848-9274-69cf22202ba1.sql",
+          "line": 53,
+          "signature": "public.verify_admin_access_code(input_code text)"
+        }
+      ],
+      "disablementImpact": "Breaks the current reserved Super Admin sign-in/sign-up entry path; ordinary authentication is not expected to depend on it.",
+      "recommendation": "replace",
+      "confidence": "high"
+    },
+    {
+      "path": "verify_super_admin_code",
+      "authorityClass": "Super Admin UI verification path",
+      "exactAuthority": "Returns verification and lockout state used to set a browser session flag; backend authority already derives from the reserved JWT email.",
+      "reservedSuperAdminAccess": "ui-access-not-backend-grant",
+      "repositoryReachability": "called-by-authenticated-verification-page",
+      "callers": [
+        {
+          "file": "src/pages/SuperAdminVerify.tsx",
+          "line": 98
+        }
+      ],
+      "definitions": [
+        {
+          "file": "supabase/migrations/20260205222524_e4925930-c863-4624-ab2c-ac99d03e8793.sql",
+          "line": 21,
+          "signature": "public.verify_super_admin_code(p_email text, p_code text)"
+        },
+        {
+          "file": "supabase/migrations/20260214114919_9915026c-7a72-4ea2-b526-ec7f92518728.sql",
+          "line": 99,
+          "signature": "public.verify_super_admin_code(p_email text, p_code text, p_device_fingerprint text default null, p_user_agent text default null)"
+        },
+        {
+          "file": "supabase/migrations/20260214165422_039e2785-b564-44fc-be65-871dec9879d8.sql",
+          "line": 57,
+          "signature": "public.verify_super_admin_code(p_email text, p_code text, p_device_fingerprint text default null, p_user_agent text default null)"
+        }
+      ],
+      "disablementImpact": "Breaks the current Super Admin verification page but does not revoke reserved-email backend authority.",
+      "recommendation": "replace",
+      "confidence": "high"
+    },
+    {
+      "path": "grant_admin_via_code",
+      "authorityClass": "generic admin grant",
+      "exactAuthority": "Adds persistent generic admin authority to a caller-supplied target UUID.",
+      "reservedSuperAdminAccess": "none-by-itself",
+      "repositoryReachability": "RPC definition and generated/client reference found; deployed grants not verified",
+      "callers": [
+        {
+          "file": "src/hooks/useUserRole.tsx",
+          "line": 88
+        }
+      ],
+      "definitions": [
+        {
+          "file": "supabase/migrations/20260113003054_9cc6acb7-a80c-4848-9274-69cf22202ba1.sql",
+          "line": 73,
+          "signature": "public.grant_admin_via_code(input_code text, target_user_id uuid)"
+        }
+      ],
+      "disablementImpact": "No confirmed active UI dependency; direct or external code-based generic-admin provisioning would stop.",
+      "recommendation": "replace",
+      "confidence": "high"
+    },
+    {
+      "path": "activate-school",
+      "authorityClass": "School Admin activation plus generic admin side effect",
+      "exactAuthority": "Binds the authenticated user to school/profile state, creates School Admin membership, and also inserts generic admin authority through service-role writes.",
+      "reservedSuperAdminAccess": "none",
+      "repositoryReachability": "called-by-ActivateSchool-page",
+      "callers": [
+        {
+          "file": "src/pages/ActivateSchool.tsx",
+          "line": 41,
+          "transport": "supabase-js"
+        }
+      ],
+      "definitions": [
+        {
+          "file": "supabase/functions/activate-school/index.ts"
+        }
+      ],
+      "disablementImpact": "Breaks new school activation; existing School Admin records remain.",
+      "recommendation": "replace",
+      "confidence": "high"
+    }
+  ]
+}

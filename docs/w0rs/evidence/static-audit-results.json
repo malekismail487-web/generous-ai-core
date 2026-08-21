@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "requestedGroups": [
+    "static-audit"
+  ],
+  "allowLive": false,
+  "summary": {
+    "files": 2,
+    "passed": 2,
+    "failed": 0,
+    "blocked": 0,
+    "skipped": 0,
+    "passedDeclaredChecks": 9
+  },
+  "results": [
+    {
+      "file": "scripts/adaptiveCoverageAudit.ts",
+      "group": "static-audit",
+      "declaredChecks": null,
+      "countBasis": "dynamic repository coverage audit",
+      "runtime": "node",
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "=== Adaptive Coverage Audit ===\nStudent-facing files scanned: 52\n  ...invoking AI:            20\n  ...adaptive-wired:         13\n  Coverage:                  65.0%\n\n✓ PASS — every student-facing AI call is wired to the adaptive engine.",
+      "stderr": ""
+    },
+    {
+      "file": "scripts/consistencyAudit.ts",
+      "group": "static-audit",
+      "declaredChecks": 9,
+      "countBasis": "required surface contracts",
+      "runtime": "node",
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "# Cross-feature consistency audit — Phase 6\n\nGenerated: 2026-08-21T01:08:45.342Z\n\n| Surface | Context | Recording | Validator | Feedback | Bus |\n|---|---|---|---|---|---|\n| LectureGenerator | ✅ | ❌ | ✅ | ✅ | ❌ |\n| StudyBuddy | ✅ | ✅ | ❌ | ❌ | ❌ |\n| AIStudyPlan | ✅ | ✅ | ❌ | ❌ | ❌ |\n| FileNotesGenerator | ✅ | ✅ | ❌ | ❌ | ❌ |\n| PracticeQuiz | ✅ | ✅ | ❌ | ❌ *(opt)* | ❌ |\n| FlashcardsSection | ✅ | ✅ | ❌ | ❌ *(opt)* | ❌ |\n| ExaminationSection | ✅ | ✅ | ❌ | ❌ *(opt)* | ❌ |\n| SATSection | ✅ | ✅ | ❌ | ❌ *(opt)* | ❌ |\n| SubjectsSection | ✅ | ✅ | ❌ | ❌ *(opt)* | ❌ |\n\n## Required (Phase 1–5) — must pass\nAll tracked surfaces inject adaptive context. ✅\n\n## Warnings (Phase 4b — helpfulness coverage)\n- ⚠️ StudyBuddy: missing <HelpfulnessFeedback>\n- ⚠️ AIStudyPlan: missing <HelpfulnessFeedback>\n- ⚠️ FileNotesGenerator: missing <HelpfulnessFeedback>\n\n✅ Required contracts satisfied. (3 feedback warning(s) — Phase 4b cleanup.)",
+      "stderr": ""
+    }
+  ]
+}

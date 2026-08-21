@@ -1,0 +1,255 @@
+{
+  "schemaVersion": 1,
+  "runner": "scripts/w0rs/run-tests.mjs",
+  "deno": {
+    "files": 36,
+    "declaredChecks": 220,
+    "tests": [
+      {
+        "file": "supabase/functions/_shared/akt_test.ts",
+        "declaredChecks": 8
+      },
+      {
+        "file": "supabase/functions/_shared/aktBackbone_test.ts",
+        "declaredChecks": 2
+      },
+      {
+        "file": "supabase/functions/_shared/auditTrail_test.ts",
+        "declaredChecks": 2
+      },
+      {
+        "file": "supabase/functions/_shared/calibration_test.ts",
+        "declaredChecks": 10
+      },
+      {
+        "file": "supabase/functions/_shared/cemTuner_test.ts",
+        "declaredChecks": 6
+      },
+      {
+        "file": "supabase/functions/_shared/coldStart_test.ts",
+        "declaredChecks": 11
+      },
+      {
+        "file": "supabase/functions/_shared/curriculumBinding_test.ts",
+        "declaredChecks": 6
+      },
+      {
+        "file": "supabase/functions/_shared/dash_test.ts",
+        "declaredChecks": 5
+      },
+      {
+        "file": "supabase/functions/_shared/decisionRegret_test.ts",
+        "declaredChecks": 3
+      },
+      {
+        "file": "supabase/functions/_shared/doublyRobust_test.ts",
+        "declaredChecks": 6
+      },
+      {
+        "file": "supabase/functions/_shared/ensemble_test.ts",
+        "declaredChecks": 6
+      },
+      {
+        "file": "supabase/functions/_shared/ensemble_v4_test.ts",
+        "declaredChecks": 3
+      },
+      {
+        "file": "supabase/functions/_shared/evalHarness_test.ts",
+        "declaredChecks": 12
+      },
+      {
+        "file": "supabase/functions/_shared/explain_test.ts",
+        "declaredChecks": 3
+      },
+      {
+        "file": "supabase/functions/_shared/fsrs_test.ts",
+        "declaredChecks": 7
+      },
+      {
+        "file": "supabase/functions/_shared/fsrsScheduler_test.ts",
+        "declaredChecks": 12
+      },
+      {
+        "file": "supabase/functions/_shared/hawkesKt_test.ts",
+        "declaredChecks": 5
+      },
+      {
+        "file": "supabase/functions/_shared/irt2pl_test.ts",
+        "declaredChecks": 11
+      },
+      {
+        "file": "supabase/functions/_shared/linucb_test.ts",
+        "declaredChecks": 9
+      },
+      {
+        "file": "supabase/functions/_shared/memorySequenceCoupling_test.ts",
+        "declaredChecks": 3
+      },
+      {
+        "file": "supabase/functions/_shared/misconceptionEmbedding_test.ts",
+        "declaredChecks": 3
+      },
+      {
+        "file": "supabase/functions/_shared/onlineLogistic_test.ts",
+        "declaredChecks": 9
+      },
+      {
+        "file": "supabase/functions/_shared/outcomeValidation_test.ts",
+        "declaredChecks": 10
+      },
+      {
+        "file": "supabase/functions/_shared/outputEngineV3_test.ts",
+        "declaredChecks": 9
+      },
+      {
+        "file": "supabase/functions/_shared/outputIntegrity_test.ts",
+        "declaredChecks": 5
+      },
+      {
+        "file": "supabase/functions/_shared/propensity_test.ts",
+        "declaredChecks": 5
+      },
+      {
+        "file": "supabase/functions/_shared/responseTime_test.ts",
+        "declaredChecks": 5
+      },
+      {
+        "file": "supabase/functions/_shared/runtimeConfig_test.ts",
+        "declaredChecks": 4
+      },
+      {
+        "file": "supabase/functions/_shared/symbolicNeuralAlignment_test.ts",
+        "declaredChecks": 4
+      },
+      {
+        "file": "supabase/functions/_shared/teacherOverride_test.ts",
+        "declaredChecks": 8
+      },
+      {
+        "file": "supabase/functions/_shared/temporalConsistency_test.ts",
+        "declaredChecks": 4
+      },
+      {
+        "file": "supabase/functions/_shared/unifiedObjective_test.ts",
+        "declaredChecks": 3
+      },
+      {
+        "file": "supabase/functions/_shared/unifiedPolicy_test.ts",
+        "declaredChecks": 3
+      },
+      {
+        "file": "supabase/functions/_shared/unifiedState_test.ts",
+        "declaredChecks": 3
+      },
+      {
+        "file": "supabase/functions/ability-update/index_test.ts",
+        "declaredChecks": 2
+      },
+      {
+        "file": "supabase/functions/teaching-generate/index_test.ts",
+        "declaredChecks": 13
+      }
+    ]
+  },
+  "scripts": {
+    "files": 14,
+    "fixedDeclaredChecksIncludingAudits": 355,
+    "assertionStyleFixedChecks": 346,
+    "tests": [
+      {
+        "file": "scripts/adaptiveCoverageAudit.ts",
+        "group": "static-audit",
+        "declaredChecks": null,
+        "countBasis": "dynamic repository coverage audit"
+      },
+      {
+        "file": "scripts/coldStartTest.ts",
+        "group": "node-dependencies",
+        "declaredChecks": 4,
+        "countBasis": "source assertion calls"
+      },
+      {
+        "file": "scripts/consistencyAudit.ts",
+        "group": "static-audit",
+        "declaredChecks": 9,
+        "countBasis": "required surface contracts"
+      },
+      {
+        "file": "scripts/lseA10Integration.test.ts",
+        "group": "node-offline",
+        "declaredChecks": 23,
+        "countBasis": "runtime observed"
+      },
+      {
+        "file": "scripts/lseA8Integration.test.ts",
+        "group": "node-offline",
+        "declaredChecks": 83,
+        "countBasis": "runtime observed"
+      },
+      {
+        "file": "scripts/lseA9LiveBenchmark.ts",
+        "group": "live-benchmark",
+        "declaredChecks": null,
+        "countBasis": "live benchmark, not a fixed assertion suite"
+      },
+      {
+        "file": "scripts/lseContextCache.test.ts",
+        "group": "node-offline",
+        "declaredChecks": 48,
+        "countBasis": "runtime observed"
+      },
+      {
+        "file": "scripts/lseEventNormalizer.test.ts",
+        "group": "node-offline",
+        "declaredChecks": 66,
+        "countBasis": "runtime observed"
+      },
+      {
+        "file": "scripts/lseLessonReducer.test.ts",
+        "group": "node-offline",
+        "declaredChecks": 25,
+        "countBasis": "runtime observed"
+      },
+      {
+        "file": "scripts/lsePriorityScheduler.test.ts",
+        "group": "node-offline",
+        "declaredChecks": 35,
+        "countBasis": "runtime observed"
+      },
+      {
+        "file": "scripts/lseSessionInternals.test.ts",
+        "group": "node-offline",
+        "declaredChecks": 45,
+        "countBasis": "runtime observed"
+      },
+      {
+        "file": "scripts/outcomeMetricsTest.ts",
+        "group": "node-dependencies",
+        "declaredChecks": 8,
+        "countBasis": "source assertion calls"
+      },
+      {
+        "file": "scripts/personaTest.ts",
+        "group": "node-offline",
+        "declaredChecks": 5,
+        "countBasis": "persona fixtures"
+      },
+      {
+        "file": "scripts/teachingOutputDeterminism.test.ts",
+        "group": "node-offline",
+        "declaredChecks": 4,
+        "countBasis": "deterministic fixtures"
+      }
+    ]
+  },
+  "reconciliation": {
+    "priorClaim": 549,
+    "currentFixedAssertionStyleMinimum": 566,
+    "currentFixedIncludingNineSurfaceAudit": 575,
+    "dynamicOrBenchmarkFilesExcludedFromFixedTotal": [
+      "scripts/adaptiveCoverageAudit.ts",
+      "scripts/lseA9LiveBenchmark.ts"
+    ],
+    "conclusion": "The prior 549 figure is not reproducible from the current tree and must not be used as a gate until a versioned manifest defines its scope."
+  }
+}

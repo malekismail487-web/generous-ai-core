@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "requestedGroups": [
+    "node-offline"
+  ],
+  "allowLive": false,
+  "summary": {
+    "files": 9,
+    "passed": 9,
+    "failed": 0,
+    "blocked": 0,
+    "skipped": 0,
+    "passedDeclaredChecks": 334
+  },
+  "results": [
+    {
+      "file": "scripts/lseA10Integration.test.ts",
+      "group": "node-offline",
+      "declaredChecks": 23,
+      "countBasis": "runtime observed",
+      "runtime": "node",
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "LSE A10 — Live-path integration validation\n  passed: 23\n  failed: 0",
+      "stderr": ""
+    },
+    {
+      "file": "scripts/lseA8Integration.test.ts",
+      "group": "node-offline",
+      "declaredChecks": 83,
+      "countBasis": "runtime observed",
+      "runtime": "node",
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "[T1] pipeline ingest overhead: 11.48 µs/event (200 events in 2.30 ms)\n  [T8] client-side per-stage overhead (µs/event, avg over 1000):\n         rehydrate  0.300\n         gate       0.321\n         reduce     0.703\n         cache      1.014\n         schedule   0.084\n         TOTAL      2.422 µs/event\n\nLSE A8 — Integration & synchronization validation\n  passed: 83\n  failed: 0",
+      "stderr": ""
+    },
+    {
+      "file": "scripts/lseContextCache.test.ts",
+      "group": "node-offline",
+      "declaredChecks": 48,
+      "countBasis": "runtime observed",
+      "runtime": "node",
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "LSE A6 context cache — 48 passed, 0 failed",
+      "stderr": ""
+    },
+    {
+      "file": "scripts/lseEventNormalizer.test.ts",
+      "group": "node-offline",
+      "declaredChecks": 66,
+      "countBasis": "runtime observed",
+      "runtime": "node",
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "LSE A2 — Event Normalizer: 66/66 checks passed\nAll checks passed.",
+      "stderr": ""
+    },
+    {
+      "file": "scripts/lseLessonReducer.test.ts",
+      "group": "node-offline",
+      "declaredChecks": 25,
+      "countBasis": "runtime observed",
+      "runtime": "node",
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "— Purity\n\n— Determinism\n\n— Associativity of fold\n\n— Per-kind semantics\n\n— Concept idempotence\n\n— Timeline ring buffer\n\n— Cross-lesson guard\n\nLSE A3 reducer tests — passed: 25, failed: 0",
+      "stderr": ""
+    },
+    {
+      "file": "scripts/lsePriorityScheduler.test.ts",
+      "group": "node-offline",
+      "declaredChecks": 35,
+      "countBasis": "runtime observed",
+      "runtime": "node",
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "LSE A7 — Priority Scheduler tests\n  passed: 35\n  failed: 0",
+      "stderr": ""
+    },
+    {
+      "file": "scripts/lseSessionInternals.test.ts",
+      "group": "node-offline",
+      "declaredChecks": 45,
+      "countBasis": "runtime observed",
+      "runtime": "node",
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "— payloadToLessonEvent\n\n— projectCachedContext\n\n— classifyIntake\n\n— parseSseStream\n\n— round trip\n\nLSE A5 session-internals tests — passed: 45, failed: 0",
+      "stderr": ""
+    },
+    {
+      "file": "scripts/personaTest.ts",
+      "group": "node-offline",
+      "declaredChecks": 5,
+      "countBasis": "persona fixtures",
+      "runtime": "node",
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "=== Lumina Phase 3 — Persona Test Harness ===\n\n✓ fast_learner           OK   — 1 bump(s): streak_break(correct=11 broke)\n✓ frustrated_learner     OK   — 4 bump(s): consecutive_wrong(3 wrong in math), consecutive_wrong(6 in math), strong_emotion(frustration), strong_emotion(confusion)\n✓ fatigued_learner       OK   — 7 bump(s): fatigue_band_shift(low→med), response_time_spike(t=19.9 med=5.4), response_time_spike(t=19.4 med=5.6), fatigue_band_shift(med→high), response_time_spike(t=18.8 med=5.6), streak_break(correct=11 broke), response_time_spike(t=21.7 med=5.6)\n✓ inconsistent_learner   OK   — 0 bump(s): no bumps\n✓ overconfident_learner  OK   — 3 bump(s): streak_break(correct=8 broke), response_time_spike(t=12.0 med=3.4), consecutive_wrong(3 wrong in math)\n\nALL PERSONAS PASSED",
+      "stderr": ""
+    },
+    {
+      "file": "scripts/teachingOutputDeterminism.test.ts",
+      "group": "node-offline",
+      "declaredChecks": 4,
+      "countBasis": "deterministic fixtures",
+      "runtime": "node",
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "✓ struggling beginner: mode=remediate intensity=0.88 steps=7\n✓ mid-range learner: mode=consolidate intensity=0.67 steps=5\n✓ advancing learner: mode=advance intensity=0.59 steps=4\n✓ challenge-ready: mode=challenge intensity=0.5 steps=3\n\n4/4 fixtures passed",
+      "stderr": ""
+    }
+  ]
+}

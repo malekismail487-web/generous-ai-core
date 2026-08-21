@@ -1,0 +1,27 @@
+name: W0-RS evidence
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "sol/w0-rs-*"
+
+permissions:
+  contents: read
+
+jobs:
+  repository-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify generated repository inventories
+        run: node scripts/w0rs/inventory.mjs --check
+      - name: Verify deterministic migration-failure evidence
+        run: node scripts/w0rs/reproduce-migration-failure.mjs --check
+      - name: Run dependency-free TypeScript harnesses
+        run: node scripts/w0rs/run-tests.mjs --group node-offline
+      - name: Run repository static audits
+        run: node scripts/w0rs/run-tests.mjs --group static-audit

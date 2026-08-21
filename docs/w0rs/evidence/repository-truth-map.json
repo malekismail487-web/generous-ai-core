@@ -1,0 +1,2400 @@
+{
+  "schemaVersion": 1,
+  "scope": "W0-RS-1 read-only repository evidence",
+  "migrations": {
+    "count": 128,
+    "fourteenDigitVersions": 127,
+    "nonFourteenDigitVersions": [
+      "supabase/migrations/20260430_create_api_infrastructure.sql"
+    ],
+    "uniqueVersions": true,
+    "files": [
+      {
+        "order": 1,
+        "file": "supabase/migrations/20251229134549_ffe6f4f6-5001-4473-8d23-adbf944e9e4f.sql",
+        "version": "20251229134549",
+        "versionDigits": 14,
+        "bytes": 3646,
+        "sha256": "fc28942ab14d60cd356ce20116cedb06ad1fdc48b712184ae52940813976ca7f"
+      },
+      {
+        "order": 2,
+        "file": "supabase/migrations/20260103085157_4c17151b-ef5a-43ca-90ca-f2719b92c44e.sql",
+        "version": "20260103085157",
+        "versionDigits": 14,
+        "bytes": 1399,
+        "sha256": "83c45475cb43244e51b690ef53ca3d98d652d7709bba2b87a01a779ce71b84ad"
+      },
+      {
+        "order": 3,
+        "file": "supabase/migrations/20260110005022_1b2944da-8c0c-4cd9-a112-b2d090e65571.sql",
+        "version": "20260110005022",
+        "versionDigits": 14,
+        "bytes": 4095,
+        "sha256": "384eb7c89e7e8bbcb9f002571d8a5e100ad9dcad07ab2896118a1a3887441400"
+      },
+      {
+        "order": 4,
+        "file": "supabase/migrations/20260111001031_ef2a1cf1-6220-42d7-8c81-775307db9514.sql",
+        "version": "20260111001031",
+        "versionDigits": 14,
+        "bytes": 121,
+        "sha256": "df6ac42018508fe98e5cfeac2721dd7d2dc93197e06e80d55f860b283e579c33"
+      },
+      {
+        "order": 5,
+        "file": "supabase/migrations/20260111001113_db08bd95-e243-49b2-bed3-4ec66b8ee96d.sql",
+        "version": "20260111001113",
+        "versionDigits": 14,
+        "bytes": 1775,
+        "sha256": "eb3e111dc0bbb34c2527b3ebd5abb6dffc77291186bc686e28793ab82d33254d"
+      },
+      {
+        "order": 6,
+        "file": "supabase/migrations/20260112001051_e440cf24-7253-4460-a7b0-0818be9374ae.sql",
+        "version": "20260112001051",
+        "versionDigits": 14,
+        "bytes": 4804,
+        "sha256": "3e309d9ed5a27e711679892d2cabc521cf3f966957ce0b431a95de014e0cb85f"
+      },
+      {
+        "order": 7,
+        "file": "supabase/migrations/20260113003054_9cc6acb7-a80c-4848-9274-69cf22202ba1.sql",
+        "version": "20260113003054",
+        "versionDigits": 14,
+        "bytes": 4541,
+        "sha256": "d422440cfe3e2cab3f9c41246b7d73412d6f76fcf18f2d2db12923680f1f6336"
+      },
+      {
+        "order": 8,
+        "file": "supabase/migrations/20260114031014_96142f08-9734-4495-89b8-bab533b6c4ca.sql",
+        "version": "20260114031014",
+        "versionDigits": 14,
+        "bytes": 6476,
+        "sha256": "a450941d754cd1ed826891b976c69cd4139dd72a6da47e021f6875bc0f8f4996"
+      },
+      {
+        "order": 9,
+        "file": "supabase/migrations/20260201203655_5d7c1433-144f-48f2-8274-66bcc9c37bb6.sql",
+        "version": "20260201203655",
+        "versionDigits": 14,
+        "bytes": 22397,
+        "sha256": "1592360ea196e5e236626a57350083d782696f6bbf1c2854b24a46b09f7cceb5"
+      },
+      {
+        "order": 10,
+        "file": "supabase/migrations/20260201203746_98fb600b-2d13-494d-9b49-b8575749bbf3.sql",
+        "version": "20260201203746",
+        "versionDigits": 14,
+        "bytes": 526,
+        "sha256": "a82f4758abe0d7ef54d54dbc5a48fe0b4f5115b8625d760eba1eaddf837e4893"
+      },
+      {
+        "order": 11,
+        "file": "supabase/migrations/20260202040407_f482aa67-f3c9-4f32-9e47-ee89d527c928.sql",
+        "version": "20260202040407",
+        "versionDigits": 14,
+        "bytes": 2531,
+        "sha256": "f5c9babe9988c5855d2ffafec001f60c9ee5ac60e826339e57c85c4f9481b863"
+      },
+      {
+        "order": 12,
+        "file": "supabase/migrations/20260202040751_81a873e6-7f7f-4489-bda7-a0ddc46890ad.sql",
+        "version": "20260202040751",
+        "versionDigits": 14,
+        "bytes": 1437,
+        "sha256": "3a33c5ddf07993e3708d97c37c63b4358f69934987a3ef9900631d5c03c362dc"
+      },
+      {
+        "order": 13,
+        "file": "supabase/migrations/20260202054052_170705c4-3d66-4a76-8580-43037b33b751.sql",
+        "version": "20260202054052",
+        "versionDigits": 14,
+        "bytes": 331,
+        "sha256": "2c71c1090595b1982984ee85f0b9af1b4edcb7627abb8f7b6595708398f03fcf"
+      },
+      {
+        "order": 14,
+        "file": "supabase/migrations/20260202065016_636bee2c-c867-402c-95df-fc60c2b82ff3.sql",
+        "version": "20260202065016",
+        "versionDigits": 14,
+        "bytes": 295,
+        "sha256": "6a3cb78236f40f9236bf1484a3afa170b84616963c7280306d8623ef555d80ab"
+      },
+      {
+        "order": 15,
+        "file": "supabase/migrations/20260202065237_ac89dd57-18eb-433e-b439-6745fb4589d8.sql",
+        "version": "20260202065237",
+        "versionDigits": 14,
+        "bytes": 491,
+        "sha256": "4dac37fe630c5d6744fcb078f48727f854a8b753ddb08d6670a5c9997291bbfb"
+      },
+      {
+        "order": 16,
+        "file": "supabase/migrations/20260202070529_30d1c878-541d-4c07-b2cf-d9294351adc3.sql",
+        "version": "20260202070529",
+        "versionDigits": 14,
+        "bytes": 3173,
+        "sha256": "daa6236d67e85477513b47cc1f8a2dcea991d19b40c432125f53d0056a672bcb"
+      },
+      {
+        "order": 17,
+        "file": "supabase/migrations/20260202070619_fad2a20b-f18d-427d-816d-b5c00add43a0.sql",
+        "version": "20260202070619",
+        "versionDigits": 14,
+        "bytes": 3606,
+        "sha256": "dd5d58ec45c89d7db0cdb27ca2e2ea3e9efc1c9df1847eaaf95b73dc77183ed5"
+      },
+      {
+        "order": 18,
+        "file": "supabase/migrations/20260202071959_929c1bb4-f236-4d14-89fc-d8330759d892.sql",
+        "version": "20260202071959",
+        "versionDigits": 14,
+        "bytes": 2332,
+        "sha256": "af98894189b3f03790f85f29d2e476a6e88ee8e8501d41a9cc17df25ac6b2d27"
+      },
+      {
+        "order": 19,
+        "file": "supabase/migrations/20260202072050_57144b59-00f5-41e2-bdc9-72ac50deee75.sql",
+        "version": "20260202072050",
+        "versionDigits": 14,
+        "bytes": 1896,
+        "sha256": "49d20c312f89d68ad104754a2e45b5d5c1ca29590d45f9410dfa628e44e4ec25"
+      },
+      {
+        "order": 20,
+        "file": "supabase/migrations/20260202112822_a61c6b14-58e3-4d54-a6ec-f025d3ae0486.sql",
+        "version": "20260202112822",
+        "versionDigits": 14,
+        "bytes": 407,
+        "sha256": "89d520c82469e5aac7f1c18850a634343be7ee841c67df75a475f7a31d992cbb"
+      },
+      {
+        "order": 21,
+        "file": "supabase/migrations/20260202114359_ff9a5575-f042-425e-81b8-fd787757cf85.sql",
+        "version": "20260202114359",
+        "versionDigits": 14,
+        "bytes": 1424,
+        "sha256": "99dd12146a48639517a484a3b8f5697fd3a4660128685c5b1adb3089f9dea5a5"
+      },
+      {
+        "order": 22,
+        "file": "supabase/migrations/20260202125600_08e27647-2e58-49c3-bf8b-cfc372a014b7.sql",
+        "version": "20260202125600",
+        "versionDigits": 14,
+        "bytes": 860,
+        "sha256": "240bd8a33aa0fe1044cf07335cc8ed5340aeb07fcb486db2769415ac51809b6d"
+      },
+      {
+        "order": 23,
+        "file": "supabase/migrations/20260202130412_87e690a7-358f-4278-8900-5711f0cbdaf3.sql",
+        "version": "20260202130412",
+        "versionDigits": 14,
+        "bytes": 1752,
+        "sha256": "59d601313b4ab6d3c85092ef700bc7499a0b625065a8016a17fc376a9034dcb2"
+      },
+      {
+        "order": 24,
+        "file": "supabase/migrations/20260202132724_c27475ad-dea6-48e3-9e2f-4f048ab8f882.sql",
+        "version": "20260202132724",
+        "versionDigits": 14,
+        "bytes": 2502,
+        "sha256": "50cd22c50170c357d8b486de4a7e006e25f88cbd2cbb130000cfde0730f844ba"
+      },
+      {
+        "order": 25,
+        "file": "supabase/migrations/20260202132809_c2b5f9e3-5292-4615-aff5-aa1771fac408.sql",
+        "version": "20260202132809",
+        "versionDigits": 14,
+        "bytes": 2042,
+        "sha256": "e01356a1e3901b4ee5044e2273eec88581e2f7a66085dee13b27fefebafbbd29"
+      },
+      {
+        "order": 26,
+        "file": "supabase/migrations/20260204225201_b59ddea8-5786-4c5b-b4fd-ad3f6c3ca96c.sql",
+        "version": "20260204225201",
+        "versionDigits": 14,
+        "bytes": 1371,
+        "sha256": "565e6dc24c98903b5035c90919df6292d06e983162830cb80cf9a70c6066b604"
+      },
+      {
+        "order": 27,
+        "file": "supabase/migrations/20260205222524_e4925930-c863-4624-ab2c-ac99d03e8793.sql",
+        "version": "20260205222524",
+        "versionDigits": 14,
+        "bytes": 4829,
+        "sha256": "9adbd72ec5dd98f0b67d9426e3e80b33b5900246324f01fcafc239b7e758cd69"
+      },
+      {
+        "order": 28,
+        "file": "supabase/migrations/20260208025800_337d7300-f363-484e-91a8-985e8304f394.sql",
+        "version": "20260208025800",
+        "versionDigits": 14,
+        "bytes": 1210,
+        "sha256": "d30c2a52eee39bfb5fc4f578fef3596878ab374a538b03500292b5f2ca842097"
+      },
+      {
+        "order": 29,
+        "file": "supabase/migrations/20260209124029_850e5a9c-ca6b-44b0-90fd-7d13c2d6c592.sql",
+        "version": "20260209124029",
+        "versionDigits": 14,
+        "bytes": 346,
+        "sha256": "28336f3e234a40a8f3a78c0978907e37af9d98384c4235523162cf3613834612"
+      },
+      {
+        "order": 30,
+        "file": "supabase/migrations/20260209124504_ad9a6a98-70dc-4574-b90b-0058a2b08ad1.sql",
+        "version": "20260209124504",
+        "versionDigits": 14,
+        "bytes": 257,
+        "sha256": "b555791a46dd561c7f4074fce787a1a2436cda289ddcf6d25c5d3adac56a52ed"
+      },
+      {
+        "order": 31,
+        "file": "supabase/migrations/20260210095408_49bed31f-7b06-4964-a06f-469b8f68eba0.sql",
+        "version": "20260210095408",
+        "versionDigits": 14,
+        "bytes": 285,
+        "sha256": "fd1dcd8c478094fa279c7437e08e84005ba38fba24b5f14d06090117b567a01a"
+      },
+      {
+        "order": 32,
+        "file": "supabase/migrations/20260211061109_bd68faaa-6a58-4ada-aa24-d748814cf918.sql",
+        "version": "20260211061109",
+        "versionDigits": 14,
+        "bytes": 3914,
+        "sha256": "7bcf954fa9f922b3bd8ddd02cf9b684f33a75b36d7c4d3a01d0c429f39b21d07"
+      },
+      {
+        "order": 33,
+        "file": "supabase/migrations/20260214102110_8a6c7d8e-6618-45c1-b00b-e03151f5b58a.sql",
+        "version": "20260214102110",
+        "versionDigits": 14,
+        "bytes": 819,
+        "sha256": "c0e425f8150dc74cfed01a7a0ccc61577b2ba288b0f89587b0e8861075c4f5ec"
+      },
+      {
+        "order": 34,
+        "file": "supabase/migrations/20260214105300_00d87dd3-5424-48f1-b0d6-9262d9b5f457.sql",
+        "version": "20260214105300",
+        "versionDigits": 14,
+        "bytes": 3379,
+        "sha256": "7b52f82c67e6991ebd3bb3972fe9b7e1193b5aac48a8787010d639831d41de3c"
+      },
+      {
+        "order": 35,
+        "file": "supabase/migrations/20260214112729_58848686-1800-48ca-9e4a-2147d40bba8b.sql",
+        "version": "20260214112729",
+        "versionDigits": 14,
+        "bytes": 530,
+        "sha256": "aa2ab53b6dc2c864bdd96dcf9ed9d7eaa6a7a6d39c99136787ea84343b8fb372"
+      },
+      {
+        "order": 36,
+        "file": "supabase/migrations/20260214114919_9915026c-7a72-4ea2-b526-ec7f92518728.sql",
+        "version": "20260214114919",
+        "versionDigits": 14,
+        "bytes": 6662,
+        "sha256": "dd6ddda5d3f4a54459b1ea883ac02d624417d6a884ecb5ffa5a6d51b750f8be5"
+      },
+      {
+        "order": 37,
+        "file": "supabase/migrations/20260214165422_039e2785-b564-44fc-be65-871dec9879d8.sql",
+        "version": "20260214165422",
+        "versionDigits": 14,
+        "bytes": 5223,
+        "sha256": "8f5a898ef3f5d9afddd7a0e3927da3a9eaf174f62dd503a39ec71ade3290795b"
+      },
+      {
+        "order": 38,
+        "file": "supabase/migrations/20260214175403_9815e4ed-1575-4366-93be-e6280db24b6e.sql",
+        "version": "20260214175403",
+        "versionDigits": 14,
+        "bytes": 572,
+        "sha256": "8488374756f0bc9c5235355a5aaedbdb5532c3aaec03a64ff4a46b0c09ca0d6f"
+      },
+      {
+        "order": 39,
+        "file": "supabase/migrations/20260216193141_a4561099-2f59-499b-8a2d-cd09899bc4bc.sql",
+        "version": "20260216193141",
+        "versionDigits": 14,
+        "bytes": 293,
+        "sha256": "c2fe0f01ecc0675705c341932b66f8c02818881ecbcef0d770021f727fab7a82"
+      },
+      {
+        "order": 40,
+        "file": "supabase/migrations/20260219003042_438a9f74-d065-456e-9291-a6c4e6b60de4.sql",
+        "version": "20260219003042",
+        "versionDigits": 14,
+        "bytes": 1129,
+        "sha256": "fc43d3f77d126fb7c3c5fca6eb259aabef1a9c7eb40c0d03ea1ac7766e0a5574"
+      },
+      {
+        "order": 41,
+        "file": "supabase/migrations/20260220194827_650d982a-5049-4d51-9c6a-324a65a42bac.sql",
+        "version": "20260220194827",
+        "versionDigits": 14,
+        "bytes": 3951,
+        "sha256": "bcb216384830c271fd19142a407ab7bc16be4fcbc1fe5fde2bf2b5630c987bd6"
+      },
+      {
+        "order": 42,
+        "file": "supabase/migrations/20260220195916_f8a9cb9f-2e6b-4efb-8512-60c152121ce3.sql",
+        "version": "20260220195916",
+        "versionDigits": 14,
+        "bytes": 1355,
+        "sha256": "b21114e92b52a16f3947d0fcde3da8c7444a8750a2daf2515b1362fc91335afb"
+      },
+      {
+        "order": 43,
+        "file": "supabase/migrations/20260220200229_575b9cc5-7952-48c7-bce5-32af085f49dc.sql",
+        "version": "20260220200229",
+        "versionDigits": 14,
+        "bytes": 534,
+        "sha256": "63174b956f8488d6d7cba456eb907bff7e713881594a6dc8567e8d7afcd97233"
+      },
+      {
+        "order": 44,
+        "file": "supabase/migrations/20260222004158_1f97b406-dbe4-4a10-99c3-5daf534e9409.sql",
+        "version": "20260222004158",
+        "versionDigits": 14,
+        "bytes": 2441,
+        "sha256": "a716bcd60ab75a7a437afad1d3385756ea971025a2d4511cc9385289a918b4d4"
+      },
+      {
+        "order": 45,
+        "file": "supabase/migrations/20260223020740_c2d966af-85fa-4197-9632-9efe5d399fdb.sql",
+        "version": "20260223020740",
+        "versionDigits": 14,
+        "bytes": 3438,
+        "sha256": "e339010bd075f499d55481e9f3bcdebebeecc33b4f3e56fd047020e4dbaa3b02"
+      },
+      {
+        "order": 46,
+        "file": "supabase/migrations/20260227030056_7759683a-154f-483e-9ad3-f5c49f7cffe5.sql",
+        "version": "20260227030056",
+        "versionDigits": 14,
+        "bytes": 1947,
+        "sha256": "16cec0ed130fac24f896ba964632fbb27792cdf5010180483565a33828d31954"
+      },
+      {
+        "order": 47,
+        "file": "supabase/migrations/20260227030129_2df88e76-376b-434b-b0ca-1ec56af858e0.sql",
+        "version": "20260227030129",
+        "versionDigits": 14,
+        "bytes": 299,
+        "sha256": "23afc5d4ba779e601b9bdbf1b127aa6e60bfa715239c83461c399e75a724163e"
+      },
+      {
+        "order": 48,
+        "file": "supabase/migrations/20260301234659_6ae2f802-d224-46af-94ac-b0938422bdf6.sql",
+        "version": "20260301234659",
+        "versionDigits": 14,
+        "bytes": 94,
+        "sha256": "e84a4cddaf470aa2fe9842a0aedb4e3ea31ee8d156a47c99c5d485a8650b161a"
+      },
+      {
+        "order": 49,
+        "file": "supabase/migrations/20260302000538_ad6580bd-1205-449b-8970-e1feb3b06998.sql",
+        "version": "20260302000538",
+        "versionDigits": 14,
+        "bytes": 2824,
+        "sha256": "e0bafac33077d58734be1aa938f149bfca1271e643373b8cde78b004e8952891"
+      },
+      {
+        "order": 50,
+        "file": "supabase/migrations/20260302003145_4be5b196-cb0f-4ff6-aa83-80e1bb2c8698.sql",
+        "version": "20260302003145",
+        "versionDigits": 14,
+        "bytes": 98,
+        "sha256": "ac17e580fc8b526da31796bdb44931eb4a04e99626d9882c3a9955b4094d9cbf"
+      },
+      {
+        "order": 51,
+        "file": "supabase/migrations/20260302010138_e3685f32-941a-4705-b416-22efac5abbe8.sql",
+        "version": "20260302010138",
+        "versionDigits": 14,
+        "bytes": 821,
+        "sha256": "8e69b08db1cac3b833ad818178db929b36574feaeb67d88727885c28abbce607"
+      },
+      {
+        "order": 52,
+        "file": "supabase/migrations/20260302011716_affd4541-51ec-4698-8d6c-2e2d6a62ee21.sql",
+        "version": "20260302011716",
+        "versionDigits": 14,
+        "bytes": 6637,
+        "sha256": "833bfc1ab2255b973740a57013c98b02f2af19380550666ea8d66aa48afc3395"
+      },
+      {
+        "order": 53,
+        "file": "supabase/migrations/20260302011948_f481294a-4490-4f39-8e80-91453c8039c3.sql",
+        "version": "20260302011948",
+        "versionDigits": 14,
+        "bytes": 483,
+        "sha256": "01196727091985244cc9e227b25a4160bc64888b4dd77738a2436c2cf6e646aa"
+      },
+      {
+        "order": 54,
+        "file": "supabase/migrations/20260302012430_912bc5f1-1801-4715-be9b-f3f2d794fba4.sql",
+        "version": "20260302012430",
+        "versionDigits": 14,
+        "bytes": 219,
+        "sha256": "6f8800af49a316bed85d193a1be0aea010deaffed1aa11f25c9774b4dc5b9e76"
+      },
+      {
+        "order": 55,
+        "file": "supabase/migrations/20260302012659_72e8adfd-ef3b-4b8c-b6b6-94f5fc1af7bd.sql",
+        "version": "20260302012659",
+        "versionDigits": 14,
+        "bytes": 180,
+        "sha256": "4465b10ec261ff33b955a85d358c6fa1fdd575c87340193a53bac71d1608365f"
+      },
+      {
+        "order": 56,
+        "file": "supabase/migrations/20260302082829_1dd4f0ef-cd74-43ee-874f-42d1dddac0e1.sql",
+        "version": "20260302082829",
+        "versionDigits": 14,
+        "bytes": 8992,
+        "sha256": "e5eb11590347379f06b30dd7425bcd81f4b0e649961ca06838d8f904fe490680"
+      },
+      {
+        "order": 57,
+        "file": "supabase/migrations/20260302082844_0a3a5bc6-253b-46bb-8b5d-fb158d568cbe.sql",
+        "version": "20260302082844",
+        "versionDigits": 14,
+        "bytes": 753,
+        "sha256": "686220035ae8ab19af7eb9be730b057820279899baadcf7e9f1ad6ba9085983d"
+      },
+      {
+        "order": 58,
+        "file": "supabase/migrations/20260302083318_2b351917-a268-46c2-b44f-496428ced0cb.sql",
+        "version": "20260302083318",
+        "versionDigits": 14,
+        "bytes": 2106,
+        "sha256": "e66acd6b5c9b552d2d680d2ca204a11cd2bb05673a08e30726fd8c6e959e2d2e"
+      },
+      {
+        "order": 59,
+        "file": "supabase/migrations/20260302085207_10d3d098-8591-45b8-b046-24c0a4283d01.sql",
+        "version": "20260302085207",
+        "versionDigits": 14,
+        "bytes": 580,
+        "sha256": "b503c5e0212d6f82411ec887309486f03e6439ccba15fe2a382bc62cb4a44320"
+      },
+      {
+        "order": 60,
+        "file": "supabase/migrations/20260302085649_b5cb91a8-a5c2-46a8-8c81-30b8d79956b4.sql",
+        "version": "20260302085649",
+        "versionDigits": 14,
+        "bytes": 2364,
+        "sha256": "6c94fac360f8dfd2bc0edc339d8f487798d12fd13358944de61ed9f628ed2dbe"
+      },
+      {
+        "order": 61,
+        "file": "supabase/migrations/20260302090134_f6b35599-3649-4c53-95c3-215febce9afc.sql",
+        "version": "20260302090134",
+        "versionDigits": 14,
+        "bytes": 250,
+        "sha256": "f663f11728b1dbc38e3028f29bb139a16ac52b28cbdd039b4e4d8fd8202105f2"
+      },
+      {
+        "order": 62,
+        "file": "supabase/migrations/20260303004338_9a0db725-ea34-48fe-8a61-37a656d322ec.sql",
+        "version": "20260303004338",
+        "versionDigits": 14,
+        "bytes": 12290,
+        "sha256": "fb20056736877317eb416bef4b24fe875ad290577358539d2881caff013ca00b"
+      },
+      {
+        "order": 63,
+        "file": "supabase/migrations/20260303004356_f315aaa8-044a-40d7-96a2-00934b732462.sql",
+        "version": "20260303004356",
+        "versionDigits": 14,
+        "bytes": 631,
+        "sha256": "8e4d5a5228475e92c121335680e555a61b51c6ceafe9b22ddd56c5ddf463100e"
+      },
+      {
+        "order": 64,
+        "file": "supabase/migrations/20260305223242_e2999e0d-d99a-47ed-8ffb-1b84dc170672.sql",
+        "version": "20260305223242",
+        "versionDigits": 14,
+        "bytes": 4362,
+        "sha256": "9e958809344d0c8f5dc7c691254c30b1bcc9e5110c42cf24479cdabceb6ba9f0"
+      },
+      {
+        "order": 65,
+        "file": "supabase/migrations/20260306060423_098b8b63-6039-4c8b-9509-5b1dca1066f9.sql",
+        "version": "20260306060423",
+        "versionDigits": 14,
+        "bytes": 2162,
+        "sha256": "d5f92ce980e6772ce71914a9bfc88c93b1cdc43f52a3ab7cfcc8f23285f876aa"
+      },
+      {
+        "order": 66,
+        "file": "supabase/migrations/20260312104141_b1d811ea-59f6-485c-8590-c3e049ad9541.sql",
+        "version": "20260312104141",
+        "versionDigits": 14,
+        "bytes": 3190,
+        "sha256": "52ae757fbbb2434dc20d8ba7e5aa8414a51be168ecca6194bdef5409d80c4e86"
+      },
+      {
+        "order": 67,
+        "file": "supabase/migrations/20260330034310_96b0929d-1c46-43e1-b34c-15404cb8a14c.sql",
+        "version": "20260330034310",
+        "versionDigits": 14,
+        "bytes": 133,
+        "sha256": "2f8b867bbe56f10e1c3afb103207ad1511957e2550fe32075d9b552e0cca87aa"
+      },
+      {
+        "order": 68,
+        "file": "supabase/migrations/20260330034429_fd529584-be10-4046-9aaf-04d52bb0533b.sql",
+        "version": "20260330034429",
+        "versionDigits": 14,
+        "bytes": 144,
+        "sha256": "4dcc60d79b3c96750f5758957b1167af3a07b63ed1d16810fd28c7774dce08c1"
+      },
+      {
+        "order": 69,
+        "file": "supabase/migrations/20260330042108_4ef4393d-6aec-4b71-bef9-e735c3fe0ad2.sql",
+        "version": "20260330042108",
+        "versionDigits": 14,
+        "bytes": 486,
+        "sha256": "083d2b172183d8fd324014e86db2ae65a34a463d14b22840ba3409b232025523"
+      },
+      {
+        "order": 70,
+        "file": "supabase/migrations/20260405121922_1d2c78b0-3412-4491-ac43-25cae46f65c7.sql",
+        "version": "20260405121922",
+        "versionDigits": 14,
+        "bytes": 3157,
+        "sha256": "08c3c83199ebc04f3f3568c2de4975d38feab91bc84159b06ed3494d6846ce2d"
+      },
+      {
+        "order": 71,
+        "file": "supabase/migrations/20260409190240_dc78d93d-8c8c-4887-a98b-5f3ffe32a891.sql",
+        "version": "20260409190240",
+        "versionDigits": 14,
+        "bytes": 4391,
+        "sha256": "e453fca8add65867a80f91765f5650837afc48465b53136139ebafed6fc28f33"
+      },
+      {
+        "order": 72,
+        "file": "supabase/migrations/20260414153710_3e7e55d8-6ba6-4cc7-a45c-e585b32aa4da.sql",
+        "version": "20260414153710",
+        "versionDigits": 14,
+        "bytes": 891,
+        "sha256": "e37e20d4ffe66ce3f331fef309d5b5400ccfee400638dc137997f38f7ec68c86"
+      },
+      {
+        "order": 73,
+        "file": "supabase/migrations/20260430_create_api_infrastructure.sql",
+        "version": "20260430",
+        "versionDigits": 8,
+        "bytes": 2521,
+        "sha256": "de1587cfbfc1a82802a27e535e4f1e5f66ded48febd5bc9e2659a7aa4dc93a57"
+      },
+      {
+        "order": 74,
+        "file": "supabase/migrations/20260503165307_3f9d4e07-abf3-4b69-a69d-01ca340f9320.sql",
+        "version": "20260503165307",
+        "versionDigits": 14,
+        "bytes": 2244,
+        "sha256": "bf40397bb69815d097682413fae5ab55c506e6a68737d6f78014c0e0097dd89f"
+      },
+      {
+        "order": 75,
+        "file": "supabase/migrations/20260503170510_676e3794-6ab2-4e5f-9522-8cf1afb004af.sql",
+        "version": "20260503170510",
+        "versionDigits": 14,
+        "bytes": 4313,
+        "sha256": "5d9578f4f0bb2383e735b6684cda2bd164d340ef51da600a1f922259bbfb7f57"
+      },
+      {
+        "order": 76,
+        "file": "supabase/migrations/20260503171037_f462ba85-9acd-41a6-842c-422094a14880.sql",
+        "version": "20260503171037",
+        "versionDigits": 14,
+        "bytes": 2134,
+        "sha256": "57ca5494315f97384be5433fa548cfa70d3a338e28405b04a04927cae11a95e3"
+      },
+      {
+        "order": 77,
+        "file": "supabase/migrations/20260503171841_ad59bd55-fdf6-416b-b8b1-52b722ef1b35.sql",
+        "version": "20260503171841",
+        "versionDigits": 14,
+        "bytes": 2445,
+        "sha256": "dbb166bb696271691e38a8dd5e3e683ae15e7d03569091d1c557ec61b6f8063f"
+      },
+      {
+        "order": 78,
+        "file": "supabase/migrations/20260504090617_fbbf9a18-6116-4d81-a7d8-21b6f84f1e2d.sql",
+        "version": "20260504090617",
+        "versionDigits": 14,
+        "bytes": 13402,
+        "sha256": "f5a48b0968df1bfc648c834f369ca4c7817d1fa864e3b516e6f9f83b03cf2315"
+      },
+      {
+        "order": 79,
+        "file": "supabase/migrations/20260504093443_ad2db392-aca4-4da3-899a-ab1557d67958.sql",
+        "version": "20260504093443",
+        "versionDigits": 14,
+        "bytes": 2068,
+        "sha256": "94ea83d55f07d95bec685936351542c14a8e72875ebdbc6e9244aa46a30c5580"
+      },
+      {
+        "order": 80,
+        "file": "supabase/migrations/20260504094427_b08bf889-6956-410c-8999-f496f06b15a9.sql",
+        "version": "20260504094427",
+        "versionDigits": 14,
+        "bytes": 3284,
+        "sha256": "840b14afd3fcea8e0d32423de96978ded8cf66617e2e5a4d6219fb886d0650ca"
+      },
+      {
+        "order": 81,
+        "file": "supabase/migrations/20260504094924_7118b3d4-d44c-458a-b773-2e0683ecb1d0.sql",
+        "version": "20260504094924",
+        "versionDigits": 14,
+        "bytes": 2187,
+        "sha256": "9e6991f96056c1a20ca2b3c30cc5ddc77f8686b9f3de7da6b6f1def7901b36f1"
+      },
+      {
+        "order": 82,
+        "file": "supabase/migrations/20260512175820_03a0b5c8-ac46-46b6-947a-942cef1a2640.sql",
+        "version": "20260512175820",
+        "versionDigits": 14,
+        "bytes": 1867,
+        "sha256": "ba48a14015e02f9610faf2dfc385a572ff3360e0facb19509c625edcd4d234f1"
+      },
+      {
+        "order": 83,
+        "file": "supabase/migrations/20260515202521_791c1998-f03c-45a0-a4ca-737376aed902.sql",
+        "version": "20260515202521",
+        "versionDigits": 14,
+        "bytes": 1743,
+        "sha256": "f6c2aeaa3b31a3374cc7ac1051a367bdc6facd060c239e90b65502a6e5dcb0a4"
+      },
+      {
+        "order": 84,
+        "file": "supabase/migrations/20260528012933_5331b609-f851-42af-866d-03b715afeb4c.sql",
+        "version": "20260528012933",
+        "versionDigits": 14,
+        "bytes": 1559,
+        "sha256": "8bf0f5e9e8022e73cf21185f6d40331a34eecd0a9570f366b04cfe9f1e8cd773"
+      },
+      {
+        "order": 85,
+        "file": "supabase/migrations/20260529023536_3b11e5fd-b155-4aef-b109-fa1902e49ca3.sql",
+        "version": "20260529023536",
+        "versionDigits": 14,
+        "bytes": 5836,
+        "sha256": "121601b07614614e4758c76b92d004c23db441d64480c393445ccefe6fa72d2b"
+      },
+      {
+        "order": 86,
+        "file": "supabase/migrations/20260531001828_b9d654a5-f8da-41af-ab92-f053f5b151aa.sql",
+        "version": "20260531001828",
+        "versionDigits": 14,
+        "bytes": 413,
+        "sha256": "b269309c6c707b648d59813768b5778e2847055687e1e1c3ed17b3797b726b75"
+      },
+      {
+        "order": 87,
+        "file": "supabase/migrations/20260601013318_addd674c-ed21-4a7e-9a3b-8cf370b38cad.sql",
+        "version": "20260601013318",
+        "versionDigits": 14,
+        "bytes": 983,
+        "sha256": "24f09f5995748f2ee904d9f475c8e88ee678dc4d085a09f1e3b6ef18bb93fab0"
+      },
+      {
+        "order": 88,
+        "file": "supabase/migrations/20260603074946_faccdaaf-8037-41af-bb17-1ddaa3ed638c.sql",
+        "version": "20260603074946",
+        "versionDigits": 14,
+        "bytes": 6889,
+        "sha256": "3dcbda62a93bf7838d5a3518733c9f1406236ccf0bff043f50db8842b724cec4"
+      },
+      {
+        "order": 89,
+        "file": "supabase/migrations/20260604005004_22a35f6c-5281-4146-9f48-468b3706172a.sql",
+        "version": "20260604005004",
+        "versionDigits": 14,
+        "bytes": 6490,
+        "sha256": "67e3e182de1bb1b0ce0675b30e72391dc8fd3ca328f596335f9fa10ce67b153c"
+      },
+      {
+        "order": 90,
+        "file": "supabase/migrations/20260604005037_10f2a572-c91f-4a28-ac65-3f045d0c133d.sql",
+        "version": "20260604005037",
+        "versionDigits": 14,
+        "bytes": 2844,
+        "sha256": "8caff3f96fc25710e9f10280e87970db9f8b5837f91f48b7039ac21f93ca8903"
+      },
+      {
+        "order": 91,
+        "file": "supabase/migrations/20260604012816_15fac739-e4fd-483c-9157-038ca6666b68.sql",
+        "version": "20260604012816",
+        "versionDigits": 14,
+        "bytes": 119,
+        "sha256": "c4c220062172f046c5331eb9a9115d458d4098e4d5dfe8b06e0e12e84a00159b"
+      },
+      {
+        "order": 92,
+        "file": "supabase/migrations/20260612012233_b235e0b6-2ea7-4394-b9a1-312a8849e7c9.sql",
+        "version": "20260612012233",
+        "versionDigits": 14,
+        "bytes": 14979,
+        "sha256": "c0c042e345a309c889571e9d2a031ae65c39c9ef5c873f9d86df22dd17db889b"
+      },
+      {
+        "order": 93,
+        "file": "supabase/migrations/20260612013407_db0bd635-014a-4b2a-889a-3b2f41f89ed4.sql",
+        "version": "20260612013407",
+        "versionDigits": 14,
+        "bytes": 2426,
+        "sha256": "8de76301b5b2a31edfb92331cec68cc3a49228c43e9402a7d435e315f0d2d024"
+      },
+      {
+        "order": 94,
+        "file": "supabase/migrations/20260612043740_88d22c70-cc50-4a5f-9938-1c0e18209986.sql",
+        "version": "20260612043740",
+        "versionDigits": 14,
+        "bytes": 2676,
+        "sha256": "da9c4562829f3a7b8bb84c04e6be8c2fbbd50910730442aa71dddb1aa077998e"
+      },
+      {
+        "order": 95,
+        "file": "supabase/migrations/20260612044803_96b2b5d3-abef-4bf4-a182-2bc768c69a99.sql",
+        "version": "20260612044803",
+        "versionDigits": 14,
+        "bytes": 4105,
+        "sha256": "546365cec0df95f22c77569df29b6a6e7688201c7f38ac12e9a65e91fd51527d"
+      },
+      {
+        "order": 96,
+        "file": "supabase/migrations/20260612045829_e1fcae9e-6697-4979-b471-c2b777fc9582.sql",
+        "version": "20260612045829",
+        "versionDigits": 14,
+        "bytes": 1629,
+        "sha256": "5b286a3329cedb2fbe1f0e68eab494ce3624ddb2792f751e0e8af7d8fec4d6f8"
+      },
+      {
+        "order": 97,
+        "file": "supabase/migrations/20260612051033_e684c32b-3429-4144-8ff0-9f0c4a18a3de.sql",
+        "version": "20260612051033",
+        "versionDigits": 14,
+        "bytes": 1600,
+        "sha256": "691d74317014b90a6ff23efd2c3c2376961264e69de86f2930f3cc4d364c006c"
+      },
+      {
+        "order": 98,
+        "file": "supabase/migrations/20260616031403_0439d3aa-7f19-423e-907a-de04532ff759.sql",
+        "version": "20260616031403",
+        "versionDigits": 14,
+        "bytes": 3637,
+        "sha256": "3ade4988a3f801263b09f8522f7ebf74c5c959bbc21e3ea858a96cbb874ee18a"
+      },
+      {
+        "order": 99,
+        "file": "supabase/migrations/20260617211726_1461e3e5-d610-4294-8350-c00b40ceaedb.sql",
+        "version": "20260617211726",
+        "versionDigits": 14,
+        "bytes": 6432,
+        "sha256": "621b92f2dcc5e2c850e66fa5d026432e3c283b6f53b53517900aff6ce1087086"
+      },
+      {
+        "order": 100,
+        "file": "supabase/migrations/20260617212421_310d667b-da6e-4d4c-a36f-17eb21a63eeb.sql",
+        "version": "20260617212421",
+        "versionDigits": 14,
+        "bytes": 5658,
+        "sha256": "0c21e79652cd431f966980c61650cc8797ee9abfd360f464a3d44ae7694203ce"
+      },
+      {
+        "order": 101,
+        "file": "supabase/migrations/20260617213329_a7cee2b2-79ee-4fef-93f8-f9ec44ff65d8.sql",
+        "version": "20260617213329",
+        "versionDigits": 14,
+        "bytes": 4166,
+        "sha256": "50607f902164b26fb93699a0d1b82dc811975de5e799d4151080adecae3448c8"
+      },
+      {
+        "order": 102,
+        "file": "supabase/migrations/20260625223255_7d440c81-97eb-4077-bc03-b3fd486735d1.sql",
+        "version": "20260625223255",
+        "versionDigits": 14,
+        "bytes": 2817,
+        "sha256": "ed39f9e5f8ba3f021dbaff37bdbbd066828e05d5de25707bc65bc56cfd3b8a30"
+      },
+      {
+        "order": 103,
+        "file": "supabase/migrations/20260626174708_976696ea-9cde-49bc-85e2-8d730dc0b723.sql",
+        "version": "20260626174708",
+        "versionDigits": 14,
+        "bytes": 5169,
+        "sha256": "b783a42a71531e3330d8b6082f34467acc5b552876c8bd5fcff167352a609754"
+      },
+      {
+        "order": 104,
+        "file": "supabase/migrations/20260627235835_cb9eb6ad-2316-4bbf-ba1a-e49f116bdc44.sql",
+        "version": "20260627235835",
+        "versionDigits": 14,
+        "bytes": 3552,
+        "sha256": "2423a778b864ad3dbc329d17b42197fec214f68e1b094aabe8fd90b51391a6c5"
+      },
+      {
+        "order": 105,
+        "file": "supabase/migrations/20260628000746_1d608391-c47f-418a-b17c-fafd2622422a.sql",
+        "version": "20260628000746",
+        "versionDigits": 14,
+        "bytes": 18763,
+        "sha256": "89ab4b970faf8f153ad1a1016be7f3dcb3184a4ebb4bc49d12caa64fd67198e8"
+      },
+      {
+        "order": 106,
+        "file": "supabase/migrations/20260630002025_1112d094-b731-4a77-8b10-37efc86d9db1.sql",
+        "version": "20260630002025",
+        "versionDigits": 14,
+        "bytes": 5353,
+        "sha256": "3b949db741e5669edd33808fd73f480d1d3643d65214ee9605a4e3bdbacf7a50"
+      },
+      {
+        "order": 107,
+        "file": "supabase/migrations/20260707001536_18883c6d-7bf4-4124-97d2-491bb9d7731e.sql",
+        "version": "20260707001536",
+        "versionDigits": 14,
+        "bytes": 7647,
+        "sha256": "e2254be8ea403517eaaccb6ab58f34b1df547e0eab3e47814d612dcf08c2dbba"
+      },
+      {
+        "order": 108,
+        "file": "supabase/migrations/20260707001552_6812d8d6-e8cb-467a-b4c2-aa20279742cb.sql",
+        "version": "20260707001552",
+        "versionDigits": 14,
+        "bytes": 152,
+        "sha256": "0807300b4ddb4e1c66a003365c9b967a648f414126cbb404e2064b44acac3a16"
+      },
+      {
+        "order": 109,
+        "file": "supabase/migrations/20260707004506_806f5221-1faa-4d5a-950f-59e52686b278.sql",
+        "version": "20260707004506",
+        "versionDigits": 14,
+        "bytes": 2347,
+        "sha256": "cdfa6147a96b370bda010ef94644bcef7fb8530347308eec44da634233f64729"
+      },
+      {
+        "order": 110,
+        "file": "supabase/migrations/20260711001138_dd633da7-0d13-424b-86e3-bc2150d561ca.sql",
+        "version": "20260711001138",
+        "versionDigits": 14,
+        "bytes": 3810,
+        "sha256": "04c6e830148708153753dc5e1a71da9994ba4557b820d9f5c1c47cb365068beb"
+      },
+      {
+        "order": 111,
+        "file": "supabase/migrations/20260714000058_1abbb0e6-6ba1-4fd1-ab02-21f735d24d8c.sql",
+        "version": "20260714000058",
+        "versionDigits": 14,
+        "bytes": 17168,
+        "sha256": "30f2ef3b6e78054896b078b61943124a3329424c4a107b73da405daf6c0c4b14"
+      },
+      {
+        "order": 112,
+        "file": "supabase/migrations/20260714000854_711f4937-9db3-4b7a-9203-c674cf51f922.sql",
+        "version": "20260714000854",
+        "versionDigits": 14,
+        "bytes": 7397,
+        "sha256": "20da033895bc799d00d9c612389466ece1f62a77d94fa0408436c6ed1a0346dd"
+      },
+      {
+        "order": 113,
+        "file": "supabase/migrations/20260714001821_c8477af6-5f17-4016-9421-fb37d69ff51f.sql",
+        "version": "20260714001821",
+        "versionDigits": 14,
+        "bytes": 8586,
+        "sha256": "ad07caa2fbf2382265c98048e9127115622ec0490b0561bf47cdacedb36661ce"
+      },
+      {
+        "order": 114,
+        "file": "supabase/migrations/20260714002554_3a06afd3-789e-43eb-bbcf-bb32191462ad.sql",
+        "version": "20260714002554",
+        "versionDigits": 14,
+        "bytes": 10020,
+        "sha256": "9303a4f616a256bf3e481ee731e47f1bec9eb82b589d212658f58ca5f734f45d"
+      },
+      {
+        "order": 115,
+        "file": "supabase/migrations/20260714002607_e691992b-4564-424e-bdda-ad1ee53e18e9.sql",
+        "version": "20260714002607",
+        "versionDigits": 14,
+        "bytes": 74,
+        "sha256": "dc0130f5007042ebb280485c8cb10eb6f956ea2713a5f791a79b78c0afaedcea"
+      },
+      {
+        "order": 116,
+        "file": "supabase/migrations/20260716011827_3b89b83b-326e-414d-93e1-dbc7e37a7cfe.sql",
+        "version": "20260716011827",
+        "versionDigits": 14,
+        "bytes": 3833,
+        "sha256": "d9fd472f0a0e47cd38703ceb6337f73550740af5bb4b196bb644fd958b1b61e0"
+      },
+      {
+        "order": 117,
+        "file": "supabase/migrations/20260716014039_e562a1b2-5597-4953-bf6c-caa7852ff59a.sql",
+        "version": "20260716014039",
+        "versionDigits": 14,
+        "bytes": 26576,
+        "sha256": "1e97c4e5b14697f8351fa597fe017dcad8cb1e14b93ce53a7dd21bd4b3a7bcec"
+      },
+      {
+        "order": 118,
+        "file": "supabase/migrations/20260716014906_7e43f52c-05eb-4a2f-8199-573ba990bd5b.sql",
+        "version": "20260716014906",
+        "versionDigits": 14,
+        "bytes": 31552,
+        "sha256": "1dfdb2849c854dd344a2c3cfa9a352be650132315fbe3fe2f106fad463e6335e"
+      },
+      {
+        "order": 119,
+        "file": "supabase/migrations/20260717213531_0db2e10b-e1f5-4cb3-86dd-498a4e9cd5b6.sql",
+        "version": "20260717213531",
+        "versionDigits": 14,
+        "bytes": 184,
+        "sha256": "5179ca8bbd5f54208437c363fe6fbf6881dffa5a5ebd7a68c8d53a136d5cc825"
+      },
+      {
+        "order": 120,
+        "file": "supabase/migrations/20260717215336_84d21faa-8c8a-4105-b593-2b121145a6a0.sql",
+        "version": "20260717215336",
+        "versionDigits": 14,
+        "bytes": 23623,
+        "sha256": "c042148a0fcd24cc4cb0ffdf9c9fa76939639b2ba00b135cc47d3d1fa3bf74b9"
+      },
+      {
+        "order": 121,
+        "file": "supabase/migrations/20260720110653_b4e74627-339a-46bf-b2b4-7f1924a2d657.sql",
+        "version": "20260720110653",
+        "versionDigits": 14,
+        "bytes": 8857,
+        "sha256": "650b10bf980df894c0b882af26443b748d6642a6a87073d5012b03bb6aad0917"
+      },
+      {
+        "order": 122,
+        "file": "supabase/migrations/20260720110711_cc49139d-e5b1-41d8-93d4-16ac1206ed07.sql",
+        "version": "20260720110711",
+        "versionDigits": 14,
+        "bytes": 857,
+        "sha256": "bdf57394e35ce64f7dab9c1df0679633c13f1b692e6016bc58b2bd9aa7d095f8"
+      },
+      {
+        "order": 123,
+        "file": "supabase/migrations/20260720110911_f9ac1fed-4a99-4a94-a4b5-bcb5aea17dc8.sql",
+        "version": "20260720110911",
+        "versionDigits": 14,
+        "bytes": 11371,
+        "sha256": "542d2c40c8cdfa9e6cb30985b2a40a3b3aa5d166f80e22d05e6c27de3f8c51ad"
+      },
+      {
+        "order": 124,
+        "file": "supabase/migrations/20260721210837_421b4a21-cf25-46f3-a524-5a30c0ea7cc4.sql",
+        "version": "20260721210837",
+        "versionDigits": 14,
+        "bytes": 723,
+        "sha256": "bcdf63e86c9c3e59efcc16c84cfd1155b763f8d4e05c8412dd238f03a0bffbf5"
+      },
+      {
+        "order": 125,
+        "file": "supabase/migrations/20260730001730_2d0d14cb-8e90-484f-8272-84c83600e575.sql",
+        "version": "20260730001730",
+        "versionDigits": 14,
+        "bytes": 2804,
+        "sha256": "48e29989f57152a41a7bbf5d9efa5b83330b255001f17742a3cc4816cf77a73a"
+      },
+      {
+        "order": 126,
+        "file": "supabase/migrations/20260802002518_5030b615-1f85-4c95-b05d-bbe2b814f541.sql",
+        "version": "20260802002518",
+        "versionDigits": 14,
+        "bytes": 2404,
+        "sha256": "83076436194a616bb5db7e8dcecb8ef485acb05d1f12aedfb5d6dfdb3d35f902"
+      },
+      {
+        "order": 127,
+        "file": "supabase/migrations/20260815153005_4fd1bd73-1bca-4558-8e0a-f2cb55bfb8ce.sql",
+        "version": "20260815153005",
+        "versionDigits": 14,
+        "bytes": 909,
+        "sha256": "e9bb131c0f6bc545e8e18cd31ccb32192f699021b4748a75acb32ef6dd80142b"
+      },
+      {
+        "order": 128,
+        "file": "supabase/migrations/20260815153144_0411e760-658b-40ac-9f1b-24530a9b1395.sql",
+        "version": "20260815153144",
+        "versionDigits": 14,
+        "bytes": 2607,
+        "sha256": "dedd3e9e8b440c4e2ab1eb84618e37ef2935ed76810857ea0a41ce4d244f2ef9"
+      }
+    ]
+  },
+  "schemaEvents": {
+    "functionDefinitions": 180,
+    "uniqueFunctionNames": 151,
+    "duplicateFunctionNames": 18,
+    "tableCreateEvents": 172,
+    "enumCreateEvents": 8,
+    "extensionCreateEvents": 6,
+    "policyCreateEvents": 440,
+    "privilegedGrantOrRevokeStatements": 279,
+    "storageBucketEvidence": [
+      {
+        "type": "storage_bucket",
+        "name": "chat-attachments",
+        "file": "supabase/migrations/20260414153710_3e7e55d8-6ba6-4cc7-a45c-e585b32aa4da.sql",
+        "line": 3
+      },
+      {
+        "type": "storage_bucket",
+        "name": "course-materials",
+        "file": "supabase/migrations/20260202130412_87e690a7-358f-4278-8900-5711f0cbdaf3.sql",
+        "line": 2
+      },
+      {
+        "type": "storage_bucket",
+        "name": "generated-diagrams",
+        "file": "supabase/migrations/20260330034310_96b0929d-1c46-43e1-b34c-15404cb8a14c.sql",
+        "line": 1
+      },
+      {
+        "type": "storage_bucket",
+        "name": "report-cards",
+        "file": "supabase/migrations/20260208025800_337d7300-f363-484e-91a8-985e8304f394.sql",
+        "line": 6
+      }
+    ],
+    "realtimePublicationAdditions": [
+      {
+        "publication": "supabase_realtime",
+        "table": "public.chat_messages",
+        "file": "supabase/migrations/20260114031014_96142f08-9734-4495-89b8-bab533b6c4ca.sql",
+        "line": 200
+      },
+      {
+        "publication": "supabase_realtime",
+        "table": "public.announcements",
+        "file": "supabase/migrations/20260201203655_5d7c1433-144f-48f2-8274-66bcc9c37bb6.sql",
+        "line": 609
+      },
+      {
+        "publication": "supabase_realtime",
+        "table": "public.submissions",
+        "file": "supabase/migrations/20260201203655_5d7c1433-144f-48f2-8274-66bcc9c37bb6.sql",
+        "line": 610
+      },
+      {
+        "publication": "supabase_realtime",
+        "table": "public.invite_requests",
+        "file": "supabase/migrations/20260201203655_5d7c1433-144f-48f2-8274-66bcc9c37bb6.sql",
+        "line": 611
+      },
+      {
+        "publication": "supabase_realtime",
+        "table": "public.ministry_access_requests",
+        "file": "supabase/migrations/20260302082829_1dd4f0ef-cd74-43ee-874f-42d1dddac0e1.sql",
+        "line": 90
+      },
+      {
+        "publication": "supabase_realtime",
+        "table": "public.teacher_categories",
+        "file": "supabase/migrations/20260612012233_b235e0b6-2ea7-4394-b9a1-312a8849e7c9.sql",
+        "line": 421
+      },
+      {
+        "publication": "supabase_realtime",
+        "table": "public.live_meetings",
+        "file": "supabase/migrations/20260711001138_dd633da7-0d13-424b-86e3-bc2150d561ca.sql",
+        "line": 74
+      }
+    ]
+  },
+  "callers": {
+    "rpcCalls": [
+      {
+        "name": "ext_list_pending_requests",
+        "file": "src/components/admin/ExtensionReviewPanel.tsx",
+        "line": 60
+      },
+      {
+        "name": "ext_load_audit_chat",
+        "file": "src/components/admin/ExtensionReviewPanel.tsx",
+        "line": 71
+      },
+      {
+        "name": "ext_approve_request",
+        "file": "src/components/admin/ExtensionReviewPanel.tsx",
+        "line": 94
+      },
+      {
+        "name": "ext_reject_request",
+        "file": "src/components/admin/ExtensionReviewPanel.tsx",
+        "line": 109
+      },
+      {
+        "name": "list_feature_flags",
+        "file": "src/components/admin/FeatureFlagsEditor.tsx",
+        "line": 34
+      },
+      {
+        "name": "set_feature_flag",
+        "file": "src/components/admin/FeatureFlagsEditor.tsx",
+        "line": 43
+      },
+      {
+        "name": "set_feature_flag",
+        "file": "src/components/admin/FeatureFlagsEditor.tsx",
+        "line": 63
+      },
+      {
+        "name": "generate_ministry_invite_code",
+        "file": "src/components/admin/MinistryCodeGenerator.tsx",
+        "line": 61
+      },
+      {
+        "name": "rotate_teacher_category_code",
+        "file": "src/components/admin/TeacherCategoriesManager.tsx",
+        "line": 150
+      },
+      {
+        "name": "update_tenant_defaults",
+        "file": "src/components/admin/TenantDefaultsEditor.tsx",
+        "line": 65
+      },
+      {
+        "name": "get_cross_tenant_observatory",
+        "file": "src/components/admin/TenantObservatory.tsx",
+        "line": 44
+      },
+      {
+        "name": "provision_tenant",
+        "file": "src/components/admin/TenantsPanel.tsx",
+        "line": 74
+      },
+      {
+        "name": "activate_tenant",
+        "file": "src/components/admin/TenantsPanel.tsx",
+        "line": 97
+      },
+      {
+        "name": "suspend_tenant",
+        "file": "src/components/admin/TenantsPanel.tsx",
+        "line": 105
+      },
+      {
+        "name": "check_device_ban",
+        "file": "src/components/DeviceBanScreen.tsx",
+        "line": 16
+      },
+      {
+        "name": "ext_list_active_for_me",
+        "file": "src/components/extensions/TenantExtensionsSection.tsx",
+        "line": 28
+      },
+      {
+        "name": "check_lct_lock",
+        "file": "src/components/LCTExamGuard.tsx",
+        "line": 61
+      },
+      {
+        "name": "list_mc_notices",
+        "file": "src/components/ministry/control/CommunicationsPanel.tsx",
+        "line": 28
+      },
+      {
+        "name": "list_mc_curriculum_subjects",
+        "file": "src/components/ministry/control/CurriculumPanel.tsx",
+        "line": 32
+      },
+      {
+        "name": "list_mc_curriculum_versions",
+        "file": "src/components/ministry/control/CurriculumPanel.tsx",
+        "line": 33
+      },
+      {
+        "name": "ext_list_conversations",
+        "file": "src/components/ministry/control/ExtensionsPanel.tsx",
+        "line": 74
+      },
+      {
+        "name": "ext_load_conversation",
+        "file": "src/components/ministry/control/ExtensionsPanel.tsx",
+        "line": 90
+      },
+      {
+        "name": "ext_create_conversation",
+        "file": "src/components/ministry/control/ExtensionsPanel.tsx",
+        "line": 112
+      },
+      {
+        "name": "ext_push_forward",
+        "file": "src/components/ministry/control/ExtensionsPanel.tsx",
+        "line": 175
+      },
+      {
+        "name": "list_mc_feature_flags",
+        "file": "src/components/ministry/control/FeaturesPanel.tsx",
+        "line": 31
+      },
+      {
+        "name": "list_mc_lumina_config",
+        "file": "src/components/ministry/control/LuminaConfigPanel.tsx",
+        "line": 35
+      },
+      {
+        "name": "list_mc_policies",
+        "file": "src/components/ministry/control/PoliciesPanel.tsx",
+        "line": 33
+      },
+      {
+        "name": "list_mc_regions",
+        "file": "src/components/ministry/control/RegionsPanel.tsx",
+        "line": 25
+      },
+      {
+        "name": "list_mc_schools",
+        "file": "src/components/ministry/control/SchoolsPanel.tsx",
+        "line": 31
+      },
+      {
+        "name": "list_ministry_sessions",
+        "file": "src/components/ministry/control/SecurityPanel.tsx",
+        "line": 35
+      },
+      {
+        "name": "mi_national_overview",
+        "file": "src/components/ministry/intelligence/IntelligenceShell.tsx",
+        "line": 84
+      },
+      {
+        "name": "mi_regional_breakdown",
+        "file": "src/components/ministry/intelligence/IntelligenceShell.tsx",
+        "line": 85
+      },
+      {
+        "name": "mi_list_insights",
+        "file": "src/components/ministry/intelligence/IntelligenceShell.tsx",
+        "line": 86
+      },
+      {
+        "name": "mi_school_snapshot",
+        "file": "src/components/ministry/intelligence/IntelligenceShell.tsx",
+        "line": 118
+      },
+      {
+        "name": "resolve_ministry_request",
+        "file": "src/components/MinistryAccessAlert.tsx",
+        "line": 86
+      },
+      {
+        "name": "delete_school_cascade",
+        "file": "src/components/SuperAdminPanel.tsx",
+        "line": 69
+      },
+      {
+        "name": "link_profile_after_signup",
+        "file": "src/hooks/useAuth.tsx",
+        "line": 28
+      },
+      {
+        "name": "list_change_requests",
+        "file": "src/hooks/useMinistryControl.tsx",
+        "line": 88
+      },
+      {
+        "name": "submit_change_request",
+        "file": "src/hooks/useMinistryControl.tsx",
+        "line": 108
+      },
+      {
+        "name": "review_change_request",
+        "file": "src/hooks/useMinistryControl.tsx",
+        "line": 126
+      },
+      {
+        "name": "publish_change_request",
+        "file": "src/hooks/useMinistryControl.tsx",
+        "line": 140
+      },
+      {
+        "name": "withdraw_change_request",
+        "file": "src/hooks/useMinistryControl.tsx",
+        "line": 153
+      },
+      {
+        "name": "list_ministry_audit",
+        "file": "src/hooks/useMinistryControl.tsx",
+        "line": 164
+      },
+      {
+        "name": "list_ministry_role_assignments",
+        "file": "src/hooks/useMinistryControl.tsx",
+        "line": 173
+      },
+      {
+        "name": "assign_ministry_role",
+        "file": "src/hooks/useMinistryControl.tsx",
+        "line": 182
+      },
+      {
+        "name": "revoke_ministry_role",
+        "file": "src/hooks/useMinistryControl.tsx",
+        "line": 196
+      },
+      {
+        "name": "activate_school_with_code",
+        "file": "src/hooks/useRoleGuard.tsx",
+        "line": 142
+      },
+      {
+        "name": "approve_school_profile",
+        "file": "src/hooks/useSchoolAdmin.tsx",
+        "line": 53
+      },
+      {
+        "name": "reject_school_profile",
+        "file": "src/hooks/useSchoolAdmin.tsx",
+        "line": 72
+      },
+      {
+        "name": "get_active_tenants",
+        "file": "src/hooks/useTenant.tsx",
+        "line": 33
+      },
+      {
+        "name": "get_tenant_config",
+        "file": "src/hooks/useTenantConfig.tsx",
+        "line": 93
+      },
+      {
+        "name": "is_hardcoded_admin",
+        "file": "src/hooks/useUserRole.tsx",
+        "line": 35
+      },
+      {
+        "name": "grant_admin_via_code",
+        "file": "src/hooks/useUserRole.tsx",
+        "line": 88
+      },
+      {
+        "name": "get_weakest_topics",
+        "file": "src/lib/mastery.ts",
+        "line": 35
+      },
+      {
+        "name": "get_due_reviews",
+        "file": "src/lib/mastery.ts",
+        "line": 53
+      },
+      {
+        "name": "signup_with_invite_code",
+        "file": "src/pages/Auth.tsx",
+        "line": 376
+      },
+      {
+        "name": "link_profile_after_signup",
+        "file": "src/pages/Auth.tsx",
+        "line": 397
+      },
+      {
+        "name": "signup_as_parent",
+        "file": "src/pages/Auth.tsx",
+        "line": 409
+      },
+      {
+        "name": "verify_admin_access_code",
+        "file": "src/pages/Auth.tsx",
+        "line": 592
+      },
+      {
+        "name": "check_ministry_ip_ban",
+        "file": "src/pages/Auth.tsx",
+        "line": 616
+      },
+      {
+        "name": "verify_ministry_code",
+        "file": "src/pages/Auth.tsx",
+        "line": 626
+      },
+      {
+        "name": "signup_with_invite_code",
+        "file": "src/pages/Auth.tsx",
+        "line": 765
+      },
+      {
+        "name": "signup_as_parent",
+        "file": "src/pages/Auth.tsx",
+        "line": 1261
+      },
+      {
+        "name": "get_active_tenants",
+        "file": "src/pages/CountrySelect.tsx",
+        "line": 40
+      },
+      {
+        "name": "ext_list_active_for_me",
+        "file": "src/pages/ExtensionView.tsx",
+        "line": 54
+      },
+      {
+        "name": "check_ministry_session",
+        "file": "src/pages/MinistryDashboard.tsx",
+        "line": 72
+      },
+      {
+        "name": "check_ministry_session",
+        "file": "src/pages/MinistryDashboard.tsx",
+        "line": 118
+      },
+      {
+        "name": "get_ministry_dashboard_data",
+        "file": "src/pages/MinistryDashboard.tsx",
+        "line": 128
+      },
+      {
+        "name": "generate_moderator_invite_code",
+        "file": "src/pages/MinistryDashboard.tsx",
+        "line": 244
+      },
+      {
+        "name": "get_ministry_dashboard_data",
+        "file": "src/pages/MinistryDashboard.tsx",
+        "line": 623
+      },
+      {
+        "name": "check_ministry_ip_ban",
+        "file": "src/pages/MinistryLogin.tsx",
+        "line": 49
+      },
+      {
+        "name": "check_ministry_session",
+        "file": "src/pages/MinistryLogin.tsx",
+        "line": 63
+      },
+      {
+        "name": "verify_ministry_code",
+        "file": "src/pages/MinistryLogin.tsx",
+        "line": 112
+      },
+      {
+        "name": "signup_as_moderator",
+        "file": "src/pages/MinistryLogin.tsx",
+        "line": 155
+      },
+      {
+        "name": "link_moderator_after_signup",
+        "file": "src/pages/MinistryLogin.tsx",
+        "line": 179
+      },
+      {
+        "name": "approve_invite_request",
+        "file": "src/pages/SchoolAdminDashboard.tsx",
+        "line": 364
+      },
+      {
+        "name": "deny_invite_request",
+        "file": "src/pages/SchoolAdminDashboard.tsx",
+        "line": 390
+      },
+      {
+        "name": "create_school_with_code",
+        "file": "src/pages/SuperAdmin.tsx",
+        "line": 230
+      },
+      {
+        "name": "check_super_admin_lock_status",
+        "file": "src/pages/SuperAdminVerify.tsx",
+        "line": 57
+      },
+      {
+        "name": "verify_super_admin_code",
+        "file": "src/pages/SuperAdminVerify.tsx",
+        "line": 98
+      },
+      {
+        "name": "attach_bandit_reward",
+        "file": "supabase/functions/_shared/banditState.ts",
+        "line": 218
+      },
+      {
+        "name": "attach_ensemble_outcome",
+        "file": "supabase/functions/_shared/ensemblePredictionLog.ts",
+        "line": 77
+      },
+      {
+        "name": "update_concept_mastery",
+        "file": "supabase/functions/confidence-record/index.ts",
+        "line": 125
+      },
+      {
+        "name": "check_and_increment_cost",
+        "file": "supabase/functions/debate/index.ts",
+        "line": 212
+      },
+      {
+        "name": "update_concept_mastery",
+        "file": "supabase/functions/decay-grade-refresher/index.ts",
+        "line": 108
+      },
+      {
+        "name": "check_and_increment_cost",
+        "file": "supabase/functions/dream-consolidate/index.ts",
+        "line": 47
+      },
+      {
+        "name": "can_view_student_mastery",
+        "file": "supabase/functions/evaluate-models/index.ts",
+        "line": 203
+      },
+      {
+        "name": "can_view_student_mastery",
+        "file": "supabase/functions/kt-predict/index.ts",
+        "line": 86
+      },
+      {
+        "name": "is_super_admin_caller",
+        "file": "supabase/functions/lumina-extension-audit/index.ts",
+        "line": 85
+      },
+      {
+        "name": "ext_tenant_from_session",
+        "file": "supabase/functions/lumina-extension-chat/index.ts",
+        "line": 177
+      },
+      {
+        "name": "ext_append_message",
+        "file": "supabase/functions/lumina-extension-chat/index.ts",
+        "line": 187
+      },
+      {
+        "name": "ext_append_message",
+        "file": "supabase/functions/lumina-extension-chat/index.ts",
+        "line": 198
+      },
+      {
+        "name": "ext_save_blueprint",
+        "file": "supabase/functions/lumina-extension-chat/index.ts",
+        "line": 300
+      },
+      {
+        "name": "ext_append_message",
+        "file": "supabase/functions/lumina-extension-chat/index.ts",
+        "line": 316
+      },
+      {
+        "name": "mi_run_daily_aggregation",
+        "file": "supabase/functions/mi-aggregate/index.ts",
+        "line": 23
+      },
+      {
+        "name": "update_concept_mastery",
+        "file": "supabase/functions/misconception-hunt-grade/index.ts",
+        "line": 142
+      },
+      {
+        "name": "has_role",
+        "file": "supabase/functions/refresh-cold-start-priors/index.ts",
+        "line": 72
+      },
+      {
+        "name": "can_view_student_mastery",
+        "file": "supabase/functions/retrain-ensemble/index.ts",
+        "line": 118
+      },
+      {
+        "name": "get_fsrs_due_cards",
+        "file": "supabase/functions/review-schedule/index.ts",
+        "line": 78
+      },
+      {
+        "name": "record_review_delivered",
+        "file": "supabase/functions/review-schedule/index.ts",
+        "line": 151
+      },
+      {
+        "name": "is_super_admin_user",
+        "file": "supabase/functions/simulate-student-view/index.ts",
+        "line": 73
+      },
+      {
+        "name": "update_concept_mastery",
+        "file": "supabase/functions/socratic-next-turn/index.ts",
+        "line": 185
+      },
+      {
+        "name": "update_concept_mastery",
+        "file": "supabase/functions/teach-back-grade/index.ts",
+        "line": 153
+      },
+      {
+        "name": "can_view_student_mastery",
+        "file": "supabase/functions/teaching-generate/index.ts",
+        "line": 319
+      }
+    ],
+    "edgeFunctionCalls": [
+      {
+        "name": "lumina-extension-audit",
+        "file": "src/components/admin/ExtensionReviewPanel.tsx",
+        "line": 131,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "generate-lct",
+        "file": "src/components/admin/LCTPanel.tsx",
+        "line": 522,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "generate-lct",
+        "file": "src/components/admin/LCTPanel.tsx",
+        "line": 542,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "generate-lct",
+        "file": "src/components/admin/LCTPanel.tsx",
+        "line": 566,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "generate-lct",
+        "file": "src/components/admin/LCTPanel.tsx",
+        "line": 586,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "generate-lct",
+        "file": "src/components/admin/LCTPanel.tsx",
+        "line": 603,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "lumina-api",
+        "file": "src/components/admin/LuminaApiPanel.tsx",
+        "line": 65,
+        "transport": "raw-url"
+      },
+      {
+        "name": "invite-codes",
+        "file": "src/components/admin/TeacherCategoriesManager.tsx",
+        "line": 162,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "generate-exam",
+        "file": "src/components/ExaminationSection.tsx",
+        "line": 435,
+        "transport": "raw-url"
+      },
+      {
+        "name": "explain-file",
+        "file": "src/components/FileNotesGenerator.tsx",
+        "line": 454,
+        "transport": "raw-url"
+      },
+      {
+        "name": "lumina-extension-chat",
+        "file": "src/components/ministry/control/ExtensionsPanel.tsx",
+        "line": 139,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "note-timeline-summary",
+        "file": "src/components/NoteTimeline.tsx",
+        "line": 67,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "explain-file",
+        "file": "src/components/PodcastsSection.tsx",
+        "line": 20,
+        "transport": "raw-url"
+      },
+      {
+        "name": "lecture-image",
+        "file": "src/components/shared/LectureStudio/LectureStudio.tsx",
+        "line": 40,
+        "transport": "raw-url"
+      },
+      {
+        "name": "lecture-3d-spec",
+        "file": "src/components/shared/LectureStudio/LectureStudio.tsx",
+        "line": 69,
+        "transport": "raw-url"
+      },
+      {
+        "name": "lecture-outline",
+        "file": "src/components/shared/LectureStudio/LectureStudio.tsx",
+        "line": 267,
+        "transport": "raw-url"
+      },
+      {
+        "name": "chat",
+        "file": "src/components/student/AIStudyPlan.tsx",
+        "line": 90,
+        "transport": "raw-url"
+      },
+      {
+        "name": "extract-memories",
+        "file": "src/components/student/AssignmentQuizTaker.tsx",
+        "line": 192,
+        "transport": "raw-url"
+      },
+      {
+        "name": "cold-start-probe",
+        "file": "src/components/student/ColdStartProbe.tsx",
+        "line": 62,
+        "transport": "raw-url"
+      },
+      {
+        "name": "debate",
+        "file": "src/components/student/DebateTheater.tsx",
+        "line": 46,
+        "transport": "raw-url"
+      },
+      {
+        "name": "decay-generate-refresher",
+        "file": "src/components/student/DecayDashboardCard.tsx",
+        "line": 67,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "decay-grade-refresher",
+        "file": "src/components/student/DecayDashboardCard.tsx",
+        "line": 85,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "generate-lct",
+        "file": "src/components/student/LCTExamScreen.tsx",
+        "line": 335,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "get-leaderboard",
+        "file": "src/components/student/Leaderboard.tsx",
+        "line": 36,
+        "transport": "raw-url"
+      },
+      {
+        "name": "misconception-hunt-generate",
+        "file": "src/components/student/learning-modes/MisconceptionHunt.tsx",
+        "line": 40,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "misconception-hunt-grade",
+        "file": "src/components/student/learning-modes/MisconceptionHunt.tsx",
+        "line": 72,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "socratic-next-turn",
+        "file": "src/components/student/learning-modes/SocraticMode.tsx",
+        "line": 38,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "socratic-next-turn",
+        "file": "src/components/student/learning-modes/SocraticMode.tsx",
+        "line": 69,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "teach-back-grade",
+        "file": "src/components/student/learning-modes/TeachBackMode.tsx",
+        "line": 43,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "lecture-image",
+        "file": "src/components/student/LectureGenerator.tsx",
+        "line": 47,
+        "transport": "raw-url"
+      },
+      {
+        "name": "lecture-outline",
+        "file": "src/components/student/LectureGenerator.tsx",
+        "line": 161,
+        "transport": "raw-url"
+      },
+      {
+        "name": "chat",
+        "file": "src/components/student/MindMapGenerator.tsx",
+        "line": 384,
+        "transport": "raw-url"
+      },
+      {
+        "name": "chat",
+        "file": "src/components/student/MindMapGenerator.tsx",
+        "line": 442,
+        "transport": "raw-url"
+      },
+      {
+        "name": "generate-diagram",
+        "file": "src/components/student/MindMapGenerator.tsx",
+        "line": 603,
+        "transport": "raw-url"
+      },
+      {
+        "name": "predict-student",
+        "file": "src/components/student/MirrorRevealCard.tsx",
+        "line": 37,
+        "transport": "raw-url"
+      },
+      {
+        "name": "dream-consolidate",
+        "file": "src/components/student/MorningBriefingCard.tsx",
+        "line": 80,
+        "transport": "raw-url"
+      },
+      {
+        "name": "generate-diagram",
+        "file": "src/components/student/StudyBuddy.tsx",
+        "line": 231,
+        "transport": "raw-url"
+      },
+      {
+        "name": "predict-student",
+        "file": "src/components/student/StudyBuddy.tsx",
+        "line": 448,
+        "transport": "raw-url"
+      },
+      {
+        "name": "chat",
+        "file": "src/components/student/StudyBuddy.tsx",
+        "line": 506,
+        "transport": "raw-url"
+      },
+      {
+        "name": "extract-memories",
+        "file": "src/components/student/StudyBuddy.tsx",
+        "line": 601,
+        "transport": "raw-url"
+      },
+      {
+        "name": "generate-diagram",
+        "file": "src/components/SubjectsSection.tsx",
+        "line": 173,
+        "transport": "raw-url"
+      },
+      {
+        "name": "check-content-relevance",
+        "file": "src/components/teacher/AssignmentQuestionBuilder.tsx",
+        "line": 192,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "chat",
+        "file": "src/components/teacher/LessonPlanGenerator.tsx",
+        "line": 93,
+        "transport": "raw-url"
+      },
+      {
+        "name": "generate-assignment",
+        "file": "src/components/teacher/TeacherCopilot.tsx",
+        "line": 119,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "chat",
+        "file": "src/components/teacher/TeacherCopilot.tsx",
+        "line": 170,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "generate-assignment",
+        "file": "src/components/teacher/TeacherCopilot.tsx",
+        "line": 208,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "generate-assignment",
+        "file": "src/components/teacher/TeacherCopilot.tsx",
+        "line": 244,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "check-content-relevance",
+        "file": "src/components/teacher/TeacherMaterials.tsx",
+        "line": 301,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "lumina-live",
+        "file": "src/hooks/useLuminaLiveSession.tsx",
+        "line": 134,
+        "transport": "raw-url"
+      },
+      {
+        "name": "teaching-generate",
+        "file": "src/hooks/useTeachingGenerate.tsx",
+        "line": 69,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "infer-concept",
+        "file": "src/lib/adaptive/conceptInferenceHybrid.ts",
+        "line": 31,
+        "transport": "raw-url"
+      },
+      {
+        "name": "ability-update",
+        "file": "src/lib/adaptive/irtEngine.ts",
+        "line": 65,
+        "transport": "raw-url"
+      },
+      {
+        "name": "adaptive-validate",
+        "file": "src/lib/adaptiveValidator.ts",
+        "line": 106,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "chat",
+        "file": "src/lib/chat.ts",
+        "line": 10,
+        "transport": "raw-url"
+      },
+      {
+        "name": "confidence-record",
+        "file": "src/lib/confidence.ts",
+        "line": 30,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "scan-content",
+        "file": "src/lib/contentScanner.ts",
+        "line": 24,
+        "transport": "raw-url"
+      },
+      {
+        "name": "chat",
+        "file": "src/lib/luminaAI.ts",
+        "line": 27,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "activate-school",
+        "file": "src/pages/ActivateSchool.tsx",
+        "line": 41,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "get-client-ip",
+        "file": "src/pages/Auth.tsx",
+        "line": 611,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "codelab-proxy",
+        "file": "src/pages/CodeLab.tsx",
+        "line": 213,
+        "transport": "raw-url"
+      },
+      {
+        "name": "get-client-ip",
+        "file": "src/pages/MinistryLogin.tsx",
+        "line": 40,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "invite-codes",
+        "file": "src/pages/SchoolAdminDashboard.tsx",
+        "line": 321,
+        "transport": "supabase-js"
+      },
+      {
+        "name": " or ",
+        "file": "scripts/adaptiveCoverageAudit.ts",
+        "line": 15,
+        "transport": "supabase-js"
+      },
+      {
+        "name": "ale-api",
+        "file": "supabase/functions/ale-api/index.ts",
+        "line": 307,
+        "transport": "raw-url"
+      },
+      {
+        "name": "scan-content",
+        "file": "supabase/functions/chat/index.ts",
+        "line": 47,
+        "transport": "raw-url"
+      }
+    ]
+  },
+  "environmentVariableNames": [
+    {
+      "name": "CRON_SECRET",
+      "files": [
+        "supabase/functions/dream-consolidate/index.ts"
+      ]
+    },
+    {
+      "name": "DEV",
+      "files": [
+        "src/lib/logger.ts"
+      ]
+    },
+    {
+      "name": "ELEVENLABS_API_KEY",
+      "files": [
+        "supabase/functions/generate-ambient-music/index.ts"
+      ]
+    },
+    {
+      "name": "LOVABLE_API_KEY",
+      "files": [
+        "supabase/functions/adaptive-validate/index.ts",
+        "supabase/functions/chat/index.ts",
+        "supabase/functions/check-content-relevance/index.ts",
+        "supabase/functions/codelab-proxy/index.ts",
+        "supabase/functions/cold-start-probe/index.ts",
+        "supabase/functions/debate/index.ts",
+        "supabase/functions/decay-generate-refresher/index.ts",
+        "supabase/functions/dream-consolidate/index.ts",
+        "supabase/functions/explain-file/index.ts",
+        "supabase/functions/extract-memories/index.ts",
+        "supabase/functions/generate-assignment/index.ts",
+        "supabase/functions/generate-diagram/index.ts",
+        "supabase/functions/generate-exam/index.ts",
+        "supabase/functions/generate-lct/index.ts",
+        "supabase/functions/infer-concept/index.ts",
+        "supabase/functions/lecture-3d-spec/index.ts",
+        "supabase/functions/lecture-image/index.ts",
+        "supabase/functions/lecture-outline/index.ts",
+        "supabase/functions/lumina-api/index.ts",
+        "supabase/functions/lumina-extension-audit/index.ts",
+        "supabase/functions/lumina-extension-chat/index.ts",
+        "supabase/functions/lumina-live/index.ts",
+        "supabase/functions/misconception-hunt-generate/index.ts",
+        "supabase/functions/misconception-hunt-grade/index.ts",
+        "supabase/functions/note-timeline-summary/index.ts",
+        "supabase/functions/predict-student/index.ts",
+        "supabase/functions/scan-content/index.ts",
+        "supabase/functions/socratic-next-turn/index.ts",
+        "supabase/functions/teach-back-grade/index.ts",
+        "supabase/functions/teaching-generate/index.ts"
+      ]
+    },
+    {
+      "name": "LSE_ARTIFACT_DIR",
+      "files": [
+        "scripts/lseA9LiveBenchmark.ts"
+      ]
+    },
+    {
+      "name": "LSE_BURST_EVENTS",
+      "files": [
+        "scripts/lseA9LiveBenchmark.ts"
+      ]
+    },
+    {
+      "name": "LSE_BURST_INTERVAL_MS",
+      "files": [
+        "scripts/lseA9LiveBenchmark.ts"
+      ]
+    },
+    {
+      "name": "LSE_LESSON_ID",
+      "files": [
+        "scripts/lseA9LiveBenchmark.ts"
+      ]
+    },
+    {
+      "name": "LSE_PREVIEW_URL",
+      "files": [
+        "scripts/lseA9LiveBenchmark.ts"
+      ]
+    },
+    {
+      "name": "LSE_STEADY_EVENTS",
+      "files": [
+        "scripts/lseA9LiveBenchmark.ts"
+      ]
+    },
+    {
+      "name": "LSE_STEADY_INTERVAL_MS",
+      "files": [
+        "scripts/lseA9LiveBenchmark.ts"
+      ]
+    },
+    {
+      "name": "LSE_STUDENT_COUNT",
+      "files": [
+        "scripts/lseA9LiveBenchmark.ts"
+      ]
+    },
+    {
+      "name": "LSE_STUDENT_EMAIL",
+      "files": [
+        "scripts/lseA9LiveBenchmark.ts"
+      ]
+    },
+    {
+      "name": "LSE_STUDENT_PASSWORD",
+      "files": [
+        "scripts/lseA9LiveBenchmark.ts"
+      ]
+    },
+    {
+      "name": "LSE_TEACHER_EMAIL",
+      "files": [
+        "scripts/lseA9LiveBenchmark.ts"
+      ]
+    },
+    {
+      "name": "LSE_TEACHER_PASSWORD",
+      "files": [
+        "scripts/lseA9LiveBenchmark.ts"
+      ]
+    },
+    {
+      "name": "NODE_ENV",
+      "files": [
+        "src/components/error-boundary/AppErrorBoundary.tsx"
+      ]
+    },
+    {
+      "name": "SUPABASE_ANON_KEY",
+      "files": [
+        "supabase/functions/ability-update/index.ts",
+        "supabase/functions/activate-school/index.ts",
+        "supabase/functions/ale-api/index.ts",
+        "supabase/functions/audit-log/index.ts",
+        "supabase/functions/calibrate-predictions/index.ts",
+        "supabase/functions/chat/index.ts",
+        "supabase/functions/codelab-proxy/index.ts",
+        "supabase/functions/cold-start-probe/index.ts",
+        "supabase/functions/curriculum-bind/index.ts",
+        "supabase/functions/data-export/index.ts",
+        "supabase/functions/evaluate-models/index.ts",
+        "supabase/functions/generate-lct/index.ts",
+        "supabase/functions/infer-concept/index.ts",
+        "supabase/functions/invite-codes/index.ts",
+        "supabase/functions/kt-predict/index.ts",
+        "supabase/functions/lumina-extension-audit/index.ts",
+        "supabase/functions/outcome-report/index.ts",
+        "supabase/functions/pilot-study-manage/index.ts",
+        "supabase/functions/record-assessment-score/index.ts",
+        "supabase/functions/refresh-cold-start-priors/index.ts",
+        "supabase/functions/retrain-ensemble/index.ts",
+        "supabase/functions/review-schedule/index.ts",
+        "supabase/functions/simulate-student-view/index.ts",
+        "supabase/functions/teacher-override/index.ts",
+        "supabase/functions/teaching-generate/index.ts"
+      ]
+    },
+    {
+      "name": "SUPABASE_PUBLISHABLE_KEY",
+      "files": [
+        "supabase/functions/chat/index.ts"
+      ]
+    },
+    {
+      "name": "SUPABASE_SERVICE_ROLE_KEY",
+      "files": [
+        "supabase/functions/_shared/curriculumBinding.ts",
+        "supabase/functions/ability-update/index.ts",
+        "supabase/functions/activate-school/index.ts",
+        "supabase/functions/adaptive-validate/index.ts",
+        "supabase/functions/ale-api/index.ts",
+        "supabase/functions/audit-log/index.ts",
+        "supabase/functions/auto-tune-hyperparams/index.ts",
+        "supabase/functions/calibrate-predictions/index.ts",
+        "supabase/functions/chat/index.ts",
+        "supabase/functions/cold-start-probe/index.ts",
+        "supabase/functions/confidence-record/index.ts",
+        "supabase/functions/continuous-validate/index.ts",
+        "supabase/functions/curriculum-bind/index.ts",
+        "supabase/functions/data-export/index.ts",
+        "supabase/functions/debate/index.ts",
+        "supabase/functions/decay-generate-refresher/index.ts",
+        "supabase/functions/decay-grade-refresher/index.ts",
+        "supabase/functions/dream-consolidate/index.ts",
+        "supabase/functions/evaluate-models/index.ts",
+        "supabase/functions/extract-memories/index.ts",
+        "supabase/functions/generate-diagram/index.ts",
+        "supabase/functions/generate-lct/index.ts",
+        "supabase/functions/get-leaderboard/index.ts",
+        "supabase/functions/invite-codes/index.ts",
+        "supabase/functions/kt-predict/index.ts",
+        "supabase/functions/lumina-api/index.ts",
+        "supabase/functions/lumina-extension-audit/index.ts",
+        "supabase/functions/lumina-extension-chat/index.ts",
+        "supabase/functions/lumina-live/index.ts",
+        "supabase/functions/mi-aggregate/index.ts",
+        "supabase/functions/misconception-hunt-generate/index.ts",
+        "supabase/functions/misconception-hunt-grade/index.ts",
+        "supabase/functions/note-timeline-summary/index.ts",
+        "supabase/functions/outcome-report/index.ts",
+        "supabase/functions/pilot-study-manage/index.ts",
+        "supabase/functions/policy-evaluate/index.ts",
+        "supabase/functions/predict-student/index.ts",
+        "supabase/functions/recalibrate-anchors/index.ts",
+        "supabase/functions/record-assessment-score/index.ts",
+        "supabase/functions/refresh-cold-start-priors/index.ts",
+        "supabase/functions/retrain-ensemble/index.ts",
+        "supabase/functions/review-schedule/index.ts",
+        "supabase/functions/scan-content/index.ts",
+        "supabase/functions/simulate-student-view/index.ts",
+        "supabase/functions/socratic-next-turn/index.ts",
+        "supabase/functions/teach-back-grade/index.ts",
+        "supabase/functions/teacher-override/index.ts",
+        "supabase/functions/teaching-generate/index.ts",
+        "supabase/functions/unified-optimize/index.ts"
+      ]
+    },
+    {
+      "name": "SUPABASE_URL",
+      "files": [
+        "supabase/functions/_shared/curriculumBinding.ts",
+        "supabase/functions/ability-update/index.ts",
+        "supabase/functions/activate-school/index.ts",
+        "supabase/functions/adaptive-validate/index.ts",
+        "supabase/functions/ale-api/index.ts",
+        "supabase/functions/audit-log/index.ts",
+        "supabase/functions/auto-tune-hyperparams/index.ts",
+        "supabase/functions/calibrate-predictions/index.ts",
+        "supabase/functions/chat/index.ts",
+        "supabase/functions/codelab-proxy/index.ts",
+        "supabase/functions/cold-start-probe/index.ts",
+        "supabase/functions/confidence-record/index.ts",
+        "supabase/functions/continuous-validate/index.ts",
+        "supabase/functions/curriculum-bind/index.ts",
+        "supabase/functions/data-export/index.ts",
+        "supabase/functions/debate/index.ts",
+        "supabase/functions/decay-generate-refresher/index.ts",
+        "supabase/functions/decay-grade-refresher/index.ts",
+        "supabase/functions/dream-consolidate/index.ts",
+        "supabase/functions/evaluate-models/index.ts",
+        "supabase/functions/extract-memories/index.ts",
+        "supabase/functions/generate-diagram/index.ts",
+        "supabase/functions/generate-lct/index.ts",
+        "supabase/functions/get-leaderboard/index.ts",
+        "supabase/functions/infer-concept/index.ts",
+        "supabase/functions/invite-codes/index.ts",
+        "supabase/functions/kt-predict/index.ts",
+        "supabase/functions/lumina-api/index.ts",
+        "supabase/functions/lumina-extension-audit/index.ts",
+        "supabase/functions/lumina-extension-chat/index.ts",
+        "supabase/functions/lumina-live/index.ts",
+        "supabase/functions/mi-aggregate/index.ts",
+        "supabase/functions/misconception-hunt-generate/index.ts",
+        "supabase/functions/misconception-hunt-grade/index.ts",
+        "supabase/functions/note-timeline-summary/index.ts",
+        "supabase/functions/outcome-report/index.ts",
+        "supabase/functions/pilot-study-manage/index.ts",
+        "supabase/functions/policy-evaluate/index.ts",
+        "supabase/functions/predict-student/index.ts",
+        "supabase/functions/recalibrate-anchors/index.ts",
+        "supabase/functions/record-assessment-score/index.ts",
+        "supabase/functions/refresh-cold-start-priors/index.ts",
+        "supabase/functions/retrain-ensemble/index.ts",
+        "supabase/functions/review-schedule/index.ts",
+        "supabase/functions/scan-content/index.ts",
+        "supabase/functions/simulate-student-view/index.ts",
+        "supabase/functions/socratic-next-turn/index.ts",
+        "supabase/functions/teach-back-grade/index.ts",
+        "supabase/functions/teacher-override/index.ts",
+        "supabase/functions/teaching-generate/index.ts",
+        "supabase/functions/unified-optimize/index.ts"
+      ]
+    },
+    {
+      "name": "VITE_SUPABASE_ANON_KEY",
+      "files": [
+        "src/hooks/useLuminaLiveSession.tsx"
+      ]
+    },
+    {
+      "name": "VITE_SUPABASE_PROJECT_ID",
+      "files": [
+        ".env"
+      ]
+    },
+    {
+      "name": "VITE_SUPABASE_PUBLISHABLE_KEY",
+      "files": [
+        ".env",
+        "src/components/ExaminationSection.tsx",
+        "src/components/FileNotesGenerator.tsx",
+        "src/components/PodcastsSection.tsx",
+        "src/components/SubjectsSection.tsx",
+        "src/components/shared/LectureStudio/LectureStudio.tsx",
+        "src/components/student/AIStudyPlan.tsx",
+        "src/components/student/DebateTheater.tsx",
+        "src/components/student/Leaderboard.tsx",
+        "src/components/student/LectureGenerator.tsx",
+        "src/components/student/MindMapGenerator.tsx",
+        "src/components/student/MirrorRevealCard.tsx",
+        "src/components/student/MorningBriefingCard.tsx",
+        "src/components/student/StudyBuddy.tsx",
+        "src/components/teacher/LessonPlanGenerator.tsx",
+        "src/hooks/useLuminaLiveSession.tsx",
+        "src/lib/chat.ts",
+        "src/lib/contentScanner.ts"
+      ]
+    },
+    {
+      "name": "VITE_SUPABASE_URL",
+      "files": [
+        ".env",
+        "src/components/ExaminationSection.tsx",
+        "src/components/FileNotesGenerator.tsx",
+        "src/components/PodcastsSection.tsx",
+        "src/components/SubjectsSection.tsx",
+        "src/components/admin/LuminaApiPanel.tsx",
+        "src/components/shared/LectureStudio/LectureStudio.tsx",
+        "src/components/student/AIStudyPlan.tsx",
+        "src/components/student/AssignmentQuizTaker.tsx",
+        "src/components/student/ColdStartProbe.tsx",
+        "src/components/student/DebateTheater.tsx",
+        "src/components/student/Leaderboard.tsx",
+        "src/components/student/LectureGenerator.tsx",
+        "src/components/student/MindMapGenerator.tsx",
+        "src/components/student/MirrorRevealCard.tsx",
+        "src/components/student/MorningBriefingCard.tsx",
+        "src/components/student/StudyBuddy.tsx",
+        "src/components/teacher/LessonPlanGenerator.tsx",
+        "src/hooks/useLuminaLiveSession.tsx",
+        "src/lib/adaptive/conceptInferenceHybrid.ts",
+        "src/lib/adaptive/irtEngine.ts",
+        "src/lib/chat.ts",
+        "src/lib/contentScanner.ts",
+        "src/lib/storageUtils.ts",
+        "src/pages/CodeLab.tsx"
+      ]
+    }
+  ],
+  "oldBackendCoupling": [
+    {
+      "file": "src/integrations/supabase/client.ts",
+      "kind": "hardcoded-project-or-url",
+      "valueRedacted": true
+    },
+    {
+      "file": ".env",
+      "kind": "environment-project-reference",
+      "valueRedacted": true
+    },
+    {
+      "file": "supabase/config.toml",
+      "kind": "supabase-config-project-id",
+      "valueRedacted": true
+    }
+  ],
+  "lockfiles": [
+    "bun.lock",
+    "bun.lockb",
+    "package-lock.json"
+  ]
+}

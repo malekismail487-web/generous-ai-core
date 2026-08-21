@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "reproductionType": "deterministic ordered-SQL dependency reproduction",
+  "databaseEngineExecution": false,
+  "databaseEngineBlocker": "Docker and Supabase CLI are unavailable in the current execution environment.",
+  "migrationCount": 128,
+  "profileCreation": {
+    "file": "supabase/migrations/20260112001051_e440cf24-7253-4460-a7b0-0818be9374ae.sql",
+    "order": 6,
+    "declaresEmail": false
+  },
+  "firstFailingDependency": {
+    "file": "supabase/migrations/20260202112822_a61c6b14-58e3-4d54-a6ec-f025d3ae0486.sql",
+    "order": 20,
+    "referencesProfilesEmail": true,
+    "priorAddColumnEmailFound": false
+  },
+  "expectedPostgresDiagnostic": {
+    "sqlstate": "42703",
+    "condition": "undefined_column",
+    "missingIdentifier": "public.profiles.email"
+  },
+  "confirmed": true,
+  "interpretation": "A clean ordered replay reaches migration 20 with public.profiles.email absent, while that migration creates a policy referencing email."
+}

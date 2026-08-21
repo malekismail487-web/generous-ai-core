@@ -21,8 +21,9 @@
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = new URL("..", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SRC = join(ROOT, "src");
 
 /** Files that must satisfy the full wiring contract (Tier 1 + reference set). */
@@ -98,6 +99,10 @@ interface Violation {
   reason: string;
 }
 
+function repoRelative(path: string): string {
+  return relative(ROOT, path).replaceAll("\\", "/");
+}
+
 function walk(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
@@ -162,7 +167,7 @@ for (const rel of STUDENT_AI_SURFACES) {
 const allFiles = walk(join(SRC, "components"));
 const newBlindCallers: string[] = [];
 for (const full of allFiles) {
-  const rel = relative(ROOT, full);
+  const rel = repoRelative(full);
   if (!isStudentSurface(rel)) continue;
   if (KNOWN_ADAPTIVE_OR_EXEMPT.has(rel)) continue;
   const src = readFileSync(full, "utf8");
@@ -182,7 +187,7 @@ for (const rel of newBlindCallers) {
 
 // ── Coverage metric ─────────────────────────────────────────────────────────
 const studentSurfaces = allFiles
-  .map((f) => relative(ROOT, f))
+  .map(repoRelative)
   .filter(isStudentSurface);
 const studentSurfacesWithAI = studentSurfaces.filter((rel) => {
   const src = readFileSync(join(ROOT, rel), "utf8");

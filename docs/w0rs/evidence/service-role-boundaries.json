@@ -1,0 +1,1108 @@
+{
+  "schemaVersion": 1,
+  "count": 50,
+  "interpretation": "Static boundary evidence only; absence of a first-party caller or auth signal is not proof of safety, reachability, or vulnerability.",
+  "boundaries": [
+    {
+      "function": "_shared",
+      "file": "supabase/functions/_shared/coldStart.ts",
+      "serviceRoleReferenceLines": [
+        32
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "_shared",
+      "file": "supabase/functions/_shared/curriculumBinding.ts",
+      "serviceRoleReferenceLines": [
+        147
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "ability-update",
+      "file": "supabase/functions/ability-update/index.ts",
+      "serviceRoleReferenceLines": [
+        110
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/lib/adaptive/irtEngine.ts",
+          "line": 65,
+          "transport": "raw-url"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "activate-school",
+      "file": "supabase/functions/activate-school/index.ts",
+      "serviceRoleReferenceLines": [
+        23,
+        23,
+        25,
+        29,
+        69
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/pages/ActivateSchool.tsx",
+          "line": 41,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "adaptive-validate",
+      "file": "supabase/functions/adaptive-validate/index.ts",
+      "serviceRoleReferenceLines": [
+        126
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/lib/adaptiveValidator.ts",
+          "line": 106,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "ale-api",
+      "file": "supabase/functions/ale-api/index.ts",
+      "serviceRoleReferenceLines": [
+        29
+      ],
+      "jwtVerification": "explicit-false",
+      "repositoryCallers": [
+        {
+          "file": "supabase/functions/ale-api/index.ts",
+          "line": 307,
+          "transport": "raw-url"
+        }
+      ],
+      "boundaryEvidence": [
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "audit-log",
+      "file": "supabase/functions/audit-log/index.ts",
+      "serviceRoleReferenceLines": [
+        15
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "auto-tune-hyperparams",
+      "file": "supabase/functions/auto-tune-hyperparams/index.ts",
+      "serviceRoleReferenceLines": [
+        57
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "calibrate-predictions",
+      "file": "supabase/functions/calibrate-predictions/index.ts",
+      "serviceRoleReferenceLines": [
+        33
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "chat",
+      "file": "supabase/functions/chat/index.ts",
+      "serviceRoleReferenceLines": [
+        17
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/AIStudyPlan.tsx",
+          "line": 90,
+          "transport": "raw-url"
+        },
+        {
+          "file": "src/components/student/MindMapGenerator.tsx",
+          "line": 384,
+          "transport": "raw-url"
+        },
+        {
+          "file": "src/components/student/MindMapGenerator.tsx",
+          "line": 442,
+          "transport": "raw-url"
+        },
+        {
+          "file": "src/components/student/StudyBuddy.tsx",
+          "line": 506,
+          "transport": "raw-url"
+        },
+        {
+          "file": "src/components/teacher/LessonPlanGenerator.tsx",
+          "line": 93,
+          "transport": "raw-url"
+        },
+        {
+          "file": "src/components/teacher/TeacherCopilot.tsx",
+          "line": 170,
+          "transport": "supabase-js"
+        },
+        {
+          "file": "src/lib/chat.ts",
+          "line": 10,
+          "transport": "raw-url"
+        },
+        {
+          "file": "src/lib/luminaAI.ts",
+          "line": 27,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "cold-start-probe",
+      "file": "supabase/functions/cold-start-probe/index.ts",
+      "serviceRoleReferenceLines": [
+        166
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/ColdStartProbe.tsx",
+          "line": 62,
+          "transport": "raw-url"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "confidence-record",
+      "file": "supabase/functions/confidence-record/index.ts",
+      "serviceRoleReferenceLines": [
+        27
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/lib/confidence.ts",
+          "line": 30,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "continuous-validate",
+      "file": "supabase/functions/continuous-validate/index.ts",
+      "serviceRoleReferenceLines": [
+        58
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "curriculum-bind",
+      "file": "supabase/functions/curriculum-bind/index.ts",
+      "serviceRoleReferenceLines": [
+        16
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "data-export",
+      "file": "supabase/functions/data-export/index.ts",
+      "serviceRoleReferenceLines": [
+        16
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "debate",
+      "file": "supabase/functions/debate/index.ts",
+      "serviceRoleReferenceLines": [
+        63
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/DebateTheater.tsx",
+          "line": 46,
+          "transport": "raw-url"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "decay-generate-refresher",
+      "file": "supabase/functions/decay-generate-refresher/index.ts",
+      "serviceRoleReferenceLines": [
+        21
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/DecayDashboardCard.tsx",
+          "line": 67,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "decay-grade-refresher",
+      "file": "supabase/functions/decay-grade-refresher/index.ts",
+      "serviceRoleReferenceLines": [
+        18
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/DecayDashboardCard.tsx",
+          "line": 85,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "dream-consolidate",
+      "file": "supabase/functions/dream-consolidate/index.ts",
+      "serviceRoleReferenceLines": [
+        18
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/MorningBriefingCard.tsx",
+          "line": 80,
+          "transport": "raw-url"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "internal-secret-reference",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "evaluate-models",
+      "file": "supabase/functions/evaluate-models/index.ts",
+      "serviceRoleReferenceLines": [
+        47
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "extract-memories",
+      "file": "supabase/functions/extract-memories/index.ts",
+      "serviceRoleReferenceLines": [
+        22
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/AssignmentQuizTaker.tsx",
+          "line": 192,
+          "transport": "raw-url"
+        },
+        {
+          "file": "src/components/student/StudyBuddy.tsx",
+          "line": 601,
+          "transport": "raw-url"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "generate-diagram",
+      "file": "supabase/functions/generate-diagram/index.ts",
+      "serviceRoleReferenceLines": [
+        26
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/MindMapGenerator.tsx",
+          "line": 603,
+          "transport": "raw-url"
+        },
+        {
+          "file": "src/components/student/StudyBuddy.tsx",
+          "line": 231,
+          "transport": "raw-url"
+        },
+        {
+          "file": "src/components/SubjectsSection.tsx",
+          "line": 173,
+          "transport": "raw-url"
+        }
+      ],
+      "boundaryEvidence": [
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "generate-lct",
+      "file": "supabase/functions/generate-lct/index.ts",
+      "serviceRoleReferenceLines": [
+        227
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/admin/LCTPanel.tsx",
+          "line": 522,
+          "transport": "supabase-js"
+        },
+        {
+          "file": "src/components/admin/LCTPanel.tsx",
+          "line": 542,
+          "transport": "supabase-js"
+        },
+        {
+          "file": "src/components/admin/LCTPanel.tsx",
+          "line": 566,
+          "transport": "supabase-js"
+        },
+        {
+          "file": "src/components/admin/LCTPanel.tsx",
+          "line": 586,
+          "transport": "supabase-js"
+        },
+        {
+          "file": "src/components/admin/LCTPanel.tsx",
+          "line": 603,
+          "transport": "supabase-js"
+        },
+        {
+          "file": "src/components/student/LCTExamScreen.tsx",
+          "line": 335,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "get-leaderboard",
+      "file": "supabase/functions/get-leaderboard/index.ts",
+      "serviceRoleReferenceLines": [
+        17
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/Leaderboard.tsx",
+          "line": 36,
+          "transport": "raw-url"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "invite-codes",
+      "file": "supabase/functions/invite-codes/index.ts",
+      "serviceRoleReferenceLines": [
+        32,
+        32,
+        34,
+        77
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/admin/TeacherCategoriesManager.tsx",
+          "line": 162,
+          "transport": "supabase-js"
+        },
+        {
+          "file": "src/pages/SchoolAdminDashboard.tsx",
+          "line": 321,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "kt-predict",
+      "file": "supabase/functions/kt-predict/index.ts",
+      "serviceRoleReferenceLines": [
+        60
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "lumina-api",
+      "file": "supabase/functions/lumina-api/index.ts",
+      "serviceRoleReferenceLines": [
+        13
+      ],
+      "jwtVerification": "explicit-false",
+      "repositoryCallers": [
+        {
+          "file": "src/components/admin/LuminaApiPanel.tsx",
+          "line": 65,
+          "transport": "raw-url"
+        }
+      ],
+      "boundaryEvidence": [
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "lumina-extension-audit",
+      "file": "supabase/functions/lumina-extension-audit/index.ts",
+      "serviceRoleReferenceLines": [
+        64
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/admin/ExtensionReviewPanel.tsx",
+          "line": 131,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "lumina-extension-chat",
+      "file": "supabase/functions/lumina-extension-chat/index.ts",
+      "serviceRoleReferenceLines": [
+        165
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/ministry/control/ExtensionsPanel.tsx",
+          "line": 139,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "lumina-live",
+      "file": "supabase/functions/lumina-live/index.ts",
+      "serviceRoleReferenceLines": [
+        113
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/hooks/useLuminaLiveSession.tsx",
+          "line": 134,
+          "transport": "raw-url"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "mi-aggregate",
+      "file": "supabase/functions/mi-aggregate/index.ts",
+      "serviceRoleReferenceLines": [
+        12
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "misconception-hunt-generate",
+      "file": "supabase/functions/misconception-hunt-generate/index.ts",
+      "serviceRoleReferenceLines": [
+        19
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/learning-modes/MisconceptionHunt.tsx",
+          "line": 40,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "misconception-hunt-grade",
+      "file": "supabase/functions/misconception-hunt-grade/index.ts",
+      "serviceRoleReferenceLines": [
+        19
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/learning-modes/MisconceptionHunt.tsx",
+          "line": 72,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "note-timeline-summary",
+      "file": "supabase/functions/note-timeline-summary/index.ts",
+      "serviceRoleReferenceLines": [
+        20
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/NoteTimeline.tsx",
+          "line": 67,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "outcome-report",
+      "file": "supabase/functions/outcome-report/index.ts",
+      "serviceRoleReferenceLines": [
+        17
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "pilot-study-manage",
+      "file": "supabase/functions/pilot-study-manage/index.ts",
+      "serviceRoleReferenceLines": [
+        15
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "policy-evaluate",
+      "file": "supabase/functions/policy-evaluate/index.ts",
+      "serviceRoleReferenceLines": [
+        50
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "predict-student",
+      "file": "supabase/functions/predict-student/index.ts",
+      "serviceRoleReferenceLines": [
+        25
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/MirrorRevealCard.tsx",
+          "line": 37,
+          "transport": "raw-url"
+        },
+        {
+          "file": "src/components/student/StudyBuddy.tsx",
+          "line": 448,
+          "transport": "raw-url"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "recalibrate-anchors",
+      "file": "supabase/functions/recalibrate-anchors/index.ts",
+      "serviceRoleReferenceLines": [
+        50
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "record-assessment-score",
+      "file": "supabase/functions/record-assessment-score/index.ts",
+      "serviceRoleReferenceLines": [
+        16
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "refresh-cold-start-priors",
+      "file": "supabase/functions/refresh-cold-start-priors/index.ts",
+      "serviceRoleReferenceLines": [
+        52
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "retrain-ensemble",
+      "file": "supabase/functions/retrain-ensemble/index.ts",
+      "serviceRoleReferenceLines": [
+        36
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "review-schedule",
+      "file": "supabase/functions/review-schedule/index.ts",
+      "serviceRoleReferenceLines": [
+        43,
+        43,
+        163
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "scan-content",
+      "file": "supabase/functions/scan-content/index.ts",
+      "serviceRoleReferenceLines": [
+        19,
+        19,
+        22,
+        101
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/lib/contentScanner.ts",
+          "line": 24,
+          "transport": "raw-url"
+        },
+        {
+          "file": "supabase/functions/chat/index.ts",
+          "line": 47,
+          "transport": "raw-url"
+        }
+      ],
+      "boundaryEvidence": [
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "simulate-student-view",
+      "file": "supabase/functions/simulate-student-view/index.ts",
+      "serviceRoleReferenceLines": [
+        19
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "socratic-next-turn",
+      "file": "supabase/functions/socratic-next-turn/index.ts",
+      "serviceRoleReferenceLines": [
+        20
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/learning-modes/SocraticMode.tsx",
+          "line": 38,
+          "transport": "supabase-js"
+        },
+        {
+          "file": "src/components/student/learning-modes/SocraticMode.tsx",
+          "line": 69,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "teach-back-grade",
+      "file": "supabase/functions/teach-back-grade/index.ts",
+      "serviceRoleReferenceLines": [
+        18
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/components/student/learning-modes/TeachBackMode.tsx",
+          "line": 43,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "teacher-override",
+      "file": "supabase/functions/teacher-override/index.ts",
+      "serviceRoleReferenceLines": [
+        15
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "teaching-generate",
+      "file": "supabase/functions/teaching-generate/index.ts",
+      "serviceRoleReferenceLines": [
+        55
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [
+        {
+          "file": "src/hooks/useTeachingGenerate.tsx",
+          "line": 69,
+          "transport": "supabase-js"
+        }
+      ],
+      "boundaryEvidence": [
+        "auth.getUser",
+        "authorization-header",
+        "api-key-reference"
+      ],
+      "classification": "client-reachable-needs-endpoint-review",
+      "confidence": "medium",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    },
+    {
+      "function": "unified-optimize",
+      "file": "supabase/functions/unified-optimize/index.ts",
+      "serviceRoleReferenceLines": [
+        25
+      ],
+      "jwtVerification": "supabase-default",
+      "repositoryCallers": [],
+      "boundaryEvidence": [],
+      "classification": "no-first-party-client-caller-found-needs-review",
+      "confidence": "low",
+      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
+    }
+  ]
+}
