@@ -63,7 +63,12 @@ for (const test of selected) {
 
   const command = test.runtime === "deno" ? "deno" : process.execPath;
   const commandArgs = test.runtime === "deno"
-    ? ["test", "--allow-env", test.file]
+    ? [
+        "test",
+        "--allow-env",
+        "--allow-read=.env,.env.defaults,.env.example,supabase/functions",
+        test.file,
+      ]
     : ["--experimental-strip-types", "--import", pathToFileURL(LOADER).href, test.file];
   const run = spawnSync(command, commandArgs, { cwd: ROOT, encoding: "utf8", timeout: 120_000 });
   const missingRuntime = run.error?.code === "ENOENT";

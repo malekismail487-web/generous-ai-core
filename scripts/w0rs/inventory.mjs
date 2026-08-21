@@ -264,6 +264,7 @@ for (const path of walk(join(ROOT, "supabase", "functions"), (candidate) => /\.[
   if (/CRON_SECRET|INTERNAL_SECRET|WEBHOOK_SECRET/.test(content)) evidence.push("internal-secret-reference");
   if (/x-api-key|api[_-]?key/i.test(content)) evidence.push("api-key-reference");
   const callers = edgeCallers.get(functionName) ?? [];
+  const isDefaultDenyBlocker = ["mi-aggregate", "unified-optimize"].includes(functionName);
   serviceRoleBoundaries.push({
     function: functionName,
     file,
@@ -271,8 +272,15 @@ for (const path of walk(join(ROOT, "supabase", "functions"), (candidate) => /\.[
     jwtVerification: functionJwtConfig.has(functionName) ? (functionJwtConfig.get(functionName) ? "explicit-true" : "explicit-false") : "supabase-default",
     repositoryCallers: callers,
     boundaryEvidence: evidence,
-    classification: callers.length > 0 ? "client-reachable-needs-endpoint-review" : "no-first-party-client-caller-found-needs-review",
-    confidence: callers.length > 0 ? "medium" : "low",
+    classification: isDefaultDenyBlocker
+      ? "default-deny-review-blocker"
+      : callers.length > 0
+        ? "client-reachable-needs-endpoint-review"
+        : "no-first-party-client-caller-found-needs-review",
+    confidence: isDefaultDenyBlocker || callers.length > 0 ? "medium" : "low",
+    requiredBeforeEnablement: isDefaultDenyBlocker
+      ? "Prove intended callers, authentication, authorization, tenant scope, and audit contract."
+      : null,
     conclusionLimit: "Static evidence does not prove the deployed endpoint is reachable or vulnerable.",
   });
 }
@@ -370,10 +378,10 @@ const baselineObjects = latestUnique([...tables, ...enums, ...extensions, ...buc
     rationale = "Dedicated legacy code/email-based authority support object superseded by the approved W0-RS authority model.";
   }
   if (["public.api_keys", "public.api_call_logs"].includes(tableName)) {
-    recommendation = "retain";
-    confidence = "low";
+    recommendation = "exclude";
+    confidence = "medium";
     decisionRequired = true;
-    rationale = "No first-party caller was found, but absence of a caller is insufficient evidence for exclusion; retain pending product decision.";
+    rationale = "Preserve in the historical evidence archive, but exclude from the canonical baseline unless Phase B proves a legitimate consumer. No first-party consumer is currently evidenced.";
   }
   if (["public.lumina_api_keys", "public.lumina_api_usage"].includes(tableName)) {
     recommendation = "retain";
@@ -387,6 +395,9 @@ const baselineObjects = latestUnique([...tables, ...enums, ...extensions, ...buc
     confidence,
     decisionRequired,
     rationale,
+    prerequisites: legacyExcludeTables.has(tableName)
+      ? ["Replacement Super Admin authority is implemented and verified before any legacy authority path is retired."]
+      : undefined,
     evidence: object.type === "table" ? { firstPartyCodeReferences: codeReferences(unqualifiedName(object.name)) } : undefined,
   };
 });
@@ -407,6 +418,9 @@ for (const [name, definitions] of [...functionGroups.entries()].sort(([a], [b]) 
     rationale: isLegacyReplacement
       ? "Legacy authority implementation must be replaced only after the replacement path is proven."
       : "Retain conservatively until duplicate, grant, caller, and business semantics are reviewed.",
+    prerequisites: isLegacyReplacement
+      ? ["Replacement Super Admin authority is implemented and verified before this legacy path is retired."]
+      : undefined,
   });
 }
 
@@ -425,7 +439,8 @@ baselineObjects.push(
     recommendation: "add",
     confidence: "medium",
     decisionRequired: true,
-    rationale: "The School Admin UI calls this RPC and generated types declare it, but no defining migration was found; Phase B must review intended transition semantics.",
+    rationale: "New canonical operation required by the School Admin UI; implement as authenticated, school-scoped, idempotent, and audited without claiming historical migration provenance.",
+    requirements: ["authenticated", "school-scoped", "idempotent", "audited", "newly-reviewed-not-historical"],
   },
   {
     type: "enum-value",
@@ -433,7 +448,7 @@ baselineObjects.push(
     recommendation: "replace",
     confidence: "medium",
     decisionRequired: true,
-    rationale: "Generic admin overlaps distinct authority domains. Every trust site must be mapped before removal; this is not an authorization to retire it in Phase A.",
+    rationale: "Replace generic admin, but do not remove it until every trust site has a reviewed Super Admin, School Admin, ordinary-role, or narrow-capability replacement.",
     evidence: {
       migrationTrustSites: genericAdminMigrationFiles,
       highSignalClientAuthorityFiles: genericAdminCodeFiles,
@@ -603,6 +618,11 @@ const outputs = {
     schemaVersion: 1,
     status: "Phase A recommendations; no Phase B mutation authorized",
     allowedRecommendations: ["retain", "replace", "add", "exclude"],
+    safetyConstraints: [
+      "Preserve legitimate School Admin onboarding without generic-admin escalation.",
+      "Do not remove any legacy Super Admin path before replacement authority is implemented and verified.",
+      "Do not treat absence of a first-party caller as proof that an object or endpoint is unused.",
+    ],
     objects: baselineObjects.sort((a, b) => `${a.type}:${a.name}`.localeCompare(`${b.type}:${b.name}`)),
   },
   "test-manifest.json": {

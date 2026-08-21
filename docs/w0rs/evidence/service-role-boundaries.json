@@ -14,6 +14,7 @@
       "boundaryEvidence": [],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -27,6 +28,7 @@
       "boundaryEvidence": [],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -50,6 +52,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -77,6 +80,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -100,6 +104,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -122,6 +127,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -139,6 +145,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -155,6 +162,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -172,6 +180,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -230,6 +239,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -253,6 +263,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -276,6 +287,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -292,6 +304,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -309,6 +322,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -326,6 +340,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -349,6 +364,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -372,6 +388,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -395,6 +412,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -419,6 +437,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -436,6 +455,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -464,6 +484,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -496,6 +517,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -544,6 +566,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -567,6 +590,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -598,6 +622,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -615,6 +640,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -637,6 +663,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -660,6 +687,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -682,6 +710,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -705,6 +734,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -716,8 +746,9 @@
       "jwtVerification": "supabase-default",
       "repositoryCallers": [],
       "boundaryEvidence": [],
-      "classification": "no-first-party-client-caller-found-needs-review",
-      "confidence": "low",
+      "classification": "default-deny-review-blocker",
+      "confidence": "medium",
+      "requiredBeforeEnablement": "Prove intended callers, authentication, authorization, tenant scope, and audit contract.",
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -741,6 +772,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -764,6 +796,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -787,6 +820,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -804,6 +838,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -821,6 +856,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -837,6 +873,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -865,6 +902,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -881,6 +919,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -898,6 +937,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -915,6 +955,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -932,6 +973,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -951,6 +993,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -981,6 +1024,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -998,6 +1042,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -1026,6 +1071,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -1049,6 +1095,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -1066,6 +1113,7 @@
       ],
       "classification": "no-first-party-client-caller-found-needs-review",
       "confidence": "low",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -1089,6 +1137,7 @@
       ],
       "classification": "client-reachable-needs-endpoint-review",
       "confidence": "medium",
+      "requiredBeforeEnablement": null,
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     },
     {
@@ -1100,8 +1149,9 @@
       "jwtVerification": "supabase-default",
       "repositoryCallers": [],
       "boundaryEvidence": [],
-      "classification": "no-first-party-client-caller-found-needs-review",
-      "confidence": "low",
+      "classification": "default-deny-review-blocker",
+      "confidence": "medium",
+      "requiredBeforeEnablement": "Prove intended callers, authentication, authorization, tenant scope, and audit contract.",
       "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable."
     }
   ]

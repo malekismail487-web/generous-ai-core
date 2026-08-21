@@ -25,7 +25,7 @@ The scripts use only Node built-ins. The TypeScript loader exists solely to reso
 - `test-manifest.json` separates fixed assertion counts, dynamic audits, and live benchmarks.
 - `migration-failure-reproduction.json` deterministically proves the ordered SQL dependency failure. It is not a substitute for the Phase B Docker/Supabase database replay.
 
-`api_keys` and `api_call_logs` are conservatively classified as **retain pending decision**. Their lack of an obvious first-party caller is evidence, not sufficient authority to remove them.
+`api_keys` and `api_call_logs` are preserved as historical evidence and classified as **exclude from the canonical baseline unless a legitimate consumer is proven**. Their lack of an obvious first-party caller is supporting evidence, not independent authority to remove them.
 
 ## Safety boundary
 

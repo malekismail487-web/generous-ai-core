@@ -6,11 +6,11 @@
   "allowLive": false,
   "summary": {
     "files": 36,
-    "passed": 0,
+    "passed": 36,
     "failed": 0,
-    "blocked": 36,
+    "blocked": 0,
     "skipped": 0,
-    "passedDeclaredChecks": 0
+    "passedDeclaredChecks": 220
   },
   "results": [
     {
@@ -19,11 +19,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 8 tests from ./supabase/functions/_shared/akt_test.ts\nAKT: empty history equals plain 2PL ... ok (465µs)\nAKT: streak of correct answers raises P above Rasch ... ok (370µs)\nAKT: streak of wrong answers lowers P below Rasch + forget gate kicks in ... ok (209µs)\nAKT: cross-concept attention is dampened (kappa) ... ok (6ms)\nAKT: multi-head decays cover distinct horizons ... ok (241µs)\nAKT: DKVMN memory accumulates evidence across events ... ok (116µs)\nAKT: stable in (0, 1) for extreme inputs ... ok (101µs)\nAKT: back-compat shim aktLitePredict still resolves to (p, attentionMass, residual) ... ok (118µs)\n\nok | 8 passed | 0 failed (13ms)",
+      "stderr": "Check supabase/functions/_shared/akt_test.ts"
     },
     {
       "file": "supabase/functions/_shared/aktBackbone_test.ts",
@@ -31,11 +31,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 2 tests from ./supabase/functions/_shared/aktBackbone_test.ts\naktBackboneForward returns 8-dim hidden + valid prob ... ok (938µs)\nbackbone determinism across repeat calls ... ok (180µs)\n\nok | 2 passed | 0 failed (6ms)",
+      "stderr": "Check supabase/functions/_shared/aktBackbone_test.ts"
     },
     {
       "file": "supabase/functions/_shared/auditTrail_test.ts",
@@ -43,11 +43,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 2 tests from ./supabase/functions/_shared/auditTrail_test.ts\ndescribeLessonAudit produces canonical action and payload ... ok (441µs)\ndescribeLessonAudit tolerates null binding ... ok (70µs)\n\nok | 2 passed | 0 failed (5ms)",
+      "stderr": "Check supabase/functions/_shared/auditTrail_test.ts"
     },
     {
       "file": "supabase/functions/_shared/calibration_test.ts",
@@ -55,11 +55,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 10 tests from ./supabase/functions/_shared/calibration_test.ts\nBrier: bounded in [0, 1] ... ok (321µs)\nECE: well-calibrated predictions have low ECE ... ok (7ms)\nECE: over-confident predictions have high ECE ... ok (1ms)\nAUC: perfect ranking → 1.0 ... ok (204µs)\nAUC: random predictions → ~0.5 ... ok (794µs)\nTemperature fit recovers T≈3 on over-confident data ... ok (2ms)\nfitCalibration: never makes things worse than identity ... ok (6ms)\nfitCalibration: reduces ECE on over-confident data ... ok (10ms)\napplyCalibration: identity is a no-op ... ok (166µs)\nPlatt fit: degenerate sample returns (1,0) ... ok (82µs)\n\nok | 10 passed | 0 failed (35ms)",
+      "stderr": "Check supabase/functions/_shared/calibration_test.ts"
     },
     {
       "file": "supabase/functions/_shared/cemTuner_test.ts",
@@ -67,11 +67,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 6 tests from ./supabase/functions/_shared/cemTuner_test.ts\nCEM recovers known optimum of a 2-D quadratic ... ok (7ms)\nCEM trace shrinks sigma over generations ... ok (425µs)\nCEM evaluations equals population × generations ... ok (129µs)\nCEM respects bounds (clipping) ... ok (148µs)\nnormaliseEnsembleWeights produces a valid simplex ... ok (147µs)\nnormaliseEnsembleWeights handles all-zero defensively ... ok (61µs)\n\nok | 6 passed | 0 failed (14ms)",
+      "stderr": "Check supabase/functions/_shared/cemTuner_test.ts"
     },
     {
       "file": "supabase/functions/_shared/coldStart_test.ts",
@@ -79,11 +79,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 11 tests from ./supabase/functions/_shared/coldStart_test.ts\nshrinkScalar: equal n, equal var → midpoint ... ok (308µs)\nshrinkScalar: child dominates when n_child >> n_parent ... ok (324µs)\nshrinkScalar: parent dominates when child is tiny ... ok (66µs)\nshrinkScalar: empty both → returns child mean, zero precision ... ok (60µs)\ncombinePrior: child null → parent unchanged ... ok (122µs)\ncombinePrior: variance shrinks (posterior more precise than either) ... ok (144µs)\ncombinePrior: SE seed never decreases below child's ... ok (74µs)\ncomposePriorStack: empty stack → fallback ... ok (123µs)\ncomposePriorStack: single concept_school row → clamped output ... ok (70µs)\ncomposePriorStack: ensemble weights blend by n_weights ... ok (6ms)\ncomposePriorStack: hierarchical fold preserves trace order ... ok (208µs)\n\nok | 11 passed | 0 failed (13ms)",
+      "stderr": "Check supabase/functions/_shared/coldStart_test.ts"
     },
     {
       "file": "supabase/functions/_shared/curriculumBinding_test.ts",
@@ -91,11 +91,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 6 tests from ./supabase/functions/_shared/curriculumBinding_test.ts\nconceptKey prefers conceptId when present ... ok (424µs)\nconceptKey falls back to subject::topic, lowercased and *-padded ... ok (62µs)\npickBinding returns null on empty ... ok (122µs)\npickBinding chooses highest alignment strength ... ok (92µs)\npickBinding tie-breaks by standardCode then objectiveCode ... ok (67µs)\npickBinding is deterministic across permutations ... ok (102µs)\n\nok | 6 passed | 0 failed (8ms)",
+      "stderr": "Check supabase/functions/_shared/curriculumBinding_test.ts"
     },
     {
       "file": "supabase/functions/_shared/dash_test.ts",
@@ -103,11 +103,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 5 tests from ./supabase/functions/_shared/dash_test.ts\nDASH: empty history degrades to plain 2PL on logit scale ... ok (329µs)\nDASH: successes raise P, failures lower it ... ok (167µs)\nDASH: conceptId filter ignores unrelated history ... ok (80µs)\nDASH: bucketing places each event in exactly one window ... ok (60µs)\nDASH: clamps prevent NaN / out-of-range ... ok (58µs)\n\nok | 5 passed | 0 failed (5ms)",
+      "stderr": "Check supabase/functions/_shared/dash_test.ts"
     },
     {
       "file": "supabase/functions/_shared/decisionRegret_test.ts",
@@ -115,11 +115,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 3 tests from ./supabase/functions/_shared/decisionRegret_test.ts\nregret = max(alt.mean) - realised when oracle exceeds realised ... ok (377µs)\nregret is clamped to zero when realised meets/exceeds oracle ... ok (116µs)\nmissing alternatives → oracle == realised, regret == 0 ... ok (64µs)\n\nok | 3 passed | 0 failed (5ms)",
+      "stderr": "Check supabase/functions/_shared/decisionRegret_test.ts"
     },
     {
       "file": "supabase/functions/_shared/doublyRobust_test.ts",
@@ -127,11 +127,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 6 tests from ./supabase/functions/_shared/doublyRobust_test.ts\nIPS recovers ~uniform value on uniform target ... ok (9ms)\nSNIPS has lower variance than IPS on the same log ... ok (2ms)\nDR with correct reward model has very low variance ... ok (2ms)\nDR with bad propensities but correct model still ≈ correct ... ok (1ms)\ncumulativeRegret is non-negative and zero when always optimal ... ok (232µs)\ncumulativeRegret detects suboptimal choices ... ok (117µs)\n\nok | 6 passed | 0 failed (21ms)",
+      "stderr": "Check supabase/functions/_shared/doublyRobust_test.ts"
     },
     {
       "file": "supabase/functions/_shared/ensemble_test.ts",
@@ -139,11 +139,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 6 tests from ./supabase/functions/_shared/ensemble_test.ts\nensemble: default weights blend close to logit-weighted mean ... ok (405µs)\nensemble: degenerate (zero) weights fall back to uniform ... ok (141µs)\nensemble: bias shifts the logit ... ok (51µs)\nElo probability: 0 rating gap → 0.5 ... ok (56µs)\nElo probability: +400 gap → ≈0.91 ... ok (100µs)\nBrier: perfect prediction is 0 ... ok (53µs)\n\nok | 6 passed | 0 failed (6ms)",
+      "stderr": "Check supabase/functions/_shared/ensemble_test.ts"
     },
     {
       "file": "supabase/functions/_shared/ensemble_v4_test.ts",
@@ -151,11 +151,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 3 tests from ./supabase/functions/_shared/ensemble_v4_test.ts\nensemble v4: six-signal blend includes FSRS and Hawkes channels ... ok (421µs)\nensemble v4: missing optional signals are dropped, not coerced to 0.5 ... ok (123µs)\nensemble v4: a strongly disagreeing FSRS signal moves the blend ... ok (52µs)\n\nok | 3 passed | 0 failed (6ms)",
+      "stderr": "Check supabase/functions/_shared/ensemble_v4_test.ts"
     },
     {
       "file": "supabase/functions/_shared/evalHarness_test.ts",
@@ -163,11 +163,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 12 tests from ./supabase/functions/_shared/evalHarness_test.ts\nlogLoss: perfect predictions → ~0 ... ok (347µs)\nlogLoss: worst predictions → very large ... ok (83µs)\nprAuc: perfect ranking = 1 ... ok (169µs)\nprAuc: random ranking ≈ base rate ... ok (7ms)\nbrierDecomposition identity: brier = reliability − resolution + uncertainty ... ok (409µs)\nbrierSkillScore: predictor better than base → > 0 ... ok (186µs)\nbrierSkillScore: constant base rate → 0 ... ok (128µs)\nreliabilityBins: counts sum to n ... ok (378µs)\ncomputeMetrics: AUC monotone wrt noise ... ok (1ms)\nsliceMetrics: respects minSize ... ok (351µs)\nbootstrapCI: estimate inside CI; CI shrinks with n ... ok (2ms)\nextractChannelEvents: nulls filtered, clipped ... ok (161µs)\n\nok | 12 passed | 0 failed (21ms)",
+      "stderr": "Check supabase/functions/_shared/evalHarness_test.ts"
     },
     {
       "file": "supabase/functions/_shared/explain_test.ts",
@@ -175,11 +175,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 3 tests from ./supabase/functions/_shared/explain_test.ts\nexplanation has headline + reasoning layers + numbers ... ok (636µs)\nexplanation is deterministic for identical input ... ok (133µs)\nreview block only appears when review cards are due ... ok (102µs)\n\nok | 3 passed | 0 failed (6ms)",
+      "stderr": "Check supabase/functions/_shared/explain_test.ts"
     },
     {
       "file": "supabase/functions/_shared/fsrs_test.ts",
@@ -187,11 +187,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 7 tests from ./supabase/functions/_shared/fsrs_test.ts\nFSRS: fresh card returns neutral 0.5 retrievability ... ok (393µs)\nFSRS: first review seeds (S, D) > 0 ... ok (122µs)\nFSRS: retrievability decays monotonically with elapsed time ... ok (47µs)\nFSRS: lapse reduces stability and increments lapses ... ok (89µs)\nFSRS: successful overdue review increases stability ... ok (66µs)\nFSRS: nextInterval inverts retrievability curve ... ok (50µs)\nFSRS: ratingFromBinary maps correctness sensibly ... ok (29µs)\n\nok | 7 passed | 0 failed (7ms)",
+      "stderr": "Check supabase/functions/_shared/fsrs_test.ts"
     },
     {
       "file": "supabase/functions/_shared/fsrsScheduler_test.ts",
@@ -199,11 +199,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 12 tests from ./supabase/functions/_shared/fsrsScheduler_test.ts\nfuzz: sub-day intervals are not fuzzed (in-session) ... ok (433µs)\nfuzz: same seed → same value (deterministic) ... ok (79µs)\nfuzz: stays within published Anki band (±15% for 1–6d) ... ok (6ms)\nfuzz: long intervals use the tighter ±5% band ... ok (233µs)\nleech: under threshold → not a leech ... ok (94µs)\nleech: at threshold → flagged and suspended ~1 day ... ok (94µs)\npriority: leech severely overdue beats fresh barely-due ... ok (160µs)\npriority: monotonic in overdueness ... ok (104µs)\noptimalRequestRetention: cheap-lapse → lower R, expensive-lapse → higher R ... ok (61µs)\noptimalRequestRetention: published default cost-ratio ≈ 3..5 → R near 0.85..0.92 ... ok (96µs)\nsmoothWorkload: respects daily cap ... ok (300µs)\nsmoothWorkload: highest-priority cards stay on their original day ... ok (199µs)\n\nok | 12 passed | 0 failed (15ms)",
+      "stderr": "Check supabase/functions/_shared/fsrsScheduler_test.ts"
     },
     {
       "file": "supabase/functions/_shared/hawkesKt_test.ts",
@@ -211,11 +211,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 5 tests from ./supabase/functions/_shared/hawkesKt_test.ts\nHawkes: empty history returns sigmoid(item) baseline ... ok (327µs)\nHawkes: recent same-concept correct lifts probability ... ok (119µs)\nHawkes: cross-concept excitation only fires with link weight > 0 ... ok (77µs)\nHawkes: wrong answers inhibit ... ok (92µs)\nHawkes: distant events decay to ~0 contribution ... ok (78µs)\n\nok | 5 passed | 0 failed (7ms)",
+      "stderr": "Check supabase/functions/_shared/hawkesKt_test.ts"
     },
     {
       "file": "supabase/functions/_shared/irt2pl_test.ts",
@@ -223,11 +223,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 11 tests from ./supabase/functions/_shared/irt2pl_test.ts\n2PL: P(correct) is 0.5 when θ = b regardless of a ... ok (322µs)\n2PL: Fisher info peaks at θ = b and scales with a² ... ok (91µs)\n2PL step: correct answer raises θ, wrong lowers it ... ok (159µs)\n2PL step: high-`a` items move θ more for the same surprise ... ok (50µs)\n2PL step: SE monotonically decreases as graded_count rises ... ok (184µs)\nElo: gain equals item loss (zero-sum) ... ok (122µs)\nElo: cold pairs use K=32, warm pairs use K=16 ... ok (223µs)\nJoint MLE: returns prior verbatim when sample too small ... ok (162µs)\nJoint MLE: recovers a≈1.2, b≈0.4 on clean simulated data ... ok (7ms)\nJoint MLE: clamps a to [A_MIN, A_MAX] ... ok (152µs)\nConstants are exported correctly ... ok (61µs)\n\nok | 11 passed | 0 failed (16ms)",
+      "stderr": "Check supabase/functions/_shared/irt2pl_test.ts"
     },
     {
       "file": "supabase/functions/_shared/linucb_test.ts",
@@ -235,11 +235,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 9 tests from ./supabase/functions/_shared/linucb_test.ts\nlinucb: fresh arm — UCB equals α·||x||/√λ, mean = 0 ... ok (406µs)\nlinucb: rank-1 update — bonus shrinks along the trained direction ... ok (326µs)\nlinucb: Sherman–Morrison matches direct inversion (d=2) ... ok (86µs)\nlinucb: reward gets clamped to [-1, 1] ... ok (99µs)\nlinucb: selectArm prefers higher UCB; tiebreak prefers fewer pulls ... ok (160µs)\nlinucb: hydrate degenerates malformed rows gracefully ... ok (140µs)\nlinucb: context vector is well-formed under extreme inputs ... ok (84µs)\nlinucb: 12 canonical arms cover the 4×3 strategy/difficulty grid ... ok (6ms)\nlinucb: convergence — after many on-policy rewards, mean tracks reward ... ok (320µs)\n\nok | 9 passed | 0 failed (14ms)",
+      "stderr": "Check supabase/functions/_shared/linucb_test.ts"
     },
     {
       "file": "supabase/functions/_shared/memorySequenceCoupling_test.ts",
@@ -247,11 +247,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 3 tests from ./supabase/functions/_shared/memorySequenceCoupling_test.ts\nattentionToDecay is monotone in attention mass ... ok (315µs)\nretrievabilityToAttention only boosts below floor ... ok (129µs)\ncouplingDelta produces consistent retention ... ok (61µs)\n\nok | 3 passed | 0 failed (6ms)",
+      "stderr": "Check supabase/functions/_shared/memorySequenceCoupling_test.ts"
     },
     {
       "file": "supabase/functions/_shared/misconceptionEmbedding_test.ts",
@@ -259,11 +259,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 3 tests from ./supabase/functions/_shared/misconceptionEmbedding_test.ts\nBayesian update converges toward truth with repeated evidence ... ok (407µs)\nDecay erodes inactive misconceptions ... ok (82µs)\nRanking and aggregation behave correctly ... ok (287µs)\n\nok | 3 passed | 0 failed (6ms)",
+      "stderr": "Check supabase/functions/_shared/misconceptionEmbedding_test.ts"
     },
     {
       "file": "supabase/functions/_shared/onlineLogistic_test.ts",
@@ -271,11 +271,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 9 tests from ./supabase/functions/_shared/onlineLogistic_test.ts\nonlineLogistic: predictProba degrades to 0.5 with no signal ... ok (384µs)\nonlineLogistic: predictProba is monotonic in a single dominant channel ... ok (116µs)\nonlineLogistic: evaluateMetrics — perfect predictor has 0 brier, low ECE ... ok (7ms)\nonlineLogistic: fit improves log-loss on channel-1-dominant synthetic data ... ok (15ms)\nonlineLogistic: fitted weights are non-negative (softplus invariant) ... ok (15ms)\nonlineLogistic: zero samples → not accepted, returns prior unchanged ... ok (122µs)\nonlineLogistic: deterministic — same seed → same fit ... ok (12ms)\nonlineLogistic: rejects fit on pure-noise data (no improvement) ... ok (2ms)\nonlineLogistic: handles missing channels (NaN probs) without NaN-poisoning ... ok (135µs)\n\nok | 9 passed | 0 failed (61ms)",
+      "stderr": "Check supabase/functions/_shared/onlineLogistic_test.ts"
     },
     {
       "file": "supabase/functions/_shared/outcomeValidation_test.ts",
@@ -283,11 +283,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 10 tests from ./supabase/functions/_shared/outcomeValidation_test.ts\nsummarise handles empty and single ... ok (590µs)\nCohen's d returns null for tiny samples ... ok (112µs)\nCohen's d is positive when treatment outperforms ... ok (48µs)\nWelch t-statistic is symmetric in sign ... ok (163µs)\nHake gain handles ceiling and floor ... ok (75µs)\nmean normalised gain averages correctly ... ok (70µs)\nretention fit recovers known exponential decay ... ok (151µs)\nretention fit degrades gracefully on insufficient samples ... ok (43µs)\ncomparePilot bundles symmetric metrics ... ok (217µs)\nsummariseArm is pure (deterministic) ... ok (6ms)\n\nok | 10 passed | 0 failed (14ms)",
+      "stderr": "Check supabase/functions/_shared/outcomeValidation_test.ts"
     },
     {
       "file": "supabase/functions/_shared/outputEngineV3_test.ts",
@@ -295,11 +295,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 9 tests from ./supabase/functions/_shared/outputEngineV3_test.ts\npacing multiplier monotone in ensembleP ... ok (347µs)\npacing multiplier bounded ... ok (103µs)\nselectReviewInterleave respects budget ... ok (379µs)\nselectPrereqRefresh filters mastered + zero excitation ... ok (168µs)\ncomposeOutputV3 emits hook + main steps when no extras ... ok (354µs)\ncomposeOutputV3 prepends review and appends prereq ... ok (8ms)\ncomposeOutputV3 truncates to maxDurationSec ... ok (188µs)\ncomposeOutputV3 stretches durations for struggling student ... ok (119µs)\ncomposeOutputV3 bandit overrides difficulty/strategy on practice ... ok (151µs)\n\nok | 9 passed | 0 failed (16ms)",
+      "stderr": "Check supabase/functions/_shared/outputEngineV3_test.ts"
     },
     {
       "file": "supabase/functions/_shared/outputIntegrity_test.ts",
@@ -307,11 +307,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 5 tests from ./supabase/functions/_shared/outputIntegrity_test.ts\nok report when every step is present with verifications ... ok (570µs)\ndetects missing steps and unmet floor ... ok (55µs)\ndetects missing verification cues ... ok (114µs)\nrepairImproved compares violation totals ... ok (56µs)\nrepair prompt mentions every missing step ... ok (127µs)\n\nok | 5 passed | 0 failed (6ms)",
+      "stderr": "Check supabase/functions/_shared/outputIntegrity_test.ts"
     },
     {
       "file": "supabase/functions/_shared/propensity_test.ts",
@@ -319,11 +319,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 5 tests from ./supabase/functions/_shared/propensity_test.ts\nsoftmaxPropensity sums to 1 and concentrates on top arm at low τ ... ok (433µs)\nsoftmaxPropensity respects PROP_FLOOR even for crushed arms ... ok (90µs)\nsoftmaxPropensity spreads uniformly when ucbs tie ... ok (63µs)\nlookupProb returns floor for unknown arm ... ok (235µs)\nhigher temperature flattens the distribution ... ok (128µs)\n\nok | 5 passed | 0 failed (7ms)",
+      "stderr": "Check supabase/functions/_shared/propensity_test.ts"
     },
     {
       "file": "supabase/functions/_shared/responseTime_test.ts",
@@ -331,11 +331,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 5 tests from ./supabase/functions/_shared/responseTime_test.ts\nrt weight is 1 when responseTime is missing ... ok (352µs)\nrt weight peaks near the median for correct answers ... ok (91µs)\ninstant-correct collapses to guess-suspicion weight ... ok (86µs)\nmonotonicity of weight w.r.t. RT for incorrect answers (around midpoint) ... ok (81µs)\ncombineGating bounds composite confidence to [0.05, 1] ... ok (103µs)\n\nok | 5 passed | 0 failed (6ms)",
+      "stderr": "Check supabase/functions/_shared/responseTime_test.ts"
     },
     {
       "file": "supabase/functions/_shared/runtimeConfig_test.ts",
@@ -343,11 +343,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 4 tests from ./supabase/functions/_shared/runtimeConfig_test.ts\ndefaults are returned when params is null ... ok (470µs)\nout-of-bound params are clamped, not adopted ... ok (58µs)\nsnapshot carries the id and a loadedAt timestamp ... ok (81µs)\ndefaultRuntimeConfig() exposes the canonical baseline ... ok (52µs)\n\nok | 4 passed | 0 failed (6ms)",
+      "stderr": "Check supabase/functions/_shared/runtimeConfig_test.ts"
     },
     {
       "file": "supabase/functions/_shared/symbolicNeuralAlignment_test.ts",
@@ -355,11 +355,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 4 tests from ./supabase/functions/_shared/symbolicNeuralAlignment_test.ts\nAlignment forward returns valid softmax over standards ... ok (473µs)\nInverse projection emits bias vector in Z_DIM ... ok (329µs)\nAlignment reconstruction loss is non-negative and finite ... ok (164µs)\nEmpty alignment is no-op ... ok (87µs)\n\nok | 4 passed | 0 failed (7ms)",
+      "stderr": "Check supabase/functions/_shared/symbolicNeuralAlignment_test.ts"
     },
     {
       "file": "supabase/functions/_shared/teacherOverride_test.ts",
@@ -367,11 +367,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 8 tests from ./supabase/functions/_shared/teacherOverride_test.ts\nexpired override is ignored ... ok (843µs)\nstudent scope beats school scope ... ok (77µs)\nsubject filter excludes non-matching subjects ... ok (112µs)\ntopic lock locks when scope matches ... ok (86µs)\nstudent-scope unlock beats school-scope lock ... ok (91µs)\napplyOverridesToPolicy substitutes locked dimensions only ... ok (119µs)\nfreeze_progression flag flows through and is auditable ... ok (104µs)\ncurriculum_pacing parses day index ... ok (61µs)\n\nok | 8 passed | 0 failed (6ms)",
+      "stderr": "Check supabase/functions/_shared/teacherOverride_test.ts"
     },
     {
       "file": "supabase/functions/_shared/temporalConsistency_test.ts",
@@ -379,11 +379,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 4 tests from ./supabase/functions/_shared/temporalConsistency_test.ts\nSmoother clips large jumps and reports residual ... ok (450µs)\nForgetting relaxation permits larger negative jumps ... ok (115µs)\nPrerequisite validator enforces ordering slack ... ok (216µs)\nEmpty prev passes proposed unchanged ... ok (137µs)\n\nok | 4 passed | 0 failed (5ms)",
+      "stderr": "Check supabase/functions/_shared/temporalConsistency_test.ts"
     },
     {
       "file": "supabase/functions/_shared/unifiedObjective_test.ts",
@@ -391,11 +391,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 3 tests from ./supabase/functions/_shared/unifiedObjective_test.ts\nevaluateObjective returns finite, non-negative components ... ok (6ms)\nFlatten/unflatten round-trips weights exactly ... ok (227µs)\ngradientStep decreases or holds the loss on a learnable batch ... ok (1ms)\n\nok | 3 passed | 0 failed (14ms)",
+      "stderr": "Check supabase/functions/_shared/unifiedObjective_test.ts"
     },
     {
       "file": "supabase/functions/_shared/unifiedPolicy_test.ts",
@@ -403,11 +403,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 3 tests from ./supabase/functions/_shared/unifiedPolicy_test.ts\npolicyForward emits valid distributions on every head ... ok (468µs)\nHigh ability state biases toward advance/stretch ... ok (6ms)\nShadow agreement is 1 when actions match, decreases with distance ... ok (293µs)\n\nok | 3 passed | 0 failed (12ms)",
+      "stderr": "Check supabase/functions/_shared/unifiedPolicy_test.ts"
     },
     {
       "file": "supabase/functions/_shared/unifiedState_test.ts",
@@ -415,11 +415,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 3 tests from ./supabase/functions/_shared/unifiedState_test.ts\nbuildUnifiedState produces fixed-dim, bounded vector ... ok (552µs)\nbuildUnifiedState handles NaN / Infinity safely ... ok (124µs)\ncosineSimilarity is 1 for identical, 0 for orthogonal ... ok (78µs)\n\nok | 3 passed | 0 failed (5ms)",
+      "stderr": "Check supabase/functions/_shared/unifiedState_test.ts"
     },
     {
       "file": "supabase/functions/ability-update/index_test.ts",
@@ -427,11 +427,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 2 tests from ./supabase/functions/ability-update/index_test.ts\nability-update imports the KT sequence helper ... ok (253µs)\nability-update appends the latest answer to the KT sequence ... ok (70µs)\n\nok | 2 passed | 0 failed (12ms)",
+      "stderr": "Check supabase/functions/ability-update/index_test.ts"
     },
     {
       "file": "supabase/functions/teaching-generate/index_test.ts",
@@ -439,11 +439,11 @@
       "group": "deno-unit",
       "runtime": "deno",
       "countBasis": "Deno.test declarations",
-      "status": "blocked",
-      "exitCode": null,
-      "reason": "deno runtime unavailable",
-      "stdout": "",
-      "stderr": "spawnSync deno ENOENT"
+      "status": "passed",
+      "exitCode": 0,
+      "reason": null,
+      "stdout": "running 13 tests from ./supabase/functions/teaching-generate/index_test.ts\nteaching-generate reads theta from ability_estimates ... ok (418µs)\nteaching-generate reads was_correct from graded_events ... ok (122µs)\nteaching-generate forwards client fatigue to the state vector ... ok (71µs)\nteaching-generate computes 2PL discrimination from question_bank ... ok (39µs)\nteaching-generate state vector passes discrimination + conceptMeanB ... ok (87µs)\nteaching-generate response exposes irt summary ... ok (74µs)\nteaching-generate imports the four Stage 2 predictors ... ok (73µs)\nteaching-generate loads the KT sequence + ensemble weights ... ok (103µs)\nteaching-generate passes ensembleP into the state vector ... ok (61µs)\nteaching-generate response exposes ensemble surface ... ok (58µs)\nteaching-generate imports the calibration layer ... ok (35µs)\nteaching-generate reads calibration_state with population fallback ... ok (34µs)\nteaching-generate calibrates the blended probability before feeding the state vector ... ok (28µs)\n\nok | 13 passed | 0 failed (7ms)",
+      "stderr": "Check supabase/functions/teaching-generate/index_test.ts"
     }
   ]
 }

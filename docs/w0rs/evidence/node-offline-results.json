@@ -34,7 +34,7 @@
       "status": "passed",
       "exitCode": 0,
       "reason": null,
-      "stdout": "[T1] pipeline ingest overhead: 11.48 µs/event (200 events in 2.30 ms)\n  [T8] client-side per-stage overhead (µs/event, avg over 1000):\n         rehydrate  0.300\n         gate       0.321\n         reduce     0.703\n         cache      1.014\n         schedule   0.084\n         TOTAL      2.422 µs/event\n\nLSE A8 — Integration & synchronization validation\n  passed: 83\n  failed: 0",
+      "stdout": "[T1] pipeline ingest overhead: 13.69 µs/event (200 events in 2.74 ms)\n  [T8] client-side per-stage overhead (µs/event, avg over 1000):\n         rehydrate  0.392\n         gate       0.278\n         reduce     1.288\n         cache      0.777\n         schedule   0.086\n         TOTAL      2.821 µs/event\n\nLSE A8 — Integration & synchronization validation\n  passed: 83\n  failed: 0",
       "stderr": ""
     },
     {
@@ -106,7 +106,7 @@
       "status": "passed",
       "exitCode": 0,
       "reason": null,
-      "stdout": "=== Lumina Phase 3 — Persona Test Harness ===\n\n✓ fast_learner           OK   — 1 bump(s): streak_break(correct=11 broke)\n✓ frustrated_learner     OK   — 4 bump(s): consecutive_wrong(3 wrong in math), consecutive_wrong(6 in math), strong_emotion(frustration), strong_emotion(confusion)\n✓ fatigued_learner       OK   — 7 bump(s): fatigue_band_shift(low→med), response_time_spike(t=19.9 med=5.4), response_time_spike(t=19.4 med=5.6), fatigue_band_shift(med→high), response_time_spike(t=18.8 med=5.6), streak_break(correct=11 broke), response_time_spike(t=21.7 med=5.6)\n✓ inconsistent_learner   OK   — 0 bump(s): no bumps\n✓ overconfident_learner  OK   — 3 bump(s): streak_break(correct=8 broke), response_time_spike(t=12.0 med=3.4), consecutive_wrong(3 wrong in math)\n\nALL PERSONAS PASSED",
+      "stdout": "=== Lumina Phase 3 — Persona Test Harness ===\n\n✓ fast_learner           OK   — 0 bump(s): no bumps\n✓ frustrated_learner     OK   — 6 bump(s): consecutive_wrong(3 wrong in math), consecutive_wrong(6 in math), streak_break(correct=6 broke), consecutive_wrong(3 wrong in math), strong_emotion(frustration), strong_emotion(confusion)\n✓ fatigued_learner       OK   — 7 bump(s): fatigue_band_shift(low→med), streak_break(correct=8 broke), response_time_spike(t=22.7 med=5.5), response_time_spike(t=18.3 med=5.5), fatigue_band_shift(med→high), response_time_spike(t=21.2 med=5.7), response_time_spike(t=20.5 med=5.9)\n✓ inconsistent_learner   OK   — 0 bump(s): no bumps\n✓ overconfident_learner  OK   — 4 bump(s): streak_break(correct=8 broke), response_time_spike(t=12.0 med=3.6), consecutive_wrong(3 wrong in math), consecutive_wrong(3 in math)\n\nALL PERSONAS PASSED",
       "stderr": ""
     },
     {

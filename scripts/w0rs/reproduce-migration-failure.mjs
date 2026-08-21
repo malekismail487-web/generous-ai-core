@@ -39,7 +39,7 @@ const result = {
   schemaVersion: 1,
   reproductionType: "deterministic ordered-SQL dependency reproduction",
   databaseEngineExecution: false,
-  databaseEngineBlocker: "Docker and Supabase CLI are unavailable in the current execution environment.",
+  databaseEngineBlocker: "The pinned Supabase CLI is available, but no Docker-compatible runtime is installed and WSL is unavailable, so local PostgreSQL could not start.",
   migrationCount: files.length,
   profileCreation: { file: `supabase/migrations/${profileCreationFile}`, order: creationIndex + 1, declaresEmail: declaredProfileEmail },
   firstFailingDependency: {
@@ -50,8 +50,9 @@ const result = {
   },
   expectedPostgresDiagnostic: { sqlstate: "42703", condition: "undefined_column", missingIdentifier: "public.profiles.email" },
   confirmed,
+  confirmedScope: "Deterministic repository dependency check only; this is not database-engine confirmation.",
   interpretation: confirmed
-    ? "A clean ordered replay reaches migration 20 with public.profiles.email absent, while that migration creates a policy referencing email."
+    ? "Static ordered-SQL analysis predicts that a clean replay reaches migration 20 with public.profiles.email absent while that migration creates a policy referencing email."
     : "Repository evidence drifted; the expected migration failure was not reproduced.",
 };
 

@@ -7,6 +7,11 @@
     "add",
     "exclude"
   ],
+  "safetyConstraints": [
+    "Preserve legitimate School Admin onboarding without generic-admin escalation.",
+    "Do not remove any legacy Super Admin path before replacement authority is implemented and verified.",
+    "Do not treat absence of a first-party caller as proof that an object or endpoint is unused."
+  ],
   "objects": [
     {
       "type": "column",
@@ -22,7 +27,7 @@
       "recommendation": "replace",
       "confidence": "medium",
       "decisionRequired": true,
-      "rationale": "Generic admin overlaps distinct authority domains. Every trust site must be mapped before removal; this is not an authorization to retire it in Phase A.",
+      "rationale": "Replace generic admin, but do not remove it until every trust site has a reviewed Super Admin, School Admin, ordinary-role, or narrow-capability replacement.",
       "evidence": {
         "migrationTrustSites": [
           "supabase/migrations/20260111001113_db08bd95-e243-49b2-bed3-4ec66b8ee96d.sql",
@@ -214,7 +219,10 @@
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
-      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven."
+      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before this legacy path is retired."
+      ]
     },
     {
       "type": "function",
@@ -987,7 +995,14 @@
       "recommendation": "add",
       "confidence": "medium",
       "decisionRequired": true,
-      "rationale": "The School Admin UI calls this RPC and generated types declare it, but no defining migration was found; Phase B must review intended transition semantics."
+      "rationale": "New canonical operation required by the School Admin UI; implement as authenticated, school-scoped, idempotent, and audited without claiming historical migration provenance.",
+      "requirements": [
+        "authenticated",
+        "school-scoped",
+        "idempotent",
+        "audited",
+        "newly-reviewed-not-historical"
+      ]
     },
     {
       "type": "function",
@@ -1924,7 +1939,10 @@
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
-      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven."
+      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before this legacy path is retired."
+      ]
     },
     {
       "type": "function",
@@ -2197,7 +2215,10 @@
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
-      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven."
+      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before this legacy path is retired."
+      ]
     },
     {
       "type": "function",
@@ -2228,7 +2249,10 @@
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
-      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven."
+      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before this legacy path is retired."
+      ]
     },
     {
       "type": "function",
@@ -2258,7 +2282,10 @@
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
-      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven."
+      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before this legacy path is retired."
+      ]
     },
     {
       "type": "function",
@@ -4199,7 +4226,10 @@
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
-      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven."
+      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before this legacy path is retired."
+      ]
     },
     {
       "type": "function",
@@ -4264,7 +4294,10 @@
       "recommendation": "replace",
       "confidence": "high",
       "decisionRequired": false,
-      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven."
+      "rationale": "Legacy authority implementation must be replaced only after the replacement path is proven.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before this legacy path is retired."
+      ]
     },
     {
       "type": "function",
@@ -4349,10 +4382,10 @@
       "name": "api_call_logs",
       "file": "supabase/migrations/20260430_create_api_infrastructure.sql",
       "line": 19,
-      "recommendation": "retain",
-      "confidence": "low",
+      "recommendation": "exclude",
+      "confidence": "medium",
       "decisionRequired": true,
-      "rationale": "No first-party caller was found, but absence of a caller is insufficient evidence for exclusion; retain pending product decision.",
+      "rationale": "Preserve in the historical evidence archive, but exclude from the canonical baseline unless Phase B proves a legitimate consumer. No first-party consumer is currently evidenced.",
       "evidence": {
         "firstPartyCodeReferences": []
       }
@@ -4362,10 +4395,10 @@
       "name": "api_keys",
       "file": "supabase/migrations/20260430_create_api_infrastructure.sql",
       "line": 2,
-      "recommendation": "retain",
-      "confidence": "low",
+      "recommendation": "exclude",
+      "confidence": "medium",
       "decisionRequired": true,
-      "rationale": "No first-party caller was found, but absence of a caller is insufficient evidence for exclusion; retain pending product decision.",
+      "rationale": "Preserve in the historical evidence archive, but exclude from the canonical baseline unless Phase B proves a legitimate consumer. No first-party consumer is currently evidenced.",
       "evidence": {
         "firstPartyCodeReferences": []
       }
@@ -4770,6 +4803,9 @@
       "confidence": "high",
       "decisionRequired": false,
       "rationale": "Dedicated legacy code/email-based authority support object superseded by the approved W0-RS authority model.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before any legacy authority path is retired."
+      ],
       "evidence": {
         "firstPartyCodeReferences": []
       }
@@ -5763,6 +5799,9 @@
       "confidence": "high",
       "decisionRequired": false,
       "rationale": "Dedicated legacy code/email-based authority support object superseded by the approved W0-RS authority model.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before any legacy authority path is retired."
+      ],
       "evidence": {
         "firstPartyCodeReferences": [
           "src/lib/extensions/blueprint.ts",
@@ -7471,6 +7510,9 @@
       "confidence": "high",
       "decisionRequired": false,
       "rationale": "Dedicated legacy code/email-based authority support object superseded by the approved W0-RS authority model.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before any legacy authority path is retired."
+      ],
       "evidence": {
         "firstPartyCodeReferences": [
           "src/components/AttackLogsPanel.tsx",
@@ -7487,6 +7529,9 @@
       "confidence": "high",
       "decisionRequired": false,
       "rationale": "Dedicated legacy code/email-based authority support object superseded by the approved W0-RS authority model.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before any legacy authority path is retired."
+      ],
       "evidence": {
         "firstPartyCodeReferences": [
           "src/components/AttackLogsPanel.tsx",
@@ -7503,6 +7548,9 @@
       "confidence": "high",
       "decisionRequired": false,
       "rationale": "Dedicated legacy code/email-based authority support object superseded by the approved W0-RS authority model.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before any legacy authority path is retired."
+      ],
       "evidence": {
         "firstPartyCodeReferences": []
       }
@@ -7516,6 +7564,9 @@
       "confidence": "high",
       "decisionRequired": false,
       "rationale": "Dedicated legacy code/email-based authority support object superseded by the approved W0-RS authority model.",
+      "prerequisites": [
+        "Replacement Super Admin authority is implemented and verified before any legacy authority path is retired."
+      ],
       "evidence": {
         "firstPartyCodeReferences": []
       }
