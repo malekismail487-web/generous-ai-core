@@ -156,7 +156,15 @@ assert(
   "unknown relationship target is rejected",
 );
 assert(
-  errorCodes(mutate((registry) => { registry.capabilities[1].epistemicState = "SUPPORTED"; })).has("supported_without_evidence"),
+  errorCodes(mutate((registry) => {
+    const capability = registry.capabilities[1];
+    capability.maturity = "SPECIFIED";
+    capability.maturityHistory = capability.maturityHistory.slice(0, 2);
+    capability.verificationState = "UNVERIFIED";
+    capability.evidence = [];
+    capability.securityProfile.securityEvidenceIds = [];
+    capability.epistemicState = "SUPPORTED";
+  })).has("supported_without_evidence"),
   "SUPPORTED without evidence is rejected",
 );
 assert(
@@ -193,7 +201,7 @@ const e0 = OMEGA_BASELINE_REGISTRY.plans[0].evidence[0];
 assert(evidenceIsIndependent(e3), "E3 evidence with basis is classified independent");
 assert(!evidenceIsIndependent(e0), "E0 directive evidence is not inflated to independent evidence");
 assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.currentResult === "385/385"), "baseline tracks exact ORCHESTRA capability result");
-assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.currentResult === "PENDING"), "unavailable read capability remains pending");
+assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.currentResult === "VERIFIED_R1_34_OF_34"), "read capability regression state records the newly verified R1 result");
 assert(
   (OMEGA_BASELINE_REGISTRY.plans[0].evidence[0] as EvidenceRecord).provenance.sourceType === "conversation",
   "directive evidence retains conversation provenance",
