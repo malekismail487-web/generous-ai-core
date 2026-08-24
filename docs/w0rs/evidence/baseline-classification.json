@@ -4412,6 +4412,7 @@
           "scripts/omegaHarnessGenealogy.test.mjs",
           "scripts/omegaHarnessIntegrity.test.mjs",
           "scripts/omegaPlanArtifact.test.ts",
+          "scripts/omegaPlanCoverageTraceability.test.ts",
           "scripts/omegaPreR2GateBundle.test.mjs",
           "scripts/omegaR2AImplSpec.test.ts",
           "scripts/omegaR2AReadiness.test.ts",
@@ -4615,6 +4616,7 @@
           "src/lib/codelab/orchestra/swarm.ts",
           "src/lib/codelab/registry/baseline.ts",
           "src/lib/codelab/registry/criticalPath.ts",
+          "src/lib/codelab/registry/planCoverage.ts",
           "src/lib/codelab/registry/registry.ts",
           "src/lib/codelab/verifier/types.ts",
           "src/lib/coldStartBootstrap.ts",
@@ -5214,6 +5216,7 @@
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
         "firstPartyCodeReferences": [
+          "scripts/omegaPlanCoverageTraceability.test.ts",
           "scripts/orchestraO1.test.ts",
           "src/components/ui/sidebar.tsx",
           "src/lib/codelab/registry/baseline.ts"
@@ -5301,6 +5304,7 @@
       "evidence": {
         "firstPartyCodeReferences": [
           "scripts/lseSessionInternals.test.ts",
+          "scripts/omegaPlanCoverageTraceability.test.ts",
           "src/components/FileNotesGenerator.tsx",
           "src/components/FlashcardsSection.tsx",
           "src/components/PracticeSection.tsx",
@@ -5329,6 +5333,7 @@
           "src/lib/adaptive/spacedRepetition.ts",
           "src/lib/adaptive/teachingPolicy.ts",
           "src/lib/adaptiveIntelligence.ts",
+          "src/lib/codelab/registry/planCoverage.ts",
           "src/lib/lse/lessonReducer.ts",
           "src/lib/promptTemplates.ts",
           "supabase/functions/_shared/hawkesKt.ts",
@@ -7961,6 +7966,7 @@
           "scripts/omegaEvidenceCustody.test.ts",
           "scripts/omegaEvidenceInvalidation.test.ts",
           "scripts/omegaPlanArtifact.test.ts",
+          "scripts/omegaPlanCoverageTraceability.test.ts",
           "scripts/omegaPreR2GateBundle.test.mjs",
           "scripts/omegaR2AImplSpec.test.ts",
           "scripts/omegaR2Design.test.ts",
@@ -8177,6 +8183,7 @@
           "src/lib/codelab/orchestra/router.ts",
           "src/lib/codelab/orchestra/swarm.ts",
           "src/lib/codelab/registry/baseline.ts",
+          "src/lib/codelab/registry/planCoverage.ts",
           "src/lib/codelab/verifier/types.ts",
           "src/lib/coldStartBootstrap.ts",
           "src/lib/extensions/blueprint.ts",
