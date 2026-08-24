@@ -136,6 +136,7 @@ assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLA
 assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-DESIGN-001")?.verificationState === "VERIFIED", "R2 specification has verification evidence without claiming implementation");
 assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-A-SPEC-EVAL-001")?.verificationState === "VERIFIED", "R2-A specification/evaluator is verified without operational authority");
 assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-TS-RATCHET-001")?.maturity === "VERIFIED", "TypeScript diagnostic ratchet plan is operationally verified");
+assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-ASSURE-R2-SPEC-001")?.verificationState === "VERIFIED", "R2 assurance decision specification is verified without certifying R2");
 const writeSandboxCapability = OMEGA_BASELINE_REGISTRY.capabilities.find((capability) => capability.canonicalId === "Ω-CAP-WRITE-SANDBOX");
 assert(writeSandboxCapability?.maturity === "SPECIFIED" && writeSandboxCapability.epistemicState === "INSUFFICIENT_EVIDENCE", "WRITE_SANDBOX remains specified with insufficient operational evidence");
 assert(writeSandboxCapability?.implementationMappings.every((mapping) => mapping.status !== "active"), "WRITE_SANDBOX has no active implementation mapping");
@@ -145,6 +146,10 @@ assert(capabilityRelationships(OMEGA_BASELINE_REGISTRY, "Ω-CAP-WRITE-SANDBOX", 
 assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-WRITE-SANDBOX" && entry.currentResult === "SPECIFIED_R2_A_NOT_IMPLEMENTED"), "capability regression ledger distinguishes R2-A specification from implementation");
 assert(OMEGA_BASELINE_REGISTRY.capabilities.find((capability) => capability.canonicalId === "Ω-CAP-TS-ERROR-RATCHET")?.verificationState === "VERIFIED", "TypeScript no-new-error capability is registered as verified");
 assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-TS-ERROR-RATCHET" && entry.currentResult.endsWith("NEW_0")), "TypeScript regression record preserves the zero-new-error result");
+const r2AssuranceCapability = OMEGA_BASELINE_REGISTRY.capabilities.find((capability) => capability.canonicalId === "Ω-CAP-R2-INDEPENDENT-ASSURANCE");
+assert(r2AssuranceCapability?.maturity === "SPECIFIED" && r2AssuranceCapability.verificationState === "UNVERIFIED", "R2 assurance capability remains specified and operationally unverified");
+assert(capabilityRelationships(OMEGA_BASELINE_REGISTRY, "Ω-CAP-R2-INDEPENDENT-ASSURANCE", "VERIFIES")[0]?.canonicalId === "Ω-CAP-WRITE-SANDBOX", "R2 assurance capability is mapped to verify WRITE_SANDBOX");
+assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-R2-INDEPENDENT-ASSURANCE" && entry.currentResult === "SPECIFIED_NOT_OPERATIONAL"), "assurance regression record does not inflate specification into operation");
 
 const serialized = serializeRegistry(OMEGA_BASELINE_REGISTRY);
 assert(serialized.ok, "valid registry serializes");
