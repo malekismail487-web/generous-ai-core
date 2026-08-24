@@ -28,6 +28,7 @@ const TESTS = Object.freeze([
   ["scripts/omegaR2HostEval.test.ts", 43],
   ["scripts/omegaAssureR2Evaluator.test.ts", 49],
   ["scripts/omegaEvidenceCustody.test.ts", 39],
+  ["scripts/omegaR2CompositionSecuritySpec.test.ts", 44],
 ]);
 
 let passedChecks = 0;
