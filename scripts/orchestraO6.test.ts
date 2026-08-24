@@ -78,6 +78,9 @@ const ALL_PASS: EvidencePack = must(buildPack({
     { probe: "visual", status: "pass", metrics: { pixelDiffPct: 0 }, details: [] },
     { probe: "a11y", status: "pass", metrics: { contrastFailures: 0 }, details: [] },
     { probe: "api_contract", status: "pass", metrics: { misuseCount: 0 }, details: [] },
+    { probe: "animation", status: "pass", metrics: { meanFrameDelta: 2.4 }, details: [] },
+    { probe: "audio", status: "pass", metrics: { rms: 0.12, peak: 0.7 }, details: [] },
+    { probe: "playtest", status: "pass", metrics: { injectedEvents: 200, inputLatencyMs: 12 }, details: [] },
   ],
 }));
 

@@ -1,0 +1,44 @@
+{
+  "errors": [],
+  "motion": {
+    "meanFrameDelta": 4.805,
+    "samples": 2
+  },
+  "palette": {
+    "histogram": [
+      32555,
+      3606,
+      196,
+      42,
+      266,
+      199,
+      0,
+      0
+    ],
+    "meanLuminance": 20.1
+  },
+  "edges": {
+    "edgeRatio": 0.0386
+  },
+  "physics": {
+    "replayHashA": "fa0f0a6d",
+    "replayHashB": "fa0f0a6d",
+    "energyDrift": 0,
+    "tunnelRate": 0
+  },
+  "audio": {
+    "rms": 0.0465,
+    "peak": 0.1946,
+    "spectralCentroidHz": 155,
+    "durationSec": 2.5
+  },
+  "playtest": {
+    "injectedEvents": 120,
+    "consoleErrors": [],
+    "framesAdvanced": 40,
+    "windowMs": 1880,
+    "inputLatencyMs": 38.6
+  },
+  "errorsAfterFuzz": 0,
+  "wallMs": 1880
+}

@@ -1,0 +1,259 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>ORCHESTRA O7 — Crystal Canyon v3</title>
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+
+const FIXED_TIMESTEP = 1 / 60;
+
+// ---- Seeded integer noise (O7a rng contract) ----
+function hash2(x, y) {
+  let h = 1779033703 ^ (x * 374761393) ^ (y * 668265263);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+function valueNoise(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  const xf = x - xi, yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const a = hash2(xi, yi), b = hash2(xi + 1, yi), c = hash2(xi, yi + 1), d = hash2(xi + 1, yi + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function fbm(x, y) {
+  let amp = 0.5, freq = 1, sum = 0;
+  for (let o = 0; o < 5; o++) { sum += amp * valueNoise(x * freq, y * freq); freq *= 2.03; amp *= 0.5; }
+  return sum;
+}
+// Canyon profile: steep walls, flat-ish floor (repair: v2 read as dunes)
+function canyonHeight(x, z) {
+  const n = fbm(x * 0.02, z * 0.02);
+  const wall = Math.pow(Math.abs(n - 0.5) * 2, 0.7) * -26;      // steep valley
+  const floor = fbm(x * 0.09 + 31, z * 0.09) * 1.6;
+  const macro = fbm(x * 0.005, z * 0.005) * 9;
+  return wall + floor + macro;
+}
+
+// ---- Renderer (color pipeline pinned) ----
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.25;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x241638);
+scene.fog = new THREE.Fog(0x241638, 30, 150);
+
+const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 900);
+
+// ---- Lighting: raking dusk + cyan fill from crystals ----
+scene.add(new THREE.HemisphereLight(0x8899ff, 0x2a1a10, 0.5));
+const sun = new THREE.DirectionalLight(0xff9a4d, 2.8);
+sun.position.set(-70, 9, -34);
+scene.add(sun);
+
+// ---- Terrain ----
+const SEG = 180, SIZE = 220;
+const geo = new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG);
+geo.rotateX(-Math.PI / 2);
+{
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) pos.setY(i, canyonHeight(pos.getX(i), pos.getZ(i)));
+  geo.computeVertexNormals();
+}
+const terrain = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+  color: 0x5d4f80, roughness: 0.9, metalness: 0.05, flatShading: true,
+}));
+scene.add(terrain);
+
+// ---- Crystals: saturated, veined, PULSING (animation channel) ----
+const crystalMat = new THREE.MeshStandardMaterial({
+  color: 0x6fb9ff, emissive: 0x1f7fff, emissiveIntensity: 1.1,
+  roughness: 0.06, metalness: 0.2, transparent: true, opacity: 0.94,
+});
+const crystals = [];
+const veinLights = [];
+for (let i = 0; i < 26; i++) {
+  const r = hash2(i * 7919 + 13, i * 104729 + 7);
+  const h = 3 + r * 12;
+  const c = new THREE.Mesh(new THREE.ConeGeometry(0.6 + r * 1.5, h, 5), crystalMat.clone());
+  c.material.emissiveIntensity = 0.7 + hash2(i, 55) * 1.2;
+  const x = (hash2(i, 1) - 0.5) * 150, z = (hash2(i, 2) - 0.5) * 150;
+  c.position.set(x, canyonHeight(x, z) + h * 0.32, z);
+  c.rotation.z = (hash2(i, 3) - 0.5) * 0.22;
+  c.userData.pulsePhase = hash2(i, 77) * Math.PI * 2;
+  c.userData.baseEmissive = c.material.emissiveIntensity;
+  if (h > 9 && veinLights.length < 4) {
+    const glow = new THREE.PointLight(0x3fa8ff, 40, 30, 2);
+    glow.position.set(x, c.position.y + h * 0.6, z);
+    scene.add(glow); veinLights.push(glow);
+  }
+  crystals.push(c); scene.add(c);
+}
+
+// ---- Vein glow sprites (billboards behind crystals — repair v3) ----
+function glowSprite() {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+  const g = cv.getContext('2d');
+  const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, 'rgba(90,180,255,0.85)');
+  grad.addColorStop(0.35, 'rgba(60,140,255,0.35)');
+  grad.addColorStop(1, 'rgba(40,100,255,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const glowTex = glowSprite();
+for (const c of crystals) {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTex, transparent: true, opacity: 0.5,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  }));
+  s.scale.setScalar(6 + c.geometry.parameters.height * 0.7);
+  s.position.copy(c.position);
+  scene.add(s);
+}
+
+// ---- Pollen: soft drifting sprites (animated) ----
+function pollenSprite() {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  const g = cv.getContext('2d');
+  const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, 'rgba(255,244,224,1)');
+  grad.addColorStop(0.4, 'rgba(217,200,255,0.55)');
+  grad.addColorStop(1, 'rgba(217,200,255,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, 64, 64);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+const N = 1400;
+const pollenGeo = new THREE.BufferGeometry();
+const ppos = new Float32Array(N * 3);
+const pseed = new Float32Array(N);
+for (let i = 0; i < N; i++) {
+  ppos[i*3] = (hash2(i,11)-0.5)*160; ppos[i*3+1] = hash2(i,12)*24+1; ppos[i*3+2] = (hash2(i,13)-0.5)*160;
+  pseed[i] = hash2(i, 14) * Math.PI * 2;
+}
+pollenGeo.setAttribute('position', new THREE.BufferAttribute(ppos, 3));
+const pollen = new THREE.Points(pollenGeo, new THREE.PointsMaterial({
+  map: pollenSprite(), size: 0.55, transparent: true, opacity: 0.85,
+  depthWrite: false, blending: THREE.AdditiveBlending,
+}));
+scene.add(pollen);
+
+// ---- Animation loop (camera dolly + pulses + drift) ----
+let frames = 0;
+const clock = new THREE.Clock();
+function tick() {
+  requestAnimationFrame(tick);
+  frames++;
+  const t = clock.getElapsedTime();
+  const a = t * 0.05;
+  camera.position.set(Math.sin(a) * 34, 15 + Math.sin(t * 0.11) * 1.6, Math.cos(a) * 34);
+  camera.lookAt(0, 0, 0);
+  for (const c of crystals) {
+    c.material.emissiveIntensity = c.userData.baseEmissive * (0.8 + 0.25 * Math.sin(t * 1.7 + c.userData.pulsePhase));
+  }
+  const p = pollenGeo.attributes.position;
+  for (let i = 0; i < N; i++) {
+    p.setY(i, ppos[i*3+1] + Math.sin(t * 0.6 + pseed[i]) * 1.4);
+    p.setX(i, ppos[i*3] + Math.sin(t * 0.22 + pseed[i] * 2) * 2.2);
+  }
+  p.needsUpdate = true;
+  renderer.render(scene, camera);
+  window.__frames = frames;
+}
+tick();
+
+// ---- PHYSICS EYES: Rapier replay determinism (async module) ----
+window.__physicsReplay = async function () {
+  const RAPIER = await import('https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.12.0/+esm');
+  await RAPIER.init();
+  function runOnce() {
+    const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
+    const gBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -1, 0));
+    world.createCollider(RAPIER.ColliderDesc.cuboid(60, 1, 60), gBody);
+    const bodies = [];
+    for (let i = 0; i < 10; i++) {
+      const x = (hash2(i, 21) - 0.5) * 20, z = (hash2(i, 22) - 0.5) * 20;
+      const y = 6 + hash2(i, 23) * 14;
+      const b = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic()
+        .setTranslation(x, y, z)
+        .setLinvel((hash2(i,24)-0.5)*4, 0, (hash2(i,25)-0.5)*4));
+      world.createCollider(RAPIER.ColliderDesc.cuboid(0.6, 0.6, 0.6).setDensity(1.2), b);
+      bodies.push(b);
+    }
+    // energy bookkeeping (spurious-gain definition)
+    let e0 = null, maxE = null;
+    const g = 9.81;
+    for (let s = 0; s < 240; s++) {
+      world.step();
+      let E = 0;
+      for (const b of bodies) {
+        const p = b.translation(), v = b.linvel();
+        E += 0.5 * (v.x*v.x + v.y*v.y + v.z*v.z) + g * p.y;
+      }
+      if (s === 0) { e0 = E; maxE = E; }
+      if (E > maxE) maxE = E;
+    }
+    const gain = Math.max(0, maxE - e0) / Math.max(1, Math.abs(e0));
+    let hash = 0;
+    let below = 0;
+    for (const b of bodies) {
+      const p = b.translation();
+      if (p.y < -2.2) below++;
+      const q = Math.round(p.x * 100) + ',' + Math.round(p.y * 100) + ',' + Math.round(p.z * 100);
+      for (let i = 0; i < q.length; i++) { hash = Math.imul(hash ^ q.charCodeAt(i), 2654435761); }
+    }
+    return { hash: (hash >>> 0).toString(16), energyGain: gain, tunnelRate: below / bodies.length };
+  }
+  const a = runOnce();
+  const b = runOnce();
+  return { replayHashA: a.hash, replayHashB: b.hash, energyDrift: Math.max(a.energyGain, b.energyGain), tunnelRate: Math.max(a.tunnelRate, b.tunnelRate) };
+};
+
+// ---- AUDIO EYES: offline synth render (dusk chord swell) ----
+window.__audioRender = async function () {
+  const sr = 22050, dur = 2.5;
+  const ctx = new OfflineAudioContext(2, sr * dur, sr);
+  const master = ctx.createDynamicsCompressor();
+  master.threshold.value = -14; master.ratio.value = 6;
+  const masterGain = ctx.createGain(); masterGain.gain.value = 0.5;
+  master.connect(masterGain).connect(ctx.destination);
+  // Dm add9 swell: D2 A2 D3 F3 E4
+  const freqs = [73.42, 110, 146.83, 174.61, 329.63];
+  freqs.forEach((f, i) => {
+    const o = ctx.createOscillator(); o.type = i < 3 ? 'triangle' : 'sine'; o.frequency.value = f;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, 0);
+    g.gain.linearRampToValueAtTime(0.16 / (1 + i * 0.35), 0.9 + i * 0.12);
+    g.gain.linearRampToValueAtTime(0.0001, dur);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1200 + i * 300;
+    o.connect(g).connect(lp).connect(master);
+    o.start(0); o.stop(dur);
+  });
+  const buf = await ctx.startRendering();
+  const ch = buf.getChannelData(0);
+  let sum = 0, peak = 0;
+  for (let i = 0; i < ch.length; i++) { const v = Math.abs(ch[i]); sum += ch[i]*ch[i]; if (v > peak) peak = v; }
+  const rms = Math.sqrt(sum / ch.length);
+  // crude spectral centroid via zero-crossing-informed band split
+  let zc = 0;
+  for (let i = 1; i < ch.length; i++) if ((ch[i-1] < 0) !== (ch[i] < 0)) zc++;
+  const centroid = (zc / (ch.length / sr)) / 2; // ~mean frequency proxy
+  return { rms: +rms.toFixed(4), peak: +peak.toFixed(4), spectralCentroidHz: Math.round(centroid), durationSec: dur };
+};
+window.__audioRender().then((r) => { window.__audioResult = r; }).catch((e) => { window.__audioError = String(e); });
+</script>
+</body>
+</html>

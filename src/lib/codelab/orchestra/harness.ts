@@ -42,6 +42,9 @@ export const PROBE_KINDS = Object.freeze([
   "physics",
   "a11y",
   "api_contract",
+  "animation",
+  "audio",
+  "playtest",
 ] as const);
 
 export type ProbeKind = (typeof PROBE_KINDS)[number];
@@ -62,9 +65,12 @@ export const PACK_CHANNEL_MAP: Readonly<Record<ProbeKind, "runtime" | "behaviora
     network: "runtime",
     perf: "runtime",
     physics: "runtime",
+    animation: "runtime",
+    audio: "runtime",
     fuzz: "behavioral",
     visual: "behavioral",
     a11y: "behavioral",
+    playtest: "behavioral",
     api_contract: "integration",
   });
 
