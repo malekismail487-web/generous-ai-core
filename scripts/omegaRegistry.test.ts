@@ -127,15 +127,21 @@ assert(planRelationships(OMEGA_BASELINE_REGISTRY, "Ω-PLAN-REG-001A", "OVERLAPS"
 assert(capabilityRelationships(OMEGA_BASELINE_REGISTRY, "Ω-CAP-REGISTRY-INVARIANTS", "ENABLES")[0]?.canonicalId === "Ω-CAP-READ-REPOSITORY", "capability relationship query resolves target");
 assert(dependenciesOf(OMEGA_BASELINE_REGISTRY, "Ω-CAP-READ-REPOSITORY").length === 3, "cross-graph dependencies resolve");
 assert(planRelationships(OMEGA_BASELINE_REGISTRY, "MISSING").length === 0, "missing relationship source is honest empty result");
-assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-SEC-003")?.epistemicState === "UNKNOWN", "unresolved credential containment remains explicitly UNKNOWN");
+const sec003Plan = OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-SEC-003");
+assert(sec003Plan?.epistemicState === "UNKNOWN", "unresolved credential containment remains explicitly UNKNOWN");
+assert(sec003Plan?.securityClosureSubstates?.length === 10, "SEC-003 exposes all ten explicit closure substates");
+assert(sec003Plan?.securityClosureSubstates?.find((item) => item.substateId === "PROJECT_IDENTIFIED")?.satisfied === true, "SEC-003 records the repository-linked project as identified");
+assert(sec003Plan?.securityClosureSubstates?.filter((item) => item.substateId !== "PROJECT_IDENTIFIED").every((item) => item.satisfied === false), "SEC-003 keeps every unresolved containment substate open");
 assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-DESIGN-001")?.maturity === "SPECIFIED", "R2 plan stops at SPECIFIED maturity");
 assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-DESIGN-001")?.verificationState === "VERIFIED", "R2 specification has verification evidence without claiming implementation");
+assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-A-SPEC-EVAL-001")?.verificationState === "VERIFIED", "R2-A specification/evaluator is verified without operational authority");
 const writeSandboxCapability = OMEGA_BASELINE_REGISTRY.capabilities.find((capability) => capability.canonicalId === "Ω-CAP-WRITE-SANDBOX");
 assert(writeSandboxCapability?.maturity === "SPECIFIED" && writeSandboxCapability.epistemicState === "INSUFFICIENT_EVIDENCE", "WRITE_SANDBOX remains specified with insufficient operational evidence");
 assert(writeSandboxCapability?.implementationMappings.every((mapping) => mapping.status !== "active"), "WRITE_SANDBOX has no active implementation mapping");
 assert(dependenciesOf(OMEGA_BASELINE_REGISTRY, "Ω-PLAN-R2-DESIGN-001").some((dependency) => dependency.canonicalId === "Ω-PLAN-SEC-003"), "R2 design dependency graph retains credential containment blocker");
+assert(dependenciesOf(OMEGA_BASELINE_REGISTRY, "Ω-PLAN-R2-A-SPEC-EVAL-001").some((dependency) => dependency.canonicalId === "Ω-PLAN-SEC-003"), "R2-A implementation preparation retains credential containment blocker");
 assert(capabilityRelationships(OMEGA_BASELINE_REGISTRY, "Ω-CAP-WRITE-SANDBOX", "DEPENDS_ON")[0]?.canonicalId === "Ω-CAP-READ-REPOSITORY", "WRITE_SANDBOX capability depends on verified R1 observation");
-assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-WRITE-SANDBOX" && entry.currentResult === "SPECIFIED_NOT_IMPLEMENTED"), "capability regression ledger distinguishes design from implementation");
+assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-WRITE-SANDBOX" && entry.currentResult === "SPECIFIED_R2_A_NOT_IMPLEMENTED"), "capability regression ledger distinguishes R2-A specification from implementation");
 
 const serialized = serializeRegistry(OMEGA_BASELINE_REGISTRY);
 assert(serialized.ok, "valid registry serializes");
@@ -218,6 +224,29 @@ assert(
 assert(
   errorCodes(mutate((registry) => { registry.capabilities[1].certificates[0].evidenceIds = ["Ω-EV-MISSING"]; })).has("unknown_certificate_evidence"),
   "capability certificate evidence must resolve locally",
+);
+assert(
+  errorCodes(mutate((registry) => {
+    const plan = registry.plans.find((item) => item.canonicalId === "Ω-PLAN-SEC-003");
+    const substate = plan.securityClosureSubstates.find((item) => item.substateId === "CORRECT_MANAGEMENT_ACCESS");
+    substate.satisfied = true;
+    substate.evidenceIds = [];
+  })).has("satisfied_security_closure_without_evidence"),
+  "satisfied security closure substate requires evidence",
+);
+assert(
+  errorCodes(mutate((registry) => {
+    const plan = registry.plans.find((item) => item.canonicalId === "Ω-PLAN-SEC-003");
+    plan.securityClosureSubstates[1].substateId = plan.securityClosureSubstates[0].substateId;
+  })).has("duplicate_security_closure_substate"),
+  "duplicate security closure substates are rejected",
+);
+assert(
+  errorCodes(mutate((registry) => {
+    const plan = registry.plans.find((item) => item.canonicalId === "Ω-PLAN-SEC-003");
+    plan.securityClosureSubstates[0].evidenceIds = ["Ω-EV-MISSING"];
+  })).has("unknown_security_closure_evidence"),
+  "security closure evidence must resolve locally",
 );
 
 const e3 = OMEGA_BASELINE_REGISTRY.capabilities[0].evidence[0];

@@ -176,6 +176,15 @@ export interface RegistryRecordBase {
 export interface PlanRecord extends RegistryRecordBase {
   readonly recordType: "PLAN";
   readonly relationships: readonly PlanRelationship[];
+  readonly securityClosureSubstates?: readonly SecurityClosureSubstate[];
+}
+
+export interface SecurityClosureSubstate {
+  readonly substateId: string;
+  readonly satisfied: boolean;
+  readonly epistemicState: EpistemicState;
+  readonly evidenceIds: readonly string[];
+  readonly rationale: string;
 }
 
 export interface CapabilityRecord extends RegistryRecordBase {

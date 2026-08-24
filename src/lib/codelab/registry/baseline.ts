@@ -23,6 +23,13 @@ const DIRECTIVE_003_SOURCE: SourceProvenance = Object.freeze({
   contentHash: null,
 });
 
+const DIRECTIVE_004_SOURCE: SourceProvenance = Object.freeze({
+  sourceId: "Ω-SOURCE-DIRECTIVE-004",
+  sourceType: "conversation",
+  locator: "conversation://omega-institutional-execution-directive-004",
+  contentHash: null,
+});
+
 const REPOSITORY_SOURCE: SourceProvenance = Object.freeze({
   sourceId: "Ω-SOURCE-REPOSITORY",
   sourceType: "repository",
@@ -120,6 +127,31 @@ const directive003Evidence = evidence(
   null,
   DIRECTIVE_003_SOURCE,
 );
+const directive004Evidence = evidence(
+  "Ω-EV-DIRECTIVE-004",
+  "E0",
+  "The institutional authority kept security containment as the controlling gate and required R2-A specification/evaluation without authority.",
+  DIRECTIVE_004_SOURCE.locator,
+  "Explicit institutional directive",
+  null,
+  DIRECTIVE_004_SOURCE,
+);
+const secProjectIdentityEvidence = evidence(
+  "Ω-EV-SEC-003-PROJECT-IDENTIFIED",
+  "E3",
+  "Repository configuration identifies the linked Supabase project without reproducing credential material.",
+  "repository://sanitized-environment-project-reference",
+  "Sanitized repository-configuration inspection",
+  "The repository configuration is external to the registry claim and the evidence excludes credential bytes.",
+);
+const secManagementAccessEvidence = evidence(
+  "Ω-EV-SEC-003-MANAGEMENT-ACCESS-BLOCKED",
+  "E4",
+  "The authenticated Supabase management session redirected away from the repository-linked project and exposed only an unrelated project.",
+  "external-observation://supabase-dashboard-access-check-2026-08-24",
+  "Read-only authenticated management-plane observation",
+  "The live Supabase dashboard determined project visibility independently from repository and registry assertions; no credential state was inferred.",
+);
 const registryEvidence = evidence(
   "Ω-EV-REGISTRY-TESTS",
   "E3",
@@ -175,6 +207,14 @@ const r2DesignEvidence = evidence(
   "command://omega-r2-design-tests",
   "Node 24 pure contract harness over sandbox design, mutation transactions, rollback proofs, and evidence chains",
   "The executable validator is separate from institutional narrative claims, while implementation-oracle and same-author correlation remain acknowledged.",
+);
+const r2ASpecEvidence = evidence(
+  "Ω-EV-R2-A-SPEC-EVAL-51",
+  "E3",
+  "The R2-A provisioning specification and evaluator passed 51 deterministic contract checks while exposing no filesystem adapter or operational authority.",
+  "command://omega-r2-a-spec-eval-tests",
+  "Node 24 pure contract harness over provisioning requests, identity stability, cleanup equivalence, authority composition, and gate state",
+  "The executable validator is separate from stored registry claims; implementation-oracle and same-author correlation remain acknowledged.",
 );
 
 export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
@@ -312,7 +352,7 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
       maturityHistory: maturityHistory(["PROPOSED"], directive003Evidence.evidenceId),
       epistemicState: "UNKNOWN",
       verificationState: "UNVERIFIED",
-      evidence: [directive003Evidence],
+      evidence: [directive003Evidence, directive004Evidence, secProjectIdentityEvidence, secManagementAccessEvidence],
       acceptanceCriteria: [
         criterion("Ω-AC-SEC-003-MGMT", "The exposed credential is authoritatively revoked, rotated, or confirmed invalid.", "Supabase management-plane or database-backed evidence", "REVOKED_AND_VERIFIED, ROTATED_AND_VERIFIED, or CONFIRMED_INVALID"),
       ],
@@ -333,10 +373,34 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
         blastRadius: "Unknown until an authorized operator inspects credential status and usage.",
         containmentMechanisms: ["Revoke first; redact current tips only after containment; assess history separately."],
         rollbackMechanisms: ["Credential replacement and dependent integration rotation; retain repository recovery plan before history operations."],
-        securityEvidenceIds: [],
+        securityEvidenceIds: [secProjectIdentityEvidence.evidenceId, secManagementAccessEvidence.evidenceId],
       },
       researchMaturity: "CONCEPT",
       relationships: [{ kind: "OVERLAPS", targetId: "Ω-PLAN-R2-DESIGN-001" }],
+      securityClosureSubstates: [
+        {
+          substateId: "PROJECT_IDENTIFIED",
+          satisfied: true,
+          epistemicState: "SUPPORTED",
+          evidenceIds: [secProjectIdentityEvidence.evidenceId],
+          rationale: "The repository-linked project identity is known without reproducing the credential.",
+        },
+        {
+          substateId: "CORRECT_MANAGEMENT_ACCESS",
+          satisfied: false,
+          epistemicState: "INSUFFICIENT_EVIDENCE",
+          evidenceIds: [secManagementAccessEvidence.evidenceId],
+          rationale: "The current authenticated management session does not expose the repository-linked project.",
+        },
+        { substateId: "CREDENTIAL_RECORD_IDENTIFIED", satisfied: false, epistemicState: "UNKNOWN", evidenceIds: [], rationale: "No authorized matching credential record is accessible." },
+        { substateId: "VALIDITY_ESTABLISHED", satisfied: false, epistemicState: "UNKNOWN", evidenceIds: [], rationale: "Credential validity cannot be inferred without management evidence." },
+        { substateId: "USAGE_REVIEWED", satisfied: false, epistemicState: "UNKNOWN", evidenceIds: [], rationale: "Usage and audit history are unavailable without correct management access." },
+        { substateId: "REVOCATION_COMPLETED", satisfied: false, epistemicState: "UNKNOWN", evidenceIds: [], rationale: "No revocation was attempted or completed." },
+        { substateId: "REVOCATION_VERIFIED", satisfied: false, epistemicState: "UNKNOWN", evidenceIds: [], rationale: "No authoritative revoked-state evidence exists." },
+        { substateId: "DEPENDENCIES_ROTATED", satisfied: false, epistemicState: "UNKNOWN", evidenceIds: [], rationale: "Dependent integration rotation awaits authoritative credential containment." },
+        { substateId: "REMOTE_TIPS_REDACTED", satisfied: false, epistemicState: "UNKNOWN", evidenceIds: [], rationale: "Remote-tip redaction is intentionally sequenced after credential invalidation." },
+        { substateId: "HISTORY_POLICY_DECIDED", satisfied: false, epistemicState: "UNKNOWN", evidenceIds: [], rationale: "Shared-history sanitation remains a separate governance decision." },
+      ],
     },
     {
       recordType: "PLAN",
@@ -392,6 +456,62 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
         calibrationRequirement: "Specification verification must never be reported as implemented write capability",
       },
       relationships: [{ kind: "DERIVES_FROM", targetId: "Ω-PLAN-EVAL-R1-001" }],
+    },
+    {
+      recordType: "PLAN",
+      canonicalId: "Ω-PLAN-R2-A-SPEC-EVAL-001",
+      originalSourceId: "Ω-R2-A-SPEC/EVAL-001",
+      title: "Disposable Sandbox Provisioning Specification and Evaluator",
+      source: DIRECTIVE_004_SOURCE,
+      corpusStatus: "PARTIAL",
+      losslessCertification: false,
+      maturity: "SPECIFIED",
+      maturityHistory: maturityHistory(["PROPOSED", "SPECIFIED"], r2ASpecEvidence.evidenceId),
+      epistemicState: "SUPPORTED",
+      verificationState: "VERIFIED",
+      evidence: [directive004Evidence, r2ASpecEvidence],
+      acceptanceCriteria: [
+        criterion("Ω-AC-R2-A-SPEC-NOAUTH", "The artifact specifies and evaluates R2-A without creating a sandbox or exposing a filesystem adapter.", "Static contract and deterministic evaluator", "Operational authority UNAVAILABLE; filesystem adapter NONE"),
+        criterion("Ω-AC-R2-A-SPEC-BOUNDARY", "Future provisioning must prove canonical disjointness, stable target identity, bounded lifetime, and cleanup equivalence.", "Adversarial contract harness", "Every positive and negative contract case passes"),
+        criterion("Ω-AC-R2-A-SPEC-GATE", "SEC-003 remains the controlling implementation gate.", "Eligibility decision", "Current decision INELIGIBLE with credential containment blocker"),
+      ],
+      falsificationCriteria: [
+        criterion("Ω-FC-R2-A-SPEC-AUTH", "The specification exposes filesystem mutation or content writes.", "Static API inspection", "Any operational adapter or content mutation primitive"),
+        criterion("Ω-FC-R2-A-SPEC-TOCTOU", "A changed target identity can satisfy the provisioning evidence contract.", "Adversarial identity fixture", "Any identity substitution accepted"),
+        criterion("Ω-FC-R2-A-SPEC-READ", "WRITE_SANDBOX implicitly grants observation authority.", "Authority-composition fixture", "Any implied read scope"),
+      ],
+      dependencies: ["Ω-PLAN-SEC-003", "Ω-PLAN-R2-DESIGN-001", "Ω-PLAN-EVAL-R1-001", "Ω-CAP-READ-REPOSITORY"],
+      implementationMappings: [
+        { kind: "repository", ref: "src/lib/codelab/executor/r2SandboxProvisioningSpec.ts", status: "experimental" },
+        { kind: "tool", ref: "scripts/omegaR2ASpecEval.test.ts", status: "active" },
+      ],
+      securityProfile: {
+        threatModel: ["Repository/sandbox overlap", "filesystem alias escape", "TOCTOU target substitution", "cleanup failure", "observation-authority expansion", "maturity inflation"],
+        privilegeRequirements: ["No runtime privilege; pure specification and evaluator only"],
+        dataSensitivity: "INTERNAL",
+        isolationRequirements: ["No filesystem adapter", "No sandbox creation", "No content mutation", "No network or credentials"],
+        attackSurface: ["Provisioning request validation", "identity evidence contract", "cleanup equivalence contract", "eligibility gate"],
+        trustAssumptions: ["Operational implementation will be evaluated separately", "canonical identity requires host evidence", "SEC-003 remains unresolved"],
+        possibleMisuse: ["Treating specification verification as capability verification", "assuming write authority implies read authority"],
+        compromisePaths: ["Future adapter diverges from specification", "future target changes after validation"],
+        blastRadius: "No operational blast radius; this artifact contains no filesystem adapter or granted authority.",
+        containmentMechanisms: ["Operational authority is machine-labelled UNAVAILABLE", "content mutation is forbidden until R2-B", "current eligibility is INELIGIBLE"],
+        rollbackMechanisms: ["Revert specification commit; no runtime state was mutated"],
+        securityEvidenceIds: [r2ASpecEvidence.evidenceId],
+      },
+      researchMaturity: "EXPERIMENT_DESIGNED",
+      hypothesis: {
+        statement: "A separately evaluable R2-A contract can expose sandbox-provisioning failure modes before any write authority exists.",
+        supportCriterion: "The contract rejects overlap, traversal, alias/identity substitution, expiry, resource, cleanup, and authority-expansion failures while remaining design-only.",
+        falsificationCriterion: "The evaluator accepts any defined escape or requires operational authority to validate the specification.",
+        baseline: "R2 design contracts at d2b7121 without a phase-specific provisioning evaluator",
+        competingExplanations: ["The phase-specific contract adds no information beyond the generic R2 design", "Host-specific implementation evidence will invalidate important assumptions"],
+        measurementMethod: "Pure deterministic specification/evaluator cases with explicit adversarial families and gate-state assertions",
+        requiredPopulation: "Valid requests plus root redirection, aliases, duplicate identity, expiry, malformed paths, nesting, cleanup, contention, repository substitution, and TOCTOU cases",
+        computeBudget: "Single local CPU process; no filesystem mutation, model inference, or network",
+        calibrationRequirement: "Plan may be VERIFIED at SPECIFIED maturity while WRITE_SANDBOX remains UNVERIFIED and unavailable",
+      },
+      relationships: [{ kind: "DERIVES_FROM", targetId: "Ω-PLAN-R2-DESIGN-001" }],
     },
   ],
   capabilities: [
@@ -473,16 +593,17 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
       maturityHistory: maturityHistory(["PROPOSED", "SPECIFIED"], r2DesignEvidence.evidenceId),
       epistemicState: "INSUFFICIENT_EVIDENCE",
       verificationState: "UNVERIFIED",
-      evidence: [r2DesignEvidence],
+      evidence: [r2DesignEvidence, r2ASpecEvidence],
       acceptanceCriteria: [
         criterion("Ω-AC-CAP-R2", "Future isolated writes preserve R1 boundaries and rollback exactly.", "Disposable filesystem demonstration and negative-capability regression", "R2-A through R2-G evidenced; A-prime equivalent to A after rollback"),
       ],
       falsificationCriteria: [
         criterion("Ω-FC-CAP-R2", "Any write escapes the sandbox, lacks provenance, or cannot roll back.", "Adversarial operational evaluation", "Any escape, omitted action, or rollback mismatch"),
       ],
-      dependencies: ["Ω-PLAN-R2-DESIGN-001", "Ω-PLAN-SEC-003", "Ω-CAP-READ-REPOSITORY"],
+      dependencies: ["Ω-PLAN-R2-DESIGN-001", "Ω-PLAN-R2-A-SPEC-EVAL-001", "Ω-PLAN-SEC-003", "Ω-CAP-READ-REPOSITORY"],
       implementationMappings: [
         { kind: "repository", ref: "src/lib/codelab/executor/r2Design.ts", status: "experimental" },
+        { kind: "repository", ref: "src/lib/codelab/executor/r2SandboxProvisioningSpec.ts", status: "experimental" },
       ],
       securityProfile: {
         threatModel: ["Unimplemented capability is mistakenly represented as available.", "Future write escapes or weakens R1."],
@@ -496,11 +617,11 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
         blastRadius: "No operational blast radius exists in this chunk because no write adapter is implemented.",
         containmentMechanisms: ["Capability remains INSUFFICIENT_EVIDENCE and UNVERIFIED", "eligibility gate is INELIGIBLE"],
         rollbackMechanisms: ["Specified only; not yet demonstrated"],
-        securityEvidenceIds: [r2DesignEvidence.evidenceId],
+        securityEvidenceIds: [r2DesignEvidence.evidenceId, r2ASpecEvidence.evidenceId],
       },
       researchMaturity: "EXPERIMENT_DESIGNED",
       relationships: [{ kind: "DEPENDS_ON", targetId: "Ω-CAP-READ-REPOSITORY" }],
-      expectedEvidence: ["Disposable sandbox demonstration", "Negative-capability regression", "Rollback equivalence", "Tamper-evident session audit"],
+      expectedEvidence: ["Disposable sandbox demonstration", "Stable canonical target identity", "Negative-capability regression", "Rollback equivalence", "Tamper-evident session audit"],
     },
     {
       recordType: "CAPABILITY",
@@ -586,13 +707,13 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
     },
     {
       capabilityId: "Ω-CAP-WRITE-SANDBOX",
-      expectedEvidence: ["Design contracts", "Disposable sandbox demonstration", "Rollback proof", "Preserved forbidden actions"],
+      expectedEvidence: ["Design contracts", "R2-A provisioning specification", "Disposable sandbox demonstration", "Rollback proof", "Preserved forbidden actions"],
       previousResult: "UNAVAILABLE",
-      currentResult: "SPECIFIED_NOT_IMPLEMENTED",
+      currentResult: "SPECIFIED_R2_A_NOT_IMPLEMENTED",
       change: "NEW",
       confidence: 1,
       previousEvidenceIds: [],
-      currentEvidenceIds: [r2DesignEvidence.evidenceId],
+      currentEvidenceIds: [r2DesignEvidence.evidenceId, r2ASpecEvidence.evidenceId],
     },
   ],
 } as const satisfies OmegaRegistry);

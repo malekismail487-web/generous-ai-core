@@ -431,6 +431,46 @@ export function validateRegistry(candidate: unknown): RegistryValidation {
   const capabilityIds = new Set(registry.capabilities.map((record) => record.canonicalId));
   registry.plans.forEach((record, index) => {
     validateRelationships(record, PLAN_RELATION_KINDS, planIds, `$.plans[${index}].relationships`, errors);
+    if (record.securityClosureSubstates !== undefined) {
+      const path = `$.plans[${index}].securityClosureSubstates`;
+      if (!Array.isArray(record.securityClosureSubstates)) {
+        errors.push({ code: "bad_security_closure_substates", path, message: "Security closure substates must be an array." });
+      } else {
+        const substateIds = new Set<string>();
+        const evidenceIds = new Set(record.evidence.map((item: EvidenceRecord) => item.evidenceId));
+        record.securityClosureSubstates.forEach((substate, substateIndex) => {
+          const substatePath = `${path}[${substateIndex}]`;
+          if (!isObject(substate)) {
+            errors.push({ code: "bad_security_closure_substate", path: substatePath, message: "Security closure substate must be an object." });
+            return;
+          }
+          if (!isNonEmptyString(substate.substateId)) {
+            errors.push({ code: "bad_security_closure_substate_id", path: substatePath, message: "Security closure substate ID is required." });
+          } else if (substateIds.has(substate.substateId)) {
+            errors.push({ code: "duplicate_security_closure_substate", path: substatePath, message: "Security closure substate IDs must be unique." });
+          } else substateIds.add(substate.substateId);
+          if (typeof substate.satisfied !== "boolean") {
+            errors.push({ code: "bad_security_closure_satisfaction", path: substatePath, message: "Security closure satisfaction must be boolean." });
+          }
+          if (!(EPISTEMIC_STATES as readonly unknown[]).includes(substate.epistemicState)) {
+            errors.push({ code: "bad_security_closure_epistemic_state", path: substatePath, message: "Unknown security closure epistemic state." });
+          }
+          if (!isNonEmptyString(substate.rationale)) {
+            errors.push({ code: "missing_security_closure_rationale", path: substatePath, message: "Security closure rationale is required." });
+          }
+          if (!Array.isArray(substate.evidenceIds)) {
+            errors.push({ code: "bad_security_closure_evidence", path: substatePath, message: "Security closure evidence IDs must be an array." });
+          } else {
+            for (const evidenceId of substate.evidenceIds) {
+              if (!evidenceIds.has(evidenceId)) errors.push({ code: "unknown_security_closure_evidence", path: substatePath, message: `Unknown security closure evidence ${evidenceId}.` });
+            }
+            if (substate.satisfied && substate.evidenceIds.length === 0) {
+              errors.push({ code: "satisfied_security_closure_without_evidence", path: substatePath, message: "Satisfied security closure substate requires evidence." });
+            }
+          }
+        });
+      }
+    }
   });
   registry.capabilities.forEach((record, index) => {
     validateRelationships(record, CAPABILITY_RELATION_KINDS, capabilityIds, `$.capabilities[${index}].relationships`, errors);
