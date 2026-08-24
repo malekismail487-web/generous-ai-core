@@ -48,11 +48,13 @@ const executions = [];
 for (const suite of composition.suites) {
   const source = readFileSync(resolve(ROOT, suite.file), "utf8");
   const testIdentities = extractSemanticTestIdentities(source, suite.suiteId, suite.file);
+  const startedAt = performance.now();
   const run = spawnSync(
     process.execPath,
     ["--experimental-strip-types", "--import", pathToFileURL(LOADER).href, suite.file],
     { cwd: ROOT, encoding: "utf8", timeout: 120_000 },
   );
+  const durationMs = Math.max(0, Math.round(performance.now() - startedAt));
   const output = `${run.stdout ?? ""}\n${run.stderr ?? ""}`;
   const execution = parseTestExecution({
     suite,
@@ -61,6 +63,7 @@ for (const suite of composition.suites) {
     output,
     source,
     testIdentities,
+    durationMs,
   });
   executions.push(execution);
   if (execution.status === "PASSED") {

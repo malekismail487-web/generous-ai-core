@@ -47,20 +47,28 @@ export function discoverOmegaTestFiles(root) {
 export function loadSuiteCatalog(file) {
   const parsed = JSON.parse(readFileSync(file, "utf8"));
   if (parsed.schemaVersion !== 1 || typeof parsed.suiteVersion !== "string" || !Array.isArray(parsed.requiredSuites)
-    || !Array.isArray(parsed.criticalSuites) || parsed.criticalSuites.some((item) => typeof item !== "string")) {
+    || !Array.isArray(parsed.criticalSuites) || !Array.isArray(parsed.heldOutSuites) || !Array.isArray(parsed.informationalSuites)
+    || [...parsed.criticalSuites, ...parsed.heldOutSuites, ...parsed.informationalSuites].some((item) => typeof item !== "string")) {
     throw new Error("Unsupported or malformed Ω suite catalog");
   }
   const criticalSuites = Object.freeze([...new Set(parsed.criticalSuites.map(String))].sort());
+  const heldOutSuites = Object.freeze([...new Set(parsed.heldOutSuites.map(String))].sort());
+  const informationalSuites = Object.freeze([...new Set(parsed.informationalSuites.map(String))].sort());
   const declaredIds = new Set(parsed.requiredSuites.map((suite) => String(suite.suiteId)));
-  if (criticalSuites.some((suiteId) => !declaredIds.has(suiteId))) throw new Error("Critical Ω suite is not declared");
+  const classified = [...criticalSuites, ...heldOutSuites, ...informationalSuites];
+  if (classified.some((suiteId) => !declaredIds.has(suiteId)) || new Set(classified).size !== classified.length) throw new Error("Ω suite importance classification is invalid");
   return Object.freeze({
     schemaVersion: 1,
     suiteVersion: parsed.suiteVersion,
     criticalSuites,
+    heldOutSuites,
+    informationalSuites,
     requiredSuites: Object.freeze(parsed.requiredSuites.map((suite) => Object.freeze({
       suiteId: String(suite.suiteId),
       file: normalizePath(String(suite.file)),
-      criticality: criticalSuites.includes(String(suite.suiteId)) ? "CRITICAL_GATE" : "REGRESSION",
+      criticality: criticalSuites.includes(String(suite.suiteId)) ? "CRITICAL_GATE"
+        : heldOutSuites.includes(String(suite.suiteId)) ? "HELD_OUT"
+          : informationalSuites.includes(String(suite.suiteId)) ? "INFORMATIONAL" : "REGRESSION",
     }))),
   });
 }
@@ -111,7 +119,7 @@ export function extractSemanticTestIdentities(source, suiteId, file = "test.ts")
   return Object.freeze(definitions);
 }
 
-export function parseTestExecution({ suite, exitCode, signal = null, output, source, testIdentities }) {
+export function parseTestExecution({ suite, exitCode, signal = null, output, source, testIdentities, durationMs = 0 }) {
   const summaries = [...output.matchAll(/passed:\s*(\d+),\s*failed:\s*(\d+)/gi)];
   const passedChecks = summaries.length === 1 ? Number(summaries[0][1]) : 0;
   const failedChecks = summaries.length === 1 ? Number(summaries[0][2]) : 0;
@@ -129,6 +137,7 @@ export function parseTestExecution({ suite, exitCode, signal = null, output, sou
     status: failureReason === null ? "PASSED" : "FAILED",
     failureReason,
     exitCode,
+    durationMs,
     passedChecks,
     failedChecks,
     sourceDigest: sha256(source),

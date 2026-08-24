@@ -24,6 +24,8 @@ const catalog = loadSuiteCatalog(resolve(ROOT, "scripts/omega/required-suites.js
 const discovered = discoverOmegaTestFiles(ROOT);
 const liveComposition = assessSuiteComposition(catalog.requiredSuites, discovered);
 assert(catalog.schemaVersion === 1 && /^omega-institutional-suite\/\d+$/.test(catalog.suiteVersion), "catalog schema and suite genealogy are explicit");
+assert(catalog.criticalSuites.includes("OMEGA-HARNESS-INTEGRITY"), "critical-gate suite importance is explicit");
+assert(catalog.heldOutSuites.includes("OMEGA-R1-PRIVATE-EVAL"), "held-out evaluator importance is explicit");
 assert(liveComposition.ok, "declared and discovered Ω suite composition matches");
 assert(liveComposition.suites.some((suite) => suite.suiteId === "OMEGA-HARNESS-INTEGRITY"), "harness self-test is part of discovered execution");
 assert(isDiscoverableOmegaTest("scripts/omegaFuture.test.ts"), "future Ω tests are discoverable without runner count edits");
@@ -52,8 +54,9 @@ assert(JSON.stringify(semanticA) === JSON.stringify(semanticB), "semantic identi
 assert(new Set(semanticA).size === semanticA.length, "semantic test identities are unique within a suite");
 
 const suite = { suiteId: "S", file: "scripts/omegaSynthetic.test.ts" };
-const good = parseTestExecution({ suite, exitCode: 0, output: "passed: 2, failed: 0", source: semanticSource, testIdentities: semanticA });
+const good = parseTestExecution({ suite, exitCode: 0, output: "passed: 2, failed: 0", source: semanticSource, testIdentities: semanticA, durationMs: 17 });
 assert(good.status === "PASSED" && good.passedChecks === 2, "actual executed checks drive successful aggregation");
+assert(good.durationMs === 17, "suite execution records lightweight verification-cost telemetry");
 assert(good.sourceDigest.length === 64 && good.testIdentityDigest.length === 64, "execution binds source and semantic identity digests");
 const noSummary = parseTestExecution({ suite, exitCode: 0, output: "looks fine", source: semanticSource, testIdentities: semanticA });
 assert(noSummary.failureReason === "MISSING_EXECUTION_SUMMARY", "missing execution summary is rejected");
