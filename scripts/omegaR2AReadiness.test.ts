@@ -9,6 +9,7 @@ import {
   type R2AReadinessCheck,
   type R2AReadinessInput,
 } from "../src/lib/codelab/assurance/r2AReadiness";
+import { OMEGA_R1_TRACEABLE_BASELINE_COMMIT } from "../src/lib/codelab/registry/baselineGenealogy";
 
 let passed = 0;
 let failed = 0;
@@ -35,6 +36,7 @@ function input(overrides: Partial<R2AReadinessInput> = {}): R2AReadinessInput {
     decisionId: "OMEGA-R2-A-READINESS-FIXTURE",
     candidateCommit: "7".repeat(40),
     r1BaselineCommit: OMEGA_R1_BASELINE_COMMIT,
+    traceableR1BaselineCommit: OMEGA_R1_TRACEABLE_BASELINE_COMMIT,
     preR2BaselineCommit: OMEGA_PRE_R2_BASELINE_COMMIT,
     securityClosure: "REVOKED_AND_VERIFIED",
     checks: R2_A_READINESS_REQUIREMENTS.map((requirement) => check(requirement)),
@@ -77,6 +79,7 @@ const evidenceLess = decideR2AReadiness(input({ checks: input().checks.map((item
 assert(evidenceLess.decision === "INSUFFICIENT_EVIDENCE", "passing check without evidence is insufficient");
 assert(decideR2AReadiness(input({ checks: [...input().checks, input().checks[0]] })).decision === "INSUFFICIENT_EVIDENCE", "duplicate readiness requirement fails closed");
 assert(decideR2AReadiness(input({ r1BaselineCommit: "8".repeat(40) })).decision === "INSUFFICIENT_EVIDENCE", "wrong R1 baseline cannot become eligible");
+assert(decideR2AReadiness(input({ traceableR1BaselineCommit: "8".repeat(40) })).decision === "INSUFFICIENT_EVIDENCE", "wrong traceable R1 baseline cannot become eligible");
 assert(decideR2AReadiness(input({ preR2BaselineCommit: "9".repeat(40) })).decision === "INSUFFICIENT_EVIDENCE", "wrong pre-R2 baseline cannot become eligible");
 assert(decideR2AReadiness(input({ candidateCommit: "short" })).decision === "INSUFFICIENT_EVIDENCE", "malformed candidate identity fails closed");
 

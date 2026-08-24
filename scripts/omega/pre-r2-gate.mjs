@@ -8,6 +8,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 export const OMEGA_R1_BEHAVIORAL_BASELINE = "7729cf3e3e6bdb9e8771dfcad6386ecc9fa55296";
 export const OMEGA_R1_INTEGRATED_BASELINE = "734e402fd80ed7425735830ea9a0b2b6a6e25908";
+export const OMEGA_R1_TRACEABLE_BASELINE = "68717200b669a8e7644e01f717f158ea44899820";
 export const PRE_R2_GATE_VERSION = "omega-pre-r2-gate/1";
 
 export const PRE_R2_GATE_REQUIREMENTS = Object.freeze([
@@ -110,6 +111,9 @@ function sourceDependency(id, path) {
 
 export function evaluatePreR2Gate(input) {
   const reasons = [];
+  if (input.behavioralBaselineCommit !== OMEGA_R1_BEHAVIORAL_BASELINE) reasons.push("wrong_behavioral_r1_baseline");
+  if (input.integratedBaselineCommit !== OMEGA_R1_INTEGRATED_BASELINE) reasons.push("wrong_integrated_r1_baseline");
+  if (input.traceableBaselineCommit !== OMEGA_R1_TRACEABLE_BASELINE) reasons.push("wrong_traceable_r1_baseline");
   const requirements = new Map();
   for (const item of input.evidence) {
     if (requirements.has(item.requirement)) reasons.push(`duplicate_requirement:${item.requirement}`);
@@ -135,7 +139,7 @@ export function evaluatePreR2Gate(input) {
   const blocked = input.evidence.filter((item) => ["BLOCKED_ENVIRONMENT", "BLOCKED_AUTHORITY", "UNKNOWN"].includes(item.outcome));
   if (input.securityClosure === "OPEN" || input.securityClosure === "UNKNOWN") reasons.push("omega_sec_003_not_authoritatively_closed");
   if (input.r2Readiness !== "ELIGIBLE") reasons.push(`r2_readiness_${input.r2Readiness.toLowerCase()}`);
-  const structural = reasons.some((reason) => reason.startsWith("duplicate_") || reason.startsWith("missing_") || reason.startsWith("candidate_") || reason.startsWith("incomplete_") || reason.startsWith("stale_") || reason.startsWith("dependency_"));
+  const structural = reasons.some((reason) => reason.startsWith("duplicate_") || reason.startsWith("missing_") || reason.startsWith("candidate_") || reason.startsWith("incomplete_") || reason.startsWith("stale_") || reason.startsWith("dependency_") || reason.startsWith("wrong_"));
   const decision = failed.length > 0 || input.securityClosure === "OPEN" || input.securityClosure === "UNKNOWN" || input.r2Readiness === "INELIGIBLE"
     ? "NOT_READY"
     : blocked.length > 0 || structural || input.r2Readiness === "INSUFFICIENT_EVIDENCE"
@@ -213,6 +217,7 @@ export function collectPreR2GateEvidence() {
     candidate,
     behavioralBaselineCommit: OMEGA_R1_BEHAVIORAL_BASELINE,
     integratedBaselineCommit: OMEGA_R1_INTEGRATED_BASELINE,
+    traceableBaselineCommit: OMEGA_R1_TRACEABLE_BASELINE,
     securityClosure: "OPEN",
     r2Readiness: "INELIGIBLE",
     currentDependencies,

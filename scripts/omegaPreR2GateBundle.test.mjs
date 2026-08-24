@@ -1,6 +1,7 @@
 import {
   OMEGA_R1_BEHAVIORAL_BASELINE,
   OMEGA_R1_INTEGRATED_BASELINE,
+  OMEGA_R1_TRACEABLE_BASELINE,
   PRE_R2_GATE_REQUIREMENTS,
   classifyProductionBuildRun,
   classifyW0ExecutionSummary,
@@ -26,13 +27,16 @@ function item(requirement, overrides = {}) {
 }
 function bundle(overrides = {}) {
   return {
-    schemaVersion: 1, candidate, securityClosure: "REVOKED_AND_VERIFIED", r2Readiness: "ELIGIBLE",
+    schemaVersion: 1, candidate, behavioralBaselineCommit: OMEGA_R1_BEHAVIORAL_BASELINE,
+    integratedBaselineCommit: OMEGA_R1_INTEGRATED_BASELINE, traceableBaselineCommit: OMEGA_R1_TRACEABLE_BASELINE,
+    securityClosure: "REVOKED_AND_VERIFIED", r2Readiness: "ELIGIBLE",
     currentDependencies: dependencies, evidence: PRE_R2_GATE_REQUIREMENTS.map((requirement) => item(requirement)), ...overrides,
   };
 }
 
 assert(OMEGA_R1_BEHAVIORAL_BASELINE === "7729cf3e3e6bdb9e8771dfcad6386ecc9fa55296", "original R1 behavioral baseline is immutable");
 assert(OMEGA_R1_INTEGRATED_BASELINE === "734e402fd80ed7425735830ea9a0b2b6a6e25908", "integrated institutional R1 baseline is exact");
+assert(OMEGA_R1_TRACEABLE_BASELINE === "68717200b669a8e7644e01f717f158ea44899820", "traceable institutional R1 baseline is exact");
 assert(PRE_R2_GATE_REQUIREMENTS.length === 16, "all required pre-R2 evidence families are explicit");
 const ready = evaluatePreR2Gate(bundle());
 assert(ready.decision === "READY", "complete fresh exact-bound evidence can produce READY");
@@ -45,6 +49,7 @@ assert(evaluatePreR2Gate(bundle({ evidence: [...bundle().evidence, bundle().evid
 assert(evaluatePreR2Gate(bundle({ evidence: bundle().evidence.map((entry) => entry.requirement === "HARNESS_MANIFEST" ? { ...entry, candidate: { ...candidate, commit: "b".repeat(40) } } : entry) })).decision === "INSUFFICIENT_EVIDENCE", "cross-candidate evidence cannot satisfy the bundle");
 assert(evaluatePreR2Gate(bundle({ evidence: bundle().evidence.map((entry) => entry.requirement === "TYPESCRIPT_ZERO_RATCHET" ? { ...entry, freshness: "STALE" } : entry) })).decision === "INSUFFICIENT_EVIDENCE", "stale evidence requires revalidation");
 assert(evaluatePreR2Gate(bundle({ currentDependencies: [{ dependencyId: "SOURCE", fingerprint: "source-v2" }] })).decision === "INSUFFICIENT_EVIDENCE", "dependency change invalidates only evidence bound to that dependency");
+assert(evaluatePreR2Gate(bundle({ traceableBaselineCommit: "c".repeat(40) })).decision === "INSUFFICIENT_EVIDENCE", "wrong traceable baseline fails closed");
 assert(classifyProductionBuildRun({ exitCode: 0, stdout: "", stderr: "" }) === "PASS", "successful production build is classified as pass");
 assert(classifyProductionBuildRun({ exitCode: 1, stdout: "", stderr: "Access is denied" }) === "BLOCKED_ENVIRONMENT", "sandbox filesystem denial is not misreported as a product build failure");
 assert(classifyProductionBuildRun({ exitCode: 1, stdout: "", stderr: "syntax error" }) === "FAIL", "real build failure remains failure");

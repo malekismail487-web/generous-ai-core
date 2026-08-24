@@ -1,3 +1,5 @@
+import { OMEGA_R1_TRACEABLE_BASELINE_COMMIT } from "../registry/baselineGenealogy";
+
 export const R2_A_READINESS_REQUIREMENTS = Object.freeze([
   "SEC_003_AUTHORIZED_CLOSURE",
   "R1_BASELINE_PRESERVED",
@@ -33,6 +35,7 @@ export interface R2AReadinessInput {
   readonly decisionId: string;
   readonly candidateCommit: string;
   readonly r1BaselineCommit: string;
+  readonly traceableR1BaselineCommit: string;
   readonly preR2BaselineCommit: string;
   readonly securityClosure: R2ASecurityClosure;
   readonly checks: readonly R2AReadinessCheck[];
@@ -64,6 +67,7 @@ export function decideR2AReadiness(input: R2AReadinessInput): R2AReadinessDecisi
   const insufficient: string[] = [];
   if (input.schemaVersion !== 1 || !nonEmpty(input.decisionId) || !exactCommit(input.candidateCommit)) insufficient.push("malformed_readiness_identity");
   if (input.r1BaselineCommit !== OMEGA_R1_BASELINE_COMMIT) insufficient.push("wrong_r1_baseline");
+  if (input.traceableR1BaselineCommit !== OMEGA_R1_TRACEABLE_BASELINE_COMMIT) insufficient.push("wrong_traceable_r1_baseline");
   if (input.preR2BaselineCommit !== OMEGA_PRE_R2_BASELINE_COMMIT) insufficient.push("wrong_pre_r2_baseline");
   if (!R2_A_ACCEPTED_SECURITY_CLOSURES.includes(input.securityClosure as (typeof R2_A_ACCEPTED_SECURITY_CLOSURES)[number])) {
     ineligible.push("omega_sec_003_not_authoritatively_closed");
@@ -131,6 +135,7 @@ export const CURRENT_R2_A_READINESS_INPUT = Object.freeze<R2AReadinessInput>({
   decisionId: "OMEGA-R2-A-READINESS-CURRENT",
   candidateCommit: OMEGA_PRE_R2_BASELINE_COMMIT,
   r1BaselineCommit: OMEGA_R1_BASELINE_COMMIT,
+  traceableR1BaselineCommit: OMEGA_R1_TRACEABLE_BASELINE_COMMIT,
   preR2BaselineCommit: OMEGA_PRE_R2_BASELINE_COMMIT,
   securityClosure: "OPEN",
   checks: R2_A_READINESS_REQUIREMENTS.map((requirement) => ({

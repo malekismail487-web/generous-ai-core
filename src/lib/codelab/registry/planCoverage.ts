@@ -64,7 +64,7 @@ export interface PlanCoverageRecord {
   readonly registryIdentity: string;
   readonly capabilityObjectiveId: string;
   readonly visionRef: "OMEGA_VERIFIED_STATE_TRANSFORMATION";
-  readonly sourceDirective: "OMEGA_DIRECTIVE_008";
+  readonly sourceDirective: "OMEGA_DIRECTIVE_008" | "OMEGA_DIRECTIVE_009";
   readonly coverageStatus: typeof OMEGA_COVERAGE_STATUS;
   readonly corpusStatus: typeof OMEGA_CORPUS_STATUS;
   readonly directlyImplemented: readonly OmegaConceptRef[];
@@ -286,7 +286,12 @@ function sameSet(actual: readonly string[], expected: readonly string[]): boolea
   return actual.length === expected.length && [...actual].sort().every((value, index) => value === [...expected].sort()[index]);
 }
 
-export function validatePlanCoverage(records: readonly PlanCoverageRecord[]): readonly PlanCoverageIssue[] {
+export const DIRECTIVE_008_WORKSTREAM_IDS = Object.freeze([
+  "OMEGA-PRE-R2-GATE-BUNDLE-001", "OMEGA-EVIDENCE-INVALIDATION-001", "OMEGA-CLAIM-LIFECYCLE-001",
+  "OMEGA-PLAN-ARTIFACT-001", "OMEGA-HARNESS-GENEALOGY-001", "OMEGA-ENV-CAPABILITY-001",
+] as const);
+
+export function validatePlanCoverage(records: readonly PlanCoverageRecord[], expectedWorkstreams: readonly string[] = DIRECTIVE_008_WORKSTREAM_IDS): readonly PlanCoverageIssue[] {
   const issues: PlanCoverageIssue[] = [];
   const workstreams = new Set<string>();
   const registryIds = new Set<string>();
@@ -316,10 +321,6 @@ export function validatePlanCoverage(records: readonly PlanCoverageRecord[]): re
       if (evidenceRef.startsWith("suite://")) evidenceOwnership.set(evidenceRef, item.workstreamId);
     }
   }
-  const expectedWorkstreams = [
-    "OMEGA-PRE-R2-GATE-BUNDLE-001", "OMEGA-EVIDENCE-INVALIDATION-001", "OMEGA-CLAIM-LIFECYCLE-001",
-    "OMEGA-PLAN-ARTIFACT-001", "OMEGA-HARNESS-GENEALOGY-001", "OMEGA-ENV-CAPABILITY-001",
-  ];
   for (const expected of expectedWorkstreams) if (!workstreams.has(expected)) issues.push({ code: "MISSING_DIRECTIVE_WORKSTREAM", workstreamId: expected, detail: "Directive 008 workstream lacks coverage" });
   return Object.freeze(issues);
 }
