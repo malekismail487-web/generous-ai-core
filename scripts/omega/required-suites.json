@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/7",
+  "suiteVersion": "omega-institutional-suite/8",
   "requiredSuites": [
     { "suiteId": "CODELAB-AGENT-PROTOCOL", "file": "scripts/codelabAgentProtocol.test.ts" },
     { "suiteId": "CODELAB-AGENT-REDUCER", "file": "scripts/codelabAgentReducer.test.ts" },
@@ -15,6 +15,7 @@
     { "suiteId": "ORCHESTRA-O7-PERCEPTION", "file": "scripts/orchestraO7perception.test.ts" },
     { "suiteId": "OMEGA-ASSURE-R2-EVALUATOR", "file": "scripts/omegaAssureR2Evaluator.test.ts" },
     { "suiteId": "OMEGA-ASSURE-R2-SPEC", "file": "scripts/omegaAssureR2Spec.test.ts" },
+    { "suiteId": "OMEGA-CLAIM-LIFECYCLE", "file": "scripts/omegaClaimLifecycle.test.ts" },
     { "suiteId": "OMEGA-EVIDENCE-CUSTODY", "file": "scripts/omegaEvidenceCustody.test.ts" },
     { "suiteId": "OMEGA-EVIDENCE-INVALIDATION", "file": "scripts/omegaEvidenceInvalidation.test.ts" },
     { "suiteId": "OMEGA-HARNESS-INTEGRITY", "file": "scripts/omegaHarnessIntegrity.test.mjs" },
