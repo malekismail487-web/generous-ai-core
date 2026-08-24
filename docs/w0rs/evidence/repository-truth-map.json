@@ -2148,6 +2148,12 @@
       ]
     },
     {
+      "name": "OMEGA_TEST_MANIFEST_PATH",
+      "files": [
+        "scripts/omega/run-tests.mjs"
+      ]
+    },
+    {
       "name": "PERSONA_SEED",
       "files": [
         "scripts/personaTest.ts"
