@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/11",
+  "suiteVersion": "omega-institutional-suite/12",
   "criticalSuites": [
     "OMEGA-ASSURE-R2-EVALUATOR",
     "OMEGA-EVIDENCE-CUSTODY",
@@ -8,6 +8,7 @@
     "OMEGA-ENV-CAPABILITY",
     "OMEGA-HARNESS-GENEALOGY",
     "OMEGA-HARNESS-INTEGRITY",
+    "OMEGA-PLAN-COVERAGE-TRACEABILITY",
     "OMEGA-PRE-R2-GATE-BUNDLE",
     "OMEGA-R2-A-READINESS",
     "OMEGA-R2-COMPOSITION-SECURITY",
@@ -43,6 +44,7 @@
     { "suiteId": "OMEGA-HARNESS-GENEALOGY", "file": "scripts/omegaHarnessGenealogy.test.mjs" },
     { "suiteId": "OMEGA-PRE-R2-GATE-BUNDLE", "file": "scripts/omegaPreR2GateBundle.test.mjs" },
     { "suiteId": "OMEGA-PLAN-ARTIFACT", "file": "scripts/omegaPlanArtifact.test.ts" },
+    { "suiteId": "OMEGA-PLAN-COVERAGE-TRACEABILITY", "file": "scripts/omegaPlanCoverageTraceability.test.ts" },
     { "suiteId": "OMEGA-R1-PRIVATE-EVAL", "file": "scripts/evaluation/omegaR1PrivateEval.ts" },
     { "suiteId": "OMEGA-R2-A-IMPL-SPEC", "file": "scripts/omegaR2AImplSpec.test.ts" },
     { "suiteId": "OMEGA-R2-A-READINESS", "file": "scripts/omegaR2AReadiness.test.ts" },
