@@ -28,6 +28,7 @@ import {
   serializeFrame,
 } from "../src/lib/codelab/agent/protocol";
 import type { AgentEventDraft } from "../src/lib/codelab/agent/types";
+import { validateDraft } from "../src/lib/codelab/agent/types";
 
 // ---------------------------------------------------------------------------
 // Deterministic fixtures
@@ -240,6 +241,23 @@ section("Fault tolerance");
   // Schema rejection reason tokens carry NO payload echo.
   const leakCheck = JSON.stringify(r2.invalid);
   assert(!leakCheck.includes("secrets"), "rejection records contain no payload content");
+
+  assert(!validateDraft({ kind: "tool_result", callId: "c1", ok: true, summary: "x", resultJson: 7 }).ok,
+    "numeric optional resultJson is rejected");
+  assert(!validateDraft({ kind: "tool_result", callId: "c1", ok: true, summary: "x", resultJson: {} }).ok,
+    "object optional resultJson is rejected");
+  assert(!validateDraft({ kind: "file_delta", path: "a.ts", op: "write", contentAfter: 7 }).ok,
+    "numeric optional contentAfter is rejected");
+  assert(!validateDraft({ kind: "file_delta", path: "a.ts", op: "write" }).ok,
+    "write without contentAfter is rejected");
+  assert(!validateDraft({ kind: "file_delta", path: "a.ts", op: "delete", contentAfter: "x" }).ok,
+    "delete with contentAfter is rejected");
+  const validResult = validateDraft({ kind: "tool_result", callId: "c1", ok: true, summary: "x", resultJson: "{}" });
+  assert(validResult.ok && validResult.value.kind === "tool_result" && validResult.value.resultJson === "{}",
+    "validated optional resultJson is preserved as a string");
+  const validDelete = validateDraft({ kind: "file_delta", path: "a.ts", op: "delete" });
+  assert(validDelete.ok && validDelete.value.kind === "file_delta" && !("contentAfter" in validDelete.value),
+    "absent optional contentAfter remains absent");
 }
 
 // ---------------------------------------------------------------------------

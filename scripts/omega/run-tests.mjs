@@ -6,18 +6,18 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const LOADER = resolve(ROOT, "scripts/w0rs/register-typescript-loader.mjs");
 
 const TESTS = Object.freeze([
-  ["scripts/codelabAgentProtocol.test.ts", 19],
+  ["scripts/codelabAgentProtocol.test.ts", 26],
   ["scripts/codelabAgentReducer.test.ts", 55],
-  ["scripts/orchestraO0.test.ts", 53],
+  ["scripts/orchestraO0.test.ts", 54],
   ["scripts/orchestraO1.test.ts", 36],
-  ["scripts/orchestraO2.test.ts", 43],
+  ["scripts/orchestraO2.test.ts", 44],
   ["scripts/orchestraO3.test.ts", 45],
   ["scripts/orchestraO4.test.ts", 31],
   ["scripts/orchestraO5.test.ts", 37],
-  ["scripts/orchestraO6.test.ts", 28],
+  ["scripts/orchestraO6.test.ts", 32],
   ["scripts/orchestraO7a.test.ts", 19],
   ["scripts/orchestraO7perception.test.ts", 19],
-  ["scripts/omegaRegistry.test.ts", 77],
+  ["scripts/omegaRegistry.test.ts", 79],
   ["scripts/omegaReadOnlyExecutor.test.ts", 34],
   ["scripts/evaluation/omegaR1PrivateEval.ts", 31],
   ["scripts/omegaR2Design.test.ts", 51],

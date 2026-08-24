@@ -188,7 +188,7 @@ export function buildPack(raw: unknown): V<EvidencePack> {
   const seen = new Set<string>();
   for (const r of o.results) {
     const v = validateResult(r);
-    if (!v.ok) return v;
+    if (v.ok === false) return { ok: false, reason: v.reason };
     if (seen.has(v.value.probe)) return { ok: false, reason: "duplicate_probe" };
     seen.add(v.value.probe);
     results.push(v.value);

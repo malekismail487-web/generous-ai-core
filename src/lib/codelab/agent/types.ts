@@ -489,7 +489,7 @@ export function validateDraft(raw: unknown): ValidationResult<AgentEventDraft> {
           callId: callId.val!,
           ok: raw.ok,
           summary: s.val!,
-          ...(resultJson !== undefined ? { resultJson } : {}),
+          ...(typeof resultJson === "string" ? { resultJson } : {}),
         },
       };
     }
@@ -499,10 +499,11 @@ export function validateDraft(raw: unknown): ValidationResult<AgentEventDraft> {
       const p = str(raw, "path", 512);
       if (p.err) return { ok: false, reason: p.err };
       if (!isValidFsPath(p.val!)) return { ok: false, reason: "bad_path" };
-      if (raw.contentAfter !== undefined) {
-        if (typeof raw.contentAfter !== "string") return { ok: false, reason: "bad_type" };
+      const contentAfter = raw.contentAfter;
+      if (contentAfter !== undefined) {
+        if (typeof contentAfter !== "string") return { ok: false, reason: "bad_type" };
         if (raw.op === "delete") return { ok: false, reason: "bad_type" };
-        if (raw.contentAfter.length > LIMITS.resultJsonMaxBytes) {
+        if (contentAfter.length > LIMITS.resultJsonMaxBytes) {
           return { ok: false, reason: "too_long" };
         }
       } else if (raw.op === "write") {
@@ -514,7 +515,7 @@ export function validateDraft(raw: unknown): ValidationResult<AgentEventDraft> {
           kind: "file_delta",
           path: p.val!,
           op: raw.op,
-          ...(raw.contentAfter !== undefined ? { contentAfter: raw.contentAfter } : {}),
+          ...(typeof contentAfter === "string" ? { contentAfter } : {}),
         },
       };
     }

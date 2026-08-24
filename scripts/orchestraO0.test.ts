@@ -328,6 +328,11 @@ section("Audit attempt records");
     "illegal attempt recorded with typed reason");
   assert(rec.messageId === "m-attempt" && rec.epoch === 0, "attempt identifies message");
 
+  const malformed = envelope({ messageId: "m-unroutable", toChannel: "chan:bogus" });
+  const malformedRecord = attemptRecord(malformed, route(malformed, G_WO1));
+  assert(malformedRecord.delivered === false && malformedRecord.rejectReason === "unroutable_address",
+    "unroutable attempt preserves its exact rejection reason");
+
   const legalDec = route(envelope({ messageId: "m-legal" }), G_WO1);
   const legalRec = attemptRecord(envelope({ messageId: "m-legal" }), legalDec);
   assert(legalRec.delivered === true && legalRec.rejectReason === undefined,

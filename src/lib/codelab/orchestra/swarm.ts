@@ -193,7 +193,7 @@ export function foundFamily(params: {
   readonly charter: ParentCharter;
 }): FoundResult {
   const gate = activationGate(params.cert, params.charter);
-  if (!gate.allowed) {
+  if (gate.allowed === false) {
     return {
       ok: false,
       reason:

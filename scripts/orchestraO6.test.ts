@@ -119,6 +119,16 @@ section("Pack validation");
   });
   assert(!badRef.ok, "non-artifact/http build ref rejected");
 
+  const invalidResultBase = { packId: "pk-reason", familyId: "fam-t", epoch: 0, buildRef: "artifact://b/reason" } as const;
+  const unknownProbe = buildPack({ ...invalidResultBase, results: [{ probe: "unknown", status: "pass", metrics: {}, details: [] }] });
+  assert(unknownProbe.ok === false && unknownProbe.reason === "unknown_probe", "nested unknown-probe reason propagates exactly");
+  const badStatus = buildPack({ ...invalidResultBase, results: [{ probe: "console", status: "unknown", metrics: {}, details: [] }] });
+  assert(badStatus.ok === false && badStatus.reason === "bad_status", "nested bad-status reason propagates exactly");
+  const badMetrics = buildPack({ ...invalidResultBase, results: [{ probe: "console", status: "pass", metrics: "bad", details: [] }] });
+  assert(badMetrics.ok === false && badMetrics.reason === "bad_metrics", "nested bad-metrics reason propagates exactly");
+  const badDetails = buildPack({ ...invalidResultBase, results: [{ probe: "console", status: "pass", metrics: {}, details: "bad" }] });
+  assert(badDetails.ok === false && badDetails.reason === "bad_details", "nested bad-details reason propagates exactly");
+
   // Tamper evidence.
   assert(verifyPack(ALL_PASS), "fresh pack verifies");
   const forged: EvidencePack = { ...ALL_PASS, results: ALL_PASS.results.map((r) => r.probe === "perf" ? { ...r, status: "fail" as const } : r) };

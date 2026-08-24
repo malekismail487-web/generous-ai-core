@@ -64,7 +64,7 @@ const live = spawnSync(process.execPath, ["scripts/typescript/typecheck-ratchet.
 });
 const liveOutput = `${live.stdout ?? ""}\n${live.stderr ?? ""}`;
 assert(live.status === 0, "live full-project TypeScript ratchet permits only baseline debt");
-assert(/baseline=7 current=7 new=0 resolved=0/.test(liveOutput), "live ratchet reports exact baseline/current/new/resolved counts");
+assert(/baseline=7 current=0 new=0 resolved=7/.test(liveOutput), "live ratchet proves all seven historical diagnostics resolved before re-baselining");
 assert(/typescript=5\.8\.3/.test(liveOutput), "live ratchet reports the verified compiler version");
 assert(!liveOutput.includes("NEW_TYPE_ERROR"), "live ratchet reports no new TypeScript diagnostics");
 

@@ -628,7 +628,7 @@ export type SerializationResult =
 
 export function serializeRegistry(registry: OmegaRegistry): SerializationResult {
   const validation = validateRegistry(registry);
-  if (!validation.ok) return { ok: false, errors: validation.errors };
+  if (validation.ok === false) return { ok: false, errors: validation.errors };
   return { ok: true, json: canonicalJson(registry) };
 }
 

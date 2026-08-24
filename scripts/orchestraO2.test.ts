@@ -180,6 +180,11 @@ section("Genesis-gated founding");
   assert(!deniedDigest.ok && deniedDigest.reason === "gate_digest_mismatch",
     "charter drift since certification ⇒ unfoundable");
 
+  const wrongIdentityCharter = { ...fx.charter, identity: { ...fx.charter.identity, agentId: "pa-other" } };
+  const deniedIdentity = foundFamily({ familyId: "fam-a", cert: fx.cert, charter: wrongIdentityCharter });
+  assert(!deniedIdentity.ok && deniedIdentity.reason === "gate_identity_mismatch",
+    "certificate/charter identity mismatch preserves the exact gate reason");
+
   const okFound = foundFamily({ familyId: "fam-a", cert: fx.cert, charter: fx.charter });
   assert(okFound.ok, "certified charter founds cleanly");
   if (!okFound.ok) throw new Error("fixture broken");
