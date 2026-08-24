@@ -30,6 +30,13 @@ const DIRECTIVE_004_SOURCE: SourceProvenance = Object.freeze({
   contentHash: null,
 });
 
+const DIRECTIVE_005_SOURCE: SourceProvenance = Object.freeze({
+  sourceId: "Ω-SOURCE-DIRECTIVE-005",
+  sourceType: "conversation",
+  locator: "conversation://omega-institutional-execution-directive-005",
+  contentHash: null,
+});
+
 const REPOSITORY_SOURCE: SourceProvenance = Object.freeze({
   sourceId: "Ω-SOURCE-REPOSITORY",
   sourceType: "repository",
@@ -136,6 +143,15 @@ const directive004Evidence = evidence(
   null,
   DIRECTIVE_004_SOURCE,
 );
+const directive005Evidence = evidence(
+  "Ω-EV-DIRECTIVE-005",
+  "E0",
+  "The institutional authority required an exact R2-A implementation blueprint while keeping operational write authority unavailable.",
+  DIRECTIVE_005_SOURCE.locator,
+  "Explicit institutional directive",
+  null,
+  DIRECTIVE_005_SOURCE,
+);
 const secProjectIdentityEvidence = evidence(
   "Ω-EV-SEC-003-PROJECT-IDENTIFIED",
   "E3",
@@ -231,6 +247,14 @@ const r2AssuranceSpecEvidence = evidence(
   "command://omega-assure-r2-spec-tests",
   "Node 24 pure assurance-package evaluator with explicit independence and falsification cases",
   "The executable decision contract is separate from stored registry claims; operational evidence and independent evaluator implementation do not yet exist.",
+);
+const r2AImplSpecEvidence = evidence(
+  "Ω-EV-R2-A-IMPLSPEC-82",
+  "E3",
+  "The authority-free R2-A implementation blueprint passed 82 deterministic checks covering lifecycle, object identity, cleanup quarantine, audit reconstruction, exact version binding, and authority deltas.",
+  "command://omega-r2-a-implspec-tests",
+  "Node 24 pure blueprint harness with no filesystem adapter or operational authority",
+  "The deterministic harness is independent from stored registry claims, while blueprint and test-oracle authorship remains correlated.",
 );
 
 export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
@@ -531,6 +555,63 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
     },
     {
       recordType: "PLAN",
+      canonicalId: "Ω-PLAN-R2-A-IMPLSPEC-001",
+      originalSourceId: "Ω-R2-A-IMPLSPEC-001",
+      title: "R2-A Authority-Free Operational Implementation Blueprint",
+      source: DIRECTIVE_005_SOURCE,
+      corpusStatus: "PARTIAL",
+      losslessCertification: false,
+      maturity: "SPECIFIED",
+      maturityHistory: maturityHistory(["PROPOSED", "SPECIFIED"], r2AImplSpecEvidence.evidenceId),
+      epistemicState: "SUPPORTED",
+      verificationState: "VERIFIED",
+      evidence: [directive005Evidence, r2AImplSpecEvidence],
+      acceptanceCriteria: [
+        criterion("Ω-AC-R2-A-IMPLSPEC-STATE", "Provisioning, termination, cleanup, failure, and quarantine states are explicit and closed under validated transitions.", "Deterministic lifecycle harness", "All defined transitions pass and invalid transitions fail closed"),
+        criterion("Ω-AC-R2-A-IMPLSPEC-IDENTITY", "Future mutation binds an authorized absent target slot to stable parent and created-object identities rather than lexical paths alone.", "Identity-substitution fixtures", "Parent/object substitution and best-effort binding are rejected"),
+        criterion("Ω-AC-R2-A-IMPLSPEC-NOAUTH", "The blueprint grants no filesystem or write authority.", "Static blueprint inspection and authority manifest", "Operational authority UNAVAILABLE; filesystem adapter NONE"),
+        criterion("Ω-AC-R2-A-IMPLSPEC-DELTA", "The desired future R2-A delta adds only sandbox provision and terminate primitives.", "Capability-delta evaluator", "Aggregate/content write remain unavailable and every forbidden action remains forbidden"),
+      ],
+      falsificationCriteria: [
+        criterion("Ω-FC-R2-A-IMPLSPEC-CLEANUP", "Unknown cleanup is represented as successful or permits reuse.", "Cleanup and quarantine fixtures", "Any false success or reuse"),
+        criterion("Ω-FC-R2-A-IMPLSPEC-RETRY", "Authorization, confinement, or identity failure can silently retry without new authorization.", "Failure-policy fixtures", "Any automatic security retry"),
+        criterion("Ω-FC-R2-A-IMPLSPEC-AUTH", "The design artifact exposes an operational filesystem adapter or broader authority.", "Static blueprint inspection", "Any operational adapter or unexpected authority delta"),
+      ],
+      dependencies: ["Ω-PLAN-SEC-003", "Ω-PLAN-R2-A-SPEC-EVAL-001", "Ω-PLAN-R2-DESIGN-001", "Ω-CAP-READ-REPOSITORY"],
+      implementationMappings: [
+        { kind: "repository", ref: "src/lib/codelab/executor/r2ProvisioningBlueprint.ts", status: "experimental" },
+        { kind: "tool", ref: "scripts/omegaR2AImplSpec.test.ts", status: "active" },
+      ],
+      securityProfile: {
+        threatModel: ["Lexical-path authorization without object identity", "TOCTOU parent or target substitution", "cleanup uncertainty", "silent security retry", "authority-name overbreadth", "maturity inflation"],
+        privilegeRequirements: ["No runtime privilege; interfaces and pure validators only"],
+        dataSensitivity: "INTERNAL",
+        isolationRequirements: ["No filesystem imports", "No sandbox creation", "No content mutation", "No network or credentials"],
+        attackSurface: ["Provision request", "authorized target slot", "lifecycle transition", "cleanup/quarantine evidence", "authority manifest"],
+        trustAssumptions: ["Future host adapter supplies stable object identities", "SEC-003 remains unresolved", "hash chain remains tamper-evident but unsigned"],
+        possibleMisuse: ["Treating a verified blueprint as granted authority", "Treating aggregate WRITE_SANDBOX as equivalent to provisioning"],
+        compromisePaths: ["Future adapter skips identity recheck", "future cleanup record is fabricated", "candidate version binding is omitted"],
+        blastRadius: "No operational blast radius; this chunk contains no filesystem adapter and grants no authority.",
+        containmentMechanisms: ["Atomic authority names", "explicit negative certificates", "quarantine and revocation", "no silent retry", "exact candidate binding"],
+        rollbackMechanisms: ["Revert blueprint commit; no runtime or filesystem state was changed"],
+        securityEvidenceIds: [r2AImplSpecEvidence.evidenceId],
+      },
+      researchMaturity: "EXPERIMENT_DESIGNED",
+      hypothesis: {
+        statement: "An exact authority-free R2-A blueprint can surface object-identity, cleanup, retry, and privilege-delta failures before a host adapter exists.",
+        supportCriterion: "All deterministic blueprint attacks fail closed while WRITE_SANDBOX remains unavailable.",
+        falsificationCriterion: "The blueprint requires filesystem authority to validate, permits lexical-only identity, treats unknown cleanup as success, or expands forbidden authority.",
+        baseline: "R2-A phase specification at a46aed6 without exact operational interfaces or state transitions",
+        competingExplanations: ["The blueprint duplicates the earlier R2-A specification without improving implementation precision", "Host behavior will invalidate the proposed identity contract"],
+        measurementMethod: "Pure deterministic interface, state-machine, identity, cleanup, audit, version-binding, and capability-delta fixtures",
+        requiredPopulation: "Valid and adversarial requests, identities, transitions, cleanup outcomes, quarantine records, audits, and authority manifests",
+        computeBudget: "Single local CPU process; no filesystem mutation, model inference, or network",
+        calibrationRequirement: "Plan is SPECIFIED and its design verification is VERIFIED; operational WRITE_SANDBOX remains UNVERIFIED and unavailable",
+      },
+      relationships: [{ kind: "DERIVES_FROM", targetId: "Ω-PLAN-R2-A-SPEC-EVAL-001" }],
+    },
+    {
+      recordType: "PLAN",
       canonicalId: "Ω-PLAN-TS-RATCHET-001",
       originalSourceId: "Ω-TS-RATCHET-001",
       title: "Full-Project TypeScript Diagnostic Ratchet",
@@ -723,17 +804,18 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
       maturityHistory: maturityHistory(["PROPOSED", "SPECIFIED"], r2DesignEvidence.evidenceId),
       epistemicState: "INSUFFICIENT_EVIDENCE",
       verificationState: "UNVERIFIED",
-      evidence: [r2DesignEvidence, r2ASpecEvidence],
+      evidence: [r2DesignEvidence, r2ASpecEvidence, r2AImplSpecEvidence],
       acceptanceCriteria: [
         criterion("Ω-AC-CAP-R2", "Future isolated writes preserve R1 boundaries and rollback exactly.", "Disposable filesystem demonstration and negative-capability regression", "R2-A through R2-G evidenced; A-prime equivalent to A after rollback"),
       ],
       falsificationCriteria: [
         criterion("Ω-FC-CAP-R2", "Any write escapes the sandbox, lacks provenance, or cannot roll back.", "Adversarial operational evaluation", "Any escape, omitted action, or rollback mismatch"),
       ],
-      dependencies: ["Ω-PLAN-R2-DESIGN-001", "Ω-PLAN-R2-A-SPEC-EVAL-001", "Ω-PLAN-SEC-003", "Ω-CAP-READ-REPOSITORY"],
+      dependencies: ["Ω-PLAN-R2-DESIGN-001", "Ω-PLAN-R2-A-SPEC-EVAL-001", "Ω-PLAN-R2-A-IMPLSPEC-001", "Ω-PLAN-SEC-003", "Ω-CAP-READ-REPOSITORY"],
       implementationMappings: [
         { kind: "repository", ref: "src/lib/codelab/executor/r2Design.ts", status: "experimental" },
         { kind: "repository", ref: "src/lib/codelab/executor/r2SandboxProvisioningSpec.ts", status: "experimental" },
+        { kind: "repository", ref: "src/lib/codelab/executor/r2ProvisioningBlueprint.ts", status: "experimental" },
       ],
       securityProfile: {
         threatModel: ["Unimplemented capability is mistakenly represented as available.", "Future write escapes or weakens R1."],
@@ -747,7 +829,7 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
         blastRadius: "No operational blast radius exists in this chunk because no write adapter is implemented.",
         containmentMechanisms: ["Capability remains INSUFFICIENT_EVIDENCE and UNVERIFIED", "eligibility gate is INELIGIBLE"],
         rollbackMechanisms: ["Specified only; not yet demonstrated"],
-        securityEvidenceIds: [r2DesignEvidence.evidenceId, r2ASpecEvidence.evidenceId],
+        securityEvidenceIds: [r2DesignEvidence.evidenceId, r2ASpecEvidence.evidenceId, r2AImplSpecEvidence.evidenceId],
       },
       researchMaturity: "EXPERIMENT_DESIGNED",
       relationships: [{ kind: "DEPENDS_ON", targetId: "Ω-CAP-READ-REPOSITORY" }],
@@ -905,11 +987,11 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
       capabilityId: "Ω-CAP-WRITE-SANDBOX",
       expectedEvidence: ["Design contracts", "R2-A provisioning specification", "Disposable sandbox demonstration", "Rollback proof", "Preserved forbidden actions"],
       previousResult: "UNAVAILABLE",
-      currentResult: "SPECIFIED_R2_A_NOT_IMPLEMENTED",
+      currentResult: "IMPLSPEC_VERIFIED_AUTHORITY_UNAVAILABLE",
       change: "NEW",
       confidence: 1,
       previousEvidenceIds: [],
-      currentEvidenceIds: [r2DesignEvidence.evidenceId, r2ASpecEvidence.evidenceId],
+      currentEvidenceIds: [r2DesignEvidence.evidenceId, r2ASpecEvidence.evidenceId, r2AImplSpecEvidence.evidenceId],
     },
     {
       capabilityId: "Ω-CAP-TS-ERROR-RATCHET",

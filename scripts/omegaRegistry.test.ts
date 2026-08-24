@@ -135,6 +135,9 @@ assert(sec003Plan?.securityClosureSubstates?.filter((item) => item.substateId !=
 assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-DESIGN-001")?.maturity === "SPECIFIED", "R2 plan stops at SPECIFIED maturity");
 assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-DESIGN-001")?.verificationState === "VERIFIED", "R2 specification has verification evidence without claiming implementation");
 assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-A-SPEC-EVAL-001")?.verificationState === "VERIFIED", "R2-A specification/evaluator is verified without operational authority");
+const r2AImplSpecPlan = OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-A-IMPLSPEC-001");
+assert(r2AImplSpecPlan?.maturity === "SPECIFIED" && r2AImplSpecPlan.verificationState === "VERIFIED", "R2-A implementation blueprint is design-verified at SPECIFIED maturity only");
+assert(r2AImplSpecPlan?.implementationMappings.every((mapping) => mapping.status !== "active" || mapping.kind === "tool"), "R2-A implementation blueprint has no active repository authority mapping");
 assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-TS-RATCHET-001")?.maturity === "VERIFIED", "TypeScript diagnostic ratchet plan is operationally verified");
 assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-ASSURE-R2-SPEC-001")?.verificationState === "VERIFIED", "R2 assurance decision specification is verified without certifying R2");
 const writeSandboxCapability = OMEGA_BASELINE_REGISTRY.capabilities.find((capability) => capability.canonicalId === "Ω-CAP-WRITE-SANDBOX");
@@ -143,7 +146,8 @@ assert(writeSandboxCapability?.implementationMappings.every((mapping) => mapping
 assert(dependenciesOf(OMEGA_BASELINE_REGISTRY, "Ω-PLAN-R2-DESIGN-001").some((dependency) => dependency.canonicalId === "Ω-PLAN-SEC-003"), "R2 design dependency graph retains credential containment blocker");
 assert(dependenciesOf(OMEGA_BASELINE_REGISTRY, "Ω-PLAN-R2-A-SPEC-EVAL-001").some((dependency) => dependency.canonicalId === "Ω-PLAN-SEC-003"), "R2-A implementation preparation retains credential containment blocker");
 assert(capabilityRelationships(OMEGA_BASELINE_REGISTRY, "Ω-CAP-WRITE-SANDBOX", "DEPENDS_ON")[0]?.canonicalId === "Ω-CAP-READ-REPOSITORY", "WRITE_SANDBOX capability depends on verified R1 observation");
-assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-WRITE-SANDBOX" && entry.currentResult === "SPECIFIED_R2_A_NOT_IMPLEMENTED"), "capability regression ledger distinguishes R2-A specification from implementation");
+assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-WRITE-SANDBOX" && entry.currentResult === "IMPLSPEC_VERIFIED_AUTHORITY_UNAVAILABLE"), "capability regression ledger distinguishes blueprint verification from authority availability");
+assert(writeSandboxCapability?.implementationMappings.some((mapping) => mapping.ref.endsWith("r2ProvisioningBlueprint.ts") && mapping.status === "experimental"), "WRITE_SANDBOX maps the blueprint as experimental rather than active authority");
 assert(OMEGA_BASELINE_REGISTRY.capabilities.find((capability) => capability.canonicalId === "Ω-CAP-TS-ERROR-RATCHET")?.verificationState === "VERIFIED", "TypeScript no-new-error capability is registered as verified");
 assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-TS-ERROR-RATCHET" && entry.currentResult.endsWith("NEW_0")), "TypeScript regression record preserves the zero-new-error result");
 const r2AssuranceCapability = OMEGA_BASELINE_REGISTRY.capabilities.find((capability) => capability.canonicalId === "Ω-CAP-R2-INDEPENDENT-ASSURANCE");
