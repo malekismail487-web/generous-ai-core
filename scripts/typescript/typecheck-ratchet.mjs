@@ -90,7 +90,12 @@ export function loadTypeScriptBaseline(path = BASELINE_PATH) {
     || !/^[0-9a-f]{40}$/.test(parsed?.baselineCommit ?? "")
     || !/^[0-9]+\.[0-9]+\.[0-9]+$/.test(parsed?.typescriptVersion ?? "")
     || parsed?.project !== "tsconfig.app.json"
-    || !diagnosticsValid) {
+    || parsed?.predecessor?.transition !== "STRICT_DOWNWARD_SUBSET"
+    || !/^[0-9a-f]{40}$/.test(parsed?.predecessor?.baselineCommit ?? "")
+    || !Number.isInteger(parsed?.predecessor?.diagnosticCount)
+    || !diagnosticsValid
+    || parsed.predecessor.diagnosticCount <= parsed.diagnostics.length
+    || !String(parsed?.predecessor?.artifactRef ?? "").startsWith("git://")) {
     throw new Error("Unsupported or malformed TypeScript diagnostic baseline.");
   }
   return parsed;

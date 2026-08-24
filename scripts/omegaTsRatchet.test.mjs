@@ -52,8 +52,11 @@ assert(!compilerVersionMatches("Version 5.9.0", "5.8.3"), "compiler upgrade cann
 
 const stored = loadTypeScriptBaseline();
 assert(stored.schemaVersion === 1, "stored baseline schema is recognized");
-assert(stored.baselineCommit === "d2b7121716cb17d0b78e29b9a6510e8c122b901e", "stored baseline identifies the exact accepted commit");
-assert(stored.diagnostics.length === 7, "stored baseline contains all seven freshly reproduced diagnostics");
+assert(stored.baselineCommit === "e97da82a00208725d66f618b15fa6580b2301f10", "zero-error baseline identifies the exact pushed source commit");
+assert(stored.diagnostics.length === 0, "stored baseline accepts no historical TypeScript diagnostics");
+assert(stored.predecessor.baselineCommit === "d2b7121716cb17d0b78e29b9a6510e8c122b901e" && stored.predecessor.diagnosticCount === 7,
+  "downward baseline preserves its seven-error predecessor genealogy");
+assert(stored.predecessor.transition === "STRICT_DOWNWARD_SUBSET", "baseline transition is explicitly downward-only");
 assert(stored.typescriptVersion === "5.8.3", "stored baseline binds exact TypeScript 5.8.3");
 assert(stored.project === "tsconfig.app.json", "stored baseline binds the intended project configuration");
 
@@ -64,7 +67,7 @@ const live = spawnSync(process.execPath, ["scripts/typescript/typecheck-ratchet.
 });
 const liveOutput = `${live.stdout ?? ""}\n${live.stderr ?? ""}`;
 assert(live.status === 0, "live full-project TypeScript ratchet permits only baseline debt");
-assert(/baseline=7 current=0 new=0 resolved=7/.test(liveOutput), "live ratchet proves all seven historical diagnostics resolved before re-baselining");
+assert(/baseline=0 current=0 new=0 resolved=0/.test(liveOutput), "live ratchet enforces the zero-diagnostic baseline");
 assert(/typescript=5\.8\.3/.test(liveOutput), "live ratchet reports the verified compiler version");
 assert(!liveOutput.includes("NEW_TYPE_ERROR"), "live ratchet reports no new TypeScript diagnostics");
 

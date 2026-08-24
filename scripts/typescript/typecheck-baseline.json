@@ -1,45 +1,15 @@
 {
   "schemaVersion": 1,
-  "baselineCommit": "d2b7121716cb17d0b78e29b9a6510e8c122b901e",
+  "baselineCommit": "e97da82a00208725d66f618b15fa6580b2301f10",
   "typescriptVersion": "5.8.3",
   "project": "tsconfig.app.json",
   "capturedAt": "2026-08-24",
   "policy": "EXISTING_DEBT_TEMPORARILY_PERMITTED_NEW_DEBT_FORBIDDEN",
-  "diagnostics": [
-    {
-      "file": "src/lib/codelab/agent/types.ts",
-      "code": "TS2322",
-      "message": "Type '{ resultJson?: unknown; kind: \"tool_result\"; callId: string; ok: boolean; summary: string; }' is not assignable to type 'AgentEventDraft'."
-    },
-    {
-      "file": "src/lib/codelab/agent/types.ts",
-      "code": "TS2322",
-      "message": "Type '{ contentAfter?: unknown; kind: \"file_delta\"; path: string; op: \"delete\" | \"write\"; }' is not assignable to type 'AgentEventDraft'."
-    },
-    {
-      "file": "src/lib/codelab/orchestra/harness.ts",
-      "code": "TS2322",
-      "message": "Type 'V<ProbeResult>' is not assignable to type 'V<EvidencePack>'."
-    },
-    {
-      "file": "src/lib/codelab/orchestra/router.ts",
-      "code": "TS2339",
-      "message": "Property 'reason' does not exist on type 'RouteDecision'."
-    },
-    {
-      "file": "src/lib/codelab/orchestra/swarm.ts",
-      "code": "TS2339",
-      "message": "Property 'reason' does not exist on type 'GateDecision'."
-    },
-    {
-      "file": "src/lib/codelab/orchestra/swarm.ts",
-      "code": "TS2339",
-      "message": "Property 'reason' does not exist on type 'GateDecision'."
-    },
-    {
-      "file": "src/lib/codelab/registry/registry.ts",
-      "code": "TS2339",
-      "message": "Property 'errors' does not exist on type 'RegistryValidation'."
-    }
-  ]
+  "predecessor": {
+    "baselineCommit": "d2b7121716cb17d0b78e29b9a6510e8c122b901e",
+    "diagnosticCount": 7,
+    "artifactRef": "git://generous-ai-core/commit/e97da82a00208725d66f618b15fa6580b2301f10^/scripts/typescript/typecheck-baseline.json",
+    "transition": "STRICT_DOWNWARD_SUBSET"
+  },
+  "diagnostics": []
 }
