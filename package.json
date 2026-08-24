@@ -11,6 +11,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "security:secrets": "node scripts/security/scan-secrets.mjs",
     "w0rs:inventory": "node scripts/w0rs/inventory.mjs --write",
     "w0rs:inventory:check": "node scripts/w0rs/inventory.mjs --check",
     "w0rs:archive": "node scripts/w0rs/archive-manifest.mjs --write",

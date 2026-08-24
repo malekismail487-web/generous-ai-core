@@ -8,7 +8,7 @@ engine code.
 
 ```
 POST https://ivzltzehosalijmkgzhb.supabase.co/functions/v1/ale-api
-Authorization: Bearer ale_live_EFHs4BuU8wPyejRBi3VYZ1lSLnaaTJKlJv6HZiwem0o
+Authorization: Bearer ale_live_REDACTED
 Content-Type: application/json
 ```
 

@@ -8,7 +8,7 @@
  * on: nulls, empty arrays, sign of delta.
  */
 
-import { formatRate, formatDelta } from '../src/lib/outcomeMetrics';
+import { formatRate, formatDelta } from '../src/lib/outcomeMetricsFormat';
 
 let failed = 0;
 function assert(cond: unknown, msg: string) {

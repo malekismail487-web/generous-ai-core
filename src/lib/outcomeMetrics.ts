@@ -22,6 +22,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+export { formatDelta, formatRate } from '@/lib/outcomeMetricsFormat';
+
 export interface OutcomeWindow {
   windowDays: number;
   windowStart: string; // ISO
@@ -215,18 +217,4 @@ export async function computeOutcomeMetrics(userId: string): Promise<OutcomeMetr
       helpfulnessDelta: delta(last7.helpfulnessPositiveRate, prior.helpfulnessPositiveRate),
     },
   };
-}
-
-/** Human-friendly formatter for the diagnostics panel. */
-export function formatRate(n: number | null, digits = 0): string {
-  if (n == null) return '—';
-  return `${(n * 100).toFixed(digits)}%`;
-}
-
-export function formatDelta(n: number | null): { text: string; tone: 'up' | 'down' | 'flat' | 'na' } {
-  if (n == null) return { text: '—', tone: 'na' };
-  const pct = n * 100;
-  if (Math.abs(pct) < 0.5) return { text: '±0%', tone: 'flat' };
-  const sign = pct > 0 ? '+' : '';
-  return { text: `${sign}${pct.toFixed(1)}%`, tone: pct > 0 ? 'up' : 'down' };
 }

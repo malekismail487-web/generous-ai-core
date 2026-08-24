@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - "sol/w0-rs-*"
+      - "sol/omega-*"
 
 permissions:
   contents: read
@@ -17,6 +18,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Reject tracked secrets
+        run: node scripts/security/scan-secrets.mjs
       - name: Verify generated repository inventories
         run: node scripts/w0rs/inventory.mjs --check
       - name: Verify deterministic migration-failure evidence

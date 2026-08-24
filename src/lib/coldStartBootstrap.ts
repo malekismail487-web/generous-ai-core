@@ -26,6 +26,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { ContentModality } from '@/hooks/useActivityTracker';
 
+export { shouldApplyColdStart } from '@/lib/coldStartPolicy';
+
 export interface ColdStartSeed {
   /** Source of the seed — useful for diagnostics and the dev panel. */
   source: 'iq+grade' | 'iq' | 'grade' | 'none';
@@ -190,18 +192,4 @@ export async function fetchColdStartSeed(userId: string): Promise<ColdStartSeed 
       : null,
     gradeLevel,
   };
-}
-
-/**
- * Decide whether the seed should actually be applied. We only override
- * when the engine genuinely has nothing to say yet — once real signals
- * accumulate, the live engines win.
- */
-export function shouldApplyColdStart(opts: {
-  answerCount: number;
-  behaviorDataPoints: number;
-  hadExplicitLevelOverride: boolean;
-}): boolean {
-  if (opts.hadExplicitLevelOverride) return false;
-  return opts.answerCount < 5 && opts.behaviorDataPoints < 20;
 }

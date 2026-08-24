@@ -4,7 +4,7 @@
  */
 import {
   shouldApplyColdStart,
-} from '../src/lib/coldStartBootstrap';
+} from '../src/lib/coldStartPolicy';
 
 let failed = 0;
 function assert(cond: boolean, label: string) {
