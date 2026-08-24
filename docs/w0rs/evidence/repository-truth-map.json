@@ -2148,6 +2148,18 @@
       ]
     },
     {
+      "name": "OMEGA_PREVIOUS_TEST_MANIFEST_PATH",
+      "files": [
+        "scripts/omega/run-tests.mjs"
+      ]
+    },
+    {
+      "name": "OMEGA_TEST_GENEALOGY_CLASSIFICATIONS_PATH",
+      "files": [
+        "scripts/omega/run-tests.mjs"
+      ]
+    },
+    {
       "name": "OMEGA_TEST_MANIFEST_PATH",
       "files": [
         "scripts/omega/run-tests.mjs"
