@@ -2,6 +2,8 @@ import {
   OMEGA_R1_BEHAVIORAL_BASELINE,
   OMEGA_R1_INTEGRATED_BASELINE,
   PRE_R2_GATE_REQUIREMENTS,
+  classifyProductionBuildRun,
+  classifyW0ExecutionSummary,
   evaluatePreR2Gate,
 } from "./omega/pre-r2-gate.mjs";
 
@@ -43,6 +45,12 @@ assert(evaluatePreR2Gate(bundle({ evidence: [...bundle().evidence, bundle().evid
 assert(evaluatePreR2Gate(bundle({ evidence: bundle().evidence.map((entry) => entry.requirement === "HARNESS_MANIFEST" ? { ...entry, candidate: { ...candidate, commit: "b".repeat(40) } } : entry) })).decision === "INSUFFICIENT_EVIDENCE", "cross-candidate evidence cannot satisfy the bundle");
 assert(evaluatePreR2Gate(bundle({ evidence: bundle().evidence.map((entry) => entry.requirement === "TYPESCRIPT_ZERO_RATCHET" ? { ...entry, freshness: "STALE" } : entry) })).decision === "INSUFFICIENT_EVIDENCE", "stale evidence requires revalidation");
 assert(evaluatePreR2Gate(bundle({ currentDependencies: [{ dependencyId: "SOURCE", fingerprint: "source-v2" }] })).decision === "INSUFFICIENT_EVIDENCE", "dependency change invalidates only evidence bound to that dependency");
+assert(classifyProductionBuildRun({ exitCode: 0, stdout: "", stderr: "" }) === "PASS", "successful production build is classified as pass");
+assert(classifyProductionBuildRun({ exitCode: 1, stdout: "", stderr: "Access is denied" }) === "BLOCKED_ENVIRONMENT", "sandbox filesystem denial is not misreported as a product build failure");
+assert(classifyProductionBuildRun({ exitCode: 1, stdout: "", stderr: "syntax error" }) === "FAIL", "real build failure remains failure");
+assert(classifyW0ExecutionSummary({ passed: 36, failed: 0, blocked: 0 }) === "PASS", "executed green Deno population can pass");
+assert(classifyW0ExecutionSummary({ passed: 0, failed: 0, blocked: 36 }) === "BLOCKED_ENVIRONMENT", "missing Deno runtime blocks the executed population");
+assert(classifyW0ExecutionSummary({ passed: 35, failed: 1, blocked: 0 }) === "FAIL", "Deno test failure cannot be laundered as environment blocking");
 
 console.log(`Omega pre-R2 gate bundle tests - passed: ${passed}, failed: ${failed}`);
 if (failed > 0) {

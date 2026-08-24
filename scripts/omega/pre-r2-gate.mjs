@@ -74,6 +74,19 @@ function parseJsonLine(output, prefix) {
   try { return JSON.parse(line.slice(prefix.length)); } catch { return null; }
 }
 
+export function classifyProductionBuildRun(runResult) {
+  if (runResult.exitCode === 0) return "PASS";
+  const output = `${runResult.stdout ?? ""}\n${runResult.stderr ?? ""}`;
+  return /Access is denied/i.test(output) ? "BLOCKED_ENVIRONMENT" : "FAIL";
+}
+
+export function classifyW0ExecutionSummary(summary) {
+  if (!summary || !Number.isInteger(summary.failed) || !Number.isInteger(summary.blocked)) return "FAIL";
+  if (summary.failed > 0) return "FAIL";
+  if (summary.blocked > 0) return "BLOCKED_ENVIRONMENT";
+  return summary.passed > 0 ? "PASS" : "FAIL";
+}
+
 function evidence(requirement, outcome, runResult, candidate, dependencies, detail, evidenceRef = null) {
   return Object.freeze({
     requirement,
@@ -179,19 +192,21 @@ export function collectPreR2GateEvidence() {
   results.push(evidence("SECRET_SCAN", secretRun.exitCode === 0 && /SECRET_SCAN_PASSED/.test(secretRun.stdout) ? "PASS" : "FAIL", secretRun, candidate,
     pick("SECRET_SCANNER", "NODE_VERSION"), secretRun.stdout.trim() || secretRun.stderr.trim()));
 
-  const npm = process.platform === "win32" ? "npm.cmd" : "npm";
-  const buildRun = run(npm, ["run", "build"], ++order, "vite-production-build/1");
-  results.push(evidence("PRODUCTION_BUILD", buildRun.exitCode === 0 ? "PASS" : "FAIL", buildRun, candidate,
-    pick("NODE_VERSION"), buildRun.exitCode === 0 ? "production build completed" : (buildRun.stderr.trim() || "production build failed")));
+  const buildRun = run(process.execPath, ["node_modules/vite/bin/vite.js", "build"], ++order, "vite-production-build/2");
+  const buildOutcome = classifyProductionBuildRun(buildRun);
+  results.push(evidence("PRODUCTION_BUILD", buildOutcome, buildRun, candidate,
+    pick("NODE_VERSION"), buildOutcome === "PASS" ? "production build completed" : (buildRun.stderr.trim() || "production build unavailable")));
 
   const w0NodeRun = run(process.execPath, ["scripts/w0rs/run-tests.mjs", "--group", "node-dependencies", "--group", "node-offline", "--group", "static-audit"], ++order, "w0-deterministic/1");
   const w0NodeSummary = parseJsonLine(w0NodeRun.stdout, "SUMMARY ");
   results.push(evidence("W0_NODE_STATIC", w0NodeRun.exitCode === 0 && w0NodeSummary?.failed === 0 && w0NodeSummary?.blocked === 0 ? "PASS" : "FAIL", w0NodeRun, candidate,
     pick("W0_TEST_MANIFEST", "NODE_VERSION"), w0NodeSummary ? JSON.stringify(w0NodeSummary) : "W0 Node/static summary unavailable"));
 
-  const denoRun = run("deno", ["test", "--version"], ++order, "w0-deno-environment-probe/1");
-  const denoOutcome = denoRun.errorCode === "ENOENT" ? "BLOCKED_ENVIRONMENT" : denoRun.exitCode === 0 ? "PASS" : "FAIL";
-  results.push(evidence("W0_DENO", denoOutcome, denoRun, candidate, [], denoOutcome === "BLOCKED_ENVIRONMENT" ? "Deno runtime unavailable; 220 checks not executed" : "Deno runtime probe completed"));
+  const denoRun = run(process.execPath, ["scripts/w0rs/run-tests.mjs", "--group", "deno-unit"], ++order, "w0-deno-deterministic/1");
+  const denoSummary = parseJsonLine(denoRun.stdout, "SUMMARY ");
+  const denoOutcome = classifyW0ExecutionSummary(denoSummary);
+  results.push(evidence("W0_DENO", denoOutcome, denoRun, candidate, pick("W0_TEST_MANIFEST", "NODE_VERSION"),
+    denoSummary ? JSON.stringify(denoSummary) : "W0 Deno execution summary unavailable"));
 
   return Object.freeze({
     schemaVersion: 1,
