@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/2",
+  "suiteVersion": "omega-institutional-suite/3",
   "requiredSuites": [
     { "suiteId": "CODELAB-AGENT-PROTOCOL", "file": "scripts/codelabAgentProtocol.test.ts" },
     { "suiteId": "CODELAB-AGENT-REDUCER", "file": "scripts/codelabAgentReducer.test.ts" },
@@ -27,6 +27,7 @@
     { "suiteId": "OMEGA-READ-ONLY-EXECUTOR", "file": "scripts/omegaReadOnlyExecutor.test.ts" },
     { "suiteId": "OMEGA-REGISTRY", "file": "scripts/omegaRegistry.test.ts" },
     { "suiteId": "OMEGA-REGISTRY-CRITICAL-PATH", "file": "scripts/omegaRegistryCriticalPath.test.ts" },
+    { "suiteId": "OMEGA-REGISTRY-EVIDENCE-BRIDGE", "file": "scripts/omegaRegistryEvidenceBridge.test.ts" },
     { "suiteId": "OMEGA-TS-RATCHET", "file": "scripts/omegaTsRatchet.test.mjs" }
   ]
 }

@@ -226,6 +226,35 @@ export const INSTITUTIONAL_WORK_STATES = Object.freeze([
 ] as const);
 export type InstitutionalWorkState = (typeof INSTITUTIONAL_WORK_STATES)[number];
 
+export const INSTITUTIONAL_ADMINISTRATIVE_STATES = Object.freeze([
+  "QUEUED",
+  "BLOCKED_EXTERNAL",
+  "AUTHORIZED",
+  "CANCELLED",
+  "SUPERSEDED",
+] as const);
+export type InstitutionalAdministrativeState = (typeof INSTITUTIONAL_ADMINISTRATIVE_STATES)[number];
+
+export const INSTITUTIONAL_EVIDENTIARY_STATES = Object.freeze([
+  "UNVERIFIED",
+  "SUPPORTED",
+  "VERIFIED",
+  "REFUTED",
+  "CONFLICTED",
+  "UNKNOWN",
+  "INSUFFICIENT_EVIDENCE",
+  "STALE",
+] as const);
+export type InstitutionalEvidentiaryState = (typeof INSTITUTIONAL_EVIDENTIARY_STATES)[number];
+
+export interface EvidenceBoundWorkState {
+  readonly workItemId: string;
+  readonly administrativeState: InstitutionalAdministrativeState;
+  readonly evidentiaryState: InstitutionalEvidentiaryState;
+  readonly evidenceAdmissionRefs: readonly string[];
+  readonly blockingReasons: readonly string[];
+}
+
 export interface InstitutionalWorkItem {
   readonly workItemId: string;
   readonly title: string;

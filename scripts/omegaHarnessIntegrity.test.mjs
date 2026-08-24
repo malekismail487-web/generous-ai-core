@@ -23,7 +23,7 @@ function assert(condition, label) {
 const catalog = loadSuiteCatalog(resolve(ROOT, "scripts/omega/required-suites.json"));
 const discovered = discoverOmegaTestFiles(ROOT);
 const liveComposition = assessSuiteComposition(catalog.requiredSuites, discovered);
-assert(catalog.schemaVersion === 1 && catalog.suiteVersion === "omega-institutional-suite/2", "catalog schema and suite genealogy are explicit");
+assert(catalog.schemaVersion === 1 && /^omega-institutional-suite\/\d+$/.test(catalog.suiteVersion), "catalog schema and suite genealogy are explicit");
 assert(liveComposition.ok, "declared and discovered Ω suite composition matches");
 assert(liveComposition.suites.some((suite) => suite.suiteId === "OMEGA-HARNESS-INTEGRITY"), "harness self-test is part of discovered execution");
 assert(isDiscoverableOmegaTest("scripts/omegaFuture.test.ts"), "future Ω tests are discoverable without runner count edits");
