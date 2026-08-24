@@ -17,11 +17,12 @@ const TESTS = Object.freeze([
   ["scripts/orchestraO6.test.ts", 28],
   ["scripts/orchestraO7a.test.ts", 19],
   ["scripts/orchestraO7perception.test.ts", 19],
-  ["scripts/omegaRegistry.test.ts", 61],
+  ["scripts/omegaRegistry.test.ts", 64],
   ["scripts/omegaReadOnlyExecutor.test.ts", 34],
   ["scripts/evaluation/omegaR1PrivateEval.ts", 31],
   ["scripts/omegaR2Design.test.ts", 51],
   ["scripts/omegaR2ASpecEval.test.ts", 51],
+  ["scripts/omegaTsRatchet.test.mjs", 16],
 ]);
 
 let passedChecks = 0;

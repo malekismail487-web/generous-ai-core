@@ -1,0 +1,67 @@
+import { spawnSync } from "node:child_process";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  compareDiagnostics,
+  loadTypeScriptBaseline,
+  normalizeDiagnostic,
+  parseTypeScriptDiagnostics,
+} from "./typescript/typecheck-ratchet.mjs";
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+let passed = 0;
+let failed = 0;
+const failures = [];
+
+function assert(condition, label) {
+  if (condition) passed += 1;
+  else {
+    failed += 1;
+    failures.push(label);
+    console.error(`  x ${label}`);
+  }
+}
+
+const sample = [
+  "src/example.ts(4,2): error TS2322: Type 'number' is not assignable to type 'string'.",
+  "  continuation text is deliberately ignored by the stable first-line fingerprint",
+  "src/other.ts(8,1): error TS2339: Property 'x' does not exist on type 'Y'.",
+].join("\n");
+const parsed = parseTypeScriptDiagnostics(sample, ROOT);
+assert(parsed.length === 2, "parser extracts TypeScript diagnostic headers");
+assert(parsed[0].file === "src/example.ts", "parser normalizes diagnostic paths");
+assert(parsed[0].code === "TS2322", "parser preserves TypeScript diagnostic codes");
+assert(parsed[0].message.includes("not assignable"), "parser preserves the stable first-line message");
+assert(normalizeDiagnostic({ file: ".\\src\\a.ts", code: "TS1", message: " a   b " }).file === "src/a.ts", "diagnostic normalization is platform-neutral");
+
+const baseline = [parsed[0], parsed[1], parsed[1]];
+const unchanged = compareDiagnostics(baseline, [parsed[1], parsed[0], parsed[1]]);
+assert(unchanged.accepted && unchanged.newDiagnostics.length === 0, "ordering does not affect the ratchet");
+assert(unchanged.resolvedDiagnostics.length === 0, "unchanged diagnostics do not appear resolved");
+const improved = compareDiagnostics(baseline, [parsed[0]]);
+assert(improved.accepted, "resolved historical diagnostics are allowed");
+assert(improved.resolvedDiagnostics.length === 2, "duplicate historical diagnostics are counted as a multiset");
+const regressed = compareDiagnostics(baseline, [...baseline, { file: "src/new.ts", code: "TS9999", message: "New error" }]);
+assert(!regressed.accepted && regressed.newDiagnostics.length === 1, "new diagnostic fails the comparison");
+
+const stored = loadTypeScriptBaseline();
+assert(stored.schemaVersion === 1, "stored baseline schema is recognized");
+assert(stored.baselineCommit === "d2b7121716cb17d0b78e29b9a6510e8c122b901e", "stored baseline identifies the exact accepted commit");
+assert(stored.diagnostics.length === 7, "stored baseline contains all seven freshly reproduced diagnostics");
+
+const live = spawnSync(process.execPath, ["scripts/typescript/typecheck-ratchet.mjs"], {
+  cwd: ROOT,
+  encoding: "utf8",
+  timeout: 120_000,
+});
+const liveOutput = `${live.stdout ?? ""}\n${live.stderr ?? ""}`;
+assert(live.status === 0, "live full-project TypeScript ratchet permits only baseline debt");
+assert(/baseline=7 current=7 new=0 resolved=0/.test(liveOutput), "live ratchet reports exact baseline/current/new/resolved counts");
+assert(!liveOutput.includes("NEW_TYPE_ERROR"), "live ratchet reports no new TypeScript diagnostics");
+
+console.log(`Omega TypeScript ratchet tests - passed: ${passed}, failed: ${failed}`);
+if (failed > 0) {
+  console.error("FAILURES:");
+  for (const failure of failures) console.error(`  - ${failure}`);
+  process.exit(1);
+}
