@@ -182,6 +182,19 @@ export interface CapabilityRecord extends RegistryRecordBase {
   readonly recordType: "CAPABILITY";
   readonly relationships: readonly CapabilityRelationship[];
   readonly expectedEvidence: readonly string[];
+  readonly certificates?: readonly CapabilityCertificate[];
+}
+
+export interface CapabilityCertificate {
+  readonly certificateId: string;
+  readonly title: string;
+  readonly maturity: MaturityState;
+  readonly epistemicState: EpistemicState;
+  readonly verificationState: VerificationState;
+  readonly evidenceIds: readonly string[];
+  readonly threshold: string;
+  readonly result: string;
+  readonly confidence: number;
 }
 
 export interface CapabilityRegressionRecord {

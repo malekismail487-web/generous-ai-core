@@ -1,4 +1,5 @@
 import type {
+  CapabilityCertificate,
   Criterion,
   EvidenceRecord,
   MaturityAttestation,
@@ -12,6 +13,13 @@ const DIRECTIVE_SOURCE: SourceProvenance = Object.freeze({
   sourceId: "Ω-SOURCE-DIRECTIVE-002",
   sourceType: "conversation",
   locator: "conversation://omega-institutional-execution-directive-002",
+  contentHash: null,
+});
+
+const DIRECTIVE_003_SOURCE: SourceProvenance = Object.freeze({
+  sourceId: "Ω-SOURCE-DIRECTIVE-003",
+  sourceType: "conversation",
+  locator: "conversation://omega-institutional-execution-directive-003",
   contentHash: null,
 });
 
@@ -75,6 +83,25 @@ function securityProfile(evidenceIds: readonly string[], privilege = "No runtime
   };
 }
 
+function capabilityCertificate(
+  certificateId: string,
+  title: string,
+  evidenceId: string,
+  result: string,
+): CapabilityCertificate {
+  return {
+    certificateId,
+    title,
+    maturity: "VERIFIED",
+    epistemicState: "SUPPORTED",
+    verificationState: "VERIFIED",
+    evidenceIds: [evidenceId],
+    threshold: "All assigned held-out checks pass with zero false acceptance",
+    result,
+    confidence: 1,
+  };
+}
+
 const directiveEvidence = evidence(
   "Ω-EV-DIRECTIVE-002",
   "E0",
@@ -83,6 +110,15 @@ const directiveEvidence = evidence(
   "Explicit institutional directive",
   null,
   DIRECTIVE_SOURCE,
+);
+const directive003Evidence = evidence(
+  "Ω-EV-DIRECTIVE-003",
+  "E0",
+  "The institutional authority specified credential containment, private R1 evaluation, and R2 design requirements.",
+  DIRECTIVE_003_SOURCE.locator,
+  "Explicit institutional directive",
+  null,
+  DIRECTIVE_003_SOURCE,
 );
 const registryEvidence = evidence(
   "Ω-EV-REGISTRY-TESTS",
@@ -99,6 +135,22 @@ const readOnlyExecutorEvidence = evidence(
   "command://npm-run-omega-tests",
   "Node 24 executor adversarial harness with live repository observation",
   "The filesystem and deterministic harness produce observations independently from stored capability claims; harness-oracle correlation remains acknowledged.",
+);
+const r1BaselineEvidence = evidence(
+  "Ω-EV-R1-BASELINE-7729CF3",
+  "E3",
+  "Commit 7729cf3 is the immutable comparison point for the locally verified R1 executor foundation.",
+  "git://generous-ai-core/commit/7729cf3e3e6bdb9e8771dfcad6386ecc9fa55296",
+  "Git object identity and pushed upstream equality",
+  "Git independently identifies the exact repository state; it does not independently validate capability semantics.",
+);
+const r1PrivateEvaluationEvidence = evidence(
+  "Ω-EV-EVAL-R1-PRIVATE-31",
+  "E3",
+  "A fresh evaluator-owned repository corpus passed 31 held-out checks across R1-A through R1-J, including a real Windows junction escape attempt.",
+  "command://omega-r1-private-evaluation",
+  "Separate temporary-repository generator, direct host-filesystem oracle, and capability-certificate harness",
+  "The evaluator does not import executor normalization or audit validators and discovered a root-path defect before the corrected rerun; model-author correlation remains acknowledged.",
 );
 const orchestraEvidence = evidence(
   "Ω-EV-ORCHESTRA-385",
@@ -196,6 +248,50 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
       researchMaturity: "EXPERIMENT_RUN",
       relationships: [{ kind: "OVERLAPS", targetId: "Ω-PLAN-REG-001A" }],
     },
+    {
+      recordType: "PLAN",
+      canonicalId: "Ω-PLAN-EVAL-R1-001",
+      originalSourceId: "Ω-EVAL-R1-001",
+      title: "Independent Private R1 Evaluation",
+      source: DIRECTIVE_003_SOURCE,
+      corpusStatus: "PARTIAL",
+      losslessCertification: false,
+      maturity: "VERIFIED",
+      maturityHistory: maturityHistory(
+        ["PROPOSED", "SPECIFIED", "PROTOTYPED", "IMPLEMENTED", "INTEGRATED", "VERIFIED"],
+        r1PrivateEvaluationEvidence.evidenceId,
+      ),
+      epistemicState: "SUPPORTED",
+      verificationState: "VERIFIED",
+      evidence: [directive003Evidence, r1PrivateEvaluationEvidence, r1BaselineEvidence],
+      acceptanceCriteria: [
+        criterion("Ω-AC-EVAL-R1-HELDOUT", "Fresh evaluator-owned repository cases pass against independent expected outcomes.", "Private R1 evaluation harness", "All assigned checks pass"),
+        criterion("Ω-AC-EVAL-R1-ALIAS", "A real host filesystem alias cannot escape the canonical repository root.", "Real junction or symlink fixture", "Escape rejected without content or target disclosure"),
+      ],
+      falsificationCriteria: [
+        criterion("Ω-FC-EVAL-R1-ESCAPE", "Any held-out request observes content outside its authorization.", "Private adversarial fixture", "Any unauthorized observation falsifies R1 confinement"),
+        criterion("Ω-FC-EVAL-R1-CORRELATION", "The independent oracle fails to reveal any behavior beyond the unit harness.", "Defect-discovery comparison", "No differentiated case coverage or fault discovery"),
+      ],
+      dependencies: ["Ω-PLAN-VS-001A", "Ω-CAP-READ-REPOSITORY"],
+      implementationMappings: [
+        { kind: "tool", ref: "scripts/evaluation/omegaR1PrivateEval.ts", status: "active" },
+        { kind: "repository", ref: "src/lib/codelab/executor/readOnlyExecutor.ts", status: "active" },
+      ],
+      securityProfile: securityProfile([r1PrivateEvaluationEvidence.evidenceId], "R1 scoped read over evaluator-owned disposable repositories"),
+      researchMaturity: "EXPERIMENT_RUN",
+      hypothesis: {
+        statement: "A fresh, separately oracled repository suite reveals R1 failures hidden by implementation-adjacent unit tests.",
+        supportCriterion: "The evaluator discovers at least one real behavioral gap or materially expands host-filesystem evidence at matched authority.",
+        falsificationCriterion: "The evaluator adds no differentiated coverage and no independent behavioral information.",
+        baseline: "34 implementation-adjacent R1 unit checks at commit 7729cf3",
+        competingExplanations: ["Additional cases improve only test volume", "The same model author preserves correlated assumptions"],
+        measurementMethod: "Fresh temporary repository construction, direct host-filesystem expectations, and R1-A through R1-J certificates",
+        requiredPopulation: "Nested, ignored, Unicode, generated, bounded, malformed, nested-Git, alias, expired, revoked, and adversarial scope cases",
+        computeBudget: "Single local CPU process; no model inference and no network",
+        calibrationRequirement: "Exact outcomes; host alias unsupported state must be reported PARTIAL rather than inferred",
+      },
+      relationships: [{ kind: "OVERLAPS", targetId: "Ω-PLAN-VS-001A" }],
+    },
   ],
   capabilities: [
     {
@@ -238,15 +334,31 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
       ),
       epistemicState: "SUPPORTED",
       verificationState: "VERIFIED",
-      evidence: [readOnlyExecutorEvidence],
+      evidence: [readOnlyExecutorEvidence, r1BaselineEvidence, r1PrivateEvaluationEvidence],
       acceptanceCriteria: [criterion("Ω-AC-CAP-READ", "Authorized reads succeed and forbidden reads fail closed.", "Executor adversarial harness", "All defined cases pass")],
       falsificationCriteria: [criterion("Ω-FC-CAP-READ", "Any request escapes scope or loses provenance.", "Executor adversarial harness", "Any escape or missing evidence")],
-      dependencies: ["Ω-PLAN-VS-001A", "Ω-CAP-REGISTRY-INVARIANTS"],
-      implementationMappings: [{ kind: "repository", ref: "src/lib/codelab/executor", status: "active" }],
-      securityProfile: securityProfile([readOnlyExecutorEvidence.evidenceId], "R1 scoped repository read only"),
+      dependencies: ["Ω-PLAN-VS-001A", "Ω-PLAN-EVAL-R1-001", "Ω-CAP-REGISTRY-INVARIANTS"],
+      implementationMappings: [
+        { kind: "repository", ref: "src/lib/codelab/executor", status: "active" },
+        { kind: "repository", ref: "git:7729cf3e3e6bdb9e8771dfcad6386ecc9fa55296", status: "historical" },
+        { kind: "tool", ref: "scripts/evaluation/omegaR1PrivateEval.ts", status: "active" },
+      ],
+      securityProfile: securityProfile([readOnlyExecutorEvidence.evidenceId, r1PrivateEvaluationEvidence.evidenceId], "R1 scoped repository read only"),
       researchMaturity: "EXPERIMENT_RUN",
       relationships: [{ kind: "DEPENDS_ON", targetId: "Ω-CAP-REGISTRY-INVARIANTS" }],
-      expectedEvidence: ["Authorization decisions", "Tool-action records", "Observation evidence", "Revocation tests"],
+      expectedEvidence: ["Authorization decisions", "Tool-action records", "Observation evidence", "Revocation tests", "Less-correlated private repository cases"],
+      certificates: [
+        capabilityCertificate("Ω-CERT-R1-A", "Authorized file observation", r1PrivateEvaluationEvidence.evidenceId, "2/2 held-out checks passed"),
+        capabilityCertificate("Ω-CERT-R1-B", "Directory observation", r1PrivateEvaluationEvidence.evidenceId, "1/1 held-out check passed"),
+        capabilityCertificate("Ω-CERT-R1-C", "Metadata observation", r1PrivateEvaluationEvidence.evidenceId, "2/2 held-out checks passed"),
+        capabilityCertificate("Ω-CERT-R1-D", "Scope confinement", r1PrivateEvaluationEvidence.evidenceId, "6/6 held-out checks passed"),
+        capabilityCertificate("Ω-CERT-R1-E", "Canonical-path confinement", r1PrivateEvaluationEvidence.evidenceId, "1/1 real junction check passed"),
+        capabilityCertificate("Ω-CERT-R1-F", "Revocation", r1PrivateEvaluationEvidence.evidenceId, "2/2 held-out checks passed"),
+        capabilityCertificate("Ω-CERT-R1-G", "Audit completeness", r1PrivateEvaluationEvidence.evidenceId, "3/3 independent-oracle checks passed"),
+        capabilityCertificate("Ω-CERT-R1-H", "Epistemic failure handling", r1PrivateEvaluationEvidence.evidenceId, "4/4 held-out checks passed"),
+        capabilityCertificate("Ω-CERT-R1-I", "Resource-bound enforcement", r1PrivateEvaluationEvidence.evidenceId, "3/3 held-out checks passed"),
+        capabilityCertificate("Ω-CERT-R1-J", "Host-filesystem edge cases", r1PrivateEvaluationEvidence.evidenceId, "7/7 checks passed with a real Windows junction"),
+      ],
     },
     {
       recordType: "CAPABILITY",
@@ -312,13 +424,13 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
     },
     {
       capabilityId: "Ω-CAP-READ-REPOSITORY",
-      expectedEvidence: ["Scoped repository observation harness"],
-      previousResult: "UNAVAILABLE",
-      currentResult: "VERIFIED_R1_34_OF_34",
-      change: "NEW",
+      expectedEvidence: ["Scoped repository observation harness", "Fresh private repository evaluation", "Real host alias confinement"],
+      previousResult: "VERIFIED_R1_34_OF_34_AT_7729CF3",
+      currentResult: "VERIFIED_R1_PRIVATE_31_OF_31",
+      change: "IMPROVED",
       confidence: 1,
-      previousEvidenceIds: [],
-      currentEvidenceIds: [readOnlyExecutorEvidence.evidenceId],
+      previousEvidenceIds: [readOnlyExecutorEvidence.evidenceId, r1BaselineEvidence.evidenceId],
+      currentEvidenceIds: [readOnlyExecutorEvidence.evidenceId, r1BaselineEvidence.evidenceId, r1PrivateEvaluationEvidence.evidenceId],
     },
     {
       capabilityId: "Ω-CAP-TRACKED-SECRET-DETECTION",

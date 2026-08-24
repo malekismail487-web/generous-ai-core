@@ -54,7 +54,7 @@ function within(root: string, candidate: string): boolean {
 
 function normalizeRelativeResource(resource: unknown): string | null {
   if (!nonEmpty(resource) || resource.includes("\0") || isAbsolute(resource) || /^[A-Za-z]:/.test(resource)) return null;
-  const unix = resource.replaceAll("\\", "/");
+  const unix = resource.replace(/\\/g, "/");
   if (unix.startsWith("/") || unix.includes("//")) return null;
   const segments = unix.split("/");
   if (segments.some((segment) => segment === ".." || segment.length === 0)) return null;
@@ -291,7 +291,8 @@ export class ReadOnlyRepositoryExecutor {
     if (!within(this.#realRoot, resolvedPath)) {
       return { ...base, status: "OUTSIDE_RESOLVED_SCOPE", epistemicState: "OUT_OF_SCOPE", resolvedPath: null, resourceKind: "UNKNOWN", detail: "Resolved resource escapes repository root." };
     }
-    const resolvedRelative = normalizeRelativeResource(relative(this.#realRoot, resolvedPath));
+    const rawResolvedRelative = relative(this.#realRoot, resolvedPath);
+    const resolvedRelative = rawResolvedRelative === "" ? "." : normalizeRelativeResource(rawResolvedRelative);
     if (resolvedRelative === null || !withinDeclaredScope(resolvedRelative, this.token.resourceScopes)) {
       return { ...base, status: "OUTSIDE_RESOLVED_SCOPE", epistemicState: "OUT_OF_SCOPE", resolvedPath: null, resourceKind: "UNKNOWN", detail: "Resolved resource escapes declared scope." };
     }

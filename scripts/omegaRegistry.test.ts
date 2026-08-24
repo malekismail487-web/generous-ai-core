@@ -125,7 +125,7 @@ assert(
 
 assert(planRelationships(OMEGA_BASELINE_REGISTRY, "Ω-PLAN-REG-001A", "OVERLAPS")[0]?.canonicalId === "Ω-PLAN-VS-001A", "plan relationship query resolves target");
 assert(capabilityRelationships(OMEGA_BASELINE_REGISTRY, "Ω-CAP-REGISTRY-INVARIANTS", "ENABLES")[0]?.canonicalId === "Ω-CAP-READ-REPOSITORY", "capability relationship query resolves target");
-assert(dependenciesOf(OMEGA_BASELINE_REGISTRY, "Ω-CAP-READ-REPOSITORY").length === 2, "cross-graph dependencies resolve");
+assert(dependenciesOf(OMEGA_BASELINE_REGISTRY, "Ω-CAP-READ-REPOSITORY").length === 3, "cross-graph dependencies resolve");
 assert(planRelationships(OMEGA_BASELINE_REGISTRY, "MISSING").length === 0, "missing relationship source is honest empty result");
 
 const serialized = serializeRegistry(OMEGA_BASELINE_REGISTRY);
@@ -139,6 +139,8 @@ assert(
   "source provenance survives serialization",
 );
 assert(!deserializeRegistry("{not-json").ok, "invalid JSON is rejected");
+assert(errorCodes(mutate((registry) => { registry.schemaVersion = 2; })).has("bad_schema_version"), "unsupported future schema version is explicitly rejected");
+assert(errorCodes(mutate((registry) => { registry.schemaVersion = "1"; })).has("bad_schema_version"), "malformed schema version is explicitly rejected");
 assert(!validateRegistry({ schemaVersion: 1, plans: [null], capabilities: [], regressions: [] }).ok, "malformed records fail closed without throwing");
 assert(!validateRegistry(mutate((registry) => { registry.plans[0].relationships = [null]; })).ok, "malformed relationships fail closed without throwing");
 assert(!validateRegistry(mutate((registry) => { delete registry.plans[0].dependencies; })).ok, "missing dependency arrays fail closed without throwing");
@@ -195,13 +197,26 @@ assert(
   errorCodes(mutate((registry) => { registry.regressions[0].currentEvidenceIds = ["Ω-EV-MISSING"]; })).has("unknown_current_regression_evidence"),
   "regression evidence must resolve",
 );
+assert(OMEGA_BASELINE_REGISTRY.capabilities[1].certificates?.length === 10, "R1 capability exposes ten subordinate certificates");
+assert(
+  errorCodes(mutate((registry) => { registry.capabilities[1].certificates[0].evidenceIds = []; })).has("verified_certificate_without_evidence"),
+  "verified capability certificate requires evidence",
+);
+assert(
+  errorCodes(mutate((registry) => { registry.capabilities[1].certificates[1].certificateId = registry.capabilities[1].certificates[0].certificateId; })).has("duplicate_certificate_id"),
+  "duplicate capability certificate IDs are rejected",
+);
+assert(
+  errorCodes(mutate((registry) => { registry.capabilities[1].certificates[0].evidenceIds = ["Ω-EV-MISSING"]; })).has("unknown_certificate_evidence"),
+  "capability certificate evidence must resolve locally",
+);
 
 const e3 = OMEGA_BASELINE_REGISTRY.capabilities[0].evidence[0];
 const e0 = OMEGA_BASELINE_REGISTRY.plans[0].evidence[0];
 assert(evidenceIsIndependent(e3), "E3 evidence with basis is classified independent");
 assert(!evidenceIsIndependent(e0), "E0 directive evidence is not inflated to independent evidence");
 assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.currentResult === "385/385"), "baseline tracks exact ORCHESTRA capability result");
-assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.currentResult === "VERIFIED_R1_34_OF_34"), "read capability regression state records the newly verified R1 result");
+assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.currentResult === "VERIFIED_R1_PRIVATE_31_OF_31"), "read capability regression state records the private R1 evaluation result");
 assert(
   (OMEGA_BASELINE_REGISTRY.plans[0].evidence[0] as EvidenceRecord).provenance.sourceType === "conversation",
   "directive evidence retains conversation provenance",

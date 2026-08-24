@@ -8,6 +8,7 @@ import {
   RESEARCH_MATURITY_STATES,
   VERIFICATION_STATES,
   type CapabilityRecord,
+  type CapabilityCertificate,
   type CapabilityRelationKind,
   type EvidenceRecord,
   type MaturityState,
@@ -440,6 +441,52 @@ export function validateRegistry(candidate: unknown): RegistryValidation {
         message: "Capabilities require expected evidence descriptions.",
       });
     }
+    if (record.certificates !== undefined) {
+      const path = `$.capabilities[${index}].certificates`;
+      if (!Array.isArray(record.certificates)) {
+        errors.push({ code: "bad_capability_certificates", path, message: "Capability certificates must be an array." });
+      } else {
+        const certificateIds = new Set<string>();
+        const evidenceIds = new Set(record.evidence.map((item: EvidenceRecord) => item.evidenceId));
+        record.certificates.forEach((certificate: CapabilityCertificate, certificateIndex: number) => {
+          const certificatePath = `${path}[${certificateIndex}]`;
+          if (!isObject(certificate)) {
+            errors.push({ code: "bad_capability_certificate", path: certificatePath, message: "Certificate must be an object." });
+            return;
+          }
+          if (!isCanonicalId(certificate.certificateId)) {
+            errors.push({ code: "bad_certificate_id", path: certificatePath, message: "Certificate ID is invalid." });
+          } else if (certificateIds.has(certificate.certificateId)) {
+            errors.push({ code: "duplicate_certificate_id", path: certificatePath, message: "Certificate IDs must be unique within a capability." });
+          } else certificateIds.add(certificate.certificateId);
+          if (!isNonEmptyString(certificate.title) || !isNonEmptyString(certificate.threshold) || !isNonEmptyString(certificate.result)) {
+            errors.push({ code: "bad_certificate_description", path: certificatePath, message: "Certificate title, threshold, and result are required." });
+          }
+          if (!(MATURITY_STATES as readonly unknown[]).includes(certificate.maturity)) {
+            errors.push({ code: "bad_certificate_maturity", path: certificatePath, message: "Unknown certificate maturity." });
+          }
+          if (!(EPISTEMIC_STATES as readonly unknown[]).includes(certificate.epistemicState)) {
+            errors.push({ code: "bad_certificate_epistemic_state", path: certificatePath, message: "Unknown certificate epistemic state." });
+          }
+          if (!(VERIFICATION_STATES as readonly unknown[]).includes(certificate.verificationState)) {
+            errors.push({ code: "bad_certificate_verification_state", path: certificatePath, message: "Unknown certificate verification state." });
+          }
+          if (!Array.isArray(certificate.evidenceIds)) {
+            errors.push({ code: "bad_certificate_evidence", path: certificatePath, message: "Certificate evidence IDs must be an array." });
+          } else {
+            for (const evidenceId of certificate.evidenceIds) {
+              if (!evidenceIds.has(evidenceId)) errors.push({ code: "unknown_certificate_evidence", path: certificatePath, message: `Unknown certificate evidence ${evidenceId}.` });
+            }
+            if (["VERIFIED", "INDEPENDENTLY_REPLICATED", "PRODUCTION_READY", "ROUTINIZED"].includes(String(certificate.maturity)) && certificate.evidenceIds.length === 0) {
+              errors.push({ code: "verified_certificate_without_evidence", path: certificatePath, message: "Verified certificate maturity requires evidence." });
+            }
+          }
+          if (typeof certificate.confidence !== "number" || !Number.isFinite(certificate.confidence) || certificate.confidence < 0 || certificate.confidence > 1) {
+            errors.push({ code: "bad_certificate_confidence", path: certificatePath, message: "Certificate confidence must be between 0 and 1." });
+          }
+        });
+      }
+    }
   });
   allRecords.forEach((record) => {
     const seen = new Set<string>();
@@ -541,7 +588,7 @@ export type SerializationResult =
 
 export function serializeRegistry(registry: OmegaRegistry): SerializationResult {
   const validation = validateRegistry(registry);
-  if (!validation.ok) return validation;
+  if (!validation.ok) return { ok: false, errors: validation.errors };
   return { ok: true, json: canonicalJson(registry) };
 }
 
