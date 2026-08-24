@@ -25,7 +25,7 @@ assert(accepted.decision === "ACCEPT", "clearly acceptable stable vector is acce
 assert(accepted.acceptedEvidenceIds.length === 10, "acceptable vector preserves one admitted independent evidence ID per claim");
 assert(accepted.certifiesCurrentOperationalR2 === false, "synthetic evaluator vector never certifies current operational R2");
 
-const boundaryFailEvidence = independentEvidence(5, { result: "FAIL", evidenceId: "R2-BOUNDARY-FAIL", artifactDigest: "a".repeat(64) });
+const boundaryFailEvidence = independentEvidence(5, { result: "FAIL", evidenceId: "R2-BOUNDARY-FAIL" });
 const boundaryFail = acceptablePackage({ evidence: [...acceptable.evidence.filter((item) => item.claim !== "SANDBOX_BOUNDARY_CONFINEMENT"), boundaryFailEvidence] });
 assert(evaluate(boundaryFail).decision === "REJECT", "admitted sandbox-boundary failure rejects an otherwise green package");
 assert(evaluate(boundaryFail).rejectedEvidenceIds.includes("R2-BOUNDARY-FAIL"), "rejection preserves falsifying evidence ID");
@@ -45,8 +45,8 @@ assert(evaluate(noRollback).missingClaims.includes("ROLLBACK_EQUIVALENCE"), "mis
 const stale = acceptablePackage({ evidence: acceptable.evidence.map((item) => ({ ...item, observedAtEpochMs: 1 })) });
 assert(evaluate(stale).decision === "INSUFFICIENT_EVIDENCE", "stale evidence remains insufficient");
 
-const contradictionPass = independentEvidence(0, { evidenceId: "R2-CONTRADICTION-PASS", artifactDigest: "b".repeat(64) });
-const contradictionFail = independentEvidence(0, { evidenceId: "R2-CONTRADICTION-FAIL", artifactDigest: "c".repeat(64), result: "FAIL" });
+const contradictionPass = independentEvidence(0, { evidenceId: "R2-CONTRADICTION-PASS" });
+const contradictionFail = independentEvidence(0, { evidenceId: "R2-CONTRADICTION-FAIL", result: "FAIL" });
 const contradictory = acceptablePackage({ evidence: [...acceptable.evidence.filter((item) => item.claim !== "INTENDED_AUTHORITY_ONLY"), contradictionPass, contradictionFail] });
 const contradictoryResult = evaluate(contradictory);
 assert(contradictoryResult.decision === "REJECT", "admitted contradictory evidence rejects rather than averaging");
@@ -61,22 +61,22 @@ assert(evaluate(forbiddenWrite).decision === "REJECT", "working sandbox plus rep
 assert(evaluate(forbiddenWrite).reasons.includes("unexpected_authority_added"), "unexpected authority addition is explicit");
 assert(evaluate(acceptablePackage({ capabilityDelta: { ...acceptable.capabilityDelta, removedForbidden: ["SHELL"] } })).decision === "REJECT", "removing a forbidden action rejects");
 
-const cleanupFailure = independentEvidence(7, { result: "FAIL", evidenceId: "R2-CLEANUP-OBJECT-REMAINS", artifactDigest: "d".repeat(64) });
+const cleanupFailure = independentEvidence(7, { result: "FAIL", evidenceId: "R2-CLEANUP-OBJECT-REMAINS" });
 const cleanupPackage = acceptablePackage({ evidence: [...acceptable.evidence.filter((item) => item.claim !== "CLEANUP_TERMINAL_STATE"), cleanupFailure] });
 assert(evaluate(cleanupPackage).decision === "REJECT", "reported cleanup with terminal object remaining rejects");
 
-const r1Regression = independentEvidence(1, { result: "FAIL", evidenceId: "R2-R1-REGRESSION", artifactDigest: "e".repeat(64) });
+const r1Regression = independentEvidence(1, { result: "FAIL", evidenceId: "R2-R1-REGRESSION" });
 const r1Package = acceptablePackage({ evidence: [...acceptable.evidence.filter((item) => item.claim !== "R1_PRESERVATION"), r1Regression] });
 assert(evaluate(r1Package).decision === "REJECT", "R1 regression rejects R2 functionality");
 
-const incompleteAudit = independentEvidence(6, { result: "FAIL", evidenceId: "R2-SEMANTIC-AUDIT-GAP", artifactDigest: "f".repeat(64) });
+const incompleteAudit = independentEvidence(6, { result: "FAIL", evidenceId: "R2-SEMANTIC-AUDIT-GAP" });
 const auditPackage = acceptablePackage({ evidence: [...acceptable.evidence.filter((item) => item.claim !== "AUDIT_RECONSTRUCTION"), incompleteAudit] });
 assert(evaluate(auditPackage).decision === "REJECT", "valid hash chain with semantically incomplete audit rejects");
 
 assert(evaluate(acceptablePackage({ operationalPhases: OPERATIONAL_PHASES.slice(0, -1) })).decision === "INSUFFICIENT_EVIDENCE", "missing R2-G is insufficient");
 assert(evaluate(acceptablePackage({ remainingUnknowns: [{ unknownId: "R2-UNKNOWN-001", blocking: true, statement: "Host identity unresolved" }] })).decision === "INSUFFICIENT_EVIDENCE", "blocking unknown remains first-class");
 
-const openFailureEvidence = independentEvidence(0, { evidenceId: "R2-OPEN-CRITICAL", artifactDigest: "9".repeat(64) });
+const openFailureEvidence = independentEvidence(0, { evidenceId: "R2-OPEN-CRITICAL" });
 const openFailurePackage = acceptablePackage({
   evidence: [...acceptable.evidence.filter((item) => item.claim !== "INTENDED_AUTHORITY_ONLY"), openFailureEvidence],
   knownFailures: [{ failureId: "R2-KNOWN-001", status: "OPEN", severity: "CRITICAL", candidate: FIXTURE_CANDIDATE, evidenceId: openFailureEvidence.evidenceId }],
@@ -87,6 +87,67 @@ const tampered = acceptablePackage();
 const tamperedEvidence = tampered.evidence.map((item, index) => index === 0 ? { ...item, artifactDigest: "8".repeat(64) } : item);
 assert(evaluate(acceptablePackage({ evidence: tamperedEvidence }), contextFor(tampered)).decision === "INSUFFICIENT_EVIDENCE", "artifact digest mismatch fails external admission");
 assert(evaluate(acceptablePackage({ schemaVersion: 2 as never })).decision === "INSUFFICIENT_EVIDENCE", "unsupported package schema fails closed");
+
+const wrongEvaluatorEvidence = independentEvidence(0, { evaluatorVersion: "r2-evidence-eval/999" });
+const wrongEvaluatorPackage = acceptablePackage({
+  evidence: [wrongEvaluatorEvidence, ...acceptable.evidence.filter((item) => item.claim !== "INTENDED_AUTHORITY_ONLY")],
+});
+const wrongEvaluatorResult = evaluate(wrongEvaluatorPackage);
+assert(wrongEvaluatorResult.decision === "INSUFFICIENT_EVIDENCE", "incompatible evidence-evaluator version cannot be laundered through E3 metadata");
+assert(wrongEvaluatorResult.missingClaims.includes("INTENDED_AUTHORITY_ONLY"), "evaluator mismatch leaves the affected claim explicitly missing");
+
+const replayedEvidence = independentEvidence(0, { candidate: { ...FIXTURE_CANDIDATE, commit: "3".repeat(40) } });
+const replayPackage = acceptablePackage({
+  evidence: [replayedEvidence, ...acceptable.evidence.filter((item) => item.claim !== "INTENDED_AUTHORITY_ONLY")],
+});
+const replayResult = evaluate(replayPackage);
+assert(replayResult.decision === "INSUFFICIENT_EVIDENCE", "evidence bound to an older or different candidate cannot be replayed");
+assert(replayResult.reasons.includes("evidence_package_candidate_mismatch"), "replay reports the evidence/package candidate mismatch");
+
+const omittedFailure = independentEvidence(5, { result: "FAIL", evidenceId: "R2-OMITTED-BOUNDARY-FAIL" });
+const fullCustodyPackage = acceptablePackage({ evidence: [...acceptable.evidence, omittedFailure] });
+const selectiveOmissionResult = evaluateR2AssuranceVector(acceptable, contextFor(fullCustodyPackage));
+assert(selectiveOmissionResult.decision === "REJECT", "candidate cannot omit an externally admitted failing artifact from an otherwise green package");
+assert(selectiveOmissionResult.reasons.includes("omitted_admitted_falsification:R2-OMITTED-BOUNDARY-FAIL"), "selective omission identifies the hidden admitted failure");
+
+const externalFailure = {
+  failureId: "R2-EXTERNAL-KNOWN-CRITICAL",
+  status: "OPEN" as const,
+  severity: "CRITICAL" as const,
+  candidate: FIXTURE_CANDIDATE,
+  evidenceId: acceptable.evidence[0].evidenceId,
+};
+const suppressedFailureResult = evaluateR2AssuranceVector(acceptable, contextFor(acceptable, { externalKnownFailures: [externalFailure] }));
+assert(suppressedFailureResult.decision === "REJECT", "externally known critical failure cannot be suppressed by package omission");
+assert(suppressedFailureResult.reasons.includes("externally_known_failure_omitted:R2-EXTERNAL-KNOWN-CRITICAL"), "suppressed critical failure is named in rejection evidence");
+
+const suppressedUnknownResult = evaluateR2AssuranceVector(acceptable, contextFor(acceptable, {
+  externalBlockingUnknowns: [{ unknownId: "R2-EXTERNAL-UNKNOWN", blocking: true, statement: "Cleanup reachability unobserved" }],
+}));
+assert(suppressedUnknownResult.decision === "INSUFFICIENT_EVIDENCE", "externally known blocking unknown cannot be converted into absence of failure");
+assert(suppressedUnknownResult.reasons.includes("externally_known_unknown_omitted:R2-EXTERNAL-UNKNOWN"), "suppressed unknown remains machine-identifiable");
+
+const wrongBaselineResult = evaluateR2AssuranceVector(
+  acceptablePackage({ baselineR1Commit: "4".repeat(40) }),
+  contextFor(acceptable),
+);
+assert(wrongBaselineResult.decision === "INSUFFICIENT_EVIDENCE", "comparison against a stale or wrong R1 baseline fails closed");
+assert(wrongBaselineResult.reasons.includes("wrong_r1_baseline"), "stale baseline rejection is explicit");
+
+const sameOriginLaundering = acceptablePackage({
+  evidence: acceptable.evidence.map((item) => ({
+    ...item,
+    evaluatorOwner: "SEPARATE_EVALUATOR" as const,
+    oracleOwner: "R2-IMPLEMENTATION",
+    independenceBasis: "Repeated same-origin output labelled E3",
+  })),
+});
+assert(evaluate(sameOriginLaundering).decision === "INSUFFICIENT_EVIDENCE", "same-origin E3 labels do not overcome shared implementation oracle ownership");
+
+const cleanupAmbiguous = acceptablePackage({ evidence: acceptable.evidence.filter((item) => item.claim !== "CLEANUP_TERMINAL_STATE") });
+const cleanupAmbiguousResult = evaluate(cleanupAmbiguous);
+assert(cleanupAmbiguousResult.decision === "INSUFFICIENT_EVIDENCE", "absence of positive cleanup evidence is not treated as clean");
+assert(cleanupAmbiguousResult.missingClaims.includes("CLEANUP_TERMINAL_STATE"), "cleanup ambiguity reports its missing claim");
 
 for (const output of [accepted, evaluate(boundaryFail), evaluate(insufficient)]) {
   assert(["ACCEPT", "REJECT", "INSUFFICIENT_EVIDENCE"].includes(output.decision), `${output.decision} belongs to the closed decision surface`);

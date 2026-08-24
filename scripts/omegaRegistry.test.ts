@@ -163,7 +163,7 @@ const r2AssuranceCapability = OMEGA_BASELINE_REGISTRY.capabilities.find((capabil
 assert(r2AssuranceCapability?.maturity === "PROTOTYPED" && r2AssuranceCapability.verificationState === "UNVERIFIED", "R2 assurance capability remains prototyped and operationally unverified");
 assert(r2AssuranceCapability?.implementationMappings.some((mapping) => mapping.ref.endsWith("r2-assurance/evaluator.ts") && mapping.status === "experimental"), "separate assurance evaluator remains an experimental mapping");
 assert(capabilityRelationships(OMEGA_BASELINE_REGISTRY, "Ω-CAP-R2-INDEPENDENT-ASSURANCE", "VERIFIES")[0]?.canonicalId === "Ω-CAP-WRITE-SANDBOX", "R2 assurance capability is mapped to verify WRITE_SANDBOX");
-assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-R2-INDEPENDENT-ASSURANCE" && entry.currentResult === "PROTOTYPED_34_VECTORS_NOT_OPERATIONAL"), "assurance regression record does not inflate evaluator vectors into operation");
+assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-R2-INDEPENDENT-ASSURANCE" && entry.currentResult === "PROTOTYPED_49_SELFTEST_VECTORS_NOT_OPERATIONAL"), "assurance regression record preserves stronger self-tests without inflating them into operation");
 
 const serialized = serializeRegistry(OMEGA_BASELINE_REGISTRY);
 assert(serialized.ok, "valid registry serializes");

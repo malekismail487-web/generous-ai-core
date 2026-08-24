@@ -8,6 +8,7 @@ import {
   type CandidateVersion,
   type EvidenceClass,
 } from "./contracts";
+import { verifyAdmittedEvidence } from "../evidence-custody/custodian";
 
 const CLASS_RANK: Readonly<Record<EvidenceClass, number>> = Object.freeze({ E0: 0, E1: 1, E2: 2, E3: 3, E4: 4, E5: 5 });
 function nonEmpty(value: unknown): value is string { return typeof value === "string" && value.trim().length > 0; }
@@ -22,7 +23,16 @@ function sameCandidate(left: CandidateVersion, right: CandidateVersion): boolean
 function unique<T>(values: readonly T[]): readonly T[] { return [...new Set(values)]; }
 
 function evidenceAdmitted(evidence: AssuranceEvidenceVector, context: AssuranceEvaluationContext): boolean {
-  return context.admittedEvidenceDigests[evidence.evidenceId] === evidence.artifactDigest;
+  const admission = context.admittedEvidence[evidence.evidenceId];
+  if (!admission) return false;
+  if (!verifyAdmittedEvidence(admission.record, admission.artifact, context.admissionPolicy).ok) return false;
+  const payload = admission.artifact.payload;
+  if (payload === null || typeof payload !== "object" || Array.isArray(payload)) return false;
+  return admission.record.authoritativeDigest === evidence.artifactDigest
+    && admission.record.artifactId === evidence.evidenceId
+    && admission.record.evaluatorVersion === evidence.evaluatorVersion
+    && payload.claim === evidence.claim
+    && payload.result === evidence.result;
 }
 
 function independentlyAdmissible(evidence: AssuranceEvidenceVector, context: AssuranceEvaluationContext): boolean {
@@ -34,6 +44,7 @@ function independentlyAdmissible(evidence: AssuranceEvidenceVector, context: Ass
     && !evidence.sharesImplementationHelpers
     && nonEmpty(evidence.independenceBasis)
     && nonEmpty(evidence.provenance)
+    && context.admissionPolicy.compatibleEvaluatorVersions.includes(evidence.evaluatorVersion)
     && exactDigest(evidence.artifactDigest)
     && evidence.observedAtEpochMs <= context.nowEpochMs
     && context.nowEpochMs - evidence.observedAtEpochMs <= context.maxEvidenceAgeMs;
@@ -62,6 +73,15 @@ export function evaluateR2AssuranceVector(
     if (!exactDigest(item.artifactDigest)) insufficient.push("malformed_evidence_digest");
   }
 
+  const packageEvidenceIds = new Set(pkg.evidence.map((item) => item.evidenceId));
+  for (const admission of Object.values(context.admittedEvidence)) {
+    const payload = admission.artifact.payload;
+    if (payload === null || typeof payload !== "object" || Array.isArray(payload)) continue;
+    if (payload.result === "FAIL" && !packageEvidenceIds.has(admission.record.artifactId)) {
+      reject.push(`omitted_admitted_falsification:${admission.record.artifactId}`);
+    }
+  }
+
   const admittedCurrent = pkg.evidence.filter((item) => evidenceAdmitted(item, context) && sameCandidate(item.candidate, context.expectedCandidate));
   const rejectedEvidenceIds = admittedCurrent.filter((item) => item.result === "FAIL").map((item) => item.evidenceId);
   if (rejectedEvidenceIds.length > 0) reject.push("admitted_falsifying_evidence_present");
@@ -83,7 +103,18 @@ export function evaluateR2AssuranceVector(
     if (!admittedIds.has(failure.evidenceId)) insufficient.push("known_failure_evidence_not_admitted");
     if (failure.status === "OPEN" && ["HIGH", "CRITICAL"].includes(failure.severity)) reject.push("open_high_impact_failure");
   }
-  if (pkg.remainingUnknowns.some((item) => item.blocking)) insufficient.push("blocking_unknown_remains");
+  const packageFailureIds = new Set(pkg.knownFailures.map((item) => item.failureId));
+  for (const failure of context.externalKnownFailures) {
+    if (!packageFailureIds.has(failure.failureId)) {
+      if (failure.status === "OPEN" && ["HIGH", "CRITICAL"].includes(failure.severity)) reject.push(`externally_known_failure_omitted:${failure.failureId}`);
+      else insufficient.push(`external_failure_record_omitted:${failure.failureId}`);
+    }
+  }
+  const packageUnknownIds = new Set(pkg.remainingUnknowns.map((item) => item.unknownId));
+  for (const unknown of context.externalBlockingUnknowns) {
+    if (!packageUnknownIds.has(unknown.unknownId)) insufficient.push(`externally_known_unknown_omitted:${unknown.unknownId}`);
+  }
+  if (pkg.remainingUnknowns.some((item) => item.blocking) || context.externalBlockingUnknowns.some((item) => item.blocking)) insufficient.push("blocking_unknown_remains");
 
   const missingClaims = [] as (typeof ASSURANCE_CLAIMS)[number][];
   const acceptedEvidenceIds: string[] = [];

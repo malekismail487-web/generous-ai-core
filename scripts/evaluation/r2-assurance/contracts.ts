@@ -34,9 +34,15 @@ export interface AssuranceEvidenceVector {
   readonly sharesImplementationHelpers: boolean;
   readonly independenceBasis: string | null;
   readonly provenance: string;
+  readonly evaluatorVersion: string;
   readonly artifactDigest: string;
   readonly candidate: CandidateVersion;
   readonly observedAtEpochMs: number;
+}
+
+export interface AuthoritativeEvidenceAdmission {
+  readonly record: AdmittedEvidenceRecord;
+  readonly artifact: EvidenceArtifact;
 }
 
 export interface CapabilityDeltaVector {
@@ -78,7 +84,10 @@ export interface AssuranceEvaluationContext {
   readonly expectedBaselineR1Commit: string;
   readonly nowEpochMs: number;
   readonly maxEvidenceAgeMs: number;
-  readonly admittedEvidenceDigests: Readonly<Record<string, string>>;
+  readonly admissionPolicy: EvidenceAdmissionPolicy;
+  readonly admittedEvidence: Readonly<Record<string, AuthoritativeEvidenceAdmission>>;
+  readonly externalKnownFailures: readonly KnownFailureVector[];
+  readonly externalBlockingUnknowns: readonly RemainingUnknownVector[];
   readonly requiredForbiddenActions: readonly string[];
   readonly permittedAddedAuthorities: readonly string[];
 }
@@ -92,3 +101,8 @@ export interface AssuranceEvaluationResult {
   readonly missingPhases: readonly OperationalPhase[];
   readonly certifiesCurrentOperationalR2: false;
 }
+import type {
+  AdmittedEvidenceRecord,
+  EvidenceAdmissionPolicy,
+  EvidenceArtifact,
+} from "../evidence-custody/contracts";
