@@ -9,6 +9,7 @@ import {
   extractSemanticTestIdentities,
   loadSuiteCatalog,
   parseTestExecution,
+  compareExecutionManifests,
 } from "./test-harness.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -71,7 +72,7 @@ for (const suite of composition.suites) {
   }
 }
 
-const manifest = buildExecutionManifest({
+let manifest = buildExecutionManifest({
   suiteVersion: catalog.suiteVersion,
   candidateCommit,
   worktreeState,
@@ -80,6 +81,20 @@ const manifest = buildExecutionManifest({
   composition,
   executions,
 });
+if (process.env.OMEGA_PREVIOUS_TEST_MANIFEST_PATH) {
+  const previous = JSON.parse(readFileSync(resolve(process.env.OMEGA_PREVIOUS_TEST_MANIFEST_PATH), "utf8"));
+  const classifications = process.env.OMEGA_TEST_GENEALOGY_CLASSIFICATIONS_PATH
+    ? JSON.parse(readFileSync(resolve(process.env.OMEGA_TEST_GENEALOGY_CLASSIFICATIONS_PATH), "utf8")) : [];
+  const genealogy = compareExecutionManifests(previous, manifest, classifications);
+  manifest = buildExecutionManifest({
+    suiteVersion: catalog.suiteVersion, candidateCommit, worktreeState, nodeVersion: process.version,
+    typescriptVersion: packageJson.devDependencies?.typescript ?? "UNKNOWN", composition, executions,
+    predecessor: { manifestDigest: previous.manifestDigest, candidate: previous.candidate }, genealogy,
+  });
+  if (genealogy.decision !== "ACCEPTED") {
+    for (const issue of genealogy.issues ?? []) console.error(`OMEGA_HARNESS_GENEALOGY_FAILURE ${issue}`);
+  }
+}
 const compactManifest = {
   ...manifest,
   executions: manifest.executions.map(({ testIdentities, ...execution }) => ({
@@ -92,4 +107,4 @@ if (process.env.OMEGA_TEST_MANIFEST_PATH) {
 }
 console.log(`OMEGA_TEST_MANIFEST ${JSON.stringify(compactManifest)}`);
 console.log(`OMEGA_TEST_SUMMARY files=${executions.length} failedFiles=${manifest.aggregate.failedSuites} passedChecks=${manifest.aggregate.passedChecks}`);
-if (manifest.aggregate.failedSuites > 0) process.exit(1);
+if (manifest.aggregate.failedSuites > 0 || (manifest.genealogy && manifest.genealogy.decision !== "ACCEPTED")) process.exit(1);

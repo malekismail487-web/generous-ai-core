@@ -46,15 +46,21 @@ export function discoverOmegaTestFiles(root) {
 
 export function loadSuiteCatalog(file) {
   const parsed = JSON.parse(readFileSync(file, "utf8"));
-  if (parsed.schemaVersion !== 1 || typeof parsed.suiteVersion !== "string" || !Array.isArray(parsed.requiredSuites)) {
+  if (parsed.schemaVersion !== 1 || typeof parsed.suiteVersion !== "string" || !Array.isArray(parsed.requiredSuites)
+    || !Array.isArray(parsed.criticalSuites) || parsed.criticalSuites.some((item) => typeof item !== "string")) {
     throw new Error("Unsupported or malformed Ω suite catalog");
   }
+  const criticalSuites = Object.freeze([...new Set(parsed.criticalSuites.map(String))].sort());
+  const declaredIds = new Set(parsed.requiredSuites.map((suite) => String(suite.suiteId)));
+  if (criticalSuites.some((suiteId) => !declaredIds.has(suiteId))) throw new Error("Critical Ω suite is not declared");
   return Object.freeze({
     schemaVersion: 1,
     suiteVersion: parsed.suiteVersion,
+    criticalSuites,
     requiredSuites: Object.freeze(parsed.requiredSuites.map((suite) => Object.freeze({
       suiteId: String(suite.suiteId),
       file: normalizePath(String(suite.file)),
+      criticality: criticalSuites.includes(String(suite.suiteId)) ? "CRITICAL_GATE" : "REGRESSION",
     }))),
   });
 }
@@ -80,7 +86,7 @@ export function assessSuiteComposition(declarations, discoveredFiles) {
   }
 
   const suites = declarations
-    .map((suite) => ({ suiteId: suite.suiteId, file: normalizePath(suite.file) }))
+    .map((suite) => ({ suiteId: suite.suiteId, file: normalizePath(suite.file), criticality: suite.criticality ?? "REGRESSION" }))
     .sort((a, b) => a.suiteId.localeCompare(b.suiteId));
   return Object.freeze({ ok: issues.length === 0, issues: Object.freeze(issues), suites: Object.freeze(suites) });
 }
@@ -119,6 +125,7 @@ export function parseTestExecution({ suite, exitCode, signal = null, output, sou
   return Object.freeze({
     suiteId: suite.suiteId,
     file: suite.file,
+    criticality: suite.criticality ?? "REGRESSION",
     status: failureReason === null ? "PASSED" : "FAILED",
     failureReason,
     exitCode,
@@ -130,7 +137,7 @@ export function parseTestExecution({ suite, exitCode, signal = null, output, sou
   });
 }
 
-export function buildExecutionManifest({ suiteVersion, candidateCommit, worktreeState, nodeVersion, typescriptVersion, composition, executions }) {
+export function buildExecutionManifest({ suiteVersion, candidateCommit, worktreeState, nodeVersion, typescriptVersion, composition, executions, predecessor = null, genealogy = null }) {
   const aggregate = {
     discoveredSuites: composition.suites.length,
     executedSuites: executions.length,
@@ -145,9 +152,61 @@ export function buildExecutionManifest({ suiteVersion, candidateCommit, worktree
     suiteVersion,
     candidate: { commit: candidateCommit, worktreeState },
     tools: { node: nodeVersion, typescript: typescriptVersion },
+    predecessor,
+    genealogy,
     composition: { ok: composition.ok, issues: composition.issues },
     executions,
     aggregate,
   };
   return Object.freeze({ ...body, manifestDigest: sha256(canonicalize(body)) });
+}
+
+function validClassification(classification, critical) {
+  if (!classification || typeof classification.rationale !== "string" || classification.rationale.trim().length === 0) return false;
+  if (!Array.isArray(classification.evidenceRefs) || classification.evidenceRefs.length === 0) return false;
+  if (critical && classification.disposition !== "SUPERSEDED_BY_STRONGER_TEST") return false;
+  return ["SUPERSEDED_BY_STRONGER_TEST", "APPROVED_REMOVAL"].includes(classification.disposition);
+}
+
+export function compareExecutionManifests(previous, current, classifications = []) {
+  if (!previous?.manifestDigest || !current?.manifestDigest || !Array.isArray(previous.executions) || !Array.isArray(current.executions)) {
+    return Object.freeze({ decision: "INVALID", issues: Object.freeze(["malformed_manifest_pair"]) });
+  }
+  const previousById = new Map(previous.executions.map((item) => [item.suiteId, item]));
+  const currentById = new Map(current.executions.map((item) => [item.suiteId, item]));
+  const addedSuites = [...currentById.keys()].filter((id) => !previousById.has(id)).sort();
+  const removedSuites = [...previousById.keys()].filter((id) => !currentById.has(id)).sort();
+  const changedSourceDigests = [];
+  const addedSemanticIds = [];
+  const removedSemanticIds = [];
+  for (const [suiteId, before] of previousById) {
+    const after = currentById.get(suiteId);
+    if (!after) continue;
+    if (before.sourceDigest !== after.sourceDigest) changedSourceDigests.push({ suiteId, previous: before.sourceDigest, current: after.sourceDigest });
+    const beforeIds = new Set(before.testIdentities ?? []);
+    const afterIds = new Set(after.testIdentities ?? []);
+    for (const testId of afterIds) if (!beforeIds.has(testId)) addedSemanticIds.push({ suiteId, testId });
+    for (const testId of beforeIds) if (!afterIds.has(testId)) removedSemanticIds.push({ suiteId, testId, critical: before.criticality === "CRITICAL_GATE" });
+  }
+  const classificationById = new Map(classifications.map((item) => [item.changeId, item]));
+  const issues = [];
+  for (const suiteId of removedSuites) {
+    const before = previousById.get(suiteId);
+    const changeId = `SUITE_REMOVED:${suiteId}`;
+    if (!validClassification(classificationById.get(changeId), before?.criticality === "CRITICAL_GATE")) issues.push(`unclassified_suite_removal:${suiteId}`);
+  }
+  for (const removal of removedSemanticIds) {
+    const changeId = `SEMANTIC_REMOVED:${removal.suiteId}:${removal.testId}`;
+    if (!validClassification(classificationById.get(changeId), removal.critical)) issues.push(`unclassified_semantic_removal:${removal.suiteId}:${removal.testId}`);
+  }
+  return Object.freeze({
+    decision: issues.length === 0 ? "ACCEPTED" : "REVIEW_REQUIRED",
+    previousManifestDigest: previous.manifestDigest,
+    currentManifestDigest: current.manifestDigest,
+    previousSuiteVersion: previous.suiteVersion,
+    currentSuiteVersion: current.suiteVersion,
+    addedSuites: Object.freeze(addedSuites), removedSuites: Object.freeze(removedSuites),
+    changedSourceDigests: Object.freeze(changedSourceDigests), addedSemanticIds: Object.freeze(addedSemanticIds), removedSemanticIds: Object.freeze(removedSemanticIds),
+    classifications: Object.freeze(classifications.map((item) => Object.freeze({ ...item }))), issues: Object.freeze(issues),
+  });
 }
