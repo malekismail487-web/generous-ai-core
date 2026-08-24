@@ -138,6 +138,8 @@ assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLA
 const r2AImplSpecPlan = OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-A-IMPLSPEC-001");
 assert(r2AImplSpecPlan?.maturity === "SPECIFIED" && r2AImplSpecPlan.verificationState === "VERIFIED", "R2-A implementation blueprint is design-verified at SPECIFIED maturity only");
 assert(r2AImplSpecPlan?.implementationMappings.every((mapping) => mapping.status !== "active" || mapping.kind === "tool"), "R2-A implementation blueprint has no active repository authority mapping");
+const r2HostEvalPlan = OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-HOST-EVAL-001");
+assert(r2HostEvalPlan?.maturity === "PROTOTYPED" && r2HostEvalPlan.verificationState === "VERIFIED", "R2 host detector is verified only as a prototype evaluator");
 assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-TS-RATCHET-001")?.maturity === "VERIFIED", "TypeScript diagnostic ratchet plan is operationally verified");
 assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-ASSURE-R2-SPEC-001")?.verificationState === "VERIFIED", "R2 assurance decision specification is verified without certifying R2");
 const writeSandboxCapability = OMEGA_BASELINE_REGISTRY.capabilities.find((capability) => capability.canonicalId === "Ω-CAP-WRITE-SANDBOX");
@@ -148,6 +150,10 @@ assert(dependenciesOf(OMEGA_BASELINE_REGISTRY, "Ω-PLAN-R2-A-SPEC-EVAL-001").som
 assert(capabilityRelationships(OMEGA_BASELINE_REGISTRY, "Ω-CAP-WRITE-SANDBOX", "DEPENDS_ON")[0]?.canonicalId === "Ω-CAP-READ-REPOSITORY", "WRITE_SANDBOX capability depends on verified R1 observation");
 assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-WRITE-SANDBOX" && entry.currentResult === "IMPLSPEC_VERIFIED_AUTHORITY_UNAVAILABLE"), "capability regression ledger distinguishes blueprint verification from authority availability");
 assert(writeSandboxCapability?.implementationMappings.some((mapping) => mapping.ref.endsWith("r2ProvisioningBlueprint.ts") && mapping.status === "experimental"), "WRITE_SANDBOX maps the blueprint as experimental rather than active authority");
+const r2HostCapability = OMEGA_BASELINE_REGISTRY.capabilities.find((capability) => capability.canonicalId === "Ω-CAP-R2-HOST-EVALUATION");
+assert(r2HostCapability?.epistemicState === "INSUFFICIENT_EVIDENCE" && r2HostCapability.verificationState === "UNVERIFIED", "real host-boundary capability remains unverified despite detector tests");
+assert(capabilityRelationships(OMEGA_BASELINE_REGISTRY, "Ω-CAP-R2-HOST-EVALUATION", "VERIFIES")[0]?.canonicalId === "Ω-CAP-WRITE-SANDBOX", "host evaluator capability maps to future sandbox-write verification");
+assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-R2-HOST-EVALUATION" && entry.currentResult === "PROTOTYPED_SYNTHETIC_13_OF_13_REAL_HOST_0"), "host evaluator regression ledger separates synthetic from real-host coverage");
 assert(OMEGA_BASELINE_REGISTRY.capabilities.find((capability) => capability.canonicalId === "Ω-CAP-TS-ERROR-RATCHET")?.verificationState === "VERIFIED", "TypeScript no-new-error capability is registered as verified");
 assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-TS-ERROR-RATCHET" && entry.currentResult.endsWith("NEW_0")), "TypeScript regression record preserves the zero-new-error result");
 const r2AssuranceCapability = OMEGA_BASELINE_REGISTRY.capabilities.find((capability) => capability.canonicalId === "Ω-CAP-R2-INDEPENDENT-ASSURANCE");
