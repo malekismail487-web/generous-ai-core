@@ -127,6 +127,15 @@ assert(planRelationships(OMEGA_BASELINE_REGISTRY, "Ω-PLAN-REG-001A", "OVERLAPS"
 assert(capabilityRelationships(OMEGA_BASELINE_REGISTRY, "Ω-CAP-REGISTRY-INVARIANTS", "ENABLES")[0]?.canonicalId === "Ω-CAP-READ-REPOSITORY", "capability relationship query resolves target");
 assert(dependenciesOf(OMEGA_BASELINE_REGISTRY, "Ω-CAP-READ-REPOSITORY").length === 3, "cross-graph dependencies resolve");
 assert(planRelationships(OMEGA_BASELINE_REGISTRY, "MISSING").length === 0, "missing relationship source is honest empty result");
+assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-SEC-003")?.epistemicState === "UNKNOWN", "unresolved credential containment remains explicitly UNKNOWN");
+assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-DESIGN-001")?.maturity === "SPECIFIED", "R2 plan stops at SPECIFIED maturity");
+assert(OMEGA_BASELINE_REGISTRY.plans.find((plan) => plan.canonicalId === "Ω-PLAN-R2-DESIGN-001")?.verificationState === "VERIFIED", "R2 specification has verification evidence without claiming implementation");
+const writeSandboxCapability = OMEGA_BASELINE_REGISTRY.capabilities.find((capability) => capability.canonicalId === "Ω-CAP-WRITE-SANDBOX");
+assert(writeSandboxCapability?.maturity === "SPECIFIED" && writeSandboxCapability.epistemicState === "INSUFFICIENT_EVIDENCE", "WRITE_SANDBOX remains specified with insufficient operational evidence");
+assert(writeSandboxCapability?.implementationMappings.every((mapping) => mapping.status !== "active"), "WRITE_SANDBOX has no active implementation mapping");
+assert(dependenciesOf(OMEGA_BASELINE_REGISTRY, "Ω-PLAN-R2-DESIGN-001").some((dependency) => dependency.canonicalId === "Ω-PLAN-SEC-003"), "R2 design dependency graph retains credential containment blocker");
+assert(capabilityRelationships(OMEGA_BASELINE_REGISTRY, "Ω-CAP-WRITE-SANDBOX", "DEPENDS_ON")[0]?.canonicalId === "Ω-CAP-READ-REPOSITORY", "WRITE_SANDBOX capability depends on verified R1 observation");
+assert(OMEGA_BASELINE_REGISTRY.regressions.some((entry) => entry.capabilityId === "Ω-CAP-WRITE-SANDBOX" && entry.currentResult === "SPECIFIED_NOT_IMPLEMENTED"), "capability regression ledger distinguishes design from implementation");
 
 const serialized = serializeRegistry(OMEGA_BASELINE_REGISTRY);
 assert(serialized.ok, "valid registry serializes");
