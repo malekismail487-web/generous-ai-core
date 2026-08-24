@@ -5,6 +5,8 @@ import {
   compareDiagnostics,
   loadTypeScriptBaseline,
   normalizeDiagnostic,
+  compilerVersionMatches,
+  parseCompilerVersion,
   parseTypeScriptDiagnostics,
 } from "./typescript/typecheck-ratchet.mjs";
 
@@ -43,11 +45,17 @@ assert(improved.accepted, "resolved historical diagnostics are allowed");
 assert(improved.resolvedDiagnostics.length === 2, "duplicate historical diagnostics are counted as a multiset");
 const regressed = compareDiagnostics(baseline, [...baseline, { file: "src/new.ts", code: "TS9999", message: "New error" }]);
 assert(!regressed.accepted && regressed.newDiagnostics.length === 1, "new diagnostic fails the comparison");
+assert(parseCompilerVersion("Version 5.8.3\n") === "5.8.3", "compiler version parser accepts the exact tsc format");
+assert(parseCompilerVersion("typescript 5.8.3") === null, "compiler version parser rejects ambiguous output");
+assert(compilerVersionMatches("Version 5.8.3", "5.8.3"), "exact compiler version matches the baseline");
+assert(!compilerVersionMatches("Version 5.9.0", "5.8.3"), "compiler upgrade cannot silently reuse the baseline");
 
 const stored = loadTypeScriptBaseline();
 assert(stored.schemaVersion === 1, "stored baseline schema is recognized");
 assert(stored.baselineCommit === "d2b7121716cb17d0b78e29b9a6510e8c122b901e", "stored baseline identifies the exact accepted commit");
 assert(stored.diagnostics.length === 7, "stored baseline contains all seven freshly reproduced diagnostics");
+assert(stored.typescriptVersion === "5.8.3", "stored baseline binds exact TypeScript 5.8.3");
+assert(stored.project === "tsconfig.app.json", "stored baseline binds the intended project configuration");
 
 const live = spawnSync(process.execPath, ["scripts/typescript/typecheck-ratchet.mjs"], {
   cwd: ROOT,
@@ -57,6 +65,7 @@ const live = spawnSync(process.execPath, ["scripts/typescript/typecheck-ratchet.
 const liveOutput = `${live.stdout ?? ""}\n${live.stderr ?? ""}`;
 assert(live.status === 0, "live full-project TypeScript ratchet permits only baseline debt");
 assert(/baseline=7 current=7 new=0 resolved=0/.test(liveOutput), "live ratchet reports exact baseline/current/new/resolved counts");
+assert(/typescript=5\.8\.3/.test(liveOutput), "live ratchet reports the verified compiler version");
 assert(!liveOutput.includes("NEW_TYPE_ERROR"), "live ratchet reports no new TypeScript diagnostics");
 
 console.log(`Omega TypeScript ratchet tests - passed: ${passed}, failed: ${failed}`);

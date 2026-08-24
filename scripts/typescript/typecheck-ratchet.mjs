@@ -73,9 +73,24 @@ export function compareDiagnostics(baselineDiagnostics, currentDiagnostics) {
   };
 }
 
+export function parseCompilerVersion(output) {
+  const match = String(output).trim().match(/^Version ([0-9]+\.[0-9]+\.[0-9]+)$/);
+  return match?.[1] ?? null;
+}
+
+export function compilerVersionMatches(output, expectedVersion) {
+  return parseCompilerVersion(output) === expectedVersion;
+}
+
 export function loadTypeScriptBaseline(path = BASELINE_PATH) {
   const parsed = JSON.parse(readFileSync(path, "utf8"));
-  if (parsed?.schemaVersion !== 1 || !Array.isArray(parsed.diagnostics)) {
+  const diagnosticsValid = Array.isArray(parsed?.diagnostics) && parsed.diagnostics.every((item) =>
+    item && typeof item === "object" && typeof item.file === "string" && typeof item.code === "string" && typeof item.message === "string");
+  if (parsed?.schemaVersion !== 1
+    || !/^[0-9a-f]{40}$/.test(parsed?.baselineCommit ?? "")
+    || !/^[0-9]+\.[0-9]+\.[0-9]+$/.test(parsed?.typescriptVersion ?? "")
+    || parsed?.project !== "tsconfig.app.json"
+    || !diagnosticsValid) {
     throw new Error("Unsupported or malformed TypeScript diagnostic baseline.");
   }
   return parsed;
@@ -84,6 +99,13 @@ export function loadTypeScriptBaseline(path = BASELINE_PATH) {
 export function runTypeScriptRatchet() {
   const baseline = loadTypeScriptBaseline();
   const compiler = resolve(ROOT, "node_modules/.bin", process.platform === "win32" ? "tsc.exe" : "tsc");
+  const versionRun = spawnSync(compiler, ["--version"], { cwd: ROOT, encoding: "utf8", timeout: 30_000 });
+  if (versionRun.error) throw versionRun.error;
+  const compilerVersionOutput = `${versionRun.stdout ?? ""}${versionRun.stderr ?? ""}`;
+  if (versionRun.status !== 0 || !compilerVersionMatches(compilerVersionOutput, baseline.typescriptVersion)) {
+    const observed = parseCompilerVersion(compilerVersionOutput) ?? "UNPARSEABLE";
+    throw new Error(`TypeScript compiler version mismatch: expected ${baseline.typescriptVersion}, observed ${observed}.`);
+  }
   const run = spawnSync(compiler, ["--noEmit", "-p", baseline.project, "--pretty", "false"], {
     cwd: ROOT,
     encoding: "utf8",
@@ -96,7 +118,7 @@ export function runTypeScriptRatchet() {
     throw new Error(`TypeScript failed without parseable diagnostics (exit ${run.status}).`);
   }
   const comparison = compareDiagnostics(baseline.diagnostics, currentDiagnostics);
-  return { baseline, comparison, compilerExitCode: run.status ?? -1 };
+  return { baseline, comparison, compilerExitCode: run.status ?? -1, compilerVersion: baseline.typescriptVersion };
 }
 
 function printDiagnostic(prefix, diagnostic) {
@@ -108,7 +130,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const result = runTypeScriptRatchet();
     const { comparison, baseline } = result;
     console.log(
-      `TS_RATCHET baselineCommit=${baseline.baselineCommit} baseline=${comparison.baselineCount} current=${comparison.currentCount} new=${comparison.newDiagnostics.length} resolved=${comparison.resolvedDiagnostics.length}`,
+      `TS_RATCHET typescript=${result.compilerVersion} baselineCommit=${baseline.baselineCommit} baseline=${comparison.baselineCount} current=${comparison.currentCount} new=${comparison.newDiagnostics.length} resolved=${comparison.resolvedDiagnostics.length}`,
     );
     for (const diagnostic of comparison.newDiagnostics) printDiagnostic("NEW_TYPE_ERROR", diagnostic);
     for (const diagnostic of comparison.resolvedDiagnostics) console.log(`RESOLVED_TYPE_ERROR ${diagnostic.file} ${diagnostic.code}`);

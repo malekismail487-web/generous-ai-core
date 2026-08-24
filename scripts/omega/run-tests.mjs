@@ -22,7 +22,7 @@ const TESTS = Object.freeze([
   ["scripts/evaluation/omegaR1PrivateEval.ts", 31],
   ["scripts/omegaR2Design.test.ts", 51],
   ["scripts/omegaR2ASpecEval.test.ts", 51],
-  ["scripts/omegaTsRatchet.test.mjs", 16],
+  ["scripts/omegaTsRatchet.test.mjs", 23],
   ["scripts/omegaAssureR2Spec.test.ts", 37],
   ["scripts/omegaR2AImplSpec.test.ts", 82],
   ["scripts/omegaR2HostEval.test.ts", 43],
