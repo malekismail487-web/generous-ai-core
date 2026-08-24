@@ -1,0 +1,17 @@
+{
+  "drawCalls": 14,
+  "triangles": 51380,
+  "meanLuminance": 29.13,
+  "histogram": [
+    435479,
+    458373,
+    15061,
+    2080,
+    2629,
+    7582,
+    331,
+    65
+  ],
+  "width": 1280,
+  "height": 720
+}

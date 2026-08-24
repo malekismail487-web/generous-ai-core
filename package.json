@@ -11,6 +11,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "omega:tests": "node scripts/omega/run-tests.mjs",
     "security:secrets": "node scripts/security/scan-secrets.mjs",
     "w0rs:inventory": "node scripts/w0rs/inventory.mjs --write",
     "w0rs:inventory:check": "node scripts/w0rs/inventory.mjs --check",

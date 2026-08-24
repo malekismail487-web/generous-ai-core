@@ -20,6 +20,8 @@ jobs:
           node-version: 24
       - name: Reject tracked secrets
         run: node scripts/security/scan-secrets.mjs
+      - name: Run deterministic Omega protocol and orchestration harnesses
+        run: node scripts/omega/run-tests.mjs
       - name: Verify generated repository inventories
         run: node scripts/w0rs/inventory.mjs --check
       - name: Verify deterministic migration-failure evidence
