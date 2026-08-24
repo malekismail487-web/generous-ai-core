@@ -217,6 +217,31 @@ export interface CapabilityRegressionRecord {
   readonly currentEvidenceIds: readonly string[];
 }
 
+export const INSTITUTIONAL_WORK_STATES = Object.freeze([
+  "SATISFIED",
+  "NOT_STARTED",
+  "BLOCKED_EXTERNAL",
+  "UNKNOWN",
+  "REJECTED",
+] as const);
+export type InstitutionalWorkState = (typeof INSTITUTIONAL_WORK_STATES)[number];
+
+export interface InstitutionalWorkItem {
+  readonly workItemId: string;
+  readonly title: string;
+  readonly state: InstitutionalWorkState;
+  readonly registryRecordId: string | null;
+  readonly dependencies: readonly string[];
+  readonly blockingReasons: readonly string[];
+}
+
+export interface InstitutionalCriticalPath {
+  readonly pathId: string;
+  readonly title: string;
+  readonly targetWorkItemId: string;
+  readonly workItems: readonly InstitutionalWorkItem[];
+}
+
 export interface OmegaRegistry {
   readonly schemaVersion: 1;
   readonly corpusStatus: CorpusStatus;
@@ -224,4 +249,6 @@ export interface OmegaRegistry {
   readonly plans: readonly PlanRecord[];
   readonly capabilities: readonly CapabilityRecord[];
   readonly regressions: readonly CapabilityRegressionRecord[];
+  /** Optional schema-v1 extension. Older compatible v1 snapshots may omit critical paths. */
+  readonly criticalPaths?: readonly InstitutionalCriticalPath[];
 }

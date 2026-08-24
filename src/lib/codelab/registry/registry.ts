@@ -18,6 +18,7 @@ import {
   type RegistryRecordBase,
   type SourceProvenance,
 } from "./types";
+import { validateInstitutionalCriticalPaths } from "./criticalPath";
 
 export interface RegistryError {
   readonly code: string;
@@ -560,6 +561,14 @@ export function validateRegistry(candidate: unknown): RegistryValidation {
       if (!currentEvidence.has(evidenceId)) errors.push({ code: "unknown_current_regression_evidence", path, message: `Unknown current evidence ${evidenceId}.` });
     }
   });
+
+  for (const issue of validateInstitutionalCriticalPaths(registry)) {
+    errors.push({
+      code: issue.code,
+      path: issue.workItemId === null ? `$.criticalPaths.${issue.pathId}` : `$.criticalPaths.${issue.pathId}.${issue.workItemId}`,
+      message: issue.message,
+    });
+  }
 
   return errors.length === 0 ? { ok: true, registry } : { ok: false, errors };
 }
