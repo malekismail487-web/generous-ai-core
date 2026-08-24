@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "omega:tests": "node scripts/omega/run-tests.mjs",
+    "omega:pre-r2-gate": "node scripts/omega/pre-r2-gate.mjs",
     "typecheck:ratchet": "node scripts/typescript/typecheck-ratchet.mjs",
     "security:secrets": "node scripts/security/scan-secrets.mjs",
     "w0rs:inventory": "node scripts/w0rs/inventory.mjs --write",
