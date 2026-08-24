@@ -37,6 +37,13 @@ const DIRECTIVE_005_SOURCE: SourceProvenance = Object.freeze({
   contentHash: null,
 });
 
+const DIRECTIVE_006_SOURCE: SourceProvenance = Object.freeze({
+  sourceId: "Ω-SOURCE-DIRECTIVE-006",
+  sourceType: "conversation",
+  locator: "conversation://omega-institutional-execution-directive-006",
+  contentHash: null,
+});
+
 const REPOSITORY_SOURCE: SourceProvenance = Object.freeze({
   sourceId: "Ω-SOURCE-REPOSITORY",
   sourceType: "repository",
@@ -151,6 +158,15 @@ const directive005Evidence = evidence(
   "Explicit institutional directive",
   null,
   DIRECTIVE_005_SOURCE,
+);
+const directive006Evidence = evidence(
+  "Ω-EV-DIRECTIVE-006",
+  "E0",
+  "The institutional authority required candidate-external evidence custody, assurance self-testing, R2 composition review, and fail-closed R2-A readiness while keeping mutation authority unavailable.",
+  DIRECTIVE_006_SOURCE.locator,
+  "Explicit institutional directive",
+  null,
+  DIRECTIVE_006_SOURCE,
 );
 const secProjectIdentityEvidence = evidence(
   "Ω-EV-SEC-003-PROJECT-IDENTIFIED",
@@ -287,6 +303,14 @@ const tsZeroBaselineEvidence = evidence(
   "command://npm-run-typecheck-ratchet",
   "Exact compiler check, zero-diagnostic live run, predecessor-genealogy validation, and 25 deterministic ratchet checks",
   "The compiler and ratchet execute independently from the registry claim; baseline-transition policy remains institutionally authored.",
+);
+const evidenceCustodyEvidence = evidence(
+  "Ω-EV-EVIDENCE-CUSTODY-39",
+  "E3",
+  "The candidate-external evidence admission boundary passed 39 deterministic checks covering canonicalization, authoritative digest recomputation, exact candidate/evaluator/environment binding, provenance, freshness, immutable references, replay identities, and tamper detection.",
+  "command://omega-evidence-custody-tests",
+  "Node 24 SHA-256 admission custodian and adversarial deterministic fixture harness",
+  "The custodian imports no executor, filesystem, process, or network authority and recomputes digests outside candidate claims; implementation and test authorship remains correlated.",
 );
 
 export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
@@ -923,6 +947,63 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
       },
       relationships: [{ kind: "DERIVES_FROM", targetId: "Ω-PLAN-R2-A-SPEC-EVAL-001" }],
     },
+    {
+      recordType: "PLAN",
+      canonicalId: "Ω-PLAN-EVIDENCE-CUSTODY-001",
+      originalSourceId: "Ω-EVIDENCE-CUSTODY-001",
+      title: "Candidate-External Evidence Admission and Custody",
+      source: DIRECTIVE_006_SOURCE,
+      corpusStatus: "PARTIAL",
+      losslessCertification: false,
+      maturity: "VERIFIED",
+      maturityHistory: maturityHistory(
+        ["PROPOSED", "SPECIFIED", "PROTOTYPED", "IMPLEMENTED", "INTEGRATED", "VERIFIED"],
+        evidenceCustodyEvidence.evidenceId,
+      ),
+      epistemicState: "SUPPORTED",
+      verificationState: "VERIFIED",
+      evidence: [directive006Evidence, evidenceCustodyEvidence],
+      acceptanceCriteria: [
+        criterion("Ω-AC-EVIDENCE-CUSTODY-DIGEST", "Authoritative evidence digests are recomputed by the custodian and never inherited from candidate claims.", "Adversarial digest fixtures", "Matching recomputation admitted; mismatch rejected"),
+        criterion("Ω-AC-EVIDENCE-CUSTODY-BINDING", "Admitted evidence binds exact candidate, capability, evaluator, environment, source, time, order, and independence metadata.", "Admission and verification fixtures", "Every required binding preserved and tampering detected"),
+      ],
+      falsificationCriteria: [
+        criterion("Ω-FC-EVIDENCE-CUSTODY-CANDIDATE", "A candidate-provided digest becomes authoritative without recomputation.", "Digest mismatch fixture", "Any admission of mismatched candidate digest"),
+        criterion("Ω-FC-EVIDENCE-CUSTODY-REPLAY", "Evidence for another candidate, evaluator, environment, or stale interval is admitted.", "Version/replay fixtures", "Any cross-binding admission"),
+      ],
+      dependencies: ["Ω-PLAN-ASSURE-R2-EVAL-001", "Ω-CAP-REGISTRY-INVARIANTS"],
+      implementationMappings: [
+        { kind: "tool", ref: "scripts/evaluation/evidence-custody/custodian.ts", status: "active" },
+        { kind: "tool", ref: "scripts/omegaEvidenceCustody.test.ts", status: "active" },
+      ],
+      securityProfile: {
+        threatModel: ["Candidate controls its certification digest", "stale or cross-candidate evidence replay", "provenance or independence metadata is lost", "mutable admitted record is altered post hoc"],
+        privilegeRequirements: ["Local in-memory artifact admission and cryptographic hashing only"],
+        dataSensitivity: "INTERNAL",
+        isolationRequirements: ["No executor imports", "no filesystem, process, network, credential, or deployment authority", "candidate claims remain non-authoritative"],
+        attackSurface: ["Evidence artifact", "admission policy", "candidate digest assertion", "custody record"],
+        trustAssumptions: ["Custodian process is outside the candidate decision path", "SHA-256 implementation and canonical JSON are deterministic"],
+        possibleMisuse: ["Calling an in-memory frozen record durable storage", "treating same-author E3 as institutionally independent replication"],
+        compromisePaths: ["Custodian and candidate collusion", "incorrect allowed evaluator policy", "process memory compromise"],
+        blastRadius: "False evidence admission could mislead future assurance; no executor authority is granted.",
+        containmentMechanisms: ["Exact bindings", "external digest recomputation", "duplicate identity rejection", "append-only session order", "tamper verification"],
+        rollbackMechanisms: ["Reject custody record and retain the prior R1/pre-R2 baselines"],
+        securityEvidenceIds: [evidenceCustodyEvidence.evidenceId],
+      },
+      researchMaturity: "EXPERIMENT_RUN",
+      hypothesis: {
+        statement: "A small deterministic candidate-external admission boundary prevents candidate-controlled digest and replay attacks without requiring a distributed evidence database.",
+        supportCriterion: "All binding, digest, freshness, duplicate, and tamper attacks fail closed while valid artifacts remain deterministically admissible.",
+        falsificationCriterion: "A mismatched candidate digest, cross-version artifact, stale observation, duplicate identity, or modified admitted artifact verifies successfully.",
+        baseline: "R2 assurance context containing only candidate-supplied evidence IDs and digest strings",
+        competingExplanations: ["Candidate and custodian remain same-process and therefore operationally correlated", "Durable external storage may be necessary for stronger custody"],
+        measurementMethod: "Canonical artifact fixtures, independent SHA-256 recomputation, version/freshness attacks, immutable-record checks, and post-admission tamper verification",
+        requiredPopulation: "Valid, reordered, digest-mismatched, malformed, stale, future, cross-candidate, cross-evaluator, duplicate, and tampered artifacts",
+        computeBudget: "Single local CPU process; no model inference, filesystem mutation, or network",
+        calibrationRequirement: "Verified only as a local deterministic admission contract; not durable, signed, or independently replicated",
+      },
+      relationships: [{ kind: "OVERLAPS", targetId: "Ω-PLAN-ASSURE-R2-EVAL-001" }],
+    },
   ],
   capabilities: [
     {
@@ -1191,6 +1272,34 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
       relationships: [],
       expectedEvidence: ["Tracked-file scanner pass", "Adversarial scanner fixtures"],
     },
+    {
+      recordType: "CAPABILITY",
+      canonicalId: "Ω-CAP-EVIDENCE-CUSTODY",
+      originalSourceId: "Ω-EVIDENCE-CUSTODY-001",
+      title: "Candidate-external deterministic evidence admission",
+      source: DIRECTIVE_006_SOURCE,
+      corpusStatus: "PARTIAL",
+      losslessCertification: false,
+      maturity: "VERIFIED",
+      maturityHistory: maturityHistory(
+        ["PROPOSED", "SPECIFIED", "PROTOTYPED", "IMPLEMENTED", "INTEGRATED", "VERIFIED"],
+        evidenceCustodyEvidence.evidenceId,
+      ),
+      epistemicState: "SUPPORTED",
+      verificationState: "VERIFIED",
+      evidence: [evidenceCustodyEvidence],
+      acceptanceCriteria: [criterion("Ω-AC-CAP-EVIDENCE-CUSTODY", "Evidence is externally digested, exactly bound, and immutable within a custody session.", "Evidence custody harness", "39/39 deterministic checks pass")],
+      falsificationCriteria: [criterion("Ω-FC-CAP-EVIDENCE-CUSTODY", "Candidate-controlled, replayed, or tampered evidence becomes authoritative.", "Adversarial admission fixtures", "Any false admission or false verification")],
+      dependencies: ["Ω-PLAN-EVIDENCE-CUSTODY-001", "Ω-CAP-REGISTRY-INVARIANTS"],
+      implementationMappings: [{ kind: "tool", ref: "scripts/evaluation/evidence-custody/custodian.ts", status: "active" }],
+      securityProfile: securityProfile([evidenceCustodyEvidence.evidenceId], "Local in-memory cryptographic admission only"),
+      researchMaturity: "EXPERIMENT_RUN",
+      relationships: [
+        { kind: "VERIFIES", targetId: "Ω-CAP-R2-INDEPENDENT-ASSURANCE" },
+        { kind: "DEPENDS_ON", targetId: "Ω-CAP-REGISTRY-INVARIANTS" },
+      ],
+      expectedEvidence: ["Custodian-recomputed digest", "Exact candidate/evaluator/environment binding", "Immutable admission reference", "Tamper verification"],
+    },
   ],
   regressions: [
     {
@@ -1262,6 +1371,16 @@ export const OMEGA_BASELINE_REGISTRY: OmegaRegistry = Object.freeze({
       confidence: 1,
       previousEvidenceIds: [],
       currentEvidenceIds: [r2AssuranceSpecEvidence.evidenceId, r2AssuranceEvaluatorEvidence.evidenceId],
+    },
+    {
+      capabilityId: "Ω-CAP-EVIDENCE-CUSTODY",
+      expectedEvidence: ["Custodian-recomputed digest", "Exact candidate/evaluator/environment binding", "Immutable admission reference", "Tamper verification"],
+      previousResult: "UNAVAILABLE",
+      currentResult: "VERIFIED_LOCAL_DETERMINISTIC_39_OF_39",
+      change: "NEW",
+      confidence: 1,
+      previousEvidenceIds: [],
+      currentEvidenceIds: [evidenceCustodyEvidence.evidenceId],
     },
   ],
 } as const satisfies OmegaRegistry);
