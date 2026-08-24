@@ -139,7 +139,7 @@ const verifiedBindings: readonly EvidenceBoundWorkState[] = [
 const advanced = analyzeInstitutionalCriticalPath(deriveEvidenceBoundCriticalPath(path, verifiedBindings));
 assert(advanced.nextEligibleWorkItems[0]?.workItemId === "Ω-WORK-CHILD", "admitted root verification makes only its immediate dependent eligible");
 const stale = invalidateEvidenceBoundState(verifiedBindings[0], DEPENDENCIES, [{ dependencyId: "CUSTODY", fingerprint: "custody-v2" }], 1_500, 1_000);
-assert(stale.evidentiaryState === "STALE", "dependency-aware invalidation marks prior verification stale");
+assert(stale.evidentiaryState === "REQUIRES_REVALIDATION", "dependency-aware invalidation preserves history but requires revalidation");
 const stalePath = analyzeInstitutionalCriticalPath(deriveEvidenceBoundCriticalPath(path, [stale, blockedBindings[1]]));
 assert(stalePath.controllingBlockers[0]?.workItemId === "Ω-WORK-ROOT" && stalePath.unknownWorkItems.some((item) => item.workItemId === "Ω-WORK-ROOT"), "stale evidence re-closes the dependent critical path");
 

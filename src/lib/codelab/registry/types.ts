@@ -244,6 +244,7 @@ export const INSTITUTIONAL_EVIDENTIARY_STATES = Object.freeze([
   "UNKNOWN",
   "INSUFFICIENT_EVIDENCE",
   "STALE",
+  "REQUIRES_REVALIDATION",
 ] as const);
 export type InstitutionalEvidentiaryState = (typeof INSTITUTIONAL_EVIDENTIARY_STATES)[number];
 

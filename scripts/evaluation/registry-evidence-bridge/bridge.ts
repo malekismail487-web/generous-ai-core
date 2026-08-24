@@ -281,5 +281,5 @@ export function invalidateEvidenceBoundState(
   materialChangedAtEpochMs: number,
 ): EvidenceBoundWorkState {
   const stale = observedAtEpochMs < materialChangedAtEpochMs || !dependencyBindingsMatch(claimDependencies, currentDependencies);
-  return stale ? { ...binding, evidentiaryState: "STALE", blockingReasons: [...binding.blockingReasons, "MATERIAL_OR_DEPENDENCY_STATE_CHANGED"] } : binding;
+  return stale ? { ...binding, evidentiaryState: "REQUIRES_REVALIDATION", blockingReasons: [...binding.blockingReasons, "MATERIAL_OR_DEPENDENCY_STATE_CHANGED"] } : binding;
 }
