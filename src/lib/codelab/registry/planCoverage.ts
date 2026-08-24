@@ -36,7 +36,7 @@ export const PLAN_CONFLICT_DOMAINS = Object.freeze([
 
 const CURRENT_AUTHORITY = Object.freeze({
   available: Object.freeze(["READ_REPOSITORY"]),
-  unavailable: Object.freeze(["PROVISION_SANDBOX", "WRITE_SANDBOX_CONTENT"]),
+  unavailable: Object.freeze(["WRITE_SANDBOX", "PROVISION_SANDBOX", "TERMINATE_SANDBOX", "WRITE_SANDBOX_CONTENT"]),
   forbidden: Object.freeze(["WRITE_REPOSITORY", "SHELL", "NETWORK", "CREDENTIAL_ACCESS", "PACKAGE_INSTALL", "DEPLOYMENT"]),
   grantedByArtifact: Object.freeze([] as string[]),
 });
