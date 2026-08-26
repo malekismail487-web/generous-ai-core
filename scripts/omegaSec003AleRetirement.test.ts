@@ -87,6 +87,13 @@ assert(!/CREATE\s+TABLE/i.test(migration), "retirement migration never creates t
 const notices = migration.split("\n").filter((line) => /RAISE NOTICE/.test(line)).join("\n");
 assert(!/key_hash|key_prefix|credential/i.test(notices), "migration notices contain no credential identifiers or material");
 
+const implementationCandidate = "c75f484c063b801b1843f4f0ea53bdc7edcfb9a0";
+const operatorManifestPath = "supabase/deployment/sec003-ale-retirement.release.json";
+assert(existsSync(resolve(ROOT, operatorManifestPath)), "non-secret Lovable operator manifest is present");
+const operatorManifest = JSON.parse(source(operatorManifestPath)) as AleRetirementReleaseManifest;
+assert(validateAleRetirementReleaseManifest(operatorManifest, implementationCandidate).length === 0, "operator manifest binds the exact immutable implementation candidate and required retirement artifacts");
+assert(operatorManifest.deploymentOccurred === false && operatorManifest.containsSecretMaterial === false, "operator manifest neither claims deployment nor contains secret material");
+
 const CANDIDATE: EvidenceCandidateBinding = Object.freeze({
   commit: "c".repeat(40), capabilityVersion: "sec003-ale-retirement/1", schemaVersion: 1, environmentIdentity: "synthetic-lovable-deployment",
 });

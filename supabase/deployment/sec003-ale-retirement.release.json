@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "manifestId": "SEC003-ALE-RETIREMENT-RELEASE-001",
+  "candidateCommit": "c75f484c063b801b1843f4f0ea53bdc7edcfb9a0",
+  "branch": "sol/omega-institutional-spine",
+  "affectedArtifacts": [
+    "supabase/functions/ale-api/index.ts",
+    "supabase/functions/ale-api/retirement.ts",
+    "supabase/migrations/20260826000000_retire_legacy_ale_external_api.sql",
+    "supabase/config.toml"
+  ],
+  "migrationIdentity": "20260826000000_retire_legacy_ale_external_api",
+  "expectedLegacyVerifierState": "RETIRED_FAIL_CLOSED",
+  "expectedDatabaseRetirementStates": [
+    "TABLE_PRESENT_ALL_INACTIVE",
+    "TABLE_ABSENT"
+  ],
+  "expectedLegacyCredentialOutcome": "REJECTED_RETIRED",
+  "unchangedCredentialSystems": [
+    "LUMINA_API_GATEWAY",
+    "LUMINA_EXTERNAL_CREDENTIAL_RECORDS"
+  ],
+  "operatorAction": "In the linked Lovable project, publish/deploy exact commit c75f484c063b801b1843f4f0ea53bdc7edcfb9a0, including the ale-api edge function and migration 20260826000000_retire_legacy_ale_external_api.",
+  "requiredResultingEvidence": [
+    "A non-secret Lovable deployment record identifying exact deployed commit c75f484c063b801b1843f4f0ea53bdc7edcfb9a0.",
+    "A non-secret resulting-state record showing the deployed ale-api returns HTTP 410 with code ALE_EXTERNAL_API_RETIRED for a synthetic legacy-format request and performs no database lookup, learner provisioning, learner-token minting, or downstream forwarding.",
+    "A non-secret migration result showing either TABLE_PRESENT_ALL_INACTIVE with activeRowsAfter=0 or TABLE_ABSENT, bound to migration 20260826000000_retire_legacy_ale_external_api."
+  ],
+  "sec003Evaluator": "scripts/evaluation/sec003-retirement/evaluator.ts",
+  "deploymentOccurred": false,
+  "containsSecretMaterial": false
+}
