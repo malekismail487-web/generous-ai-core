@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "count": 50,
-  "deployableCount": 47,
+  "count": 49,
+  "deployableCount": 46,
   "excludedCount": 3,
   "interpretation": "Static boundary evidence plus explicit deployability. Absence of a first-party caller or auth signal is not proof of safety, reachability, or vulnerability.",
   "boundaries": [
@@ -131,30 +131,6 @@
       ],
       "boundaryEvidence": [
         "auth.getUser",
-        "authorization-header",
-        "api-key-reference"
-      ],
-      "classification": "client-reachable-needs-endpoint-review",
-      "confidence": "medium",
-      "requiredBeforeEnablement": null,
-      "conclusionLimit": "Static evidence does not prove the deployed endpoint is reachable or vulnerable.",
-      "deploymentEligible": true
-    },
-    {
-      "function": "ale-api",
-      "file": "supabase/functions/ale-api/index.ts",
-      "serviceRoleReferenceLines": [
-        29
-      ],
-      "jwtVerification": "explicit-false",
-      "repositoryCallers": [
-        {
-          "file": "supabase/functions/ale-api/index.ts",
-          "line": 305,
-          "transport": "raw-url"
-        }
-      ],
-      "boundaryEvidence": [
         "authorization-header",
         "api-key-reference"
       ],

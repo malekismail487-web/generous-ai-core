@@ -4394,6 +4394,8 @@
           "scripts/evaluation/ro-vertical-slice/assurance.ts",
           "scripts/evaluation/ro-vertical-slice/orchestrator.ts",
           "scripts/evaluation/sec003-closure/evaluator.ts",
+          "scripts/evaluation/sec003-retirement/contracts.ts",
+          "scripts/evaluation/sec003-retirement/evaluator.ts",
           "scripts/evaluation/verification-cost/telemetry.ts",
           "scripts/lseA10Integration.test.ts",
           "scripts/lseA8Integration.test.ts",
@@ -4415,6 +4417,7 @@
           "scripts/omegaClaimLifecycle.test.ts",
           "scripts/omegaDirective009PlanCoverage.test.ts",
           "scripts/omegaDirective010PlanCoverage.test.ts",
+          "scripts/omegaDirective015PlanCoverage.test.ts",
           "scripts/omegaEnvironmentCapability.test.ts",
           "scripts/omegaEvidenceCorrelationMap.test.ts",
           "scripts/omegaEvidenceCustody.test.ts",
@@ -4443,6 +4446,7 @@
           "scripts/omegaRegistry.test.ts",
           "scripts/omegaRegistryCriticalPath.test.ts",
           "scripts/omegaRegistryEvidenceBridge.test.ts",
+          "scripts/omegaSec003AleRetirement.test.ts",
           "scripts/omegaSec003ClosureEvidence.test.ts",
           "scripts/omegaTsRatchet.test.mjs",
           "scripts/omegaVerificationCost.test.ts",
@@ -4642,6 +4646,7 @@
           "src/lib/codelab/registry/criticalPath.ts",
           "src/lib/codelab/registry/directive009Coverage.ts",
           "src/lib/codelab/registry/directive010Coverage.ts",
+          "src/lib/codelab/registry/directive015Coverage.ts",
           "src/lib/codelab/registry/planCoverage.ts",
           "src/lib/codelab/registry/registry.ts",
           "src/lib/codelab/verifier/types.ts",
@@ -4752,7 +4757,7 @@
           "supabase/functions/_shared/unifiedState_test.ts",
           "supabase/functions/ability-update/index.ts",
           "supabase/functions/adaptive-validate/index.ts",
-          "supabase/functions/ale-api/index.ts",
+          "supabase/functions/ale-api/retirement.ts",
           "supabase/functions/auto-tune-hyperparams/index.ts",
           "supabase/functions/calibrate-predictions/index.ts",
           "supabase/functions/chat/index.ts",
@@ -4922,9 +4927,7 @@
       "decisionRequired": true,
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
-        "firstPartyCodeReferences": [
-          "supabase/functions/ale-api/index.ts"
-        ]
+        "firstPartyCodeReferences": []
       }
     },
     {
@@ -4937,9 +4940,7 @@
       "decisionRequired": true,
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
-        "firstPartyCodeReferences": [
-          "supabase/functions/ale-api/index.ts"
-        ]
+        "firstPartyCodeReferences": []
       }
     },
     {
@@ -4952,9 +4953,7 @@
       "decisionRequired": true,
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
-        "firstPartyCodeReferences": [
-          "supabase/functions/ale-api/index.ts"
-        ]
+        "firstPartyCodeReferences": []
       }
     },
     {
@@ -5374,7 +5373,6 @@
           "supabase/functions/_shared/symbolicNeuralAlignment.ts",
           "supabase/functions/ability-update/index.ts",
           "supabase/functions/adaptive-validate/index.ts",
-          "supabase/functions/ale-api/index.ts",
           "supabase/functions/chat/index.ts",
           "supabase/functions/explain-file/index.ts",
           "supabase/functions/extract-memories/index.ts",
@@ -8010,6 +8008,7 @@
           "scripts/omegaR2NyxLineage.test.ts",
           "scripts/omegaReadOnlyVerticalSlice.test.ts",
           "scripts/omegaRegistry.test.ts",
+          "scripts/omegaSec003AleRetirement.test.ts",
           "scripts/omegaTsRatchet.test.mjs",
           "scripts/orchestraO0.test.ts",
           "scripts/orchestraO1.test.ts",
@@ -8224,6 +8223,7 @@
           "src/lib/codelab/registry/baseline.ts",
           "src/lib/codelab/registry/directive009Coverage.ts",
           "src/lib/codelab/registry/directive010Coverage.ts",
+          "src/lib/codelab/registry/directive015Coverage.ts",
           "src/lib/codelab/registry/planCoverage.ts",
           "src/lib/codelab/verifier/types.ts",
           "src/lib/coldStartBootstrap.ts",
@@ -8327,7 +8327,6 @@
           "supabase/functions/ability-update/index.ts",
           "supabase/functions/ability-update/index_test.ts",
           "supabase/functions/adaptive-validate/index.ts",
-          "supabase/functions/ale-api/index.ts",
           "supabase/functions/audit-log/index.ts",
           "supabase/functions/auto-tune-hyperparams/index.ts",
           "supabase/functions/calibrate-predictions/index.ts",

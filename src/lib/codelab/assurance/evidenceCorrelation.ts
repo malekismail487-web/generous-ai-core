@@ -96,7 +96,7 @@ export const EVIDENCE_BOTTLENECKS = Object.freeze([
   Object.freeze({ claimFamily: "R2_PREACTUATION_SAFETY", state: "IMPLEMENTATION_ADJACENT_E3_DOMINANT", reason: "Candidate, negative-capability, custody, and assurance evidence are locally authored and run on one host." }),
   Object.freeze({ claimFamily: "R1_CROSS_ENVIRONMENT_REPRODUCIBILITY", state: "BLOCKED_ENVIRONMENT", reason: "No exact clean dependency-complete independent environment is available." }),
   Object.freeze({ claimFamily: "FILESYSTEM_MUTATION_SAFETY", state: "UNOBSERVED", reason: "Operational R2 authority remains unavailable." }),
-  Object.freeze({ claimFamily: "SEC003_CONTAINMENT", state: "BLOCKED_EXTERNAL", reason: "Authorized management-plane evidence remains unavailable." }),
+  Object.freeze({ claimFamily: "SEC003_CONTAINMENT", state: "BLOCKED_EXTERNAL", reason: "Authorized Lovable deployment and resulting-state evidence remain unavailable." }),
 ]);
 
 export function validateEvidenceCorrelationMap(profiles: readonly EvidenceMechanismProfile[] = MAJOR_EVIDENCE_MECHANISMS): readonly string[] {

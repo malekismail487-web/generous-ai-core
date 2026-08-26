@@ -144,7 +144,7 @@ export const CURRENT_R2_A_READINESS_INPUT = Object.freeze<R2AReadinessInput>({
     evidenceClass: requirement === "SEC_003_AUTHORIZED_CLOSURE" ? "E0" : "E3",
     evidenceRefs: [],
     statement: requirement === "SEC_003_AUTHORIZED_CLOSURE"
-      ? "Ω-SEC-003 remains blocked on authorized management-plane evidence."
+      ? "Ω-SEC-003 remains open pending authorized Lovable deployment and resulting-state evidence for the retired ALE credential class."
       : "Fresh pre-implementation rerun is required after Ω-SEC-003 closure.",
   })),
   currentAllowedAuthorities: ["READ_REPOSITORY"],

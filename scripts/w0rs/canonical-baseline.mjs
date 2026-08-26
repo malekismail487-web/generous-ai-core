@@ -100,10 +100,10 @@ if (write) {
   console.log(`Wrote ${repoPath(baselinePath)} from ${sources.length} canonical sources.`);
 } else {
   const migrationFiles = readdirSync(migrationDir).filter((name) => name.endsWith(".sql")).sort();
-  if (migrationFiles.length !== 1 || migrationFiles[0] !== baselineName) {
-    throw new Error(`Executable migration discovery must contain only ${baselineName}; found ${migrationFiles.join(", ")}`);
-  }
+  if (!migrationFiles.includes(baselineName)) throw new Error(`Canonical executable migration ${baselineName} is missing.`);
+  const invalidPostBaseline = migrationFiles.filter((name) => name !== baselineName && name.localeCompare(baselineName) <= 0);
+  if (invalidPostBaseline.length > 0) throw new Error(`Executable migrations must follow canonical baseline ${baselineName}; found ${invalidPostBaseline.join(", ")}`);
   if (canonical(readFileSync(baselinePath, "utf8")) !== body) throw new Error(`${repoPath(baselinePath)} is out of date`);
   if (canonical(readFileSync(manifestPath, "utf8")) !== manifestText) throw new Error(`${repoPath(manifestPath)} is out of date`);
-  console.log(`Verified one canonical migration, ${sources.length} sources, and ${manifest.baseline.canonicalLfSha256}.`);
+  console.log(`Verified canonical baseline, ${migrationFiles.length - 1} post-baseline migration(s), ${sources.length} sources, and ${manifest.baseline.canonicalLfSha256}.`);
 }

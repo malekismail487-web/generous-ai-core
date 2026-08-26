@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/14",
+  "suiteVersion": "omega-institutional-suite/15",
   "criticalSuites": [
     "OMEGA-ASSURE-R2-EVALUATOR",
     "OMEGA-AUDIT-RECONSTRUCTION",
@@ -8,6 +8,7 @@
     "OMEGA-BASELINE-DIFF-ASSURANCE",
     "OMEGA-DIRECTIVE-009-PLAN-COVERAGE",
     "OMEGA-DIRECTIVE-010-PLAN-COVERAGE",
+    "OMEGA-DIRECTIVE-015-PLAN-COVERAGE",
     "OMEGA-EVIDENCE-CORRELATION-MAP",
     "OMEGA-EVIDENCE-CUSTODY",
     "OMEGA-EVIDENCE-INVALIDATION",
@@ -29,7 +30,8 @@
     "OMEGA-READ-ONLY-EXECUTOR",
     "OMEGA-READ-ONLY-VERTICAL-SLICE",
     "OMEGA-REGISTRY-EVIDENCE-BRIDGE",
-    "OMEGA-SEC003-CLOSURE-EVIDENCE"
+    "OMEGA-SEC003-CLOSURE-EVIDENCE",
+    "OMEGA-SEC003-ALE-RETIREMENT"
   ],
   "heldOutSuites": [
     "OMEGA-R1-PRIVATE-EVAL"
@@ -55,6 +57,7 @@
     { "suiteId": "OMEGA-CLAIM-LIFECYCLE", "file": "scripts/omegaClaimLifecycle.test.ts" },
     { "suiteId": "OMEGA-DIRECTIVE-009-PLAN-COVERAGE", "file": "scripts/omegaDirective009PlanCoverage.test.ts" },
     { "suiteId": "OMEGA-DIRECTIVE-010-PLAN-COVERAGE", "file": "scripts/omegaDirective010PlanCoverage.test.ts" },
+    { "suiteId": "OMEGA-DIRECTIVE-015-PLAN-COVERAGE", "file": "scripts/omegaDirective015PlanCoverage.test.ts" },
     { "suiteId": "OMEGA-EVIDENCE-CORRELATION-MAP", "file": "scripts/omegaEvidenceCorrelationMap.test.ts" },
     { "suiteId": "OMEGA-EVIDENCE-CUSTODY", "file": "scripts/omegaEvidenceCustody.test.ts" },
     { "suiteId": "OMEGA-EVIDENCE-INVALIDATION", "file": "scripts/omegaEvidenceInvalidation.test.ts" },
@@ -85,6 +88,7 @@
     { "suiteId": "OMEGA-REGISTRY-CRITICAL-PATH", "file": "scripts/omegaRegistryCriticalPath.test.ts" },
     { "suiteId": "OMEGA-REGISTRY-EVIDENCE-BRIDGE", "file": "scripts/omegaRegistryEvidenceBridge.test.ts" },
     { "suiteId": "OMEGA-SEC003-CLOSURE-EVIDENCE", "file": "scripts/omegaSec003ClosureEvidence.test.ts" },
+    { "suiteId": "OMEGA-SEC003-ALE-RETIREMENT", "file": "scripts/omegaSec003AleRetirement.test.ts" },
     { "suiteId": "OMEGA-TS-RATCHET", "file": "scripts/omegaTsRatchet.test.mjs" },
     { "suiteId": "OMEGA-VERIFICATION-COST", "file": "scripts/omegaVerificationCost.test.ts" }
   ]

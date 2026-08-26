@@ -2002,12 +2002,6 @@
         "transport": "supabase-js"
       },
       {
-        "name": "ale-api",
-        "file": "supabase/functions/ale-api/index.ts",
-        "line": 305,
-        "transport": "raw-url"
-      },
-      {
         "name": "scan-content",
         "file": "supabase/functions/chat/index.ts",
         "line": 47,
@@ -2175,7 +2169,6 @@
       "name": "SUPABASE_ANON_KEY",
       "files": [
         "supabase/functions/ability-update/index.ts",
-        "supabase/functions/ale-api/index.ts",
         "supabase/functions/audit-log/index.ts",
         "supabase/functions/calibrate-predictions/index.ts",
         "supabase/functions/chat/index.ts",
@@ -2212,7 +2205,6 @@
         "supabase/functions/_shared/curriculumBinding.ts",
         "supabase/functions/ability-update/index.ts",
         "supabase/functions/adaptive-validate/index.ts",
-        "supabase/functions/ale-api/index.ts",
         "supabase/functions/audit-log/index.ts",
         "supabase/functions/auto-tune-hyperparams/index.ts",
         "supabase/functions/calibrate-predictions/index.ts",
@@ -2263,7 +2255,6 @@
         "supabase/functions/_shared/curriculumBinding.ts",
         "supabase/functions/ability-update/index.ts",
         "supabase/functions/adaptive-validate/index.ts",
-        "supabase/functions/ale-api/index.ts",
         "supabase/functions/audit-log/index.ts",
         "supabase/functions/auto-tune-hyperparams/index.ts",
         "supabase/functions/calibrate-predictions/index.ts",

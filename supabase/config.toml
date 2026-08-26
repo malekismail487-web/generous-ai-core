@@ -4,4 +4,6 @@ project_id = "lumina-local"
 verify_jwt = false
 
 [functions.ale-api]
+# Intentionally public only so the deployed tombstone can return an explicit
+# 410 response. The handler contains no authentication or downstream path.
 verify_jwt = false
