@@ -236,6 +236,28 @@ export class R2AIsolatedSandboxLifecycle {
     return Object.freeze({ ...R2_A_ISOLATED_CANDIDATE_STATUS, revoked: this.#capabilityRevoked, activeSandboxes: this.#active.size });
   }
 
+  ownsActiveSandbox(sandbox: R2AProvisionedSandbox): boolean {
+    const session = this.#active.get(sandbox.requestId);
+    return !this.#capabilityRevoked
+      && session?.sandbox.sandboxId === sandbox.sandboxId
+      && session.sandbox.requestId === sandbox.requestId
+      && session.sandbox.canonicalPath === sandbox.canonicalPath
+      && session.sandbox.createdAtEpochMs === sandbox.createdAtEpochMs
+      && session.sandbox.expiresAtEpochMs === sandbox.expiresAtEpochMs
+      && sameIdentity(session.sandbox.objectIdentity, sandbox.objectIdentity);
+  }
+
+  authorizesTermination(request: R2ATerminationRequest, sandbox: R2AProvisionedSandbox): boolean {
+    return this.ownsActiveSandbox(sandbox)
+      && request.schemaVersion === 1
+      && request.requestId === sandbox.requestId
+      && request.authority === "TERMINATE_SANDBOX"
+      && request.capabilityId === this.#config.capability.capabilityId
+      && request.issuer === this.#config.capability.issuer
+      && request.auditIdentity === this.#config.capability.auditIdentity
+      && Number.isFinite(request.observedAtEpochMs);
+  }
+
   async provision(request: SandboxProvisionRequest, nowEpochMs = Date.now()): Promise<R2AOperationResult> {
     const events: R2AAuditEvent[] = [];
     const requestedTarget = resolve(this.#sandboxRoot, request.requestedPath || "INVALID");
@@ -322,12 +344,7 @@ export class R2AIsolatedSandboxLifecycle {
     const session = this.#active.get(request.requestId);
     if (!session) return this.#result("REJECTED", "unknown_or_stale_sandbox", null, []);
     const events = session.events;
-    const authorized = request.schemaVersion === 1
-      && request.authority === "TERMINATE_SANDBOX"
-      && request.capabilityId === this.#config.capability.capabilityId
-      && request.issuer === this.#config.capability.issuer
-      && request.auditIdentity === this.#config.capability.auditIdentity
-      && Number.isFinite(request.observedAtEpochMs);
+    const authorized = this.authorizesTermination(request, session.sandbox);
     if (!authorized) return this.#result("REJECTED", "termination_authorization_rejected", session.sandbox, []);
     appendEvent(events, {
       eventType: "TERMINATION_REQUEST", requestId: request.requestId, actorIdentity: request.issuer,
