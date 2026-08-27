@@ -1,8 +1,9 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/23",
+  "suiteVersion": "omega-institutional-suite/24",
   "criticalSuites": [
     "OMEGA-ASSURE-R2-EVALUATOR",
+    "OMEGA-ASSURE-R2-OPERATIONAL-INDEPENDENT",
     "OMEGA-AUDIT-RECONSTRUCTION",
     "OMEGA-AUTHORITY-GRAPH",
     "OMEGA-BASELINE-DIFF-ASSURANCE",
@@ -58,6 +59,7 @@
     { "suiteId": "ORCHESTRA-O7A", "file": "scripts/orchestraO7a.test.ts" },
     { "suiteId": "ORCHESTRA-O7-PERCEPTION", "file": "scripts/orchestraO7perception.test.ts" },
     { "suiteId": "OMEGA-ASSURE-R2-EVALUATOR", "file": "scripts/omegaAssureR2Evaluator.test.ts" },
+    { "suiteId": "OMEGA-ASSURE-R2-OPERATIONAL-INDEPENDENT", "file": "scripts/omegaR2OperationalIndependentEval.test.ts" },
     { "suiteId": "OMEGA-ASSURE-R2-SPEC", "file": "scripts/omegaAssureR2Spec.test.ts" },
     { "suiteId": "OMEGA-AUDIT-RECONSTRUCTION", "file": "scripts/omegaAuditReconstruction.test.ts" },
     { "suiteId": "OMEGA-AUTHORITY-GRAPH", "file": "scripts/omegaAuthorityGraph.test.ts" },
