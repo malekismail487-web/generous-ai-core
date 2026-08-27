@@ -233,6 +233,19 @@ export class R2BIsolatedContentCreator {
     return true;
   }
 
+  transferOwnedArtifactToTransaction(artifact: R2BCreatedArtifact): boolean {
+    if (this.#revoked || !this.#artifact) return false;
+    const matches = this.#artifact.artifactId === artifact.artifactId
+      && this.#artifact.canonicalPath === artifact.canonicalPath
+      && this.#artifact.contentHash === artifact.contentHash
+      && this.#artifact.byteLength === artifact.byteLength
+      && sameIdentity(this.#artifact.objectIdentity, artifact.objectIdentity)
+      && this.#config.lifecycle.ownsActiveSandbox(this.#config.sandbox);
+    if (!matches) return false;
+    this.#revoked = true;
+    return true;
+  }
+
   async createFile(request: R2BCreateFileRequest): Promise<R2BCreateResult> {
     const requestId = typeof request.requestId === "string" && request.requestId.trim() ? request.requestId : "MALFORMED";
     const relativePath = typeof request.relativePath === "string" ? request.relativePath : "INVALID";
