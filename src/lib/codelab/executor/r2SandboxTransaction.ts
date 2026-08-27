@@ -41,6 +41,7 @@ export interface R2EOwnedInput {
 export interface R2EFaultInjection {
   readonly failAfterOperationIndex?: number;
   readonly failRollbackForRelativePath?: string;
+  readonly failExplicitRollbackForRelativePath?: string;
 }
 
 export interface R2EIsolatedTransactionConfig {
@@ -170,6 +171,22 @@ export interface R2ETerminationResult {
   readonly authorityGranted: false;
 }
 
+export interface R2ERollbackLease {
+  readonly leaseId: string;
+  readonly transactionId: string;
+  readonly sandboxId: string;
+  readonly consumerIdentity: string;
+  readonly committedPoststateDigest: string;
+}
+
+export interface R2ERecoveryResult {
+  readonly decision: "RESTORED" | "STALE_REJECTED" | "REJECTED" | "QUARANTINED";
+  readonly reason: string;
+  readonly prestateDigest: string | null;
+  readonly evidenceClass: "E3";
+  readonly authorityGranted: false;
+}
+
 interface ObservedFile {
   readonly exists: boolean;
   readonly identity: CanonicalTargetIdentity | null;
@@ -256,6 +273,8 @@ export class R2EIsolatedTransactionEngine {
   readonly #events: R2ETransactionEvent[] = [];
   #prepared: PrivatePreparedTransaction | null = null;
   #committed: PrivateCommittedTransaction | null = null;
+  #rollbackLease: R2ERollbackLease | null = null;
+  #rolledBack = false;
   #revoked = false;
 
   private constructor(config: R2EIsolatedTransactionConfig, ownedByPath: ReadonlyMap<string, R2BCreatedArtifact>) {
@@ -294,6 +313,111 @@ export class R2EIsolatedTransactionEngine {
 
   capabilityProfile(): typeof R2_E_ISOLATED_CANDIDATE_STATUS & { readonly revoked: boolean; readonly prepared: boolean; readonly committed: boolean } {
     return Object.freeze({ ...R2_E_ISOLATED_CANDIDATE_STATUS, revoked: this.#revoked, prepared: this.#prepared !== null, committed: this.#committed !== null });
+  }
+
+  transferCommittedTransactionToRollback(transaction: R2ECommittedTransaction, consumerIdentity: string): R2ERollbackLease | null {
+    if (this.#revoked || this.#rolledBack || this.#rollbackLease || !this.#committed || !consumerIdentity.trim()) return null;
+    const expected = this.#committed.publicRecord;
+    if (transaction.transactionId !== expected.transactionId || transaction.poststateDigest !== expected.poststateDigest
+      || transaction.commitRequestId !== expected.commitRequestId || transaction.operationDigest !== expected.operationDigest
+      || !this.#config.lifecycle.ownsActiveSandbox(this.#config.sandbox)) return null;
+    this.#rollbackLease = Object.freeze({
+      leaseId: `rollback-lease://${this.#config.capability.capabilityId}/${transaction.transactionId}/${sha256(consumerIdentity).slice(0, 16)}`,
+      transactionId: transaction.transactionId,
+      sandboxId: this.#config.sandbox.sandboxId,
+      consumerIdentity,
+      committedPoststateDigest: transaction.poststateDigest,
+    });
+    return this.#rollbackLease;
+  }
+
+  ownsRollbackLease(lease: R2ERollbackLease, consumerIdentity: string): boolean {
+    return !this.#revoked && !this.#rolledBack && this.#rollbackLease !== null
+      && lease.leaseId === this.#rollbackLease.leaseId && lease.transactionId === this.#rollbackLease.transactionId
+      && lease.sandboxId === this.#rollbackLease.sandboxId && lease.committedPoststateDigest === this.#rollbackLease.committedPoststateDigest
+      && consumerIdentity === this.#rollbackLease.consumerIdentity && this.#config.lifecycle.ownsActiveSandbox(this.#config.sandbox);
+  }
+
+  async executeAuthorizedRecovery(lease: R2ERollbackLease, consumerIdentity: string, observedAtEpochMs: number): Promise<R2ERecoveryResult> {
+    if (!this.ownsRollbackLease(lease, consumerIdentity) || !this.#committed) {
+      return Object.freeze({ decision: "REJECTED", reason: "rollback_lease_not_owned", prestateDigest: null, evidenceClass: "E3", authorityGranted: false });
+    }
+    try {
+      for (const operation of this.#committed.prestateOperations) {
+        const expected = this.#committed.poststates.get(operation.relativePath)!;
+        const observed = await observeFile(operation.canonicalPath, observedAtEpochMs);
+        if (expected.exists !== observed.exists || (expected.exists
+          && (!sameIdentity(expected.identity, observed.identity) || expected.hash !== observed.hash))) {
+          this.#revoked = true;
+          return Object.freeze({ decision: "STALE_REJECTED", reason: "committed_poststate_diverged_external_state_preserved",
+            prestateDigest: null, evidenceClass: "E3", authorityGranted: false });
+        }
+      }
+      for (const operation of [...this.#committed.prestateOperations].reverse()) {
+        if (this.#config.faultInjection?.failExplicitRollbackForRelativePath === operation.relativePath) throw new Error("induced_explicit_rollback_failure");
+        const current = await observeFile(operation.canonicalPath, observedAtEpochMs);
+        if (!operation.prestate.exists) {
+          if (!current.exists || !sameIdentity(current.identity, this.#committed.poststates.get(operation.relativePath)!.identity)
+            || current.hash !== this.#committed.poststates.get(operation.relativePath)!.hash) throw new Error("created_artifact_changed_during_rollback");
+          await unlink(operation.canonicalPath);
+        } else if (!current.exists) {
+          const handle = await open(operation.canonicalPath, "wx", 0o600);
+          await handle.writeFile(operation.prestate.content!); await handle.sync(); await handle.close();
+        } else {
+          const handle = await open(operation.canonicalPath, "r+");
+          const stats = await handle.stat({ bigint: true });
+          const handleIdentity: CanonicalTargetIdentity = {
+            identityScheme: process.platform === "win32" ? "WINDOWS_FILE_ID" : "POSIX_DEVICE_INODE",
+            volumeOrDevice: stats.dev.toString(), objectId: `${stats.ino.toString()}:${stats.birthtimeNs.toString()}`, observedAtEpochMs,
+          };
+          if (!sameIdentity(handleIdentity, current.identity)) { await handle.close(); throw new Error("rollback_target_identity_changed"); }
+          await handle.truncate(0); await handle.writeFile(operation.prestate.content!); await handle.sync(); await handle.close();
+        }
+      }
+      const proof = [];
+      for (const operation of this.#committed.prestateOperations) {
+        const observed = await observeFile(operation.canonicalPath, observedAtEpochMs);
+        if (operation.prestate.exists !== observed.exists || (observed.exists && observed.hash !== operation.prestate.hash)) {
+          throw new Error("rollback_postcondition_failed");
+        }
+        proof.push({ relativePath: operation.relativePath, exists: observed.exists, hash: observed.hash });
+      }
+      const prestateDigest = sha256(canonical(proof));
+      this.#rolledBack = true;
+      return Object.freeze({ decision: "RESTORED", reason: "committed_transaction_prestate_restored_and_verified",
+        prestateDigest, evidenceClass: "E3", authorityGranted: false });
+    } catch (error) {
+      this.#revoked = true;
+      return Object.freeze({ decision: "QUARANTINED", reason: error instanceof Error ? error.message : "explicit_rollback_failed",
+        prestateDigest: null, evidenceClass: "E3", authorityGranted: false });
+    }
+  }
+
+  async terminateAfterAuthorizedRecovery(lease: R2ERollbackLease, consumerIdentity: string, request: R2ATerminationRequest): Promise<R2ETerminationResult> {
+    if (this.#revoked || !this.#rolledBack || !this.#rollbackLease || lease.leaseId !== this.#rollbackLease.leaseId
+      || consumerIdentity !== this.#rollbackLease.consumerIdentity || !this.#committed) {
+      return this.#terminationResult("REJECTED", "no_verified_recovery_owned_by_consumer", null);
+    }
+    if (!this.#config.lifecycle.authorizesTermination(request, this.#config.sandbox)) return this.#terminationResult("REJECTED", "sandbox_termination_binding_mismatch", null);
+    try {
+      for (const operation of this.#committed.prestateOperations) {
+        const observed = await observeFile(operation.canonicalPath, request.observedAtEpochMs);
+        if (operation.prestate.exists !== observed.exists || (observed.exists && observed.hash !== operation.prestate.hash)) {
+          throw new Error("recovered_prestate_changed_before_cleanup");
+        }
+      }
+      for (const operation of this.#committed.prestateOperations) {
+        const observed = await observeFile(operation.canonicalPath, request.observedAtEpochMs);
+        if (observed.exists) await unlink(operation.canonicalPath);
+      }
+      this.#revoked = true;
+      const lifecycleResult = await this.#config.lifecycle.terminate(request);
+      return this.#terminationResult(lifecycleResult.decision === "TERMINATED" ? "TERMINATED" : "QUARANTINED",
+        lifecycleResult.decision === "TERMINATED" ? "recovered_content_and_sandbox_cleanup_verified" : `sandbox_cleanup_${lifecycleResult.reason}`, lifecycleResult);
+    } catch (error) {
+      this.#revoked = true;
+      return this.#terminationResult("QUARANTINED", error instanceof Error ? error.message : "recovered_cleanup_failed", null);
+    }
   }
 
   async prepare(request: R2EPrepareRequest): Promise<R2EPrepareResult> {

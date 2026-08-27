@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/21",
+  "suiteVersion": "omega-institutional-suite/22",
   "criticalSuites": [
     "OMEGA-ASSURE-R2-EVALUATOR",
     "OMEGA-AUDIT-RECONSTRUCTION",
@@ -29,6 +29,7 @@
     "OMEGA-R2-C-ISOLATED-MODIFICATION",
     "OMEGA-R2-D-ISOLATED-DELETION",
     "OMEGA-R2-E-ISOLATED-TRANSACTION",
+    "OMEGA-R2-F-ISOLATED-ROLLBACK",
     "OMEGA-R2-COMPOSITION-SECURITY",
     "OMEGA-R2-HOST-EVAL",
     "OMEGA-R2-NYX-LINEAGE",
@@ -88,6 +89,7 @@
     { "suiteId": "OMEGA-R2-C-ISOLATED-MODIFICATION", "file": "scripts/omegaR2CIsolatedModification.test.ts" },
     { "suiteId": "OMEGA-R2-D-ISOLATED-DELETION", "file": "scripts/omegaR2DIsolatedDeletion.test.ts" },
     { "suiteId": "OMEGA-R2-E-ISOLATED-TRANSACTION", "file": "scripts/omegaR2EIsolatedTransaction.test.ts" },
+    { "suiteId": "OMEGA-R2-F-ISOLATED-ROLLBACK", "file": "scripts/omegaR2FIsolatedRollback.test.ts" },
     { "suiteId": "OMEGA-R2-A-READINESS", "file": "scripts/omegaR2AReadiness.test.ts" },
     { "suiteId": "OMEGA-R2-A-SPEC-EVAL", "file": "scripts/omegaR2ASpecEval.test.ts" },
     { "suiteId": "OMEGA-R2-COMPOSITION-SECURITY", "file": "scripts/omegaR2CompositionSecuritySpec.test.ts" },
