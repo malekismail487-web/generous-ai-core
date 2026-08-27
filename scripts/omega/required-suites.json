@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/18",
+  "suiteVersion": "omega-institutional-suite/19",
   "criticalSuites": [
     "OMEGA-ASSURE-R2-EVALUATOR",
     "OMEGA-AUDIT-RECONSTRUCTION",
@@ -26,6 +26,7 @@
     "OMEGA-R2-A-NEGATIVE-CAP-EVAL",
     "OMEGA-R2-A-SHADOW-INTEGRATION",
     "OMEGA-R2-B-ISOLATED-CONTENT",
+    "OMEGA-R2-C-ISOLATED-MODIFICATION",
     "OMEGA-R2-COMPOSITION-SECURITY",
     "OMEGA-R2-HOST-EVAL",
     "OMEGA-R2-NYX-LINEAGE",
@@ -82,6 +83,7 @@
     { "suiteId": "OMEGA-R2-A-NEGATIVE-CAP-EVAL", "file": "scripts/omegaR2ANegativeCapabilityEval.test.ts" },
     { "suiteId": "OMEGA-R2-A-SHADOW-INTEGRATION", "file": "scripts/omegaR2AShadowIntegration.test.ts" },
     { "suiteId": "OMEGA-R2-B-ISOLATED-CONTENT", "file": "scripts/omegaR2BIsolatedContent.test.ts" },
+    { "suiteId": "OMEGA-R2-C-ISOLATED-MODIFICATION", "file": "scripts/omegaR2CIsolatedModification.test.ts" },
     { "suiteId": "OMEGA-R2-A-READINESS", "file": "scripts/omegaR2AReadiness.test.ts" },
     { "suiteId": "OMEGA-R2-A-SPEC-EVAL", "file": "scripts/omegaR2ASpecEval.test.ts" },
     { "suiteId": "OMEGA-R2-COMPOSITION-SECURITY", "file": "scripts/omegaR2CompositionSecuritySpec.test.ts" },
