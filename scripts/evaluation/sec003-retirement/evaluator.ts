@@ -3,6 +3,7 @@ import type { JsonValue } from "../evidence-custody/contracts";
 import type { CustodyAdmissionEnvelope } from "../registry-evidence-bridge/bridge";
 import {
   ALE_RETIREMENT_MIGRATION_ID,
+  REVIEWED_ALE_RETIREMENT_ARTIFACTS,
   SEC003_RETIREMENT_OBSERVATION_KINDS,
   validateAleRetirementReleaseManifest,
   type Sec003RetirementDecision,
@@ -18,7 +19,7 @@ interface Observation {
   readonly kind: Sec003RetirementObservationKind;
   readonly closureId: string;
   readonly projectRef: string;
-  readonly candidateCommit: string;
+  readonly deploymentCommit: string;
   readonly secretMaterialIncluded: boolean;
   readonly data: DataObject;
 }
@@ -31,7 +32,7 @@ function unique(values: readonly string[]): readonly string[] { return [...new S
 
 function parseObservation(envelope: CustodyAdmissionEnvelope): Observation | null {
   const payload = object(envelope.artifact.payload);
-  if (!payload || payload.schemaVersion !== 1 || !nonEmpty(payload.closureId) || !nonEmpty(payload.projectRef) || !nonEmpty(payload.candidateCommit)) return null;
+  if (!payload || payload.schemaVersion !== 2 || !nonEmpty(payload.closureId) || !nonEmpty(payload.projectRef) || !nonEmpty(payload.deploymentCommit)) return null;
   if (!SEC003_RETIREMENT_OBSERVATION_KINDS.includes(payload.kind as Sec003RetirementObservationKind)) return null;
   const data = object(payload.data);
   if (!data || typeof payload.secretMaterialIncluded !== "boolean") return null;
@@ -40,7 +41,7 @@ function parseObservation(envelope: CustodyAdmissionEnvelope): Observation | nul
     kind: payload.kind as Sec003RetirementObservationKind,
     closureId: payload.closureId,
     projectRef: payload.projectRef,
-    candidateCommit: payload.candidateCommit,
+    deploymentCommit: payload.deploymentCommit,
     secretMaterialIncluded: payload.secretMaterialIncluded,
     data,
   };
@@ -49,6 +50,7 @@ function parseObservation(envelope: CustodyAdmissionEnvelope): Observation | nul
 function result(
   decision: Sec003RetirementDecision["decision"],
   closureState: Sec003RetirementDecision["closureState"],
+  deploymentIdentity: Sec003RetirementDecision["deploymentIdentity"],
   verifierRetirement: Sec003RetirementDecision["verifierRetirement"],
   databaseRetirement: Sec003RetirementDecision["databaseRetirement"],
   internalAdaptiveLearning: Sec003RetirementDecision["internalAdaptiveLearning"],
@@ -57,15 +59,15 @@ function result(
   evidenceRefs: readonly string[],
 ): Sec003RetirementDecision {
   return Object.freeze({
-    decision, closureState, verifierRetirement, databaseRetirement, internalAdaptiveLearning, dependentIntegration,
+    decision, closureState, deploymentIdentity, verifierRetirement, databaseRetirement, internalAdaptiveLearning, dependentIntegration,
     issues: unique(issues), evidenceRefs: unique(evidenceRefs), grantsAuthority: false, containsSecretMaterial: false,
   });
 }
 
 export function evaluateSec003AleRetirement(input: Sec003RetirementPackage): Sec003RetirementDecision {
-  const issues = [...validateAleRetirementReleaseManifest(input.releaseManifest, input.expectedCandidateCommit)];
+  const issues = [...validateAleRetirementReleaseManifest(input.releaseManifest)];
   const hardFailures: string[] = [];
-  if (input.schemaVersion !== 1 || !nonEmpty(input.closureId) || !nonEmpty(input.expectedProjectRef) || !/^[0-9a-f]{40}$/.test(input.expectedCandidateCommit)) hardFailures.push("malformed_closure_identity");
+  if (input.schemaVersion !== 2 || !nonEmpty(input.closureId) || !nonEmpty(input.expectedProjectRef) || !/^[0-9a-f]{40}$/.test(input.expectedDeploymentCommit)) hardFailures.push("malformed_closure_identity");
   if (input.admissionRefs.length === 0) issues.push("deployment_evidence_required");
   if (unique(input.admissionRefs).length !== input.admissionRefs.length) hardFailures.push("duplicate_admission_reference");
   const envelopes = input.admissionRefs.map((ref) => input.admissions.find((item) => item.record.admissionRef === ref));
@@ -80,13 +82,34 @@ export function evaluateSec003AleRetirement(input: Sec003RetirementPackage): Sec
     observations.push(observation);
     if (observation.closureId !== input.closureId) hardFailures.push("closure_identity_mismatch");
     if (observation.projectRef !== input.expectedProjectRef) hardFailures.push("wrong_lovable_project");
-    if (observation.candidateCommit !== input.expectedCandidateCommit) hardFailures.push("wrong_deployed_candidate");
+    if (observation.deploymentCommit !== input.expectedDeploymentCommit) hardFailures.push("wrong_deployed_candidate");
     if (observation.secretMaterialIncluded) hardFailures.push("secret_material_prohibited");
     const evidenceClass = envelope.record.independence.evidenceClass;
-    const required = observation.kind === "DEPENDENCY_PRESERVATION" ? "E3" : "E4";
+    const required = observation.kind === "DEPENDENCY_PRESERVATION" || observation.kind === "DEPLOYMENT_IDENTITY" ? "E3" : "E4";
     if (EVIDENCE_RANK[evidenceClass] < EVIDENCE_RANK[required]) issues.push(`evidence_class_below_requirement:${observation.kind}`);
   }
-  if (hardFailures.length > 0) return result("REJECTED", null, "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN", hardFailures, input.admissionRefs);
+  if (hardFailures.length > 0) return result("REJECTED", null, "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN", hardFailures, input.admissionRefs);
+
+  const identity = observations.filter((item) => item.kind === "DEPLOYMENT_IDENTITY");
+  if (identity.length !== 1) issues.push(identity.length === 0 ? "deployment_identity_evidence_missing" : "duplicate_deployment_identity_evidence");
+  let identityState: Sec003RetirementDecision["deploymentIdentity"] = "UNKNOWN";
+  if (identity.length === 1) {
+    const data = identity[0].data;
+    const digests = object(data.reviewedArtifactDigests);
+    const exactArtifacts = digests !== null && REVIEWED_ALE_RETIREMENT_ARTIFACTS.every((artifact) => digests[artifact.path] === artifact.sha256);
+    const valid = data.designatedDeploymentCommit === input.expectedDeploymentCommit
+      && data.reviewedImplementationCommit === input.releaseManifest.reviewedImplementationCommit
+      && data.reviewedBaselineIsAncestor === true
+      && data.runtimeArtifactsExact === true
+      && data.migrationArtifactExact === true
+      && data.legacyCredentialAcceptanceReintroduced === false
+      && data.securityBehaviorChanged === false
+      && data.legacyAcceptanceScanPassed === true
+      && exactArtifacts
+      && nonEmpty(data.identityEvidenceRef)
+      && nonEmpty(data.legacyAcceptanceScanEvidenceRef);
+    if (valid) identityState = "VERIFIED"; else issues.push("deployment_identity_unproven");
+  }
 
   const deployment = observations.filter((item) => item.kind === "LOVABLE_DEPLOYMENT");
   if (deployment.length !== 1) issues.push(deployment.length === 0 ? "lovable_deployment_evidence_missing" : "duplicate_lovable_deployment_evidence");
@@ -94,7 +117,7 @@ export function evaluateSec003AleRetirement(input: Sec003RetirementPackage): Sec
   if (deployment.length === 1) {
     const data = deployment[0].data;
     const valid = data.deploymentAuthority === "AUTHORIZED_LOVABLE_PROJECT"
-      && data.deployedCommit === input.expectedCandidateCommit
+      && data.deployedCommit === input.expectedDeploymentCommit
       && data.gatewayState === "RETIRED_FAIL_CLOSED"
       && data.syntheticLegacyRequestOutcome === "REJECTED_RETIRED"
       && data.httpStatus === 410
@@ -131,10 +154,10 @@ export function evaluateSec003AleRetirement(input: Sec003RetirementPackage): Sec
     else issues.push("dependent_external_integration_unresolved");
   }
 
-  const closed = verifier === "VERIFIED" && databaseState !== "UNKNOWN" && internal === "PRESERVED" && integration === "NOT_REQUIRED" && issues.length === 0;
+  const closed = identityState === "VERIFIED" && verifier === "VERIFIED" && databaseState !== "UNKNOWN" && internal === "PRESERVED" && integration === "NOT_REQUIRED" && issues.length === 0;
   return closed
-    ? result("CLOSED", "CONFIRMED_INVALID", verifier, databaseState, internal, integration, [], input.admissionRefs)
-    : result("INSUFFICIENT_EVIDENCE", null, verifier, databaseState, internal, integration, issues, input.admissionRefs);
+    ? result("CLOSED", "CONFIRMED_INVALID", identityState, verifier, databaseState, internal, integration, [], input.admissionRefs)
+    : result("INSUFFICIENT_EVIDENCE", null, identityState, verifier, databaseState, internal, integration, issues, input.admissionRefs);
 }
 
 export function projectAleRetirementToR2Readiness(decision: Sec003RetirementDecision): "CONFIRMED_INVALID" | "OPEN" {

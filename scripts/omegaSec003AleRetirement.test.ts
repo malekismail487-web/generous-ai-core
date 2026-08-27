@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,15 +8,19 @@ import { EvidenceCustodySession, computeAuthoritativeEvidenceDigest } from "./ev
 import type { EvidenceAdmissionPolicy, EvidenceArtifact, EvidenceCandidateBinding, JsonValue } from "./evaluation/evidence-custody/contracts";
 import type { CustodyAdmissionEnvelope } from "./evaluation/registry-evidence-bridge/bridge";
 import {
+  ALE_RETIREMENT_CONFIG_ARTIFACT,
   ALE_RETIREMENT_GATEWAY_ARTIFACT,
   ALE_RETIREMENT_HANDLER_ARTIFACT,
   ALE_RETIREMENT_MIGRATION_ARTIFACT,
   ALE_RETIREMENT_MIGRATION_ID,
+  REVIEWED_ALE_RETIREMENT_ARTIFACTS,
+  REVIEWED_ALE_RETIREMENT_IMPLEMENTATION_COMMIT,
   validateAleRetirementReleaseManifest,
   type AleRetirementReleaseManifest,
   type Sec003RetirementObservationKind,
   type Sec003RetirementPackage,
 } from "./evaluation/sec003-retirement/contracts";
+import { inspectSec003DeploymentIdentity } from "./evaluation/sec003-retirement/deploymentIdentity";
 import { evaluateSec003AleRetirement, projectAleRetirementToR2Readiness } from "./evaluation/sec003-retirement/evaluator";
 import { CURRENT_R2_A_READINESS_DECISION, CURRENT_R2_A_READINESS_INPUT } from "../src/lib/codelab/assurance/r2AReadiness";
 
@@ -87,12 +92,17 @@ assert(!/CREATE\s+TABLE/i.test(migration), "retirement migration never creates t
 const notices = migration.split("\n").filter((line) => /RAISE NOTICE/.test(line)).join("\n");
 assert(!/key_hash|key_prefix|credential/i.test(notices), "migration notices contain no credential identifiers or material");
 
-const implementationCandidate = "c75f484c063b801b1843f4f0ea53bdc7edcfb9a0";
 const operatorManifestPath = "supabase/deployment/sec003-ale-retirement.release.json";
 assert(existsSync(resolve(ROOT, operatorManifestPath)), "non-secret Lovable operator manifest is present");
 const operatorManifest = JSON.parse(source(operatorManifestPath)) as AleRetirementReleaseManifest;
-assert(validateAleRetirementReleaseManifest(operatorManifest, implementationCandidate).length === 0, "operator manifest binds the exact immutable implementation candidate and required retirement artifacts");
+assert(validateAleRetirementReleaseManifest(operatorManifest).length === 0, "operator manifest binds the reviewed implementation and immutable security artifacts without hard-coding a stale branch head");
+assert(operatorManifest.reviewedImplementationCommit === REVIEWED_ALE_RETIREMENT_IMPLEMENTATION_COMMIT, "operator manifest retains the reviewed Directive 015 implementation baseline");
+assert(REVIEWED_ALE_RETIREMENT_ARTIFACTS.every((artifact) => createHash("sha256").update(source(artifact.path)).digest("hex") === artifact.sha256), "current checkout preserves every reviewed ALE runtime and migration artifact under canonical line endings");
 assert(operatorManifest.deploymentOccurred === false && operatorManifest.containsSecretMaterial === false, "operator manifest neither claims deployment nor contains secret material");
+const checkoutHead = execFileSync("git", ["-C", ROOT, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+const checkoutIdentity = inspectSec003DeploymentIdentity(ROOT, checkoutHead);
+assert(checkoutIdentity.issues.length === 0 && checkoutIdentity.reviewedBaselineIsAncestor, "repository identity tool proves current committed HEAD descends from the reviewed implementation");
+assert(checkoutIdentity.runtimeArtifactsExact && checkoutIdentity.migrationArtifactExact && checkoutIdentity.legacyAcceptanceScanPassed, "repository identity tool proves current committed HEAD preserves reviewed security artifacts and introduces no legacy acceptance path");
 
 const CANDIDATE: EvidenceCandidateBinding = Object.freeze({
   commit: "c".repeat(40), capabilityVersion: "sec003-ale-retirement/1", schemaVersion: 1, environmentIdentity: "synthetic-lovable-deployment",
@@ -101,40 +111,43 @@ const PROJECT = "synthetic-linked-lovable-project";
 let sequence = 0;
 function manifest(): AleRetirementReleaseManifest {
   return {
-    schemaVersion: 1, manifestId: "SEC003-ALE-RETIREMENT-RELEASE-001", candidateCommit: CANDIDATE.commit,
+    schemaVersion: 2, manifestId: "SEC003-ALE-RETIREMENT-RELEASE-002", reviewedImplementationCommit: REVIEWED_ALE_RETIREMENT_IMPLEMENTATION_COMMIT,
     branch: "sol/omega-institutional-spine", affectedArtifacts: [ALE_RETIREMENT_GATEWAY_ARTIFACT, ALE_RETIREMENT_HANDLER_ARTIFACT, ALE_RETIREMENT_MIGRATION_ARTIFACT],
+    reviewedArtifacts: REVIEWED_ALE_RETIREMENT_ARTIFACTS, deploymentIdentityPolicy: "EXACT_DESIGNATED_COMMIT_PLUS_REVIEWED_ARTIFACTS",
     migrationIdentity: ALE_RETIREMENT_MIGRATION_ID, expectedLegacyVerifierState: "RETIRED_FAIL_CLOSED",
     expectedDatabaseRetirementStates: ["TABLE_PRESENT_ALL_INACTIVE", "TABLE_ABSENT"], expectedLegacyCredentialOutcome: "REJECTED_RETIRED",
     unchangedCredentialSystems: ["LUMINA_API_GATEWAY", "LUMINA_EXTERNAL_CREDENTIAL_RECORDS"],
     operatorAction: "Publish the exact candidate through the linked Lovable project.",
-    requiredResultingEvidence: ["deployed commit", "gateway retirement result", "database retirement result"],
+    requiredResultingEvidence: ["deployed commit", "repository identity", "gateway retirement result", "database retirement result"],
     sec003Evaluator: "scripts/evaluation/sec003-retirement/evaluator.ts", deploymentOccurred: false, containsSecretMaterial: false,
   };
 }
-assert(validateAleRetirementReleaseManifest(manifest(), CANDIDATE.commit).length === 0, "complete non-secret release manifest is valid");
-assert(validateAleRetirementReleaseManifest({ ...manifest(), candidateCommit: "bad" }, CANDIDATE.commit).includes("malformed_candidate_commit"), "malformed release commit is rejected");
+assert(validateAleRetirementReleaseManifest(manifest()).length === 0, "complete non-secret release manifest is valid");
+assert(validateAleRetirementReleaseManifest({ ...manifest(), reviewedImplementationCommit: "bad" as typeof REVIEWED_ALE_RETIREMENT_IMPLEMENTATION_COMMIT }).includes("malformed_reviewed_implementation_commit"), "malformed reviewed implementation commit is rejected");
+assert(validateAleRetirementReleaseManifest({ ...manifest(), deploymentIdentityPolicy: "unsafe" as AleRetirementReleaseManifest["deploymentIdentityPolicy"] }).includes("unsafe_deployment_identity_policy"), "manifest cannot weaken exact deployment identity policy");
 assert(validateAleRetirementReleaseManifest({ ...manifest(), deploymentOccurred: true as false }).includes("manifest_falsely_claims_deployment"), "release manifest cannot claim deployment");
 
 function policy(): EvidenceAdmissionPolicy {
   return {
     schemaVersion: 1, policyId: "SEC003-ALE-RETIREMENT-POLICY", custodianId: "SEC003-ALE-RETIREMENT-CUSTODIAN", expectedCandidate: CANDIDATE,
     compatibleEvaluatorVersions: ["sec003-ale-retirement-evaluator/1"],
-    allowedEvidenceTypes: ["SEC003_LOVABLE_DEPLOYMENT", "SEC003_DATABASE_RETIREMENT", "SEC003_DEPENDENCY_PRESERVATION"],
+    allowedEvidenceTypes: ["SEC003_DEPLOYMENT_IDENTITY", "SEC003_LOVABLE_DEPLOYMENT", "SEC003_DATABASE_RETIREMENT", "SEC003_DEPENDENCY_PRESERVATION"],
     admittedAtEpochMs: 10_000, maxEvidenceAgeMs: 10_000, maxFutureSkewMs: 0,
   };
 }
-function artifact(kind: Sec003RetirementObservationKind, data: Record<string, JsonValue>, evidenceClass: "E3" | "E4" = kind === "DEPENDENCY_PRESERVATION" ? "E3" : "E4", overrides: Partial<EvidenceArtifact> = {}): EvidenceArtifact {
+function artifact(kind: Sec003RetirementObservationKind, data: Record<string, JsonValue>, evidenceClass: "E3" | "E4" = kind === "DEPENDENCY_PRESERVATION" || kind === "DEPLOYMENT_IDENTITY" ? "E3" : "E4", overrides: Partial<EvidenceArtifact> = {}): EvidenceArtifact {
   sequence += 1;
   return {
     schemaVersion: 1, artifactId: `SEC003-RETIREMENT-EVIDENCE-${sequence}`, evidenceType: `SEC003_${kind}`,
     source: `synthetic-lovable://${kind.toLowerCase()}`, candidate: CANDIDATE, evaluatorVersion: "sec003-ale-retirement-evaluator/1", observedAtEpochMs: 6_000,
     independence: { evidenceClass, evidenceChannel: kind === "DEPENDENCY_PRESERVATION" ? "repository-dependency-analysis" : "lovable-resulting-state", producerOwner: "AUTHORIZED-LOVABLE-OPERATOR", evaluatorOwner: "OMEGA-SEC003-RETIREMENT-EVALUATOR", oracleOwner: "LOVABLE-DEPLOYMENT", implementationOwner: "OMEGA-SEC003-RELEASE", sharesImplementationHelpers: false, independenceBasis: "Synthetic fixture models separately produced non-secret resulting-state evidence and does not certify a real deployment." },
-    payload: { schemaVersion: 1, closureId: "SEC003-ALE-RETIREMENT-SYNTHETIC", projectRef: PROJECT, candidateCommit: CANDIDATE.commit, kind, secretMaterialIncluded: false, data },
+    payload: { schemaVersion: 2, closureId: "SEC003-ALE-RETIREMENT-SYNTHETIC", projectRef: PROJECT, deploymentCommit: CANDIDATE.commit, kind, secretMaterialIncluded: false, data },
     ...overrides,
   };
 }
 function artifacts(databaseOutcome: "TABLE_PRESENT_ALL_INACTIVE" | "TABLE_ABSENT" = "TABLE_PRESENT_ALL_INACTIVE"): readonly EvidenceArtifact[] {
   return [
+    artifact("DEPLOYMENT_IDENTITY", { designatedDeploymentCommit: CANDIDATE.commit, reviewedImplementationCommit: REVIEWED_ALE_RETIREMENT_IMPLEMENTATION_COMMIT, reviewedBaselineIsAncestor: true, runtimeArtifactsExact: true, migrationArtifactExact: true, legacyCredentialAcceptanceReintroduced: false, securityBehaviorChanged: false, legacyAcceptanceScanPassed: true, reviewedArtifactDigests: Object.fromEntries(REVIEWED_ALE_RETIREMENT_ARTIFACTS.map((item) => [item.path, item.sha256])), identityEvidenceRef: "git://synthetic/deployment-identity", legacyAcceptanceScanEvidenceRef: "git://synthetic/legacy-acceptance-scan" }),
     artifact("LOVABLE_DEPLOYMENT", { deploymentAuthority: "AUTHORIZED_LOVABLE_PROJECT", deployedCommit: CANDIDATE.commit, gatewayState: "RETIRED_FAIL_CLOSED", syntheticLegacyRequestOutcome: "REJECTED_RETIRED", httpStatus: 410, databaseLookupAttempted: false, learnerProvisioningAttempted: false, learnerTokenMintingAttempted: false, downstreamForwardingAttempted: false, deploymentEvidenceRef: "lovable://synthetic/deployment", resultingStateEvidenceRef: "lovable://synthetic/retired-gateway" }),
     artifact("DATABASE_RETIREMENT", { migrationIdentity: ALE_RETIREMENT_MIGRATION_ID, outcome: databaseOutcome, activeRowsAfter: databaseOutcome === "TABLE_ABSENT" ? null : 0, retiredRows: databaseOutcome === "TABLE_ABSENT" ? 0 : 1, migrationEvidenceRef: "lovable://synthetic/migration" }),
     artifact("DEPENDENCY_PRESERVATION", { internalAdaptiveLearningPreserved: true, internalCallsLegacyGateway: false, luminaCredentialSystemUnchanged: true, externalIntegrationRequired: false, externalIntegrationStatus: "NOT_REQUIRED", evidenceRef: "repository://synthetic/dependency-analysis" }),
@@ -150,7 +163,7 @@ function admit(items: readonly EvidenceArtifact[]): readonly CustodyAdmissionEnv
 }
 function closure(items = artifacts()): Sec003RetirementPackage {
   const admissions = admit(items);
-  return { schemaVersion: 1, closureId: "SEC003-ALE-RETIREMENT-SYNTHETIC", expectedProjectRef: PROJECT, expectedCandidateCommit: CANDIDATE.commit, releaseManifest: manifest(), admissionRefs: admissions.map((item) => item.record.admissionRef), admissions };
+  return { schemaVersion: 2, closureId: "SEC003-ALE-RETIREMENT-SYNTHETIC", expectedProjectRef: PROJECT, expectedDeploymentCommit: CANDIDATE.commit, releaseManifest: manifest(), admissionRefs: admissions.map((item) => item.record.admissionRef), admissions };
 }
 
 for (const outcome of ["TABLE_PRESENT_ALL_INACTIVE", "TABLE_ABSENT"] as const) {
@@ -161,6 +174,12 @@ for (const outcome of ["TABLE_PRESENT_ALL_INACTIVE", "TABLE_ABSENT"] as const) {
 }
 const noEvidence = evaluateSec003AleRetirement(closure([]));
 assert(noEvidence.decision === "INSUFFICIENT_EVIDENCE" && projectAleRetirementToR2Readiness(noEvidence) === "OPEN", "repository release without deployment evidence cannot close SEC-003");
+const withoutIdentity = artifacts().filter((item) => (item.payload as Record<string, JsonValue>).kind !== "DEPLOYMENT_IDENTITY");
+assert(evaluateSec003AleRetirement(closure(withoutIdentity)).issues.includes("deployment_identity_evidence_missing"), "Lovable runtime evidence cannot close SEC-003 without independent deployment identity evidence");
+const alteredIdentity = artifacts().map((item) => (item.payload as Record<string, JsonValue>).kind === "DEPLOYMENT_IDENTITY" ? { ...item, payload: { ...(item.payload as Record<string, JsonValue>), data: { ...((item.payload as Record<string, JsonValue>).data as Record<string, JsonValue>), runtimeArtifactsExact: false, securityBehaviorChanged: true } } } : item);
+assert(evaluateSec003AleRetirement(closure(alteredIdentity)).issues.includes("deployment_identity_unproven"), "a descendant with changed ALE runtime behavior is not accepted");
+const alteredDigest = artifacts().map((item) => (item.payload as Record<string, JsonValue>).kind === "DEPLOYMENT_IDENTITY" ? { ...item, payload: { ...(item.payload as Record<string, JsonValue>), data: { ...((item.payload as Record<string, JsonValue>).data as Record<string, JsonValue>), reviewedArtifactDigests: { [ALE_RETIREMENT_CONFIG_ARTIFACT]: "0".repeat(64) } } } } : item);
+assert(evaluateSec003AleRetirement(closure(alteredDigest)).issues.includes("deployment_identity_unproven"), "ancestry alone cannot substitute for exact reviewed artifact digests");
 const forwarded = artifacts().map((item) => (item.payload as Record<string, JsonValue>).kind === "LOVABLE_DEPLOYMENT" ? { ...item, payload: { ...(item.payload as Record<string, JsonValue>), data: { ...((item.payload as Record<string, JsonValue>).data as Record<string, JsonValue>), downstreamForwardingAttempted: true } } } : item);
 assert(evaluateSec003AleRetirement(closure(forwarded)).issues.includes("deployed_verifier_retirement_unproven"), "any observed downstream forwarding prevents closure");
 const activeRows = artifacts().map((item) => (item.payload as Record<string, JsonValue>).kind === "DATABASE_RETIREMENT" ? { ...item, payload: { ...(item.payload as Record<string, JsonValue>), data: { ...((item.payload as Record<string, JsonValue>).data as Record<string, JsonValue>), activeRowsAfter: 1 } } } : item);
@@ -168,8 +187,8 @@ assert(evaluateSec003AleRetirement(closure(activeRows)).issues.includes("databas
 const secretEvidence = artifacts().map((item, index) => index === 0 ? { ...item, payload: { ...(item.payload as Record<string, JsonValue>), secretMaterialIncluded: true } } : item);
 assert(evaluateSec003AleRetirement(closure(secretEvidence)).decision === "REJECTED", "secret-bearing deployment evidence is rejected");
 const wrongCandidate = closure();
-assert(evaluateSec003AleRetirement({ ...wrongCandidate, expectedCandidateCommit: "d".repeat(40) }).decision === "REJECTED", "cross-candidate deployment evidence is rejected");
-const weakDeployment = artifacts().map((item, index) => index === 0 ? { ...item, independence: { ...item.independence, evidenceClass: "E3" as const } } : item);
+assert(evaluateSec003AleRetirement({ ...wrongCandidate, expectedDeploymentCommit: "d".repeat(40) }).decision === "REJECTED", "cross-candidate deployment evidence is rejected");
+const weakDeployment = artifacts().map((item) => (item.payload as Record<string, JsonValue>).kind === "LOVABLE_DEPLOYMENT" ? { ...item, independence: { ...item.independence, evidenceClass: "E3" as const } } : item);
 assert(evaluateSec003AleRetirement(closure(weakDeployment)).issues.includes("evidence_class_below_requirement:LOVABLE_DEPLOYMENT"), "deployment evidence below E4 cannot close SEC-003");
 assert(CURRENT_R2_A_READINESS_INPUT.securityClosure === "OPEN" && CURRENT_R2_A_READINESS_DECISION.decision === "INELIGIBLE", "real SEC-003 and R2-A readiness remain open and ineligible before deployment");
 assert(CURRENT_R2_A_READINESS_DECISION.writeSandboxAvailable === false, "WRITE_SANDBOX remains unavailable");

@@ -92,7 +92,7 @@ export const DIRECTIVE_015_PLAN_COVERAGE = Object.freeze([
     direct: [concept("PLAN-D", "Machine-Readable Assurance Case", "Bind gateway, database, dependency, and deployment claims to non-secret evidence."), concept("PLAN-DIII", "Completion Proof Compiler", "CONFIRMED_INVALID requires every retirement evidence path."), assurance],
     support: [concept("PLAN-DI", "Confidence Decomposition", "Represent verifier, database, internal feature, and dependency states separately."), reality],
     deferred: [concept("PLAN-DCCXLVII", "Calibrated Consensus", "Independent human or institutional replication remains future work."), concept("OMEGA-R2-A", "Operational Sandbox Provisioning", "Readiness remains ineligible before final security closure and gate reruns.")],
-    implemented: ["exact candidate binding", "E4 deployment/database evidence floors", "secret-bearing evidence rejection", "table-present/table-absent outcomes", "non-authorizing readiness projection"],
+    implemented: ["reviewed implementation baseline and artifact binding", "E4 deployment/database evidence floors", "secret-bearing evidence rejection", "table-present/table-absent outcomes", "non-authorizing readiness projection"],
     deferredRequirements: ["real operator evidence", "evidence custody admission after deployment", "R2-A readiness rerun"],
     conflict: "Code-level retirement could be reported as final credential invalidation.",
     decision: "Keep SEC-003 open until authorized Lovable resulting-state evidence passes the separate closure evaluator.",

@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 1,
-  "manifestId": "SEC003-ALE-RETIREMENT-RELEASE-001",
-  "candidateCommit": "c75f484c063b801b1843f4f0ea53bdc7edcfb9a0",
+  "schemaVersion": 2,
+  "manifestId": "SEC003-ALE-RETIREMENT-RELEASE-002",
+  "reviewedImplementationCommit": "c75f484c063b801b1843f4f0ea53bdc7edcfb9a0",
   "branch": "sol/omega-institutional-spine",
   "affectedArtifacts": [
     "supabase/functions/ale-api/index.ts",
@@ -9,6 +9,13 @@
     "supabase/migrations/20260826000000_retire_legacy_ale_external_api.sql",
     "supabase/config.toml"
   ],
+  "reviewedArtifacts": [
+    { "path": "supabase/functions/ale-api/index.ts", "sha256": "8d0b91fac30f4012d0901e7863f9dfa0e800ed80de976cd3f3a7317532a95d67" },
+    { "path": "supabase/functions/ale-api/retirement.ts", "sha256": "a947790f477c09a7a7ce9262516d5e5e4043f5734ad04acf512f77b603ca47c8" },
+    { "path": "supabase/migrations/20260826000000_retire_legacy_ale_external_api.sql", "sha256": "5a2c8bd2f5921569d5551c5682d836ac6f232915f55b2d83e616ad93e26f68ec" },
+    { "path": "supabase/config.toml", "sha256": "9046869d6508c166f95bdb689e08f58cd13490d4918951340cc04e90f9ba9328" }
+  ],
+  "deploymentIdentityPolicy": "EXACT_DESIGNATED_COMMIT_PLUS_REVIEWED_ARTIFACTS",
   "migrationIdentity": "20260826000000_retire_legacy_ale_external_api",
   "expectedLegacyVerifierState": "RETIRED_FAIL_CLOSED",
   "expectedDatabaseRetirementStates": [
@@ -20,9 +27,10 @@
     "LUMINA_API_GATEWAY",
     "LUMINA_EXTERNAL_CREDENTIAL_RECORDS"
   ],
-  "operatorAction": "In the linked Lovable project, publish/deploy exact commit c75f484c063b801b1843f4f0ea53bdc7edcfb9a0, including the ale-api edge function and migration 20260826000000_retire_legacy_ale_external_api.",
+  "operatorAction": "Deploy only the exact commit designated by the Directive 016 completion dossier from branch sol/omega-institutional-spine; do not substitute another repository state.",
   "requiredResultingEvidence": [
-    "A non-secret Lovable deployment record identifying exact deployed commit c75f484c063b801b1843f4f0ea53bdc7edcfb9a0.",
+    "A non-secret Lovable deployment record identifying the exact deployed commit designated by the Directive 016 completion dossier.",
+    "A repository identity report showing that exact commit preserves every reviewed ALE runtime artifact and migration digest and contains no reintroduced legacy acceptance path.",
     "A non-secret resulting-state record showing the deployed ale-api returns HTTP 410 with code ALE_EXTERNAL_API_RETIRED for a synthetic legacy-format request and performs no database lookup, learner provisioning, learner-token minting, or downstream forwarding.",
     "A non-secret migration result showing either TABLE_PRESENT_ALL_INACTIVE with activeRowsAfter=0 or TABLE_ABSENT, bound to migration 20260826000000_retire_legacy_ale_external_api."
   ],

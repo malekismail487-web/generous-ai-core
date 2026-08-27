@@ -64,7 +64,7 @@ export interface PlanCoverageRecord {
   readonly registryIdentity: string;
   readonly capabilityObjectiveId: string;
   readonly visionRef: "OMEGA_VERIFIED_STATE_TRANSFORMATION";
-  readonly sourceDirective: "OMEGA_DIRECTIVE_008" | "OMEGA_DIRECTIVE_009" | "OMEGA_DIRECTIVE_010" | "OMEGA_DIRECTIVE_015";
+  readonly sourceDirective: "OMEGA_DIRECTIVE_008" | "OMEGA_DIRECTIVE_009" | "OMEGA_DIRECTIVE_010" | "OMEGA_DIRECTIVE_015" | "OMEGA_DIRECTIVE_016";
   readonly coverageStatus: typeof OMEGA_COVERAGE_STATUS;
   readonly corpusStatus: typeof OMEGA_CORPUS_STATUS;
   readonly directlyImplemented: readonly OmegaConceptRef[];
