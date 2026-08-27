@@ -202,6 +202,20 @@ export class R2CIsolatedContentModifier {
     return Object.freeze({ ...R2_C_ISOLATED_CANDIDATE_STATUS, revoked: this.#revoked, modified: this.#artifact !== null });
   }
 
+  transferOwnedArtifactToDeleter(artifact: R2CModifiedArtifact): boolean {
+    if (this.#revoked || !this.#artifact) return false;
+    const matches = this.#artifact.artifactId === artifact.artifactId
+      && this.#artifact.canonicalPath === artifact.canonicalPath
+      && this.#artifact.contentHash === artifact.contentHash
+      && this.#artifact.byteLength === artifact.byteLength
+      && this.#artifact.modificationRequestId === artifact.modificationRequestId
+      && sameIdentity(this.#artifact.objectIdentity, artifact.objectIdentity)
+      && this.#config.lifecycle.ownsActiveSandbox(this.#config.sandbox);
+    if (!matches) return false;
+    this.#revoked = true;
+    return true;
+  }
+
   async modifyFile(request: R2CModifyRequest): Promise<R2CModifyResult> {
     const requestId = typeof request.requestId === "string" && request.requestId.trim() ? request.requestId : "MALFORMED";
     appendEvent(this.#events, {
