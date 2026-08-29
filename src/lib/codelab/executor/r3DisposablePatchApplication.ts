@@ -100,6 +100,7 @@ export interface R3AApplyResult {
   readonly reason: string;
   readonly applicationId: string;
   readonly proposalDigest: string;
+  readonly disposableRepositoryId: string;
   readonly prestateDigest: string | null;
   readonly poststateDigest: string | null;
   readonly changedPaths: readonly string[];
@@ -217,6 +218,7 @@ export class R3ADisposablePatchApplicator {
   readonly #events: R3AEvent[] = [];
   #revoked = false;
   #used = false;
+  #appliedResult: R3AApplyResult | null = null;
 
   private constructor(config: R3ADisposablePatchConfig, sourceRoot: string, cloneRoot: string,
     disposableRepositoryId: string, prepared: readonly PreparedChange[]) {
@@ -290,6 +292,19 @@ export class R3ADisposablePatchApplicator {
     return this.#disposableRepositoryId;
   }
 
+  async attestsAppliedCandidate(result: R3AApplyResult, disposableRepositoryRoot: string,
+    disposableRepositoryId: string): Promise<boolean> {
+    if (result !== this.#appliedResult || result.decision !== "APPLIED" || result.authorityGranted
+      || result.disposableRepositoryId !== this.#disposableRepositoryId
+      || disposableRepositoryId !== this.#disposableRepositoryId) return false;
+    try {
+      return await realpath(disposableRepositoryRoot) === this.#cloneRoot
+        && this.#config.lifecycle.ownsActiveSandbox(this.#config.sandbox);
+    } catch {
+      return false;
+    }
+  }
+
   capabilityProfile(): typeof R3_A_ISOLATED_CANDIDATE_STATUS & { readonly revoked: boolean; readonly used: boolean } {
     return Object.freeze({ ...R3_A_ISOLATED_CANDIDATE_STATUS, revoked: this.#revoked, used: this.#used });
   }
@@ -340,8 +355,10 @@ export class R3ADisposablePatchApplicator {
       appendEvent(this.#events, { eventType: "APPLICATION_PROVEN", requestId, applicationId, actorIdentity: this.#config.executorId,
         result: "VERIFIED", proposalDigest: request.proposalDigest, stateDigest: poststate });
       this.#used = true;
-      return this.#result("APPLIED", "reviewed_patch_applied_to_disposable_repository", applicationId, prestate, poststate,
+      const completed = this.#result("APPLIED", "reviewed_patch_applied_to_disposable_repository", applicationId, prestate, poststate,
         this.#prepared.map((item) => item.change.relativePath));
+      this.#appliedResult = completed;
+      return completed;
     } catch (error) {
       const reason = error instanceof Error ? error.message : "patch_application_failed";
       if (applied.length === 0) {
@@ -457,6 +474,7 @@ export class R3ADisposablePatchApplicator {
   #result(decision: R3AApplyResult["decision"], reason: string, applicationId: string, prestateDigest: string | null,
     poststateDigest: string | null, changedPaths: readonly string[]): R3AApplyResult {
     return Object.freeze({ decision, reason, applicationId, proposalDigest: this.#config.proposal.proposalDigest,
+      disposableRepositoryId: this.#disposableRepositoryId,
       prestateDigest, poststateDigest, changedPaths: Object.freeze([...changedPaths]), events: Object.freeze([...this.#events]),
       evidenceClass: "E3", sourceRepositoryMutated: false, authorityGranted: false });
   }
