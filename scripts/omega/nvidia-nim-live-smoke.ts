@@ -5,26 +5,28 @@ if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1") {
   process.exit(2);
 }
 
-const model = process.env.NVIDIA_NIM_MODEL?.trim() || "openai/gpt-oss-20b";
+const SENTINEL = "OMEGA_NVIDIA_NIM_OK";
+const model = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const provider = NvidiaNimProvider.create({
   providerId: "NVIDIA-NIM-LIVE-SMOKE",
   model,
   authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM",
   credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
   maxPromptBytes: 1024,
-  maxOutputTokens: 32,
-  timeoutMs: 30_000,
+  maxOutputTokens: 512,
+  timeoutMs: 90_000,
 });
 
 const result = await provider.complete({
   schemaVersion: 1,
   requestId: `NVIDIA-NIM-LIVE-${Date.now()}`,
-  messages: [{ role: "user", content: "Respond with exactly OMEGA_NVIDIA_NIM_OK and nothing else." }],
-  maxTokens: 24,
+  messages: [{ role: "user", content: `After any internal reasoning, end your response with exactly ${SENTINEL} and output nothing after it.` }],
+  maxTokens: 256,
   temperature: 0,
   observedAtEpochMs: Date.now(),
 });
 
-const sentinelObserved = result.content?.trim() === "OMEGA_NVIDIA_NIM_OK";
-console.log(`NVIDIA_NIM_SMOKE result=${result.decision} sentinel=${sentinelObserved ? "OBSERVED" : "NOT_OBSERVED"} model=${model} status=${result.evidence.statusCode ?? "NONE"} evidence=${result.evidence.evidenceId}`);
+const normalizedContent = result.content?.trim() ?? "";
+const sentinelObserved = normalizedContent.endsWith(SENTINEL);
+console.log(`NVIDIA_NIM_SMOKE result=${result.decision} sentinel=${sentinelObserved ? "OBSERVED" : "NOT_OBSERVED"} model=${model} status=${result.evidence.statusCode ?? "NONE"} finish=${result.finishReason ?? "NONE"} tokens=${result.evidence.usage.totalTokens ?? "UNKNOWN"} evidence=${result.evidence.evidenceId}`);
 if (result.decision !== "COMPLETED" || !sentinelObserved) process.exit(1);
