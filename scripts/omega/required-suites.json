@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/25",
+  "suiteVersion": "omega-institutional-suite/26",
   "criticalSuites": [
     "OMEGA-ASSURE-R2-EVALUATOR",
     "OMEGA-ASSURE-R2-OPERATIONAL-INDEPENDENT",
@@ -36,6 +36,7 @@
     "OMEGA-R2-HOST-EVAL",
     "OMEGA-R2-NYX-LINEAGE",
     "OMEGA-R3-A-DISPOSABLE-PATCH",
+    "OMEGA-NVIDIA-NIM-PROVIDER",
     "OMEGA-R1-INDEPENDENT-REPLICATION",
     "OMEGA-READ-ONLY-EXECUTOR",
     "OMEGA-READ-ONLY-VERTICAL-SLICE",
@@ -102,6 +103,7 @@
     { "suiteId": "OMEGA-R2-HOST-EVAL", "file": "scripts/omegaR2HostEval.test.ts" },
     { "suiteId": "OMEGA-R2-NYX-LINEAGE", "file": "scripts/omegaR2NyxLineage.test.ts" },
     { "suiteId": "OMEGA-R3-A-DISPOSABLE-PATCH", "file": "scripts/omegaR3ADisposablePatch.test.ts" },
+    { "suiteId": "OMEGA-NVIDIA-NIM-PROVIDER", "file": "scripts/omegaNvidiaNimProvider.test.ts" },
     { "suiteId": "OMEGA-READ-ONLY-EXECUTOR", "file": "scripts/omegaReadOnlyExecutor.test.ts" },
     { "suiteId": "OMEGA-READ-ONLY-VERTICAL-SLICE", "file": "scripts/omegaReadOnlyVerticalSlice.test.ts" },
     { "suiteId": "OMEGA-REGISTRY", "file": "scripts/omegaRegistry.test.ts" },

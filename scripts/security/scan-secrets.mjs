@@ -10,6 +10,7 @@ const HIGH_CONFIDENCE_PATTERNS = Object.freeze([
   { id: "ale-live-key", pattern: /ale_live_[A-Za-z0-9]{20,}/ },
   { id: "github-token", pattern: /(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})/ },
   { id: "openai-style-key", pattern: /sk-[A-Za-z0-9_-]{20,}/ },
+  { id: "nvidia-api-key", pattern: /nvapi-[A-Za-z0-9_-]{20,}/ },
   { id: "aws-access-key", pattern: /AKIA[0-9A-Z]{16}/ },
   { id: "google-api-key", pattern: /AIza[0-9A-Za-z_-]{35}/ },
   { id: "private-key", pattern: /-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----/ },
