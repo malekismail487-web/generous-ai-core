@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 5
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
-      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
     steps:
       - uses: actions/checkout@v4
