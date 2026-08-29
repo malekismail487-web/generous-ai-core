@@ -104,6 +104,7 @@ export interface R3BExecutionEvidence {
   readonly toolKind: R3BEngineeringToolDefinition["toolKind"] | "UNKNOWN";
   readonly toolVersion: string;
   readonly toolIdentityDigest: string;
+  readonly environmentIdentity: string;
   readonly environment: R3BEnvironmentObservation;
   readonly startedAtEpochMs: number;
   readonly endedAtEpochMs: number;
@@ -460,7 +461,8 @@ export class R3BControlledEngineeringExecutor {
       applicationId: this.#config.appliedCandidate.applicationId, proposalDigest: this.#config.appliedCandidate.proposalDigest,
       toolId: tool?.definition.toolId ?? (typeof request.toolId === "string" ? request.toolId : "MALFORMED"),
       toolKind: tool?.definition.toolKind ?? "UNKNOWN",
-      toolVersion: tool?.definition.toolVersion ?? "UNKNOWN", toolIdentityDigest: tool?.identityDigest ?? "UNKNOWN", environment,
+      toolVersion: tool?.definition.toolVersion ?? "UNKNOWN", toolIdentityDigest: tool?.identityDigest ?? "UNKNOWN",
+      environmentIdentity: this.#config.environmentIdentity, environment,
       startedAtEpochMs, endedAtEpochMs, durationMs: Math.max(0, endedAtEpochMs - startedAtEpochMs), exitCode, signal,
       stdout: safeStdout, stderr: safeStderr, outputTruncated, prestateManifestDigest: this.#baseline.digest,
       poststateManifestDigest: after?.digest ?? null, changedPaths: Object.freeze([...changedPaths]),
