@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/29",
+  "suiteVersion": "omega-institutional-suite/30",
   "criticalSuites": [
     "OMEGA-ASSURE-R2-EVALUATOR",
     "OMEGA-ASSURE-R2-OPERATIONAL-INDEPENDENT",
@@ -39,6 +39,7 @@
     "OMEGA-R3-B-CONTROLLED-EXECUTION",
     "OMEGA-R3-C-ENGINEERING-OBSERVATION",
     "OMEGA-R3-D-NYX-NEMOTRON-COGNITION",
+    "OMEGA-R3-E-BOUNDED-REPAIR-LOOP",
     "OMEGA-NVIDIA-NIM-PROVIDER",
     "OMEGA-R1-INDEPENDENT-REPLICATION",
     "OMEGA-READ-ONLY-EXECUTOR",
@@ -109,6 +110,7 @@
     { "suiteId": "OMEGA-R3-B-CONTROLLED-EXECUTION", "file": "scripts/omegaR3BControlledExecution.test.ts" },
     { "suiteId": "OMEGA-R3-C-ENGINEERING-OBSERVATION", "file": "scripts/omegaR3CEngineeringObservation.test.ts" },
     { "suiteId": "OMEGA-R3-D-NYX-NEMOTRON-COGNITION", "file": "scripts/omegaR3DNyxNemotronCognition.test.ts" },
+    { "suiteId": "OMEGA-R3-E-BOUNDED-REPAIR-LOOP", "file": "scripts/omegaR3EBoundedRepairLoop.test.ts" },
     { "suiteId": "OMEGA-NVIDIA-NIM-PROVIDER", "file": "scripts/omegaNvidiaNimProvider.test.ts" },
     { "suiteId": "OMEGA-READ-ONLY-EXECUTOR", "file": "scripts/omegaReadOnlyExecutor.test.ts" },
     { "suiteId": "OMEGA-READ-ONLY-VERTICAL-SLICE", "file": "scripts/omegaReadOnlyVerticalSlice.test.ts" },
