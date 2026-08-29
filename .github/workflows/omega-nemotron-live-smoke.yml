@@ -1,0 +1,37 @@
+name: Omega Nemotron live smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - sol/omega-institutional-spine
+    paths:
+      - .github/workflows/omega-nemotron-live-smoke.yml
+      - scripts/omega/nvidia-nim-live-smoke.ts
+      - src/lib/codelab/model/nvidiaNimProvider.ts
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-nemotron-live-smoke-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  nemotron-live-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Confirm encrypted credential is available
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Run bounded live Nemotron smoke
+        run: npm run omega:nvidia:smoke
