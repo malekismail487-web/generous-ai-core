@@ -48,6 +48,7 @@ function request(overrides: Partial<NyxRepairCognitionRequest> = {}): NyxRepairC
   return { schemaVersion: 1, cognitionRequestId: "NYX-REPAIR-REQUEST-1",
     objective: "Restore correct addition behavior while preserving the exported function contract.", observation: observation(),
     files: [{ relativePath: "src/math.ts", content: source, contentSha256: hash(source) }],
+    allowedMutationPaths: ["src/math.ts"],
     availableEvidence: [], priorHypotheses: [],
     allowedVerificationToolIds: ["TYPECHECK", "TEST"], maxChanges: 2, maxPatchBytes: 4_096,
     maxDiagnosisCharacters: 1_000, maxCounterexamples: 3, observedAtEpochMs: NOW, ...overrides };

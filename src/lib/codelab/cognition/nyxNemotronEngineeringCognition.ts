@@ -46,6 +46,7 @@ export interface NyxRepairCognitionRequest {
   readonly objective: string;
   readonly observation: EngineeringObservation;
   readonly files: readonly NyxEngineeringFileContext[];
+  readonly allowedMutationPaths: readonly string[];
   readonly availableEvidence: readonly NyxAvailableEvidence[];
   readonly priorHypotheses: readonly NyxPriorHypothesis[];
   readonly allowedVerificationToolIds: readonly string[];
@@ -283,7 +284,7 @@ export class NyxNemotronEngineeringCognition {
         { evidenceRef: `OBSERVATION:${request.observation.observationId}`, kind: "EXECUTION_OBSERVATION",
           value: { state: request.observation.state, diagnostics: request.observation.diagnostics, unknowns: request.observation.unknowns } },
         ...request.files.map((file) => ({ evidenceRef: `FILE:${file.relativePath}`, kind: "FILE", target: file.relativePath,
-          content: file.content }))],
+          mutationAllowed: request.allowedMutationPaths.includes(file.relativePath), content: file.content }))],
       availableEvidence: request.availableEvidence,
       hypothesisHistory: request.priorHypotheses,
       requiredSchema: NYX_REPAIR_INTENT_JSON_SCHEMA,
@@ -353,7 +354,8 @@ export class NyxNemotronEngineeringCognition {
       || !Number.isInteger(request.maxCounterexamples) || request.maxCounterexamples < 1 || request.maxCounterexamples > 5) issues.push("nyx_cognition_policy_invalid");
     if (!Array.isArray(request.files) || request.files.length < 1 || !Array.isArray(request.allowedVerificationToolIds)
       || request.allowedVerificationToolIds.length < 1 || !Array.isArray(request.availableEvidence)
-      || !Array.isArray(request.priorHypotheses)) issues.push("nyx_cognition_context_missing");
+      || !Array.isArray(request.priorHypotheses) || !Array.isArray(request.allowedMutationPaths)
+      || request.allowedMutationPaths.length < 1) issues.push("nyx_cognition_context_missing");
     const paths = new Set<string>();
     for (const file of request.files ?? []) {
       if (!validRelativePath(file?.relativePath) || paths.has(file.relativePath) || typeof file.content !== "string"
@@ -362,6 +364,10 @@ export class NyxNemotronEngineeringCognition {
     }
     const tools = request.allowedVerificationToolIds ?? [];
     if (new Set(tools).size !== tools.length || tools.some((tool) => typeof tool !== "string" || !tool.trim())) issues.push("nyx_cognition_verification_catalog_invalid");
+    const mutationPaths = request.allowedMutationPaths ?? [];
+    if (new Set(mutationPaths).size !== mutationPaths.length || mutationPaths.some((path) => !paths.has(path))) {
+      issues.push("nyx_cognition_mutation_scope_invalid");
+    }
     const availableRefs = new Set<string>();
     const availablePaths = new Set<string>();
     for (const item of request.availableEvidence ?? []) {
@@ -519,6 +525,9 @@ export class NyxNemotronEngineeringCognition {
       if (!validRelativePath(change.target)) { diagnostics.push(diagnostic("INVALID_TARGET_REFERENCE", `${base}.target`, "admitted relative target", "malformed_reference")); continue; }
       const context = contexts.get(change.target);
       if (!context) { diagnostics.push(diagnostic("UNSUPPORTED_FILE_TARGET", `${base}.target`, "currently admitted target", "unadmitted_reference")); continue; }
+      if (!request.allowedMutationPaths.includes(change.target)) {
+        diagnostics.push(diagnostic("UNSUPPORTED_FILE_TARGET", `${base}.target`, "explicitly authorized mutation target", "read_only_evidence_target")); continue;
+      }
       if (paths.has(change.target)) { diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", `${base}.target`, "unique target", "duplicate_reference")); continue; }
       if (sha256(change.replacement) === context.contentSha256) {
         diagnostics.push(diagnostic("REPEATED_FALSIFIED_STRATEGY", `${base}.replacement`, "a semantic change from the currently failed candidate", "no_op_repair")); continue;

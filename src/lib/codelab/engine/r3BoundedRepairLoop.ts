@@ -80,6 +80,7 @@ export interface R3BoundedRepairRequest {
   readonly objective: string;
   readonly initialObservation: EngineeringObservation;
   readonly initialFiles: readonly NyxEngineeringFileContext[];
+  readonly allowedMutationPaths: readonly string[];
   readonly availableEvidence: readonly NyxAvailableEvidence[];
   readonly allowedVerificationToolIds: readonly string[];
   readonly baselineExecutions: readonly R3RepairBaselineExecution[];
@@ -240,6 +241,9 @@ export class R3BoundedRepairLoop {
     if (request.schemaVersion !== 1 || !request.repairRequestId?.trim() || typeof request.objective !== "string"
       || !request.objective.trim() || request.objective.length > 2_000 || !Number.isFinite(request.observedAtEpochMs)
       || !failing(request.initialObservation) || request.initialObservation.grantsAuthority || !fileContextsValid(request.initialFiles)
+      || !Array.isArray(request.allowedMutationPaths) || request.allowedMutationPaths.length < 1
+      || new Set(request.allowedMutationPaths).size !== request.allowedMutationPaths.length
+      || request.allowedMutationPaths.some((path) => !request.initialFiles.some((file) => file.relativePath === path))
       || !Array.isArray(request.availableEvidence) || !evidenceCatalogValid(request.availableEvidence, request.initialFiles)
       || request.allowedVerificationToolIds.length < 1 || new Set(request.allowedVerificationToolIds).size !== request.allowedVerificationToolIds.length
       || request.baselineExecutions.some((item) => !item.toolId || item.toolId !== item.result.evidence.toolId)
@@ -260,7 +264,8 @@ export class R3BoundedRepairLoop {
       if (Date.now() - started >= this.#config.maxWallClockMs) return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
       const cognition = await this.#config.cognition.proposeRepair({ schemaVersion: 1,
         cognitionRequestId: `${request.repairRequestId}-COGNITION-${cognitionCycle}`, objective: request.objective,
-        observation: currentObservation, files: currentFiles, availableEvidence: currentAvailableEvidence,
+        observation: currentObservation, files: currentFiles, allowedMutationPaths: request.allowedMutationPaths,
+        availableEvidence: currentAvailableEvidence,
         priorHypotheses,
         allowedVerificationToolIds: request.allowedVerificationToolIds, maxChanges: this.#config.maxChangesPerIteration,
         maxPatchBytes: this.#config.maxPatchBytesPerIteration, maxDiagnosisCharacters: this.#config.maxDiagnosisCharacters,

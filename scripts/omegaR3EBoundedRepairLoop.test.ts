@@ -221,6 +221,7 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
   return { schemaVersion: 1, repairRequestId: `R3E-REPAIR-${sequence}`,
     objective: "Repair the arithmetic fixture so the repository-native test passes.", initialObservation,
     initialFiles: [{ relativePath: "src/math.txt", content: wrong, contentSha256: hash(wrong) }],
+    allowedMutationPaths: ["src/math.txt"],
     availableEvidence: [],
     allowedVerificationToolIds: ["TEST"], baselineExecutions: [{ toolId: "TEST", result: initialExecution }],
     observedAtEpochMs: NOW + 30_000, ...overrides };
@@ -275,6 +276,11 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
   const invalid = await loop(cognition(async () => new Response("{}")), candidateBuilder, 1).run(loopRequest({ initialObservation: {
     ...initialObservation, state: "TEST_PASS" } }));
   check(invalid.outcome === "BLOCKED" && invalid.reason === "bounded_repair_request_invalid", "repair loop rejects non-failing initial state");
+  const missingMutationScope = await loop(cognition(async () => new Response("{}")), candidateBuilder, 1).run({
+    ...loopRequest(), allowedMutationPaths: undefined,
+  } as unknown as Parameters<R3BoundedRepairLoop["run"]>[0]);
+  check(missingMutationScope.outcome === "BLOCKED" && missingMutationScope.reason === "bounded_repair_request_invalid",
+    "repair loop fails closed when explicit mutation scope is absent");
 }
 
 let configRejected = "";

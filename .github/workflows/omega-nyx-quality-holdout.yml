@@ -1,0 +1,42 @@
+name: Omega NYX engineering quality holdout
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - sol/omega-institutional-spine
+    paths:
+      - .github/workflows/omega-nyx-quality-holdout.yml
+      - scripts/omega/nyx-quality-holdout-live-eval.ts
+      - scripts/omega/nyx-quality-holdout-fixtures.ts
+      - scripts/omegaNyxEngineeringQualityAssurance.test.ts
+      - src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts
+      - src/lib/codelab/engine/r3BoundedRepairLoop.ts
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-nyx-quality-holdout-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  nyx-quality-holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Confirm encrypted credential is available
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Verify fresh holdout and authority contracts
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxEngineeringQualityAssurance.test.ts
+      - name: Run frozen fresh engineering-quality holdout
+        run: npm run omega:nyx:quality-holdout

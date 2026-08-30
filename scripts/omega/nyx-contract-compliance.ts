@@ -56,6 +56,7 @@ for (let index = 1; index <= TRIAL_COUNT; index += 1) {
   const result = await cognition.proposeRepair({ schemaVersion: 1,
     cognitionRequestId: `NYX-CONTRACT-COMPLIANCE-${index}-${observedAt}`, objective: OBJECTIVE, observation,
     files: [{ relativePath: "src/normalize-tags.mjs", content: SOURCE, contentSha256: sha256(SOURCE) }],
+    allowedMutationPaths: ["src/normalize-tags.mjs"],
     availableEvidence: [], priorHypotheses: [],
     allowedVerificationToolIds: ["TEST"], maxChanges: 1, maxPatchBytes: 4_096,
     maxDiagnosisCharacters: 1_500, maxCounterexamples: 3, observedAtEpochMs: observedAt });

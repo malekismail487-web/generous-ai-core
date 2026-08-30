@@ -41,6 +41,7 @@ function observation(): EngineeringObservation {
 function request(overrides: Partial<NyxRepairCognitionRequest> = {}): NyxRepairCognitionRequest {
   return { schemaVersion: 1, cognitionRequestId: `R3F-ASSURANCE-${Math.random()}`, objective: "Return value 1.",
     observation: observation(), files: [{ relativePath: "src/value.mjs", content: SOURCE, contentSha256: hash(SOURCE) }],
+    allowedMutationPaths: ["src/value.mjs"],
     availableEvidence: [], priorHypotheses: [],
     allowedVerificationToolIds: ["TEST"], maxChanges: 2, maxPatchBytes: 256, maxDiagnosisCharacters: 500,
     maxCounterexamples: 3, observedAtEpochMs: NOW, ...overrides };

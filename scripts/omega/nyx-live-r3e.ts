@@ -232,7 +232,8 @@ try {
     maxDiagnosisCharacters: 1_500 });
   const result = await loop.run({ schemaVersion: 1, repairRequestId: "NYX-LIVE-R3E-REPAIR", objective: OBJECTIVE,
     initialObservation, initialFiles: [{ relativePath: "src/normalize-tags.mjs", content: FAULTY_SOURCE,
-      contentSha256: hash(FAULTY_SOURCE) }], availableEvidence: [], allowedVerificationToolIds: ["TEST"],
+      contentSha256: hash(FAULTY_SOURCE) }], allowedMutationPaths: ["src/normalize-tags.mjs"],
+    availableEvidence: [], allowedVerificationToolIds: ["TEST"],
     baselineExecutions: [{ toolId: "TEST", result: initialExecution }], observedAtEpochMs: Date.now() });
 
   const sourceUnchanged = await readFile(join(sourceRoot, "src", "normalize-tags.mjs"), "utf8") === CORRECT_SOURCE;
