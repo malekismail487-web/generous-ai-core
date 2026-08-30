@@ -53,13 +53,17 @@ function rate(numerator: number, denominator: number): number {
   return denominator === 0 ? 0 : Math.round((numerator / denominator) * 10_000) / 10_000;
 }
 function cognitionEvidence(result: R3BoundedRepairResult): readonly NyxRepairCognitionEvidence[] {
-  return [...result.iterations.map((item) => item.cognitionEvidence), ...(result.lastCognitionEvidence ? [result.lastCognitionEvidence] : [])]
+  return [...result.iterations.map((item) => item.cognitionEvidence),
+    ...result.evidenceAcquisitions.map((item) => item.cognitionEvidence),
+    ...result.cognitionFailures.map((item) => item.cognitionEvidence),
+    ...(result.lastCognitionEvidence ? [result.lastCognitionEvidence] : [])]
     .filter((item, index, all) => all.findIndex((candidate) => candidate.evidenceId === item.evidenceId) === index);
 }
 function failureClass(result: R3BoundedRepairResult, hidden: string, quality: string): string {
   if (result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && hidden === "PASS" && quality === "ACCEPTED") return "NONE";
   if (hidden === "FAIL" || result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && hidden !== "PASS") return "VERIFICATION_FAILURE";
   if (quality === "REJECTED") return "QUALITY_ACCEPTANCE_FAILURE";
+  if (result.reason === "repair_cognition_correction_budget_exhausted") return "MODEL_SCHEMA_COMPLIANCE_FAILURE";
   if (result.reason.includes("schema_invalid") || result.reason.includes("not_strict_json")) return "MODEL_SCHEMA_COMPLIANCE_FAILURE";
   if (result.reason.includes("no_action")) return "INSUFFICIENT_EVIDENCE";
   if (result.reason.includes("provider_") || result.reason.includes("credential_")) return "PROVIDER_FAILURE";
@@ -320,6 +324,8 @@ try {
       contractDigest: CONTRACT_AT_START, modelId: MODEL, modelCalls: loopResult.modelCallCount, semanticActions,
       rejectedActions: Math.max(0, loopResult.modelCallCount - semanticActions), evidenceRequests: loopResult.evidenceAcquisitions.length,
       hypotheses: loopResult.iterations.length, hypothesisDispositions: loopResult.iterations.map((item) => item.hypothesisDisposition),
+      cognitionFailures: loopResult.cognitionFailures.map((item) => ({ cycle: item.cognitionCycle, reason: item.reason,
+        diagnostics: item.diagnostics.map((diagnostic) => ({ category: diagnostic.category, path: diagnostic.path })) })),
       candidates: loopResult.iterations.length, repairIterations: Math.max(0, loopResult.iterations.length - 1),
       verificationCount: 1 + loopResult.iterations.reduce((sum, item) => sum + item.verifications.length, 0)
         + (hiddenResult === "NOT_APPLICABLE" ? 0 : 1), deterministicVerification: loopResult.outcome,

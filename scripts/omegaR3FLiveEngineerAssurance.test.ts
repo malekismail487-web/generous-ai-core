@@ -42,7 +42,7 @@ function request(overrides: Partial<NyxRepairCognitionRequest> = {}): NyxRepairC
   return { schemaVersion: 1, cognitionRequestId: `R3F-ASSURANCE-${Math.random()}`, objective: "Return value 1.",
     observation: observation(), files: [{ relativePath: "src/value.mjs", content: SOURCE, contentSha256: hash(SOURCE) }],
     allowedMutationPaths: ["src/value.mjs"],
-    availableEvidence: [], priorHypotheses: [],
+    availableEvidence: [], priorHypotheses: [], priorCognitionFailures: [],
     allowedVerificationToolIds: ["TEST"], maxChanges: 2, maxPatchBytes: 256, maxDiagnosisCharacters: 500,
     maxCounterexamples: 3, observedAtEpochMs: NOW, ...overrides };
 }
@@ -73,7 +73,7 @@ function inert(result: NyxRepairCognitionResult): boolean {
 }
 
 check(/^[0-9a-f]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
-  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/2",
+  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/3",
   "frozen semantic contract has a versioned deterministic digest");
 check(NYX_R3F_EVALUATION_FIXTURES.length === 5
   && new Set(NYX_R3F_EVALUATION_FIXTURES.map((task) => task.taskClass)).size === 5,

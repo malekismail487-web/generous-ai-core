@@ -57,7 +57,7 @@ for (let index = 1; index <= TRIAL_COUNT; index += 1) {
     cognitionRequestId: `NYX-CONTRACT-COMPLIANCE-${index}-${observedAt}`, objective: OBJECTIVE, observation,
     files: [{ relativePath: "src/normalize-tags.mjs", content: SOURCE, contentSha256: sha256(SOURCE) }],
     allowedMutationPaths: ["src/normalize-tags.mjs"],
-    availableEvidence: [], priorHypotheses: [],
+    availableEvidence: [], priorHypotheses: [], priorCognitionFailures: [],
     allowedVerificationToolIds: ["TEST"], maxChanges: 1, maxPatchBytes: 4_096,
     maxDiagnosisCharacters: 1_500, maxCounterexamples: 3, observedAtEpochMs: observedAt });
   const schemaValid = result.decision === "PROPOSED" || result.decision === "REQUEST_EVIDENCE" || result.decision === "NO_ACTION";
@@ -74,7 +74,7 @@ for (let index = 1; index <= TRIAL_COUNT; index += 1) {
 
 const compliant = trials.filter((trial) => trial.schemaValid === true).length;
 const summary = { schemaVersion: 1, chunkId: "NYX-NEMOTRON-CONTRACT-REPAIR-001", model: MODEL,
-  protocolIdentity: "NYX_CAUSAL_ENGINEERING_INTENT_V2", taskDigest: sha256(OBJECTIVE), trialCount: TRIAL_COUNT,
+  protocolIdentity: "NYX_CAUSAL_ENGINEERING_INTENT_V3", taskDigest: sha256(OBJECTIVE), trialCount: TRIAL_COUNT,
   compliantTrials: compliant, minimumRequired: 1, unchangedTaskAcrossTrials: true,
   authorityIncrease: false, generalNetworkAuthority: false, credentialPersisted: false, trials };
 console.log(`NYX_TYPED_COMPLIANCE ${JSON.stringify(summary)}`);

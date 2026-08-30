@@ -49,7 +49,7 @@ function request(overrides: Partial<NyxRepairCognitionRequest> = {}): NyxRepairC
     objective: "Restore correct addition behavior while preserving the exported function contract.", observation: observation(),
     files: [{ relativePath: "src/math.ts", content: source, contentSha256: hash(source) }],
     allowedMutationPaths: ["src/math.ts"],
-    availableEvidence: [], priorHypotheses: [],
+    availableEvidence: [], priorHypotheses: [], priorCognitionFailures: [],
     allowedVerificationToolIds: ["TYPECHECK", "TEST"], maxChanges: 2, maxPatchBytes: 4_096,
     maxDiagnosisCharacters: 1_000, maxCounterexamples: 3, observedAtEpochMs: NOW, ...overrides };
 }
@@ -109,6 +109,22 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
 }
 
 {
+  let prompt = "";
+  const nyx = cognition(async (_input, init) => {
+    const body = JSON.parse(String(init?.body)) as { messages: Array<{ content: string }> };
+    prompt = body.messages[1].content;
+    return transportFor(intent())(_input, init);
+  });
+  const result = await nyx.proposeRepair(request({ priorCognitionFailures: [{ failureId: "NYX-FAILURE-1",
+    cognitionRequestId: "NYX-REPAIR-REQUEST-0", reason: "SCHEMA_INVALID", modelResponseDigest: "a".repeat(64),
+    diagnostics: [{ category: "MISSING_REQUIRED_FIELD", path: "$.expectedResult",
+      expected: "required field", observed: "missing" }] }] }));
+  check(result.decision === "PROPOSED" && prompt.includes("cognitionFailureHistory")
+    && prompt.includes("MISSING_REQUIRED_FIELD") && prompt.includes("$.expectedResult"),
+  "sanitized prior contract diagnostics are returned to Νύξ for bounded correction");
+}
+
+{
   let calls = 0;
   const nyx = cognition(async () => { calls += 1; return new Response("{}"); });
   const passing = await nyx.proposeRepair(request({ observation: observation("TEST_PASS") }));
@@ -116,6 +132,11 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
   const stale = await nyx.proposeRepair(request({ files: [{ relativePath: "src/math.ts", content: source, contentSha256: "0".repeat(64) }] }));
   check(stale.decision === "REJECTED" && has(stale, "STALE_TARGET_REFERENCE") && calls === 0,
     "stale admitted target evidence is rejected before provider invocation");
+  const malformedHistory = await nyx.proposeRepair(request({ priorCognitionFailures: [{ failureId: "DUPLICATE",
+    cognitionRequestId: "OLD", reason: "SCHEMA_INVALID", modelResponseDigest: "bad",
+    diagnostics: [] }] }));
+  check(malformedHistory.decision === "REJECTED" && calls === 0,
+    "malformed cognition-failure history fails closed before provider invocation");
 }
 
 {

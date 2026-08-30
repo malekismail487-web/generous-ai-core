@@ -191,12 +191,31 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
 }
 
 {
+  const invalidIntent = JSON.stringify({ decision: "PROPOSE_EDIT", diagnosis: "Incomplete retry." });
+  const responses = [modelResponse("2+2=6"), invalidIntent, modelResponse("2+2=4", {
+    failureInterpretation: "The first candidate was falsified and the intervening intent violated the semantic contract.",
+  })];
+  let calls = 0;
+  const nyx = cognition(async () => new Response(JSON.stringify({ choices: [{ message: { content: responses[calls++] } }] }), { status: 200 }));
+  const result = await loop(nyx, builder(), 3).run(loopRequest());
+  check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 3
+    && result.iterations.length === 2 && result.cognitionFailures.length === 1,
+    "one schema-invalid revision consumes an existing cognition cycle and can still converge without a larger budget");
+  check(result.cognitionFailures[0].reason === "SCHEMA_INVALID"
+    && result.cognitionFailures[0].diagnostics.some((item) => item.category === "MISSING_REQUIRED_FIELD")
+    && result.iterations[0].hypothesisDisposition === "FALSIFIED" && result.iterations[1].hypothesisDisposition === "SUPPORTED",
+    "bounded correction preserves sanitized diagnostics alongside falsified-to-supported hypothesis lineage");
+}
+
+{
   const evidenceIntent = JSON.stringify({ decision: "REQUEST_EVIDENCE", diagnosis: "The observed value is wrong but the intended identity needs confirmation.",
     causalHypothesis: "The stored result violates the repository arithmetic rule.", evidenceRefs: ["OBJECTIVE", "FILE:src/math.txt"],
     uncertainties: ["The authoritative arithmetic rule has not yet been admitted."], invariant: "The stored expression must equal the repository rule.",
     failureInterpretation: "No prior candidate exists.", expectedResult: "Admitting the rule will discriminate the correct replacement.",
     counterexamples: [], requestedEvidenceRefs: ["AVAILABLE:src/rule.txt"], assumptions: [], changes: [], confidence: 0.7 });
-  const responses = [evidenceIntent, modelResponse("2+2=4", { evidenceRefs: ["OBJECTIVE", "FILE:src/math.txt", "FILE:src/rule.txt"] })];
+  const invalidIntent = JSON.stringify({ decision: "PROPOSE_EDIT", diagnosis: "Incomplete post-evidence intent." });
+  const responses = [evidenceIntent, invalidIntent,
+    modelResponse("2+2=4", { evidenceRefs: ["OBJECTIVE", "FILE:src/math.txt", "FILE:src/rule.txt"] })];
   let calls = 0;
   const nyx = cognition(async () => new Response(JSON.stringify({ choices: [{ message: { content: responses[calls++] } }] }), { status: 200 }));
   const evidenceProvider: OmegaRepairEvidenceProvider = { providerIdentity: "OMEGA-R3E-READ-ONLY-EVIDENCE",
@@ -206,15 +225,16 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
         files: [{ relativePath: "src/rule.txt", content, contentSha256: hash(content) }],
         omegaAuthorityBoundary: "R1_ADMITTED_READ_ONLY_EVIDENCE", authorityGranted: false };
     } };
-  const result = await loop(nyx, builder(), 2, evidenceProvider).run(loopRequest({ availableEvidence: [{
+  const result = await loop(nyx, builder(), 3, evidenceProvider).run(loopRequest({ availableEvidence: [{
     evidenceRef: "AVAILABLE:src/rule.txt", kind: "FILE", relativePath: "src/rule.txt",
     description: "Repository rule referenced by the failing fixture." }] }));
-  check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 2
-    && result.evidenceAcquisitions.length === 1 && result.iterations.length === 1,
-    "Νύξ can spend one bounded cognition cycle acquiring admitted evidence before a verified repair");
+  check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 3
+    && result.evidenceAcquisitions.length === 1 && result.cognitionFailures.length === 1 && result.iterations.length === 1,
+    "Νύξ can acquire evidence, correct one invalid intent, and verify a repair within the unchanged three-cycle budget");
   check(result.evidenceAcquisitions[0].authorityGranted === false
-    && result.evidenceAcquisitions[0].admittedPaths.join() === "src/rule.txt",
-    "evidence acquisition remains attributable, read-only, and authority-neutral");
+    && result.evidenceAcquisitions[0].admittedPaths.join() === "src/rule.txt"
+    && result.evidenceAcquisitions[0].cognitionEvidence.modelUsage.totalTokens !== undefined,
+    "evidence acquisition remains attributable, read-only, authority-neutral, and resource-accounted");
 }
 
 function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0]> = {}): Parameters<R3BoundedRepairLoop["run"]>[0] {

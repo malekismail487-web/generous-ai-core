@@ -28,7 +28,7 @@ check(NYX_ENGINEERING_QUALITY_HOLDOUT.every((task) => task.mutationPaths.every((
   && task.availableEvidence.every((item) => !task.mutationPaths.includes(item.relativePath))),
 "observation-only evidence cannot silently expand the holdout mutation scope");
 check(/^[a-f0-9]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
-  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/2",
+  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/3",
 "scored cognition contract has a frozen version and deterministic digest");
 
 const parent = await mkdtemp(join(tmpdir(), "nyx-quality-assurance-"));
@@ -82,7 +82,7 @@ try {
     objective: "Use repository policy without changing it.", observation,
     files: [{ relativePath: "src/retention.mjs", content: source, contentSha256: hash(source) },
       { relativePath: "src/retention-policy.mjs", content: policy, contentSha256: hash(policy) }],
-    allowedMutationPaths: ["src/retention.mjs"], availableEvidence: [], priorHypotheses: [],
+    allowedMutationPaths: ["src/retention.mjs"], availableEvidence: [], priorHypotheses: [], priorCognitionFailures: [],
     allowedVerificationToolIds: ["TEST"], maxChanges: 1, maxPatchBytes: 2_048, maxDiagnosisCharacters: 1_000,
     maxCounterexamples: 3, observedAtEpochMs: Date.now() });
   check(result.decision === "COGNITION_ERROR" && result.schemaDiagnostics.some((item) => item.category === "UNSUPPORTED_FILE_TARGET"),

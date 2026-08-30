@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { NyxAvailableEvidence, NyxEngineeringFileContext, NyxEvidenceRequest, NyxNemotronEngineeringCognition,
-  NyxPriorHypothesis, NyxRepairCognitionEvidence, NyxRepairHypothesis } from "../cognition/nyxNemotronEngineeringCognition";
+  NyxPriorCognitionFailure, NyxPriorHypothesis, NyxRepairCognitionEvidence, NyxRepairHypothesis,
+  NyxSchemaDiagnostic } from "../cognition/nyxNemotronEngineeringCognition";
 import type { R2GPatchProposal } from "../executor/r2PatchProposal";
 import type { R3AApplyResult } from "../executor/r3DisposablePatchApplication";
 import type { R3BControlledEngineeringExecutor, R3BExecutionRequest, R3BExecutionResult } from "../executor/r3ControlledEngineeringExecution";
@@ -110,6 +111,7 @@ export interface R3RepairIteration {
 export interface R3EvidenceAcquisitionRecord {
   readonly cognitionCycle: number;
   readonly cognitionEvidenceId: string;
+  readonly cognitionEvidence: NyxRepairCognitionEvidence;
   readonly requestDigest: string;
   readonly requestedEvidenceRefs: readonly string[];
   readonly admittedEvidenceIds: readonly string[];
@@ -117,11 +119,20 @@ export interface R3EvidenceAcquisitionRecord {
   readonly authorityGranted: false;
 }
 
+export interface R3CognitionFailureRecord {
+  readonly cognitionCycle: number;
+  readonly cognitionRequestId: string;
+  readonly reason: "SCHEMA_INVALID" | "NON_JSON";
+  readonly cognitionEvidence: NyxRepairCognitionEvidence;
+  readonly diagnostics: readonly NyxSchemaDiagnostic[];
+}
+
 export interface R3BoundedRepairResult {
   readonly outcome: "FUNCTIONALLY_REPAIRED_VERIFIED" | "EXHAUSTED" | "BLOCKED" | "COGNITION_ERROR" | "INFRASTRUCTURE_ERROR";
   readonly reason: string;
   readonly iterations: readonly R3RepairIteration[];
   readonly evidenceAcquisitions: readonly R3EvidenceAcquisitionRecord[];
+  readonly cognitionFailures: readonly R3CognitionFailureRecord[];
   readonly finalObservation: EngineeringObservation;
   readonly evidenceId: string;
   readonly evidenceClass: "E3";
@@ -233,9 +244,11 @@ export class R3BoundedRepairLoop {
     let modelCallCount = 0;
     let lastCognitionEvidence: NyxRepairCognitionEvidence | null = null;
     const evidenceAcquisitions: R3EvidenceAcquisitionRecord[] = [];
+    const cognitionFailures: R3CognitionFailureRecord[] = [];
     const finish = (outcome: R3BoundedRepairResult["outcome"], reason: string,
       iterations: readonly R3RepairIteration[], observation: EngineeringObservation): R3BoundedRepairResult =>
-      this.#result(outcome, reason, iterations, evidenceAcquisitions, observation, started, modelCallCount, lastCognitionEvidence);
+      this.#result(outcome, reason, iterations, evidenceAcquisitions, cognitionFailures, observation, started,
+        modelCallCount, lastCognitionEvidence);
     const initialExecution = request.baselineExecutions.find((item) => item.toolId === request.initialObservation.toolId
       && item.result.evidence.evidenceId === request.initialObservation.candidateEvidenceId);
     if (request.schemaVersion !== 1 || !request.repairRequestId?.trim() || typeof request.objective !== "string"
@@ -259,6 +272,7 @@ export class R3BoundedRepairLoop {
     let currentFiles: readonly NyxEngineeringFileContext[] = request.initialFiles;
     let currentAvailableEvidence: readonly NyxAvailableEvidence[] = request.availableEvidence;
     const priorHypotheses: NyxPriorHypothesis[] = [];
+    const priorCognitionFailures: NyxPriorCognitionFailure[] = [];
     const iterations: R3RepairIteration[] = [];
     for (let cognitionCycle = 1; cognitionCycle <= this.#config.maxIterations; cognitionCycle += 1) {
       if (Date.now() - started >= this.#config.maxWallClockMs) return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
@@ -266,13 +280,26 @@ export class R3BoundedRepairLoop {
         cognitionRequestId: `${request.repairRequestId}-COGNITION-${cognitionCycle}`, objective: request.objective,
         observation: currentObservation, files: currentFiles, allowedMutationPaths: request.allowedMutationPaths,
         availableEvidence: currentAvailableEvidence,
-        priorHypotheses,
+        priorHypotheses, priorCognitionFailures,
         allowedVerificationToolIds: request.allowedVerificationToolIds, maxChanges: this.#config.maxChangesPerIteration,
         maxPatchBytes: this.#config.maxPatchBytesPerIteration, maxDiagnosisCharacters: this.#config.maxDiagnosisCharacters,
         maxCounterexamples: 3,
         observedAtEpochMs: Math.max(request.observedAtEpochMs, Date.now()) });
       lastCognitionEvidence = cognition.evidence;
       if (cognition.evidence.modelEvidenceId !== "NOT_INVOKED") modelCallCount += 1;
+      if (cognition.decision === "COGNITION_ERROR" && cognition.schemaDiagnostics.length > 0
+        && cognition.evidence.modelEvidenceId !== "NOT_INVOKED") {
+        const reason = cognition.reason === "nyx_cognition_output_not_strict_json" ? "NON_JSON" as const : "SCHEMA_INVALID" as const;
+        const record: R3CognitionFailureRecord = Object.freeze({ cognitionCycle,
+          cognitionRequestId: `${request.repairRequestId}-COGNITION-${cognitionCycle}`, reason,
+          cognitionEvidence: cognition.evidence, diagnostics: Object.freeze([...cognition.schemaDiagnostics]) });
+        cognitionFailures.push(record);
+        priorCognitionFailures.push(Object.freeze({ failureId: cognition.evidence.evidenceId,
+          cognitionRequestId: record.cognitionRequestId, reason, modelResponseDigest: cognition.evidence.modelResponseDigest,
+          diagnostics: record.diagnostics }));
+        if (cognitionCycle < this.#config.maxIterations && Date.now() - started < this.#config.maxWallClockMs) continue;
+        return finish("EXHAUSTED", "repair_cognition_correction_budget_exhausted", iterations, currentObservation);
+      }
       if (cognition.decision === "REQUEST_EVIDENCE" && cognition.evidenceRequest) {
         if (!this.#config.evidenceProvider) return finish("BLOCKED", "repair_evidence_provider_unavailable", iterations, currentObservation);
         let acquired: OmegaAcquiredRepairEvidence;
@@ -282,6 +309,7 @@ export class R3BoundedRepairLoop {
           return finish("BLOCKED", "repair_acquired_evidence_provenance_invalid", iterations, currentObservation);
         }
         evidenceAcquisitions.push(Object.freeze({ cognitionCycle, cognitionEvidenceId: cognition.evidence.evidenceId,
+          cognitionEvidence: cognition.evidence,
           requestDigest: cognition.evidenceRequest.requestDigest,
           requestedEvidenceRefs: Object.freeze([...acquired.requestedEvidenceRefs]),
           admittedEvidenceIds: Object.freeze([...acquired.evidenceIds]),
@@ -346,7 +374,7 @@ export class R3BoundedRepairLoop {
   }
 
   #result(outcome: R3BoundedRepairResult["outcome"], reason: string, iterations: readonly R3RepairIteration[],
-    evidenceAcquisitions: readonly R3EvidenceAcquisitionRecord[],
+    evidenceAcquisitions: readonly R3EvidenceAcquisitionRecord[], cognitionFailures: readonly R3CognitionFailureRecord[],
     finalObservation: EngineeringObservation, started: number, modelCallCount: number,
     lastCognitionEvidence: NyxRepairCognitionEvidence | null): R3BoundedRepairResult {
     const durationMs = Math.max(0, Date.now() - started);
@@ -356,9 +384,12 @@ export class R3BoundedRepairLoop {
         verifications: item.verifications.map((verification) => ({ tool: verification.toolId,
           evidence: verification.execution.evidence.evidenceId, observation: verification.observation.observationId })) })),
       evidenceAcquisitions: evidenceAcquisitions.map((item) => ({ request: item.requestDigest, evidence: item.admittedEvidenceIds })),
+      cognitionFailures: cognitionFailures.map((item) => ({ cycle: item.cognitionCycle, reason: item.reason,
+        evidence: item.cognitionEvidence.evidenceId, diagnostics: item.diagnostics })),
       finalObservation: finalObservation.observationId })).slice(0, 32)}`;
     return Object.freeze({ outcome, reason, iterations: Object.freeze([...iterations]),
-      evidenceAcquisitions: Object.freeze([...evidenceAcquisitions]), finalObservation, evidenceId,
+      evidenceAcquisitions: Object.freeze([...evidenceAcquisitions]), cognitionFailures: Object.freeze([...cognitionFailures]),
+      finalObservation, evidenceId,
       evidenceClass: "E3", modelCallCount, lastCognitionEvidence, durationMs,
       functionalAcceptance: outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" ? "ACCEPTED" : "NOT_ACCEPTED",
       engineeringQualityAcceptance: "NOT_EVALUATED", authorityGranted: false, sourceRepositoryWriteAuthority: false, productionAuthority: false });

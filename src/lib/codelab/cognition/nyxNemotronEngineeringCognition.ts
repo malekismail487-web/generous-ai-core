@@ -49,6 +49,7 @@ export interface NyxRepairCognitionRequest {
   readonly allowedMutationPaths: readonly string[];
   readonly availableEvidence: readonly NyxAvailableEvidence[];
   readonly priorHypotheses: readonly NyxPriorHypothesis[];
+  readonly priorCognitionFailures: readonly NyxPriorCognitionFailure[];
   readonly allowedVerificationToolIds: readonly string[];
   readonly maxChanges: number;
   readonly maxPatchBytes: number;
@@ -152,6 +153,14 @@ export interface NyxSchemaDiagnostic {
   readonly observed: string;
 }
 
+export interface NyxPriorCognitionFailure {
+  readonly failureId: string;
+  readonly cognitionRequestId: string;
+  readonly reason: "SCHEMA_INVALID" | "NON_JSON";
+  readonly modelResponseDigest: string | null;
+  readonly diagnostics: readonly NyxSchemaDiagnostic[];
+}
+
 interface RawRepairIntent {
   readonly decision?: unknown;
   readonly diagnosis?: unknown;
@@ -193,7 +202,7 @@ export const NYX_REPAIR_INTENT_JSON_SCHEMA: Readonly<Record<string, unknown>> = 
   additionalProperties: false,
 });
 
-export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/2" as const;
+export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/3" as const;
 export const NYX_SEMANTIC_ACTIONS = Object.freeze(["PROPOSE_EDIT", "REQUEST_EVIDENCE", "NO_ACTION"] as const);
 export const NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS = Object.freeze(["expectedBaseHash", "replacementContentHash",
   "verificationToolIds", "sandboxId", "candidateId", "transactionId", "authorization", "evidenceId",
@@ -201,7 +210,7 @@ export const NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS = Object.freeze(["expectedBaseH
 export const NYX_FORBIDDEN_SEMANTIC_REPLACEMENT_PATTERNS = Object.freeze([
   "shell_recursive_delete", "shell_command_interpreter", "node_child_process", "runtime_process_spawn",
 ] as const);
-export const NYX_REPAIR_SYSTEM_INSTRUCTION = "You are Νύξ engineering cognition running on NVIDIA Nemotron 3 Ultra. Act like a disciplined software engineer: diagnose causally, cite admitted evidence, state the invariant, challenge the repair with bounded counterexamples, and revise falsified hypotheses instead of perturbing failed patches. Return only one strict JSON semantic engineering intent with no markdown or commentary. You propose; Omega authorizes.";
+export const NYX_REPAIR_SYSTEM_INSTRUCTION = "You are Νύξ engineering cognition running on NVIDIA Nemotron 3 Ultra. Act like a disciplined software engineer: diagnose causally, cite admitted evidence, state the invariant, challenge the repair with bounded counterexamples, and revise falsified hypotheses instead of perturbing failed patches. If Omega supplies sanitized diagnostics from an invalid prior intent, correct every listed contract violation without repeating it. Return only one strict JSON semantic engineering intent with no markdown or commentary. You propose; Omega authorizes.";
 export const NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST = sha256(canonical({
   version: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
   actions: NYX_SEMANTIC_ACTIONS,
@@ -287,6 +296,7 @@ export class NyxNemotronEngineeringCognition {
           mutationAllowed: request.allowedMutationPaths.includes(file.relativePath), content: file.content }))],
       availableEvidence: request.availableEvidence,
       hypothesisHistory: request.priorHypotheses,
+      cognitionFailureHistory: request.priorCognitionFailures,
       requiredSchema: NYX_REPAIR_INTENT_JSON_SCHEMA,
       minimalExample: { decision: "PROPOSE_EDIT", diagnosis: "bounded symptom and cause distinction",
         causalHypothesis: "specific mechanism explaining the observation", evidenceRefs: ["OBJECTIVE", `FILE:${request.files[0].relativePath}`],
@@ -354,7 +364,8 @@ export class NyxNemotronEngineeringCognition {
       || !Number.isInteger(request.maxCounterexamples) || request.maxCounterexamples < 1 || request.maxCounterexamples > 5) issues.push("nyx_cognition_policy_invalid");
     if (!Array.isArray(request.files) || request.files.length < 1 || !Array.isArray(request.allowedVerificationToolIds)
       || request.allowedVerificationToolIds.length < 1 || !Array.isArray(request.availableEvidence)
-      || !Array.isArray(request.priorHypotheses) || !Array.isArray(request.allowedMutationPaths)
+      || !Array.isArray(request.priorHypotheses) || !Array.isArray(request.priorCognitionFailures)
+      || !Array.isArray(request.allowedMutationPaths)
       || request.allowedMutationPaths.length < 1) issues.push("nyx_cognition_context_missing");
     const paths = new Set<string>();
     for (const file of request.files ?? []) {
@@ -388,6 +399,18 @@ export class NyxNemotronEngineeringCognition {
         || !Array.isArray(item.verificationEvidenceRefs) || item.verificationEvidenceRefs.some((ref) => typeof ref !== "string" || !ref.trim())) {
         issues.push("nyx_cognition_hypothesis_history_invalid");
       } else { priorIds.add(item.hypothesisId); expectedParent = item.hypothesisId; }
+    }
+    const failureIds = new Set<string>();
+    for (const item of request.priorCognitionFailures ?? []) {
+      if (!item || typeof item.failureId !== "string" || !item.failureId.trim() || failureIds.has(item.failureId)
+        || typeof item.cognitionRequestId !== "string" || !item.cognitionRequestId.trim()
+        || !["SCHEMA_INVALID", "NON_JSON"].includes(item.reason)
+        || (item.modelResponseDigest !== null && !/^[a-f0-9]{64}$/.test(item.modelResponseDigest))
+        || !Array.isArray(item.diagnostics) || item.diagnostics.length < 1 || item.diagnostics.length > 50
+        || item.diagnostics.some((entry) => !entry || !entry.category || typeof entry.path !== "string"
+          || typeof entry.expected !== "string" || typeof entry.observed !== "string")) {
+        issues.push("nyx_cognition_failure_history_invalid");
+      } else failureIds.add(item.failureId);
     }
     return Object.freeze([...new Set(issues)]);
   }
