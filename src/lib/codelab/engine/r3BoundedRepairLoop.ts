@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import type { NyxEngineeringFileContext, NyxNemotronEngineeringCognition, NyxRepairCognitionEvidence, NyxRepairHypothesis } from "../cognition/nyxNemotronEngineeringCognition";
+import type { NyxAvailableEvidence, NyxEngineeringFileContext, NyxEvidenceRequest, NyxNemotronEngineeringCognition,
+  NyxPriorHypothesis, NyxRepairCognitionEvidence, NyxRepairHypothesis } from "../cognition/nyxNemotronEngineeringCognition";
 import type { R2GPatchProposal } from "../executor/r2PatchProposal";
 import type { R3AApplyResult } from "../executor/r3DisposablePatchApplication";
 import type { R3BControlledEngineeringExecutor, R3BExecutionRequest, R3BExecutionResult } from "../executor/r3ControlledEngineeringExecution";
@@ -41,12 +42,26 @@ export interface OmegaRepairCandidateBuilder {
   readonly prepare: (hypothesis: NyxRepairHypothesis, iteration: number) => Promise<OmegaPreparedRepairCandidate>;
 }
 
+export interface OmegaAcquiredRepairEvidence {
+  readonly requestedEvidenceRefs: readonly string[];
+  readonly evidenceIds: readonly string[];
+  readonly files: readonly NyxEngineeringFileContext[];
+  readonly omegaAuthorityBoundary: "R1_ADMITTED_READ_ONLY_EVIDENCE";
+  readonly authorityGranted: false;
+}
+
+export interface OmegaRepairEvidenceProvider {
+  readonly providerIdentity: string;
+  readonly acquire: (request: NyxEvidenceRequest, cognitionCycle: number) => Promise<OmegaAcquiredRepairEvidence>;
+}
+
 export interface R3BoundedRepairLoopConfig {
   readonly loopId: string;
   readonly evaluatorVersion: string;
   readonly observerIdentity: string;
   readonly cognition: NyxNemotronEngineeringCognition;
   readonly candidateBuilder: OmegaRepairCandidateBuilder;
+  readonly evidenceProvider?: OmegaRepairEvidenceProvider;
   readonly maxIterations: number;
   readonly maxWallClockMs: number;
   readonly maxChangesPerIteration: number;
@@ -65,6 +80,7 @@ export interface R3BoundedRepairRequest {
   readonly objective: string;
   readonly initialObservation: EngineeringObservation;
   readonly initialFiles: readonly NyxEngineeringFileContext[];
+  readonly availableEvidence: readonly NyxAvailableEvidence[];
   readonly allowedVerificationToolIds: readonly string[];
   readonly baselineExecutions: readonly R3RepairBaselineExecution[];
   readonly observedAtEpochMs: number;
@@ -82,6 +98,7 @@ export interface R3RepairIteration {
   readonly cognitionEvidenceId: string;
   readonly cognitionEvidence: NyxRepairCognitionEvidence;
   readonly hypothesis: NyxRepairHypothesis;
+  readonly hypothesisDisposition: "SUPPORTED" | "FALSIFIED";
   readonly proposalDigest: string;
   readonly applicationId: string;
   readonly applicationDecision: R3AApplyResult["decision"];
@@ -89,10 +106,21 @@ export interface R3RepairIteration {
   readonly passed: boolean;
 }
 
+export interface R3EvidenceAcquisitionRecord {
+  readonly cognitionCycle: number;
+  readonly cognitionEvidenceId: string;
+  readonly requestDigest: string;
+  readonly requestedEvidenceRefs: readonly string[];
+  readonly admittedEvidenceIds: readonly string[];
+  readonly admittedPaths: readonly string[];
+  readonly authorityGranted: false;
+}
+
 export interface R3BoundedRepairResult {
   readonly outcome: "FUNCTIONALLY_REPAIRED_VERIFIED" | "EXHAUSTED" | "BLOCKED" | "COGNITION_ERROR" | "INFRASTRUCTURE_ERROR";
   readonly reason: string;
   readonly iterations: readonly R3RepairIteration[];
+  readonly evidenceAcquisitions: readonly R3EvidenceAcquisitionRecord[];
   readonly finalObservation: EngineeringObservation;
   readonly evidenceId: string;
   readonly evidenceClass: "E3";
@@ -124,6 +152,30 @@ function patchDigestValid(proposal: R2GPatchProposal): boolean {
 function fileContextsValid(files: readonly NyxEngineeringFileContext[]): boolean {
   return files.length > 0 && new Set(files.map((file) => file.relativePath)).size === files.length
     && files.every((file) => Boolean(file.relativePath) && file.contentSha256 === sha256(file.content));
+}
+
+function evidenceCatalogValid(catalog: readonly NyxAvailableEvidence[], admittedFiles: readonly NyxEngineeringFileContext[]): boolean {
+  const admittedPaths = new Set(admittedFiles.map((file) => file.relativePath));
+  return new Set(catalog.map((item) => item.evidenceRef)).size === catalog.length
+    && new Set(catalog.map((item) => item.relativePath)).size === catalog.length
+    && catalog.every((item) => item.kind === "FILE" && Boolean(item.evidenceRef) && Boolean(item.relativePath)
+      && Boolean(item.description) && !admittedPaths.has(item.relativePath));
+}
+
+function acquiredEvidenceValid(acquired: OmegaAcquiredRepairEvidence, requested: NyxEvidenceRequest,
+  catalog: readonly NyxAvailableEvidence[], currentFiles: readonly NyxEngineeringFileContext[]): boolean {
+  if (acquired.omegaAuthorityBoundary !== "R1_ADMITTED_READ_ONLY_EVIDENCE" || acquired.authorityGranted
+    || !fileContextsValid(acquired.files) || acquired.evidenceIds.length !== acquired.files.length
+    || new Set(acquired.evidenceIds).size !== acquired.evidenceIds.length || acquired.evidenceIds.some((item) => !item)
+    || canonical([...acquired.requestedEvidenceRefs].sort()) !== canonical([...requested.requestedEvidenceRefs].sort())) return false;
+  const descriptorByRef = new Map(catalog.map((item) => [item.evidenceRef, item]));
+  const existingPaths = new Set(currentFiles.map((file) => file.relativePath));
+  return acquired.requestedEvidenceRefs.length === acquired.files.length
+    && acquired.requestedEvidenceRefs.every((ref, index) => {
+      const descriptor = descriptorByRef.get(ref);
+      const file = acquired.files[index];
+      return Boolean(descriptor) && descriptor?.relativePath === file.relativePath && !existingPaths.has(file.relativePath);
+    });
 }
 
 function preparedCandidateValid(candidate: OmegaPreparedRepairCandidate, hypothesis: NyxRepairHypothesis): boolean {
@@ -165,6 +217,8 @@ export class R3BoundedRepairLoop {
   static create(config: R3BoundedRepairLoopConfig): R3BoundedRepairLoop {
     if (!config.loopId.trim() || !config.evaluatorVersion.trim() || !config.observerIdentity.trim()
       || !config.candidateBuilder.builderIdentity.trim() || typeof config.candidateBuilder.prepare !== "function"
+      || (config.evidenceProvider !== undefined && (!config.evidenceProvider.providerIdentity.trim()
+        || typeof config.evidenceProvider.acquire !== "function"))
       || !Number.isInteger(config.maxIterations) || config.maxIterations < 1 || config.maxIterations > 8
       || !Number.isInteger(config.maxWallClockMs) || config.maxWallClockMs < 100 || config.maxWallClockMs > 600_000
       || !Number.isInteger(config.maxChangesPerIteration) || config.maxChangesPerIteration < 1
@@ -177,14 +231,16 @@ export class R3BoundedRepairLoop {
     const started = Date.now();
     let modelCallCount = 0;
     let lastCognitionEvidence: NyxRepairCognitionEvidence | null = null;
+    const evidenceAcquisitions: R3EvidenceAcquisitionRecord[] = [];
     const finish = (outcome: R3BoundedRepairResult["outcome"], reason: string,
       iterations: readonly R3RepairIteration[], observation: EngineeringObservation): R3BoundedRepairResult =>
-      this.#result(outcome, reason, iterations, observation, started, modelCallCount, lastCognitionEvidence);
+      this.#result(outcome, reason, iterations, evidenceAcquisitions, observation, started, modelCallCount, lastCognitionEvidence);
     const initialExecution = request.baselineExecutions.find((item) => item.toolId === request.initialObservation.toolId
       && item.result.evidence.evidenceId === request.initialObservation.candidateEvidenceId);
     if (request.schemaVersion !== 1 || !request.repairRequestId?.trim() || typeof request.objective !== "string"
       || !request.objective.trim() || request.objective.length > 2_000 || !Number.isFinite(request.observedAtEpochMs)
       || !failing(request.initialObservation) || request.initialObservation.grantsAuthority || !fileContextsValid(request.initialFiles)
+      || !Array.isArray(request.availableEvidence) || !evidenceCatalogValid(request.availableEvidence, request.initialFiles)
       || request.allowedVerificationToolIds.length < 1 || new Set(request.allowedVerificationToolIds).size !== request.allowedVerificationToolIds.length
       || request.baselineExecutions.some((item) => !item.toolId || item.toolId !== item.result.evidence.toolId)
       || !initialExecution || initialExecution.result.evidence.candidateCommit !== request.initialObservation.candidateCommit
@@ -196,24 +252,47 @@ export class R3BoundedRepairLoop {
     }
     const baselineByTool = new Map(request.baselineExecutions.map((item) => [item.toolId, item.result]));
     let currentObservation = request.initialObservation;
-    let currentFiles = request.initialFiles;
+    let currentFiles: readonly NyxEngineeringFileContext[] = request.initialFiles;
+    let currentAvailableEvidence: readonly NyxAvailableEvidence[] = request.availableEvidence;
+    const priorHypotheses: NyxPriorHypothesis[] = [];
     const iterations: R3RepairIteration[] = [];
-    for (let iteration = 1; iteration <= this.#config.maxIterations; iteration += 1) {
+    for (let cognitionCycle = 1; cognitionCycle <= this.#config.maxIterations; cognitionCycle += 1) {
       if (Date.now() - started >= this.#config.maxWallClockMs) return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
       const cognition = await this.#config.cognition.proposeRepair({ schemaVersion: 1,
-        cognitionRequestId: `${request.repairRequestId}-COGNITION-${iteration}`, objective: request.objective,
-        observation: currentObservation, files: currentFiles,
+        cognitionRequestId: `${request.repairRequestId}-COGNITION-${cognitionCycle}`, objective: request.objective,
+        observation: currentObservation, files: currentFiles, availableEvidence: currentAvailableEvidence,
+        priorHypotheses,
         allowedVerificationToolIds: request.allowedVerificationToolIds, maxChanges: this.#config.maxChangesPerIteration,
         maxPatchBytes: this.#config.maxPatchBytesPerIteration, maxDiagnosisCharacters: this.#config.maxDiagnosisCharacters,
+        maxCounterexamples: 3,
         observedAtEpochMs: Math.max(request.observedAtEpochMs, Date.now()) });
       lastCognitionEvidence = cognition.evidence;
       if (cognition.evidence.modelEvidenceId !== "NOT_INVOKED") modelCallCount += 1;
+      if (cognition.decision === "REQUEST_EVIDENCE" && cognition.evidenceRequest) {
+        if (!this.#config.evidenceProvider) return finish("BLOCKED", "repair_evidence_provider_unavailable", iterations, currentObservation);
+        let acquired: OmegaAcquiredRepairEvidence;
+        try { acquired = await this.#config.evidenceProvider.acquire(cognition.evidenceRequest, cognitionCycle); }
+        catch { return finish("INFRASTRUCTURE_ERROR", "repair_evidence_acquisition_failed", iterations, currentObservation); }
+        if (!acquiredEvidenceValid(acquired, cognition.evidenceRequest, currentAvailableEvidence, currentFiles)) {
+          return finish("BLOCKED", "repair_acquired_evidence_provenance_invalid", iterations, currentObservation);
+        }
+        evidenceAcquisitions.push(Object.freeze({ cognitionCycle, cognitionEvidenceId: cognition.evidence.evidenceId,
+          requestDigest: cognition.evidenceRequest.requestDigest,
+          requestedEvidenceRefs: Object.freeze([...acquired.requestedEvidenceRefs]),
+          admittedEvidenceIds: Object.freeze([...acquired.evidenceIds]),
+          admittedPaths: Object.freeze(acquired.files.map((file) => file.relativePath)), authorityGranted: false }));
+        const requested = new Set<string>(acquired.requestedEvidenceRefs);
+        currentFiles = Object.freeze([...currentFiles, ...acquired.files]);
+        currentAvailableEvidence = Object.freeze(currentAvailableEvidence.filter((item) => !requested.has(item.evidenceRef)));
+        continue;
+      }
       if (cognition.decision !== "PROPOSED" || !cognition.hypothesis) {
         const outcome = cognition.decision === "BLOCKED" || cognition.decision === "REJECTED" || cognition.decision === "NO_ACTION"
           ? "BLOCKED" : "COGNITION_ERROR";
         return finish(outcome, `repair_cognition_${cognition.reason}`, iterations, currentObservation);
       }
       let candidate: OmegaPreparedRepairCandidate;
+      const iteration = iterations.length + 1;
       try { candidate = await this.#config.candidateBuilder.prepare(cognition.hypothesis, iteration); }
       catch { return finish("INFRASTRUCTURE_ERROR", "omega_candidate_preparation_failed", iterations, currentObservation); }
       if (!preparedCandidateValid(candidate, cognition.hypothesis)) {
@@ -241,14 +320,20 @@ export class R3BoundedRepairLoop {
         verifications.push(Object.freeze({ toolId: verification.toolId, execution, observation: observed.observation }));
       }
       const passed = verifications.length > 0 && verifications.every((item) => passing(item.observation));
+      const hypothesisDisposition = passed ? "SUPPORTED" as const : "FALSIFIED" as const;
       const record: R3RepairIteration = Object.freeze({ iteration, inputObservationId: currentObservation.observationId,
         cognitionEvidenceId: cognition.evidence.evidenceId, cognitionEvidence: cognition.evidence, hypothesis: cognition.hypothesis,
+        hypothesisDisposition,
         proposalDigest: candidate.proposal.proposalDigest, applicationId: candidate.application.applicationId,
         applicationDecision: candidate.application.decision, verifications: Object.freeze(verifications), passed });
       iterations.push(record);
       if (passed) return finish("FUNCTIONALLY_REPAIRED_VERIFIED", "bounded_repair_functionally_verified", iterations, verifications[0].observation);
       const nextFailure = verifications.find((item) => failing(item.observation));
       if (!nextFailure) return finish("BLOCKED", "repair_verification_state_not_actionable", iterations, currentObservation);
+      priorHypotheses.push(Object.freeze({ hypothesisId: cognition.hypothesis.hypothesisId,
+        parentHypothesisId: cognition.hypothesis.parentHypothesisId, causalHypothesis: cognition.hypothesis.causalHypothesis,
+        expectedResult: cognition.hypothesis.expectedResult, strategyDigest: cognition.hypothesis.strategyDigest,
+        disposition: "FALSIFIED", verificationEvidenceRefs: Object.freeze(verifications.map((item) => item.execution.evidence.evidenceId)) }));
       currentObservation = nextFailure.observation;
       currentFiles = candidate.files;
     }
@@ -256,6 +341,7 @@ export class R3BoundedRepairLoop {
   }
 
   #result(outcome: R3BoundedRepairResult["outcome"], reason: string, iterations: readonly R3RepairIteration[],
+    evidenceAcquisitions: readonly R3EvidenceAcquisitionRecord[],
     finalObservation: EngineeringObservation, started: number, modelCallCount: number,
     lastCognitionEvidence: NyxRepairCognitionEvidence | null): R3BoundedRepairResult {
     const durationMs = Math.max(0, Date.now() - started);
@@ -264,8 +350,10 @@ export class R3BoundedRepairLoop {
         proposal: item.proposalDigest, application: item.applicationId,
         verifications: item.verifications.map((verification) => ({ tool: verification.toolId,
           evidence: verification.execution.evidence.evidenceId, observation: verification.observation.observationId })) })),
+      evidenceAcquisitions: evidenceAcquisitions.map((item) => ({ request: item.requestDigest, evidence: item.admittedEvidenceIds })),
       finalObservation: finalObservation.observationId })).slice(0, 32)}`;
-    return Object.freeze({ outcome, reason, iterations: Object.freeze([...iterations]), finalObservation, evidenceId,
+    return Object.freeze({ outcome, reason, iterations: Object.freeze([...iterations]),
+      evidenceAcquisitions: Object.freeze([...evidenceAcquisitions]), finalObservation, evidenceId,
       evidenceClass: "E3", modelCallCount, lastCognitionEvidence, durationMs,
       functionalAcceptance: outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" ? "ACCEPTED" : "NOT_ACCEPTED",
       engineeringQualityAcceptance: "NOT_EVALUATED", authorityGranted: false, sourceRepositoryWriteAuthority: false, productionAuthority: false });

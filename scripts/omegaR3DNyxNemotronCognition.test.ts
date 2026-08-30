@@ -48,11 +48,16 @@ function request(overrides: Partial<NyxRepairCognitionRequest> = {}): NyxRepairC
   return { schemaVersion: 1, cognitionRequestId: "NYX-REPAIR-REQUEST-1",
     objective: "Restore correct addition behavior while preserving the exported function contract.", observation: observation(),
     files: [{ relativePath: "src/math.ts", content: source, contentSha256: hash(source) }],
+    availableEvidence: [], priorHypotheses: [],
     allowedVerificationToolIds: ["TYPECHECK", "TEST"], maxChanges: 2, maxPatchBytes: 4_096,
-    maxDiagnosisCharacters: 1_000, observedAtEpochMs: NOW, ...overrides };
+    maxDiagnosisCharacters: 1_000, maxCounterexamples: 3, observedAtEpochMs: NOW, ...overrides };
 }
 function intent(overrides: Record<string, unknown> = {}): string {
   return JSON.stringify({ decision: "PROPOSE_EDIT", diagnosis: "The implementation adds an unintended constant offset.",
+    causalHypothesis: "The extra constant violates the addition contract.", evidenceRefs: ["OBJECTIVE", "FILE:src/math.ts"],
+    uncertainties: [], invariant: "The result equals the sum of both arguments for all finite numeric inputs.",
+    failureInterpretation: "No prior candidate exists.", expectedResult: "The addition test changes from failure to pass.",
+    counterexamples: ["negative and zero operands"], requestedEvidenceRefs: [],
     assumptions: ["The failing test defines the required behavior."],
     changes: [{ target: "src/math.ts", replacement: repaired }], confidence: 0.97, ...overrides });
 }
@@ -82,6 +87,9 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
     "Omega derives target freshness and replacement hashes from admitted evidence");
   check(hypothesis?.verificationToolIds.join(",") === "TYPECHECK,TEST" && hypothesis.confidence === 0.97,
     "Omega derives the authorized verification plan while preserving model confidence");
+  check(hypothesis?.causalHypothesis.includes("extra constant") && hypothesis.invariant.includes("sum")
+    && hypothesis.counterexamples.length === 1 && hypothesis.parentHypothesisId === null,
+    "validated intent preserves compact causal reasoning, invariant, challenge, and lineage semantics");
   check(hypothesis?.applyAuthorized === false && !result.omegaAuthorityGranted && !result.evidence.authorityGranted,
     "Νύξ semantic intent cannot authorize Omega action");
   check(result.evidence.modelRequestDigest !== null && result.evidence.modelResponseDigest !== null
@@ -89,8 +97,9 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
     "cognition preserves sanitized E3 model evidence and usage");
   const messages = body.messages as Array<{ role: string; content: string }>;
   check(messages[0].content.includes("You are Νύξ engineering cognition")
-    && messages[1].content.includes("Omega derives freshness hashes and execution metadata"),
-    "prompt states the Νύξ/Omega semantic-authority boundary");
+    && messages[1].content.includes("Omega derives freshness hashes and execution metadata")
+    && messages[1].content.includes("counterexamples") && messages[1].content.includes("hypothesisHistory"),
+    "prompt states the Νύξ/Omega boundary and compact engineering-reasoning discipline");
   const format = body.response_format as { type?: string; json_schema?: { name?: string; strict?: boolean } };
   check(format.type === "json_schema" && format.json_schema?.name === "nyx_repair_intent" && format.json_schema.strict === true,
     "provider receives the strict typed semantic-intent schema");
@@ -134,12 +143,51 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
   check(has(unsupported, "UNSUPPORTED_FILE_TARGET"), "unadmitted file target is rejected");
   const tooLarge = await evaluate(intent({ changes: [{ target: "src/math.ts", replacement: "x".repeat(200) }] }), { maxPatchBytes: 100 });
   check(has(tooLarge, "SEMANTIC_REPAIR_INVALID"), "oversized semantic patch is rejected");
+  const unsupportedEvidence = await evaluate(intent({ evidenceRefs: ["FILE:src/not-admitted.ts"] }));
+  check(has(unsupportedEvidence, "UNSUPPORTED_EVIDENCE_REFERENCE"), "mutation cannot cite evidence that Omega did not admit");
+  const noEvidence = await evaluate(intent({ evidenceRefs: [] }));
+  check(has(noEvidence, "SEMANTIC_REPAIR_INVALID"), "mutation without causal evidence fails closed");
+  const noChallenge = await evaluate(intent({ counterexamples: [] }));
+  check(has(noChallenge, "SEMANTIC_REPAIR_INVALID"), "candidate without a bounded counterexample challenge is rejected");
+  const hiddenTarget = await evaluate(intent({ expectedResult: "Pass the hidden test oracle." }));
+  check(has(hiddenTarget, "HIDDEN_EVALUATOR_TARGETING"), "reasoning that targets hidden evaluation instead of an invariant is rejected");
+  const noOp = await evaluate(intent({ changes: [{ target: "src/math.ts", replacement: source }] }));
+  check(has(noOp, "REPEATED_FALSIFIED_STRATEGY"), "no-op repair against the currently failed candidate is rejected");
   const extra = await evaluate(intent({ commentary: "execute this" }));
   check(has(extra, "UNEXPECTED_STRUCTURE"), "extra unexpected model field is rejected");
 }
 
 {
-  const noAction = await evaluate(intent({ decision: "NO_ACTION", diagnosis: "The admitted evidence is insufficient.", changes: [] }));
+  const availableEvidence = [{ evidenceRef: "AVAILABLE:src/caller.ts", kind: "FILE" as const,
+    relativePath: "src/caller.ts", description: "A caller that defines the expected result contract." }];
+  const evidenceRequest = await evaluate(intent({ decision: "REQUEST_EVIDENCE", changes: [], counterexamples: [],
+    uncertainties: ["The caller contract may distinguish two plausible return shapes."],
+    requestedEvidenceRefs: ["AVAILABLE:src/caller.ts"] }), { availableEvidence });
+  check(evidenceRequest.decision === "REQUEST_EVIDENCE" && evidenceRequest.evidenceRequest?.requestedEvidenceRefs[0]
+    === "AVAILABLE:src/caller.ts" && evidenceRequest.evidenceRequest.authorityGranted === false,
+    "Νύξ can request listed evidence without gaining read or execution authority");
+  const fabricatedRequest = await evaluate(intent({ decision: "REQUEST_EVIDENCE", changes: [], counterexamples: [],
+    uncertainties: ["A caller is required."], requestedEvidenceRefs: ["AVAILABLE:src/secret.ts"] }), { availableEvidence });
+  check(has(fabricatedRequest, "UNSUPPORTED_EVIDENCE_REFERENCE"), "fabricated evidence request fails closed");
+  const prematureExit = await evaluate(intent({ decision: "NO_ACTION", changes: [], counterexamples: [],
+    uncertainties: ["The caller contract is unclear."], requestedEvidenceRefs: [] }), { availableEvidence });
+  check(has(prematureExit, "UNJUSTIFIED_EPISTEMIC_EXIT"), "NO_ACTION cannot evade available discriminating evidence");
+}
+
+{
+  const first = await evaluate(intent());
+  const prior = first.hypothesis!;
+  const repeated = await evaluate(intent({ failureInterpretation: "The prior candidate failed but I will repeat it." }), {
+    priorHypotheses: [{ hypothesisId: prior.hypothesisId, parentHypothesisId: null,
+      causalHypothesis: prior.causalHypothesis, expectedResult: prior.expectedResult, strategyDigest: prior.strategyDigest,
+      disposition: "FALSIFIED", verificationEvidenceRefs: ["EVIDENCE-FAILED-1"] }],
+  });
+  check(has(repeated, "REPEATED_FALSIFIED_STRATEGY"), "exact failed strategy cannot be resubmitted under new prose");
+}
+
+{
+  const noAction = await evaluate(intent({ decision: "NO_ACTION", diagnosis: "The admitted evidence is insufficient.",
+    uncertainties: ["The required caller contract is unavailable."], counterexamples: [], changes: [] }));
   check(noAction.decision === "NO_ACTION" && noAction.hypothesis === null && !noAction.omegaAuthorityGranted,
     "valid NO_ACTION preserves epistemic honesty without creating an executable hypothesis");
   const absent = await evaluate(intent({ changes: [] }));

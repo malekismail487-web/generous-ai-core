@@ -16,7 +16,7 @@ const OBJECTIVE = "Repair normalizeTags(tags) so it returns sorted, unique, lowe
 
 function sha256(value: string): string { return createHash("sha256").update(value).digest("hex"); }
 function classify(result: NyxRepairCognitionResult): string {
-  if (result.decision === "PROPOSED" || result.decision === "NO_ACTION") return "NONE";
+  if (result.decision === "PROPOSED" || result.decision === "REQUEST_EVIDENCE" || result.decision === "NO_ACTION") return "NONE";
   if (result.reason.includes("provider_http") || result.reason.includes("provider_timeout")
     || result.reason.includes("transport_failure") || result.reason.includes("credential_unavailable")) {
     return "PROVIDER_TRANSPORT_FAILURE";
@@ -56,9 +56,10 @@ for (let index = 1; index <= TRIAL_COUNT; index += 1) {
   const result = await cognition.proposeRepair({ schemaVersion: 1,
     cognitionRequestId: `NYX-CONTRACT-COMPLIANCE-${index}-${observedAt}`, objective: OBJECTIVE, observation,
     files: [{ relativePath: "src/normalize-tags.mjs", content: SOURCE, contentSha256: sha256(SOURCE) }],
+    availableEvidence: [], priorHypotheses: [],
     allowedVerificationToolIds: ["TEST"], maxChanges: 1, maxPatchBytes: 4_096,
-    maxDiagnosisCharacters: 1_500, observedAtEpochMs: observedAt });
-  const schemaValid = result.decision === "PROPOSED" || result.decision === "NO_ACTION";
+    maxDiagnosisCharacters: 1_500, maxCounterexamples: 3, observedAtEpochMs: observedAt });
+  const schemaValid = result.decision === "PROPOSED" || result.decision === "REQUEST_EVIDENCE" || result.decision === "NO_ACTION";
   trials.push({ trial: index, model: result.evidence.model, modelEvidenceId: result.evidence.modelEvidenceId,
     evidenceClass: result.evidence.evidenceClass, statusCode: result.evidence.modelStatusCode,
     requestDigest: result.evidence.modelRequestDigest, responseDigest: result.evidence.modelResponseDigest,
@@ -72,7 +73,7 @@ for (let index = 1; index <= TRIAL_COUNT; index += 1) {
 
 const compliant = trials.filter((trial) => trial.schemaValid === true).length;
 const summary = { schemaVersion: 1, chunkId: "NYX-NEMOTRON-CONTRACT-REPAIR-001", model: MODEL,
-  protocolIdentity: "NYX_SEMANTIC_REPAIR_INTENT_V1", taskDigest: sha256(OBJECTIVE), trialCount: TRIAL_COUNT,
+  protocolIdentity: "NYX_CAUSAL_ENGINEERING_INTENT_V2", taskDigest: sha256(OBJECTIVE), trialCount: TRIAL_COUNT,
   compliantTrials: compliant, minimumRequired: 1, unchangedTaskAcrossTrials: true,
   authorityIncrease: false, generalNetworkAuthority: false, credentialPersisted: false, trials };
 console.log(`NYX_TYPED_COMPLIANCE ${JSON.stringify(summary)}`);

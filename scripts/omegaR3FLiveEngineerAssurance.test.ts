@@ -41,8 +41,9 @@ function observation(): EngineeringObservation {
 function request(overrides: Partial<NyxRepairCognitionRequest> = {}): NyxRepairCognitionRequest {
   return { schemaVersion: 1, cognitionRequestId: `R3F-ASSURANCE-${Math.random()}`, objective: "Return value 1.",
     observation: observation(), files: [{ relativePath: "src/value.mjs", content: SOURCE, contentSha256: hash(SOURCE) }],
+    availableEvidence: [], priorHypotheses: [],
     allowedVerificationToolIds: ["TEST"], maxChanges: 2, maxPatchBytes: 256, maxDiagnosisCharacters: 500,
-    observedAtEpochMs: NOW, ...overrides };
+    maxCounterexamples: 3, observedAtEpochMs: NOW, ...overrides };
 }
 function provider(transport: NvidiaNimTransport) {
   return NvidiaNimProvider.create({ providerId: "R3F-ASSURANCE", model: "nvidia/nemotron-3-ultra",
@@ -57,6 +58,9 @@ async function evaluate(value: unknown, override: Partial<NyxRepairCognitionRequ
 }
 function intent(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return { decision: "PROPOSE_EDIT", diagnosis: "The implementation returns the wrong value.", assumptions: [],
+    causalHypothesis: "The literal return value violates the objective.", evidenceRefs: ["OBJECTIVE", "FILE:src/value.mjs"],
+    uncertainties: [], invariant: "value() returns one without side effects.", failureInterpretation: "No prior candidate exists.",
+    expectedResult: "The visible value assertion passes.", counterexamples: ["Repeated calls must still return one."], requestedEvidenceRefs: [],
     changes: [{ target: "src/value.mjs", replacement: "export function value() { return 1; }\n" }], confidence: 0.9,
     ...overrides };
 }
@@ -68,7 +72,7 @@ function inert(result: NyxRepairCognitionResult): boolean {
 }
 
 check(/^[0-9a-f]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
-  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-semantic-repair-intent/1",
+  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/2",
   "frozen semantic contract has a versioned deterministic digest");
 check(NYX_R3F_EVALUATION_FIXTURES.length === 5
   && new Set(NYX_R3F_EVALUATION_FIXTURES.map((task) => task.taskClass)).size === 5,
@@ -148,7 +152,8 @@ check(nyxR3FActionCounts(2, 1, "repair_cognition_nyx_cognition_output_schema_inv
   const stale = await evaluate(intent(), { files: [{ relativePath: "src/value.mjs", content: SOURCE, contentSha256: "0".repeat(64) }] });
   check(stale.decision === "REJECTED" && has(stale, "STALE_TARGET_REFERENCE") && inert(stale),
     "stale admitted evidence rejects before provider-backed action can exist");
-  const noAction = await evaluate(intent({ decision: "NO_ACTION", diagnosis: "Insufficient evidence.", changes: [] }));
+  const noAction = await evaluate(intent({ decision: "NO_ACTION", diagnosis: "Insufficient evidence.",
+    uncertainties: ["The required behavior is unavailable."], counterexamples: [], changes: [] }));
   check(noAction.decision === "NO_ACTION" && inert(noAction), "terminal NO_ACTION creates no mutation hypothesis");
   const malformed = await evaluate("not-json");
   check(malformed.decision === "COGNITION_ERROR" && inert(malformed), "arbitrary model text is inert and non-executable");

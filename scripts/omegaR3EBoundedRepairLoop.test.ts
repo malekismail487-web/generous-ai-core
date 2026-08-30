@@ -4,7 +4,8 @@ import { cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/p
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { NyxNemotronEngineeringCognition, type NyxRepairHypothesis } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
-import { R3BoundedRepairLoop, R3_E_BOUNDED_REPAIR_LOOP_STATUS, type OmegaPreparedRepairCandidate } from "../src/lib/codelab/engine/r3BoundedRepairLoop";
+import { R3BoundedRepairLoop, R3_E_BOUNDED_REPAIR_LOOP_STATUS, type OmegaPreparedRepairCandidate,
+  type OmegaRepairEvidenceProvider } from "../src/lib/codelab/engine/r3BoundedRepairLoop";
 import { R2AIsolatedSandboxLifecycle, type R2AIsolatedLifecycleConfig } from "../src/lib/codelab/executor/r2SandboxLifecycle";
 import type { SandboxProvisionRequest } from "../src/lib/codelab/executor/r2ProvisioningBlueprint";
 import type { R2GPatchProposal, R2GProposedChange } from "../src/lib/codelab/executor/r2PatchProposal";
@@ -119,7 +120,9 @@ function cognition(transport: NvidiaNimTransport): NyxNemotronEngineeringCogniti
 }
 
 const sourceRoot = join(parent, "source"); await mkdir(join(sourceRoot, "src"), { recursive: true }); await mkdir(join(sourceRoot, "tools"));
-await writeFile(join(sourceRoot, "src", "math.txt"), "2+2=4", "utf8"); await writeFile(join(sourceRoot, "tools", "verify.mjs"), VERIFY_SOURCE, "utf8");
+await writeFile(join(sourceRoot, "src", "math.txt"), "2+2=4", "utf8");
+await writeFile(join(sourceRoot, "src", "rule.txt"), "The accepted arithmetic identity is 2+2=4.", "utf8");
+await writeFile(join(sourceRoot, "tools", "verify.mjs"), VERIFY_SOURCE, "utf8");
 const wrong = "2+2=5";
 const initial = await applyChange(sourceRoot, { kind: "MODIFY", relativePath: "src/math.txt", expectedBaseHash: hash("2+2=4"),
   proposedContentHash: hash(wrong), proposedContent: wrong, baselineEvidenceId: "evidence://initial", baselineObservationId: "observation://initial",
@@ -135,20 +138,28 @@ const initialObserved = observeEngineeringExecution({ schemaVersion: 1, observat
 if (!initialObserved.observation || initialObserved.observation.state !== "TEST_FAIL") throw new Error("r3e_initial_failure_not_observed");
 const initialObservation: EngineeringObservation = initialObserved.observation;
 
-function modelResponse(replacement: string): string {
+function modelResponse(replacement: string, overrides: Record<string, unknown> = {}): string {
   return JSON.stringify({ decision: "PROPOSE_EDIT", diagnosis: "The arithmetic fixture contains the wrong result.",
-    assumptions: ["The verifier encodes intended behavior."], changes: [{ target: "src/math.txt", replacement }], confidence: 0.99 });
+    causalHypothesis: "The stored arithmetic result contradicts the objective.",
+    evidenceRefs: ["OBJECTIVE", "FILE:src/math.txt"], uncertainties: [], invariant: "The fixture must state 2+2=4.",
+    failureInterpretation: "No prior candidate exists or the prior value remained incorrect.",
+    expectedResult: "The repository-native test reports TEST_PASS.", counterexamples: ["The file contains any value other than 2+2=4."],
+    requestedEvidenceRefs: [],
+    assumptions: ["The verifier encodes intended behavior."], changes: [{ target: "src/math.txt", replacement }], confidence: 0.99,
+    ...overrides });
 }
 
 function builder(tamper = false) {
+  let currentBaseRoot = initial.cloneRoot;
   return { builderIdentity: tamper ? "OMEGA-R3E-TAMPER-BUILDER" : "OMEGA-R3E-BUILDER",
     prepare: async (hypothesis: NyxRepairHypothesis, iteration: number): Promise<OmegaPreparedRepairCandidate> => {
       const change = hypothesis.changes[0];
-      const pack = await applyChange(initial.cloneRoot, { kind: "MODIFY", relativePath: change.relativePath,
+      const pack = await applyChange(currentBaseRoot, { kind: "MODIFY", relativePath: change.relativePath,
         expectedBaseHash: change.expectedBaseHash, proposedContentHash: change.replacementContentHash,
         proposedContent: change.replacementContent, baselineEvidenceId: `evidence://repair/${iteration}`,
         baselineObservationId: `observation://repair/${iteration}`, sandboxArtifactId: `artifact://repair/${iteration}` }, `repair-${iteration}`);
       const run = await verification(pack, `repair-${iteration}-${sequence}`);
+      currentBaseRoot = pack.cloneRoot;
       const content = await readFile(join(pack.cloneRoot, "src", "math.txt"), "utf8");
       return { hypothesisId: hypothesis.hypothesisId, hypothesisDigest: hypothesis.proposalDigest, proposal: pack.proposal,
         application: pack.application, verifications: [{ toolId: "TEST", executor: run.executor, request: run.request }],
@@ -158,16 +169,59 @@ function builder(tamper = false) {
     } };
 }
 
-function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder(), maxIterations = 1): R3BoundedRepairLoop {
+function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder(), maxIterations = 1,
+  evidenceProvider?: OmegaRepairEvidenceProvider): R3BoundedRepairLoop {
   return R3BoundedRepairLoop.create({ loopId: `R3E-LOOP-${sequence}`, evaluatorVersion: "r3-e/1",
-    observerIdentity: "OMEGA-R3E-OBSERVER", cognition: nyx, candidateBuilder, maxIterations, maxWallClockMs: 30_000,
+    observerIdentity: "OMEGA-R3E-OBSERVER", cognition: nyx, candidateBuilder, evidenceProvider, maxIterations, maxWallClockMs: 30_000,
     maxChangesPerIteration: 1, maxPatchBytesPerIteration: 1_000, maxDiagnosisCharacters: 1_000 });
+}
+
+{
+  const responses = [modelResponse("2+2=6"), modelResponse("2+2=4", {
+    failureInterpretation: "The failed verification falsified the proposed value 2+2=6; the repository rule supports 2+2=4.",
+  })];
+  let calls = 0;
+  const nyx = cognition(async () => new Response(JSON.stringify({ choices: [{ message: { content: responses[calls++] } }] }), { status: 200 }));
+  const result = await loop(nyx, builder(), 2).run(loopRequest());
+  check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 2 && result.iterations.length === 2,
+    "failed verification drives a bounded revised candidate to verified success without a larger budget");
+  check(result.iterations[0].hypothesisDisposition === "FALSIFIED" && result.iterations[1].hypothesisDisposition === "SUPPORTED"
+    && result.iterations[1].hypothesis.parentHypothesisId === result.iterations[0].hypothesis.hypothesisId,
+    "repair loop preserves causal hypothesis lineage and deterministic falsification disposition");
+}
+
+{
+  const evidenceIntent = JSON.stringify({ decision: "REQUEST_EVIDENCE", diagnosis: "The observed value is wrong but the intended identity needs confirmation.",
+    causalHypothesis: "The stored result violates the repository arithmetic rule.", evidenceRefs: ["OBJECTIVE", "FILE:src/math.txt"],
+    uncertainties: ["The authoritative arithmetic rule has not yet been admitted."], invariant: "The stored expression must equal the repository rule.",
+    failureInterpretation: "No prior candidate exists.", expectedResult: "Admitting the rule will discriminate the correct replacement.",
+    counterexamples: [], requestedEvidenceRefs: ["AVAILABLE:src/rule.txt"], assumptions: [], changes: [], confidence: 0.7 });
+  const responses = [evidenceIntent, modelResponse("2+2=4", { evidenceRefs: ["OBJECTIVE", "FILE:src/math.txt", "FILE:src/rule.txt"] })];
+  let calls = 0;
+  const nyx = cognition(async () => new Response(JSON.stringify({ choices: [{ message: { content: responses[calls++] } }] }), { status: 200 }));
+  const evidenceProvider: OmegaRepairEvidenceProvider = { providerIdentity: "OMEGA-R3E-READ-ONLY-EVIDENCE",
+    acquire: async (request) => {
+      const content = await readFile(join(initial.cloneRoot, "src", "rule.txt"), "utf8");
+      return { requestedEvidenceRefs: request.requestedEvidenceRefs, evidenceIds: ["R1-EVIDENCE-RULE"],
+        files: [{ relativePath: "src/rule.txt", content, contentSha256: hash(content) }],
+        omegaAuthorityBoundary: "R1_ADMITTED_READ_ONLY_EVIDENCE", authorityGranted: false };
+    } };
+  const result = await loop(nyx, builder(), 2, evidenceProvider).run(loopRequest({ availableEvidence: [{
+    evidenceRef: "AVAILABLE:src/rule.txt", kind: "FILE", relativePath: "src/rule.txt",
+    description: "Repository rule referenced by the failing fixture." }] }));
+  check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 2
+    && result.evidenceAcquisitions.length === 1 && result.iterations.length === 1,
+    "Νύξ can spend one bounded cognition cycle acquiring admitted evidence before a verified repair");
+  check(result.evidenceAcquisitions[0].authorityGranted === false
+    && result.evidenceAcquisitions[0].admittedPaths.join() === "src/rule.txt",
+    "evidence acquisition remains attributable, read-only, and authority-neutral");
 }
 
 function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0]> = {}): Parameters<R3BoundedRepairLoop["run"]>[0] {
   return { schemaVersion: 1, repairRequestId: `R3E-REPAIR-${sequence}`,
     objective: "Repair the arithmetic fixture so the repository-native test passes.", initialObservation,
     initialFiles: [{ relativePath: "src/math.txt", content: wrong, contentSha256: hash(wrong) }],
+    availableEvidence: [],
     allowedVerificationToolIds: ["TEST"], baselineExecutions: [{ toolId: "TEST", result: initialExecution }],
     observedAtEpochMs: NOW + 30_000, ...overrides };
 }

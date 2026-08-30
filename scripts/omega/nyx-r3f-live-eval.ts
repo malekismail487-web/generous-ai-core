@@ -236,7 +236,7 @@ try {
       maxWallClockMs: MAX_WALL_CLOCK_MS_PER_TASK, maxChangesPerIteration: task.maxChanges,
       maxPatchBytesPerIteration: task.maxPatchBytes, maxDiagnosisCharacters: MAX_DIAGNOSIS_CHARACTERS });
     const loopResult = await loop.run({ schemaVersion: 1, repairRequestId: `NYX-R3F-REPAIR-${task.taskId}`,
-      objective: task.objective, initialObservation, initialFiles, allowedVerificationToolIds: ["TEST"],
+      objective: task.objective, initialObservation, initialFiles, availableEvidence: [], allowedVerificationToolIds: ["TEST"],
       baselineExecutions: [{ toolId: "TEST", result: initialExecution }], observedAtEpochMs: Date.now() });
 
     let hiddenResult = "NOT_APPLICABLE";
