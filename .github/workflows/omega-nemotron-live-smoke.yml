@@ -2,17 +2,6 @@ name: Omega Nemotron live smoke
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - sol/omega-institutional-spine
-    paths:
-      - .github/workflows/omega-nemotron-live-smoke.yml
-      - scripts/omega/nvidia-nim-live-smoke.ts
-      - scripts/omega/nyx-contract-compliance.ts
-      - src/lib/codelab/model/nvidiaNimProvider.ts
-      - src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts
-      - src/lib/codelab/engine/r3BoundedRepairLoop.ts
-      - scripts/omega/nyx-live-r3e.ts
 
 permissions:
   contents: read

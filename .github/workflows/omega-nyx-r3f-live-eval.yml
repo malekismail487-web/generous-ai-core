@@ -2,16 +2,6 @@ name: Omega NYX R3F cross-task live evaluation
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - sol/omega-institutional-spine
-    paths:
-      - .github/workflows/omega-nyx-r3f-live-eval.yml
-      - scripts/omega/nyx-r3f-live-eval.ts
-      - scripts/omega/nyx-r3f-fixtures.ts
-      - src/lib/codelab/model/nvidiaNimProvider.ts
-      - src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts
-      - src/lib/codelab/engine/r3BoundedRepairLoop.ts
 
 permissions:
   contents: read
