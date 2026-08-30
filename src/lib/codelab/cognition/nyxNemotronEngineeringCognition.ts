@@ -65,26 +65,65 @@ export interface NyxRepairCognitionEvidence {
   readonly cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA";
   readonly modelRequestDigest: string | null;
   readonly modelResponseDigest: string | null;
+  readonly modelStatusCode: number | null;
   readonly modelUsage: NvidiaNimEvidence["usage"];
   readonly proposalDigest: string | null;
   readonly authorityGranted: false;
 }
 
 export interface NyxRepairCognitionResult {
-  readonly decision: "PROPOSED" | "REJECTED" | "BLOCKED" | "COGNITION_ERROR";
+  readonly decision: "PROPOSED" | "NO_ACTION" | "REJECTED" | "BLOCKED" | "COGNITION_ERROR";
   readonly reason: string;
   readonly hypothesis: NyxRepairHypothesis | null;
   readonly evidence: NyxRepairCognitionEvidence;
+  readonly schemaDiagnostics: readonly NyxSchemaDiagnostic[];
   readonly omegaAuthorityGranted: false;
 }
 
-interface RawRepairHypothesis {
+export type NyxSchemaDiagnosticCategory =
+  | "MISSING_REQUIRED_FIELD"
+  | "INVALID_FIELD_TYPE"
+  | "INVALID_ENUM_VALUE"
+  | "UNEXPECTED_STRUCTURE"
+  | "UNKNOWN_CAPABILITY"
+  | "INVALID_TARGET_REFERENCE"
+  | "STALE_TARGET_REFERENCE"
+  | "UNSUPPORTED_FILE_TARGET"
+  | "MODEL_GENERATED_INFRASTRUCTURE_METADATA"
+  | "SEMANTIC_REPAIR_ABSENT"
+  | "SEMANTIC_REPAIR_INVALID"
+  | "OTHER_SCHEMA_MISMATCH";
+
+export interface NyxSchemaDiagnostic {
+  readonly category: NyxSchemaDiagnosticCategory;
+  readonly path: string;
+  readonly expected: string;
+  readonly observed: string;
+}
+
+interface RawRepairIntent {
+  readonly decision?: unknown;
   readonly diagnosis?: unknown;
   readonly assumptions?: unknown;
   readonly changes?: unknown;
-  readonly verificationToolIds?: unknown;
   readonly confidence?: unknown;
+  readonly [key: string]: unknown;
 }
+
+export const NYX_REPAIR_INTENT_JSON_SCHEMA: Readonly<Record<string, unknown>> = Object.freeze({
+  type: "object",
+  properties: {
+    decision: { type: "string", enum: ["PROPOSE_EDIT", "NO_ACTION"] },
+    diagnosis: { type: "string" },
+    assumptions: { type: "array", items: { type: "string" } },
+    changes: { type: "array", items: { type: "object", properties: {
+      target: { type: "string" }, replacement: { type: "string" },
+    }, required: ["target", "replacement"], additionalProperties: false } },
+    confidence: { type: "number", minimum: 0, maximum: 1 },
+  },
+  required: ["decision", "diagnosis", "changes", "confidence"],
+  additionalProperties: false,
+});
 
 export interface NyxNemotronEngineeringCognitionConfig {
   readonly cognitionId: string;
@@ -107,6 +146,14 @@ function validRelativePath(value: unknown): value is string {
 function failureObservation(observation: EngineeringObservation): boolean {
   return observation.state.endsWith("_FAIL") || ["TIMEOUT", "BLOCKED", "INFRASTRUCTURE_ERROR"].includes(observation.state);
 }
+function observedType(value: unknown): string {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "array";
+  return typeof value;
+}
+function diagnostic(category: NyxSchemaDiagnosticCategory, path: string, expected: string, observed: string): NyxSchemaDiagnostic {
+  return Object.freeze({ category, path, expected, observed });
+}
 
 export class NyxNemotronEngineeringCognition {
   readonly #config: NyxNemotronEngineeringCognitionConfig;
@@ -128,43 +175,55 @@ export class NyxNemotronEngineeringCognition {
 
   async proposeRepair(request: NyxRepairCognitionRequest): Promise<NyxRepairCognitionResult> {
     const inputIssues = this.#validateInput(request);
-    if (inputIssues.length > 0) return this.#result("REJECTED", inputIssues.join(","), request, null, null);
+    if (inputIssues.length > 0) return this.#result("REJECTED", inputIssues.join(","), request, null, null,
+      inputIssues.map((issue) => diagnostic(issue === "nyx_cognition_file_context_invalid"
+        ? "STALE_TARGET_REFERENCE" : "OTHER_SCHEMA_MISMATCH", "$request", "valid admitted cognition request", issue)));
     const promptObject = { role: "NYX_ENGINEERING_COGNITION", objective: request.objective,
       assignment: "Diagnose the observed engineering failure and propose the smallest bounded repair that satisfies the objective.",
-      constraints: { output: "JSON_ONLY", allowedChangeKind: "MODIFY", maxChanges: request.maxChanges,
-        maxPatchBytes: request.maxPatchBytes, allowedVerificationToolIds: request.allowedVerificationToolIds,
-        authorityStatement: "This is a proposal. Omega alone authorizes and executes actions." },
+      availableSemanticActions: ["PROPOSE_EDIT", "NO_ACTION"],
+      constraints: { output: "JSON_SCHEMA", maxChanges: request.maxChanges, maxPatchBytes: request.maxPatchBytes,
+        omegaVerificationPlan: request.allowedVerificationToolIds,
+        forbiddenModelFields: ["expectedBaseHash", "replacementContentHash", "verificationToolIds", "sandboxId",
+          "candidateId", "transactionId", "authorization", "evidenceId"],
+        insufficientEvidenceBehavior: "Return decision NO_ACTION, explain the missing evidence in diagnosis, and return changes as an empty array.",
+        authorityStatement: "This is semantic intent only. Omega derives freshness hashes and execution metadata, then independently authorizes and executes." },
       observation: { observationId: request.observation.observationId, state: request.observation.state,
         baselineComparison: request.observation.baselineComparison, candidateAttribution: request.observation.candidateAttribution,
         attributionConfidence: request.observation.attributionConfidence, epistemicState: request.observation.epistemicState,
         diagnostics: request.observation.diagnostics, unknowns: request.observation.unknowns },
-      files: request.files, requiredSchema: { diagnosis: "string", assumptions: ["string"],
-        changes: [{ kind: "MODIFY", relativePath: "authorized path", expectedBaseHash: "supplied SHA-256", replacementContent: "string" }],
-        verificationToolIds: ["authorized tool id"], confidence: "number from 0 to 1" } };
+      admittedTargets: request.files.map((file) => ({ target: file.relativePath, content: file.content })),
+      requiredSchema: NYX_REPAIR_INTENT_JSON_SCHEMA,
+      minimalExample: { decision: "PROPOSE_EDIT", diagnosis: "bounded explanation", assumptions: [],
+        changes: [{ target: request.files[0].relativePath, replacement: "complete replacement content" }], confidence: 0.8 } };
     const serializedPrompt = canonical(promptObject);
     if (Buffer.byteLength(serializedPrompt, "utf8") > this.#config.maxPromptBytes) {
-      return this.#result("REJECTED", "nyx_cognition_prompt_bound_exceeded", request, null, null);
+      return this.#result("REJECTED", "nyx_cognition_prompt_bound_exceeded", request, null, null,
+        [diagnostic("OTHER_SCHEMA_MISMATCH", "$prompt", "prompt within configured byte bound", "bound_exceeded")]);
     }
     const completion = await this.#config.provider.complete({ schemaVersion: 1, requestId: request.cognitionRequestId,
       messages: [{ role: "system", content: "You are Νύξ engineering cognition running on NVIDIA Nemotron 3 Ultra. Reason internally, then return only one strict JSON repair hypothesis with no markdown or commentary. You propose; Omega authorizes." },
         { role: "user", content: serializedPrompt }], maxTokens: this.#config.maxOutputTokens, temperature: 0,
-      responseFormat: "JSON_OBJECT", observedAtEpochMs: request.observedAtEpochMs });
+      responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema: NYX_REPAIR_INTENT_JSON_SCHEMA },
+      observedAtEpochMs: request.observedAtEpochMs });
     if (completion.decision !== "COMPLETED" || completion.content === null) {
       const decision = completion.decision === "BLOCKED" ? "BLOCKED" : completion.decision === "REJECTED" ? "REJECTED" : "COGNITION_ERROR";
-      return this.#result(decision, completion.reason, request, null, completion.evidence);
+      return this.#result(decision, completion.reason, request, null, completion.evidence, []);
     }
-    let parsed: RawRepairHypothesis;
-    try { parsed = JSON.parse(completion.content) as RawRepairHypothesis; }
-    catch { return this.#result("COGNITION_ERROR", "nyx_cognition_output_not_strict_json", request, null, completion.evidence); }
-    const validated = this.#validateHypothesis(parsed, request);
-    if (typeof validated === "string") return this.#result("COGNITION_ERROR", validated, request, null, completion.evidence);
+    let parsed: RawRepairIntent;
+    try { parsed = JSON.parse(completion.content) as RawRepairIntent; }
+    catch { return this.#result("COGNITION_ERROR", "nyx_cognition_output_not_strict_json", request, null, completion.evidence,
+      [diagnostic("UNEXPECTED_STRUCTURE", "$", "one JSON object", "non_json_content")]); }
+    const validated = this.#validateIntent(parsed, request);
+    if (validated.diagnostics.length > 0) return this.#result("COGNITION_ERROR", "nyx_cognition_output_schema_invalid",
+      request, null, completion.evidence, validated.diagnostics);
+    if (validated.noAction) return this.#result("NO_ACTION", "nyx_cognition_no_action", request, null, completion.evidence, []);
     const proposalBase = { schemaVersion: 1 as const, hypothesisId: `NYX-REPAIR-${sha256(canonical({ request: request.cognitionRequestId,
       observation: request.observation.observationId, output: parsed })).slice(0, 32)}`, cognitionRequestId: request.cognitionRequestId,
-      sourceObservationId: request.observation.observationId, diagnosis: validated.diagnosis,
+      sourceObservationId: request.observation.observationId, diagnosis: validated.diagnosis!,
       assumptions: Object.freeze(validated.assumptions), changes: Object.freeze(validated.changes),
-      verificationToolIds: Object.freeze(validated.verificationToolIds), confidence: validated.confidence, applyAuthorized: false as const };
+      verificationToolIds: Object.freeze([...request.allowedVerificationToolIds]), confidence: validated.confidence!, applyAuthorized: false as const };
     const hypothesis: NyxRepairHypothesis = Object.freeze({ ...proposalBase, proposalDigest: sha256(canonical(proposalBase)) });
-    return this.#result("PROPOSED", "nyx_repair_hypothesis_validated", request, hypothesis, completion.evidence);
+    return this.#result("PROPOSED", "nyx_repair_hypothesis_validated", request, hypothesis, completion.evidence, []);
   }
 
   #validateInput(request: NyxRepairCognitionRequest): readonly string[] {
@@ -188,45 +247,89 @@ export class NyxNemotronEngineeringCognition {
     return Object.freeze([...new Set(issues)]);
   }
 
-  #validateHypothesis(raw: RawRepairHypothesis, request: NyxRepairCognitionRequest): string | {
-    diagnosis: string; assumptions: string[]; changes: NyxRepairChange[]; verificationToolIds: string[]; confidence: number;
-  } {
-    if (!raw || typeof raw !== "object" || typeof raw.diagnosis !== "string" || !raw.diagnosis.trim()
-      || raw.diagnosis.length > request.maxDiagnosisCharacters || !Array.isArray(raw.assumptions)
-      || raw.assumptions.some((item) => typeof item !== "string" || !item.trim() || item.length > 500)
-      || !Array.isArray(raw.changes) || raw.changes.length < 1 || raw.changes.length > request.maxChanges
-      || !Array.isArray(raw.verificationToolIds) || raw.verificationToolIds.length < 1
-      || typeof raw.confidence !== "number" || !Number.isFinite(raw.confidence) || raw.confidence < 0 || raw.confidence > 1) {
-      return "nyx_cognition_output_schema_invalid";
+  #validateIntent(raw: RawRepairIntent, request: NyxRepairCognitionRequest): { diagnostics: NyxSchemaDiagnostic[];
+    noAction: boolean; diagnosis: string | null; assumptions: string[]; changes: NyxRepairChange[]; confidence: number | null } {
+    const diagnostics: NyxSchemaDiagnostic[] = [];
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      return { diagnostics: [diagnostic("UNEXPECTED_STRUCTURE", "$", "object", observedType(raw))], noAction: false,
+        diagnosis: null, assumptions: [], changes: [], confidence: null };
+    }
+    const allowedTop = new Set(["decision", "diagnosis", "assumptions", "changes", "confidence"]);
+    const infrastructureFields = new Set(["expectedBaseHash", "replacementContentHash", "verificationToolIds", "sandboxId",
+      "candidateId", "transactionId", "authorization", "evidenceId", "kind", "relativePath", "replacementContent"]);
+    for (const key of Object.keys(raw)) {
+      if (!allowedTop.has(key)) diagnostics.push(diagnostic(infrastructureFields.has(key)
+        ? "MODEL_GENERATED_INFRASTRUCTURE_METADATA" : "UNEXPECTED_STRUCTURE", `$.${key}`, "field omitted", "unexpected_field"));
+    }
+    for (const key of ["decision", "diagnosis", "changes", "confidence"] as const) {
+      if (!(key in raw)) diagnostics.push(diagnostic("MISSING_REQUIRED_FIELD", `$.${key}`, "required field", "missing"));
+    }
+    const decision = raw.decision;
+    if (decision !== undefined && typeof decision !== "string") diagnostics.push(diagnostic("INVALID_FIELD_TYPE", "$.decision", "string enum", observedType(decision)));
+    else if (typeof decision === "string" && !["PROPOSE_EDIT", "NO_ACTION"].includes(decision)) {
+      diagnostics.push(diagnostic(decision === "RUN_SHELL" || decision === "NETWORK" || decision === "DEPLOY"
+        ? "UNKNOWN_CAPABILITY" : "INVALID_ENUM_VALUE", "$.decision", "PROPOSE_EDIT|NO_ACTION", "unsupported_string"));
+    }
+    const diagnosis = typeof raw.diagnosis === "string" ? raw.diagnosis.trim() : null;
+    if (raw.diagnosis !== undefined && typeof raw.diagnosis !== "string") diagnostics.push(diagnostic("INVALID_FIELD_TYPE", "$.diagnosis", "string", observedType(raw.diagnosis)));
+    else if (diagnosis !== null && (!diagnosis || diagnosis.length > request.maxDiagnosisCharacters)) {
+      diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", "$.diagnosis", `non-empty string <= ${request.maxDiagnosisCharacters} chars`, "invalid_length"));
+    }
+    let assumptions: string[] = [];
+    if (raw.assumptions !== undefined) {
+      if (!Array.isArray(raw.assumptions)) diagnostics.push(diagnostic("INVALID_FIELD_TYPE", "$.assumptions", "array<string>", observedType(raw.assumptions)));
+      else if (raw.assumptions.some((item) => typeof item !== "string" || !item.trim() || item.length > 500)) {
+        diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", "$.assumptions", "non-empty bounded strings", "invalid_item"));
+      } else assumptions = (raw.assumptions as string[]).map((item) => item.trim());
+    }
+    const confidence = typeof raw.confidence === "number" ? raw.confidence : null;
+    if (raw.confidence !== undefined && typeof raw.confidence !== "number") diagnostics.push(diagnostic("INVALID_FIELD_TYPE", "$.confidence", "number", observedType(raw.confidence)));
+    else if (confidence !== null && (!Number.isFinite(confidence) || confidence < 0 || confidence > 1)) {
+      diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", "$.confidence", "number from 0 to 1", "out_of_range"));
+    }
+    if (raw.changes !== undefined && !Array.isArray(raw.changes)) diagnostics.push(diagnostic("INVALID_FIELD_TYPE", "$.changes", "array", observedType(raw.changes)));
+    const rawChanges = Array.isArray(raw.changes) ? raw.changes : [];
+    if (decision === "NO_ACTION" && rawChanges.length > 0) diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", "$.changes", "empty for NO_ACTION", "nonempty_array"));
+    if (decision === "PROPOSE_EDIT" && (rawChanges.length < 1 || rawChanges.length > request.maxChanges)) {
+      diagnostics.push(diagnostic(rawChanges.length < 1 ? "SEMANTIC_REPAIR_ABSENT" : "SEMANTIC_REPAIR_INVALID", "$.changes",
+        `1..${request.maxChanges} changes`, `array_length_${rawChanges.length}`));
     }
     const contexts = new Map(request.files.map((file) => [file.relativePath, file]));
     const changes: NyxRepairChange[] = [];
     const paths = new Set<string>();
     let bytes = 0;
-    for (const unknownChange of raw.changes) {
-      if (!unknownChange || typeof unknownChange !== "object") return "nyx_cognition_change_invalid";
+    for (const [index, unknownChange] of rawChanges.entries()) {
+      const base = `$.changes[${index}]`;
+      if (!unknownChange || typeof unknownChange !== "object" || Array.isArray(unknownChange)) {
+        diagnostics.push(diagnostic("UNEXPECTED_STRUCTURE", base, "object", observedType(unknownChange))); continue;
+      }
       const change = unknownChange as Record<string, unknown>;
-      if (change.kind !== "MODIFY" || !validRelativePath(change.relativePath) || paths.has(change.relativePath)
-        || typeof change.expectedBaseHash !== "string" || typeof change.replacementContent !== "string") return "nyx_cognition_change_invalid";
-      const context = contexts.get(change.relativePath);
-      if (!context) return "nyx_cognition_change_outside_authorized_context";
-      if (change.expectedBaseHash !== context.contentSha256) return "nyx_cognition_change_base_hash_mismatch";
-      bytes += Buffer.byteLength(change.replacementContent, "utf8");
-      if (bytes > request.maxPatchBytes) return "nyx_cognition_patch_byte_limit_exceeded";
-      paths.add(change.relativePath);
-      changes.push(Object.freeze({ kind: "MODIFY", relativePath: change.relativePath, expectedBaseHash: change.expectedBaseHash,
-        replacementContent: change.replacementContent, replacementContentHash: sha256(change.replacementContent) }));
+      const allowedChange = new Set(["target", "replacement"]);
+      for (const key of Object.keys(change)) {
+        if (!allowedChange.has(key)) diagnostics.push(diagnostic(infrastructureFields.has(key)
+          ? "MODEL_GENERATED_INFRASTRUCTURE_METADATA" : "UNEXPECTED_STRUCTURE", `${base}.${key}`, "field omitted", "unexpected_field"));
+      }
+      for (const key of ["target", "replacement"] as const) {
+        if (!(key in change)) diagnostics.push(diagnostic("MISSING_REQUIRED_FIELD", `${base}.${key}`, "required field", "missing"));
+        else if (typeof change[key] !== "string") diagnostics.push(diagnostic("INVALID_FIELD_TYPE", `${base}.${key}`, "string", observedType(change[key])));
+      }
+      if (typeof change.target !== "string" || typeof change.replacement !== "string") continue;
+      if (!validRelativePath(change.target)) { diagnostics.push(diagnostic("INVALID_TARGET_REFERENCE", `${base}.target`, "admitted relative target", "malformed_reference")); continue; }
+      const context = contexts.get(change.target);
+      if (!context) { diagnostics.push(diagnostic("UNSUPPORTED_FILE_TARGET", `${base}.target`, "currently admitted target", "unadmitted_reference")); continue; }
+      if (paths.has(change.target)) { diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", `${base}.target`, "unique target", "duplicate_reference")); continue; }
+      bytes += Buffer.byteLength(change.replacement, "utf8");
+      if (bytes > request.maxPatchBytes) { diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", `${base}.replacement`, `total <= ${request.maxPatchBytes} bytes`, "patch_bound_exceeded")); continue; }
+      paths.add(change.target);
+      changes.push(Object.freeze({ kind: "MODIFY", relativePath: change.target, expectedBaseHash: context.contentSha256,
+        replacementContent: change.replacement, replacementContentHash: sha256(change.replacement) }));
     }
-    const allowedTools = new Set(request.allowedVerificationToolIds);
-    const verificationToolIds = raw.verificationToolIds as unknown[];
-    if (new Set(verificationToolIds).size !== verificationToolIds.length
-      || verificationToolIds.some((tool) => typeof tool !== "string" || !allowedTools.has(tool))) return "nyx_cognition_verification_tool_not_authorized";
-    return { diagnosis: raw.diagnosis.trim(), assumptions: (raw.assumptions as string[]).map((item) => item.trim()), changes,
-      verificationToolIds: verificationToolIds as string[], confidence: raw.confidence };
+    return { diagnostics, noAction: decision === "NO_ACTION" && diagnostics.length === 0, diagnosis, assumptions, changes, confidence };
   }
 
   #result(decision: NyxRepairCognitionResult["decision"], reason: string, request: NyxRepairCognitionRequest,
-    hypothesis: NyxRepairHypothesis | null, modelEvidence: NvidiaNimEvidence | null): NyxRepairCognitionResult {
+    hypothesis: NyxRepairHypothesis | null, modelEvidence: NvidiaNimEvidence | null,
+    schemaDiagnostics: readonly NyxSchemaDiagnostic[]): NyxRepairCognitionResult {
     const sourceObservationId = request.observation?.observationId ?? "UNKNOWN";
     const sourceEvidenceId = request.observation?.candidateEvidenceId ?? "UNKNOWN";
     const evidence: NyxRepairCognitionEvidence = Object.freeze({ evidenceId: `NYX-COGNITION-${sha256(canonical({
@@ -236,8 +339,10 @@ export class NyxNemotronEngineeringCognition {
       modelEvidenceId: modelEvidence?.evidenceId ?? "NOT_INVOKED", model: this.#model,
       cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA", modelRequestDigest: modelEvidence?.requestDigest ?? null,
       modelResponseDigest: modelEvidence?.responseDigest ?? null,
+      modelStatusCode: modelEvidence?.statusCode ?? null,
       modelUsage: modelEvidence?.usage ?? Object.freeze({ promptTokens: null, completionTokens: null, totalTokens: null }),
       proposalDigest: hypothesis?.proposalDigest ?? null, authorityGranted: false });
-    return Object.freeze({ decision, reason, hypothesis, evidence, omegaAuthorityGranted: false });
+    return Object.freeze({ decision, reason, hypothesis, evidence,
+      schemaDiagnostics: Object.freeze([...schemaDiagnostics]), omegaAuthorityGranted: false });
   }
 }

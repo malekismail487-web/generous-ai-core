@@ -209,7 +209,8 @@ export class R3BoundedRepairLoop {
       lastCognitionEvidence = cognition.evidence;
       if (cognition.evidence.modelEvidenceId !== "NOT_INVOKED") modelCallCount += 1;
       if (cognition.decision !== "PROPOSED" || !cognition.hypothesis) {
-        const outcome = cognition.decision === "BLOCKED" || cognition.decision === "REJECTED" ? "BLOCKED" : "COGNITION_ERROR";
+        const outcome = cognition.decision === "BLOCKED" || cognition.decision === "REJECTED" || cognition.decision === "NO_ACTION"
+          ? "BLOCKED" : "COGNITION_ERROR";
         return finish(outcome, `repair_cognition_${cognition.reason}`, iterations, currentObservation);
       }
       let candidate: OmegaPreparedRepairCandidate;

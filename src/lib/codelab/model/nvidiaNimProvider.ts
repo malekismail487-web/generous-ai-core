@@ -44,8 +44,14 @@ export interface NvidiaNimCompletionRequest {
   readonly messages: readonly NvidiaNimMessage[];
   readonly maxTokens: number;
   readonly temperature: number;
-  readonly responseFormat?: "JSON_OBJECT";
+  readonly responseFormat?: "JSON_OBJECT" | NvidiaNimJsonSchemaResponseFormat;
   readonly observedAtEpochMs: number;
+}
+
+export interface NvidiaNimJsonSchemaResponseFormat {
+  readonly type: "JSON_SCHEMA";
+  readonly name: string;
+  readonly schema: Readonly<Record<string, unknown>>;
 }
 
 export interface NvidiaNimUsage {
@@ -123,6 +129,17 @@ function emptyUsage(): NvidiaNimUsage {
   return Object.freeze({ promptTokens: null, completionTokens: null, totalTokens: null });
 }
 
+function responseFormatPayload(format: NvidiaNimCompletionRequest["responseFormat"]): Record<string, unknown> | null {
+  if (format === undefined) return null;
+  if (format === "JSON_OBJECT") return { type: "json_object" };
+  if (!format || format.type !== "JSON_SCHEMA" || !/^[a-z][a-z0-9_]{2,63}$/i.test(format.name)
+    || !format.schema || typeof format.schema !== "object" || Array.isArray(format.schema)) return null;
+  try {
+    if (Buffer.byteLength(canonical(format.schema), "utf8") > 32_768) return null;
+  } catch { return null; }
+  return { type: "json_schema", json_schema: { name: format.name, strict: true, schema: format.schema } };
+}
+
 export function nvidiaNimCredentialFromEnvironment(environment: Readonly<Record<string, string | undefined>>): NvidiaNimCredentialSource {
   return Object.freeze({
     sourceIdentity: "environment:NVIDIA_API_KEY",
@@ -156,9 +173,10 @@ export class NvidiaNimProvider {
 
   async complete(request: NvidiaNimCompletionRequest): Promise<NvidiaNimCompletionResult> {
     const requestId = typeof request.requestId === "string" && request.requestId.trim() ? request.requestId : "MALFORMED";
+    const responseFormat = responseFormatPayload(request.responseFormat);
     const payload = { model: this.#config.model, messages: request.messages, max_tokens: request.maxTokens,
       temperature: request.temperature, stream: false,
-      ...(request.responseFormat === "JSON_OBJECT" ? { response_format: { type: "json_object" as const } } : {}) };
+      ...(responseFormat ? { response_format: responseFormat } : {}) };
     const requestDigest = sha256(canonical({ requestId, ...payload }));
     const issues: string[] = [];
     if (request.schemaVersion !== 1 || typeof request.requestId !== "string" || !request.requestId.trim()
@@ -166,7 +184,7 @@ export class NvidiaNimProvider {
     if (!validMessages(request.messages)) issues.push("completion_messages_invalid");
     if (!Number.isInteger(request.maxTokens) || request.maxTokens < 1 || request.maxTokens > this.#config.maxOutputTokens) issues.push("completion_token_bound_exceeded");
     if (typeof request.temperature !== "number" || !Number.isFinite(request.temperature) || request.temperature < 0 || request.temperature > 1) issues.push("completion_temperature_invalid");
-    if (request.responseFormat !== undefined && request.responseFormat !== "JSON_OBJECT") issues.push("completion_response_format_invalid");
+    if (request.responseFormat !== undefined && responseFormat === null) issues.push("completion_response_format_invalid");
     if (Buffer.byteLength(canonical(request.messages), "utf8") > this.#config.maxPromptBytes) issues.push("completion_prompt_bound_exceeded");
     if (issues.length > 0) return this.#result("REJECTED", [...new Set(issues)].join(","), null, null, requestDigest, null, null, emptyUsage(), false);
     const credential = this.#config.credentialSource.read();

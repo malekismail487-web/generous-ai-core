@@ -56,6 +56,20 @@ function provider(transport: NvidiaNimTransport, credential = "test-credential-n
 }
 
 {
+  let observedBody: Record<string, unknown> = {};
+  const client = provider(async (_input, init) => {
+    observedBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    return new Response(JSON.stringify({ choices: [{ message: { content: "{}" }, finish_reason: "stop" }] }), { status: 200 });
+  });
+  const schema = { type: "object", properties: { decision: { type: "string" } }, required: ["decision"], additionalProperties: false };
+  const result = await client.complete(request({ responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema } }));
+  const format = observedBody.response_format as { type?: string; json_schema?: { name?: string; strict?: boolean; schema?: unknown } };
+  check(result.decision === "COMPLETED" && format.type === "json_schema" && format.json_schema?.name === "nyx_repair_intent"
+    && format.json_schema.strict === true && JSON.stringify(format.json_schema.schema) === JSON.stringify(schema),
+    "adapter transmits a bounded strict JSON-schema response contract");
+}
+
+{
   let calls = 0;
   const client = provider(async () => { calls += 1; return new Response("{}", { status: 200 }); }, "");
   const result = await client.complete(request());

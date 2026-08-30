@@ -136,9 +136,8 @@ if (!initialObserved.observation || initialObserved.observation.state !== "TEST_
 const initialObservation: EngineeringObservation = initialObserved.observation;
 
 function modelResponse(replacement: string): string {
-  return JSON.stringify({ diagnosis: "The arithmetic fixture contains the wrong result.", assumptions: ["The verifier encodes intended behavior."],
-    changes: [{ kind: "MODIFY", relativePath: "src/math.txt", expectedBaseHash: hash(wrong), replacementContent: replacement }],
-    verificationToolIds: ["TEST"], confidence: 0.99 });
+  return JSON.stringify({ decision: "PROPOSE_EDIT", diagnosis: "The arithmetic fixture contains the wrong result.",
+    assumptions: ["The verifier encodes intended behavior."], changes: [{ target: "src/math.txt", replacement }], confidence: 0.99 });
 }
 
 function builder(tamper = false) {
