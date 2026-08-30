@@ -17,6 +17,7 @@
     "omega:nvidia:smoke": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nvidia-nim-live-smoke.ts",
     "omega:nyx:contract-compliance": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-contract-compliance.ts",
     "omega:nyx:live-engineering": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-live-r3e.ts",
+    "omega:nyx:r3f-live-eval": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-r3f-live-eval.ts",
     "typecheck:ratchet": "node scripts/typescript/typecheck-ratchet.mjs",
     "security:secrets": "node scripts/security/scan-secrets.mjs",
     "w0rs:inventory": "node scripts/w0rs/inventory.mjs --write",

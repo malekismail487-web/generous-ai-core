@@ -1,0 +1,40 @@
+name: Omega NYX R3F cross-task live evaluation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - sol/omega-institutional-spine
+    paths:
+      - .github/workflows/omega-nyx-r3f-live-eval.yml
+      - scripts/omega/nyx-r3f-live-eval.ts
+      - scripts/omega/nyx-r3f-fixtures.ts
+      - src/lib/codelab/model/nvidiaNimProvider.ts
+      - src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts
+      - src/lib/codelab/engine/r3BoundedRepairLoop.ts
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-nyx-r3f-live-eval-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  nyx-r3f-live-eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Confirm encrypted credential is available
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Run frozen cross-task live Νύξ engineering matrix
+        run: npm run omega:nyx:r3f-live-eval

@@ -66,6 +66,8 @@ export interface NyxRepairCognitionEvidence {
   readonly modelRequestDigest: string | null;
   readonly modelResponseDigest: string | null;
   readonly modelStatusCode: number | null;
+  readonly contractVersion: typeof NYX_SEMANTIC_REPAIR_CONTRACT_VERSION;
+  readonly contractDigest: string;
   readonly modelUsage: NvidiaNimEvidence["usage"];
   readonly proposalDigest: string | null;
   readonly authorityGranted: false;
@@ -125,6 +127,24 @@ export const NYX_REPAIR_INTENT_JSON_SCHEMA: Readonly<Record<string, unknown>> = 
   additionalProperties: false,
 });
 
+export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-semantic-repair-intent/1" as const;
+export const NYX_SEMANTIC_ACTIONS = Object.freeze(["PROPOSE_EDIT", "NO_ACTION"] as const);
+export const NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS = Object.freeze(["expectedBaseHash", "replacementContentHash",
+  "verificationToolIds", "sandboxId", "candidateId", "transactionId", "authorization", "evidenceId",
+  "kind", "relativePath", "replacementContent"] as const);
+export const NYX_FORBIDDEN_SEMANTIC_REPLACEMENT_PATTERNS = Object.freeze([
+  "shell_recursive_delete", "shell_command_interpreter", "node_child_process", "runtime_process_spawn",
+] as const);
+export const NYX_REPAIR_SYSTEM_INSTRUCTION = "You are Νύξ engineering cognition running on NVIDIA Nemotron 3 Ultra. Reason internally, then return only one strict JSON semantic repair intent with no markdown or commentary. You propose; Omega authorizes.";
+export const NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST = sha256(canonical({
+  version: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
+  actions: NYX_SEMANTIC_ACTIONS,
+  schema: NYX_REPAIR_INTENT_JSON_SCHEMA,
+  systemInstruction: NYX_REPAIR_SYSTEM_INSTRUCTION,
+  forbiddenReplacementPatterns: NYX_FORBIDDEN_SEMANTIC_REPLACEMENT_PATTERNS,
+  authorityBoundary: "Omega derives trusted execution metadata and independently authorizes every action.",
+}));
+
 export interface NyxNemotronEngineeringCognitionConfig {
   readonly cognitionId: string;
   readonly provider: NvidiaNimProvider;
@@ -180,11 +200,12 @@ export class NyxNemotronEngineeringCognition {
         ? "STALE_TARGET_REFERENCE" : "OTHER_SCHEMA_MISMATCH", "$request", "valid admitted cognition request", issue)));
     const promptObject = { role: "NYX_ENGINEERING_COGNITION", objective: request.objective,
       assignment: "Diagnose the observed engineering failure and propose the smallest bounded repair that satisfies the objective.",
-      availableSemanticActions: ["PROPOSE_EDIT", "NO_ACTION"],
+      contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
+      contractDigest: NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST,
+      availableSemanticActions: NYX_SEMANTIC_ACTIONS,
       constraints: { output: "JSON_SCHEMA", maxChanges: request.maxChanges, maxPatchBytes: request.maxPatchBytes,
         omegaVerificationPlan: request.allowedVerificationToolIds,
-        forbiddenModelFields: ["expectedBaseHash", "replacementContentHash", "verificationToolIds", "sandboxId",
-          "candidateId", "transactionId", "authorization", "evidenceId"],
+        forbiddenModelFields: NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS,
         insufficientEvidenceBehavior: "Return decision NO_ACTION, explain the missing evidence in diagnosis, and return changes as an empty array.",
         authorityStatement: "This is semantic intent only. Omega derives freshness hashes and execution metadata, then independently authorizes and executes." },
       observation: { observationId: request.observation.observationId, state: request.observation.state,
@@ -201,7 +222,7 @@ export class NyxNemotronEngineeringCognition {
         [diagnostic("OTHER_SCHEMA_MISMATCH", "$prompt", "prompt within configured byte bound", "bound_exceeded")]);
     }
     const completion = await this.#config.provider.complete({ schemaVersion: 1, requestId: request.cognitionRequestId,
-      messages: [{ role: "system", content: "You are Νύξ engineering cognition running on NVIDIA Nemotron 3 Ultra. Reason internally, then return only one strict JSON repair hypothesis with no markdown or commentary. You propose; Omega authorizes." },
+      messages: [{ role: "system", content: NYX_REPAIR_SYSTEM_INSTRUCTION },
         { role: "user", content: serializedPrompt }], maxTokens: this.#config.maxOutputTokens, temperature: 0,
       responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema: NYX_REPAIR_INTENT_JSON_SCHEMA },
       observedAtEpochMs: request.observedAtEpochMs });
@@ -255,8 +276,7 @@ export class NyxNemotronEngineeringCognition {
         diagnosis: null, assumptions: [], changes: [], confidence: null };
     }
     const allowedTop = new Set(["decision", "diagnosis", "assumptions", "changes", "confidence"]);
-    const infrastructureFields = new Set(["expectedBaseHash", "replacementContentHash", "verificationToolIds", "sandboxId",
-      "candidateId", "transactionId", "authorization", "evidenceId", "kind", "relativePath", "replacementContent"]);
+    const infrastructureFields = new Set<string>(NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS);
     for (const key of Object.keys(raw)) {
       if (!allowedTop.has(key)) diagnostics.push(diagnostic(infrastructureFields.has(key)
         ? "MODEL_GENERATED_INFRASTRUCTURE_METADATA" : "UNEXPECTED_STRUCTURE", `$.${key}`, "field omitted", "unexpected_field"));
@@ -318,6 +338,11 @@ export class NyxNemotronEngineeringCognition {
       const context = contexts.get(change.target);
       if (!context) { diagnostics.push(diagnostic("UNSUPPORTED_FILE_TARGET", `${base}.target`, "currently admitted target", "unadmitted_reference")); continue; }
       if (paths.has(change.target)) { diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", `${base}.target`, "unique target", "duplicate_reference")); continue; }
+      if (/\brm\s+-rf\b/i.test(change.replacement) || /\b(?:bash|sh|cmd|powershell)(?:\.exe)?\s+(?:-c|\/c)\b/i.test(change.replacement)
+        || /(?:node:)?child_process/.test(change.replacement) || /\b(?:spawn|spawnSync|execFile|execSync)\s*\(/.test(change.replacement)) {
+        diagnostics.push(diagnostic("UNKNOWN_CAPABILITY", `${base}.replacement`,
+          "source content without ungranted shell or child-process execution", "forbidden_execution_primitive")); continue;
+      }
       bytes += Buffer.byteLength(change.replacement, "utf8");
       if (bytes > request.maxPatchBytes) { diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", `${base}.replacement`, `total <= ${request.maxPatchBytes} bytes`, "patch_bound_exceeded")); continue; }
       paths.add(change.target);
@@ -340,6 +365,8 @@ export class NyxNemotronEngineeringCognition {
       cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA", modelRequestDigest: modelEvidence?.requestDigest ?? null,
       modelResponseDigest: modelEvidence?.responseDigest ?? null,
       modelStatusCode: modelEvidence?.statusCode ?? null,
+      contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
+      contractDigest: NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST,
       modelUsage: modelEvidence?.usage ?? Object.freeze({ promptTokens: null, completionTokens: null, totalTokens: null }),
       proposalDigest: hypothesis?.proposalDigest ?? null, authorityGranted: false });
     return Object.freeze({ decision, reason, hypothesis, evidence,
