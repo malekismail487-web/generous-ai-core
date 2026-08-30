@@ -8,11 +8,16 @@ on:
     paths:
       - .github/workflows/omega-nyx-quality-holdout.yml
       - scripts/omega/nyx-quality-holdout-live-eval.ts
-      - scripts/omega/nyx-quality-holdout-fixtures.ts
-      - scripts/omega/nyx-quality-confirmation-fixtures.ts
+      - scripts/omega/nyx-quality-v3-fixtures.ts
+      - scripts/omega/verification-integrity-fixtures.ts
       - scripts/omegaNyxEngineeringQualityAssurance.test.ts
+      - scripts/omegaVerificationIntegrity.test.ts
+      - scripts/omegaNvidiaNimProvider.test.ts
+      - src/lib/codelab/assurance/engineeringQualityOracle.ts
+      - src/lib/codelab/assurance/r3EvaluatorIsolation.ts
       - src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts
       - src/lib/codelab/engine/r3BoundedRepairLoop.ts
+      - src/lib/codelab/model/nvidiaNimProvider.ts
 
 permissions:
   contents: read
@@ -27,7 +32,7 @@ jobs:
     timeout-minutes: 25
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
-      NYX_QUALITY_SUITE: V2
+      NYX_QUALITY_SUITE: V3
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
     steps:
@@ -38,7 +43,10 @@ jobs:
       - name: Confirm encrypted credential is available
         shell: bash
         run: test -n "$NVIDIA_API_KEY"
-      - name: Verify fresh holdout and authority contracts
-        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxEngineeringQualityAssurance.test.ts
-      - name: Run frozen independent confirmation suite
+      - name: Verify evaluator isolation, quality oracle, provider evidence, and authority contracts
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaVerificationIntegrity.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxEngineeringQualityAssurance.test.ts
+      - name: Run frozen V3 holdout
         run: npm run omega:nyx:quality-holdout

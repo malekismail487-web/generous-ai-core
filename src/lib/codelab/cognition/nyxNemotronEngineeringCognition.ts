@@ -111,6 +111,9 @@ export interface NyxRepairCognitionEvidence {
   readonly modelRequestDigest: string | null;
   readonly modelResponseDigest: string | null;
   readonly modelStatusCode: number | null;
+  readonly providerFailureCategory: NvidiaNimEvidence["failureCategory"];
+  readonly providerRetryability: NvidiaNimEvidence["retryability"];
+  readonly providerRequestId: NvidiaNimEvidence["providerRequestId"];
   readonly contractVersion: typeof NYX_SEMANTIC_REPAIR_CONTRACT_VERSION;
   readonly contractDigest: string;
   readonly modelUsage: NvidiaNimEvidence["usage"];
@@ -593,6 +596,9 @@ export class NyxNemotronEngineeringCognition {
       cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA", modelRequestDigest: modelEvidence?.requestDigest ?? null,
       modelResponseDigest: modelEvidence?.responseDigest ?? null,
       modelStatusCode: modelEvidence?.statusCode ?? null,
+      providerFailureCategory: modelEvidence?.failureCategory ?? null,
+      providerRetryability: modelEvidence?.retryability ?? null,
+      providerRequestId: modelEvidence?.providerRequestId ?? null,
       contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
       contractDigest: NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST,
       modelUsage: modelEvidence?.usage ?? Object.freeze({ promptTokens: null, completionTokens: null, totalTokens: null }),

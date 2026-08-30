@@ -24,10 +24,10 @@ function request(overrides: Partial<NvidiaNimCompletionRequest> = {}): NvidiaNim
   ], maxTokens: 32, temperature: 0, observedAtEpochMs: NOW, ...overrides };
 }
 
-function provider(transport: NvidiaNimTransport, credential = "test-credential-not-a-real-secret") {
+function provider(transport: NvidiaNimTransport, credential = "test-credential-not-a-real-secret", timeoutMs = 1_000) {
   return NvidiaNimProvider.create({ providerId: "NVIDIA-NIM-TEST", model: "openai/gpt-oss-20b", authorityMode: "TEST_DOUBLE_ONLY",
     credentialSource: { sourceIdentity: "test-double:credential", read: () => credential }, maxPromptBytes: 4096,
-    maxOutputTokens: 128, timeoutMs: 1_000, transport });
+    maxOutputTokens: 128, timeoutMs, transport });
 }
 
 {
@@ -92,9 +92,12 @@ function provider(transport: NvidiaNimTransport, credential = "test-credential-n
 }
 
 {
-  const client = provider(async () => new Response(JSON.stringify({ error: { message: "do-not-propagate-provider-detail" } }), { status: 401 }));
+  const client = provider(async () => new Response(JSON.stringify({ error: { message: "do-not-propagate-provider-detail" } }),
+    { status: 401, headers: { "x-request-id": "safe-request-401" } }));
   const result = await client.complete(request());
   check(result.decision === "PROVIDER_ERROR" && result.reason === "nvidia_provider_http_401", "provider HTTP failure is classified without raw body propagation");
+  check(result.evidence.failureCategory === "PROVIDER_AUTH_FAILURE" && result.evidence.retryability === "NO"
+    && result.evidence.providerRequestId === "safe-request-401", "authentication failure retains bounded status, retryability, and safe request identity");
   check(!JSON.stringify(result).includes("do-not-propagate-provider-detail"), "provider error body is excluded from evidence");
 }
 
@@ -102,6 +105,43 @@ function provider(transport: NvidiaNimTransport, credential = "test-credential-n
   const client = provider(async () => new Response(JSON.stringify({ choices: [] }), { status: 200 }));
   const result = await client.complete(request());
   check(result.decision === "PROVIDER_ERROR" && result.reason === "nvidia_provider_response_missing_content", "malformed successful response fails closed");
+  check(result.evidence.failureCategory === "PROVIDER_RESPONSE_SCHEMA_ERROR" && result.evidence.retryability === "NO",
+    "malformed provider response receives precise schema-failure attribution");
+}
+
+{
+  const expectations = [
+    { status: 429, category: "PROVIDER_RATE_LIMIT", retryability: "YES" },
+    { status: 500, category: "PROVIDER_SERVER_ERROR", retryability: "YES" },
+    { status: 503, category: "PROVIDER_UNAVAILABLE", retryability: "YES" },
+  ] as const;
+  for (const expected of expectations) {
+    const result = await provider(async () => new Response("sensitive-body-must-not-survive", { status: expected.status })).complete(request());
+    check(result.evidence.failureCategory === expected.category && result.evidence.retryability === expected.retryability,
+      `HTTP ${expected.status} receives precise sanitized provider attribution`);
+    check(!JSON.stringify(result).includes("sensitive-body-must-not-survive"), `HTTP ${expected.status} excludes raw provider body`);
+  }
+}
+
+{
+  const result = await provider(async () => { throw new Error("transport detail must remain private"); }).complete(request());
+  check(result.evidence.failureCategory === "PROVIDER_TRANSPORT_ERROR" && result.evidence.retryability === "UNKNOWN",
+    "transport failure is distinguished from model or schema failure");
+  check(!JSON.stringify(result).includes("transport detail must remain private"), "transport exception detail is not persisted");
+}
+
+{
+  const result = await provider(async (_input, init) => new Promise<Response>((_resolve, reject) => {
+    init?.signal?.addEventListener("abort", () => reject(new DOMException("timeout private", "AbortError")), { once: true });
+  }), "test-credential-not-a-real-secret", 100).complete(request());
+  check(result.evidence.failureCategory === "PROVIDER_TIMEOUT" && result.evidence.retryability === "YES",
+    "provider timeout is causally distinct and retryable at the delivery layer");
+}
+
+{
+  const result = await provider(async () => { throw new DOMException("local cancellation private", "AbortError"); }).complete(request());
+  check(result.evidence.failureCategory === "PROVIDER_CANCELLED" && result.evidence.retryability === "NO",
+    "local cancellation is distinguished from timeout");
 }
 
 {

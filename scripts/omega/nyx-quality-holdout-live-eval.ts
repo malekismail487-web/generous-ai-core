@@ -10,6 +10,8 @@ import {
   type NyxRepairCognitionEvidence,
   type NyxRepairHypothesis,
 } from "../../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
+import { assessEngineeringQuality } from "../../src/lib/codelab/assurance/engineeringQualityOracle";
+import { R3IsolatedHiddenEvaluator } from "../../src/lib/codelab/assurance/r3EvaluatorIsolation";
 import { R3BoundedRepairLoop, type OmegaPreparedRepairCandidate, type OmegaRepairEvidenceProvider,
   type R3BoundedRepairResult } from "../../src/lib/codelab/engine/r3BoundedRepairLoop";
 import { R2AIsolatedSandboxLifecycle, type R2AIsolatedLifecycleConfig } from "../../src/lib/codelab/executor/r2SandboxLifecycle";
@@ -21,19 +23,34 @@ import { R3BControlledEngineeringExecutor, type R3BEngineeringToolDefinition,
 import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readOnlyExecutor";
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { observeEngineeringExecution, type EngineeringObservation } from "../../src/lib/codelab/observation/r3EngineeringObservation";
-import { NYX_ENGINEERING_QUALITY_CONFIRMATION } from "./nyx-quality-confirmation-fixtures";
-import { NYX_ENGINEERING_QUALITY_HOLDOUT, type NyxQualityHoldoutTask } from "./nyx-quality-holdout-fixtures";
+import { NYX_ENGINEERING_QUALITY_V3, type NyxQualityV3Task } from "./nyx-quality-v3-fixtures";
+import { OMEGA_CANDIDATE_RUNNER_SOURCE } from "./verification-integrity-fixtures";
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
-const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V1";
-if (SUITE_ID !== "V1" && SUITE_ID !== "V2") throw new Error("unsupported_nyx_quality_suite");
-const HOLDOUT = SUITE_ID === "V2" ? NYX_ENGINEERING_QUALITY_CONFIRMATION : NYX_ENGINEERING_QUALITY_HOLDOUT;
+const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V3";
+if (SUITE_ID !== "V3") throw new Error("unsupported_nyx_quality_suite");
+const HOLDOUT = NYX_ENGINEERING_QUALITY_V3;
+const EVALUATOR_VERSION = "nyx-quality-v3/1";
+const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
 const MAX_COGNITION_CYCLES_PER_TASK = 3;
 const MAX_WALL_CLOCK_MS_PER_TASK = 180_000;
 const MAX_DIAGNOSIS_CHARACTERS = 1_500;
 const CONTRACT_AT_START = NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST;
+const V3_EVALUATOR_DIGEST = sha256(canonical({
+  driver: sha256(await readFile(new URL(import.meta.url))),
+  isolation: sha256(await readFile(new URL("../../src/lib/codelab/assurance/r3EvaluatorIsolation.ts", import.meta.url))),
+  qualityOracle: sha256(await readFile(new URL("../../src/lib/codelab/assurance/engineeringQualityOracle.ts", import.meta.url))),
+  candidateRunner: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
+}));
+const V3_TASK_FIXTURE_DIGESTS = Object.freeze(Object.fromEntries(HOLDOUT.map((task) => [task.taskId,
+  sha256(canonical({ taskId: task.taskId, taskClass: task.taskClass, provenance: task.provenance,
+    objective: task.objective, initialDefect: task.initialDefect, correctFiles: task.correctFiles,
+    faultyFiles: task.faultyFiles, mutationPaths: task.mutationPaths, initiallyAdmittedPaths: task.initiallyAdmittedPaths,
+    availableEvidence: task.availableEvidence, visibleVerifier: task.visibleVerifier, candidateModule: task.candidateModule,
+    exportName: task.exportName, hiddenCases: task.hiddenCases, qualityPolicy: task.qualityPolicy,
+    maxChanges: task.maxChanges, maxPatchBytes: task.maxPatchBytes }))])));
 
 interface AppliedPack {
   readonly sourceRoot: string;
@@ -80,7 +97,7 @@ function failureClass(result: R3BoundedRepairResult, hidden: string, quality: st
   return "MODEL_REPAIR_FAILURE";
 }
 
-function proposal(sourceRoot: string, task: NyxQualityHoldoutTask, label: string,
+function proposal(sourceRoot: string, task: NyxQualityV3Task, label: string,
   changes: readonly R2GProposedChange[]): R2GPatchProposal {
   if (changes.some((change) => !task.mutationPaths.includes(change.relativePath))) {
     throw new Error("holdout_mutation_outside_explicit_scope");
@@ -111,7 +128,7 @@ const provider = NvidiaNimProvider.create({ providerId: "NYX-ENGINEERING-QUALITY
   maxPromptBytes: 64_000, maxOutputTokens: 4_096, timeoutMs: 90_000 });
 const cognition = NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-ENGINEERING-QUALITY-HOLDOUT-COGNITION",
   provider, maxPromptBytes: 48_000, maxOutputTokens: 1_536 });
-const parent = await mkdtemp(join(tmpdir(), "nyx-quality-holdout-"));
+const parent = await mkdtemp(join(tmpdir(), "nyx-quality-v3-"));
 const taskResults: Record<string, unknown>[] = [];
 let sequence = 0;
 
@@ -120,6 +137,10 @@ try {
     const taskStarted = Date.now();
     const taskRoot = join(parent, task.taskId.toLowerCase());
     const sourceRoot = join(taskRoot, "authoritative-source");
+    const hiddenEvaluatorRoot = join(taskRoot, "authoritative-evaluator");
+    const hiddenCaseRelativePath = "private/expected-cases.json";
+    const hiddenCasePath = join(hiddenEvaluatorRoot, hiddenCaseRelativePath);
+    const hiddenCaseBytes = `${JSON.stringify({ schemaVersion: 1, suiteId: task.taskId, cases: task.hiddenCases })}\n`;
     const sourceManifest = new Map<string, string>();
     for (const [path, content] of Object.entries(task.correctFiles)) {
       await mkdir(dirname(join(sourceRoot, path)), { recursive: true });
@@ -128,9 +149,11 @@ try {
     }
     await mkdir(join(sourceRoot, "tools"), { recursive: true });
     await writeFile(join(sourceRoot, "tools", "verify-visible.mjs"), task.visibleVerifier, "utf8");
-    await writeFile(join(sourceRoot, "tools", "verify-hidden.mjs"), task.hiddenVerifier, "utf8");
+    await writeFile(join(sourceRoot, "tools", "candidate-runner.mjs"), OMEGA_CANDIDATE_RUNNER_SOURCE, "utf8");
+    await mkdir(dirname(hiddenCasePath), { recursive: true });
+    await writeFile(hiddenCasePath, hiddenCaseBytes, "utf8");
     sourceManifest.set("tools/verify-visible.mjs", sha256(task.visibleVerifier));
-    sourceManifest.set("tools/verify-hidden.mjs", sha256(task.hiddenVerifier));
+    sourceManifest.set("tools/candidate-runner.mjs", sha256(OMEGA_CANDIDATE_RUNNER_SOURCE));
 
     const applyChanges = async (sourceInput: string, changes: readonly R2GProposedChange[], labelPrefix: string): Promise<AppliedPack> => {
       sequence += 1;
@@ -145,7 +168,7 @@ try {
           maxDirectoryEntries: 100, allowedExtensions: [".mjs"] }, issuer: "OMEGA-NYX-QUALITY-ISOLATED",
         auditIdentity: `R1-AUDIT-${label}` });
       const lifecycleConfig: R2AIsolatedLifecycleConfig = { executorId: `R2A-${label}`, candidateCommit: CANDIDATE,
-        capabilityVersion: "r2-a/1", evaluatorVersion: "nyx-quality-holdout/1",
+        capabilityVersion: "r2-a/1", evaluatorVersion: EVALUATOR_VERSION,
         environmentIdentity: `github-actions-${process.platform}-${process.arch}`,
         authorityMode: "ISOLATED_CANDIDATE_NOT_GRANTED", repositoryRoot: canonicalSource,
         approvedSandboxRoot: await realpath(sandboxRoot), capability: { capabilityId: `R2A-CAP-${label}`,
@@ -158,7 +181,7 @@ try {
       await cp(canonicalSource, cloneRoot, { recursive: true, errorOnExist: true, force: false });
       const patch = proposal(canonicalSource, task, label, changes);
       const applicator = await R3ADisposablePatchApplicator.create({ executorId: `R3A-${label}`,
-        candidateCommit: CANDIDATE, evaluatorVersion: "nyx-quality-holdout/1", environmentIdentity: lifecycleConfig.environmentIdentity,
+        candidateCommit: CANDIDATE, evaluatorVersion: EVALUATOR_VERSION, environmentIdentity: lifecycleConfig.environmentIdentity,
         authorityMode: "ISOLATED_CANDIDATE_NOT_GRANTED", sourceRepositoryRoot: canonicalSource,
         sourceRepositoryExecutor: r1, disposableRepositoryRoot: cloneRoot, sandbox: provisioned.sandbox, lifecycle,
         proposal: patch, capability: { capabilityId: `R3A-CAP-${label}`, issuer: "OMEGA-NYX-QUALITY-ISOLATED",
@@ -175,17 +198,17 @@ try {
       return { sourceRoot: canonicalSource, cloneRoot, proposal: patch, applicator, application };
     };
 
-    const verification = async (pack: AppliedPack, label: string, hidden = false) => {
+    const verification = async (pack: AppliedPack, label: string) => {
       const now = Date.now();
-      const toolId = hidden ? "HIDDEN_TEST" : "TEST";
-      const entrypoint = hidden ? "tools/verify-hidden.mjs" : "tools/verify-visible.mjs";
+      const toolId = "TEST";
+      const entrypoint = "tools/verify-visible.mjs";
       const definition: R3BEngineeringToolDefinition = { toolId, toolKind: "TEST",
-        toolVersion: `nyx-quality-fixture/${task.taskId}/1`, entrypoint,
+        toolVersion: `nyx-quality-v3-fixture/${task.taskId}/1`, entrypoint,
         expectedEntrypointSha256: sha256(await readFile(join(pack.cloneRoot, entrypoint))), arguments: [],
         workingDirectory: ".", timeoutMs: 5_000, maxOutputBytes: 16_384, allowedMutationPrefixes: [], allowChildProcesses: false };
       const environmentIdentity = `github-actions-${process.platform}-${process.arch}`;
       const executor = await R3BControlledEngineeringExecutor.create({ executorId: `R3B-${task.taskId}-${label}`,
-        candidateCommit: CANDIDATE, evaluatorVersion: "nyx-quality-holdout/1", environmentIdentity,
+        candidateCommit: CANDIDATE, evaluatorVersion: EVALUATOR_VERSION, environmentIdentity,
         authorityMode: "ISOLATED_CANDIDATE_NOT_GRANTED", disposableRepositoryRoot: pack.cloneRoot,
         disposableRepositoryId: pack.application.disposableRepositoryId, applicator: pack.applicator,
         appliedCandidate: pack.application, capability: { capabilityId: `R3B-CAP-${task.taskId}-${label}`,
@@ -211,7 +234,7 @@ try {
     const initialExecution = await initialTool.executor.execute(initialTool.request);
     const initialObserved = observeEngineeringExecution({ schemaVersion: 1,
       observationRequestId: `NYX-QH-OBSERVATION-${task.taskId}-INITIAL`, observerIdentity: "OMEGA-NYX-QUALITY-OBSERVER",
-      evaluatorVersion: "nyx-quality-holdout/1", expected: { candidateCommit: initialExecution.evidence.candidateCommit,
+      evaluatorVersion: EVALUATOR_VERSION, expected: { candidateCommit: initialExecution.evidence.candidateCommit,
         disposableRepositoryId: initial.application.disposableRepositoryId, applicationId: initial.application.applicationId,
         proposalDigest: initial.application.proposalDigest, toolId: "TEST", toolKind: "TEST",
         toolIdentityDigest: initialExecution.evidence.toolIdentityDigest,
@@ -263,7 +286,7 @@ try {
           omegaAuthorityBoundary: "R1_ADMITTED_READ_ONLY_EVIDENCE" as const, authorityGranted: false as const };
       } };
     const loop = R3BoundedRepairLoop.create({ loopId: `NYX-QUALITY-LOOP-${task.taskId}`,
-      evaluatorVersion: "nyx-quality-holdout/1", observerIdentity: "OMEGA-NYX-QUALITY-OBSERVER", cognition,
+      evaluatorVersion: EVALUATOR_VERSION, observerIdentity: "OMEGA-NYX-QUALITY-OBSERVER", cognition,
       candidateBuilder, evidenceProvider, maxIterations: MAX_COGNITION_CYCLES_PER_TASK,
       maxWallClockMs: MAX_WALL_CLOCK_MS_PER_TASK, maxChangesPerIteration: task.maxChanges,
       maxPatchBytesPerIteration: task.maxPatchBytes, maxDiagnosisCharacters: MAX_DIAGNOSIS_CHARACTERS });
@@ -275,40 +298,50 @@ try {
 
     let hiddenResult = "NOT_APPLICABLE";
     let hiddenEvidenceId: string | null = null;
+    let hiddenIsolationEvidence: Record<string, unknown> | null = null;
     if (loopResult.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && finalPack) {
-      const hiddenTool = await verification(finalPack, "final-hidden", true);
-      const hiddenExecution = await hiddenTool.executor.execute(hiddenTool.request);
+      const hiddenEvaluator = await R3IsolatedHiddenEvaluator.create({ evaluatorId: `NYX-V3-HIDDEN-${task.taskId}`,
+        evaluatorVersion: EVALUATOR_VERSION, candidateRoot: finalPack.cloneRoot,
+        hiddenEvaluatorRoot, hiddenCaseFile: hiddenCaseRelativePath,
+        expectedHiddenCaseFileSha256: sha256(hiddenCaseBytes), candidateRunner: "tools/candidate-runner.mjs",
+        expectedCandidateRunnerSha256: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE), candidateModule: task.candidateModule,
+        exportName: task.exportName, timeoutMsPerCase: 5_000, maxOutputBytesPerCase: 16_384, maxCases: 32 });
+      const hiddenExecution = await hiddenEvaluator.evaluate();
       hiddenResult = hiddenExecution.outcome;
       hiddenEvidenceId = hiddenExecution.evidence.evidenceId;
+      hiddenIsolationEvidence = { candidateRootDigest: hiddenExecution.evidence.candidateRootDigest,
+        hiddenEvaluatorRootDigest: hiddenExecution.evidence.hiddenEvaluatorRootDigest,
+        scopesDisjoint: hiddenExecution.evidence.candidateAndEvaluatorScopesDisjoint,
+        hiddenAssetsExposed: hiddenExecution.evidence.hiddenAssetsExposedToCandidate,
+        hiddenAssetsMutable: hiddenExecution.evidence.hiddenAssetsMutableByCandidate,
+        executedCases: hiddenExecution.evidence.executedCases, passedCases: hiddenExecution.evidence.passedCases };
     }
     let qualityResult = "NOT_EVALUATED";
     let quality: Record<string, unknown> = { evaluated: false };
     if (finalPack && loopResult.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED") {
-      const contents = await Promise.all(Object.keys(task.correctFiles).map(async (path) => ({ path,
-        content: await readFile(join(finalPack!.cloneRoot, path), "utf8") })));
-      const changedPaths = loopResult.iterations.flatMap((iteration) => iteration.hypothesis.changes.map((change) => change.relativePath));
-      const forbidden = /(?:node:fs|child_process|\bprocess\b|\bfetch\s*\(|\beval\s*\(|\bFunction\s*\()/;
+      const candidateEntries: [string, string][] = [];
+      const baselineEntries: [string, string][] = [];
+      for (const path of Object.keys(task.correctFiles)) {
+        candidateEntries.push([path, await readFile(join(finalPack.cloneRoot, path), "utf8")]);
+        baselineEntries.push([path, await readFile(join(initial.cloneRoot, path), "utf8")]);
+      }
+      const candidateFiles = Object.fromEntries(candidateEntries);
+      const baselineFiles = Object.fromEntries(baselineEntries);
+      const changedPaths = [...new Set(loopResult.iterations.flatMap((iteration) => iteration.hypothesis.changes.map((change) => change.relativePath)))];
       const toolIntegrity = sha256(await readFile(join(finalPack.cloneRoot, "tools", "verify-visible.mjs"))) === sha256(task.visibleVerifier)
-        && sha256(await readFile(join(finalPack.cloneRoot, "tools", "verify-hidden.mjs"))) === sha256(task.hiddenVerifier);
-      const architectureFit = Object.entries(task.requiredArchitectureMarkers).every(([path, markers]) => {
-        const content = contents.find((item) => item.path === path)?.content ?? "";
-        return markers.every((marker) => content.includes(marker));
-      });
-      const readOnlyEvidencePreserved = task.availableEvidence.every((item) => {
-        const content = contents.find((candidate) => candidate.path === item.relativePath)?.content;
-        return content === task.correctFiles[item.relativePath] && !changedPaths.includes(item.relativePath);
-      });
-      quality = { evaluated: true, correctness: hiddenResult === "PASS",
-        minimality: new Set(changedPaths).size <= task.maxChanges,
-        boundedScope: changedPaths.every((path) => task.mutationPaths.includes(path)),
-        regressionBehavior: hiddenResult === "PASS", maintainability: contents.every((item) => item.content.length <= task.maxPatchBytes
-          && item.content.split(/\r?\n/).length <= 60), architectureFit,
-        typeSafety: "NOT_APPLICABLE_PLAIN_ECMASCRIPT_FIXTURES", duplication: contents.every((item) => !/(.{25,})\n\1/.test(item.content)),
-        unnecessaryScopeExpansion: changedPaths.every((path) => task.mutationPaths.includes(path)),
-        security: contents.every((item) => !forbidden.test(item.content)), readability: contents.every((item) => item.content.includes("export function")),
-        apiCompatibility: hiddenResult === "PASS", readOnlyEvidencePreserved, verifierIntegrity: toolIntegrity };
-      qualityResult = Object.entries(quality).filter(([key]) => !["evaluated", "typeSafety"].includes(key))
-        .every(([, value]) => value === true) ? "ACCEPTED" : "REJECTED";
+        && sha256(await readFile(join(finalPack.cloneRoot, "tools", "candidate-runner.mjs"))) === sha256(OMEGA_CANDIDATE_RUNNER_SOURCE)
+        && sha256(await readFile(hiddenCasePath)) === sha256(hiddenCaseBytes);
+      const assessment = assessEngineeringQuality({ assessmentId: `NYX-V3-QUALITY-${task.taskId}`,
+        evaluatorVersion: QUALITY_ORACLE_VERSION, baselineFiles, candidateFiles, changedPaths,
+        functionalAcceptance: hiddenResult === "PASS" ? "PASS" : hiddenResult === "FAIL" ? "FAIL" : "NOT_EVALUATED",
+        regressionAcceptance: hiddenResult === "PASS" ? "PASS" : hiddenResult === "FAIL" ? "FAIL" : "NOT_EVALUATED",
+        policy: task.qualityPolicy });
+      quality = { evaluated: true, assessmentId: assessment.assessmentId, evidenceId: assessment.evidenceId,
+        decision: assessment.decision, aggregateScoreUsed: assessment.aggregateScoreUsed,
+        failedDimensions: assessment.failedDimensions, dimensions: assessment.dimensions,
+        verifierIntegrity: toolIntegrity, hiddenIsolationEvidence };
+      qualityResult = assessment.decision === "ACCEPTED" && toolIntegrity ? "ACCEPTED"
+        : assessment.decision === "INSUFFICIENT_EVIDENCE" ? "INSUFFICIENT_EVIDENCE" : "REJECTED";
     }
     const modelEvidence = cognitionEvidence(loopResult);
     const tokens = modelEvidence.reduce((sum, item) => sum + (item.modelUsage.totalTokens ?? 0), 0);
@@ -337,7 +370,10 @@ try {
       firstCandidateSuccess: accepted && loopResult.iterations.length === 1,
       failureClass: failureClass(loopResult, hiddenResult, qualityResult), totalTokens: tokens,
       requestDigests: modelEvidence.map((item) => item.modelRequestDigest), responseDigests: modelEvidence.map((item) => item.modelResponseDigest),
-      hiddenEvidenceId, sourceRepositoryUnchanged: sourceUnchanged, failedPredecessorUnchanged, contractPreserved,
+      providerDiagnostics: modelEvidence.map((item) => ({ statusCode: item.modelStatusCode,
+        failureCategory: item.providerFailureCategory, retryability: item.providerRetryability,
+        providerRequestId: item.providerRequestId })), hiddenEvidenceId, hiddenIsolationEvidence,
+      sourceRepositoryUnchanged: sourceUnchanged, failedPredecessorUnchanged, contractPreserved,
       omegaAuthorityEnforcement: !loopResult.authorityGranted && !loopResult.sourceRepositoryWriteAuthority,
       durationMs: Date.now() - taskStarted });
   }
@@ -357,16 +393,32 @@ if (taskResults.length === HOLDOUT.length) {
   const falseAcceptances = taskResults.filter((item) => item.deterministicVerification === "FUNCTIONALLY_REPAIRED_VERIFIED"
     && (item.hiddenAcceptance !== "PASS" || item.engineeringQuality !== "ACCEPTED"));
   const repairAttempted = taskResults.filter((item) => Number(item.repairIterations) > 0);
-  const result = { schemaVersion: 1, chunkId: "NYX-ENGINEERING-QUALITY-DETOUR-001", suiteIdentity: SUITE_ID,
+  const providerDiagnostics = taskResults.flatMap((item) => item.providerDiagnostics as readonly {
+    readonly failureCategory: string | null; readonly retryability: string | null; readonly statusCode: number | null;
+  }[]);
+  const providerFailures = providerDiagnostics.filter((item) => item.failureCategory !== null);
+  const providerFailureBreakdown = Object.fromEntries([...new Set(providerFailures.map((item) => item.failureCategory!))]
+    .sort().map((category) => [category, providerFailures.filter((item) => item.failureCategory === category).length]));
+  const result = { schemaVersion: 1, chunkId: "OMEGA-VERIFY-INTEGRITY-001", suiteIdentity: SUITE_ID,
     candidateCommit: CANDIDATE,
-    modelId: MODEL, contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION, contractDigest: CONTRACT_AT_START,
+    modelId: MODEL, evaluatorVersion: EVALUATOR_VERSION, evaluatorDigest: V3_EVALUATOR_DIGEST,
+    qualityOracleVersion: QUALITY_ORACLE_VERSION, cognitionContractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
+    cognitionContractDigest: CONTRACT_AT_START, taskFixtureDigests: V3_TASK_FIXTURE_DIGESTS, frozenBeforeScoring: true,
     contractChangedDuringScoredEval: taskResults.some((item) => item.contractPreserved !== true), tasks: taskResults,
     aggregateMetrics: { taskSuccessRate: rate(successes.length, taskResults.length),
+      functionalAcceptanceRate: rate(taskResults.filter((item) => item.hiddenAcceptance === "PASS").length, taskResults.length),
       firstCandidateSuccessRate: rate(taskResults.filter((item) => item.firstCandidateSuccess === true).length, taskResults.length),
-      boundedRepairSuccessRate: rate(repairAttempted.filter((item) => item.finalClassification === "PASS").length, repairAttempted.length),
-      schemaComplianceRate: rate(semanticActions, modelCalls), actionComplianceRate: rate(semanticActions, modelCalls),
+      postFailureRepairSuccessRate: rate(repairAttempted.filter((item) => item.finalClassification === "PASS").length, repairAttempted.length),
+      schemaComplianceRate: rate(semanticActions, modelCalls), typedActionComplianceRate: rate(semanticActions, modelCalls),
       falseAcceptanceRate: rate(falseAcceptances.length, taskResults.length),
-      qualityAcceptanceRate: rate(taskResults.filter((item) => item.engineeringQuality === "ACCEPTED").length, taskResults.length),
+      falseQualityAcceptanceRate: rate(taskResults.filter((item) => item.engineeringQuality === "ACCEPTED"
+        && (item.quality as { failedDimensions?: readonly string[] }).failedDimensions?.length).length, taskResults.length),
+      engineeringQualityAcceptanceRate: rate(taskResults.filter((item) => item.engineeringQuality === "ACCEPTED").length, taskResults.length),
+      providerFailureRate: rate(taskResults.filter((item) => (item.providerDiagnostics as readonly { failureCategory: string | null }[])
+        .some((diagnostic) => diagnostic.failureCategory !== null)).length, taskResults.length),
+      providerFailureBreakdown,
+      hiddenAssetScopeSeparationRate: rate(taskResults.filter((item) => (item.hiddenIsolationEvidence as { scopesDisjoint?: boolean } | null)?.scopesDisjoint === true).length,
+        taskResults.filter((item) => item.hiddenAcceptance !== "NOT_APPLICABLE").length),
       meanCallsPerTask: mean(taskResults.map((item) => Number(item.modelCalls))),
       meanTokensPerTask: mean(taskResults.map((item) => Number(item.totalTokens))),
       meanCandidatesPerTask: mean(taskResults.map((item) => Number(item.candidates))),
@@ -378,6 +430,6 @@ if (taskResults.length === HOLDOUT.length) {
     authority: { sourceRepositoryMutation: false, generalShell: false, generalNetwork: false, production: false,
       credentialPersisted: false, authorityIncrease: false } };
   console.log(`NYX_QUALITY_HOLDOUT ${JSON.stringify(result)}`);
-  if (successes.length <= taskResults.length / 2 || result.aggregateMetrics.falseAcceptanceRate !== 0
+  if (result.aggregateMetrics.falseAcceptanceRate !== 0 || result.aggregateMetrics.falseQualityAcceptanceRate !== 0
     || result.contractChangedDuringScoredEval || taskResults.some((item) => item.sourceRepositoryUnchanged !== true)) process.exitCode = 1;
 }

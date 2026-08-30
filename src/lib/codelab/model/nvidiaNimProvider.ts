@@ -60,6 +60,12 @@ export interface NvidiaNimUsage {
   readonly totalTokens: number | null;
 }
 
+export type NvidiaNimProviderFailureCategory = "PROVIDER_AUTH_FAILURE" | "PROVIDER_RATE_LIMIT"
+  | "PROVIDER_SERVER_ERROR" | "PROVIDER_UNAVAILABLE" | "PROVIDER_TIMEOUT" | "PROVIDER_TRANSPORT_ERROR"
+  | "PROVIDER_RESPONSE_SCHEMA_ERROR" | "PROVIDER_CANCELLED";
+
+export type NvidiaNimRetryability = "YES" | "NO" | "UNKNOWN";
+
 export interface NvidiaNimEvidence {
   readonly evidenceId: string;
   readonly evidenceClass: "E3" | "E4";
@@ -73,6 +79,9 @@ export interface NvidiaNimEvidence {
   readonly promptPersisted: false;
   readonly networkAttempted: boolean;
   readonly statusCode: number | null;
+  readonly failureCategory: NvidiaNimProviderFailureCategory | null;
+  readonly retryability: NvidiaNimRetryability | null;
+  readonly providerRequestId: string | null;
   readonly usage: NvidiaNimUsage;
 }
 
@@ -140,6 +149,27 @@ function responseFormatPayload(format: NvidiaNimCompletionRequest["responseForma
   return { type: "json_schema", json_schema: { name: format.name, strict: true, schema: format.schema } };
 }
 
+function safeProviderRequestId(value: string | null): string | null {
+  return value && /^[A-Za-z0-9._:/-]{1,160}$/.test(value) ? value : null;
+}
+
+function failureDiagnostics(reason: string, statusCode: number | null): {
+  readonly category: NvidiaNimProviderFailureCategory | null;
+  readonly retryability: NvidiaNimRetryability | null;
+} {
+  if (reason === "nvidia_provider_timeout") return { category: "PROVIDER_TIMEOUT", retryability: "YES" };
+  if (reason === "nvidia_provider_cancelled") return { category: "PROVIDER_CANCELLED", retryability: "NO" };
+  if (reason === "nvidia_provider_transport_failure") return { category: "PROVIDER_TRANSPORT_ERROR", retryability: "UNKNOWN" };
+  if (reason === "nvidia_provider_response_not_json" || reason === "nvidia_provider_response_missing_content") {
+    return { category: "PROVIDER_RESPONSE_SCHEMA_ERROR", retryability: "NO" };
+  }
+  if (statusCode === 401 || statusCode === 403) return { category: "PROVIDER_AUTH_FAILURE", retryability: "NO" };
+  if (statusCode === 429) return { category: "PROVIDER_RATE_LIMIT", retryability: "YES" };
+  if (statusCode === 502 || statusCode === 503 || statusCode === 504) return { category: "PROVIDER_UNAVAILABLE", retryability: "YES" };
+  if (statusCode !== null && statusCode >= 500) return { category: "PROVIDER_SERVER_ERROR", retryability: "YES" };
+  return { category: null, retryability: null };
+}
+
 export function nvidiaNimCredentialFromEnvironment(environment: Readonly<Record<string, string | undefined>>): NvidiaNimCredentialSource {
   return Object.freeze({
     sourceIdentity: "environment:NVIDIA_API_KEY",
@@ -193,7 +223,8 @@ export class NvidiaNimProvider {
     }
     if (!this.#transport) return this.#result("BLOCKED", "network_transport_unavailable", null, null, requestDigest, null, null, emptyUsage(), false);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.#config.timeoutMs);
+    let timeoutTriggered = false;
+    const timeout = setTimeout(() => { timeoutTriggered = true; controller.abort(); }, this.#config.timeoutMs);
     try {
       const response = await this.#transport(NVIDIA_NIM_CHAT_COMPLETIONS_URL, {
         method: "POST",
@@ -201,26 +232,29 @@ export class NvidiaNimProvider {
         body: JSON.stringify(payload),
         signal: controller.signal,
       });
+      const providerRequestId = safeProviderRequestId(response.headers.get("x-request-id") ?? response.headers.get("request-id"));
       if (!response.ok) {
         return this.#result("PROVIDER_ERROR", `nvidia_provider_http_${response.status}`, null, null, requestDigest, null,
-          response.status, emptyUsage(), true);
+          response.status, emptyUsage(), true, providerRequestId);
       }
       let parsed: ProviderResponse;
       try { parsed = await response.json() as ProviderResponse; }
       catch { return this.#result("PROVIDER_ERROR", "nvidia_provider_response_not_json", null, null, requestDigest, null,
-        response.status, emptyUsage(), true); }
+        response.status, emptyUsage(), true, providerRequestId); }
       const content = parsed.choices?.[0]?.message?.content;
       const finishReason = parsed.choices?.[0]?.finish_reason;
       if (typeof content !== "string" || !content.trim()) {
         return this.#result("PROVIDER_ERROR", "nvidia_provider_response_missing_content", null, null, requestDigest, null,
-          response.status, emptyUsage(), true);
+          response.status, emptyUsage(), true, providerRequestId);
       }
       const usage = Object.freeze({ promptTokens: finiteInteger(parsed.usage?.prompt_tokens),
         completionTokens: finiteInteger(parsed.usage?.completion_tokens), totalTokens: finiteInteger(parsed.usage?.total_tokens) });
       return this.#result("COMPLETED", "nvidia_nim_completion_observed", content,
-        typeof finishReason === "string" ? finishReason : null, requestDigest, sha256(content), response.status, usage, true);
+        typeof finishReason === "string" ? finishReason : null, requestDigest, sha256(content), response.status, usage, true, providerRequestId);
     } catch (error) {
-      const reason = error instanceof Error && error.name === "AbortError" ? "nvidia_provider_timeout" : "nvidia_provider_transport_failure";
+      const reason = error instanceof Error && error.name === "AbortError"
+        ? timeoutTriggered ? "nvidia_provider_timeout" : "nvidia_provider_cancelled"
+        : "nvidia_provider_transport_failure";
       return this.#result("PROVIDER_ERROR", reason, null, null, requestDigest, null, null, emptyUsage(), true);
     } finally {
       clearTimeout(timeout);
@@ -229,12 +263,15 @@ export class NvidiaNimProvider {
 
   #result(decision: NvidiaNimCompletionResult["decision"], reason: string, content: string | null, finishReason: string | null,
     requestDigest: string, responseDigest: string | null, statusCode: number | null, usage: NvidiaNimUsage,
-    networkAttempted: boolean): NvidiaNimCompletionResult {
+    networkAttempted: boolean, providerRequestId: string | null = null): NvidiaNimCompletionResult {
     const evidenceClass = this.#config.authorityMode === "EXPLICIT_LIVE_NVIDIA_NIM" && networkAttempted ? "E4" : "E3";
+    const diagnostics = failureDiagnostics(reason, statusCode);
     const evidence: NvidiaNimEvidence = Object.freeze({ evidenceId: `NVIDIA-NIM-${requestDigest.slice(0, 32)}`, evidenceClass,
       providerId: this.#config.providerId, endpointOrigin: "https://integrate.api.nvidia.com", model: this.#config.model,
       requestDigest, responseDigest, credentialSourceIdentity: this.#config.credentialSource.sourceIdentity,
-      credentialPersisted: false, promptPersisted: false, networkAttempted, statusCode, usage });
+      credentialPersisted: false, promptPersisted: false, networkAttempted, statusCode,
+      failureCategory: diagnostics.category, retryability: diagnostics.retryability,
+      providerRequestId: safeProviderRequestId(providerRequestId), usage });
     return Object.freeze({ decision, reason, content, finishReason, evidence, executorAuthorityGranted: false });
   }
 }
