@@ -21,9 +21,13 @@ import { R3BControlledEngineeringExecutor, type R3BEngineeringToolDefinition,
 import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readOnlyExecutor";
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { observeEngineeringExecution, type EngineeringObservation } from "../../src/lib/codelab/observation/r3EngineeringObservation";
+import { NYX_ENGINEERING_QUALITY_CONFIRMATION } from "./nyx-quality-confirmation-fixtures";
 import { NYX_ENGINEERING_QUALITY_HOLDOUT, type NyxQualityHoldoutTask } from "./nyx-quality-holdout-fixtures";
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
+const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V1";
+if (SUITE_ID !== "V1" && SUITE_ID !== "V2") throw new Error("unsupported_nyx_quality_suite");
+const HOLDOUT = SUITE_ID === "V2" ? NYX_ENGINEERING_QUALITY_CONFIRMATION : NYX_ENGINEERING_QUALITY_HOLDOUT;
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
 const MAX_COGNITION_CYCLES_PER_TASK = 3;
@@ -112,7 +116,7 @@ const taskResults: Record<string, unknown>[] = [];
 let sequence = 0;
 
 try {
-  for (const task of NYX_ENGINEERING_QUALITY_HOLDOUT) {
+  for (const task of HOLDOUT) {
     const taskStarted = Date.now();
     const taskRoot = join(parent, task.taskId.toLowerCase());
     const sourceRoot = join(taskRoot, "authoritative-source");
@@ -345,7 +349,7 @@ try {
   await rm(parent, { recursive: true, force: true });
 }
 
-if (taskResults.length === NYX_ENGINEERING_QUALITY_HOLDOUT.length) {
+if (taskResults.length === HOLDOUT.length) {
   const successes = taskResults.filter((item) => item.finalClassification === "PASS");
   const modelCalls = taskResults.reduce((sum, item) => sum + Number(item.modelCalls), 0);
   const semanticActions = taskResults.reduce((sum, item) => sum + Number(item.semanticActions), 0);
@@ -353,7 +357,8 @@ if (taskResults.length === NYX_ENGINEERING_QUALITY_HOLDOUT.length) {
   const falseAcceptances = taskResults.filter((item) => item.deterministicVerification === "FUNCTIONALLY_REPAIRED_VERIFIED"
     && (item.hiddenAcceptance !== "PASS" || item.engineeringQuality !== "ACCEPTED"));
   const repairAttempted = taskResults.filter((item) => Number(item.repairIterations) > 0);
-  const result = { schemaVersion: 1, chunkId: "NYX-ENGINEERING-QUALITY-DETOUR-001", candidateCommit: CANDIDATE,
+  const result = { schemaVersion: 1, chunkId: "NYX-ENGINEERING-QUALITY-DETOUR-001", suiteIdentity: SUITE_ID,
+    candidateCommit: CANDIDATE,
     modelId: MODEL, contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION, contractDigest: CONTRACT_AT_START,
     contractChangedDuringScoredEval: taskResults.some((item) => item.contractPreserved !== true), tasks: taskResults,
     aggregateMetrics: { taskSuccessRate: rate(successes.length, taskResults.length),

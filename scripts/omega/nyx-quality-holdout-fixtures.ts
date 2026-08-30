@@ -10,7 +10,7 @@ export interface NyxQualityAvailableEvidence {
 export interface NyxQualityHoldoutTask {
   readonly taskId: string;
   readonly taskClass: NyxQualityHoldoutTaskClass;
-  readonly provenance: "NYX_ENGINEERING_QUALITY_FRESH_HOLDOUT_V1";
+  readonly provenance: "NYX_ENGINEERING_QUALITY_FRESH_HOLDOUT_V1" | "NYX_ENGINEERING_QUALITY_CONFIRMATION_V2";
   readonly objective: string;
   readonly initialDefect: string;
   readonly correctFiles: Readonly<Record<string, string>>;

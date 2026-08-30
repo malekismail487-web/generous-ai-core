@@ -9,6 +9,7 @@ on:
       - .github/workflows/omega-nyx-quality-holdout.yml
       - scripts/omega/nyx-quality-holdout-live-eval.ts
       - scripts/omega/nyx-quality-holdout-fixtures.ts
+      - scripts/omega/nyx-quality-confirmation-fixtures.ts
       - scripts/omegaNyxEngineeringQualityAssurance.test.ts
       - src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts
       - src/lib/codelab/engine/r3BoundedRepairLoop.ts
@@ -26,6 +27,7 @@ jobs:
     timeout-minutes: 25
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NYX_QUALITY_SUITE: V2
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
     steps:
@@ -38,5 +40,5 @@ jobs:
         run: test -n "$NVIDIA_API_KEY"
       - name: Verify fresh holdout and authority contracts
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxEngineeringQualityAssurance.test.ts
-      - name: Run frozen fresh engineering-quality holdout
+      - name: Run frozen independent confirmation suite
         run: npm run omega:nyx:quality-holdout

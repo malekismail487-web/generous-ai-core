@@ -7,6 +7,7 @@ import { NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST, NYX_SEMANTIC_REPAIR_CONTRACT_VERSI
   NyxNemotronEngineeringCognition } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import type { EngineeringObservation } from "../src/lib/codelab/observation/r3EngineeringObservation";
+import { NYX_ENGINEERING_QUALITY_CONFIRMATION } from "./omega/nyx-quality-confirmation-fixtures";
 import { NYX_ENGINEERING_QUALITY_HOLDOUT } from "./omega/nyx-quality-holdout-fixtures";
 
 let passed = 0;
@@ -27,13 +28,22 @@ check(NYX_ENGINEERING_QUALITY_HOLDOUT.every((task) => !task.taskId.startsWith("R
 check(NYX_ENGINEERING_QUALITY_HOLDOUT.every((task) => task.mutationPaths.every((path) => task.initiallyAdmittedPaths.includes(path))
   && task.availableEvidence.every((item) => !task.mutationPaths.includes(item.relativePath))),
 "observation-only evidence cannot silently expand the holdout mutation scope");
+check(NYX_ENGINEERING_QUALITY_CONFIRMATION.length === 6
+  && new Set(NYX_ENGINEERING_QUALITY_CONFIRMATION.map((task) => task.taskClass)).size === 6,
+"confirmation suite independently covers the six engineering defect classes");
+check(NYX_ENGINEERING_QUALITY_CONFIRMATION.every((task) => task.provenance === "NYX_ENGINEERING_QUALITY_CONFIRMATION_V2")
+  && new Set([...NYX_ENGINEERING_QUALITY_HOLDOUT, ...NYX_ENGINEERING_QUALITY_CONFIRMATION].map((task) => task.taskId)).size === 12,
+"confirmation identities and provenance are distinct from the diagnostic holdout");
+check(NYX_ENGINEERING_QUALITY_CONFIRMATION.every((task) => task.mutationPaths.every((path) => task.initiallyAdmittedPaths.includes(path))
+  && task.availableEvidence.every((item) => !task.mutationPaths.includes(item.relativePath))),
+"confirmation evidence remains observation-only and cannot expand mutation authority");
 check(/^[a-f0-9]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
   && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/3",
 "scored cognition contract has a frozen version and deterministic digest");
 
 const parent = await mkdtemp(join(tmpdir(), "nyx-quality-assurance-"));
 try {
-  for (const task of NYX_ENGINEERING_QUALITY_HOLDOUT) {
+  for (const task of [...NYX_ENGINEERING_QUALITY_HOLDOUT, ...NYX_ENGINEERING_QUALITY_CONFIRMATION]) {
     const correctRoot = join(parent, task.taskId, "correct");
     const faultyRoot = join(parent, task.taskId, "faulty");
     for (const root of [correctRoot, faultyRoot]) {
