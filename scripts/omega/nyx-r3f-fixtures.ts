@@ -16,6 +16,15 @@ export interface NyxR3FEvaluationTask {
   readonly maxPatchBytes: number;
 }
 
+export function nyxR3FActionCounts(modelCalls: number, candidateCount: number, terminalReason: string): {
+  readonly semanticActions: number; readonly noActionActions: number; readonly rejectedActions: number;
+} {
+  const noActionActions = terminalReason === "repair_cognition_nyx_cognition_no_action" ? 1 : 0;
+  const semanticActions = candidateCount + noActionActions;
+  return Object.freeze({ semanticActions, noActionActions,
+    rejectedActions: Math.max(0, modelCalls - semanticActions) });
+}
+
 export const NYX_R3F_EVALUATION_FIXTURES: readonly NyxR3FEvaluationTask[] = Object.freeze([
   Object.freeze({
     taskId: "R3F-A-CLAMP-EDGE", taskClass: "LOGIC_DEFECT", provenance: "DIRECTIVE_024_INDEPENDENT_FIXTURE_V1",

@@ -15,7 +15,7 @@ import { R3_A_ISOLATED_CANDIDATE_STATUS } from "../src/lib/codelab/executor/r3Di
 import { R3_B_ISOLATED_CANDIDATE_STATUS } from "../src/lib/codelab/executor/r3ControlledEngineeringExecution";
 import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/model/nvidiaNimProvider";
 import type { EngineeringObservation } from "../src/lib/codelab/observation/r3EngineeringObservation";
-import { NYX_R3F_EVALUATION_FIXTURES } from "./omega/nyx-r3f-fixtures";
+import { NYX_R3F_EVALUATION_FIXTURES, nyxR3FActionCounts } from "./omega/nyx-r3f-fixtures";
 
 let passed = 0;
 let failed = 0;
@@ -82,6 +82,11 @@ check(NYX_R3F_EVALUATION_FIXTURES.every((task) => task.admittedPaths.every((path
 check(NYX_R3F_EVALUATION_FIXTURES.some((task) => task.taskClass === "MULTI_FILE_LOCAL_DEFECT" && task.admittedPaths.length >= 2)
   && NYX_R3F_EVALUATION_FIXTURES.some((task) => task.taskClass === "REGRESSION_SENSITIVE_DEFECT"),
   "matrix contains multi-file reasoning and hidden regression-sensitive coverage");
+check(JSON.stringify(nyxR3FActionCounts(2, 1, "repair_cognition_nyx_cognition_no_action"))
+  === JSON.stringify({ semanticActions: 2, noActionActions: 1, rejectedActions: 0 }),
+  "valid NO_ACTION is counted as compliant semantic behavior rather than an Omega rejection");
+check(nyxR3FActionCounts(2, 1, "repair_cognition_nyx_cognition_output_schema_invalid").rejectedActions === 1,
+  "a genuinely invalid terminal model response remains a rejected action");
 
 {
   const parent = await mkdtemp(join(tmpdir(), "nyx-r3f-fixture-assurance-"));

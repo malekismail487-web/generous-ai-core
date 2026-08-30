@@ -19,7 +19,7 @@ import { R3BControlledEngineeringExecutor, type R3BEngineeringToolDefinition, ty
 import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readOnlyExecutor";
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { observeEngineeringExecution, type EngineeringObservation } from "../../src/lib/codelab/observation/r3EngineeringObservation";
-import { NYX_R3F_EVALUATION_FIXTURES, type NyxR3FEvaluationTask } from "./nyx-r3f-fixtures";
+import { NYX_R3F_EVALUATION_FIXTURES, nyxR3FActionCounts, type NyxR3FEvaluationTask } from "./nyx-r3f-fixtures";
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
@@ -276,10 +276,12 @@ try {
       await readFile(join(initial.cloneRoot, path), "utf8") === expected))).every(Boolean);
     const accepted = loopResult.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && hiddenResult === "PASS"
       && qualityResult === "ACCEPTED" && sourceUnchanged && failedPredecessorUnchanged && contractPreserved;
+    const actionCounts = nyxR3FActionCounts(loopResult.modelCallCount, loopResult.iterations.length, loopResult.reason);
     taskResults.push({ taskId: task.taskId, taskClass: task.taskClass, provenance: task.provenance,
       initialDefect: task.initialDefect, allowedMutationScope: task.admittedPaths, contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
       contractDigest: CONTRACT_AT_START, modelId: MODEL, modelCalls: loopResult.modelCallCount,
-      semanticActions: loopResult.iterations.length, rejectedActions: Math.max(0, loopResult.modelCallCount - loopResult.iterations.length),
+      semanticActions: actionCounts.semanticActions, noActionActions: actionCounts.noActionActions,
+      rejectedActions: actionCounts.rejectedActions,
       candidates: loopResult.iterations.length, repairIterations: Math.max(0, loopResult.iterations.length - 1),
       verificationCount: 1 + loopResult.iterations.reduce((sum, item) => sum + item.verifications.length, 0)
         + (hiddenResult === "NOT_APPLICABLE" ? 0 : 1), deterministicVerification: loopResult.outcome,
