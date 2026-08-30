@@ -41,10 +41,12 @@ function provider(transport: NvidiaNimTransport, credential = "test-credential-n
     return new Response(JSON.stringify({ choices: [{ message: { content: "OMEGA_NIM_OK" }, finish_reason: "stop" }],
       usage: { prompt_tokens: 10, completion_tokens: 4, total_tokens: 14 } }), { status: 200, headers: { "Content-Type": "application/json" } });
   });
-  const result = await client.complete(request());
+  const result = await client.complete(request({ responseFormat: "JSON_OBJECT" }));
   check(result.decision === "COMPLETED" && result.content === "OMEGA_NIM_OK", "valid NVIDIA NIM response produces a bounded completion");
   check(observedUrl === NVIDIA_NIM_CHAT_COMPLETIONS_URL && observedBody.model === "openai/gpt-oss-20b" && observedBody.stream === false,
     "adapter uses fixed official endpoint and non-streaming model payload");
+  check((observedBody.response_format as { type?: string })?.type === "json_object",
+    "adapter transmits the explicitly requested bounded JSON response format");
   check(observedAuthorization === "Bearer test-credential-not-a-real-secret", "credential is placed only in the authorization header");
   check(result.evidence.statusCode === 200 && result.evidence.usage.totalTokens === 14 && result.evidence.responseDigest !== null,
     "completion returns attributable status, usage, and response digest");
@@ -69,6 +71,7 @@ function provider(transport: NvidiaNimTransport, credential = "test-credential-n
     request({ messages: [{ role: "user", content: "one" }, { role: "user", content: "two" }] }),
     request({ maxTokens: 129 }),
     request({ temperature: 2 }),
+    request({ responseFormat: "INVALID" as "JSON_OBJECT" }),
   ];
   for (const input of invalid) check((await client.complete(input)).decision === "REJECTED", "invalid completion contract rejects deterministically");
   check(calls === 0, "invalid requests never reach provider transport");

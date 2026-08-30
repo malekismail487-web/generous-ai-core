@@ -44,6 +44,7 @@ export interface NvidiaNimCompletionRequest {
   readonly messages: readonly NvidiaNimMessage[];
   readonly maxTokens: number;
   readonly temperature: number;
+  readonly responseFormat?: "JSON_OBJECT";
   readonly observedAtEpochMs: number;
 }
 
@@ -156,7 +157,8 @@ export class NvidiaNimProvider {
   async complete(request: NvidiaNimCompletionRequest): Promise<NvidiaNimCompletionResult> {
     const requestId = typeof request.requestId === "string" && request.requestId.trim() ? request.requestId : "MALFORMED";
     const payload = { model: this.#config.model, messages: request.messages, max_tokens: request.maxTokens,
-      temperature: request.temperature, stream: false };
+      temperature: request.temperature, stream: false,
+      ...(request.responseFormat === "JSON_OBJECT" ? { response_format: { type: "json_object" as const } } : {}) };
     const requestDigest = sha256(canonical({ requestId, ...payload }));
     const issues: string[] = [];
     if (request.schemaVersion !== 1 || typeof request.requestId !== "string" || !request.requestId.trim()
@@ -164,6 +166,7 @@ export class NvidiaNimProvider {
     if (!validMessages(request.messages)) issues.push("completion_messages_invalid");
     if (!Number.isInteger(request.maxTokens) || request.maxTokens < 1 || request.maxTokens > this.#config.maxOutputTokens) issues.push("completion_token_bound_exceeded");
     if (typeof request.temperature !== "number" || !Number.isFinite(request.temperature) || request.temperature < 0 || request.temperature > 1) issues.push("completion_temperature_invalid");
+    if (request.responseFormat !== undefined && request.responseFormat !== "JSON_OBJECT") issues.push("completion_response_format_invalid");
     if (Buffer.byteLength(canonical(request.messages), "utf8") > this.#config.maxPromptBytes) issues.push("completion_prompt_bound_exceeded");
     if (issues.length > 0) return this.#result("REJECTED", [...new Set(issues)].join(","), null, null, requestDigest, null, null, emptyUsage(), false);
     const credential = this.#config.credentialSource.read();

@@ -190,6 +190,8 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
   check(result.evidenceId.startsWith("R3E-EVIDENCE-") && result.iterations[0].cognitionEvidenceId.startsWith("NYX-COGNITION-"), "loop evidence preserves cognition, proposal, application, execution, and observation genealogy");
   check(result.iterations[0].cognitionEvidence.evidenceClass === "E3"
     && result.iterations[0].cognitionEvidence.modelRequestDigest !== null, "loop retains sanitized cognition evidence without granting authority");
+  check(result.modelCallCount === 1 && result.lastCognitionEvidence?.evidenceId === result.iterations[0].cognitionEvidenceId,
+    "loop counts model calls and preserves the latest sanitized cognition evidence");
 }
 
 {
@@ -215,6 +217,8 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
   const result = await loop(nyx, candidateBuilder, 1).run(loopRequest());
   check(result.outcome === "COGNITION_ERROR" && result.reason.includes("nvidia_provider_http_503") && prepares === 0,
     "cognition failure stops before Omega candidate preparation");
+  check(result.modelCallCount === 1 && result.lastCognitionEvidence?.modelEvidenceId.startsWith("NVIDIA-NIM-"),
+    "failed cognition remains attributable instead of disappearing from the evidence record");
   const invalid = await loop(cognition(async () => new Response("{}")), candidateBuilder, 1).run(loopRequest({ initialObservation: {
     ...initialObservation, state: "TEST_PASS" } }));
   check(invalid.outcome === "BLOCKED" && invalid.reason === "bounded_repair_request_invalid", "repair loop rejects non-failing initial state");

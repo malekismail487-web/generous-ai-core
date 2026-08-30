@@ -148,7 +148,7 @@ export class NyxNemotronEngineeringCognition {
     const completion = await this.#config.provider.complete({ schemaVersion: 1, requestId: request.cognitionRequestId,
       messages: [{ role: "system", content: "You are Νύξ engineering cognition running on NVIDIA Nemotron 3 Ultra. Reason internally, then return only one strict JSON repair hypothesis with no markdown or commentary. You propose; Omega authorizes." },
         { role: "user", content: serializedPrompt }], maxTokens: this.#config.maxOutputTokens, temperature: 0,
-      observedAtEpochMs: request.observedAtEpochMs });
+      responseFormat: "JSON_OBJECT", observedAtEpochMs: request.observedAtEpochMs });
     if (completion.decision !== "COMPLETED" || completion.content === null) {
       const decision = completion.decision === "BLOCKED" ? "BLOCKED" : completion.decision === "REJECTED" ? "REJECTED" : "COGNITION_ERROR";
       return this.#result(decision, completion.reason, request, null, completion.evidence);

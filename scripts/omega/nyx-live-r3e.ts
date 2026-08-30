@@ -274,17 +274,20 @@ try {
     functionalAcceptance = result.functionalAcceptance === "ACCEPTED" && hiddenBehavior;
   }
 
-  const modelTokens = result.iterations.reduce((sum, item) => sum + (item.cognitionEvidence.modelUsage.totalTokens ?? 0), 0);
+  const cognitionEvidence = [...result.iterations.map((item) => item.cognitionEvidence),
+    ...(result.lastCognitionEvidence ? [result.lastCognitionEvidence] : [])]
+    .filter((item, index, all) => all.findIndex((candidate) => candidate.evidenceId === item.evidenceId) === index);
+  const modelTokens = cognitionEvidence.reduce((sum, item) => sum + (item.modelUsage.totalTokens ?? 0), 0);
   const summary = {
     schemaVersion: 1, chunkId: "NYX-LIVE-R3E-001", taskId: TASK_ID, candidateCommit: CANDIDATE, model: MODEL,
     result: functionalAcceptance && engineeringQualityAcceptance ? "VERIFIED_IN_ISOLATION" : "EMPIRICALLY_NOT_YET_VERIFIED",
     failureClass: functionalAcceptance && engineeringQualityAcceptance ? "NONE" : failureClass(result),
     loopOutcome: result.outcome, loopReason: result.reason, iterations: result.iterations.length,
-    modelCalls: result.iterations.length, modelCallLimit: MAX_MODEL_CALLS, modelTokens,
-    modelRequestDigests: result.iterations.map((item) => item.cognitionEvidence.modelRequestDigest),
-    modelResponseDigests: result.iterations.map((item) => item.cognitionEvidence.modelResponseDigest),
-    cognitionEvidenceClasses: result.iterations.map((item) => item.cognitionEvidence.evidenceClass),
-    cognitionEvidenceIds: result.iterations.map((item) => item.cognitionEvidenceId),
+    modelCalls: result.modelCallCount, modelCallLimit: MAX_MODEL_CALLS, modelTokens,
+    modelRequestDigests: cognitionEvidence.map((item) => item.modelRequestDigest),
+    modelResponseDigests: cognitionEvidence.map((item) => item.modelResponseDigest),
+    cognitionEvidenceClasses: cognitionEvidence.map((item) => item.evidenceClass),
+    cognitionEvidenceIds: cognitionEvidence.map((item) => item.evidenceId),
     proposalDigests: result.iterations.map((item) => item.proposalDigest),
     applicationDecisions: result.iterations.map((item) => item.applicationDecision),
     verificationOutcomes: result.iterations.flatMap((item) => item.verifications.map((entry) => entry.execution.outcome)),

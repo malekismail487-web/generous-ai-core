@@ -96,6 +96,8 @@ export interface R3BoundedRepairResult {
   readonly finalObservation: EngineeringObservation;
   readonly evidenceId: string;
   readonly evidenceClass: "E3";
+  readonly modelCallCount: number;
+  readonly lastCognitionEvidence: NyxRepairCognitionEvidence | null;
   readonly durationMs: number;
   readonly functionalAcceptance: "ACCEPTED" | "NOT_ACCEPTED";
   readonly engineeringQualityAcceptance: "NOT_EVALUATED";
@@ -173,6 +175,11 @@ export class R3BoundedRepairLoop {
 
   async run(request: R3BoundedRepairRequest): Promise<R3BoundedRepairResult> {
     const started = Date.now();
+    let modelCallCount = 0;
+    let lastCognitionEvidence: NyxRepairCognitionEvidence | null = null;
+    const finish = (outcome: R3BoundedRepairResult["outcome"], reason: string,
+      iterations: readonly R3RepairIteration[], observation: EngineeringObservation): R3BoundedRepairResult =>
+      this.#result(outcome, reason, iterations, observation, started, modelCallCount, lastCognitionEvidence);
     const initialExecution = request.baselineExecutions.find((item) => item.toolId === request.initialObservation.toolId
       && item.result.evidence.evidenceId === request.initialObservation.candidateEvidenceId);
     if (request.schemaVersion !== 1 || !request.repairRequestId?.trim() || typeof request.objective !== "string"
@@ -185,37 +192,39 @@ export class R3BoundedRepairLoop {
       || initialExecution.result.evidence.applicationId !== request.initialObservation.applicationId
       || initialExecution.result.evidence.proposalDigest !== request.initialObservation.proposalDigest
       || initialExecution.result.evidence.toolIdentityDigest !== request.initialObservation.toolIdentityDigest) {
-      return this.#result("BLOCKED", "bounded_repair_request_invalid", [], request.initialObservation, started);
+      return finish("BLOCKED", "bounded_repair_request_invalid", [], request.initialObservation);
     }
     const baselineByTool = new Map(request.baselineExecutions.map((item) => [item.toolId, item.result]));
     let currentObservation = request.initialObservation;
     let currentFiles = request.initialFiles;
     const iterations: R3RepairIteration[] = [];
     for (let iteration = 1; iteration <= this.#config.maxIterations; iteration += 1) {
-      if (Date.now() - started >= this.#config.maxWallClockMs) return this.#result("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation, started);
+      if (Date.now() - started >= this.#config.maxWallClockMs) return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
       const cognition = await this.#config.cognition.proposeRepair({ schemaVersion: 1,
         cognitionRequestId: `${request.repairRequestId}-COGNITION-${iteration}`, objective: request.objective,
         observation: currentObservation, files: currentFiles,
         allowedVerificationToolIds: request.allowedVerificationToolIds, maxChanges: this.#config.maxChangesPerIteration,
         maxPatchBytes: this.#config.maxPatchBytesPerIteration, maxDiagnosisCharacters: this.#config.maxDiagnosisCharacters,
         observedAtEpochMs: Math.max(request.observedAtEpochMs, Date.now()) });
+      lastCognitionEvidence = cognition.evidence;
+      if (cognition.evidence.modelEvidenceId !== "NOT_INVOKED") modelCallCount += 1;
       if (cognition.decision !== "PROPOSED" || !cognition.hypothesis) {
         const outcome = cognition.decision === "BLOCKED" || cognition.decision === "REJECTED" ? "BLOCKED" : "COGNITION_ERROR";
-        return this.#result(outcome, `repair_cognition_${cognition.reason}`, iterations, currentObservation, started);
+        return finish(outcome, `repair_cognition_${cognition.reason}`, iterations, currentObservation);
       }
       let candidate: OmegaPreparedRepairCandidate;
       try { candidate = await this.#config.candidateBuilder.prepare(cognition.hypothesis, iteration); }
-      catch { return this.#result("INFRASTRUCTURE_ERROR", "omega_candidate_preparation_failed", iterations, currentObservation, started); }
+      catch { return finish("INFRASTRUCTURE_ERROR", "omega_candidate_preparation_failed", iterations, currentObservation); }
       if (!preparedCandidateValid(candidate, cognition.hypothesis)) {
-        return this.#result("BLOCKED", "omega_prepared_candidate_provenance_invalid", iterations, currentObservation, started);
+        return finish("BLOCKED", "omega_prepared_candidate_provenance_invalid", iterations, currentObservation);
       }
       const verifications: R3RepairVerificationRecord[] = [];
       for (const verification of candidate.verifications) {
-        if (Date.now() - started >= this.#config.maxWallClockMs) return this.#result("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation, started);
+        if (Date.now() - started >= this.#config.maxWallClockMs) return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
         const execution = await verification.executor.execute(verification.request);
-        if (execution.evidence.toolKind === "UNKNOWN") return this.#result("BLOCKED", "repair_verification_tool_kind_unknown", iterations, currentObservation, started);
+        if (execution.evidence.toolKind === "UNKNOWN") return finish("BLOCKED", "repair_verification_tool_kind_unknown", iterations, currentObservation);
         const baseline = baselineByTool.get(verification.toolId);
-        if (!baseline) return this.#result("BLOCKED", "repair_verification_baseline_missing", iterations, currentObservation, started);
+        if (!baseline) return finish("BLOCKED", "repair_verification_baseline_missing", iterations, currentObservation);
         const observed = observeEngineeringExecution({ schemaVersion: 1,
           observationRequestId: `${request.repairRequestId}-OBSERVATION-${iteration}-${verification.toolId}`,
           observerIdentity: this.#config.observerIdentity, evaluatorVersion: this.#config.evaluatorVersion,
@@ -226,7 +235,7 @@ export class R3BoundedRepairLoop {
           candidate: execution, baseline,
           observedAtEpochMs: Math.max(Date.now(), execution.evidence.endedAtEpochMs) });
         if (observed.decision !== "OBSERVED" || !observed.observation || observed.observation.epistemicState === "CONFLICTED") {
-          return this.#result("BLOCKED", `repair_observation_${observed.reason}`, iterations, currentObservation, started);
+          return finish("BLOCKED", `repair_observation_${observed.reason}`, iterations, currentObservation);
         }
         verifications.push(Object.freeze({ toolId: verification.toolId, execution, observation: observed.observation }));
       }
@@ -236,17 +245,18 @@ export class R3BoundedRepairLoop {
         proposalDigest: candidate.proposal.proposalDigest, applicationId: candidate.application.applicationId,
         applicationDecision: candidate.application.decision, verifications: Object.freeze(verifications), passed });
       iterations.push(record);
-      if (passed) return this.#result("FUNCTIONALLY_REPAIRED_VERIFIED", "bounded_repair_functionally_verified", iterations, verifications[0].observation, started);
+      if (passed) return finish("FUNCTIONALLY_REPAIRED_VERIFIED", "bounded_repair_functionally_verified", iterations, verifications[0].observation);
       const nextFailure = verifications.find((item) => failing(item.observation));
-      if (!nextFailure) return this.#result("BLOCKED", "repair_verification_state_not_actionable", iterations, currentObservation, started);
+      if (!nextFailure) return finish("BLOCKED", "repair_verification_state_not_actionable", iterations, currentObservation);
       currentObservation = nextFailure.observation;
       currentFiles = candidate.files;
     }
-    return this.#result("EXHAUSTED", "repair_iteration_budget_exhausted", iterations, currentObservation, started);
+    return finish("EXHAUSTED", "repair_iteration_budget_exhausted", iterations, currentObservation);
   }
 
   #result(outcome: R3BoundedRepairResult["outcome"], reason: string, iterations: readonly R3RepairIteration[],
-    finalObservation: EngineeringObservation, started: number): R3BoundedRepairResult {
+    finalObservation: EngineeringObservation, started: number, modelCallCount: number,
+    lastCognitionEvidence: NyxRepairCognitionEvidence | null): R3BoundedRepairResult {
     const durationMs = Math.max(0, Date.now() - started);
     const evidenceId = `R3E-EVIDENCE-${sha256(canonical({ loopId: this.#config.loopId, outcome, reason,
       iterations: iterations.map((item) => ({ iteration: item.iteration, hypothesis: item.hypothesis.proposalDigest,
@@ -255,7 +265,8 @@ export class R3BoundedRepairLoop {
           evidence: verification.execution.evidence.evidenceId, observation: verification.observation.observationId })) })),
       finalObservation: finalObservation.observationId })).slice(0, 32)}`;
     return Object.freeze({ outcome, reason, iterations: Object.freeze([...iterations]), finalObservation, evidenceId,
-      evidenceClass: "E3", durationMs, functionalAcceptance: outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" ? "ACCEPTED" : "NOT_ACCEPTED",
+      evidenceClass: "E3", modelCallCount, lastCognitionEvidence, durationMs,
+      functionalAcceptance: outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" ? "ACCEPTED" : "NOT_ACCEPTED",
       engineeringQualityAcceptance: "NOT_EVALUATED", authorityGranted: false, sourceRepositoryWriteAuthority: false, productionAuthority: false });
   }
 }
