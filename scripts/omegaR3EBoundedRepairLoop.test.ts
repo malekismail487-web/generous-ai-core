@@ -166,7 +166,8 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
 }
 
 function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0]> = {}): Parameters<R3BoundedRepairLoop["run"]>[0] {
-  return { schemaVersion: 1, repairRequestId: `R3E-REPAIR-${sequence}`, initialObservation,
+  return { schemaVersion: 1, repairRequestId: `R3E-REPAIR-${sequence}`,
+    objective: "Repair the arithmetic fixture so the repository-native test passes.", initialObservation,
     initialFiles: [{ relativePath: "src/math.txt", content: wrong, contentSha256: hash(wrong) }],
     allowedVerificationToolIds: ["TEST"], baselineExecutions: [{ toolId: "TEST", result: initialExecution }],
     observedAtEpochMs: NOW + 30_000, ...overrides };
@@ -187,6 +188,8 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
   check(await readFile(join(initial.cloneRoot, "src", "math.txt"), "utf8") === wrong
     && await readFile(join(sourceRoot, "src", "math.txt"), "utf8") === "2+2=4", "repair candidate leaves both source and failed predecessor repositories unchanged");
   check(result.evidenceId.startsWith("R3E-EVIDENCE-") && result.iterations[0].cognitionEvidenceId.startsWith("NYX-COGNITION-"), "loop evidence preserves cognition, proposal, application, execution, and observation genealogy");
+  check(result.iterations[0].cognitionEvidence.evidenceClass === "E3"
+    && result.iterations[0].cognitionEvidence.modelRequestDigest !== null, "loop retains sanitized cognition evidence without granting authority");
 }
 
 {

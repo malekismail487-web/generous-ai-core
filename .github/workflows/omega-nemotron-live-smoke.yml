@@ -9,6 +9,9 @@ on:
       - .github/workflows/omega-nemotron-live-smoke.yml
       - scripts/omega/nvidia-nim-live-smoke.ts
       - src/lib/codelab/model/nvidiaNimProvider.ts
+      - src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts
+      - src/lib/codelab/engine/r3BoundedRepairLoop.ts
+      - scripts/omega/nyx-live-r3e.ts
 
 permissions:
   contents: read
@@ -35,3 +38,5 @@ jobs:
         run: test -n "$NVIDIA_API_KEY"
       - name: Run bounded live Nemotron smoke
         run: npm run omega:nvidia:smoke
+      - name: Run live bounded Νύξ engineering loop
+        run: npm run omega:nyx:live-engineering

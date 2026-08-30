@@ -23,6 +23,7 @@ export interface NyxEngineeringFileContext {
 export interface NyxRepairCognitionRequest {
   readonly schemaVersion: 1;
   readonly cognitionRequestId: string;
+  readonly objective: string;
   readonly observation: EngineeringObservation;
   readonly files: readonly NyxEngineeringFileContext[];
   readonly allowedVerificationToolIds: readonly string[];
@@ -62,6 +63,9 @@ export interface NyxRepairCognitionEvidence {
   readonly modelEvidenceId: string;
   readonly model: string;
   readonly cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA";
+  readonly modelRequestDigest: string | null;
+  readonly modelResponseDigest: string | null;
+  readonly modelUsage: NvidiaNimEvidence["usage"];
   readonly proposalDigest: string | null;
   readonly authorityGranted: false;
 }
@@ -125,7 +129,8 @@ export class NyxNemotronEngineeringCognition {
   async proposeRepair(request: NyxRepairCognitionRequest): Promise<NyxRepairCognitionResult> {
     const inputIssues = this.#validateInput(request);
     if (inputIssues.length > 0) return this.#result("REJECTED", inputIssues.join(","), request, null, null);
-    const promptObject = { role: "NYX_ENGINEERING_COGNITION", objective: "Diagnose the observed engineering failure and propose the smallest bounded repair.",
+    const promptObject = { role: "NYX_ENGINEERING_COGNITION", objective: request.objective,
+      assignment: "Diagnose the observed engineering failure and propose the smallest bounded repair that satisfies the objective.",
       constraints: { output: "JSON_ONLY", allowedChangeKind: "MODIFY", maxChanges: request.maxChanges,
         maxPatchBytes: request.maxPatchBytes, allowedVerificationToolIds: request.allowedVerificationToolIds,
         authorityStatement: "This is a proposal. Omega alone authorizes and executes actions." },
@@ -141,7 +146,7 @@ export class NyxNemotronEngineeringCognition {
       return this.#result("REJECTED", "nyx_cognition_prompt_bound_exceeded", request, null, null);
     }
     const completion = await this.#config.provider.complete({ schemaVersion: 1, requestId: request.cognitionRequestId,
-      messages: [{ role: "system", content: "You are Νύξ engineering cognition running on NVIDIA Nemotron 3 Ultra. Return one strict JSON repair hypothesis. You propose; Omega authorizes." },
+      messages: [{ role: "system", content: "You are Νύξ engineering cognition running on NVIDIA Nemotron 3 Ultra. Reason internally, then return only one strict JSON repair hypothesis with no markdown or commentary. You propose; Omega authorizes." },
         { role: "user", content: serializedPrompt }], maxTokens: this.#config.maxOutputTokens, temperature: 0,
       observedAtEpochMs: request.observedAtEpochMs });
     if (completion.decision !== "COMPLETED" || completion.content === null) {
@@ -164,7 +169,8 @@ export class NyxNemotronEngineeringCognition {
 
   #validateInput(request: NyxRepairCognitionRequest): readonly string[] {
     const issues: string[] = [];
-    if (request.schemaVersion !== 1 || !request.cognitionRequestId?.trim() || !Number.isFinite(request.observedAtEpochMs)) issues.push("nyx_cognition_request_malformed");
+    if (request.schemaVersion !== 1 || !request.cognitionRequestId?.trim() || typeof request.objective !== "string"
+      || !request.objective.trim() || request.objective.length > 2_000 || !Number.isFinite(request.observedAtEpochMs)) issues.push("nyx_cognition_request_malformed");
     if (!request.observation || !request.observation.observationId?.trim() || request.observation.grantsAuthority
       || !failureObservation(request.observation)) issues.push("nyx_cognition_failure_observation_required");
     if (!Number.isInteger(request.maxChanges) || request.maxChanges < 1 || !Number.isInteger(request.maxPatchBytes)
@@ -228,7 +234,10 @@ export class NyxNemotronEngineeringCognition {
       proposalDigest: hypothesis?.proposalDigest ?? null, decision, reason })).slice(0, 32)}`,
       evidenceClass: modelEvidence?.evidenceClass ?? "E3", sourceObservationId, sourceExecutionEvidenceId: sourceEvidenceId,
       modelEvidenceId: modelEvidence?.evidenceId ?? "NOT_INVOKED", model: this.#model,
-      cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA", proposalDigest: hypothesis?.proposalDigest ?? null, authorityGranted: false });
+      cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA", modelRequestDigest: modelEvidence?.requestDigest ?? null,
+      modelResponseDigest: modelEvidence?.responseDigest ?? null,
+      modelUsage: modelEvidence?.usage ?? Object.freeze({ promptTokens: null, completionTokens: null, totalTokens: null }),
+      proposalDigest: hypothesis?.proposalDigest ?? null, authorityGranted: false });
     return Object.freeze({ decision, reason, hypothesis, evidence, omegaAuthorityGranted: false });
   }
 }

@@ -44,7 +44,8 @@ function cognition(transport: NvidiaNimTransport) {
 
 const source = "export const add = (a: number, b: number) => a + b + 1;\n";
 function request(overrides: Partial<NyxRepairCognitionRequest> = {}): NyxRepairCognitionRequest {
-  return { schemaVersion: 1, cognitionRequestId: "NYX-REPAIR-REQUEST-1", observation: observation(),
+  return { schemaVersion: 1, cognitionRequestId: "NYX-REPAIR-REQUEST-1",
+    objective: "Restore correct addition behavior while preserving the exported function contract.", observation: observation(),
     files: [{ relativePath: "src/math.ts", content: source, contentSha256: hash(source) }],
     allowedVerificationToolIds: ["TYPECHECK", "TEST"], maxChanges: 2, maxPatchBytes: 4_096,
     maxDiagnosisCharacters: 1_000, observedAtEpochMs: NOW, ...overrides };
@@ -73,8 +74,11 @@ function response(overrides: Record<string, unknown> = {}): string {
   check(result.evidence.sourceObservationId === "R3C-OBSERVATION-CANDIDATE"
     && result.evidence.sourceExecutionEvidenceId === "R3B-EVIDENCE-CANDIDATE" && result.evidence.modelEvidenceId.startsWith("NVIDIA-NIM-"), "cognition evidence connects observation, execution, and model provenance");
   check(result.evidence.cognitiveSubstrate === "NVIDIA_NEMOTRON_3_ULTRA" && result.evidence.model === "nvidia/nemotron-3-ultra", "evidence identifies Nemotron 3 Ultra as Νύξ's cognitive substrate");
+  check(result.evidence.modelRequestDigest !== null && result.evidence.modelResponseDigest !== null
+    && result.evidence.modelUsage.totalTokens === 520, "cognition preserves sanitized model request, response, and resource evidence");
   const messages = body.messages as Array<{ role: string; content: string }>;
   check(messages[0].content.includes("You are Νύξ engineering cognition") && messages[1].content.includes("Omega alone authorizes"), "prompt preserves Νύξ identity and independent Omega authority boundary");
+  check(messages[1].content.includes("Restore correct addition behavior"), "typed cognition prompt carries the explicit engineering objective");
   check(!JSON.stringify(result.evidence).includes(source) && result.evidence.proposalDigest === hypothesis?.proposalDigest, "evidence stores digests rather than repository content while binding the proposal");
 }
 
@@ -87,6 +91,9 @@ function response(overrides: Record<string, unknown> = {}): string {
   const badHash = await nyx.proposeRepair(request({ files: [{ relativePath: "src/math.ts", content: source, contentSha256: "0".repeat(64) }] }));
   check(badHash.decision === "REJECTED" && badHash.reason.includes("file_context_invalid") && calls === 0,
     "unproven repository file context is rejected before cognition");
+  const missingObjective = await nyx.proposeRepair(request({ objective: "" }));
+  check(missingObjective.decision === "REJECTED" && missingObjective.reason.includes("request_malformed") && calls === 0,
+    "missing task objective is rejected before cognition");
 }
 
 {

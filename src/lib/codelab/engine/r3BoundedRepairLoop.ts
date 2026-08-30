@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { NyxEngineeringFileContext, NyxNemotronEngineeringCognition, NyxRepairHypothesis } from "../cognition/nyxNemotronEngineeringCognition";
+import type { NyxEngineeringFileContext, NyxNemotronEngineeringCognition, NyxRepairCognitionEvidence, NyxRepairHypothesis } from "../cognition/nyxNemotronEngineeringCognition";
 import type { R2GPatchProposal } from "../executor/r2PatchProposal";
 import type { R3AApplyResult } from "../executor/r3DisposablePatchApplication";
 import type { R3BControlledEngineeringExecutor, R3BExecutionRequest, R3BExecutionResult } from "../executor/r3ControlledEngineeringExecution";
@@ -62,6 +62,7 @@ export interface R3RepairBaselineExecution {
 export interface R3BoundedRepairRequest {
   readonly schemaVersion: 1;
   readonly repairRequestId: string;
+  readonly objective: string;
   readonly initialObservation: EngineeringObservation;
   readonly initialFiles: readonly NyxEngineeringFileContext[];
   readonly allowedVerificationToolIds: readonly string[];
@@ -79,6 +80,7 @@ export interface R3RepairIteration {
   readonly iteration: number;
   readonly inputObservationId: string;
   readonly cognitionEvidenceId: string;
+  readonly cognitionEvidence: NyxRepairCognitionEvidence;
   readonly hypothesis: NyxRepairHypothesis;
   readonly proposalDigest: string;
   readonly applicationId: string;
@@ -173,7 +175,8 @@ export class R3BoundedRepairLoop {
     const started = Date.now();
     const initialExecution = request.baselineExecutions.find((item) => item.toolId === request.initialObservation.toolId
       && item.result.evidence.evidenceId === request.initialObservation.candidateEvidenceId);
-    if (request.schemaVersion !== 1 || !request.repairRequestId?.trim() || !Number.isFinite(request.observedAtEpochMs)
+    if (request.schemaVersion !== 1 || !request.repairRequestId?.trim() || typeof request.objective !== "string"
+      || !request.objective.trim() || request.objective.length > 2_000 || !Number.isFinite(request.observedAtEpochMs)
       || !failing(request.initialObservation) || request.initialObservation.grantsAuthority || !fileContextsValid(request.initialFiles)
       || request.allowedVerificationToolIds.length < 1 || new Set(request.allowedVerificationToolIds).size !== request.allowedVerificationToolIds.length
       || request.baselineExecutions.some((item) => !item.toolId || item.toolId !== item.result.evidence.toolId)
@@ -191,7 +194,8 @@ export class R3BoundedRepairLoop {
     for (let iteration = 1; iteration <= this.#config.maxIterations; iteration += 1) {
       if (Date.now() - started >= this.#config.maxWallClockMs) return this.#result("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation, started);
       const cognition = await this.#config.cognition.proposeRepair({ schemaVersion: 1,
-        cognitionRequestId: `${request.repairRequestId}-COGNITION-${iteration}`, observation: currentObservation, files: currentFiles,
+        cognitionRequestId: `${request.repairRequestId}-COGNITION-${iteration}`, objective: request.objective,
+        observation: currentObservation, files: currentFiles,
         allowedVerificationToolIds: request.allowedVerificationToolIds, maxChanges: this.#config.maxChangesPerIteration,
         maxPatchBytes: this.#config.maxPatchBytesPerIteration, maxDiagnosisCharacters: this.#config.maxDiagnosisCharacters,
         observedAtEpochMs: Math.max(request.observedAtEpochMs, Date.now()) });
@@ -228,7 +232,7 @@ export class R3BoundedRepairLoop {
       }
       const passed = verifications.length > 0 && verifications.every((item) => passing(item.observation));
       const record: R3RepairIteration = Object.freeze({ iteration, inputObservationId: currentObservation.observationId,
-        cognitionEvidenceId: cognition.evidence.evidenceId, hypothesis: cognition.hypothesis,
+        cognitionEvidenceId: cognition.evidence.evidenceId, cognitionEvidence: cognition.evidence, hypothesis: cognition.hypothesis,
         proposalDigest: candidate.proposal.proposalDigest, applicationId: candidate.application.applicationId,
         applicationDecision: candidate.application.decision, verifications: Object.freeze(verifications), passed });
       iterations.push(record);
