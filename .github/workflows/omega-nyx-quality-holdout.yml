@@ -14,6 +14,7 @@ on:
       - scripts/omegaVerificationIntegrity.test.ts
       - scripts/omegaNvidiaNimProvider.test.ts
       - src/lib/codelab/assurance/engineeringQualityOracle.ts
+      - src/lib/codelab/assurance/holdoutAcceptanceIntegrity.ts
       - src/lib/codelab/assurance/r3EvaluatorIsolation.ts
       - src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts
       - src/lib/codelab/engine/r3BoundedRepairLoop.ts

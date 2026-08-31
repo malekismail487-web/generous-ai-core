@@ -11,6 +11,8 @@ import {
   type NyxRepairHypothesis,
 } from "../../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 import { assessEngineeringQuality } from "../../src/lib/codelab/assurance/engineeringQualityOracle";
+import { isFalseAcceptance, meetsAuthoritativeAcceptancePrerequisites,
+  type HoldoutAcceptanceRecord } from "../../src/lib/codelab/assurance/holdoutAcceptanceIntegrity";
 import { R3IsolatedHiddenEvaluator } from "../../src/lib/codelab/assurance/r3EvaluatorIsolation";
 import { R3BoundedRepairLoop, type OmegaPreparedRepairCandidate, type OmegaRepairEvidenceProvider,
   type R3BoundedRepairResult } from "../../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -30,7 +32,7 @@ const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-5
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V3";
 if (SUITE_ID !== "V3") throw new Error("unsupported_nyx_quality_suite");
 const HOLDOUT = NYX_ENGINEERING_QUALITY_V3;
-const EVALUATOR_VERSION = "nyx-quality-v3/1";
+const EVALUATOR_VERSION = "nyx-quality-v3/2";
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
@@ -42,6 +44,7 @@ const V3_EVALUATOR_DIGEST = sha256(canonical({
   driver: sha256(await readFile(new URL(import.meta.url))),
   isolation: sha256(await readFile(new URL("../../src/lib/codelab/assurance/r3EvaluatorIsolation.ts", import.meta.url))),
   qualityOracle: sha256(await readFile(new URL("../../src/lib/codelab/assurance/engineeringQualityOracle.ts", import.meta.url))),
+  acceptanceIntegrity: sha256(await readFile(new URL("../../src/lib/codelab/assurance/holdoutAcceptanceIntegrity.ts", import.meta.url))),
   candidateRunner: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
 }));
 const V3_TASK_FIXTURE_DIGESTS = Object.freeze(Object.fromEntries(HOLDOUT.map((task) => [task.taskId,
@@ -351,8 +354,10 @@ try {
       sha256(await readFile(join(sourceRoot, path))) === expected))).every(Boolean);
     const failedPredecessorUnchanged = (await Promise.all(Object.entries(task.faultyFiles).map(async ([path, expected]) =>
       await readFile(join(initial.cloneRoot, path), "utf8") === expected))).every(Boolean);
-    const accepted = loopResult.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && hiddenResult === "PASS"
-      && qualityResult === "ACCEPTED" && sourceUnchanged && failedPredecessorUnchanged && contractPreserved;
+    const authorityPreserved = !loopResult.authorityGranted && !loopResult.sourceRepositoryWriteAuthority;
+    const accepted = meetsAuthoritativeAcceptancePrerequisites({ deterministicVerification: loopResult.outcome,
+      hiddenAcceptance: hiddenResult, engineeringQuality: qualityResult, sourceRepositoryUnchanged: sourceUnchanged,
+      failedPredecessorUnchanged, contractPreserved, omegaAuthorityEnforcement: authorityPreserved });
     const noActionActions = loopResult.reason.includes("no_action") ? 1 : 0;
     const semanticActions = loopResult.iterations.length + loopResult.evidenceAcquisitions.length + noActionActions;
     taskResults.push({ taskId: task.taskId, taskClass: task.taskClass, provenance: task.provenance,
@@ -374,7 +379,7 @@ try {
         failureCategory: item.providerFailureCategory, retryability: item.providerRetryability,
         providerRequestId: item.providerRequestId })), hiddenEvidenceId, hiddenIsolationEvidence,
       sourceRepositoryUnchanged: sourceUnchanged, failedPredecessorUnchanged, contractPreserved,
-      omegaAuthorityEnforcement: !loopResult.authorityGranted && !loopResult.sourceRepositoryWriteAuthority,
+      omegaAuthorityEnforcement: authorityPreserved,
       durationMs: Date.now() - taskStarted });
   }
 } catch (error) {
@@ -390,8 +395,7 @@ if (taskResults.length === HOLDOUT.length) {
   const modelCalls = taskResults.reduce((sum, item) => sum + Number(item.modelCalls), 0);
   const semanticActions = taskResults.reduce((sum, item) => sum + Number(item.semanticActions), 0);
   const rejectedActions = taskResults.reduce((sum, item) => sum + Number(item.rejectedActions), 0);
-  const falseAcceptances = taskResults.filter((item) => item.deterministicVerification === "FUNCTIONALLY_REPAIRED_VERIFIED"
-    && (item.hiddenAcceptance !== "PASS" || item.engineeringQuality !== "ACCEPTED"));
+  const falseAcceptances = taskResults.filter((item) => isFalseAcceptance(item as unknown as HoldoutAcceptanceRecord));
   const repairAttempted = taskResults.filter((item) => Number(item.repairIterations) > 0);
   const providerDiagnostics = taskResults.flatMap((item) => item.providerDiagnostics as readonly {
     readonly failureCategory: string | null; readonly retryability: string | null; readonly statusCode: number | null;

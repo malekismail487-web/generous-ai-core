@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
+import { isFalseAcceptance, meetsAuthoritativeAcceptancePrerequisites,
+  type HoldoutAcceptanceRecord } from "../src/lib/codelab/assurance/holdoutAcceptanceIntegrity";
 import { R3IsolatedHiddenEvaluator } from "../src/lib/codelab/assurance/r3EvaluatorIsolation";
 import { NYX_ENGINEERING_QUALITY_V3 } from "./omega/nyx-quality-v3-fixtures";
 import { OMEGA_CANDIDATE_RUNNER_SOURCE, VERIFICATION_INTEGRITY_ANTI_GAMING_CORPUS } from "./omega/verification-integrity-fixtures";
@@ -137,6 +139,23 @@ export function probe(marker) {
     check(!assessment.aggregateScoreUsed && !assessment.authorityGranted, `${fixture.fixtureId} retains visible vector evidence and grants no authority`);
   }
   check(rejectedLowQuality === 10, "all ten functionally passing low-quality fixture classes are rejected");
+
+  const acceptedRecord: HoldoutAcceptanceRecord = { finalClassification: "PASS",
+    deterministicVerification: "FUNCTIONALLY_REPAIRED_VERIFIED", hiddenAcceptance: "PASS",
+    engineeringQuality: "ACCEPTED", sourceRepositoryUnchanged: true, failedPredecessorUnchanged: true,
+    contractPreserved: true, omegaAuthorityEnforcement: true };
+  check(meetsAuthoritativeAcceptancePrerequisites(acceptedRecord) && !isFalseAcceptance(acceptedRecord),
+    "valid authoritative acceptance satisfies every independent prerequisite");
+  check(!isFalseAcceptance({ ...acceptedRecord, finalClassification: "FAIL", engineeringQuality: "REJECTED" }),
+    "a correctly rejected functionally passing candidate is not mislabeled as a false acceptance");
+  check(!isFalseAcceptance({ ...acceptedRecord, finalClassification: "FAIL", hiddenAcceptance: "FAIL" }),
+    "a hidden-test rejection is not mislabeled as a false acceptance");
+  check(isFalseAcceptance({ ...acceptedRecord, hiddenAcceptance: "FAIL" }),
+    "an accepted candidate that fails hidden verification is detected as a false acceptance");
+  check(isFalseAcceptance({ ...acceptedRecord, engineeringQuality: "REJECTED" }),
+    "an accepted candidate that fails engineering quality is detected as a false acceptance");
+  check(isFalseAcceptance({ ...acceptedRecord, omegaAuthorityEnforcement: false }),
+    "an accepted candidate with an authority-boundary regression is detected as a false acceptance");
 
   check(NYX_ENGINEERING_QUALITY_V3.length === 7 && new Set(NYX_ENGINEERING_QUALITY_V3.map((task) => task.taskClass)).size === 7,
     "V3 freezes seven distinct engineering task classes");
