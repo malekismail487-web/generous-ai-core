@@ -73,7 +73,9 @@ export interface R3HiddenEvaluationEvidence {
   readonly candidateRunnerDigest: string;
   readonly hiddenAssetsExposedToCandidate: false;
   readonly hiddenAssetsMutableByCandidate: false;
-  readonly candidateResultTransportAuthenticated: true;
+  readonly candidateResultTransportAuthenticated: boolean;
+  readonly authenticatedCandidateResults: number;
+  readonly unauthenticatedCandidateResults: number;
   readonly executedCases: number;
   readonly passedCases: number;
   readonly observations: readonly HiddenCaseObservation[];
@@ -179,24 +181,36 @@ function validCandidateResult(value: unknown): value is CandidateResult {
   return result.kind === "THROW" && typeof result.errorName === "string" && Boolean(result.errorName);
 }
 
-function parseAuthenticatedCandidateResult(lines: readonly string[], resultCapability: string): CandidateResult | null {
+function parseAuthenticatedCandidateResult(lines: readonly string[], resultCapability: string): {
+  readonly authenticated: boolean;
+  readonly result: CandidateResult | null;
+} {
   const reserved = lines.filter((value) => value.startsWith(RESULT_PREFIX));
-  if (reserved.length !== 1) return null;
+  if (reserved.length !== 1) return { authenticated: false, result: null };
   let envelope: CandidateResultEnvelope;
   try { envelope = JSON.parse(reserved[0].slice(RESULT_PREFIX.length)) as CandidateResultEnvelope; }
-  catch { return null; }
+  catch { return { authenticated: false, result: null }; }
   if (!envelope || typeof envelope.payloadJson !== "string" || envelope.payloadJson.length > 1_000_000
-    || typeof envelope.authenticator !== "string" || !/^[0-9a-f]{64}$/.test(envelope.authenticator)) return null;
+    || typeof envelope.authenticator !== "string" || !/^[0-9a-f]{64}$/.test(envelope.authenticator)) {
+    return { authenticated: false, result: null };
+  }
   const expected = createHmac("sha256", resultCapability).update(envelope.payloadJson).digest();
   const observed = Buffer.from(envelope.authenticator, "hex");
-  if (observed.length !== expected.length || !timingSafeEqual(expected, observed)) return null;
+  if (observed.length !== expected.length || !timingSafeEqual(expected, observed)) {
+    return { authenticated: false, result: null };
+  }
   let payload: unknown;
-  try { payload = JSON.parse(envelope.payloadJson); } catch { return null; }
-  return validCandidateResult(payload) ? payload : null;
+  try { payload = JSON.parse(envelope.payloadJson); }
+  catch { return { authenticated: true, result: null }; }
+  return { authenticated: true, result: validCandidateResult(payload) ? payload : null };
 }
 
 async function executeCase(config: R3HiddenEvaluatorConfig, candidateRoot: string, runnerPath: string,
-  item: HiddenEvaluationCase): Promise<{ observation: HiddenCaseObservation; actual: CandidateResult | null }> {
+  item: HiddenEvaluationCase): Promise<{
+    observation: HiddenCaseObservation;
+    actual: CandidateResult | null;
+    transportAuthenticated: boolean;
+  }> {
   const resultCapability = randomBytes(32).toString("hex");
   const args = ["--permission", `--allow-fs-read=${candidateRoot}`, runnerPath, config.candidateModule, config.exportName];
   const child = spawn(process.execPath, args, { cwd: candidateRoot, env: safeEnvironment(), shell: false,
@@ -222,13 +236,17 @@ async function executeCase(config: R3HiddenEvaluatorConfig, candidateRoot: strin
     child.once("close", (code) => finish({ code, error: false }));
   });
   clearTimeout(timer);
-  if (timedOut || exceeded) return { actual: null, observation: Object.freeze({ caseId: item.caseId, disposition: "BLOCKED",
-    failureClass: "CANDIDATE_EXECUTION_BLOCKED", actualDigest: null }) };
-  if (closed.error || closed.code !== 0) return { actual: null, observation: Object.freeze({ caseId: item.caseId,
-    disposition: closed.error ? "INFRASTRUCTURE_ERROR" : "FAIL", failureClass: "EXECUTION_FAILURE", actualDigest: null }) };
-  const actual = parseAuthenticatedCandidateResult(stdout.toString("utf8").split(/\r?\n/), resultCapability);
-  if (!actual) return { actual: null, observation: Object.freeze({ caseId: item.caseId, disposition: "FAIL",
-    failureClass: "MALFORMED_CANDIDATE_OUTPUT", actualDigest: null }) };
+  if (timedOut || exceeded) return { actual: null, transportAuthenticated: false,
+    observation: Object.freeze({ caseId: item.caseId, disposition: "BLOCKED",
+      failureClass: "CANDIDATE_EXECUTION_BLOCKED", actualDigest: null }) };
+  if (closed.error || closed.code !== 0) return { actual: null, transportAuthenticated: false,
+    observation: Object.freeze({ caseId: item.caseId,
+      disposition: closed.error ? "INFRASTRUCTURE_ERROR" : "FAIL", failureClass: "EXECUTION_FAILURE", actualDigest: null }) };
+  const parsed = parseAuthenticatedCandidateResult(stdout.toString("utf8").split(/\r?\n/), resultCapability);
+  const actual = parsed.result;
+  if (!actual) return { actual: null, transportAuthenticated: parsed.authenticated,
+    observation: Object.freeze({ caseId: item.caseId, disposition: "FAIL",
+      failureClass: "MALFORMED_CANDIDATE_OUTPUT", actualDigest: null }) };
   const expected = item.expectation.kind === "RETURN"
     ? { kind: "RETURN", value: item.expectation.value, argsAfter: item.expectation.argsAfter ?? item.args }
     : { kind: "THROW", errorName: item.expectation.errorName };
@@ -236,7 +254,8 @@ async function executeCase(config: R3HiddenEvaluatorConfig, candidateRoot: strin
     ? { kind: "RETURN", value: actual.value, argsAfter: actual.argsAfter }
     : { kind: "THROW", errorName: actual.errorName };
   const pass = canonical(expected) === canonical(normalizedActual);
-  return { actual, observation: Object.freeze({ caseId: item.caseId, disposition: pass ? "PASS" : "FAIL",
+  return { actual, transportAuthenticated: true,
+    observation: Object.freeze({ caseId: item.caseId, disposition: pass ? "PASS" : "FAIL",
     failureClass: pass ? "NONE" : "BEHAVIOR_MISMATCH", actualDigest: sha256(canonical(normalizedActual)) }) };
 }
 
@@ -292,8 +311,13 @@ export class R3IsolatedHiddenEvaluator {
     if (this.#used) throw new Error("hidden_evaluator_single_use_exhausted");
     this.#used = true;
     const startedAtEpochMs = Date.now();
+    const executions: Awaited<ReturnType<typeof executeCase>>[] = [];
     const observations: HiddenCaseObservation[] = [];
-    for (const item of this.#caseFile.cases) observations.push((await executeCase(this.#config, this.#candidateRoot, this.#runnerPath, item)).observation);
+    for (const item of this.#caseFile.cases) {
+      const execution = await executeCase(this.#config, this.#candidateRoot, this.#runnerPath, item);
+      executions.push(execution);
+      observations.push(execution.observation);
+    }
     const [caseBytesAfter, runnerBytesAfter] = await Promise.all([readFile(this.#caseFilePath), readFile(this.#runnerPath)]);
     if (sha256(caseBytesAfter) !== this.#config.expectedHiddenCaseFileSha256
       || sha256(runnerBytesAfter) !== this.#config.expectedCandidateRunnerSha256) throw new Error("hidden_evaluator_poststate_identity_mismatch");
@@ -304,7 +328,10 @@ export class R3IsolatedHiddenEvaluator {
       candidateRootDigest: sha256(this.#candidateRoot), hiddenEvaluatorRootDigest: sha256(this.#hiddenRoot),
       candidateAndEvaluatorScopesDisjoint: true as const, hiddenCaseFileDigest: this.#config.expectedHiddenCaseFileSha256,
       candidateRunnerDigest: this.#config.expectedCandidateRunnerSha256, hiddenAssetsExposedToCandidate: false as const,
-      hiddenAssetsMutableByCandidate: false as const, candidateResultTransportAuthenticated: true as const,
+      hiddenAssetsMutableByCandidate: false as const,
+      candidateResultTransportAuthenticated: executions.every((item) => item.transportAuthenticated),
+      authenticatedCandidateResults: executions.filter((item) => item.transportAuthenticated).length,
+      unauthenticatedCandidateResults: executions.filter((item) => !item.transportAuthenticated).length,
       executedCases: observations.length,
       passedCases: observations.filter((item) => item.disposition === "PASS").length,
       observations: Object.freeze(observations), startedAtEpochMs, endedAtEpochMs: Date.now() };

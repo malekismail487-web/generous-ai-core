@@ -4,8 +4,112 @@ export const OMEGA_CANDIDATE_RUNNER_SOURCE = `import { createHmac } from "node:c
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 const safeWrite = process.stdout.write.bind(process.stdout);
-const safeStringify = JSON.stringify.bind(JSON);
+const safeStringifyPrimitive = JSON.stringify.bind(JSON);
 const safeClone = structuredClone;
+const safeApply = Reflect.apply.bind(Reflect);
+const safeArrayIsArray = Array.isArray.bind(Array);
+const safeObjectKeys = Object.keys.bind(Object);
+const safeGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor.bind(Object);
+const safeGetPrototypeOf = Object.getPrototypeOf.bind(Object);
+const safeNumberToString = Function.prototype.call.bind(Number.prototype.toString);
+const safeHasOwn = Function.prototype.call.bind(Object.prototype.hasOwnProperty);
+const safeSort = Function.prototype.call.bind(Array.prototype.sort);
+const safeWeakSetHas = Function.prototype.call.bind(WeakSet.prototype.has);
+const safeWeakSetAdd = Function.prototype.call.bind(WeakSet.prototype.add);
+const safeWeakSetDelete = Function.prototype.call.bind(WeakSet.prototype.delete);
+const SafeWeakSet = WeakSet;
+const SafeError = Error;
+const safeObjectPrototype = Object.prototype;
+const safeArrayPrototype = Array.prototype;
+function assertPlainJsonData(value) {
+  const seen = new SafeWeakSet();
+  let nodes = 0;
+  const visit = (item, depth) => {
+    nodes += 1;
+    if (nodes > 10000 || depth > 64) throw new SafeError("candidate_result_structure_limit");
+    if (item === null) return;
+    const kind = typeof item;
+    if (kind === "string" || kind === "boolean" || kind === "number" || kind === "undefined") return;
+    if (kind !== "object") throw new SafeError("candidate_result_non_json_value_rejected");
+    if (safeWeakSetHas(seen, item)) throw new SafeError("candidate_result_cycle_rejected");
+    const array = safeArrayIsArray(item);
+    const prototype = safeGetPrototypeOf(item);
+    if (array ? prototype !== safeArrayPrototype : prototype !== safeObjectPrototype && prototype !== null) {
+      throw new SafeError("candidate_result_exotic_object_rejected");
+    }
+    safeWeakSetAdd(seen, item);
+    try {
+      if (array) {
+        for (let index = 0; index < item.length; index += 1) {
+          const descriptor = safeGetOwnPropertyDescriptor(item, safeNumberToString(index));
+          if (!descriptor) continue;
+          if (!safeHasOwn(descriptor, "value")) throw new SafeError("candidate_result_accessor_rejected");
+          visit(descriptor.value, depth + 1);
+        }
+      } else {
+        const keys = safeObjectKeys(item);
+        for (let index = 0; index < keys.length; index += 1) {
+          const descriptor = safeGetOwnPropertyDescriptor(item, keys[index]);
+          if (!descriptor || !safeHasOwn(descriptor, "value")) throw new SafeError("candidate_result_accessor_rejected");
+          visit(descriptor.value, depth + 1);
+        }
+      }
+    } finally {
+      safeWeakSetDelete(seen, item);
+    }
+  };
+  visit(value, 0);
+}
+function safeSerializeJson(value) {
+  const seen = new SafeWeakSet();
+  let nodes = 0;
+  const encode = (item, arrayPosition, depth) => {
+    nodes += 1;
+    if (nodes > 10000 || depth > 64) throw new SafeError("candidate_result_structure_limit");
+    if (item === null) return "null";
+    const kind = typeof item;
+    if (kind === "string") return safeStringifyPrimitive(item);
+    if (kind === "boolean") return item ? "true" : "false";
+    if (kind === "number") return item !== item || item === Infinity || item === -Infinity ? "null" : safeNumberToString(item);
+    if (kind === "undefined" || kind === "function" || kind === "symbol") return arrayPosition ? "null" : undefined;
+    if (kind === "bigint") throw new SafeError("candidate_result_bigint_rejected");
+    if (safeWeakSetHas(seen, item)) throw new SafeError("candidate_result_cycle_rejected");
+    safeWeakSetAdd(seen, item);
+    try {
+      if (safeArrayIsArray(item)) {
+        let output = "[";
+        for (let index = 0; index < item.length; index += 1) {
+          if (index > 0) output += ",";
+          const descriptor = safeGetOwnPropertyDescriptor(item, safeNumberToString(index));
+          if (!descriptor) output += "null";
+          else {
+            if (!safeHasOwn(descriptor, "value")) throw new SafeError("candidate_result_accessor_rejected");
+            output += encode(descriptor.value, true, depth + 1) ?? "null";
+          }
+        }
+        return output + "]";
+      }
+      const keys = safeObjectKeys(item);
+      safeSort(keys);
+      let output = "{";
+      let emitted = 0;
+      for (let index = 0; index < keys.length; index += 1) {
+        const key = keys[index];
+        const descriptor = safeGetOwnPropertyDescriptor(item, key);
+        if (!descriptor || !safeHasOwn(descriptor, "value")) throw new SafeError("candidate_result_accessor_rejected");
+        const encoded = encode(descriptor.value, false, depth + 1);
+        if (encoded === undefined) continue;
+        if (emitted > 0) output += ",";
+        output += safeStringifyPrimitive(key) + ":" + encoded;
+        emitted += 1;
+      }
+      return output + "}";
+    } finally {
+      safeWeakSetDelete(seen, item);
+    }
+  };
+  return encode(value, false, 0);
+}
 const input = await new Promise((resolveInput, rejectInput) => {
   let value = "";
   process.stdin.setEncoding("utf8");
@@ -24,21 +128,45 @@ const signerDigest = signer.digest.bind(signer);
 const modulePath = process.argv[2];
 const exportName = process.argv[3];
 const candidateUrl = pathToFileURL(resolve(process.cwd(), modulePath)).href + "?omega=" + Date.now();
-let payload;
+const args = safeClone(request.args);
+let executionReturned = false;
+let executionValue;
+let executionErrorName = "UnknownError";
 try {
   const module = await import(candidateUrl);
   const callable = module[exportName];
-  if (typeof callable !== "function") throw Object.assign(new Error("export unavailable"), { name: "ExportUnavailableError" });
-  const args = safeClone(request.args);
-  const value = await callable(...args);
-  payload = { kind: "RETURN", value, argsAfter: args };
+  if (typeof callable !== "function") executionErrorName = "ExportUnavailableError";
+  else {
+    executionValue = await safeApply(callable, undefined, args);
+    executionReturned = true;
+  }
 } catch (error) {
-  payload = { kind: "THROW", errorName: error instanceof Error ? error.name : "UnknownError" };
+  let cursor = error;
+  for (let depth = 0; cursor && (typeof cursor === "object" || typeof cursor === "function") && depth < 16; depth += 1) {
+    const descriptor = safeGetOwnPropertyDescriptor(cursor, "name");
+    if (descriptor && safeHasOwn(descriptor, "value") && typeof descriptor.value === "string" && descriptor.value) {
+      executionErrorName = descriptor.value;
+      break;
+    }
+    cursor = safeGetPrototypeOf(cursor);
+  }
 }
-const payloadJson = safeStringify(payload);
+let payload;
+if (executionReturned) {
+  assertPlainJsonData(executionValue);
+  assertPlainJsonData(args);
+  const observedValue = safeClone(executionValue);
+  const observedArgs = safeClone(args);
+  assertPlainJsonData(observedValue);
+  assertPlainJsonData(observedArgs);
+  payload = { kind: "RETURN", value: observedValue, argsAfter: observedArgs };
+} else payload = { kind: "THROW", errorName: executionErrorName };
+const payloadJson = safeSerializeJson(payload);
 signerUpdate(payloadJson);
 const authenticator = signerDigest("hex");
-safeWrite("OMEGA_CANDIDATE_RESULT " + safeStringify({ payloadJson, authenticator }) + "\\n");
+const envelopeJson = "{\\"payloadJson\\":" + safeStringifyPrimitive(payloadJson)
+  + ",\\"authenticator\\":" + safeStringifyPrimitive(authenticator) + "}";
+safeWrite("OMEGA_CANDIDATE_RESULT " + envelopeJson + "\\n");
 `;
 
 export interface AntiGamingFixture {

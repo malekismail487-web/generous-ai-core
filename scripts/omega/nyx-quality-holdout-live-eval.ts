@@ -32,7 +32,7 @@ const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-5
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V3";
 if (SUITE_ID !== "V3") throw new Error("unsupported_nyx_quality_suite");
 const HOLDOUT = NYX_ENGINEERING_QUALITY_V3;
-const EVALUATOR_VERSION = "nyx-quality-v3/3";
+const EVALUATOR_VERSION = "nyx-quality-v3/4";
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();

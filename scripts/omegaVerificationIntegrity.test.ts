@@ -51,7 +51,8 @@ try {
   const positive = await evaluator.evaluate();
   check(positive.outcome === "PASS" && positive.evidence.passedCases === 1, "opaque evaluator still executes a correct candidate");
   check(positive.evidence.candidateAndEvaluatorScopesDisjoint && !positive.evidence.hiddenAssetsExposedToCandidate
-    && !positive.evidence.hiddenAssetsMutableByCandidate && positive.evidence.candidateResultTransportAuthenticated,
+    && !positive.evidence.hiddenAssetsMutableByCandidate && positive.evidence.candidateResultTransportAuthenticated
+    && positive.evidence.authenticatedCandidateResults === 1 && positive.evidence.unauthenticatedCandidateResults === 0,
   "runtime evidence proves scope disjointness and authenticated result transport");
   check(!JSON.stringify(positive.candidateFeedback).includes("authoritative-evaluator")
     && !JSON.stringify(positive).includes('"value":"yes"'), "candidate-facing evidence excludes evaluator paths and expected values");
@@ -96,8 +97,97 @@ export function normalize() {
     maxOutputBytesPerCase: 8_192, maxCases: 10 });
   const forgedOutput = await forgedOutputEvaluator.evaluate();
   check(forgedOutput.outcome === "FAIL"
-    && forgedOutput.evidence.observations[0]?.failureClass === "MALFORMED_CANDIDATE_OUTPUT",
+    && forgedOutput.evidence.observations[0]?.failureClass === "MALFORMED_CANDIDATE_OUTPUT"
+    && !forgedOutput.evidence.candidateResultTransportAuthenticated
+    && forgedOutput.evidence.unauthenticatedCandidateResults === 1,
   "candidate-generated reserved-prefix output cannot forge an authoritative acceptance");
+
+  await writeFile(subjectPath, `let evaluatorFacingValue = "";
+Object.prototype.toJSON = function poisonTrustedSerialization() {
+  if (this && this.kind === "RETURN" && Object.prototype.hasOwnProperty.call(this, "argsAfter")) {
+    return { kind: "RETURN", value: evaluatorFacingValue, argsAfter: this.argsAfter };
+  }
+  return this;
+};
+export function normalize(value) {
+  evaluatorFacingValue = value.trim().toLowerCase();
+  return "incorrect-public-result";
+}
+`, "utf8");
+  const prototypePoisonEvaluator = await R3IsolatedHiddenEvaluator.create({ evaluatorId: "OMEGA-INTEGRITY-PROTOTYPE-POISON",
+    evaluatorVersion: "omega-hidden-evaluator/3", candidateRoot, hiddenEvaluatorRoot: hiddenRoot,
+    hiddenCaseFile: "private/expected-cases.json", expectedHiddenCaseFileSha256: sha256(caseBytes),
+    candidateRunner: "tools/candidate-runner.mjs", expectedCandidateRunnerSha256: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
+    candidateModule: "src/subject.mjs", exportName: "normalize", timeoutMsPerCase: 3_000,
+    maxOutputBytesPerCase: 8_192, maxCases: 10 });
+  const prototypePoison = await prototypePoisonEvaluator.evaluate();
+  check(prototypePoison.outcome === "FAIL"
+    && prototypePoison.evidence.observations[0]?.failureClass === "BEHAVIOR_MISMATCH"
+    && prototypePoison.evidence.candidateResultTransportAuthenticated,
+  "candidate prototype/toJSON poisoning cannot alter the authenticated evaluator result");
+
+  const numericCases = { schemaVersion: 1, suiteId: "OMEGA-ISOLATION-NUMERIC-POISON", cases: [
+    { caseId: "NUMERIC-RESULT", args: [7], expectation: { kind: "RETURN", value: 14, argsAfter: [7] } },
+  ] };
+  const numericBytes = `${JSON.stringify(numericCases)}\n`;
+  await writeFile(casePath, numericBytes, "utf8");
+  await writeFile(subjectPath, `const originalString = String;
+globalThis.String = (value) => value === 31337 ? "14" : originalString(value);
+export function normalize() { return 31337; }
+`, "utf8");
+  const numericPoisonEvaluator = await R3IsolatedHiddenEvaluator.create({ evaluatorId: "OMEGA-INTEGRITY-NUMERIC-POISON",
+    evaluatorVersion: "omega-hidden-evaluator/4", candidateRoot, hiddenEvaluatorRoot: hiddenRoot,
+    hiddenCaseFile: "private/expected-cases.json", expectedHiddenCaseFileSha256: sha256(numericBytes),
+    candidateRunner: "tools/candidate-runner.mjs", expectedCandidateRunnerSha256: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
+    candidateModule: "src/subject.mjs", exportName: "normalize", timeoutMsPerCase: 3_000,
+    maxOutputBytesPerCase: 8_192, maxCases: 10 });
+  const numericPoison = await numericPoisonEvaluator.evaluate();
+  check(numericPoison.outcome === "FAIL"
+    && numericPoison.evidence.observations[0]?.failureClass === "BEHAVIOR_MISMATCH"
+    && numericPoison.evidence.candidateResultTransportAuthenticated,
+  "candidate replacement of mutable numeric conversion globals cannot alter the authenticated result");
+
+  const structuredCases = { schemaVersion: 1, suiteId: "OMEGA-ISOLATION-STRUCTURED-POISON", cases: [
+    { caseId: "STRUCTURED-RESULT", args: [], expectation: { kind: "RETURN", value: { safe: true }, argsAfter: [] } },
+  ] };
+  const structuredBytes = `${JSON.stringify(structuredCases)}\n`;
+  await writeFile(casePath, structuredBytes, "utf8");
+  await writeFile(subjectPath, `export function normalize() {
+  let firstRead = true;
+  return { get safe() { const value = firstRead; firstRead = false; return value; } };
+}
+`, "utf8");
+  const accessorEvaluator = await R3IsolatedHiddenEvaluator.create({ evaluatorId: "OMEGA-INTEGRITY-ACCESSOR-POISON",
+    evaluatorVersion: "omega-hidden-evaluator/4", candidateRoot, hiddenEvaluatorRoot: hiddenRoot,
+    hiddenCaseFile: "private/expected-cases.json", expectedHiddenCaseFileSha256: sha256(structuredBytes),
+    candidateRunner: "tools/candidate-runner.mjs", expectedCandidateRunnerSha256: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
+    candidateModule: "src/subject.mjs", exportName: "normalize", timeoutMsPerCase: 3_000,
+    maxOutputBytesPerCase: 8_192, maxCases: 10 });
+  const accessorPoison = await accessorEvaluator.evaluate();
+  check(accessorPoison.outcome === "FAIL"
+    && accessorPoison.evidence.observations[0]?.failureClass === "EXECUTION_FAILURE"
+    && !accessorPoison.evidence.candidateResultTransportAuthenticated,
+  "stateful accessors are rejected before they can create an evaluator-only result snapshot");
+
+  await writeFile(subjectPath, `export function normalize() {
+  return new Proxy({ safe: false }, {
+    ownKeys: () => ["safe"],
+    getOwnPropertyDescriptor: () => ({ enumerable: true, configurable: true, writable: true, value: true }),
+    get: () => false,
+  });
+}
+`, "utf8");
+  const proxyEvaluator = await R3IsolatedHiddenEvaluator.create({ evaluatorId: "OMEGA-INTEGRITY-PROXY-POISON",
+    evaluatorVersion: "omega-hidden-evaluator/4", candidateRoot, hiddenEvaluatorRoot: hiddenRoot,
+    hiddenCaseFile: "private/expected-cases.json", expectedHiddenCaseFileSha256: sha256(structuredBytes),
+    candidateRunner: "tools/candidate-runner.mjs", expectedCandidateRunnerSha256: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
+    candidateModule: "src/subject.mjs", exportName: "normalize", timeoutMsPerCase: 3_000,
+    maxOutputBytesPerCase: 8_192, maxCases: 10 });
+  const proxyPoison = await proxyEvaluator.evaluate();
+  check(proxyPoison.outcome === "FAIL"
+    && proxyPoison.evidence.observations[0]?.failureClass === "EXECUTION_FAILURE"
+    && !proxyPoison.evidence.candidateResultTransportAuthenticated,
+  "proxy-controlled reflection is rejected before authenticated result serialization");
 
   const marker = "SECRET_EXPECTED_VALUE_991";
   const relativeEscape = relative(candidateRoot, casePath).replace(/\\/g, "/");
