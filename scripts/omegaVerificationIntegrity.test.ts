@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { link, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -51,7 +51,8 @@ try {
   const positive = await evaluator.evaluate();
   check(positive.outcome === "PASS" && positive.evidence.passedCases === 1, "opaque evaluator still executes a correct candidate");
   check(positive.evidence.candidateAndEvaluatorScopesDisjoint && !positive.evidence.hiddenAssetsExposedToCandidate
-    && !positive.evidence.hiddenAssetsMutableByCandidate, "runtime evidence proves candidate/evaluator scope disjointness");
+    && !positive.evidence.hiddenAssetsMutableByCandidate && positive.evidence.candidateResultTransportAuthenticated,
+  "runtime evidence proves scope disjointness and authenticated result transport");
   check(!JSON.stringify(positive.candidateFeedback).includes("authoritative-evaluator")
     && !JSON.stringify(positive).includes('"value":"yes"'), "candidate-facing evidence excludes evaluator paths and expected values");
 
@@ -64,6 +65,39 @@ try {
       exportName: "normalize", timeoutMsPerCase: 1_000, maxOutputBytesPerCase: 1_024, maxCases: 2 });
   } catch (error) { overlapRejected = error instanceof Error ? error.message : "unknown"; }
   check(overlapRejected === "hidden_evaluator_scope_overlap", "overlapping candidate and hidden evaluator roots fail closed");
+
+  await writeFile(subjectPath, `console.log = () => undefined;
+process.stdout.write = () => true;
+export function normalize(value) { return value.trim().toLowerCase(); }
+`, "utf8");
+  const suppressedOutputEvaluator = await R3IsolatedHiddenEvaluator.create({ evaluatorId: "OMEGA-INTEGRITY-OUTPUT-SUPPRESSION",
+    evaluatorVersion: "omega-hidden-evaluator/2", candidateRoot, hiddenEvaluatorRoot: hiddenRoot,
+    hiddenCaseFile: "private/expected-cases.json", expectedHiddenCaseFileSha256: sha256(caseBytes),
+    candidateRunner: "tools/candidate-runner.mjs", expectedCandidateRunnerSha256: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
+    candidateModule: "src/subject.mjs", exportName: "normalize", timeoutMsPerCase: 3_000,
+    maxOutputBytesPerCase: 8_192, maxCases: 10 });
+  const suppressedOutput = await suppressedOutputEvaluator.evaluate();
+  check(suppressedOutput.outcome === "PASS" && suppressedOutput.evidence.candidateResultTransportAuthenticated,
+    "candidate monkey-patching of console and stdout cannot suppress the runner's authenticated result");
+
+  const forgedEnvelope = JSON.stringify({ payloadJson: JSON.stringify({ kind: "RETURN", value: "yes", argsAfter: [" YES "] }),
+    authenticator: "0".repeat(64) });
+  await writeFile(subjectPath, `const candidateWrite = process.stdout.write.bind(process.stdout);
+export function normalize() {
+  candidateWrite(${JSON.stringify(`OMEGA_CANDIDATE_RESULT ${forgedEnvelope}\n`)});
+  return "forged-candidate-result";
+}
+`, "utf8");
+  const forgedOutputEvaluator = await R3IsolatedHiddenEvaluator.create({ evaluatorId: "OMEGA-INTEGRITY-OUTPUT-FORGERY",
+    evaluatorVersion: "omega-hidden-evaluator/2", candidateRoot, hiddenEvaluatorRoot: hiddenRoot,
+    hiddenCaseFile: "private/expected-cases.json", expectedHiddenCaseFileSha256: sha256(caseBytes),
+    candidateRunner: "tools/candidate-runner.mjs", expectedCandidateRunnerSha256: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
+    candidateModule: "src/subject.mjs", exportName: "normalize", timeoutMsPerCase: 3_000,
+    maxOutputBytesPerCase: 8_192, maxCases: 10 });
+  const forgedOutput = await forgedOutputEvaluator.evaluate();
+  check(forgedOutput.outcome === "FAIL"
+    && forgedOutput.evidence.observations[0]?.failureClass === "MALFORMED_CANDIDATE_OUTPUT",
+  "candidate-generated reserved-prefix output cannot forge an authoritative acceptance");
 
   const marker = "SECRET_EXPECTED_VALUE_991";
   const relativeEscape = relative(candidateRoot, casePath).replace(/\\/g, "/");
@@ -114,6 +148,29 @@ export function probe(marker) {
     } catch (error) { aliasRejected = error instanceof Error ? error.message : "unknown"; }
   } catch { aliasCreated = false; }
   check(!aliasCreated || aliasRejected === "candidate_alias_rejected", "filesystem aliases toward evaluator assets are rejected where host supports them");
+
+  const hardLinkRoot = join(parent, "candidate-hardlink");
+  const hardLinkRunner = join(hardLinkRoot, "tools", "candidate-runner.mjs");
+  const hardLinkSubject = join(hardLinkRoot, "src", "subject.mjs");
+  await Promise.all([mkdir(dirname(hardLinkRunner), { recursive: true }), mkdir(dirname(hardLinkSubject), { recursive: true })]);
+  await writeFile(hardLinkRunner, OMEGA_CANDIDATE_RUNNER_SOURCE, "utf8");
+  await writeFile(hardLinkSubject, `export function probe() { return true; }\n`, "utf8");
+  let hardLinkCreated = false;
+  let hardLinkRejected = "";
+  try {
+    await link(casePath, join(hardLinkRoot, "leaked-hidden-cases.json"));
+    hardLinkCreated = true;
+    try {
+      await R3IsolatedHiddenEvaluator.create({ evaluatorId: "OMEGA-INTEGRITY-HARDLINK",
+        evaluatorVersion: "omega-hidden-evaluator/2", candidateRoot: hardLinkRoot, hiddenEvaluatorRoot: hiddenRoot,
+        hiddenCaseFile: "private/expected-cases.json", expectedHiddenCaseFileSha256: sha256(attackBytes),
+        candidateRunner: "tools/candidate-runner.mjs", expectedCandidateRunnerSha256: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
+        candidateModule: "src/subject.mjs", exportName: "probe", timeoutMsPerCase: 1_000,
+        maxOutputBytesPerCase: 1_024, maxCases: 10 });
+    } catch (error) { hardLinkRejected = error instanceof Error ? error.message : "unknown"; }
+  } catch { hardLinkCreated = false; }
+  check(!hardLinkCreated || hardLinkRejected === "candidate_hardlink_rejected",
+    "hard-link aliases to hidden evaluator assets are rejected where host supports them");
 
   let rejectedLowQuality = 0;
   for (const fixture of VERIFICATION_INTEGRITY_ANTI_GAMING_CORPUS) {

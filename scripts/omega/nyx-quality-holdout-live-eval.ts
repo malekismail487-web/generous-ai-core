@@ -32,7 +32,7 @@ const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-5
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V3";
 if (SUITE_ID !== "V3") throw new Error("unsupported_nyx_quality_suite");
 const HOLDOUT = NYX_ENGINEERING_QUALITY_V3;
-const EVALUATOR_VERSION = "nyx-quality-v3/2";
+const EVALUATOR_VERSION = "nyx-quality-v3/3";
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
@@ -45,6 +45,9 @@ const V3_EVALUATOR_DIGEST = sha256(canonical({
   isolation: sha256(await readFile(new URL("../../src/lib/codelab/assurance/r3EvaluatorIsolation.ts", import.meta.url))),
   qualityOracle: sha256(await readFile(new URL("../../src/lib/codelab/assurance/engineeringQualityOracle.ts", import.meta.url))),
   acceptanceIntegrity: sha256(await readFile(new URL("../../src/lib/codelab/assurance/holdoutAcceptanceIntegrity.ts", import.meta.url))),
+  cognition: sha256(await readFile(new URL("../../src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts", import.meta.url))),
+  repairLoop: sha256(await readFile(new URL("../../src/lib/codelab/engine/r3BoundedRepairLoop.ts", import.meta.url))),
+  provider: sha256(await readFile(new URL("../../src/lib/codelab/model/nvidiaNimProvider.ts", import.meta.url))),
   candidateRunner: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
 }));
 const V3_TASK_FIXTURE_DIGESTS = Object.freeze(Object.fromEntries(HOLDOUT.map((task) => [task.taskId,
@@ -317,6 +320,7 @@ try {
         scopesDisjoint: hiddenExecution.evidence.candidateAndEvaluatorScopesDisjoint,
         hiddenAssetsExposed: hiddenExecution.evidence.hiddenAssetsExposedToCandidate,
         hiddenAssetsMutable: hiddenExecution.evidence.hiddenAssetsMutableByCandidate,
+        authenticatedResultTransport: hiddenExecution.evidence.candidateResultTransportAuthenticated,
         executedCases: hiddenExecution.evidence.executedCases, passedCases: hiddenExecution.evidence.passedCases };
     }
     let qualityResult = "NOT_EVALUATED";
@@ -423,6 +427,8 @@ if (taskResults.length === HOLDOUT.length) {
       providerFailureBreakdown,
       hiddenAssetScopeSeparationRate: rate(taskResults.filter((item) => (item.hiddenIsolationEvidence as { scopesDisjoint?: boolean } | null)?.scopesDisjoint === true).length,
         taskResults.filter((item) => item.hiddenAcceptance !== "NOT_APPLICABLE").length),
+      authenticatedResultTransportRate: rate(taskResults.filter((item) => (item.hiddenIsolationEvidence as { authenticatedResultTransport?: boolean } | null)
+        ?.authenticatedResultTransport === true).length, taskResults.filter((item) => item.hiddenAcceptance !== "NOT_APPLICABLE").length),
       meanCallsPerTask: mean(taskResults.map((item) => Number(item.modelCalls))),
       meanTokensPerTask: mean(taskResults.map((item) => Number(item.totalTokens))),
       meanCandidatesPerTask: mean(taskResults.map((item) => Number(item.candidates))),

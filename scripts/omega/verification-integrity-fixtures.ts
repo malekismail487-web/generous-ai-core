@@ -1,20 +1,44 @@
 import type { EngineeringQualityPolicy } from "../../src/lib/codelab/assurance/engineeringQualityOracle";
 
-export const OMEGA_CANDIDATE_RUNNER_SOURCE = `import { resolve } from "node:path";
+export const OMEGA_CANDIDATE_RUNNER_SOURCE = `import { createHmac } from "node:crypto";
+import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+const safeWrite = process.stdout.write.bind(process.stdout);
+const safeStringify = JSON.stringify.bind(JSON);
+const safeClone = structuredClone;
+const input = await new Promise((resolveInput, rejectInput) => {
+  let value = "";
+  process.stdin.setEncoding("utf8");
+  process.stdin.on("data", (chunk) => { value += chunk; });
+  process.stdin.once("end", () => resolveInput(value));
+  process.stdin.once("error", rejectInput);
+});
+const request = JSON.parse(input);
+if (request.schemaVersion !== 1 || !Array.isArray(request.args)
+  || typeof request.resultCapability !== "string" || !/^[0-9a-f]{64}$/.test(request.resultCapability)) {
+  throw new Error("candidate_runner_request_invalid");
+}
+const signer = createHmac("sha256", request.resultCapability);
+const signerUpdate = signer.update.bind(signer);
+const signerDigest = signer.digest.bind(signer);
 const modulePath = process.argv[2];
 const exportName = process.argv[3];
-const request = JSON.parse(Buffer.from(process.argv[4], "base64url").toString("utf8"));
+const candidateUrl = pathToFileURL(resolve(process.cwd(), modulePath)).href + "?omega=" + Date.now();
+let payload;
 try {
-  const module = await import(pathToFileURL(resolve(process.cwd(), modulePath)).href + "?omega=" + Date.now());
+  const module = await import(candidateUrl);
   const callable = module[exportName];
   if (typeof callable !== "function") throw Object.assign(new Error("export unavailable"), { name: "ExportUnavailableError" });
-  const args = structuredClone(request.args);
+  const args = safeClone(request.args);
   const value = await callable(...args);
-  console.log("OMEGA_CANDIDATE_RESULT " + JSON.stringify({ kind: "RETURN", value, argsAfter: args }));
+  payload = { kind: "RETURN", value, argsAfter: args };
 } catch (error) {
-  console.log("OMEGA_CANDIDATE_RESULT " + JSON.stringify({ kind: "THROW", errorName: error instanceof Error ? error.name : "UnknownError" }));
+  payload = { kind: "THROW", errorName: error instanceof Error ? error.name : "UnknownError" };
 }
+const payloadJson = safeStringify(payload);
+signerUpdate(payloadJson);
+const authenticator = signerDigest("hex");
+safeWrite("OMEGA_CANDIDATE_RESULT " + safeStringify({ payloadJson, authenticator }) + "\\n");
 `;
 
 export interface AntiGamingFixture {

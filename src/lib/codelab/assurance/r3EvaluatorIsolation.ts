@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { spawn } from "node:child_process";
 import { lstat, readFile, readdir, realpath } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
@@ -9,6 +9,8 @@ export const R3_HIDDEN_EVALUATOR_STATUS = Object.freeze({
   capability: "CANDIDATE_BLIND_HIDDEN_EVALUATION",
   candidateReadableHiddenAssets: false,
   candidateMutableHiddenAssets: false,
+  networkAuthorityGranted: false,
+  candidateNetworkIsolation: "NOT_PROVEN",
   authorityGranted: false,
   hostileCodeSandbox: false,
 } as const);
@@ -71,6 +73,7 @@ export interface R3HiddenEvaluationEvidence {
   readonly candidateRunnerDigest: string;
   readonly hiddenAssetsExposedToCandidate: false;
   readonly hiddenAssetsMutableByCandidate: false;
+  readonly candidateResultTransportAuthenticated: true;
   readonly executedCases: number;
   readonly passedCases: number;
   readonly observations: readonly HiddenCaseObservation[];
@@ -96,6 +99,11 @@ interface CandidateResult {
   readonly value?: unknown;
   readonly argsAfter?: readonly unknown[];
   readonly errorName?: string;
+}
+
+interface CandidateResultEnvelope {
+  readonly payloadJson: string;
+  readonly authenticator: string;
 }
 
 const RESULT_PREFIX = "OMEGA_CANDIDATE_RESULT ";
@@ -143,6 +151,7 @@ async function assertAliasFree(root: string): Promise<void> {
       if (stats.isSymbolicLink()) throw new Error("candidate_alias_rejected");
       if (stats.isDirectory()) await walk(path);
       else if (!stats.isFile()) throw new Error("candidate_resource_type_rejected");
+      else if (stats.nlink !== 1) throw new Error("candidate_hardlink_rejected");
     }
   }
   await walk(root);
@@ -163,10 +172,33 @@ function validCaseFile(value: unknown, maxCases: number): value is HiddenCaseFil
   });
 }
 
+function validCandidateResult(value: unknown): value is CandidateResult {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const result = value as Partial<CandidateResult>;
+  if (result.kind === "RETURN") return Array.isArray(result.argsAfter);
+  return result.kind === "THROW" && typeof result.errorName === "string" && Boolean(result.errorName);
+}
+
+function parseAuthenticatedCandidateResult(lines: readonly string[], resultCapability: string): CandidateResult | null {
+  const reserved = lines.filter((value) => value.startsWith(RESULT_PREFIX));
+  if (reserved.length !== 1) return null;
+  let envelope: CandidateResultEnvelope;
+  try { envelope = JSON.parse(reserved[0].slice(RESULT_PREFIX.length)) as CandidateResultEnvelope; }
+  catch { return null; }
+  if (!envelope || typeof envelope.payloadJson !== "string" || envelope.payloadJson.length > 1_000_000
+    || typeof envelope.authenticator !== "string" || !/^[0-9a-f]{64}$/.test(envelope.authenticator)) return null;
+  const expected = createHmac("sha256", resultCapability).update(envelope.payloadJson).digest();
+  const observed = Buffer.from(envelope.authenticator, "hex");
+  if (observed.length !== expected.length || !timingSafeEqual(expected, observed)) return null;
+  let payload: unknown;
+  try { payload = JSON.parse(envelope.payloadJson); } catch { return null; }
+  return validCandidateResult(payload) ? payload : null;
+}
+
 async function executeCase(config: R3HiddenEvaluatorConfig, candidateRoot: string, runnerPath: string,
   item: HiddenEvaluationCase): Promise<{ observation: HiddenCaseObservation; actual: CandidateResult | null }> {
-  const encodedInput = Buffer.from(JSON.stringify({ args: item.args }), "utf8").toString("base64url");
-  const args = ["--permission", `--allow-fs-read=${candidateRoot}`, runnerPath, config.candidateModule, config.exportName, encodedInput];
+  const resultCapability = randomBytes(32).toString("hex");
+  const args = ["--permission", `--allow-fs-read=${candidateRoot}`, runnerPath, config.candidateModule, config.exportName];
   const child = spawn(process.execPath, args, { cwd: candidateRoot, env: safeEnvironment(), shell: false,
     windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
   let stdout = Buffer.alloc(0);
@@ -179,7 +211,8 @@ async function executeCase(config: R3HiddenEvaluatorConfig, candidateRoot: strin
   };
   child.stdout.on("data", (chunk: Buffer) => { stdout = append(stdout, chunk); });
   child.stderr.on("data", (chunk: Buffer) => { stderr = append(stderr, chunk); });
-  child.stdin.end();
+  child.stdin.on("error", () => undefined);
+  child.stdin.end(JSON.stringify({ schemaVersion: 1, args: item.args, resultCapability }));
   let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; child.kill("SIGKILL"); }, config.timeoutMsPerCase);
   const closed = await new Promise<{ code: number | null; error: boolean }>((done) => {
@@ -193,13 +226,9 @@ async function executeCase(config: R3HiddenEvaluatorConfig, candidateRoot: strin
     failureClass: "CANDIDATE_EXECUTION_BLOCKED", actualDigest: null }) };
   if (closed.error || closed.code !== 0) return { actual: null, observation: Object.freeze({ caseId: item.caseId,
     disposition: closed.error ? "INFRASTRUCTURE_ERROR" : "FAIL", failureClass: "EXECUTION_FAILURE", actualDigest: null }) };
-  const line = stdout.toString("utf8").split(/\r?\n/).filter((value) => value.startsWith(RESULT_PREFIX)).at(-1);
-  if (!line) return { actual: null, observation: Object.freeze({ caseId: item.caseId, disposition: "FAIL",
+  const actual = parseAuthenticatedCandidateResult(stdout.toString("utf8").split(/\r?\n/), resultCapability);
+  if (!actual) return { actual: null, observation: Object.freeze({ caseId: item.caseId, disposition: "FAIL",
     failureClass: "MALFORMED_CANDIDATE_OUTPUT", actualDigest: null }) };
-  let actual: CandidateResult;
-  try { actual = JSON.parse(line.slice(RESULT_PREFIX.length)) as CandidateResult; }
-  catch { return { actual: null, observation: Object.freeze({ caseId: item.caseId, disposition: "FAIL",
-    failureClass: "MALFORMED_CANDIDATE_OUTPUT", actualDigest: null }) }; }
   const expected = item.expectation.kind === "RETURN"
     ? { kind: "RETURN", value: item.expectation.value, argsAfter: item.expectation.argsAfter ?? item.args }
     : { kind: "THROW", errorName: item.expectation.errorName };
@@ -275,7 +304,8 @@ export class R3IsolatedHiddenEvaluator {
       candidateRootDigest: sha256(this.#candidateRoot), hiddenEvaluatorRootDigest: sha256(this.#hiddenRoot),
       candidateAndEvaluatorScopesDisjoint: true as const, hiddenCaseFileDigest: this.#config.expectedHiddenCaseFileSha256,
       candidateRunnerDigest: this.#config.expectedCandidateRunnerSha256, hiddenAssetsExposedToCandidate: false as const,
-      hiddenAssetsMutableByCandidate: false as const, executedCases: observations.length,
+      hiddenAssetsMutableByCandidate: false as const, candidateResultTransportAuthenticated: true as const,
+      executedCases: observations.length,
       passedCases: observations.filter((item) => item.disposition === "PASS").length,
       observations: Object.freeze(observations), startedAtEpochMs, endedAtEpochMs: Date.now() };
     const evidence: R3HiddenEvaluationEvidence = Object.freeze({ evidenceId: `R3-HIDDEN-${sha256(canonical(evidenceBase)).slice(0, 32)}`,
