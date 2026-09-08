@@ -69,7 +69,7 @@ export type NvidiaNimFinishReason = "stop" | "length" | "content_filter" | "tool
 
 export type NvidiaNimProviderFailureCategory = "PROVIDER_AUTH_FAILURE" | "PROVIDER_RATE_LIMIT"
   | "PROVIDER_SERVER_ERROR" | "PROVIDER_UNAVAILABLE" | "PROVIDER_TIMEOUT" | "PROVIDER_TRANSPORT_ERROR"
-  | "PROVIDER_RESPONSE_SCHEMA_ERROR" | "PROVIDER_CANCELLED";
+  | "PROVIDER_REQUEST_REJECTED" | "PROVIDER_RESPONSE_SCHEMA_ERROR" | "PROVIDER_CANCELLED";
 
 export type NvidiaNimRetryability = "YES" | "NO" | "UNKNOWN";
 
@@ -183,6 +183,9 @@ function failureDiagnostics(reason: string, statusCode: number | null): {
     return { category: "PROVIDER_RESPONSE_SCHEMA_ERROR", retryability: "NO" };
   }
   if (statusCode === 401 || statusCode === 403) return { category: "PROVIDER_AUTH_FAILURE", retryability: "NO" };
+  if (statusCode === 400 || statusCode === 404 || statusCode === 405 || statusCode === 422) {
+    return { category: "PROVIDER_REQUEST_REJECTED", retryability: "NO" };
+  }
   if (statusCode === 429) return { category: "PROVIDER_RATE_LIMIT", retryability: "YES" };
   if (statusCode === 502 || statusCode === 503 || statusCode === 504) return { category: "PROVIDER_UNAVAILABLE", retryability: "YES" };
   if (statusCode !== null && statusCode >= 500) return { category: "PROVIDER_SERVER_ERROR", retryability: "YES" };

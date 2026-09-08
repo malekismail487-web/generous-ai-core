@@ -156,6 +156,8 @@ function provider(transport: NvidiaNimTransport, credential = "test-credential-n
 
 {
   const expectations = [
+    { status: 400, category: "PROVIDER_REQUEST_REJECTED", retryability: "NO" },
+    { status: 422, category: "PROVIDER_REQUEST_REJECTED", retryability: "NO" },
     { status: 429, category: "PROVIDER_RATE_LIMIT", retryability: "YES" },
     { status: 500, category: "PROVIDER_SERVER_ERROR", retryability: "YES" },
     { status: 503, category: "PROVIDER_UNAVAILABLE", retryability: "YES" },

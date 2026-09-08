@@ -7,7 +7,11 @@ import {
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import type { EngineeringObservation } from "../../src/lib/codelab/observation/r3EngineeringObservation";
 
-const TRIAL_COUNT = 5;
+const requestedTrialCount = Number(process.env.NYX_CONTRACT_TRIALS ?? "5");
+if (!Number.isInteger(requestedTrialCount) || requestedTrialCount < 1 || requestedTrialCount > 5) {
+  throw new Error("nyx_contract_trial_count_invalid");
+}
+const TRIAL_COUNT = requestedTrialCount;
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const SOURCE = `export function normalizeTags(tags) {
   return [...new Set(tags.map((tag) => tag.trim()))];

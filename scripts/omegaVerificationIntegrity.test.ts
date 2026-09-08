@@ -21,6 +21,10 @@ function check(value: unknown, label: string): void {
   else { failed += 1; failures.push(label); console.error(`  x ${label}`); }
 }
 function sha256(value: Uint8Array | string): string { return createHash("sha256").update(value).digest("hex"); }
+function frozenGitBlob(commit: string, path: string): Uint8Array | null {
+  const result = spawnSync("git", ["show", `${commit}:${path}`], { encoding: null, maxBuffer: 2_000_000 });
+  return result.status === 0 && result.stdout instanceof Buffer ? result.stdout : null;
+}
 function canonical(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
@@ -366,7 +370,8 @@ export function probe(marker) {
     && task.availableEvidence.every((item) => !item.relativePath.startsWith("tools/"))),
   "V4 provenance is fresh and no evaluator tooling enters admitted model context");
   check(Object.entries(NYX_V4_FROZEN_CORE.files).every(([path, digest]) => {
-    try { return sha256(readFileSync(path)) === digest; } catch { return false; }
+    const blob = frozenGitBlob(NYX_V4_FROZEN_CORE.commit, path);
+    return blob !== null && sha256(blob) === digest;
   }), "V4 frozen core digests bind the exact pre-holdout cognition and assurance implementation");
   const v4TaskDigests = new Set<string>();
   for (const task of NYX_ENGINEERING_QUALITY_V4) {

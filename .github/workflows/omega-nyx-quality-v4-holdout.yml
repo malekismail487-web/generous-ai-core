@@ -2,15 +2,6 @@ name: Omega NYX engineering quality V4 holdout
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - sol/omega-institutional-spine
-    paths:
-      - .github/workflows/omega-nyx-quality-v4-holdout.yml
-      - scripts/omega/nyx-quality-v4-fixtures.ts
-      - scripts/omega/nyx-quality-v4-live-eval.ts
-      - scripts/omegaVerificationIntegrity.test.ts
-      - package.json
 
 permissions:
   contents: read

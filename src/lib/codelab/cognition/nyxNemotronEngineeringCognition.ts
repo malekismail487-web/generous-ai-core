@@ -248,6 +248,26 @@ export const NYX_REPAIR_INTENT_JSON_SCHEMA: Readonly<Record<string, unknown>> = 
   additionalProperties: false,
 });
 
+const PROVIDER_UNSUPPORTED_SCHEMA_KEYWORDS = new Set([
+  "minimum", "maximum", "minLength", "maxLength", "maxItems", "uniqueItems",
+]);
+
+function providerCompatibleSchema(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(providerCompatibleSchema);
+  if (value === null || typeof value !== "object") return value;
+  return Object.freeze(Object.fromEntries(Object.entries(value as Record<string, unknown>)
+    .filter(([key]) => !PROVIDER_UNSUPPORTED_SCHEMA_KEYWORDS.has(key))
+    .map(([key, item]) => [key, providerCompatibleSchema(item)])));
+}
+
+/**
+ * NVIDIA's hosted guided-decoding backend accepts a portable JSON Schema subset.
+ * Rich semantic bounds remain enforced by the local parser after generation.
+ */
+export const NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA = providerCompatibleSchema(
+  NYX_REPAIR_INTENT_JSON_SCHEMA,
+) as Readonly<Record<string, unknown>>;
+
 export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/4" as const;
 export const NYX_SEMANTIC_ACTIONS = Object.freeze(["PROPOSE_EDIT", "REQUEST_EVIDENCE", "NO_ACTION"] as const);
 export const NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS = Object.freeze(["expectedBaseHash", "replacementContentHash",
@@ -376,7 +396,7 @@ export class NyxNemotronEngineeringCognition {
     const completion = await this.#config.provider.complete({ schemaVersion: 1, requestId: request.cognitionRequestId,
       messages: [{ role: "system", content: NYX_REPAIR_SYSTEM_INSTRUCTION },
         { role: "user", content: serializedPrompt }], maxTokens: this.#config.maxOutputTokens, temperature: 0,
-      responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema: NYX_REPAIR_INTENT_JSON_SCHEMA },
+      responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema: NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA },
       inferencePolicy: "CONSTRAINED_JSON",
       observedAtEpochMs: request.observedAtEpochMs });
     if (completion.decision !== "COMPLETED" || completion.content === null) {

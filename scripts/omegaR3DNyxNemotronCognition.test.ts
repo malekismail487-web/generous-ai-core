@@ -4,6 +4,8 @@ import type { EngineeringObservation } from "../src/lib/codelab/observation/r3En
 import {
   NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS,
   NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
+  NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA,
+  NYX_REPAIR_INTENT_JSON_SCHEMA,
   NyxNemotronEngineeringCognition,
   type NyxRepairCognitionRequest,
   type NyxRepairCognitionResult,
@@ -73,6 +75,27 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
 }
 function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCategory): boolean {
   return result.schemaDiagnostics.some((item) => item.category === category);
+}
+
+function schemaKeys(value: unknown): string[] {
+  if (Array.isArray(value)) return value.flatMap(schemaKeys);
+  if (value === null || typeof value !== "object") return [];
+  return Object.entries(value as Record<string, unknown>)
+    .flatMap(([key, item]) => [key, ...schemaKeys(item)]);
+}
+
+{
+  const fullKeys = new Set(schemaKeys(NYX_REPAIR_INTENT_JSON_SCHEMA));
+  const providerKeys = new Set(schemaKeys(NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA));
+  const locallyEnforcedOnly = ["minimum", "maximum", "minLength", "maxLength", "maxItems", "uniqueItems"];
+  check(locallyEnforcedOnly.every((key) => fullKeys.has(key) && !providerKeys.has(key)),
+    "provider schema removes only hosted-backend-incompatible bounds retained by local semantic validation");
+  const providerRoot = NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA as {
+    required?: unknown; additionalProperties?: unknown; properties?: Record<string, unknown>;
+  };
+  check(Array.isArray(providerRoot.required) && providerRoot.additionalProperties === false
+    && providerRoot.properties?.decision !== undefined && providerRoot.properties?.changes !== undefined,
+  "provider-compatible schema preserves the closed semantic-intent structure and required action fields");
 }
 
 {
