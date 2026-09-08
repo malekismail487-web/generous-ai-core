@@ -47,12 +47,33 @@ function provider(transport: NvidiaNimTransport, credential = "test-credential-n
     "adapter uses fixed official endpoint and non-streaming model payload");
   check((observedBody.response_format as { type?: string })?.type === "json_object",
     "adapter transmits the explicitly requested bounded JSON response format");
+  check(observedBody.chat_template_kwargs === undefined,
+    "default requests preserve the provider chat-template behavior");
   check(observedAuthorization === "Bearer test-credential-not-a-real-secret", "credential is placed only in the authorization header");
   check(result.evidence.statusCode === 200 && result.evidence.usage.totalTokens === 14 && result.evidence.responseDigest !== null,
     "completion returns attributable status, usage, and response digest");
+  check(result.finishReason === "stop" && result.evidence.finishReason === "stop",
+    "completion evidence binds the sanitized provider finish reason");
   check(result.evidence.evidenceClass === "E3" && !result.executorAuthorityGranted, "test-double evidence remains E3 and grants no executor authority");
   check(!JSON.stringify(result).includes("test-credential-not-a-real-secret"), "result and evidence never serialize the credential");
   check(!JSON.stringify(result.evidence).includes("Return OMEGA_NIM_OK"), "evidence persists prompt digest rather than prompt content");
+}
+
+{
+  let constrainedBody: Record<string, unknown> = {};
+  let defaultDigest = "";
+  const transport: NvidiaNimTransport = async (_input, init) => {
+    const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    if (body.chat_template_kwargs !== undefined) constrainedBody = body;
+    return new Response(JSON.stringify({ choices: [{ message: { content: "{}" }, finish_reason: "stop" }] }), { status: 200 });
+  };
+  const client = provider(transport);
+  defaultDigest = (await client.complete(request({ responseFormat: "JSON_OBJECT" }))).evidence.requestDigest;
+  const constrained = await client.complete(request({ responseFormat: "JSON_OBJECT", inferencePolicy: "CONSTRAINED_JSON" }));
+  check(JSON.stringify(constrainedBody.chat_template_kwargs) === JSON.stringify({ enable_thinking: false, force_nonempty_content: true }),
+    "constrained JSON policy sends only the fixed request-level chat-template controls");
+  check(constrained.decision === "COMPLETED" && constrained.evidence.requestDigest !== defaultDigest,
+    "request evidence digest binds the constrained-inference controls");
 }
 
 {
@@ -86,9 +107,33 @@ function provider(transport: NvidiaNimTransport, credential = "test-credential-n
     request({ maxTokens: 129 }),
     request({ temperature: 2 }),
     request({ responseFormat: "INVALID" as "JSON_OBJECT" }),
+    request({ inferencePolicy: "INVALID" as "CONSTRAINED_JSON" }),
+    request({ inferencePolicy: "CONSTRAINED_JSON" }),
   ];
   for (const input of invalid) check((await client.complete(input)).decision === "REJECTED", "invalid completion contract rejects deterministically");
   check(calls === 0, "invalid requests never reach provider transport");
+}
+
+{
+  const invalidFinishReasons: unknown[] = [undefined, "provider-internal-secret-reason", { reason: "stop" }];
+  for (const finishReason of invalidFinishReasons) {
+    const result = await provider(async () => new Response(JSON.stringify({
+      choices: [{ message: { content: "content-must-not-be-accepted" }, finish_reason: finishReason }],
+    }), { status: 200 })).complete(request());
+    check(result.decision === "PROVIDER_ERROR" && result.reason === "nvidia_provider_response_finish_reason_invalid"
+      && result.content === null && result.evidence.finishReason === null,
+    "missing, unknown, or malformed provider finish reasons fail closed");
+    check(!JSON.stringify(result).includes("provider-internal-secret-reason") && !JSON.stringify(result).includes("content-must-not-be-accepted"),
+      "invalid termination metadata cannot propagate provider content or raw finish-reason detail");
+  }
+}
+
+{
+  const result = await provider(async () => new Response(JSON.stringify({
+    choices: [{ message: { content: "bounded partial result" }, finish_reason: "length" }],
+  }), { status: 200 })).complete(request());
+  check(result.decision === "COMPLETED" && result.finishReason === "length" && result.evidence.finishReason === "length",
+    "allowlisted non-stop termination remains explicit in completion and evidence");
 }
 
 {

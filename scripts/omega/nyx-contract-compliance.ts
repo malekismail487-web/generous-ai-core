@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import {
+  NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
   NyxNemotronEngineeringCognition,
   type NyxRepairCognitionResult,
 } from "../../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
@@ -21,7 +22,8 @@ function classify(result: NyxRepairCognitionResult): string {
     || result.reason.includes("transport_failure") || result.reason.includes("credential_unavailable")) {
     return "PROVIDER_TRANSPORT_FAILURE";
   }
-  if (result.reason.includes("not_strict_json")) return "PROVIDER_RESPONSE_FORMAT_FAILURE";
+  if (result.reason.includes("not_strict_json") || result.reason.includes("output_truncated")
+    || result.reason.includes("finish_reason_invalid")) return "PROVIDER_RESPONSE_FORMAT_FAILURE";
   if (result.reason.includes("schema_invalid")) return "MODEL_SCHEMA_COMPLIANCE_FAILURE";
   if (result.decision === "REJECTED" || result.decision === "BLOCKED") return "INTEGRATION_CONTRACT_FAILURE";
   return "MODEL_CAPABILITY_FAILURE";
@@ -57,12 +59,14 @@ for (let index = 1; index <= TRIAL_COUNT; index += 1) {
     cognitionRequestId: `NYX-CONTRACT-COMPLIANCE-${index}-${observedAt}`, objective: OBJECTIVE, observation,
     files: [{ relativePath: "src/normalize-tags.mjs", content: SOURCE, contentSha256: sha256(SOURCE) }],
     allowedMutationPaths: ["src/normalize-tags.mjs"],
-    availableEvidence: [], priorHypotheses: [], priorCognitionFailures: [],
+    availableEvidence: [], priorHypotheses: [], priorCognitionFailures: [], candidateQualityFeedback: null,
+    sourceQualityConstraints: NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
     allowedVerificationToolIds: ["TEST"], maxChanges: 1, maxPatchBytes: 4_096,
     maxDiagnosisCharacters: 1_500, maxCounterexamples: 3, observedAtEpochMs: observedAt });
   const schemaValid = result.decision === "PROPOSED" || result.decision === "REQUEST_EVIDENCE" || result.decision === "NO_ACTION";
   trials.push({ trial: index, model: result.evidence.model, modelEvidenceId: result.evidence.modelEvidenceId,
     evidenceClass: result.evidence.evidenceClass, statusCode: result.evidence.modelStatusCode,
+    finishReason: result.evidence.modelFinishReason,
     requestDigest: result.evidence.modelRequestDigest, responseDigest: result.evidence.modelResponseDigest,
     tokens: result.evidence.modelUsage.totalTokens, providerRequestObserved: result.evidence.modelRequestDigest !== null,
     strictJsonValid: result.reason !== "nyx_cognition_output_not_strict_json", schemaValid,
@@ -74,7 +78,7 @@ for (let index = 1; index <= TRIAL_COUNT; index += 1) {
 
 const compliant = trials.filter((trial) => trial.schemaValid === true).length;
 const summary = { schemaVersion: 1, chunkId: "NYX-NEMOTRON-CONTRACT-REPAIR-001", model: MODEL,
-  protocolIdentity: "NYX_CAUSAL_ENGINEERING_INTENT_V3", taskDigest: sha256(OBJECTIVE), trialCount: TRIAL_COUNT,
+  protocolIdentity: "NYX_CAUSAL_ENGINEERING_INTENT_V4", taskDigest: sha256(OBJECTIVE), trialCount: TRIAL_COUNT,
   compliantTrials: compliant, minimumRequired: 1, unchangedTaskAcrossTrials: true,
   authorityIncrease: false, generalNetworkAuthority: false, credentialPersisted: false, trials };
 console.log(`NYX_TYPED_COMPLIANCE ${JSON.stringify(summary)}`);

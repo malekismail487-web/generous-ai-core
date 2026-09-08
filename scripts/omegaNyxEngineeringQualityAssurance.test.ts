@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST, NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
+import { NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS, NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST, NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
   NyxNemotronEngineeringCognition } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import type { EngineeringObservation } from "../src/lib/codelab/observation/r3EngineeringObservation";
@@ -38,7 +38,7 @@ check(NYX_ENGINEERING_QUALITY_CONFIRMATION.every((task) => task.mutationPaths.ev
   && task.availableEvidence.every((item) => !task.mutationPaths.includes(item.relativePath))),
 "confirmation evidence remains observation-only and cannot expand mutation authority");
 check(/^[a-f0-9]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
-  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/3",
+  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/4",
 "scored cognition contract has a frozen version and deterministic digest");
 
 const parent = await mkdtemp(join(tmpdir(), "nyx-quality-assurance-"));
@@ -85,7 +85,9 @@ try {
   const provider = NvidiaNimProvider.create({ providerId: "NYX-QH-ASSURANCE", model: "nvidia/nemotron-3-ultra",
     authorityMode: "TEST_DOUBLE_ONLY", credentialSource: { sourceIdentity: "test-double:quality", read: () => "test-credential-material" },
     maxPromptBytes: 50_000, maxOutputTokens: 2_048, timeoutMs: 1_000,
-    transport: async () => new Response(JSON.stringify({ choices: [{ message: { content: output } }] }), { status: 200 }) });
+    transport: async () => new Response(JSON.stringify({
+      choices: [{ message: { content: output }, finish_reason: "stop" }],
+    }), { status: 200 }) });
   const cognition = NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-QH-ASSURANCE", provider,
     maxPromptBytes: 50_000, maxOutputTokens: 1_024 });
   const result = await cognition.proposeRepair({ schemaVersion: 1, cognitionRequestId: "NYX-QH-READONLY-REQUEST",
@@ -93,6 +95,7 @@ try {
     files: [{ relativePath: "src/retention.mjs", content: source, contentSha256: hash(source) },
       { relativePath: "src/retention-policy.mjs", content: policy, contentSha256: hash(policy) }],
     allowedMutationPaths: ["src/retention.mjs"], availableEvidence: [], priorHypotheses: [], priorCognitionFailures: [],
+    candidateQualityFeedback: null, sourceQualityConstraints: NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
     allowedVerificationToolIds: ["TEST"], maxChanges: 1, maxPatchBytes: 2_048, maxDiagnosisCharacters: 1_000,
     maxCounterexamples: 3, observedAtEpochMs: Date.now() });
   check(result.decision === "COGNITION_ERROR" && result.schemaDiagnostics.some((item) => item.category === "UNSUPPORTED_FILE_TARGET"),

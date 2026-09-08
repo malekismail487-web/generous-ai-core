@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import {
   NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST,
   NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
+  NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
   NyxNemotronEngineeringCognition,
   type NyxRepairCognitionRequest,
   type NyxRepairCognitionResult,
@@ -42,7 +43,8 @@ function request(overrides: Partial<NyxRepairCognitionRequest> = {}): NyxRepairC
   return { schemaVersion: 1, cognitionRequestId: `R3F-ASSURANCE-${Math.random()}`, objective: "Return value 1.",
     observation: observation(), files: [{ relativePath: "src/value.mjs", content: SOURCE, contentSha256: hash(SOURCE) }],
     allowedMutationPaths: ["src/value.mjs"],
-    availableEvidence: [], priorHypotheses: [], priorCognitionFailures: [],
+    availableEvidence: [], priorHypotheses: [], priorCognitionFailures: [], candidateQualityFeedback: null,
+    sourceQualityConstraints: NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
     allowedVerificationToolIds: ["TEST"], maxChanges: 2, maxPatchBytes: 256, maxDiagnosisCharacters: 500,
     maxCounterexamples: 3, observedAtEpochMs: NOW, ...overrides };
 }
@@ -53,7 +55,9 @@ function provider(transport: NvidiaNimTransport) {
 }
 async function evaluate(value: unknown, override: Partial<NyxRepairCognitionRequest> = {}): Promise<NyxRepairCognitionResult> {
   const cognition = NyxNemotronEngineeringCognition.create({ cognitionId: "R3F-ASSURANCE", provider: provider(async () =>
-    new Response(JSON.stringify({ choices: [{ message: { content: typeof value === "string" ? value : JSON.stringify(value) } }] }), { status: 200 })),
+    new Response(JSON.stringify({ choices: [{
+      message: { content: typeof value === "string" ? value : JSON.stringify(value) }, finish_reason: "stop",
+    }] }), { status: 200 })),
   maxPromptBytes: 50_000, maxOutputTokens: 1_024 });
   return cognition.proposeRepair(request(override));
 }
@@ -73,7 +77,7 @@ function inert(result: NyxRepairCognitionResult): boolean {
 }
 
 check(/^[0-9a-f]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
-  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/3",
+  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/4",
   "frozen semantic contract has a versioned deterministic digest");
 check(NYX_R3F_EVALUATION_FIXTURES.length === 5
   && new Set(NYX_R3F_EVALUATION_FIXTURES.map((task) => task.taskClass)).size === 5,

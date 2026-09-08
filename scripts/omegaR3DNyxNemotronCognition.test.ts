@@ -3,6 +3,7 @@ import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/m
 import type { EngineeringObservation } from "../src/lib/codelab/observation/r3EngineeringObservation";
 import {
   NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS,
+  NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
   NyxNemotronEngineeringCognition,
   type NyxRepairCognitionRequest,
   type NyxRepairCognitionResult,
@@ -49,7 +50,8 @@ function request(overrides: Partial<NyxRepairCognitionRequest> = {}): NyxRepairC
     objective: "Restore correct addition behavior while preserving the exported function contract.", observation: observation(),
     files: [{ relativePath: "src/math.ts", content: source, contentSha256: hash(source) }],
     allowedMutationPaths: ["src/math.ts"],
-    availableEvidence: [], priorHypotheses: [], priorCognitionFailures: [],
+    availableEvidence: [], priorHypotheses: [], priorCognitionFailures: [], candidateQualityFeedback: null,
+    sourceQualityConstraints: NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
     allowedVerificationToolIds: ["TYPECHECK", "TEST"], maxChanges: 2, maxPatchBytes: 4_096,
     maxDiagnosisCharacters: 1_000, maxCounterexamples: 3, observedAtEpochMs: NOW, ...overrides };
 }
@@ -94,7 +96,8 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
   check(hypothesis?.applyAuthorized === false && !result.omegaAuthorityGranted && !result.evidence.authorityGranted,
     "Νύξ semantic intent cannot authorize Omega action");
   check(result.evidence.modelRequestDigest !== null && result.evidence.modelResponseDigest !== null
-    && result.evidence.modelStatusCode === 200 && result.evidence.modelUsage.totalTokens === 520,
+    && result.evidence.modelStatusCode === 200 && result.evidence.modelUsage.totalTokens === 520
+    && result.evidence.modelFinishReason === "stop",
     "cognition preserves sanitized E3 model evidence and usage");
   const messages = body.messages as Array<{ role: string; content: string }>;
   check(messages[0].content.includes("You are Νύξ engineering cognition")
@@ -104,6 +107,9 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
   const format = body.response_format as { type?: string; json_schema?: { name?: string; strict?: boolean } };
   check(format.type === "json_schema" && format.json_schema?.name === "nyx_repair_intent" && format.json_schema.strict === true,
     "provider receives the strict typed semantic-intent schema");
+  const template = body.chat_template_kwargs as { enable_thinking?: boolean; force_nonempty_content?: boolean };
+  check(template.enable_thinking === false && template.force_nonempty_content === true,
+    "constrained cognition disables free-form reasoning and requires non-empty provider content");
   check(!JSON.stringify(result.evidence).includes(source) && result.evidence.proposalDigest === hypothesis?.proposalDigest,
     "evidence stores digests rather than repository content while binding the proposal");
 }
@@ -137,6 +143,48 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
     diagnostics: [] }] }));
   check(malformedHistory.decision === "REJECTED" && calls === 0,
     "malformed cognition-failure history fails closed before provider invocation");
+  const excessiveChanges = await nyx.proposeRepair(request({ maxChanges: 9 }));
+  const excessiveDiagnosis = await nyx.proposeRepair(request({ maxDiagnosisCharacters: 2_001 }));
+  check(excessiveChanges.decision === "REJECTED" && excessiveChanges.reason.includes("nyx_cognition_policy_invalid")
+    && excessiveDiagnosis.decision === "REJECTED" && excessiveDiagnosis.reason.includes("nyx_cognition_policy_invalid")
+    && calls === 0,
+  "request bounds cannot exceed the frozen provider schema before cognition runs");
+}
+
+{
+  const first = await evaluate(intent());
+  const prior = first.hypothesis!;
+  const qualityEvidenceId = "CANDIDATE-ADMISSION-E3-QUALITY-1";
+  const passingObservation = Object.freeze({ ...observation("TEST_PASS"), applicationId: "APPLICATION-QUALITY-1",
+    proposalDigest: prior.proposalDigest, candidateEvidenceId: "EXECUTION-E3-QUALITY-1" });
+  const priorHypotheses = [{ hypothesisId: prior.hypothesisId, parentHypothesisId: null,
+    causalHypothesis: prior.causalHypothesis, expectedResult: prior.expectedResult, strategyDigest: prior.strategyDigest,
+    disposition: "PARTIALLY_SUPPORTED" as const, verificationEvidenceRefs: [qualityEvidenceId] }];
+  const feedback = { assessmentId: "QUALITY-ASSESSMENT-1", evidenceId: qualityEvidenceId,
+    hypothesisId: prior.hypothesisId, proposalDigest: prior.proposalDigest, applicationId: "APPLICATION-QUALITY-1",
+    findings: [{ dimension: "READABILITY", code: "EXCESSIVE_LINE_LENGTH", paths: ["src/math.ts"] }],
+    hiddenEvidenceUsed: false as const, authorityGranted: false as const };
+  const validRevision = await evaluate(intent({ failureInterpretation: "Visible behavior passed but the candidate failed static quality admission." }), {
+    observation: passingObservation, priorHypotheses, candidateQualityFeedback: feedback,
+  });
+  check(validRevision.decision === "PROPOSED" && validRevision.hypothesis?.parentHypothesisId === prior.hypothesisId,
+    "quality-driven revision requires a passing candidate with bound proposal, application, and E3 admission evidence");
+
+  let calls = 0;
+  const rejecting = cognition(async () => { calls += 1; return transportFor(intent())("", {}); });
+  const wrongProposal = await rejecting.proposeRepair(request({ observation: passingObservation, priorHypotheses,
+    candidateQualityFeedback: { ...feedback, proposalDigest: "e".repeat(64) } }));
+  const wrongApplication = await rejecting.proposeRepair(request({ observation: passingObservation, priorHypotheses,
+    candidateQualityFeedback: { ...feedback, applicationId: "APPLICATION-UNBOUND" } }));
+  const unreferencedEvidence = await rejecting.proposeRepair(request({ observation: passingObservation, priorHypotheses,
+    candidateQualityFeedback: { ...feedback, evidenceId: "CANDIDATE-ADMISSION-E3-UNREFERENCED" } }));
+  const failureObservationWithFeedback = observation("TEST_FAIL");
+  const feedbackOnFailure = await rejecting.proposeRepair(request({ observation: failureObservationWithFeedback, priorHypotheses,
+    candidateQualityFeedback: { ...feedback, proposalDigest: failureObservationWithFeedback.proposalDigest,
+      applicationId: failureObservationWithFeedback.applicationId } }));
+  check([wrongProposal, wrongApplication, unreferencedEvidence, feedbackOnFailure].every((result) => result.decision === "REJECTED"
+    && result.reason.includes("nyx_cognition_quality_feedback_invalid")) && calls === 0,
+  "forged, unbound, unreferenced, or failure-state quality feedback is inert before provider invocation");
 }
 
 {
@@ -156,6 +204,9 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
     "model-generated Omega infrastructure metadata is diagnosed and rejected");
   const malformedRepair = await evaluate(intent({ changes: [{ target: "src/math.ts", replacement: 7 }] }));
   check(has(malformedRepair, "INVALID_FIELD_TYPE"), "malformed semantic repair is rejected despite valid surrounding metadata");
+  const emptyRepair = await evaluate(intent({ changes: [{ target: "src/math.ts", replacement: "" }] }));
+  check(has(emptyRepair, "SOURCE_QUALITY_INVALID") && emptyRepair.hypothesis === null,
+    "empty replacement cannot bypass the complete-source schema through a permissive test transport");
   const unknownCapability = await evaluate(intent({ decision: "RUN_SHELL" }));
   check(has(unknownCapability, "UNKNOWN_CAPABILITY") && !unknownCapability.omegaAuthorityGranted,
     "unknown model-requested capability fails closed without authority");
@@ -220,6 +271,12 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
   const invalidJson = await evaluate("```json\n{}\n```");
   check(invalidJson.reason === "nyx_cognition_output_not_strict_json" && has(invalidJson, "UNEXPECTED_STRUCTURE"),
     "markdown-wrapped output fails strict JSON parsing with a diagnostic");
+  const truncated = await cognition(async () => new Response(JSON.stringify({
+    choices: [{ message: { content: intent() }, finish_reason: "length" }],
+  }), { status: 200 })).proposeRepair(request());
+  check(truncated.decision === "COGNITION_ERROR" && truncated.reason === "nyx_cognition_output_truncated"
+    && truncated.evidence.modelFinishReason === "length" && truncated.hypothesis === null,
+  "length-terminated model output is attributable but never admitted as an executable hypothesis");
   const unavailable = await cognition(async () => new Response(JSON.stringify({ error: "unavailable" }), { status: 503 })).proposeRepair(request());
   check(unavailable.decision === "COGNITION_ERROR" && unavailable.reason === "nvidia_provider_http_503" && unavailable.hypothesis === null,
     "provider failure remains distinct from model contract failure");

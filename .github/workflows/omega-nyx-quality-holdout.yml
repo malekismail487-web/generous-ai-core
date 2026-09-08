@@ -2,23 +2,6 @@ name: Omega NYX engineering quality holdout
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - sol/omega-institutional-spine
-    paths:
-      - .github/workflows/omega-nyx-quality-holdout.yml
-      - scripts/omega/nyx-quality-holdout-live-eval.ts
-      - scripts/omega/nyx-quality-v3-fixtures.ts
-      - scripts/omega/verification-integrity-fixtures.ts
-      - scripts/omegaNyxEngineeringQualityAssurance.test.ts
-      - scripts/omegaVerificationIntegrity.test.ts
-      - scripts/omegaNvidiaNimProvider.test.ts
-      - src/lib/codelab/assurance/engineeringQualityOracle.ts
-      - src/lib/codelab/assurance/holdoutAcceptanceIntegrity.ts
-      - src/lib/codelab/assurance/r3EvaluatorIsolation.ts
-      - src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts
-      - src/lib/codelab/engine/r3BoundedRepairLoop.ts
-      - src/lib/codelab/model/nvidiaNimProvider.ts
 
 permissions:
   contents: read

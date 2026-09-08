@@ -1,12 +1,13 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/33",
+  "suiteVersion": "omega-institutional-suite/34",
   "criticalSuites": [
     "OMEGA-ASSURE-R2-EVALUATOR",
     "OMEGA-ASSURE-R2-OPERATIONAL-INDEPENDENT",
     "OMEGA-AUDIT-RECONSTRUCTION",
     "OMEGA-AUTHORITY-GRAPH",
     "OMEGA-BASELINE-DIFF-ASSURANCE",
+    "OMEGA-CANDIDATE-ENGINEERING-ADMISSION",
     "OMEGA-DIRECTIVE-009-PLAN-COVERAGE",
     "OMEGA-DIRECTIVE-010-PLAN-COVERAGE",
     "OMEGA-DIRECTIVE-015-PLAN-COVERAGE",
@@ -73,6 +74,7 @@
     { "suiteId": "OMEGA-AUDIT-RECONSTRUCTION", "file": "scripts/omegaAuditReconstruction.test.ts" },
     { "suiteId": "OMEGA-AUTHORITY-GRAPH", "file": "scripts/omegaAuthorityGraph.test.ts" },
     { "suiteId": "OMEGA-BASELINE-DIFF-ASSURANCE", "file": "scripts/omegaBaselineDiffAssurance.test.ts" },
+    { "suiteId": "OMEGA-CANDIDATE-ENGINEERING-ADMISSION", "file": "scripts/omegaCandidateEngineeringAdmission.test.ts" },
     { "suiteId": "OMEGA-CLAIM-LIFECYCLE", "file": "scripts/omegaClaimLifecycle.test.ts" },
     { "suiteId": "OMEGA-DIRECTIVE-009-PLAN-COVERAGE", "file": "scripts/omegaDirective009PlanCoverage.test.ts" },
     { "suiteId": "OMEGA-DIRECTIVE-010-PLAN-COVERAGE", "file": "scripts/omegaDirective010PlanCoverage.test.ts" },

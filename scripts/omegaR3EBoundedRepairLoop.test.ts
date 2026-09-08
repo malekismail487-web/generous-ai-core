@@ -33,7 +33,10 @@ function canonical(value: unknown): string {
   return `{${Object.keys(object).sort().map((key) => `${JSON.stringify(key)}:${canonical(object[key])}`).join(",")}}`;
 }
 
-const VERIFY_SOURCE = `import { readFileSync } from "node:fs"; const value = readFileSync(new URL("../src/math.txt", import.meta.url), "utf8"); if (value === "2+2=4") console.log("TEST_PASS math"); else { console.error("FAIL tests/math > expected 2+2=4"); process.exit(2); }`;
+const CORRECT_SOURCE = "export const answer = 4;";
+const WRONG_SOURCE = "export const answer = 5;";
+const OTHER_WRONG_SOURCE = "export const answer = 6;";
+const VERIFY_SOURCE = `import { readFileSync } from "node:fs"; const value = readFileSync(new URL("../src/math.txt", import.meta.url), "utf8"); if (value.split(/\\r?\\n/, 1)[0] === "${CORRECT_SOURCE}") console.log("TEST_PASS math"); else { console.error("FAIL tests/math > expected exported answer 4"); process.exit(2); }`;
 interface AppliedPack { readonly sourceRoot: string; readonly cloneRoot: string; readonly proposal: R2GPatchProposal;
   readonly applicator: R3ADisposablePatchApplicator; readonly application: Awaited<ReturnType<R3ADisposablePatchApplicator["apply"]>>; }
 
@@ -120,11 +123,18 @@ function cognition(transport: NvidiaNimTransport): NyxNemotronEngineeringCogniti
 }
 
 const sourceRoot = join(parent, "source"); await mkdir(join(sourceRoot, "src"), { recursive: true }); await mkdir(join(sourceRoot, "tools"));
-await writeFile(join(sourceRoot, "src", "math.txt"), "2+2=4", "utf8");
-await writeFile(join(sourceRoot, "src", "rule.txt"), "The accepted arithmetic identity is 2+2=4.", "utf8");
+await writeFile(join(sourceRoot, "src", "math.txt"), CORRECT_SOURCE, "utf8");
+await writeFile(join(sourceRoot, "src", "rule.txt"), "The accepted arithmetic answer is exported as 4.", "utf8");
 await writeFile(join(sourceRoot, "tools", "verify.mjs"), VERIFY_SOURCE, "utf8");
-const wrong = "2+2=5";
-const initial = await applyChange(sourceRoot, { kind: "MODIFY", relativePath: "src/math.txt", expectedBaseHash: hash("2+2=4"),
+const wrong = WRONG_SOURCE;
+const OVERCOMPLEX_SOURCE = [
+  CORRECT_SOURCE,
+  "function overengineered(value) {",
+  ...Array.from({ length: 13 }, (_, index) => `  if (value === ${index}) return value;`),
+  "  return value;",
+  "}",
+].join("\n");
+const initial = await applyChange(sourceRoot, { kind: "MODIFY", relativePath: "src/math.txt", expectedBaseHash: hash(CORRECT_SOURCE),
   proposedContentHash: hash(wrong), proposedContent: wrong, baselineEvidenceId: "evidence://initial", baselineObservationId: "observation://initial",
   sandboxArtifactId: "artifact://initial" }, "initial");
 const initialVerification = await verification(initial, "initial");
@@ -141,7 +151,7 @@ const initialObservation: EngineeringObservation = initialObserved.observation;
 function modelResponse(replacement: string, overrides: Record<string, unknown> = {}): string {
   return JSON.stringify({ decision: "PROPOSE_EDIT", diagnosis: "The arithmetic fixture contains the wrong result.",
     causalHypothesis: "The stored arithmetic result contradicts the objective.",
-    evidenceRefs: ["OBJECTIVE", "FILE:src/math.txt"], uncertainties: [], invariant: "The fixture must state 2+2=4.",
+    evidenceRefs: ["OBJECTIVE", "FILE:src/math.txt"], uncertainties: [], invariant: "The fixture must export answer 4.",
     failureInterpretation: "No prior candidate exists or the prior value remained incorrect.",
     expectedResult: "The repository-native test reports TEST_PASS.", counterexamples: ["The file contains any value other than 2+2=4."],
     requestedEvidenceRefs: [],
@@ -149,7 +159,11 @@ function modelResponse(replacement: string, overrides: Record<string, unknown> =
     ...overrides });
 }
 
-function builder(tamper = false) {
+function providerResponse(content: string, finishReason = "stop"): Response {
+  return new Response(JSON.stringify({ choices: [{ message: { content }, finish_reason: finishReason }] }), { status: 200 });
+}
+
+function builder(tamper = false, additionalAdmittedPaths: () => readonly string[] = () => []) {
   let currentBaseRoot = initial.cloneRoot;
   return { builderIdentity: tamper ? "OMEGA-R3E-TAMPER-BUILDER" : "OMEGA-R3E-BUILDER",
     prepare: async (hypothesis: NyxRepairHypothesis, iteration: number): Promise<OmegaPreparedRepairCandidate> => {
@@ -160,10 +174,14 @@ function builder(tamper = false) {
         baselineObservationId: `observation://repair/${iteration}`, sandboxArtifactId: `artifact://repair/${iteration}` }, `repair-${iteration}`);
       const run = await verification(pack, `repair-${iteration}-${sequence}`);
       currentBaseRoot = pack.cloneRoot;
-      const content = await readFile(join(pack.cloneRoot, "src", "math.txt"), "utf8");
+      const relativePaths = ["src/math.txt", ...additionalAdmittedPaths()];
+      const files = await Promise.all(relativePaths.map(async (relativePath) => {
+        const content = await readFile(join(pack.cloneRoot, relativePath), "utf8");
+        return { relativePath, content, contentSha256: hash(content) };
+      }));
       return { hypothesisId: hypothesis.hypothesisId, hypothesisDigest: hypothesis.proposalDigest, proposal: pack.proposal,
         application: pack.application, verifications: [{ toolId: "TEST", executor: run.executor, request: run.request }],
-        files: [{ relativePath: "src/math.txt", content, contentSha256: hash(content) }],
+        files,
         omegaAuthorityBoundary: "R3A_APPLY_AND_R3B_EXECUTE_ISOLATED_ONLY", sourceRepositoryMutated: tamper as unknown as false,
         productionAuthorityGranted: false };
     } };
@@ -177,11 +195,11 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
 }
 
 {
-  const responses = [modelResponse("2+2=6"), modelResponse("2+2=4", {
+  const responses = [modelResponse(OTHER_WRONG_SOURCE), modelResponse(CORRECT_SOURCE, {
     failureInterpretation: "The failed verification falsified the proposed value 2+2=6; the repository rule supports 2+2=4.",
   })];
   let calls = 0;
-  const nyx = cognition(async () => new Response(JSON.stringify({ choices: [{ message: { content: responses[calls++] } }] }), { status: 200 }));
+  const nyx = cognition(async () => providerResponse(responses[calls++]));
   const result = await loop(nyx, builder(), 2).run(loopRequest());
   check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 2 && result.iterations.length === 2,
     "failed verification drives a bounded revised candidate to verified success without a larger budget");
@@ -192,11 +210,11 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
 
 {
   const invalidIntent = JSON.stringify({ decision: "PROPOSE_EDIT", diagnosis: "Incomplete retry." });
-  const responses = [modelResponse("2+2=6"), invalidIntent, modelResponse("2+2=4", {
+  const responses = [modelResponse(OTHER_WRONG_SOURCE), invalidIntent, modelResponse(CORRECT_SOURCE, {
     failureInterpretation: "The first candidate was falsified and the intervening intent violated the semantic contract.",
   })];
   let calls = 0;
-  const nyx = cognition(async () => new Response(JSON.stringify({ choices: [{ message: { content: responses[calls++] } }] }), { status: 200 }));
+  const nyx = cognition(async () => providerResponse(responses[calls++]));
   const result = await loop(nyx, builder(), 3).run(loopRequest());
   check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 3
     && result.iterations.length === 2 && result.cognitionFailures.length === 1,
@@ -215,17 +233,20 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
     counterexamples: [], requestedEvidenceRefs: ["AVAILABLE:src/rule.txt"], assumptions: [], changes: [], confidence: 0.7 });
   const invalidIntent = JSON.stringify({ decision: "PROPOSE_EDIT", diagnosis: "Incomplete post-evidence intent." });
   const responses = [evidenceIntent, invalidIntent,
-    modelResponse("2+2=4", { evidenceRefs: ["OBJECTIVE", "FILE:src/math.txt", "FILE:src/rule.txt"] })];
+    modelResponse(CORRECT_SOURCE, { evidenceRefs: ["OBJECTIVE", "FILE:src/math.txt", "FILE:src/rule.txt"] })];
   let calls = 0;
-  const nyx = cognition(async () => new Response(JSON.stringify({ choices: [{ message: { content: responses[calls++] } }] }), { status: 200 }));
+  const nyx = cognition(async () => providerResponse(responses[calls++]));
+  let ruleAdmitted = false;
   const evidenceProvider: OmegaRepairEvidenceProvider = { providerIdentity: "OMEGA-R3E-READ-ONLY-EVIDENCE",
     acquire: async (request) => {
+      ruleAdmitted = true;
       const content = await readFile(join(initial.cloneRoot, "src", "rule.txt"), "utf8");
       return { requestedEvidenceRefs: request.requestedEvidenceRefs, evidenceIds: ["R1-EVIDENCE-RULE"],
         files: [{ relativePath: "src/rule.txt", content, contentSha256: hash(content) }],
         omegaAuthorityBoundary: "R1_ADMITTED_READ_ONLY_EVIDENCE", authorityGranted: false };
     } };
-  const result = await loop(nyx, builder(), 3, evidenceProvider).run(loopRequest({ availableEvidence: [{
+  const result = await loop(nyx, builder(false, () => ruleAdmitted ? ["src/rule.txt"] : []), 3, evidenceProvider)
+    .run(loopRequest({ availableEvidence: [{
     evidenceRef: "AVAILABLE:src/rule.txt", kind: "FILE", relativePath: "src/rule.txt",
     description: "Repository rule referenced by the failing fixture." }] }));
   check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 3
@@ -248,7 +269,7 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
 }
 
 {
-  const nyx = cognition(async () => new Response(JSON.stringify({ choices: [{ message: { content: modelResponse("2+2=4") }, finish_reason: "stop" }] }), { status: 200 }));
+  const nyx = cognition(async () => providerResponse(modelResponse(CORRECT_SOURCE)));
   const result = await loop(nyx).run(loopRequest());
   check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.iterations.length === 1, "bounded loop closes a real fail-diagnose-repair-retest cycle in one iteration");
   check(result.iterations[0].applicationDecision === "APPLIED" && result.iterations[0].passed, "Νύξ hypothesis is applied only through R3-A and verified through R3-B");
@@ -260,7 +281,7 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
   check(result.functionalAcceptance === "ACCEPTED" && result.engineeringQualityAcceptance === "NOT_EVALUATED",
     "functional repair success remains explicitly separate from engineering-quality acceptance");
   check(await readFile(join(initial.cloneRoot, "src", "math.txt"), "utf8") === wrong
-    && await readFile(join(sourceRoot, "src", "math.txt"), "utf8") === "2+2=4", "repair candidate leaves both source and failed predecessor repositories unchanged");
+    && await readFile(join(sourceRoot, "src", "math.txt"), "utf8") === CORRECT_SOURCE, "repair candidate leaves both source and failed predecessor repositories unchanged");
   check(result.evidenceId.startsWith("R3E-EVIDENCE-") && result.iterations[0].cognitionEvidenceId.startsWith("NYX-COGNITION-"), "loop evidence preserves cognition, proposal, application, execution, and observation genealogy");
   check(result.iterations[0].cognitionEvidence.evidenceClass === "E3"
     && result.iterations[0].cognitionEvidence.modelRequestDigest !== null, "loop retains sanitized cognition evidence without granting authority");
@@ -269,7 +290,70 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
 }
 
 {
-  const nyx = cognition(async () => new Response(JSON.stringify({ choices: [{ message: { content: modelResponse("2+2=6") } }] }), { status: 200 }));
+  const responses = [modelResponse(OVERCOMPLEX_SOURCE, {
+    causalHypothesis: "Returning the correct export plus extra branching will satisfy the visible arithmetic check.",
+    expectedResult: "The repository-native test passes, after which static candidate admission evaluates engineering quality.",
+    counterexamples: ["The extra branching violates the public complexity bound even if the arithmetic check passes."],
+  }), modelResponse(CORRECT_SOURCE, {
+    causalHypothesis: "The correct export alone satisfies behavior without the rejected unnecessary branching.",
+    failureInterpretation: "Functional execution passed, but candidate admission rejected the prior strategy for excessive complexity.",
+    expectedResult: "Both repository-native verification and public static candidate admission pass.",
+    counterexamples: ["Any retained unnecessary branching would repeat the candidate-admission failure."],
+  })];
+  let calls = 0;
+  const result = await loop(cognition(async () => providerResponse(responses[calls++])), builder(), 2).run(loopRequest());
+  check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 2 && result.iterations.length === 2,
+    "functionally passing but statically rejected candidate receives one bounded quality-driven repair and converges");
+  check(result.iterations[0].functionallyPassed && !result.iterations[0].passed
+    && result.iterations[0].hypothesisDisposition === "PARTIALLY_SUPPORTED"
+    && result.iterations[0].candidateAdmission?.decision === "REJECTED"
+    && result.iterations[0].candidateAdmission.findings.some((finding) => finding.dimension === "MAINTAINABILITY"
+      && finding.code === "COMPLEXITY_LIMIT"),
+  "candidate admission preserves functional success while rejecting excessive complexity with public E3 evidence");
+  check(result.iterations[1].functionallyPassed && result.iterations[1].passed
+    && result.iterations[1].candidateAdmission?.decision === "ADMITTED"
+    && result.iterations[1].hypothesis.parentHypothesisId === result.iterations[0].hypothesis.hypothesisId,
+  "quality repair preserves hypothesis lineage and admits the exact revised candidate");
+  check(result.candidateAdmissionAcceptance === "ACCEPTED" && result.engineeringQualityAcceptance === "NOT_EVALUATED"
+    && !result.authorityGranted && !result.sourceRepositoryWriteAuthority && !result.productionAuthority,
+  "final admitted candidate is accepted without conflating public admission with independent quality or broader authority");
+}
+
+{
+  let prepares = 0;
+  const truncated = cognition(async () => providerResponse(modelResponse(CORRECT_SOURCE), "length"));
+  const candidateBuilder = { builderIdentity: "OMEGA-R3E-TRUNCATION-GUARD",
+    prepare: async () => { prepares += 1; throw new Error("must_not_run"); } };
+  const result = await loop(truncated, candidateBuilder, 1).run(loopRequest());
+  check(result.outcome === "EXHAUSTED" && result.reason === "repair_cognition_correction_budget_exhausted"
+    && result.cognitionFailures.length === 1 && result.cognitionFailures[0].reason === "OUTPUT_TRUNCATED" && prepares === 0,
+  "length-truncated model output is classified explicitly and never reaches Omega actuation");
+  check(result.lastCognitionEvidence?.modelFinishReason === "length" && result.candidateAdmissionAcceptance === "NOT_EVALUATED",
+    "truncation and unevaluated admission remain visible in sanitized loop evidence");
+}
+
+{
+  const validBuilder = builder();
+  const admissionTamperBuilder = { builderIdentity: "OMEGA-R3E-ADMISSION-PROVENANCE-TAMPER",
+    prepare: async (hypothesis: NyxRepairHypothesis, iteration: number) => {
+      const prepared = await validBuilder.prepare(hypothesis, iteration);
+      return { ...prepared, application: { ...prepared.application,
+        events: prepared.application.events.slice(0, -1) } };
+    } };
+  const result = await loop(cognition(async () => providerResponse(modelResponse(CORRECT_SOURCE))),
+    admissionTamperBuilder, 1).run(loopRequest());
+  check(result.outcome === "BLOCKED" && result.reason === "candidate_admission_evidence_insufficient"
+    && result.iterations.length === 1 && result.iterations[0].functionallyPassed
+    && result.iterations[0].hypothesisDisposition === "INSUFFICIENT_EVIDENCE"
+    && result.iterations[0].candidateAdmission?.decision === "INSUFFICIENT_EVIDENCE",
+  "candidate-admission provenance failure preserves the already executed and verified attempt in loop evidence");
+  check(result.functionalAcceptance === "ACCEPTED" && result.candidateAdmissionAcceptance === "INSUFFICIENT_EVIDENCE"
+    && result.evidenceId.startsWith("R3E-EVIDENCE-"),
+  "functional evidence remains distinct from an insufficient static-admission evidence package");
+}
+
+{
+  const nyx = cognition(async () => providerResponse(modelResponse(OTHER_WRONG_SOURCE)));
   const result = await loop(nyx, builder(), 1).run(loopRequest());
   check(result.outcome === "EXHAUSTED" && result.reason === "repair_iteration_budget_exhausted" && result.iterations.length === 1,
     "unsuccessful repair stops exactly at the iteration budget");
@@ -278,7 +362,7 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
 }
 
 {
-  const nyx = cognition(async () => new Response(JSON.stringify({ choices: [{ message: { content: modelResponse("2+2=4") } }] }), { status: 200 }));
+  const nyx = cognition(async () => providerResponse(modelResponse(CORRECT_SOURCE)));
   const result = await loop(nyx, builder(true), 1).run(loopRequest());
   check(result.outcome === "BLOCKED" && result.reason === "omega_prepared_candidate_provenance_invalid" && result.iterations.length === 0,
     "candidate claiming source mutation is rejected before verification execution");
