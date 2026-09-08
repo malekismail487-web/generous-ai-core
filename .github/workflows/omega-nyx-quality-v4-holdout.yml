@@ -1,0 +1,58 @@
+name: Omega NYX engineering quality V4 holdout
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - sol/omega-institutional-spine
+    paths:
+      - .github/workflows/omega-nyx-quality-v4-holdout.yml
+      - scripts/omega/nyx-quality-v4-fixtures.ts
+      - scripts/omega/nyx-quality-v4-live-eval.ts
+      - scripts/omegaVerificationIntegrity.test.ts
+      - package.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-nyx-quality-v4-holdout-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  nyx-quality-v4-holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NYX_QUALITY_SUITE: V4
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Confirm encrypted credential is available
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Verify evaluator isolation, ground truth, provider evidence, and authority contracts
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaVerificationIntegrity.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxEngineeringQualityAssurance.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaCandidateEngineeringAdmission.test.ts
+      - name: Run frozen V4 holdout
+        run: npm run omega:nyx:quality-holdout:v4
+      - name: Upload sanitized V4 report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-nyx-quality-v4-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-quality-v4-*.json
+          if-no-files-found: warn
