@@ -11,6 +11,7 @@ import { isFalseAcceptance, meetsAuthoritativeAcceptancePrerequisites,
 import { R3IsolatedHiddenEvaluator } from "../src/lib/codelab/assurance/r3EvaluatorIsolation";
 import { NYX_ENGINEERING_QUALITY_V3 } from "./omega/nyx-quality-v3-fixtures";
 import { NYX_ENGINEERING_QUALITY_V4, NYX_V4_FROZEN_CORE } from "./omega/nyx-quality-v4-fixtures";
+import { NYX_ENGINEERING_QUALITY_V5, NYX_V5_FROZEN_CORE } from "./omega/nyx-quality-v5-fixtures";
 import { OMEGA_CANDIDATE_RUNNER_SOURCE, VERIFICATION_INTEGRITY_ANTI_GAMING_CORPUS } from "./omega/verification-integrity-fixtures";
 
 let passed = 0;
@@ -421,6 +422,65 @@ export function probe(marker) {
     `${task.taskId} model-admitted context excludes hidden evaluator and rubric internals`);
   }
   check(v4TaskDigests.size === NYX_ENGINEERING_QUALITY_V4.length, "V4 task fixture identities are unique and freezeable");
+
+  check(NYX_ENGINEERING_QUALITY_V5.length === 7 && new Set(NYX_ENGINEERING_QUALITY_V5.map((task) => task.taskClass)).size === 7,
+    "V5 freezes seven fresh and distinct engineering task classes");
+  check(NYX_ENGINEERING_QUALITY_V5.every((task) => task.provenance === "NYX_ENGINEERING_QUALITY_FRESH_HOLDOUT_V5"
+    && task.initiallyAdmittedPaths.every((path) => !path.startsWith("tools/"))
+    && task.availableEvidence.every((item) => !item.relativePath.startsWith("tools/"))),
+  "V5 provenance is fresh and no evaluator tooling enters admitted model context");
+  check(Object.entries(NYX_V5_FROZEN_CORE.files).every(([path, digest]) => {
+    const blob = frozenGitBlob(NYX_V5_FROZEN_CORE.commit, path);
+    return blob !== null && sha256(blob) === digest;
+  }), "V5 frozen core digests bind the exact provider-compatible cognition and assurance implementation");
+  const v5TaskDigests = new Set<string>();
+  for (const task of NYX_ENGINEERING_QUALITY_V5) {
+    v5TaskDigests.add(sha256(canonical(task)));
+    const taskRoot = join(parent, "v5-ground-truth", task.taskId);
+    const correctRoot = join(taskRoot, "candidate");
+    const faultyRoot = join(taskRoot, "faulty");
+    const hiddenTaskRoot = join(taskRoot, "hidden-evaluator");
+    for (const [path, content] of Object.entries(task.correctFiles)) {
+      await mkdir(dirname(join(correctRoot, path)), { recursive: true });
+      await mkdir(dirname(join(faultyRoot, path)), { recursive: true });
+      await writeFile(join(correctRoot, path), content, "utf8");
+      await writeFile(join(faultyRoot, path), content, "utf8");
+    }
+    for (const [path, content] of Object.entries(task.faultyFiles)) await writeFile(join(faultyRoot, path), content, "utf8");
+    for (const root of [correctRoot, faultyRoot]) {
+      await mkdir(join(root, "tools"), { recursive: true });
+      await writeFile(join(root, "tools", "verify-visible.mjs"), task.visibleVerifier, "utf8");
+      await writeFile(join(root, "tools", "candidate-runner.mjs"), OMEGA_CANDIDATE_RUNNER_SOURCE, "utf8");
+    }
+    await mkdir(join(hiddenTaskRoot, "private"), { recursive: true });
+    const hiddenTaskBytes = `${JSON.stringify({ schemaVersion: 1, suiteId: task.taskId, cases: task.hiddenCases })}\n`;
+    await writeFile(join(hiddenTaskRoot, "private", "cases.json"), hiddenTaskBytes, "utf8");
+    const correctVisible = spawnSync(process.execPath, [join(correctRoot, "tools", "verify-visible.mjs")], { cwd: correctRoot });
+    const faultyVisible = spawnSync(process.execPath, [join(faultyRoot, "tools", "verify-visible.mjs")], { cwd: faultyRoot });
+    const hiddenEvaluator = await R3IsolatedHiddenEvaluator.create({ evaluatorId: `V5-GROUND-${task.taskId}`,
+      evaluatorVersion: "nyx-quality-v5/1", candidateRoot: correctRoot, hiddenEvaluatorRoot: hiddenTaskRoot,
+      hiddenCaseFile: "private/cases.json", expectedHiddenCaseFileSha256: sha256(hiddenTaskBytes),
+      candidateRunner: "tools/candidate-runner.mjs", expectedCandidateRunnerSha256: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
+      candidateModule: task.candidateModule, exportName: task.exportName, timeoutMsPerCase: 3_000,
+      maxOutputBytesPerCase: 8_192, maxCases: 32 });
+    const hidden = await hiddenEvaluator.evaluate();
+    const quality = assessEngineeringQuality({ assessmentId: `V5-GROUND-QUALITY-${task.taskId}`,
+      evaluatorVersion: "omega-quality-oracle/1", baselineFiles: { ...task.correctFiles, ...task.faultyFiles },
+      candidateFiles: task.correctFiles, changedPaths: Object.keys(task.faultyFiles),
+      functionalAcceptance: hidden.outcome === "PASS" ? "PASS" : "FAIL",
+      regressionAcceptance: hidden.outcome === "PASS" ? "PASS" : "FAIL", policy: task.qualityPolicy });
+    check(correctVisible.status === 0 && faultyVisible.status !== 0,
+      `${task.taskId} visible oracle distinguishes correct and seeded-defect states`);
+    check(hidden.outcome === "PASS", `${task.taskId} private evaluator accepts frozen ground truth outside candidate scope`);
+    check(quality.decision === "ACCEPTED", `${task.taskId} quality vector accepts the minimal frozen ground truth`);
+    const modelContext = canonical({ objective: task.objective, initiallyAdmittedPaths: task.initiallyAdmittedPaths,
+      availableEvidence: task.availableEvidence, admittedFiles: Object.fromEntries(task.initiallyAdmittedPaths.map((path) => [path,
+        task.faultyFiles[path] ?? task.correctFiles[path]])) });
+    check(!modelContext.includes("expected-cases") && !modelContext.includes("OMEGA_CANDIDATE_RESULT")
+      && !modelContext.includes(task.qualityPolicy.policyId),
+    `${task.taskId} model-admitted context excludes hidden evaluator and rubric internals`);
+  }
+  check(v5TaskDigests.size === NYX_ENGINEERING_QUALITY_V5.length, "V5 task fixture identities are unique and freezeable");
 } finally {
   await rm(parent, { recursive: true, force: true });
 }

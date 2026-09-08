@@ -20,6 +20,7 @@
     "omega:nyx:r3f-live-eval": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-r3f-live-eval.ts",
     "omega:nyx:quality-holdout": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-holdout-live-eval.ts",
     "omega:nyx:quality-holdout:v4": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v4-live-eval.ts",
+    "omega:nyx:quality-holdout:v5": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v5-live-eval.ts",
     "typecheck:ratchet": "node scripts/typescript/typecheck-ratchet.mjs",
     "security:secrets": "node scripts/security/scan-secrets.mjs",
     "w0rs:inventory": "node scripts/w0rs/inventory.mjs --write",

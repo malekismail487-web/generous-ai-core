@@ -26,13 +26,16 @@ import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readO
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { observeEngineeringExecution, type EngineeringObservation } from "../../src/lib/codelab/observation/r3EngineeringObservation";
 import { NYX_ENGINEERING_QUALITY_V4, NYX_V4_FROZEN_CORE, type NyxQualityV4Task } from "./nyx-quality-v4-fixtures";
+import { NYX_ENGINEERING_QUALITY_V5, NYX_V5_FROZEN_CORE, type NyxQualityV5Task } from "./nyx-quality-v5-fixtures";
 import { OMEGA_CANDIDATE_RUNNER_SOURCE } from "./verification-integrity-fixtures";
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V4";
-if (SUITE_ID !== "V4") throw new Error("unsupported_nyx_quality_suite");
-const HOLDOUT = NYX_ENGINEERING_QUALITY_V4;
-const EVALUATOR_VERSION = "nyx-quality-v4/1";
+if (SUITE_ID !== "V4" && SUITE_ID !== "V5") throw new Error("unsupported_nyx_quality_suite");
+const HOLDOUT: readonly (NyxQualityV4Task | NyxQualityV5Task)[] = SUITE_ID === "V5"
+  ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
+const FROZEN_CORE = SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
+const EVALUATOR_VERSION = SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
@@ -41,12 +44,12 @@ const MAX_WALL_CLOCK_MS_PER_TASK = 180_000;
 const MAX_DIAGNOSIS_CHARACTERS = 1_500;
 const CONTRACT_AT_START = NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST;
 const FROZEN_CORE_OBSERVED = Object.freeze(Object.fromEntries(await Promise.all(
-  Object.entries(NYX_V4_FROZEN_CORE.files).map(async ([path]) => [path, sha256(await readFile(resolve(path)))]),
+  Object.entries(FROZEN_CORE.files).map(async ([path]) => [path, sha256(await readFile(resolve(path)))]),
 )));
-const FROZEN_CORE_PRESERVED = Object.entries(NYX_V4_FROZEN_CORE.files)
+const FROZEN_CORE_PRESERVED = Object.entries(FROZEN_CORE.files)
   .every(([path, digest]) => FROZEN_CORE_OBSERVED[path] === digest);
-if (!FROZEN_CORE_PRESERVED) throw new Error("v4_frozen_core_digest_mismatch");
-const V4_EVALUATOR_DIGEST = sha256(canonical({
+if (!FROZEN_CORE_PRESERVED) throw new Error(`${SUITE_ID.toLowerCase()}_frozen_core_digest_mismatch`);
+const EVALUATOR_DIGEST = sha256(canonical({
   driver: sha256(await readFile(new URL(import.meta.url))),
   isolation: sha256(await readFile(new URL("../../src/lib/codelab/assurance/r3EvaluatorIsolation.ts", import.meta.url))),
   qualityOracle: sha256(await readFile(new URL("../../src/lib/codelab/assurance/engineeringQualityOracle.ts", import.meta.url))),
@@ -57,7 +60,7 @@ const V4_EVALUATOR_DIGEST = sha256(canonical({
   provider: sha256(await readFile(new URL("../../src/lib/codelab/model/nvidiaNimProvider.ts", import.meta.url))),
   candidateRunner: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
 }));
-const V4_TASK_FIXTURE_DIGESTS = Object.freeze(Object.fromEntries(HOLDOUT.map((task) => [task.taskId,
+const TASK_FIXTURE_DIGESTS = Object.freeze(Object.fromEntries(HOLDOUT.map((task) => [task.taskId,
   sha256(canonical({ taskId: task.taskId, taskClass: task.taskClass, provenance: task.provenance,
     objective: task.objective, initialDefect: task.initialDefect, correctFiles: task.correctFiles,
     faultyFiles: task.faultyFiles, mutationPaths: task.mutationPaths, initiallyAdmittedPaths: task.initiallyAdmittedPaths,
@@ -109,7 +112,7 @@ function failureClass(result: R3BoundedRepairResult, hidden: string, quality: st
   return "MODEL_REPAIR_FAILURE";
 }
 
-function proposal(sourceRoot: string, task: NyxQualityV4Task, label: string,
+function proposal(sourceRoot: string, task: NyxQualityV4Task | NyxQualityV5Task, label: string,
   changes: readonly R2GProposedChange[]): R2GPatchProposal {
   if (changes.some((change) => !task.mutationPaths.includes(change.relativePath))) {
     throw new Error("holdout_mutation_outside_explicit_scope");
@@ -131,7 +134,7 @@ function provisionRequest(config: R2AIsolatedLifecycleConfig, label: string, now
 }
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1") {
-  console.error("NYX_QUALITY_V4_HOLDOUT result=BLOCKED failureClass=OMEGA_AUTHORIZATION_REJECTION reason=explicit_nvidia_network_authorization_missing");
+  console.error(`NYX_QUALITY_${SUITE_ID}_HOLDOUT result=BLOCKED failureClass=OMEGA_AUTHORIZATION_REJECTION reason=explicit_nvidia_network_authorization_missing`);
   process.exit(2);
 }
 
@@ -312,7 +315,7 @@ try {
     let hiddenEvidenceId: string | null = null;
     let hiddenIsolationEvidence: Record<string, unknown> | null = null;
     if (loopResult.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && finalPack) {
-      const hiddenEvaluator = await R3IsolatedHiddenEvaluator.create({ evaluatorId: `NYX-V4-HIDDEN-${task.taskId}`,
+      const hiddenEvaluator = await R3IsolatedHiddenEvaluator.create({ evaluatorId: `NYX-${SUITE_ID}-HIDDEN-${task.taskId}`,
         evaluatorVersion: EVALUATOR_VERSION, candidateRoot: finalPack.cloneRoot,
         hiddenEvaluatorRoot, hiddenCaseFile: hiddenCaseRelativePath,
         expectedHiddenCaseFileSha256: sha256(hiddenCaseBytes), candidateRunner: "tools/candidate-runner.mjs",
@@ -344,7 +347,7 @@ try {
       const toolIntegrity = sha256(await readFile(join(finalPack.cloneRoot, "tools", "verify-visible.mjs"))) === sha256(task.visibleVerifier)
         && sha256(await readFile(join(finalPack.cloneRoot, "tools", "candidate-runner.mjs"))) === sha256(OMEGA_CANDIDATE_RUNNER_SOURCE)
         && sha256(await readFile(hiddenCasePath)) === sha256(hiddenCaseBytes);
-      const assessment = assessEngineeringQuality({ assessmentId: `NYX-V4-QUALITY-${task.taskId}`,
+      const assessment = assessEngineeringQuality({ assessmentId: `NYX-${SUITE_ID}-QUALITY-${task.taskId}`,
         evaluatorVersion: QUALITY_ORACLE_VERSION, baselineFiles, candidateFiles, changedPaths,
         functionalAcceptance: hiddenResult === "PASS" ? "PASS" : hiddenResult === "FAIL" ? "FAIL" : "NOT_EVALUATED",
         regressionAcceptance: hiddenResult === "PASS" ? "PASS" : hiddenResult === "FAIL" ? "FAIL" : "NOT_EVALUATED",
@@ -405,7 +408,7 @@ try {
   }
 } catch (error) {
   const reason = error instanceof Error ? error.message : "unknown_error";
-  console.error(`NYX_QUALITY_V4_HOLDOUT result=HARNESS_ABORTED failureClass=HARNESS_DEFECT reason=${reason.replace(/\s+/g, "_").slice(0, 200)}`);
+  console.error(`NYX_QUALITY_${SUITE_ID}_HOLDOUT result=HARNESS_ABORTED failureClass=HARNESS_DEFECT reason=${reason.replace(/\s+/g, "_").slice(0, 200)}`);
   process.exitCode = 1;
 } finally {
   await rm(parent, { recursive: true, force: true });
@@ -435,12 +438,12 @@ if (taskResults.length === HOLDOUT.length) {
     .map((reason) => [reason, finishReasons.filter((item) => item === reason).length]));
   const providerFailureBreakdown = Object.fromEntries([...new Set(providerFailures.map((item) => item.failureCategory!))]
     .sort().map((category) => [category, providerFailures.filter((item) => item.failureCategory === category).length]));
-  const result = { schemaVersion: 1, chunkId: "OMEGA-NYX-QUALITY-V4-001", suiteIdentity: SUITE_ID,
+  const result = { schemaVersion: 1, chunkId: `OMEGA-NYX-QUALITY-${SUITE_ID}-001`, suiteIdentity: SUITE_ID,
     candidateCommit: CANDIDATE,
-    modelId: MODEL, evaluatorVersion: EVALUATOR_VERSION, evaluatorDigest: V4_EVALUATOR_DIGEST,
+    modelId: MODEL, evaluatorVersion: EVALUATOR_VERSION, evaluatorDigest: EVALUATOR_DIGEST,
     qualityOracleVersion: QUALITY_ORACLE_VERSION, cognitionContractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
-    cognitionContractDigest: CONTRACT_AT_START, taskFixtureDigests: V4_TASK_FIXTURE_DIGESTS, frozenBeforeScoring: true,
-    frozenCoreCommit: NYX_V4_FROZEN_CORE.commit, frozenCoreDigests: NYX_V4_FROZEN_CORE.files,
+    cognitionContractDigest: CONTRACT_AT_START, taskFixtureDigests: TASK_FIXTURE_DIGESTS, frozenBeforeScoring: true,
+    frozenCoreCommit: FROZEN_CORE.commit, frozenCoreDigests: FROZEN_CORE.files,
     frozenCoreObserved: FROZEN_CORE_OBSERVED, frozenCorePreserved: FROZEN_CORE_PRESERVED,
     contractChangedDuringScoredEval: taskResults.some((item) => item.contractPreserved !== true), tasks: taskResults,
     aggregateMetrics: { taskSuccessRate: rate(successes.length, taskResults.length),
@@ -498,10 +501,10 @@ if (taskResults.length === HOLDOUT.length) {
       criticalClassRequired: true, minimumSchemaComplianceRate: 0.9,
       providerFailureInconclusiveThreshold: 2, safetyPreservationRequired: true } };
   const reportPath = join(process.env.RUNNER_TEMP?.trim() || tmpdir(),
-    `nyx-quality-v4-${CANDIDATE.slice(0, 12)}.json`);
+    `nyx-quality-${SUITE_ID.toLowerCase()}-${CANDIDATE.slice(0, 12)}.json`);
   await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
-  console.log(`NYX_QUALITY_V4_HOLDOUT ${JSON.stringify(report)}`);
-  console.log(`NYX_QUALITY_V4_REPORT_PATH ${reportPath}`);
+  console.log(`NYX_QUALITY_${SUITE_ID}_HOLDOUT ${JSON.stringify(report)}`);
+  console.log(`NYX_QUALITY_${SUITE_ID}_REPORT_PATH ${reportPath}`);
   if (result.aggregateMetrics.falseAcceptanceRate !== 0 || result.aggregateMetrics.falseQualityAcceptanceRate !== 0
     || !result.frozenCorePreserved || result.contractChangedDuringScoredEval
     || taskResults.some((item) => item.sourceRepositoryUnchanged !== true)) process.exitCode = 1;
