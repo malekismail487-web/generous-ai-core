@@ -100,6 +100,160 @@ function scriptKind(path: string): ts.ScriptKind {
   return path.endsWith(".ts") || path.endsWith(".tsx") ? ts.ScriptKind.TS : path.endsWith(".jsx") ? ts.ScriptKind.JSX : ts.ScriptKind.JS;
 }
 
+/**
+ * Bounded, flow-insensitive borrowing analysis, not a proof of immutability.
+ * Symbols distinguish lexical shadowing; two bits distinguish a borrowed value
+ * from a fresh container that still holds borrowed values. Shallow array copies
+ * may therefore be sorted, but their borrowed elements may not be mutated.
+ * Standard built-in method semantics are assumed. Arbitrary interprocedural
+ * effects, monkey-patching, and aliasing through later container stores still
+ * require execution evidence; this detector must not replace those checks.
+ */
+function detectsParameterMutation(file: ts.SourceFile): boolean {
+  const BORROWED = 1;
+  const CONTAINS_BORROWED = 2;
+  const BORROWED_GRAPH = BORROWED | CONTAINS_BORROWED;
+  // Bind only this already-parsed source. No compiler filesystem or module access.
+  const host: ts.CompilerHost = {
+    getSourceFile: (name) => name === file.fileName ? file : undefined,
+    getDefaultLibFileName: () => "", writeFile: () => undefined,
+    getCurrentDirectory: () => "", getDirectories: () => [],
+    fileExists: (name) => name === file.fileName,
+    readFile: (name) => name === file.fileName ? file.text : undefined,
+    getCanonicalFileName: (name) => name, useCaseSensitiveFileNames: () => true, getNewLine: () => "\n",
+  };
+  const checker = ts.createProgram([file.fileName], {
+    allowJs: true, noLib: true, noResolve: true, target: ts.ScriptTarget.Latest,
+  }, host).getTypeChecker();
+  const origins = new Map<ts.Symbol, number>();
+  const nodes: ts.Node[] = [];
+  const collect = (node: ts.Node): void => { nodes.push(node); ts.forEachChild(node, collect); };
+  collect(file);
+  const unwrap = (expression: ts.Expression): ts.Expression => {
+    while (ts.isParenthesizedExpression(expression) || ts.isAsExpression(expression)
+      || ts.isTypeAssertionExpression(expression) || ts.isNonNullExpression(expression)
+      || ts.isSatisfiesExpression(expression)) expression = expression.expression;
+    return expression;
+  };
+  const member = (expression: ts.Expression): { receiver: ts.Expression; name: string } | null => {
+    const node = unwrap(expression);
+    if (ts.isPropertyAccessExpression(node)) return { receiver: node.expression, name: node.name.text };
+    if (ts.isElementAccessExpression(node) && ts.isStringLiteralLike(node.argumentExpression)) {
+      return { receiver: node.expression, name: node.argumentExpression.text };
+    }
+    return null;
+  };
+  const isGlobal = (expression: ts.Expression, name: string): boolean =>
+    ts.isIdentifier(expression) && expression.text === name && !checker.getSymbolAtLocation(expression);
+  const mutators = new Set(["push", "pop", "shift", "unshift", "splice", "sort", "reverse", "fill", "copyWithin", "set", "add", "delete", "clear"]);
+  const shallowCopies = new Set(["map", "filter", "slice", "concat", "flat", "flatMap", "toSorted", "toReversed", "toSpliced", "with"]);
+  const descendants = (origin: number): number => origin & CONTAINS_BORROWED ? BORROWED_GRAPH : 0;
+  const originOf = (input: ts.Expression): number => {
+    const node = unwrap(input);
+    if (ts.isIdentifier(node)) {
+      const symbol = checker.getSymbolAtLocation(node);
+      return symbol ? origins.get(symbol) ?? 0 : 0;
+    }
+    if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) return descendants(originOf(node.expression));
+    if (ts.isConditionalExpression(node)) return originOf(node.whenTrue) | originOf(node.whenFalse);
+    if (ts.isBinaryExpression(node)) {
+      return node.operatorToken.kind === ts.SyntaxKind.CommaToken ? originOf(node.right) : originOf(node.left) | originOf(node.right);
+    }
+    if (ts.isArrayLiteralExpression(node)) {
+      return node.elements.some((element) => ts.isSpreadElement(element)
+        ? originOf(element.expression) & CONTAINS_BORROWED : !ts.isOmittedExpression(element) && originOf(element)) ? CONTAINS_BORROWED : 0;
+    }
+    if (ts.isObjectLiteralExpression(node)) {
+      return node.properties.some((property) => ts.isSpreadAssignment(property)
+        ? originOf(property.expression) & CONTAINS_BORROWED
+        : ts.isPropertyAssignment(property) ? originOf(property.initializer)
+          : ts.isShorthandPropertyAssignment(property) && originOf(property.name)) ? CONTAINS_BORROWED : 0;
+    }
+    if (ts.isCallExpression(node)) {
+      const method = member(node.expression);
+      const receiver = method ? originOf(method.receiver) : 0;
+      if (method && shallowCopies.has(method.name)) return receiver ? CONTAINS_BORROWED : 0;
+      if (method && ["sort", "reverse", "fill", "copyWithin"].includes(method.name)) return receiver;
+      if (method && ["pop", "shift", "at", "find"].includes(method.name)) return descendants(receiver);
+      if (method && isGlobal(method.receiver, "Array") && method.name === "from") {
+        const mapper = node.arguments[1];
+        if (mapper && (ts.isArrowFunction(mapper) || ts.isFunctionExpression(mapper))) {
+          const returnedOrigin = (body: ts.Node): number => {
+            if (ts.isReturnStatement(body)) return body.expression ? originOf(body.expression) : 0;
+            if (ts.isFunctionLike(body)) return 0;
+            let origin = 0;
+            ts.forEachChild(body, (child) => { origin |= returnedOrigin(child); });
+            return origin;
+          };
+          const returned = ts.isBlock(mapper.body) ? returnedOrigin(mapper.body) : originOf(mapper.body);
+          return returned ? CONTAINS_BORROWED : 0;
+        }
+        return node.arguments.some((argument) => originOf(argument)) ? CONTAINS_BORROWED : 0;
+      }
+      if (method && isGlobal(method.receiver, "Object") && method.name === "assign") {
+        return (node.arguments[0] ? originOf(node.arguments[0]) : 0)
+          | (node.arguments.slice(1).some((argument) => originOf(argument)) ? CONTAINS_BORROWED : 0);
+      }
+      // Unknown calls may return an alias. Do not assume they make private copies.
+      return receiver || node.arguments.some((argument) => originOf(argument)) ? BORROWED_GRAPH : 0;
+    }
+    return 0;
+  };
+  let changed = false;
+  const bind = (name: ts.BindingName, origin: number): void => {
+    if (ts.isIdentifier(name)) {
+      const symbol = checker.getSymbolAtLocation(name);
+      if (!symbol) return;
+      const previous = origins.get(symbol) ?? 0;
+      const next = previous | origin;
+      if (next !== previous) { origins.set(symbol, next); changed = true; }
+    } else for (const element of name.elements) if (ts.isBindingElement(element)) {
+      bind(element.name, element.dotDotDotToken ? (origin ? CONTAINS_BORROWED : 0) : descendants(origin));
+    }
+  };
+  for (const node of nodes) if (ts.isParameter(node)) bind(node.name, BORROWED_GRAPH);
+  // Monotone fixed point: each symbol can acquire only two bits, so cycles in
+  // aliases terminate. Union across branches is deliberately conservative.
+  do {
+    changed = false;
+    for (const node of nodes) {
+      if (ts.isVariableDeclaration(node) && node.initializer) bind(node.name, originOf(node.initializer));
+      if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.EqualsToken && ts.isIdentifier(node.left)) {
+        bind(node.left, originOf(node.right));
+      }
+      if (ts.isForOfStatement(node) && ts.isVariableDeclarationList(node.initializer)) {
+        for (const declaration of node.initializer.declarations) bind(declaration.name, descendants(originOf(node.expression)));
+      }
+    }
+  } while (changed);
+  const writesBorrow = (input: ts.Expression): boolean => {
+    const node = unwrap(input);
+    if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) return Boolean(originOf(node.expression) & BORROWED);
+    if (ts.isArrayLiteralExpression(node)) return node.elements.some((element) => !ts.isOmittedExpression(element)
+      && writesBorrow(ts.isSpreadElement(element) ? element.expression : element));
+    if (ts.isObjectLiteralExpression(node)) return node.properties.some((property) => ts.isPropertyAssignment(property)
+      && writesBorrow(property.initializer));
+    return false; // Rebinding a local parameter does not mutate the caller's value.
+  };
+  return nodes.some((node) => {
+    if (ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment
+      && node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) return writesBorrow(node.left);
+    if ((ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node))
+      && [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(node.operator)) return writesBorrow(node.operand);
+    if (ts.isDeleteExpression(node)) return writesBorrow(node.expression);
+    if ((ts.isForOfStatement(node) || ts.isForInStatement(node)) && !ts.isVariableDeclarationList(node.initializer)) {
+      return writesBorrow(node.initializer);
+    }
+    if (!ts.isCallExpression(node)) return false;
+    const method = member(node.expression);
+    if (!method) return false;
+    if (mutators.has(method.name) && (originOf(method.receiver) & BORROWED)) return true;
+    const writesFirstArgument = (isGlobal(method.receiver, "Object") && ["assign", "defineProperty", "defineProperties", "setPrototypeOf"].includes(method.name))
+      || (isGlobal(method.receiver, "Reflect") && ["set", "deleteProperty", "defineProperty", "setPrototypeOf"].includes(method.name));
+    return writesFirstArgument && Boolean(node.arguments[0] && (originOf(node.arguments[0]) & BORROWED));
+  });
+}
+
 function analyze(path: string, source: string): FileAnalysis {
   const file = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, scriptKind(path));
   const exports: string[] = [];
@@ -107,12 +261,10 @@ function analyze(path: string, source: string): FileAnalysis {
   const calls: string[] = [];
   const literals: (string | number | boolean)[] = [];
   const functionBodies: string[] = [];
-  const parameterStack: Set<string>[] = [];
   let complexity = 1;
   let nesting = 0;
   let maxNesting = 0;
   let declarations = 0;
-  let parameterMutation = false;
   let globalMutableState = false;
   let unsafeTypeEscape = /@ts-(?:ignore|nocheck)|\bas\s+(?:any|unknown)\b|:\s*any\b/.test(source);
   let unsafeRuntimeAccess = false;
@@ -136,8 +288,6 @@ function analyze(path: string, source: string): FileAnalysis {
     if (node.kind === ts.SyntaxKind.FalseKeyword) literals.push(false);
     if (ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node) || ts.isArrowFunction(node) || ts.isMethodDeclaration(node)) {
       declarations += 1;
-      const parameters = new Set(node.parameters.flatMap((parameter) => ts.isIdentifier(parameter.name) ? [parameter.name.text] : []));
-      parameterStack.push(parameters);
       if (node.body) functionBodies.push(node.body.getText(file).replace(/\s+/g, " ").trim());
     }
     if (ts.isVariableStatement(node)) {
@@ -158,19 +308,8 @@ function analyze(path: string, source: string): FileAnalysis {
     if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause)) {
       for (const element of node.exportClause.elements) exports.push(`${element.name.text}:reexport`);
     }
-    if (ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment
-      && node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) {
-      const root = node.left.getText(file).split(/[.[]/, 1)[0];
-      if (parameterStack.some((parameters) => parameters.has(root))) parameterMutation = true;
-    }
-    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
-      const root = node.expression.expression.getText(file).split(/[.[]/, 1)[0];
-      if (["push", "pop", "shift", "unshift", "splice", "sort", "reverse", "fill", "copyWithin"].includes(node.expression.name.text)
-        && parameterStack.some((parameters) => parameters.has(root))) parameterMutation = true;
-    }
     if (node.kind === ts.SyntaxKind.AnyKeyword) unsafeTypeEscape = true;
     ts.forEachChild(node, visit);
-    if (ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node) || ts.isArrowFunction(node) || ts.isMethodDeclaration(node)) parameterStack.pop();
     if (isControl) nesting -= 1;
   };
   visit(file);
@@ -181,7 +320,7 @@ function analyze(path: string, source: string): FileAnalysis {
   return Object.freeze({ parseErrors: Object.freeze(parseDiagnostics.map((item) => ts.flattenDiagnosticMessageText(item.messageText, " "))),
     exports: Object.freeze([...new Set(exports)].sort()), imports: Object.freeze(imports.sort()), calls: Object.freeze(calls.sort()),
     literals: Object.freeze(literals), functionBodies: Object.freeze(functionBodies), complexity, maxNesting, declarations,
-    parameterMutation, globalMutableState, unsafeTypeEscape, unsafeRuntimeAccess });
+    parameterMutation: detectsParameterMutation(file), globalMutableState, unsafeTypeEscape, unsafeRuntimeAccess });
 }
 
 function changedLineEstimate(before: string, after: string): number {
@@ -257,7 +396,7 @@ export function assessEngineeringQuality(input: EngineeringQualityInput): Engine
   }
   const architectureFindings = invariantFindings.ARCHITECTURAL_FIT ?? [];
   dimensions.ARCHITECTURAL_FIT = result("ARCHITECTURAL_FIT", architectureFindings.length ? "FAIL" : "PASS",
-    "task_specific_ast_invariants", "MODERATE", architectureFindings, "MEDIUM", "MEDIUM");
+    "task_specific_ast_invariants/2", "MODERATE", architectureFindings, "MEDIUM", "MEDIUM");
   const typeFindings = [...analyses.entries()].flatMap(([path, item]) => item.unsafeTypeEscape ? [`unsafe_type_escape:${path}`] : []);
   dimensions.TYPE_SAFETY = result("TYPE_SAFETY", typeFindings.length ? "FAIL" : "PASS", "typescript_ast_and_suppression_scan",
     "MODERATE", typeFindings, "LOW", "MEDIUM");

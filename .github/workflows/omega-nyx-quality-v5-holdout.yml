@@ -2,11 +2,6 @@ name: Omega NYX engineering quality V5 holdout
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - sol/omega-institutional-spine
-    paths:
-      - .github/workflows/omega-nyx-quality-v5-holdout.yml
 
 permissions:
   contents: read

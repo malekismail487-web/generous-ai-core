@@ -294,6 +294,58 @@ export function probe(marker) {
   }
   check(rejectedLowQuality === 10, "all ten functionally passing low-quality fixture classes are rejected");
 
+  // These authored programs are executed independently of the AST detector. This
+  // tests false positives as well as bypasses; they are not live holdout tasks.
+  const ownershipCases = [
+    { id: "mapped-copy-sort", mutation: false, body: "return values.map(item => ({ ...item })).sort((a, b) => a.rank - b.rank);" },
+    { id: "sliced-copy-sort", mutation: false, body: "return values.slice().sort((a, b) => a.rank - b.rank);" },
+    { id: "filtered-copy-reverse", mutation: false, body: "return values.filter(item => item.rank > 0).reverse();" },
+    { id: "spread-copy-reverse", mutation: false, body: "const copy = [...values]; copy.reverse(); return copy;" },
+    { id: "shallow-object-own-property", mutation: false, body: "const copy = { ...values[0] }; copy.rank++; return copy;" },
+    { id: "parameter-rebinding", mutation: false, body: "values = [...values].reverse(); return values;" },
+    { id: "lexical-shadow", mutation: false, body: "{ const values = [{ rank: 4 }, { rank: 3 }]; values.reverse(); } return values;" },
+    { id: "array-from-private-buckets", mutation: false, body: "const buckets = Array.from({ length: values.length }, () => []); buckets[0].push(values[0]); return buckets;" },
+    { id: "array-from-block-mapper", mutation: false, body: "const buckets = Array.from(values, () => { return []; }); buckets[0].push(7); return buckets;" },
+    { id: "array-from-shallow-sort", mutation: false, body: "return Array.from(values).sort((a, b) => a.rank - b.rank);" },
+    { id: "direct-sort", mutation: true, body: "return values.sort((a, b) => a.rank - b.rank);" },
+    { id: "local-alias", mutation: true, body: "const borrowed = values; borrowed.reverse(); return values;" },
+    { id: "transitive-alias", mutation: true, body: "const first = values; const second = first; second.pop(); return values;" },
+    { id: "parenthesized-receiver", mutation: true, body: "(values).reverse(); return values;" },
+    { id: "computed-mutator", mutation: true, body: "values['reverse'](); return values;" },
+    { id: "shallow-copy-borrowed-element", mutation: true, body: "const copy = values.slice(); copy[0].rank++; return copy;" },
+    { id: "spread-borrowed-element", mutation: true, body: "const copy = [...values]; copy[0].rank = 7; return copy;" },
+    { id: "destructured-borrow", mutation: true, body: "const { 0: first } = values; first.rank++; return values;" },
+    { id: "nested-delete", mutation: true, body: "delete values[0].rank; return values;" },
+    { id: "object-assign-target", mutation: true, body: "Object.assign(values[0], { rank: 7 }); return values;" },
+    { id: "reflect-set-target", mutation: true, body: "Reflect.set(values[0], 'rank', 7); return values;" },
+    { id: "array-from-borrowed-item", mutation: true, body: "const copy = Array.from(values); copy[0].rank++; return copy;" },
+    { id: "array-from-identity-mapper", mutation: true, body: "const copy = Array.from(values, item => item); copy[0].rank++; return copy;" },
+    { id: "array-from-block-borrow", mutation: true, body: "const copy = Array.from(values, item => { return item; }); copy[0].rank++; return copy;" },
+  ] as const;
+  for (const fixture of ownershipCases) {
+    const source = `export function transform(values) {\n  ${fixture.body}\n}\n`;
+    const module = await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`) as {
+      transform: (values: { rank: number }[]) => unknown;
+    };
+    const input = [{ rank: 2 }, { rank: 1 }];
+    const before = canonical(input);
+    module.transform(input);
+    check((canonical(input) !== before) === fixture.mutation,
+      `ownership ${fixture.id} runtime independently confirms expected mutation behavior`);
+    const quality = assessEngineeringQuality({ assessmentId: `OWNERSHIP-${fixture.id}`,
+      evaluatorVersion: "omega-ownership-regression/1", baselineFiles: { "src/subject.mjs": source },
+      candidateFiles: { "src/subject.mjs": source }, changedPaths: ["src/subject.mjs"],
+      functionalAcceptance: "PASS", regressionAcceptance: "PASS", policy: {
+        policyId: "OWNERSHIP-ONLY", allowedChangedPaths: ["src/subject.mjs"], readonlyPaths: [],
+        maxChangedFiles: 1, maxChangedLines: 100, maxCandidateBytes: 8_192,
+        maxCyclomaticComplexity: 20, maxComplexityDelta: 20, maxNestingDepth: 10, maxAddedDeclarations: 20,
+        invariants: [{ invariantId: "PRESERVE-BORROWED-INPUT", dimension: "ARCHITECTURAL_FIT",
+          kind: "NO_PARAMETER_MUTATION", path: "src/subject.mjs" }],
+      } });
+    check(quality.dimensions.ARCHITECTURAL_FIT.disposition === (fixture.mutation ? "FAIL" : "PASS"),
+      `ownership ${fixture.id} structural detector agrees with independent runtime behavior`);
+  }
+
   const acceptedRecord: HoldoutAcceptanceRecord = { finalClassification: "PASS",
     deterministicVerification: "FUNCTIONALLY_REPAIRED_VERIFIED", hiddenAcceptance: "PASS",
     engineeringQuality: "ACCEPTED", sourceRepositoryUnchanged: true, failedPredecessorUnchanged: true,
