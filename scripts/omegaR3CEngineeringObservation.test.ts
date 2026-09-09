@@ -125,6 +125,11 @@ function request(candidate: R3BExecutionResult, baseline: R3BExecutionResult | n
   check(diagnostics.some((item) => item.category === "STACK" && item.file === "src/run.ts" && item.line === 8), "stack location is extracted when it is repository-relative");
   check(diagnostics.some((item) => item.code === "TS1000" && item.file === null), "absolute diagnostic path is not admitted as a repository-relative location");
   check(diagnostics.some((item) => item.category === "GENERIC") && diagnostics.some((item) => item.category === "TEST"), "generic errors and failing tests remain separately represented");
+  for (const path of ["/outside/secret.ts", "C:secret.ts", "//server/share/secret.ts", "src/../../secret.ts", "src/data.ts:stream"]) {
+    const parsed = parseEngineeringDiagnostics(execution("FAIL", { stderr: `${path}(2,1): error TS1000: outside` }).evidence);
+    check(parsed.some((item) => item.code === "TS1000" && item.file === null),
+      `cross-host or traversal diagnostic ${path} is not admitted as a repository-relative file`);
+  }
 }
 
 {

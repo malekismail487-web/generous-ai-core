@@ -2002,6 +2002,18 @@
         "transport": "supabase-js"
       },
       {
+        "name": "ale-api",
+        "file": "scripts/evaluation/sec003-retirement/deploymentIdentity.ts",
+        "line": 83,
+        "transport": "raw-url"
+      },
+      {
+        "name": "ale-api",
+        "file": "scripts/evaluation/sec003-retirement/deploymentIdentity.ts",
+        "line": 84,
+        "transport": "raw-url"
+      },
+      {
         "name": "scan-content",
         "file": "supabase/functions/chat/index.ts",
         "line": 47,
@@ -2026,6 +2038,15 @@
       "name": "ELEVENLABS_API_KEY",
       "files": [
         "supabase/functions/generate-ambient-music/index.ts"
+      ]
+    },
+    {
+      "name": "GITHUB_SHA",
+      "files": [
+        "scripts/omega/nyx-live-r3e.ts",
+        "scripts/omega/nyx-quality-holdout-live-eval.ts",
+        "scripts/omega/nyx-quality-v4-live-eval.ts",
+        "scripts/omega/nyx-r3f-live-eval.ts"
       ]
     },
     {
@@ -2142,6 +2163,42 @@
       ]
     },
     {
+      "name": "NVIDIA_NIM_MODEL",
+      "files": [
+        "scripts/omega/nvidia-nim-live-smoke.ts",
+        "scripts/omega/nyx-contract-compliance.ts",
+        "scripts/omega/nyx-live-r3e.ts",
+        "scripts/omega/nyx-quality-holdout-live-eval.ts",
+        "scripts/omega/nyx-quality-v4-live-eval.ts",
+        "scripts/omega/nyx-r3f-live-eval.ts"
+      ]
+    },
+    {
+      "name": "NYX_CONTRACT_TRIALS",
+      "files": [
+        "scripts/omega/nyx-contract-compliance.ts"
+      ]
+    },
+    {
+      "name": "NYX_QUALITY_SUITE",
+      "files": [
+        "scripts/omega/nyx-quality-holdout-live-eval.ts",
+        "scripts/omega/nyx-quality-v4-live-eval.ts",
+        "scripts/omega/nyx-quality-v5-live-eval.ts"
+      ]
+    },
+    {
+      "name": "OMEGA_ALLOW_NVIDIA_NETWORK",
+      "files": [
+        "scripts/omega/nvidia-nim-live-smoke.ts",
+        "scripts/omega/nyx-contract-compliance.ts",
+        "scripts/omega/nyx-live-r3e.ts",
+        "scripts/omega/nyx-quality-holdout-live-eval.ts",
+        "scripts/omega/nyx-quality-v4-live-eval.ts",
+        "scripts/omega/nyx-r3f-live-eval.ts"
+      ]
+    },
+    {
       "name": "OMEGA_PREVIOUS_TEST_MANIFEST_PATH",
       "files": [
         "scripts/omega/run-tests.mjs"
@@ -2163,6 +2220,12 @@
       "name": "PERSONA_SEED",
       "files": [
         "scripts/personaTest.ts"
+      ]
+    },
+    {
+      "name": "RUNNER_TEMP",
+      "files": [
+        "scripts/omega/nyx-quality-v4-live-eval.ts"
       ]
     },
     {

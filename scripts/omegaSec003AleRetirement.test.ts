@@ -31,7 +31,13 @@ const legacyKeysTable = legacyTables[0];
 let passed = 0; let failed = 0; const failures: string[] = [];
 function assert(value: unknown, label: string): void { if (value) passed += 1; else { failed += 1; failures.push(label); console.error(`  x ${label}`); } }
 function source(path: string): string { return readFileSync(resolve(ROOT, path), "utf8").replace(/\r\n?/g, "\n"); }
-function sha256(path: string): string { return createHash("sha256").update(readFileSync(resolve(ROOT, path))).digest("hex"); }
+function matchesReviewedSource(path: string): boolean {
+  const baseline = execFileSync("git", ["show", `${REVIEWED_ALE_RETIREMENT_IMPLEMENTATION_COMMIT}:${path}`],
+    { cwd: ROOT, encoding: "utf8", maxBuffer: 2_000_000 }).replace(/\r\n?/g, "\n");
+  // Checkout newline conversion is not an implementation change. No other
+  // whitespace or semantic normalization is permitted by this comparison.
+  return source(path) === baseline;
+}
 
 const syntheticLegacyCredential = ["ale", "live", "syntheticcredential00000001"].join("_");
 for (const method of ["GET", "POST", "PUT", "PATCH", "DELETE"]) {
@@ -78,8 +84,8 @@ for (const path of [
 ]) {
   assert(existsSync(resolve(ROOT, path)), `internal adaptive-learning function remains present: ${relative(ROOT, resolve(ROOT, path)).replaceAll("\\", "/")}`);
 }
-assert(sha256("supabase/functions/lumina-api/index.ts") === "cca1b8bd3d4d8bad44b605020685bf13247bd70c651eecb801a87320be246701", "separate Lumina API gateway remains byte-identical to the accepted pre-retirement baseline");
-assert(sha256("src/components/admin/LuminaApiPanel.tsx") === "bea32aab9cca25053ebb977d930efcb69ce29db2002f2696cfdb220b8f1a6a2d", "separate Lumina API administration UI remains byte-identical to the accepted pre-retirement baseline");
+assert(matchesReviewedSource("supabase/functions/lumina-api/index.ts"), "separate Lumina API gateway remains identical to reviewed Git source apart from checkout line endings");
+assert(matchesReviewedSource("src/components/admin/LuminaApiPanel.tsx"), "separate Lumina API administration UI remains identical to reviewed Git source apart from checkout line endings");
 
 const migration = source(ALE_RETIREMENT_MIGRATION_ARTIFACT);
 const guardAt = migration.indexOf(`to_regclass('public.${legacyKeysTable}') IS NULL`);

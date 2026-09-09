@@ -16,6 +16,7 @@ import {
 let passed = 0;
 let failed = 0;
 const failures: string[] = [];
+const hostDrive = process.platform === "win32" ? "C:" : "";
 
 function assert(condition: unknown, label: string): void {
   if (condition) passed += 1;
@@ -37,8 +38,8 @@ function request(overrides: Partial<R2AProvisioningRequest> = {}): R2AProvisioni
     authority: "WRITE_SANDBOX",
     issuer: "OMEGA-INSTITUTIONAL-AUTHORITY",
     auditIdentity: "OMEGA-AUDIT-R2-A-001",
-    repositoryRoot: "C:/omega/repository",
-    approvedSandboxRoot: "C:/omega-sandboxes",
+    repositoryRoot: `${hostDrive}/omega/repository`,
+    approvedSandboxRoot: `${hostDrive}/omega-sandboxes`,
     requestedSandboxName: "task-001",
     issuedAtEpochMs: 1_000,
     expiresAtEpochMs: 2_000,
@@ -57,9 +58,9 @@ function request(overrides: Partial<R2AProvisioningRequest> = {}): R2AProvisioni
 function identity(overrides: Partial<R2AIdentityObservation> = {}): R2AIdentityObservation {
   return {
     requestId: "OMEGA-R2-A-REQUEST-001",
-    canonicalRepositoryRoot: "C:/omega/repository",
-    canonicalApprovedSandboxRoot: "C:/omega-sandboxes",
-    canonicalSandboxPath: "C:/omega-sandboxes/task-001",
+    canonicalRepositoryRoot: `${hostDrive}/omega/repository`,
+    canonicalApprovedSandboxRoot: `${hostDrive}/omega-sandboxes`,
+    canonicalSandboxPath: `${hostDrive}/omega-sandboxes/task-001`,
     targetIdentityAtValidation: "volume-7:file-42",
     targetIdentityAtUse: "volume-7:file-42",
     disjointFromRepository: true,
@@ -107,8 +108,8 @@ assert(!validateR2ASpecification(spec({ evidenceLedgerClaim: "SIGNED" as never }
 const validRequest = request();
 assert(validateR2AProvisioningRequest(validRequest, 1_500).ok, "well-bounded future provisioning request satisfies the contract");
 assert(validateR2AProvisioningRequest(request({ readScopes: [], writeScopes: ["task-001"] }), 1_500).ok, "write scope remains valid without implied read scope");
-assert(!validateR2AProvisioningRequest(request({ approvedSandboxRoot: "C:/omega/repository/sandbox" }), 1_500).ok, "sandbox root inside repository is rejected");
-assert(!validateR2AProvisioningRequest(request({ approvedSandboxRoot: "C:/omega" }), 1_500).ok, "sandbox root containing repository is rejected");
+assert(!validateR2AProvisioningRequest(request({ approvedSandboxRoot: `${hostDrive}/omega/repository/sandbox` }), 1_500).ok, "sandbox root inside repository is rejected");
+assert(!validateR2AProvisioningRequest(request({ approvedSandboxRoot: `${hostDrive}/omega` }), 1_500).ok, "sandbox root containing repository is rejected");
 assert(!validateR2AProvisioningRequest(request({ requestedSandboxName: "../escape" }), 1_500).ok, "path traversal sandbox name is rejected");
 assert(!validateR2AProvisioningRequest(request({ requestedSandboxName: "a/b/c" }), 1_500).ok, "excessive nesting is rejected");
 assert(!validateR2AProvisioningRequest(request({ requestedSandboxName: "C:/omega/repository" }), 1_500).ok, "absolute sandbox name is rejected");
@@ -119,8 +120,8 @@ assert(!validateR2AProvisioningRequest(request({ auditIdentity: "" }), 1_500).ok
 assert(!validateR2AProvisioningRequest(request({ limits: { ...validRequest.limits, maxEntries: 0 } }), 1_500).ok, "invalid resource bound is rejected");
 
 assert(validateR2AIdentityObservation(validRequest, identity()).ok, "stable canonical target identity satisfies the future evidence contract");
-assert(!validateR2AIdentityObservation(validRequest, identity({ canonicalSandboxPath: "C:/omega/repository" })).ok, "repository root cannot become sandbox identity");
-assert(!validateR2AIdentityObservation(validRequest, identity({ canonicalSandboxPath: "C:/outside/task-001" })).ok, "sandbox outside approved root is rejected");
+assert(!validateR2AIdentityObservation(validRequest, identity({ canonicalSandboxPath: `${hostDrive}/omega/repository` })).ok, "repository root cannot become sandbox identity");
+assert(!validateR2AIdentityObservation(validRequest, identity({ canonicalSandboxPath: `${hostDrive}/outside/task-001` })).ok, "sandbox outside approved root is rejected");
 assert(!validateR2AIdentityObservation(validRequest, identity({ targetIdentityAtUse: "volume-7:file-99" })).ok, "TOCTOU target identity change is rejected");
 assert(!validateR2AIdentityObservation(validRequest, identity({ evidenceReferences: [] })).ok, "canonical identity requires attributable evidence");
 assert(!validateR2AIdentityObservation(validRequest, identity({ disjointFromRepository: false })).ok, "negative disjointness observation is rejected");

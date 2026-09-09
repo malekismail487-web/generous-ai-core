@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { isAbsolute } from "node:path";
+import { stripVTControlCharacters } from "node:util";
 import type { R3BExecutionEvidence, R3BExecutionResult } from "../executor/r3ControlledEngineeringExecution";
 
 export const R3_C_OBSERVATION_STATUS = Object.freeze({
@@ -102,13 +103,16 @@ function canonical(value: unknown): string {
 function sha256(value: string): string { return createHash("sha256").update(value).digest("hex"); }
 
 function normalizeMessage(value: string): string {
-  return value.replace(/\x1b\[[0-9;]*m/g, "").replace(/\s+/g, " ").trim().slice(0, MAX_MESSAGE_CHARACTERS);
+  return stripVTControlCharacters(value).replace(/\s+/g, " ").trim().slice(0, MAX_MESSAGE_CHARACTERS);
 }
 
 function safeRelativeFile(value: string | undefined): string | null {
   if (!value) return null;
   const normalized = value.trim().replace(/\\/g, "/").replace(/^\.\//, "");
-  if (!normalized || isAbsolute(normalized) || normalized === ".." || normalized.startsWith("../") || normalized.includes("\0")) return null;
+  // Observations may originate on a different OS than the evaluator. Reject
+  // drive-relative/absolute paths, UNC paths and embedded traversal on every host.
+  if (!normalized || isAbsolute(normalized) || normalized.includes(":") || normalized.includes("\0")
+    || normalized.split("/").some((part) => !part || part === "." || part === "..")) return null;
   return normalized;
 }
 
