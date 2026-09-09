@@ -317,6 +317,9 @@ export class R3BoundedRepairLoop {
         observedAtEpochMs: Math.max(request.observedAtEpochMs, Date.now()) });
       lastCognitionEvidence = cognition.evidence;
       if (cognition.evidence.modelEvidenceId !== "NOT_INVOKED") modelCallCount += 1;
+      if (Date.now() - started >= this.#config.maxWallClockMs) {
+        return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
+      }
       if (cognition.decision === "COGNITION_ERROR" && cognition.schemaDiagnostics.length > 0
         && cognition.evidence.modelEvidenceId !== "NOT_INVOKED") {
         const reason = cognition.reason === "nyx_cognition_output_truncated" ? "OUTPUT_TRUNCATED" as const
@@ -324,10 +327,16 @@ export class R3BoundedRepairLoop {
         const record: R3CognitionFailureRecord = Object.freeze({ cognitionCycle,
           cognitionRequestId: `${request.repairRequestId}-COGNITION-${cognitionCycle}`, reason,
           cognitionEvidence: cognition.evidence, diagnostics: Object.freeze([...cognition.schemaDiagnostics]) });
+        const previousFailure = cognitionFailures.at(-1);
         cognitionFailures.push(record);
         priorCognitionFailures.push(Object.freeze({ failureId: cognition.evidence.evidenceId,
           cognitionRequestId: record.cognitionRequestId, reason, modelResponseDigest: cognition.evidence.modelResponseDigest,
           diagnostics: record.diagnostics }));
+        if (previousFailure?.cognitionCycle === cognitionCycle - 1 && cognition.evidence.modelResponseDigest !== null
+          && previousFailure.cognitionEvidence.modelResponseDigest === cognition.evidence.modelResponseDigest
+          && canonical(previousFailure.diagnostics) === canonical(record.diagnostics)) {
+          return finish("EXHAUSTED", "repair_cognition_no_progress", iterations, currentObservation);
+        }
         if (cognitionCycle < this.#config.maxIterations && Date.now() - started < this.#config.maxWallClockMs) continue;
         return finish("EXHAUSTED", "repair_cognition_correction_budget_exhausted", iterations, currentObservation);
       }

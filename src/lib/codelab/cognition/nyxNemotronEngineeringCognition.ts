@@ -9,7 +9,7 @@ export const NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS = Object.freeze({
   newCapability: "NYX_NEMOTRON_REPAIR_HYPOTHESIS_PROPOSAL",
   cognitionIdentity: "NYX_PRIMARY_COGNITION",
   cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA",
-  semanticContract: "nyx-causal-engineering-intent/4",
+  semanticContract: "nyx-causal-engineering-intent/5",
   causalHypothesisLineage: true,
   boundedCounterexampleReasoning: true,
   qualityRejectionRepairFeedback: true,
@@ -118,13 +118,13 @@ export interface NyxRepairHypothesis {
   readonly evidenceRefs: readonly string[];
   readonly uncertainties: readonly string[];
   readonly invariant: string;
-  readonly failureInterpretation: string;
+  readonly failureInterpretation: string | null;
   readonly expectedResult: string;
   readonly counterexamples: readonly string[];
   readonly assumptions: readonly string[];
   readonly changes: readonly NyxRepairChange[];
   readonly verificationToolIds: readonly string[];
-  readonly confidence: number;
+  readonly confidence: number | null;
   readonly strategyDigest: string;
   readonly disposition: "PENDING_VERIFICATION";
   readonly proposalDigest: string;
@@ -134,7 +134,7 @@ export interface NyxRepairHypothesis {
 export interface NyxEvidenceRequest {
   readonly requestedEvidenceRefs: readonly string[];
   readonly diagnosis: string;
-  readonly causalHypothesis: string;
+  readonly causalHypothesis: string | null;
   readonly uncertainties: readonly string[];
   readonly evidenceRefs: readonly string[];
   readonly requestDigest: string;
@@ -224,7 +224,16 @@ interface RawRepairIntent {
   readonly [key: string]: unknown;
 }
 
-export const NYX_REPAIR_INTENT_JSON_SCHEMA: Readonly<Record<string, unknown>> = Object.freeze({
+const INTENT_ARRAY_LIMITS = Object.freeze({ evidenceRefs: 20, uncertainties: 10, requestedEvidenceRefs: 10, assumptions: 10 });
+const INTENT_STRING_ITEM_LIMIT = 500;
+const REQUIRED_INTENT_FIELDS = Object.freeze({
+  PROPOSE_EDIT: Object.freeze(["decision", "diagnosis", "causalHypothesis", "evidenceRefs", "invariant",
+    "expectedResult", "counterexamples", "changes"]),
+  REQUEST_EVIDENCE: Object.freeze(["decision", "diagnosis", "uncertainties", "requestedEvidenceRefs"]),
+  NO_ACTION: Object.freeze(["decision", "diagnosis", "uncertainties"]),
+});
+
+export const NYX_REPAIR_INTENT_JSON_SCHEMA = Object.freeze({
   type: "object",
   properties: {
     decision: { type: "string", enum: ["PROPOSE_EDIT", "REQUEST_EVIDENCE", "NO_ACTION"] },
@@ -243,21 +252,24 @@ export const NYX_REPAIR_INTENT_JSON_SCHEMA: Readonly<Record<string, unknown>> = 
     }, required: ["target", "replacement"], additionalProperties: false } },
     confidence: { type: "number", minimum: 0, maximum: 1 },
   },
-  required: ["decision", "diagnosis", "causalHypothesis", "evidenceRefs", "uncertainties", "invariant",
-    "failureInterpretation", "expectedResult", "counterexamples", "requestedEvidenceRefs", "assumptions", "changes", "confidence"],
+  required: ["decision", "diagnosis"],
   additionalProperties: false,
 });
 
-const PROVIDER_UNSUPPORTED_SCHEMA_KEYWORDS = new Set([
+// Retain local checks for keywords deliberately excluded from the hosted subset.
+// A successful portable request does not prove every excluded keyword unsupported.
+const LOCALLY_ENFORCED_SCHEMA_KEYWORDS = new Set([
   "minimum", "maximum", "minLength", "maxLength", "maxItems", "uniqueItems",
 ]);
 
 function providerCompatibleSchema(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(providerCompatibleSchema);
+  if (Array.isArray(value)) return Object.freeze(value.map(providerCompatibleSchema));
   if (value === null || typeof value !== "object") return value;
   return Object.freeze(Object.fromEntries(Object.entries(value as Record<string, unknown>)
-    .filter(([key]) => !PROVIDER_UNSUPPORTED_SCHEMA_KEYWORDS.has(key))
-    .map(([key, item]) => [key, providerCompatibleSchema(item)])));
+    .filter(([key]) => !LOCALLY_ENFORCED_SCHEMA_KEYWORDS.has(key))
+    .map(([key, item]) => [key, key === "properties" && item && typeof item === "object"
+      ? Object.freeze(Object.fromEntries(Object.entries(item).map(([name, schema]) => [name, providerCompatibleSchema(schema)])))
+      : providerCompatibleSchema(item)])));
 }
 
 /**
@@ -268,8 +280,48 @@ export const NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA = providerCompatibleSchema(
   NYX_REPAIR_INTENT_JSON_SCHEMA,
 ) as Readonly<Record<string, unknown>>;
 
-export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/4" as const;
+export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/5" as const;
 export const NYX_SEMANTIC_ACTIONS = Object.freeze(["PROPOSE_EDIT", "REQUEST_EVIDENCE", "NO_ACTION"] as const);
+
+/** A request-bound description, never an authorization token. */
+export function buildNyxRepairIntentContract(request: NyxRepairCognitionRequest) {
+  const bounds = Object.freeze({ ...INTENT_ARRAY_LIMITS, counterexamples: request.maxCounterexamples,
+    changes: request.maxChanges, patchBytes: request.maxPatchBytes, textCharacters: request.maxDiagnosisCharacters,
+    stringItemCharacters: INTENT_STRING_ITEM_LIMIT });
+  const admittedEvidenceRefs = Object.freeze(["OBJECTIVE", `OBSERVATION:${request.observation.observationId}`,
+    ...request.files.map((file) => `FILE:${file.relativePath}`),
+    ...(request.candidateQualityFeedback ? [request.candidateQualityFeedback.evidenceId] : [])]);
+  const requestableEvidenceRefs = Object.freeze(request.availableEvidence.map((item) => item.evidenceRef));
+  const allowedActions = Object.freeze(NYX_SEMANTIC_ACTIONS.filter((action) =>
+    action === "PROPOSE_EDIT" || (action === "REQUEST_EVIDENCE" ? requestableEvidenceRefs.length > 0 : requestableEvidenceRefs.length === 0)));
+  const requiredFields = Object.freeze({ ...REQUIRED_INTENT_FIELDS,
+    PROPOSE_EDIT: Object.freeze([...REQUIRED_INTENT_FIELDS.PROPOSE_EDIT,
+      ...(request.priorHypotheses.length > 0 ? ["failureInterpretation"] : [])]) });
+  const properties: Record<string, unknown> = { ...NYX_REPAIR_INTENT_JSON_SCHEMA.properties,
+    decision: { type: "string", enum: allowedActions },
+    evidenceRefs: { ...NYX_REPAIR_INTENT_JSON_SCHEMA.properties.evidenceRefs,
+      items: { type: "string", enum: admittedEvidenceRefs } },
+    requestedEvidenceRefs: requestableEvidenceRefs.length > 0
+      ? { ...NYX_REPAIR_INTENT_JSON_SCHEMA.properties.requestedEvidenceRefs,
+        items: { type: "string", enum: requestableEvidenceRefs } }
+      : { type: "array", maxItems: 0, items: { type: "string" }, description: "Must be empty; no additional evidence is available." },
+    counterexamples: { ...NYX_REPAIR_INTENT_JSON_SCHEMA.properties.counterexamples, maxItems: bounds.counterexamples },
+    changes: { ...NYX_REPAIR_INTENT_JSON_SCHEMA.properties.changes, maxItems: bounds.changes,
+      items: { ...NYX_REPAIR_INTENT_JSON_SCHEMA.properties.changes.items,
+        properties: { target: { type: "string", enum: [...request.allowedMutationPaths] },
+          replacement: NYX_REPAIR_INTENT_JSON_SCHEMA.properties.changes.items.properties.replacement } } },
+  };
+  for (const field of ["evidenceRefs", "uncertainties", "assumptions"] as const) {
+    properties[field] = { ...properties[field] as object, maxItems: bounds[field] };
+  }
+  for (const field of ["diagnosis", "causalHypothesis", "invariant", "failureInterpretation", "expectedResult"] as const) {
+    properties[field] = { ...NYX_REPAIR_INTENT_JSON_SCHEMA.properties[field], maxLength: bounds.textCharacters };
+  }
+  const schema = Object.freeze({ ...NYX_REPAIR_INTENT_JSON_SCHEMA, properties: Object.freeze(properties) });
+  return Object.freeze({ bounds, allowedActions, requiredFields, admittedEvidenceRefs, requestableEvidenceRefs,
+    schema, providerSchema: providerCompatibleSchema(schema) as Readonly<Record<string, unknown>>,
+    authorityGranted: false as const });
+}
 export const NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS = Object.freeze(["expectedBaseHash", "replacementContentHash",
   "verificationToolIds", "sandboxId", "candidateId", "transactionId", "authorization", "evidenceId",
   "kind", "relativePath", "replacementContent"] as const);
@@ -281,6 +333,9 @@ export const NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST = sha256(canonical({
   version: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
   actions: NYX_SEMANTIC_ACTIONS,
   schema: NYX_REPAIR_INTENT_JSON_SCHEMA,
+  requiredFields: REQUIRED_INTENT_FIELDS,
+  arrayLimits: INTENT_ARRAY_LIMITS,
+  stringItemLimit: INTENT_STRING_ITEM_LIMIT,
   systemInstruction: NYX_REPAIR_SYSTEM_INSTRUCTION,
   forbiddenReplacementPatterns: NYX_FORBIDDEN_SEMANTIC_REPLACEMENT_PATTERNS,
   authorityBoundary: "Omega derives trusted execution metadata and independently authorizes every action.",
@@ -314,7 +369,13 @@ function observedType(value: unknown): string {
   return typeof value;
 }
 function diagnostic(category: NyxSchemaDiagnosticCategory, path: string, expected: string, observed: string): NyxSchemaDiagnostic {
-  return Object.freeze({ category, path, expected, observed });
+  // Unknown model-supplied property names may contain sensitive or hostile text.
+  // Preserve locations only for contract-owned field names, never echo that text.
+  const knownFields = new Set([...Object.keys(NYX_REPAIR_INTENT_JSON_SCHEMA.properties),
+    ...NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS, "target", "replacement"]);
+  const safePath = path === "$request" || path === "$prompt" || /^\$(?:\.[A-Za-z_$][\w$]*|\[\d+\])*$/.test(path)
+    && [...path.matchAll(/\.([A-Za-z_$][\w$]*)/g)].every((match) => knownFields.has(match[1]));
+  return Object.freeze({ category, path: safePath ? path : "$", expected, observed });
 }
 function uniqueDiagnostics(items: readonly NyxSchemaDiagnostic[]): NyxSchemaDiagnostic[] {
   const seen = new Set<string>();
@@ -350,17 +411,20 @@ export class NyxNemotronEngineeringCognition {
       inputIssues.map((issue) => diagnostic(issue === "nyx_cognition_file_context_invalid"
         ? "STALE_TARGET_REFERENCE" : "OTHER_SCHEMA_MISMATCH", "$request", "valid admitted cognition request", issue)));
     const qualityFeedback = request.candidateQualityFeedback;
+    const contract = buildNyxRepairIntentContract(request);
     const promptObject = { role: "NYX_ENGINEERING_COGNITION", objective: request.objective,
       assignment: "Determine the causal defect, required invariant, and smallest justified professional-quality action. A failed or quality-rejected prior candidate must change the implementation strategy. Request available evidence before guessing when it can discriminate among plausible causes.",
       contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
       contractDigest: NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST,
-      availableSemanticActions: NYX_SEMANTIC_ACTIONS,
-      constraints: { output: "JSON_SCHEMA", maxChanges: request.maxChanges, maxPatchBytes: request.maxPatchBytes,
-        maxCounterexamples: request.maxCounterexamples,
+      availableSemanticActions: contract.allowedActions,
+      requiredFieldsByDecision: contract.requiredFields,
+      constraints: { output: "JSON_SCHEMA", maxChanges: contract.bounds.changes, maxPatchBytes: contract.bounds.patchBytes,
+        maxCounterexamples: contract.bounds.counterexamples, fieldBounds: contract.bounds,
         sourceQuality: request.sourceQualityConstraints,
         omegaVerificationPlan: request.allowedVerificationToolIds,
         forbiddenModelFields: NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS,
         evidenceBehavior: "Use REQUEST_EVIDENCE for listed available evidence that would discriminate among hypotheses. Use NO_ACTION only when required evidence is unavailable; both actions require no changes.",
+        fieldDiscipline: "Use only the required fields for your chosen decision, plus optional fields that convey useful information. requestedEvidenceRefs must be omitted or empty for PROPOSE_EDIT and NO_ACTION. Do not invent references. Confidence is optional and is not evidence of correctness.",
         repairDiscipline: "For PROPOSE_EDIT, cite admitted evidence, state one causal hypothesis and invariant, predict the verifier-visible effect, and challenge the proposal with 1..maxCounterexamples structurally relevant cases. Return complete files with readable multiline formatting, preserve public exports and unrelated behavior, and do not target or mention hidden evaluators.",
         authorityStatement: "This is semantic intent only. Omega derives freshness hashes and execution metadata, then independently authorizes and executes." },
       activeRepairDriver: qualityFeedback ? { kind: "QUALITY_REJECTION", assessmentId: qualityFeedback.assessmentId,
@@ -375,19 +439,24 @@ export class NyxNemotronEngineeringCognition {
         { evidenceRef: `OBSERVATION:${request.observation.observationId}`, kind: "EXECUTION_OBSERVATION",
           value: { state: request.observation.state, diagnostics: request.observation.diagnostics, unknowns: request.observation.unknowns } },
         ...request.files.map((file) => ({ evidenceRef: `FILE:${file.relativePath}`, kind: "FILE", target: file.relativePath,
-          mutationAllowed: request.allowedMutationPaths.includes(file.relativePath), content: file.content }))],
+          mutationAllowed: request.allowedMutationPaths.includes(file.relativePath), content: file.content })),
+        ...(qualityFeedback ? [{ evidenceRef: qualityFeedback.evidenceId, kind: "PUBLIC_QUALITY_OBSERVATION", findings: qualityFeedback.findings }] : [])],
       availableEvidence: request.availableEvidence,
       hypothesisHistory: request.priorHypotheses,
       cognitionFailureHistory: request.priorCognitionFailures,
       requiredCorrections: request.priorCognitionFailures.at(-1)?.diagnostics ?? [],
       minimalExample: { decision: "PROPOSE_EDIT", diagnosis: "bounded symptom and cause distinction",
-        causalHypothesis: "specific mechanism explaining the observation", evidenceRefs: ["OBJECTIVE", `FILE:${request.files[0].relativePath}`],
-        uncertainties: [], invariant: "behavior that must hold beyond the visible example",
-        failureInterpretation: request.priorHypotheses.length === 0 ? "No prior candidate exists." : "The prior verification falsifies its predicted behavior.",
+        causalHypothesis: "specific mechanism explaining the observation", evidenceRefs: ["OBJECTIVE", `FILE:${request.allowedMutationPaths[0]}`],
+        invariant: "behavior that must hold beyond the visible example",
+        ...(request.priorHypotheses.length > 0 ? { failureInterpretation: "Explain which prediction the prior evidence invalidated." } : {}),
         expectedResult: "specific observable verification change", counterexamples: ["one boundary or regression case"],
-        requestedEvidenceRefs: [], assumptions: [],
-        changes: [{ target: request.files[0].relativePath,
-          replacement: "export function example(value) {\n  return value;\n}\n" }], confidence: 0.8 } };
+        changes: [{ target: request.allowedMutationPaths[0],
+          replacement: "export function example(value) {\n  return value;\n}\n" }] },
+      ...(contract.requestableEvidenceRefs.length > 0 ? {
+        evidenceRequestExample: { decision: "REQUEST_EVIDENCE", diagnosis: "State the information needed to select a repair.",
+          uncertainties: ["the question this observation resolves"], requestedEvidenceRefs: contract.requestableEvidenceRefs.slice(0, 1) },
+      } : { noActionExample: { decision: "NO_ACTION", diagnosis: "State the blocking prerequisite.",
+        uncertainties: ["required evidence unavailable"] } }) };
     const serializedPrompt = canonical(promptObject);
     if (Buffer.byteLength(serializedPrompt, "utf8") > this.#config.maxPromptBytes) {
       return this.#result("REJECTED", "nyx_cognition_prompt_bound_exceeded", request, null, null, null,
@@ -396,7 +465,7 @@ export class NyxNemotronEngineeringCognition {
     const completion = await this.#config.provider.complete({ schemaVersion: 1, requestId: request.cognitionRequestId,
       messages: [{ role: "system", content: NYX_REPAIR_SYSTEM_INSTRUCTION },
         { role: "user", content: serializedPrompt }], maxTokens: this.#config.maxOutputTokens, temperature: 0,
-      responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema: NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA },
+      responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema: contract.providerSchema },
       inferencePolicy: "CONSTRAINED_JSON",
       observedAtEpochMs: request.observedAtEpochMs });
     if (completion.decision !== "COMPLETED" || completion.content === null) {
@@ -418,7 +487,7 @@ export class NyxNemotronEngineeringCognition {
       request, null, null, completion.evidence, validated.diagnostics);
     if (validated.evidenceRequest) {
       const requestBase = { requestedEvidenceRefs: Object.freeze(validated.requestedEvidenceRefs), diagnosis: validated.diagnosis!,
-        causalHypothesis: validated.causalHypothesis!, uncertainties: Object.freeze(validated.uncertainties),
+        causalHypothesis: validated.causalHypothesis, uncertainties: Object.freeze(validated.uncertainties),
         evidenceRefs: Object.freeze(validated.evidenceRefs), authorityGranted: false as const };
       const evidenceRequest: NyxEvidenceRequest = Object.freeze({ ...requestBase, requestDigest: sha256(canonical(requestBase)) });
       return this.#result("REQUEST_EVIDENCE", "nyx_cognition_requests_admitted_evidence", request, null, evidenceRequest,
@@ -434,10 +503,10 @@ export class NyxNemotronEngineeringCognition {
       parentHypothesisId: request.priorHypotheses.at(-1)?.hypothesisId ?? null, diagnosis: validated.diagnosis!,
       causalHypothesis: validated.causalHypothesis!, evidenceRefs: Object.freeze(validated.evidenceRefs),
       uncertainties: Object.freeze(validated.uncertainties), invariant: validated.invariant!,
-      failureInterpretation: validated.failureInterpretation!, expectedResult: validated.expectedResult!,
+      failureInterpretation: validated.failureInterpretation, expectedResult: validated.expectedResult!,
       counterexamples: Object.freeze(validated.counterexamples),
       assumptions: Object.freeze(validated.assumptions), changes: Object.freeze(validated.changes),
-      verificationToolIds: Object.freeze([...request.allowedVerificationToolIds]), confidence: validated.confidence!,
+      verificationToolIds: Object.freeze([...request.allowedVerificationToolIds]), confidence: validated.confidence,
       strategyDigest, disposition: "PENDING_VERIFICATION" as const, applyAuthorized: false as const };
     const hypothesis: NyxRepairHypothesis = Object.freeze({ ...proposalBase, proposalDigest: sha256(canonical(proposalBase)) });
     return this.#result("PROPOSED", "nyx_repair_hypothesis_validated", request, hypothesis, null, completion.evidence, []);
@@ -551,18 +620,20 @@ export class NyxNemotronEngineeringCognition {
       if (!allowedTop.has(key)) diagnostics.push(diagnostic(infrastructureFields.has(key)
         ? "MODEL_GENERATED_INFRASTRUCTURE_METADATA" : "UNEXPECTED_STRUCTURE", `$.${key}`, "field omitted", "unexpected_field"));
     }
-    for (const key of ["decision", "diagnosis", "causalHypothesis", "evidenceRefs", "uncertainties", "invariant",
-      "failureInterpretation", "expectedResult", "counterexamples", "requestedEvidenceRefs", "assumptions", "changes", "confidence"] as const) {
+    const contract = buildNyxRepairIntentContract(request);
+    const selectedRequired = NYX_SEMANTIC_ACTIONS.includes(raw.decision as typeof NYX_SEMANTIC_ACTIONS[number])
+      ? contract.requiredFields[raw.decision as keyof typeof contract.requiredFields] : ["decision", "diagnosis"];
+    for (const key of selectedRequired) {
       if (!(key in raw)) diagnostics.push(diagnostic("MISSING_REQUIRED_FIELD", `$.${key}`, "required field", "missing"));
     }
     const decision = raw.decision;
     if (decision !== undefined && typeof decision !== "string") diagnostics.push(diagnostic("INVALID_FIELD_TYPE", "$.decision", "string enum", observedType(decision)));
     else if (typeof decision === "string" && !["PROPOSE_EDIT", "REQUEST_EVIDENCE", "NO_ACTION"].includes(decision)) {
       diagnostics.push(diagnostic(decision === "RUN_SHELL" || decision === "NETWORK" || decision === "DEPLOY"
-        ? "UNKNOWN_CAPABILITY" : "INVALID_ENUM_VALUE", "$.decision", "PROPOSE_EDIT|REQUEST_EVIDENCE|NO_ACTION", "unsupported_string"));
+        ? "UNKNOWN_CAPABILITY" : "INVALID_ENUM_VALUE", "$.decision", contract.allowedActions.join("|"), "unsupported_string"));
     }
     const boundedString = (key: "diagnosis" | "causalHypothesis" | "invariant" | "failureInterpretation" | "expectedResult",
-      maximum = request.maxDiagnosisCharacters): string | null => {
+      maximum = contract.bounds.textCharacters): string | null => {
       const value = raw[key];
       if (value !== undefined && typeof value !== "string") {
         diagnostics.push(diagnostic("INVALID_FIELD_TYPE", `$.${key}`, "string", observedType(value))); return null;
@@ -580,8 +651,9 @@ export class NyxNemotronEngineeringCognition {
         diagnostics.push(diagnostic("INVALID_FIELD_TYPE", `$.${key}`, "array<string>", observedType(value))); return [];
       }
       if (!Array.isArray(value)) return [];
-      if (value.length > maximum || value.some((item) => typeof item !== "string" || !item.trim() || item.length > 500)) {
-        diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", `$.${key}`, `at most ${maximum} unique bounded strings`, "invalid_array"));
+      if (value.length > maximum || value.some((item) => typeof item !== "string" || !item.trim() || item.length > contract.bounds.stringItemCharacters)) {
+        diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", `$.${key}`, `at most ${maximum} unique strings <= ${contract.bounds.stringItemCharacters} chars`,
+          value.length > maximum ? `array_length_${value.length}` : "invalid_item"));
         return [];
       }
       const output = (value as string[]).map((item) => item.trim());
@@ -593,17 +665,16 @@ export class NyxNemotronEngineeringCognition {
     const invariant = boundedString("invariant");
     const failureInterpretation = boundedString("failureInterpretation");
     const expectedResult = boundedString("expectedResult");
-    const evidenceRefs = boundedArray("evidenceRefs", 20);
-    const uncertainties = boundedArray("uncertainties", 10);
-    const counterexamples = boundedArray("counterexamples", request.maxCounterexamples);
-    const requestedEvidenceRefs = boundedArray("requestedEvidenceRefs", 10);
-    const assumptions = boundedArray("assumptions", 10);
-    const admittedEvidenceRefs = new Set(["OBJECTIVE", `OBSERVATION:${request.observation.observationId}`,
-      ...request.files.map((file) => `FILE:${file.relativePath}`)]);
+    const evidenceRefs = boundedArray("evidenceRefs", contract.bounds.evidenceRefs);
+    const uncertainties = boundedArray("uncertainties", contract.bounds.uncertainties);
+    const counterexamples = boundedArray("counterexamples", contract.bounds.counterexamples);
+    const requestedEvidenceRefs = boundedArray("requestedEvidenceRefs", contract.bounds.requestedEvidenceRefs);
+    const assumptions = boundedArray("assumptions", contract.bounds.assumptions);
+    const admittedEvidenceRefs = new Set(contract.admittedEvidenceRefs);
     for (const [index, ref] of evidenceRefs.entries()) if (!admittedEvidenceRefs.has(ref)) {
       diagnostics.push(diagnostic("UNSUPPORTED_EVIDENCE_REFERENCE", `$.evidenceRefs[${index}]`, "admitted evidence reference", "unadmitted_reference"));
     }
-    const availableEvidenceRefs = new Set(request.availableEvidence.map((item) => item.evidenceRef));
+    const availableEvidenceRefs = new Set(contract.requestableEvidenceRefs);
     for (const [index, ref] of requestedEvidenceRefs.entries()) if (!availableEvidenceRefs.has(ref)) {
       diagnostics.push(diagnostic("UNSUPPORTED_EVIDENCE_REFERENCE", `$.requestedEvidenceRefs[${index}]`, "listed available evidence reference", "unavailable_reference"));
     }

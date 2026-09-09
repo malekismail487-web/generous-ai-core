@@ -380,7 +380,8 @@ try {
       rejectedActions: Math.max(0, loopResult.modelCallCount - semanticActions), evidenceRequests: loopResult.evidenceAcquisitions.length,
       hypotheses: loopResult.iterations.length, hypothesisDispositions: loopResult.iterations.map((item) => item.hypothesisDisposition),
       cognitionFailures: loopResult.cognitionFailures.map((item) => ({ cycle: item.cognitionCycle, reason: item.reason,
-        diagnostics: item.diagnostics.map((diagnostic) => ({ category: diagnostic.category, path: diagnostic.path })) })),
+        diagnostics: item.diagnostics.map((diagnostic) => ({ category: diagnostic.category, path: diagnostic.path,
+          expected: diagnostic.expected, observed: diagnostic.observed })) })),
       candidates: loopResult.iterations.length, repairIterations: Math.max(0, loopResult.iterations.length - 1),
       verificationCount: 1 + loopResult.iterations.reduce((sum, item) => sum + item.verifications.length, 0)
         + (hiddenResult === "NOT_APPLICABLE" ? 0 : 1), deterministicVerification: loopResult.outcome,

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
+  NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
   NyxNemotronEngineeringCognition,
   type NyxRepairCognitionResult,
 } from "../../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
@@ -77,12 +78,14 @@ for (let index = 1; index <= TRIAL_COUNT; index += 1) {
     semanticActionValid: schemaValid, semanticDecision: result.decision,
     diagnosticCategories: result.schemaDiagnostics.map((item) => item.category),
     diagnosticPaths: result.schemaDiagnostics.map((item) => item.path), failureClass: classify(result),
+    diagnostics: result.schemaDiagnostics.map((item) => ({ category: item.category, path: item.path,
+      expected: item.expected, observed: item.observed })),
     authorizationResult: "NOT_REQUESTED", omegaAuthorityGranted: false });
 }
 
 const compliant = trials.filter((trial) => trial.schemaValid === true).length;
 const summary = { schemaVersion: 1, chunkId: "NYX-NEMOTRON-CONTRACT-REPAIR-001", model: MODEL,
-  protocolIdentity: "NYX_CAUSAL_ENGINEERING_INTENT_V4", taskDigest: sha256(OBJECTIVE), trialCount: TRIAL_COUNT,
+  protocolIdentity: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION, taskDigest: sha256(OBJECTIVE), trialCount: TRIAL_COUNT,
   compliantTrials: compliant, minimumRequired: 1, unchangedTaskAcrossTrials: true,
   authorityIncrease: false, generalNetworkAuthority: false, credentialPersisted: false, trials };
 console.log(`NYX_TYPED_COMPLIANCE ${JSON.stringify(summary)}`);

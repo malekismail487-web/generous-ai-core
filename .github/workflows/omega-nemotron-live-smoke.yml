@@ -11,6 +11,7 @@ on:
         options:
           - full
           - contract-only
+          - engineering-only
 
 permissions:
   contents: read
@@ -26,21 +27,34 @@ jobs:
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
-      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
       NYX_CONTRACT_TRIALS: ${{ inputs.mode == 'contract-only' && '1' || '5' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen dependencies without lifecycle scripts
+        run: bun install --frozen-lockfile --ignore-scripts
       - name: Confirm encrypted credential is available
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         shell: bash
         run: test -n "$NVIDIA_API_KEY"
       - name: Run bounded live Nemotron smoke
-        if: inputs.mode != 'contract-only'
+        if: inputs.mode == 'full'
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: npm run omega:nvidia:smoke
-      - name: Run five-trial Νύξ typed-contract compliance matrix
+      - name: Run bounded Νύξ typed-contract compliance check
+        if: inputs.mode != 'engineering-only'
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: npm run omega:nyx:contract-compliance
       - name: Run live bounded Νύξ engineering loop
         if: inputs.mode != 'contract-only'
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: npm run omega:nyx:live-engineering

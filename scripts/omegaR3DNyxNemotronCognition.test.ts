@@ -6,6 +6,7 @@ import {
   NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
   NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA,
   NYX_REPAIR_INTENT_JSON_SCHEMA,
+  buildNyxRepairIntentContract,
   NyxNemotronEngineeringCognition,
   type NyxRepairCognitionRequest,
   type NyxRepairCognitionResult,
@@ -73,6 +74,76 @@ function transportFor(content: string): NvidiaNimTransport {
 async function evaluate(content: string, requestOverride: Partial<NyxRepairCognitionRequest> = {}): Promise<NyxRepairCognitionResult> {
   return cognition(transportFor(content)).proposeRepair(request(requestOverride));
 }
+
+{
+  const full = JSON.parse(intent()) as Record<string, unknown>;
+  const contract = buildNyxRepairIntentContract(request());
+  const compact = Object.fromEntries(contract.requiredFields.PROPOSE_EDIT.map((field) => [field, full[field]]));
+  const result = await evaluate(JSON.stringify(compact));
+  check(result.decision === "PROPOSED" && result.hypothesis?.confidence === null
+    && result.hypothesis.failureInterpretation === null && result.hypothesis.changes[0].replacementContent === repaired,
+  "decision-specific edit requires causal evidence but does not manufacture confidence or prior-failure interpretation");
+  for (const field of contract.requiredFields.PROPOSE_EDIT) {
+    const missing = { ...compact }; delete missing[field];
+    const rejected = await evaluate(JSON.stringify(missing));
+    check(rejected.decision === "COGNITION_ERROR" && rejected.hypothesis === null,
+      `compact edit cannot omit its required ${field} field`);
+  }
+  const noAction = await evaluate(JSON.stringify({ decision: "NO_ACTION", diagnosis: "The external policy is unavailable.",
+    uncertainties: ["The required policy value is not observable."] }));
+  check(noAction.decision === "NO_ACTION" && noAction.hypothesis === null,
+    "minimal no-action result requires an epistemic reason without inventing a repair plan");
+  const availableEvidence = [{ evidenceRef: "AVAILABLE:policy", kind: "FILE" as const,
+    relativePath: "src/policy.ts", description: "Authoritative policy constants" }];
+  const evidence = await evaluate(JSON.stringify({ decision: "REQUEST_EVIDENCE", diagnosis: "Read the policy before editing.",
+    uncertainties: ["Which policy constant applies?"], requestedEvidenceRefs: ["AVAILABLE:policy"] }), { availableEvidence });
+  check(evidence.decision === "REQUEST_EVIDENCE" && evidence.evidenceRequest?.causalHypothesis === null
+    && evidence.evidenceRequest.requestedEvidenceRefs[0] === "AVAILABLE:policy" && !evidence.omegaAuthorityGranted,
+  "minimal evidence request preserves exact admitted choice without fabricating a causal theory");
+  for (const decision of ["__proto__", "constructor", "toString"]) {
+    const rejected = await evaluate(JSON.stringify({ decision, diagnosis: "invalid decision" }));
+    check(rejected.decision === "COGNITION_ERROR" && has(rejected, "INVALID_ENUM_VALUE"),
+      `prototype-like decision ${decision} fails closed without crashing contract lookup`);
+  }
+  const unknownKey = "SENSITIVE_KEY_SHOULD_NOT_BE_ECHOED";
+  const rejected = await evaluate(intent({ [unknownKey]: "SENSITIVE_VALUE_SHOULD_NOT_BE_ECHOED" }));
+  check(rejected.decision === "COGNITION_ERROR" && !JSON.stringify(rejected).includes(unknownKey)
+    && !JSON.stringify(rejected).includes("SENSITIVE_VALUE_SHOULD_NOT_BE_ECHOED"),
+  "unknown output keys and values cannot leak through rejection diagnostics");
+}
+
+{
+  const scoped = request({ maxCounterexamples: 1, maxChanges: 1, maxDiagnosisCharacters: 100 });
+  const contract = buildNyxRepairIntentContract(scoped);
+  const properties = contract.schema.properties as Record<string, { maxItems?: number; maxLength?: number }>;
+  check(properties.counterexamples.maxItems === 1 && properties.changes.maxItems === 1
+    && properties.diagnosis.maxLength === 100 && contract.bounds.counterexamples === 1,
+  "one request-bound contract supplies schema and validator bounds without the five-versus-three mismatch");
+  const excessive = await evaluate(intent({ counterexamples: ["zero", "negative"] }), { maxCounterexamples: 1 });
+  check(excessive.decision === "COGNITION_ERROR" && excessive.schemaDiagnostics.some((item) =>
+    item.path === "$.counterexamples" && item.observed === "array_length_2" && item.expected.includes("at most 1")),
+  "bound rejection preserves the precise safe constraint and observed count for correction");
+  let prompt: Record<string, unknown> = {};
+  let providerSchema: Record<string, unknown> = {};
+  const nyx = cognition(async (input, init) => {
+    const body = JSON.parse(String(init?.body));
+    prompt = JSON.parse(body.messages[1].content);
+    providerSchema = body.response_format.json_schema.schema;
+    return transportFor(intent())(input, init);
+  });
+  await nyx.proposeRepair(request({ files: [
+    { relativePath: "src/read-only.ts", content: "export const policy = 1;", contentSha256: hash("export const policy = 1;") },
+    ...request().files,
+  ] }));
+  const example = prompt.minimalExample as { changes: { target: string }[] };
+  const fields = providerSchema.properties as Record<string, { enum?: string[]; items?: { enum?: string[]; properties?: Record<string, { enum?: string[] }> } }>;
+  check(example.changes[0].target === "src/math.ts"
+    && fields.changes.items?.properties?.target.enum?.join() === "src/math.ts",
+  "prompt example and provider target choices never select the first read-only context file");
+  check(!fields.decision.enum?.includes("REQUEST_EVIDENCE") && prompt.evidenceRequestExample === undefined
+    && fields.evidenceRefs.items?.enum?.includes("FILE:src/math.ts"),
+  "provider and prompt expose only currently meaningful decisions and exact evidence identities");
+}
 function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCategory): boolean {
   return result.schemaDiagnostics.some((item) => item.category === category);
 }
@@ -89,7 +160,7 @@ function schemaKeys(value: unknown): string[] {
   const providerKeys = new Set(schemaKeys(NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA));
   const locallyEnforcedOnly = ["minimum", "maximum", "minLength", "maxLength", "maxItems", "uniqueItems"];
   check(locallyEnforcedOnly.every((key) => fullKeys.has(key) && !providerKeys.has(key)),
-    "provider schema removes only hosted-backend-incompatible bounds retained by local semantic validation");
+    "provider schema omits portability-sensitive bounds while local semantic validation retains them");
   const providerRoot = NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA as {
     required?: unknown; additionalProperties?: unknown; properties?: Record<string, unknown>;
   };
@@ -192,6 +263,18 @@ function schemaKeys(value: unknown): string[] {
   });
   check(validRevision.decision === "PROPOSED" && validRevision.hypothesis?.parentHypothesisId === prior.hypothesisId,
     "quality-driven revision requires a passing candidate with bound proposal, application, and E3 admission evidence");
+  const citedQuality = await evaluate(intent({ evidenceRefs: [qualityEvidenceId] }), {
+    observation: passingObservation, priorHypotheses, candidateQualityFeedback: feedback,
+  });
+  check(citedQuality.decision === "PROPOSED" && citedQuality.hypothesis?.evidenceRefs.includes(qualityEvidenceId),
+    "a verified public quality observation can be cited as causal evidence without exposing hidden acceptance");
+  const missingRevision = JSON.parse(intent()); delete missingRevision.failureInterpretation;
+  const unexplained = await evaluate(JSON.stringify(missingRevision), {
+    observation: passingObservation, priorHypotheses, candidateQualityFeedback: feedback,
+  });
+  check(unexplained.decision === "COGNITION_ERROR" && unexplained.schemaDiagnostics.some((item) =>
+    item.category === "MISSING_REQUIRED_FIELD" && item.path === "$.failureInterpretation"),
+  "a revised hypothesis still must explain the preceding falsification or quality rejection");
 
   let calls = 0;
   const rejecting = cognition(async () => { calls += 1; return transportFor(intent())("", {}); });

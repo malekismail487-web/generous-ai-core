@@ -33,6 +33,18 @@ function canonical(value: unknown): string {
   return `{${Object.keys(object).sort().map((key) => `${JSON.stringify(key)}:${canonical(object[key])}`).join(",")}}`;
 }
 
+{
+  const smokeSource = readFileSync(new URL("./omega/nyx-live-r3e.ts", import.meta.url), "utf8");
+  check(!/\bimport\s*\(/.test(smokeSource) && !smokeSource.includes("pathToFileURL"),
+    "live smoke cannot import candidate code into the credential-bearing evaluator process");
+  check(smokeSource.includes("R3IsolatedHiddenEvaluator.create") && smokeSource.includes("assessEngineeringQuality({")
+    && smokeSource.includes("expectedHiddenCaseFileSha256: hash(hiddenCaseBytes)"),
+    "live smoke reuses the isolated hidden evaluator and common quality oracle with bound expected evidence");
+  check(smokeSource.includes("...result.cognitionFailures.map((item) => item.cognitionEvidence)")
+    && smokeSource.includes("cognitionEvidence.length > 0") && smokeSource.includes("sourceUnchanged && failedPredecessorUnchanged"),
+    "live smoke retains rejected-call resource evidence and requires source preservation before success");
+}
+
 const parent = await mkdtemp(join(tmpdir(), "omega-verification-integrity-"));
 try {
   const candidateRoot = join(parent, "candidate-workspace");

@@ -3,8 +3,9 @@ import { execFileSync } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 import { NyxNemotronEngineeringCognition, type NyxRepairHypothesis } from "../../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
+import { assessEngineeringQuality } from "../../src/lib/codelab/assurance/engineeringQualityOracle";
+import { R3IsolatedHiddenEvaluator, type R3HiddenEvaluationResult } from "../../src/lib/codelab/assurance/r3EvaluatorIsolation";
 import { R3BoundedRepairLoop, type OmegaPreparedRepairCandidate, type R3BoundedRepairResult } from "../../src/lib/codelab/engine/r3BoundedRepairLoop";
 import { R2AIsolatedSandboxLifecycle, type R2AIsolatedLifecycleConfig } from "../../src/lib/codelab/executor/r2SandboxLifecycle";
 import type { SandboxProvisionRequest } from "../../src/lib/codelab/executor/r2ProvisioningBlueprint";
@@ -14,6 +15,7 @@ import { R3BControlledEngineeringExecutor, type R3BEngineeringToolDefinition, ty
 import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readOnlyExecutor";
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { observeEngineeringExecution, type EngineeringObservation } from "../../src/lib/codelab/observation/r3EngineeringObservation";
+import { OMEGA_CANDIDATE_RUNNER_SOURCE } from "./verification-integrity-fixtures";
 
 const TASK_ID = "NYX-LIVE-R3E-001-NORMALIZE-TAGS";
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
@@ -178,6 +180,17 @@ try {
   await mkdir(join(sourceRoot, "tools"));
   await writeFile(join(sourceRoot, "src", "normalize-tags.mjs"), CORRECT_SOURCE, "utf8");
   await writeFile(join(sourceRoot, "tools", "verify.mjs"), VERIFIER_SOURCE, "utf8");
+  await writeFile(join(sourceRoot, "tools", "candidate-runner.mjs"), OMEGA_CANDIDATE_RUNNER_SOURCE, "utf8");
+  // Expected results stay outside every candidate's filesystem read scope.
+  const hiddenRoot = join(parent, "authoritative-evaluator");
+  await mkdir(hiddenRoot);
+  const hiddenCaseBytes = JSON.stringify({ schemaVersion: 1, suiteId: TASK_ID, cases: [
+    { caseId: "NORMALIZE-REGRESSION-1", args: [[" Delta", "delta ", "CHARLIE", ""]],
+      expectation: { kind: "RETURN", value: ["charlie", "delta"], argsAfter: [[" Delta", "delta ", "CHARLIE", ""]] } },
+    { caseId: "NORMALIZE-REGRESSION-2", args: [[" one ", "TWO", "One", "three"]],
+      expectation: { kind: "RETURN", value: ["one", "three", "two"], argsAfter: [[" one ", "TWO", "One", "three"]] } },
+  ] });
+  await writeFile(join(hiddenRoot, "expected-cases.json"), hiddenCaseBytes, "utf8");
 
   const initial = await applyChange(sourceRoot, { kind: "MODIFY", relativePath: "src/normalize-tags.mjs",
     expectedBaseHash: hash(CORRECT_SOURCE), proposedContentHash: hash(FAULTY_SOURCE), proposedContent: FAULTY_SOURCE,
@@ -236,66 +249,76 @@ try {
     availableEvidence: [], allowedVerificationToolIds: ["TEST"],
     baselineExecutions: [{ toolId: "TEST", result: initialExecution }], observedAtEpochMs: Date.now() });
 
-  const sourceUnchanged = await readFile(join(sourceRoot, "src", "normalize-tags.mjs"), "utf8") === CORRECT_SOURCE;
-  const failedPredecessorUnchanged = await readFile(join(initial.cloneRoot, "src", "normalize-tags.mjs"), "utf8") === FAULTY_SOURCE;
+  const unchanged = async (root: string, source: string): Promise<boolean> =>
+    await readFile(join(root, "src", "normalize-tags.mjs"), "utf8") === source
+    && await readFile(join(root, "tools", "verify.mjs"), "utf8") === VERIFIER_SOURCE
+    && await readFile(join(root, "tools", "candidate-runner.mjs"), "utf8") === OMEGA_CANDIDATE_RUNNER_SOURCE;
+  const sourceUnchanged = await unchanged(sourceRoot, CORRECT_SOURCE);
+  const failedPredecessorUnchanged = await unchanged(initial.cloneRoot, FAULTY_SOURCE);
   let functionalAcceptance = false;
   let engineeringQualityAcceptance = false;
-  let quality: Record<string, string | boolean | number> = { evaluated: false };
+  let hiddenExecution: R3HiddenEvaluationResult | null = null;
+  let quality: Record<string, unknown> = { evaluated: false };
   if (result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && finalCandidateRoot) {
     const candidatePath = join(finalCandidateRoot, "src", "normalize-tags.mjs");
     const candidateContent = await readFile(candidatePath, "utf8");
-    const loaded = await import(`${pathToFileURL(candidatePath).href}?acceptance=${Date.now()}`) as Record<string, unknown>;
-    const normalizeTags = loaded.normalizeTags;
-    const hiddenCases = [
-      { input: [" Delta", "delta ", "CHARLIE", ""], expected: ["charlie", "delta"] },
-      { input: [" one ", "TWO", "One", "three"], expected: ["one", "three", "two"] },
-    ];
-    const hiddenBehavior = typeof normalizeTags === "function" && hiddenCases.every((item) => {
-      try { return JSON.stringify((normalizeTags as (tags: string[]) => unknown)(item.input)) === JSON.stringify(item.expected); }
-      catch { return false; }
-    });
-    const forbiddenConstructs = /(?:node:fs|child_process|\bprocess\b|\bfetch\s*\(|\beval\s*\(|\bFunction\s*\()/;
-    const lastIteration = result.iterations.at(-1);
-    quality = {
-      evaluated: true,
-      correctness: hiddenBehavior,
-      changeMinimality: lastIteration?.applicationDecision === "APPLIED"
-        && lastIteration.hypothesis.changes.length === 1
-        && lastIteration.hypothesis.changes[0].relativePath === "src/normalize-tags.mjs",
-      architectureFit: typeof normalizeTags === "function",
-      typeSafety: "NOT_APPLICABLE_PLAIN_ECMASCRIPT_FIXTURE",
-      duplication: (candidateContent.match(/function\s+normalizeTags/g) ?? []).length === 1,
-      maintainability: Buffer.byteLength(candidateContent, "utf8") <= MAX_PATCH_BYTES
-        && candidateContent.split(/\r?\n/).length <= 30,
-      regressionBehavior: hiddenBehavior,
-      security: !forbiddenConstructs.test(candidateContent),
-    };
-    engineeringQualityAcceptance = Object.entries(quality)
-      .filter(([key]) => !["evaluated", "typeSafety"].includes(key)).every(([, value]) => value === true);
-    functionalAcceptance = result.functionalAcceptance === "ACCEPTED" && hiddenBehavior;
+    const hiddenEvaluator = await R3IsolatedHiddenEvaluator.create({ evaluatorId: "NYX-LIVE-R3E-HIDDEN",
+      evaluatorVersion: "nyx-live-r3e/2", candidateRoot: finalCandidateRoot, hiddenEvaluatorRoot: hiddenRoot,
+      hiddenCaseFile: "expected-cases.json", expectedHiddenCaseFileSha256: hash(hiddenCaseBytes),
+      candidateRunner: "tools/candidate-runner.mjs", expectedCandidateRunnerSha256: hash(OMEGA_CANDIDATE_RUNNER_SOURCE),
+      candidateModule: "src/normalize-tags.mjs", exportName: "normalizeTags", timeoutMsPerCase: 5_000,
+      maxOutputBytesPerCase: 16_384, maxCases: 2 });
+    hiddenExecution = await hiddenEvaluator.evaluate();
+    const verifierIntegrity = await readFile(join(finalCandidateRoot, "tools", "verify.mjs"), "utf8") === VERIFIER_SOURCE
+      && await readFile(join(finalCandidateRoot, "tools", "candidate-runner.mjs"), "utf8") === OMEGA_CANDIDATE_RUNNER_SOURCE
+      && await readFile(join(hiddenRoot, "expected-cases.json"), "utf8") === hiddenCaseBytes;
+    const assessment = assessEngineeringQuality({ assessmentId: "NYX-LIVE-R3E-QUALITY", evaluatorVersion: "nyx-live-r3e/2",
+      baselineFiles: { "src/normalize-tags.mjs": FAULTY_SOURCE }, candidateFiles: { "src/normalize-tags.mjs": candidateContent },
+      changedPaths: [...new Set(result.iterations.flatMap((item) => item.hypothesis.changes.map((change) => change.relativePath)))],
+      functionalAcceptance: hiddenExecution.outcome === "PASS" ? "PASS" : hiddenExecution.outcome === "FAIL" ? "FAIL" : "NOT_EVALUATED",
+      regressionAcceptance: hiddenExecution.outcome === "PASS" ? "PASS" : hiddenExecution.outcome === "FAIL" ? "FAIL" : "NOT_EVALUATED",
+      policy: { policyId: "NYX-LIVE-R3E-QUALITY", allowedChangedPaths: ["src/normalize-tags.mjs"], readonlyPaths: [],
+        maxChangedFiles: 1, maxChangedLines: 30, maxCandidateBytes: MAX_PATCH_BYTES, maxCyclomaticComplexity: 8,
+        maxComplexityDelta: 6, maxNestingDepth: 4, maxAddedDeclarations: 4,
+        invariants: [{ invariantId: "NORMALIZE-PRESERVES-INPUT", dimension: "REGRESSION_RESISTANCE",
+          kind: "NO_PARAMETER_MUTATION", path: "src/normalize-tags.mjs" }] } });
+    quality = { evaluated: true, assessmentId: assessment.assessmentId, evidenceId: assessment.evidenceId,
+      decision: assessment.decision, dimensions: assessment.dimensions, failedDimensions: assessment.failedDimensions, verifierIntegrity };
+    engineeringQualityAcceptance = assessment.decision === "ACCEPTED" && verifierIntegrity;
+    functionalAcceptance = result.functionalAcceptance === "ACCEPTED" && hiddenExecution.outcome === "PASS" && verifierIntegrity;
   }
 
   const cognitionEvidence = [...result.iterations.map((item) => item.cognitionEvidence),
+    ...result.cognitionFailures.map((item) => item.cognitionEvidence),
+    ...result.evidenceAcquisitions.map((item) => item.cognitionEvidence),
     ...(result.lastCognitionEvidence ? [result.lastCognitionEvidence] : [])]
     .filter((item, index, all) => all.findIndex((candidate) => candidate.evidenceId === item.evidenceId) === index);
   const modelTokens = cognitionEvidence.reduce((sum, item) => sum + (item.modelUsage.totalTokens ?? 0), 0);
+  const accepted = functionalAcceptance && engineeringQualityAcceptance && sourceUnchanged && failedPredecessorUnchanged
+    && cognitionEvidence.length > 0 && cognitionEvidence.every((item) => item.evidenceClass === "E4");
   const summary = {
     schemaVersion: 1, chunkId: "NYX-LIVE-R3E-001", taskId: TASK_ID, candidateCommit: CANDIDATE, model: MODEL,
-    result: functionalAcceptance && engineeringQualityAcceptance ? "VERIFIED_IN_ISOLATION" : "EMPIRICALLY_NOT_YET_VERIFIED",
-    failureClass: functionalAcceptance && engineeringQualityAcceptance ? "NONE" : failureClass(result),
+    result: accepted ? "VERIFIED_IN_ISOLATION" : "EMPIRICALLY_NOT_YET_VERIFIED",
+    failureClass: accepted ? "NONE"
+      : result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" ? "VERIFICATION_FAILURE" : failureClass(result),
     loopOutcome: result.outcome, loopReason: result.reason, iterations: result.iterations.length,
     modelCalls: result.modelCallCount, modelCallLimit: MAX_MODEL_CALLS, modelTokens,
     modelRequestDigests: cognitionEvidence.map((item) => item.modelRequestDigest),
     modelResponseDigests: cognitionEvidence.map((item) => item.modelResponseDigest),
     cognitionEvidenceClasses: cognitionEvidence.map((item) => item.evidenceClass),
     cognitionEvidenceIds: cognitionEvidence.map((item) => item.evidenceId),
+    cognitionFailures: result.cognitionFailures.map((item) => ({ cycle: item.cognitionCycle,
+      reason: item.reason, diagnostics: item.diagnostics })),
+    providerOutcomes: cognitionEvidence.map((item) => ({ statusCode: item.modelStatusCode,
+      finishReason: item.modelFinishReason, failureCategory: item.providerFailureCategory })),
     proposalDigests: result.iterations.map((item) => item.proposalDigest),
     applicationDecisions: result.iterations.map((item) => item.applicationDecision),
     verificationOutcomes: result.iterations.flatMap((item) => item.verifications.map((entry) => entry.execution.outcome)),
     verificationEvidenceIds: result.iterations.flatMap((item) => item.verifications.map((entry) => entry.execution.evidence.evidenceId)),
     functionalAcceptance: functionalAcceptance ? "ACCEPTED" : "NOT_ACCEPTED",
     engineeringQualityAcceptance: engineeringQualityAcceptance ? "ACCEPTED" : "NOT_ACCEPTED",
-    quality, sourceRepositoryUnchanged: sourceUnchanged, failedPredecessorUnchanged,
+    quality, hiddenAcceptance: hiddenExecution?.outcome ?? "NOT_EVALUATED", hiddenEvidence: hiddenExecution?.evidence ?? null,
+    sourceRepositoryUnchanged: sourceUnchanged, failedPredecessorUnchanged,
     omegaAuthorityEnforcement: result.authorityGranted === false && result.sourceRepositoryWriteAuthority === false,
     disposableRepositoryOnly: true, generalShellAuthority: false, generalNetworkAuthority: false,
     productionAuthority: false, credentialPersisted: false, durationMs: Date.now() - STARTED_AT,

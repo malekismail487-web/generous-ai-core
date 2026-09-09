@@ -188,10 +188,54 @@ function builder(tamper = false, additionalAdmittedPaths: () => readonly string[
 }
 
 function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder(), maxIterations = 1,
-  evidenceProvider?: OmegaRepairEvidenceProvider): R3BoundedRepairLoop {
+  evidenceProvider?: OmegaRepairEvidenceProvider, maxWallClockMs = 30_000): R3BoundedRepairLoop {
   return R3BoundedRepairLoop.create({ loopId: `R3E-LOOP-${sequence}`, evaluatorVersion: "r3-e/1",
-    observerIdentity: "OMEGA-R3E-OBSERVER", cognition: nyx, candidateBuilder, evidenceProvider, maxIterations, maxWallClockMs: 30_000,
+    observerIdentity: "OMEGA-R3E-OBSERVER", cognition: nyx, candidateBuilder, evidenceProvider, maxIterations, maxWallClockMs,
     maxChangesPerIteration: 1, maxPatchBytesPerIteration: 1_000, maxDiagnosisCharacters: 1_000 });
+}
+
+{
+  let calls = 0;
+  let correctionObserved = false;
+  const nyx = cognition(async (_input, init) => {
+    calls += 1;
+    const prompt = JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
+    if (calls === 1) return providerResponse(modelResponse(CORRECT_SOURCE, { decision: "RUN_SHELL" }));
+    correctionObserved = prompt.requiredCorrections.some((item: { category: string; expected: string }) =>
+      item.category === "UNKNOWN_CAPABILITY" && item.expected.includes("PROPOSE_EDIT") && !item.expected.includes("RUN_SHELL"));
+    return providerResponse(modelResponse(CORRECT_SOURCE));
+  });
+  let preparations = 0;
+  const allowedBuilder = builder();
+  const guardedBuilder = { ...allowedBuilder, prepare: async (hypothesis: NyxRepairHypothesis, iteration: number) => {
+    preparations += 1;
+    return allowedBuilder.prepare(hypothesis, iteration);
+  } };
+  const result = await loop(nyx, guardedBuilder, 2).run(loopRequest());
+  check(correctionObserved && result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 2,
+    "Omega explains an unsupported intent and Nyx can replace it with an authorized proposal within the existing budget");
+  check(preparations === 1 && result.cognitionFailures.length === 1 && !result.authorityGranted,
+    "rejected shell intent never reaches actuation and subsequent correction grants no additional authority");
+}
+
+{
+  let preparations = 0;
+  const unusedBuilder = { builderIdentity: "NO-PROGRESS-UNUSED", prepare: async () => {
+    preparations += 1; throw new Error("must_not_prepare");
+  } };
+  const invalid = JSON.stringify({ decision: "PROPOSE_EDIT", diagnosis: "Still missing a hypothesis." });
+  const result = await loop(cognition(async () => providerResponse(invalid)), unusedBuilder, 3).run(loopRequest());
+  check(result.outcome === "EXHAUSTED" && result.reason === "repair_cognition_no_progress" && result.modelCallCount === 2,
+    "identical invalid output after actionable feedback terminates without consuming a third call");
+  check(result.cognitionFailures.length === 2 && preparations === 0,
+    "no-progress termination retains both rejection observations without candidate mutation");
+  const late = await loop(cognition(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    return providerResponse(modelResponse(CORRECT_SOURCE));
+  }), unusedBuilder, 2, undefined, 100).run(loopRequest());
+  check(late.outcome === "EXHAUSTED" && late.reason === "repair_wall_clock_budget_exhausted"
+    && late.modelCallCount === 1 && preparations === 0,
+  "valid but late cognition cannot initiate mutation after the loop deadline");
 }
 
 {

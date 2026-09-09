@@ -77,8 +77,8 @@ function inert(result: NyxRepairCognitionResult): boolean {
 }
 
 check(/^[0-9a-f]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
-  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/4",
-  "frozen semantic contract has a versioned deterministic digest");
+  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/5",
+  "current semantic contract has an explicit version and deterministic digest; historical scores remain frozen");
 check(NYX_R3F_EVALUATION_FIXTURES.length === 5
   && new Set(NYX_R3F_EVALUATION_FIXTURES.map((task) => task.taskClass)).size === 5,
   "evaluation matrix contains five distinct task classes rather than variants of one fixture");
