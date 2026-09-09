@@ -12,6 +12,7 @@ on:
           - full
           - contract-only
           - engineering-only
+          - challenge-only
 
 permissions:
   contents: read
@@ -23,7 +24,7 @@ concurrency:
 jobs:
   nemotron-live-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: ${{ inputs.mode == 'challenge-only' && 12 || 5 }}
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
@@ -49,12 +50,29 @@ jobs:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: npm run omega:nvidia:smoke
       - name: Run bounded Νύξ typed-contract compliance check
-        if: inputs.mode != 'engineering-only'
+        if: inputs.mode == 'full' || inputs.mode == 'contract-only'
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: npm run omega:nyx:contract-compliance
       - name: Run live bounded Νύξ engineering loop
-        if: inputs.mode != 'contract-only'
+        if: inputs.mode == 'full' || inputs.mode == 'engineering-only'
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: npm run omega:nyx:live-engineering
+      - name: Validate complex challenge oracle before paid inference
+        if: inputs.mode == 'challenge-only'
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaSchedulerChallenge.test.ts
+      - name: Run one bounded multi-file scheduler challenge
+        if: inputs.mode == 'challenge-only'
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NYX_QUALITY_SUITE: CHALLENGE
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v4-live-eval.ts
+      - name: Preserve sanitized challenge outcome including failures
+        if: always() && inputs.mode == 'challenge-only'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-scheduler-challenge-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-quality-challenge-*.json
+          if-no-files-found: warn
+          retention-days: 14

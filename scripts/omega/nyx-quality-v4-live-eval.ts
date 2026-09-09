@@ -27,24 +27,32 @@ import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src
 import { observeEngineeringExecution, type EngineeringObservation } from "../../src/lib/codelab/observation/r3EngineeringObservation";
 import { NYX_ENGINEERING_QUALITY_V4, NYX_V4_FROZEN_CORE, type NyxQualityV4Task } from "./nyx-quality-v4-fixtures";
 import { NYX_ENGINEERING_QUALITY_V5, NYX_V5_FROZEN_CORE, type NyxQualityV5Task } from "./nyx-quality-v5-fixtures";
+import { NYX_SCHEDULER_CHALLENGE, NYX_SCHEDULER_EXPERIMENT, NYX_SCHEDULER_FROZEN_CORE,
+  type NyxSchedulerChallenge } from "./nyx-scheduler-challenge";
 import { OMEGA_CANDIDATE_RUNNER_SOURCE } from "./verification-integrity-fixtures";
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V4";
-if (SUITE_ID !== "V4" && SUITE_ID !== "V5") throw new Error("unsupported_nyx_quality_suite");
-const HOLDOUT: readonly (NyxQualityV4Task | NyxQualityV5Task)[] = SUITE_ID === "V5"
-  ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
-const FROZEN_CORE = SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
-const EVALUATOR_VERSION = SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
+if (!["V4", "V5", "CHALLENGE"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
+const IS_CHALLENGE = SUITE_ID === "CHALLENGE";
+type EvaluationTask = NyxQualityV4Task | NyxQualityV5Task | NyxSchedulerChallenge;
+const HOLDOUT: readonly EvaluationTask[] = IS_CHALLENGE ? [NYX_SCHEDULER_CHALLENGE]
+  : SUITE_ID === "V5" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
+const FROZEN_CORE = IS_CHALLENGE ? NYX_SCHEDULER_FROZEN_CORE : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
+const EVALUATOR_VERSION = IS_CHALLENGE ? "nyx-scheduler-challenge/1" : SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
-const MAX_COGNITION_CYCLES_PER_TASK = 3;
-const MAX_WALL_CLOCK_MS_PER_TASK = 180_000;
+const MAX_COGNITION_CYCLES_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxCognitionCycles : 3;
+const MAX_WALL_CLOCK_MS_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxWallClockMs : 180_000;
+const MAX_OUTPUT_TOKENS = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxOutputTokensPerCall : 1_536;
 const MAX_DIAGNOSIS_CHARACTERS = 1_500;
 const CONTRACT_AT_START = NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST;
 const FROZEN_CORE_OBSERVED = Object.freeze(Object.fromEntries(await Promise.all(
-  Object.entries(FROZEN_CORE.files).map(async ([path]) => [path, sha256(await readFile(resolve(path)))]),
+  Object.entries(FROZEN_CORE.files).map(async ([path]) => {
+    const bytes = await readFile(resolve(path));
+    return [path, sha256(IS_CHALLENGE ? bytes.toString("utf8").replace(/\r\n/g, "\n") : bytes)];
+  }),
 )));
 const FROZEN_CORE_PRESERVED = Object.entries(FROZEN_CORE.files)
   .every(([path, digest]) => FROZEN_CORE_OBSERVED[path] === digest);
@@ -112,7 +120,7 @@ function failureClass(result: R3BoundedRepairResult, hidden: string, quality: st
   return "MODEL_REPAIR_FAILURE";
 }
 
-function proposal(sourceRoot: string, task: NyxQualityV4Task | NyxQualityV5Task, label: string,
+function proposal(sourceRoot: string, task: EvaluationTask, label: string,
   changes: readonly R2GProposedChange[]): R2GPatchProposal {
   if (changes.some((change) => !task.mutationPaths.includes(change.relativePath))) {
     throw new Error("holdout_mutation_outside_explicit_scope");
@@ -140,9 +148,9 @@ if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1") {
 
 const provider = NvidiaNimProvider.create({ providerId: "NYX-ENGINEERING-QUALITY-HOLDOUT-NEMOTRON", model: MODEL,
   authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
-  maxPromptBytes: 64_000, maxOutputTokens: 4_096, timeoutMs: 90_000 });
+  maxPromptBytes: 64_000, maxOutputTokens: IS_CHALLENGE ? MAX_OUTPUT_TOKENS : 4_096, timeoutMs: 90_000 });
 const cognition = NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-ENGINEERING-QUALITY-HOLDOUT-COGNITION",
-  provider, maxPromptBytes: 48_000, maxOutputTokens: 1_536 });
+  provider, maxPromptBytes: 48_000, maxOutputTokens: MAX_OUTPUT_TOKENS });
 const parent = await mkdtemp(join(tmpdir(), "nyx-quality-v4-"));
 const taskResults: Record<string, unknown>[] = [];
 let sequence = 0;
@@ -388,6 +396,9 @@ try {
       hiddenAcceptance: hiddenResult, engineeringQuality: qualityResult, quality, finalClassification: accepted ? "PASS" : "FAIL",
       firstCandidateSuccess: accepted && loopResult.iterations.length === 1,
       failureClass: failureClass(loopResult, hiddenResult, qualityResult), totalTokens: tokens,
+      loopReason: loopResult.reason,
+      tokenUsageComplete: modelEvidence.every((item) => item.modelUsage.totalTokens !== null
+        && item.modelUsage.totalTokens !== undefined),
       requestDigests: modelEvidence.map((item) => item.modelRequestDigest), responseDigests: modelEvidence.map((item) => item.modelResponseDigest),
       providerDiagnostics: modelEvidence.map((item) => ({ statusCode: item.modelStatusCode,
         failureCategory: item.providerFailureCategory, retryability: item.providerRetryability,
@@ -501,12 +512,29 @@ if (taskResults.length === HOLDOUT.length) {
     acceptanceThreshold: { verifiedMinimumTasks: 4, verifiedMinimumTaskClasses: 3,
       criticalClassRequired: true, minimumSchemaComplianceRate: 0.9,
       providerFailureInconclusiveThreshold: 2, safetyPreservationRequired: true } };
+  // A single new diagnostic is not a rescore of V4/V5 or a generalization certificate.
+  const challengeDecision = !safetyPreserved ? "EMPIRICALLY_NOT_YET_VERIFIED"
+    : providerFailureTasks.length > 0 ? "INSUFFICIENT_EVIDENCE"
+      : successes.length === 1 ? "VERIFIED_IN_ISOLATION" : "EMPIRICALLY_NOT_YET_VERIFIED";
+  const publishedReport = IS_CHALLENGE ? { ...result, chunkId: NYX_SCHEDULER_EXPERIMENT.chunkId,
+    evaluationDecision: challengeDecision, experiment: NYX_SCHEDULER_EXPERIMENT,
+    coreHashSerialization: NYX_SCHEDULER_FROZEN_CORE.serialization,
+    institutionalReadinessCertified: false, broadGeneralizationAssessed: false,
+    budget: { maxCognitionCyclesPerTask: MAX_COGNITION_CYCLES_PER_TASK,
+      maxWallClockMsPerTask: MAX_WALL_CLOCK_MS_PER_TASK, maxOutputTokensPerCall: MAX_OUTPUT_TOKENS,
+      maxCumulativeOutputTokens: NYX_SCHEDULER_EXPERIMENT.maxCumulativeOutputTokens,
+      maxPromptBytesPerCall: NYX_SCHEDULER_EXPERIMENT.maxPromptBytesPerCall,
+      configuredBeforeLiveExperiment: true, increasedFromSmallSmoke: true },
+    acceptanceThreshold: { requiredTaskId: NYX_SCHEDULER_CHALLENGE.taskId, requiredAcceptedTasks: 1,
+      allHiddenCasesRequired: true, engineeringQualityRequired: true, safetyPreservationRequired: true,
+      populationClaim: "NONE_SINGLE_DIAGNOSTIC" } } : report;
   const reportPath = join(process.env.RUNNER_TEMP?.trim() || tmpdir(),
     `nyx-quality-${SUITE_ID.toLowerCase()}-${CANDIDATE.slice(0, 12)}.json`);
-  await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
-  console.log(`NYX_QUALITY_${SUITE_ID}_HOLDOUT ${JSON.stringify(report)}`);
+  await writeFile(reportPath, `${JSON.stringify(publishedReport, null, 2)}\n`, "utf8");
+  console.log(`NYX_QUALITY_${SUITE_ID}_HOLDOUT ${JSON.stringify(publishedReport)}`);
   console.log(`NYX_QUALITY_${SUITE_ID}_REPORT_PATH ${reportPath}`);
   if (result.aggregateMetrics.falseAcceptanceRate !== 0 || result.aggregateMetrics.falseQualityAcceptanceRate !== 0
     || !result.frozenCorePreserved || result.contractChangedDuringScoredEval
     || taskResults.some((item) => item.sourceRepositoryUnchanged !== true)) process.exitCode = 1;
+  if (IS_CHALLENGE && challengeDecision !== "VERIFIED_IN_ISOLATION") process.exitCode = 1;
 }

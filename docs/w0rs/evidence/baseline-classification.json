@@ -4418,6 +4418,7 @@
           "scripts/omega/nyx-quality-v5-fixtures.ts",
           "scripts/omega/nyx-r3f-fixtures.ts",
           "scripts/omega/nyx-r3f-live-eval.ts",
+          "scripts/omega/nyx-scheduler-challenge.ts",
           "scripts/omega/pre-r2-gate.mjs",
           "scripts/omega/run-tests.mjs",
           "scripts/omega/test-harness.mjs",
@@ -4477,6 +4478,7 @@
           "scripts/omegaRegistry.test.ts",
           "scripts/omegaRegistryCriticalPath.test.ts",
           "scripts/omegaRegistryEvidenceBridge.test.ts",
+          "scripts/omegaSchedulerChallenge.test.ts",
           "scripts/omegaSec003AleRetirement.test.ts",
           "scripts/omegaSec003ClosureEvidence.test.ts",
           "scripts/omegaTsRatchet.test.mjs",
@@ -7816,6 +7818,7 @@
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
         "firstPartyCodeReferences": [
+          "scripts/omega/nyx-scheduler-challenge.ts",
           "src/components/SuperAdminPanel.tsx",
           "src/components/admin/LCTPanel.tsx",
           "src/components/admin/TenantObservatory.tsx",
@@ -8080,6 +8083,7 @@
           "scripts/omegaR3EBoundedRepairLoop.test.ts",
           "scripts/omegaReadOnlyVerticalSlice.test.ts",
           "scripts/omegaRegistry.test.ts",
+          "scripts/omegaSchedulerChallenge.test.ts",
           "scripts/omegaSec003AleRetirement.test.ts",
           "scripts/omegaTsRatchet.test.mjs",
           "scripts/omegaVerificationIntegrity.test.ts",
