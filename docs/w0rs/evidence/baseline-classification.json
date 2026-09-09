@@ -4438,6 +4438,7 @@
           "scripts/omegaEvidenceCorrelationMap.test.ts",
           "scripts/omegaEvidenceCustody.test.ts",
           "scripts/omegaEvidenceInvalidation.test.ts",
+          "scripts/omegaGroundedRepositoryContext.test.ts",
           "scripts/omegaHarnessGenealogy.test.mjs",
           "scripts/omegaHarnessIntegrity.test.mjs",
           "scripts/omegaNvidiaNimProvider.test.ts",
@@ -4695,6 +4696,8 @@
           "src/lib/codelab/registry/directive015Coverage.ts",
           "src/lib/codelab/registry/planCoverage.ts",
           "src/lib/codelab/registry/registry.ts",
+          "src/lib/codelab/repository/groundedRepositoryContext.ts",
+          "src/lib/codelab/repository/staticModuleRelations.ts",
           "src/lib/codelab/verifier/types.ts",
           "src/lib/coldStartBootstrap.ts",
           "src/lib/contentScanner.ts",
@@ -7007,6 +7010,7 @@
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
         "firstPartyCodeReferences": [
+          "scripts/omegaGroundedRepositoryContext.test.ts",
           "src/components/BottomNav.tsx",
           "src/components/CourseMaterialsSection.tsx",
           "src/components/FileNotesGenerator.tsx",

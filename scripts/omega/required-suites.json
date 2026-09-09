@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/35",
+  "suiteVersion": "omega-institutional-suite/36",
   "criticalSuites": [
     "OMEGA-ASSURE-R2-EVALUATOR",
     "OMEGA-ASSURE-R2-OPERATIONAL-INDEPENDENT",
@@ -119,6 +119,7 @@
     { "suiteId": "OMEGA-R3-F-LIVE-ENGINEER-ASSURANCE", "file": "scripts/omegaR3FLiveEngineerAssurance.test.ts" },
     { "suiteId": "OMEGA-NYX-ENGINEERING-QUALITY-ASSURANCE", "file": "scripts/omegaNyxEngineeringQualityAssurance.test.ts" },
     { "suiteId": "OMEGA-SCHEDULER-CHALLENGE", "file": "scripts/omegaSchedulerChallenge.test.ts" },
+    { "suiteId": "OMEGA-GROUNDED-REPOSITORY-CONTEXT", "file": "scripts/omegaGroundedRepositoryContext.test.ts" },
     { "suiteId": "OMEGA-NVIDIA-NIM-PROVIDER", "file": "scripts/omegaNvidiaNimProvider.test.ts" },
     { "suiteId": "OMEGA-VERIFICATION-INTEGRITY", "file": "scripts/omegaVerificationIntegrity.test.ts" },
     { "suiteId": "OMEGA-READ-ONLY-EXECUTOR", "file": "scripts/omegaReadOnlyExecutor.test.ts" },

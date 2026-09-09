@@ -12,6 +12,7 @@ import type { R2GPatchProposal, R2GProposedChange } from "../src/lib/codelab/exe
 import { R3ADisposablePatchApplicator, type R3AApplyRequest } from "../src/lib/codelab/executor/r3DisposablePatchApplication";
 import { R3BControlledEngineeringExecutor, type R3BEngineeringToolDefinition, type R3BExecutionRequest, type R3BExecutionResult } from "../src/lib/codelab/executor/r3ControlledEngineeringExecution";
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
+import { GroundedRepositoryContext } from "../src/lib/codelab/repository/groundedRepositoryContext";
 import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { observeEngineeringExecution, type EngineeringObservation } from "../src/lib/codelab/observation/r3EngineeringObservation";
 
@@ -270,11 +271,21 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
 }
 
 {
+  const evidenceExecutor = await ReadOnlyRepositoryExecutor.create({ executorId: "R1-R3E-CONTEXT",
+    tokenId: "R1-R3E-CONTEXT-TOKEN", repositoryRoot: initial.cloneRoot,
+    resourceScopes: ["src/math.txt", "src/rule.txt"], issuedAtEpochMs: NOW - 1_000,
+    expiresAtEpochMs: NOW + 500_000, constraints: { maxFileBytes: 100_000,
+      maxDirectoryEntries: 10, allowedExtensions: [".txt"] }, issuer: "OMEGA-R3E-TEST", auditIdentity: "R1-CONTEXT-AUDIT" });
+  const groundedContext = await GroundedRepositoryContext.create({ sessionId: "R3E-INTEGRATION",
+    candidateId: CANDIDATE, environmentId: `local-${process.platform}`, executor: evidenceExecutor,
+    manifest: ["src/math.txt", "src/rule.txt"], maxSnapshotBytes: 100_000, maxReadOperations: 8, now: () => NOW });
+  const contextPack = await groundedContext.retrieve({ objective: "Repair arithmetic result", seedPaths: ["src/math.txt"],
+    mode: "DEPENDENCY_AUGMENTED", maxFiles: 1, maxBytes: 10_000, maxDependencyDepth: 1 });
   const evidenceIntent = JSON.stringify({ decision: "REQUEST_EVIDENCE", diagnosis: "The observed value is wrong but the intended identity needs confirmation.",
     causalHypothesis: "The stored result violates the repository arithmetic rule.", evidenceRefs: ["OBJECTIVE", "FILE:src/math.txt"],
     uncertainties: ["The authoritative arithmetic rule has not yet been admitted."], invariant: "The stored expression must equal the repository rule.",
     failureInterpretation: "No prior candidate exists.", expectedResult: "Admitting the rule will discriminate the correct replacement.",
-    counterexamples: [], requestedEvidenceRefs: ["AVAILABLE:src/rule.txt"], assumptions: [], changes: [], confidence: 0.7 });
+    counterexamples: [], requestedEvidenceRefs: [contextPack.availableEvidence[0].evidenceRef], assumptions: [], changes: [], confidence: 0.7 });
   const invalidIntent = JSON.stringify({ decision: "PROPOSE_EDIT", diagnosis: "Incomplete post-evidence intent." });
   const responses = [evidenceIntent, invalidIntent,
     modelResponse(CORRECT_SOURCE, { evidenceRefs: ["OBJECTIVE", "FILE:src/math.txt", "FILE:src/rule.txt"] })];
@@ -282,17 +293,13 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
   const nyx = cognition(async () => providerResponse(responses[calls++]));
   let ruleAdmitted = false;
   const evidenceProvider: OmegaRepairEvidenceProvider = { providerIdentity: "OMEGA-R3E-READ-ONLY-EVIDENCE",
-    acquire: async (request) => {
+    acquire: async (request, cycle) => {
+      const evidence = await groundedContext.acquire(request, cycle);
       ruleAdmitted = true;
-      const content = await readFile(join(initial.cloneRoot, "src", "rule.txt"), "utf8");
-      return { requestedEvidenceRefs: request.requestedEvidenceRefs, evidenceIds: ["R1-EVIDENCE-RULE"],
-        files: [{ relativePath: "src/rule.txt", content, contentSha256: hash(content) }],
-        omegaAuthorityBoundary: "R1_ADMITTED_READ_ONLY_EVIDENCE", authorityGranted: false };
+      return evidence;
     } };
   const result = await loop(nyx, builder(false, () => ruleAdmitted ? ["src/rule.txt"] : []), 3, evidenceProvider)
-    .run(loopRequest({ availableEvidence: [{
-    evidenceRef: "AVAILABLE:src/rule.txt", kind: "FILE", relativePath: "src/rule.txt",
-    description: "Repository rule referenced by the failing fixture." }] }));
+    .run(loopRequest({ availableEvidence: contextPack.availableEvidence, initialFiles: contextPack.files }));
   check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 3
     && result.evidenceAcquisitions.length === 1 && result.cognitionFailures.length === 1 && result.iterations.length === 1,
     "Νύξ can acquire evidence, correct one invalid intent, and verify a repair within the unchanged three-cycle budget");
@@ -300,6 +307,9 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
     && result.evidenceAcquisitions[0].admittedPaths.join() === "src/rule.txt"
     && result.evidenceAcquisitions[0].cognitionEvidence.modelUsage.totalTokens !== undefined,
     "evidence acquisition remains attributable, read-only, authority-neutral, and resource-accounted");
+  check(groundedContext.readOperations === 4 && evidenceExecutor.auditLog().length === 4
+    && result.evidenceAcquisitions[0].admittedEvidenceIds[0].startsWith("R1-R3E-CONTEXT:"),
+    "existing bounded repair consumes real R1 context evidence without a parallel cognition or execution stack");
 }
 
 function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0]> = {}): Parameters<R3BoundedRepairLoop["run"]>[0] {
