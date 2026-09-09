@@ -104,7 +104,7 @@ console.log("VISIBLE_PASS intervals");
 `,
     candidateModule: "src/coalesce-intervals.mjs",
     exportName: "coalesceIntervals",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "EMPTY", args: [[]], expectation: { kind: "RETURN", value: [] } },
       { caseId: "NESTED", args: [[[8, 10], [2, 5], [4, 9]]], expectation: { kind: "RETURN", value: [[2, 10]] } },
       { caseId: "POINT", args: [[[2, 2], [4, 5]]], expectation: { kind: "RETURN", value: [[2, 2], [4, 5]] } },
@@ -149,7 +149,7 @@ console.log("VISIBLE_PASS lease");
 `,
     candidateModule: "src/lease-transition.mjs",
     exportName: "leaseTransition",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "ACQUIRE", args: ["FREE", "ACQUIRE"], expectation: { kind: "RETURN", value: { state: "HELD", result: "ACQUIRED" } } },
       { caseId: "RELEASE", args: ["HELD", "RELEASE"], expectation: { kind: "RETURN", value: { state: "FREE", result: "RELEASED" } } },
       { caseId: "RESET", args: ["EXPIRED", "RESET"], expectation: { kind: "RETURN", value: { state: "FREE", result: "RESET" } } },
@@ -191,7 +191,7 @@ console.log("VISIBLE_PASS header");
 `,
     candidateModule: "src/decode-header.mjs",
     exportName: "decodeHeader",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "BASIC", args: ["x: 1"], expectation: { kind: "RETURN", value: { ok: true, name: "x", value: "1" } } },
       { caseId: "NO-COLON", args: ["x"], expectation: { kind: "RETURN", value: { ok: false, error: "INVALID_HEADER" } } },
       { caseId: "EMPTY-NAME", args: [": value"], expectation: { kind: "RETURN", value: { ok: false, error: "INVALID_HEADER" } } },
@@ -236,7 +236,7 @@ console.log("VISIBLE_PASS ranking");
 `,
     candidateModule: "src/rank-candidates.mjs",
     exportName: "rankCandidates",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "SCORE", args: [[{ id: "a", score: 1, risk: 0 }, { id: "b", score: 2, risk: 9 }]], expectation: { kind: "RETURN", value: ["b", "a"] } },
       { caseId: "RISK", args: [[{ id: "z", score: 5, risk: 2 }, { id: "y", score: 5, risk: 1 }]], expectation: { kind: "RETURN", value: ["y", "z"] } },
       { caseId: "ID", args: [[{ id: "b", score: 5, risk: 1 }, { id: "a", score: 5, risk: 1 }]], expectation: { kind: "RETURN", value: ["a", "b"] } },
@@ -287,7 +287,7 @@ console.log("VISIBLE_PASS inventory");
 `,
     candidateModule: "src/inventory-update.mjs",
     exportName: "applyInventoryUpdate",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "ZERO", args: [{ version: 1, items: { A: { quantity: 2 } } }, "A", 0], expectation: { kind: "RETURN", value: { version: 2, items: { A: { quantity: 2 } } }, argsAfter: [{ version: 1, items: { A: { quantity: 2 } } }, "A", 0] } },
       { caseId: "NEGATIVE", args: [{ version: 1, items: { A: { quantity: 2 } } }, "A", -3], expectation: { kind: "THROW", errorName: "RangeError" } },
       { caseId: "UNKNOWN", args: [{ version: 1, items: { A: { quantity: 2 } } }, "B", 1], expectation: { kind: "THROW", errorName: "RangeError" } },
@@ -331,7 +331,7 @@ console.log("VISIBLE_PASS retention");
 `,
     candidateModule: "src/retention-days.mjs",
     exportName: "retentionDays",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "EPHEMERAL", args: ["ephemeral"], expectation: { kind: "RETURN", value: 1 } },
       { caseId: "UNKNOWN", args: ["custom"], expectation: { kind: "RETURN", value: 7 } },
     ]),
@@ -378,7 +378,7 @@ console.log("VISIBLE_PASS partition");
 `,
     candidateModule: "src/partition-jobs.mjs",
     exportName: "partitionJobs",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "NORMALIZED", args: [[" Z ", "z"], 2], expectation: { kind: "RETURN", value: [[" Z ", "z"], []], argsAfter: [[" Z ", "z"], 2] } },
       { caseId: "STABLE", args: [["c", "a", "d"], 2], expectation: { kind: "RETURN", value: [["d"], ["c", "a"]] } },
       { caseId: "INVALID", args: [["a"], 0], expectation: { kind: "THROW", errorName: "RangeError" } },

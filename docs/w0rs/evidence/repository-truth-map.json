@@ -2217,6 +2217,12 @@
       ]
     },
     {
+      "name": "PATH",
+      "files": [
+        "scripts/omegaSchedulerChallenge.test.ts"
+      ]
+    },
+    {
       "name": "PERSONA_SEED",
       "files": [
         "scripts/personaTest.ts"
@@ -2362,6 +2368,30 @@
         "supabase/functions/teach-back-grade/index.ts",
         "supabase/functions/teacher-override/index.ts",
         "supabase/functions/teaching-generate/index.ts"
+      ]
+    },
+    {
+      "name": "SYSTEMROOT",
+      "files": [
+        "scripts/omegaSchedulerChallenge.test.ts"
+      ]
+    },
+    {
+      "name": "TEMP",
+      "files": [
+        "scripts/omegaSchedulerChallenge.test.ts"
+      ]
+    },
+    {
+      "name": "TMP",
+      "files": [
+        "scripts/omegaSchedulerChallenge.test.ts"
+      ]
+    },
+    {
+      "name": "TMPDIR",
+      "files": [
+        "scripts/omegaSchedulerChallenge.test.ts"
       ]
     },
     {

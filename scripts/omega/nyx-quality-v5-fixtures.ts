@@ -70,7 +70,7 @@ const input=[1,2,3,4];const result=rotateRing(input,5);
 if(JSON.stringify(result)!==JSON.stringify([2,3,4,1])||JSON.stringify(input)!==JSON.stringify([1,2,3,4]))process.exit(2);
 console.log("VISIBLE_PASS rotate");
 `, candidateModule: "src/rotate-ring.mjs", exportName: "rotateRing",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "NEGATIVE", args: [[1, 2, 3, 4], -1], expectation: { kind: "RETURN", value: [4, 1, 2, 3], argsAfter: [[1, 2, 3, 4], -1] } },
       { caseId: "EMPTY", args: [[], 12], expectation: { kind: "RETURN", value: [], argsAfter: [[], 12] } },
       { caseId: "FULL", args: [["a", "b"], 4], expectation: { kind: "RETURN", value: ["a", "b"] } },
@@ -104,7 +104,7 @@ console.log("VISIBLE_PASS rotate");
 if(JSON.stringify(circuitTransition("OPEN","TIMEOUT"))!==JSON.stringify({state:"HALF_OPEN",outcome:"PROBE"}))process.exit(2);
 console.log("VISIBLE_PASS circuit");
 `, candidateModule: "src/circuit-transition.mjs", exportName: "circuitTransition",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "TRIP", args: ["CLOSED", "FAILURE"], expectation: { kind: "RETURN", value: { state: "OPEN", outcome: "TRIPPED" } } },
       { caseId: "RESET", args: ["HALF_OPEN", "SUCCESS"], expectation: { kind: "RETURN", value: { state: "CLOSED", outcome: "RESET" } } },
       { caseId: "RETRIP", args: ["HALF_OPEN", "FAILURE"], expectation: { kind: "RETURN", value: { state: "OPEN", outcome: "RETRIPPED" } } },
@@ -132,7 +132,7 @@ console.log("VISIBLE_PASS circuit");
 if(JSON.stringify(parseByteSize(" 2KB "))!==JSON.stringify({ok:true,bytes:2048})||parseByteSize("2.5KB").ok)process.exit(2);
 console.log("VISIBLE_PASS bytes");
 `, candidateModule: "src/parse-byte-size.mjs", exportName: "parseByteSize",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "BYTES", args: ["0B"], expectation: { kind: "RETURN", value: { ok: true, bytes: 0 } } },
       { caseId: "MEGABYTES", args: ["3MB"], expectation: { kind: "RETURN", value: { ok: true, bytes: 3145728 } } },
       { caseId: "NO-UNIT", args: ["12"], expectation: { kind: "RETURN", value: { ok: false, error: "INVALID_SIZE" } } },
@@ -166,7 +166,7 @@ const input=[{id:"late",deadline:9,severity:9},{id:"soon",deadline:1,severity:1}
 if(JSON.stringify(prioritizeJobs(input))!==JSON.stringify(["soon","late"])||input[0].id!=="late")process.exit(2);
 console.log("VISIBLE_PASS priority");
 `, candidateModule: "src/prioritize-jobs.mjs", exportName: "prioritizeJobs",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "SEVERITY", args: [[{ id: "a", deadline: 2, severity: 1 }, { id: "b", deadline: 2, severity: 5 }]], expectation: { kind: "RETURN", value: ["b", "a"] } },
       { caseId: "STABLE", args: [[{ id: "a", deadline: 2, severity: 1 }, { id: "b", deadline: 2, severity: 1 }]], expectation: { kind: "RETURN", value: ["a", "b"] } },
     ]),
@@ -199,7 +199,7 @@ const input={version:4,quota:{used:2,available:5,label:"primary"}};const result=
 if(result.version!==5||result.quota.used!==5||result.quota.available!==2||input.quota.used!==2||result===input)process.exit(2);
 console.log("VISIBLE_PASS quota");
 `, candidateModule: "src/reserve-quota.mjs", exportName: "reserveQuota",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "ZERO", args: [{ version: 1, quota: { used: 3, available: 4 } }, 0], expectation: { kind: "RETURN", value: { version: 2, quota: { used: 3, available: 4 } }, argsAfter: [{ version: 1, quota: { used: 3, available: 4 } }, 0] } },
       { caseId: "EXCESS", args: [{ version: 1, quota: { used: 3, available: 4 } }, 5], expectation: { kind: "THROW", errorName: "RangeError" } },
       { caseId: "NEGATIVE", args: [{ version: 1, quota: { used: 3, available: 4 } }, -1], expectation: { kind: "THROW", errorName: "RangeError" } },
@@ -235,7 +235,7 @@ export function retryDelay(reason, attempt) {
 if(retryDelay("timeout",2)!==1000||retryDelay("rate_limit",5)!==16000)process.exit(2);
 console.log("VISIBLE_PASS retry");
 `, candidateModule: "src/retry-delay.mjs", exportName: "retryDelay",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "ZERO", args: ["timeout", 0], expectation: { kind: "RETURN", value: 250 } },
       { caseId: "DEFAULT", args: ["other", 2], expectation: { kind: "RETURN", value: 2000 } },
       { caseId: "CAPPED", args: ["other", 8], expectation: { kind: "RETURN", value: 8000 } },
@@ -274,7 +274,7 @@ const input=[{id:"x",type:"READ"},{id:"L-wrong",type:"WRITE"}];const result=rout
 if(JSON.stringify(result)!==JSON.stringify({local:["x"],remote:["L-wrong"]})||input[0].id!=="x")process.exit(2);
 console.log("VISIBLE_PASS routing");
 `, candidateModule: "src/route-operations.mjs", exportName: "routeOperations",
-    hiddenCases: Object.freeze([
+    hiddenCases: Object.freeze<HiddenEvaluationCase[]>([
       { caseId: "CACHE", args: [[{ id: "a", type: "CACHE" }, { id: "b", type: "EXECUTE" }]], expectation: { kind: "RETURN", value: { local: ["a"], remote: ["b"] } } },
       { caseId: "STABLE", args: [[{ id: "z", type: "WRITE" }, { id: "y", type: "READ" }, { id: "x", type: "READ" }]], expectation: { kind: "RETURN", value: { local: ["y", "x"], remote: ["z"] } } },
       { caseId: "EMPTY", args: [[]], expectation: { kind: "RETURN", value: { local: [], remote: [] } } },

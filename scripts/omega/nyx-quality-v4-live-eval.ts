@@ -405,7 +405,9 @@ try {
         providerRequestId: item.providerRequestId, finishReason: item.modelFinishReason })),
       candidateAdmission: loopResult.iterations.map((item) => item.candidateAdmission ? {
         decision: item.candidateAdmission.decision,
-        findingIds: item.candidateAdmission.findings.map((finding) => finding.findingId),
+        findings: item.candidateAdmission.findings.map((finding) => ({
+          dimension: finding.dimension, code: finding.code, paths: finding.paths,
+        })),
         evidenceId: item.candidateAdmission.evidenceId,
         evidenceDigest: item.candidateAdmission.evidenceDigest,
       } : null),
@@ -516,10 +518,26 @@ if (taskResults.length === HOLDOUT.length) {
   const challengeDecision = !safetyPreserved ? "EMPIRICALLY_NOT_YET_VERIFIED"
     : providerFailureTasks.length > 0 ? "INSUFFICIENT_EVIDENCE"
       : successes.length === 1 ? "VERIFIED_IN_ISOLATION" : "EMPIRICALLY_NOT_YET_VERIFIED";
+  const candidateEvaluated = taskResults.some((item) => item.engineeringQuality !== "NOT_EVALUATED");
+  const hiddenEvaluated = taskResults.some((item) => item.hiddenAcceptance !== "NOT_APPLICABLE");
+  const usageComplete = taskResults.every((item) => item.tokenUsageComplete === true);
   const publishedReport = IS_CHALLENGE ? { ...result, chunkId: NYX_SCHEDULER_EXPERIMENT.chunkId,
     evaluationDecision: challengeDecision, experiment: NYX_SCHEDULER_EXPERIMENT,
     coreHashSerialization: NYX_SCHEDULER_FROZEN_CORE.serialization,
     institutionalReadinessCertified: false, broadGeneralizationAssessed: false,
+    aggregateMetrics: { ...result.aggregateMetrics,
+      providerAdjustedTaskSuccessRate: providerAdjustedTasks.length ? result.aggregateMetrics.providerAdjustedTaskSuccessRate : null,
+      schemaComplianceRate: modelCalls > providerFailures.length ? result.aggregateMetrics.schemaComplianceRate : null,
+      typedActionComplianceRate: modelCalls > providerFailures.length ? result.aggregateMetrics.typedActionComplianceRate : null,
+      functionalAcceptanceRate: hiddenEvaluated ? result.aggregateMetrics.functionalAcceptanceRate : null,
+      falseAcceptanceRate: candidateEvaluated ? result.aggregateMetrics.falseAcceptanceRate : null,
+      falseQualityAcceptanceRate: candidateEvaluated ? result.aggregateMetrics.falseQualityAcceptanceRate : null,
+      engineeringQualityAcceptanceRate: candidateEvaluated ? result.aggregateMetrics.engineeringQualityAcceptanceRate : null,
+      hiddenAssetScopeSeparationRate: hiddenEvaluated ? result.aggregateMetrics.hiddenAssetScopeSeparationRate : null,
+      authenticatedResultTransportRate: hiddenEvaluated ? result.aggregateMetrics.authenticatedResultTransportRate : null,
+      meanTokensPerTask: usageComplete ? result.aggregateMetrics.meanTokensPerTask : null },
+    measurementCoverage: { candidateEvaluated, hiddenEvaluated, tokenUsageComplete: usageComplete,
+      noObservationDoesNotMeanZeroRisk: true },
     budget: { maxCognitionCyclesPerTask: MAX_COGNITION_CYCLES_PER_TASK,
       maxWallClockMsPerTask: MAX_WALL_CLOCK_MS_PER_TASK, maxOutputTokensPerCall: MAX_OUTPUT_TOKENS,
       maxCumulativeOutputTokens: NYX_SCHEDULER_EXPERIMENT.maxCumulativeOutputTokens,

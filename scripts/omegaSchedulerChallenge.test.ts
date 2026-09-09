@@ -3,7 +3,8 @@ import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { lstat, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { NYX_SCHEDULER_CHALLENGE as task, NYX_SCHEDULER_MUTANTS,
   NYX_SCHEDULER_FROZEN_CORE, NYX_SCHEDULER_EXPERIMENT } from "./omega/nyx-scheduler-challenge";
 import { assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
@@ -112,6 +113,30 @@ try {
     "existing isolated evaluator independently observes all reference return/throw/input-preservation expectations");
   check(execution.evidence.candidateAndEvaluatorScopesDisjoint && !execution.evidence.hiddenAssetsExposedToCandidate,
     "authoritative expected outcomes are outside candidate scope");
+  // Exercise the actual report path without network or inherited credentials.
+  // Provider transport is replaced before the driver loads; this is E3 simulation, not E4.
+  const transportStub = join(parent, "offline-transport.mjs");
+  await writeFile(transportStub, `globalThis.fetch = async () => new Response(
+    JSON.stringify({ error: "synthetic-unavailable" }), { status: 503 });\n`);
+  const offline = spawnSync(process.execPath, ["--experimental-strip-types", "--import", pathToFileURL(transportStub).href,
+    "--import", pathToFileURL(resolve("scripts/w0rs/register-typescript-loader.mjs")).href,
+    resolve("scripts/omega/nyx-quality-v4-live-eval.ts")], {
+    cwd: resolve("."), encoding: "utf8", timeout: 20_000, maxBuffer: 1_000_000,
+    env: { PATH: process.env.PATH, SYSTEMROOT: process.env.SYSTEMROOT, TEMP: process.env.TEMP,
+      TMP: process.env.TMP, TMPDIR: process.env.TMPDIR, RUNNER_TEMP: parent,
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1", NYX_QUALITY_SUITE: "CHALLENGE",
+      NVIDIA_API_KEY: "synthetic-offline-not-a-credential" },
+  });
+  const line = offline.stdout.split(/\r?\n/).find((item) => item.startsWith("NYX_QUALITY_CHALLENGE_HOLDOUT {"));
+  if (!line) console.error(`OFFLINE_DRIVER_FAILURE ${offline.stderr.slice(-1500)}`);
+  const report = line ? JSON.parse(line.slice("NYX_QUALITY_CHALLENGE_HOLDOUT ".length)) : null;
+  check(offline.status === 1 && report?.evaluationDecision === "INSUFFICIENT_EVIDENCE"
+    && report.tasks[0].modelCalls === 1 && report.tasks[0].candidates === 0,
+  "simulated provider failure reaches the shared driver and stops without a fabricated candidate");
+  check(report?.aggregateMetrics.falseAcceptanceRate === null && report?.aggregateMetrics.meanTokensPerTask === null
+    && report?.aggregateMetrics.providerAdjustedTaskSuccessRate === null
+    && report?.measurementCoverage.hiddenEvaluated === false,
+  "unmeasured acceptance and unavailable token usage are null rather than false zero-risk evidence");
 } finally {
   // Only this owned, unchanged temporary directory may be recursively removed.
   assert.equal(await realpath(parent), parentIdentity);
