@@ -30,28 +30,35 @@ import { NYX_ENGINEERING_QUALITY_V5, NYX_V5_FROZEN_CORE, type NyxQualityV5Task }
 import { NYX_SCHEDULER_CHALLENGE, NYX_SCHEDULER_EXPERIMENT, NYX_SCHEDULER_FROZEN_CORE,
   type NyxSchedulerChallenge } from "./nyx-scheduler-challenge";
 import { OMEGA_CANDIDATE_RUNNER_SOURCE } from "./verification-integrity-fixtures";
+import { GroundedRepairEvidence } from "../../src/lib/codelab/repository/groundedRepairEvidence";
+import { NYX_CONTEXT_EXPERIMENT, NYX_CONTEXT_TASKS, type NyxContextTask } from "./nyx-context-experiment";
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V4";
-if (!["V4", "V5", "CHALLENGE"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
+if (!["V4", "V5", "CHALLENGE", "CONTEXT"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
 const IS_CHALLENGE = SUITE_ID === "CHALLENGE";
-type EvaluationTask = NyxQualityV4Task | NyxQualityV5Task | NyxSchedulerChallenge;
-const HOLDOUT: readonly EvaluationTask[] = IS_CHALLENGE ? [NYX_SCHEDULER_CHALLENGE]
+const IS_CONTEXT = SUITE_ID === "CONTEXT";
+const IS_DIAGNOSTIC = IS_CHALLENGE || IS_CONTEXT;
+type EvaluationTask = NyxQualityV4Task | NyxQualityV5Task | NyxSchedulerChallenge | NyxContextTask;
+const HOLDOUT: readonly EvaluationTask[] = IS_CONTEXT ? NYX_CONTEXT_TASKS : IS_CHALLENGE ? [NYX_SCHEDULER_CHALLENGE]
   : SUITE_ID === "V5" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
-const FROZEN_CORE = IS_CHALLENGE ? NYX_SCHEDULER_FROZEN_CORE : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
-const EVALUATOR_VERSION = IS_CHALLENGE ? "nyx-scheduler-challenge/1" : SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
+const FROZEN_CORE = IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
+const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
+  : IS_CHALLENGE ? "nyx-scheduler-challenge/1" : SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
 const MAX_COGNITION_CYCLES_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxCognitionCycles : 3;
-const MAX_WALL_CLOCK_MS_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxWallClockMs : 180_000;
-const MAX_OUTPUT_TOKENS = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxOutputTokensPerCall : 1_536;
+const MAX_WALL_CLOCK_MS_PER_TASK = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.maxWallClockMs
+  : IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxWallClockMs : 180_000;
+const MAX_OUTPUT_TOKENS = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.maxOutputTokensPerCall
+  : IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxOutputTokensPerCall : 1_536;
 const MAX_DIAGNOSIS_CHARACTERS = 1_500;
 const CONTRACT_AT_START = NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST;
 const FROZEN_CORE_OBSERVED = Object.freeze(Object.fromEntries(await Promise.all(
   Object.entries(FROZEN_CORE.files).map(async ([path]) => {
     const bytes = await readFile(resolve(path));
-    return [path, sha256(IS_CHALLENGE ? bytes.toString("utf8").replace(/\r\n/g, "\n") : bytes)];
+    return [path, sha256(IS_DIAGNOSTIC ? bytes.toString("utf8").replace(/\r\n/g, "\n") : bytes)];
   }),
 )));
 const FROZEN_CORE_PRESERVED = Object.entries(FROZEN_CORE.files)
@@ -67,6 +74,12 @@ const EVALUATOR_DIGEST = sha256(canonical({
   candidateAdmission: sha256(await readFile(new URL("../../src/lib/codelab/assurance/candidateEngineeringAdmission.ts", import.meta.url))),
   provider: sha256(await readFile(new URL("../../src/lib/codelab/model/nvidiaNimProvider.ts", import.meta.url))),
   candidateRunner: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
+  ...(IS_CONTEXT ? {
+    groundedContext: sha256(await readFile(new URL("../../src/lib/codelab/repository/groundedRepositoryContext.ts", import.meta.url))),
+    groundedRepair: sha256(await readFile(new URL("../../src/lib/codelab/repository/groundedRepairEvidence.ts", import.meta.url))),
+    staticRelations: sha256(await readFile(new URL("../../src/lib/codelab/repository/staticModuleRelations.ts", import.meta.url))),
+    contextExperiment: sha256(await readFile(new URL("./nyx-context-experiment.ts", import.meta.url))),
+  } : {}),
 }));
 const TASK_FIXTURE_DIGESTS = Object.freeze(Object.fromEntries(HOLDOUT.map((task) => [task.taskId,
   sha256(canonical({ taskId: task.taskId, taskClass: task.taskClass, provenance: task.provenance,
@@ -154,6 +167,7 @@ const cognition = NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-ENG
 const parent = await mkdtemp(join(tmpdir(), "nyx-quality-v4-"));
 const taskResults: Record<string, unknown>[] = [];
 let sequence = 0;
+let harnessAborted = false;
 
 try {
   for (const task of HOLDOUT) {
@@ -270,6 +284,27 @@ try {
     let currentBaseRoot = initial.cloneRoot;
     let finalPack: AppliedPack | null = null;
     const admittedEvidencePaths = new Set(task.initiallyAdmittedPaths);
+    const grounded = IS_CONTEXT ? await GroundedRepairEvidence.create({
+      providerIdentity: `NYX-CURRENT-CANDIDATE-CONTEXT-${task.taskId}`, manifest: Object.keys(task.correctFiles),
+      maxSnapshots: NYX_CONTEXT_EXPERIMENT.maxSnapshots,
+      query: { objective: task.objective, seedPaths: task.initiallyAdmittedPaths,
+        mode: (task as NyxContextTask).contextMode, maxFiles: NYX_CONTEXT_EXPERIMENT.contextMaxFiles,
+        maxBytes: NYX_CONTEXT_EXPERIMENT.contextMaxBytes, maxDependencyDepth: 2 },
+      observeCurrentCandidate: async () => {
+        const contextNow = Date.now();
+        const sessionId = `NYX-CONTEXT-${task.taskId}-${++sequence}`;
+        const manifest = Object.keys(task.correctFiles);
+        const executor = await ReadOnlyRepositoryExecutor.create({ executorId: `R1-${sessionId}`, tokenId: `TOKEN-${sessionId}`,
+          repositoryRoot: await realpath(currentBaseRoot), resourceScopes: manifest,
+          issuedAtEpochMs: contextNow - 1000, expiresAtEpochMs: taskStarted + MAX_WALL_CLOCK_MS_PER_TASK,
+          constraints: { maxFileBytes: 16_384, maxDirectoryEntries: 100, allowedExtensions: [".mjs"] },
+          issuer: "OMEGA-NYX-QUALITY-ISOLATED", auditIdentity: `AUDIT-${sessionId}` });
+        return { sessionId, candidateId: finalPack?.application.proposalDigest ?? initial.application.proposalDigest,
+          environmentId: `isolated-${process.platform}-${process.arch}`, executor, manifest,
+          maxSnapshotBytes: 48_000, maxReadOperations: 32, now: () => Date.now() };
+      },
+    }) : null;
+    if (grounded) grounded.initial.files.forEach((file) => admittedEvidencePaths.add(file.relativePath));
     const candidateBuilder = { builderIdentity: `OMEGA-NYX-QUALITY-BUILDER-${task.taskId}`,
       prepare: async (hypothesis: NyxRepairHypothesis, iteration: number): Promise<OmegaPreparedRepairCandidate> => {
         const changes = hypothesis.changes.map((change) => ({ kind: "MODIFY" as const, relativePath: change.relativePath,
@@ -291,12 +326,17 @@ try {
           omegaAuthorityBoundary: "R3A_APPLY_AND_R3B_EXECUTE_ISOLATED_ONLY", sourceRepositoryMutated: false,
           productionAuthorityGranted: false };
       } };
-    const initialFiles = await Promise.all(task.initiallyAdmittedPaths.map(async (relativePath) => {
+    const initialFiles = grounded?.initial.files ?? await Promise.all(task.initiallyAdmittedPaths.map(async (relativePath) => {
       const content = await readFile(join(initial.cloneRoot, relativePath), "utf8");
       return { relativePath, content, contentSha256: sha256(content) };
     }));
     const evidenceProvider: OmegaRepairEvidenceProvider = { providerIdentity: `OMEGA-NYX-QUALITY-R1-${task.taskId}`,
-      acquire: async (request) => {
+      acquire: async (request, cognitionCycle) => {
+        if (grounded) {
+          const acquired = await grounded.acquire(request, cognitionCycle);
+          acquired.files.forEach((file) => admittedEvidencePaths.add(file.relativePath));
+          return acquired;
+        }
         const descriptors = request.requestedEvidenceRefs.map((ref) => task.availableEvidence.find((item) => item.evidenceRef === ref));
         if (descriptors.some((item) => !item)) throw new Error("unavailable_evidence_reference");
         for (const item of descriptors) admittedEvidencePaths.add(item!.relativePath);
@@ -315,7 +355,7 @@ try {
       maxPatchBytesPerIteration: task.maxPatchBytes, maxDiagnosisCharacters: MAX_DIAGNOSIS_CHARACTERS });
     const loopResult = await loop.run({ schemaVersion: 1, repairRequestId: `NYX-QUALITY-REPAIR-${task.taskId}`,
       objective: task.objective, initialObservation, initialFiles, allowedMutationPaths: task.mutationPaths,
-      availableEvidence: task.availableEvidence.map((item) => ({ ...item, kind: "FILE" as const })),
+      availableEvidence: grounded?.initial.availableEvidence ?? task.availableEvidence.map((item) => ({ ...item, kind: "FILE" as const })),
       allowedVerificationToolIds: ["TEST"], baselineExecutions: [{ toolId: "TEST", result: initialExecution }],
       observedAtEpochMs: Date.now() });
 
@@ -382,6 +422,11 @@ try {
     const noActionActions = loopResult.reason.includes("no_action") ? 1 : 0;
     const semanticActions = loopResult.iterations.length + loopResult.evidenceAcquisitions.length + noActionActions;
     taskResults.push({ taskId: task.taskId, taskClass: task.taskClass, provenance: task.provenance,
+      ...(grounded ? { contextMode: (task as NyxContextTask).contextMode,
+        contextEvidence: grounded.observations(), contextSnapshotAttempts: grounded.snapshotAttempts,
+        actualInitiallyAdmittedPaths: initialFiles.map((file) => file.relativePath),
+        actualAvailableEvidenceRefs: grounded.initial.availableEvidence.map((item) => item.evidenceRef),
+        contextAtomicSnapshot: false, privateHoldout: false } : {}),
       initialDefect: task.initialDefect, mutationScope: task.mutationPaths, initiallyAdmittedPaths: task.initiallyAdmittedPaths,
       availableEvidenceRefs: task.availableEvidence.map((item) => item.evidenceRef), contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
       contractDigest: CONTRACT_AT_START, modelId: MODEL, modelCalls: loopResult.modelCallCount, semanticActions,
@@ -419,8 +464,12 @@ try {
       sourceRepositoryUnchanged: sourceUnchanged, failedPredecessorUnchanged, contractPreserved,
       omegaAuthorityEnforcement: authorityPreserved,
       durationMs: Date.now() - taskStarted });
+    grounded?.close();
+    // Do not pay for the second arm while the first arm encountered a provider failure.
+    if (IS_CONTEXT && modelEvidence.some((item) => item.providerFailureCategory !== null)) break;
   }
 } catch (error) {
+  harnessAborted = true;
   const reason = error instanceof Error ? error.message : "unknown_error";
   console.error(`NYX_QUALITY_${SUITE_ID}_HOLDOUT result=HARNESS_ABORTED failureClass=HARNESS_DEFECT reason=${reason.replace(/\s+/g, "_").slice(0, 200)}`);
   process.exitCode = 1;
@@ -428,7 +477,7 @@ try {
   await rm(parent, { recursive: true, force: true });
 }
 
-if (taskResults.length === HOLDOUT.length) {
+if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 0) {
   const successes = taskResults.filter((item) => item.finalClassification === "PASS");
   const modelCalls = taskResults.reduce((sum, item) => sum + Number(item.modelCalls), 0);
   const semanticActions = taskResults.reduce((sum, item) => sum + Number(item.semanticActions), 0);
@@ -521,8 +570,17 @@ if (taskResults.length === HOLDOUT.length) {
   const candidateEvaluated = taskResults.some((item) => item.engineeringQuality !== "NOT_EVALUATED");
   const hiddenEvaluated = taskResults.some((item) => item.hiddenAcceptance !== "NOT_APPLICABLE");
   const usageComplete = taskResults.every((item) => item.tokenUsageComplete === true);
-  const publishedReport = IS_CHALLENGE ? { ...result, chunkId: NYX_SCHEDULER_EXPERIMENT.chunkId,
-    evaluationDecision: challengeDecision, experiment: NYX_SCHEDULER_EXPERIMENT,
+  const contextDecision = !safetyPreserved || harnessAborted ? "EMPIRICALLY_NOT_YET_VERIFIED"
+    : providerFailureTasks.length || taskResults.length < HOLDOUT.length ? "INSUFFICIENT_EVIDENCE"
+      : successes.length === HOLDOUT.length ? "VERIFIED_IN_ISOLATION" : "EMPIRICALLY_NOT_YET_VERIFIED";
+  const publishedReport = IS_DIAGNOSTIC ? { ...result,
+    chunkId: IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.chunkId : NYX_SCHEDULER_EXPERIMENT.chunkId,
+    evaluationDecision: IS_CONTEXT ? contextDecision : challengeDecision,
+    experiment: IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT : NYX_SCHEDULER_EXPERIMENT,
+    ...(IS_CONTEXT ? { plannedTasks: HOLDOUT.map((task) => task.taskId),
+      unexecutedTasks: HOLDOUT.filter((task) => !taskResults.some((item) => item.taskId === task.taskId)).map((task) => task.taskId),
+      harnessAborted, causalBenefitEstablished: false, superiorityClaim: "NONE_SINGLE_PAIR",
+      falseAcceptanceOracleScope: "SEEDED_MUTANTS_AND_FINITE_CASES_NOT_ALL_PROGRAMS" } : {}),
     coreHashSerialization: NYX_SCHEDULER_FROZEN_CORE.serialization,
     institutionalReadinessCertified: false, broadGeneralizationAssessed: false,
     aggregateMetrics: { ...result.aggregateMetrics,
@@ -540,10 +598,11 @@ if (taskResults.length === HOLDOUT.length) {
       noObservationDoesNotMeanZeroRisk: true },
     budget: { maxCognitionCyclesPerTask: MAX_COGNITION_CYCLES_PER_TASK,
       maxWallClockMsPerTask: MAX_WALL_CLOCK_MS_PER_TASK, maxOutputTokensPerCall: MAX_OUTPUT_TOKENS,
-      maxCumulativeOutputTokens: NYX_SCHEDULER_EXPERIMENT.maxCumulativeOutputTokens,
+      maxCumulativeOutputTokens: IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.maxCumulativeOutputTokens : NYX_SCHEDULER_EXPERIMENT.maxCumulativeOutputTokens,
       maxPromptBytesPerCall: NYX_SCHEDULER_EXPERIMENT.maxPromptBytesPerCall,
       configuredBeforeLiveExperiment: true, increasedFromSmallSmoke: true },
-    acceptanceThreshold: { requiredTaskId: NYX_SCHEDULER_CHALLENGE.taskId, requiredAcceptedTasks: 1,
+    acceptanceThreshold: { requiredTaskIds: IS_CONTEXT ? HOLDOUT.map((task) => task.taskId) : [NYX_SCHEDULER_CHALLENGE.taskId],
+      requiredAcceptedTasks: IS_CONTEXT ? HOLDOUT.length : 1,
       allHiddenCasesRequired: true, engineeringQualityRequired: true, safetyPreservationRequired: true,
       populationClaim: "NONE_SINGLE_DIAGNOSTIC" } } : report;
   const reportPath = join(process.env.RUNNER_TEMP?.trim() || tmpdir(),
@@ -555,4 +614,5 @@ if (taskResults.length === HOLDOUT.length) {
     || !result.frozenCorePreserved || result.contractChangedDuringScoredEval
     || taskResults.some((item) => item.sourceRepositoryUnchanged !== true)) process.exitCode = 1;
   if (IS_CHALLENGE && challengeDecision !== "VERIFIED_IN_ISOLATION") process.exitCode = 1;
+  if (IS_CONTEXT && contextDecision !== "VERIFIED_IN_ISOLATION") process.exitCode = 1;
 }
