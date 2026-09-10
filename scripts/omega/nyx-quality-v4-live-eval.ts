@@ -31,18 +31,22 @@ import { NYX_SCHEDULER_CHALLENGE, NYX_SCHEDULER_EXPERIMENT, NYX_SCHEDULER_FROZEN
   type NyxSchedulerChallenge } from "./nyx-scheduler-challenge";
 import { OMEGA_CANDIDATE_RUNNER_SOURCE } from "./verification-integrity-fixtures";
 import { GroundedRepairEvidence } from "../../src/lib/codelab/repository/groundedRepairEvidence";
-import { NYX_CONTEXT_EXPERIMENT, NYX_CONTEXT_TASKS, type NyxContextTask } from "./nyx-context-experiment";
+import { NYX_CONTEXT_EXPERIMENT as CONTEXT_V1, NYX_CONTEXT_REPAIR_EXPERIMENT, NYX_CONTEXT_REPAIR_FROZEN_CORE,
+  NYX_CONTEXT_TASKS, type NyxContextTask } from "./nyx-context-experiment";
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V4";
-if (!["V4", "V5", "CHALLENGE", "CONTEXT"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
+if (!["V4", "V5", "CHALLENGE", "CONTEXT", "CONTEXT_REPAIR"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
 const IS_CHALLENGE = SUITE_ID === "CHALLENGE";
-const IS_CONTEXT = SUITE_ID === "CONTEXT";
+const IS_CONTEXT_REPAIR = SUITE_ID === "CONTEXT_REPAIR";
+const IS_CONTEXT = SUITE_ID === "CONTEXT" || IS_CONTEXT_REPAIR;
+const NYX_CONTEXT_EXPERIMENT = IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_EXPERIMENT : CONTEXT_V1;
 const IS_DIAGNOSTIC = IS_CHALLENGE || IS_CONTEXT;
 type EvaluationTask = NyxQualityV4Task | NyxQualityV5Task | NyxSchedulerChallenge | NyxContextTask;
 const HOLDOUT: readonly EvaluationTask[] = IS_CONTEXT ? NYX_CONTEXT_TASKS : IS_CHALLENGE ? [NYX_SCHEDULER_CHALLENGE]
   : SUITE_ID === "V5" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
-const FROZEN_CORE = IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
+const FROZEN_CORE = IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_FROZEN_CORE
+  : IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
 const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
   : IS_CHALLENGE ? "nyx-scheduler-challenge/1" : SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
@@ -434,7 +438,8 @@ try {
       hypotheses: loopResult.iterations.length, hypothesisDispositions: loopResult.iterations.map((item) => item.hypothesisDisposition),
       cognitionFailures: loopResult.cognitionFailures.map((item) => ({ cycle: item.cognitionCycle, reason: item.reason,
         diagnostics: item.diagnostics.map((diagnostic) => ({ category: diagnostic.category, path: diagnostic.path,
-          expected: diagnostic.expected, observed: diagnostic.observed })) })),
+          expected: diagnostic.expected, observed: diagnostic.observed,
+          ...(diagnostic.sourceMeasurement ? { sourceMeasurement: diagnostic.sourceMeasurement } : {}) })) })),
       candidates: loopResult.iterations.length, repairIterations: Math.max(0, loopResult.iterations.length - 1),
       verificationCount: 1 + loopResult.iterations.reduce((sum, item) => sum + item.verifications.length, 0)
         + (hiddenResult === "NOT_APPLICABLE" ? 0 : 1), deterministicVerification: loopResult.outcome,

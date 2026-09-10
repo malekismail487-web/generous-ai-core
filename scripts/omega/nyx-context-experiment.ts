@@ -1,6 +1,7 @@
 import type { HiddenEvaluationCase } from "../../src/lib/codelab/assurance/r3EvaluatorIsolation";
 import type { RepositoryContextQuery } from "../../src/lib/codelab/repository/groundedRepositoryContext";
 import type { NyxQualityV4Task } from "./nyx-quality-v4-fixtures";
+import { NYX_SCHEDULER_FROZEN_CORE } from "./nyx-scheduler-challenge";
 
 export const NYX_CONTEXT_EXPERIMENT = Object.freeze({
   chunkId: "NYX-GROUNDED-ENGINEERING-001", version: "nyx-context-ablation/1",
@@ -17,6 +18,29 @@ export const NYX_CONTEXT_EXPERIMENT = Object.freeze({
     deferred: ["PHYSICAL_INSTRUMENTS", "OPEN_ENDED_DISCOVERY", "LEARNED_RETRIEVAL", "WEIGHT_UPDATES"],
     conflicts: [], superseded: [], status: "PARTIAL_JUST_IN_TIME" },
 } as const);
+
+// New cognition epoch. Original fixtures, scores and v1 core pins remain untouched.
+export const NYX_CONTEXT_REPAIR_EXPERIMENT = Object.freeze({
+  ...NYX_CONTEXT_EXPERIMENT, chunkId: "NYX-MEASURED-REJECTION-REPAIR-001", version: "nyx-context-repair/2",
+  hypothesis: "Precise bounded rejection measurements improve source-quality correction under unchanged acceptance and budgets.",
+  falsification: "Repeated source-quality rejection, no reproducible correction benefit, or any acceptance/authority regression.",
+  comparisonBaselineCommit: "f31d149d5c2e00a844aae178419ff614842783e2",
+  comparisonBaselineRun: "34481454745", historicalScoresUnchanged: true,
+  isolatedVariable: "COGNITION_REJECTION_MEASUREMENTS_AND_PROTOCOL_VERSION",
+  studyCoverage: { direct: ["STUDY-1:199,227-230", "STUDY-3:7-10,124-125", "STUDY-5:11,183-196"],
+    supporting: ["STUDY-3:47,56,156", "STUDY-5:201-213,625-650"],
+    deferred: ["REJECTED_SOURCE_CONTEXT_RETENTION", "WEIGHTS", "PHYSICAL_INSTRUMENTS", "BROAD_GENERALIZATION"],
+    conflicts: ["PRECISE_MEASUREMENTS_DO_NOT_PROVE_MODEL_REPAIR_SUCCESS"],
+    superseded: ["LOCATION_FREE_LINE_LENGTH_FEEDBACK"], status: "PARTIAL_JUST_IN_TIME" },
+} as const);
+
+export const NYX_CONTEXT_REPAIR_FROZEN_CORE = Object.freeze({
+  // The runtime report records the actual commit; this precommitted manifest pins content, not an invented commit.
+  commit: null, serialization: NYX_SCHEDULER_FROZEN_CORE.serialization,
+  files: Object.freeze({ ...NYX_SCHEDULER_FROZEN_CORE.files,
+    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "4e0d147a7042698db5562aae64db362c4dcba3cda56adbfcb4f7bb91be3dd607",
+  }),
+});
 
 export interface NyxContextTask extends Omit<NyxQualityV4Task, "provenance"> {
   readonly provenance: "AUTHOR_CONSTRUCTED_CONTEXT_DIAGNOSTIC_NOT_PRIVATE_HOLDOUT";

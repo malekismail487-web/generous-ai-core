@@ -76,6 +76,59 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
 }
 
 {
+  const rejectedSource = repaired + "//" + "x".repeat(120) + "\r\n" + "//" + "🙂".repeat(65);
+  const rejected = await evaluate(intent({ changes: [{ target: "src/math.ts", replacement: rejectedSource }] }));
+  const finding = rejected.schemaDiagnostics.find((item) => item.observed === "excessive_line_length");
+  const measured = finding?.sourceMeasurement;
+  check(rejected.decision === "COGNITION_ERROR" && rejected.hypothesis === null,
+    "overlong source remains rejected without a mutation hypothesis");
+  check(measured?.replacementSha256 === hash(rejectedSource) && measured?.lineLengthUnit === "UTF16_CODE_UNITS"
+    && measured?.totalViolations === 2 && measured?.maximumObservedLength === 132
+    && measured?.maxLineLength === 120 && measured?.omittedViolations === 0
+    && JSON.stringify(measured?.lines) === JSON.stringify([{ line: 2, length: 122 }, { line: 3, length: 132 }]),
+  "rejection measures exact prior-source identity, CRLF locations and unchanged UTF16 line lengths");
+  check(!JSON.stringify(rejected).includes(rejectedSource) && !JSON.stringify(rejected).includes("🙂")
+    && !JSON.stringify(rejected).includes("x".repeat(120)), "measurement feedback never echoes source fragments");
+  const manyLines = await evaluate(intent({ changes: [{ target: "src/math.ts",
+    replacement: repaired + Array.from({ length: 12 }, (_, index) => "//" + "x".repeat(121 + index)).join("\n") }] }));
+  const sample = manyLines.schemaDiagnostics.find((item) => item.sourceMeasurement)?.sourceMeasurement;
+  check(sample?.lines.length === 8 && sample?.totalViolations === 12 && sample?.omittedViolations === 4
+    && sample?.maximumObservedLength === 134, "feedback samples bounded locations without hiding total defect count");
+  const boundary = await evaluate(intent({ changes: [{ target: "src/math.ts", replacement: repaired + "//" + "x".repeat(118) }] }));
+  check(boundary.decision === "PROPOSED", "unchanged 120-character boundary remains inclusive");
+  let retryPrompt: Record<string, unknown> = {};
+  let retryCalls = 0;
+  const retry = cognition(async (input, init) => {
+    retryCalls += 1;
+    retryPrompt = JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
+    return transportFor(intent())(input, init);
+  });
+  const history = { failureId: rejected.evidence.evidenceId, cognitionRequestId: "PRIOR-REJECTED",
+    reason: "SCHEMA_INVALID" as const, modelResponseDigest: rejected.evidence.modelResponseDigest,
+    diagnostics: rejected.schemaDiagnostics };
+  const corrected = await retry.proposeRepair(request({ priorCognitionFailures: [history] }));
+  check(corrected.decision === "PROPOSED" && retryCalls === 1 && measured !== undefined
+    && JSON.stringify(retryPrompt.requiredCorrections).includes(hash(rejectedSource)),
+  "exact bounded measurement survives existing failure-history to correction-prompt round trip");
+  if (measured && finding) {
+    for (const corrupt of [
+      { ...measured, replacementSha256: "not-a-hash" },
+      { ...measured, lines: [{ line: 0, length: 122 }] },
+      { ...measured, omittedViolations: 10 },
+      { ...measured, lines: [{ line: 2, length: 119 }] },
+      { ...measured, lines: [{ line: 2, length: 122, source: "DO_NOT_ECHO" }] },
+      { ...measured, source: "DO_NOT_ECHO" },
+    ]) {
+      const before = retryCalls;
+      const result = await retry.proposeRepair(request({ priorCognitionFailures: [{ ...history,
+        diagnostics: [{ ...finding, sourceMeasurement: corrupt }] }] }));
+      check(result.decision === "REJECTED" && retryCalls === before && !JSON.stringify(result).includes("DO_NOT_ECHO"),
+        "malformed or source-bearing measurement fails closed before provider invocation");
+    }
+  }
+}
+
+{
   const full = JSON.parse(intent()) as Record<string, unknown>;
   const contract = buildNyxRepairIntentContract(request());
   const compact = Object.fromEntries(contract.requiredFields.PROPOSE_EDIT.map((field) => [field, full[field]]));

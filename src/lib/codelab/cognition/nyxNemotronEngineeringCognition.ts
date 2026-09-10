@@ -9,7 +9,7 @@ export const NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS = Object.freeze({
   newCapability: "NYX_NEMOTRON_REPAIR_HYPOTHESIS_PROPOSAL",
   cognitionIdentity: "NYX_PRIMARY_COGNITION",
   cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA",
-  semanticContract: "nyx-causal-engineering-intent/5",
+  semanticContract: "nyx-causal-engineering-intent/6",
   causalHypothesisLineage: true,
   boundedCounterexampleReasoning: true,
   qualityRejectionRepairFeedback: true,
@@ -197,7 +197,25 @@ export interface NyxSchemaDiagnostic {
   readonly path: string;
   readonly expected: string;
   readonly observed: string;
+  readonly sourceMeasurement?: NyxSourceQualityMeasurement;
 }
+
+/** Measurements of rejected, unapplied model output, never of the current repository. */
+export interface NyxSourceQualityMeasurement {
+  readonly replacementSha256: string;
+  readonly lineLengthUnit: "UTF16_CODE_UNITS";
+  readonly maxLineLength: number;
+  readonly maximumObservedLength: number;
+  readonly totalViolations: number;
+  readonly omittedViolations: number;
+  readonly lines: readonly { readonly line: number; readonly length: number }[];
+}
+
+export const NYX_SOURCE_MEASUREMENT_POLICY = Object.freeze({
+  version: "nyx-rejected-source-measurement/1", maxLocations: 8,
+  lineLengthUnit: "UTF16_CODE_UNITS", sourceContentIncluded: false,
+  refersTo: "REJECTED_UNAPPLIED_REPLACEMENT_NOT_CURRENT_REPOSITORY",
+} as const);
 
 export interface NyxPriorCognitionFailure {
   readonly failureId: string;
@@ -280,7 +298,7 @@ export const NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA = providerCompatibleSchema(
   NYX_REPAIR_INTENT_JSON_SCHEMA,
 ) as Readonly<Record<string, unknown>>;
 
-export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/5" as const;
+export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/6" as const;
 export const NYX_SEMANTIC_ACTIONS = Object.freeze(["PROPOSE_EDIT", "REQUEST_EVIDENCE", "NO_ACTION"] as const);
 
 /** A request-bound description, never an authorization token. */
@@ -338,6 +356,7 @@ export const NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST = sha256(canonical({
   stringItemLimit: INTENT_STRING_ITEM_LIMIT,
   systemInstruction: NYX_REPAIR_SYSTEM_INSTRUCTION,
   forbiddenReplacementPatterns: NYX_FORBIDDEN_SEMANTIC_REPLACEMENT_PATTERNS,
+  sourceMeasurementPolicy: NYX_SOURCE_MEASUREMENT_POLICY,
   authorityBoundary: "Omega derives trusted execution metadata and independently authorizes every action.",
 }));
 
@@ -385,6 +404,44 @@ function uniqueDiagnostics(items: readonly NyxSchemaDiagnostic[]): NyxSchemaDiag
     seen.add(key);
     return true;
   });
+}
+
+function measureOverlongSource(source: string, limit: number): NyxSourceQualityMeasurement | undefined {
+  const lines: { readonly line: number; readonly length: number }[] = [];
+  let totalViolations = 0;
+  let maximumObservedLength = 0;
+  for (const [index, line] of source.split(/\r?\n/).entries()) {
+    maximumObservedLength = Math.max(maximumObservedLength, line.length);
+    if (line.length <= limit) continue;
+    totalViolations += 1;
+    if (lines.length < NYX_SOURCE_MEASUREMENT_POLICY.maxLocations) {
+      lines.push(Object.freeze({ line: index + 1, length: line.length }));
+    }
+  }
+  return totalViolations === 0 ? undefined : Object.freeze({ replacementSha256: sha256(source),
+    lineLengthUnit: "UTF16_CODE_UNITS", maxLineLength: limit, maximumObservedLength, totalViolations,
+    omittedViolations: totalViolations - lines.length, lines: Object.freeze(lines) });
+}
+
+function validSourceMeasurement(value: unknown): value is NyxSourceQualityMeasurement {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const item = value as NyxSourceQualityMeasurement;
+  const keys = ["replacementSha256", "lineLengthUnit", "maxLineLength", "maximumObservedLength",
+    "totalViolations", "omittedViolations", "lines"];
+  if (Object.keys(item).length !== keys.length || Object.keys(item).some((key) => !keys.includes(key))
+    || typeof item.replacementSha256 !== "string" || !/^[a-f0-9]{64}$/.test(item.replacementSha256)
+    || item.lineLengthUnit !== "UTF16_CODE_UNITS"
+    || ![item.maxLineLength, item.maximumObservedLength, item.totalViolations].every((n) => Number.isSafeInteger(n) && n > 0)
+    || !Number.isSafeInteger(item.omittedViolations) || item.omittedViolations < 0
+    || !Array.isArray(item.lines) || item.lines.length < 1
+    || item.lines.length !== Math.min(item.totalViolations, NYX_SOURCE_MEASUREMENT_POLICY.maxLocations)
+    || item.totalViolations !== item.lines.length + item.omittedViolations
+    || item.maximumObservedLength <= item.maxLineLength) return false;
+  return item.lines.every((location, index) => location && typeof location === "object" && !Array.isArray(location)
+    && Object.keys(location).length === 2 && Object.keys(location).every((key) => ["line", "length"].includes(key))
+    && Number.isSafeInteger(location.line) && location.line > (item.lines[index - 1]?.line ?? 0)
+    && Number.isSafeInteger(location.length) && location.length > item.maxLineLength
+    && location.length <= item.maximumObservedLength);
 }
 
 export class NyxNemotronEngineeringCognition {
@@ -445,6 +502,7 @@ export class NyxNemotronEngineeringCognition {
       hypothesisHistory: request.priorHypotheses,
       cognitionFailureHistory: request.priorCognitionFailures,
       requiredCorrections: request.priorCognitionFailures.at(-1)?.diagnostics ?? [],
+      correctionMeasurementPolicy: NYX_SOURCE_MEASUREMENT_POLICY,
       minimalExample: { decision: "PROPOSE_EDIT", diagnosis: "bounded symptom and cause distinction",
         causalHypothesis: "specific mechanism explaining the observation", evidenceRefs: ["OBJECTIVE", `FILE:${request.allowedMutationPaths[0]}`],
         invariant: "behavior that must hold beyond the visible example",
@@ -594,7 +652,9 @@ export class NyxNemotronEngineeringCognition {
         || (item.modelResponseDigest !== null && !/^[a-f0-9]{64}$/.test(item.modelResponseDigest))
         || !Array.isArray(item.diagnostics) || item.diagnostics.length < 1 || item.diagnostics.length > 50
         || item.diagnostics.some((entry) => !entry || !entry.category || typeof entry.path !== "string"
-          || typeof entry.expected !== "string" || typeof entry.observed !== "string")) {
+          || typeof entry.expected !== "string" || typeof entry.observed !== "string"
+          || (entry.sourceMeasurement !== undefined && (entry.category !== "SOURCE_QUALITY_INVALID"
+            || entry.observed !== "excessive_line_length" || !validSourceMeasurement(entry.sourceMeasurement))))) {
         issues.push("nyx_cognition_failure_history_invalid");
       } else failureIds.add(item.failureId);
     }
@@ -747,9 +807,11 @@ export class NyxNemotronEngineeringCognition {
       if (sha256(change.replacement) === context.contentSha256) {
         diagnostics.push(diagnostic("REPEATED_FALSIFIED_STRATEGY", `${base}.replacement`, "a semantic change from the currently failed candidate", "no_op_repair")); continue;
       }
-      if (change.replacement.split(/\r?\n/).some((line) => line.length > request.sourceQualityConstraints.maxLineLength)) {
-        diagnostics.push(diagnostic("SOURCE_QUALITY_INVALID", `${base}.replacement`,
-          `readable source with every line <= ${request.sourceQualityConstraints.maxLineLength} characters`, "excessive_line_length"));
+      const sourceMeasurement = measureOverlongSource(change.replacement, request.sourceQualityConstraints.maxLineLength);
+      if (sourceMeasurement) {
+        diagnostics.push(Object.freeze({ ...diagnostic("SOURCE_QUALITY_INVALID", `${base}.replacement`,
+          `readable source with every line <= ${request.sourceQualityConstraints.maxLineLength} characters`, "excessive_line_length"),
+        sourceMeasurement }));
       }
       const typeSuppression = /@ts-(?:ignore|nocheck)|\bas\s+(?:any|unknown)\b|:\s*any\b/;
       if (request.sourceQualityConstraints.forbidTypeSafetySuppression && typeSuppression.test(change.replacement)

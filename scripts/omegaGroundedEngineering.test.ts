@@ -10,7 +10,8 @@ import { GroundedRepairEvidence } from "../src/lib/codelab/repository/groundedRe
 import type { NyxEvidenceRequest } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 import { assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
-import { NYX_CONTEXT_TASKS, NYX_CONTEXT_MUTANTS, NYX_CONTEXT_EXPERIMENT } from "./omega/nyx-context-experiment";
+import { NYX_CONTEXT_TASKS, NYX_CONTEXT_MUTANTS, NYX_CONTEXT_EXPERIMENT,
+  NYX_CONTEXT_REPAIR_FROZEN_CORE } from "./omega/nyx-context-experiment";
 
 let passed = 0;
 let failed = 0;
@@ -23,6 +24,15 @@ async function rejects(operation: () => Promise<unknown>, pattern: RegExp, label
 }
 const task = NYX_CONTEXT_TASKS[0];
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
+for (const [path, digest] of Object.entries(NYX_CONTEXT_REPAIR_FROZEN_CORE.files)) {
+  check(hash((await readFile(path, "utf8")).replace(/\r\n/g, "\n")) === digest,
+    `new diagnostic pins exact current core ${path}`);
+  if (!path.endsWith("nyxNemotronEngineeringCognition.ts")) {
+    const original = spawnSync("git", ["show", `f31d149d5c2e00a844aae178419ff614842783e2:${path}`], { encoding: "utf8" });
+    check(original.status === 0 && hash(original.stdout.replace(/\r\n/g, "\n")) === digest,
+      `feedback experiment preserves baseline provider, execution and independent acceptance ${path}`);
+  }
+}
 const parent = await mkdtemp(join(tmpdir(), "nyx-grounded-engineering-"));
 const parentIdentity = await realpath(parent);
 const manifest = Object.keys(task.correctFiles);
@@ -176,6 +186,12 @@ globalThis.fetch = async (url, init) => {
   calls++;
   if (calls > 6) throw new Error("test_call_budget");
   const prompt = JSON.parse(JSON.parse(init.body).messages[1].content);
+  if (prompt.requiredCorrections.length) {
+    const measurement = prompt.requiredCorrections.find((item) => item.sourceMeasurement)?.sourceMeasurement;
+    if (!measurement || measurement.totalViolations !== 1 || measurement.lines.length !== 1
+      || measurement.lines[0].length !== 132 || measurement.maxLineLength !== 120
+      || measurement.replacementSha256.length !== 64) throw new Error("precise_measurement_missing_from_real_loop");
+  }
   const missing = prompt.availableEvidence.find((item) => item.relativePath === "src/opaque.mjs");
   let intent;
   if (missing) intent = {decision: "REQUEST_EVIDENCE", diagnosis: "Need immutable measurement semantics",
@@ -196,19 +212,25 @@ globalThis.fetch = async (url, init) => {
     "--import", pathToFileURL(preloadPath).href, "scripts/omega/nyx-quality-v4-live-eval.ts"], {
     cwd: resolve("."), encoding: "utf8", timeout: 90_000, maxBuffer: 5_000_000,
     env: { ...process.env, OMEGA_ALLOW_NVIDIA_NETWORK: "1", NVIDIA_API_KEY: "synthetic-offline-key-not-a-credential",
-      NYX_QUALITY_SUITE: "CONTEXT", RUNNER_TEMP: parent },
+      NYX_QUALITY_SUITE: "CONTEXT_REPAIR", RUNNER_TEMP: parent },
   });
   if (run.status !== 0) console.error(run.stdout.slice(-15_000), run.stderr.slice(-2000));
   check(run.status === 0, "existing live driver closes both arms through R1/R2/R3 with synthetic transport");
-  const reportName = (await readdir(parent)).find((name) => /^nyx-quality-context-.*\.json$/.test(name));
+  const reportName = (await readdir(parent)).find((name) => /^nyx-quality-context_repair-.*\.json$/.test(name));
   assert.ok(reportName, "integration control must emit a sanitized report");
   const report = JSON.parse(await readFile(join(parent, reportName), "utf8"));
+  check(report.experiment.version === "nyx-context-repair/2" && report.cognitionContractVersion === "nyx-causal-engineering-intent/6"
+    && report.experiment.comparisonBaselineRun === "34481454745" && report.frozenCorePreserved,
+  "new experiment declares lineage without rescoring the historical failed run");
   check(report.tasks.length === 2 && report.tasks.every((item: { hiddenAcceptance: string }) => item.hiddenAcceptance === "PASS"),
     "candidate-blind deterministic acceptance succeeds in both synthetic control arms");
   check(report.tasks[0].modelCalls === 3 && report.tasks[1].modelCalls === 2,
     "synthetic control exercises evidence seeking then formatting rejection/repair within the fixed budget");
   check(report.tasks.every((item: { candidates: number; cognitionFailures: unknown[] }) => item.candidates === 1 && item.cognitionFailures.length === 1),
     "unreadable responses cannot execute; only corrected candidates reach mutation");
+  check(report.tasks.every((item: { cognitionFailures: { diagnostics: { sourceMeasurement?: { totalViolations: number } }[] }[] }) =>
+    item.cognitionFailures[0].diagnostics.some((diagnostic) => diagnostic.sourceMeasurement?.totalViolations === 1)),
+  "sanitized report preserves measured rejection evidence rather than dropping new feedback fields");
   check(report.tasks.every((item: { sourceRepositoryUnchanged: boolean; omegaAuthorityEnforcement: boolean }) =>
     item.sourceRepositoryUnchanged && item.omegaAuthorityEnforcement), "source immutability and Omega authority survive integration");
   check(report.causalBenefitEstablished === false && report.broadGeneralizationAssessed === false,

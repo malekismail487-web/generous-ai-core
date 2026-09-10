@@ -78,9 +78,11 @@ try {
   check(task.initiallyAdmittedPaths.every((path) => path.startsWith("src/"))
     && task.mutationPaths.every((path) => !path.startsWith("tools/")), "cognition cannot observe or edit expected answers");
   check(new Set(task.hiddenCases.map((test) => test.caseId)).size === 29, "case identities are unique and capped");
-  const coreMatches = await Promise.all(Object.entries(NYX_SCHEDULER_FROZEN_CORE.files).map(async ([path, digest]) =>
-    hash((await readFile(path, "utf8")).replace(/\r\n/g, "\n")) === digest));
-  check(coreMatches.every(Boolean), "new diagnostic uses the exact reviewed core with explicit newline normalization");
+  const coreMatches = Object.entries(NYX_SCHEDULER_FROZEN_CORE.files).map(([path, digest]) => {
+    const original = spawnSync("git", ["show", `${NYX_SCHEDULER_FROZEN_CORE.commit}:${path}`], { encoding: "utf8" });
+    return original.status === 0 && hash(original.stdout.replace(/\r\n/g, "\n")) === digest;
+  });
+  check(coreMatches.every(Boolean), "historical scheduler epoch remains reproducible from its exact frozen baseline");
   check(NYX_SCHEDULER_EXPERIMENT.maxCognitionCycles === 4
     && NYX_SCHEDULER_EXPERIMENT.maxOutputTokensPerCall * 4 === NYX_SCHEDULER_EXPERIMENT.maxCumulativeOutputTokens,
   "paid experiment has a fixed four-call and generated-token envelope");
@@ -118,21 +120,28 @@ try {
   const transportStub = join(parent, "offline-transport.mjs");
   await writeFile(transportStub, `globalThis.fetch = async () => new Response(
     JSON.stringify({ error: "synthetic-unavailable" }), { status: 503 });\n`);
-  const offline = spawnSync(process.execPath, ["--experimental-strip-types", "--import", pathToFileURL(transportStub).href,
+  const runOffline = (suite: string) => spawnSync(process.execPath, ["--experimental-strip-types", "--import", pathToFileURL(transportStub).href,
     "--import", pathToFileURL(resolve("scripts/w0rs/register-typescript-loader.mjs")).href,
     resolve("scripts/omega/nyx-quality-v4-live-eval.ts")], {
     cwd: resolve("."), encoding: "utf8", timeout: 20_000, maxBuffer: 1_000_000,
     env: { PATH: process.env.PATH, SYSTEMROOT: process.env.SYSTEMROOT, TEMP: process.env.TEMP,
       TMP: process.env.TMP, TMPDIR: process.env.TMPDIR, RUNNER_TEMP: parent,
-      OMEGA_ALLOW_NVIDIA_NETWORK: "1", NYX_QUALITY_SUITE: "CHALLENGE",
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1", NYX_QUALITY_SUITE: suite,
       NVIDIA_API_KEY: "synthetic-offline-not-a-credential" },
   });
-  const line = offline.stdout.split(/\r?\n/).find((item) => item.startsWith("NYX_QUALITY_CHALLENGE_HOLDOUT {"));
+  const historical = runOffline("CHALLENGE");
+  check(historical.status === 1 && historical.stderr.includes("challenge_frozen_core_digest_mismatch")
+    && !historical.stdout.includes("NYX_QUALITY_CHALLENGE_HOLDOUT"),
+  "new cognition cannot silently rescore the old frozen scheduler epoch");
+  const offline = runOffline("CONTEXT_REPAIR");
+  const line = offline.stdout.split(/\r?\n/).find((item) => item.startsWith("NYX_QUALITY_CONTEXT_REPAIR_HOLDOUT {"));
   if (!line) console.error(`OFFLINE_DRIVER_FAILURE ${offline.stderr.slice(-1500)}`);
-  const report = line ? JSON.parse(line.slice("NYX_QUALITY_CHALLENGE_HOLDOUT ".length)) : null;
+  const report = line ? JSON.parse(line.slice("NYX_QUALITY_CONTEXT_REPAIR_HOLDOUT ".length)) : null;
   check(offline.status === 1 && report?.evaluationDecision === "INSUFFICIENT_EVIDENCE"
     && report.tasks[0].modelCalls === 1 && report.tasks[0].candidates === 0,
   "simulated provider failure reaches the shared driver and stops without a fabricated candidate");
+  check(report?.tasks.length === 1 && report?.unexecutedTasks.length === 1,
+    "provider outage stops the second paid arm rather than spending more calls on an unavailable endpoint");
   check(report?.aggregateMetrics.falseAcceptanceRate === null && report?.aggregateMetrics.meanTokensPerTask === null
     && report?.aggregateMetrics.providerAdjustedTaskSuccessRate === null
     && report?.measurementCoverage.hiddenEvaluated === false,
