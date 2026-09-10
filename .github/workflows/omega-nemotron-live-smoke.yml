@@ -33,6 +33,9 @@ jobs:
       NYX_CONTRACT_TRIALS: ${{ inputs.mode == 'contract-only' && '1' || '5' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Preflight compares frozen historical core blobs, not just current files.
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
