@@ -15,6 +15,7 @@ on:
           - challenge-only
           - context-only
           - context-repair-only
+          - context-lines-only
 
 permissions:
   contents: read
@@ -26,7 +27,7 @@ concurrency:
 jobs:
   nemotron-live-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ (inputs.mode == 'context-only' || inputs.mode == 'context-repair-only') && 15 || inputs.mode == 'challenge-only' && 12 || 5 }}
+    timeout-minutes: ${{ startsWith(inputs.mode, 'context-') && 15 || inputs.mode == 'challenge-only' && 12 || 5 }}
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
@@ -89,23 +90,23 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
       - name: Validate context integration and measurement oracles before paid inference
-        if: inputs.mode == 'context-only' || inputs.mode == 'context-repair-only'
+        if: startsWith(inputs.mode, 'context-')
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaGroundedEngineering.test.ts
       - name: Typecheck context evaluator before paid inference
-        if: inputs.mode == 'context-only' || inputs.mode == 'context-repair-only'
+        if: startsWith(inputs.mode, 'context-')
         run: >-
           node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext
           --moduleResolution Bundler --skipLibCheck --allowImportingTsExtensions --types node
           scripts/omega/nyx-context-experiment.ts scripts/omegaGroundedEngineering.test.ts
           scripts/omega/nyx-quality-v4-live-eval.ts
       - name: Run one matched-budget pair with live cognition
-        if: inputs.mode == 'context-only' || inputs.mode == 'context-repair-only'
+        if: startsWith(inputs.mode, 'context-')
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NYX_QUALITY_SUITE: ${{ inputs.mode == 'context-repair-only' && 'CONTEXT_REPAIR' || 'CONTEXT' }}
+          NYX_QUALITY_SUITE: ${{ inputs.mode == 'context-lines-only' && 'CONTEXT_LINES' || inputs.mode == 'context-repair-only' && 'CONTEXT_REPAIR' || 'CONTEXT' }}
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v4-live-eval.ts
       - name: Preserve sanitized context outcome including failures
-        if: always() && (inputs.mode == 'context-only' || inputs.mode == 'context-repair-only')
+        if: always() && startsWith(inputs.mode, 'context-')
         uses: actions/upload-artifact@v4
         with:
           name: nyx-grounded-context-${{ github.sha }}

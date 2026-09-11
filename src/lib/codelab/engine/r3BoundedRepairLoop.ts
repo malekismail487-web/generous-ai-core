@@ -135,7 +135,7 @@ export interface R3CognitionFailureRecord {
 }
 
 export interface R3BoundedRepairResult {
-  readonly outcome: "FUNCTIONALLY_REPAIRED_VERIFIED" | "EXHAUSTED" | "BLOCKED" | "COGNITION_ERROR" | "INFRASTRUCTURE_ERROR";
+  readonly outcome: "FUNCTIONALLY_REPAIRED_VERIFIED" | "EXHAUSTED" | "BLOCKED" | "COGNITION_ERROR" | "INFRASTRUCTURE_ERROR" | "WAITING_FOR_CAPACITY";
   readonly reason: string;
   readonly iterations: readonly R3RepairIteration[];
   readonly evidenceAcquisitions: readonly R3EvidenceAcquisitionRecord[];
@@ -314,9 +314,13 @@ export class R3BoundedRepairLoop {
         allowedVerificationToolIds: request.allowedVerificationToolIds, maxChanges: this.#config.maxChangesPerIteration,
         maxPatchBytes: this.#config.maxPatchBytesPerIteration, maxDiagnosisCharacters: this.#config.maxDiagnosisCharacters,
         maxCounterexamples: 3,
+        deadlineEpochMs: started + this.#config.maxWallClockMs,
         observedAtEpochMs: Math.max(request.observedAtEpochMs, Date.now()) });
       lastCognitionEvidence = cognition.evidence;
-      if (cognition.evidence.modelEvidenceId !== "NOT_INVOKED") modelCallCount += 1;
+      if (cognition.evidence.modelEvidenceId !== "NOT_INVOKED" && cognition.evidence.delivery?.httpAttempts !== 0) modelCallCount += 1;
+      if (cognition.decision === "WAITING_FOR_CAPACITY") {
+        return finish("WAITING_FOR_CAPACITY", "repair_paused_for_capacity_requires_fresh_authority", iterations, currentObservation);
+      }
       if (Date.now() - started >= this.#config.maxWallClockMs) {
         return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
       }

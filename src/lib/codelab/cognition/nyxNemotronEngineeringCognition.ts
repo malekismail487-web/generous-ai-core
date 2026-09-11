@@ -9,7 +9,7 @@ export const NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS = Object.freeze({
   newCapability: "NYX_NEMOTRON_REPAIR_HYPOTHESIS_PROPOSAL",
   cognitionIdentity: "NYX_PRIMARY_COGNITION",
   cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA",
-  semanticContract: "nyx-causal-engineering-intent/6",
+  semanticContract: "nyx-causal-engineering-intent/7",
   causalHypothesisLineage: true,
   boundedCounterexampleReasoning: true,
   qualityRejectionRepairFeedback: true,
@@ -97,6 +97,8 @@ export interface NyxRepairCognitionRequest {
   readonly maxDiagnosisCharacters: number;
   readonly maxCounterexamples: number;
   readonly observedAtEpochMs: number;
+  readonly deadlineEpochMs?: number;
+  readonly signal?: AbortSignal;
 }
 
 export interface NyxRepairChange {
@@ -158,13 +160,15 @@ export interface NyxRepairCognitionEvidence {
   readonly modelFinishReason: NvidiaNimEvidence["finishReason"];
   readonly contractVersion: typeof NYX_SEMANTIC_REPAIR_CONTRACT_VERSION;
   readonly contractDigest: string;
+  readonly sourceRepresentation: NyxSourceRepresentation;
   readonly modelUsage: NvidiaNimEvidence["usage"];
+  readonly delivery?: NvidiaNimEvidence["delivery"];
   readonly proposalDigest: string | null;
   readonly authorityGranted: false;
 }
 
 export interface NyxRepairCognitionResult {
-  readonly decision: "PROPOSED" | "REQUEST_EVIDENCE" | "NO_ACTION" | "REJECTED" | "BLOCKED" | "COGNITION_ERROR";
+  readonly decision: "PROPOSED" | "REQUEST_EVIDENCE" | "NO_ACTION" | "REJECTED" | "BLOCKED" | "COGNITION_ERROR" | "WAITING_FOR_CAPACITY";
   readonly reason: string;
   readonly hypothesis: NyxRepairHypothesis | null;
   readonly evidenceRequest: NyxEvidenceRequest | null;
@@ -277,7 +281,7 @@ export const NYX_REPAIR_INTENT_JSON_SCHEMA = Object.freeze({
 // Retain local checks for keywords deliberately excluded from the hosted subset.
 // A successful portable request does not prove every excluded keyword unsupported.
 const LOCALLY_ENFORCED_SCHEMA_KEYWORDS = new Set([
-  "minimum", "maximum", "minLength", "maxLength", "maxItems", "uniqueItems",
+  "minimum", "maximum", "minLength", "maxLength", "minItems", "maxItems", "uniqueItems",
 ]);
 
 function providerCompatibleSchema(value: unknown): unknown {
@@ -298,11 +302,32 @@ export const NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA = providerCompatibleSchema(
   NYX_REPAIR_INTENT_JSON_SCHEMA,
 ) as Readonly<Record<string, unknown>>;
 
-export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/6" as const;
+export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/7" as const;
 export const NYX_SEMANTIC_ACTIONS = Object.freeze(["PROPOSE_EDIT", "REQUEST_EVIDENCE", "NO_ACTION"] as const);
 
+export type NyxSourceRepresentation = "TEXT" | "LINES";
+export const NYX_SOURCE_LINES_POLICY = Object.freeze({
+  version: "nyx-source-lines/1", maxLines: 4096,
+  reconstruction: "JOIN_LINES_USING_EXPLICIT_LF_OR_CRLF_WITH_NO_OTHER_TRANSFORMATION",
+  trailingNewline: "FINAL_EMPTY_ARRAY_ITEM", emptyLinesAndWhitespace: "PRESERVED_EXACTLY",
+  embeddedLineTerminators: "FORBIDDEN", automaticFormatting: false,
+  localBoundEnforcement: true, hostedBoundEnforcementVerified: false,
+} as const);
+
+function sourceReplacementSchema(request: NyxRepairCognitionRequest, representation: NyxSourceRepresentation) {
+  if (representation === "TEXT") return NYX_REPAIR_INTENT_JSON_SCHEMA.properties.changes.items.properties.replacement;
+  return { type: "object", properties: {
+    lines: { type: "array", minItems: 1, maxItems: Math.min(NYX_SOURCE_LINES_POLICY.maxLines, request.maxPatchBytes + 1),
+      description: "Complete source as separate lines. Include a final empty item only when the source ends with a newline.",
+      items: { type: "string", maxLength: request.sourceQualityConstraints.maxLineLength,
+        description: `One source line: at most ${request.sourceQualityConstraints.maxLineLength} UTF16 code units, no CR/LF/U+2028/U+2029. Preserve indentation.` } },
+    lineEnding: { type: "string", enum: ["LF", "CRLF"] },
+  }, required: ["lines", "lineEnding"], additionalProperties: false };
+}
+
 /** A request-bound description, never an authorization token. */
-export function buildNyxRepairIntentContract(request: NyxRepairCognitionRequest) {
+export function buildNyxRepairIntentContract(request: NyxRepairCognitionRequest, sourceRepresentation: NyxSourceRepresentation = "TEXT") {
+  if (!["TEXT", "LINES"].includes(sourceRepresentation)) throw new Error("nyx_source_representation_invalid");
   const bounds = Object.freeze({ ...INTENT_ARRAY_LIMITS, counterexamples: request.maxCounterexamples,
     changes: request.maxChanges, patchBytes: request.maxPatchBytes, textCharacters: request.maxDiagnosisCharacters,
     stringItemCharacters: INTENT_STRING_ITEM_LIMIT });
@@ -327,7 +352,7 @@ export function buildNyxRepairIntentContract(request: NyxRepairCognitionRequest)
     changes: { ...NYX_REPAIR_INTENT_JSON_SCHEMA.properties.changes, maxItems: bounds.changes,
       items: { ...NYX_REPAIR_INTENT_JSON_SCHEMA.properties.changes.items,
         properties: { target: { type: "string", enum: [...request.allowedMutationPaths] },
-          replacement: NYX_REPAIR_INTENT_JSON_SCHEMA.properties.changes.items.properties.replacement } } },
+          replacement: sourceReplacementSchema(request, sourceRepresentation) } } },
   };
   for (const field of ["evidenceRefs", "uncertainties", "assumptions"] as const) {
     properties[field] = { ...properties[field] as object, maxItems: bounds[field] };
@@ -337,6 +362,7 @@ export function buildNyxRepairIntentContract(request: NyxRepairCognitionRequest)
   }
   const schema = Object.freeze({ ...NYX_REPAIR_INTENT_JSON_SCHEMA, properties: Object.freeze(properties) });
   return Object.freeze({ bounds, allowedActions, requiredFields, admittedEvidenceRefs, requestableEvidenceRefs,
+    sourceRepresentation, sourceLinesPolicy: sourceRepresentation === "LINES" ? NYX_SOURCE_LINES_POLICY : null,
     schema, providerSchema: providerCompatibleSchema(schema) as Readonly<Record<string, unknown>>,
     authorityGranted: false as const });
 }
@@ -357,6 +383,7 @@ export const NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST = sha256(canonical({
   systemInstruction: NYX_REPAIR_SYSTEM_INSTRUCTION,
   forbiddenReplacementPatterns: NYX_FORBIDDEN_SEMANTIC_REPLACEMENT_PATTERNS,
   sourceMeasurementPolicy: NYX_SOURCE_MEASUREMENT_POLICY,
+  sourceRepresentations: ["TEXT", "LINES"], sourceLinesPolicy: NYX_SOURCE_LINES_POLICY,
   authorityBoundary: "Omega derives trusted execution metadata and independently authorizes every action.",
 }));
 
@@ -365,6 +392,7 @@ export interface NyxNemotronEngineeringCognitionConfig {
   readonly provider: NvidiaNimProvider;
   readonly maxPromptBytes: number;
   readonly maxOutputTokens: number;
+  readonly sourceRepresentation?: NyxSourceRepresentation;
 }
 
 function sha256(value: Uint8Array | string): string { return createHash("sha256").update(value).digest("hex"); }
@@ -391,7 +419,7 @@ function diagnostic(category: NyxSchemaDiagnosticCategory, path: string, expecte
   // Unknown model-supplied property names may contain sensitive or hostile text.
   // Preserve locations only for contract-owned field names, never echo that text.
   const knownFields = new Set([...Object.keys(NYX_REPAIR_INTENT_JSON_SCHEMA.properties),
-    ...NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS, "target", "replacement"]);
+    ...NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS, "target", "replacement", "lines", "lineEnding"]);
   const safePath = path === "$request" || path === "$prompt" || /^\$(?:\.[A-Za-z_$][\w$]*|\[\d+\])*$/.test(path)
     && [...path.matchAll(/\.([A-Za-z_$][\w$]*)/g)].every((match) => knownFields.has(match[1]));
   return Object.freeze({ category, path: safePath ? path : "$", expected, observed });
@@ -444,22 +472,68 @@ function validSourceMeasurement(value: unknown): value is NyxSourceQualityMeasur
     && location.length <= item.maximumObservedLength);
 }
 
+function decodeReplacement(value: unknown, representation: NyxSourceRepresentation, maxBytes: number,
+  path: string, diagnostics: NyxSchemaDiagnostic[]): string | null {
+  const reject = (category: NyxSchemaDiagnosticCategory, location: string, expected: string, observed: string): null => {
+    diagnostics.push(diagnostic(category, location, expected, observed)); return null;
+  };
+  if (representation === "TEXT") return typeof value === "string" ? value
+    : reject("INVALID_FIELD_TYPE", path, "string", observedType(value));
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return reject("INVALID_FIELD_TYPE", path, "object containing lines and lineEnding", observedType(value));
+  }
+  const object = value as Record<string, unknown>;
+  if (Object.keys(object).some((key) => !["lines", "lineEnding"].includes(key))) {
+    return reject("UNEXPECTED_STRUCTURE", path, "only lines and lineEnding", "unexpected_field");
+  }
+  if (!Object.prototype.hasOwnProperty.call(object, "lineEnding") || !Object.prototype.hasOwnProperty.call(object, "lines")) {
+    return reject("MISSING_REQUIRED_FIELD", path, "lines and lineEnding", "missing");
+  }
+  if (object.lineEnding !== "LF" && object.lineEnding !== "CRLF") {
+    return reject("INVALID_ENUM_VALUE", `${path}.lineEnding`, "LF or CRLF", "unsupported_line_ending");
+  }
+  const lines = object.lines;
+  if (!Array.isArray(lines)) return reject("INVALID_FIELD_TYPE", `${path}.lines`, "array", observedType(lines));
+  const maxLines = Math.min(NYX_SOURCE_LINES_POLICY.maxLines, maxBytes + 1);
+  if (lines.length < 1 || lines.length > maxLines) {
+    return reject("SEMANTIC_REPAIR_INVALID", `${path}.lines`, `1..${maxLines} source lines`, `array_length_${lines.length}`);
+  }
+  const separator = object.lineEnding === "LF" ? "\n" : "\r\n";
+  let bytes = (lines.length - 1) * separator.length;
+  for (const [index, line] of lines.entries()) {
+    if (typeof line !== "string") return reject("INVALID_FIELD_TYPE", `${path}.lines[${index}]`, "string", observedType(line));
+    if (/[\r\n\u2028\u2029]/.test(line)) {
+      return reject("SEMANTIC_REPAIR_INVALID", `${path}.lines[${index}]`, "one source line without embedded terminators", "embedded_line_terminator");
+    }
+    bytes += Buffer.byteLength(line, "utf8");
+    if (bytes > maxBytes) return reject("SEMANTIC_REPAIR_INVALID", path, `total <= ${maxBytes} bytes`, "patch_bound_exceeded");
+  }
+  // This is lossless wire decoding, not source repair. Existing admission independently checks the result.
+  return lines.join(separator);
+}
+
 export class NyxNemotronEngineeringCognition {
   readonly #config: NyxNemotronEngineeringCognitionConfig;
   readonly #model: string;
+  readonly #sourceRepresentation: NyxSourceRepresentation;
 
-  private constructor(config: NyxNemotronEngineeringCognitionConfig, model: string) { this.#config = config; this.#model = model; }
+  private constructor(config: NyxNemotronEngineeringCognitionConfig, model: string) {
+    this.#config = config; this.#model = model; this.#sourceRepresentation = config.sourceRepresentation ?? "TEXT";
+  }
 
   static create(config: NyxNemotronEngineeringCognitionConfig): NyxNemotronEngineeringCognition {
     const profile = config.provider.profile();
+    if (config.sourceRepresentation !== undefined && !["TEXT", "LINES"].includes(config.sourceRepresentation)) {
+      throw new Error("nyx_source_representation_invalid");
+    }
     if (!config.cognitionId.trim() || !Number.isInteger(config.maxPromptBytes) || config.maxPromptBytes < 1
       || !Number.isInteger(config.maxOutputTokens) || config.maxOutputTokens < 1) throw new Error("nyx_cognition_configuration_invalid");
     if (!/nemotron[-_/ ]?3[-_/ ]?ultra/i.test(profile.model)) throw new Error("nyx_primary_substrate_must_be_nemotron_3_ultra");
     return new NyxNemotronEngineeringCognition(config, profile.model);
   }
 
-  profile(): typeof NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS & { readonly model: string } {
-    return Object.freeze({ ...NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS, model: this.#model });
+  profile(): typeof NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS & { readonly model: string; readonly sourceRepresentation: NyxSourceRepresentation } {
+    return Object.freeze({ ...NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS, model: this.#model, sourceRepresentation: this.#sourceRepresentation });
   }
 
   async proposeRepair(request: NyxRepairCognitionRequest): Promise<NyxRepairCognitionResult> {
@@ -468,7 +542,7 @@ export class NyxNemotronEngineeringCognition {
       inputIssues.map((issue) => diagnostic(issue === "nyx_cognition_file_context_invalid"
         ? "STALE_TARGET_REFERENCE" : "OTHER_SCHEMA_MISMATCH", "$request", "valid admitted cognition request", issue)));
     const qualityFeedback = request.candidateQualityFeedback;
-    const contract = buildNyxRepairIntentContract(request);
+    const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation);
     const promptObject = { role: "NYX_ENGINEERING_COGNITION", objective: request.objective,
       assignment: "Determine the causal defect, required invariant, and smallest justified professional-quality action. A failed or quality-rejected prior candidate must change the implementation strategy. Request available evidence before guessing when it can discriminate among plausible causes.",
       contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
@@ -478,6 +552,7 @@ export class NyxNemotronEngineeringCognition {
       constraints: { output: "JSON_SCHEMA", maxChanges: contract.bounds.changes, maxPatchBytes: contract.bounds.patchBytes,
         maxCounterexamples: contract.bounds.counterexamples, fieldBounds: contract.bounds,
         sourceQuality: request.sourceQualityConstraints,
+        sourceRepresentation: contract.sourceRepresentation, sourceLinesPolicy: contract.sourceLinesPolicy,
         omegaVerificationPlan: request.allowedVerificationToolIds,
         forbiddenModelFields: NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS,
         evidenceBehavior: "Use REQUEST_EVIDENCE for listed available evidence that would discriminate among hypotheses. Use NO_ACTION only when required evidence is unavailable; both actions require no changes.",
@@ -509,7 +584,9 @@ export class NyxNemotronEngineeringCognition {
         ...(request.priorHypotheses.length > 0 ? { failureInterpretation: "Explain which prediction the prior evidence invalidated." } : {}),
         expectedResult: "specific observable verification change", counterexamples: ["one boundary or regression case"],
         changes: [{ target: request.allowedMutationPaths[0],
-          replacement: "export function example(value) {\n  return value;\n}\n" }] },
+          replacement: this.#sourceRepresentation === "LINES"
+            ? { lines: ["export function example(value) {", "  return value;", "}", ""], lineEnding: "LF" }
+            : "export function example(value) {\n  return value;\n}\n" }] },
       ...(contract.requestableEvidenceRefs.length > 0 ? {
         evidenceRequestExample: { decision: "REQUEST_EVIDENCE", diagnosis: "State the information needed to select a repair.",
           uncertainties: ["the question this observation resolves"], requestedEvidenceRefs: contract.requestableEvidenceRefs.slice(0, 1) },
@@ -525,9 +602,10 @@ export class NyxNemotronEngineeringCognition {
         { role: "user", content: serializedPrompt }], maxTokens: this.#config.maxOutputTokens, temperature: 0,
       responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema: contract.providerSchema },
       inferencePolicy: "CONSTRAINED_JSON",
-      observedAtEpochMs: request.observedAtEpochMs });
+      observedAtEpochMs: request.observedAtEpochMs, deadlineEpochMs: request.deadlineEpochMs, signal: request.signal });
     if (completion.decision !== "COMPLETED" || completion.content === null) {
-      const decision = completion.decision === "BLOCKED" ? "BLOCKED" : completion.decision === "REJECTED" ? "REJECTED" : "COGNITION_ERROR";
+      const decision = completion.decision === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY"
+        : completion.decision === "BLOCKED" ? "BLOCKED" : completion.decision === "REJECTED" ? "REJECTED" : "COGNITION_ERROR";
       return this.#result(decision, completion.reason, request, null, null, completion.evidence, []);
     }
     if (completion.finishReason !== "stop") {
@@ -680,7 +758,7 @@ export class NyxNemotronEngineeringCognition {
       if (!allowedTop.has(key)) diagnostics.push(diagnostic(infrastructureFields.has(key)
         ? "MODEL_GENERATED_INFRASTRUCTURE_METADATA" : "UNEXPECTED_STRUCTURE", `$.${key}`, "field omitted", "unexpected_field"));
     }
-    const contract = buildNyxRepairIntentContract(request);
+    const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation);
     const selectedRequired = NYX_SEMANTIC_ACTIONS.includes(raw.decision as typeof NYX_SEMANTIC_ACTIONS[number])
       ? contract.requiredFields[raw.decision as keyof typeof contract.requiredFields] : ["decision", "diagnosis"];
     for (const key of selectedRequired) {
@@ -790,10 +868,13 @@ export class NyxNemotronEngineeringCognition {
       }
       for (const key of ["target", "replacement"] as const) {
         if (!(key in change)) diagnostics.push(diagnostic("MISSING_REQUIRED_FIELD", `${base}.${key}`, "required field", "missing"));
-        else if (typeof change[key] !== "string") diagnostics.push(diagnostic("INVALID_FIELD_TYPE", `${base}.${key}`, "string", observedType(change[key])));
+        else if (key === "target" && typeof change[key] !== "string") diagnostics.push(diagnostic("INVALID_FIELD_TYPE", `${base}.${key}`, "string", observedType(change[key])));
       }
-      if (typeof change.target !== "string" || typeof change.replacement !== "string") continue;
-      if (change.replacement.length < 1) {
+      if (typeof change.target !== "string" || !Object.prototype.hasOwnProperty.call(change, "replacement")) continue;
+      const replacement = decodeReplacement(change.replacement, this.#sourceRepresentation, request.maxPatchBytes,
+        `${base}.replacement`, diagnostics);
+      if (replacement === null) continue;
+      if (replacement.length < 1) {
         diagnostics.push(diagnostic("SOURCE_QUALITY_INVALID", `${base}.replacement`, "non-empty complete source", "empty_source"));
         continue;
       }
@@ -804,37 +885,37 @@ export class NyxNemotronEngineeringCognition {
         diagnostics.push(diagnostic("UNSUPPORTED_FILE_TARGET", `${base}.target`, "explicitly authorized mutation target", "read_only_evidence_target")); continue;
       }
       if (paths.has(change.target)) { diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", `${base}.target`, "unique target", "duplicate_reference")); continue; }
-      if (sha256(change.replacement) === context.contentSha256) {
+      if (sha256(replacement) === context.contentSha256) {
         diagnostics.push(diagnostic("REPEATED_FALSIFIED_STRATEGY", `${base}.replacement`, "a semantic change from the currently failed candidate", "no_op_repair")); continue;
       }
-      const sourceMeasurement = measureOverlongSource(change.replacement, request.sourceQualityConstraints.maxLineLength);
+      const sourceMeasurement = measureOverlongSource(replacement, request.sourceQualityConstraints.maxLineLength);
       if (sourceMeasurement) {
         diagnostics.push(Object.freeze({ ...diagnostic("SOURCE_QUALITY_INVALID", `${base}.replacement`,
           `readable source with every line <= ${request.sourceQualityConstraints.maxLineLength} characters`, "excessive_line_length"),
         sourceMeasurement }));
       }
       const typeSuppression = /@ts-(?:ignore|nocheck)|\bas\s+(?:any|unknown)\b|:\s*any\b/;
-      if (request.sourceQualityConstraints.forbidTypeSafetySuppression && typeSuppression.test(change.replacement)
+      if (request.sourceQualityConstraints.forbidTypeSafetySuppression && typeSuppression.test(replacement)
         && !typeSuppression.test(context.content)) {
         diagnostics.push(diagnostic("SOURCE_QUALITY_INVALID", `${base}.replacement`,
           "source without newly introduced type-safety suppression", "new_type_safety_suppression"));
       }
       const unsafeRuntime = /\b(?:eval|Function|fetch)\s*\(|\bprocess\.[A-Za-z_$][\w$]*/;
-      if (request.sourceQualityConstraints.forbidNewUnsafeRuntimeAccess && unsafeRuntime.test(change.replacement)
+      if (request.sourceQualityConstraints.forbidNewUnsafeRuntimeAccess && unsafeRuntime.test(replacement)
         && !unsafeRuntime.test(context.content)) {
         diagnostics.push(diagnostic("SOURCE_QUALITY_INVALID", `${base}.replacement`,
           "source without newly introduced unsafe runtime access", "new_unsafe_runtime_access"));
       }
-      if (/\brm\s+-rf\b/i.test(change.replacement) || /\b(?:bash|sh|cmd|powershell)(?:\.exe)?\s+(?:-c|\/c)\b/i.test(change.replacement)
-        || /(?:node:)?child_process/.test(change.replacement) || /\b(?:spawn|spawnSync|execFile|execSync)\s*\(/.test(change.replacement)) {
+      if (/\brm\s+-rf\b/i.test(replacement) || /\b(?:bash|sh|cmd|powershell)(?:\.exe)?\s+(?:-c|\/c)\b/i.test(replacement)
+        || /(?:node:)?child_process/.test(replacement) || /\b(?:spawn|spawnSync|execFile|execSync)\s*\(/.test(replacement)) {
         diagnostics.push(diagnostic("UNKNOWN_CAPABILITY", `${base}.replacement`,
           "source content without ungranted shell or child-process execution", "forbidden_execution_primitive")); continue;
       }
-      bytes += Buffer.byteLength(change.replacement, "utf8");
+      bytes += Buffer.byteLength(replacement, "utf8");
       if (bytes > request.maxPatchBytes) { diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", `${base}.replacement`, `total <= ${request.maxPatchBytes} bytes`, "patch_bound_exceeded")); continue; }
       paths.add(change.target);
       changes.push(Object.freeze({ kind: "MODIFY", relativePath: change.target, expectedBaseHash: context.contentSha256,
-        replacementContent: change.replacement, replacementContentHash: sha256(change.replacement) }));
+        replacementContent: replacement, replacementContentHash: sha256(replacement) }));
     }
     if (decision === "PROPOSE_EDIT" && changes.length > 0) {
       const strategyDigest = sha256(canonical({ causalHypothesis, expectedResult,
@@ -858,7 +939,7 @@ export class NyxNemotronEngineeringCognition {
     const evidence: NyxRepairCognitionEvidence = Object.freeze({ evidenceId: `NYX-COGNITION-${sha256(canonical({
       requestId: request.cognitionRequestId ?? "MALFORMED", sourceObservationId, modelEvidenceId: modelEvidence?.evidenceId ?? null,
       proposalDigest: hypothesis?.proposalDigest ?? null, evidenceRequestDigest: evidenceRequest?.requestDigest ?? null,
-      decision, reason })).slice(0, 32)}`,
+      decision, reason, sourceRepresentation: this.#sourceRepresentation })).slice(0, 32)}`,
       evidenceClass: modelEvidence?.evidenceClass ?? "E3", sourceObservationId, sourceExecutionEvidenceId: sourceEvidenceId,
       modelEvidenceId: modelEvidence?.evidenceId ?? "NOT_INVOKED", model: this.#model,
       cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA", modelRequestDigest: modelEvidence?.requestDigest ?? null,
@@ -870,7 +951,9 @@ export class NyxNemotronEngineeringCognition {
       modelFinishReason: modelEvidence?.finishReason ?? null,
       contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
       contractDigest: NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST,
+      sourceRepresentation: this.#sourceRepresentation,
       modelUsage: modelEvidence?.usage ?? Object.freeze({ promptTokens: null, completionTokens: null, totalTokens: null }),
+      delivery: modelEvidence?.delivery,
       proposalDigest: hypothesis?.proposalDigest ?? null, authorityGranted: false });
     return Object.freeze({ decision, reason, hypothesis, evidenceRequest, evidence,
       schemaDiagnostics: Object.freeze([...schemaDiagnostics]), omegaAuthorityGranted: false });

@@ -38,7 +38,7 @@ check(NYX_ENGINEERING_QUALITY_CONFIRMATION.every((task) => task.mutationPaths.ev
   && task.availableEvidence.every((item) => !task.mutationPaths.includes(item.relativePath))),
 "confirmation evidence remains observation-only and cannot expand mutation authority");
 check(/^[a-f0-9]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
-  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/6",
+  && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/7",
 "current cognition contract has an explicit version and deterministic digest; historical scores remain frozen");
 
 const parent = await mkdtemp(join(tmpdir(), "nyx-quality-assurance-"));

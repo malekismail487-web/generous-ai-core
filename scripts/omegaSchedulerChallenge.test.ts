@@ -133,10 +133,13 @@ try {
   check(historical.status === 1 && historical.stderr.includes("challenge_frozen_core_digest_mismatch")
     && !historical.stdout.includes("NYX_QUALITY_CHALLENGE_HOLDOUT"),
   "new cognition cannot silently rescore the old frozen scheduler epoch");
-  const offline = runOffline("CONTEXT_REPAIR");
-  const line = offline.stdout.split(/\r?\n/).find((item) => item.startsWith("NYX_QUALITY_CONTEXT_REPAIR_HOLDOUT {"));
+  const previousFeedbackEpoch = runOffline("CONTEXT_REPAIR");
+  check(previousFeedbackEpoch.status === 1 && previousFeedbackEpoch.stderr.includes("context_repair_frozen_core_digest_mismatch"),
+    "typed source experiment cannot silently rescore the previous measurement-feedback epoch");
+  const offline = runOffline("CONTEXT_LINES");
+  const line = offline.stdout.split(/\r?\n/).find((item) => item.startsWith("NYX_QUALITY_CONTEXT_LINES_HOLDOUT {"));
   if (!line) console.error(`OFFLINE_DRIVER_FAILURE ${offline.stderr.slice(-1500)}`);
-  const report = line ? JSON.parse(line.slice("NYX_QUALITY_CONTEXT_REPAIR_HOLDOUT ".length)) : null;
+  const report = line ? JSON.parse(line.slice("NYX_QUALITY_CONTEXT_LINES_HOLDOUT ".length)) : null;
   check(offline.status === 1 && report?.evaluationDecision === "INSUFFICIENT_EVIDENCE"
     && report.tasks[0].modelCalls === 1 && report.tasks[0].candidates === 0,
   "simulated provider failure reaches the shared driver and stops without a fabricated candidate");

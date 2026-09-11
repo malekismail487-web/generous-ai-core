@@ -6,6 +6,8 @@ import {
   type NvidiaNimCompletionRequest,
   type NvidiaNimTransport,
 } from "../src/lib/codelab/model/nvidiaNimProvider";
+import { NvidiaCapacityCoordinator, NVIDIA_CAPACITY_POLICY, nvidiaRetryAfterMs,
+  type CapacityClock } from "../src/lib/codelab/model/nvidiaCapacity";
 
 let passed = 0;
 let failed = 0;
@@ -199,6 +201,204 @@ function provider(transport: NvidiaNimTransport, credential = "test-credential-n
     credentialSource: source, maxPromptBytes: 10, maxOutputTokens: 10, timeoutMs: 1_000 }); }
   catch (error) { rejected = error instanceof Error ? error.message : "unknown"; }
   check(rejected === "test_double_transport_required", "test-double mode cannot silently fall through to real network fetch");
+}
+
+class ManualClock implements CapacityClock {
+  time = NOW;
+  jobs: { at: number; wake: () => void }[] = [];
+  now = () => this.time;
+  sleep = (ms: number, signal: AbortSignal): Promise<void> => new Promise((resolve, reject) => {
+    const remove = () => { this.jobs = this.jobs.filter((entry) => entry !== job); signal.removeEventListener("abort", abort); };
+    const abort = () => { remove(); reject(new DOMException("cancelled", "AbortError")); };
+    const job = { at: this.time + ms, wake: () => { remove(); resolve(); } };
+    if (signal.aborted) { reject(new DOMException("cancelled", "AbortError")); return; }
+    this.jobs.push(job);
+    signal.addEventListener("abort", abort, { once: true });
+  });
+  tick(): void {
+    if (!this.jobs.length) return;
+    this.time = Math.min(...this.jobs.map((job) => job.at));
+    for (const job of [...this.jobs].filter((item) => item.at <= this.time)) job.wake();
+  }
+}
+async function drive<T>(promise: Promise<T>, clock: ManualClock): Promise<T> {
+  let settled = false;
+  void promise.then(() => { settled = true; }, () => { settled = true; });
+  for (let step = 0; step < 2000 && !settled; step += 1) {
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    if (!settled) clock.tick();
+  }
+  if (!settled) throw new Error("capacity_test_failed_to_settle");
+  return promise;
+}
+function capacityProvider(coordinator: NvidiaCapacityCoordinator, transport: NvidiaNimTransport,
+  read: () => string | undefined = () => "test-credential-not-a-real-secret") {
+  return NvidiaNimProvider.create({ providerId: "CAPACITY-TEST", model: "nvidia/test-model", authorityMode: "TEST_DOUBLE_ONLY",
+    credentialSource: { sourceIdentity: "test-double:capacity", read }, maxPromptBytes: 4096, maxOutputTokens: 128,
+    timeoutMs: 1000, transport, testCapacity: coordinator });
+}
+const success = () => new Response(JSON.stringify({ choices: [{ message: { content: "OMEGA_NIM_OK" }, finish_reason: "stop" }],
+  usage: { prompt_tokens: 10, completion_tokens: 4, total_tokens: 14 } }), { status: 200 });
+
+check(NVIDIA_CAPACITY_POLICY.requestsPerMinute === 40, "configured request ceiling is forty, not four");
+for (const [header, expected] of [["12", 12000], ["0", 0], [" 3 ", 3000], [null, 60000], ["-1", 60000],
+  ["1.5", 60000], ["1e3", 60000], ["10ms", 60000], ["2026", 2026000], ["nonsense", 60000]] as const) {
+  check(nvidiaRetryAfterMs(header, NOW) === expected, `Retry-After handles ${header ?? "missing"} without an early retry`);
+}
+check(nvidiaRetryAfterMs(new Date(Math.floor(NOW / 1000) * 1000 + 9000).toUTCString(), NOW) >= 8000,
+  "HTTP-date cooldown accounts for the actual observation time");
+check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_INTEGER,
+  "oversized valid delay cannot overflow into an immediate retry");
+
+{
+  const clock = new ManualClock();
+  const gate = new NvidiaCapacityCoordinator(clock);
+  const starts: number[] = [];
+  const bodies: string[] = [];
+  const headers: string[] = [];
+  const client = capacityProvider(gate, async (_url, init) => {
+    starts.push(clock.time); bodies.push(String(init?.body)); headers.push(new Headers(init?.headers).get("Authorization") ?? "");
+    return starts.length < 3 ? new Response("secret-provider-detail", { status: 429,
+      headers: { "retry-after": starts.length === 1 ? "2" : "3" } }) : success();
+  });
+  const result = await drive(client.complete(request()), clock);
+  check(result.decision === "COMPLETED" && result.content === "OMEGA_NIM_OK", "429 waits and resumes the same NYX request successfully");
+  check(starts[1] - starts[0] >= 2000 && starts[2] - starts[1] >= 3000, "both server cooldowns precede subsequent HTTP attempts");
+  check(new Set(bodies).size === 1 && new Set(headers).size === 1, "capacity retries preserve the exact logical model payload and credential scope");
+  check(result.evidence.delivery?.httpAttempts === 3 && result.evidence.delivery.rateLimitedResponses === 2
+    && result.evidence.delivery.capacityWaitMs === 5000 && result.evidence.delivery.state === "DELIVERED",
+  "successful resumption reports real HTTP attempts, two rate limits and measured wait separately from model calls");
+  check(result.evidence.usage.totalTokens === 14 && result.evidence.failureCategory === null,
+    "rate limits do not invent model tokens or remain a coding failure after resumption");
+  check(!JSON.stringify(result).includes("secret-provider-detail") && !JSON.stringify(result).includes("test-credential-not-a-real-secret"),
+    "retry telemetry excludes credential and raw error response");
+}
+{
+  const clock = new ManualClock();
+  const gate = new NvidiaCapacityCoordinator(clock);
+  const starts: number[] = [];
+  const transport: NvidiaNimTransport = async () => { starts.push(clock.time); return success(); };
+  const clients = [capacityProvider(gate, transport), capacityProvider(gate, transport)];
+  const results = await drive(Promise.all(Array.from({ length: 81 }, (_, index) =>
+    clients[index % 2].complete(request({ requestId: `CONCURRENT-${index}` })))), clock);
+  check(results.every((result) => result.decision === "COMPLETED") && starts.length === 81,
+    "81 concurrent requests across two provider instances share one capacity policy");
+  check(starts.every((start, index) => index === 0 || start - starts[index - 1] >= 1501),
+    "concurrent requests cannot reserve the same start slot");
+  check(starts.every((start) => starts.filter((other) => other >= start && other < start + 60000).length <= 40),
+    "every observed sliding sixty-second window contains at most forty HTTP starts");
+  check(clock.jobs.length === 0, "concurrent completion leaves no pending wait timers");
+}
+{
+  const clock = new ManualClock();
+  const gate = new NvidiaCapacityCoordinator(clock);
+  let calls = 0;
+  const client = capacityProvider(gate, async () => { calls += 1; return new Response(null, { status: 429 }); });
+  const result = await drive(client.complete(request({ deadlineEpochMs: NOW + 120000 })), clock);
+  check(result.decision === "WAITING_FOR_CAPACITY" && result.evidence.delivery?.state === "WAITING_FOR_CAPACITY",
+    "persistent 429 pauses for renewed run authority instead of asserting model failure");
+  check(calls === 2 && result.content === null && !result.executorAuthorityGranted && !result.evidence.delivery?.authorityRenewed,
+    "no retry starts at expiry and no stale result or authority is manufactured");
+  check(result.evidence.delivery?.notBeforeEpochMs === NOW + 120000, "pause retains sanitized earliest resumption time");
+}
+{
+  const clock = new ManualClock();
+  const gate = new NvidiaCapacityCoordinator(clock);
+  gate.defer("60");
+  let calls = 0; let credentialReads = 0;
+  const client = capacityProvider(gate, async () => { calls += 1; return success(); }, () => { credentialReads += 1; return "test-credential-not-a-real-secret"; });
+  const controller = new AbortController();
+  const pending = client.complete(request({ signal: controller.signal }));
+  controller.abort();
+  const result = await drive(pending, clock);
+  check(result.decision === "BLOCKED" && result.reason === "nvidia_provider_cancelled", "queued capacity wait is cancellable immediately");
+  check(calls === 0 && credentialReads === 0 && clock.jobs.length === 0, "cancelled queue entry reads no credential, performs no request and removes its timer");
+  const expired = await drive(client.complete(request({ deadlineEpochMs: NOW })), clock);
+  check(expired.decision === "WAITING_FOR_CAPACITY" && calls === 0, "already expired run cannot dispatch");
+  const malformed = await client.complete(request({ deadlineEpochMs: NaN }));
+  check(malformed.decision === "REJECTED" && calls === 0, "malformed expiry fails closed rather than disabling the deadline");
+}
+{
+  for (const status of [401, 403, 503]) {
+    const clock = new ManualClock(); let calls = 0;
+    const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => { calls += 1; return new Response(null, { status }); });
+    const result = await drive(client.complete(request()), clock);
+    check(calls === 1 && result.decision === "PROVIDER_ERROR", `HTTP ${status} is not an unbounded rate-limit retry`);
+  }
+}
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
+  gate.defer("2");
+  const messages = [{ role: "user" as const, content: "original prompt" }];
+  let observed = "";
+  const client = capacityProvider(gate, async (_url, init) => { observed = String(init?.body); return success(); });
+  const pending = client.complete(request({ messages }));
+  messages[0].content = "mutated while waiting";
+  await drive(pending, clock);
+  check(observed.includes("original prompt") && !observed.includes("mutated while waiting"), "waiting cannot silently rebind the request identity");
+}
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
+  gate.defer("1");
+  const controller = new AbortController();
+  const requests = Array.from({ length: 129 }, () => gate.acquire(NOW + 300000, controller.signal));
+  const overflow = await requests[128];
+  check(overflow.state === "WAITING_FOR_CAPACITY", "bounded queue reports unavailable capacity rather than allocating indefinitely");
+  controller.abort();
+  await Promise.all(requests);
+  check(clock.jobs.length === 0, "queue cancellation releases every waiter");
+}
+{
+  let rejection = "";
+  try { NvidiaNimProvider.create({ providerId: "LIVE", model: "nvidia/test-model", authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM",
+    credentialSource: { sourceIdentity: "test", read: () => undefined }, maxPromptBytes: 4096, maxOutputTokens: 128,
+    timeoutMs: 1000, testCapacity: new NvidiaCapacityCoordinator(new ManualClock()) }); }
+  catch (error) { rejection = (error as Error).message; }
+  check(rejection === "test_capacity_cannot_override_live_gate", "live mode cannot replace the shared rate gate with a fake clock");
+}
+
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
+  const signal = new AbortController().signal;
+  await gate.acquire(NOW + 300000, signal);
+  clock.time += 61000;
+  gate.recordDispatch();
+  const next = await drive(gate.acquire(NOW + 300000, signal), clock);
+  check(next.state === "ADMITTED" && next.waitedMs === 1501,
+    "event-loop stall cannot bunch the next request against a delayed actual dispatch");
+}
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
+  gate.defer("2");
+  const pending = gate.acquire(NOW + 300000, new AbortController().signal);
+  gate.defer("10");
+  const result = await drive(pending, clock);
+  check(result.state === "ADMITTED" && result.waitedMs === 10000, "new server cooldown is rechecked by already queued requests");
+}
+{
+  const clock = new ManualClock(); const controller = new AbortController(); let aborted = false;
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async (_url, init) => {
+    controller.abort();
+    aborted = init?.signal?.aborted === true;
+    return success();
+  });
+  const result = await client.complete(request({ signal: controller.signal }));
+  check(aborted && result.decision === "BLOCKED" && result.content === null, "active cancellation discards even a transport that returns a late successful response");
+  const failingCredential = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => { throw new Error("must_not_send"); },
+    () => { throw new Error("secret-value-never-propagated"); });
+  const blocked = await failingCredential.complete(request());
+  check(blocked.decision === "BLOCKED" && !blocked.evidence.networkAttempted && !JSON.stringify(blocked).includes("secret-value"),
+    "credential source exceptions remain sanitized and do not start a request");
+}
+
+{
+  const clock = new ManualClock(); let calls = 0;
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => { calls += 1; return success(); }, () => {
+    clock.time += 2000; return "test-credential-not-a-real-secret";
+  });
+  const result = await client.complete(request({ deadlineEpochMs: NOW + 1000 }));
+  check(result.decision === "BLOCKED" && calls === 0 && !result.evidence.networkAttempted,
+    "slow credential acquisition cannot dispatch after the run expires");
 }
 
 assert(NVIDIA_NIM_PROVIDER_STATUS.newCapability === "BOUNDED_NVIDIA_NIM_CHAT_COMPLETION", "chunk reports exact model capability gain");

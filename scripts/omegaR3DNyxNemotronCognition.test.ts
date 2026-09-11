@@ -11,6 +11,7 @@ import {
   type NyxRepairCognitionRequest,
   type NyxRepairCognitionResult,
   type NyxSchemaDiagnosticCategory,
+  type NyxSourceRepresentation,
 } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 
 let passed = 0;
@@ -41,9 +42,9 @@ function provider(transport: NvidiaNimTransport, model = "nvidia/nemotron-3-ultr
     credentialSource: { sourceIdentity: "test-double:nyx-cognition", read: () => "test-only-credential-material" },
     maxPromptBytes: 100_000, maxOutputTokens: 2_048, timeoutMs: 1_000, transport });
 }
-function cognition(transport: NvidiaNimTransport) {
+function cognition(transport: NvidiaNimTransport, sourceRepresentation: NyxSourceRepresentation = "TEXT") {
   return NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-PRIMARY-COGNITION", provider: provider(transport),
-    maxPromptBytes: 50_000, maxOutputTokens: 1_024 });
+    maxPromptBytes: 50_000, maxOutputTokens: 1_024, sourceRepresentation });
 }
 
 const source = "export const add = (a: number, b: number) => a + b + 1;\n";
@@ -73,6 +74,89 @@ function transportFor(content: string): NvidiaNimTransport {
 }
 async function evaluate(content: string, requestOverride: Partial<NyxRepairCognitionRequest> = {}): Promise<NyxRepairCognitionResult> {
   return cognition(transportFor(content)).proposeRepair(request(requestOverride));
+}
+
+{
+  const lines = ["export function add(a: number, b: number) {", "  return a + b;", "}", "", "// café 🙂 ", ""];
+  for (const lineEnding of ["LF", "CRLF"] as const) {
+    const expectedSource = lines.join(lineEnding === "LF" ? "\n" : "\r\n");
+    let seenPrompt: Record<string, unknown> = {};
+    let seenSchema: Record<string, unknown> = {};
+    const nyx = cognition(async (input, init) => {
+      const body = JSON.parse(String(init?.body));
+      seenPrompt = JSON.parse(body.messages[1].content);
+      seenSchema = body.response_format.json_schema.schema;
+      return transportFor(intent({ changes: [{ target: "src/math.ts", replacement: { lines, lineEnding } }] }))(input, init);
+    }, "LINES");
+    const result = await nyx.proposeRepair(request());
+    check(result.decision === "PROPOSED" && result.hypothesis?.changes[0].replacementContent === expectedSource
+      && result.hypothesis.changes[0].replacementContentHash === hash(expectedSource),
+    `typed source reconstruction preserves ${lineEnding}, empty lines, trailing newline, spaces and Unicode exactly`);
+    check(result.evidence.sourceRepresentation === "LINES" && nyx.profile().sourceRepresentation === "LINES"
+      && !result.omegaAuthorityGranted && !result.hypothesis?.applyAuthorized, "source representation is attested without granting authority");
+    const schema = seenSchema as { properties: { changes: { items: { properties: { replacement: {
+      type: string; required: string[]; properties: { lines: { items: { type: string; description: string } }; lineEnding: { enum: string[] } }
+    } } } } } };
+    const wire = schema.properties.changes.items.properties.replacement;
+    check(wire.type === "object" && wire.required.join() === "lines,lineEnding" && wire.properties.lines.items.type === "string"
+      && wire.properties.lineEnding.enum.join() === "LF,CRLF" && wire.properties.lines.items.description.includes("120"),
+    "provider sees a closed line-based source shape and descriptive bound, not an unsupported enforcement guarantee");
+    const example = seenPrompt.minimalExample as { changes: { replacement: { lines: string[]; lineEnding: string } }[] };
+    check(example.changes[0].replacement.lines.at(-1) === "" && example.changes[0].replacement.lineEnding === "LF",
+      "prompt example uses selected representation and explicit trailing newline convention");
+  }
+  const invalid: unknown[] = [
+    repaired, null, [], { lines }, { lineEnding: "LF" }, { lines, lineEnding: "CR" },
+    { lines: [], lineEnding: "LF" }, { lines: [1], lineEnding: "LF" },
+    { lines: ["a\nb"], lineEnding: "LF" }, { lines: ["a\rb"], lineEnding: "LF" },
+    { lines: ["a\u2028b"], lineEnding: "LF" }, { lines: ["a\u2029b"], lineEnding: "LF" },
+    { lines, lineEnding: "LF", unauthorized: "NO_SOURCE_ECHO" },
+    { lines: [""], lineEnding: "LF" }, { lines: Array(4097).fill(""), lineEnding: "LF" },
+  ];
+  for (const replacement of invalid) {
+    const result = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts", replacement }] })), "LINES")
+      .proposeRepair(request());
+    check(result.decision === "COGNITION_ERROR" && result.hypothesis === null
+      && !JSON.stringify(result).includes("NO_SOURCE_ECHO"), "malformed/mixed/oversized line representation fails closed without echoed data");
+  }
+  const overlong = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
+    replacement: { lines: [repaired.trimEnd(), "//" + "x".repeat(120)], lineEnding: "LF" } }] })), "LINES").proposeRepair(request());
+  check(overlong.decision === "COGNITION_ERROR" && overlong.schemaDiagnostics.some((item) =>
+    item.sourceMeasurement?.lines[0].line === 2 && item.sourceMeasurement.lines[0].length === 122),
+  "existing measured readability gate rejects overlong structured lines without wrapping them");
+  const byteBound = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
+    replacement: { lines: [repaired.trimEnd(), "// café 🙂"], lineEnding: "CRLF" } }] })), "LINES")
+    .proposeRepair(request({ maxPatchBytes: 55 }));
+  check(byteBound.decision === "COGNITION_ERROR" && byteBound.schemaDiagnostics.some((item) => item.observed === "patch_bound_exceeded"),
+    "UTF8 byte cap includes Unicode and selected line separators before materialization");
+  const unsafe = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts", replacement: {
+    lines: ["import { execSync } from 'node:child_process';", "export const add = execSync;"], lineEnding: "LF" } }] })), "LINES")
+    .proposeRepair(request());
+  check(unsafe.decision === "COGNITION_ERROR" && has(unsafe, "UNKNOWN_CAPABILITY"),
+    "line encoding cannot bypass existing forbidden execution detection");
+  const sameAsCurrent = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
+    replacement: { lines: source.split("\n"), lineEnding: "LF" } }] })), "LINES").proposeRepair(request());
+  check(has(sameAsCurrent, "REPEATED_FALSIFIED_STRATEGY") && sameAsCurrent.hypothesis === null,
+    "structured encoding cannot disguise an unchanged source as a semantic repair");
+  const outside = await cognition(transportFor(intent({ changes: [{ target: "../outside.ts",
+    replacement: { lines, lineEnding: "LF" } }] })), "LINES").proposeRepair(request());
+  check(has(outside, "INVALID_TARGET_REFERENCE") && outside.hypothesis === null,
+    "structured replacement cannot grant a traversal target authority");
+  const oldMode = await evaluate(intent({ changes: [{ target: "src/math.ts", replacement: { lines, lineEnding: "LF" } }] }));
+  check(has(oldMode, "INVALID_FIELD_TYPE"), "TEXT mode does not silently negotiate a model-selected representation");
+  const config = { cognitionId: "NYX-ENCODING-OWNERSHIP", provider: provider(transportFor(intent())),
+    maxPromptBytes: 50_000, maxOutputTokens: 1024, sourceRepresentation: "LINES" as NyxSourceRepresentation };
+  const owned = NyxNemotronEngineeringCognition.create(config);
+  config.sourceRepresentation = "TEXT";
+  check(owned.profile().sourceRepresentation === "LINES", "trusted source representation is snapshotted at construction");
+  for (const suffix of ["// tab\tretained", "const t = `first\nsecond`;", "const q = '\\\\n';", "// Ω café 🙂", "", "\n\n"]) {
+    const expected = repaired + suffix;
+    const text = await evaluate(intent({ changes: [{ target: "src/math.ts", replacement: expected }] }));
+    const structured = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
+      replacement: { lines: expected.split("\n"), lineEnding: "LF" } }] })), "LINES").proposeRepair(request());
+    check(structured.decision === text.decision && JSON.stringify(structured.hypothesis?.changes) === JSON.stringify(text.hypothesis?.changes),
+      "source encoding changes neither exact patch content nor existing source admission for equivalent representations");
+  }
 }
 
 {

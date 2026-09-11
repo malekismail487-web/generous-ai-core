@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { liveNvidiaCapacity, NvidiaCapacityCoordinator, NVIDIA_CAPACITY_POLICY } from "./nvidiaCapacity";
 
 export const NVIDIA_NIM_CHAT_COMPLETIONS_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 
@@ -36,6 +37,8 @@ export interface NvidiaNimProviderConfig {
   readonly maxOutputTokens: number;
   readonly timeoutMs: number;
   readonly transport?: NvidiaNimTransport;
+  /** Deterministic delivery testing only. Live instances always share the process-local gate. */
+  readonly testCapacity?: NvidiaCapacityCoordinator;
 }
 
 export interface NvidiaNimCompletionRequest {
@@ -51,6 +54,9 @@ export interface NvidiaNimCompletionRequest {
    */
   readonly inferencePolicy?: "CONSTRAINED_JSON";
   readonly observedAtEpochMs: number;
+  /** Caller-owned run expiry; capacity waiting cannot renew it. Never supplied to the model. */
+  readonly deadlineEpochMs?: number;
+  readonly signal?: AbortSignal;
 }
 
 export interface NvidiaNimJsonSchemaResponseFormat {
@@ -91,10 +97,23 @@ export interface NvidiaNimEvidence {
   readonly providerRequestId: string | null;
   readonly finishReason: NvidiaNimFinishReason | null;
   readonly usage: NvidiaNimUsage;
+  readonly delivery?: NvidiaNimDeliveryEvidence;
+}
+
+export interface NvidiaNimDeliveryEvidence {
+  readonly policy: "nvidia-capacity/1";
+  readonly requestsPerMinute: 40;
+  readonly scope: "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT";
+  readonly httpAttempts: number;
+  readonly rateLimitedResponses: number;
+  readonly capacityWaitMs: number;
+  readonly state: "DELIVERED" | "WAITING_FOR_CAPACITY" | "STOPPED";
+  readonly notBeforeEpochMs: number | null;
+  readonly authorityRenewed: false;
 }
 
 export interface NvidiaNimCompletionResult {
-  readonly decision: "COMPLETED" | "REJECTED" | "BLOCKED" | "PROVIDER_ERROR";
+  readonly decision: "COMPLETED" | "REJECTED" | "BLOCKED" | "PROVIDER_ERROR" | "WAITING_FOR_CAPACITY";
   readonly reason: string;
   readonly content: string | null;
   readonly finishReason: NvidiaNimFinishReason | null;
@@ -202,10 +221,12 @@ export function nvidiaNimCredentialFromEnvironment(environment: Readonly<Record<
 export class NvidiaNimProvider {
   readonly #config: NvidiaNimProviderConfig;
   readonly #transport: NvidiaNimTransport | null;
+  readonly #capacity: NvidiaCapacityCoordinator | null;
 
   private constructor(config: NvidiaNimProviderConfig, transport: NvidiaNimTransport | null) {
-    this.#config = config;
+    this.#config = Object.freeze({ ...config, credentialSource: Object.freeze({ ...config.credentialSource }) });
     this.#transport = transport;
+    this.#capacity = config.authorityMode === "EXPLICIT_LIVE_NVIDIA_NIM" ? liveNvidiaCapacity : config.testCapacity ?? null;
   }
 
   static create(config: NvidiaNimProviderConfig): NvidiaNimProvider {
@@ -216,6 +237,9 @@ export class NvidiaNimProvider {
       || !Number.isInteger(config.timeoutMs) || config.timeoutMs < 100 || config.timeoutMs > 120_000) throw new Error("provider_resource_policy_invalid");
     if (config.authorityMode === "TEST_DOUBLE_ONLY" && !config.transport) throw new Error("test_double_transport_required");
     if (config.authorityMode !== "TEST_DOUBLE_ONLY" && config.authorityMode !== "EXPLICIT_LIVE_NVIDIA_NIM") throw new Error("provider_authority_mode_invalid");
+    if (config.testCapacity && (config.authorityMode !== "TEST_DOUBLE_ONLY" || !(config.testCapacity instanceof NvidiaCapacityCoordinator))) {
+      throw new Error("test_capacity_cannot_override_live_gate");
+    }
     return new NvidiaNimProvider(config, config.transport ?? (config.authorityMode === "EXPLICIT_LIVE_NVIDIA_NIM" ? fetch : null));
   }
 
@@ -236,6 +260,9 @@ export class NvidiaNimProvider {
     const issues: string[] = [];
     if (request.schemaVersion !== 1 || typeof request.requestId !== "string" || !request.requestId.trim()
       || !Number.isFinite(request.observedAtEpochMs)) issues.push("completion_request_malformed");
+    if (request.deadlineEpochMs !== undefined && (!Number.isSafeInteger(request.deadlineEpochMs) || request.deadlineEpochMs < 0)) {
+      issues.push("completion_deadline_invalid");
+    }
     if (!validMessages(request.messages)) issues.push("completion_messages_invalid");
     if (!Number.isInteger(request.maxTokens) || request.maxTokens < 1 || request.maxTokens > this.#config.maxOutputTokens) issues.push("completion_token_bound_exceeded");
     if (typeof request.temperature !== "number" || !Number.isFinite(request.temperature) || request.temperature < 0 || request.temperature > 1) issues.push("completion_temperature_invalid");
@@ -244,23 +271,81 @@ export class NvidiaNimProvider {
     if (request.inferencePolicy === "CONSTRAINED_JSON" && responseFormat === null) issues.push("completion_constrained_json_requires_response_format");
     if (Buffer.byteLength(canonical(request.messages), "utf8") > this.#config.maxPromptBytes) issues.push("completion_prompt_bound_exceeded");
     if (issues.length > 0) return this.#result("REJECTED", [...new Set(issues)].join(","), null, null, requestDigest, null, null, emptyUsage(), false);
-    const credential = this.#config.credentialSource.read();
+    // Serialize once: queued requests and retries cannot silently pick up caller mutations.
+    const body = JSON.stringify(payload);
+    const now = () => this.#capacity?.clock.now() ?? Date.now();
+    const deadline = Math.min(request.deadlineEpochMs ?? Infinity, now() + NVIDIA_CAPACITY_POLICY.defaultRequestLifetimeMs);
+    const signal = request.signal ?? new AbortController().signal;
+    let httpAttempts = 0;
+    let rateLimitedResponses = 0;
+    let capacityWaitMs = 0;
+    let previous: NvidiaNimCompletionResult | null = null;
+    const finish = (result: NvidiaNimCompletionResult, notBeforeEpochMs: number | null = null): NvidiaNimCompletionResult => {
+      const delivery: NvidiaNimDeliveryEvidence = Object.freeze({ policy: "nvidia-capacity/1", requestsPerMinute: 40,
+        scope: "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT", httpAttempts, rateLimitedResponses, capacityWaitMs,
+        state: result.decision === "COMPLETED" ? "DELIVERED" : result.decision === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY" : "STOPPED",
+        notBeforeEpochMs, authorityRenewed: false });
+      return Object.freeze({ ...result, evidence: Object.freeze({ ...result.evidence, delivery }) });
+    };
+    const stopped = (cancelled: boolean, notBeforeEpochMs: number | null = null) => finish(this.#result(
+      cancelled ? "BLOCKED" : "WAITING_FOR_CAPACITY", cancelled ? "nvidia_provider_cancelled" : "nvidia_capacity_requires_renewed_run",
+      null, null, requestDigest, null, previous?.evidence.statusCode ?? null, emptyUsage(), httpAttempts > 0,
+      previous?.evidence.providerRequestId ?? null), notBeforeEpochMs);
+    while (true) {
+      if (signal.aborted) return stopped(true);
+      if (now() >= deadline) return stopped(false);
+      if (this.#capacity) {
+        const admission = await this.#capacity.acquire(deadline, signal);
+        capacityWaitMs += admission.waitedMs;
+        if (admission.state !== "ADMITTED") return stopped(admission.state === "CANCELLED", admission.notBeforeEpochMs);
+      }
+      // Admission can await; recheck before any credential read or external request.
+      if (signal.aborted) return stopped(true);
+      if (now() >= deadline) return stopped(false);
+      previous = await this.#attempt(body, requestDigest, signal, deadline);
+      if (previous.evidence.networkAttempted) httpAttempts += 1;
+      if (previous.evidence.statusCode === 429) rateLimitedResponses += 1;
+      if (previous.evidence.statusCode === 429 && this.#capacity) continue;
+      if (signal.aborted) return stopped(true);
+      if (now() >= deadline && previous.decision === "COMPLETED") {
+        return finish(this.#result("BLOCKED", "nvidia_completion_run_expired", null, null, requestDigest,
+          previous.evidence.responseDigest, previous.evidence.statusCode, previous.evidence.usage, httpAttempts > 0));
+      }
+      return finish(previous);
+    }
+  }
+
+  async #attempt(body: string, requestDigest: string, signal: AbortSignal, deadlineEpochMs: number): Promise<NvidiaNimCompletionResult> {
+    let credential: string | undefined;
+    try { credential = this.#config.credentialSource.read(); }
+    catch { return this.#result("BLOCKED", "nvidia_api_credential_unavailable", null, null, requestDigest, null, null, emptyUsage(), false); }
     if (typeof credential !== "string" || credential.length < 16 || /\s/.test(credential)) {
       return this.#result("BLOCKED", "nvidia_api_credential_unavailable", null, null, requestDigest, null, null, emptyUsage(), false);
     }
     if (!this.#transport) return this.#result("BLOCKED", "network_transport_unavailable", null, null, requestDigest, null, null, emptyUsage(), false);
+    const remainingMs = deadlineEpochMs - (this.#capacity?.clock.now() ?? Date.now());
+    if (remainingMs <= 0) return this.#result("BLOCKED", "nvidia_completion_run_expired", null, null,
+      requestDigest, null, null, emptyUsage(), false);
     const controller = new AbortController();
+    const abort = () => controller.abort();
+    signal.addEventListener("abort", abort, { once: true });
+    if (signal.aborted) { signal.removeEventListener("abort", abort); return this.#result("BLOCKED", "nvidia_provider_cancelled",
+      null, null, requestDigest, null, null, emptyUsage(), false); }
     let timeoutTriggered = false;
-    const timeout = setTimeout(() => { timeoutTriggered = true; controller.abort(); }, this.#config.timeoutMs);
+    const timeout = setTimeout(() => { timeoutTriggered = true; controller.abort(); }, Math.min(this.#config.timeoutMs, remainingMs));
     try {
+      this.#capacity?.recordDispatch();
       const response = await this.#transport(NVIDIA_NIM_CHAT_COMPLETIONS_URL, {
         method: "POST",
         headers: { Authorization: `Bearer ${credential}`, Accept: "application/json", "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body,
         signal: controller.signal,
       });
       const providerRequestId = safeProviderRequestId(response.headers.get("x-request-id") ?? response.headers.get("request-id"));
       if (!response.ok) {
+        if (response.status === 429) this.#capacity?.defer(response.headers.get("retry-after"));
+        // Error bodies are not model input or evidence; release the response without persisting it.
+        try { await response.body?.cancel(); } catch { /* transport cleanup cannot make rejection successful */ }
         return this.#result("PROVIDER_ERROR", `nvidia_provider_http_${response.status}`, null, null, requestDigest, null,
           response.status, emptyUsage(), true, providerRequestId);
       }
@@ -290,6 +375,7 @@ export class NvidiaNimProvider {
       return this.#result("PROVIDER_ERROR", reason, null, null, requestDigest, null, null, emptyUsage(), true);
     } finally {
       clearTimeout(timeout);
+      signal.removeEventListener("abort", abort);
     }
   }
 

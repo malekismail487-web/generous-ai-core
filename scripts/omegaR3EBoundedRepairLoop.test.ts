@@ -14,6 +14,7 @@ import { R3BControlledEngineeringExecutor, type R3BEngineeringToolDefinition, ty
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
 import { GroundedRepositoryContext } from "../src/lib/codelab/repository/groundedRepositoryContext";
 import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/model/nvidiaNimProvider";
+import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapacity";
 import { observeEngineeringExecution, type EngineeringObservation } from "../src/lib/codelab/observation/r3EngineeringObservation";
 
 let passed = 0;
@@ -116,10 +117,10 @@ async function verification(pack: AppliedPack, label: string): Promise<{ executo
   return { executor, request };
 }
 
-function cognition(transport: NvidiaNimTransport): NyxNemotronEngineeringCognition {
+function cognition(transport: NvidiaNimTransport, testCapacity?: NvidiaCapacityCoordinator): NyxNemotronEngineeringCognition {
   const provider = NvidiaNimProvider.create({ providerId: `NYX-R3E-${sequence}`, model: "nvidia/nemotron-3-ultra",
     authorityMode: "TEST_DOUBLE_ONLY", credentialSource: { sourceIdentity: "test-double:r3e", read: () => "test-only-credential-material" },
-    maxPromptBytes: 100_000, maxOutputTokens: 2_048, timeoutMs: 1_000, transport });
+    maxPromptBytes: 100_000, maxOutputTokens: 2_048, timeoutMs: 1_000, transport, testCapacity });
   return NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-R3E-COGNITION", provider, maxPromptBytes: 50_000, maxOutputTokens: 1_024 });
 }
 
@@ -219,6 +220,35 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
     "rejected shell intent never reaches actuation and subsequent correction grants no additional authority");
 }
 
+{
+  let time = Date.now(); let calls = 0;
+  const gate = new NvidiaCapacityCoordinator({ now: () => time, sleep: async (ms) => { time += ms; } });
+  const nyx = cognition(async () => {
+    calls += 1;
+    return calls === 1 ? new Response(null, { status: 429, headers: { "retry-after": "2" } }) : providerResponse(modelResponse(CORRECT_SOURCE));
+  }, gate);
+  const result = await loop(nyx).run(loopRequest());
+  check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 1 && calls === 2,
+    "real bounded Omega loop survives a simulated 429 and verifies the resumed NYX repair in one cognition cycle");
+  check(result.cognitionFailures.length === 0 && result.lastCognitionEvidence?.delivery?.rateLimitedResponses === 1
+    && result.lastCognitionEvidence.delivery.capacityWaitMs >= 2000,
+  "capacity wait propagates as delivery evidence rather than falsified reasoning or repair feedback");
+}
+{
+  const gate = new NvidiaCapacityCoordinator();
+  gate.defer("3600");
+  let calls = 0; let preparations = 0;
+  const nyx = cognition(async () => { calls += 1; return providerResponse(modelResponse(CORRECT_SOURCE)); }, gate);
+  const result = await loop(nyx, { builderIdentity: "CAPACITY-MUST-NOT-ACTUATE", prepare: async () => {
+    preparations += 1; throw new Error("must_not_prepare");
+  } }).run(loopRequest());
+  check(result.outcome === "WAITING_FOR_CAPACITY" && result.reason === "repair_paused_for_capacity_requires_fresh_authority",
+    "run pauses honestly when provider capacity cannot return within its existing authorized lifetime");
+  check(calls === 0 && preparations === 0 && result.modelCallCount === 0 && result.cognitionFailures.length === 0,
+    "capacity-only pause creates no model attempt, failure hypothesis or disposable candidate");
+  check(!result.authorityGranted && !result.sourceRepositoryWriteAuthority && !result.productionAuthority,
+    "waiting never renews the Omega authority graph");
+}
 {
   let preparations = 0;
   const unusedBuilder = { builderIdentity: "NO-PROGRESS-UNUSED", prepare: async () => {

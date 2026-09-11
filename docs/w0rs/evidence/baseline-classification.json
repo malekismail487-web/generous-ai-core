@@ -8296,6 +8296,7 @@
           "src/lib/codelab/engine/loopKernel.ts",
           "src/lib/codelab/engine/perception.ts",
           "src/lib/codelab/executor/r2SandboxProvisioningSpec.ts",
+          "src/lib/codelab/model/nvidiaNimProvider.ts",
           "src/lib/codelab/orchestra/adp.ts",
           "src/lib/codelab/orchestra/capabilities.ts",
           "src/lib/codelab/orchestra/capacity.ts",

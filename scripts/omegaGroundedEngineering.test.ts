@@ -11,7 +11,7 @@ import type { NyxEvidenceRequest } from "../src/lib/codelab/cognition/nyxNemotro
 import { assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { NYX_CONTEXT_TASKS, NYX_CONTEXT_MUTANTS, NYX_CONTEXT_EXPERIMENT,
-  NYX_CONTEXT_REPAIR_FROZEN_CORE } from "./omega/nyx-context-experiment";
+  NYX_CONTEXT_LINES_FROZEN_CORE } from "./omega/nyx-context-experiment";
 
 let passed = 0;
 let failed = 0;
@@ -24,13 +24,13 @@ async function rejects(operation: () => Promise<unknown>, pattern: RegExp, label
 }
 const task = NYX_CONTEXT_TASKS[0];
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
-for (const [path, digest] of Object.entries(NYX_CONTEXT_REPAIR_FROZEN_CORE.files)) {
+for (const [path, digest] of Object.entries(NYX_CONTEXT_LINES_FROZEN_CORE.files)) {
   check(hash((await readFile(path, "utf8")).replace(/\r\n/g, "\n")) === digest,
     `new diagnostic pins exact current core ${path}`);
-  if (!path.endsWith("nyxNemotronEngineeringCognition.ts")) {
+  if (path.includes("/assurance/")) {
     const original = spawnSync("git", ["show", `f31d149d5c2e00a844aae178419ff614842783e2:${path}`], { encoding: "utf8" });
     check(original.status === 0 && hash(original.stdout.replace(/\r\n/g, "\n")) === digest,
-      `feedback experiment preserves baseline provider, execution and independent acceptance ${path}`);
+      `encoding/delivery experiment preserves independent acceptance exactly ${path}`);
   }
 }
 const parent = await mkdtemp(join(tmpdir(), "nyx-grounded-engineering-"));
@@ -201,7 +201,8 @@ globalThis.fetch = async (url, init) => {
     evidenceRefs: ["OBJECTIVE", "FILE:src/summary.mjs", "FILE:src/opaque.mjs"],
     invariant: "The independent mean has variance equal to summed variance divided by squared sample count",
     expectedResult: "Visible calibration verification passes", counterexamples: ["Unequal noise, negative gain, single sample"],
-    changes: [{target: "src/summary.mjs", replacement: correct + (prompt.requiredCorrections.length ? "" : "//" + "x".repeat(130))}]};
+    changes: [{target: "src/summary.mjs", replacement: {
+      lines: (correct + (prompt.requiredCorrections.length ? "" : "//" + "x".repeat(130))).split("\\n"), lineEnding: "LF" }}]};
   return new Response(JSON.stringify({id: "SYNTHETIC-OFFLINE-ONLY", choices: [{message: {content: JSON.stringify(intent)},
     finish_reason: "stop"}], usage: {prompt_tokens: 100, completion_tokens: 100, total_tokens: 200}}), {status: 200});
 };
@@ -212,15 +213,16 @@ globalThis.fetch = async (url, init) => {
     "--import", pathToFileURL(preloadPath).href, "scripts/omega/nyx-quality-v4-live-eval.ts"], {
     cwd: resolve("."), encoding: "utf8", timeout: 90_000, maxBuffer: 5_000_000,
     env: { ...process.env, OMEGA_ALLOW_NVIDIA_NETWORK: "1", NVIDIA_API_KEY: "synthetic-offline-key-not-a-credential",
-      NYX_QUALITY_SUITE: "CONTEXT_REPAIR", RUNNER_TEMP: parent },
+      NYX_QUALITY_SUITE: "CONTEXT_LINES", RUNNER_TEMP: parent },
   });
   if (run.status !== 0) console.error(run.stdout.slice(-15_000), run.stderr.slice(-2000));
   check(run.status === 0, "existing live driver closes both arms through R1/R2/R3 with synthetic transport");
-  const reportName = (await readdir(parent)).find((name) => /^nyx-quality-context_repair-.*\.json$/.test(name));
+  const reportName = (await readdir(parent)).find((name) => /^nyx-quality-context_lines-.*\.json$/.test(name));
   assert.ok(reportName, "integration control must emit a sanitized report");
   const report = JSON.parse(await readFile(join(parent, reportName), "utf8"));
-  check(report.experiment.version === "nyx-context-repair/2" && report.cognitionContractVersion === "nyx-causal-engineering-intent/6"
-    && report.experiment.comparisonBaselineRun === "34481454745" && report.frozenCorePreserved,
+  check(report.experiment.version === "nyx-context-lines/3" && report.cognitionContractVersion === "nyx-causal-engineering-intent/7"
+    && report.experiment.comparisonBaselineRun === "34528025060" && report.frozenCorePreserved
+    && report.sourceRepresentation === "LINES" && report.tasks.every((item: { sourceRepresentation: string }) => item.sourceRepresentation === "LINES"),
   "new experiment declares lineage without rescoring the historical failed run");
   check(report.tasks.length === 2 && report.tasks.every((item: { hiddenAcceptance: string }) => item.hiddenAcceptance === "PASS"),
     "candidate-blind deterministic acceptance succeeds in both synthetic control arms");

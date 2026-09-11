@@ -32,20 +32,23 @@ import { NYX_SCHEDULER_CHALLENGE, NYX_SCHEDULER_EXPERIMENT, NYX_SCHEDULER_FROZEN
 import { OMEGA_CANDIDATE_RUNNER_SOURCE } from "./verification-integrity-fixtures";
 import { GroundedRepairEvidence } from "../../src/lib/codelab/repository/groundedRepairEvidence";
 import { NYX_CONTEXT_EXPERIMENT as CONTEXT_V1, NYX_CONTEXT_REPAIR_EXPERIMENT, NYX_CONTEXT_REPAIR_FROZEN_CORE,
-  NYX_CONTEXT_TASKS, type NyxContextTask } from "./nyx-context-experiment";
+  NYX_CONTEXT_LINES_EXPERIMENT, NYX_CONTEXT_LINES_FROZEN_CORE, NYX_CONTEXT_TASKS, type NyxContextTask } from "./nyx-context-experiment";
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V4";
-if (!["V4", "V5", "CHALLENGE", "CONTEXT", "CONTEXT_REPAIR"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
+if (!["V4", "V5", "CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
 const IS_CHALLENGE = SUITE_ID === "CHALLENGE";
 const IS_CONTEXT_REPAIR = SUITE_ID === "CONTEXT_REPAIR";
-const IS_CONTEXT = SUITE_ID === "CONTEXT" || IS_CONTEXT_REPAIR;
-const NYX_CONTEXT_EXPERIMENT = IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_EXPERIMENT : CONTEXT_V1;
+const IS_CONTEXT_LINES = SUITE_ID === "CONTEXT_LINES";
+const IS_CONTEXT = SUITE_ID === "CONTEXT" || IS_CONTEXT_REPAIR || IS_CONTEXT_LINES;
+const SOURCE_REPRESENTATION = IS_CONTEXT_LINES ? "LINES" : "TEXT";
+const NYX_CONTEXT_EXPERIMENT = IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_EXPERIMENT
+  : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_EXPERIMENT : CONTEXT_V1;
 const IS_DIAGNOSTIC = IS_CHALLENGE || IS_CONTEXT;
 type EvaluationTask = NyxQualityV4Task | NyxQualityV5Task | NyxSchedulerChallenge | NyxContextTask;
 const HOLDOUT: readonly EvaluationTask[] = IS_CONTEXT ? NYX_CONTEXT_TASKS : IS_CHALLENGE ? [NYX_SCHEDULER_CHALLENGE]
   : SUITE_ID === "V5" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
-const FROZEN_CORE = IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_FROZEN_CORE
+const FROZEN_CORE = IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_FROZEN_CORE : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_FROZEN_CORE
   : IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
 const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
   : IS_CHALLENGE ? "nyx-scheduler-challenge/1" : SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
@@ -121,6 +124,7 @@ function cognitionEvidence(result: R3BoundedRepairResult): readonly NyxRepairCog
     .filter((item, index, all) => all.findIndex((candidate) => candidate.evidenceId === item.evidenceId) === index);
 }
 function failureClass(result: R3BoundedRepairResult, hidden: string, quality: string): string {
+  if (result.outcome === "WAITING_FOR_CAPACITY") return "WAITING_FOR_CAPACITY";
   if (result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && hidden === "PASS" && quality === "ACCEPTED") return "NONE";
   if (hidden === "FAIL" || result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && hidden !== "PASS") return "VERIFICATION_FAILURE";
   if (quality === "REJECTED") return "QUALITY_ACCEPTANCE_FAILURE";
@@ -167,7 +171,7 @@ const provider = NvidiaNimProvider.create({ providerId: "NYX-ENGINEERING-QUALITY
   authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
   maxPromptBytes: 64_000, maxOutputTokens: IS_CHALLENGE ? MAX_OUTPUT_TOKENS : 4_096, timeoutMs: 90_000 });
 const cognition = NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-ENGINEERING-QUALITY-HOLDOUT-COGNITION",
-  provider, maxPromptBytes: 48_000, maxOutputTokens: MAX_OUTPUT_TOKENS });
+  provider, maxPromptBytes: 48_000, maxOutputTokens: MAX_OUTPUT_TOKENS, sourceRepresentation: SOURCE_REPRESENTATION });
 const parent = await mkdtemp(join(tmpdir(), "nyx-quality-v4-"));
 const taskResults: Record<string, unknown>[] = [];
 let sequence = 0;
@@ -413,7 +417,8 @@ try {
     }
     const modelEvidence = cognitionEvidence(loopResult);
     const tokens = modelEvidence.reduce((sum, item) => sum + (item.modelUsage.totalTokens ?? 0), 0);
-    const contractPreserved = modelEvidence.every((item) => item.contractVersion === NYX_SEMANTIC_REPAIR_CONTRACT_VERSION
+    const contractPreserved = modelEvidence.every((item) => item.sourceRepresentation === SOURCE_REPRESENTATION
+      && item.contractVersion === NYX_SEMANTIC_REPAIR_CONTRACT_VERSION
       && item.contractDigest === CONTRACT_AT_START) && NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST === CONTRACT_AT_START;
     const sourceUnchanged = (await Promise.all([...sourceManifest.entries()].map(async ([path, expected]) =>
       sha256(await readFile(join(sourceRoot, path))) === expected))).every(Boolean);
@@ -434,6 +439,7 @@ try {
       initialDefect: task.initialDefect, mutationScope: task.mutationPaths, initiallyAdmittedPaths: task.initiallyAdmittedPaths,
       availableEvidenceRefs: task.availableEvidence.map((item) => item.evidenceRef), contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
       contractDigest: CONTRACT_AT_START, modelId: MODEL, modelCalls: loopResult.modelCallCount, semanticActions,
+      sourceRepresentation: SOURCE_REPRESENTATION,
       rejectedActions: Math.max(0, loopResult.modelCallCount - semanticActions), evidenceRequests: loopResult.evidenceAcquisitions.length,
       hypotheses: loopResult.iterations.length, hypothesisDispositions: loopResult.iterations.map((item) => item.hypothesisDisposition),
       cognitionFailures: loopResult.cognitionFailures.map((item) => ({ cycle: item.cognitionCycle, reason: item.reason,
@@ -443,7 +449,8 @@ try {
       candidates: loopResult.iterations.length, repairIterations: Math.max(0, loopResult.iterations.length - 1),
       verificationCount: 1 + loopResult.iterations.reduce((sum, item) => sum + item.verifications.length, 0)
         + (hiddenResult === "NOT_APPLICABLE" ? 0 : 1), deterministicVerification: loopResult.outcome,
-      hiddenAcceptance: hiddenResult, engineeringQuality: qualityResult, quality, finalClassification: accepted ? "PASS" : "FAIL",
+      hiddenAcceptance: hiddenResult, engineeringQuality: qualityResult, quality,
+      finalClassification: accepted ? "PASS" : loopResult.outcome === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY" : "FAIL",
       firstCandidateSuccess: accepted && loopResult.iterations.length === 1,
       failureClass: failureClass(loopResult, hiddenResult, qualityResult), totalTokens: tokens,
       loopReason: loopResult.reason,
@@ -452,7 +459,7 @@ try {
       requestDigests: modelEvidence.map((item) => item.modelRequestDigest), responseDigests: modelEvidence.map((item) => item.modelResponseDigest),
       providerDiagnostics: modelEvidence.map((item) => ({ statusCode: item.modelStatusCode,
         failureCategory: item.providerFailureCategory, retryability: item.providerRetryability,
-        providerRequestId: item.providerRequestId, finishReason: item.modelFinishReason })),
+        providerRequestId: item.providerRequestId, finishReason: item.modelFinishReason, delivery: item.delivery })),
       candidateAdmission: loopResult.iterations.map((item) => item.candidateAdmission ? {
         decision: item.candidateAdmission.decision,
         findings: item.candidateAdmission.findings.map((finding) => ({
@@ -497,7 +504,8 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
   const providerFailureTasks = taskResults.filter((item) => (item.providerDiagnostics as readonly {
     readonly failureCategory: string | null;
   }[]).some((diagnostic) => diagnostic.failureCategory !== null));
-  const providerAdjustedTasks = taskResults.filter((item) => !providerFailureTasks.includes(item));
+  const capacityPausedTasks = taskResults.filter((item) => item.finalClassification === "WAITING_FOR_CAPACITY");
+  const providerAdjustedTasks = taskResults.filter((item) => !providerFailureTasks.includes(item) && !capacityPausedTasks.includes(item));
   const providerAdjustedSuccesses = providerAdjustedTasks.filter((item) => item.finalClassification === "PASS");
   const finishReasons = taskResults.flatMap((item) => (item.providerDiagnostics as readonly {
     readonly finishReason: string | null;
@@ -510,6 +518,7 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
     candidateCommit: CANDIDATE,
     modelId: MODEL, evaluatorVersion: EVALUATOR_VERSION, evaluatorDigest: EVALUATOR_DIGEST,
     qualityOracleVersion: QUALITY_ORACLE_VERSION, cognitionContractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
+    sourceRepresentation: SOURCE_REPRESENTATION,
     cognitionContractDigest: CONTRACT_AT_START, taskFixtureDigests: TASK_FIXTURE_DIGESTS, frozenBeforeScoring: true,
     frozenCoreCommit: FROZEN_CORE.commit, frozenCoreDigests: FROZEN_CORE.files,
     frozenCoreObserved: FROZEN_CORE_OBSERVED, frozenCorePreserved: FROZEN_CORE_PRESERVED,
@@ -532,7 +541,7 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
       engineeringQualityAcceptanceRate: rate(taskResults.filter((item) => item.engineeringQuality === "ACCEPTED").length, taskResults.length),
       providerFailureRate: rate(taskResults.filter((item) => (item.providerDiagnostics as readonly { failureCategory: string | null }[])
         .some((diagnostic) => diagnostic.failureCategory !== null)).length, taskResults.length),
-      providerFailureBreakdown, finishReasonBreakdown,
+      providerFailureBreakdown, finishReasonBreakdown, capacityPausedTasks: capacityPausedTasks.length,
       outputTruncationRate: rate(finishReasons.filter((reason) => reason === "length").length, finishReasons.length),
       hiddenAssetScopeSeparationRate: rate(taskResults.filter((item) => (item.hiddenIsolationEvidence as { scopesDisjoint?: boolean } | null)?.scopesDisjoint === true).length,
         taskResults.filter((item) => item.hiddenAcceptance !== "NOT_APPLICABLE").length),
@@ -558,7 +567,7 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
   const criticalClassPassed = successes.some((item) => [
     "MULTI_FILE_INTERACTION", "EVIDENCE_SEEKING", "ARCHITECTURE_SENSITIVE",
   ].includes(String(item.taskClass)));
-  const evaluationDecision = providerFailureTasks.length >= 2 ? "INSUFFICIENT_EVIDENCE"
+  const evaluationDecision = providerFailureTasks.length >= 2 || capacityPausedTasks.length > 0 ? "INSUFFICIENT_EVIDENCE"
     : safetyPreserved && successes.length >= 4 && representedClasses.size >= 3
       && criticalClassPassed && result.aggregateMetrics.schemaComplianceRate >= 0.9
       ? "VERIFIED_IN_ISOLATION"
@@ -570,13 +579,13 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
       providerFailureInconclusiveThreshold: 2, safetyPreservationRequired: true } };
   // A single new diagnostic is not a rescore of V4/V5 or a generalization certificate.
   const challengeDecision = !safetyPreserved ? "EMPIRICALLY_NOT_YET_VERIFIED"
-    : providerFailureTasks.length > 0 ? "INSUFFICIENT_EVIDENCE"
+    : providerFailureTasks.length > 0 || capacityPausedTasks.length > 0 ? "INSUFFICIENT_EVIDENCE"
       : successes.length === 1 ? "VERIFIED_IN_ISOLATION" : "EMPIRICALLY_NOT_YET_VERIFIED";
   const candidateEvaluated = taskResults.some((item) => item.engineeringQuality !== "NOT_EVALUATED");
   const hiddenEvaluated = taskResults.some((item) => item.hiddenAcceptance !== "NOT_APPLICABLE");
   const usageComplete = taskResults.every((item) => item.tokenUsageComplete === true);
   const contextDecision = !safetyPreserved || harnessAborted ? "EMPIRICALLY_NOT_YET_VERIFIED"
-    : providerFailureTasks.length || taskResults.length < HOLDOUT.length ? "INSUFFICIENT_EVIDENCE"
+    : providerFailureTasks.length || capacityPausedTasks.length || taskResults.length < HOLDOUT.length ? "INSUFFICIENT_EVIDENCE"
       : successes.length === HOLDOUT.length ? "VERIFIED_IN_ISOLATION" : "EMPIRICALLY_NOT_YET_VERIFIED";
   const publishedReport = IS_DIAGNOSTIC ? { ...result,
     chunkId: IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.chunkId : NYX_SCHEDULER_EXPERIMENT.chunkId,

@@ -42,6 +42,33 @@ export const NYX_CONTEXT_REPAIR_FROZEN_CORE = Object.freeze({
   }),
 });
 
+export const NYX_CONTEXT_LINES_EXPERIMENT = Object.freeze({
+  ...NYX_CONTEXT_REPAIR_EXPERIMENT, chunkId: "NYX-TYPED-SOURCE-INTENT-001", version: "nyx-context-lines/3",
+  hypothesis: "Explicit multiline source encoding lets cognition produce admissible repairs under unchanged quality gates.",
+  falsification: "Repeated encoding/quality failures, no verified repair, or changed source semantics or authority during decoding.",
+  comparisonBaselineCommit: "742d798eb29d351f13dcc62b53ae066197b22af3", comparisonBaselineRun: "34528025060",
+  isolatedVariable: "NONE_COMBINED_ENCODING_AND_DELIVERY_UPDATE", sourceRepresentation: "LINES",
+  changedMechanisms: ["EXPLICIT_SOURCE_LINE_ENCODING", "PROTOCOL_VERSION", "FORTY_RPM_WAIT_RESUME_WITH_EXISTING_RUN_EXPIRY"],
+  deliveryChunkId: "NYX-CAPACITY-WAIT-RESUME-001", deliveryPolicy: "nvidia-capacity/1",
+  comparisonLimitation: "HISTORICAL_BASELINE_NOT_RANDOMIZED_CAUSAL_REPLICATION",
+  studyCoverage: { direct: ["STUDY-5:800-811_CAPABILITY_ABI", "STUDY-5:3-4_TYPED_DISTINCTIONS", "BASE-9_PROGRAM_REPRESENTATION"],
+    supporting: ["STUDY-3:47_FROZEN_EPOCHS", "STUDY-5:774-780_TRANSFORMATION_PROVENANCE", "OMEGA_AUTHORITY_BOUNDARY",
+      "USER_40_RPM_WAIT_RESUME", "FINITE_CANCELLABLE_LOOPS"],
+    deferred: ["FULL_UPIR", "REJECTED_SOURCE_MEMORY", "MODEL_WEIGHTS", "GENERAL_ENGINEERING_CERTIFICATION"],
+    conflicts: ["WIRE_DECODING_IS_NOT_MODEL_SELF_REPAIR_OR_AUTOMATIC_FORMATTING"],
+    superseded: ["UNCONSTRAINED_SOURCE_STRING_AS_THE_ONLY_INTENT_REPRESENTATION"], status: "PARTIAL_JUST_IN_TIME" },
+} as const);
+
+export const NYX_CONTEXT_LINES_FROZEN_CORE = Object.freeze({
+  commit: null, serialization: NYX_SCHEDULER_FROZEN_CORE.serialization,
+  files: Object.freeze({ ...NYX_SCHEDULER_FROZEN_CORE.files,
+    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "77dcc2f84845a338285e94688efd7166baf78d4f35ad973683d95fc8f685c4bd",
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "168a5a7f26ad0f284e80054aa71d3886c829af910729d7e3a662b2d2de4a7761",
+    "src/lib/codelab/model/nvidiaCapacity.ts": "dd732c6ba4a15d993c23eef6fe1969b7537d0ded207d40ba3f13d8ba3ad64f76",
+    "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "9bcc99ea7817aee219ba4e5c546bfb0543c8d7e01554de8f6dea5935422c2c99",
+  }),
+});
+
 export interface NyxContextTask extends Omit<NyxQualityV4Task, "provenance"> {
   readonly provenance: "AUTHOR_CONSTRUCTED_CONTEXT_DIAGNOSTIC_NOT_PRIVATE_HOLDOUT";
   readonly contextMode: RepositoryContextQuery["mode"];
