@@ -11,7 +11,7 @@ import type { NyxEvidenceRequest } from "../src/lib/codelab/cognition/nyxNemotro
 import { assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { NYX_CONTEXT_TASKS, NYX_CONTEXT_MUTANTS, NYX_CONTEXT_EXPERIMENT,
-  NYX_CONFIGURATION_FROZEN_CORE } from "./omega/nyx-context-experiment";
+  NYX_CONFIGURATION_FROZEN_CORE, NYX_CAPACITY_STATUS_FROZEN_CORE } from "./omega/nyx-context-experiment";
 
 let passed = 0;
 let failed = 0;
@@ -25,6 +25,11 @@ async function rejects(operation: () => Promise<unknown>, pattern: RegExp, label
 const task = NYX_CONTEXT_TASKS[0];
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
 for (const [path, digest] of Object.entries(NYX_CONFIGURATION_FROZEN_CORE.files)) {
+  const historical = spawnSync("git", ["show", `ae3ed64cf3d7a3e73bcb6c95b24456f2b92f2c94:${path}`], { encoding: "utf8" });
+  check(historical.status === 0 && hash(historical.stdout.replace(/\r\n/g, "\n")) === digest,
+    `completed comparison keeps exact historical artifact ${path}`);
+}
+for (const [path, digest] of Object.entries(NYX_CAPACITY_STATUS_FROZEN_CORE.files)) {
   check(hash((await readFile(path, "utf8")).replace(/\r\n/g, "\n")) === digest,
     `new diagnostic pins exact current core ${path}`);
   if (path.includes("/assurance/")) {
@@ -213,15 +218,15 @@ globalThis.fetch = async (url, init) => {
     "--import", pathToFileURL(preloadPath).href, "scripts/omega/nyx-quality-v4-live-eval.ts"], {
     cwd: resolve("."), encoding: "utf8", timeout: 90_000, maxBuffer: 5_000_000,
     env: { ...process.env, OMEGA_ALLOW_NVIDIA_NETWORK: "1", NVIDIA_API_KEY: "synthetic-offline-key-not-a-credential",
-      NYX_QUALITY_SUITE: "COMPARISON", RUNNER_TEMP: parent },
+      NYX_QUALITY_SUITE: "CAPACITY_STATUS", RUNNER_TEMP: parent },
   });
   if (run.status !== 0) console.error(run.stdout.slice(-15_000), run.stderr.slice(-2000));
   check(run.status === 0, "existing live driver closes all three comparison arms through R1/R2/R3 with synthetic transport");
-  const reportName = (await readdir(parent)).find((name) => /^nyx-quality-comparison-.*\.json$/.test(name));
+  const reportName = (await readdir(parent)).find((name) => /^nyx-quality-capacity_status-.*\.json$/.test(name));
   assert.ok(reportName, "integration control must emit a sanitized report");
   const report = JSON.parse(await readFile(join(parent, reportName), "utf8"));
-  check(report.experiment.version === "nyx-configuration-comparison/1" && report.cognitionContractVersion === "nyx-causal-engineering-intent/7"
-    && report.experiment.comparisonBaselineRun === "34585934619" && report.frozenCorePreserved
+  check(report.experiment.version === "nyx-capacity-status-control/1" && report.cognitionContractVersion === "nyx-causal-engineering-intent/7"
+    && report.experiment.comparisonBaselineRun === "34624336290" && report.frozenCorePreserved
     && report.sourceRepresentation === "LINES" && report.tasks.every((item: { sourceRepresentation: string }) => item.sourceRepresentation === "LINES"),
   "new experiment declares lineage without rescoring the historical failed run");
   check(report.tasks.length === 3 && report.tasks.every((item: { hiddenAcceptance: string }) => item.hiddenAcceptance === "PASS"),

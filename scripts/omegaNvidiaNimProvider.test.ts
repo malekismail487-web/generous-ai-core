@@ -5,6 +5,7 @@ import {
   nvidiaNimCredentialFromEnvironment,
   type NvidiaNimCompletionRequest,
   type NvidiaNimTransport,
+  type NvidiaNimCapacityProgress,
 } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { NvidiaCapacityCoordinator, NVIDIA_CAPACITY_POLICY, nvidiaRetryAfterMs,
   type CapacityClock } from "../src/lib/codelab/model/nvidiaCapacity";
@@ -232,13 +233,102 @@ async function drive<T>(promise: Promise<T>, clock: ManualClock): Promise<T> {
   return promise;
 }
 function capacityProvider(coordinator: NvidiaCapacityCoordinator, transport: NvidiaNimTransport,
-  read: () => string | undefined = () => "test-credential-not-a-real-secret") {
+  read: () => string | undefined = () => "test-credential-not-a-real-secret",
+  onCapacityProgress?: (progress: NvidiaNimCapacityProgress) => void) {
   return NvidiaNimProvider.create({ providerId: "CAPACITY-TEST", model: "nvidia/test-model", authorityMode: "TEST_DOUBLE_ONLY",
     credentialSource: { sourceIdentity: "test-double:capacity", read }, maxPromptBytes: 4096, maxOutputTokens: 128,
-    timeoutMs: 1000, transport, testCapacity: coordinator });
+    timeoutMs: 1000, transport, testCapacity: coordinator, onCapacityProgress });
 }
 const success = () => new Response(JSON.stringify({ choices: [{ message: { content: "OMEGA_NIM_OK" }, finish_reason: "stop" }],
   usage: { prompt_tokens: 10, completion_tokens: 4, total_tokens: 14 } }), { status: 200 });
+
+{
+  const clock = new ManualClock(); const events: NvidiaNimCapacityProgress[] = [];
+  const starts: number[] = []; const bodies: string[] = [];
+  let earlyRetry = false;
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async (_url, init) => {
+    starts.push(clock.time); bodies.push(String(init?.body));
+    return starts.length === 1 ? new Response("private-rate-limit-response", { status: 429 }) : success();
+  }, undefined, (event) => {
+    events.push(event);
+    if (event.state === "WAITING_FOR_CAPACITY" && starts.length !== 1) earlyRetry = true;
+  });
+  const result = await drive(client.complete(request()), clock);
+  const waits = events.filter((event) => event.state === "WAITING_FOR_CAPACITY");
+  check(waits.length === 60 && waits[0].secondsUntilRetry === 60 && waits.at(-1)?.secondsUntilRetry === 1,
+    "missing Retry-After exposes an honest sixty-to-one countdown while the same request stays pending");
+  check(!earlyRetry && starts.length === 2 && starts[1] - starts[0] === 60000,
+    "sixty-second wait performs no pretend inference and resumes immediately at the eligible time");
+  check(events.at(-2)?.state === "RESUMING" && events.at(-1)?.state === "COMPLETED"
+    && result.decision === "COMPLETED" && result.evidence.delivery?.capacityWaitMs === 60000,
+    "countdown automatically transitions to real retry and observed response without human restart");
+  check(waits.every((event) => event.automaticResume) && events.every((event) => !event.taskCompletionClaimed && !event.authorityRenewed)
+    && events.at(-1)?.automaticResume === false,
+    "status never fabricates task progress, task acceptance, or authority renewal");
+  check(new Set(bodies).size === 1 && events.every((event) => event.requestDigest === result.evidence.requestDigest)
+    && !bodies[0].includes("onCapacityProgress"),
+    "wait and resume bind one exact request without injecting host status into model input");
+  check(!JSON.stringify(events).includes("test-credential") && !JSON.stringify(events).includes("private-rate-limit-response")
+    && !JSON.stringify(events).includes("Return OMEGA_NIM_OK"),
+    "in-flight status contains neither credentials nor raw requests, responses, or reasoning");
+  check(clock.jobs.length === 0, "completed countdown leaves no background timer");
+}
+{
+  const clock = new ManualClock(); const events: NvidiaNimCapacityProgress[] = []; const starts: number[] = [];
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => {
+    starts.push(clock.time);
+    return starts.length < 3 ? new Response(null, { status: 429, headers: { "retry-after": starts.length === 1 ? "75" : "60" } }) : success();
+  }, undefined, (event) => { events.push(event); });
+  const result = await drive(client.complete(request()), clock);
+  check(result.decision === "COMPLETED" && starts[1] - starts[0] === 75000 && starts[2] - starts[1] === 60000,
+    "actual server retry time outranks the one-minute estimate and renewed limits wait again");
+  check(events.filter((event) => event.state === "RESUMING").length === 2 && result.evidence.delivery?.httpAttempts === 3,
+    "each rate-limit recovery is observable without consuming an additional logical cognition cycle");
+}
+{
+  const clock = new ManualClock(); const controller = new AbortController(); const events: NvidiaNimCapacityProgress[] = [];
+  let calls = 0;
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => { calls += 1; return new Response(null, { status: 429 }); },
+    undefined, (event) => { events.push(event); if (event.secondsUntilRetry === 59) controller.abort(); });
+  const result = await drive(client.complete(request({ signal: controller.signal })), clock);
+  check(result.reason === "nvidia_provider_cancelled" && calls === 1 && clock.jobs.length === 0,
+    "cancelling from a visible countdown stops without an extra request or leftover timer");
+  check(events.at(-1)?.state === "STOPPED" && !events.at(-1)?.automaticResume
+    && !events.some((event) => event.state === "RESUMING"),
+    "cancelled countdown explicitly stops instead of claiming automatic reactivation");
+}
+{
+  const clock = new ManualClock(); const events: NvidiaNimCapacityProgress[] = []; let calls = 0;
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => { calls += 1; return new Response(null, { status: 429 }); },
+    undefined, (event) => { events.push(event); });
+  const result = await drive(client.complete(request({ deadlineEpochMs: NOW + 30000 })), clock);
+  check(result.decision === "WAITING_FOR_CAPACITY" && calls === 1 && events.at(-1)?.state === "STOPPED"
+    && events.at(-1)?.retryAtEpochMs === NOW + 60000 && !events.at(-1)?.automaticResume,
+    "cooldown beyond run expiry cannot misleadingly promise an authorized automatic retry");
+}
+{
+  for (const asynchronous of [false, true]) {
+    const clock = new ManualClock(); let calls = 0;
+    const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => {
+      calls += 1; return calls === 1 ? new Response(null, { status: 429, headers: { "retry-after": "2" } }) : success();
+    }, undefined, () => {
+      if (asynchronous) return Promise.reject(new Error("private-display-exception"));
+      throw new Error("private-display-exception");
+    });
+    const result = await drive(client.complete(request()), clock);
+    check(result.decision === "COMPLETED" && calls === 2 && !JSON.stringify(result).includes("private-display-exception"),
+      "throwing or rejecting status consumer cannot fail delivery or expose its exception");
+  }
+}
+{
+  const clock = new ManualClock(); const controller = new AbortController(); let calls = 0;
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => {
+    calls += 1; return calls === 1 ? new Response(null, { status: 429, headers: { "retry-after": "2" } }) : success();
+  }, undefined, (event) => { if (event.state === "RESUMING") controller.abort(); });
+  const result = await drive(client.complete(request({ signal: controller.signal })), clock);
+  check(result.reason === "nvidia_provider_cancelled" && calls === 1,
+    "cancellation at countdown completion is rechecked before credential read or dispatch");
+}
 
 check(NVIDIA_CAPACITY_POLICY.requestsPerMinute === 40, "configured request ceiling is forty, not four");
 for (const [header, expected] of [["12", 12000], ["0", 0], [" 3 ", 3000], [null, 60000], ["-1", 60000],

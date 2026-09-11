@@ -139,10 +139,13 @@ try {
   const previousLinesEpoch = runOffline("CONTEXT_LINES");
   check(previousLinesEpoch.status === 1 && previousLinesEpoch.stderr.includes("context_lines_frozen_core_digest_mismatch"),
     "configuration comparison cannot silently rescore the completed typed-source epoch");
-  const offline = runOffline("COMPARISON");
-  const line = offline.stdout.split(/\r?\n/).find((item) => item.startsWith("NYX_QUALITY_COMPARISON_HOLDOUT {"));
+  const previousComparison = runOffline("COMPARISON");
+  check(previousComparison.status === 1 && previousComparison.stderr.includes("comparison_frozen_core_digest_mismatch"),
+    "capacity status cannot silently rescore the completed configuration comparison");
+  const offline = runOffline("CAPACITY_STATUS");
+  const line = offline.stdout.split(/\r?\n/).find((item) => item.startsWith("NYX_QUALITY_CAPACITY_STATUS_HOLDOUT {"));
   if (!line) console.error(`OFFLINE_DRIVER_FAILURE ${offline.stderr.slice(-1500)}`);
-  const report = line ? JSON.parse(line.slice("NYX_QUALITY_COMPARISON_HOLDOUT ".length)) : null;
+  const report = line ? JSON.parse(line.slice("NYX_QUALITY_CAPACITY_STATUS_HOLDOUT ".length)) : null;
   check(offline.status === 1 && report?.evaluationDecision === "INSUFFICIENT_EVIDENCE"
     && report.tasks[0].modelCalls === 1 && report.tasks[0].candidates === 0,
   "simulated provider failure reaches the shared driver and stops without a fabricated candidate");

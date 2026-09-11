@@ -41,6 +41,13 @@ export interface NvidiaCapacityAdmission {
   readonly notBeforeEpochMs: number | null;
 }
 
+export interface NvidiaCapacityWait {
+  readonly observedAtEpochMs: number;
+  readonly notBeforeEpochMs: number;
+  readonly remainingWaitMs: number;
+  readonly reason: "PROVIDER_COOLDOWN" | "LOCAL_PACING";
+}
+
 export class NvidiaCapacityCoordinator {
   #nextStart = 0;
   #cooldownUntil = 0;
@@ -61,7 +68,8 @@ export class NvidiaCapacityCoordinator {
     this.#nextStart = Math.max(this.#nextStart, this.clock.now() + NVIDIA_CAPACITY_POLICY.minimumStartIntervalMs);
   }
 
-  async acquire(deadline: number, signal: AbortSignal): Promise<NvidiaCapacityAdmission> {
+  async acquire(deadline: number, signal: AbortSignal,
+    onWait?: (progress: NvidiaCapacityWait) => void): Promise<NvidiaCapacityAdmission> {
     const started = this.clock.now();
     const result = (state: NvidiaCapacityAdmission["state"], notBeforeEpochMs: number | null = null) =>
       Object.freeze({ state, waitedMs: Math.max(0, this.clock.now() - started), notBeforeEpochMs });
@@ -79,8 +87,17 @@ export class NvidiaCapacityCoordinator {
           this.#nextStart = now + NVIDIA_CAPACITY_POLICY.minimumStartIntervalMs;
           return result("ADMITTED");
         }
-        // Capped sleeps avoid timer overflow; every wake rechecks cancellation, cooldown and expiry.
-        await this.clock.sleep(Math.min(notBefore - now, deadline - now, 60_000), signal);
+        if (onWait) {
+          // Observation only: an unavailable display must not fail or authorize delivery.
+          try { void Promise.resolve(onWait(Object.freeze({ observedAtEpochMs: now, notBeforeEpochMs: notBefore,
+            remainingWaitMs: notBefore - now, reason: this.#cooldownUntil > now ? "PROVIDER_COOLDOWN" : "LOCAL_PACING" })))
+            .catch(() => undefined); } catch { /* status reporting is best-effort */ }
+        }
+        // A status callback can take time or cancel; never use its pre-call timestamp for dispatch.
+        const afterNotification = this.clock.now();
+        if (signal.aborted || afterNotification >= notBefore || afterNotification >= deadline) continue;
+        // A countdown is not a model call. Every wake rechecks cooldown, cancellation and expiry.
+        await this.clock.sleep(Math.min(notBefore - afterNotification, deadline - afterNotification, onWait ? 1000 : 60_000), signal);
       }
     } catch { return result("CANCELLED"); }
     finally { this.#pending -= 1; }

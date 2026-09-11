@@ -39,6 +39,22 @@ export interface NvidiaNimProviderConfig {
   readonly transport?: NvidiaNimTransport;
   /** Deterministic delivery testing only. Live instances always share the process-local gate. */
   readonly testCapacity?: NvidiaCapacityCoordinator;
+  /** Host-only, sanitized delivery status; never sent to NYX or used as execution authority. */
+  readonly onCapacityProgress?: (progress: NvidiaNimCapacityProgress) => void;
+}
+
+export interface NvidiaNimCapacityProgress {
+  readonly state: "WAITING_FOR_CAPACITY" | "RESUMING" | "COMPLETED" | "STOPPED";
+  readonly requestDigest: string;
+  readonly observedAtEpochMs: number;
+  readonly retryAtEpochMs: number | null;
+  readonly secondsUntilRetry: number | null;
+  readonly automaticResume: boolean;
+  readonly httpAttempts: number;
+  readonly rateLimitedResponses: number;
+  /** A received model response is not an accepted engineering result. */
+  readonly taskCompletionClaimed: false;
+  readonly authorityRenewed: false;
 }
 
 export interface NvidiaNimCompletionRequest {
@@ -281,11 +297,35 @@ export class NvidiaNimProvider {
     let rateLimitedResponses = 0;
     let capacityWaitMs = 0;
     let previous: NvidiaNimCompletionResult | null = null;
+    let waitVisible = false;
+    let waiting = false;
+    let lastLoggedState = "";
+    let lastLoggedRetryAt: number | null = null;
+    let lastLoggedAt = -Infinity;
+    const progress = (state: NvidiaNimCapacityProgress["state"], retryAtEpochMs: number | null = null) => {
+      const observedAtEpochMs = now();
+      const event: NvidiaNimCapacityProgress = Object.freeze({ state, requestDigest, observedAtEpochMs, retryAtEpochMs,
+        secondsUntilRetry: retryAtEpochMs === null ? null : Math.max(0, Math.ceil((retryAtEpochMs - observedAtEpochMs) / 1000)),
+        automaticResume: state === "WAITING_FOR_CAPACITY" && retryAtEpochMs !== null
+          && retryAtEpochMs < deadline && !signal.aborted,
+        httpAttempts, rateLimitedResponses, taskCompletionClaimed: false, authorityRenewed: false });
+      try {
+        if (this.#config.onCapacityProgress) {
+          void Promise.resolve(this.#config.onCapacityProgress(event)).catch(() => undefined);
+        } else if (this.#config.authorityMode === "EXPLICIT_LIVE_NVIDIA_NIM"
+          && (state !== lastLoggedState || retryAtEpochMs !== lastLoggedRetryAt || observedAtEpochMs - lastLoggedAt >= 10_000)) {
+          // Existing CLI/CI callers get truthful status without a separate controller or UI stack.
+          console.info(`NYX_CAPACITY_STATUS ${JSON.stringify(event)}`);
+          lastLoggedState = state; lastLoggedRetryAt = retryAtEpochMs; lastLoggedAt = observedAtEpochMs;
+        }
+      } catch { /* a failed status sink cannot alter delivery or expose its exception */ }
+    };
     const finish = (result: NvidiaNimCompletionResult, notBeforeEpochMs: number | null = null): NvidiaNimCompletionResult => {
       const delivery: NvidiaNimDeliveryEvidence = Object.freeze({ policy: "nvidia-capacity/1", requestsPerMinute: 40,
         scope: "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT", httpAttempts, rateLimitedResponses, capacityWaitMs,
         state: result.decision === "COMPLETED" ? "DELIVERED" : result.decision === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY" : "STOPPED",
         notBeforeEpochMs, authorityRenewed: false });
+      if (waitVisible) progress(result.decision === "COMPLETED" ? "COMPLETED" : "STOPPED", notBeforeEpochMs);
       return Object.freeze({ ...result, evidence: Object.freeze({ ...result.evidence, delivery }) });
     };
     const stopped = (cancelled: boolean, notBeforeEpochMs: number | null = null) => finish(this.#result(
@@ -296,17 +336,26 @@ export class NvidiaNimProvider {
       if (signal.aborted) return stopped(true);
       if (now() >= deadline) return stopped(false);
       if (this.#capacity) {
-        const admission = await this.#capacity.acquire(deadline, signal);
+        const admission = await this.#capacity.acquire(deadline, signal, (update) => {
+          if (update.reason !== "PROVIDER_COOLDOWN" && !waitVisible) return;
+          waitVisible = true; waiting = true;
+          progress("WAITING_FOR_CAPACITY", update.notBeforeEpochMs);
+        });
         capacityWaitMs += admission.waitedMs;
         if (admission.state !== "ADMITTED") return stopped(admission.state === "CANCELLED", admission.notBeforeEpochMs);
       }
       // Admission can await; recheck before any credential read or external request.
       if (signal.aborted) return stopped(true);
       if (now() >= deadline) return stopped(false);
+      if (waiting) {
+        progress("RESUMING"); waiting = false;
+        if (signal.aborted) return stopped(true);
+        if (now() >= deadline) return stopped(false);
+      }
       previous = await this.#attempt(body, requestDigest, signal, deadline);
       if (previous.evidence.networkAttempted) httpAttempts += 1;
       if (previous.evidence.statusCode === 429) rateLimitedResponses += 1;
-      if (previous.evidence.statusCode === 429 && this.#capacity) continue;
+      if (previous.evidence.statusCode === 429 && this.#capacity) { waitVisible = true; continue; }
       if (signal.aborted) return stopped(true);
       if (now() >= deadline && previous.decision === "COMPLETED") {
         return finish(this.#result("BLOCKED", "nvidia_completion_run_expired", null, null, requestDigest,

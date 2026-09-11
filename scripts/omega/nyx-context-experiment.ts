@@ -94,6 +94,21 @@ export const NYX_CONFIGURATION_FROZEN_CORE = Object.freeze({
   }),
 });
 
+// Regression identity for the delivery-status change; never rewrite the completed comparison's pins.
+export const NYX_CAPACITY_STATUS_CONTROL = Object.freeze({
+  ...NYX_CONFIGURATION_COMPARISON, chunkId: "NYX-CAPACITY-STATUS-001", version: "nyx-capacity-status-control/1",
+  comparisonBaselineCommit: "ae3ed64cf3d7a3e73bcb6c95b24456f2b92f2c94", comparisonBaselineRun: "34624336290",
+  hypothesis: "Observable capacity waits preserve the existing bounded engineering composition.",
+  changedMechanisms: ["SANITIZED_IN_FLIGHT_CAPACITY_STATUS"],
+});
+export const NYX_CAPACITY_STATUS_FROZEN_CORE = Object.freeze({
+  ...NYX_CONFIGURATION_FROZEN_CORE,
+  files: Object.freeze({ ...NYX_CONFIGURATION_FROZEN_CORE.files,
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "84358a3b3df5a7c400f8fc64a8121208cd804ef46f79ca89410d0b2263f06da3",
+    "src/lib/codelab/model/nvidiaCapacity.ts": "090c177ec02efbeaaf1eaa2ffa9d7b3f863568c2d56b49beee1e662a8bfd2275",
+  }),
+});
+
 export interface NyxContextTask extends Omit<NyxQualityV4Task, "provenance"> {
   readonly provenance: "AUTHOR_CONSTRUCTED_CONTEXT_DIAGNOSTIC_NOT_PRIVATE_HOLDOUT";
   readonly contextMode: RepositoryContextQuery["mode"];
