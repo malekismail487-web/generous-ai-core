@@ -136,15 +136,18 @@ try {
   const previousFeedbackEpoch = runOffline("CONTEXT_REPAIR");
   check(previousFeedbackEpoch.status === 1 && previousFeedbackEpoch.stderr.includes("context_repair_frozen_core_digest_mismatch"),
     "typed source experiment cannot silently rescore the previous measurement-feedback epoch");
-  const offline = runOffline("CONTEXT_LINES");
-  const line = offline.stdout.split(/\r?\n/).find((item) => item.startsWith("NYX_QUALITY_CONTEXT_LINES_HOLDOUT {"));
+  const previousLinesEpoch = runOffline("CONTEXT_LINES");
+  check(previousLinesEpoch.status === 1 && previousLinesEpoch.stderr.includes("context_lines_frozen_core_digest_mismatch"),
+    "configuration comparison cannot silently rescore the completed typed-source epoch");
+  const offline = runOffline("COMPARISON");
+  const line = offline.stdout.split(/\r?\n/).find((item) => item.startsWith("NYX_QUALITY_COMPARISON_HOLDOUT {"));
   if (!line) console.error(`OFFLINE_DRIVER_FAILURE ${offline.stderr.slice(-1500)}`);
-  const report = line ? JSON.parse(line.slice("NYX_QUALITY_CONTEXT_LINES_HOLDOUT ".length)) : null;
+  const report = line ? JSON.parse(line.slice("NYX_QUALITY_COMPARISON_HOLDOUT ".length)) : null;
   check(offline.status === 1 && report?.evaluationDecision === "INSUFFICIENT_EVIDENCE"
     && report.tasks[0].modelCalls === 1 && report.tasks[0].candidates === 0,
   "simulated provider failure reaches the shared driver and stops without a fabricated candidate");
-  check(report?.tasks.length === 1 && report?.unexecutedTasks.length === 1,
-    "provider outage stops the second paid arm rather than spending more calls on an unavailable endpoint");
+  check(report?.tasks.length === 3 && report?.tasks.every((item: { modelCalls: number; candidates: number }) => item.modelCalls === 1 && item.candidates === 0),
+    "bounded comparison records each arm's single unsuccessful provider request without expanding repair budgets");
   check(report?.aggregateMetrics.falseAcceptanceRate === null && report?.aggregateMetrics.meanTokensPerTask === null
     && report?.aggregateMetrics.providerAdjustedTaskSuccessRate === null
     && report?.measurementCoverage.hiddenEvaluated === false,

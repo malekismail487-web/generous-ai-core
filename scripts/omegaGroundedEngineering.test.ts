@@ -11,7 +11,7 @@ import type { NyxEvidenceRequest } from "../src/lib/codelab/cognition/nyxNemotro
 import { assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { NYX_CONTEXT_TASKS, NYX_CONTEXT_MUTANTS, NYX_CONTEXT_EXPERIMENT,
-  NYX_CONTEXT_LINES_FROZEN_CORE } from "./omega/nyx-context-experiment";
+  NYX_CONFIGURATION_FROZEN_CORE } from "./omega/nyx-context-experiment";
 
 let passed = 0;
 let failed = 0;
@@ -24,7 +24,7 @@ async function rejects(operation: () => Promise<unknown>, pattern: RegExp, label
 }
 const task = NYX_CONTEXT_TASKS[0];
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
-for (const [path, digest] of Object.entries(NYX_CONTEXT_LINES_FROZEN_CORE.files)) {
+for (const [path, digest] of Object.entries(NYX_CONFIGURATION_FROZEN_CORE.files)) {
   check(hash((await readFile(path, "utf8")).replace(/\r\n/g, "\n")) === digest,
     `new diagnostic pins exact current core ${path}`);
   if (path.includes("/assurance/")) {
@@ -213,21 +213,23 @@ globalThis.fetch = async (url, init) => {
     "--import", pathToFileURL(preloadPath).href, "scripts/omega/nyx-quality-v4-live-eval.ts"], {
     cwd: resolve("."), encoding: "utf8", timeout: 90_000, maxBuffer: 5_000_000,
     env: { ...process.env, OMEGA_ALLOW_NVIDIA_NETWORK: "1", NVIDIA_API_KEY: "synthetic-offline-key-not-a-credential",
-      NYX_QUALITY_SUITE: "CONTEXT_LINES", RUNNER_TEMP: parent },
+      NYX_QUALITY_SUITE: "COMPARISON", RUNNER_TEMP: parent },
   });
   if (run.status !== 0) console.error(run.stdout.slice(-15_000), run.stderr.slice(-2000));
-  check(run.status === 0, "existing live driver closes both arms through R1/R2/R3 with synthetic transport");
-  const reportName = (await readdir(parent)).find((name) => /^nyx-quality-context_lines-.*\.json$/.test(name));
+  check(run.status === 0, "existing live driver closes all three comparison arms through R1/R2/R3 with synthetic transport");
+  const reportName = (await readdir(parent)).find((name) => /^nyx-quality-comparison-.*\.json$/.test(name));
   assert.ok(reportName, "integration control must emit a sanitized report");
   const report = JSON.parse(await readFile(join(parent, reportName), "utf8"));
-  check(report.experiment.version === "nyx-context-lines/3" && report.cognitionContractVersion === "nyx-causal-engineering-intent/7"
-    && report.experiment.comparisonBaselineRun === "34528025060" && report.frozenCorePreserved
+  check(report.experiment.version === "nyx-configuration-comparison/1" && report.cognitionContractVersion === "nyx-causal-engineering-intent/7"
+    && report.experiment.comparisonBaselineRun === "34585934619" && report.frozenCorePreserved
     && report.sourceRepresentation === "LINES" && report.tasks.every((item: { sourceRepresentation: string }) => item.sourceRepresentation === "LINES"),
   "new experiment declares lineage without rescoring the historical failed run");
-  check(report.tasks.length === 2 && report.tasks.every((item: { hiddenAcceptance: string }) => item.hiddenAcceptance === "PASS"),
-    "candidate-blind deterministic acceptance succeeds in both synthetic control arms");
-  check(report.tasks[0].modelCalls === 3 && report.tasks[1].modelCalls === 2,
-    "synthetic control exercises evidence seeking then formatting rejection/repair within the fixed budget");
+  check(report.tasks.length === 3 && report.tasks.every((item: { hiddenAcceptance: string }) => item.hiddenAcceptance === "PASS"),
+    "candidate-blind deterministic acceptance succeeds in all three synthetic control arms");
+  check(report.tasks.every((item: { modelCalls: number }) => item.modelCalls === 2),
+    "comparison control exercises identical source-format rejection/repair under all three configurations");
+  check(JSON.stringify(report.tasks.map((item: { comparisonArm: string }) => item.comparisonArm))
+    === JSON.stringify(["CURRENT", "REASONING_ENABLED", "MINIMAL_REFERENCE"]), "report preserves three distinct experimental arm identities");
   check(report.tasks.every((item: { candidates: number; cognitionFailures: unknown[] }) => item.candidates === 1 && item.cognitionFailures.length === 1),
     "unreadable responses cannot execute; only corrected candidates reach mutation");
   check(report.tasks.every((item: { cognitionFailures: { diagnostics: { sourceMeasurement?: { totalViolations: number } }[] }[] }) =>

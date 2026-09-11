@@ -52,7 +52,7 @@ export interface NvidiaNimCompletionRequest {
    * Opts this request into the provider's bounded JSON-generation template.
    * Omission preserves the provider's default chat-template behavior.
    */
-  readonly inferencePolicy?: "CONSTRAINED_JSON";
+  readonly inferencePolicy?: "CONSTRAINED_JSON" | "REASONING_JSON";
   readonly observedAtEpochMs: number;
   /** Caller-owned run expiry; capacity waiting cannot renew it. Never supplied to the model. */
   readonly deadlineEpochMs?: number;
@@ -98,6 +98,7 @@ export interface NvidiaNimEvidence {
   readonly finishReason: NvidiaNimFinishReason | null;
   readonly usage: NvidiaNimUsage;
   readonly delivery?: NvidiaNimDeliveryEvidence;
+  readonly reasoningOutputBytes?: number | null;
 }
 
 export interface NvidiaNimDeliveryEvidence {
@@ -123,7 +124,7 @@ export interface NvidiaNimCompletionResult {
 
 interface ProviderResponse {
   readonly choices?: readonly {
-    readonly message?: { readonly content?: unknown };
+    readonly message?: { readonly content?: unknown; readonly reasoning_content?: unknown };
     readonly finish_reason?: unknown;
   }[];
   readonly usage?: {
@@ -253,8 +254,8 @@ export class NvidiaNimProvider {
     const payload = { model: this.#config.model, messages: request.messages, max_tokens: request.maxTokens,
       temperature: request.temperature, stream: false,
       ...(responseFormat ? { response_format: responseFormat } : {}),
-      ...(request.inferencePolicy === "CONSTRAINED_JSON"
-        ? { chat_template_kwargs: { enable_thinking: false, force_nonempty_content: true } }
+      ...(request.inferencePolicy === "CONSTRAINED_JSON" || request.inferencePolicy === "REASONING_JSON"
+        ? { chat_template_kwargs: { enable_thinking: request.inferencePolicy === "REASONING_JSON", force_nonempty_content: true } }
         : {}) };
     const requestDigest = sha256(canonical({ requestId, ...payload }));
     const issues: string[] = [];
@@ -267,8 +268,8 @@ export class NvidiaNimProvider {
     if (!Number.isInteger(request.maxTokens) || request.maxTokens < 1 || request.maxTokens > this.#config.maxOutputTokens) issues.push("completion_token_bound_exceeded");
     if (typeof request.temperature !== "number" || !Number.isFinite(request.temperature) || request.temperature < 0 || request.temperature > 1) issues.push("completion_temperature_invalid");
     if (request.responseFormat !== undefined && responseFormat === null) issues.push("completion_response_format_invalid");
-    if (request.inferencePolicy !== undefined && request.inferencePolicy !== "CONSTRAINED_JSON") issues.push("completion_inference_policy_invalid");
-    if (request.inferencePolicy === "CONSTRAINED_JSON" && responseFormat === null) issues.push("completion_constrained_json_requires_response_format");
+    if (request.inferencePolicy !== undefined && !["CONSTRAINED_JSON", "REASONING_JSON"].includes(request.inferencePolicy)) issues.push("completion_inference_policy_invalid");
+    if (request.inferencePolicy !== undefined && responseFormat === null) issues.push("completion_constrained_json_requires_response_format");
     if (Buffer.byteLength(canonical(request.messages), "utf8") > this.#config.maxPromptBytes) issues.push("completion_prompt_bound_exceeded");
     if (issues.length > 0) return this.#result("REJECTED", [...new Set(issues)].join(","), null, null, requestDigest, null, null, emptyUsage(), false);
     // Serialize once: queued requests and retries cannot silently pick up caller mutations.
@@ -355,9 +356,11 @@ export class NvidiaNimProvider {
         response.status, emptyUsage(), true, providerRequestId); }
       const content = parsed.choices?.[0]?.message?.content;
       const rawFinishReason = parsed.choices?.[0]?.finish_reason;
+      const reasoning = parsed.choices?.[0]?.message?.reasoning_content;
+      const reasoningOutputBytes = typeof reasoning === "string" ? Buffer.byteLength(reasoning, "utf8") : null;
       if (typeof content !== "string" || !content.trim()) {
-        return this.#result("PROVIDER_ERROR", "nvidia_provider_response_missing_content", null, null, requestDigest, null,
-          response.status, emptyUsage(), true, providerRequestId);
+        return this.#result("PROVIDER_ERROR", "nvidia_provider_response_missing_content", null, safeFinishReason(rawFinishReason), requestDigest, null,
+          response.status, emptyUsage(), true, providerRequestId, reasoningOutputBytes);
       }
       const finishReason = safeFinishReason(rawFinishReason);
       if (finishReason === null) {
@@ -367,7 +370,7 @@ export class NvidiaNimProvider {
       const usage = Object.freeze({ promptTokens: finiteInteger(parsed.usage?.prompt_tokens),
         completionTokens: finiteInteger(parsed.usage?.completion_tokens), totalTokens: finiteInteger(parsed.usage?.total_tokens) });
       return this.#result("COMPLETED", "nvidia_nim_completion_observed", content,
-        finishReason, requestDigest, sha256(content), response.status, usage, true, providerRequestId);
+        finishReason, requestDigest, sha256(content), response.status, usage, true, providerRequestId, reasoningOutputBytes);
     } catch (error) {
       const reason = error instanceof Error && error.name === "AbortError"
         ? timeoutTriggered ? "nvidia_provider_timeout" : "nvidia_provider_cancelled"
@@ -381,7 +384,7 @@ export class NvidiaNimProvider {
 
   #result(decision: NvidiaNimCompletionResult["decision"], reason: string, content: string | null, finishReason: NvidiaNimFinishReason | null,
     requestDigest: string, responseDigest: string | null, statusCode: number | null, usage: NvidiaNimUsage,
-    networkAttempted: boolean, providerRequestId: string | null = null): NvidiaNimCompletionResult {
+    networkAttempted: boolean, providerRequestId: string | null = null, reasoningOutputBytes: number | null = null): NvidiaNimCompletionResult {
     const evidenceClass = this.#config.authorityMode === "EXPLICIT_LIVE_NVIDIA_NIM" && networkAttempted ? "E4" : "E3";
     const diagnostics = failureDiagnostics(reason, statusCode);
     const evidence: NvidiaNimEvidence = Object.freeze({ evidenceId: `NVIDIA-NIM-${requestDigest.slice(0, 32)}`, evidenceClass,
@@ -389,7 +392,7 @@ export class NvidiaNimProvider {
       requestDigest, responseDigest, credentialSourceIdentity: this.#config.credentialSource.sourceIdentity,
       credentialPersisted: false, promptPersisted: false, networkAttempted, statusCode,
       failureCategory: diagnostics.category, retryability: diagnostics.retryability,
-      providerRequestId: safeProviderRequestId(providerRequestId), finishReason, usage });
+      providerRequestId: safeProviderRequestId(providerRequestId), finishReason, usage, reasoningOutputBytes });
     return Object.freeze({ decision, reason, content, finishReason, evidence, executorAuthorityGranted: false });
   }
 }

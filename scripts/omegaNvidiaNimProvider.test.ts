@@ -401,6 +401,22 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
     "slow credential acquisition cannot dispatch after the run expires");
 }
 
+{
+  let observed: Record<string, unknown> = {};
+  const client = provider(async (_url, init) => {
+    observed = JSON.parse(String(init?.body));
+    return new Response(JSON.stringify({ choices: [{ message: { content: "{}", reasoning_content: "private-model-reasoning" },
+      finish_reason: "stop" }] }), { status: 200 });
+  });
+  const result = await client.complete(request({ responseFormat: "JSON_OBJECT", inferencePolicy: "REASONING_JSON" }));
+  check((observed.chat_template_kwargs as { enable_thinking: boolean }).enable_thinking === true
+    && result.evidence.reasoningOutputBytes === Buffer.byteLength("private-model-reasoning"),
+  "reasoning-enabled request records presence/size without claiming access to latent cognition");
+  check(!JSON.stringify(result).includes("private-model-reasoning"), "raw model reasoning is never persisted in evidence or substituted for code");
+  check((await client.complete(request({ inferencePolicy: "REASONING_JSON" }))).decision === "REJECTED",
+    "reasoning mode still requires the response contract");
+}
+
 assert(NVIDIA_NIM_PROVIDER_STATUS.newCapability === "BOUNDED_NVIDIA_NIM_CHAT_COMPLETION", "chunk reports exact model capability gain");
 assert(NVIDIA_NIM_PROVIDER_STATUS.liveNetworkAuthorityGranted === false && !NVIDIA_NIM_PROVIDER_STATUS.productionEligible,
   "provider adapter does not grant live or production authority by construction");

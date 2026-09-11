@@ -12,6 +12,7 @@ import {
   type NyxRepairCognitionResult,
   type NyxSchemaDiagnosticCategory,
   type NyxSourceRepresentation,
+  type NyxCognitionExperimentVariant,
 } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 
 let passed = 0;
@@ -42,9 +43,9 @@ function provider(transport: NvidiaNimTransport, model = "nvidia/nemotron-3-ultr
     credentialSource: { sourceIdentity: "test-double:nyx-cognition", read: () => "test-only-credential-material" },
     maxPromptBytes: 100_000, maxOutputTokens: 2_048, timeoutMs: 1_000, transport });
 }
-function cognition(transport: NvidiaNimTransport, sourceRepresentation: NyxSourceRepresentation = "TEXT") {
+function cognition(transport: NvidiaNimTransport, sourceRepresentation: NyxSourceRepresentation = "TEXT", experimentVariant?: NyxCognitionExperimentVariant) {
   return NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-PRIMARY-COGNITION", provider: provider(transport),
-    maxPromptBytes: 50_000, maxOutputTokens: 1_024, sourceRepresentation });
+    maxPromptBytes: 50_000, maxOutputTokens: 1_024, sourceRepresentation, experimentVariant });
 }
 
 const source = "export const add = (a: number, b: number) => a + b + 1;\n";
@@ -535,6 +536,38 @@ check(NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.cognitionIdentity === "NYX_PRIMA
 check(!NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.grantsOmegaAuthority
   && !NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.productionEligible,
   "contract repair does not increase Omega or production authority");
+
+{
+  const payloads: Record<string, unknown>[] = [];
+  const proposals: string[] = [];
+  for (const variant of ["CURRENT", "REASONING_ENABLED", "MINIMAL_REFERENCE"] as const) {
+    const result = await cognition(async (_url, init) => {
+      payloads.push(JSON.parse(String(init?.body)));
+      return new Response(JSON.stringify({ choices: [{ message: { content: intent() }, finish_reason: "stop" }] }), { status: 200 });
+    }, "TEXT", variant).proposeRepair(request());
+    check(result.decision === "PROPOSED" && result.evidence.experimentVariant === variant && !result.omegaAuthorityGranted,
+      `${variant} is issuer-selected and cannot grant actuation authority`);
+    proposals.push(JSON.stringify(result.hypothesis?.changes));
+  }
+  const messages = payloads.map((body) => body.messages as { role: string; content: string }[]);
+  check(JSON.stringify(messages[0]) === JSON.stringify(messages[1]), "current versus reasoning comparison keeps the exact messages unchanged");
+  check(JSON.stringify({ ...payloads[0], chat_template_kwargs: undefined }) === JSON.stringify({ ...payloads[1], chat_template_kwargs: undefined }),
+    "reasoning contrast changes no other provider payload field");
+  check(JSON.stringify(payloads.map((body) => (body.chat_template_kwargs as { enable_thinking: boolean }).enable_thinking)) === "[false,true,true]",
+    "all three arms send their prescribed inference flag");
+  const prompts = messages.map((items) => JSON.parse(items[1].content));
+  check(["objective", "admittedEvidence", "availableEvidence", "hypothesisHistory", "cognitionFailureHistory", "requiredCorrections", "constraints"]
+    .every((key) => JSON.stringify(prompts[0][key]) === JSON.stringify(prompts[2][key])),
+  "minimal reference preserves evidence, failure history, constraints and task without adding a solution");
+  check(messages[2][1].content.length < messages[0][1].content.length && new Set(proposals).size === 1,
+    "thin reference removes prompt scaffolding but the same model output yields the identical typed patch");
+  for (const variant of ["REASONING_ENABLED", "MINIMAL_REFERENCE"] as const) {
+    const invalid = await cognition(async () => new Response(JSON.stringify({ choices: [{ message: {
+      content: intent({ decision: "RUN_SHELL" }) }, finish_reason: "stop" }] }), { status: 200 }), "TEXT", variant).proposeRepair(request());
+    check(invalid.decision !== "PROPOSED" && !invalid.hypothesis && !invalid.omegaAuthorityGranted,
+      `${variant} cannot bypass the unchanged unknown-tool rejection`);
+  }
+}
 
 console.log(`Omega R3-D NYX Nemotron cognition tests - passed: ${passed}, failed: ${failed}`);
 if (failed > 0) { console.error("FAILURES:"); for (const failure of failures) console.error(`  - ${failure}`); process.exit(1); }

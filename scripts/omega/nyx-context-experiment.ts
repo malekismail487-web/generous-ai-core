@@ -69,6 +69,31 @@ export const NYX_CONTEXT_LINES_FROZEN_CORE = Object.freeze({
   }),
 });
 
+export const NYX_CONFIGURATION_COMPARISON = Object.freeze({
+  ...NYX_CONTEXT_LINES_EXPERIMENT, chunkId: "NYX-BOUNDED-CONFIGURATION-COMPARISON-001", version: "nyx-configuration-comparison/1",
+  hypothesis: "Reasoning enablement or a thinner reference request improves repair under fixed Omega checks.",
+  falsification: "No accepted repair, worse bounded performance, truncation or infrastructure confounding; no causal claim from one sample.",
+  comparisonBaselineCommit: "7ed53fc34e92cf6592a1a540d3ff2e999da97e37", comparisonBaselineRun: "34585934619",
+  arms: ["CURRENT", "REASONING_ENABLED", "MINIMAL_REFERENCE"],
+  matched: ["MODEL", "TASK", "ADMITTED_FILES", "HIDDEN_CASES", "QUALITY_ORACLE", "OMEGA_AUTHORITY", "TOKENS", "CALLS", "WALL_CLOCK"],
+  contrasts: ["CURRENT_VS_REASONING:ENABLE_THINKING_ONLY", "REASONING_VS_REFERENCE:PROMPT_PRESENTATION_ONLY"],
+  referenceScope: "THIN_REFERENCE_REQUEST_SAME_TYPED_VALIDATOR_AND_OMEGA_EXECUTION_NOT_A_RAW_EXECUTOR",
+  maxCumulativeOutputTokens: 36_864, samplesPerArm: 1,
+  taskPopulation: "ONE_AUTHOR_CONSTRUCTED_TASK_THREE_CONFIGURATIONS_NOT_GENERALIZATION",
+  comparisonLimitation: "SINGLE_FIXED_ORDER_TRIAL_PROVIDER_VARIABILITY_AND_SHARED_INTEGRATION_BLIND_SPOTS_REMAIN",
+  changedMechanisms: ["EXPLICIT_EXPERIMENT_REQUEST_CONFIGURATION_ONLY"],
+  isolatedVariable: "SEE_PAIRWISE_CONTRASTS_NO_COMBINED_CAUSAL_CLAIM", broadDevelopmentPaused: true,
+  stopAfterComparison: true, defaultConfigurationChanged: false,
+} as const);
+
+export const NYX_CONFIGURATION_FROZEN_CORE = Object.freeze({
+  commit: null, serialization: NYX_CONTEXT_LINES_FROZEN_CORE.serialization,
+  files: Object.freeze({ ...NYX_CONTEXT_LINES_FROZEN_CORE.files,
+    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "6c81b370d026fc3f4e0fa658f7fb83fe024f7dcd56474e2cfba4b84f844da6ee",
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "42d02cb2f15be90709da8836f0a14bde12fb0b54aa93abc4f20851ee3e750c39",
+  }),
+});
+
 export interface NyxContextTask extends Omit<NyxQualityV4Task, "provenance"> {
   readonly provenance: "AUTHOR_CONSTRUCTED_CONTEXT_DIAGNOSTIC_NOT_PRIVATE_HOLDOUT";
   readonly contextMode: RepositoryContextQuery["mode"];

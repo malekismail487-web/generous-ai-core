@@ -9,6 +9,7 @@ import {
   NyxNemotronEngineeringCognition,
   type NyxRepairCognitionEvidence,
   type NyxRepairHypothesis,
+  type NyxCognitionExperimentVariant,
 } from "../../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 import { assessEngineeringQuality } from "../../src/lib/codelab/assurance/engineeringQualityOracle";
 import { isFalseAcceptance, meetsAuthoritativeAcceptancePrerequisites,
@@ -32,23 +33,27 @@ import { NYX_SCHEDULER_CHALLENGE, NYX_SCHEDULER_EXPERIMENT, NYX_SCHEDULER_FROZEN
 import { OMEGA_CANDIDATE_RUNNER_SOURCE } from "./verification-integrity-fixtures";
 import { GroundedRepairEvidence } from "../../src/lib/codelab/repository/groundedRepairEvidence";
 import { NYX_CONTEXT_EXPERIMENT as CONTEXT_V1, NYX_CONTEXT_REPAIR_EXPERIMENT, NYX_CONTEXT_REPAIR_FROZEN_CORE,
-  NYX_CONTEXT_LINES_EXPERIMENT, NYX_CONTEXT_LINES_FROZEN_CORE, NYX_CONTEXT_TASKS, type NyxContextTask } from "./nyx-context-experiment";
+  NYX_CONTEXT_LINES_EXPERIMENT, NYX_CONTEXT_LINES_FROZEN_CORE, NYX_CONTEXT_TASKS, type NyxContextTask,
+  NYX_CONFIGURATION_COMPARISON, NYX_CONFIGURATION_FROZEN_CORE } from "./nyx-context-experiment";
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V4";
-if (!["V4", "V5", "CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
+if (!["V4", "V5", "CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES", "COMPARISON"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
+const IS_COMPARISON = SUITE_ID === "COMPARISON";
 const IS_CHALLENGE = SUITE_ID === "CHALLENGE";
 const IS_CONTEXT_REPAIR = SUITE_ID === "CONTEXT_REPAIR";
 const IS_CONTEXT_LINES = SUITE_ID === "CONTEXT_LINES";
-const IS_CONTEXT = SUITE_ID === "CONTEXT" || IS_CONTEXT_REPAIR || IS_CONTEXT_LINES;
-const SOURCE_REPRESENTATION = IS_CONTEXT_LINES ? "LINES" : "TEXT";
-const NYX_CONTEXT_EXPERIMENT = IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_EXPERIMENT
+const IS_CONTEXT = SUITE_ID === "CONTEXT" || IS_CONTEXT_REPAIR || IS_CONTEXT_LINES || IS_COMPARISON;
+const SOURCE_REPRESENTATION = IS_CONTEXT_LINES || IS_COMPARISON ? "LINES" : "TEXT";
+const NYX_CONTEXT_EXPERIMENT = IS_COMPARISON ? NYX_CONFIGURATION_COMPARISON : IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_EXPERIMENT
   : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_EXPERIMENT : CONTEXT_V1;
 const IS_DIAGNOSTIC = IS_CHALLENGE || IS_CONTEXT;
-type EvaluationTask = NyxQualityV4Task | NyxQualityV5Task | NyxSchedulerChallenge | NyxContextTask;
-const HOLDOUT: readonly EvaluationTask[] = IS_CONTEXT ? NYX_CONTEXT_TASKS : IS_CHALLENGE ? [NYX_SCHEDULER_CHALLENGE]
+type EvaluationTask = (NyxQualityV4Task | NyxQualityV5Task | NyxSchedulerChallenge | NyxContextTask) & { comparisonArm?: NyxCognitionExperimentVariant };
+const HOLDOUT: readonly EvaluationTask[] = IS_COMPARISON ? NYX_CONFIGURATION_COMPARISON.arms.map((comparisonArm) => ({
+  ...NYX_CONTEXT_TASKS[1], taskId: `NYX-CONFIG-${comparisonArm}`, comparisonArm,
+})) : IS_CONTEXT ? NYX_CONTEXT_TASKS : IS_CHALLENGE ? [NYX_SCHEDULER_CHALLENGE]
   : SUITE_ID === "V5" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
-const FROZEN_CORE = IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_FROZEN_CORE : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_FROZEN_CORE
+const FROZEN_CORE = IS_COMPARISON ? NYX_CONFIGURATION_FROZEN_CORE : IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_FROZEN_CORE : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_FROZEN_CORE
   : IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
 const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
   : IS_CHALLENGE ? "nyx-scheduler-challenge/1" : SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
@@ -170,8 +175,6 @@ if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1") {
 const provider = NvidiaNimProvider.create({ providerId: "NYX-ENGINEERING-QUALITY-HOLDOUT-NEMOTRON", model: MODEL,
   authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
   maxPromptBytes: 64_000, maxOutputTokens: IS_CHALLENGE ? MAX_OUTPUT_TOKENS : 4_096, timeoutMs: 90_000 });
-const cognition = NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-ENGINEERING-QUALITY-HOLDOUT-COGNITION",
-  provider, maxPromptBytes: 48_000, maxOutputTokens: MAX_OUTPUT_TOKENS, sourceRepresentation: SOURCE_REPRESENTATION });
 const parent = await mkdtemp(join(tmpdir(), "nyx-quality-v4-"));
 const taskResults: Record<string, unknown>[] = [];
 let sequence = 0;
@@ -179,6 +182,9 @@ let harnessAborted = false;
 
 try {
   for (const task of HOLDOUT) {
+    const cognition = NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-ENGINEERING-QUALITY-HOLDOUT-COGNITION",
+      provider, maxPromptBytes: 48_000, maxOutputTokens: MAX_OUTPUT_TOKENS, sourceRepresentation: SOURCE_REPRESENTATION,
+      experimentVariant: task.comparisonArm ?? "CURRENT" });
     const taskStarted = Date.now();
     const taskRoot = join(parent, task.taskId.toLowerCase());
     const sourceRoot = join(taskRoot, "authoritative-source");
@@ -440,6 +446,7 @@ try {
       availableEvidenceRefs: task.availableEvidence.map((item) => item.evidenceRef), contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
       contractDigest: CONTRACT_AT_START, modelId: MODEL, modelCalls: loopResult.modelCallCount, semanticActions,
       sourceRepresentation: SOURCE_REPRESENTATION,
+      comparisonArm: task.comparisonArm ?? null,
       rejectedActions: Math.max(0, loopResult.modelCallCount - semanticActions), evidenceRequests: loopResult.evidenceAcquisitions.length,
       hypotheses: loopResult.iterations.length, hypothesisDispositions: loopResult.iterations.map((item) => item.hypothesisDisposition),
       cognitionFailures: loopResult.cognitionFailures.map((item) => ({ cycle: item.cognitionCycle, reason: item.reason,
@@ -447,6 +454,12 @@ try {
           expected: diagnostic.expected, observed: diagnostic.observed,
           ...(diagnostic.sourceMeasurement ? { sourceMeasurement: diagnostic.sourceMeasurement } : {}) })) })),
       candidates: loopResult.iterations.length, repairIterations: Math.max(0, loopResult.iterations.length - 1),
+      ...(IS_COMPARISON ? { executionObservations: loopResult.iterations.map((iteration) => ({
+        iteration: iteration.iteration, proposalDigest: iteration.proposalDigest,
+        verification: iteration.verifications.map((item) => ({ toolId: item.toolId, state: item.observation.state,
+          diagnostics: item.observation.diagnostics.map((diagnostic) => ({ category: diagnostic.category,
+            code: diagnostic.code, file: diagnostic.file, message: diagnostic.message.slice(0, 400) })) })),
+      })) } : {}),
       verificationCount: 1 + loopResult.iterations.reduce((sum, item) => sum + item.verifications.length, 0)
         + (hiddenResult === "NOT_APPLICABLE" ? 0 : 1), deterministicVerification: loopResult.outcome,
       hiddenAcceptance: hiddenResult, engineeringQuality: qualityResult, quality,
@@ -459,7 +472,8 @@ try {
       requestDigests: modelEvidence.map((item) => item.modelRequestDigest), responseDigests: modelEvidence.map((item) => item.modelResponseDigest),
       providerDiagnostics: modelEvidence.map((item) => ({ statusCode: item.modelStatusCode,
         failureCategory: item.providerFailureCategory, retryability: item.providerRetryability,
-        providerRequestId: item.providerRequestId, finishReason: item.modelFinishReason, delivery: item.delivery })),
+        providerRequestId: item.providerRequestId, finishReason: item.modelFinishReason, delivery: item.delivery,
+        experimentVariant: item.experimentVariant, reasoningOutputBytes: item.reasoningOutputBytes })),
       candidateAdmission: loopResult.iterations.map((item) => item.candidateAdmission ? {
         decision: item.candidateAdmission.decision,
         findings: item.candidateAdmission.findings.map((finding) => ({
@@ -478,7 +492,8 @@ try {
       durationMs: Date.now() - taskStarted });
     grounded?.close();
     // Do not pay for the second arm while the first arm encountered a provider failure.
-    if (IS_CONTEXT && modelEvidence.some((item) => item.providerFailureCategory !== null)) break;
+    if (IS_CONTEXT && !IS_COMPARISON && modelEvidence.some((item) => item.providerFailureCategory !== null)) break;
+    if (IS_COMPARISON && modelEvidence.some((item) => item.providerFailureCategory === "PROVIDER_AUTH_FAILURE")) break;
   }
 } catch (error) {
   harnessAborted = true;
@@ -520,6 +535,9 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
     qualityOracleVersion: QUALITY_ORACLE_VERSION, cognitionContractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
     sourceRepresentation: SOURCE_REPRESENTATION,
     cognitionContractDigest: CONTRACT_AT_START, taskFixtureDigests: TASK_FIXTURE_DIGESTS, frozenBeforeScoring: true,
+    ...(IS_COMPARISON ? { comparisonControlsDigest: sha256(canonical(NYX_CONTEXT_TASKS[1])),
+      comparisonScope: NYX_CONFIGURATION_COMPARISON.referenceScope,
+      defaultConfigurationChanged: false, stopForReview: true } : {}),
     frozenCoreCommit: FROZEN_CORE.commit, frozenCoreDigests: FROZEN_CORE.files,
     frozenCoreObserved: FROZEN_CORE_OBSERVED, frozenCorePreserved: FROZEN_CORE_PRESERVED,
     contractChangedDuringScoredEval: taskResults.some((item) => item.contractPreserved !== true), tasks: taskResults,
