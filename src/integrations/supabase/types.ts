@@ -8388,6 +8388,7 @@ export type Database = {
         Args: { role_name: string; tenant: string; uid: string }
         Returns: boolean
       }
+      is_email_verified: { Args: { p_email: string }; Returns: boolean }
       is_feature_enabled: {
         Args: { p_flag_key: string; p_tenant_id: string }
         Returns: boolean
