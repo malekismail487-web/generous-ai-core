@@ -1,6 +1,23 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSchoolSubjects } from '@/hooks/useSchoolSubjects';
-import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2, Bot, BookOpen, Download, Image as ImageIcon, FileText, Presentation, Pencil, Save, Zap, GraduationCap } from 'lucide-react';
+import {
+  GlyphArrowLeft as ArrowLeft,
+  GlyphArrowRight as ArrowRight,
+  GlyphOrbit as Loader2,
+  GlyphPlus as Plus,
+  GlyphTrash as Trash2,
+  GlyphLumina as Bot,
+  GlyphBook as BookOpen,
+  GlyphDownload as Download,
+  GlyphImage as ImageIcon,
+  GlyphPaper as FileText,
+  GlyphDeck as Presentation,
+  GlyphPencil as Pencil,
+  GlyphSave as Save,
+  GlyphBolt as Zap,
+  GlyphCap as GraduationCap,
+  SubjectGlyph,
+} from '@/components/icons';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
@@ -28,35 +45,33 @@ import {
 } from '@/components/ui/dropdown-menu';
 // Default tile list used as a fallback if the school's subjects haven't loaded yet.
 // The live source of truth comes from useSchoolSubjects (the per-school `subjects` table).
-const FALLBACK_SUBJECTS: Array<{ id: string; name: string; emoji: string; color: string }> = [
-  { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'chemistry', name: 'Chemistry', emoji: '🧪', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'english', name: 'English', emoji: '📚', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'arabic', name: 'اللغة العربية', emoji: '🕌', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'art_design', name: 'Art and Design', emoji: '🎨', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'entrepreneurship', name: 'Entrepreneurship', emoji: '💼', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-];
-
-const grades = [
-  'KG1', 'KG2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
-  'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9',
-  'Grade 10', 'Grade 11', 'Grade 12'
+const SUBJECT_SURFACE = 'from-foreground/[0.14] to-foreground/[0.04]';
+const FALLBACK_SUBJECTS: Array<{ id: string; name: string; color: string }> = [
+  { id: 'biology', name: 'Biology', color: SUBJECT_SURFACE },
+  { id: 'physics', name: 'Physics', color: SUBJECT_SURFACE },
+  { id: 'mathematics', name: 'Mathematics', color: SUBJECT_SURFACE },
+  { id: 'chemistry', name: 'Chemistry', color: SUBJECT_SURFACE },
+  { id: 'english', name: 'English', color: SUBJECT_SURFACE },
+  { id: 'social_studies', name: 'Social Studies', color: SUBJECT_SURFACE },
+  { id: 'technology', name: 'Technology', color: SUBJECT_SURFACE },
+  { id: 'arabic', name: 'اللغة العربية', color: SUBJECT_SURFACE },
+  { id: 'islamic_studies', name: 'Islamic Studies', color: SUBJECT_SURFACE },
+  { id: 'ksa_history', name: 'KSA History', color: SUBJECT_SURFACE },
+  { id: 'art_design', name: 'Art and Design', color: SUBJECT_SURFACE },
+  { id: 'entrepreneurship', name: 'Entrepreneurship', color: SUBJECT_SURFACE },
 ];
 
 type MenuType = 'main' | 'ai' | 'course';
-type ViewState = 'subjects' | 'grade' | 'input' | 'lecture';
+type ViewState = 'subjects' | 'input' | 'lecture';
 
 export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {}) {
   const [menuType, setMenuType] = useState<MenuType>('main');
   const [viewState, setViewState] = useState<ViewState>('subjects');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-  const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
+  // The grade is assigned by the school administrator on the student's
+  // profile — it is never chosen inside the app.
+  const [assignedGrade, setAssignedGrade] = useState<string | null>(null);
+  const selectedGrade = assignedGrade;
   const [materialInput, setMaterialInput] = useState('');
   const [activeMaterial, setActiveMaterial] = useState<Material | null>(null);
   const [lectureContent, setLectureContent] = useState('');
@@ -90,8 +105,11 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   useEffect(() => {
     let cancelled = false;
     if (!user?.id) { setSchoolId(null); return; }
-    supabase.from('profiles').select('school_id').eq('id', user.id).maybeSingle().then(({ data }) => {
-      if (!cancelled) setSchoolId((data as { school_id?: string } | null)?.school_id ?? null);
+    supabase.from('profiles').select('school_id, grade_level').eq('id', user.id).maybeSingle().then(({ data }) => {
+      if (cancelled) return;
+      const row = data as { school_id?: string; grade_level?: string | null } | null;
+      setSchoolId(row?.school_id ?? null);
+      setAssignedGrade(row?.grade_level ?? null);
     });
     return () => { cancelled = true; };
   }, [user?.id]);
@@ -99,8 +117,7 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   const subjects = (dbSubjects.length > 0 ? dbSubjects : FALLBACK_SUBJECTS).map((s) => ({
     id: (s as { slug?: string | null }).slug || s.id,
     name: s.name,
-    emoji: (s as { emoji?: string | null }).emoji || '📘',
-    color: (s as { color?: string | null }).color || 'from-slate-500 to-zinc-600',
+    color: (s as { color?: string | null }).color || SUBJECT_SURFACE,
   }));
 
   const containerClass = embedded
@@ -289,11 +306,11 @@ Generate a lecture that includes:
 5. A short summary for revision
 
 IMPORTANT FORMATTING:
-- Use emoji section headers (📌, 🧠, 📊, ✅, ⚠️, 📝, 💡, ⚡)
+- Use plain text section headers in Title Case. Never use emoji or decorative symbols.
 - **Bold** all key terms on first mention
 - Use tables for comparisons between concepts
 - Create ASCII diagrams or visual representations where helpful
-- Include "💡 Pro Tip" boxes for study advice
+- Include "Pro Tip" boxes for study advice
 - For ALL mathematical expressions, use LaTeX notation:
   \\( expression \\) or $expression$ for inline, \\[ expression \\] or $$expression$$ for display
 - Always include plain-text fallback after complex formulas
@@ -385,23 +402,18 @@ Use age-appropriate language for ${selectedGrade}.`;
 
   const handleSubjectClick = (subjectId: string) => {
     setSelectedSubject(subjectId);
-    setSelectedGrade(null);
     setActiveMaterial(null);
     setLectureContent('');
-    setViewState('grade');
-  };
 
-  const handleGradeSelect = (grade: string) => {
-    setSelectedGrade(grade);
-    // Check if there are saved materials for this subject/grade
-    const materials = getMaterialsBySubjectAndGrade(selectedSubject!, grade);
+    // Straight into the subject at the grade the administrator assigned.
+    const materials = assignedGrade
+      ? getMaterialsBySubjectAndGrade(subjectId, assignedGrade)
+      : [];
     if (materials.length > 0) {
-      // Show existing materials
       setActiveMaterial(materials[0]);
       setLectureContent(materials[0].content);
       setViewState('lecture');
     } else {
-      // No materials, go to input
       setViewState('input');
     }
   };
@@ -444,28 +456,43 @@ Use age-appropriate language for ${selectedGrade}.`;
   const handleBackToSubjects = () => {
     setViewState('subjects');
     setSelectedSubject(null);
-    setSelectedGrade(null);
     setActiveMaterial(null);
     setLectureContent('');
-  };
-
-  const handleBackToGrades = () => {
-    setSelectedGrade(null);
-    setActiveMaterial(null);
-    setLectureContent('');
-    setViewState('grade');
   };
 
   const handleBackToMainMenu = () => {
     setMenuType('main');
     setViewState('subjects');
     setSelectedSubject(null);
-    setSelectedGrade(null);
     setActiveMaterial(null);
     setLectureContent('');
   };
 
   const subject = subjects.find(s => s.id === selectedSubject);
+
+  // No grade on the profile yet — the administrator assigns it, the student
+  // cannot pick one, so explain the block instead of rendering an empty view.
+  if (selectedSubject && !selectedGrade) {
+    return (
+      <div className={containerClass}>
+        <div className="max-w-md mx-auto px-4 py-10 text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 liquid-glass">
+            <GraduationCap size={26} />
+          </div>
+          <h1 className="text-xl font-bold mb-2">{tl('gradeLevel')}</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            {language === 'ar'
+              ? 'لم يقم مسؤول مدرستك بتعيين صفك الدراسي بعد. سيتم ضبط لومينا تلقائيًا بمجرد تعيينه.'
+              : 'Your school administrator has not assigned your grade yet. Lumina configures itself automatically once they do.'}
+          </p>
+          <Button variant="outline" onClick={handleBackToSubjects} className="gap-2">
+            <ArrowLeft size={16} />
+            {tl('back')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // LECTURE VIEW - Shows lecture content and material tabs
   if (viewState === 'lecture' && selectedSubject && selectedGrade) {
@@ -474,7 +501,7 @@ Use age-appropriate language for ${selectedGrade}.`;
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="flex items-center gap-3 mb-4">
-            <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
+            <Button variant="ghost" size="sm" onClick={handleBackToSubjects}>
               <ArrowLeft size={16} className="mr-1" />
               {tl('back')}
             </Button>
@@ -482,7 +509,7 @@ Use age-appropriate language for ${selectedGrade}.`;
               "w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br",
               subject?.color
             )}>
-              {subject?.emoji}
+              <SubjectGlyph subject={selectedSubject} size={26} className="text-foreground" />
             </div>
             <div className="flex-1">
               <h1 className="font-bold text-sm">{getSubjectName(selectedSubject!, language)}</h1>
@@ -639,7 +666,7 @@ Use age-appropriate language for ${selectedGrade}.`;
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
-            <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
+            <Button variant="ghost" size="sm" onClick={handleBackToSubjects}>
               <ArrowLeft size={16} className="mr-1" />
               {tl('back')}
             </Button>
@@ -650,7 +677,7 @@ Use age-appropriate language for ${selectedGrade}.`;
               "inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br",
               subject?.color
             )}>
-              {subject?.emoji}
+              <SubjectGlyph subject={selectedSubject} size={26} className="text-foreground" />
             </div>
             <h1 className="text-2xl font-bold mb-2">{getSubjectName(selectedSubject!, language)}</h1>
             <p className="text-sm text-muted-foreground">{getGradeName(selectedGrade!, language)}</p>
@@ -738,55 +765,6 @@ Use age-appropriate language for ${selectedGrade}.`;
                 {tl('generateLecture')}
                 <ArrowRight size={16} />
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // GRADE SELECTION VIEW
-  if (viewState === 'grade' && selectedSubject) {
-    return (
-      <div className={containerClass}>
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <Button variant="ghost" size="sm" onClick={handleBackToSubjects}>
-              <ArrowLeft size={16} className="mr-1" />
-              {tl('back')}
-            </Button>
-          </div>
-
-          <div className="text-center mb-8 animate-fade-in">
-            <div className={cn(
-              "inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br",
-              subject?.color
-            )}>
-              {subject?.emoji}
-            </div>
-            <h1 className="text-2xl font-bold mb-2">{getSubjectName(selectedSubject!, language)}</h1>
-          </div>
-
-          {/* Grade Selection */}
-          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
-            <h3 className="font-semibold mb-4 text-center">{tl('selectGrade')}</h3>
-            <div className="grid grid-cols-4 gap-2 overflow-y-auto max-h-[50vh]">
-              {grades.map((grade) => {
-                const materialCount = getMaterialsBySubjectAndGrade(selectedSubject, grade).length;
-                return (
-                  <button
-                    key={grade}
-                    onClick={() => handleGradeSelect(grade)}
-                    className="px-3 py-2 rounded-lg text-xs font-medium transition-all bg-secondary/50 text-muted-foreground hover:bg-secondary flex flex-col items-center gap-1"
-                  >
-                    <span>{getGradeName(grade, language)}</span>
-                    {materialCount > 0 && (
-                      <span className="text-[10px] text-primary">{materialCount} {tl('saved')}</span>
-                    )}
-                  </button>
-                );
-              })}
             </div>
           </div>
         </div>
@@ -894,7 +872,7 @@ Use age-appropriate language for ${selectedGrade}.`;
                   "w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2 bg-gradient-to-br text-foreground text-lg",
                   subj.color
                 )}>
-                  {subj.emoji}
+                  <SubjectGlyph subject={subj.id} size={20} />
                 </div>
                 <h3 className="font-semibold text-foreground text-xs">{getSubjectName(subj.id, language)}</h3>
               </button>

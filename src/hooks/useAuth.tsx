@@ -60,7 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    // Confirmation links land on a dedicated page that proves the address was
+    // verified — on whatever device opened the link.
+    const redirectUrl = `${window.location.origin}/auth/confirmed?email=${encodeURIComponent(email)}`;
     const { error } = await supabase.auth.signUp({
       email,
       password,

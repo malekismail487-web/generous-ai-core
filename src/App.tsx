@@ -39,6 +39,8 @@ import LseBench from "./pages/LseBench";
 import TeacherLiveConsole from "./pages/TeacherLiveConsole";
 import StudentLiveRoom from "./pages/StudentLiveRoom";
 import ExtensionView from "./pages/ExtensionView";
+import VerifyEmail from "./pages/VerifyEmail";
+import EmailConfirmed from "./pages/EmailConfirmed";
 
 const queryClient = new QueryClient();
 
@@ -50,8 +52,11 @@ function LanguageGate({ children }: { children: React.ReactNode }) {
   const hasLanguage = sessionStorage.getItem('language-selected-tab');
   const hasCountry = sessionStorage.getItem('selected_tenant_id');
 
-  // Always allow the selection pages through.
-  if (location.pathname === '/language' || location.pathname === '/country') {
+  // Always allow the selection pages through, plus the email-verification
+  // pages: a confirmation link may be opened on a brand new device that has
+  // never passed through the language/country funnel.
+  const ungatedRoutes = ['/language', '/country', '/verify-email', '/auth/confirmed'];
+  if (ungatedRoutes.includes(location.pathname)) {
     return <>{children}</>;
   }
 
@@ -89,6 +94,8 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Auth />} />
+                    <Route path="/auth/confirmed" element={<EmailConfirmed />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
                     <Route path="/language" element={<LanguageSelect />} />
                     <Route path="/country" element={<CountrySelect />} />
                     <Route path="/super-admin" element={<SuperAdmin />} />
