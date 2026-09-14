@@ -19,6 +19,23 @@ export const NYX_SCHEDULER_FROZEN_CORE = Object.freeze({
   }),
 });
 
+// New evaluation epoch for the current bounded cognition/provider stack. The
+// original frozen epoch above remains immutable and reproducible; this pin
+// permits fresh measurement without silently rescoring its historical result.
+export const NYX_SCHEDULER_FRONTIER_FROZEN_CORE = Object.freeze({
+  commit: "f5f1ee65deaa33eb2680c9c302f426bb4ee87370",
+  serialization: "UTF8_CRLF_TO_LF_ONLY",
+  files: Object.freeze({
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "4f8d2ee4071c46d5e9097a6f20414f5215a63e47747cf17d3761afcdc0e15e01",
+    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "316860fbeb8d297f9fec9948feccfe6c3dee5eef005af8d27b65c34f8182082e",
+    "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "924a89777149722b8917f80368fa14856a319c3603298a476766164a98ab3d57",
+    "src/lib/codelab/assurance/candidateEngineeringAdmission.ts": "1fb618d25616c51757e664f5e4ca6e8390de4ec2bd8da4789c2c30d0050a6ffa",
+    "src/lib/codelab/assurance/engineeringQualityOracle.ts": "af21863b9f3680330215e5464c5adcbbd050e2f313e7d71741822714e7594931",
+    "src/lib/codelab/assurance/r3EvaluatorIsolation.ts": "88fc1041a194cb2900959212e644dbfa0419a6cf1a994916c233fe13e09d7cfe",
+    "src/lib/codelab/assurance/holdoutAcceptanceIntegrity.ts": "5cf5edf2706dcc5be36683444e4699c5ef962dfee1668a8181e98cb251946c6e",
+  }),
+});
+
 export const NYX_SCHEDULER_EXPERIMENT = Object.freeze({
   chunkId: "NYX-HARD-REJECTION-REPAIR-001", maxCognitionCycles: 4, maxWallClockMs: 480_000,
   maxOutputTokensPerCall: 8_192, maxCumulativeOutputTokens: 32_768, maxPromptBytesPerCall: 48_000,

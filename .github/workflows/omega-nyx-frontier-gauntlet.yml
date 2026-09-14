@@ -60,7 +60,7 @@ jobs:
           set +e
           npm run omega:nyx:frontier-reasoning
           frontier_exit=$?
-          NYX_QUALITY_SUITE=CHALLENGE npm run omega:nyx:quality-holdout:v4
+          NYX_QUALITY_SUITE=FRONTIER_CHALLENGE npm run omega:nyx:quality-holdout:v4
           engineering_exit=$?
           set -e
           echo "frontier_exit=$frontier_exit engineering_exit=$engineering_exit"

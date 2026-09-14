@@ -6,7 +6,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { NYX_SCHEDULER_CHALLENGE as task, NYX_SCHEDULER_MUTANTS,
-  NYX_SCHEDULER_FROZEN_CORE, NYX_SCHEDULER_EXPERIMENT } from "./omega/nyx-scheduler-challenge";
+  NYX_SCHEDULER_FROZEN_CORE, NYX_SCHEDULER_FRONTIER_FROZEN_CORE,
+  NYX_SCHEDULER_EXPERIMENT } from "./omega/nyx-scheduler-challenge";
 import { assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { R3IsolatedHiddenEvaluator } from "../src/lib/codelab/assurance/r3EvaluatorIsolation";
@@ -83,6 +84,11 @@ try {
     return original.status === 0 && hash(original.stdout.replace(/\r\n/g, "\n")) === digest;
   });
   check(coreMatches.every(Boolean), "historical scheduler epoch remains reproducible from its exact frozen baseline");
+  const frontierCoreMatches = Object.entries(NYX_SCHEDULER_FRONTIER_FROZEN_CORE.files).map(([path, digest]) => {
+    const original = spawnSync("git", ["show", `${NYX_SCHEDULER_FRONTIER_FROZEN_CORE.commit}:${path}`], { encoding: "utf8" });
+    return original.status === 0 && hash(original.stdout.replace(/\r\n/g, "\n")) === digest;
+  });
+  check(frontierCoreMatches.every(Boolean), "frontier scheduler epoch is pinned to its exact current cognition and assurance baseline");
   check(NYX_SCHEDULER_EXPERIMENT.maxCognitionCycles === 4
     && NYX_SCHEDULER_EXPERIMENT.maxOutputTokensPerCall * 4 === NYX_SCHEDULER_EXPERIMENT.maxCumulativeOutputTokens,
   "paid experiment has a fixed four-call and generated-token envelope");
@@ -119,7 +125,7 @@ try {
   // Provider transport is replaced before the driver loads; this is E3 simulation, not E4.
   const transportStub = join(parent, "offline-transport.mjs");
   await writeFile(transportStub, `globalThis.fetch = async () => new Response(
-    JSON.stringify({ error: "synthetic-unavailable" }), { status: 503 });\n`);
+    JSON.stringify({ error: "synthetic-request-rejection" }), { status: 400 });\n`);
   const runOffline = (suite: string) => spawnSync(process.execPath, ["--experimental-strip-types", "--import", pathToFileURL(transportStub).href,
     "--import", pathToFileURL(resolve("scripts/w0rs/register-typescript-loader.mjs")).href,
     resolve("scripts/omega/nyx-quality-v4-live-eval.ts")], {
@@ -133,6 +139,13 @@ try {
   check(historical.status === 1 && historical.stderr.includes("challenge_frozen_core_digest_mismatch")
     && !historical.stdout.includes("NYX_QUALITY_CHALLENGE_HOLDOUT"),
   "new cognition cannot silently rescore the old frozen scheduler epoch");
+  const frontier = runOffline("FRONTIER_CHALLENGE");
+  const frontierLine = frontier.stdout.split(/\r?\n/).find((item) => item.startsWith("NYX_QUALITY_FRONTIER_CHALLENGE_HOLDOUT {"));
+  const frontierReport = frontierLine
+    ? JSON.parse(frontierLine.slice("NYX_QUALITY_FRONTIER_CHALLENGE_HOLDOUT ".length)) : null;
+  check(frontier.status === 1 && frontierReport?.evaluationDecision === "INSUFFICIENT_EVIDENCE"
+    && frontierReport.tasks[0].modelCalls === 1 && frontierReport.tasks[0].candidates === 0,
+  "current frontier scheduler epoch reaches live driver logic and preserves provider failure as insufficient evidence");
   const previousFeedbackEpoch = runOffline("CONTEXT_REPAIR");
   check(previousFeedbackEpoch.status === 1 && previousFeedbackEpoch.stderr.includes("context_repair_frozen_core_digest_mismatch"),
     "typed source experiment cannot silently rescore the previous measurement-feedback epoch");
@@ -149,7 +162,12 @@ try {
   check(offline.status === 1 && report?.evaluationDecision === "INSUFFICIENT_EVIDENCE"
     && report.tasks[0].modelCalls === 1 && report.tasks[0].candidates === 0,
   "simulated provider failure reaches the shared driver and stops without a fabricated candidate");
-  check(report?.tasks.length === 3 && report?.tasks.every((item: { modelCalls: number; candidates: number }) => item.modelCalls === 1 && item.candidates === 0),
+  const capacityTaskShapeValid = report?.tasks.length === 3
+    && report.tasks.every((item: { modelCalls: number; candidates: number }) => item.modelCalls === 1 && item.candidates === 0);
+  if (!capacityTaskShapeValid) console.error(`CAPACITY_TASK_SHAPE ${JSON.stringify(report?.tasks?.map(
+    (item: { taskId: string; modelCalls: number; candidates: number }) => ({ taskId: item.taskId,
+      modelCalls: item.modelCalls, candidates: item.candidates })))}`);
+  check(capacityTaskShapeValid,
     "bounded comparison records each arm's single unsuccessful provider request without expanding repair budgets");
   check(report?.aggregateMetrics.falseAcceptanceRate === null && report?.aggregateMetrics.meanTokensPerTask === null
     && report?.aggregateMetrics.providerAdjustedTaskSuccessRate === null

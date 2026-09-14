@@ -29,6 +29,7 @@ import { observeEngineeringExecution, type EngineeringObservation } from "../../
 import { NYX_ENGINEERING_QUALITY_V4, NYX_V4_FROZEN_CORE, type NyxQualityV4Task } from "./nyx-quality-v4-fixtures";
 import { NYX_ENGINEERING_QUALITY_V5, NYX_V5_FROZEN_CORE, type NyxQualityV5Task } from "./nyx-quality-v5-fixtures";
 import { NYX_SCHEDULER_CHALLENGE, NYX_SCHEDULER_EXPERIMENT, NYX_SCHEDULER_FROZEN_CORE,
+  NYX_SCHEDULER_FRONTIER_FROZEN_CORE,
   type NyxSchedulerChallenge } from "./nyx-scheduler-challenge";
 import { OMEGA_CANDIDATE_RUNNER_SOURCE } from "./verification-integrity-fixtures";
 import { GroundedRepairEvidence } from "../../src/lib/codelab/repository/groundedRepairEvidence";
@@ -39,10 +40,11 @@ import { NYX_CONTEXT_EXPERIMENT as CONTEXT_V1, NYX_CONTEXT_REPAIR_EXPERIMENT, NY
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V4";
-if (!["V4", "V5", "CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES", "COMPARISON", "CAPACITY_STATUS"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
+if (!["V4", "V5", "CHALLENGE", "FRONTIER_CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES", "COMPARISON", "CAPACITY_STATUS"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
 const IS_CAPACITY_STATUS = SUITE_ID === "CAPACITY_STATUS";
 const IS_COMPARISON = SUITE_ID === "COMPARISON" || IS_CAPACITY_STATUS;
-const IS_CHALLENGE = SUITE_ID === "CHALLENGE";
+const IS_CHALLENGE = SUITE_ID === "CHALLENGE" || SUITE_ID === "FRONTIER_CHALLENGE";
+const IS_FRONTIER_CHALLENGE = SUITE_ID === "FRONTIER_CHALLENGE";
 const IS_CONTEXT_REPAIR = SUITE_ID === "CONTEXT_REPAIR";
 const IS_CONTEXT_LINES = SUITE_ID === "CONTEXT_LINES";
 const IS_CONTEXT = SUITE_ID === "CONTEXT" || IS_CONTEXT_REPAIR || IS_CONTEXT_LINES || IS_COMPARISON;
@@ -56,8 +58,10 @@ const HOLDOUT: readonly EvaluationTask[] = IS_COMPARISON ? NYX_CONFIGURATION_COM
 })) : IS_CONTEXT ? NYX_CONTEXT_TASKS : IS_CHALLENGE ? [NYX_SCHEDULER_CHALLENGE]
   : SUITE_ID === "V5" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
 const FROZEN_CORE = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_FROZEN_CORE : IS_COMPARISON ? NYX_CONFIGURATION_FROZEN_CORE : IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_FROZEN_CORE : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_FROZEN_CORE
+  : IS_FRONTIER_CHALLENGE ? NYX_SCHEDULER_FRONTIER_FROZEN_CORE
   : IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
 const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
+  : IS_FRONTIER_CHALLENGE ? "nyx-scheduler-frontier/1"
   : IS_CHALLENGE ? "nyx-scheduler-challenge/1" : SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
