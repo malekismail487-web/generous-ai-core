@@ -456,23 +456,14 @@ Use age-appropriate language for ${selectedGrade}.`;
   const handleBackToSubjects = () => {
     setViewState('subjects');
     setSelectedSubject(null);
-    setSelectedGrade(null);
     setActiveMaterial(null);
     setLectureContent('');
-  };
-
-  const handleBackToGrades = () => {
-    setSelectedGrade(null);
-    setActiveMaterial(null);
-    setLectureContent('');
-    setViewState('grade');
   };
 
   const handleBackToMainMenu = () => {
     setMenuType('main');
     setViewState('subjects');
     setSelectedSubject(null);
-    setSelectedGrade(null);
     setActiveMaterial(null);
     setLectureContent('');
   };
@@ -486,7 +477,7 @@ Use age-appropriate language for ${selectedGrade}.`;
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="flex items-center gap-3 mb-4">
-            <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
+            <Button variant="ghost" size="sm" onClick={handleBackToSubjects}>
               <ArrowLeft size={16} className="mr-1" />
               {tl('back')}
             </Button>
@@ -494,7 +485,7 @@ Use age-appropriate language for ${selectedGrade}.`;
               "w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br",
               subject?.color
             )}>
-              {subject?.emoji}
+              <SubjectGlyph subject={selectedSubject} size={26} className="text-foreground" />
             </div>
             <div className="flex-1">
               <h1 className="font-bold text-sm">{getSubjectName(selectedSubject!, language)}</h1>
@@ -651,7 +642,7 @@ Use age-appropriate language for ${selectedGrade}.`;
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
-            <Button variant="ghost" size="sm" onClick={handleBackToGrades}>
+            <Button variant="ghost" size="sm" onClick={handleBackToSubjects}>
               <ArrowLeft size={16} className="mr-1" />
               {tl('back')}
             </Button>
@@ -662,7 +653,7 @@ Use age-appropriate language for ${selectedGrade}.`;
               "inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br",
               subject?.color
             )}>
-              {subject?.emoji}
+              <SubjectGlyph subject={selectedSubject} size={26} className="text-foreground" />
             </div>
             <h1 className="text-2xl font-bold mb-2">{getSubjectName(selectedSubject!, language)}</h1>
             <p className="text-sm text-muted-foreground">{getGradeName(selectedGrade!, language)}</p>
@@ -750,55 +741,6 @@ Use age-appropriate language for ${selectedGrade}.`;
                 {tl('generateLecture')}
                 <ArrowRight size={16} />
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // GRADE SELECTION VIEW
-  if (viewState === 'grade' && selectedSubject) {
-    return (
-      <div className={containerClass}>
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <Button variant="ghost" size="sm" onClick={handleBackToSubjects}>
-              <ArrowLeft size={16} className="mr-1" />
-              {tl('back')}
-            </Button>
-          </div>
-
-          <div className="text-center mb-8 animate-fade-in">
-            <div className={cn(
-              "inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 text-2xl bg-gradient-to-br",
-              subject?.color
-            )}>
-              {subject?.emoji}
-            </div>
-            <h1 className="text-2xl font-bold mb-2">{getSubjectName(selectedSubject!, language)}</h1>
-          </div>
-
-          {/* Grade Selection */}
-          <div className="liquid-glass rounded-2xl p-5 animate-fade-in">
-            <h3 className="font-semibold mb-4 text-center">{tl('selectGrade')}</h3>
-            <div className="grid grid-cols-4 gap-2 overflow-y-auto max-h-[50vh]">
-              {grades.map((grade) => {
-                const materialCount = getMaterialsBySubjectAndGrade(selectedSubject, grade).length;
-                return (
-                  <button
-                    key={grade}
-                    onClick={() => handleGradeSelect(grade)}
-                    className="px-3 py-2 rounded-lg text-xs font-medium transition-all bg-secondary/50 text-muted-foreground hover:bg-secondary flex flex-col items-center gap-1"
-                  >
-                    <span>{getGradeName(grade, language)}</span>
-                    {materialCount > 0 && (
-                      <span className="text-[10px] text-primary">{materialCount} {tl('saved')}</span>
-                    )}
-                  </button>
-                );
-              })}
             </div>
           </div>
         </div>
@@ -906,7 +848,7 @@ Use age-appropriate language for ${selectedGrade}.`;
                   "w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2 bg-gradient-to-br text-foreground text-lg",
                   subj.color
                 )}>
-                  {subj.emoji}
+                  <SubjectGlyph subject={subj.id} size={20} />
                 </div>
                 <h3 className="font-semibold text-foreground text-xs">{getSubjectName(subj.id, language)}</h3>
               </button>
