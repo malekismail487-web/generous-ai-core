@@ -117,8 +117,7 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   const subjects = (dbSubjects.length > 0 ? dbSubjects : FALLBACK_SUBJECTS).map((s) => ({
     id: (s as { slug?: string | null }).slug || s.id,
     name: s.name,
-    emoji: (s as { emoji?: string | null }).emoji || '📘',
-    color: (s as { color?: string | null }).color || 'from-slate-500 to-zinc-600',
+    color: (s as { color?: string | null }).color || SUBJECT_SURFACE,
   }));
 
   const containerClass = embedded
@@ -307,11 +306,11 @@ Generate a lecture that includes:
 5. A short summary for revision
 
 IMPORTANT FORMATTING:
-- Use emoji section headers (📌, 🧠, 📊, ✅, ⚠️, 📝, 💡, ⚡)
+- Use plain text section headers in Title Case. Never use emoji or decorative symbols.
 - **Bold** all key terms on first mention
 - Use tables for comparisons between concepts
 - Create ASCII diagrams or visual representations where helpful
-- Include "💡 Pro Tip" boxes for study advice
+- Include "Pro Tip" boxes for study advice
 - For ALL mathematical expressions, use LaTeX notation:
   \\( expression \\) or $expression$ for inline, \\[ expression \\] or $$expression$$ for display
 - Always include plain-text fallback after complex formulas
@@ -403,23 +402,18 @@ Use age-appropriate language for ${selectedGrade}.`;
 
   const handleSubjectClick = (subjectId: string) => {
     setSelectedSubject(subjectId);
-    setSelectedGrade(null);
     setActiveMaterial(null);
     setLectureContent('');
-    setViewState('grade');
-  };
 
-  const handleGradeSelect = (grade: string) => {
-    setSelectedGrade(grade);
-    // Check if there are saved materials for this subject/grade
-    const materials = getMaterialsBySubjectAndGrade(selectedSubject!, grade);
+    // Straight into the subject at the grade the administrator assigned.
+    const materials = assignedGrade
+      ? getMaterialsBySubjectAndGrade(subjectId, assignedGrade)
+      : [];
     if (materials.length > 0) {
-      // Show existing materials
       setActiveMaterial(materials[0]);
       setLectureContent(materials[0].content);
       setViewState('lecture');
     } else {
-      // No materials, go to input
       setViewState('input');
     }
   };
