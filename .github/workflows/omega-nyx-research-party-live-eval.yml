@@ -2,6 +2,15 @@ name: Omega NYX research party live evaluation
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - sol/omega-institutional-spine
+    paths:
+      - .github/workflows/omega-nyx-research-party-live-eval.yml
+      - scripts/omega/nyx-research-party-fixtures.ts
+      - scripts/omega/nyx-research-party-live-eval.ts
+      - scripts/omegaResearchParty.test.ts
+      - src/lib/codelab/research/**
 
 permissions:
   contents: read
