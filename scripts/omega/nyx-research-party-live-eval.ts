@@ -166,6 +166,7 @@ let falseAcceptances = 0;
 let sourceMutationFailures = 0;
 let authorityFailures = 0;
 let providerFailures = 0;
+const providerStatusCounts: Record<string, number> = {};
 try {
   for (const [index, task] of NYX_RESEARCH_PARTY_LIVE_TASKS.entries()) {
     const objective = task.objective(CANDIDATE, Date.now());
@@ -201,8 +202,12 @@ try {
     if (assurance.decision === "ACCEPT" && partyResult.decision.selectedMechanismId !== task.expectedMechanismId) falseAcceptances += 1;
     if (!sourceUnchanged) sourceMutationFailures += 1;
     if (partyResult.authorityGranted || flatResult.authorityGranted) authorityFailures += 1;
-    providerFailures += [...partyResult.cognitionEvidence, ...flatResult.cognitionEvidence]
-      .filter((item) => item.statusCode !== 200).length;
+    const cognitionEvidence = [...partyResult.cognitionEvidence, ...flatResult.cognitionEvidence];
+    providerFailures += cognitionEvidence.filter((item) => item.statusCode !== 200).length;
+    for (const item of cognitionEvidence) {
+      const key = item.statusCode === null ? "NO_STATUS" : String(item.statusCode);
+      providerStatusCounts[key] = (providerStatusCounts[key] ?? 0) + 1;
+    }
     taskResults.push({ taskId: task.taskId, executionOrder: index % 2 === 0 ? "PARTY_THEN_FLAT" : "FLAT_THEN_PARTY",
       expectedMechanismDigest: theoryDigest(task.expectedMechanismId),
       party: { assuranceDecision: assurance.decision, decision: partyResult.decision.state,
@@ -222,7 +227,7 @@ try {
       modelClaims: "E1", independentInstitutionalReplication: false }, matchedLimits: limits,
     aggregate: { tasks: NYX_RESEARCH_PARTY_LIVE_TASKS.length, partyAccepted, baselineCorrect,
       partyGain: partyAccepted - baselineCorrect, falseAcceptances, sourceMutationFailures,
-      authorityFailures, providerFailures, broadGeneralizationEstablished: false,
+      authorityFailures, providerFailures, providerStatusCounts, broadGeneralizationEstablished: false,
       institutionalScientificCapabilityEstablished: false }, taskResults };
   const reportRoot = process.env.RUNNER_TEMP?.trim() || tmpdir();
   const reportPath = join(reportRoot, `nyx-research-party-live-${CANDIDATE.slice(0, 12)}.json`);

@@ -42,7 +42,7 @@ const INTENT_FIELDS = Object.freeze(["schemaVersion", "decision", "thesis", "mec
   "evidenceRefs", "assumptions", "uncertainties", "forecasts", "counterexamples", "requestedExperimentIds",
   "revisionOfTheoryId", "modelEstimate"]);
 
-const THEORY_INTENT_SCHEMA = Object.freeze({
+export const NYX_THEORY_INTENT_JSON_SCHEMA = Object.freeze({
   type: "object",
   additionalProperties: false,
   required: INTENT_FIELDS,
@@ -77,6 +77,25 @@ const THEORY_INTENT_SCHEMA = Object.freeze({
     modelEstimate: { anyOf: [{ type: "number", minimum: 0, maximum: 1 }, { type: "null" }] },
   },
 });
+
+// NVIDIA's hosted guided-decoding backend accepts a portable JSON Schema
+// subset. These bounds remain authoritative in #parseIntent after generation;
+// removing them from the transport schema does not relax Omega admission.
+const LOCALLY_ENFORCED_SCHEMA_KEYWORDS = new Set([
+  "minimum", "maximum", "minLength", "maxLength", "minItems", "maxItems", "uniqueItems",
+]);
+
+function providerCompatibleSchema(value: unknown): unknown {
+  if (Array.isArray(value)) return Object.freeze(value.map(providerCompatibleSchema));
+  if (value === null || typeof value !== "object") return value;
+  return Object.freeze(Object.fromEntries(Object.entries(value as Record<string, unknown>)
+    .filter(([key]) => !LOCALLY_ENFORCED_SCHEMA_KEYWORDS.has(key))
+    .map(([key, item]) => [key, providerCompatibleSchema(item)])));
+}
+
+export const NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA = providerCompatibleSchema(
+  NYX_THEORY_INTENT_JSON_SCHEMA,
+) as Readonly<Record<string, unknown>>;
 
 function sha256(value: string): string { return createHash("sha256").update(value).digest("hex"); }
 function token(value: unknown): value is string { return typeof value === "string" && validResearchId(value); }
@@ -188,7 +207,7 @@ export class NyxNemotronTheoryCognition {
     const completion = await this.#config.provider.complete({ schemaVersion: 1, requestId: request.requestId,
       messages: [{ role: "system", content: "You are one bounded specialist cognition process inside NYX. You reason; Omega alone authorizes actions and admits evidence. Never claim that model agreement is experimental proof." },
         { role: "user", content: serialized }], maxTokens: request.maxOutputTokens, temperature: request.role === "INVESTIGATOR" ? 0.35 : 0,
-      responseFormat: { type: "JSON_SCHEMA", name: "nyx_theory_intent", schema: THEORY_INTENT_SCHEMA },
+      responseFormat: { type: "JSON_SCHEMA", name: "nyx_theory_intent", schema: NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA },
       inferencePolicy: "REASONING_JSON", observedAtEpochMs: request.observedAtEpochMs,
       deadlineEpochMs: request.deadlineEpochMs, signal: request.signal });
     if (completion.decision !== "COMPLETED" || completion.content === null) {

@@ -1,6 +1,7 @@
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { runFlatTheoryBaseline } from "../src/lib/codelab/research/flatTheoryBaseline";
-import { NyxNemotronTheoryCognition } from "../src/lib/codelab/research/nyxNemotronTheoryCognition";
+import { NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA, NYX_THEORY_INTENT_JSON_SCHEMA,
+  NyxNemotronTheoryCognition } from "../src/lib/codelab/research/nyxNemotronTheoryCognition";
 import { assureResearchParty } from "../src/lib/codelab/research/researchPartyAssurance";
 import { immutableResearchValue, researchObjectiveDigest, validResearchLimits, validResearchObjective,
   type ResearchExperimentObservation, type ResearchPartyLimits, type ResearchPartyObjective,
@@ -19,6 +20,13 @@ function check(condition: unknown, message: string): asserts condition {
 async function rejects(action: () => unknown | Promise<unknown>, pattern: RegExp, message: string): Promise<void> {
   try { await action(); throw new Error("expected_rejection_missing"); }
   catch (error) { check(pattern.test(String(error)), message); }
+}
+
+function schemaKeys(value: unknown): string[] {
+  if (Array.isArray(value)) return value.flatMap(schemaKeys);
+  if (value === null || typeof value !== "object") return [];
+  return Object.entries(value as Record<string, unknown>)
+    .flatMap(([key, item]) => [key, ...schemaKeys(item)]);
 }
 
 const CANDIDATE = "b".repeat(40);
@@ -153,6 +161,20 @@ check(objective().experimentCatalog.every((item) => item.mutatesCandidate === fa
 check(objective().admittedEvidence.every((item) => item.grantsAuthority === false), "evidence grants no authority");
 check(!validResearchObjective({ ...objective(), expiryEpochMs: now } as ResearchPartyObjective, now), "expired objective is rejected");
 check(!validResearchLimits({ ...limits, maxModelCalls: 65 }), "unbounded model-call policy is rejected");
+
+{
+  const fullKeys = new Set(schemaKeys(NYX_THEORY_INTENT_JSON_SCHEMA));
+  const providerKeys = new Set(schemaKeys(NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA));
+  const locallyEnforcedOnly = ["minimum", "maximum", "minLength", "maxLength", "maxItems", "uniqueItems"];
+  check(locallyEnforcedOnly.every((key) => fullKeys.has(key) && !providerKeys.has(key)),
+    "hosted theory schema removes incompatible bounds retained by local admission");
+  const providerRoot = NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA as {
+    required?: unknown; additionalProperties?: unknown; properties?: Record<string, unknown>;
+  };
+  check(Array.isArray(providerRoot.required) && providerRoot.additionalProperties === false
+    && providerRoot.properties?.decision !== undefined && providerRoot.properties?.forecasts !== undefined,
+  "provider theory schema preserves the closed intent structure and required semantic fields");
+}
 
 const directGraph = new ResearchEvidenceGraph(objective(), now);
 await rejects(() => directGraph.recordObservation(makeObservation("EXP-A-FAILED")), /without_precommitted_prediction/,
