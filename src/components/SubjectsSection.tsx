@@ -1,6 +1,23 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSchoolSubjects } from '@/hooks/useSchoolSubjects';
-import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2, Bot, BookOpen, Download, Image as ImageIcon, FileText, Presentation, Pencil, Save, Zap, GraduationCap } from 'lucide-react';
+import {
+  GlyphArrowLeft as ArrowLeft,
+  GlyphArrowRight as ArrowRight,
+  GlyphOrbit as Loader2,
+  GlyphPlus as Plus,
+  GlyphTrash as Trash2,
+  GlyphLumina as Bot,
+  GlyphBook as BookOpen,
+  GlyphDownload as Download,
+  GlyphImage as ImageIcon,
+  GlyphPaper as FileText,
+  GlyphDeck as Presentation,
+  GlyphPencil as Pencil,
+  GlyphSave as Save,
+  GlyphBolt as Zap,
+  GlyphCap as GraduationCap,
+  SubjectGlyph,
+} from '@/components/icons';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { Button } from '@/components/ui/button';
 import { streamChat, Message } from '@/lib/chat';
@@ -28,35 +45,33 @@ import {
 } from '@/components/ui/dropdown-menu';
 // Default tile list used as a fallback if the school's subjects haven't loaded yet.
 // The live source of truth comes from useSchoolSubjects (the per-school `subjects` table).
-const FALLBACK_SUBJECTS: Array<{ id: string; name: string; emoji: string; color: string }> = [
-  { id: 'biology', name: 'Biology', emoji: '🧬', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'physics', name: 'Physics', emoji: '⚛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'mathematics', name: 'Mathematics', emoji: '📐', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'chemistry', name: 'Chemistry', emoji: '🧪', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'english', name: 'English', emoji: '📚', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'social_studies', name: 'Social Studies', emoji: '🌍', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'technology', name: 'Technology', emoji: '💻', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'arabic', name: 'اللغة العربية', emoji: '🕌', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'islamic_studies', name: 'Islamic Studies', emoji: '☪️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'ksa_history', name: 'KSA History', emoji: '🏛️', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'art_design', name: 'Art and Design', emoji: '🎨', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-  { id: 'entrepreneurship', name: 'Entrepreneurship', emoji: '💼', color: 'from-foreground/[0.14] to-foreground/[0.04]' },
-];
-
-const grades = [
-  'KG1', 'KG2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
-  'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9',
-  'Grade 10', 'Grade 11', 'Grade 12'
+const SUBJECT_SURFACE = 'from-foreground/[0.14] to-foreground/[0.04]';
+const FALLBACK_SUBJECTS: Array<{ id: string; name: string; color: string }> = [
+  { id: 'biology', name: 'Biology', color: SUBJECT_SURFACE },
+  { id: 'physics', name: 'Physics', color: SUBJECT_SURFACE },
+  { id: 'mathematics', name: 'Mathematics', color: SUBJECT_SURFACE },
+  { id: 'chemistry', name: 'Chemistry', color: SUBJECT_SURFACE },
+  { id: 'english', name: 'English', color: SUBJECT_SURFACE },
+  { id: 'social_studies', name: 'Social Studies', color: SUBJECT_SURFACE },
+  { id: 'technology', name: 'Technology', color: SUBJECT_SURFACE },
+  { id: 'arabic', name: 'اللغة العربية', color: SUBJECT_SURFACE },
+  { id: 'islamic_studies', name: 'Islamic Studies', color: SUBJECT_SURFACE },
+  { id: 'ksa_history', name: 'KSA History', color: SUBJECT_SURFACE },
+  { id: 'art_design', name: 'Art and Design', color: SUBJECT_SURFACE },
+  { id: 'entrepreneurship', name: 'Entrepreneurship', color: SUBJECT_SURFACE },
 ];
 
 type MenuType = 'main' | 'ai' | 'course';
-type ViewState = 'subjects' | 'grade' | 'input' | 'lecture';
+type ViewState = 'subjects' | 'input' | 'lecture';
 
 export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {}) {
   const [menuType, setMenuType] = useState<MenuType>('main');
   const [viewState, setViewState] = useState<ViewState>('subjects');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-  const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
+  // The grade is assigned by the school administrator on the student's
+  // profile — it is never chosen inside the app.
+  const [assignedGrade, setAssignedGrade] = useState<string | null>(null);
+  const selectedGrade = assignedGrade;
   const [materialInput, setMaterialInput] = useState('');
   const [activeMaterial, setActiveMaterial] = useState<Material | null>(null);
   const [lectureContent, setLectureContent] = useState('');
@@ -90,8 +105,11 @@ export function SubjectsSection({ embedded = false }: { embedded?: boolean } = {
   useEffect(() => {
     let cancelled = false;
     if (!user?.id) { setSchoolId(null); return; }
-    supabase.from('profiles').select('school_id').eq('id', user.id).maybeSingle().then(({ data }) => {
-      if (!cancelled) setSchoolId((data as { school_id?: string } | null)?.school_id ?? null);
+    supabase.from('profiles').select('school_id, grade_level').eq('id', user.id).maybeSingle().then(({ data }) => {
+      if (cancelled) return;
+      const row = data as { school_id?: string; grade_level?: string | null } | null;
+      setSchoolId(row?.school_id ?? null);
+      setAssignedGrade(row?.grade_level ?? null);
     });
     return () => { cancelled = true; };
   }, [user?.id]);
