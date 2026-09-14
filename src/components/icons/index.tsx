@@ -303,3 +303,81 @@ export function SubjectGlyph({ subject, ...props }: GlyphProps & { subject?: str
   const Mark = (subject && SUBJECT_GLYPHS[subject]) || GlyphBook;
   return <Mark {...props} />;
 }
+
+/* ------------------------------------------------------------------ tools */
+
+export const GlyphPlus = (p: GlyphProps) => (
+  <Glyph {...p}>
+    <path d="M12 4.75v14.5M4.75 12h14.5" />
+  </Glyph>
+);
+
+export const GlyphClose = (p: GlyphProps) => (
+  <Glyph {...p}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </Glyph>
+);
+
+export const GlyphTrash = (p: GlyphProps) => (
+  <Glyph {...p}>
+    <path d="M4.5 6.75h15" />
+    <path d="M9.25 6.75V5a1.5 1.5 0 0 1 1.5-1.5h2.5a1.5 1.5 0 0 1 1.5 1.5v1.75" />
+    <path d="M6.5 6.75 7.4 19a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.9-12.25" />
+    <path d="M10.5 10.5v6M13.5 10.5v6" />
+  </Glyph>
+);
+
+export const GlyphDownload = (p: GlyphProps) => (
+  <Glyph {...p}>
+    <path d="M12 3.75v11" />
+    <path d="m7.75 10.5 4.25 4.25 4.25-4.25" />
+    <path d="M4.25 17.5v1.25a1.5 1.5 0 0 0 1.5 1.5h12.5a1.5 1.5 0 0 0 1.5-1.5V17.5" />
+  </Glyph>
+);
+
+export const GlyphImage = (p: GlyphProps) => (
+  <Glyph {...p}>
+    <rect x="3.25" y="4.75" width="17.5" height="14.5" rx="2" />
+    <circle cx="8.5" cy="9.5" r="1.4" />
+    <path d="m4 17 4.6-4.6 3.2 3.2 3-2.9 5.2 5" />
+  </Glyph>
+);
+
+export const GlyphDeck = (p: GlyphProps) => (
+  <Glyph {...p}>
+    <rect x="3.25" y="4.5" width="17.5" height="11.5" rx="1.75" />
+    <path d="M12 16v4M8.75 20h6.5" />
+  </Glyph>
+);
+
+export const GlyphPencil = (p: GlyphProps) => (
+  <Glyph {...p}>
+    <path d="M15.6 4.4 19.6 8.4 8.6 19.4l-5 1 1-5z" />
+    <path d="m13.75 6.25 4 4" />
+  </Glyph>
+);
+
+export const GlyphSave = (p: GlyphProps) => (
+  <Glyph {...p}>
+    <path d="M4.25 5.75A1.5 1.5 0 0 1 5.75 4.25h9.6l4.4 4.4v9.6a1.5 1.5 0 0 1-1.5 1.5H5.75a1.5 1.5 0 0 1-1.5-1.5z" />
+    <path d="M8 4.25v5h6.5v-5" />
+    <rect x="8" y="13" width="8" height="6.75" rx="1" />
+  </Glyph>
+);
+
+export const GlyphBolt = (p: GlyphProps) => (
+  <Glyph {...p}>
+    <path d="M13.25 2.75 5.5 13.5h5.25L10 21.25 18.5 10.5h-5.4z" />
+  </Glyph>
+);
+
+/** Lumina's own agent mark — a nucleus inside a soft containment ring. */
+export const GlyphLumina = (p: GlyphProps) => (
+  <Glyph {...p}>
+    <rect x="3.75" y="6.5" width="16.5" height="12" rx="4" />
+    <circle cx="9" cy="12.5" r="1.1" />
+    <circle cx="15" cy="12.5" r="1.1" />
+    <path d="M12 2.75V6.5" />
+    <path d="M9.75 16.25h4.5" />
+  </Glyph>
+);
