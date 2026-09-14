@@ -15,6 +15,7 @@ import {
   executeCausalExperiments,
   frontierDigest,
   frontierProviderSchema,
+  frontierRevisionPrompt,
   graphPrompt,
   protocolPrompt,
   verifyCausalConclusion,
@@ -101,12 +102,13 @@ async function runStage(input: {
 }): Promise<StageResult> {
   const attempts: StageAttempt[] = [];
   let feedback: readonly string[] = [];
+  let previousRejectedCandidate: Record<string, unknown> | null = null;
   for (let attempt = 1; attempt <= NYX_FRONTIER_GAUNTLET.maxAttemptsPerStage; attempt += 1) {
     if (modelCalls >= NYX_FRONTIER_GAUNTLET.maxModelCalls || Date.now() >= deadlineEpochMs) {
       attempts.push(stageFailure(attempt, ["RESOURCE_BUDGET_EXHAUSTED"], null));
       break;
     }
-    const prompt = input.prompt(feedback);
+    const prompt = frontierRevisionPrompt(input.prompt(feedback), previousRejectedCandidate, feedback);
     const requestId = `${input.stageId}-ATTEMPT-${attempt}-${frontierDigest([CANDIDATE, input.stageId, attempt]).slice(0, 16)}`;
     modelCalls += 1;
     const completion = await provider.complete({ schemaVersion: 1, requestId,
@@ -143,6 +145,7 @@ async function runStage(input: {
       verificationEvidenceDigest: verification.evidenceDigest }));
     if (verification.accepted) return Object.freeze({ stageId: input.stageId, accepted: true,
       attempts: Object.freeze(attempts), value: parsed as Record<string, unknown>, correctedAfterFeedback: attempt > 1 });
+    previousRejectedCandidate = parsed as Record<string, unknown>;
     feedback = verification.findings;
   }
   return Object.freeze({ stageId: input.stageId, accepted: false, attempts: Object.freeze(attempts), value: null,

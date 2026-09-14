@@ -409,12 +409,36 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
   check(malformed.decision === "REJECTED" && calls === 0, "malformed expiry fails closed rather than disabling the deadline");
 }
 {
-  for (const status of [401, 403, 503]) {
+  for (const status of [401, 403]) {
     const clock = new ManualClock(); let calls = 0;
     const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => { calls += 1; return new Response(null, { status }); });
     const result = await drive(client.complete(request()), clock);
     check(calls === 1 && result.decision === "PROVIDER_ERROR", `HTTP ${status} is not an unbounded rate-limit retry`);
   }
+}
+{
+  const clock = new ManualClock(); const events: NvidiaNimCapacityProgress[] = []; let calls = 0;
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => {
+    calls += 1; return calls === 1 ? new Response(null, { status: 503 }) : success();
+  }, undefined, (event) => { events.push(event); });
+  const result = await drive(client.complete(request()), clock);
+  check(result.decision === "COMPLETED" && calls === 2
+    && result.evidence.delivery?.transientUnavailableResponses === 1
+    && result.evidence.delivery.capacityWaitMs === 60000,
+  "one transient provider-unavailable response waits sixty seconds and resumes the same logical request");
+  check(events.some((event) => event.state === "WAITING_FOR_CAPACITY")
+    && events.some((event) => event.state === "RESUMING") && events.at(-1)?.state === "COMPLETED",
+  "transient provider recovery remains visible and distinguishes waiting from execution");
+}
+{
+  const clock = new ManualClock(); let calls = 0;
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => {
+    calls += 1; return new Response(null, { status: 503 });
+  });
+  const result = await drive(client.complete(request()), clock);
+  check(result.decision === "PROVIDER_ERROR" && calls === 2
+    && result.evidence.delivery?.transientUnavailableResponses === 2,
+  "persistent provider unavailability stops after one bounded retry rather than looping until success");
 }
 {
   const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);

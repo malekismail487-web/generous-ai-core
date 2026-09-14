@@ -52,6 +52,7 @@ export interface NvidiaNimCapacityProgress {
   readonly automaticResume: boolean;
   readonly httpAttempts: number;
   readonly rateLimitedResponses: number;
+  readonly transientUnavailableResponses: number;
   /** A received model response is not an accepted engineering result. */
   readonly taskCompletionClaimed: false;
   readonly authorityRenewed: false;
@@ -123,6 +124,7 @@ export interface NvidiaNimDeliveryEvidence {
   readonly scope: "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT";
   readonly httpAttempts: number;
   readonly rateLimitedResponses: number;
+  readonly transientUnavailableResponses: number;
   readonly capacityWaitMs: number;
   readonly state: "DELIVERED" | "WAITING_FOR_CAPACITY" | "STOPPED";
   readonly notBeforeEpochMs: number | null;
@@ -295,6 +297,7 @@ export class NvidiaNimProvider {
     const signal = request.signal ?? new AbortController().signal;
     let httpAttempts = 0;
     let rateLimitedResponses = 0;
+    let transientUnavailableResponses = 0;
     let capacityWaitMs = 0;
     let previous: NvidiaNimCompletionResult | null = null;
     let waitVisible = false;
@@ -308,7 +311,8 @@ export class NvidiaNimProvider {
         secondsUntilRetry: retryAtEpochMs === null ? null : Math.max(0, Math.ceil((retryAtEpochMs - observedAtEpochMs) / 1000)),
         automaticResume: state === "WAITING_FOR_CAPACITY" && retryAtEpochMs !== null
           && retryAtEpochMs < deadline && !signal.aborted,
-        httpAttempts, rateLimitedResponses, taskCompletionClaimed: false, authorityRenewed: false });
+        httpAttempts, rateLimitedResponses, transientUnavailableResponses,
+        taskCompletionClaimed: false, authorityRenewed: false });
       try {
         if (this.#config.onCapacityProgress) {
           void Promise.resolve(this.#config.onCapacityProgress(event)).catch(() => undefined);
@@ -322,7 +326,8 @@ export class NvidiaNimProvider {
     };
     const finish = (result: NvidiaNimCompletionResult, notBeforeEpochMs: number | null = null): NvidiaNimCompletionResult => {
       const delivery: NvidiaNimDeliveryEvidence = Object.freeze({ policy: "nvidia-capacity/1", requestsPerMinute: 40,
-        scope: "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT", httpAttempts, rateLimitedResponses, capacityWaitMs,
+        scope: "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT", httpAttempts, rateLimitedResponses,
+        transientUnavailableResponses, capacityWaitMs,
         state: result.decision === "COMPLETED" ? "DELIVERED" : result.decision === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY" : "STOPPED",
         notBeforeEpochMs, authorityRenewed: false });
       if (waitVisible) progress(result.decision === "COMPLETED" ? "COMPLETED" : "STOPPED", notBeforeEpochMs);
@@ -356,6 +361,15 @@ export class NvidiaNimProvider {
       if (previous.evidence.networkAttempted) httpAttempts += 1;
       if (previous.evidence.statusCode === 429) rateLimitedResponses += 1;
       if (previous.evidence.statusCode === 429 && this.#capacity) { waitVisible = true; continue; }
+      if ([502, 503, 504].includes(previous.evidence.statusCode ?? 0)) {
+        transientUnavailableResponses += 1;
+        if (this.#capacity
+          && transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries) {
+          this.#capacity.defer(null);
+          waitVisible = true;
+          continue;
+        }
+      }
       if (signal.aborted) return stopped(true);
       if (now() >= deadline && previous.decision === "COMPLETED") {
         return finish(this.#result("BLOCKED", "nvidia_completion_run_expired", null, null, requestDigest,

@@ -4,10 +4,10 @@ export const NYX_FRONTIER_GAUNTLET = Object.freeze({
   chunkId: "NYX-FRONTIER-GAUNTLET-001",
   version: "nyx-frontier-reasoning/1",
   scope: "BOUNDED_FRONTIER_STYLE_EVALUATION_NOT_AGI_CERTIFICATION",
-  maxModelCalls: 8,
-  maxAttemptsPerStage: 2,
+  maxModelCalls: 12,
+  maxAttemptsPerStage: 3,
   maxOutputTokensPerCall: 2_048,
-  maxCumulativeOutputTokens: 16_384,
+  maxCumulativeOutputTokens: 24_576,
   maxWallClockMs: 30 * 60_000,
   authorityGranted: false,
   planCoverage: Object.freeze({
@@ -77,6 +77,16 @@ export function frontierProviderSchema(value: unknown): Readonly<Record<string, 
       .map(([key, nested]) => [key, visit(nested)])));
   };
   return visit(value) as Readonly<Record<string, unknown>>;
+}
+
+export function frontierRevisionPrompt(base: Readonly<Record<string, unknown>>,
+  previousRejectedCandidate: Readonly<Record<string, unknown>> | null,
+  feedback: readonly string[]): Readonly<Record<string, unknown>> {
+  return Object.freeze({ ...base, verifierFeedback: Object.freeze([...feedback]), previousRejectedCandidate,
+    revisionInstruction: previousRejectedCandidate === null
+      ? "Solve from the supplied evidence and return a verifiable certificate."
+      : "Revise the previous rejected candidate using every verifier finding; do not repeat a disproven assignment, trace, guard, or experiment set.",
+    authorityGranted: false });
 }
 
 const GRAPH_VERTICES = Object.freeze([

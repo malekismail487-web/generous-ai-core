@@ -1,7 +1,7 @@
 /** Delivery pacing only. This module grants no cognition or executor authority. */
 export const NVIDIA_CAPACITY_POLICY = Object.freeze({
   requestsPerMinute: 40, minimumStartIntervalMs: 1501, fallbackRetryAfterMs: 60_000,
-  defaultRequestLifetimeMs: 300_000, maxPendingRequests: 128,
+  defaultRequestLifetimeMs: 300_000, maxPendingRequests: 128, maxTransientUnavailableRetries: 1,
   scope: "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT", crossProcessCoordination: false,
   credentialAccess: false, authorityGranted: false,
 } as const);
