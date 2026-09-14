@@ -470,6 +470,30 @@ Use age-appropriate language for ${selectedGrade}.`;
 
   const subject = subjects.find(s => s.id === selectedSubject);
 
+  // No grade on the profile yet — the administrator assigns it, the student
+  // cannot pick one, so explain the block instead of rendering an empty view.
+  if (selectedSubject && !selectedGrade) {
+    return (
+      <div className={containerClass}>
+        <div className="max-w-md mx-auto px-4 py-10 text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 liquid-glass">
+            <GraduationCap size={26} />
+          </div>
+          <h1 className="text-xl font-bold mb-2">{tl('gradeLevel')}</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            {language === 'ar'
+              ? 'لم يقم مسؤول مدرستك بتعيين صفك الدراسي بعد. سيتم ضبط لومينا تلقائيًا بمجرد تعيينه.'
+              : 'Your school administrator has not assigned your grade yet. Lumina configures itself automatically once they do.'}
+          </p>
+          <Button variant="outline" onClick={handleBackToSubjects} className="gap-2">
+            <ArrowLeft size={16} />
+            {tl('back')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // LECTURE VIEW - Shows lecture content and material tabs
   if (viewState === 'lecture' && selectedSubject && selectedGrade) {
     return (
