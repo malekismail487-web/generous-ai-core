@@ -173,7 +173,7 @@ try {
     const network = TheoryNetwork.create({ namespace: `nyx-live-party-${index}`, addressCapacity: "1000000000000",
       maxAssignedPairs: 100, maxConcurrentActivations: 8, maxTotalActivations: 100,
       maxEvents: 1_000, maxPredictionsPerTheory: 64, maxObservationsPerTheory: 128,
-      maxRelations: 1_000, maxFanout: 16, maxMessages: 1_000, activationLifetimeMs: 15 * 60_000,
+      maxRelations: 1_000, maxFanout: 16, maxMessages: 1_000, activationLifetimeMs: 10 * 60_000,
       now: () => Date.now() }, networkCoordinator);
     const omega = await createOmegaExperimentRunner(task, objective);
     const party = TheoryResearchParty.create({ partyId: `${task.taskId}-PARTY`, network,
