@@ -741,12 +741,9 @@ export default function Auth() {
           description: message,
         });
       } else {
-        toast({
-          title: 'Account created!',
-          description: 'Please check your email to verify your account.',
-        });
+        const pendingEmail = email.trim().toLowerCase();
         clearForm();
-        setAuthMode('login');
+        navigate('/verify-email', { state: { email: pendingEmail, next: '/' } });
       }
     } finally {
       setIsSubmitting(false);
@@ -832,9 +829,11 @@ export default function Auth() {
         title: 'Request Submitted!',
         description: 'Your request is pending approval from your school administrator.',
       });
-      
-      // Navigate to pending approval page
-      navigate('/pending-approval');
+
+      // Confirm the email address first; the pending-approval page follows.
+      navigate('/verify-email', {
+        state: { email: email.trim().toLowerCase(), next: '/pending-approval' },
+      });
     } catch (err) {
       toast({
         variant: 'destructive',
