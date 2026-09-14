@@ -56,7 +56,7 @@ async function session(paths = manifest, overrides: Partial<Parameters<typeof Gr
   const r1 = overrides.executor ?? await executor(paths);
   const context = await GroundedRepositoryContext.create({ sessionId: `SESSION-${sequence}`, candidateId: "controlled-fixture-v1",
     environmentId: `${process.platform}-${process.arch}`, executor: r1, manifest: paths,
-    maxSnapshotBytes: 100_000, maxReadOperations: 200, now: () => clock, ...overrides });
+    maxSnapshotBytes: 200_000, maxReadOperations: 200, now: () => clock, ...overrides });
   return { r1, context };
 }
 const query: RepositoryContextQuery = { objective: "scheduler lease stale cancellation priority quota tenant budget",
@@ -206,7 +206,7 @@ try {
   const liveRoot = resolve(".");
   const priorHashes = await Promise.all(livePaths.map(async (path) => hash(await readFile(join(liveRoot, path), "utf8"))));
   const live = await session(livePaths, { executor: await executor(livePaths, liveRoot), candidateId: "working-tree-read-only-demonstration" });
-  const livePack = await live.context.retrieve({ ...query, seedPaths: [livePaths[0]], maxBytes: 100_000 });
+  const livePack = await live.context.retrieve({ ...query, seedPaths: [livePaths[0]], maxBytes: 200_000 });
   check(livePack.relations.some((edge) => edge.source === livePaths[0] && edge.resolution.target === livePaths[1]),
     "real Omega repair loop dependency on NYX cognition is retrieved with R1 evidence");
   check(JSON.stringify(priorHashes) === JSON.stringify(await Promise.all(livePaths.map(async (path) =>

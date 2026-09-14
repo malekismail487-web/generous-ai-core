@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/41",
+  "suiteVersion": "omega-institutional-suite/42",
   "criticalSuites": [
+    "OMEGA-THEORY-NETWORK",
     "OMEGA-ASSURE-R2-EVALUATOR",
     "OMEGA-ASSURE-R2-OPERATIONAL-INDEPENDENT",
     "OMEGA-AUDIT-RECONSTRUCTION",
@@ -57,6 +58,7 @@
   ],
   "informationalSuites": [],
   "requiredSuites": [
+    { "suiteId": "OMEGA-THEORY-NETWORK", "file": "scripts/omegaTheoryNetwork.test.ts" },
     { "suiteId": "CODELAB-AGENT-PROTOCOL", "file": "scripts/codelabAgentProtocol.test.ts" },
     { "suiteId": "CODELAB-AGENT-REDUCER", "file": "scripts/codelabAgentReducer.test.ts" },
     { "suiteId": "ORCHESTRA-O0", "file": "scripts/orchestraO0.test.ts" },

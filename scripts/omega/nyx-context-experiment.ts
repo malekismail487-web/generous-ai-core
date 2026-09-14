@@ -103,6 +103,7 @@ export const NYX_CAPACITY_STATUS_CONTROL = Object.freeze({
 });
 export const NYX_CAPACITY_STATUS_FROZEN_CORE = Object.freeze({
   ...NYX_CONFIGURATION_FROZEN_CORE,
+  commit: "29250696d14acf3d49065cab845759c50e336c32",
   files: Object.freeze({ ...NYX_CONFIGURATION_FROZEN_CORE.files,
     "src/lib/codelab/model/nvidiaNimProvider.ts": "84358a3b3df5a7c400f8fc64a8121208cd804ef46f79ca89410d0b2263f06da3",
     "src/lib/codelab/model/nvidiaCapacity.ts": "090c177ec02efbeaaf1eaa2ffa9d7b3f863568c2d56b49beee1e662a8bfd2275",

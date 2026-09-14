@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { isAbsolute } from "node:path";
 import { NvidiaNimProvider, type NvidiaNimEvidence } from "../model/nvidiaNimProvider";
 import type { EngineeringObservation } from "../observation/r3EngineeringObservation";
+import { validTheoryResearchContext, type TheoryResearchContext } from "../research/theoryContracts";
 
 export const NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS = Object.freeze({
   chunkId: "OMEGA-R3-D-NYX-COGNITION-001",
@@ -80,6 +81,7 @@ export interface NyxPriorHypothesis {
 }
 
 export interface NyxRepairCognitionRequest {
+  readonly theoryResearchContext?: TheoryResearchContext;
   readonly schemaVersion: 1;
   readonly cognitionRequestId: string;
   readonly objective: string;
@@ -555,6 +557,7 @@ export class NyxNemotronEngineeringCognition {
     const qualityFeedback = request.candidateQualityFeedback;
     const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation);
     const promptObject = { role: "NYX_ENGINEERING_COGNITION", objective: request.objective,
+      ...(request.theoryResearchContext ? { theoryResearchContext: request.theoryResearchContext } : {}),
       assignment: "Determine the causal defect, required invariant, and smallest justified professional-quality action. A failed or quality-rejected prior candidate must change the implementation strategy. Request available evidence before guessing when it can discriminate among plausible causes.",
       contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
       contractDigest: NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST,
@@ -604,6 +607,7 @@ export class NyxNemotronEngineeringCognition {
       } : { noActionExample: { decision: "NO_ACTION", diagnosis: "State the blocking prerequisite.",
         uncertainties: ["required evidence unavailable"] } }) };
     const minimalReference = { objective: request.objective, admittedEvidence: promptObject.admittedEvidence,
+      ...(request.theoryResearchContext ? { theoryResearchContext: request.theoryResearchContext } : {}),
       availableEvidence: promptObject.availableEvidence, hypothesisHistory: promptObject.hypothesisHistory,
       cognitionFailureHistory: promptObject.cognitionFailureHistory, requiredCorrections: promptObject.requiredCorrections,
       requiredFieldsByDecision: contract.requiredFields, constraints: promptObject.constraints };
@@ -667,6 +671,11 @@ export class NyxNemotronEngineeringCognition {
 
   #validateInput(request: NyxRepairCognitionRequest): readonly string[] {
     const issues: string[] = [];
+    if (request.theoryResearchContext && (!validTheoryResearchContext(request.theoryResearchContext,
+      request.objective, request.observation?.candidateCommit)
+      || request.allowedMutationPaths?.some((path) => !request.theoryResearchContext!.assignment.scope.includes(path)))) {
+      issues.push("nyx_theory_research_context_invalid");
+    }
     if (request.schemaVersion !== 1 || !request.cognitionRequestId?.trim() || typeof request.objective !== "string"
       || !request.objective.trim() || request.objective.length > 2_000 || !Number.isFinite(request.observedAtEpochMs)) issues.push("nyx_cognition_request_malformed");
     if (!request.observation || !request.observation.observationId?.trim() || request.observation.grantsAuthority

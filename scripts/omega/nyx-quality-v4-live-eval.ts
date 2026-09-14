@@ -71,7 +71,9 @@ const MAX_DIAGNOSIS_CHARACTERS = 1_500;
 const CONTRACT_AT_START = NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST;
 const FROZEN_CORE_OBSERVED = Object.freeze(Object.fromEntries(await Promise.all(
   Object.entries(FROZEN_CORE.files).map(async ([path]) => {
-    const bytes = await readFile(resolve(path));
+    const bytes = IS_CAPACITY_STATUS && FROZEN_CORE.commit
+      ? Buffer.from(execFileSync("git", ["show", `${FROZEN_CORE.commit}:${path}`], { cwd: resolve(".") }))
+      : await readFile(resolve(path));
     return [path, sha256(IS_DIAGNOSTIC ? bytes.toString("utf8").replace(/\r\n/g, "\n") : bytes)];
   }),
 )));
@@ -541,6 +543,7 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
       comparisonScope: NYX_CONFIGURATION_COMPARISON.referenceScope,
       defaultConfigurationChanged: false, stopForReview: true } : {}),
     frozenCoreCommit: FROZEN_CORE.commit, frozenCoreDigests: FROZEN_CORE.files,
+    frozenCoreObservationSource: IS_CAPACITY_STATUS ? "IMMUTABLE_HISTORICAL_COMMIT" : "CURRENT_WORKTREE",
     frozenCoreObserved: FROZEN_CORE_OBSERVED, frozenCorePreserved: FROZEN_CORE_PRESERVED,
     contractChangedDuringScoredEval: taskResults.some((item) => item.contractPreserved !== true), tasks: taskResults,
     aggregateMetrics: { taskSuccessRate: rate(successes.length, taskResults.length),

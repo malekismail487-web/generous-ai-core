@@ -16,6 +16,10 @@ import { GroundedRepositoryContext } from "../src/lib/codelab/repository/grounde
 import { NvidiaNimProvider, type NvidiaNimTransport, type NvidiaNimCapacityProgress } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapacity";
 import { observeEngineeringExecution, type EngineeringObservation } from "../src/lib/codelab/observation/r3EngineeringObservation";
+import { TheoryNetwork } from "../src/lib/codelab/research/theoryNetwork";
+import { TheoryInvestigationSession } from "../src/lib/codelab/research/theoryInvestigation";
+import { runNextTheoryEngineeringInvestigation } from "../src/lib/codelab/research/theoryEngineeringDispatch";
+import { investigateDependencyReadiness, type ReadinessSpecialistResult } from "../src/lib/codelab/research/dependencyReadinessSpecialist";
 
 let passed = 0;
 let failed = 0;
@@ -85,7 +89,7 @@ async function applyChange(sourceInput: string, change: R2GProposedChange, prefi
     disposableRepositoryRoot: cloneRoot, sandbox: provisioned.sandbox, lifecycle, proposal: patch,
     capability: { capabilityId: `R3A-R3E-CAP-${label}`, issuer: "OMEGA-ISOLATED-TEST-AUTHORITY",
       auditIdentity: `R3A-R3E-AUDIT-${label}`, issuedAtEpochMs: NOW - 1_000, expiresAtEpochMs: NOW + 525_000 },
-    allowedExtensions: [".txt"], maxChanges: 2, maxPatchBytes: 10_000 });
+    allowedExtensions: [".txt", ".mjs"], maxChanges: 2, maxPatchBytes: 10_000 });
   const applyRequest: R3AApplyRequest = { schemaVersion: 1, requestId: `R3A-R3E-REQUEST-${label}`,
     applicationId: `R3A-R3E-APPLICATION-${label}`, proposalId: patch.proposalId, proposalDigest: patch.proposalDigest,
     disposableRepositoryId: applicator.disposableRepositoryId(), sandboxId: provisioned.sandbox.sandboxId,
@@ -96,8 +100,8 @@ async function applyChange(sourceInput: string, change: R2GProposedChange, prefi
   return { sourceRoot, cloneRoot, proposal: patch, applicator, application };
 }
 
-async function verification(pack: AppliedPack, label: string): Promise<{ executor: R3BControlledEngineeringExecutor; request: R3BExecutionRequest }> {
-  const entrypoint = "tools/verify.mjs"; const definition: R3BEngineeringToolDefinition = { toolId: "TEST", toolKind: "TEST",
+async function verification(pack: AppliedPack, label: string, probeDefinition?: R3BEngineeringToolDefinition): Promise<{ executor: R3BControlledEngineeringExecutor; request: R3BExecutionRequest }> {
+  const entrypoint = "tools/verify.mjs"; const definition: R3BEngineeringToolDefinition = probeDefinition ?? { toolId: "TEST", toolKind: "TEST",
     toolVersion: "fixture/1", entrypoint, expectedEntrypointSha256: hash(await readFile(join(pack.cloneRoot, entrypoint))),
     arguments: [], workingDirectory: ".", timeoutMs: 2_000, maxOutputBytes: 16_384, allowedMutationPrefixes: [], allowChildProcesses: false };
   const environmentIdentity = `local-${process.platform}-${process.arch}`;
@@ -109,7 +113,7 @@ async function verification(pack: AppliedPack, label: string): Promise<{ executo
       auditIdentity: `R3B-R3E-AUDIT-${label}`, issuedAtEpochMs: NOW - 1_000, expiresAtEpochMs: NOW + 500_000 },
     tools: [definition], maxRepositoryFiles: 100, maxRepositoryBytes: 500_000, maxTimeoutMs: 5_000, maxOutputBytes: 100_000 });
   const request: R3BExecutionRequest = { schemaVersion: 1, requestId: `R3B-R3E-REQUEST-${label}`,
-    executionId: `R3B-R3E-EXECUTION-${label}`, authority: "RUN_AUTHORIZED_ENGINEERING_TOOL", toolId: "TEST",
+    executionId: `R3B-R3E-EXECUTION-${label}`, authority: "RUN_AUTHORIZED_ENGINEERING_TOOL", toolId: definition.toolId,
     disposableRepositoryId: pack.application.disposableRepositoryId, applicationId: pack.application.applicationId,
     proposalDigest: pack.application.proposalDigest, capabilityId: `R3B-R3E-CAP-${label}`,
     issuer: "OMEGA-ISOLATED-TEST-AUTHORITY", auditIdentity: `R3B-R3E-AUDIT-${label}`,
@@ -191,10 +195,11 @@ function builder(tamper = false, additionalAdmittedPaths: () => readonly string[
 }
 
 function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder(), maxIterations = 1,
-  evidenceProvider?: OmegaRepairEvidenceProvider, maxWallClockMs = 30_000): R3BoundedRepairLoop {
+  evidenceProvider?: OmegaRepairEvidenceProvider, maxWallClockMs = 30_000,
+  theorySession?: TheoryInvestigationSession): R3BoundedRepairLoop {
   return R3BoundedRepairLoop.create({ loopId: `R3E-LOOP-${sequence}`, evaluatorVersion: "r3-e/1",
     observerIdentity: "OMEGA-R3E-OBSERVER", cognition: nyx, candidateBuilder, evidenceProvider, maxIterations, maxWallClockMs,
-    maxChangesPerIteration: 1, maxPatchBytesPerIteration: 1_000, maxDiagnosisCharacters: 1_000 });
+    maxChangesPerIteration: 1, maxPatchBytesPerIteration: 1_000, maxDiagnosisCharacters: 1_000, theorySession });
 }
 
 {
@@ -474,6 +479,203 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
   } as unknown as Parameters<R3BoundedRepairLoop["run"]>[0]);
   check(missingMutationScope.outcome === "BLOCKED" && missingMutationScope.reason === "bounded_repair_request_invalid",
     "repair loop fails closed when explicit mutation scope is absent");
+}
+
+function researchFixture(scope = ["src/math.txt"]) {
+  const coordinator = Object.freeze({ id: "NYX-RESEARCH-COORDINATOR" });
+  const network = TheoryNetwork.create({ namespace: "engineering", addressCapacity: "1000000000000",
+    maxAssignedPairs: 8, maxConcurrentActivations: 1, maxTotalActivations: 3, maxEvents: 16,
+    maxPredictionsPerTheory: 8, maxObservationsPerTheory: 16, maxRelations: 8, maxFanout: 2,
+    maxMessages: 8, activationLifetimeMs: 60_000, now: Date.now }, coordinator);
+  const { firstId: id } = network.reserve(coordinator, "1000000000000");
+  network.assign(coordinator, id, { objective: loopRequest().objective,
+    question: "Which implementation explains the failed arithmetic invariant?", domain: "SOFTWARE",
+    candidateBinding: CANDIDATE, scope, assumptions: ["The frozen test describes the required behavior."] });
+  network.wake(coordinator, id, { eventId: "initial-evidence", kind: "ASSIGNMENT",
+    reason: "A real failed Omega execution requires investigation." });
+  return { network, coordinator, id };
+}
+
+{
+  const { network, coordinator, id } = researchFixture();
+  let calls = 0;
+  let guardianFeedbackObserved = false;
+  let precommittedPredictions = 0;
+  const preparedBuilder = builder();
+  const observedBuilder = { builderIdentity: preparedBuilder.builderIdentity,
+    prepare: async (hypothesis: NyxRepairHypothesis, iteration: number) => {
+      const snapshot = network.inspect(id);
+      if ("predictions" in snapshot && snapshot.predictions.some((item) => item.predictionId === hypothesis.hypothesisId)
+        && snapshot.observations.every((item) => item.predictionId !== hypothesis.hypothesisId)) precommittedPredictions += 1;
+      return preparedBuilder.prepare(hypothesis, iteration);
+    } };
+  const nyx = cognition(async (_input, init) => {
+    calls += 1;
+    const prompt = JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
+    if (calls === 2) {
+      guardianFeedbackObserved = prompt.theoryResearchContext.report.predictionResults[0].disposition === "FALSIFIED_PREDICTION"
+        && prompt.theoryResearchContext.report.confidence.calibratedProbability === null
+        && prompt.theoryResearchContext.report.weakPoints.includes("The cancellation boundary has not been exercised.");
+    }
+    return providerResponse(modelResponse(calls === 1 ? OTHER_WRONG_SOURCE : CORRECT_SOURCE,
+      { uncertainties: ["The cancellation boundary has not been exercised."] }));
+  });
+  const dispatched = await runNextTheoryEngineeringInvestigation(network, coordinator, async () => ({
+    config: { loopId: "THEORY-R3E", evaluatorVersion: "theory-r3e/1", observerIdentity: "OMEGA-THEORY-OBSERVER",
+      cognition: nyx, candidateBuilder: observedBuilder, maxIterations: 2, maxWallClockMs: 30_000,
+      maxChangesPerIteration: 1, maxPatchBytesPerIteration: 1_000, maxDiagnosisCharacters: 1_000 }, request: loopRequest(),
+  }));
+  check(dispatched.state === "FINISHED" && dispatched.result?.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED",
+    "event-driven theory activation uses existing Omega isolated repair and real test execution to converge");
+  check(calls === 2 && guardianFeedbackObserved && precommittedPredictions === 2,
+    "falsified prediction reaches the next NYX prompt while both hypotheses precede candidate preparation");
+  const report = network.guardianReport(id);
+  check(report.predictionResults.map((item) => item.disposition).join(",") === "FALSIFIED_PREDICTION,SUPPORTED_WITHIN_TEST_SCOPE",
+    "guardian retains failed and successful predictions instead of overwriting history with eventual success");
+  check(report.confidence.distinctEvidenceRoots === 1 && !report.confidence.independenceEstablished
+    && report.causalTheoryState === "UNKNOWN", "reusing one verifier across two candidates does not manufacture independent truth");
+  check(network.metrics().activePairs === 0 && network.inspect(id).state === "DORMANT",
+    "finished investigation relinquishes its worker without discarding theory history");
+  check(dispatched.result?.iterations.every((item) => item.cognitionEvidence.evidenceClass === "E3")
+    && !dispatched.grantsAuthority && !dispatched.result?.sourceRepositoryWriteAuthority,
+    "test-double cognition remains E3 and does not grant research entities source mutation authority");
+  check(await readFile(join(sourceRoot, "src/math.txt"), "utf8") === CORRECT_SOURCE
+    && await readFile(join(initial.cloneRoot, "src/math.txt"), "utf8") === WRONG_SOURCE,
+    "theory-driven repair leaves authoritative source and predecessor candidate unchanged");
+}
+{
+  const { network, coordinator, id } = researchFixture();
+  const lease = network.take(coordinator)!;
+  const session = new TheoryInvestigationSession(network, coordinator, lease);
+  let prepares = 0;
+  const nyx = cognition(async () => {
+    network.wake(coordinator, id, { eventId: "changed-during-reasoning", kind: "DEPENDENCY_CHANGED",
+      reason: "The research premise changed while the model was reasoning." });
+    return providerResponse(modelResponse(CORRECT_SOURCE));
+  });
+  const guardedBuilder = { builderIdentity: "NO-STALE-THEORY-ACTION",
+    prepare: async () => { prepares += 1; throw new Error("must_not_execute"); } };
+  const result = await loop(nyx, guardedBuilder, 1, undefined, 30_000, session).run(loopRequest());
+  check(result.outcome === "BLOCKED" && result.reason === "theory_session_revoked_or_expired" && prepares === 0,
+    "dependency invalidation during NYX reasoning prevents the subsequent Omega mutation request");
+}
+{
+  const { network, coordinator } = researchFixture(["src/unrelated.txt"]);
+  const session = new TheoryInvestigationSession(network, coordinator, network.take(coordinator)!);
+  let calls = 0;
+  const nyx = cognition(async () => { calls += 1; return providerResponse(modelResponse(CORRECT_SOURCE)); });
+  const result = await loop(nyx, builder(), 1, undefined, 30_000, session).run(loopRequest());
+  check(result.outcome === "BLOCKED" && result.reason === "theory_session_not_admitted" && calls === 0,
+    "a theory charter cannot expand research scope to another mutation target");
+}
+
+// Fresh evaluator-only fixtures: no import of the specialist's causal model or probe predictions.
+// They use Set-based prerequisites and independently authored dispatch implementations.
+// These are same-author held-out E3 fixtures, not institutional replication or a broad coding benchmark.
+{
+  const statuses = ["pending", "failed", "cancelled"];
+  const mechanisms = ["STRICT", "PENDING_AS_COMPLETE", "FAILED_AS_COMPLETE", "CANCELLED_AS_COMPLETE"];
+  const rows: { taskId: string; budget: number; expected: string; mode: ReadinessSpecialistResult["mode"];
+    correct: boolean; decision: string; experiments: number; predictions: number; wallClockMs: number }[] = [];
+  for (let variation = 0; variation < 2; variation += 1) {
+    for (let defect = 0; defect < 4; defect += 1) {
+      const taskId = `heldout-readiness-${variation}-${defect}`;
+      const fixtureRoot = join(parent, taskId);
+      await mkdir(join(fixtureRoot, "src"), { recursive: true });
+      await mkdir(join(fixtureRoot, "tools"));
+      const target = `export function ready(dependencies, state) {
+  const unfinished = new Set(dependencies);
+  for (const [job, status] of state) {
+    if (status === "completed"${defect ? ` || status === ${JSON.stringify(statuses[defect - 1])}` : ""}) unfinished.delete(job);
+  }
+  return unfinished.size === 0;
+}\n`;
+      const fixtureInitial = "export function ready() { throw new Error('uninitialized fixture'); }\n";
+      await writeFile(join(fixtureRoot, "src/scheduler.mjs"), fixtureInitial, "utf8");
+      const probeSource = `import { ready } from "../src/scheduler.mjs";
+const selected = Number(process.argv[2]);
+const states = ["pending", "failed", "cancelled"];
+let unexpected = false;
+for (let index = 0; index < states.length; index += 1) {
+  if (!(selected & (2 ** index))) continue;
+  const blocked = "task-${variation}-" + index;
+  const completed = Array.from({length: ${variation + 2}}, (_, i) => "done-" + i);
+  const dependencies = ${variation ? "[blocked, ...completed].reverse()" : "[...completed, blocked]"};
+  const state = new Map([...completed.map(id => [id, "completed"]), [blocked, states[index]], ["unrelated", "failed"]]);
+  if (ready(dependencies, state)) unexpected = true;
+}
+console.log(unexpected ? "UNEXPECTED_DISPATCH" : "NO_UNEXPECTED_DISPATCH");
+process.exit(unexpected ? 0 : 2);
+`;
+      await writeFile(join(fixtureRoot, "tools/verify.mjs"), probeSource, "utf8");
+      const pack = await applyChange(fixtureRoot, { kind: "MODIFY", relativePath: "src/scheduler.mjs",
+        expectedBaseHash: hash(fixtureInitial), proposedContentHash: hash(target), proposedContent: target,
+        baselineEvidenceId: `evidence://${taskId}`, baselineObservationId: `observation://${taskId}`,
+        sandboxArtifactId: `artifact://${taskId}` }, taskId);
+      for (const budget of [2, 3]) {
+        const modes = variation === 0 ? ["ADAPTIVE", "FIXED_ORDER_BASELINE"] as const : ["FIXED_ORDER_BASELINE", "ADAPTIVE"] as const;
+        for (const mode of modes) {
+          const coordinator = Object.freeze({ id: taskId });
+          const network = TheoryNetwork.create({ namespace: "specialist", addressCapacity: "1000000000000",
+            maxAssignedPairs: 1, maxConcurrentActivations: 1, maxTotalActivations: 1, maxEvents: 1,
+            maxPredictionsPerTheory: 32, maxObservationsPerTheory: 32, maxRelations: 1, maxFanout: 1,
+            maxMessages: 1, activationLifetimeMs: 60_000, now: Date.now }, coordinator);
+          const { firstId: id } = network.reserve(coordinator, "1");
+          network.assign(coordinator, id, { objective: "Identify which dependency state incorrectly permits dispatch, within the single-fault family.",
+            question: "Does the dispatcher conflate pending, failed, or cancelled prerequisites with completion?",
+            domain: "SOFTWARE", candidateBinding: CANDIDATE, scope: ["src/scheduler.mjs"],
+            assumptions: ["At most one of the three modeled prerequisite states is incorrectly treated as completed."] });
+          network.wake(coordinator, id, { eventId: "investigate", kind: "ASSIGNMENT", reason: "Investigate bounded readiness semantics." });
+          const lease = network.take(coordinator)!;
+          const experiments = [];
+          for (const mask of [1, 2, 4, 3, 5, 6, 7]) {
+            const toolId = `READINESS_${mask}`;
+            const tool = await verification(pack, `${taskId}-${budget}-${mode}-${mask}`, { toolId, toolKind: "OTHER",
+              toolVersion: "independent-readiness-probe/1", entrypoint: "tools/verify.mjs",
+              expectedEntrypointSha256: hash(probeSource), arguments: [String(mask)], workingDirectory: ".",
+              timeoutMs: 1_000, maxOutputBytes: 1_024, allowedMutationPrefixes: [], allowChildProcesses: false });
+            experiments.push({ toolId, ...tool });
+          }
+          const result = await investigateDependencyReadiness({ network, coordinator, lease, mode,
+            limits: { maxExperiments: budget, maxWallClockMs: 15_000, maxPredictionEvaluations: 150 }, experiments });
+          rows.push({ taskId, budget, mode, expected: mechanisms[defect], decision: result.decision,
+            correct: result.decision === "IDENTIFIED_WITHIN_MODELED_FAMILY" && result.hypothesisIds.length === 1
+              && result.hypothesisIds[0] === mechanisms[defect], experiments: result.resourceUsage.experiments,
+            predictions: result.resourceUsage.predictionEvaluations, wallClockMs: result.resourceUsage.wallClockMs });
+          check(result.decision !== "BLOCKED" && result.resourceUsage.experiments <= budget
+            && result.resourceUsage.predictionEvaluations <= 150 && result.resourceUsage.modelCalls === 0,
+            `native specialist and fixed baseline stay inside matched resource envelope ${taskId}/${budget}/${mode}`);
+          check(result.steps.every((step) => step.evidenceId.startsWith("R3B-EVIDENCE-") && step.evidenceDigest.length === 64)
+            && !result.grantsAuthority && result.calibratedConfidence === null,
+            `specialist conclusions retain real controlled-execution evidence without manufactured probability ${taskId}/${budget}/${mode}`);
+          const report = network.guardianReport(id);
+          check(report.predictionResults.some((item) => item.disposition === "FALSIFIED_PREDICTION")
+            && report.causalTheoryState === "UNKNOWN", `counterexamples revise alternatives without granting broad causal certainty ${taskId}/${budget}/${mode}`);
+          network.release(coordinator, lease);
+        }
+      }
+      check(await readFile(join(fixtureRoot, "src/scheduler.mjs"), "utf8") === fixtureInitial
+        && await readFile(join(pack.cloneRoot, "src/scheduler.mjs"), "utf8") === target,
+        `readiness experiments preserve source and exact candidate state ${taskId}`);
+    }
+  }
+  for (const budget of [2, 3]) {
+    for (const mode of ["ADAPTIVE", "FIXED_ORDER_BASELINE"] as const) {
+      const group = rows.filter((row) => row.budget === budget && row.mode === mode);
+      console.log(`THEORY_SPECIALIST_COMPARISON ${JSON.stringify({ budget, mode, tasks: group.length,
+        correct: group.filter((row) => row.correct).length,
+        insufficient: group.filter((row) => row.decision === "INSUFFICIENT_EVIDENCE").length,
+        falseIdentification: group.filter((row) => row.decision === "IDENTIFIED_WITHIN_MODELED_FAMILY" && !row.correct).length,
+        experiments: group.reduce((sum, row) => sum + row.experiments, 0),
+        predictionEvaluations: group.reduce((sum, row) => sum + row.predictions, 0),
+        wallClockMs: group.reduce((sum, row) => sum + row.wallClockMs, 0), modelCalls: 0, modelTokens: 0,
+        evidenceClass: "E3_SAME_AUTHOR_HELD_OUT_FIXTURES", comparison: "ADAPTIVE_SELECTION_ONLY" })}`);
+    }
+  }
+  check(rows.every((row) => row.decision !== "IDENTIFIED_WITHIN_MODELED_FAMILY" || row.correct),
+    "independent fixture labels reject false identification in either comparison arm");
+  check(rows.filter((row) => row.budget === 3).every((row) => row.correct),
+    "both arms can recover all held-out single-fault mechanisms with the full three-experiment envelope");
 }
 
 let configRejected = "";

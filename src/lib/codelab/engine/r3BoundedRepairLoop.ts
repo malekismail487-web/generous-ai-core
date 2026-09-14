@@ -8,6 +8,8 @@ import type { R2GPatchProposal } from "../executor/r2PatchProposal";
 import type { R3AApplyResult } from "../executor/r3DisposablePatchApplication";
 import type { R3BControlledEngineeringExecutor, R3BExecutionRequest, R3BExecutionResult } from "../executor/r3ControlledEngineeringExecution";
 import { observeEngineeringExecution, type EngineeringObservation } from "../observation/r3EngineeringObservation";
+import type { TheoryInvestigationSession } from "../research/theoryInvestigation";
+import type { TheoryResearchContext } from "../research/theoryContracts";
 
 export const R3_E_BOUNDED_REPAIR_LOOP_STATUS = Object.freeze({
   chunkId: "OMEGA-R3-E-BOUNDED-REPAIR-001",
@@ -62,6 +64,7 @@ export interface OmegaRepairEvidenceProvider {
 }
 
 export interface R3BoundedRepairLoopConfig {
+  readonly theorySession?: TheoryInvestigationSession;
   readonly loopId: string;
   readonly evaluatorVersion: string;
   readonly observerIdentity: string;
@@ -304,7 +307,12 @@ export class R3BoundedRepairLoop {
     let candidateQualityFeedback: NyxCandidateQualityFeedback | null = null;
     for (let cognitionCycle = 1; cognitionCycle <= this.#config.maxIterations; cognitionCycle += 1) {
       if (Date.now() - started >= this.#config.maxWallClockMs) return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
+      let theoryResearchContext: TheoryResearchContext | undefined;
+      try { theoryResearchContext = this.#config.theorySession?.context(request.objective,
+        currentObservation.candidateCommit, request.allowedMutationPaths); }
+      catch { return finish("BLOCKED", "theory_session_not_admitted", iterations, currentObservation); }
       const cognition = await this.#config.cognition.proposeRepair({ schemaVersion: 1,
+        ...(theoryResearchContext ? { theoryResearchContext } : {}),
         cognitionRequestId: `${request.repairRequestId}-COGNITION-${cognitionCycle}`, objective: request.objective,
         observation: currentObservation, files: currentFiles, allowedMutationPaths: request.allowedMutationPaths,
         availableEvidence: currentAvailableEvidence,
@@ -318,6 +326,8 @@ export class R3BoundedRepairLoop {
         observedAtEpochMs: Math.max(request.observedAtEpochMs, Date.now()) });
       lastCognitionEvidence = cognition.evidence;
       if (cognition.evidence.modelEvidenceId !== "NOT_INVOKED" && cognition.evidence.delivery?.httpAttempts !== 0) modelCallCount += 1;
+      try { this.#config.theorySession?.assertActive(); }
+      catch { return finish("BLOCKED", "theory_session_revoked_or_expired", iterations, currentObservation); }
       if (cognition.decision === "WAITING_FOR_CAPACITY") {
         return finish("WAITING_FOR_CAPACITY", "repair_paused_for_capacity_requires_fresh_authority", iterations, currentObservation);
       }
@@ -370,6 +380,8 @@ export class R3BoundedRepairLoop {
       }
       let candidate: OmegaPreparedRepairCandidate;
       const iteration = iterations.length + 1;
+      try { this.#config.theorySession?.predict(cognition.hypothesis); }
+      catch { return finish("BLOCKED", "theory_prediction_not_admitted", iterations, currentObservation); }
       try { candidate = await this.#config.candidateBuilder.prepare(cognition.hypothesis, iteration); }
       catch { return finish("INFRASTRUCTURE_ERROR", "omega_candidate_preparation_failed", iterations, currentObservation); }
       if (!preparedCandidateValid(candidate, cognition.hypothesis, currentFiles)) {
@@ -379,6 +391,8 @@ export class R3BoundedRepairLoop {
       const verifications: R3RepairVerificationRecord[] = [];
       for (const verification of candidate.verifications) {
         if (Date.now() - started >= this.#config.maxWallClockMs) return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
+        try { this.#config.theorySession?.assertActive(); }
+        catch { return finish("BLOCKED", "theory_session_revoked_or_expired", iterations, currentObservation); }
         const execution = await verification.executor.execute(verification.request);
         if (execution.evidence.toolKind === "UNKNOWN") return finish("BLOCKED", "repair_verification_tool_kind_unknown", iterations, currentObservation);
         const baseline = baselineByTool.get(verification.toolId);
@@ -396,6 +410,8 @@ export class R3BoundedRepairLoop {
           return finish("BLOCKED", `repair_observation_${observed.reason}`, iterations, currentObservation);
         }
         verifications.push(Object.freeze({ toolId: verification.toolId, execution, observation: observed.observation }));
+        try { this.#config.theorySession?.observe(cognition.hypothesis, observed.observation); }
+        catch { return finish("BLOCKED", "theory_observation_not_admitted", iterations, currentObservation); }
       }
       const functionallyPassed = verifications.length > 0 && verifications.every((item) => passing(item.observation));
       const candidateAdmission = functionallyPassed ? admitStaticEngineeringCandidate({ schemaVersion: 1,

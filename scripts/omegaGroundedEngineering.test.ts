@@ -30,8 +30,9 @@ for (const [path, digest] of Object.entries(NYX_CONFIGURATION_FROZEN_CORE.files)
     `completed comparison keeps exact historical artifact ${path}`);
 }
 for (const [path, digest] of Object.entries(NYX_CAPACITY_STATUS_FROZEN_CORE.files)) {
-  check(hash((await readFile(path, "utf8")).replace(/\r\n/g, "\n")) === digest,
-    `new diagnostic pins exact current core ${path}`);
+  const frozen = spawnSync("git", ["show", `${NYX_CAPACITY_STATUS_FROZEN_CORE.commit}:${path}`], { encoding: "utf8" });
+  check(frozen.status === 0 && hash(frozen.stdout.replace(/\r\n/g, "\n")) === digest,
+    `new diagnostic pins exact frozen core ${path}`);
   if (path.includes("/assurance/")) {
     const original = spawnSync("git", ["show", `f31d149d5c2e00a844aae178419ff614842783e2:${path}`], { encoding: "utf8" });
     check(original.status === 0 && hash(original.stdout.replace(/\r\n/g, "\n")) === digest,
@@ -227,6 +228,7 @@ globalThis.fetch = async (url, init) => {
   const report = JSON.parse(await readFile(join(parent, reportName), "utf8"));
   check(report.experiment.version === "nyx-capacity-status-control/1" && report.cognitionContractVersion === "nyx-causal-engineering-intent/7"
     && report.experiment.comparisonBaselineRun === "34624336290" && report.frozenCorePreserved
+    && report.frozenCoreObservationSource === "IMMUTABLE_HISTORICAL_COMMIT"
     && report.sourceRepresentation === "LINES" && report.tasks.every((item: { sourceRepresentation: string }) => item.sourceRepresentation === "LINES"),
   "new experiment declares lineage without rescoring the historical failed run");
   check(report.tasks.length === 3 && report.tasks.every((item: { hiddenAcceptance: string }) => item.hiddenAcceptance === "PASS"),
