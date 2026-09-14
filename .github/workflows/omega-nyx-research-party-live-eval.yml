@@ -1,0 +1,50 @@
+name: Omega NYX research party live evaluation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-nyx-research-party-live-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  nyx-research-party-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Confirm encrypted credential is available
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Verify research-party, provider, authority, and TypeScript contracts
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaResearchParty.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaR2CompositionSecuritySpec.test.ts
+          npm run typecheck:ratchet
+      - name: Run matched live research-party evaluation
+        run: npm run omega:nyx:research-party-live
+      - name: Upload sanitized live report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-nyx-research-party-live-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-research-party-live-*.json
+          if-no-files-found: warn
