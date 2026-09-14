@@ -4410,7 +4410,6 @@
           "scripts/omega/nyx-context-experiment.ts",
           "scripts/omega/nyx-contract-compliance.ts",
           "scripts/omega/nyx-frontier-reasoning-fixtures.ts",
-          "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
           "scripts/omega/nyx-live-r3e.ts",
           "scripts/omega/nyx-quality-confirmation-fixtures.ts",
           "scripts/omega/nyx-quality-holdout-fixtures.ts",
@@ -7637,6 +7636,7 @@
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
         "firstPartyCodeReferences": [
+          "scripts/omegaFrontierReasoningGauntlet.test.ts",
           "src/components/admin/RolePreviewPanel.tsx",
           "src/components/admin/SchoolPerformanceDashboard.tsx",
           "src/components/admin/TeacherExcellenceProgram.tsx",

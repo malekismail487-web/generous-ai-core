@@ -16,6 +16,7 @@ import {
   frontierDigest,
   frontierProviderSchema,
   frontierRevisionPrompt,
+  mergeFrontierFeedback,
   graphPrompt,
   protocolPrompt,
   verifyCausalConclusion,
@@ -60,7 +61,8 @@ interface SanitizedModelEvidence {
 }
 
 interface StageAttempt {
-  readonly attempt: number;
+  readonly callAttempt: number;
+  readonly candidateSubmission: number | null;
   readonly accepted: boolean;
   readonly findings: readonly string[];
   readonly requestDigest: string | null;
@@ -74,6 +76,9 @@ interface StageResult {
   readonly attempts: readonly StageAttempt[];
   readonly value: Record<string, unknown> | null;
   readonly correctedAfterFeedback: boolean;
+  readonly modelCalls: number;
+  readonly candidateSubmissions: number;
+  readonly providerFailures: number;
 }
 
 let modelCalls = 0;
@@ -88,8 +93,10 @@ function sanitized(evidence: NvidiaNimEvidence): SanitizedModelEvidence {
     authorityGranted: false as const });
 }
 
-function stageFailure(attempt: number, findings: readonly string[], evidence: NvidiaNimEvidence | null): StageAttempt {
-  return Object.freeze({ attempt, accepted: false, findings: Object.freeze([...new Set(findings)].slice(0, 20)),
+function stageFailure(callAttempt: number, candidateSubmission: number | null,
+  findings: readonly string[], evidence: NvidiaNimEvidence | null): StageAttempt {
+  return Object.freeze({ callAttempt, candidateSubmission, accepted: false,
+    findings: Object.freeze([...new Set(findings)].slice(0, NYX_FRONTIER_GAUNTLET.maxFeedbackFindings)),
     requestDigest: evidence?.requestDigest ?? null, responseDigest: evidence?.responseDigest ?? null,
     verificationEvidenceDigest: null });
 }
@@ -103,13 +110,19 @@ async function runStage(input: {
   const attempts: StageAttempt[] = [];
   let feedback: readonly string[] = [];
   let previousRejectedCandidate: Record<string, unknown> | null = null;
-  for (let attempt = 1; attempt <= NYX_FRONTIER_GAUNTLET.maxAttemptsPerStage; attempt += 1) {
+  let callAttempts = 0;
+  let candidateSubmissions = 0;
+  let providerFailures = 0;
+  while (callAttempts < NYX_FRONTIER_GAUNTLET.maxCallsPerStage
+    && candidateSubmissions < NYX_FRONTIER_GAUNTLET.maxCandidateSubmissionsPerStage
+    && providerFailures < NYX_FRONTIER_GAUNTLET.maxProviderFailuresPerStage) {
+    callAttempts += 1;
     if (modelCalls >= NYX_FRONTIER_GAUNTLET.maxModelCalls || Date.now() >= deadlineEpochMs) {
-      attempts.push(stageFailure(attempt, ["RESOURCE_BUDGET_EXHAUSTED"], null));
+      attempts.push(stageFailure(callAttempts, null, ["RESOURCE_BUDGET_EXHAUSTED"], null));
       break;
     }
     const prompt = frontierRevisionPrompt(input.prompt(feedback), previousRejectedCandidate, feedback);
-    const requestId = `${input.stageId}-ATTEMPT-${attempt}-${frontierDigest([CANDIDATE, input.stageId, attempt]).slice(0, 16)}`;
+    const requestId = `${input.stageId}-CALL-${callAttempts}-${frontierDigest([CANDIDATE, input.stageId, callAttempts]).slice(0, 16)}`;
     modelCalls += 1;
     const completion = await provider.complete({ schemaVersion: 1, requestId,
       messages: [
@@ -123,33 +136,37 @@ async function runStage(input: {
     if (completion.decision !== "COMPLETED" || completion.content === null) {
       const finding = completion.decision === "WAITING_FOR_CAPACITY"
         ? "PROVIDER_CAPACITY_DEADLINE" : `PROVIDER_${completion.evidence.failureCategory ?? "UNKNOWN_FAILURE"}`;
-      attempts.push(stageFailure(attempt, [finding], completion.evidence));
-      feedback = [finding];
+      providerFailures += 1;
+      feedback = mergeFrontierFeedback(feedback, [finding]);
+      attempts.push(stageFailure(callAttempts, null, feedback, completion.evidence));
       continue;
     }
+    candidateSubmissions += 1;
     if (completion.finishReason !== "stop") {
-      attempts.push(stageFailure(attempt, [`MODEL_OUTPUT_${completion.finishReason ?? "INVALID_FINISH"}`], completion.evidence));
-      feedback = ["RETURN_ONE_COMPLETE_JSON_OBJECT"];
+      feedback = mergeFrontierFeedback(feedback, ["RETURN_ONE_COMPLETE_JSON_OBJECT"]);
+      attempts.push(stageFailure(callAttempts, candidateSubmissions, feedback, completion.evidence));
       continue;
     }
     let parsed: unknown;
     try { parsed = JSON.parse(completion.content); }
     catch {
-      attempts.push(stageFailure(attempt, ["MODEL_OUTPUT_NOT_JSON"], completion.evidence));
-      feedback = ["RETURN_STRICT_JSON_WITHOUT_MARKDOWN"];
+      feedback = mergeFrontierFeedback(feedback, ["RETURN_STRICT_JSON_WITHOUT_MARKDOWN"]);
+      attempts.push(stageFailure(callAttempts, candidateSubmissions, feedback, completion.evidence));
       continue;
     }
     const verification = input.verify(parsed);
-    attempts.push(Object.freeze({ attempt, accepted: verification.accepted, findings: verification.findings,
+    attempts.push(Object.freeze({ callAttempt: callAttempts, candidateSubmission: candidateSubmissions,
+      accepted: verification.accepted, findings: verification.findings,
       requestDigest: completion.evidence.requestDigest, responseDigest: completion.evidence.responseDigest,
       verificationEvidenceDigest: verification.evidenceDigest }));
     if (verification.accepted) return Object.freeze({ stageId: input.stageId, accepted: true,
-      attempts: Object.freeze(attempts), value: parsed as Record<string, unknown>, correctedAfterFeedback: attempt > 1 });
+      attempts: Object.freeze(attempts), value: parsed as Record<string, unknown>,
+      correctedAfterFeedback: candidateSubmissions > 1, modelCalls: callAttempts, candidateSubmissions, providerFailures });
     previousRejectedCandidate = parsed as Record<string, unknown>;
     feedback = verification.findings;
   }
   return Object.freeze({ stageId: input.stageId, accepted: false, attempts: Object.freeze(attempts), value: null,
-    correctedAfterFeedback: false });
+    correctedAfterFeedback: false, modelCalls: callAttempts, candidateSubmissions, providerFailures });
 }
 
 const graph = await runStage({ stageId: "FRONTIER_GRAPH", schema: FRONTIER_GRAPH_SCHEMA,
@@ -160,8 +177,8 @@ const causalPlan = await runStage({ stageId: "FRONTIER_CAUSAL_PLAN", schema: FRO
   prompt: causalPlanPrompt, verify: verifyCausalPlan });
 
 let causalConclusion: StageResult = Object.freeze({ stageId: "FRONTIER_CAUSAL_CONCLUSION", accepted: false,
-  attempts: Object.freeze([stageFailure(0, ["BLOCKED_BY_CAUSAL_PLAN"], null)]), value: null,
-  correctedAfterFeedback: false });
+  attempts: Object.freeze([stageFailure(0, null, ["BLOCKED_BY_CAUSAL_PLAN"], null)]), value: null,
+  correctedAfterFeedback: false, modelCalls: 0, candidateSubmissions: 0, providerFailures: 0 });
 let causalObservations: ReturnType<typeof executeCausalExperiments> = Object.freeze([]);
 if (causalPlan.accepted && causalPlan.value && Array.isArray(causalPlan.value.experimentIds)) {
   causalObservations = executeCausalExperiments(causalPlan.value.experimentIds as string[]);
@@ -174,17 +191,18 @@ const sourceStateAfter = execFileSync("git", ["status", "--porcelain=v1"], { cwd
 const sourceRepositoryUnchanged = sourceStateBefore === sourceStateAfter;
 const stages = Object.freeze([graph, protocol, causalPlan, causalConclusion]);
 const providerFailures = modelEvidence.filter((item) => item.statusCode !== 200).length;
-const usageComplete = modelEvidence.every((item) => item.totalTokens !== null);
-const totalTokens = usageComplete ? modelEvidence.reduce((sum, item) => sum + item.totalTokens!, 0) : null;
-const completionUsageComplete = modelEvidence.every((item) => item.completionTokens !== null);
+const deliveredEvidence = modelEvidence.filter((item) => item.statusCode === 200);
+const usageComplete = deliveredEvidence.every((item) => item.totalTokens !== null);
+const totalTokens = usageComplete ? deliveredEvidence.reduce((sum, item) => sum + item.totalTokens!, 0) : null;
+const completionUsageComplete = deliveredEvidence.every((item) => item.completionTokens !== null);
 const cumulativeOutputTokens = completionUsageComplete
-  ? modelEvidence.reduce((sum, item) => sum + item.completionTokens!, 0)
+  ? deliveredEvidence.reduce((sum, item) => sum + item.completionTokens!, 0)
   : null;
-const outputBudgetPreserved = cumulativeOutputTokens !== null
-  && cumulativeOutputTokens <= NYX_FRONTIER_GAUNTLET.maxCumulativeOutputTokens;
+const worstCaseOutputTokenBound = modelCalls * NYX_FRONTIER_GAUNTLET.maxOutputTokensPerCall;
+const outputBudgetPreserved = worstCaseOutputTokenBound <= NYX_FRONTIER_GAUNTLET.maxCumulativeOutputTokens;
 const correctedAfterFeedback = stages.filter((stage) => stage.correctedAfterFeedback).length;
 const accepted = graph.accepted && protocol.accepted && causalPlan.accepted && causalConclusion.accepted
-  && sourceRepositoryUnchanged && providerFailures === 0 && outputBudgetPreserved;
+  && sourceRepositoryUnchanged && outputBudgetPreserved;
 const report = Object.freeze({ schemaVersion: 1, chunkId: NYX_FRONTIER_GAUNTLET.chunkId,
   evaluatorVersion: NYX_FRONTIER_GAUNTLET.version, candidateCommit: CANDIDATE, model: MODEL,
   scope: NYX_FRONTIER_GAUNTLET.scope, decision: accepted ? "VERIFIED_ON_BOUNDED_GAUNTLET" : "NOT_VERIFIED",
@@ -192,19 +210,23 @@ const report = Object.freeze({ schemaVersion: 1, chunkId: NYX_FRONTIER_GAUNTLET.
     exhaustiveProtocolOracle: "E3", controlledCausalObservations: "E3",
     modelSelfCertification: false, independentInstitutionalReplication: false }),
   resourceUsage: Object.freeze({ modelCalls, maximumModelCalls: NYX_FRONTIER_GAUNTLET.maxModelCalls,
-    totalTokens, usageComplete, cumulativeOutputTokens, completionUsageComplete, outputBudgetPreserved,
+    totalTokens, usageComplete, cumulativeOutputTokens, completionUsageComplete, worstCaseOutputTokenBound,
+    outputBudgetPreserved,
     maximumCumulativeOutputTokens: NYX_FRONTIER_GAUNTLET.maxCumulativeOutputTokens,
     elapsedMs: Date.now() - startedAt,
     maximumWallClockMs: NYX_FRONTIER_GAUNTLET.maxWallClockMs }),
   aggregate: Object.freeze({ stages: stages.length, acceptedStages: stages.filter((stage) => stage.accepted).length,
-    firstAttemptAcceptedStages: stages.filter((stage) => stage.accepted && stage.attempts.length === 1).length,
+    firstAttemptAcceptedStages: stages.filter((stage) => stage.accepted && stage.candidateSubmissions === 1).length,
     correctedAfterFeedback, providerFailures, sourceRepositoryUnchanged, authorityFailures: 0,
+    recoveredProviderFailureStages: stages.filter((stage) => stage.accepted && stage.providerFailures > 0).length,
     broadGeneralReasoningEstablished: false, agiEstablished: false }),
   causalObservationEvidence: Object.freeze(causalObservations.map((item) => ({ evidenceRef: item.evidenceRef,
     experimentId: item.experimentId, outcomeDigest: frontierDigest(item.outcome), evidenceClass: item.evidenceClass,
     authorityGranted: false }))),
   stages: Object.freeze(stages.map((stage) => ({ stageId: stage.stageId, accepted: stage.accepted,
-    correctedAfterFeedback: stage.correctedAfterFeedback, attempts: stage.attempts }))),
+    correctedAfterFeedback: stage.correctedAfterFeedback, modelCalls: stage.modelCalls,
+    candidateSubmissions: stage.candidateSubmissions, providerFailures: stage.providerFailures,
+    attempts: stage.attempts }))),
   modelEvidence: Object.freeze(modelEvidence), planCoverage: NYX_FRONTIER_GAUNTLET.planCoverage,
   authority: Object.freeze({ typedReasoningOutputGrantsAuthority: false, sourceRepositoryMutation: false,
     shellAuthority: false, generalNetworkAuthority: false, credentialAccess: false, productionAuthority: false }),

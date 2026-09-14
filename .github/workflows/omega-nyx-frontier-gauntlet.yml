@@ -13,9 +13,13 @@ on:
       - scripts/omegaFrontierReasoningGauntlet.test.ts
       - scripts/omega/nyx-quality-v4-live-eval.ts
       - scripts/omega/nyx-quality-v4-fixtures.ts
+      - scripts/omega/nyx-scheduler-challenge.ts
       - scripts/omegaSchedulerChallenge.test.ts
       - scripts/omega/required-suites.json
-      - src/lib/codelab/nvidiaNimProvider.ts
+      - src/lib/codelab/model/nvidiaNimProvider.ts
+      - src/lib/codelab/model/nvidiaCapacity.ts
+      - src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts
+      - src/lib/codelab/engine/r3BoundedRepairLoop.ts
 
 permissions:
   contents: read
@@ -74,5 +78,5 @@ jobs:
           name: omega-nyx-frontier-gauntlet-${{ github.sha }}
           path: |
             ${{ runner.temp }}/nyx-frontier-reasoning-*.json
-            ${{ runner.temp }}/nyx-quality-v4-*.json
+            ${{ runner.temp }}/nyx-quality-*.json
           if-no-files-found: warn

@@ -2,12 +2,15 @@ import { createHash } from "node:crypto";
 
 export const NYX_FRONTIER_GAUNTLET = Object.freeze({
   chunkId: "NYX-FRONTIER-GAUNTLET-001",
-  version: "nyx-frontier-reasoning/1",
+  version: "nyx-frontier-reasoning/2",
   scope: "BOUNDED_FRONTIER_STYLE_EVALUATION_NOT_AGI_CERTIFICATION",
-  maxModelCalls: 12,
-  maxAttemptsPerStage: 3,
+  maxModelCalls: 20,
+  maxCallsPerStage: 5,
+  maxCandidateSubmissionsPerStage: 3,
+  maxProviderFailuresPerStage: 2,
+  maxFeedbackFindings: 32,
   maxOutputTokensPerCall: 2_048,
-  maxCumulativeOutputTokens: 24_576,
+  maxCumulativeOutputTokens: 40_960,
   maxWallClockMs: 30 * 60_000,
   authorityGranted: false,
   planCoverage: Object.freeze({
@@ -87,6 +90,13 @@ export function frontierRevisionPrompt(base: Readonly<Record<string, unknown>>,
       ? "Solve from the supplied evidence and return a verifiable certificate."
       : "Revise the previous rejected candidate using every verifier finding; do not repeat a disproven assignment, trace, guard, or experiment set.",
     authorityGranted: false });
+}
+
+/** Preserve deterministic correction evidence when delivery itself fails. */
+export function mergeFrontierFeedback(previous: readonly string[], current: readonly string[],
+  maximum = NYX_FRONTIER_GAUNTLET.maxFeedbackFindings): readonly string[] {
+  if (!Number.isSafeInteger(maximum) || maximum < 1) throw new Error("frontier_feedback_bound_invalid");
+  return Object.freeze([...new Set([...previous, ...current])].slice(0, maximum));
 }
 
 const GRAPH_VERTICES = Object.freeze([

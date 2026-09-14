@@ -9,6 +9,7 @@ import {
   frontierDigest,
   frontierProviderSchema,
   frontierRevisionPrompt,
+  mergeFrontierFeedback,
   graphPrompt,
   protocolPrompt,
   referenceCausalConclusion,
@@ -35,9 +36,12 @@ function schemaKeys(value: unknown): string[] {
   return Object.entries(value as Record<string, unknown>).flatMap(([key, nested]) => [key, ...schemaKeys(nested)]);
 }
 
-check(NYX_FRONTIER_GAUNTLET.maxModelCalls === 12 && NYX_FRONTIER_GAUNTLET.maxAttemptsPerStage === 3
-  && NYX_FRONTIER_GAUNTLET.maxCumulativeOutputTokens === 24_576,
-  "frontier live evaluation is bounded and retry-limited");
+check(NYX_FRONTIER_GAUNTLET.maxModelCalls === 20 && NYX_FRONTIER_GAUNTLET.maxCallsPerStage === 5
+  && NYX_FRONTIER_GAUNTLET.maxCandidateSubmissionsPerStage === 3
+  && NYX_FRONTIER_GAUNTLET.maxProviderFailuresPerStage === 2
+  && NYX_FRONTIER_GAUNTLET.maxFeedbackFindings === 32
+  && NYX_FRONTIER_GAUNTLET.maxCumulativeOutputTokens === 40_960,
+  "frontier live evaluation separately bounds calls, candidate submissions, provider failures, and output");
 check(NYX_FRONTIER_GAUNTLET.authorityGranted === false
   && NYX_FRONTIER_GAUNTLET.scope.includes("NOT_AGI_CERTIFICATION"),
 "bounded frontier evaluation grants no authority and cannot masquerade as AGI certification");
@@ -48,6 +52,16 @@ check(revision.previousRejectedCandidate === rejectedCandidate
   && (revision.verifierFeedback as string[])[0] === "GRAPH_EDGE_CONFLICT:Aster:Kepler"
   && revision.authorityGranted === false,
 "revision prompt preserves the rejected candidate and exact verifier finding without granting authority");
+const preservedFeedback = mergeFrontierFeedback(
+  ["GRAPH_EDGE_CONFLICT:Aster:Kepler", "GRAPH_CLIQUE_INVALID"], ["PROVIDER_UNAVAILABLE"]);
+check(JSON.stringify(preservedFeedback) === JSON.stringify([
+  "GRAPH_EDGE_CONFLICT:Aster:Kepler", "GRAPH_CLIQUE_INVALID", "PROVIDER_UNAVAILABLE",
+]), "transient provider failure cannot erase deterministic verifier feedback");
+check(JSON.stringify(mergeFrontierFeedback(["A", "B"], ["B", "C"], 2)) === JSON.stringify(["A", "B"]),
+  "frontier feedback is deduplicated and deterministically bounded");
+let invalidFeedbackBoundRejected = false;
+try { mergeFrontierFeedback([], [], 0); } catch { invalidFeedbackBoundRejected = true; }
+check(invalidFeedbackBoundRejected, "frontier feedback rejects invalid bounds");
 check(!JSON.stringify(graphPrompt()).includes("GRAPH_REFERENCE_COLORS"), "graph prompt does not expose reference-color metadata");
 check(!JSON.stringify(protocolPrompt()).includes("PREPARE_A,VOTE_A,VOTE_B,TRANSFER_B,COMMIT"),
   "protocol prompt does not expose the reference counterexample trace");

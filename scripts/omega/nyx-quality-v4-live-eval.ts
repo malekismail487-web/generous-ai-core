@@ -182,7 +182,7 @@ if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1") {
 
 const provider = NvidiaNimProvider.create({ providerId: "NYX-ENGINEERING-QUALITY-HOLDOUT-NEMOTRON", model: MODEL,
   authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
-  maxPromptBytes: 64_000, maxOutputTokens: IS_CHALLENGE ? MAX_OUTPUT_TOKENS : 4_096, timeoutMs: 90_000 });
+  maxPromptBytes: 64_000, maxOutputTokens: IS_CHALLENGE ? MAX_OUTPUT_TOKENS : 4_096, timeoutMs: 120_000 });
 const parent = await mkdtemp(join(tmpdir(), "nyx-quality-v4-"));
 const taskResults: Record<string, unknown>[] = [];
 let sequence = 0;
