@@ -2046,7 +2046,8 @@
         "scripts/omega/nyx-live-r3e.ts",
         "scripts/omega/nyx-quality-holdout-live-eval.ts",
         "scripts/omega/nyx-quality-v4-live-eval.ts",
-        "scripts/omega/nyx-r3f-live-eval.ts"
+        "scripts/omega/nyx-r3f-live-eval.ts",
+        "scripts/omega/nyx-research-party-live-eval.ts"
       ]
     },
     {
@@ -2163,6 +2164,12 @@
       ]
     },
     {
+      "name": "NVIDIA_API_KEY",
+      "files": [
+        "scripts/omega/nyx-research-party-live-eval.ts"
+      ]
+    },
+    {
       "name": "NVIDIA_NIM_MODEL",
       "files": [
         "scripts/omega/nvidia-nim-live-smoke.ts",
@@ -2170,7 +2177,8 @@
         "scripts/omega/nyx-live-r3e.ts",
         "scripts/omega/nyx-quality-holdout-live-eval.ts",
         "scripts/omega/nyx-quality-v4-live-eval.ts",
-        "scripts/omega/nyx-r3f-live-eval.ts"
+        "scripts/omega/nyx-r3f-live-eval.ts",
+        "scripts/omega/nyx-research-party-live-eval.ts"
       ]
     },
     {
@@ -2195,7 +2203,8 @@
         "scripts/omega/nyx-live-r3e.ts",
         "scripts/omega/nyx-quality-holdout-live-eval.ts",
         "scripts/omega/nyx-quality-v4-live-eval.ts",
-        "scripts/omega/nyx-r3f-live-eval.ts"
+        "scripts/omega/nyx-r3f-live-eval.ts",
+        "scripts/omega/nyx-research-party-live-eval.ts"
       ]
     },
     {
@@ -2231,7 +2240,8 @@
     {
       "name": "RUNNER_TEMP",
       "files": [
-        "scripts/omega/nyx-quality-v4-live-eval.ts"
+        "scripts/omega/nyx-quality-v4-live-eval.ts",
+        "scripts/omega/nyx-research-party-live-eval.ts"
       ]
     },
     {
