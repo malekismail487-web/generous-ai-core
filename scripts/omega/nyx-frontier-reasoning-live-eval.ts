@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment,
   type NvidiaNimEvidence } from "../../src/lib/codelab/model/nvidiaNimProvider";
+import { ReasoningObligationGraph, type ObligationWorkPacket } from
+  "../../src/lib/codelab/research/reasoningObligationGraph";
 import {
   FRONTIER_CAUSAL_CONCLUSION_SCHEMA,
   FRONTIER_CAUSAL_PLAN_SCHEMA,
@@ -14,6 +16,8 @@ import {
   causalPlanPrompt,
   executeCausalExperiments,
   frontierDigest,
+  frontierObligationFindings,
+  frontierObligationsForStage,
   frontierProviderSchema,
   frontierRevisionPrompt,
   mergeFrontierFeedback,
@@ -68,6 +72,9 @@ interface StageAttempt {
   readonly requestDigest: string | null;
   readonly responseDigest: string | null;
   readonly verificationEvidenceDigest: string | null;
+  readonly obligationAcceptanceState: ObligationWorkPacket["acceptanceState"] | null;
+  readonly unresolvedObligationIds: readonly string[];
+  readonly falsifiedObligationIds: readonly string[];
 }
 
 interface StageResult {
@@ -79,6 +86,8 @@ interface StageResult {
   readonly modelCalls: number;
   readonly candidateSubmissions: number;
   readonly providerFailures: number;
+  readonly obligationPacket: ObligationWorkPacket;
+  readonly obligationGraphDigest: string;
 }
 
 let modelCalls = 0;
@@ -98,7 +107,29 @@ function stageFailure(callAttempt: number, candidateSubmission: number | null,
   return Object.freeze({ callAttempt, candidateSubmission, accepted: false,
     findings: Object.freeze([...new Set(findings)].slice(0, NYX_FRONTIER_GAUNTLET.maxFeedbackFindings)),
     requestDigest: evidence?.requestDigest ?? null, responseDigest: evidence?.responseDigest ?? null,
-    verificationEvidenceDigest: null });
+    verificationEvidenceDigest: null, obligationAcceptanceState: null,
+    unresolvedObligationIds: Object.freeze([]), falsifiedObligationIds: Object.freeze([]) });
+}
+
+function obligationRuntime(stageId: string) {
+  const coordinator = {};
+  const stageObligations = frontierObligationsForStage(stageId);
+  const graph = ReasoningObligationGraph.create({ graphId: `${stageId}-OBLIGATIONS`,
+    objective: `Discharge every deterministic acceptance obligation for ${stageId}.`,
+    objectiveBinding: CANDIDATE, obligations: stageObligations.map((item) => item.definition),
+    maxAttempts: NYX_FRONTIER_GAUNTLET.maxCandidateSubmissionsPerStage,
+    maxEvaluations: NYX_FRONTIER_GAUNTLET.maxCandidateSubmissionsPerStage * stageObligations.length,
+    maxConcurrentAttempts: 1, attemptLifetimeMs: NYX_FRONTIER_GAUNTLET.maxWallClockMs,
+    now: () => Date.now() }, coordinator);
+  return Object.freeze({ coordinator, stageObligations, graph });
+}
+
+function unexecutedStage(stageId: string, reason: string): StageResult {
+  const runtime = obligationRuntime(stageId);
+  return Object.freeze({ stageId, accepted: false,
+    attempts: Object.freeze([stageFailure(0, null, [reason], null)]), value: null,
+    correctedAfterFeedback: false, modelCalls: 0, candidateSubmissions: 0, providerFailures: 0,
+    obligationPacket: runtime.graph.workPacket(), obligationGraphDigest: runtime.graph.snapshot().integrityDigest });
 }
 
 async function runStage(input: {
@@ -107,6 +138,7 @@ async function runStage(input: {
   readonly prompt: (feedback: readonly string[]) => Readonly<Record<string, unknown>>;
   readonly verify: (value: unknown) => FrontierVerification;
 }): Promise<StageResult> {
+  const { coordinator: obligationCoordinator, stageObligations, graph: obligationGraph } = obligationRuntime(input.stageId);
   const attempts: StageAttempt[] = [];
   let feedback: readonly string[] = [];
   let previousRejectedCandidate: Record<string, unknown> | null = null;
@@ -121,7 +153,8 @@ async function runStage(input: {
       attempts.push(stageFailure(callAttempts, null, ["RESOURCE_BUDGET_EXHAUSTED"], null));
       break;
     }
-    const prompt = frontierRevisionPrompt(input.prompt(feedback), previousRejectedCandidate, feedback);
+    const prompt = frontierRevisionPrompt(input.prompt(feedback), previousRejectedCandidate, feedback,
+      obligationGraph.workPacket());
     const requestId = `${input.stageId}-CALL-${callAttempts}-${frontierDigest([CANDIDATE, input.stageId, callAttempts]).slice(0, 16)}`;
     modelCalls += 1;
     const completion = await provider.complete({ schemaVersion: 1, requestId,
@@ -155,18 +188,55 @@ async function runStage(input: {
       continue;
     }
     const verification = input.verify(parsed);
+    const subjectBinding = `candidate:${frontierDigest(parsed)}`;
+    const obligationLease = obligationGraph.beginAttempt(obligationCoordinator, {
+      attemptId: `${input.stageId}-CANDIDATE-${candidateSubmissions}`, subjectBinding,
+      ownerRole: "OMEGA_DETERMINISTIC_VERIFIER",
+    });
+    const mappedFindings = new Set<string>();
+    for (const obligation of stageObligations) {
+      const obligationFindings = frontierObligationFindings(input.stageId,
+        obligation.definition.obligationId, verification.findings);
+      obligationFindings.forEach((finding) => mappedFindings.add(finding));
+      const disposition = obligationFindings.length > 0 ? "FALSIFIES" as const : "SATISFIES" as const;
+      const evidenceRefs = obligationFindings.length > 0 ? obligationFindings
+        : [`VERIFIER:NO_FINDING:${obligation.definition.obligationId}`];
+      const evaluationId = `${input.stageId}-EVAL-${candidateSubmissions}-${obligation.definition.obligationId}`;
+      obligationGraph.recordEvaluation(obligationCoordinator, obligationLease, {
+        evaluationId, obligationId: obligation.definition.obligationId, subjectBinding, disposition,
+        evidenceClass: "E3", evidenceRefs, provenanceRoot: `${input.stageId}-DETERMINISTIC-ORACLE`,
+        summary: disposition === "SATISFIES" ? "The deterministic verifier emitted no finding for this obligation."
+          : "The deterministic verifier emitted one or more falsifying findings for this obligation.",
+        contentDigest: frontierDigest({ evaluationId, evidenceRefs, verification: verification.evidenceDigest }),
+        freshnessDependencies: ["FRONTIER_TASK_DEFINITION", "CANDIDATE_OUTPUT"],
+        observedAtEpochMs: Date.now(), evaluatorIdentity: `${input.stageId}-DETERMINISTIC-ORACLE`,
+        grantsAuthority: false,
+      });
+    }
+    obligationGraph.finishAttempt(obligationCoordinator, obligationLease);
+    const obligationPacket = obligationGraph.workPacket();
+    const unmappedFindings = verification.findings.filter((finding) => !mappedFindings.has(finding));
+    const admittedFindings = Object.freeze([...verification.findings,
+      ...unmappedFindings.map((finding) => `UNMAPPED_VERIFIER_FINDING:${finding}`)]);
+    const obligationAccepted = obligationPacket.acceptanceState === "ACCEPTABLE" && unmappedFindings.length === 0;
     attempts.push(Object.freeze({ callAttempt: callAttempts, candidateSubmission: candidateSubmissions,
-      accepted: verification.accepted, findings: verification.findings,
+      accepted: verification.accepted && obligationAccepted, findings: admittedFindings,
       requestDigest: completion.evidence.requestDigest, responseDigest: completion.evidence.responseDigest,
-      verificationEvidenceDigest: verification.evidenceDigest }));
-    if (verification.accepted) return Object.freeze({ stageId: input.stageId, accepted: true,
+      verificationEvidenceDigest: verification.evidenceDigest,
+      obligationAcceptanceState: obligationPacket.acceptanceState,
+      unresolvedObligationIds: obligationPacket.unresolved.map((item) => item.obligationId),
+      falsifiedObligationIds: obligationPacket.falsified.map((item) => item.obligationId) }));
+    if (verification.accepted && obligationAccepted) return Object.freeze({ stageId: input.stageId, accepted: true,
       attempts: Object.freeze(attempts), value: parsed as Record<string, unknown>,
-      correctedAfterFeedback: candidateSubmissions > 1, modelCalls: callAttempts, candidateSubmissions, providerFailures });
+      correctedAfterFeedback: candidateSubmissions > 1, modelCalls: callAttempts, candidateSubmissions, providerFailures,
+      obligationPacket, obligationGraphDigest: obligationGraph.snapshot().integrityDigest });
     previousRejectedCandidate = parsed as Record<string, unknown>;
-    feedback = verification.findings;
+    feedback = admittedFindings;
   }
+  const obligationPacket = obligationGraph.workPacket();
   return Object.freeze({ stageId: input.stageId, accepted: false, attempts: Object.freeze(attempts), value: null,
-    correctedAfterFeedback: false, modelCalls: callAttempts, candidateSubmissions, providerFailures });
+    correctedAfterFeedback: false, modelCalls: callAttempts, candidateSubmissions, providerFailures,
+    obligationPacket, obligationGraphDigest: obligationGraph.snapshot().integrityDigest });
 }
 
 const graph = await runStage({ stageId: "FRONTIER_GRAPH", schema: FRONTIER_GRAPH_SCHEMA,
@@ -176,9 +246,7 @@ const protocol = await runStage({ stageId: "FRONTIER_PROTOCOL", schema: FRONTIER
 const causalPlan = await runStage({ stageId: "FRONTIER_CAUSAL_PLAN", schema: FRONTIER_CAUSAL_PLAN_SCHEMA,
   prompt: causalPlanPrompt, verify: verifyCausalPlan });
 
-let causalConclusion: StageResult = Object.freeze({ stageId: "FRONTIER_CAUSAL_CONCLUSION", accepted: false,
-  attempts: Object.freeze([stageFailure(0, null, ["BLOCKED_BY_CAUSAL_PLAN"], null)]), value: null,
-  correctedAfterFeedback: false, modelCalls: 0, candidateSubmissions: 0, providerFailures: 0 });
+let causalConclusion: StageResult = unexecutedStage("FRONTIER_CAUSAL_CONCLUSION", "BLOCKED_BY_CAUSAL_PLAN");
 let causalObservations: ReturnType<typeof executeCausalExperiments> = Object.freeze([]);
 if (causalPlan.accepted && causalPlan.value && Array.isArray(causalPlan.value.experimentIds)) {
   causalObservations = executeCausalExperiments(causalPlan.value.experimentIds as string[]);
@@ -206,6 +274,7 @@ const accepted = graph.accepted && protocol.accepted && causalPlan.accepted && c
 const report = Object.freeze({ schemaVersion: 1, chunkId: NYX_FRONTIER_GAUNTLET.chunkId,
   evaluatorVersion: NYX_FRONTIER_GAUNTLET.version, candidateCommit: CANDIDATE, model: MODEL,
   scope: NYX_FRONTIER_GAUNTLET.scope, decision: accepted ? "VERIFIED_ON_BOUNDED_GAUNTLET" : "NOT_VERIFIED",
+  reasoningArchitecture: "OBLIGATION_DIRECTED_NYX_WITH_INDEPENDENT_DETERMINISTIC_ORACLES",
   evidence: Object.freeze({ liveModelCognition: "E4", deterministicGraphOracle: "E3",
     exhaustiveProtocolOracle: "E3", controlledCausalObservations: "E3",
     modelSelfCertification: false, independentInstitutionalReplication: false }),
@@ -226,6 +295,7 @@ const report = Object.freeze({ schemaVersion: 1, chunkId: NYX_FRONTIER_GAUNTLET.
   stages: Object.freeze(stages.map((stage) => ({ stageId: stage.stageId, accepted: stage.accepted,
     correctedAfterFeedback: stage.correctedAfterFeedback, modelCalls: stage.modelCalls,
     candidateSubmissions: stage.candidateSubmissions, providerFailures: stage.providerFailures,
+    obligationPacket: stage.obligationPacket, obligationGraphDigest: stage.obligationGraphDigest,
     attempts: stage.attempts }))),
   modelEvidence: Object.freeze(modelEvidence), planCoverage: NYX_FRONTIER_GAUNTLET.planCoverage,
   authority: Object.freeze({ typedReasoningOutputGrantsAuthority: false, sourceRepositoryMutation: false,

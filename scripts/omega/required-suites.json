@@ -62,6 +62,7 @@
   "requiredSuites": [
     { "suiteId": "OMEGA-FRONTIER-REASONING-GAUNTLET", "file": "scripts/omegaFrontierReasoningGauntlet.test.ts" },
     { "suiteId": "OMEGA-THEORY-NETWORK", "file": "scripts/omegaTheoryNetwork.test.ts" },
+    { "suiteId": "OMEGA-REASONING-OBLIGATION-GRAPH", "file": "scripts/omegaReasoningObligationGraph.test.ts" },
     { "suiteId": "OMEGA-RESEARCH-PARTY", "file": "scripts/omegaResearchParty.test.ts" },
     { "suiteId": "CODELAB-AGENT-PROTOCOL", "file": "scripts/codelabAgentProtocol.test.ts" },
     { "suiteId": "CODELAB-AGENT-REDUCER", "file": "scripts/codelabAgentReducer.test.ts" },

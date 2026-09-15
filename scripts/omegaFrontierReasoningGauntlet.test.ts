@@ -3,10 +3,13 @@ import {
   FRONTIER_CAUSAL_PLAN_SCHEMA,
   FRONTIER_GRAPH_SCHEMA,
   FRONTIER_PROTOCOL_SCHEMA,
+  FRONTIER_STAGE_OBLIGATIONS,
   NYX_FRONTIER_GAUNTLET,
   causalPlanPrompt,
   executeCausalExperiments,
   frontierDigest,
+  frontierObligationFindings,
+  frontierObligationsForStage,
   frontierProviderSchema,
   frontierRevisionPrompt,
   mergeFrontierFeedback,
@@ -45,6 +48,24 @@ check(NYX_FRONTIER_GAUNTLET.maxModelCalls === 20 && NYX_FRONTIER_GAUNTLET.maxCal
 check(NYX_FRONTIER_GAUNTLET.authorityGranted === false
   && NYX_FRONTIER_GAUNTLET.scope.includes("NOT_AGI_CERTIFICATION"),
 "bounded frontier evaluation grants no authority and cannot masquerade as AGI certification");
+check(NYX_FRONTIER_GAUNTLET.version === "nyx-frontier-reasoning/3",
+  "frontier evaluator version records obligation-directed reasoning semantics");
+check(Object.keys(FRONTIER_STAGE_OBLIGATIONS).sort().join(",") === [
+  "FRONTIER_CAUSAL_CONCLUSION", "FRONTIER_CAUSAL_PLAN", "FRONTIER_GRAPH", "FRONTIER_PROTOCOL",
+].join(","), "every frontier stage has an explicit obligation graph");
+check(Object.values(FRONTIER_STAGE_OBLIGATIONS).every((items) => items.length === 4
+  && items.every((item) => item.definition.priority === "CRITICAL"
+    && item.definition.minimumEvidenceClass === "E3" && item.definition.grantsAuthority === false)),
+"frontier obligations are critical, deterministic-evidence-gated, and authority-neutral");
+check(frontierObligationFindings("FRONTIER_GRAPH", "GRAPH-EDGE-SAFETY",
+  ["GRAPH_EDGE_CONFLICT:Aster:Beryl", "GRAPH_CLIQUE_INVALID"]).join("") === "GRAPH_EDGE_CONFLICT:Aster:Beryl",
+"dynamic graph conflicts map only to the edge-safety obligation");
+check(frontierObligationFindings("FRONTIER_PROTOCOL", "PROTOCOL-MINIMAL-WITNESS",
+  ["PROTOCOL_TRACE_NOT_MINIMAL"]).length === 1,
+"protocol minimality failure maps to its independently tracked obligation");
+let unknownObligationRejected = false;
+try { frontierObligationsForStage("UNKNOWN_STAGE"); } catch { unknownObligationRejected = true; }
+check(unknownObligationRejected, "unknown frontier stage cannot run without explicit obligations");
 check(frontierDigest(graphPrompt()) === frontierDigest(graphPrompt()), "frontier prompts have deterministic identities");
 const rejectedCandidate = Object.freeze({ schemaVersion: 1, decision: "ABSTAIN" });
 const revision = frontierRevisionPrompt(graphPrompt(), rejectedCandidate, ["GRAPH_EDGE_CONFLICT:Aster:Kepler"]);

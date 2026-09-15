@@ -1,8 +1,10 @@
 import { createHash } from "node:crypto";
+import type { ObligationWorkPacket, ReasoningObligationDefinition } from
+  "../../src/lib/codelab/research/reasoningObligationGraph";
 
 export const NYX_FRONTIER_GAUNTLET = Object.freeze({
   chunkId: "NYX-FRONTIER-GAUNTLET-001",
-  version: "nyx-frontier-reasoning/2",
+  version: "nyx-frontier-reasoning/3",
   scope: "BOUNDED_FRONTIER_STYLE_EVALUATION_NOT_AGI_CERTIFICATION",
   maxModelCalls: 20,
   maxCallsPerStage: 5,
@@ -39,6 +41,93 @@ export interface FrontierVerification {
   readonly accepted: boolean;
   readonly findings: readonly string[];
   readonly evidenceDigest: string;
+}
+
+export interface FrontierStageObligation {
+  readonly definition: ReasoningObligationDefinition;
+  readonly findingPrefixes: readonly string[];
+}
+
+function obligation(obligationId: string, kind: ReasoningObligationDefinition["kind"], statement: string,
+  acceptanceCriterion: string, falsificationCriterion: string, findingPrefixes: readonly string[],
+  dependsOn: readonly string[] = []): FrontierStageObligation {
+  return Object.freeze({ definition: Object.freeze({ obligationId, kind, priority: "CRITICAL" as const,
+    statement, acceptanceCriterion, falsificationCriterion, dependsOn: Object.freeze([...dependsOn]),
+    conflictsWith: Object.freeze([]), ownerRoles: Object.freeze(["OMEGA_DETERMINISTIC_VERIFIER"]),
+    minimumEvidenceClass: "E3" as const, minimumIndependentRoots: 1,
+    freshnessDependencies: Object.freeze(["FRONTIER_TASK_DEFINITION", "CANDIDATE_OUTPUT"]),
+    grantsAuthority: false as const }), findingPrefixes: Object.freeze([...findingPrefixes]) });
+}
+
+export const FRONTIER_STAGE_OBLIGATIONS: Readonly<Record<string, readonly FrontierStageObligation[]>> = Object.freeze({
+  FRONTIER_GRAPH: Object.freeze([
+    obligation("GRAPH-WELL-FORMED", "REQUIREMENT", "Return exactly the required graph certificate structure.",
+      "Every required scalar and assignment is well formed.", "Any structural, scalar, or assignment diagnostic is emitted.",
+      ["GRAPH_STRUCTURE_INVALID", "GRAPH_SCALARS_INVALID", "GRAPH_ASSIGNMENT_INVALID"]),
+    obligation("GRAPH-VERTEX-COVERAGE", "COVERAGE", "Assign exactly one allowed color to every named vertex.",
+      "Every supplied vertex appears exactly once.", "The vertex coverage diagnostic is emitted.",
+      ["GRAPH_VERTEX_COVERAGE_INVALID"], ["GRAPH-WELL-FORMED"]),
+    obligation("GRAPH-EDGE-SAFETY", "INVARIANT", "No graph edge may connect equal colors.",
+      "The deterministic oracle finds zero edge conflicts.", "Any GRAPH_EDGE_CONFLICT diagnostic is emitted.",
+      ["GRAPH_EDGE_CONFLICT"], ["GRAPH-VERTEX-COVERAGE"]),
+    obligation("GRAPH-LOWER-BOUND", "COUNTEREXAMPLE", "Supply four pairwise adjacent vertices proving four colors are necessary.",
+      "The supplied four vertices form a clique.", "The clique diagnostic is emitted.", ["GRAPH_CLIQUE_INVALID"]),
+  ]),
+  FRONTIER_PROTOCOL: Object.freeze([
+    obligation("PROTOCOL-WELL-FORMED", "REQUIREMENT", "Return one complete protocol certificate.",
+      "All required scalar, trace, and guard fields are valid.", "Any structural, scalar, trace, or guard diagnostic is emitted.",
+      ["PROTOCOL_STRUCTURE_INVALID", "PROTOCOL_SCALARS_INVALID", "PROTOCOL_TRACE_INVALID", "PROTOCOL_GUARD_INVALID"]),
+    obligation("PROTOCOL-UNSAFE-WITNESS", "COUNTEREXAMPLE", "Produce an executable trace that reaches an unsafe committed state.",
+      "Executing the trace violates the stated safety invariant.", "The trace remains safe.",
+      ["PROTOCOL_TRACE_DOES_NOT_VIOLATE_SAFETY"], ["PROTOCOL-WELL-FORMED"]),
+    obligation("PROTOCOL-MINIMAL-WITNESS", "COUNTEREXAMPLE", "The unsafe trace must be shortest.",
+      "Its length equals the exhaustive shortest counterexample length.", "A shorter unsafe trace exists.",
+      ["PROTOCOL_TRACE_NOT_MINIMAL"], ["PROTOCOL-UNSAFE-WITNESS"]),
+    obligation("PROTOCOL-SAFE-REPAIR", "INVARIANT", "Select a replacement guard with no reachable safety violation.",
+      "Exhaustive reachability finds no unsafe state under the guard.", "A reachable unsafe state remains.",
+      ["PROTOCOL_GUARD_REMAINS_UNSAFE"], ["PROTOCOL-WELL-FORMED"]),
+  ]),
+  FRONTIER_CAUSAL_PLAN: Object.freeze([
+    obligation("CAUSAL-PLAN-WELL-FORMED", "REQUIREMENT", "Return one complete causal experiment plan.",
+      "All required plan scalars and forecast records are valid.", "A structure, scalar, or forecast-shape diagnostic is emitted.",
+      ["CAUSAL_PLAN_STRUCTURE_INVALID", "CAUSAL_PLAN_SCALARS_INVALID", "CAUSAL_FORECASTS_INVALID"]),
+    obligation("CAUSAL-MINIMAL-SEPARATION", "EXPERIMENT", "Choose the minimum experiment set that separates every mechanism pair.",
+      "Exactly two selected experiments jointly distinguish all modeled mechanisms.", "The set is nonminimal or nonseparating.",
+      ["CAUSAL_EXPERIMENT_SET_NOT_MINIMAL_SEPARATING"], ["CAUSAL-PLAN-WELL-FORMED"]),
+    obligation("CAUSAL-FORECAST-CORRECTNESS", "INVARIANT", "Precommit the supplied outcome for each selected experiment and mechanism.",
+      "Every forecast equals the hidden deterministic matrix entry.", "Any forecast mismatches the matrix.",
+      ["CAUSAL_FORECAST_MISMATCH"], ["CAUSAL-PLAN-WELL-FORMED"]),
+    obligation("CAUSAL-FORECAST-COVERAGE", "COVERAGE", "Forecast every selected experiment for every mechanism exactly once.",
+      "The forecast Cartesian product is complete.", "Forecast coverage is incomplete.",
+      ["CAUSAL_FORECAST_COVERAGE_INCOMPLETE"], ["CAUSAL-PLAN-WELL-FORMED"]),
+  ]),
+  FRONTIER_CAUSAL_CONCLUSION: Object.freeze([
+    obligation("CAUSAL-CONCLUSION-WELL-FORMED", "REQUIREMENT", "Return one complete evidence-bound causal conclusion.",
+      "All required conclusion scalars and collections are valid.", "A structure or scalar diagnostic is emitted.",
+      ["CAUSAL_CONCLUSION_STRUCTURE_INVALID", "CAUSAL_CONCLUSION_SCALARS_INVALID"]),
+    obligation("CAUSAL-UNIQUE-SURVIVOR", "INVARIANT", "Select the unique mechanism consistent with every observation.",
+      "Exactly one mechanism survives and is selected.", "The selected mechanism is not uniquely supported.",
+      ["CAUSAL_MECHANISM_NOT_SUPPORTED"], ["CAUSAL-CONCLUSION-WELL-FORMED"]),
+    obligation("CAUSAL-EVIDENCE-PROVENANCE", "PROVENANCE", "Cite every admitted experiment observation and no invented evidence.",
+      "Evidence references exactly equal the observation references.", "Evidence references are missing or invented.",
+      ["CAUSAL_EVIDENCE_REFERENCES_INVALID"], ["CAUSAL-CONCLUSION-WELL-FORMED"]),
+    obligation("CAUSAL-ELIMINATION-COVERAGE", "COVERAGE", "Identify every mechanism eliminated by the observations.",
+      "The ruled-out set is exact and complete.", "The elimination set is incomplete or incorrect.",
+      ["CAUSAL_ELIMINATION_INCOMPLETE"], ["CAUSAL-UNIQUE-SURVIVOR"]),
+  ]),
+});
+
+export function frontierObligationsForStage(stageId: string): readonly FrontierStageObligation[] {
+  const obligations = FRONTIER_STAGE_OBLIGATIONS[stageId];
+  if (!obligations) throw new Error("frontier_stage_obligations_unknown");
+  return obligations;
+}
+
+export function frontierObligationFindings(stageId: string, obligationId: string,
+  findings: readonly string[]): readonly string[] {
+  const obligation = frontierObligationsForStage(stageId).find((item) => item.definition.obligationId === obligationId);
+  if (!obligation) throw new Error("frontier_obligation_unknown");
+  return Object.freeze(findings.filter((finding) => obligation.findingPrefixes.some((prefix) => finding.startsWith(prefix))));
 }
 
 function canonical(value: unknown): string {
@@ -84,11 +173,12 @@ export function frontierProviderSchema(value: unknown): Readonly<Record<string, 
 
 export function frontierRevisionPrompt(base: Readonly<Record<string, unknown>>,
   previousRejectedCandidate: Readonly<Record<string, unknown>> | null,
-  feedback: readonly string[]): Readonly<Record<string, unknown>> {
+  feedback: readonly string[], obligationPacket: ObligationWorkPacket | null = null): Readonly<Record<string, unknown>> {
   return Object.freeze({ ...base, verifierFeedback: Object.freeze([...feedback]), previousRejectedCandidate,
+    obligationPacket,
     revisionInstruction: previousRejectedCandidate === null
-      ? "Solve from the supplied evidence and return a verifiable certificate."
-      : "Revise the previous rejected candidate using every verifier finding; do not repeat a disproven assignment, trace, guard, or experiment set.",
+      ? "Solve only by discharging every critical obligation with a verifiable certificate."
+      : "Revise the previous rejected candidate by resolving every falsified or unresolved obligation while preserving the obligations it already satisfied.",
     authorityGranted: false });
 }
 
