@@ -90,7 +90,8 @@ try {
   });
   check(frontierCoreMatches.every(Boolean), "frontier scheduler epoch is pinned to its exact current cognition and assurance baseline");
   check(NYX_SCHEDULER_EXPERIMENT.maxCognitionCycles === 4
-    && NYX_SCHEDULER_EXPERIMENT.maxOutputTokensPerCall * 4 === NYX_SCHEDULER_EXPERIMENT.maxCumulativeOutputTokens,
+    && NYX_SCHEDULER_EXPERIMENT.maxOutputTokensPerCall * 4 === NYX_SCHEDULER_EXPERIMENT.maxCumulativeOutputTokens
+    && NYX_SCHEDULER_EXPERIMENT.sourceRepresentation === "LINES",
   "paid experiment has a fixed four-call and generated-token envelope");
   for (const [name, policy] of [["challenge", task.qualityPolicy], ["existing admission", {
     ...OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1, allowedChangedPaths: task.mutationPaths, readonlyPaths: ["src/contracts.mjs"],
@@ -144,7 +145,9 @@ try {
   const frontierReport = frontierLine
     ? JSON.parse(frontierLine.slice("NYX_QUALITY_FRONTIER_CHALLENGE_HOLDOUT ".length)) : null;
   check(frontier.status === 1 && frontierReport?.evaluationDecision === "INSUFFICIENT_EVIDENCE"
-    && frontierReport.tasks[0].modelCalls === 1 && frontierReport.tasks[0].candidates === 0,
+    && frontierReport.tasks[0].modelCalls === 1 && frontierReport.tasks[0].candidates === 0
+    && frontierReport.sourceRepresentation === "LINES"
+    && frontierReport.tasks[0].sourceRepresentation === "LINES",
   "current frontier scheduler epoch reaches live driver logic and preserves provider failure as insufficient evidence");
   const previousFeedbackEpoch = runOffline("CONTEXT_REPAIR");
   check(previousFeedbackEpoch.status === 1 && previousFeedbackEpoch.stderr.includes("context_repair_frozen_core_digest_mismatch"),

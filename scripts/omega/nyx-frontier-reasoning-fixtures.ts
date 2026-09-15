@@ -4,7 +4,7 @@ import type { ObligationWorkPacket, ReasoningObligationDefinition } from
 
 export const NYX_FRONTIER_GAUNTLET = Object.freeze({
   chunkId: "NYX-FRONTIER-GAUNTLET-001",
-  version: "nyx-frontier-reasoning/3",
+  version: "nyx-frontier-reasoning/4",
   scope: "BOUNDED_FRONTIER_STYLE_EVALUATION_NOT_AGI_CERTIFICATION",
   maxModelCalls: 20,
   maxCallsPerStage: 5,
@@ -36,6 +36,15 @@ export const NYX_FRONTIER_GAUNTLET = Object.freeze({
     ]),
   }),
 });
+
+export type FrontierRevisionMode = "INITIAL" | "TARGETED_CORRECTION" | "INDEPENDENT_RECOMPUTATION";
+
+export function frontierRevisionMode(callAttempt: number): FrontierRevisionMode {
+  if (!Number.isSafeInteger(callAttempt) || callAttempt < 1) throw new Error("frontier_call_attempt_invalid");
+  if (callAttempt === 1) return "INITIAL";
+  if (callAttempt === 2) return "TARGETED_CORRECTION";
+  return "INDEPENDENT_RECOMPUTATION";
+}
 
 export interface FrontierVerification {
   readonly accepted: boolean;
@@ -173,12 +182,16 @@ export function frontierProviderSchema(value: unknown): Readonly<Record<string, 
 
 export function frontierRevisionPrompt(base: Readonly<Record<string, unknown>>,
   previousRejectedCandidate: Readonly<Record<string, unknown>> | null,
-  feedback: readonly string[], obligationPacket: ObligationWorkPacket | null = null): Readonly<Record<string, unknown>> {
+  feedback: readonly string[], obligationPacket: ObligationWorkPacket | null = null,
+  revisionMode: FrontierRevisionMode = previousRejectedCandidate === null ? "INITIAL" : "TARGETED_CORRECTION"):
+  Readonly<Record<string, unknown>> {
+  const revisionInstruction = revisionMode === "INITIAL"
+    ? "Solve only by discharging every critical obligation with a verifiable certificate."
+    : revisionMode === "TARGETED_CORRECTION"
+      ? "Change the rejected candidate to eliminate every falsification. Preserve only fields backed by satisfied obligations. Do not repeat the candidate."
+      : "Recompute an independent candidate from the original constraints. Treat the rejected candidate only as a counterexample and do not reuse its values.";
   return Object.freeze({ ...base, verifierFeedback: Object.freeze([...feedback]), previousRejectedCandidate,
-    obligationPacket,
-    revisionInstruction: previousRejectedCandidate === null
-      ? "Solve only by discharging every critical obligation with a verifiable certificate."
-      : "Revise the previous rejected candidate by resolving every falsified or unresolved obligation while preserving the obligations it already satisfied.",
+    obligationPacket, revisionMode, revisionInstruction,
     authorityGranted: false });
 }
 

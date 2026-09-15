@@ -20,6 +20,7 @@ import {
   frontierObligationsForStage,
   frontierProviderSchema,
   frontierRevisionPrompt,
+  frontierRevisionMode,
   mergeFrontierFeedback,
   graphPrompt,
   protocolPrompt,
@@ -75,6 +76,9 @@ interface StageAttempt {
   readonly obligationAcceptanceState: ObligationWorkPacket["acceptanceState"] | null;
   readonly unresolvedObligationIds: readonly string[];
   readonly falsifiedObligationIds: readonly string[];
+  readonly revisionMode: ReturnType<typeof frontierRevisionMode>;
+  readonly candidateDigest: string | null;
+  readonly repeatedRejectedCandidate: boolean;
 }
 
 interface StageResult {
@@ -108,7 +112,9 @@ function stageFailure(callAttempt: number, candidateSubmission: number | null,
     findings: Object.freeze([...new Set(findings)].slice(0, NYX_FRONTIER_GAUNTLET.maxFeedbackFindings)),
     requestDigest: evidence?.requestDigest ?? null, responseDigest: evidence?.responseDigest ?? null,
     verificationEvidenceDigest: null, obligationAcceptanceState: null,
-    unresolvedObligationIds: Object.freeze([]), falsifiedObligationIds: Object.freeze([]) });
+    unresolvedObligationIds: Object.freeze([]), falsifiedObligationIds: Object.freeze([]),
+    revisionMode: callAttempt > 0 ? frontierRevisionMode(callAttempt) : "INITIAL",
+    candidateDigest: null, repeatedRejectedCandidate: false });
 }
 
 function obligationRuntime(stageId: string) {
@@ -145,6 +151,7 @@ async function runStage(input: {
   let callAttempts = 0;
   let candidateSubmissions = 0;
   let providerFailures = 0;
+  const rejectedCandidateDigests = new Set<string>();
   while (callAttempts < NYX_FRONTIER_GAUNTLET.maxCallsPerStage
     && candidateSubmissions < NYX_FRONTIER_GAUNTLET.maxCandidateSubmissionsPerStage
     && providerFailures < NYX_FRONTIER_GAUNTLET.maxProviderFailuresPerStage) {
@@ -153,15 +160,17 @@ async function runStage(input: {
       attempts.push(stageFailure(callAttempts, null, ["RESOURCE_BUDGET_EXHAUSTED"], null));
       break;
     }
+    const revisionMode = frontierRevisionMode(callAttempts);
     const prompt = frontierRevisionPrompt(input.prompt(feedback), previousRejectedCandidate, feedback,
-      obligationGraph.workPacket());
+      obligationGraph.workPacket(), revisionMode);
     const requestId = `${input.stageId}-CALL-${callAttempts}-${frontierDigest([CANDIDATE, input.stageId, callAttempts]).slice(0, 16)}`;
     modelCalls += 1;
     const completion = await provider.complete({ schemaVersion: 1, requestId,
       messages: [
         { role: "system", content: "You are Νύξ performing a bounded frontier reasoning evaluation. Return exactly one strict JSON object. Your confidence is not evidence. Omega independently verifies every certificate, trace, experiment plan, and conclusion. Never request or imply authority." },
         { role: "user", content: JSON.stringify(prompt) },
-      ], maxTokens: NYX_FRONTIER_GAUNTLET.maxOutputTokensPerCall, temperature: 0,
+      ], maxTokens: NYX_FRONTIER_GAUNTLET.maxOutputTokensPerCall,
+      temperature: revisionMode === "INITIAL" ? 0 : revisionMode === "TARGETED_CORRECTION" ? 0.15 : 0.35,
       responseFormat: { type: "JSON_SCHEMA", name: input.stageId.toLowerCase().replace(/-/g, "_").slice(0, 63),
         schema: frontierProviderSchema(input.schema) }, inferencePolicy: "REASONING_JSON",
       observedAtEpochMs: Date.now(), deadlineEpochMs });
@@ -187,8 +196,12 @@ async function runStage(input: {
       attempts.push(stageFailure(callAttempts, candidateSubmissions, feedback, completion.evidence));
       continue;
     }
+    const candidateDigest = frontierDigest(parsed);
+    const repeatedRejectedCandidate = rejectedCandidateDigests.has(candidateDigest);
     const verification = input.verify(parsed);
-    const subjectBinding = `candidate:${frontierDigest(parsed)}`;
+    const candidateFindings = Object.freeze([...verification.findings,
+      ...(repeatedRejectedCandidate ? ["REPEATED_REJECTED_CANDIDATE"] : [])]);
+    const subjectBinding = `candidate:${candidateDigest}`;
     const obligationLease = obligationGraph.beginAttempt(obligationCoordinator, {
       attemptId: `${input.stageId}-CANDIDATE-${candidateSubmissions}`, subjectBinding,
       ownerRole: "OMEGA_DETERMINISTIC_VERIFIER",
@@ -196,7 +209,7 @@ async function runStage(input: {
     const mappedFindings = new Set<string>();
     for (const obligation of stageObligations) {
       const obligationFindings = frontierObligationFindings(input.stageId,
-        obligation.definition.obligationId, verification.findings);
+        obligation.definition.obligationId, candidateFindings);
       obligationFindings.forEach((finding) => mappedFindings.add(finding));
       const disposition = obligationFindings.length > 0 ? "FALSIFIES" as const : "SATISFIES" as const;
       const evidenceRefs = obligationFindings.length > 0 ? obligationFindings
@@ -215,8 +228,8 @@ async function runStage(input: {
     }
     obligationGraph.finishAttempt(obligationCoordinator, obligationLease);
     const obligationPacket = obligationGraph.workPacket();
-    const unmappedFindings = verification.findings.filter((finding) => !mappedFindings.has(finding));
-    const admittedFindings = Object.freeze([...verification.findings,
+    const unmappedFindings = candidateFindings.filter((finding) => !mappedFindings.has(finding));
+    const admittedFindings = Object.freeze([...candidateFindings,
       ...unmappedFindings.map((finding) => `UNMAPPED_VERIFIER_FINDING:${finding}`)]);
     const obligationAccepted = obligationPacket.acceptanceState === "ACCEPTABLE" && unmappedFindings.length === 0;
     attempts.push(Object.freeze({ callAttempt: callAttempts, candidateSubmission: candidateSubmissions,
@@ -225,11 +238,13 @@ async function runStage(input: {
       verificationEvidenceDigest: verification.evidenceDigest,
       obligationAcceptanceState: obligationPacket.acceptanceState,
       unresolvedObligationIds: obligationPacket.unresolved.map((item) => item.obligationId),
-      falsifiedObligationIds: obligationPacket.falsified.map((item) => item.obligationId) }));
+      falsifiedObligationIds: obligationPacket.falsified.map((item) => item.obligationId),
+      revisionMode, candidateDigest, repeatedRejectedCandidate }));
     if (verification.accepted && obligationAccepted) return Object.freeze({ stageId: input.stageId, accepted: true,
       attempts: Object.freeze(attempts), value: parsed as Record<string, unknown>,
       correctedAfterFeedback: candidateSubmissions > 1, modelCalls: callAttempts, candidateSubmissions, providerFailures,
       obligationPacket, obligationGraphDigest: obligationGraph.snapshot().integrityDigest });
+    rejectedCandidateDigests.add(candidateDigest);
     previousRejectedCandidate = parsed as Record<string, unknown>;
     feedback = admittedFindings;
   }

@@ -12,6 +12,7 @@ import {
   frontierObligationsForStage,
   frontierProviderSchema,
   frontierRevisionPrompt,
+  frontierRevisionMode,
   mergeFrontierFeedback,
   graphPrompt,
   protocolPrompt,
@@ -48,7 +49,7 @@ check(NYX_FRONTIER_GAUNTLET.maxModelCalls === 20 && NYX_FRONTIER_GAUNTLET.maxCal
 check(NYX_FRONTIER_GAUNTLET.authorityGranted === false
   && NYX_FRONTIER_GAUNTLET.scope.includes("NOT_AGI_CERTIFICATION"),
 "bounded frontier evaluation grants no authority and cannot masquerade as AGI certification");
-check(NYX_FRONTIER_GAUNTLET.version === "nyx-frontier-reasoning/3",
+check(NYX_FRONTIER_GAUNTLET.version === "nyx-frontier-reasoning/4",
   "frontier evaluator version records obligation-directed reasoning semantics");
 check(Object.keys(FRONTIER_STAGE_OBLIGATIONS).sort().join(",") === [
   "FRONTIER_CAUSAL_CONCLUSION", "FRONTIER_CAUSAL_PLAN", "FRONTIER_GRAPH", "FRONTIER_PROTOCOL",
@@ -71,8 +72,20 @@ const rejectedCandidate = Object.freeze({ schemaVersion: 1, decision: "ABSTAIN" 
 const revision = frontierRevisionPrompt(graphPrompt(), rejectedCandidate, ["GRAPH_EDGE_CONFLICT:Aster:Kepler"]);
 check(revision.previousRejectedCandidate === rejectedCandidate
   && (revision.verifierFeedback as string[])[0] === "GRAPH_EDGE_CONFLICT:Aster:Kepler"
+  && revision.revisionMode === "TARGETED_CORRECTION"
   && revision.authorityGranted === false,
 "revision prompt preserves the rejected candidate and exact verifier finding without granting authority");
+check(frontierRevisionMode(1) === "INITIAL" && frontierRevisionMode(2) === "TARGETED_CORRECTION"
+  && frontierRevisionMode(3) === "INDEPENDENT_RECOMPUTATION",
+"bounded retries escalate from initial solution to targeted correction and independent recomputation");
+const recomputation = frontierRevisionPrompt(graphPrompt(), rejectedCandidate,
+  ["GRAPH_EDGE_CONFLICT:Aster:Kepler"], null, frontierRevisionMode(3));
+check(recomputation.revisionMode === "INDEPENDENT_RECOMPUTATION"
+  && String(recomputation.revisionInstruction).includes("do not reuse"),
+"late retry treats the rejected candidate as a counterexample instead of inviting deterministic replay");
+let invalidAttemptRejected = false;
+try { frontierRevisionMode(0); } catch { invalidAttemptRejected = true; }
+check(invalidAttemptRejected, "retry policy rejects malformed attempt identities");
 const preservedFeedback = mergeFrontierFeedback(
   ["GRAPH_EDGE_CONFLICT:Aster:Kepler", "GRAPH_CLIQUE_INVALID"], ["PROVIDER_UNAVAILABLE"]);
 check(JSON.stringify(preservedFeedback) === JSON.stringify([

@@ -39,6 +39,7 @@ export const NYX_SCHEDULER_FRONTIER_FROZEN_CORE = Object.freeze({
 export const NYX_SCHEDULER_EXPERIMENT = Object.freeze({
   chunkId: "NYX-HARD-REJECTION-REPAIR-001", maxCognitionCycles: 4, maxWallClockMs: 480_000,
   maxOutputTokensPerCall: 8_192, maxCumulativeOutputTokens: 32_768, maxPromptBytesPerCall: 48_000,
+  sourceRepresentation: "LINES",
   scope: "ONE_CONSTRUCTED_MULTIFILE_TASK_NOT_BROAD_GENERALIZATION",
   evidenceIndependence: "E3_AUTHOR_ADJACENT_ORACLES_PLUS_E4_MODEL_CALLS",
   privateHoldout: false, candidateHiddenExpectations: true,
