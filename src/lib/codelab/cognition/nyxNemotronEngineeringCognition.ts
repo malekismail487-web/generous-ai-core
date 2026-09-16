@@ -309,7 +309,7 @@ export const NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA = providerCompatibleSchema(
   NYX_REPAIR_INTENT_JSON_SCHEMA,
 ) as Readonly<Record<string, unknown>>;
 
-export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/8" as const;
+export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/9" as const;
 export const NYX_SEMANTIC_ACTIONS = Object.freeze(["PROPOSE_EDIT", "REQUEST_EVIDENCE", "NO_ACTION"] as const);
 
 export type NyxSourceRepresentation = "TEXT" | "LINES";
@@ -344,9 +344,7 @@ export function buildNyxRepairIntentContract(request: NyxRepairCognitionRequest,
   const requestableEvidenceRefs = Object.freeze(request.availableEvidence.map((item) => item.evidenceRef));
   const allowedActions = Object.freeze(NYX_SEMANTIC_ACTIONS.filter((action) =>
     action === "PROPOSE_EDIT" || (action === "REQUEST_EVIDENCE" ? requestableEvidenceRefs.length > 0 : requestableEvidenceRefs.length === 0)));
-  const requiredFields = Object.freeze({ ...REQUIRED_INTENT_FIELDS,
-    PROPOSE_EDIT: Object.freeze([...REQUIRED_INTENT_FIELDS.PROPOSE_EDIT,
-      ...(request.priorHypotheses.length > 0 ? ["failureInterpretation"] : [])]) });
+  const requiredFields = REQUIRED_INTENT_FIELDS;
   const properties: Record<string, unknown> = { ...NYX_REPAIR_INTENT_JSON_SCHEMA.properties,
     decision: { type: "string", enum: allowedActions },
     evidenceRefs: { ...NYX_REPAIR_INTENT_JSON_SCHEMA.properties.evidenceRefs,
@@ -653,7 +651,7 @@ export class NyxNemotronEngineeringCognition {
     try { parsed = JSON.parse(completion.content) as RawRepairIntent; }
     catch { return this.#result("COGNITION_ERROR", "nyx_cognition_output_not_strict_json", request, null, null, completion.evidence,
       [diagnostic("UNEXPECTED_STRUCTURE", "$", "one JSON object", "non_json_content")]); }
-    const compiled = compileNyxRepairIntent(parsed, { mode: this.#intentCompilationMode,
+    const compiled = await compileNyxRepairIntent(parsed, { mode: this.#intentCompilationMode,
       sourceRepresentation: this.#sourceRepresentation, maxCounterexamples: request.maxCounterexamples,
       maxPatchBytes: request.maxPatchBytes, maxLineLength: request.sourceQualityConstraints.maxLineLength,
       maxSourceLines: NYX_SOURCE_LINES_POLICY.maxLines });

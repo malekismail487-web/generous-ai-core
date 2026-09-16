@@ -142,7 +142,8 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
     && compilation.operations.some((item) => item.kind === "BOUND_ADVISORY_COUNTEREXAMPLES"
       && item.beforeCount === 5 && item.afterCount === 3)
     && compilation.inputDigest !== compilation.outputDigest
-    && compilation.semanticPreservationClaim === "TYPESCRIPT_PARSE_PRINT_REQUIRES_EXECUTION_VERIFICATION"
+    && compilation.semanticPreservationClaim === "PARSEABLE_SOURCE_FORMAT_REQUIRES_EXECUTION_VERIFICATION"
+    && compilation.formatterIdentity === "prettier/3.9.6"
     && !compilation.executableAuthorityGranted && compiled.hypothesis?.counterexamples.length === 3,
   "canonicalization is hash-attributed, bounds only advisory metadata and grants no execution authority");
   const repeatedCompilation = await cognition(transportFor(intent({
@@ -152,6 +153,21 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
   check(repeatedCompilation.evidence.intentCompilation.outputDigest === compilation.outputDigest
     && repeatedCompilation.hypothesis?.proposalDigest === compiled.hypothesis?.proposalDigest,
   "intent compilation is deterministic for identical model output and request constraints");
+  const complexExpression = "export const describe=(items:Array<{id:string;priority:number;enabled:boolean}>)=>items.filter((item)=>item.enabled&&item.priority>0).map((item)=>({identifier:item.id,normalizedPriority:Math.min(100,Math.max(0,item.priority)),description:`${item.id}:${item.priority}`}));\n";
+  const compiledComplex = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts", replacement: {
+    lines: complexExpression.split("\n"), lineEnding: "LF" } }] })), "LINES", undefined, "SAFE_CANONICALIZATION")
+    .proposeRepair(request());
+  check(compiledComplex.decision === "PROPOSED"
+    && compiledComplex.hypothesis!.changes[0].replacementContent.split("\n").every((line) => line.length <= 120)
+    && compiledComplex.hypothesis!.changes[0].replacementContent.includes("normalizedPriority"),
+  "compiler formats nested expressions that the TypeScript printer previously left overlong");
+  const unbreakableLiteral = `export const token = "${"x".repeat(160)}";\n`;
+  const stillOverlong = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts", replacement: {
+    lines: unbreakableLiteral.split("\n"), lineEnding: "LF" } }] })), "LINES", undefined, "SAFE_CANONICALIZATION")
+    .proposeRepair(request());
+  check(stillOverlong.decision === "COGNITION_ERROR" && stillOverlong.hypothesis === null
+    && has(stillOverlong, "SOURCE_QUALITY_INVALID"),
+  "formatter cannot launder an intrinsically overlong literal through source-quality admission");
   const invalidSyntax = "export function add(a:number,b:number){ return a + ; }\n";
   const refusedSyntax = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
     replacement: { lines: [invalidSyntax.trimEnd() + " ".repeat(121)], lineEnding: "LF" } }] })),
@@ -449,9 +465,8 @@ function schemaKeys(value: unknown): string[] {
   const unexplained = await evaluate(JSON.stringify(missingRevision), {
     observation: passingObservation, priorHypotheses, candidateQualityFeedback: feedback,
   });
-  check(unexplained.decision === "COGNITION_ERROR" && unexplained.schemaDiagnostics.some((item) =>
-    item.category === "MISSING_REQUIRED_FIELD" && item.path === "$.failureInterpretation"),
-  "a revised hypothesis still must explain the preceding falsification or quality rejection");
+  check(unexplained.decision === "PROPOSED" && unexplained.hypothesis?.failureInterpretation === null,
+  "missing explanatory prose does not discard an otherwise testable revision backed by prior E3 failure evidence");
 
   let calls = 0;
   const rejecting = cognition(async () => { calls += 1; return transportFor(intent())("", {}); });

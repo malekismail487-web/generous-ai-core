@@ -147,6 +147,10 @@ function parseChannel(value: string, channel: EngineeringDiagnostic["channel"]):
         code: null, testName: null, message: line });
       continue;
     }
+    if (/\b(?:SyntaxError|ReferenceError|TypeError)\b|\bUnexpected\s+(?:token|identifier|end of input)\b|\bhas already been declared\b/i.test(line)) {
+      add({ category: "GENERIC", channel, file: null, line: null, column: null, code: null, testName: null, message: line });
+      continue;
+    }
     if (/\b(error|failed|failure|exception|fatal)\b/i.test(line)) {
       add({ category: "GENERIC", channel, file: null, line: null, column: null, code: null, testName: null, message: line });
     }

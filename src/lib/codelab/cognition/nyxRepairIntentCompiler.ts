@@ -1,12 +1,14 @@
 import { createHash } from "node:crypto";
 import { extname } from "node:path";
+import { format } from "prettier";
 import ts from "typescript";
 
 export type NyxRepairIntentCompilationMode = "STRICT" | "SAFE_CANONICALIZATION";
 
 export const NYX_REPAIR_INTENT_COMPILER_STATUS = Object.freeze({
   compilerId: "OMEGA_NYX_REPAIR_INTENT_COMPILER",
-  compilerVersion: "nyx-repair-intent-compiler/1",
+  compilerVersion: "nyx-repair-intent-compiler/2",
+  formatterIdentity: "prettier/3.9.6",
   supportedModes: Object.freeze(["STRICT", "SAFE_CANONICALIZATION"] as const),
   transformsExecutableTargets: false,
   repairsInvalidSyntax: false,
@@ -25,14 +27,15 @@ export interface NyxIntentCompilationOperation {
 
 export interface NyxIntentCompilationEvidence {
   readonly compilerId: "OMEGA_NYX_REPAIR_INTENT_COMPILER";
-  readonly compilerVersion: "nyx-repair-intent-compiler/1";
+  readonly compilerVersion: "nyx-repair-intent-compiler/2";
+  readonly formatterIdentity: "prettier/3.9.6";
   readonly mode: NyxRepairIntentCompilationMode;
   readonly outcome: "NOT_REQUESTED" | "UNCHANGED" | "COMPILED" | "REFUSED";
   readonly inputDigest: string;
   readonly outputDigest: string;
   readonly refusalReason: string | null;
   readonly operations: readonly NyxIntentCompilationOperation[];
-  readonly semanticPreservationClaim: "NONE" | "TYPESCRIPT_PARSE_PRINT_REQUIRES_EXECUTION_VERIFICATION";
+  readonly semanticPreservationClaim: "NONE" | "PARSEABLE_SOURCE_FORMAT_REQUIRES_EXECUTION_VERIFICATION";
   readonly executableAuthorityGranted: false;
 }
 
@@ -69,10 +72,11 @@ function evidence(request: NyxRepairIntentCompilationRequest, inputDigest: strin
   outcome: NyxIntentCompilationEvidence["outcome"], refusalReason: string | null,
   operations: readonly NyxIntentCompilationOperation[]): NyxIntentCompilationEvidence {
   return Object.freeze({ compilerId: "OMEGA_NYX_REPAIR_INTENT_COMPILER",
-    compilerVersion: "nyx-repair-intent-compiler/1", mode: request.mode, outcome, inputDigest, outputDigest,
+    compilerVersion: "nyx-repair-intent-compiler/2", formatterIdentity: "prettier/3.9.6",
+    mode: request.mode, outcome, inputDigest, outputDigest,
     refusalReason, operations: Object.freeze(operations.map(frozenOperation)),
     semanticPreservationClaim: operations.some((item) => item.kind === "CANONICALIZE_PARSEABLE_SOURCE")
-      ? "TYPESCRIPT_PARSE_PRINT_REQUIRES_EXECUTION_VERIFICATION" : "NONE",
+      ? "PARSEABLE_SOURCE_FORMAT_REQUIRES_EXECUTION_VERIFICATION" : "NONE",
     executableAuthorityGranted: false });
 }
 
@@ -86,11 +90,29 @@ function sourceKind(path: string): ts.ScriptKind {
   }
 }
 
-function formatParseableSource(path: string, source: string): string | null {
+function prettierParser(path: string): "babel" | "json" | "typescript" {
+  switch (extname(path).toLowerCase()) {
+    case ".js": case ".cjs": case ".mjs": case ".jsx": return "babel";
+    case ".json": return "json";
+    default: return "typescript";
+  }
+}
+
+function parseable(path: string, source: string): boolean {
   const parsed = ts.createSourceFile(path, source, ts.ScriptTarget.ES2022, true, sourceKind(path));
   const diagnostics = (parsed as ts.SourceFile & { readonly parseDiagnostics?: readonly ts.Diagnostic[] }).parseDiagnostics ?? [];
-  if (diagnostics.length > 0) return null;
-  return ts.createPrinter({ newLine: ts.NewLineKind.LineFeed, removeComments: false }).printFile(parsed);
+  return diagnostics.length === 0;
+}
+
+async function formatParseableSource(path: string, source: string, printWidth: number): Promise<string | null> {
+  if (!parseable(path, source)) return null;
+  try {
+    const formatted = await format(source, { parser: prettierParser(path), filepath: path,
+      printWidth, tabWidth: 2, useTabs: false, endOfLine: "lf" });
+    return parseable(path, formatted) ? formatted : null;
+  } catch {
+    return null;
+  }
 }
 
 function asStructuredSource(value: unknown): { readonly lines: readonly string[]; readonly lineEnding: "LF" | "CRLF" } | null {
@@ -115,8 +137,8 @@ function safeCounterexampleBound(value: unknown, maximum: number): readonly stri
  * or executable semantics and it never grants authority. Every transformed
  * candidate still requires the ordinary validator and deterministic execution.
  */
-export function compileNyxRepairIntent(input: unknown,
-  request: NyxRepairIntentCompilationRequest): NyxRepairIntentCompilationResult {
+export async function compileNyxRepairIntent(input: unknown,
+  request: NyxRepairIntentCompilationRequest): Promise<NyxRepairIntentCompilationResult> {
   const inputDigest = digest(input);
   if (request.mode === "STRICT") {
     return Object.freeze({ value: input, evidence: evidence(request, inputDigest, inputDigest,
@@ -151,7 +173,7 @@ export function compileNyxRepairIntent(input: unknown,
       const separator = replacement.lineEnding === "LF" ? "\n" : "\r\n";
       const original = replacement.lines.join(separator);
       if (Buffer.byteLength(original, "utf8") > request.maxPatchBytes) continue;
-      const formatted = formatParseableSource(change.target, original);
+      const formatted = await formatParseableSource(change.target, original, request.maxLineLength);
       if (formatted === null || formatted === original || Buffer.byteLength(formatted, "utf8") > request.maxPatchBytes) continue;
       const formattedLines = formatted.split("\n");
       if (formattedLines.length > request.maxSourceLines
