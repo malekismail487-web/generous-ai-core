@@ -42,7 +42,8 @@ export function assureResearchParty(input: {
   if (!result || result.researchId !== objective.researchId) findings.push("RESULT_OBJECTIVE_BINDING_INVALID");
   if (result.authorityGranted !== false || result.contributions.some((item) => item.grantsAuthority)
     || result.observations.some((item) => item.authorityGranted || item.evidence.grantsAuthority)
-    || result.cognitionEvidence.some((item) => item.grantsAuthority)) findings.push("UNAUTHORIZED_AUTHORITY_DELTA");
+    || result.cognitionEvidence.some((item) => item.grantsAuthority)
+    || result.cognitiveRouting?.grantsAuthority !== false) findings.push("UNAUTHORIZED_AUTHORITY_DELTA");
   if (result.resourceUsage.modelCalls > limits.maxModelCalls || result.resourceUsage.experiments > limits.maxExperiments
     || result.resourceUsage.experimentCostUnits > limits.maxCostUnits
     || result.resourceUsage.wallClockMs > limits.maxWallClockMs

@@ -1,6 +1,8 @@
 import { TheoryNetwork } from "./theoryNetwork";
 import { immutableTheoryValue, theoryDigest, type TheoryLease } from "./theoryContracts";
 import { ResearchEvidenceGraph } from "./researchEvidenceGraph";
+import { sparseTheoryPerspectiveRouter, validTheoryPerspectiveRoute,
+  type TheoryPerspectiveRouter } from "./sparseTheoryRouter";
 import { researchObjectiveDigest, validResearchLimits, validResearchObjective,
   type ResearchExperiment, type ResearchExperimentObservation, type ResearchPartyLimits,
   type ResearchPartyObjective, type ResearchPartyResult, type ResearchRole, type TheoryCognitionEvidence,
@@ -25,6 +27,7 @@ export interface TheoryResearchPartyConfig {
   readonly limits: ResearchPartyLimits;
   readonly investigatorCount: number;
   readonly now: () => number;
+  readonly perspectiveRouter?: TheoryPerspectiveRouter;
 }
 
 interface EntityRuntime {
@@ -58,7 +61,8 @@ export class TheoryResearchParty {
       || !Number.isSafeInteger(config.investigatorCount) || config.investigatorCount < 2
       || config.investigatorCount + 2 > config.limits.maxEntities || typeof config.now !== "function"
       || typeof config.cognition?.think !== "function" || typeof config.cognition?.profile !== "function"
-      || typeof config.experiments?.run !== "function" || !config.coordinator || typeof config.coordinator !== "object") {
+      || typeof config.experiments?.run !== "function" || !config.coordinator || typeof config.coordinator !== "object"
+      || (config.perspectiveRouter !== undefined && typeof config.perspectiveRouter?.route !== "function")) {
       throw new Error("theory_research_party_configuration_invalid");
     }
     return new TheoryResearchParty(config);
@@ -77,6 +81,7 @@ export class TheoryResearchParty {
     const observations: ResearchExperimentObservation[] = [];
     const cognitionEvidence: TheoryCognitionEvidence[] = [];
     const predictionBindings: NetworkPredictionBinding[] = [];
+    let cognitiveRouting: ResearchPartyResult["cognitiveRouting"] = null;
     let modelCalls = 0;
     let reservedOutputTokens = 0;
     let knownPromptTokens = 0;
@@ -95,7 +100,7 @@ export class TheoryResearchParty {
         independentAcceptance: false as const, grantsAuthority: false as const }) : graph.decision();
       const metrics = this.#config.network.metrics();
       return immutableTheoryValue({ researchId: objective.researchId, decision, contributions, observations,
-        cognitionEvidence, resourceUsage: { modelCalls, experiments: observations.length, experimentCostUnits,
+        cognitionEvidence, cognitiveRouting, resourceUsage: { modelCalls, experiments: observations.length, experimentCostUnits,
           promptTokens: usageComplete ? knownPromptTokens : null, completionTokens: usageComplete ? knownCompletionTokens : null,
           totalTokens: usageComplete ? knownTotalTokens : null, wallClockMs: elapsed },
         addressability: { reservedTheorySlots: metrics.reservedAddressSlots,
@@ -203,6 +208,11 @@ export class TheoryResearchParty {
     };
 
     try {
+      cognitiveRouting = (this.#config.perspectiveRouter ?? sparseTheoryPerspectiveRouter)
+        .route(objective, this.#config.investigatorCount);
+      if (!validTheoryPerspectiveRoute(cognitiveRouting, objective, this.#config.investigatorCount)) {
+        failure = "research_party_cognitive_route_invalid"; return finish();
+      }
       const reservation = this.#config.network.reserve(this.#config.coordinator, entityCount.toString());
       const first = BigInt(reservation.firstId.slice(reservation.firstId.lastIndexOf(":") + 1));
       const roles: ResearchRole[] = [...Array(this.#config.investigatorCount).fill("INVESTIGATOR"), "FALSIFIER", "META_REVIEWER"];
@@ -210,7 +220,7 @@ export class TheoryResearchParty {
       for (const [index, role] of roles.entries()) {
         const theoryId = `${namespace}${first + BigInt(index)}`;
         this.#config.network.assign(this.#config.coordinator, theoryId, { objective: objective.objective,
-          question: role === "INVESTIGATOR" ? `Independently explain the causal mechanism using perspective ${index + 1}.`
+          question: role === "INVESTIGATOR" ? `Independently explain the causal mechanism using the ${cognitiveRouting.assignments[index].perspectiveId} compartment.`
             : role === "FALSIFIER" ? "Find decisive counterexamples to the independent hypotheses."
               : "Audit the party's evidence coverage without self-certifying the answer.",
           domain: objective.domain, candidateBinding: objective.candidateBinding, scope: objective.scope,
@@ -227,7 +237,7 @@ export class TheoryResearchParty {
       const investigators = entities.filter((item) => item.initialRole === "INVESTIGATOR");
       peakParallelModelExecutions = Math.max(peakParallelModelExecutions, investigators.length);
       await Promise.all(investigators.map((entity, index) => call(entity, "INVESTIGATOR",
-        `Generate an independent causal hypothesis. Perspective ${index + 1} must prioritize ${["state-transition semantics", "boundary and adversarial behavior", "data/control-flow invariants", "integration effects"][index % 4]}. Predict every catalogued experiment and request the most discriminating ones.`, [], [])));
+        `Generate an independent causal hypothesis from the ${cognitiveRouting!.assignments[index].perspectiveId} compartment. ${cognitiveRouting!.assignments[index].instruction} Predict every catalogued experiment and request the most discriminating ones.`, [], [])));
       if (failure) return finish();
       const hypotheses = contributions.filter((item) => item.intent.decision === "PROPOSE_HYPOTHESIS");
       if (hypotheses.length < 2) { failure = "research_party_insufficient_independent_hypotheses"; return finish(); }
@@ -275,7 +285,8 @@ export class TheoryResearchParty {
   #emptyResult(researchId: string, started: number, state: "BLOCKED", reason: string): ResearchPartyResult {
     return immutableTheoryValue({ researchId, decision: { state, selectedTheoryId: null, selectedMechanismId: null,
       reason, assessments: [], decisiveEvidenceIds: [], independentAcceptance: false, grantsAuthority: false },
-      contributions: [], observations: [], cognitionEvidence: [], resourceUsage: { modelCalls: 0, experiments: 0,
+      contributions: [], observations: [], cognitionEvidence: [], cognitiveRouting: null,
+      resourceUsage: { modelCalls: 0, experiments: 0,
         experimentCostUnits: 0, promptTokens: 0, completionTokens: 0, totalTokens: 0,
         wallClockMs: Math.max(0, this.#config.now() - started) },
       addressability: { reservedTheorySlots: this.#config.network.metrics().reservedAddressSlots,

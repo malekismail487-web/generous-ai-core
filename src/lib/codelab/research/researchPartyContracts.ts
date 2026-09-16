@@ -2,6 +2,10 @@ import { immutableTheoryValue, theoryDigest, theoryKeys, theoryStrings, theoryTe
 
 export type ResearchDomain = "SOFTWARE" | "MATHEMATICS" | "SCIENCE";
 export type ResearchRole = "INVESTIGATOR" | "FALSIFIER" | "REVISER" | "META_REVIEWER";
+export type TheoryPerspectiveId = "STATE_TRANSITION" | "BOUNDARY_ADVERSARY" | "DATA_CONTROL_FLOW"
+  | "INTEGRATION_EFFECT" | "CONCURRENCY_ORDERING" | "RESOURCE_LIFECYCLE" | "IDENTITY_AUTHORIZATION"
+  | "TEMPORAL_EXPIRY" | "NUMERICAL_INVARIANT" | "CAUSAL_INTERVENTION" | "REPRESENTATION_ENCODING"
+  | "ENVIRONMENT_VARIANCE";
 export type ResearchEvidenceClass = "E1" | "E3" | "E4";
 export type ResearchEpistemicState = "UNKNOWN" | "SUPPORTED" | "REFUTED" | "CONFLICTED"
   | "INSUFFICIENT_EVIDENCE" | "STALE";
@@ -118,6 +122,27 @@ export interface ResearchPartyLimits {
   readonly maxCostUnits: number;
 }
 
+export interface TheoryPerspectiveAssignment {
+  readonly perspectiveId: TheoryPerspectiveId;
+  readonly ordinal: number;
+  readonly instruction: string;
+  readonly relevantCues: readonly string[];
+  readonly relevanceScore: number;
+  readonly noveltyScore: number;
+}
+
+export interface TheoryPerspectiveRoute {
+  readonly schemaVersion: 1;
+  readonly algorithmId: "FIXED_ROTATION_V1" | "SPARSE_RELEVANCE_DIVERSITY_V1";
+  readonly objectiveDigest: string;
+  readonly inputFeatureDigest: string;
+  readonly inputFeatureCount: number;
+  readonly candidatePerspectiveCount: number;
+  readonly assignments: readonly TheoryPerspectiveAssignment[];
+  readonly sparseActivationRatio: number;
+  readonly grantsAuthority: false;
+}
+
 export interface TheoryCognitionRequest {
   readonly schemaVersion: 1;
   readonly requestId: string;
@@ -198,6 +223,7 @@ export interface ResearchPartyResult {
   readonly contributions: readonly TheoryContribution[];
   readonly observations: readonly ResearchExperimentObservation[];
   readonly cognitionEvidence: readonly TheoryCognitionEvidence[];
+  readonly cognitiveRouting: TheoryPerspectiveRoute | null;
   readonly resourceUsage: ResearchPartyResourceUsage;
   readonly addressability: {
     readonly reservedTheorySlots: string;

@@ -11,6 +11,9 @@ import { ResearchEvidenceGraph } from "../src/lib/codelab/research/researchEvide
 import { TheoryNetwork } from "../src/lib/codelab/research/theoryNetwork";
 import { immutableTheoryValue, theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { TheoryResearchParty, type TheoryCognitionEngine } from "../src/lib/codelab/research/theoryResearchParty";
+import { fixedTheoryPerspectiveRouter, routeFixedTheoryPerspectives, routeSparseTheoryPerspectives,
+  validTheoryPerspectiveRoute }
+  from "../src/lib/codelab/research/sparseTheoryRouter";
 
 let checks = 0;
 function check(condition: unknown, message: string): asserts condition {
@@ -234,6 +237,14 @@ check(result.addressability.peakActiveReasoners === 5, "active population is rep
 check(result.addressability.simultaneousModelExecutions === 3, "parallel cognition width is reported honestly");
 check(result.addressability.distributedExecutionImplemented === false, "process-local party does not claim distributed execution");
 check(result.actualReasoningEngine === "TEST_DOUBLE", "scripted test does not claim live Nemotron reasoning");
+check(result.cognitiveRouting?.algorithmId === "SPARSE_RELEVANCE_DIVERSITY_V1",
+  "research party uses sparse objective-linked cognitive routing by default");
+check(result.cognitiveRouting?.assignments.length === 3 && result.cognitiveRouting.sparseActivationRatio === 0.25,
+  "three investigators activate three of twelve available reasoning compartments");
+check(result.cognitiveRouting?.grantsAuthority === false, "cognitive routing grants no Omega authority");
+check(scripted.calls.slice(0, 3).every((item, index) =>
+  item.instruction.includes(result.cognitiveRouting!.assignments[index].perspectiveId)),
+"each investigator receives its independently recorded compartment instruction");
 check(result.evidenceChainComplete, "party builds evidence chains at contribution time");
 check(result.authorityGranted === false, "research party grants no authority");
 check(scripted.calls.slice(0, 3).every((item) => item.peerContributions.length === 0),
@@ -282,6 +293,195 @@ check(flat.selectedMechanismId === "CANCELLED_AS_COMPLETE", "flat plurality pres
 check(flat.experiments === 0 && !flat.counterexampleRevision && !flat.evidenceGraph,
   "flat baseline lacks the three ablated research mechanisms");
 check(flat.authorityGranted === false, "flat comparison grants no authority");
+
+function routingObjective(researchId: string, domain: ResearchPartyObjective["domain"], description: string): ResearchPartyObjective {
+  const candidate = "c".repeat(40);
+  const source = { evidenceId: `E-${researchId}`, evidenceClass: "E3" as const, kind: "SOURCE" as const,
+    summary: description, contentDigest: theoryDigest(description), provenanceRoot: `HELDOUT-${researchId}`,
+    freshnessDependencies: [`CANDIDATE:${candidate}`], observedAtEpochMs: now, candidateBinding: candidate,
+    grantsAuthority: false as const };
+  return immutableResearchValue({ schemaVersion: 1, researchId, objective: description, domain,
+    candidateBinding: candidate, scope: [`${researchId.toLowerCase()}.fixture`], mechanismCatalog: [
+      { mechanismId: "TARGET", description },
+      { mechanismId: "ALTERNATE", description: "A generic alternative mechanism without task-specific explanatory structure." },
+    ], admittedEvidence: [source], experimentCatalog: [
+      { experimentId: `EXP-${researchId}`, toolId: `PROBE-${researchId}`, question: `Which mechanism explains: ${description}`,
+        possibleOutcomes: ["TARGET", "ALTERNATE"], costUnits: 1, authority: "RUN_TEST_IN_SANDBOX" as const,
+        scope: [`${researchId.toLowerCase()}.fixture`], mutatesCandidate: false as const },
+    ], successCriteria: ["Activate a reasoning lens capable of forming a falsifiable target hypothesis."],
+    expiryEpochMs: 100_000 });
+}
+
+const routingHeldout = [
+  ["ROUTE-CONCURRENCY", "SOFTWARE", "Concurrent interleavings lose updates unless atomic lock ordering is preserved.", "CONCURRENCY_ORDERING"],
+  ["ROUTE-RESOURCE", "SOFTWARE", "Resource handle acquisition lacks deterministic release, cleanup, disposal, and ownership.", "RESOURCE_LIFECYCLE"],
+  ["ROUTE-IDENTITY", "SOFTWARE", "Credential identity authentication and token authorization ignore capability scope and revocation.", "IDENTITY_AUTHORIZATION"],
+  ["ROUTE-TEMPORAL", "SOFTWARE", "Clock deadline expiry, timeout retry, stale freshness, and TOCTOU behavior conflict.", "TEMPORAL_EXPIRY"],
+  ["ROUTE-NUMERICAL", "MATHEMATICS", "Numerical precision breaks a conservation equation, dimensional range, and stability invariant.", "NUMERICAL_INVARIANT"],
+  ["ROUTE-CAUSAL", "SCIENCE", "A causal intervention and counterfactual experiment must separate confounding treatment effects.", "CAUSAL_INTERVENTION"],
+  ["ROUTE-ENCODING", "SOFTWARE", "Unicode parser encoding, schema serialization, and normalization lose representation information.", "REPRESENTATION_ENCODING"],
+  ["ROUTE-ENVIRONMENT", "SCIENCE", "Runtime platform, filesystem, configuration, dependency version, hardware, and host differ.", "ENVIRONMENT_VARIANCE"],
+] as const;
+let sparseCoverage = 0;
+let fixedCoverage = 0;
+for (const [researchId, domain, description, target] of routingHeldout) {
+  const heldoutObjective = routingObjective(researchId, domain, description);
+  const sparse = routeSparseTheoryPerspectives(heldoutObjective, 3);
+  const fixed = routeFixedTheoryPerspectives(heldoutObjective, 3);
+  if (sparse.assignments.some((item) => item.perspectiveId === target)) sparseCoverage += 1;
+  if (fixed.assignments.some((item) => item.perspectiveId === target)) fixedCoverage += 1;
+  check(sparse.inputFeatureDigest.length === 64 && sparse.objectiveDigest === researchObjectiveDigest(heldoutObjective),
+    `${researchId} routing remains bound to canonical objective and feature evidence`);
+}
+check(sparseCoverage === routingHeldout.length,
+  "sparse routing activates the oracle-relevant specialist on every held-out routing task");
+check(fixedCoverage === 0, "matched three-slot fixed rotation misses all held-out specialist compartments");
+check(sparseCoverage > fixedCoverage, "sparse routing outperforms fixed rotation at identical active width");
+const deterministicRouteObjective = routingObjective("ROUTE-DETERMINISM", "SOFTWARE",
+  "Concurrent resource cleanup races with token revocation and deadline expiry.");
+check(JSON.stringify(routeSparseTheoryPerspectives(deterministicRouteObjective, 3))
+  === JSON.stringify(routeSparseTheoryPerspectives(deterministicRouteObjective, 3)),
+"sparse routing is deterministic for identical canonical input");
+check(new Set(routeSparseTheoryPerspectives(deterministicRouteObjective, 3).assignments
+  .map((item) => item.perspectiveId)).size === 3, "sparse routing preserves compartment diversity before replication");
+check(routeSparseTheoryPerspectives(deterministicRouteObjective, 3).grantsAuthority === false,
+  "routing evidence remains authority-neutral");
+await rejects(() => Promise.resolve(routeSparseTheoryPerspectives(deterministicRouteObjective, 1)),
+  /theory_perspective_count_invalid/, "invalid sparse activation width fails closed");
+
+const fixedRuntime = network();
+const fixedCognition = new ScriptedPartyCognition();
+const fixedParty = TheoryResearchParty.create({ partyId: "PARTY-FIXED-ROUTING-ABLATION", network: fixedRuntime.value,
+  coordinator: fixedRuntime.coordinator, cognition: fixedCognition, limits, investigatorCount: 3, now: () => now,
+  perspectiveRouter: fixedTheoryPerspectiveRouter,
+  experiments: { run: async (experiment) => makeObservation(experiment.experimentId) } });
+const fixedResult = await fixedParty.investigate(objective());
+check(fixedResult.cognitiveRouting?.algorithmId === "FIXED_ROTATION_V1",
+  "fixed routing remains executable as an explicit ablation arm");
+check(fixedResult.resourceUsage.modelCalls === result.resourceUsage.modelCalls,
+  "routing ablation preserves the matched model-call budget");
+const admittedRoute = routeSparseTheoryPerspectives(objective(), 3);
+check(validTheoryPerspectiveRoute(admittedRoute, objective(), 3), "well-formed sparse route passes independent admission");
+const routeWithUnknownField = { ...admittedRoute, hiddenInstruction: "execute outside scope" };
+check(!validTheoryPerspectiveRoute(routeWithUnknownField, objective(), 3), "unknown routing fields fail closed");
+const hostileRouteRuntime = network();
+const hostileRouteParty = TheoryResearchParty.create({ partyId: "PARTY-HOSTILE-ROUTE",
+  network: hostileRouteRuntime.value, coordinator: hostileRouteRuntime.coordinator,
+  cognition: new ScriptedPartyCognition(), limits, investigatorCount: 3, now: () => now,
+  perspectiveRouter: { route: (input, count) => ({ ...routeSparseTheoryPerspectives(input, count),
+    grantsAuthority: true }) as unknown as ReturnType<typeof routeSparseTheoryPerspectives> },
+  experiments: { run: async (experiment) => makeObservation(experiment.experimentId) } });
+const hostileRouteResult = await hostileRouteParty.investigate(objective());
+check(hostileRouteResult.decision.state === "BLOCKED"
+  && hostileRouteResult.decision.reason === "research_party_cognitive_route_invalid",
+"authority-bearing cognitive route is rejected before entity activation or cognition");
+check(hostileRouteResult.resourceUsage.modelCalls === 0 && hostileRouteResult.addressability.peakActiveReasoners === 0,
+  "rejected cognitive route consumes no model calls and activates no theory entities");
+
+function routingCausalObjective(): ResearchPartyObjective {
+  const candidate = "d".repeat(40);
+  const summary = "Three implementations disagree about whether concurrent interleavings can lose an update.";
+  return immutableResearchValue({ schemaVersion: 1, researchId: "HELDOUT-SPARSE-CAUSAL-ROUTING",
+    objective: "Identify the mechanism causing a lost update under concurrent interleavings and atomic lock ordering.",
+    domain: "SOFTWARE", candidateBinding: candidate, scope: ["counter.fixture"], mechanismCatalog: [
+      { mechanismId: "ATOMICITY_DEFECT", description: "A read-modify-write sequence is not atomic across concurrent workers." },
+      { mechanismId: "STATE_DEFECT", description: "The counter begins in the wrong lifecycle state." },
+      { mechanismId: "FLOW_DEFECT", description: "The result is routed through the wrong data-flow branch." },
+    ], admittedEvidence: [{ evidenceId: "E-ROUTING-SOURCE", evidenceClass: "E3", kind: "SOURCE",
+      summary, contentDigest: theoryDigest(summary), provenanceRoot: "HELDOUT-ROUTING-SOURCE",
+      freshnessDependencies: [`CANDIDATE:${candidate}`], observedAtEpochMs: now, candidateBinding: candidate,
+      grantsAuthority: false }], experimentCatalog: [
+      { experimentId: "EXP-INTERLEAVING", toolId: "DETERMINISTIC-INTERLEAVING-PROBE",
+        question: "Which precommitted mechanism predicts the observed controlled interleaving?",
+        possibleOutcomes: ["ATOMICITY_DEFECT", "STATE_DEFECT", "FLOW_DEFECT"], costUnits: 1,
+        authority: "RUN_TEST_IN_SANDBOX", scope: ["counter.fixture"], mutatesCandidate: false },
+    ], successCriteria: ["Select only the mechanism surviving the deterministic interleaving probe."],
+    expiryEpochMs: 100_000 });
+}
+
+function routingCausalIntent(request: TheoryCognitionRequest, mechanismId: string): TheoryCognitionIntent {
+  const objectiveValue = routingCausalObjective();
+  return immutableTheoryValue({ schemaVersion: 1, decision: "PROPOSE_HYPOTHESIS",
+    thesis: `${mechanismId} is the mechanism predicted by this compartment.`, mechanismId,
+    causalMechanism: objectiveValue.mechanismCatalog.find((item) => item.mechanismId === mechanismId)!.description,
+    evidenceRefs: ["E-ROUTING-SOURCE"], assumptions: ["The hidden task belongs to the bounded three-mechanism family."],
+    uncertainties: ["One deterministic schedule does not establish behavior for every possible schedule."],
+    forecasts: [{ experimentId: "EXP-INTERLEAVING", expectedOutcome: mechanismId,
+      rationale: "The selected causal mechanism uniquely predicts its named controlled outcome." }],
+    counterexamples: [], requestedExperimentIds: ["EXP-INTERLEAVING"], revisionOfTheoryId: null,
+    modelEstimate: 0.5 });
+}
+
+class PerspectiveSensitiveCognition implements TheoryCognitionEngine {
+  readonly calls: TheoryCognitionRequest[] = [];
+  profile() { return Object.freeze({ model: "perspective-sensitive-test-double" }); }
+  async think(request: TheoryCognitionRequest): Promise<TheoryCognitionResult> {
+    this.calls.push(immutableTheoryValue(request));
+    if (request.role === "INVESTIGATOR") {
+      const mechanism = request.instruction.includes("CONCURRENCY_ORDERING") ? "ATOMICITY_DEFECT"
+        : request.instruction.includes("DATA_CONTROL_FLOW") ? "FLOW_DEFECT" : "STATE_DEFECT";
+      return cognitionResult(request, routingCausalIntent(request, mechanism));
+    }
+    if (request.role === "FALSIFIER") {
+      const counterexamples = request.peerContributions.map((item) => ({ targetTheoryId: item.theoryId,
+        experimentId: "EXP-INTERLEAVING", disconfirmingOutcome: item.intent.mechanismId === "ATOMICITY_DEFECT"
+          ? "STATE_DEFECT" : "ATOMICITY_DEFECT",
+        rationale: "A controlled outcome different from the precommitted forecast falsifies the mechanism." }));
+      return cognitionResult(request, immutableTheoryValue({ schemaVersion: 1, decision: "CHALLENGE",
+        thesis: "The controlled interleaving must attack every precommitted mechanism.", mechanismId: null,
+        causalMechanism: null, evidenceRefs: ["E-ROUTING-SOURCE"], assumptions: [],
+        uncertainties: ["The experiment covers one deliberately bounded schedule."], forecasts: [], counterexamples,
+        requestedExperimentIds: [], revisionOfTheoryId: null, modelEstimate: null }));
+    }
+    return cognitionResult(request, immutableTheoryValue({ schemaVersion: 1, decision: "NO_CONCLUSION",
+      thesis: "Only the deterministic evidence graph may select a mechanism.", mechanismId: null,
+      causalMechanism: null, evidenceRefs: ["E-ROUTING-OBS"], assumptions: [], uncertainties: [], forecasts: [],
+      counterexamples: [], requestedExperimentIds: [], revisionOfTheoryId: null, modelEstimate: null }));
+  }
+}
+
+function routingObservation(): ResearchExperimentObservation {
+  const executionIdentity = "EXEC-HELDOUT-INTERLEAVING";
+  const outputDigest = theoryDigest("atomicity-defect-observed");
+  const content = { experimentId: "EXP-INTERLEAVING", toolId: "DETERMINISTIC-INTERLEAVING-PROBE",
+    outcome: "ATOMICITY_DEFECT", executionIdentity, outputDigest };
+  const candidate = routingCausalObjective().candidateBinding;
+  return immutableResearchValue({ observationId: "OBS-HELDOUT-INTERLEAVING", experimentId: "EXP-INTERLEAVING",
+    toolId: "DETERMINISTIC-INTERLEAVING-PROBE", outcome: "ATOMICITY_DEFECT",
+    evidence: { evidenceId: "E-ROUTING-OBS", evidenceClass: "E3", kind: "EXPERIMENT_RESULT",
+      summary: "Deterministic interleaving exposes a lost update only when atomicity is absent.",
+      contentDigest: theoryDigest(content), provenanceRoot: "HELDOUT-INTERLEAVING-ORACLE",
+      freshnessDependencies: [`CANDIDATE:${candidate}`], observedAtEpochMs: now,
+      candidateBinding: candidate, grantsAuthority: false }, executionIdentity, outputDigest, authorityGranted: false });
+}
+
+const routingLimits: ResearchPartyLimits = Object.freeze({ ...limits, maxEntities: 5, maxModelCalls: 5,
+  maxExperiments: 1, maxTotalOutputTokens: 2_560, maxCostUnits: 1 });
+async function runRoutingArm(router = undefined as typeof fixedTheoryPerspectiveRouter | undefined) {
+  const runtimeValue = network();
+  const cognition = new PerspectiveSensitiveCognition();
+  const partyValue = TheoryResearchParty.create({ partyId: router ? "PARTY-ROUTING-FIXED" : "PARTY-ROUTING-SPARSE",
+    network: runtimeValue.value, coordinator: runtimeValue.coordinator, cognition, limits: routingLimits,
+    investigatorCount: 3, now: () => now, perspectiveRouter: router,
+    experiments: { run: async () => routingObservation() } });
+  return { result: await partyValue.investigate(routingCausalObjective()), cognition };
+}
+const sparseCausalArm = await runRoutingArm();
+const fixedCausalArm = await runRoutingArm(fixedTheoryPerspectiveRouter);
+check(sparseCausalArm.result.decision.state === "SUPPORTED_WITHIN_MODELED_FAMILY"
+  && sparseCausalArm.result.decision.selectedMechanismId === "ATOMICITY_DEFECT",
+"sparse compartment routing discovers the held-out causal mechanism under deterministic experiment evidence");
+check(fixedCausalArm.result.decision.state === "REFUTED_MODELED_FAMILY"
+  && fixedCausalArm.result.decision.selectedMechanismId === null,
+"matched fixed routing cannot recover a mechanism absent from its active cognitive compartments");
+check(sparseCausalArm.result.resourceUsage.modelCalls === fixedCausalArm.result.resourceUsage.modelCalls
+  && sparseCausalArm.result.resourceUsage.experiments === fixedCausalArm.result.resourceUsage.experiments,
+"causal routing comparison uses matched model-call and experiment budgets");
+check(assureResearchParty({ objective: routingCausalObjective(), limits: routingLimits, result: sparseCausalArm.result,
+  groundTruth: { taskId: "HELDOUT-SPARSE-CAUSAL-ROUTING", expectedMechanismId: "ATOMICITY_DEFECT",
+    oracleDigest: theoryDigest("independent-hidden-atomicity-oracle"),
+    oracleProvenanceRoot: "INDEPENDENT-HELDOUT-ATOMICITY-ORACLE", hiddenFromCognition: true } }).decision === "ACCEPT",
+"independent hidden oracle accepts the sparse arm rather than model self-assessment");
 
 const validRaw = intentFor("FAILED_AS_COMPLETE", "PROPOSE_HYPOTHESIS", "adapter:theory:0");
 let responseContent = JSON.stringify(validRaw);
