@@ -23,11 +23,12 @@ export const NYX_SCHEDULER_FROZEN_CORE = Object.freeze({
 // original frozen epoch above remains immutable and reproducible; this pin
 // permits fresh measurement without silently rescoring its historical result.
 export const NYX_SCHEDULER_FRONTIER_FROZEN_CORE = Object.freeze({
-  commit: "a1ba5302fc059fe010537bf7114c2d014fd27fb7",
+  commit: "e0a1e212c493d3bf8bc1bf70d062c4d80d8cfeea",
   serialization: "UTF8_CRLF_TO_LF_ONLY",
   files: Object.freeze({
     "src/lib/codelab/model/nvidiaNimProvider.ts": "4f8d2ee4071c46d5e9097a6f20414f5215a63e47747cf17d3761afcdc0e15e01",
-    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "316860fbeb8d297f9fec9948feccfe6c3dee5eef005af8d27b65c34f8182082e",
+    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "41c0729f09eb78cb1fc6109fcff09ae58c8d890f2783381517bc0af1fe7cca3d",
+    "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts": "735c6252fe75aa634e0173059941e61c2bf22129ec9f216d8cd6299a2b1798ce",
     "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "23337f97b70e9bfb13df84560b52199e55cb67500a7ef70e6dea9b76254b6e2d",
     "src/lib/codelab/assurance/candidateEngineeringAdmission.ts": "1fb618d25616c51757e664f5e4ca6e8390de4ec2bd8da4789c2c30d0050a6ffa",
     "src/lib/codelab/assurance/engineeringQualityOracle.ts": "af21863b9f3680330215e5464c5adcbbd050e2f313e7d71741822714e7594931",
@@ -40,7 +41,7 @@ export const NYX_SCHEDULER_EXPERIMENT = Object.freeze({
   chunkId: "NYX-HARD-REJECTION-REPAIR-001", maxCognitionCycles: 5, maxCandidateIterations: 2,
   maxCognitionCorrections: 3, maxWallClockMs: 480_000,
   maxOutputTokensPerCall: 8_192, maxCumulativeOutputTokens: 40_960, maxPromptBytesPerCall: 48_000,
-  sourceRepresentation: "LINES",
+  sourceRepresentation: "LINES", intentCompilationMode: "SAFE_CANONICALIZATION",
   scope: "ONE_CONSTRUCTED_MULTIFILE_TASK_NOT_BROAD_GENERALIZATION",
   evidenceIndependence: "E3_AUTHOR_ADJACENT_ORACLES_PLUS_E4_MODEL_CALLS",
   privateHoldout: false, candidateHiddenExpectations: true,

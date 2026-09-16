@@ -93,7 +93,8 @@ try {
     && NYX_SCHEDULER_EXPERIMENT.maxCandidateIterations === 2
     && NYX_SCHEDULER_EXPERIMENT.maxCognitionCorrections === 3
     && NYX_SCHEDULER_EXPERIMENT.maxOutputTokensPerCall * 5 === NYX_SCHEDULER_EXPERIMENT.maxCumulativeOutputTokens
-    && NYX_SCHEDULER_EXPERIMENT.sourceRepresentation === "LINES",
+    && NYX_SCHEDULER_EXPERIMENT.sourceRepresentation === "LINES"
+    && NYX_SCHEDULER_EXPERIMENT.intentCompilationMode === "SAFE_CANONICALIZATION",
   "paid experiment separates protocol correction from candidate repair inside a fixed five-call envelope");
   for (const [name, policy] of [["challenge", task.qualityPolicy], ["existing admission", {
     ...OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1, allowedChangedPaths: task.mutationPaths, readonlyPaths: ["src/contracts.mjs"],

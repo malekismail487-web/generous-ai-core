@@ -49,6 +49,7 @@ const IS_CONTEXT_REPAIR = SUITE_ID === "CONTEXT_REPAIR";
 const IS_CONTEXT_LINES = SUITE_ID === "CONTEXT_LINES";
 const IS_CONTEXT = SUITE_ID === "CONTEXT" || IS_CONTEXT_REPAIR || IS_CONTEXT_LINES || IS_COMPARISON;
 const SOURCE_REPRESENTATION = IS_CONTEXT_LINES || IS_COMPARISON || IS_FRONTIER_CHALLENGE ? "LINES" : "TEXT";
+const INTENT_COMPILATION_MODE = IS_FRONTIER_CHALLENGE ? "SAFE_CANONICALIZATION" : "STRICT";
 const NYX_CONTEXT_EXPERIMENT = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_CONTROL : IS_COMPARISON ? NYX_CONFIGURATION_COMPARISON : IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_EXPERIMENT
   : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_EXPERIMENT : CONTEXT_V1;
 const IS_DIAGNOSTIC = IS_CHALLENGE || IS_CONTEXT;
@@ -61,7 +62,7 @@ const FROZEN_CORE = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_FROZEN_CORE : IS_CO
   : IS_FRONTIER_CHALLENGE ? NYX_SCHEDULER_FRONTIER_FROZEN_CORE
   : IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
 const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
-  : IS_FRONTIER_CHALLENGE ? "nyx-scheduler-frontier/3"
+  : IS_FRONTIER_CHALLENGE ? "nyx-scheduler-frontier/4"
   : IS_CHALLENGE ? "nyx-scheduler-challenge/1" : SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
@@ -92,6 +93,7 @@ const EVALUATOR_DIGEST = sha256(canonical({
   qualityOracle: sha256(await readFile(new URL("../../src/lib/codelab/assurance/engineeringQualityOracle.ts", import.meta.url))),
   acceptanceIntegrity: sha256(await readFile(new URL("../../src/lib/codelab/assurance/holdoutAcceptanceIntegrity.ts", import.meta.url))),
   cognition: sha256(await readFile(new URL("../../src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts", import.meta.url))),
+  intentCompiler: sha256(await readFile(new URL("../../src/lib/codelab/cognition/nyxRepairIntentCompiler.ts", import.meta.url))),
   repairLoop: sha256(await readFile(new URL("../../src/lib/codelab/engine/r3BoundedRepairLoop.ts", import.meta.url))),
   candidateAdmission: sha256(await readFile(new URL("../../src/lib/codelab/assurance/candidateEngineeringAdmission.ts", import.meta.url))),
   provider: sha256(await readFile(new URL("../../src/lib/codelab/model/nvidiaNimProvider.ts", import.meta.url))),
@@ -194,7 +196,7 @@ try {
   for (const task of HOLDOUT) {
     const cognition = NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-ENGINEERING-QUALITY-HOLDOUT-COGNITION",
       provider, maxPromptBytes: 48_000, maxOutputTokens: MAX_OUTPUT_TOKENS, sourceRepresentation: SOURCE_REPRESENTATION,
-      experimentVariant: task.comparisonArm ?? "CURRENT" });
+      experimentVariant: task.comparisonArm ?? "CURRENT", intentCompilationMode: INTENT_COMPILATION_MODE });
     const taskStarted = Date.now();
     const taskRoot = join(parent, task.taskId.toLowerCase());
     const sourceRoot = join(taskRoot, "authoritative-source");
@@ -458,6 +460,7 @@ try {
       availableEvidenceRefs: task.availableEvidence.map((item) => item.evidenceRef), contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
       contractDigest: CONTRACT_AT_START, modelId: MODEL, modelCalls: loopResult.modelCallCount, semanticActions,
       sourceRepresentation: SOURCE_REPRESENTATION,
+      intentCompilationMode: INTENT_COMPILATION_MODE,
       comparisonArm: task.comparisonArm ?? null,
       rejectedActions: Math.max(0, loopResult.modelCallCount - semanticActions), evidenceRequests: loopResult.evidenceAcquisitions.length,
       hypotheses: loopResult.iterations.length, hypothesisDispositions: loopResult.iterations.map((item) => item.hypothesisDisposition),
@@ -482,6 +485,7 @@ try {
       tokenUsageComplete: modelEvidence.every((item) => item.modelUsage.totalTokens !== null
         && item.modelUsage.totalTokens !== undefined),
       requestDigests: modelEvidence.map((item) => item.modelRequestDigest), responseDigests: modelEvidence.map((item) => item.modelResponseDigest),
+      intentCompilations: modelEvidence.map((item) => item.intentCompilation),
       providerDiagnostics: modelEvidence.map((item) => ({ statusCode: item.modelStatusCode,
         failureCategory: item.providerFailureCategory, retryability: item.providerRetryability,
         providerRequestId: item.providerRequestId, finishReason: item.modelFinishReason, delivery: item.delivery,
@@ -546,6 +550,7 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
     modelId: MODEL, evaluatorVersion: EVALUATOR_VERSION, evaluatorDigest: EVALUATOR_DIGEST,
     qualityOracleVersion: QUALITY_ORACLE_VERSION, cognitionContractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
     sourceRepresentation: SOURCE_REPRESENTATION,
+    intentCompilationMode: INTENT_COMPILATION_MODE,
     cognitionContractDigest: CONTRACT_AT_START, taskFixtureDigests: TASK_FIXTURE_DIGESTS, frozenBeforeScoring: true,
     ...(IS_COMPARISON ? { comparisonControlsDigest: sha256(canonical(NYX_CONTEXT_TASKS[1])),
       comparisonScope: NYX_CONFIGURATION_COMPARISON.referenceScope,
