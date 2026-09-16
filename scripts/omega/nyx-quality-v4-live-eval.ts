@@ -61,12 +61,14 @@ const FROZEN_CORE = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_FROZEN_CORE : IS_CO
   : IS_FRONTIER_CHALLENGE ? NYX_SCHEDULER_FRONTIER_FROZEN_CORE
   : IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
 const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
-  : IS_FRONTIER_CHALLENGE ? "nyx-scheduler-frontier/2"
+  : IS_FRONTIER_CHALLENGE ? "nyx-scheduler-frontier/3"
   : IS_CHALLENGE ? "nyx-scheduler-challenge/1" : SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
 const MAX_COGNITION_CYCLES_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxCognitionCycles : 3;
+const MAX_CANDIDATE_ITERATIONS_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxCandidateIterations : 3;
+const MAX_COGNITION_CORRECTIONS_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxCognitionCorrections : 2;
 const MAX_WALL_CLOCK_MS_PER_TASK = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.maxWallClockMs
   : IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxWallClockMs : 180_000;
 const MAX_OUTPUT_TOKENS = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.maxOutputTokensPerCall
@@ -372,7 +374,9 @@ try {
       } };
     const loop = R3BoundedRepairLoop.create({ loopId: `NYX-QUALITY-LOOP-${task.taskId}`,
       evaluatorVersion: EVALUATOR_VERSION, observerIdentity: "OMEGA-NYX-QUALITY-OBSERVER", cognition,
-      candidateBuilder, evidenceProvider, maxIterations: MAX_COGNITION_CYCLES_PER_TASK,
+      candidateBuilder, evidenceProvider, maxIterations: MAX_CANDIDATE_ITERATIONS_PER_TASK,
+      maxModelInteractions: MAX_COGNITION_CYCLES_PER_TASK,
+      maxCognitionCorrections: MAX_COGNITION_CORRECTIONS_PER_TASK,
       maxWallClockMs: MAX_WALL_CLOCK_MS_PER_TASK, maxChangesPerIteration: task.maxChanges,
       maxPatchBytesPerIteration: task.maxPatchBytes, maxDiagnosisCharacters: MAX_DIAGNOSIS_CHARACTERS });
     const loopResult = await loop.run({ schemaVersion: 1, repairRequestId: `NYX-QUALITY-REPAIR-${task.taskId}`,
@@ -462,12 +466,12 @@ try {
           expected: diagnostic.expected, observed: diagnostic.observed,
           ...(diagnostic.sourceMeasurement ? { sourceMeasurement: diagnostic.sourceMeasurement } : {}) })) })),
       candidates: loopResult.iterations.length, repairIterations: Math.max(0, loopResult.iterations.length - 1),
-      ...(IS_COMPARISON ? { executionObservations: loopResult.iterations.map((iteration) => ({
+      executionObservations: loopResult.iterations.map((iteration) => ({
         iteration: iteration.iteration, proposalDigest: iteration.proposalDigest,
         verification: iteration.verifications.map((item) => ({ toolId: item.toolId, state: item.observation.state,
           diagnostics: item.observation.diagnostics.map((diagnostic) => ({ category: diagnostic.category,
             code: diagnostic.code, file: diagnostic.file, message: diagnostic.message.slice(0, 400) })) })),
-      })) } : {}),
+      })),
       verificationCount: 1 + loopResult.iterations.reduce((sum, item) => sum + item.verifications.length, 0)
         + (hiddenResult === "NOT_APPLICABLE" ? 0 : 1), deterministicVerification: loopResult.outcome,
       hiddenAcceptance: hiddenResult, engineeringQuality: qualityResult, quality,
@@ -581,6 +585,8 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
       meanTimeMsPerTask: mean(taskResults.map((item) => Number(item.durationMs))),
       meanTokensPerAcceptedTask: mean(successes.map((item) => Number(item.totalTokens))) },
     budget: { maxCognitionCyclesPerTask: MAX_COGNITION_CYCLES_PER_TASK,
+      maxCandidateIterationsPerTask: MAX_CANDIDATE_ITERATIONS_PER_TASK,
+      maxCognitionCorrectionsPerTask: MAX_COGNITION_CORRECTIONS_PER_TASK,
       maxWallClockMsPerTask: MAX_WALL_CLOCK_MS_PER_TASK, widenedFromR3F: false },
     authority: { sourceRepositoryMutation: false, generalShell: false, generalNetwork: false, production: false,
       credentialPersisted: false, authorityIncrease: false } };
@@ -638,6 +644,8 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
     measurementCoverage: { candidateEvaluated, hiddenEvaluated, tokenUsageComplete: usageComplete,
       noObservationDoesNotMeanZeroRisk: true },
     budget: { maxCognitionCyclesPerTask: MAX_COGNITION_CYCLES_PER_TASK,
+      maxCandidateIterationsPerTask: MAX_CANDIDATE_ITERATIONS_PER_TASK,
+      maxCognitionCorrectionsPerTask: MAX_COGNITION_CORRECTIONS_PER_TASK,
       maxWallClockMsPerTask: MAX_WALL_CLOCK_MS_PER_TASK, maxOutputTokensPerCall: MAX_OUTPUT_TOKENS,
       maxCumulativeOutputTokens: IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.maxCumulativeOutputTokens : NYX_SCHEDULER_EXPERIMENT.maxCumulativeOutputTokens,
       maxPromptBytesPerCall: NYX_SCHEDULER_EXPERIMENT.maxPromptBytesPerCall,

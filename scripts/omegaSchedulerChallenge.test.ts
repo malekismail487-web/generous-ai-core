@@ -89,10 +89,12 @@ try {
     return original.status === 0 && hash(original.stdout.replace(/\r\n/g, "\n")) === digest;
   });
   check(frontierCoreMatches.every(Boolean), "frontier scheduler epoch is pinned to its exact current cognition and assurance baseline");
-  check(NYX_SCHEDULER_EXPERIMENT.maxCognitionCycles === 4
-    && NYX_SCHEDULER_EXPERIMENT.maxOutputTokensPerCall * 4 === NYX_SCHEDULER_EXPERIMENT.maxCumulativeOutputTokens
+  check(NYX_SCHEDULER_EXPERIMENT.maxCognitionCycles === 5
+    && NYX_SCHEDULER_EXPERIMENT.maxCandidateIterations === 2
+    && NYX_SCHEDULER_EXPERIMENT.maxCognitionCorrections === 3
+    && NYX_SCHEDULER_EXPERIMENT.maxOutputTokensPerCall * 5 === NYX_SCHEDULER_EXPERIMENT.maxCumulativeOutputTokens
     && NYX_SCHEDULER_EXPERIMENT.sourceRepresentation === "LINES",
-  "paid experiment has a fixed four-call and generated-token envelope");
+  "paid experiment separates protocol correction from candidate repair inside a fixed five-call envelope");
   for (const [name, policy] of [["challenge", task.qualityPolicy], ["existing admission", {
     ...OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1, allowedChangedPaths: task.mutationPaths, readonlyPaths: ["src/contracts.mjs"],
   }]] as const) {
