@@ -4668,6 +4668,7 @@
           "src/lib/codelab/assurance/r2CompositionSecuritySpec.ts",
           "src/lib/codelab/assurance/r3EvaluatorIsolation.ts",
           "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts",
+          "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts",
           "src/lib/codelab/engine/linter.ts",
           "src/lib/codelab/engine/loopKernel.ts",
           "src/lib/codelab/engine/perception.ts",
