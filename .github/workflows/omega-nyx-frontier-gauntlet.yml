@@ -64,8 +64,15 @@ jobs:
           set +e
           npm run omega:nyx:frontier-reasoning
           frontier_exit=$?
-          NYX_QUALITY_SUITE=FRONTIER_CHALLENGE npm run omega:nyx:quality-holdout:v4
-          engineering_exit=$?
+          engineering_exit=0
+          for configuration in CURRENT REASONING_ENABLED MINIMAL_REFERENCE; do
+            NYX_QUALITY_SUITE=FRONTIER_CHALLENGE NYX_EXPERIMENT_VARIANT="$configuration" npm run omega:nyx:quality-holdout:v4
+            configuration_exit=$?
+            echo "configuration=$configuration exit=$configuration_exit"
+            if [ "$configuration_exit" -ne 0 ]; then
+              engineering_exit=1
+            fi
+          done
           set -e
           echo "frontier_exit=$frontier_exit engineering_exit=$engineering_exit"
           if [ "$frontier_exit" -ne 0 ] || [ "$engineering_exit" -ne 0 ]; then

@@ -662,8 +662,9 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
       requiredAcceptedTasks: IS_CONTEXT ? HOLDOUT.length : 1,
       allHiddenCasesRequired: true, engineeringQualityRequired: true, safetyPreservationRequired: true,
       populationClaim: "NONE_SINGLE_DIAGNOSTIC" } } : report;
+  const configurationSuffix = IS_CHALLENGE ? `-${EXPERIMENT_VARIANT.toLowerCase()}` : "";
   const reportPath = join(process.env.RUNNER_TEMP?.trim() || tmpdir(),
-    `nyx-quality-${SUITE_ID.toLowerCase()}-${CANDIDATE.slice(0, 12)}.json`);
+    `nyx-quality-${SUITE_ID.toLowerCase()}${configurationSuffix}-${CANDIDATE.slice(0, 12)}.json`);
   await writeFile(reportPath, `${JSON.stringify(publishedReport, null, 2)}\n`, "utf8");
   console.log(`NYX_QUALITY_${SUITE_ID}_HOLDOUT ${JSON.stringify(publishedReport)}`);
   console.log(`NYX_QUALITY_${SUITE_ID}_REPORT_PATH ${reportPath}`);

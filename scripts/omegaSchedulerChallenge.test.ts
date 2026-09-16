@@ -166,6 +166,12 @@ try {
   check(workflow.includes("frontier-challenge-only") && workflow.includes("NYX_EXPERIMENT_VARIANT: ${{ inputs.configuration }}")
     && workflow.includes("NYX_QUALITY_SUITE: ${{ inputs.mode == 'frontier-challenge-only' && 'FRONTIER_CHALLENGE' || 'CHALLENGE' }}"),
   "manual workflow exposes the same frozen frontier task under an explicit cognition configuration only");
+  const frontierWorkflow = await readFile(resolve(".github/workflows/omega-nyx-frontier-gauntlet.yml"), "utf8");
+  check(frontierWorkflow.includes("for configuration in CURRENT REASONING_ENABLED MINIMAL_REFERENCE")
+    && frontierWorkflow.includes('NYX_EXPERIMENT_VARIANT="$configuration"'),
+  "branch-triggered frontier workflow compares all cognition configurations on one candidate");
+  check(reasoningFrontier.stdout.includes("nyx-quality-frontier_challenge-reasoning_enabled-"),
+    "frontier report identity prevents one cognition configuration from overwriting another");
   const previousFeedbackEpoch = runOffline("CONTEXT_REPAIR");
   check(previousFeedbackEpoch.status === 1 && previousFeedbackEpoch.stderr.includes("context_repair_frozen_core_digest_mismatch"),
     "typed source experiment cannot silently rescore the previous measurement-feedback epoch");
