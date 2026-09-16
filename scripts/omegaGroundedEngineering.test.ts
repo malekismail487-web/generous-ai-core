@@ -226,7 +226,7 @@ globalThis.fetch = async (url, init) => {
   const reportName = (await readdir(parent)).find((name) => /^nyx-quality-capacity_status-.*\.json$/.test(name));
   assert.ok(reportName, "integration control must emit a sanitized report");
   const report = JSON.parse(await readFile(join(parent, reportName), "utf8"));
-  check(report.experiment.version === "nyx-capacity-status-control/1" && report.cognitionContractVersion === "nyx-causal-engineering-intent/8"
+  check(report.experiment.version === "nyx-capacity-status-control/1" && report.cognitionContractVersion === "nyx-causal-engineering-intent/9"
     && report.experiment.comparisonBaselineRun === "34624336290" && report.frozenCorePreserved
     && report.frozenCoreObservationSource === "IMMUTABLE_HISTORICAL_COMMIT"
     && report.sourceRepresentation === "LINES" && report.tasks.every((item: { sourceRepresentation: string }) => item.sourceRepresentation === "LINES"),
