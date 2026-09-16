@@ -196,9 +196,11 @@ function builder(tamper = false, additionalAdmittedPaths: () => readonly string[
 
 function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder(), maxIterations = 1,
   evidenceProvider?: OmegaRepairEvidenceProvider, maxWallClockMs = 30_000,
-  theorySession?: TheoryInvestigationSession): R3BoundedRepairLoop {
+  theorySession?: TheoryInvestigationSession,
+  interactionBudget?: { readonly maxModelInteractions: number; readonly maxCognitionCorrections: number }): R3BoundedRepairLoop {
   return R3BoundedRepairLoop.create({ loopId: `R3E-LOOP-${sequence}`, evaluatorVersion: "r3-e/1",
     observerIdentity: "OMEGA-R3E-OBSERVER", cognition: nyx, candidateBuilder, evidenceProvider, maxIterations, maxWallClockMs,
+    ...interactionBudget,
     maxChangesPerIteration: 1, maxPatchBytesPerIteration: 1_000, maxDiagnosisCharacters: 1_000, theorySession });
 }
 
@@ -453,6 +455,26 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
     "unsuccessful repair stops exactly at the iteration budget");
   check(result.iterations[0].verifications[0].observation.state === "TEST_FAIL" && !result.iterations[0].passed,
     "failed repair generation is preserved with its execution and observation evidence");
+}
+
+{
+  const responses = [
+    modelResponse(CORRECT_SOURCE, { decision: "RUN_SHELL" }),
+    modelResponse(CORRECT_SOURCE, { decision: "NETWORK" }),
+    modelResponse(CORRECT_SOURCE, { decision: "DEPLOY" }),
+    modelResponse(OTHER_WRONG_SOURCE),
+    modelResponse(CORRECT_SOURCE, {
+      failureInterpretation: "The executed candidate changed the value but did not satisfy the arithmetic invariant.",
+    }),
+  ];
+  let calls = 0;
+  const result = await loop(cognition(async () => providerResponse(responses[calls++])), builder(), 2,
+    undefined, 30_000, undefined, { maxModelInteractions: 5, maxCognitionCorrections: 3 }).run(loopRequest());
+  check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && calls === 5 && result.modelCallCount === 5,
+    "bounded protocol corrections no longer consume the independently bounded executed-candidate repair budget");
+  check(result.cognitionFailures.length === 3 && result.iterations.length === 2
+    && result.iterations[0].hypothesisDisposition === "FALSIFIED" && result.iterations[1].passed,
+  "three rejected protocol outputs, one falsified candidate, and one verified repair remain separately attributable");
 }
 
 {

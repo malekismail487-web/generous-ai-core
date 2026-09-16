@@ -71,7 +71,12 @@ export interface R3BoundedRepairLoopConfig {
   readonly cognition: NyxNemotronEngineeringCognition;
   readonly candidateBuilder: OmegaRepairCandidateBuilder;
   readonly evidenceProvider?: OmegaRepairEvidenceProvider;
+  /** Maximum candidates that may reach Omega application and verification. */
   readonly maxIterations: number;
+  /** Maximum cognition interactions, including rejected protocol outputs and evidence requests. */
+  readonly maxModelInteractions?: number;
+  /** Maximum malformed model outputs that may be returned for bounded correction. */
+  readonly maxCognitionCorrections?: number;
   readonly maxWallClockMs: number;
   readonly maxChangesPerIteration: number;
   readonly maxPatchBytesPerIteration: number;
@@ -257,11 +262,16 @@ export class R3BoundedRepairLoop {
   private constructor(config: R3BoundedRepairLoopConfig) { this.#config = config; }
 
   static create(config: R3BoundedRepairLoopConfig): R3BoundedRepairLoop {
+    const maxModelInteractions = config.maxModelInteractions ?? config.maxIterations;
+    const maxCognitionCorrections = config.maxCognitionCorrections ?? Math.max(0, config.maxIterations - 1);
     if (!config.loopId.trim() || !config.evaluatorVersion.trim() || !config.observerIdentity.trim()
       || !config.candidateBuilder.builderIdentity.trim() || typeof config.candidateBuilder.prepare !== "function"
       || (config.evidenceProvider !== undefined && (!config.evidenceProvider.providerIdentity.trim()
         || typeof config.evidenceProvider.acquire !== "function"))
       || !Number.isInteger(config.maxIterations) || config.maxIterations < 1 || config.maxIterations > 8
+      || !Number.isInteger(maxModelInteractions) || maxModelInteractions < config.maxIterations || maxModelInteractions > 16
+      || !Number.isInteger(maxCognitionCorrections) || maxCognitionCorrections < 0
+      || maxCognitionCorrections >= maxModelInteractions
       || !Number.isInteger(config.maxWallClockMs) || config.maxWallClockMs < 100 || config.maxWallClockMs > 600_000
       || !Number.isInteger(config.maxChangesPerIteration) || config.maxChangesPerIteration < 1
       || !Number.isInteger(config.maxPatchBytesPerIteration) || config.maxPatchBytesPerIteration < 1
@@ -305,7 +315,12 @@ export class R3BoundedRepairLoop {
     const priorCognitionFailures: NyxPriorCognitionFailure[] = [];
     const iterations: R3RepairIteration[] = [];
     let candidateQualityFeedback: NyxCandidateQualityFeedback | null = null;
-    for (let cognitionCycle = 1; cognitionCycle <= this.#config.maxIterations; cognitionCycle += 1) {
+    let cognitionCorrections = 0;
+    const maxModelInteractions = this.#config.maxModelInteractions ?? this.#config.maxIterations;
+    const maxCognitionCorrections = this.#config.maxCognitionCorrections ?? Math.max(0, this.#config.maxIterations - 1);
+    for (let cognitionCycle = 1;
+      cognitionCycle <= maxModelInteractions && iterations.length < this.#config.maxIterations;
+      cognitionCycle += 1) {
       if (Date.now() - started >= this.#config.maxWallClockMs) return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
       let theoryResearchContext: TheoryResearchContext | undefined;
       try { theoryResearchContext = this.#config.theorySession?.context(request.objective,
@@ -336,6 +351,7 @@ export class R3BoundedRepairLoop {
       }
       if (cognition.decision === "COGNITION_ERROR" && cognition.schemaDiagnostics.length > 0
         && cognition.evidence.modelEvidenceId !== "NOT_INVOKED") {
+        cognitionCorrections += 1;
         const reason = cognition.reason === "nyx_cognition_output_truncated" ? "OUTPUT_TRUNCATED" as const
           : cognition.reason === "nyx_cognition_output_not_strict_json" ? "NON_JSON" as const : "SCHEMA_INVALID" as const;
         const record: R3CognitionFailureRecord = Object.freeze({ cognitionCycle,
@@ -351,7 +367,8 @@ export class R3BoundedRepairLoop {
           && canonical(previousFailure.diagnostics) === canonical(record.diagnostics)) {
           return finish("EXHAUSTED", "repair_cognition_no_progress", iterations, currentObservation);
         }
-        if (cognitionCycle < this.#config.maxIterations && Date.now() - started < this.#config.maxWallClockMs) continue;
+        if (cognitionCorrections <= maxCognitionCorrections && cognitionCycle < maxModelInteractions
+          && Date.now() - started < this.#config.maxWallClockMs) continue;
         return finish("EXHAUSTED", "repair_cognition_correction_budget_exhausted", iterations, currentObservation);
       }
       if (cognition.decision === "REQUEST_EVIDENCE" && cognition.evidenceRequest) {
@@ -467,7 +484,8 @@ export class R3BoundedRepairLoop {
       currentFiles = candidateContexts;
       candidateQualityFeedback = null;
     }
-    return finish("EXHAUSTED", "repair_iteration_budget_exhausted", iterations, currentObservation);
+    return finish("EXHAUSTED", iterations.length >= this.#config.maxIterations
+      ? "repair_iteration_budget_exhausted" : "repair_model_interaction_budget_exhausted", iterations, currentObservation);
   }
 
   #result(outcome: R3BoundedRepairResult["outcome"], reason: string, iterations: readonly R3RepairIteration[],
