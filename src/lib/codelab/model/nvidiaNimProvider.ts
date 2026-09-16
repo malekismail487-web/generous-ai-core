@@ -53,6 +53,7 @@ export interface NvidiaNimCapacityProgress {
   readonly httpAttempts: number;
   readonly rateLimitedResponses: number;
   readonly transientUnavailableResponses: number;
+  readonly timedOutAttempts: number;
   /** A received model response is not an accepted engineering result. */
   readonly taskCompletionClaimed: false;
   readonly authorityRenewed: false;
@@ -125,6 +126,7 @@ export interface NvidiaNimDeliveryEvidence {
   readonly httpAttempts: number;
   readonly rateLimitedResponses: number;
   readonly transientUnavailableResponses: number;
+  readonly timedOutAttempts: number;
   readonly capacityWaitMs: number;
   readonly state: "DELIVERED" | "WAITING_FOR_CAPACITY" | "STOPPED";
   readonly notBeforeEpochMs: number | null;
@@ -298,6 +300,7 @@ export class NvidiaNimProvider {
     let httpAttempts = 0;
     let rateLimitedResponses = 0;
     let transientUnavailableResponses = 0;
+    let timedOutAttempts = 0;
     let capacityWaitMs = 0;
     let previous: NvidiaNimCompletionResult | null = null;
     let waitVisible = false;
@@ -311,7 +314,7 @@ export class NvidiaNimProvider {
         secondsUntilRetry: retryAtEpochMs === null ? null : Math.max(0, Math.ceil((retryAtEpochMs - observedAtEpochMs) / 1000)),
         automaticResume: state === "WAITING_FOR_CAPACITY" && retryAtEpochMs !== null
           && retryAtEpochMs < deadline && !signal.aborted,
-        httpAttempts, rateLimitedResponses, transientUnavailableResponses,
+        httpAttempts, rateLimitedResponses, transientUnavailableResponses, timedOutAttempts,
         taskCompletionClaimed: false, authorityRenewed: false });
       try {
         if (this.#config.onCapacityProgress) {
@@ -327,7 +330,7 @@ export class NvidiaNimProvider {
     const finish = (result: NvidiaNimCompletionResult, notBeforeEpochMs: number | null = null): NvidiaNimCompletionResult => {
       const delivery: NvidiaNimDeliveryEvidence = Object.freeze({ policy: "nvidia-capacity/1", requestsPerMinute: 40,
         scope: "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT", httpAttempts, rateLimitedResponses,
-        transientUnavailableResponses, capacityWaitMs,
+        transientUnavailableResponses, timedOutAttempts, capacityWaitMs,
         state: result.decision === "COMPLETED" ? "DELIVERED" : result.decision === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY" : "STOPPED",
         notBeforeEpochMs, authorityRenewed: false });
       if (waitVisible) progress(result.decision === "COMPLETED" ? "COMPLETED" : "STOPPED", notBeforeEpochMs);
@@ -365,6 +368,16 @@ export class NvidiaNimProvider {
         transientUnavailableResponses += 1;
         if (this.#capacity
           && transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries) {
+          this.#capacity.defer(null);
+          waitVisible = true;
+          continue;
+        }
+      }
+      if (previous.evidence.failureCategory === "PROVIDER_TIMEOUT") {
+        timedOutAttempts += 1;
+        if (this.#capacity && timedOutAttempts <= NVIDIA_CAPACITY_POLICY.maxTimeoutRetries) {
+          // A completion request has no executor authority and timed-out output is discarded. Retry the
+          // exact frozen payload once after the same conservative cooldown used for transient outage.
           this.#capacity.defer(null);
           waitVisible = true;
           continue;

@@ -232,12 +232,24 @@ async function drive<T>(promise: Promise<T>, clock: ManualClock): Promise<T> {
   if (!settled) throw new Error("capacity_test_failed_to_settle");
   return promise;
 }
+async function driveWithWallClock<T>(promise: Promise<T>, clock: ManualClock, timeoutMs = 5_000): Promise<T> {
+  let settled = false;
+  void promise.then(() => { settled = true; }, () => { settled = true; });
+  const deadline = Date.now() + timeoutMs;
+  while (!settled && Date.now() < deadline) {
+    await new Promise<void>((resolve) => setTimeout(resolve, 5));
+    if (!settled) clock.tick();
+  }
+  if (!settled) throw new Error("capacity_wall_clock_test_failed_to_settle");
+  return promise;
+}
 function capacityProvider(coordinator: NvidiaCapacityCoordinator, transport: NvidiaNimTransport,
   read: () => string | undefined = () => "test-credential-not-a-real-secret",
-  onCapacityProgress?: (progress: NvidiaNimCapacityProgress) => void) {
+  onCapacityProgress?: (progress: NvidiaNimCapacityProgress) => void,
+  timeoutMs = 1000) {
   return NvidiaNimProvider.create({ providerId: "CAPACITY-TEST", model: "nvidia/test-model", authorityMode: "TEST_DOUBLE_ONLY",
     credentialSource: { sourceIdentity: "test-double:capacity", read }, maxPromptBytes: 4096, maxOutputTokens: 128,
-    timeoutMs: 1000, transport, testCapacity: coordinator, onCapacityProgress });
+    timeoutMs, transport, testCapacity: coordinator, onCapacityProgress });
 }
 const success = () => new Response(JSON.stringify({ choices: [{ message: { content: "OMEGA_NIM_OK" }, finish_reason: "stop" }],
   usage: { prompt_tokens: 10, completion_tokens: 4, total_tokens: 14 } }), { status: 200 });
@@ -439,6 +451,71 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
   check(result.decision === "PROVIDER_ERROR" && calls === 2
     && result.evidence.delivery?.transientUnavailableResponses === 2,
   "persistent provider unavailability stops after one bounded retry rather than looping until success");
+}
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
+  const events: NvidiaNimCapacityProgress[] = []; const bodies: string[] = []; let calls = 0;
+  const client = capacityProvider(gate, async (_url, init) => {
+    calls += 1; bodies.push(String(init?.body));
+    if (calls > 1) return success();
+    return new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(new DOMException("private timeout", "AbortError")), { once: true });
+    });
+  }, undefined, (event) => { events.push(event); }, 100);
+  const result = await driveWithWallClock(client.complete(request()), clock);
+  check(result.decision === "COMPLETED" && calls === 2 && result.content === "OMEGA_NIM_OK",
+    "one provider timeout waits and retries the same logical completion successfully");
+  check(result.evidence.delivery?.timedOutAttempts === 1 && result.evidence.delivery.httpAttempts === 2
+    && result.evidence.delivery.capacityWaitMs === 60000,
+  "timeout recovery reports timed-out and HTTP attempts separately from one logical model call");
+  check(new Set(bodies).size === 1 && events.some((event) => event.state === "WAITING_FOR_CAPACITY")
+    && events.some((event) => event.state === "RESUMING") && events.at(-1)?.state === "COMPLETED",
+  "timeout recovery preserves the frozen request and exposes wait, resume, and completion states");
+}
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock); let calls = 0;
+  const client = capacityProvider(gate, async (_url, init) => {
+    calls += 1;
+    return new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(new DOMException("private timeout", "AbortError")), { once: true });
+    });
+  }, undefined, undefined, 100);
+  const result = await driveWithWallClock(client.complete(request()), clock);
+  check(result.decision === "PROVIDER_ERROR" && result.reason === "nvidia_provider_timeout" && calls === 2
+    && result.evidence.delivery?.timedOutAttempts === 2,
+  "persistent provider timeout stops after one bounded retry rather than looping until success");
+}
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
+  const controller = new AbortController(); const events: NvidiaNimCapacityProgress[] = []; let calls = 0;
+  const client = capacityProvider(gate, async (_url, init) => {
+    calls += 1;
+    return new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(new DOMException("private timeout", "AbortError")), { once: true });
+    });
+  }, undefined, (event) => {
+    events.push(event);
+    if (event.state === "WAITING_FOR_CAPACITY" && event.secondsUntilRetry === 59) controller.abort();
+  }, 100);
+  const result = await driveWithWallClock(client.complete(request({ signal: controller.signal })), clock);
+  check(result.decision === "BLOCKED" && result.reason === "nvidia_provider_cancelled" && calls === 1,
+    "cancellation during timeout cooldown prevents the recovery request");
+  check(result.evidence.delivery?.timedOutAttempts === 1 && events.at(-1)?.state === "STOPPED"
+    && !events.some((event) => event.state === "RESUMING"),
+  "cancelled timeout recovery remains attributable and cannot claim resumption");
+}
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock); let calls = 0;
+  const client = capacityProvider(gate, async (_url, init) => {
+    calls += 1;
+    return new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(new DOMException("private timeout", "AbortError")), { once: true });
+    });
+  }, undefined, undefined, 100);
+  const result = await driveWithWallClock(client.complete(request({ deadlineEpochMs: NOW + 30_000 })), clock);
+  check(result.decision === "WAITING_FOR_CAPACITY" && calls === 1
+    && result.evidence.delivery?.timedOutAttempts === 1 && result.evidence.delivery.notBeforeEpochMs === NOW + 60_000,
+  "timeout retry cannot renew or exceed the caller-owned run deadline");
 }
 {
   const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
