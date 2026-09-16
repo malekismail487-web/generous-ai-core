@@ -65,6 +65,7 @@ jobs:
       - name: Run live frontier reasoning and engineering gauntlets
         shell: bash
         run: |
+          npm run omega:nvidia:smoke
           set +e
           npm run omega:nyx:frontier-reasoning
           frontier_exit=$?
