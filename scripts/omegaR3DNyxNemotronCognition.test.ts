@@ -14,6 +14,7 @@ import {
   type NyxSourceRepresentation,
   type NyxCognitionExperimentVariant,
 } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
+import type { NyxRepairIntentCompilationMode } from "../src/lib/codelab/cognition/nyxRepairIntentCompiler";
 
 let passed = 0;
 let failed = 0;
@@ -43,9 +44,10 @@ function provider(transport: NvidiaNimTransport, model = "nvidia/nemotron-3-ultr
     credentialSource: { sourceIdentity: "test-double:nyx-cognition", read: () => "test-only-credential-material" },
     maxPromptBytes: 100_000, maxOutputTokens: 2_048, timeoutMs: 1_000, transport });
 }
-function cognition(transport: NvidiaNimTransport, sourceRepresentation: NyxSourceRepresentation = "TEXT", experimentVariant?: NyxCognitionExperimentVariant) {
+function cognition(transport: NvidiaNimTransport, sourceRepresentation: NyxSourceRepresentation = "TEXT",
+  experimentVariant?: NyxCognitionExperimentVariant, intentCompilationMode?: NyxRepairIntentCompilationMode) {
   return NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-PRIMARY-COGNITION", provider: provider(transport),
-    maxPromptBytes: 50_000, maxOutputTokens: 1_024, sourceRepresentation, experimentVariant });
+    maxPromptBytes: 50_000, maxOutputTokens: 1_024, sourceRepresentation, experimentVariant, intentCompilationMode });
 }
 
 const source = "export const add = (a: number, b: number) => a + b + 1;\n";
@@ -125,6 +127,43 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
   check(overlong.decision === "COGNITION_ERROR" && overlong.schemaDiagnostics.some((item) =>
     item.sourceMeasurement?.lines[0].line === 2 && item.sourceMeasurement.lines[0].length === 122),
   "existing measured readability gate rejects overlong structured lines without wrapping them");
+  const minified = "export function add(a:number,b:number){if(!Number.isFinite(a)||!Number.isFinite(b)){throw new TypeError('finite numbers required');}return a+b;}\n";
+  const compiled = await cognition(transportFor(intent({
+    counterexamples: ["zero", "negative", "fractional", "non-finite", "large finite"],
+    changes: [{ target: "src/math.ts", replacement: { lines: minified.split("\n"), lineEnding: "LF" } }],
+  })), "LINES", undefined, "SAFE_CANONICALIZATION").proposeRepair(request());
+  const compilation = compiled.evidence.intentCompilation;
+  check(compiled.decision === "PROPOSED" && compiled.hypothesis !== null
+    && compiled.hypothesis.changes[0].replacementContent.includes("export function add")
+    && compiled.hypothesis.changes[0].replacementContent.split("\n").every((line) => line.length <= 120),
+  "opt-in compiler turns parseable minified source into a validator-admissible multiline candidate");
+  check(compilation.outcome === "COMPILED" && compilation.operations.length === 2
+    && compilation.operations.some((item) => item.kind === "CANONICALIZE_PARSEABLE_SOURCE")
+    && compilation.operations.some((item) => item.kind === "BOUND_ADVISORY_COUNTEREXAMPLES"
+      && item.beforeCount === 5 && item.afterCount === 3)
+    && compilation.inputDigest !== compilation.outputDigest
+    && compilation.semanticPreservationClaim === "TYPESCRIPT_PARSE_PRINT_REQUIRES_EXECUTION_VERIFICATION"
+    && !compilation.executableAuthorityGranted && compiled.hypothesis?.counterexamples.length === 3,
+  "canonicalization is hash-attributed, bounds only advisory metadata and grants no execution authority");
+  const repeatedCompilation = await cognition(transportFor(intent({
+    counterexamples: ["zero", "negative", "fractional", "non-finite", "large finite"],
+    changes: [{ target: "src/math.ts", replacement: { lines: minified.split("\n"), lineEnding: "LF" } }],
+  })), "LINES", undefined, "SAFE_CANONICALIZATION").proposeRepair(request());
+  check(repeatedCompilation.evidence.intentCompilation.outputDigest === compilation.outputDigest
+    && repeatedCompilation.hypothesis?.proposalDigest === compiled.hypothesis?.proposalDigest,
+  "intent compilation is deterministic for identical model output and request constraints");
+  const invalidSyntax = "export function add(a:number,b:number){ return a + ; }\n";
+  const refusedSyntax = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
+    replacement: { lines: [invalidSyntax.trimEnd() + " ".repeat(121)], lineEnding: "LF" } }] })),
+  "LINES", undefined, "SAFE_CANONICALIZATION").proposeRepair(request());
+  check(refusedSyntax.decision === "COGNITION_ERROR" && refusedSyntax.hypothesis === null
+    && refusedSyntax.evidence.intentCompilation.outcome === "UNCHANGED",
+  "compiler refuses to repair syntactically invalid source and strict admission still rejects it");
+  const compiledUnsafe = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts", replacement: {
+    lines: ["import{execSync}from'node:child_process';export const add=execSync;" + " ".repeat(121)], lineEnding: "LF" } }] })),
+  "LINES", undefined, "SAFE_CANONICALIZATION").proposeRepair(request());
+  check(compiledUnsafe.decision === "COGNITION_ERROR" && has(compiledUnsafe, "UNKNOWN_CAPABILITY")
+    && compiledUnsafe.hypothesis === null, "canonical formatting cannot bypass forbidden execution admission");
   const byteBound = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
     replacement: { lines: [repaired.trimEnd(), "// café 🙂"], lineEnding: "CRLF" } }] })), "LINES")
     .proposeRepair(request({ maxPatchBytes: 55 }));

@@ -3,6 +3,8 @@ import { isAbsolute } from "node:path";
 import { NvidiaNimProvider, type NvidiaNimEvidence } from "../model/nvidiaNimProvider";
 import type { EngineeringObservation } from "../observation/r3EngineeringObservation";
 import { validTheoryResearchContext, type TheoryResearchContext } from "../research/theoryContracts";
+import { compileNyxRepairIntent, NYX_REPAIR_INTENT_COMPILER_STATUS, unattemptedNyxRepairIntentCompilation,
+  type NyxIntentCompilationEvidence, type NyxRepairIntentCompilationMode } from "./nyxRepairIntentCompiler";
 
 export const NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS = Object.freeze({
   chunkId: "OMEGA-R3-D-NYX-COGNITION-001",
@@ -10,7 +12,7 @@ export const NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS = Object.freeze({
   newCapability: "NYX_NEMOTRON_REPAIR_HYPOTHESIS_PROPOSAL",
   cognitionIdentity: "NYX_PRIMARY_COGNITION",
   cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA",
-  semanticContract: "nyx-causal-engineering-intent/7",
+  semanticContract: "nyx-causal-engineering-intent/8",
   causalHypothesisLineage: true,
   boundedCounterexampleReasoning: true,
   qualityRejectionRepairFeedback: true,
@@ -163,6 +165,7 @@ export interface NyxRepairCognitionEvidence {
   readonly contractVersion: typeof NYX_SEMANTIC_REPAIR_CONTRACT_VERSION;
   readonly contractDigest: string;
   readonly sourceRepresentation: NyxSourceRepresentation;
+  readonly intentCompilation: NyxIntentCompilationEvidence;
   readonly modelUsage: NvidiaNimEvidence["usage"];
   readonly experimentVariant?: NyxCognitionExperimentVariant;
   readonly delivery?: NvidiaNimEvidence["delivery"];
@@ -306,7 +309,7 @@ export const NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA = providerCompatibleSchema(
   NYX_REPAIR_INTENT_JSON_SCHEMA,
 ) as Readonly<Record<string, unknown>>;
 
-export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/7" as const;
+export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/8" as const;
 export const NYX_SEMANTIC_ACTIONS = Object.freeze(["PROPOSE_EDIT", "REQUEST_EVIDENCE", "NO_ACTION"] as const);
 
 export type NyxSourceRepresentation = "TEXT" | "LINES";
@@ -388,6 +391,7 @@ export const NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST = sha256(canonical({
   forbiddenReplacementPatterns: NYX_FORBIDDEN_SEMANTIC_REPLACEMENT_PATTERNS,
   sourceMeasurementPolicy: NYX_SOURCE_MEASUREMENT_POLICY,
   sourceRepresentations: ["TEXT", "LINES"], sourceLinesPolicy: NYX_SOURCE_LINES_POLICY,
+  intentCompiler: NYX_REPAIR_INTENT_COMPILER_STATUS,
   authorityBoundary: "Omega derives trusted execution metadata and independently authorizes every action.",
 }));
 
@@ -399,6 +403,8 @@ export interface NyxNemotronEngineeringCognitionConfig {
   readonly maxPromptBytes: number;
   readonly maxOutputTokens: number;
   readonly sourceRepresentation?: NyxSourceRepresentation;
+  /** Strict by default. Canonicalization remains transparent, bounded, and authority-neutral. */
+  readonly intentCompilationMode?: NyxRepairIntentCompilationMode;
   /** Explicit bounded evaluation switch; omission preserves the established configuration. */
   readonly experimentVariant?: NyxCognitionExperimentVariant;
 }
@@ -525,10 +531,12 @@ export class NyxNemotronEngineeringCognition {
   readonly #model: string;
   readonly #sourceRepresentation: NyxSourceRepresentation;
   readonly #experimentVariant: NyxCognitionExperimentVariant;
+  readonly #intentCompilationMode: NyxRepairIntentCompilationMode;
 
   private constructor(config: NyxNemotronEngineeringCognitionConfig, model: string) {
     this.#config = config; this.#model = model; this.#sourceRepresentation = config.sourceRepresentation ?? "TEXT";
     this.#experimentVariant = config.experimentVariant ?? "CURRENT";
+    this.#intentCompilationMode = config.intentCompilationMode ?? "STRICT";
   }
 
   static create(config: NyxNemotronEngineeringCognitionConfig): NyxNemotronEngineeringCognition {
@@ -539,14 +547,20 @@ export class NyxNemotronEngineeringCognition {
     if (config.sourceRepresentation !== undefined && !["TEXT", "LINES"].includes(config.sourceRepresentation)) {
       throw new Error("nyx_source_representation_invalid");
     }
+    if (config.intentCompilationMode !== undefined
+      && !["STRICT", "SAFE_CANONICALIZATION"].includes(config.intentCompilationMode)) {
+      throw new Error("nyx_intent_compilation_mode_invalid");
+    }
     if (!config.cognitionId.trim() || !Number.isInteger(config.maxPromptBytes) || config.maxPromptBytes < 1
       || !Number.isInteger(config.maxOutputTokens) || config.maxOutputTokens < 1) throw new Error("nyx_cognition_configuration_invalid");
     if (!/nemotron[-_/ ]?3[-_/ ]?ultra/i.test(profile.model)) throw new Error("nyx_primary_substrate_must_be_nemotron_3_ultra");
     return new NyxNemotronEngineeringCognition(config, profile.model);
   }
 
-  profile(): typeof NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS & { readonly model: string; readonly sourceRepresentation: NyxSourceRepresentation } {
-    return Object.freeze({ ...NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS, model: this.#model, sourceRepresentation: this.#sourceRepresentation });
+  profile(): typeof NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS & { readonly model: string; readonly sourceRepresentation: NyxSourceRepresentation;
+    readonly intentCompilationMode: NyxRepairIntentCompilationMode } {
+    return Object.freeze({ ...NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS, model: this.#model,
+      sourceRepresentation: this.#sourceRepresentation, intentCompilationMode: this.#intentCompilationMode });
   }
 
   async proposeRepair(request: NyxRepairCognitionRequest): Promise<NyxRepairCognitionResult> {
@@ -639,23 +653,29 @@ export class NyxNemotronEngineeringCognition {
     try { parsed = JSON.parse(completion.content) as RawRepairIntent; }
     catch { return this.#result("COGNITION_ERROR", "nyx_cognition_output_not_strict_json", request, null, null, completion.evidence,
       [diagnostic("UNEXPECTED_STRUCTURE", "$", "one JSON object", "non_json_content")]); }
-    const validated = this.#validateIntent(parsed, request);
+    const compiled = compileNyxRepairIntent(parsed, { mode: this.#intentCompilationMode,
+      sourceRepresentation: this.#sourceRepresentation, maxCounterexamples: request.maxCounterexamples,
+      maxPatchBytes: request.maxPatchBytes, maxLineLength: request.sourceQualityConstraints.maxLineLength,
+      maxSourceLines: NYX_SOURCE_LINES_POLICY.maxLines });
+    const compiledIntent = compiled.value as RawRepairIntent;
+    const validated = this.#validateIntent(compiledIntent, request);
     if (validated.diagnostics.length > 0) return this.#result("COGNITION_ERROR", "nyx_cognition_output_schema_invalid",
-      request, null, null, completion.evidence, validated.diagnostics);
+      request, null, null, completion.evidence, validated.diagnostics, compiled.evidence);
     if (validated.evidenceRequest) {
       const requestBase = { requestedEvidenceRefs: Object.freeze(validated.requestedEvidenceRefs), diagnosis: validated.diagnosis!,
         causalHypothesis: validated.causalHypothesis, uncertainties: Object.freeze(validated.uncertainties),
         evidenceRefs: Object.freeze(validated.evidenceRefs), authorityGranted: false as const };
       const evidenceRequest: NyxEvidenceRequest = Object.freeze({ ...requestBase, requestDigest: sha256(canonical(requestBase)) });
       return this.#result("REQUEST_EVIDENCE", "nyx_cognition_requests_admitted_evidence", request, null, evidenceRequest,
-        completion.evidence, []);
+        completion.evidence, [], compiled.evidence);
     }
-    if (validated.noAction) return this.#result("NO_ACTION", "nyx_cognition_no_action", request, null, null, completion.evidence, []);
+    if (validated.noAction) return this.#result("NO_ACTION", "nyx_cognition_no_action", request, null, null,
+      completion.evidence, [], compiled.evidence);
     const strategyDigest = sha256(canonical({ causalHypothesis: validated.causalHypothesis,
       expectedResult: validated.expectedResult, changes: validated.changes.map((change) => ({ path: change.relativePath,
         replacementContentHash: change.replacementContentHash })) }));
     const proposalBase = { schemaVersion: 1 as const, hypothesisId: `NYX-REPAIR-${sha256(canonical({ request: request.cognitionRequestId,
-      observation: request.observation.observationId, output: parsed })).slice(0, 32)}`, cognitionRequestId: request.cognitionRequestId,
+      observation: request.observation.observationId, output: compiledIntent })).slice(0, 32)}`, cognitionRequestId: request.cognitionRequestId,
       sourceObservationId: request.observation.observationId,
       parentHypothesisId: request.priorHypotheses.at(-1)?.hypothesisId ?? null, diagnosis: validated.diagnosis!,
       causalHypothesis: validated.causalHypothesis!, evidenceRefs: Object.freeze(validated.evidenceRefs),
@@ -666,7 +686,8 @@ export class NyxNemotronEngineeringCognition {
       verificationToolIds: Object.freeze([...request.allowedVerificationToolIds]), confidence: validated.confidence,
       strategyDigest, disposition: "PENDING_VERIFICATION" as const, applyAuthorized: false as const };
     const hypothesis: NyxRepairHypothesis = Object.freeze({ ...proposalBase, proposalDigest: sha256(canonical(proposalBase)) });
-    return this.#result("PROPOSED", "nyx_repair_hypothesis_validated", request, hypothesis, null, completion.evidence, []);
+    return this.#result("PROPOSED", "nyx_repair_hypothesis_validated", request, hypothesis, null,
+      completion.evidence, [], compiled.evidence);
   }
 
   #validateInput(request: NyxRepairCognitionRequest): readonly string[] {
@@ -959,13 +980,14 @@ export class NyxNemotronEngineeringCognition {
 
   #result(decision: NyxRepairCognitionResult["decision"], reason: string, request: NyxRepairCognitionRequest,
     hypothesis: NyxRepairHypothesis | null, evidenceRequest: NyxEvidenceRequest | null, modelEvidence: NvidiaNimEvidence | null,
-    schemaDiagnostics: readonly NyxSchemaDiagnostic[]): NyxRepairCognitionResult {
+    schemaDiagnostics: readonly NyxSchemaDiagnostic[], intentCompilation?: NyxIntentCompilationEvidence): NyxRepairCognitionResult {
     const sourceObservationId = request.observation?.observationId ?? "UNKNOWN";
     const sourceEvidenceId = request.observation?.candidateEvidenceId ?? "UNKNOWN";
     const evidence: NyxRepairCognitionEvidence = Object.freeze({ evidenceId: `NYX-COGNITION-${sha256(canonical({
       requestId: request.cognitionRequestId ?? "MALFORMED", sourceObservationId, modelEvidenceId: modelEvidence?.evidenceId ?? null,
       proposalDigest: hypothesis?.proposalDigest ?? null, evidenceRequestDigest: evidenceRequest?.requestDigest ?? null,
-      decision, reason, sourceRepresentation: this.#sourceRepresentation, experimentVariant: this.#experimentVariant })).slice(0, 32)}`,
+      decision, reason, sourceRepresentation: this.#sourceRepresentation, experimentVariant: this.#experimentVariant,
+      intentCompilation: intentCompilation ?? null })).slice(0, 32)}`,
       evidenceClass: modelEvidence?.evidenceClass ?? "E3", sourceObservationId, sourceExecutionEvidenceId: sourceEvidenceId,
       modelEvidenceId: modelEvidence?.evidenceId ?? "NOT_INVOKED", model: this.#model,
       cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA", modelRequestDigest: modelEvidence?.requestDigest ?? null,
@@ -978,6 +1000,8 @@ export class NyxNemotronEngineeringCognition {
       contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
       contractDigest: NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST,
       sourceRepresentation: this.#sourceRepresentation,
+      intentCompilation: intentCompilation
+        ?? unattemptedNyxRepairIntentCompilation(this.#intentCompilationMode, this.#sourceRepresentation),
       experimentVariant: this.#experimentVariant,
       modelUsage: modelEvidence?.usage ?? Object.freeze({ promptTokens: null, completionTokens: null, totalTokens: null }),
       delivery: modelEvidence?.delivery,
