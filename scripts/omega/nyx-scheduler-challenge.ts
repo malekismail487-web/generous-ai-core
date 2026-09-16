@@ -23,10 +23,11 @@ export const NYX_SCHEDULER_FROZEN_CORE = Object.freeze({
 // original frozen epoch above remains immutable and reproducible; this pin
 // permits fresh measurement without silently rescoring its historical result.
 export const NYX_SCHEDULER_FRONTIER_FROZEN_CORE = Object.freeze({
-  commit: "bb4c5dcc8df7a7d424bdd875685bf92d0cc4af38",
+  commit: "8459474b06e14a241b112f06b577912e222b09ee",
   serialization: "UTF8_CRLF_TO_LF_ONLY",
   files: Object.freeze({
-    "src/lib/codelab/model/nvidiaNimProvider.ts": "4f8d2ee4071c46d5e9097a6f20414f5215a63e47747cf17d3761afcdc0e15e01",
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "b4254ef147ca1855a3ce969323411a6953f76eac37b89e0a775eec3ab7f6e6c8",
+    "src/lib/codelab/model/nvidiaCapacity.ts": "6b98ae61f325b73fe9c94c93e0b2ff7cde0b8b6bb93454745a5dc74616549ab1",
     "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "65c488963e216a38dd83eb6f8dcf83503f195b39c0849b6eb71805455ae6de26",
     "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts": "d5ad3321e9b34d9de11c14eb5446cd84f7ea611f1298fc1ca556b828fc0982af",
     "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "23337f97b70e9bfb13df84560b52199e55cb67500a7ef70e6dea9b76254b6e2d",
