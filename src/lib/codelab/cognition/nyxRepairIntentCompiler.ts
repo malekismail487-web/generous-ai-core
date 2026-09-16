@@ -53,6 +53,13 @@ export interface NyxRepairIntentCompilationResult {
   readonly evidence: NyxIntentCompilationEvidence;
 }
 
+export interface NyxSourceSyntaxValidation {
+  readonly valid: boolean;
+  readonly parser: "babel" | "json" | "typescript";
+  readonly line: number | null;
+  readonly column: number | null;
+}
+
 function canonical(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
@@ -112,6 +119,30 @@ async function formatParseableSource(path: string, source: string, printWidth: n
     return parseable(path, formatted) ? formatted : null;
   } catch {
     return null;
+  }
+}
+
+function syntaxLocation(error: unknown): { readonly line: number | null; readonly column: number | null } {
+  if (!error || typeof error !== "object") return { line: null, column: null };
+  const loc = (error as { readonly loc?: unknown }).loc;
+  if (!loc || typeof loc !== "object") return { line: null, column: null };
+  const start = (loc as { readonly start?: unknown }).start;
+  const position = start && typeof start === "object" ? start : loc;
+  const line = (position as { readonly line?: unknown }).line;
+  const column = (position as { readonly column?: unknown }).column;
+  return { line: Number.isSafeInteger(line) && Number(line) > 0 ? Number(line) : null,
+    column: Number.isSafeInteger(column) && Number(column) >= 0 ? Number(column) : null };
+}
+
+/** Parse-only authority-neutral check using the same language parser as canonical formatting. */
+export async function validateNyxSourceSyntax(path: string, source: string): Promise<NyxSourceSyntaxValidation> {
+  const parser = prettierParser(path);
+  if (!parseable(path, source)) return Object.freeze({ valid: false, parser, line: null, column: null });
+  try {
+    await format(source, { parser, filepath: path, printWidth: 120, endOfLine: "lf" });
+    return Object.freeze({ valid: true, parser, line: null, column: null });
+  } catch (error) {
+    return Object.freeze({ valid: false, parser, ...syntaxLocation(error) });
   }
 }
 

@@ -4,7 +4,8 @@ import { NvidiaNimProvider, type NvidiaNimEvidence } from "../model/nvidiaNimPro
 import type { EngineeringObservation } from "../observation/r3EngineeringObservation";
 import { validTheoryResearchContext, type TheoryResearchContext } from "../research/theoryContracts";
 import { compileNyxRepairIntent, NYX_REPAIR_INTENT_COMPILER_STATUS, unattemptedNyxRepairIntentCompilation,
-  type NyxIntentCompilationEvidence, type NyxRepairIntentCompilationMode } from "./nyxRepairIntentCompiler";
+  validateNyxSourceSyntax, type NyxIntentCompilationEvidence,
+  type NyxRepairIntentCompilationMode } from "./nyxRepairIntentCompiler";
 
 export const NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS = Object.freeze({
   chunkId: "OMEGA-R3-D-NYX-COGNITION-001",
@@ -12,7 +13,7 @@ export const NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS = Object.freeze({
   newCapability: "NYX_NEMOTRON_REPAIR_HYPOTHESIS_PROPOSAL",
   cognitionIdentity: "NYX_PRIMARY_COGNITION",
   cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA",
-  semanticContract: "nyx-causal-engineering-intent/8",
+  semanticContract: "nyx-causal-engineering-intent/9",
   causalHypothesisLineage: true,
   boundedCounterexampleReasoning: true,
   qualityRejectionRepairFeedback: true,
@@ -656,7 +657,7 @@ export class NyxNemotronEngineeringCognition {
       maxPatchBytes: request.maxPatchBytes, maxLineLength: request.sourceQualityConstraints.maxLineLength,
       maxSourceLines: NYX_SOURCE_LINES_POLICY.maxLines });
     const compiledIntent = compiled.value as RawRepairIntent;
-    const validated = this.#validateIntent(compiledIntent, request);
+    const validated = await this.#validateIntent(compiledIntent, request);
     if (validated.diagnostics.length > 0) return this.#result("COGNITION_ERROR", "nyx_cognition_output_schema_invalid",
       request, null, null, completion.evidence, validated.diagnostics, compiled.evidence);
     if (validated.evidenceRequest) {
@@ -784,11 +785,11 @@ export class NyxNemotronEngineeringCognition {
     return Object.freeze([...new Set(issues)]);
   }
 
-  #validateIntent(raw: RawRepairIntent, request: NyxRepairCognitionRequest): { diagnostics: NyxSchemaDiagnostic[];
+  async #validateIntent(raw: RawRepairIntent, request: NyxRepairCognitionRequest): Promise<{ diagnostics: NyxSchemaDiagnostic[];
     noAction: boolean; evidenceRequest: boolean; diagnosis: string | null; causalHypothesis: string | null;
     evidenceRefs: string[]; uncertainties: string[]; invariant: string | null; failureInterpretation: string | null;
     expectedResult: string | null; counterexamples: string[]; requestedEvidenceRefs: string[]; assumptions: string[];
-    changes: NyxRepairChange[]; confidence: number | null } {
+    changes: NyxRepairChange[]; confidence: number | null }> {
     const diagnostics: NyxSchemaDiagnostic[] = [];
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
       return { diagnostics: [diagnostic("UNEXPECTED_STRUCTURE", "$", "object", observedType(raw))], noAction: false,
@@ -932,6 +933,14 @@ export class NyxNemotronEngineeringCognition {
       if (paths.has(change.target)) { diagnostics.push(diagnostic("SEMANTIC_REPAIR_INVALID", `${base}.target`, "unique target", "duplicate_reference")); continue; }
       if (sha256(replacement) === context.contentSha256) {
         diagnostics.push(diagnostic("REPEATED_FALSIFIED_STRATEGY", `${base}.replacement`, "a semantic change from the currently failed candidate", "no_op_repair")); continue;
+      }
+      const syntax = await validateNyxSourceSyntax(change.target, replacement);
+      if (!syntax.valid) {
+        const location = syntax.line === null ? "unknown_location"
+          : `line_${syntax.line}_column_${syntax.column ?? "unknown"}`;
+        diagnostics.push(diagnostic("SOURCE_QUALITY_INVALID", `${base}.replacement`,
+          `source accepted by ${syntax.parser} syntax parser`, `syntax_error_${location}`));
+        continue;
       }
       const sourceMeasurement = measureOverlongSource(replacement, request.sourceQualityConstraints.maxLineLength);
       if (sourceMeasurement) {

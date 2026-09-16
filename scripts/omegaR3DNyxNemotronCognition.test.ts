@@ -6,6 +6,7 @@ import {
   NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
   NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA,
   NYX_REPAIR_INTENT_JSON_SCHEMA,
+  NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
   buildNyxRepairIntentContract,
   NyxNemotronEngineeringCognition,
   type NyxRepairCognitionRequest,
@@ -175,6 +176,16 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
   check(refusedSyntax.decision === "COGNITION_ERROR" && refusedSyntax.hypothesis === null
     && refusedSyntax.evidence.intentCompilation.outcome === "UNCHANGED",
   "compiler refuses to repair syntactically invalid source and strict admission still rejects it");
+  const javascriptSource = "export const value = 1;\n";
+  const runtimeInvalidJavascript = "export const value = 1 as number;\n";
+  const rejectedRuntimeSyntax = await cognition(transportFor(intent({ changes: [{ target: "src/value.mjs", replacement: {
+    lines: runtimeInvalidJavascript.split("\n"), lineEnding: "LF" } }] })), "LINES")
+    .proposeRepair(request({ files: [{ relativePath: "src/value.mjs", content: javascriptSource,
+      contentSha256: hash(javascriptSource) }], allowedMutationPaths: ["src/value.mjs"] }));
+  check(rejectedRuntimeSyntax.decision === "COGNITION_ERROR" && rejectedRuntimeSyntax.hypothesis === null
+    && rejectedRuntimeSyntax.schemaDiagnostics.some((item) => item.category === "SOURCE_QUALITY_INVALID"
+      && item.observed === "syntax_error_line_1_column_23"),
+  "runtime JavaScript syntax is rejected before candidate mutation even when the TypeScript parser accepts it");
   const compiledUnsafe = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts", replacement: {
     lines: ["import{execSync}from'node:child_process';export const add=execSync;" + " ".repeat(121)], lineEnding: "LF" } }] })),
   "LINES", undefined, "SAFE_CANONICALIZATION").proposeRepair(request());
@@ -590,6 +601,8 @@ check(NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.cognitionIdentity === "NYX_PRIMA
 check(!NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.grantsOmegaAuthority
   && !NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.productionEligible,
   "contract repair does not increase Omega or production authority");
+check(NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.semanticContract === NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
+  "status metadata cannot drift from the executable semantic repair contract");
 
 {
   const payloads: Record<string, unknown>[] = [];
