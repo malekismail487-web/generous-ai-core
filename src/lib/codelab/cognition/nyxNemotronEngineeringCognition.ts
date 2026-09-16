@@ -4,7 +4,7 @@ import { NvidiaNimProvider, type NvidiaNimEvidence } from "../model/nvidiaNimPro
 import type { EngineeringObservation } from "../observation/r3EngineeringObservation";
 import { validTheoryResearchContext, type TheoryResearchContext } from "../research/theoryContracts";
 import { compileNyxRepairIntent, NYX_REPAIR_INTENT_COMPILER_STATUS, unattemptedNyxRepairIntentCompilation,
-  validateNyxSourceSyntax, type NyxIntentCompilationEvidence,
+  nyxSourceLanguageContract, validateNyxSourceSyntax, type NyxIntentCompilationEvidence,
   type NyxRepairIntentCompilationMode } from "./nyxRepairIntentCompiler";
 
 export const NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS = Object.freeze({
@@ -569,6 +569,9 @@ export class NyxNemotronEngineeringCognition {
         ? "STALE_TARGET_REFERENCE" : "OTHER_SCHEMA_MISMATCH", "$request", "valid admitted cognition request", issue)));
     const qualityFeedback = request.candidateQualityFeedback;
     const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation);
+    const sourceLanguageContracts = request.files.map((file) => Object.freeze({ target: file.relativePath,
+      mutationAllowed: request.allowedMutationPaths.includes(file.relativePath),
+      ...nyxSourceLanguageContract(file.relativePath) }));
     const promptObject = { role: "NYX_ENGINEERING_COGNITION", objective: request.objective,
       ...(request.theoryResearchContext ? { theoryResearchContext: request.theoryResearchContext } : {}),
       assignment: "Determine the causal defect, required invariant, and smallest justified professional-quality action. A failed or quality-rejected prior candidate must change the implementation strategy. Request available evidence before guessing when it can discriminate among plausible causes.",
@@ -580,11 +583,12 @@ export class NyxNemotronEngineeringCognition {
         maxCounterexamples: contract.bounds.counterexamples, fieldBounds: contract.bounds,
         sourceQuality: request.sourceQualityConstraints,
         sourceRepresentation: contract.sourceRepresentation, sourceLinesPolicy: contract.sourceLinesPolicy,
+        sourceLanguageContracts,
         omegaVerificationPlan: request.allowedVerificationToolIds,
         forbiddenModelFields: NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS,
         evidenceBehavior: "Use REQUEST_EVIDENCE for listed available evidence that would discriminate among hypotheses. Use NO_ACTION only when required evidence is unavailable; both actions require no changes.",
         fieldDiscipline: "Use only the required fields for your chosen decision, plus optional fields that convey useful information. requestedEvidenceRefs must be omitted or empty for PROPOSE_EDIT and NO_ACTION. Do not invent references. Confidence is optional and is not evidence of correctness.",
-        repairDiscipline: "For PROPOSE_EDIT, cite admitted evidence, state one causal hypothesis and invariant, predict the verifier-visible effect, and challenge the proposal with 1..maxCounterexamples structurally relevant cases. Return complete files with readable multiline formatting, preserve public exports and unrelated behavior, and do not target or mention hidden evaluators.",
+        repairDiscipline: "For PROPOSE_EDIT, cite admitted evidence, state one causal hypothesis and invariant, predict the verifier-visible effect, and challenge the proposal with 1..maxCounterexamples structurally relevant cases. Return complete files with readable multiline formatting, preserve public exports and unrelated behavior, obey each target's exact sourceLanguageContract, and do not target or mention hidden evaluators.",
         authorityStatement: "This is semantic intent only. Omega derives freshness hashes and execution metadata, then independently authorizes and executes." },
       activeRepairDriver: qualityFeedback ? { kind: "QUALITY_REJECTION", assessmentId: qualityFeedback.assessmentId,
         evidenceRef: qualityFeedback.evidenceId, hypothesisId: qualityFeedback.hypothesisId,
@@ -598,7 +602,8 @@ export class NyxNemotronEngineeringCognition {
         { evidenceRef: `OBSERVATION:${request.observation.observationId}`, kind: "EXECUTION_OBSERVATION",
           value: { state: request.observation.state, diagnostics: request.observation.diagnostics, unknowns: request.observation.unknowns } },
         ...request.files.map((file) => ({ evidenceRef: `FILE:${file.relativePath}`, kind: "FILE", target: file.relativePath,
-          mutationAllowed: request.allowedMutationPaths.includes(file.relativePath), content: file.content })),
+          mutationAllowed: request.allowedMutationPaths.includes(file.relativePath),
+          sourceLanguageContract: nyxSourceLanguageContract(file.relativePath), content: file.content })),
         ...(qualityFeedback ? [{ evidenceRef: qualityFeedback.evidenceId, kind: "PUBLIC_QUALITY_OBSERVATION", findings: qualityFeedback.findings }] : [])],
       availableEvidence: request.availableEvidence,
       hypothesisHistory: request.priorHypotheses,
@@ -936,10 +941,12 @@ export class NyxNemotronEngineeringCognition {
       }
       const syntax = await validateNyxSourceSyntax(change.target, replacement);
       if (!syntax.valid) {
+        const languageContract = nyxSourceLanguageContract(change.target);
         const location = syntax.line === null ? "unknown_location"
           : `line_${syntax.line}_column_${syntax.column ?? "unknown"}`;
         diagnostics.push(diagnostic("SOURCE_QUALITY_INVALID", `${base}.replacement`,
-          `source accepted by ${syntax.parser} syntax parser`, `syntax_error_${location}`));
+          `complete ${languageContract.language} source for ${change.target} accepted by ${syntax.parser}; forbidden syntax: ${languageContract.forbiddenSyntax.join(", ") || "none"}`,
+          `syntax_error_${location}`));
         continue;
       }
       const sourceMeasurement = measureOverlongSource(replacement, request.sourceQualityConstraints.maxLineLength);

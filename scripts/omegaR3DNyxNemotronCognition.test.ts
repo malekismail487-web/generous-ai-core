@@ -184,8 +184,24 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
       contentSha256: hash(javascriptSource) }], allowedMutationPaths: ["src/value.mjs"] }));
   check(rejectedRuntimeSyntax.decision === "COGNITION_ERROR" && rejectedRuntimeSyntax.hypothesis === null
     && rejectedRuntimeSyntax.schemaDiagnostics.some((item) => item.category === "SOURCE_QUALITY_INVALID"
-      && item.observed === "syntax_error_line_1_column_23"),
+      && item.observed === "syntax_error_line_1_column_23" && item.expected.includes("ECMASCRIPT_2022")
+      && item.expected.includes("src/value.mjs") && item.expected.includes("TypeScript as/satisfies assertions")),
   "runtime JavaScript syntax is rejected before candidate mutation even when the TypeScript parser accepts it");
+  let javascriptPrompt = "";
+  const validJavascript = "export const value = 2;\n";
+  await cognition(async (input, init) => {
+    javascriptPrompt = (JSON.parse(String(init?.body)) as { messages: Array<{ content: string }> }).messages[1].content;
+    return transportFor(intent({ changes: [{ target: "src/value.mjs", replacement: validJavascript }] }))(input, init);
+  }).proposeRepair(request({ files: [{ relativePath: "src/value.mjs", content: javascriptSource,
+    contentSha256: hash(javascriptSource) }], allowedMutationPaths: ["src/value.mjs"] }));
+  const parsedJavascriptPrompt = JSON.parse(javascriptPrompt) as { constraints: { sourceLanguageContracts: Array<{
+    target: string; language: string; parser: string; moduleSystem: string; forbiddenSyntax: string[];
+  }> } };
+  const javascriptContract = parsedJavascriptPrompt.constraints.sourceLanguageContracts[0];
+  check(javascriptContract.target === "src/value.mjs" && javascriptContract.language === "ECMASCRIPT_2022"
+    && javascriptContract.parser === "babel" && javascriptContract.moduleSystem === "ES_MODULE"
+    && javascriptContract.forbiddenSyntax.includes("TypeScript as/satisfies assertions"),
+  "live repair prompt explicitly forbids TypeScript-only syntax in ECMAScript module targets");
   const compiledUnsafe = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts", replacement: {
     lines: ["import{execSync}from'node:child_process';export const add=execSync;" + " ".repeat(121)], lineEnding: "LF" } }] })),
   "LINES", undefined, "SAFE_CANONICALIZATION").proposeRepair(request());
@@ -402,6 +418,14 @@ function schemaKeys(value: unknown): string[] {
     && messages[1].content.includes("Omega derives freshness hashes and execution metadata")
     && messages[1].content.includes("counterexamples") && messages[1].content.includes("hypothesisHistory"),
     "prompt states the Νύξ/Omega boundary and compact engineering-reasoning discipline");
+  const prompt = JSON.parse(messages[1].content) as { constraints?: { sourceLanguageContracts?: Array<{
+    target?: string; language?: string; parser?: string; moduleSystem?: string; forbiddenSyntax?: string[];
+  }> }; admittedEvidence?: Array<{ target?: string; sourceLanguageContract?: { language?: string } }> };
+  const sourceContract = prompt.constraints?.sourceLanguageContracts?.find((item) => item.target === "src/math.ts");
+  check(sourceContract?.language === "TYPESCRIPT" && sourceContract.parser === "typescript"
+    && prompt.admittedEvidence?.some((item) => item.target === "src/math.ts"
+      && item.sourceLanguageContract?.language === "TYPESCRIPT"),
+  "prompt binds every admitted source file to an explicit parser and language contract");
   const format = body.response_format as { type?: string; json_schema?: { name?: string; strict?: boolean } };
   check(format.type === "json_schema" && format.json_schema?.name === "nyx_repair_intent" && format.json_schema.strict === true,
     "provider receives the strict typed semantic-intent schema");

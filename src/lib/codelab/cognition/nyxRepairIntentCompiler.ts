@@ -60,6 +60,41 @@ export interface NyxSourceSyntaxValidation {
   readonly column: number | null;
 }
 
+export interface NyxSourceLanguageContract {
+  readonly language: "ECMASCRIPT_2022" | "TYPESCRIPT" | "JSON";
+  readonly parser: "babel" | "json" | "typescript";
+  readonly moduleSystem: "ES_MODULE" | "COMMONJS" | "DATA" | "REPOSITORY_CONVENTION";
+  readonly forbiddenSyntax: readonly string[];
+}
+
+const JAVASCRIPT_ONLY_FORBIDDEN_SYNTAX = Object.freeze([
+  "TypeScript type annotations",
+  "TypeScript as/satisfies assertions",
+  "interface/type/enum/namespace declarations",
+  "access modifiers and parameter properties",
+] as const);
+
+/** Machine-readable source-language contract used by both prompting and admission diagnostics. */
+export function nyxSourceLanguageContract(path: string): NyxSourceLanguageContract {
+  switch (extname(path).toLowerCase()) {
+    case ".mjs":
+      return Object.freeze({ language: "ECMASCRIPT_2022", parser: "babel", moduleSystem: "ES_MODULE",
+        forbiddenSyntax: JAVASCRIPT_ONLY_FORBIDDEN_SYNTAX });
+    case ".cjs":
+      return Object.freeze({ language: "ECMASCRIPT_2022", parser: "babel", moduleSystem: "COMMONJS",
+        forbiddenSyntax: JAVASCRIPT_ONLY_FORBIDDEN_SYNTAX });
+    case ".js": case ".jsx":
+      return Object.freeze({ language: "ECMASCRIPT_2022", parser: "babel", moduleSystem: "REPOSITORY_CONVENTION",
+        forbiddenSyntax: JAVASCRIPT_ONLY_FORBIDDEN_SYNTAX });
+    case ".json":
+      return Object.freeze({ language: "JSON", parser: "json", moduleSystem: "DATA",
+        forbiddenSyntax: Object.freeze(["comments", "functions", "undefined", "trailing commas"]) });
+    default:
+      return Object.freeze({ language: "TYPESCRIPT", parser: "typescript", moduleSystem: "REPOSITORY_CONVENTION",
+        forbiddenSyntax: Object.freeze([]) });
+  }
+}
+
 function canonical(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
@@ -98,11 +133,7 @@ function sourceKind(path: string): ts.ScriptKind {
 }
 
 function prettierParser(path: string): "babel" | "json" | "typescript" {
-  switch (extname(path).toLowerCase()) {
-    case ".js": case ".cjs": case ".mjs": case ".jsx": return "babel";
-    case ".json": return "json";
-    default: return "typescript";
-  }
+  return nyxSourceLanguageContract(path).parser;
 }
 
 function parseable(path: string, source: string): boolean {
