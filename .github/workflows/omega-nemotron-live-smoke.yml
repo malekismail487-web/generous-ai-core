@@ -13,10 +13,20 @@ on:
           - contract-only
           - engineering-only
           - challenge-only
+          - frontier-challenge-only
           - context-only
           - context-repair-only
           - context-lines-only
           - context-comparison-only
+      configuration:
+        description: Cognition configuration for a frontier challenge
+        required: true
+        default: CURRENT
+        type: choice
+        options:
+          - CURRENT
+          - REASONING_ENABLED
+          - MINIMAL_REFERENCE
 
 permissions:
   contents: read
@@ -28,7 +38,7 @@ concurrency:
 jobs:
   nemotron-live-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ inputs.mode == 'context-comparison-only' && 20 || startsWith(inputs.mode, 'context-') && 15 || inputs.mode == 'challenge-only' && 12 || 5 }}
+    timeout-minutes: ${{ inputs.mode == 'context-comparison-only' && 20 || startsWith(inputs.mode, 'context-') && 15 || (inputs.mode == 'challenge-only' || inputs.mode == 'frontier-challenge-only') && 12 || 5 }}
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
@@ -67,27 +77,30 @@ jobs:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: npm run omega:nyx:live-engineering
       - name: Validate complex challenge oracle before paid inference
-        if: inputs.mode == 'challenge-only'
+        if: inputs.mode == 'challenge-only' || inputs.mode == 'frontier-challenge-only'
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaSchedulerChallenge.test.ts
       - name: Typecheck live evaluator scripts before paid inference
-        if: inputs.mode == 'challenge-only'
+        if: inputs.mode == 'challenge-only' || inputs.mode == 'frontier-challenge-only'
         run: >-
           node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext
           --moduleResolution Bundler --skipLibCheck --allowImportingTsExtensions --types node
           scripts/omega/nyx-scheduler-challenge.ts scripts/omegaSchedulerChallenge.test.ts
           scripts/omega/nyx-quality-v4-live-eval.ts
       - name: Run one bounded multi-file scheduler challenge
-        if: inputs.mode == 'challenge-only'
+        if: inputs.mode == 'challenge-only' || inputs.mode == 'frontier-challenge-only'
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NYX_QUALITY_SUITE: CHALLENGE
+          NYX_QUALITY_SUITE: ${{ inputs.mode == 'frontier-challenge-only' && 'FRONTIER_CHALLENGE' || 'CHALLENGE' }}
+          NYX_EXPERIMENT_VARIANT: ${{ inputs.configuration }}
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v4-live-eval.ts
       - name: Preserve sanitized challenge outcome including failures
-        if: always() && inputs.mode == 'challenge-only'
+        if: always() && (inputs.mode == 'challenge-only' || inputs.mode == 'frontier-challenge-only')
         uses: actions/upload-artifact@v4
         with:
           name: nyx-scheduler-challenge-${{ github.sha }}
-          path: ${{ runner.temp }}/nyx-quality-challenge-*.json
+          path: |
+            ${{ runner.temp }}/nyx-quality-challenge-*.json
+            ${{ runner.temp }}/nyx-quality-frontier_challenge-*.json
           if-no-files-found: warn
           retention-days: 14
       - name: Validate context integration and measurement oracles before paid inference

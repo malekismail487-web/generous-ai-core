@@ -40,7 +40,9 @@ import { NYX_CONTEXT_EXPERIMENT as CONTEXT_V1, NYX_CONTEXT_REPAIR_EXPERIMENT, NY
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V4";
+const EXPERIMENT_VARIANT = (process.env.NYX_EXPERIMENT_VARIANT?.trim() || "CURRENT") as NyxCognitionExperimentVariant;
 if (!["V4", "V5", "CHALLENGE", "FRONTIER_CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES", "COMPARISON", "CAPACITY_STATUS"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
+if (!["CURRENT", "REASONING_ENABLED", "MINIMAL_REFERENCE"].includes(EXPERIMENT_VARIANT)) throw new Error("unsupported_nyx_experiment_variant");
 const IS_CAPACITY_STATUS = SUITE_ID === "CAPACITY_STATUS";
 const IS_COMPARISON = SUITE_ID === "COMPARISON" || IS_CAPACITY_STATUS;
 const IS_CHALLENGE = SUITE_ID === "CHALLENGE" || SUITE_ID === "FRONTIER_CHALLENGE";
@@ -56,7 +58,7 @@ const IS_DIAGNOSTIC = IS_CHALLENGE || IS_CONTEXT;
 type EvaluationTask = (NyxQualityV4Task | NyxQualityV5Task | NyxSchedulerChallenge | NyxContextTask) & { comparisonArm?: NyxCognitionExperimentVariant };
 const HOLDOUT: readonly EvaluationTask[] = IS_COMPARISON ? NYX_CONFIGURATION_COMPARISON.arms.map((comparisonArm) => ({
   ...NYX_CONTEXT_TASKS[1], taskId: `NYX-CONFIG-${comparisonArm}`, comparisonArm,
-})) : IS_CONTEXT ? NYX_CONTEXT_TASKS : IS_CHALLENGE ? [NYX_SCHEDULER_CHALLENGE]
+})) : IS_CONTEXT ? NYX_CONTEXT_TASKS : IS_CHALLENGE ? [{ ...NYX_SCHEDULER_CHALLENGE, comparisonArm: EXPERIMENT_VARIANT }]
   : SUITE_ID === "V5" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
 const FROZEN_CORE = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_FROZEN_CORE : IS_COMPARISON ? NYX_CONFIGURATION_FROZEN_CORE : IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_FROZEN_CORE : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_FROZEN_CORE
   : IS_FRONTIER_CHALLENGE ? NYX_SCHEDULER_FRONTIER_FROZEN_CORE
@@ -551,6 +553,7 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
     qualityOracleVersion: QUALITY_ORACLE_VERSION, cognitionContractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
     sourceRepresentation: SOURCE_REPRESENTATION,
     intentCompilationMode: INTENT_COMPILATION_MODE,
+    experimentVariant: IS_CHALLENGE ? EXPERIMENT_VARIANT : IS_COMPARISON ? "MATCHED_THREE_ARM" : "CURRENT",
     cognitionContractDigest: CONTRACT_AT_START, taskFixtureDigests: TASK_FIXTURE_DIGESTS, frozenBeforeScoring: true,
     ...(IS_COMPARISON ? { comparisonControlsDigest: sha256(canonical(NYX_CONTEXT_TASKS[1])),
       comparisonScope: NYX_CONFIGURATION_COMPARISON.referenceScope,

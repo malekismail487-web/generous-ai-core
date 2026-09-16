@@ -2191,6 +2191,12 @@
       ]
     },
     {
+      "name": "NYX_EXPERIMENT_VARIANT",
+      "files": [
+        "scripts/omega/nyx-quality-v4-live-eval.ts"
+      ]
+    },
+    {
       "name": "NYX_QUALITY_SUITE",
       "files": [
         "scripts/omega/nyx-quality-holdout-live-eval.ts",

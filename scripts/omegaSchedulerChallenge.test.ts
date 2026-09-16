@@ -130,13 +130,14 @@ try {
   const transportStub = join(parent, "offline-transport.mjs");
   await writeFile(transportStub, `globalThis.fetch = async () => new Response(
     JSON.stringify({ error: "synthetic-request-rejection" }), { status: 400 });\n`);
-  const runOffline = (suite: string) => spawnSync(process.execPath, ["--experimental-strip-types", "--import", pathToFileURL(transportStub).href,
+  const runOffline = (suite: string, variant = "CURRENT") => spawnSync(process.execPath, ["--experimental-strip-types", "--import", pathToFileURL(transportStub).href,
     "--import", pathToFileURL(resolve("scripts/w0rs/register-typescript-loader.mjs")).href,
     resolve("scripts/omega/nyx-quality-v4-live-eval.ts")], {
     cwd: resolve("."), encoding: "utf8", timeout: 20_000, maxBuffer: 1_000_000,
     env: { PATH: process.env.PATH, SYSTEMROOT: process.env.SYSTEMROOT, TEMP: process.env.TEMP,
       TMP: process.env.TMP, TMPDIR: process.env.TMPDIR, RUNNER_TEMP: parent,
       OMEGA_ALLOW_NVIDIA_NETWORK: "1", NYX_QUALITY_SUITE: suite,
+      NYX_EXPERIMENT_VARIANT: variant,
       NVIDIA_API_KEY: "synthetic-offline-not-a-credential" },
   });
   const historical = runOffline("CHALLENGE");
@@ -152,6 +153,19 @@ try {
     && frontierReport.sourceRepresentation === "LINES"
     && frontierReport.tasks[0].sourceRepresentation === "LINES",
   "current frontier scheduler epoch reaches live driver logic and preserves provider failure as insufficient evidence");
+  const reasoningFrontier = runOffline("FRONTIER_CHALLENGE", "REASONING_ENABLED");
+  const reasoningLine = reasoningFrontier.stdout.split(/\r?\n/)
+    .find((item) => item.startsWith("NYX_QUALITY_FRONTIER_CHALLENGE_HOLDOUT {"));
+  const reasoningReport = reasoningLine
+    ? JSON.parse(reasoningLine.slice("NYX_QUALITY_FRONTIER_CHALLENGE_HOLDOUT ".length)) : null;
+  check(reasoningFrontier.status === 1 && reasoningReport?.experimentVariant === "REASONING_ENABLED"
+    && reasoningReport?.tasks[0].comparisonArm === "REASONING_ENABLED"
+    && reasoningReport?.tasks[0].providerDiagnostics[0].experimentVariant === "REASONING_ENABLED",
+  "issuer-selected frontier configuration is attributable across report, task and provider evidence");
+  const workflow = await readFile(resolve(".github/workflows/omega-nemotron-live-smoke.yml"), "utf8");
+  check(workflow.includes("frontier-challenge-only") && workflow.includes("NYX_EXPERIMENT_VARIANT: ${{ inputs.configuration }}")
+    && workflow.includes("NYX_QUALITY_SUITE: ${{ inputs.mode == 'frontier-challenge-only' && 'FRONTIER_CHALLENGE' || 'CHALLENGE' }}"),
+  "manual workflow exposes the same frozen frontier task under an explicit cognition configuration only");
   const previousFeedbackEpoch = runOffline("CONTEXT_REPAIR");
   check(previousFeedbackEpoch.status === 1 && previousFeedbackEpoch.stderr.includes("context_repair_frozen_core_digest_mismatch"),
     "typed source experiment cannot silently rescore the previous measurement-feedback epoch");
