@@ -2185,6 +2185,12 @@
       ]
     },
     {
+      "name": "NYX_CONNECTOME_CACHE_ROOT",
+      "files": [
+        "scripts/omega/verify-biological-connectome-cache.ts"
+      ]
+    },
+    {
       "name": "NYX_CONTRACT_TRIALS",
       "files": [
         "scripts/omega/nyx-contract-compliance.ts"
@@ -2199,6 +2205,7 @@
     {
       "name": "NYX_QUALITY_SUITE",
       "files": [
+        "scripts/omega/nyx-connectome-ablation-live-eval.ts",
         "scripts/omega/nyx-quality-holdout-live-eval.ts",
         "scripts/omega/nyx-quality-v4-live-eval.ts",
         "scripts/omega/nyx-quality-v5-live-eval.ts"
