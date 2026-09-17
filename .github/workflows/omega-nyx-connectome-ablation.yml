@@ -1,0 +1,70 @@
+name: Omega NYX matched connectome ablation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - sol/omega-institutional-spine
+    paths:
+      - .github/workflows/omega-nyx-connectome-ablation.yml
+      - scripts/omega/nyx-quality-v4-live-eval.ts
+      - scripts/omega/nyx-connectome-ablation-live-eval.ts
+      - scripts/omega/nyx-connectome-ablation.ts
+      - scripts/omega/nyx-connectome-ablation-analysis.ts
+      - scripts/omega/nyx-quality-v5-fixtures.ts
+      - scripts/omegaNyxConnectomeCognitionAdapter.test.ts
+      - scripts/omegaNyxConnectomeAblationAnalysis.test.ts
+      - src/lib/codelab/connectome/nyxConnectomeCognitionAdapter.ts
+      - src/lib/codelab/connectome/epistemicMicrocircuit.ts
+      - src/lib/codelab/connectome/cognitivePopulationRuntime.ts
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-nyx-connectome-ablation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  matched-connectome-ablation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      NYX_QUALITY_SUITE: CONNECTOME_ABLATION
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Confirm encrypted model credential is available
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Verify connectome adapter, provider, evaluator, and authority contracts
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxConnectomeCognitionAdapter.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxConnectomeAblationAnalysis.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaDigitalNeuronStability.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaVerificationIntegrity.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxEngineeringQualityAssurance.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaCandidateEngineeringAdmission.test.ts
+          npm run typecheck:ratchet
+      - name: Run frozen matched A/B/C capability experiment
+        run: npm run omega:nyx:connectome-ablation
+      - name: Upload sanitized ablation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-nyx-connectome-ablation-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-quality-connectome_ablation-*.json
+          if-no-files-found: error
