@@ -1,0 +1,53 @@
+import type { BiologicalSourceProvenance } from "./biologicalCircuitIR";
+
+export const NYX_BIOLOGICAL_SOURCE_REGISTRY = Object.freeze({
+  schemaVersion: 1,
+  corpusStatus: "PARTIAL_JUST_IN_TIME_NOT_LOSSLESSLY_CERTIFIED",
+  rawDataCommittedToProductRepository: false,
+  sources: Object.freeze({
+    flyvisFib25Fib19: Object.freeze({
+      datasetId: "flyvis:fib25-fib19-v2.2",
+      organism: "Drosophila melanogaster",
+      nervousSystemRegion: "optic-lobe visual system",
+      sourceRepository: "https://github.com/TuragaLab/flyvis",
+      sourceCommit: "92b3845cc426dd309a1a0e1b3890156c42e14021",
+      artifactPath: "flyvis/connectome/fib25-fib19_v2.2.json",
+      artifactSha256: "6779065467F70CEF14E8F2F1005EFD4830FD29C00795C103756A6AF60607F825".toLowerCase(),
+      licenseId: "MIT",
+      evidenceClass: "E2",
+      sourceConfidence: 0.95,
+      retrievedAt: "2026-09-17T00:00:00.000Z",
+    } satisfies BiologicalSourceProvenance),
+    openWormWhiteWhole: Object.freeze({
+      datasetId: "openworm:white-whole",
+      organism: "Caenorhabditis elegans",
+      nervousSystemRegion: "whole nervous system",
+      sourceRepository: "https://github.com/openworm/ConnectomeToolbox",
+      sourceCommit: "b9c0b4a7bc2ccf47d3ce7aac624e1b3e2ea86254",
+      artifactPath: "cect/cache/White_whole.json",
+      artifactSha256: "D9AE79E870D3FFEC97074272BC5B1E52C90C6E27143E982F14F31C6601B058F3".toLowerCase(),
+      licenseId: "MIT",
+      evidenceClass: "E2",
+      sourceConfidence: 0.9,
+      retrievedAt: "2026-09-17T00:00:00.000Z",
+    } satisfies BiologicalSourceProvenance),
+    flyWireWholeBrain: Object.freeze({
+      datasetId: "flywire:whole-brain",
+      organism: "Drosophila melanogaster",
+      nervousSystemRegion: "adult whole brain",
+      sourceRepository: "https://github.com/seung-lab/FlyConnectome",
+      sourceCommit: "9b1790b5553082e1f57921790564c7aae7c9c99a",
+      accessState: "METADATA_CLIENT_CACHED_BULK_DATA_NOT_INGESTED",
+      admissionState: "DEFERRED_PENDING_DATA_TERMS_AND_EXACT_ARTIFACT_PROVENANCE",
+    }),
+    micronsCortical: Object.freeze({
+      datasetId: "microns:minnie65",
+      organism: "Mus musculus",
+      nervousSystemRegion: "visual cortex",
+      sourceRepository: "https://github.com/cajal/microns-nda-access",
+      sourceCommit: "8cd39b7bef38cd319759ae0cb38e3919f339c6b5",
+      accessState: "ACCESS_INFRASTRUCTURE_CACHED_BULK_DATABASE_NOT_DOWNLOADED",
+      admissionState: "DEFERRED_DUE_TO_SCALE_AND_NO_CURRENT_CAUSAL_NEED",
+    }),
+  }),
+} as const);
