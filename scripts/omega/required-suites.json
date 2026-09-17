@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/44",
+  "suiteVersion": "omega-institutional-suite/45",
   "criticalSuites": [
+    "OMEGA-DIGITAL-NEURON-MICROCIRCUIT",
     "OMEGA-FRONTIER-REASONING-GAUNTLET",
     "OMEGA-THEORY-NETWORK",
     "OMEGA-RESEARCH-PARTY",
@@ -60,6 +61,7 @@
   ],
   "informationalSuites": [],
   "requiredSuites": [
+    { "suiteId": "OMEGA-DIGITAL-NEURON-MICROCIRCUIT", "file": "scripts/omegaDigitalNeuronMicrocircuit.test.ts" },
     { "suiteId": "OMEGA-FRONTIER-REASONING-GAUNTLET", "file": "scripts/omegaFrontierReasoningGauntlet.test.ts" },
     { "suiteId": "OMEGA-THEORY-NETWORK", "file": "scripts/omegaTheoryNetwork.test.ts" },
     { "suiteId": "OMEGA-REASONING-OBLIGATION-GRAPH", "file": "scripts/omegaReasoningObligationGraph.test.ts" },
