@@ -201,6 +201,7 @@ function evidence(evidenceId: string, channelId: string, root: string, group = r
   const signal: NeuronSignal = Object.freeze({ signalId: "signal-1", cycle: 1, sourceId: "external:test",
     targetId: identity.neuronId, kind: "EVIDENCE", compartment: "SUPPORT", magnitude: 1, confidence: 1,
     evidenceClass: "E3", provenanceRoot: "oracle-root-a", evidenceRoots: ["oracle-root-a"],
+    evidenceCorrelationGroups: ["oracle-a"],
     correlationGroup: "oracle-a", candidateBinding, expiresAfterCycle: 2, grantsAuthority: false });
   const result = kernel.evaluate([signal], { cycle: 1, candidateBinding, correlationDiscount: 0.3,
     globalActivityFraction: 0 });
@@ -218,6 +219,7 @@ function evidence(evidenceId: string, channelId: string, root: string, group = r
   const malformed = { signalId: "malformed", cycle: 0, sourceId: "external:test", targetId: firstTarget,
     kind: "EVIDENCE", compartment: "SUPPORT", magnitude: 1, confidence: 1, evidenceClass: "E3",
     provenanceRoot: "root", evidenceRoots: ["root"], correlationGroup: "group", candidateBinding,
+    evidenceCorrelationGroups: ["group"],
     expiresAfterCycle: 0, grantsAuthority: false, operation: "WRITE_REPOSITORY" } as unknown as NeuronSignal;
   check(throws(() => runtime.inject(malformed), "external_neuron_signal_invalid"),
     "undeclared executable fields cannot smuggle authority through a neural signal");

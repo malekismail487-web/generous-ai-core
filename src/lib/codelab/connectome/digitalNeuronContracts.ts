@@ -110,6 +110,8 @@ export interface NeuronSignal {
   readonly provenanceRoot: string;
   /** Original independent evidence roots retained through derived neural signals. */
   readonly evidenceRoots: readonly string[];
+  /** Original correlation groups retained so derived signals cannot manufacture independence. */
+  readonly evidenceCorrelationGroups: readonly string[];
   /** Signals in one correlation group are discounted instead of counted as independent votes. */
   readonly correlationGroup: string;
   readonly candidateBinding: string;
@@ -137,6 +139,7 @@ export interface DendriticIntegration {
   readonly distinctRoots: number;
   readonly distinctCorrelationGroups: number;
   readonly admittedProvenanceRoots: readonly string[];
+  readonly admittedCorrelationGroups: readonly string[];
   readonly admittedSignalIds: readonly string[];
   readonly rejectedSignalIds: readonly string[];
 }
@@ -194,6 +197,7 @@ export interface NeuronFiring {
   readonly role: NeuronRole;
   readonly semanticFamily: string;
   readonly evidenceRoots: readonly string[];
+  readonly evidenceCorrelationGroups: readonly string[];
   readonly integrationDigest: string;
   readonly grantsAuthority: false;
 }
@@ -287,6 +291,7 @@ export interface PopulationCycleRecord {
   readonly activeFraction: number;
   readonly quiescent: boolean;
   readonly firingIds: readonly string[];
+  readonly firings: readonly NeuronFiring[];
   readonly digest: string;
 }
 
@@ -423,7 +428,7 @@ export function validPopulationGenome(value: PopulationGenome): boolean {
 
 export function validNeuronSignal(value: NeuronSignal, candidateBinding: string): boolean {
   return Boolean(value && connectomeKeys(value, ["signalId", "cycle", "sourceId", "targetId", "kind", "compartment",
-    "magnitude", "confidence", "evidenceClass", "provenanceRoot", "evidenceRoots", "correlationGroup",
+    "magnitude", "confidence", "evidenceClass", "provenanceRoot", "evidenceRoots", "evidenceCorrelationGroups", "correlationGroup",
     "candidateBinding", "expiresAfterCycle", "grantsAuthority"])
     && connectomeId(value.signalId) && safeInteger(value.cycle, 0, Number.MAX_SAFE_INTEGER)
     && connectomeId(value.sourceId) && connectomeId(value.targetId) && NEURON_SIGNAL_KINDS.includes(value.kind)
@@ -432,7 +437,12 @@ export function validNeuronSignal(value: NeuronSignal, candidateBinding: string)
     && connectomeId(value.provenanceRoot) && Array.isArray(value.evidenceRoots)
     && value.evidenceRoots.length > 0 && value.evidenceRoots.length <= 32
     && value.evidenceRoots.every((root) => connectomeId(root))
-    && new Set(value.evidenceRoots).size === value.evidenceRoots.length && connectomeId(value.correlationGroup)
+    && new Set(value.evidenceRoots).size === value.evidenceRoots.length
+    && Array.isArray(value.evidenceCorrelationGroups) && value.evidenceCorrelationGroups.length > 0
+    && value.evidenceCorrelationGroups.length <= 32
+    && value.evidenceCorrelationGroups.every((group) => connectomeId(group))
+    && new Set(value.evidenceCorrelationGroups).size === value.evidenceCorrelationGroups.length
+    && connectomeId(value.correlationGroup)
     && value.candidateBinding === candidateBinding && safeInteger(value.expiresAfterCycle, value.cycle, Number.MAX_SAFE_INTEGER)
     && value.grantsAuthority === false);
 }

@@ -5,13 +5,17 @@ import {
   connectomeKeys,
   immutableConnectomeValue,
   safeInteger,
+  validNeuronGenome,
   validPopulationGenome,
+  validPopulationLimits,
+  validPopulationPolicy,
   type CompiledPopulation,
   type DigitalNeuronGenome,
   type DigitalNeuronIdentity,
   type NeuronReplicationRequest,
   type NeuronSynapse,
   type PopulationBlueprint,
+  type PopulationGenome,
   type SynapseProjectionRule,
 } from "./digitalNeuronContracts";
 
@@ -160,11 +164,96 @@ readonly { readonly start: number; readonly end: number }[] {
 }
 
 /**
- * Compiles a bounded resident population from a potentially enormous address
- * space. Compilation creates no model calls, tools, filesystem authority, or
- * autonomous background execution.
+ * Revalidates the compiler/runtime trust boundary. A CompiledPopulation is a
+ * serializable artifact and must not become trusted merely because TypeScript
+ * says it has the right shape.
  */
-export function compileCognitivePopulation(blueprint: PopulationBlueprint): CompiledPopulation {
+export function validCompiledPopulation(value: CompiledPopulation): boolean {
+  try {
+    if (!value || !connectomeKeys(value, ["populationId", "candidateBinding", "addressCapacity", "identities",
+      "templateByOrdinal", "synapses", "limits", "policy", "authority", "populationDigest",
+      "genomesByTemplate", "outgoingRanges"])
+      || !connectomeId(value.populationId) || !/^[a-f0-9]{64}$/.test(value.populationDigest)
+      || !/^[a-f0-9]{40}$|^[a-f0-9]{64}$/.test(value.candidateBinding)
+      || !/^[1-9][0-9]{0,29}$/.test(value.addressCapacity)
+      || value.authority !== DIGITAL_NEURON_AUTHORITY || !validPopulationLimits(value.limits)
+      || !validPopulationPolicy(value.policy) || !Array.isArray(value.identities)
+      || !Array.isArray(value.templateByOrdinal) || !Array.isArray(value.synapses)
+      || !Array.isArray(value.outgoingRanges)
+      || value.identities.length < 1 || value.identities.length > value.limits.maximumMaterializedNeurons
+      || value.templateByOrdinal.length !== value.identities.length
+      || value.outgoingRanges.length !== value.identities.length
+      || value.synapses.length > value.limits.maximumSynapses
+      || !value.genomesByTemplate || typeof value.genomesByTemplate !== "object"
+      || Array.isArray(value.genomesByTemplate)) return false;
+
+    const templateKeys = Object.keys(value.genomesByTemplate);
+    if (templateKeys.length < 1 || templateKeys.length > 1_024
+      || !templateKeys.every((key) => connectomeId(key)
+        && value.genomesByTemplate[key]?.templateId === key
+        && validNeuronGenome(value.genomesByTemplate[key]))) return false;
+
+    const capacity = BigInt(value.addressCapacity);
+    const identityIds = new Set<string>();
+    const guardianIds = new Set<string>();
+    const ordinals = new Set<number>();
+    let priorOrdinal = -1;
+    for (let index = 0; index < value.identities.length; index += 1) {
+      const identity = value.identities[index];
+      const templateId = value.templateByOrdinal[index];
+      const genome = value.genomesByTemplate[templateId];
+      if (!identity || !connectomeKeys(identity, ["neuronId", "guardianId", "populationId", "ordinal",
+        "generation", "genomeDigest", "lineageDigest"])
+        || !connectomeId(identity.neuronId) || !connectomeId(identity.guardianId)
+        || identity.populationId !== value.populationId || !safeInteger(identity.ordinal, 0, Number.MAX_SAFE_INTEGER)
+        || identity.ordinal <= priorOrdinal || BigInt(identity.ordinal) >= capacity
+        || !safeInteger(identity.generation, 0, 1_000_000) || !genome
+        || identity.genomeDigest !== connectomeDigest(genome) || !/^[a-f0-9]{64}$/.test(identity.lineageDigest)
+        || identityIds.has(identity.neuronId) || guardianIds.has(identity.guardianId)
+        || ordinals.has(identity.ordinal)) return false;
+      identityIds.add(identity.neuronId);
+      guardianIds.add(identity.guardianId);
+      ordinals.add(identity.ordinal);
+      priorOrdinal = identity.ordinal;
+    }
+
+    const synapseIds = new Set<string>();
+    for (const synapse of value.synapses) {
+      if (!synapse || !connectomeKeys(synapse, ["synapseId", "sourceId", "targetId", "targetCompartment",
+        "signalKind", "weight", "delayCycles", "plastic", "relation"])
+        || !/^[a-f0-9]{64}$/.test(synapse.synapseId) || !identityIds.has(synapse.sourceId)
+        || !identityIds.has(synapse.targetId)
+        || !["SUPPORT", "CONTRADICTION", "CONTEXT", "NOVELTY", "UNCERTAINTY", "INHIBITION", "PREDICTION_ERROR"]
+          .includes(synapse.targetCompartment)
+        || !["EVIDENCE", "EXCITATION", "INHIBITION", "CONTRADICTION", "UNCERTAINTY", "PREDICTION_ERROR", "REPLAY"]
+          .includes(synapse.signalKind)
+        || typeof synapse.weight !== "number" || !Number.isFinite(synapse.weight)
+        || synapse.weight < -16 || synapse.weight > 16 || !safeInteger(synapse.delayCycles, 0, 1_000)
+        || typeof synapse.plastic !== "boolean"
+        || !["SUPPORTS", "CONTRADICTS", "INHIBITS", "REFINES", "RECALLS", "PROPOSES"].includes(synapse.relation)
+        || synapseIds.has(synapse.synapseId)) return false;
+      synapseIds.add(synapse.synapseId);
+    }
+
+    const ordinalById = new Map(value.identities.map((identity, index) => [identity.neuronId, index]));
+    const expectedSynapses = sortSynapses(value.synapses, ordinalById);
+    if (expectedSynapses.some((synapse, index) => synapse.synapseId !== value.synapses[index].synapseId)) return false;
+    const expectedRanges = outgoingRanges(value.identities, value.synapses);
+    if (value.outgoingRanges.some((range, index) => !range
+      || !connectomeKeys(range, ["start", "end"])
+      || !safeInteger(range.start, 0, value.synapses.length)
+      || !safeInteger(range.end, range.start, value.synapses.length)
+      || range.start !== expectedRanges[index].start || range.end !== expectedRanges[index].end)) return false;
+
+    const digestPayload = { populationId: value.populationId, candidateBinding: value.candidateBinding,
+      addressCapacity: value.addressCapacity, identities: value.identities,
+      templateByOrdinal: value.templateByOrdinal, synapses: value.synapses,
+      limits: value.limits, policy: value.policy, authority: DIGITAL_NEURON_AUTHORITY };
+    return value.populationDigest === connectomeDigest(digestPayload);
+  } catch { return false; }
+}
+
+function validatedBlueprint(blueprint: PopulationBlueprint): PopulationGenome {
   if (!blueprint || !connectomeKeys(blueprint, ["genome", "replications", "projections"])
     || !validPopulationGenome(blueprint.genome)
     || !Array.isArray(blueprint.replications) || blueprint.replications.length < 1
@@ -178,7 +267,27 @@ export function compileCognitivePopulation(blueprint: PopulationBlueprint): Comp
     throw new Error("population_blueprint_invalid");
   }
   const requested = blueprint.replications.reduce((sum, item) => sum + item.count, 0);
-  if (requested > genome.limits.maximumMaterializedNeurons) throw new Error("population_resident_budget_exhausted");
+  if (!Number.isSafeInteger(requested) || requested > genome.limits.maximumMaterializedNeurons) {
+    throw new Error("population_resident_budget_exhausted");
+  }
+  const capacity = BigInt(genome.addressCapacity);
+  for (const replication of blueprint.replications) {
+    const lastOrdinal = BigInt(replication.ordinalOffset)
+      + BigInt(replication.count - 1) * BigInt(replication.ordinalStride);
+    if (lastOrdinal >= capacity || lastOrdinal > BigInt(Number.MAX_SAFE_INTEGER)) {
+      throw new Error("neuron_address_capacity_exhausted");
+    }
+  }
+  return genome;
+}
+
+/**
+ * Compiles a bounded resident population from a potentially enormous address
+ * space. Compilation creates no model calls, tools, filesystem authority, or
+ * autonomous background execution.
+ */
+export function compileCognitivePopulation(blueprint: PopulationBlueprint): CompiledPopulation {
+  const genome = validatedBlueprint(blueprint);
 
   const capacity = BigInt(genome.addressCapacity);
   const genomesByTemplate = new Map(genome.neuronTemplates.map((template) => [template.templateId, template]));
@@ -229,12 +338,12 @@ export function estimatePopulationFootprint(blueprint: PopulationBlueprint): Rea
   activeModelExecutions: 0;
   grantsAuthority: false;
 }> {
-  if (!blueprint || !validPopulationGenome(blueprint.genome)) throw new Error("population_blueprint_invalid");
+  const genome = validatedBlueprint(blueprint);
   const materializedNeurons = blueprint.replications.reduce((sum, item) => sum + item.count, 0);
   const counts = new Map(blueprint.replications.map((item) => [item.templateId, item.count]));
   const upperBoundSynapses = blueprint.projections.reduce((sum, rule) =>
     sum + (counts.get(rule.sourceTemplateId) ?? 0) * rule.fanout, 0);
-  const fraction = Number(BigInt(materializedNeurons) * 1_000_000_000n / BigInt(blueprint.genome.addressCapacity)) / 1_000_000_000;
-  return Object.freeze({ materializedNeurons, upperBoundSynapses, addressCapacity: blueprint.genome.addressCapacity,
+  const fraction = Number(BigInt(materializedNeurons) * 1_000_000_000n / BigInt(genome.addressCapacity)) / 1_000_000_000;
+  return Object.freeze({ materializedNeurons, upperBoundSynapses, addressCapacity: genome.addressCapacity,
     materializationFraction: fraction, activeModelExecutions: 0, grantsAuthority: false });
 }

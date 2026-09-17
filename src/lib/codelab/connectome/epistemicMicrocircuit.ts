@@ -74,8 +74,11 @@ export interface HypothesisPopulationAssessment {
   readonly firedCells: number;
   readonly averageGuardianReliability: number;
   readonly evidenceRoots: readonly string[];
+  readonly evidenceCorrelationGroups: readonly string[];
   readonly proposedAction: string;
   readonly actionCellsFired: number;
+  readonly actionEvidenceRoots: readonly string[];
+  readonly actionEvidenceCorrelationGroups: readonly string[];
 }
 
 export interface EpistemicCircuitDecision {
@@ -85,6 +88,7 @@ export interface EpistemicCircuitDecision {
   readonly confidenceMargin: number;
   readonly assessments: readonly HypothesisPopulationAssessment[];
   readonly independentEvidenceRoots: number;
+  readonly independentEvidenceCorrelationGroups: number;
   readonly run: PopulationRunResult;
   readonly authority: typeof DIGITAL_NEURON_AUTHORITY;
   readonly grantsAuthority: false;
@@ -329,6 +333,7 @@ export class EpistemicMicrocircuit {
         compartment: "SUPPORT", magnitude: packet.magnitude, confidence: packet.confidence,
         evidenceClass: packet.evidenceClass, provenanceRoot: packet.provenanceRoot,
         evidenceRoots: [packet.provenanceRoot], correlationGroup: packet.correlationGroup,
+        evidenceCorrelationGroups: [packet.correlationGroup],
         candidateBinding: packet.candidateBinding, expiresAfterCycle: this.#runtime.cycle + 2,
         grantsAuthority: false,
       });
@@ -346,14 +351,22 @@ export class EpistemicMicrocircuit {
   #decision(run: PopulationRunResult): EpistemicCircuitDecision {
     const ids = templateIds(this.#definition);
     const firedIds = new Set(run.snapshot.cycleRecords.flatMap((record) => record.firingIds));
+    const firings = run.snapshot.cycleRecords.flatMap((record) => record.firings);
     const allRoots = new Set(this.#evidencePackets.map((packet) => packet.provenanceRoot));
+    const allGroups = new Set(this.#evidencePackets.map((packet) => packet.correlationGroup));
     const assessments = this.#definition.hypotheses.map((hypothesis): HypothesisPopulationAssessment => {
       const hypothesisIds = this.#templateNeurons.get(ids.hypothesis(hypothesis.hypothesisId)) ?? [];
       const actionIds = this.#templateNeurons.get(ids.action(hypothesis.hypothesisId)) ?? [];
       const states = hypothesisIds.map((id) => this.#runtime.neuron(id));
       const activations = states.map((state) => state.activation);
-      const roots = new Set(states.flatMap((state) => state.lastIntegration
-        .flatMap((integration) => integration.admittedProvenanceRoots)));
+      const hypothesisIdSet = new Set(hypothesisIds);
+      const actionIdSet = new Set(actionIds);
+      const hypothesisFirings = firings.filter((firing) => hypothesisIdSet.has(firing.neuronId));
+      const actionFirings = firings.filter((firing) => actionIdSet.has(firing.neuronId));
+      const roots = new Set(hypothesisFirings.flatMap((firing) => firing.evidenceRoots));
+      const groups = new Set(hypothesisFirings.flatMap((firing) => firing.evidenceCorrelationGroups));
+      const actionRoots = new Set(actionFirings.flatMap((firing) => firing.evidenceRoots));
+      const actionGroups = new Set(actionFirings.flatMap((firing) => firing.evidenceCorrelationGroups));
       return immutableConnectomeValue({ hypothesisId: hypothesis.hypothesisId, statement: hypothesis.statement,
         meanActivation: rounded(activations.reduce((sum, value) => sum + value, 0) / Math.max(1, activations.length)),
         peakActivation: rounded(Math.max(0, ...activations)),
@@ -361,8 +374,11 @@ export class EpistemicMicrocircuit {
         firedCells: hypothesisIds.filter((id) => firedIds.has(id)).length,
         averageGuardianReliability: rounded(states.reduce((sum, state) =>
           sum + state.guardian.calibratedReliability, 0) / Math.max(1, states.length)),
-        evidenceRoots: [...roots].sort(), proposedAction: hypothesis.proposedAction,
-        actionCellsFired: actionIds.filter((id) => firedIds.has(id)).length });
+        evidenceRoots: [...roots].sort(), evidenceCorrelationGroups: [...groups].sort(),
+        proposedAction: hypothesis.proposedAction,
+        actionCellsFired: actionIds.filter((id) => firedIds.has(id)).length,
+        actionEvidenceRoots: [...actionRoots].sort(),
+        actionEvidenceCorrelationGroups: [...actionGroups].sort() });
     }).sort((left, right) => right.peakActivation - left.peakActivation
       || right.meanActivation - left.meanActivation || left.hypothesisId.localeCompare(right.hypothesisId));
 
@@ -370,7 +386,8 @@ export class EpistemicMicrocircuit {
     const second = assessments[1];
     const margin = rounded((first?.peakActivation ?? 0) - (second?.peakActivation ?? 0));
     const actionReady = Boolean(first && first.actionCellsFired > 0
-      && first.evidenceRoots.length >= this.#compiled.policy.requireIndependentRootsForAction);
+      && first.actionEvidenceRoots.length >= this.#compiled.policy.requireIndependentRootsForAction
+      && first.actionEvidenceCorrelationGroups.length >= this.#compiled.policy.requireIndependentRootsForAction);
     const conflicted = Boolean(first && second && Math.abs(margin) < this.#compiled.policy.winnerMargin
       && first.peakActivation >= 0.52 && second.peakActivation >= 0.52);
     const state: EpistemicCircuitDecision["state"] = conflicted ? "CONFLICTED"
@@ -378,6 +395,7 @@ export class EpistemicMicrocircuit {
     return immutableConnectomeValue({ state, selectedHypothesis: state === "SUPPORTED_CANDIDATE" ? first.hypothesisId : null,
       selectedAction: state === "SUPPORTED_CANDIDATE" ? first.proposedAction : null,
       confidenceMargin: margin, assessments, independentEvidenceRoots: allRoots.size,
+      independentEvidenceCorrelationGroups: allGroups.size,
       run, authority: DIGITAL_NEURON_AUTHORITY, grantsAuthority: false });
   }
 

@@ -18,6 +18,7 @@ import {
   emittedSignalFromFiring,
   plasticSynapseWeight,
 } from "./digitalNeuronKernel";
+import { validCompiledPopulation } from "./cognitivePopulationCompiler";
 
 export interface PopulationRunResult {
   readonly state: "QUIESCENT" | "CYCLE_LIMIT_REACHED";
@@ -86,12 +87,10 @@ export class CognitivePopulationRuntime {
   #suppressedFirings = 0;
   #emittedSignals = 0;
   #previousActiveFraction = 0;
+  #pendingSignals = 0;
 
   constructor(compiled: CompiledPopulation) {
-    if (!compiled || compiled.authority !== DIGITAL_NEURON_AUTHORITY
-      || compiled.identities.length > compiled.limits.maximumMaterializedNeurons
-      || compiled.synapses.length > compiled.limits.maximumSynapses
-      || compiled.outgoingRanges.length !== compiled.identities.length) throw new Error("compiled_population_invalid");
+    if (!validCompiledPopulation(compiled)) throw new Error("compiled_population_invalid");
     this.#compiled = compiled;
     this.#ordinalById = new Map(compiled.identities.map((identity, ordinal) => [identity.neuronId, ordinal]));
     this.#kernels = Object.freeze(compiled.identities.map((identity, ordinal) => {
@@ -112,10 +111,18 @@ export class CognitivePopulationRuntime {
     this.#trace.push(traceEvent(kind, payload));
   }
 
+  #assertTraceCapacity(additional: number): void {
+    if (!Number.isSafeInteger(additional) || additional < 0
+      || this.#trace.length + additional > this.#compiled.limits.maximumTraceEvents) {
+      throw new Error("population_trace_budget_exhausted");
+    }
+  }
+
   #enqueue(signal: NeuronSignal, external: boolean): void {
     if (this.#allSignalIds.has(signal.signalId)) throw new Error("population_signal_duplicate");
-    const pending = [...this.#signalQueue.values()].reduce((sum, bucket) => sum + bucket.length, 0);
-    if (pending >= this.#compiled.limits.maximumQueuedSignals) throw new Error("population_signal_queue_exhausted");
+    if (this.#pendingSignals >= this.#compiled.limits.maximumQueuedSignals) {
+      throw new Error("population_signal_queue_exhausted");
+    }
     this.#allSignalIds.add(signal.signalId);
     if (external) this.#externalSignalIds.add(signal.signalId);
     const bucket = this.#signalQueue.get(signal.cycle) ?? [];
@@ -123,15 +130,18 @@ export class CognitivePopulationRuntime {
     bucket.sort((left, right) => left.targetId.localeCompare(right.targetId)
       || left.signalId.localeCompare(right.signalId));
     this.#signalQueue.set(signal.cycle, bucket);
+    this.#pendingSignals += 1;
   }
 
   inject(signal: NeuronSignal): void {
     if (!validNeuronSignal(signal, this.#compiled.candidateBinding)
       || !this.#ordinalById.has(signal.targetId) || signal.cycle < this.#cycle
+      || signal.cycle >= this.#compiled.limits.maximumCyclesPerRun
       || !signal.sourceId.startsWith("external:")) throw new Error("external_neuron_signal_invalid");
     if (this.#externalSignals >= this.#compiled.limits.maximumExternalSignals) {
       throw new Error("population_external_signal_budget_exhausted");
     }
+    this.#assertTraceCapacity(1);
     this.#enqueue(signal, true);
     this.#externalSignals += 1;
     this.#record("EXTERNAL_SIGNAL_ADMITTED", { signalId: signal.signalId, targetId: signal.targetId,
@@ -165,14 +175,17 @@ export class CognitivePopulationRuntime {
       }
       seenIntegrations.add(candidate.firing.integrationDigest);
       if (candidate.genome.role === "ACTION_PROPOSAL"
-        && candidate.firing.evidenceRoots.length < this.#compiled.policy.requireIndependentRootsForAction) {
+        && (candidate.firing.evidenceRoots.length < this.#compiled.policy.requireIndependentRootsForAction
+          || candidate.firing.evidenceCorrelationGroups.length
+            < this.#compiled.policy.requireIndependentRootsForAction)) {
         suppressed.push({ candidate, reason: "COMPETITION" });
         continue;
       }
       if (candidate.genome.competitionGroup) {
-        const group = groupCandidates.get(candidate.genome.competitionGroup) ?? [];
+        const competitionKey = `${candidate.genome.role}:${candidate.genome.competitionGroup}`;
+        const group = groupCandidates.get(competitionKey) ?? [];
         group.push(candidate);
-        groupCandidates.set(candidate.genome.competitionGroup, group);
+        groupCandidates.set(competitionKey, group);
       } else accepted.push(candidate);
     }
 
@@ -223,7 +236,6 @@ export class CognitivePopulationRuntime {
   step(): PopulationCycleRecord {
     if (this.#cycle >= this.#compiled.limits.maximumCyclesPerRun) throw new Error("population_cycle_budget_exhausted");
     const signals = this.#signalQueue.get(this.#cycle) ?? [];
-    this.#signalQueue.delete(this.#cycle);
     const byTarget = new Map<string, NeuronSignal[]>();
     let rejected = 0;
     for (const signal of signals) {
@@ -232,6 +244,21 @@ export class CognitivePopulationRuntime {
       bucket.push(signal);
       byTarget.set(signal.targetId, bucket);
     }
+
+    // Preflight every bounded side effect before mutating neuron state. The
+    // outgoing bound is conservative but makes budget failure transactional.
+    const maximumEmissions = [...byTarget.keys()].reduce((sum, targetId) => {
+      const ordinal = this.#ordinalById.get(targetId)!;
+      const range = this.#compiled.outgoingRanges[ordinal];
+      return sum + Math.max(0, range.end - range.start);
+    }, 0);
+    if (this.#pendingSignals - signals.length + maximumEmissions
+      > this.#compiled.limits.maximumQueuedSignals) {
+      throw new Error("population_step_queue_budget_exhausted");
+    }
+    this.#assertTraceCapacity(byTarget.size + 1);
+    this.#signalQueue.delete(this.#cycle);
+    this.#pendingSignals -= signals.length;
 
     const firings: NeuronFiring[] = [];
     let admitted = 0;
@@ -273,11 +300,12 @@ export class CognitivePopulationRuntime {
     const activeFraction = this.#compiled.identities.length === 0 ? 0
       : selected.accepted.length / this.#compiled.identities.length;
     this.#previousActiveFraction = activeFraction;
-    const futureSignals = [...this.#signalQueue.values()].reduce((sum, bucket) => sum + bucket.length, 0);
+    const futureSignals = this.#pendingSignals;
     const recordPayload = { cycle: this.#cycle, admittedSignals: admitted, rejectedSignals: rejected,
       evaluatedNeurons: byTarget.size, firedNeurons: selected.accepted.length,
       inhibitedNeurons: selected.suppressed.length, emittedSignals: emitted, activeFraction,
-      quiescent: futureSignals === 0, firingIds: selected.accepted.map((item) => item.firing.neuronId) };
+      quiescent: futureSignals === 0, firingIds: selected.accepted.map((item) => item.firing.neuronId),
+      firings: selected.accepted.map((item) => item.firing) };
     const record: PopulationCycleRecord = immutableConnectomeValue({ ...recordPayload,
       digest: connectomeDigest(recordPayload) });
     this.#cycleRecords.push(record);
@@ -311,6 +339,7 @@ export class CognitivePopulationRuntime {
     }
     const ordinal = this.#ordinalById.get(feedback.neuronId);
     if (ordinal === undefined) throw new Error("population_guardian_feedback_invalid");
+    this.#assertTraceCapacity(1);
     this.#feedbackIds.add(feedback.feedbackId);
     this.#kernels[ordinal].applyFeedback(feedback);
     const genome = this.#compiled.genomesByTemplate[this.#compiled.templateByOrdinal[ordinal]]!;
@@ -330,7 +359,6 @@ export class CognitivePopulationRuntime {
   }
 
   snapshot(): PopulationSnapshot {
-    const pendingSignals = [...this.#signalQueue.values()].reduce((sum, bucket) => sum + bucket.length, 0);
     const neuronStates = this.#kernels.map((kernel) => kernel.snapshot());
     const traceDigest = connectomeDigest({ populationDigest: this.#compiled.populationDigest,
       trace: this.#trace, cycles: this.#cycleRecords, weights: [...this.#weights] });
@@ -338,7 +366,8 @@ export class CognitivePopulationRuntime {
       populationDigest: this.#compiled.populationDigest, candidateBinding: this.#compiled.candidateBinding,
       cycle: this.#cycle, materializedNeurons: this.#compiled.identities.length,
       addressCapacity: this.#compiled.addressCapacity, synapses: this.#compiled.synapses.length,
-      pendingSignals, neuronStates, cycleRecords: this.#cycleRecords, traceDigest, grantsAuthority: false });
+      pendingSignals: this.#pendingSignals, neuronStates, cycleRecords: this.#cycleRecords,
+      traceDigest, grantsAuthority: false });
   }
 
   metrics(): PopulationMetrics {
@@ -347,7 +376,7 @@ export class CognitivePopulationRuntime {
       addressCapacity: this.#compiled.addressCapacity, materializedNeurons: states.length,
       activeNeurons: states.filter((state) => state.lifecycle === "ACTIVE").length,
       synapses: this.#compiled.synapses.length,
-      pendingSignals: [...this.#signalQueue.values()].reduce((sum, bucket) => sum + bucket.length, 0),
+      pendingSignals: this.#pendingSignals,
       externalSignalsAdmitted: this.#externalSignals, rejectedSignals: this.#rejectedSignals,
       totalFirings: this.#totalFirings, suppressedFirings: this.#suppressedFirings,
       guardianFeedbackEvents: this.#feedbackIds.size, cycles: this.#cycle,

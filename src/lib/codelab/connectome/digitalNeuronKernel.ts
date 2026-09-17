@@ -2,6 +2,8 @@ import {
   DENDRITIC_COMPARTMENTS,
   DIGITAL_NEURON_AUTHORITY,
   connectomeDigest,
+  connectomeId,
+  connectomeKeys,
   finiteBounded,
   immutableConnectomeValue,
   initialGuardianCalibration,
@@ -65,8 +67,10 @@ function round(value: number, precision = 12): number {
 }
 
 function validIdentity(identity: DigitalNeuronIdentity, genome: DigitalNeuronGenome): boolean {
-  return Boolean(identity && typeof identity.neuronId === "string" && typeof identity.guardianId === "string"
-    && typeof identity.populationId === "string" && Number.isSafeInteger(identity.ordinal) && identity.ordinal >= 0
+  return Boolean(identity && connectomeKeys(identity, ["neuronId", "guardianId", "populationId", "ordinal",
+    "generation", "genomeDigest", "lineageDigest"])
+    && connectomeId(identity.neuronId) && connectomeId(identity.guardianId)
+    && connectomeId(identity.populationId) && Number.isSafeInteger(identity.ordinal) && identity.ordinal >= 0
     && Number.isSafeInteger(identity.generation) && identity.generation >= 0
     && identity.genomeDigest === connectomeDigest(genome) && /^[a-f0-9]{64}$/.test(identity.lineageDigest));
 }
@@ -87,8 +91,10 @@ function correlationAwareMagnitude(signals: readonly NeuronSignal[], discount: n
 } {
   const byGroup = new Map<string, number[]>();
   const roots = new Set<string>();
+  const evidenceGroups = new Set<string>();
   for (const signal of signals) {
     for (const root of signal.evidenceRoots) roots.add(root);
+    for (const group of signal.evidenceCorrelationGroups) evidenceGroups.add(group);
     const weighted = signal.magnitude * signal.confidence * EVIDENCE_STRENGTH[signal.evidenceClass];
     const bucket = byGroup.get(signal.correlationGroup) ?? [];
     bucket.push(weighted);
@@ -101,7 +107,7 @@ function correlationAwareMagnitude(signals: readonly NeuronSignal[], discount: n
     const ordered = [...values].sort((left, right) => Math.abs(right) - Math.abs(left));
     correlated += ordered.reduce((sum, value, index) => sum + value * (index === 0 ? 1 : discount ** index), 0);
   }
-  return { raw: round(raw), correlated: round(correlated), roots, groups: new Set(byGroup.keys()) };
+  return { raw: round(raw), correlated: round(correlated), roots, groups: evidenceGroups };
 }
 
 function integrateCompartment(genome: DigitalNeuronGenome, compartment: DendriticCompartment,
@@ -109,7 +115,7 @@ function integrateCompartment(genome: DigitalNeuronGenome, compartment: Dendriti
   const definition = genome.compartments.find((item) => item.compartment === compartment);
   if (!definition) return immutableConnectomeValue({ compartment, rawMagnitude: 0, correlatedMagnitude: 0,
     effectiveMagnitude: 0, distinctRoots: 0, distinctCorrelationGroups: 0,
-    admittedProvenanceRoots: [],
+    admittedProvenanceRoots: [], admittedCorrelationGroups: [],
     admittedSignalIds: [], rejectedSignalIds: signals.map((signal) => signal.signalId) });
 
   const eligible = signals.filter((signal) => Math.abs(signal.magnitude) >= definition.floor);
@@ -121,6 +127,7 @@ function integrateCompartment(genome: DigitalNeuronGenome, compartment: Dendriti
     correlatedMagnitude: aggregate.correlated, effectiveMagnitude: round(effective),
     distinctRoots: aggregate.roots.size, distinctCorrelationGroups: aggregate.groups.size,
     admittedProvenanceRoots: enoughRoots ? [...aggregate.roots].sort() : [],
+    admittedCorrelationGroups: enoughRoots ? [...aggregate.groups].sort() : [],
     admittedSignalIds: enoughRoots ? eligible.map((signal) => signal.signalId) : [],
     rejectedSignalIds: [
       ...signals.filter((signal) => Math.abs(signal.magnitude) < definition.floor).map((signal) => signal.signalId),
@@ -141,6 +148,10 @@ function activationInput(genome: DigitalNeuronGenome, integrations: readonly Den
 
 function allEvidenceRoots(integrations: readonly DendriticIntegration[]): readonly string[] {
   return [...new Set(integrations.flatMap((item) => item.admittedProvenanceRoots))].sort();
+}
+
+function allEvidenceCorrelationGroups(integrations: readonly DendriticIntegration[]): readonly string[] {
+  return [...new Set(integrations.flatMap((item) => item.admittedCorrelationGroups))].sort();
 }
 
 export class DigitalNeuronKernel {
@@ -207,11 +218,16 @@ export class DigitalNeuronKernel {
       firingCount: this.#state.firingCount + (fires ? 1 : 0), suppressedCount: this.#state.suppressedCount,
       guardian: this.#state.guardian, lastIntegration: integrations });
     this.#state = next;
+    const firingRoots = allEvidenceRoots(integrations);
+    const firingGroups = allEvidenceCorrelationGroups(integrations);
+    const integrationDigest = connectomeDigest({ templateId: this.#genome.templateId, role: this.#genome.role,
+      semanticFamily: this.#genome.semanticFamily, competitionGroup: this.#genome.competitionGroup,
+      integrations });
     const firing: NeuronFiring | null = fires ? immutableConnectomeValue({ neuronId: this.#identity.neuronId,
       guardianId: this.#identity.guardianId, cycle: context.cycle, activation,
       membranePotential: next.membranePotential, role: this.#genome.role,
-      semanticFamily: this.#genome.semanticFamily, evidenceRoots: allEvidenceRoots(integrations),
-      integrationDigest: connectomeDigest(integrations), grantsAuthority: false }) : null;
+      semanticFamily: this.#genome.semanticFamily, evidenceRoots: firingRoots,
+      evidenceCorrelationGroups: firingGroups, integrationDigest, grantsAuthority: false }) : null;
     return immutableConnectomeValue({ state: next, firing, admittedSignals: admitted.length, rejectedSignals,
       suppressionReason: refractory ? "REFRACTORY" : fires ? null : "BELOW_THRESHOLD" });
   }
@@ -284,12 +300,15 @@ export function emittedSignalFromFiring(firing: NeuronFiring, synapse: NeuronSyn
   const cycle = firing.cycle + synapse.delayCycles + 1;
   const magnitude = round(firing.activation * synapse.weight * attenuation);
   const inheritedRoot = firing.evidenceRoots.length === 1 ? firing.evidenceRoots[0] : firing.integrationDigest;
-  const inheritedGroup = `evidence-set:${connectomeDigest(firing.evidenceRoots).slice(0, 24)}`;
+  const inheritedGroup = firing.evidenceCorrelationGroups.length === 1 ? firing.evidenceCorrelationGroups[0]
+    : `evidence-set:${connectomeDigest(firing.evidenceCorrelationGroups).slice(0, 24)}`;
   return immutableConnectomeValue({ signalId: connectomeDigest([synapse.synapseId, firing.integrationDigest, cycle]),
     cycle, sourceId: firing.neuronId, targetId: synapse.targetId, kind: synapse.signalKind,
     compartment: synapse.targetCompartment, magnitude, confidence: firing.activation,
     evidenceClass: "E1", provenanceRoot: inheritedRoot, evidenceRoots: firing.evidenceRoots.length > 0
       ? firing.evidenceRoots : [firing.integrationDigest],
+    evidenceCorrelationGroups: firing.evidenceCorrelationGroups.length > 0
+      ? firing.evidenceCorrelationGroups : [inheritedGroup],
     correlationGroup: inheritedGroup, candidateBinding, expiresAfterCycle: cycle + 8,
     grantsAuthority: false });
 }
