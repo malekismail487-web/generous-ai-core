@@ -31,6 +31,10 @@ import { NYX_ENGINEERING_QUALITY_V5, NYX_V5_FROZEN_CORE, type NyxQualityV5Task }
 import { NYX_CONNECTOME_ABLATION, NYX_CONNECTOME_ABLATION_FROZEN_CORE } from "./nyx-connectome-ablation";
 import { assessNyxConnectomeAblation, type NyxConnectomeAblationArm,
   type NyxConnectomeAblationRecord } from "./nyx-connectome-ablation-analysis";
+import { NYX_BIOLOGICAL_CONNECTOME_ABLATION,
+  NYX_BIOLOGICAL_CONNECTOME_ABLATION_FROZEN_CORE } from "./nyx-biological-connectome-ablation";
+import { assessNyxBiologicalConnectomeAblation, type NyxBiologicalConnectomeAblationArm,
+  type NyxBiologicalConnectomeAblationRecord } from "./nyx-biological-connectome-ablation-analysis";
 import { NYX_SCHEDULER_CHALLENGE, NYX_SCHEDULER_EXPERIMENT, NYX_SCHEDULER_FROZEN_CORE,
   NYX_SCHEDULER_FRONTIER_FROZEN_CORE,
   type NyxSchedulerChallenge } from "./nyx-scheduler-challenge";
@@ -38,6 +42,8 @@ import { OMEGA_CANDIDATE_RUNNER_SOURCE } from "./verification-integrity-fixtures
 import { GroundedRepairEvidence } from "../../src/lib/codelab/repository/groundedRepairEvidence";
 import { createNyxConnectomeCognitionAdapter,
   type NyxConnectomeCognitionTrace } from "../../src/lib/codelab/connectome/nyxConnectomeCognitionAdapter";
+import { NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE } from
+  "../../src/lib/codelab/connectome/verifiedBiologicalArchitectureProfile";
 import { NYX_CONTEXT_EXPERIMENT as CONTEXT_V1, NYX_CONTEXT_REPAIR_EXPERIMENT, NYX_CONTEXT_REPAIR_FROZEN_CORE,
   NYX_CONTEXT_LINES_EXPERIMENT, NYX_CONTEXT_LINES_FROZEN_CORE, NYX_CONTEXT_TASKS, type NyxContextTask,
   NYX_CONFIGURATION_COMPARISON, NYX_CONFIGURATION_FROZEN_CORE,
@@ -46,27 +52,37 @@ import { NYX_CONTEXT_EXPERIMENT as CONTEXT_V1, NYX_CONTEXT_REPAIR_EXPERIMENT, NY
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V4";
 const EXPERIMENT_VARIANT = (process.env.NYX_EXPERIMENT_VARIANT?.trim() || "CURRENT") as NyxCognitionExperimentVariant;
-if (!["V4", "V5", "CHALLENGE", "FRONTIER_CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES", "COMPARISON", "CAPACITY_STATUS", "CONNECTOME_ABLATION"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
+if (!["V4", "V5", "CHALLENGE", "FRONTIER_CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES", "COMPARISON", "CAPACITY_STATUS", "CONNECTOME_ABLATION", "BIOLOGICAL_CONNECTOME_ABLATION"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
 if (!["CURRENT", "REASONING_ENABLED", "MINIMAL_REFERENCE"].includes(EXPERIMENT_VARIANT)) throw new Error("unsupported_nyx_experiment_variant");
 const IS_CAPACITY_STATUS = SUITE_ID === "CAPACITY_STATUS";
 const IS_COMPARISON = SUITE_ID === "COMPARISON" || IS_CAPACITY_STATUS;
 const IS_CONNECTOME_ABLATION = SUITE_ID === "CONNECTOME_ABLATION";
+const IS_BIOLOGICAL_CONNECTOME_ABLATION = SUITE_ID === "BIOLOGICAL_CONNECTOME_ABLATION";
+const IS_ANY_CONNECTOME_ABLATION = IS_CONNECTOME_ABLATION || IS_BIOLOGICAL_CONNECTOME_ABLATION;
 const IS_CHALLENGE = SUITE_ID === "CHALLENGE" || SUITE_ID === "FRONTIER_CHALLENGE";
 const IS_FRONTIER_CHALLENGE = SUITE_ID === "FRONTIER_CHALLENGE";
 const IS_CONTEXT_REPAIR = SUITE_ID === "CONTEXT_REPAIR";
 const IS_CONTEXT_LINES = SUITE_ID === "CONTEXT_LINES";
 const IS_CONTEXT = SUITE_ID === "CONTEXT" || IS_CONTEXT_REPAIR || IS_CONTEXT_LINES || IS_COMPARISON;
-const SOURCE_REPRESENTATION = IS_CONTEXT_LINES || IS_COMPARISON || IS_FRONTIER_CHALLENGE ? "LINES" : "TEXT";
-const INTENT_COMPILATION_MODE = IS_FRONTIER_CHALLENGE ? "SAFE_CANONICALIZATION" : "STRICT";
+const SOURCE_REPRESENTATION = IS_CONTEXT_LINES || IS_COMPARISON || IS_FRONTIER_CHALLENGE
+  || IS_BIOLOGICAL_CONNECTOME_ABLATION ? "LINES" : "TEXT";
+const INTENT_COMPILATION_MODE = IS_FRONTIER_CHALLENGE || IS_BIOLOGICAL_CONNECTOME_ABLATION
+  ? "SAFE_CANONICALIZATION" : "STRICT";
 const NYX_CONTEXT_EXPERIMENT = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_CONTROL : IS_COMPARISON ? NYX_CONFIGURATION_COMPARISON : IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_EXPERIMENT
   : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_EXPERIMENT : CONTEXT_V1;
 const IS_DIAGNOSTIC = IS_CHALLENGE || IS_CONTEXT;
 const CONNECTOME_ABLATION_ARMS: readonly NyxConnectomeAblationArm[] = NYX_CONNECTOME_ABLATION.arms;
+const BIOLOGICAL_CONNECTOME_ABLATION_ARMS: readonly NyxBiologicalConnectomeAblationArm[] =
+  NYX_BIOLOGICAL_CONNECTOME_ABLATION.arms;
 type EvaluationTask = (NyxQualityV4Task | NyxQualityV5Task | NyxSchedulerChallenge | NyxContextTask) & {
-  comparisonArm?: NyxCognitionExperimentVariant | NyxConnectomeAblationArm;
+  comparisonArm?: NyxCognitionExperimentVariant | NyxConnectomeAblationArm | NyxBiologicalConnectomeAblationArm;
   baseTaskId?: string;
 };
-const HOLDOUT: readonly EvaluationTask[] = IS_CONNECTOME_ABLATION
+const HOLDOUT: readonly EvaluationTask[] = IS_BIOLOGICAL_CONNECTOME_ABLATION
+  ? NYX_ENGINEERING_QUALITY_V5.flatMap((task) => BIOLOGICAL_CONNECTOME_ABLATION_ARMS.map((comparisonArm) => ({
+    ...task, taskId: `${task.taskId}-${comparisonArm}`, baseTaskId: task.taskId, comparisonArm,
+  })))
+  : IS_CONNECTOME_ABLATION
   ? NYX_ENGINEERING_QUALITY_V5.flatMap((task) => CONNECTOME_ABLATION_ARMS.map((comparisonArm) => ({
     ...task, taskId: `${task.taskId}-${comparisonArm}`, baseTaskId: task.taskId, comparisonArm,
   })))
@@ -76,11 +92,15 @@ const HOLDOUT: readonly EvaluationTask[] = IS_CONNECTOME_ABLATION
   : SUITE_ID === "V5" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
 const FROZEN_CORE = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_FROZEN_CORE : IS_COMPARISON ? NYX_CONFIGURATION_FROZEN_CORE : IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_FROZEN_CORE : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_FROZEN_CORE
   : IS_FRONTIER_CHALLENGE ? NYX_SCHEDULER_FRONTIER_FROZEN_CORE
-  : IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE : IS_CONNECTOME_ABLATION ? NYX_CONNECTOME_ABLATION_FROZEN_CORE
+  : IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE
+    : IS_BIOLOGICAL_CONNECTOME_ABLATION ? NYX_BIOLOGICAL_CONNECTOME_ABLATION_FROZEN_CORE
+      : IS_CONNECTOME_ABLATION ? NYX_CONNECTOME_ABLATION_FROZEN_CORE
     : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
 const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
   : IS_FRONTIER_CHALLENGE ? "nyx-scheduler-frontier/4"
-  : IS_CHALLENGE ? "nyx-scheduler-challenge/1" : IS_CONNECTOME_ABLATION ? NYX_CONNECTOME_ABLATION.version
+  : IS_CHALLENGE ? "nyx-scheduler-challenge/1"
+    : IS_BIOLOGICAL_CONNECTOME_ABLATION ? NYX_BIOLOGICAL_CONNECTOME_ABLATION.version
+      : IS_CONNECTOME_ABLATION ? NYX_CONNECTOME_ABLATION.version
     : SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
@@ -98,6 +118,19 @@ if (IS_CONNECTOME_ABLATION && (MAX_COGNITION_CYCLES_PER_TASK !== NYX_CONNECTOME_
   || MAX_WALL_CLOCK_MS_PER_TASK !== NYX_CONNECTOME_ABLATION.maxWallClockMsPerTask
   || MAX_OUTPUT_TOKENS !== NYX_CONNECTOME_ABLATION.maxOutputTokensPerCall)) {
   throw new Error("connectome_ablation_budget_contract_mismatch");
+}
+if (IS_BIOLOGICAL_CONNECTOME_ABLATION
+  && (MAX_COGNITION_CYCLES_PER_TASK !== NYX_BIOLOGICAL_CONNECTOME_ABLATION.maxCognitionCyclesPerTask
+    || MAX_CANDIDATE_ITERATIONS_PER_TASK !== NYX_BIOLOGICAL_CONNECTOME_ABLATION.maxCandidateIterationsPerTask
+    || MAX_COGNITION_CORRECTIONS_PER_TASK !== NYX_BIOLOGICAL_CONNECTOME_ABLATION.maxCognitionCorrectionsPerTask
+    || MAX_WALL_CLOCK_MS_PER_TASK !== NYX_BIOLOGICAL_CONNECTOME_ABLATION.maxWallClockMsPerTask
+    || MAX_OUTPUT_TOKENS !== NYX_BIOLOGICAL_CONNECTOME_ABLATION.maxOutputTokensPerCall)) {
+  throw new Error("biological_connectome_ablation_budget_contract_mismatch");
+}
+if (IS_BIOLOGICAL_CONNECTOME_ABLATION
+  && (SOURCE_REPRESENTATION !== NYX_BIOLOGICAL_CONNECTOME_ABLATION.sourceRepresentation
+    || INTENT_COMPILATION_MODE !== NYX_BIOLOGICAL_CONNECTOME_ABLATION.intentCompilationMode)) {
+  throw new Error("biological_connectome_ablation_integration_control_mismatch");
 }
 const MAX_DIAGNOSIS_CHARACTERS = 1_500;
 const CONTRACT_AT_START = NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST;
@@ -123,10 +156,14 @@ const EVALUATOR_DIGEST = sha256(canonical({
   candidateAdmission: sha256(await readFile(new URL("../../src/lib/codelab/assurance/candidateEngineeringAdmission.ts", import.meta.url))),
   provider: sha256(await readFile(new URL("../../src/lib/codelab/model/nvidiaNimProvider.ts", import.meta.url))),
   candidateRunner: sha256(OMEGA_CANDIDATE_RUNNER_SOURCE),
-  ...(IS_CONNECTOME_ABLATION ? {
+  ...(IS_ANY_CONNECTOME_ABLATION ? {
     connectomeAdapter: sha256(await readFile(new URL("../../src/lib/codelab/connectome/nyxConnectomeCognitionAdapter.ts", import.meta.url))),
     connectomeCircuit: sha256(await readFile(new URL("../../src/lib/codelab/connectome/epistemicMicrocircuit.ts", import.meta.url))),
     connectomeRuntime: sha256(await readFile(new URL("../../src/lib/codelab/connectome/cognitivePopulationRuntime.ts", import.meta.url))),
+    ...(IS_BIOLOGICAL_CONNECTOME_ABLATION ? {
+      biologicalCircuit: sha256(await readFile(new URL("../../src/lib/codelab/connectome/biologicalCircuitIR.ts", import.meta.url))),
+      biologicalProfile: sha256(await readFile(new URL("../../src/lib/codelab/connectome/verifiedBiologicalArchitectureProfile.ts", import.meta.url))),
+    } : {}),
   } : {}),
   ...(IS_CONTEXT ? {
     groundedContext: sha256(await readFile(new URL("../../src/lib/codelab/repository/groundedRepositoryContext.ts", import.meta.url))),
@@ -155,7 +192,8 @@ function frozenTaskContentDigest(task: EvaluationTask): string {
 
 function cognitionVariantFor(task: EvaluationTask): NyxCognitionExperimentVariant {
   if (task.comparisonArm === "NEMOTRON_ALONE") return "MINIMAL_REFERENCE";
-  if (task.comparisonArm === "NYX_REASONING_STACK" || task.comparisonArm === "NYX_CONNECTOME") return "REASONING_ENABLED";
+  if (task.comparisonArm === "NYX_REASONING_STACK" || task.comparisonArm === "NYX_CONNECTOME"
+    || task.comparisonArm === "NYX_BIOLOGICAL_CONNECTOME") return "REASONING_ENABLED";
   return task.comparisonArm ?? "CURRENT";
 }
 
@@ -244,7 +282,11 @@ try {
       provider, maxPromptBytes: 48_000, maxOutputTokens: MAX_OUTPUT_TOKENS, sourceRepresentation: SOURCE_REPRESENTATION,
       experimentVariant: cognitionVariantFor(task), intentCompilationMode: INTENT_COMPILATION_MODE });
     const connectomeAdapter = task.comparisonArm === "NYX_CONNECTOME"
-      ? createNyxConnectomeCognitionAdapter(baseCognition) : null;
+      ? createNyxConnectomeCognitionAdapter(baseCognition)
+      : task.comparisonArm === "NYX_BIOLOGICAL_CONNECTOME"
+        ? createNyxConnectomeCognitionAdapter(baseCognition, {
+          architectureProfile: NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE,
+        }) : null;
     const cognition = connectomeAdapter?.cognition ?? baseCognition;
     const taskStarted = Date.now();
     const taskRoot = join(parent, task.taskId.toLowerCase());
@@ -609,7 +651,8 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
     qualityOracleVersion: QUALITY_ORACLE_VERSION, cognitionContractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
     sourceRepresentation: SOURCE_REPRESENTATION,
     intentCompilationMode: INTENT_COMPILATION_MODE,
-    experimentVariant: IS_CONNECTOME_ABLATION ? "MATCHED_CONNECTOME_ABLATION"
+    experimentVariant: IS_BIOLOGICAL_CONNECTOME_ABLATION ? "MATCHED_BIOLOGICAL_CONNECTOME_ABLATION"
+      : IS_CONNECTOME_ABLATION ? "MATCHED_CONNECTOME_ABLATION"
       : IS_CHALLENGE ? EXPERIMENT_VARIANT : IS_COMPARISON ? "MATCHED_THREE_ARM" : "CURRENT",
     cognitionContractDigest: CONTRACT_AT_START, taskFixtureDigests: TASK_FIXTURE_DIGESTS, frozenBeforeScoring: true,
     ...(IS_COMPARISON ? { comparisonControlsDigest: sha256(canonical(NYX_CONTEXT_TASKS[1])),
@@ -690,7 +733,27 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
     expectedBaseTaskIds: NYX_ENGINEERING_QUALITY_V5.map((task) => task.taskId),
     frozenKernelCommit: NYX_CONNECTOME_ABLATION_FROZEN_CORE.commit,
   }) : null;
-  const publishedReport = IS_CONNECTOME_ABLATION ? { ...result,
+  const biologicalConnectomeAssessment = IS_BIOLOGICAL_CONNECTOME_ABLATION
+    ? assessNyxBiologicalConnectomeAblation({
+      records: taskResults as unknown as readonly NyxBiologicalConnectomeAblationRecord[],
+      expectedBaseTaskIds: NYX_ENGINEERING_QUALITY_V5.map((task) => task.taskId),
+    }) : null;
+  const publishedReport = IS_BIOLOGICAL_CONNECTOME_ABLATION ? { ...result,
+    chunkId: NYX_BIOLOGICAL_CONNECTOME_ABLATION.chunkId,
+    evaluationDecision: biologicalConnectomeAssessment!.decision,
+    biologicalConnectomeAssessment,
+    institutionalReadinessCertified: false,
+    broadGeneralizationAssessed: false,
+    defaultConfigurationChanged: false,
+    measurementCoverage: { candidateEvaluated, hiddenEvaluated,
+      tokenUsageComplete: usageComplete, noObservationDoesNotMeanZeroRisk: true },
+    budget: { maxCognitionCyclesPerTask: MAX_COGNITION_CYCLES_PER_TASK,
+      maxCandidateIterationsPerTask: MAX_CANDIDATE_ITERATIONS_PER_TASK,
+      maxCognitionCorrectionsPerTask: MAX_COGNITION_CORRECTIONS_PER_TASK,
+      maxWallClockMsPerTask: MAX_WALL_CLOCK_MS_PER_TASK,
+      maxOutputTokensPerCall: MAX_OUTPUT_TOKENS, maxPromptBytesPerCall: 48_000,
+      sameAcrossArms: true, configuredBeforeLiveExperiment: true },
+  } : IS_CONNECTOME_ABLATION ? { ...result,
     chunkId: "OMEGA-NYX-CONNECTOME-ABLATION-001",
     evaluationDecision: connectomeAssessment!.decision,
     connectomeAssessment,
@@ -752,4 +815,6 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
   if (IS_CHALLENGE && challengeDecision !== "VERIFIED_IN_ISOLATION") process.exitCode = 1;
   if (IS_CONTEXT && contextDecision !== "VERIFIED_IN_ISOLATION") process.exitCode = 1;
   if (IS_CONNECTOME_ABLATION && connectomeAssessment?.decision === "SAFETY_REGRESSION") process.exitCode = 1;
+  if (IS_BIOLOGICAL_CONNECTOME_ABLATION
+    && biologicalConnectomeAssessment?.decision === "SAFETY_REGRESSION") process.exitCode = 1;
 }

@@ -12,9 +12,14 @@ import {
 } from "../research/theoryContracts";
 import {
   EpistemicMicrocircuit,
+  type EpistemicCircuitScale,
   type EpistemicCircuitDecision,
   type EpistemicEvidencePacket,
 } from "./epistemicMicrocircuit";
+import {
+  validEpistemicArchitectureProfile,
+  type EpistemicArchitectureProfile,
+} from "./biologicalCircuitIR";
 
 export const NYX_CONNECTOME_COGNITION_ADAPTER_STATUS = Object.freeze({
   chunkId: "OMEGA-NYX-CONNECTOME-ABLATION-001",
@@ -49,6 +54,13 @@ export interface NyxConnectomeCognitionTrace {
     cyclesExecuted: number;
     traceDigest: string;
   }>;
+  readonly architecture: Readonly<{
+    profileDigest: string | null;
+    sourcePriorDigest: string | null;
+    scale: EpistemicCircuitScale;
+    routingFanoutMultiplier: number;
+    recurrenceCycles: number;
+  }>;
   readonly additionalModelCalls: 0;
   readonly grantsAuthority: false;
 }
@@ -61,6 +73,44 @@ export interface NyxConnectomeContextResult {
 export interface NyxConnectomeCognitionAdapter {
   readonly cognition: NyxNemotronEngineeringCognition;
   readonly traces: () => readonly NyxConnectomeCognitionTrace[];
+}
+
+export interface NyxConnectomeCognitionConfiguration {
+  readonly architectureProfile?: EpistemicArchitectureProfile;
+}
+
+const BASE_SCALE: EpistemicCircuitScale = Object.freeze({ evidenceCopies: 4, hypothesisCopies: 8,
+  falsifierCopies: 4, integratorCopies: 4, inhibitoryCopies: 2, uncertaintyCopies: 2, actionCopies: 2 });
+const BASE_RECURRENCE_CYCLES = 24;
+
+function scaledCopies(value: number, multiplier: number): number {
+  return Math.max(1, Math.min(4_096, Math.round(value * multiplier)));
+}
+
+function architecture(configuration: NyxConnectomeCognitionConfiguration): Readonly<{
+  profile: EpistemicArchitectureProfile | null;
+  scale: EpistemicCircuitScale;
+  routingFanoutMultiplier: number;
+  recurrenceCycles: number;
+}> {
+  const profile = configuration.architectureProfile ?? null;
+  if (profile && !validEpistemicArchitectureProfile(profile)) {
+    throw new Error("nyx_connectome_architecture_profile_invalid");
+  }
+  const scale = profile ? Object.freeze({
+    evidenceCopies: scaledCopies(BASE_SCALE.evidenceCopies, profile.evidenceCopiesMultiplier),
+    hypothesisCopies: scaledCopies(BASE_SCALE.hypothesisCopies, profile.hypothesisCopiesMultiplier),
+    falsifierCopies: scaledCopies(BASE_SCALE.falsifierCopies, profile.falsifierCopiesMultiplier),
+    integratorCopies: scaledCopies(BASE_SCALE.integratorCopies, profile.integratorCopiesMultiplier),
+    inhibitoryCopies: scaledCopies(BASE_SCALE.inhibitoryCopies, profile.inhibitoryCopiesMultiplier),
+    uncertaintyCopies: scaledCopies(BASE_SCALE.uncertaintyCopies, profile.uncertaintyCopiesMultiplier),
+    actionCopies: scaledCopies(BASE_SCALE.actionCopies, profile.actionCopiesMultiplier),
+  }) : BASE_SCALE;
+  return Object.freeze({ profile, scale,
+    routingFanoutMultiplier: profile?.routingFanoutMultiplier ?? 1,
+    recurrenceCycles: profile
+      ? Math.max(1, Math.min(128, Math.round(BASE_RECURRENCE_CYCLES * profile.recurrenceCyclesMultiplier)))
+      : BASE_RECURRENCE_CYCLES });
 }
 
 function sha256(value: string): string {
@@ -148,8 +198,10 @@ function weakPoints(request: NyxRepairCognitionRequest, decision: EpistemicCircu
  * Builds a deterministic, authority-neutral epistemic review from evidence already admitted by Omega.
  * It neither retrieves new evidence nor asks the model an additional question.
  */
-export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionRequest): NyxConnectomeContextResult {
+export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionRequest,
+  configuration: NyxConnectomeCognitionConfiguration = {}): NyxConnectomeContextResult {
   if (request.theoryResearchContext) throw new Error("nyx_connectome_context_conflicts_with_existing_research_context");
+  const architectureConfiguration = architecture(configuration);
   const candidateBinding = request.observation.candidateCommit;
   const circuit = new EpistemicMicrocircuit({
     circuitId: `nyx-connectome-${sha256(request.cognitionRequestId).slice(0, 24)}`,
@@ -182,20 +234,25 @@ export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionReq
         contradictionChannels: [], competitionGroup: "engineering-action",
         proposedAction: "Revise the causal strategy, directly address each falsifier, and preserve unrelated behavior." },
     ],
-    scale: { evidenceCopies: 4, hypothesisCopies: 8, falsifierCopies: 4,
-      integratorCopies: 4, inhibitoryCopies: 2, uncertaintyCopies: 2, actionCopies: 2 },
+    scale: architectureConfiguration.scale,
+    routingFanoutMultiplier: architectureConfiguration.routingFanoutMultiplier,
   });
   for (const evidence of evidencePackets(request)) circuit.admitEvidence(evidence);
-  const decision = circuit.run(24);
+  const decision = circuit.run(architectureConfiguration.recurrenceCycles);
   const assignment = immutableTheoryValue({ objective: request.objective,
     question: "Which bounded action is best supported, what would falsify it, and what evidence is still missing?",
     domain: "SOFTWARE" as const, candidateBinding, scope: request.allowedMutationPaths,
     assumptions: [
       "Connectome output is derived only from evidence already admitted by Omega.",
       "Connectome ranking is advisory and cannot authorize mutation or certify success.",
+      ...(architectureConfiguration.profile ? [
+        `Local circuit structure is influenced by validated biological profile ${architectureConfiguration.profile.profileDigest}.`,
+        "Biological topology is an experimental computational prior, not evidence of intelligence or correctness.",
+      ] : []),
     ] });
   const assignmentDigest = theoryDigest(assignment);
-  const suffix = sha256(canonical({ request: request.cognitionRequestId, decision })).slice(0, 24);
+  const suffix = sha256(canonical({ request: request.cognitionRequestId, decision,
+    architectureProfileDigest: architectureConfiguration.profile?.profileDigest ?? null })).slice(0, 24);
   const theoryId = `nyx-connectome-theory-${suffix}`;
   const guardianId = `nyx-connectome-guardian-${suffix}`;
   const context: TheoryResearchContext = immutableTheoryValue({ schemaVersion: 1, theoryId, guardianId,
@@ -235,7 +292,13 @@ export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionReq
     }))),
     population: Object.freeze({ materializedNeurons: metrics.materializedNeurons,
       materializedSynapses: metrics.synapses, cyclesExecuted: decision.run.cyclesExecuted,
-      traceDigest: decision.run.snapshot.traceDigest }), additionalModelCalls: 0, grantsAuthority: false });
+      traceDigest: decision.run.snapshot.traceDigest }),
+    architecture: Object.freeze({ profileDigest: architectureConfiguration.profile?.profileDigest ?? null,
+      sourcePriorDigest: architectureConfiguration.profile?.sourcePriorDigest ?? null,
+      scale: architectureConfiguration.scale,
+      routingFanoutMultiplier: architectureConfiguration.routingFanoutMultiplier,
+      recurrenceCycles: architectureConfiguration.recurrenceCycles }),
+    additionalModelCalls: 0, grantsAuthority: false });
   return Object.freeze({ context, trace });
 }
 
@@ -245,13 +308,14 @@ export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionReq
  */
 export function createNyxConnectomeCognitionAdapter(
   base: NyxNemotronEngineeringCognition,
+  configuration: NyxConnectomeCognitionConfiguration = {},
 ): NyxConnectomeCognitionAdapter {
   const traces: NyxConnectomeCognitionTrace[] = [];
   const cognition = new Proxy(base, {
     get(target, property) {
       if (property === "proposeRepair") {
         return async (request: NyxRepairCognitionRequest): Promise<NyxRepairCognitionResult> => {
-          const augmented = buildNyxConnectomeResearchContext(request);
+          const augmented = buildNyxConnectomeResearchContext(request, configuration);
           traces.push(augmented.trace);
           return target.proposeRepair({ ...request, theoryResearchContext: augmented.context });
         };

@@ -99,6 +99,7 @@ export interface HybridBiologicalPrior {
 }
 
 export interface EpistemicArchitectureProfile {
+  readonly schemaVersion: typeof BIOLOGICAL_CIRCUIT_SCHEMA_VERSION;
   readonly profileId: string;
   readonly sourcePriorDigest: string;
   readonly evidenceCopiesMultiplier: number;
@@ -110,6 +111,8 @@ export interface EpistemicArchitectureProfile {
   readonly actionCopiesMultiplier: number;
   readonly routingFanoutMultiplier: number;
   readonly recurrenceCyclesMultiplier: number;
+  readonly profileDigest: string;
+  readonly authority: typeof BIOLOGICAL_CIRCUIT_AUTHORITY;
   readonly modelCallsAdded: 0;
   readonly toolsAdded: 0;
   readonly grantsAuthority: false;
@@ -487,7 +490,8 @@ function multiplier(value: number, amplitude: number): number {
 export function compileEpistemicArchitectureProfile(prior: HybridBiologicalPrior): EpistemicArchitectureProfile {
   if (!validHybridBiologicalPrior(prior)) throw new Error("hybrid_biological_prior_invalid");
   const metric = prior.aggregateMetrics;
-  const body = { profileId: `${prior.priorId}:epistemic-profile`, sourcePriorDigest: prior.priorDigest,
+  const body = { schemaVersion: BIOLOGICAL_CIRCUIT_SCHEMA_VERSION,
+    profileId: `${prior.priorId}:epistemic-profile`, sourcePriorDigest: prior.priorDigest,
     evidenceCopiesMultiplier: multiplier(metric.sparsity, 0.35),
     hypothesisCopiesMultiplier: multiplier(metric.recurrentCoreFraction, 0.3),
     falsifierCopiesMultiplier: multiplier(metric.inhibitoryEdgeFraction, 0.5),
@@ -497,8 +501,25 @@ export function compileEpistemicArchitectureProfile(prior: HybridBiologicalPrior
     actionCopiesMultiplier: multiplier(1 - metric.hubOutflowConcentration, 0.2),
     routingFanoutMultiplier: multiplier(1 - metric.sparsity, 0.5),
     recurrenceCyclesMultiplier: multiplier(metric.recurrentCoreFraction, 0.4),
+    authority: BIOLOGICAL_CIRCUIT_AUTHORITY,
     modelCallsAdded: 0 as const, toolsAdded: 0 as const, grantsAuthority: false as const };
-  return immutable(body);
+  return immutable({ ...body, profileDigest: sha256(body) });
+}
+
+export function validEpistemicArchitectureProfile(profile: EpistemicArchitectureProfile): boolean {
+  if (!profile || profile.schemaVersion !== BIOLOGICAL_CIRCUIT_SCHEMA_VERSION
+    || profile.authority !== BIOLOGICAL_CIRCUIT_AUTHORITY || profile.grantsAuthority !== false
+    || profile.modelCallsAdded !== 0 || profile.toolsAdded !== 0 || !validId(profile.profileId)
+    || !validSha256(profile.sourcePriorDigest) || !validSha256(profile.profileDigest)) return false;
+  const multipliers = [profile.evidenceCopiesMultiplier, profile.hypothesisCopiesMultiplier,
+    profile.falsifierCopiesMultiplier, profile.integratorCopiesMultiplier,
+    profile.inhibitoryCopiesMultiplier, profile.uncertaintyCopiesMultiplier,
+    profile.actionCopiesMultiplier, profile.routingFanoutMultiplier,
+    profile.recurrenceCyclesMultiplier];
+  if (multipliers.some((value) => typeof value !== "number" || !Number.isFinite(value)
+    || value < 0.5 || value > 1.5)) return false;
+  const { profileDigest: _digest, ...body } = profile;
+  return sha256(body) === profile.profileDigest;
 }
 
 export function validBiologicalCircuit(circuit: BiologicalCircuitIR): boolean {

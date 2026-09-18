@@ -52,6 +52,8 @@ export interface EpistemicMicrocircuitDefinition {
   readonly channels: readonly EpistemicEvidenceChannel[];
   readonly hypotheses: readonly EpistemicHypothesisDefinition[];
   readonly scale: EpistemicCircuitScale;
+  /** Bounded structural multiplier; it changes local sparse fan-out, never authority or tool access. */
+  readonly routingFanoutMultiplier?: number;
 }
 
 export interface EpistemicEvidencePacket {
@@ -123,8 +125,11 @@ function neuronTemplate(templateId: string, role: DigitalNeuronGenome["role"], s
 function validateDefinition(definition: EpistemicMicrocircuitDefinition): void {
   const scale = definition?.scale;
   const scaleValues = scale && Object.values(scale);
-  if (!definition || !connectomeKeys(definition, ["circuitId", "objective", "candidateBinding", "addressCapacity",
-    "seed", "channels", "hypotheses", "scale"])
+  const definitionKeys = definition?.routingFanoutMultiplier === undefined
+    ? ["circuitId", "objective", "candidateBinding", "addressCapacity", "seed", "channels", "hypotheses", "scale"]
+    : ["circuitId", "objective", "candidateBinding", "addressCapacity", "seed", "channels", "hypotheses", "scale",
+      "routingFanoutMultiplier"];
+  if (!definition || !connectomeKeys(definition, definitionKeys)
     || !connectomeId(definition.circuitId) || !connectomeId(definition.seed)
     || !validCandidateBinding(definition.candidateBinding) || !/^[1-9][0-9]{0,29}$/.test(definition.addressCapacity)
     || typeof definition.objective !== "string" || definition.objective.trim().length < 8
@@ -136,7 +141,11 @@ function validateDefinition(definition: EpistemicMicrocircuitDefinition): void {
     || !Array.isArray(definition.hypotheses) || definition.hypotheses.length < 2 || definition.hypotheses.length > 32
     || !scaleValues || !connectomeKeys(scale, ["evidenceCopies", "hypothesisCopies", "falsifierCopies",
       "integratorCopies", "inhibitoryCopies", "uncertaintyCopies", "actionCopies"])
-    || scaleValues.some((value) => !Number.isSafeInteger(value) || value < 1 || value > 4_096)) {
+    || scaleValues.some((value) => !Number.isSafeInteger(value) || value < 1 || value > 4_096)
+    || definition.routingFanoutMultiplier !== undefined
+      && (typeof definition.routingFanoutMultiplier !== "number"
+        || !Number.isFinite(definition.routingFanoutMultiplier)
+        || definition.routingFanoutMultiplier < 0.5 || definition.routingFanoutMultiplier > 1.5)) {
     throw new Error("epistemic_microcircuit_definition_invalid");
   }
   const channelIds = new Set(definition.channels.map((item) => item.channelId));
@@ -262,13 +271,17 @@ function projections(definition: EpistemicMicrocircuitDefinition): readonly Syna
       ids.inhibitor(hypothesis.competitionGroup), ids.hypothesis(hypothesis.hypothesisId),
       "INHIBITION", "INHIBITION", "INHIBITS", 1.1, 8));
   }
-  return Object.freeze(result);
+  const multiplier = definition.routingFanoutMultiplier ?? 1;
+  return Object.freeze(result.map((rule) => Object.freeze({ ...rule,
+    fanout: Math.max(1, Math.min(64, Math.round(rule.fanout * multiplier))),
+  })));
 }
 
 export function createEpistemicMicrocircuitBlueprint(input: Omit<EpistemicMicrocircuitDefinition, "scale">
   & { readonly scale?: Partial<EpistemicCircuitScale> }): PopulationBlueprint {
   const definition: EpistemicMicrocircuitDefinition = immutableConnectomeValue({ ...input,
-    scale: { ...DEFAULT_SCALE, ...(input.scale ?? {}) } });
+    scale: { ...DEFAULT_SCALE, ...(input.scale ?? {}) },
+    routingFanoutMultiplier: input.routingFanoutMultiplier ?? 1 });
   validateDefinition(definition);
   const neuronTemplates = templates(definition);
   const populationGenome: PopulationGenome = immutableConnectomeValue({
@@ -298,7 +311,8 @@ export class EpistemicMicrocircuit {
 
   constructor(input: Omit<EpistemicMicrocircuitDefinition, "scale">
     & { readonly scale?: Partial<EpistemicCircuitScale> }) {
-    this.#definition = immutableConnectomeValue({ ...input, scale: { ...DEFAULT_SCALE, ...(input.scale ?? {}) } });
+    this.#definition = immutableConnectomeValue({ ...input, scale: { ...DEFAULT_SCALE, ...(input.scale ?? {}) },
+      routingFanoutMultiplier: input.routingFanoutMultiplier ?? 1 });
     validateDefinition(this.#definition);
     this.#blueprint = createEpistemicMicrocircuitBlueprint(input);
     this.#compiled = compileCognitivePopulation(this.#blueprint);

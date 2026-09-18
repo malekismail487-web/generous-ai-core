@@ -6,6 +6,7 @@ import {
   importFlyVisConnectome,
   importOpenWormConnectome,
   validBiologicalCircuit,
+  validEpistemicArchitectureProfile,
   validHybridBiologicalPrior,
   type BiologicalSourceProvenance,
 } from "../src/lib/codelab/connectome/biologicalCircuitIR";
@@ -85,7 +86,8 @@ check(prior.sourceDatasetIds.join(",") === "fly:test,worm:test",
   "source ordering is deterministic rather than dependent on caller order");
 
 const profile = compileEpistemicArchitectureProfile(prior);
-check(profile.sourcePriorDigest === prior.priorDigest && profile.modelCallsAdded === 0
+check(validEpistemicArchitectureProfile(profile) && profile.sourcePriorDigest === prior.priorDigest
+  && profile.modelCallsAdded === 0
   && profile.toolsAdded === 0 && profile.grantsAuthority === false,
 "architecture profile can tune local structure without adding model, tool, or execution authority");
 check([profile.evidenceCopiesMultiplier, profile.hypothesisCopiesMultiplier,
@@ -113,6 +115,10 @@ check(!validBiologicalCircuit({ ...fly, edges: [{ ...fly.edges[0], normalizedWei
   "normalized edge-weight tampering invalidates the circuit rather than being silently recomputed");
 check(!validHybridBiologicalPrior({ ...prior, priorDigest: "f".repeat(64) }),
   "hybrid prior digest detects post-compilation mutation");
+check(!validEpistemicArchitectureProfile({ ...profile, recurrenceCyclesMultiplier: 1.5 }),
+  "architecture profile digest detects post-compilation mutation");
+check(!validEpistemicArchitectureProfile({ ...profile, modelCallsAdded: 1 } as unknown as typeof profile),
+  "architecture profile cannot silently add model computation");
 
 console.log(`OMEGA_BIOLOGICAL_CIRCUIT_IR_TESTS passed: ${passed}, failed: ${failed}`);
 if (failed > 0) process.exit(1);

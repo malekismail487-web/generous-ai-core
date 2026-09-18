@@ -67,6 +67,7 @@
     { "suiteId": "OMEGA-DIGITAL-NEURON-MICROCIRCUIT", "file": "scripts/omegaDigitalNeuronMicrocircuit.test.ts" },
     { "suiteId": "OMEGA-NYX-CONNECTOME-COGNITION-ADAPTER", "file": "scripts/omegaNyxConnectomeCognitionAdapter.test.ts" },
     { "suiteId": "OMEGA-NYX-CONNECTOME-ABLATION-ANALYSIS", "file": "scripts/omegaNyxConnectomeAblationAnalysis.test.ts" },
+    { "suiteId": "OMEGA-NYX-BIOLOGICAL-CONNECTOME-ABLATION-ANALYSIS", "file": "scripts/omegaNyxBiologicalConnectomeAblationAnalysis.test.ts" },
     { "suiteId": "OMEGA-FRONTIER-REASONING-GAUNTLET", "file": "scripts/omegaFrontierReasoningGauntlet.test.ts" },
     { "suiteId": "OMEGA-THEORY-NETWORK", "file": "scripts/omegaTheoryNetwork.test.ts" },
     { "suiteId": "OMEGA-REASONING-OBLIGATION-GRAPH", "file": "scripts/omegaReasoningObligationGraph.test.ts" },

@@ -4407,6 +4407,7 @@
           "scripts/lsePriorityScheduler.test.ts",
           "scripts/lseSessionInternals.test.ts",
           "scripts/o7verdict.ts",
+          "scripts/omega/nyx-biological-connectome-ablation-analysis.ts",
           "scripts/omega/nyx-connectome-ablation-analysis.ts",
           "scripts/omega/nyx-context-experiment.ts",
           "scripts/omega/nyx-contract-compliance.ts",
@@ -7265,6 +7266,7 @@
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
         "firstPartyCodeReferences": [
+          "scripts/omegaNyxConnectomeCognitionAdapter.test.ts",
           "scripts/orchestraO2.test.ts",
           "src/components/SubjectsSection.tsx",
           "src/components/admin/BudgetOptimizationReport.tsx",
@@ -8100,6 +8102,7 @@
           "scripts/lseEventNormalizer.test.ts",
           "scripts/lseLessonReducer.test.ts",
           "scripts/lseSessionInternals.test.ts",
+          "scripts/omega/nyx-biological-connectome-ablation.ts",
           "scripts/omega/nyx-context-experiment.ts",
           "scripts/omega/nyx-frontier-reasoning-fixtures.ts",
           "scripts/omega/nyx-quality-confirmation-fixtures.ts",
@@ -8120,6 +8123,7 @@
           "scripts/omegaFrontierReasoningGauntlet.test.ts",
           "scripts/omegaGroundedEngineering.test.ts",
           "scripts/omegaNvidiaNimProvider.test.ts",
+          "scripts/omegaNyxBiologicalConnectomeAblationAnalysis.test.ts",
           "scripts/omegaNyxConnectomeCognitionAdapter.test.ts",
           "scripts/omegaNyxEngineeringQualityAssurance.test.ts",
           "scripts/omegaPlanArtifact.test.ts",

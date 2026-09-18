@@ -22,6 +22,7 @@
     "omega:nyx:quality-holdout:v4": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v4-live-eval.ts",
     "omega:nyx:quality-holdout:v5": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v5-live-eval.ts",
     "omega:nyx:connectome-ablation": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-connectome-ablation-live-eval.ts",
+    "omega:nyx:biological-connectome-ablation": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-biological-connectome-ablation-live-eval.ts",
     "omega:nyx:biological-cache": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/verify-biological-connectome-cache.ts",
     "omega:nyx:research-party-live": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-research-party-live-eval.ts",
     "omega:nyx:frontier-reasoning": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-frontier-reasoning-live-eval.ts",

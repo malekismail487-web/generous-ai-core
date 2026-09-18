@@ -1,0 +1,55 @@
+name: Omega NYX matched biological connectome ablation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-nyx-biological-connectome-ablation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  matched-biological-connectome-ablation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      NYX_QUALITY_SUITE: BIOLOGICAL_CONNECTOME_ABLATION
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Confirm encrypted model credential is available
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Verify biological treatment, evaluator, and authority contracts
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBiologicalCircuitIR.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxConnectomeCognitionAdapter.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxBiologicalConnectomeAblationAnalysis.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaDigitalNeuronStability.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaVerificationIntegrity.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaCandidateEngineeringAdmission.test.ts
+          npm run typecheck:ratchet
+      - name: Run frozen matched A/B/C/D biological capability experiment
+        run: npm run omega:nyx:biological-connectome-ablation
+      - name: Upload sanitized biological ablation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-nyx-biological-connectome-ablation-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-quality-biological_connectome_ablation-*.json
+          if-no-files-found: error

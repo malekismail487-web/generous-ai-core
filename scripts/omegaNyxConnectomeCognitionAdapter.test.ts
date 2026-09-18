@@ -8,6 +8,8 @@ import type {
   NyxRepairCognitionResult,
 } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 import { validTheoryResearchContext } from "../src/lib/codelab/research/theoryContracts";
+import { NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE } from
+  "../src/lib/codelab/connectome/verifiedBiologicalArchitectureProfile";
 
 let passed = 0;
 let failed = 0;
@@ -67,6 +69,37 @@ check(initial.trace.independentEvidenceRoots >= 3 && initial.trace.independentEv
 check(initial.context.report.confidence.calibratedProbability === null
   && initial.context.report.confidence.calibrationState === "NOT_CALIBRATED",
 "neural activation is not mislabeled as calibrated confidence");
+check(initial.trace.architecture.profileDigest === null
+  && initial.trace.architecture.routingFanoutMultiplier === 1
+  && initial.trace.architecture.recurrenceCycles === 24,
+"default adapter retains the pre-biological architecture exactly");
+
+const profiled = buildNyxConnectomeResearchContext(request(), {
+  architectureProfile: NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE,
+});
+check(profiled.trace.architecture.profileDigest === NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE.profileDigest
+  && profiled.trace.architecture.sourcePriorDigest === NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE.sourcePriorDigest,
+"profiled circuit trace binds the exact verified biological profile and source prior");
+check(profiled.trace.architecture.recurrenceCycles === 28
+  && profiled.trace.architecture.routingFanoutMultiplier < 1,
+"biological recurrent-core and sparse-routing motifs alter bounded local circuit structure");
+check(profiled.trace.population.materializedNeurons !== initial.trace.population.materializedNeurons
+  && profiled.trace.population.materializedSynapses !== initial.trace.population.materializedSynapses
+  && profiled.trace.contextDigest !== initial.trace.contextDigest,
+"biological profile produces an attributable structural treatment distinct from the control");
+const profiledReplay = buildNyxConnectomeResearchContext(request(), {
+  architectureProfile: NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE,
+});
+check(profiledReplay.trace.contextDigest === profiled.trace.contextDigest
+  && profiledReplay.trace.population.traceDigest === profiled.trace.population.traceDigest,
+"biological-profile circuit execution is deterministic for an identical evidence-bound request");
+check(throws(() => buildNyxConnectomeResearchContext(request(), {
+  architectureProfile: { ...NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE,
+    evidenceCopiesMultiplier: 1.5 },
+}), "nyx_connectome_architecture_profile_invalid"),
+"tampered biological profiles fail closed before influencing cognition");
+check(profiled.trace.additionalModelCalls === 0 && profiled.trace.grantsAuthority === false,
+  "biological topology adds neither model calls nor authority");
 
 const revised = buildNyxConnectomeResearchContext(request({
   cognitionRequestId: "NYX-CONNECTOME-TEST-REQUEST-2",

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import {
   analyzeBiologicalTopology,
   compileEpistemicArchitectureProfile,
@@ -10,6 +11,8 @@ import {
   importOpenWormConnectome,
 } from "../../src/lib/codelab/connectome/biologicalCircuitIR";
 import { NYX_BIOLOGICAL_SOURCE_REGISTRY } from "../../src/lib/codelab/connectome/biologicalSourceRegistry";
+import { NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE } from
+  "../../src/lib/codelab/connectome/verifiedBiologicalArchitectureProfile";
 
 const rootInput = process.env.NYX_CONNECTOME_CACHE_ROOT?.trim();
 if (!rootInput || !isAbsolute(rootInput)) {
@@ -51,6 +54,9 @@ const fly = importFlyVisConnectome(flyRaw, flySource);
 const worm = importOpenWormConnectome(wormRaw, wormSource);
 const prior = compileHybridBiologicalPrior([fly, worm], "nyx:hybrid-biological-prior:v1");
 const profile = compileEpistemicArchitectureProfile(prior);
+if (!isDeepStrictEqual(profile, NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE)) {
+  throw new Error("committed_biological_profile_does_not_match_pinned_source_artifacts");
+}
 console.log(JSON.stringify({ result: "VERIFIED", rawDataCommittedToProductRepository: false,
   sources: [
     { datasetId: fly.provenance.datasetId, circuitDigest: fly.circuitDigest,
