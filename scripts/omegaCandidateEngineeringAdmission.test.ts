@@ -163,6 +163,32 @@ const declarationHeavy = admitStaticEngineeringCandidate(fixture(undefined,
 check(declarationHeavy.decision === "REJECTED" && declarationHeavy.findings.some((item) =>
   item.dimension === "UNNECESSARY_COMPLEXITY" && item.code === "DECLARATION_DELTA"),
 "the public complexity bound catches declaration-heavy small repairs");
+const originalTinySource = "export function add(a, b) { return a - b; }\n";
+const firstHeavyCandidate = `export function add(a, b) {
+  const first = 0;
+  const second = 0;
+  const third = 0;
+  const fourth = 0;
+  const fifth = 0;
+  const sixth = 0;
+  return a + b + first + second + third + fourth + fifth + sixth;
+}\n`;
+const revisedHeavyCandidate = firstHeavyCandidate.replace("const sixth = 0;", "const sixth = 1;")
+  .replace("+ fifth + sixth;", "+ fifth + sixth - 1;");
+const incrementalOnly = admitStaticEngineeringCandidate(fixture(firstHeavyCandidate, revisedHeavyCandidate));
+const cumulativeReview = admitStaticEngineeringCandidate({ ...fixture(firstHeavyCandidate, revisedHeavyCandidate),
+  qualityBaselineFiles: { [PATH]: originalTinySource } });
+check(incrementalOnly.decision === "ADMITTED", "the incremental-only review reproduces the hidden cumulative-quality gap");
+check(cumulativeReview.decision === "REJECTED" && cumulativeReview.findings.some((item) =>
+  item.dimension === "UNNECESSARY_COMPLEXITY" && item.code === "DECLARATION_DELTA"),
+"the cumulative review rejects a second repair that remains excessive relative to the original baseline");
+check(cumulativeReview.qualityBaselineDigest === hash(canonical({ [PATH]: originalTinySource }))
+  && cumulativeReview.reviewedPaths.length === 1 && cumulativeReview.reviewedPaths[0] === PATH,
+"admission evidence identifies the original quality baseline and cumulative review scope");
+const missingCumulativeCandidate = admitStaticEngineeringCandidate({ ...fixture(firstHeavyCandidate, revisedHeavyCandidate),
+  qualityBaselineFiles: { [PATH]: originalTinySource, "src/unobserved.mjs": "export const x = 1;\n" } });
+check(missingCumulativeCandidate.decision === "INSUFFICIENT_EVIDENCE" && missingCumulativeCandidate.findings.some((item) =>
+  item.code === "QUALITY_BASELINE_FILES_INVALID"), "cumulative review fails closed when a baseline file has no candidate state");
 const largerBaseline = "export function add(a,b) {\n  const left = a;\n  const right = b;\n  const prior = left + right;\n  return prior;\n}\n";
 const largerCandidate = "export function add(a,b) { const x=0; const y=0; const z=0; const q=0; const r=0; return a+b+x+y+z+q+r; }\n";
 const largerRepair = admitStaticEngineeringCandidate(fixture(largerBaseline, largerCandidate));

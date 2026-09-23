@@ -673,7 +673,8 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
     intentCompilationMode: INTENT_COMPILATION_MODE,
     experimentVariant: IS_BIOLOGICAL_CONNECTOME_ABLATION ? "MATCHED_BIOLOGICAL_CONNECTOME_ABLATION"
       : IS_CONNECTOME_ABLATION ? "MATCHED_CONNECTOME_ABLATION"
-      : IS_CHALLENGE ? EXPERIMENT_VARIANT : IS_COMPARISON ? "MATCHED_THREE_ARM" : "CURRENT",
+      : IS_CHALLENGE || IS_V5_QUALITY_REPAIR ? EXPERIMENT_VARIANT
+        : IS_COMPARISON ? "MATCHED_THREE_ARM" : "CURRENT",
     cognitionContractDigest: CONTRACT_AT_START, taskFixtureDigests: TASK_FIXTURE_DIGESTS, frozenBeforeScoring: true,
     ...(IS_COMPARISON ? { comparisonControlsDigest: sha256(canonical(NYX_CONTEXT_TASKS[1])),
       comparisonScope: NYX_CONFIGURATION_COMPARISON.referenceScope,

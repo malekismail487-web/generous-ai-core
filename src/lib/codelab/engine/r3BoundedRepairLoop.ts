@@ -437,13 +437,14 @@ export class R3BoundedRepairLoop {
       const functionallyPassed = verifications.length > 0 && verifications.every((item) => passing(item.observation));
       const candidateAdmission = functionallyPassed ? admitStaticEngineeringCandidate({ schemaVersion: 1,
         reviewId: `${request.repairRequestId}-CANDIDATE-ADMISSION-${iteration}`,
-        evaluatorVersion: `${this.#config.evaluatorVersion}/candidate-admission-1`,
+        evaluatorVersion: `${this.#config.evaluatorVersion}/candidate-admission-2`,
         candidateCommit: candidate.proposal.baseCandidateCommit,
         lineage: { hypothesisId: cognition.hypothesis.hypothesisId, hypothesisDigest: cognition.hypothesis.proposalDigest,
           proposalId: candidate.proposal.proposalId, proposalDigest: candidate.proposal.proposalDigest,
           applicationId: candidate.application.applicationId },
         hypothesis: cognition.hypothesis, proposal: candidate.proposal, application: candidate.application,
         baselineFiles: Object.freeze(Object.fromEntries(currentFiles.map((file) => [file.relativePath, file.content]))),
+        qualityBaselineFiles: Object.freeze(Object.fromEntries(request.initialFiles.map((file) => [file.relativePath, file.content]))),
         candidateFiles: Object.freeze(Object.fromEntries(candidateContexts.map((file) => [file.relativePath, file.content]))),
         allowedMutationPaths: request.allowedMutationPaths, objective: request.objective,
         publicQualityObligations: request.publicQualityObligations }) : null;

@@ -62,6 +62,8 @@ export interface CandidateEngineeringAdmissionRequest {
   readonly proposal: R2GPatchProposal;
   readonly application: R3AApplyResult;
   readonly baselineFiles: Readonly<Record<string, string>>;
+  /** Original observed repository state for cumulative quality review, distinct from the immediate patch base. */
+  readonly qualityBaselineFiles?: Readonly<Record<string, string>>;
   readonly candidateFiles: Readonly<Record<string, string>>;
   readonly allowedMutationPaths: readonly string[];
   readonly objective?: string;
@@ -88,10 +90,12 @@ export interface CandidateEngineeringAdmissionResult {
   readonly decision: "ADMITTED" | "REJECTED" | "INSUFFICIENT_EVIDENCE";
   readonly lineage: CandidateEngineeringLineage | null;
   readonly changedPaths: readonly string[];
+  readonly reviewedPaths: readonly string[];
   readonly findings: readonly CandidateEngineeringAdmissionFinding[];
   readonly dimensionDispositions: Readonly<Partial<Record<EngineeringQualityDimension, QualityDisposition>>>;
   readonly staticPolicyId: typeof OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.policyId;
   readonly appliedPolicyDigest: string | null;
+  readonly qualityBaselineDigest: string | null;
   readonly reviewScope: "PUBLIC_STATIC_CHANGED_FILES_ONLY";
   readonly functionalEvidenceConsidered: false;
   readonly evidenceId: string;
@@ -226,6 +230,13 @@ function basicContractIssues(value: unknown): readonly CandidateEngineeringAdmis
   if (!isRecord(value.application) || !Array.isArray(value.application.changedPaths)
     || !Array.isArray(value.application.events)) issues.push(frozenFinding("CONTRACT", "APPLICATION_INVALID"));
   if (!stringRecord(value.baselineFiles)) issues.push(frozenFinding("CONTRACT", "BASELINE_FILES_INVALID"));
+  if (value.qualityBaselineFiles !== undefined && (!stringRecord(value.qualityBaselineFiles)
+    || !Array.isArray(value.allowedMutationPaths)
+    || !value.allowedMutationPaths.every((path) => Object.prototype.hasOwnProperty.call(value.qualityBaselineFiles, path))
+    || !stringRecord(value.candidateFiles)
+    || !Object.keys(value.qualityBaselineFiles).every((path) => Object.prototype.hasOwnProperty.call(value.candidateFiles, path)))) {
+    issues.push(frozenFinding("CONTRACT", "QUALITY_BASELINE_FILES_INVALID"));
+  }
   if (!stringRecord(value.candidateFiles)) issues.push(frozenFinding("CONTRACT", "CANDIDATE_FILES_INVALID"));
   if (!Array.isArray(value.allowedMutationPaths) || !value.allowedMutationPaths.every(validPath)
     || new Set(value.allowedMutationPaths).size !== value.allowedMutationPaths.length) {
@@ -299,14 +310,18 @@ function provenanceIssues(request: CandidateEngineeringAdmissionRequest): readon
 function result(input: { readonly reviewId: string; readonly evaluatorVersion: string; readonly candidateCommit: string | null;
   readonly decision: CandidateEngineeringAdmissionResult["decision"]; readonly lineage: CandidateEngineeringLineage | null;
   readonly changedPaths: readonly string[]; readonly findings: readonly CandidateEngineeringAdmissionFinding[];
+  readonly reviewedPaths?: readonly string[]; readonly qualityBaselineDigest?: string | null;
   readonly appliedPolicyDigest?: string | null;
   readonly dimensionDispositions?: Readonly<Partial<Record<EngineeringQualityDimension, QualityDisposition>>> }): CandidateEngineeringAdmissionResult {
   const body = { schemaVersion: 1 as const, reviewId: input.reviewId, evaluatorVersion: input.evaluatorVersion,
     candidateCommit: input.candidateCommit, decision: input.decision, lineage: input.lineage,
-    changedPaths: Object.freeze([...input.changedPaths].sort()), findings: Object.freeze([...input.findings]),
+    changedPaths: Object.freeze([...input.changedPaths].sort()),
+    reviewedPaths: Object.freeze([...(input.reviewedPaths ?? [])].sort()),
+    findings: Object.freeze([...input.findings]),
     dimensionDispositions: Object.freeze({ ...(input.dimensionDispositions ?? {}) }),
     staticPolicyId: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.policyId,
     appliedPolicyDigest: input.appliedPolicyDigest ?? null,
+    qualityBaselineDigest: input.qualityBaselineDigest ?? null,
     reviewScope: "PUBLIC_STATIC_CHANGED_FILES_ONLY" as const, functionalEvidenceConsidered: false as const };
   const evidenceDigest = sha256(canonical(body));
   return Object.freeze({ ...body, evidenceId: `CANDIDATE-ADMISSION-${evidenceDigest.slice(0, 32)}`, evidenceDigest,
@@ -335,42 +350,51 @@ function admitStaticEngineeringCandidateInternal(input: unknown): CandidateEngin
     candidateCommit: request.candidateCommit, decision: "INSUFFICIENT_EVIDENCE", lineage: request.lineage,
     changedPaths, findings: provenance });
 
-  // Only changed files are supplied to the analyzer. Existing debt in observed,
-  // read-only context therefore cannot become a false rejection of this candidate.
-  const baselineFiles = Object.fromEntries(changedPaths.map((path) => [path, request.baselineFiles[path]]));
-  const candidateFiles = Object.fromEntries(changedPaths.map((path) => [path, request.candidateFiles[path]]));
+  // Provenance is checked against the immediate patch base above. Quality is
+  // checked against the original observed baseline, including prior rejected
+  // edits, so a small second delta cannot conceal a large cumulative change.
+  const qualityBaseline = request.qualityBaselineFiles ?? request.baselineFiles;
+  const reviewedPaths = [...new Set([...Object.keys(qualityBaseline), ...changedPaths])]
+    .filter((path) => typeof qualityBaseline[path] === "string"
+      && typeof request.candidateFiles[path] === "string"
+      && qualityBaseline[path] !== request.candidateFiles[path]).sort();
+  const baselineFiles = Object.fromEntries(reviewedPaths.map((path) => [path, qualityBaseline[path]]));
+  const candidateFiles = Object.fromEntries(reviewedPaths.map((path) => [path, request.candidateFiles[path]]));
   // A one-file repair of a tiny existing function should not need an entire new
   // declaration forest. Larger files retain the broader, less false-positive-prone limit.
-  const tinySingleFileRepair = changedPaths.length === 1
-    && (request.baselineFiles[changedPaths[0]]?.split(/\r?\n/).filter((line) => line.trim()).length ?? Infinity) <= 3;
+  const tinySingleFileRepair = reviewedPaths.length === 1
+    && (qualityBaseline[reviewedPaths[0]]?.split(/\r?\n/).filter((line) => line.trim()).length ?? Infinity) <= 3;
   const policy: EngineeringQualityPolicy = Object.freeze({ ...OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,
     allowedChangedPaths: Object.freeze([...request.allowedMutationPaths]), readonlyPaths: Object.freeze([]),
     maxAddedDeclarations: tinySingleFileRepair ? 4 : OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.maxAddedDeclarations,
     invariants: Object.freeze((request.publicQualityObligations ?? []).map((item) => item.invariant)) });
   const appliedPolicyDigest = sha256(canonical({ policy, publicQualityObligations: request.publicQualityObligations ?? [],
     objective: request.publicQualityObligations?.length ? request.objective : null }));
+  const qualityBaselineDigest = sha256(canonical(baselineFiles));
   let assessment;
   try {
     assessment = assessEngineeringQuality({ assessmentId: request.reviewId, evaluatorVersion: request.evaluatorVersion,
-      baselineFiles, candidateFiles, changedPaths, functionalAcceptance: "NOT_EVALUATED",
+      baselineFiles, candidateFiles, changedPaths: reviewedPaths, functionalAcceptance: "NOT_EVALUATED",
       regressionAcceptance: "NOT_EVALUATED", policy });
   } catch {
     return result({ reviewId: request.reviewId, evaluatorVersion: request.evaluatorVersion,
     candidateCommit: request.candidateCommit, decision: "INSUFFICIENT_EVIDENCE", lineage: request.lineage,
-      changedPaths, findings: [frozenFinding("CONTRACT", "STATIC_ANALYSIS_INPUT_INVALID")], appliedPolicyDigest });
+      changedPaths, reviewedPaths, qualityBaselineDigest,
+      findings: [frozenFinding("CONTRACT", "STATIC_ANALYSIS_INPUT_INVALID")], appliedPolicyDigest });
   }
   const dimensionDispositions: Partial<Record<EngineeringQualityDimension, QualityDisposition>> = {};
   const findings: CandidateEngineeringAdmissionFinding[] = [];
   for (const dimension of STATIC_DIMENSIONS) {
     const detector = assessment.dimensions[dimension];
     dimensionDispositions[dimension] = detector.disposition;
-    for (const finding of detector.findings) findings.push(publicFinding(dimension, finding, changedPaths));
+    for (const finding of detector.findings) findings.push(publicFinding(dimension, finding, reviewedPaths));
   }
   const staticInsufficient = STATIC_DIMENSIONS.some((dimension) => dimensionDispositions[dimension] === "INSUFFICIENT_EVIDENCE");
   const rejected = STATIC_DIMENSIONS.some((dimension) => dimensionDispositions[dimension] === "FAIL");
   return result({ reviewId: request.reviewId, evaluatorVersion: request.evaluatorVersion,
     candidateCommit: request.candidateCommit, decision: rejected ? "REJECTED" : staticInsufficient ? "INSUFFICIENT_EVIDENCE" : "ADMITTED",
-    lineage: request.lineage, changedPaths, findings, dimensionDispositions, appliedPolicyDigest });
+    lineage: request.lineage, changedPaths, reviewedPaths, qualityBaselineDigest,
+    findings, dimensionDispositions, appliedPolicyDigest });
 }
 
 export function admitStaticEngineeringCandidate(input: unknown): CandidateEngineeringAdmissionResult {

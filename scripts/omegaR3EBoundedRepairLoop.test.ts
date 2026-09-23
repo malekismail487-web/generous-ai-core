@@ -410,6 +410,10 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
     && result.iterations[1].candidateAdmission?.decision === "ADMITTED"
     && result.iterations[1].hypothesis.parentHypothesisId === result.iterations[0].hypothesis.hypothesisId,
   "quality repair preserves hypothesis lineage and admits the exact revised candidate");
+  check(result.iterations[0].candidateAdmission?.qualityBaselineDigest !== null
+    && result.iterations[0].candidateAdmission?.qualityBaselineDigest
+      === result.iterations[1].candidateAdmission?.qualityBaselineDigest,
+  "quality admission compares both iterations to the same original repository baseline");
   check(result.candidateAdmissionAcceptance === "ACCEPTED" && result.engineeringQualityAcceptance === "NOT_EVALUATED"
     && !result.authorityGranted && !result.sourceRepositoryWriteAuthority && !result.productionAuthority,
   "final admitted candidate is accepted without conflating public admission with independent quality or broader authority");
