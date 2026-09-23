@@ -1,7 +1,13 @@
 name: Omega NYX matched connectome ablation
 
-# Live matched trials remain opt-in while the experiment is frozen.
+# The narrow push trigger executes one requested adaptive-portfolio trial on the Omega branch.
+# Remove it after the run so future pushes cannot silently consume model compute.
 on:
+  push:
+    branches:
+      - sol/omega-institutional-spine
+    paths:
+      - scripts/omega/nyx-biological-connectome-ablation.ts
   workflow_dispatch:
     inputs:
       experiment:
@@ -66,9 +72,9 @@ jobs:
           if-no-files-found: error
 
   matched-biological-connectome-ablation:
-    if: inputs.experiment == 'biological'
+    if: github.event_name == 'push' || inputs.experiment == 'biological'
     runs-on: ubuntu-latest
-    timeout-minutes: 100
+    timeout-minutes: 130
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
@@ -100,7 +106,7 @@ jobs:
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaVerificationIntegrity.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaCandidateEngineeringAdmission.test.ts
           npm run typecheck:ratchet
-      - name: Run frozen matched A/B/C/D biological capability experiment
+      - name: Run frozen matched A/B/C/D/E adaptive biological capability experiment
         run: npm run omega:nyx:biological-connectome-ablation
       - name: Upload sanitized biological ablation report
         if: always()

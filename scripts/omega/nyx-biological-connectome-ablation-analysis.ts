@@ -27,7 +27,11 @@ export interface NyxBiologicalConnectomeAblationRecord {
   readonly connectomeTraces: readonly {
     readonly additionalModelCalls: number;
     readonly grantsAuthority: boolean;
-    readonly architecture?: { readonly profileDigest: string | null };
+    readonly architecture?: {
+      readonly profileDigest: string | null;
+      readonly portfolioDigest?: string | null;
+      readonly adaptiveSelectionDigest?: string | null;
+    };
   }[];
 }
 
@@ -72,11 +76,11 @@ function armSummary(records: readonly NyxBiologicalConnectomeAblationRecord[],
 }
 
 function pairedOutcome(records: readonly NyxBiologicalConnectomeAblationRecord[],
-  comparator: Exclude<NyxBiologicalConnectomeAblationArm, "NYX_BIOLOGICAL_CONNECTOME">) {
+  comparator: Exclude<NyxBiologicalConnectomeAblationArm, "NYX_ADAPTIVE_BIOLOGICAL_CONNECTOME">) {
   let wins = 0; let losses = 0; let ties = 0; let missing = 0;
   for (const baseTaskId of [...new Set(records.map((record) => record.baseTaskId))].sort()) {
     const treatment = records.find((record) => record.baseTaskId === baseTaskId
-      && record.comparisonArm === "NYX_BIOLOGICAL_CONNECTOME");
+      && record.comparisonArm === "NYX_ADAPTIVE_BIOLOGICAL_CONNECTOME");
     const other = records.find((record) => record.baseTaskId === baseTaskId
       && record.comparisonArm === comparator);
     if (!treatment || !other) { missing += 1; continue; }
@@ -101,27 +105,36 @@ export function assessNyxBiologicalConnectomeAblation(input: {
     versusNemotronAlone: pairedOutcome(records, "NEMOTRON_ALONE"),
     versusNyxReasoningStack: pairedOutcome(records, "NYX_REASONING_STACK"),
     versusDigitalConnectome: pairedOutcome(records, "NYX_CONNECTOME"),
+    versusFixedBiologicalProfile: pairedOutcome(records, "NYX_BIOLOGICAL_CONNECTOME"),
   });
   const complete = records.length === input.expectedBaseTaskIds.length * arms.length
     && arms.every((arm) => records.filter((record) => record.comparisonArm === arm).length
       === input.expectedBaseTaskIds.length);
-  const taskParity = input.expectedBaseTaskIds.every((taskId) => {
+  const expectedTaskSet = new Set(input.expectedBaseTaskIds);
+  const taskParity = records.every((record) => expectedTaskSet.has(record.baseTaskId))
+    && input.expectedBaseTaskIds.every((taskId) => {
     const taskRecords = records.filter((record) => record.baseTaskId === taskId);
     return taskRecords.length === arms.length
+      && new Set(taskRecords.map((record) => record.comparisonArm)).size === arms.length
       && new Set(taskRecords.map((record) => record.frozenTaskContentDigest)).size === 1;
   });
   const usageComplete = records.every((record) => record.tokenUsageComplete);
   const providerClean = records.every((record) => record.providerDiagnostics
     .every((diagnostic) => diagnostic.failureCategory === null));
   const safetyPreserved = arms.every((arm) => summaries[arm].safetyPreserved);
-  const treatment = summaries.NYX_BIOLOGICAL_CONNECTOME;
+  const treatment = summaries.NYX_ADAPTIVE_BIOLOGICAL_CONNECTOME;
   const controls = arms.filter((arm): arm is Exclude<NyxBiologicalConnectomeAblationArm,
-    "NYX_BIOLOGICAL_CONNECTOME"> => arm !== "NYX_BIOLOGICAL_CONNECTOME");
-  const treatmentIdentityValid = records.filter((record) => record.comparisonArm === "NYX_BIOLOGICAL_CONNECTOME")
+    "NYX_ADAPTIVE_BIOLOGICAL_CONNECTOME"> => arm !== "NYX_ADAPTIVE_BIOLOGICAL_CONNECTOME");
+  const treatmentIdentityValid = records.filter((record) => record.comparisonArm === "NYX_ADAPTIVE_BIOLOGICAL_CONNECTOME")
     .every((record) => record.connectomeTraces.length > 0 && record.connectomeTraces.every((trace) =>
-      trace.architecture?.profileDigest === NYX_BIOLOGICAL_CONNECTOME_ABLATION.treatmentProfileDigest));
-  const controlIdentityValid = records.filter((record) => record.comparisonArm !== "NYX_BIOLOGICAL_CONNECTOME")
-    .every((record) => record.connectomeTraces.every((trace) => trace.architecture?.profileDigest == null));
+      trace.architecture?.portfolioDigest === NYX_BIOLOGICAL_CONNECTOME_ABLATION.adaptiveTreatmentPortfolioDigest
+      && typeof trace.architecture?.profileDigest === "string"
+      && typeof trace.architecture?.adaptiveSelectionDigest === "string"));
+  const controlIdentityValid = records.filter((record) => record.comparisonArm !== "NYX_ADAPTIVE_BIOLOGICAL_CONNECTOME")
+    .every((record) => record.connectomeTraces.every((trace) =>
+      trace.architecture?.portfolioDigest == null && (record.comparisonArm === "NYX_BIOLOGICAL_CONNECTOME"
+        ? trace.architecture?.profileDigest === NYX_BIOLOGICAL_CONNECTOME_ABLATION.fixedControlProfileDigest
+        : trace.architecture?.profileDigest == null)));
   const computeNeutral = usageComplete && controls.every((arm) => treatment.modelCalls <= summaries[arm].modelCalls
     && treatment.totalTokens !== null && summaries[arm].totalTokens !== null
     && treatment.totalTokens <= summaries[arm].totalTokens)
@@ -132,12 +145,12 @@ export function assessNyxBiologicalConnectomeAblation(input: {
   const decision = !complete || !taskParity || !usageComplete || !providerClean
     || !treatmentIdentityValid || !controlIdentityValid ? "INSUFFICIENT_EVIDENCE"
     : !safetyPreserved ? "SAFETY_REGRESSION"
-      : consistentSuperiority && computeNeutral ? "MEASURABLE_BIOLOGICAL_COGNITIVE_CONTRIBUTION"
-        : "NO_MEASURABLE_BIOLOGICAL_COGNITIVE_CONTRIBUTION";
+      : consistentSuperiority && computeNeutral ? "MEASURABLE_ADAPTIVE_BIOLOGICAL_COGNITIVE_CONTRIBUTION"
+        : "NO_MEASURABLE_ADAPTIVE_BIOLOGICAL_COGNITIVE_CONTRIBUTION";
   return Object.freeze({ decision,
-    hypothesis: "Pinned cross-species topology improves engineering outcomes at matched model compute.",
-    treatmentProfileDigest: NYX_BIOLOGICAL_CONNECTOME_ABLATION.treatmentProfileDigest,
-    sourcePriorDigest: NYX_BIOLOGICAL_CONNECTOME_ABLATION.sourcePriorDigest,
+    hypothesis: "Adaptive source-specific topology improves engineering outcomes over fixed profile and simpler controls at matched model compute.",
+    adaptiveTreatmentPortfolioDigest: NYX_BIOLOGICAL_CONNECTOME_ABLATION.adaptiveTreatmentPortfolioDigest,
+    fixedControlProfileDigest: NYX_BIOLOGICAL_CONNECTOME_ABLATION.fixedControlProfileDigest,
     controls: { complete, taskParity, providerClean, usageComplete, safetyPreserved,
       treatmentIdentityValid, controlIdentityValid, computeNeutral }, summaries, pairedComparisons: comparisons,
     limitations: ["One run per frozen task and arm does not establish broad generalization.",
@@ -146,4 +159,3 @@ export function assessNyxBiologicalConnectomeAblation(input: {
       "A negative result rejects this compiled profile on this population, not biological computation in general."],
   });
 }
-

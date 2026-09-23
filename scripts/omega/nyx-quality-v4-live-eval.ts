@@ -44,6 +44,8 @@ import { createNyxConnectomeCognitionAdapter,
   type NyxConnectomeCognitionTrace } from "../../src/lib/codelab/connectome/nyxConnectomeCognitionAdapter";
 import { NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE } from
   "../../src/lib/codelab/connectome/verifiedBiologicalArchitectureProfile";
+import { NYX_VERIFIED_BIOLOGICAL_ARCHITECTURE_PORTFOLIO } from
+  "../../src/lib/codelab/connectome/verifiedBiologicalArchitecturePortfolio";
 import { NYX_CONTEXT_EXPERIMENT as CONTEXT_V1, NYX_CONTEXT_REPAIR_EXPERIMENT, NYX_CONTEXT_REPAIR_FROZEN_CORE,
   NYX_CONTEXT_LINES_EXPERIMENT, NYX_CONTEXT_LINES_FROZEN_CORE, NYX_CONTEXT_TASKS, type NyxContextTask,
   NYX_CONFIGURATION_COMPARISON, NYX_CONFIGURATION_FROZEN_CORE,
@@ -163,6 +165,9 @@ const EVALUATOR_DIGEST = sha256(canonical({
     ...(IS_BIOLOGICAL_CONNECTOME_ABLATION ? {
       biologicalCircuit: sha256(await readFile(new URL("../../src/lib/codelab/connectome/biologicalCircuitIR.ts", import.meta.url))),
       biologicalProfile: sha256(await readFile(new URL("../../src/lib/codelab/connectome/verifiedBiologicalArchitectureProfile.ts", import.meta.url))),
+      biologicalPortfolio: sha256(await readFile(new URL("../../src/lib/codelab/connectome/biologicalArchitecturePortfolio.ts", import.meta.url))),
+      biologicalAdaptivePolicy: sha256(await readFile(new URL("../../src/lib/codelab/connectome/biologicalAdaptivePolicy.ts", import.meta.url))),
+      pinnedPortfolio: sha256(await readFile(new URL("../../src/lib/codelab/connectome/verifiedBiologicalArchitecturePortfolio.ts", import.meta.url))),
     } : {}),
   } : {}),
   ...(IS_CONTEXT ? {
@@ -193,7 +198,8 @@ function frozenTaskContentDigest(task: EvaluationTask): string {
 function cognitionVariantFor(task: EvaluationTask): NyxCognitionExperimentVariant {
   if (task.comparisonArm === "NEMOTRON_ALONE") return "MINIMAL_REFERENCE";
   if (task.comparisonArm === "NYX_REASONING_STACK" || task.comparisonArm === "NYX_CONNECTOME"
-    || task.comparisonArm === "NYX_BIOLOGICAL_CONNECTOME") return "REASONING_ENABLED";
+    || task.comparisonArm === "NYX_BIOLOGICAL_CONNECTOME"
+    || task.comparisonArm === "NYX_ADAPTIVE_BIOLOGICAL_CONNECTOME") return "REASONING_ENABLED";
   return task.comparisonArm ?? "CURRENT";
 }
 
@@ -286,7 +292,10 @@ try {
       : task.comparisonArm === "NYX_BIOLOGICAL_CONNECTOME"
         ? createNyxConnectomeCognitionAdapter(baseCognition, {
           architectureProfile: NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE,
-        }) : null;
+        }) : task.comparisonArm === "NYX_ADAPTIVE_BIOLOGICAL_CONNECTOME"
+          ? createNyxConnectomeCognitionAdapter(baseCognition, {
+            architecturePortfolio: NYX_VERIFIED_BIOLOGICAL_ARCHITECTURE_PORTFOLIO,
+          }) : null;
     const cognition = connectomeAdapter?.cognition ?? baseCognition;
     const taskStarted = Date.now();
     const taskRoot = join(parent, task.taskId.toLowerCase());
