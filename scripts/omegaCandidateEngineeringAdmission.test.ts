@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { admitStaticEngineeringCandidate, OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1,
-  type CandidateEngineeringAdmissionRequest } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
+  validPublicQualityObligations, type CandidateEngineeringAdmissionRequest } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
+import { NYX_ENGINEERING_QUALITY_V5 } from "./omega/nyx-quality-v5-fixtures";
 import type { NyxRepairHypothesis } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 import type { R2GPatchProposal } from "../src/lib/codelab/executor/r2PatchProposal";
 import type { R3AApplyResult, R3AEvent } from "../src/lib/codelab/executor/r3DisposablePatchApplication";
@@ -126,6 +127,47 @@ check(clean.eventIntegrity === "HASH_CHAINED_NOT_AUTHENTICATED",
 check(!clean.hiddenEvidenceUsed && !clean.authorityGranted && !clean.functionalEvidenceConsidered,
   "static admission uses no hidden evidence, execution claim, or authority");
 check(OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1.invariants.length === 0, "public policy contains no task-specific invariants");
+check(NYX_ENGINEERING_QUALITY_V5.every((task) => validPublicQualityObligations(task.objective,
+  task.mutationPaths, task.publicQualityObligations ?? [])),
+"every published V5 obligation is independently anchored in public objective text and mutation scope");
+
+const objective = "Use the repository-owned comparePriority helper to order jobs.";
+const publicObligation = Object.freeze({ objectiveQuote: "comparePriority helper", invariant: Object.freeze({
+  invariantId: "PUBLIC_COMPARATOR_CALL", dimension: "ARCHITECTURAL_FIT" as const,
+  kind: "REQUIRED_CALL" as const, path: PATH, value: "comparePriority",
+}) });
+const missingRequiredCall = admitStaticEngineeringCandidate({ ...fixture(), objective,
+  publicQualityObligations: [publicObligation] });
+check(missingRequiredCall.decision === "REJECTED" && missingRequiredCall.findings.some((item) =>
+  item.dimension === "ARCHITECTURAL_FIT" && item.code === "INVARIANT_FAILED"),
+"a public objective-bound architecture obligation rejects a missing helper call");
+check(missingRequiredCall.appliedPolicyDigest !== clean.appliedPolicyDigest
+  && missingRequiredCall.staticPolicyId === "omega-public-static-candidate/2",
+"objective-bound obligations and revised public policy are reflected in evidence identity");
+const satisfiedRequiredCall = admitStaticEngineeringCandidate({ ...fixture(undefined,
+  "export function add(a, b) { return comparePriority(a, b); }\n"), objective,
+  publicQualityObligations: [publicObligation] });
+check(satisfiedRequiredCall.decision === "ADMITTED", "an objective-bound helper call can be satisfied");
+const forgedQuote = admitStaticEngineeringCandidate({ ...fixture(), objective,
+  publicQualityObligations: [{ ...publicObligation, objectiveQuote: "secret hidden assertion" }] });
+check(forgedQuote.decision === "INSUFFICIENT_EVIDENCE" && forgedQuote.findings.some((item) =>
+  item.code === "PUBLIC_OBJECTIVE_OBLIGATIONS_INVALID"),
+"a requirement absent from the public objective cannot be smuggled into admission");
+const unauthorizedObligation = admitStaticEngineeringCandidate({ ...fixture(), objective,
+  publicQualityObligations: [{ ...publicObligation, invariant: { ...publicObligation.invariant,
+    path: "src/other.mjs" } }] });
+check(unauthorizedObligation.decision === "INSUFFICIENT_EVIDENCE",
+  "a public obligation cannot expand the authorized mutation scope");
+const declarationHeavy = admitStaticEngineeringCandidate(fixture(undefined,
+  "export function add(a, b) { const x=0; const y=0; const z=0; const q=0; const r=0; return a+b+x+y+z+q+r; }\n"));
+check(declarationHeavy.decision === "REJECTED" && declarationHeavy.findings.some((item) =>
+  item.dimension === "UNNECESSARY_COMPLEXITY" && item.code === "DECLARATION_DELTA"),
+"the public complexity bound catches declaration-heavy small repairs");
+const largerBaseline = "export function add(a,b) {\n  const left = a;\n  const right = b;\n  const prior = left + right;\n  return prior;\n}\n";
+const largerCandidate = "export function add(a,b) { const x=0; const y=0; const z=0; const q=0; const r=0; return a+b+x+y+z+q+r; }\n";
+const largerRepair = admitStaticEngineeringCandidate(fixture(largerBaseline, largerCandidate));
+check(largerRepair.decision === "ADMITTED" && largerRepair.appliedPolicyDigest !== declarationHeavy.appliedPolicyDigest,
+"the stricter declaration limit is confined to tiny one-file repairs, not all substantial patches");
 
 const longLine = `export function add(a, b) { const explanation = "${"x".repeat(190)}"; return explanation ? a + b : 0; }\n`;
 const longLineResult = admitStaticEngineeringCandidate(fixture(undefined, longLine));

@@ -1,4 +1,5 @@
 import type { EngineeringQualityPolicy } from "../../src/lib/codelab/assurance/engineeringQualityOracle";
+import type { PublicObjectiveQualityObligation } from "../../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import type { HiddenEvaluationCase } from "../../src/lib/codelab/assurance/r3EvaluatorIsolation";
 import type { NyxQualityAvailableEvidence, NyxQualityHoldoutTaskClass } from "./nyx-quality-holdout-fixtures";
 
@@ -22,6 +23,7 @@ export interface NyxQualityV5Task {
   readonly qualityPolicy: EngineeringQualityPolicy;
   readonly maxChanges: number;
   readonly maxPatchBytes: number;
+  readonly publicQualityObligations?: readonly PublicObjectiveQualityObligation[];
 }
 
 export const NYX_V5_FROZEN_CORE = Object.freeze({
@@ -161,6 +163,9 @@ export function prioritizeJobs(jobs) {
 ` }),
     mutationPaths: Object.freeze(["src/prioritize-jobs.mjs"]),
     initiallyAdmittedPaths: Object.freeze(["src/prioritize-jobs.mjs", "src/compare-priority.mjs"]), availableEvidence: Object.freeze([]),
+    publicQualityObligations: Object.freeze([{ objectiveQuote: "repository-owned comparePriority helper",
+      invariant: Object.freeze({ invariantId: "PUBLIC_USE_COMPARATOR", dimension: "ARCHITECTURAL_FIT" as const,
+        kind: "REQUIRED_CALL" as const, path: "src/prioritize-jobs.mjs", value: "comparePriority" }) }]),
     visibleVerifier: `import { prioritizeJobs } from "../src/prioritize-jobs.mjs";
 const input=[{id:"late",deadline:9,severity:9},{id:"soon",deadline:1,severity:1}];
 if(JSON.stringify(prioritizeJobs(input))!==JSON.stringify(["soon","late"])||input[0].id!=="late")process.exit(2);

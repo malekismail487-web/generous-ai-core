@@ -3,7 +3,8 @@ import { NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS, type NyxAvailableEvidence, type
   type NyxEngineeringFileContext, type NyxEvidenceRequest, type NyxNemotronEngineeringCognition,
   type NyxPriorCognitionFailure, type NyxPriorHypothesis, type NyxRepairCognitionEvidence, type NyxRepairHypothesis,
   type NyxSchemaDiagnostic } from "../cognition/nyxNemotronEngineeringCognition";
-import { admitStaticEngineeringCandidate, type CandidateEngineeringAdmissionResult } from "../assurance/candidateEngineeringAdmission";
+import { admitStaticEngineeringCandidate, validPublicQualityObligations,
+  type CandidateEngineeringAdmissionResult, type PublicObjectiveQualityObligation } from "../assurance/candidateEngineeringAdmission";
 import type { R2GPatchProposal } from "../executor/r2PatchProposal";
 import type { R3AApplyResult } from "../executor/r3DisposablePatchApplication";
 import type { R3BControlledEngineeringExecutor, R3BExecutionRequest, R3BExecutionResult } from "../executor/r3ControlledEngineeringExecution";
@@ -95,6 +96,7 @@ export interface R3BoundedRepairRequest {
   readonly initialObservation: EngineeringObservation;
   readonly initialFiles: readonly NyxEngineeringFileContext[];
   readonly allowedMutationPaths: readonly string[];
+  readonly publicQualityObligations?: readonly PublicObjectiveQualityObligation[];
   readonly availableEvidence: readonly NyxAvailableEvidence[];
   readonly allowedVerificationToolIds: readonly string[];
   readonly baselineExecutions: readonly R3RepairBaselineExecution[];
@@ -297,6 +299,8 @@ export class R3BoundedRepairLoop {
       || !Array.isArray(request.allowedMutationPaths) || request.allowedMutationPaths.length < 1
       || new Set(request.allowedMutationPaths).size !== request.allowedMutationPaths.length
       || request.allowedMutationPaths.some((path) => !request.initialFiles.some((file) => file.relativePath === path))
+      || (request.publicQualityObligations !== undefined && !validPublicQualityObligations(request.objective,
+        request.allowedMutationPaths, request.publicQualityObligations))
       || !Array.isArray(request.availableEvidence) || !evidenceCatalogValid(request.availableEvidence, request.initialFiles)
       || request.allowedVerificationToolIds.length < 1 || new Set(request.allowedVerificationToolIds).size !== request.allowedVerificationToolIds.length
       || request.baselineExecutions.some((item) => !item.toolId || item.toolId !== item.result.evidence.toolId)
@@ -441,7 +445,8 @@ export class R3BoundedRepairLoop {
         hypothesis: cognition.hypothesis, proposal: candidate.proposal, application: candidate.application,
         baselineFiles: Object.freeze(Object.fromEntries(currentFiles.map((file) => [file.relativePath, file.content]))),
         candidateFiles: Object.freeze(Object.fromEntries(candidateContexts.map((file) => [file.relativePath, file.content]))),
-        allowedMutationPaths: request.allowedMutationPaths }) : null;
+        allowedMutationPaths: request.allowedMutationPaths, objective: request.objective,
+        publicQualityObligations: request.publicQualityObligations }) : null;
       const passed = functionallyPassed && candidateAdmission?.decision === "ADMITTED";
       const hypothesisDisposition = passed ? "SUPPORTED" as const
         : candidateAdmission?.decision === "INSUFFICIENT_EVIDENCE" ? "INSUFFICIENT_EVIDENCE" as const

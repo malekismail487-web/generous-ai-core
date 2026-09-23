@@ -183,6 +183,7 @@ const TASK_FIXTURE_DIGESTS = Object.freeze(Object.fromEntries(HOLDOUT.map((task)
     faultyFiles: task.faultyFiles, mutationPaths: task.mutationPaths, initiallyAdmittedPaths: task.initiallyAdmittedPaths,
     availableEvidence: task.availableEvidence, visibleVerifier: task.visibleVerifier, candidateModule: task.candidateModule,
     exportName: task.exportName, hiddenCases: task.hiddenCases, qualityPolicy: task.qualityPolicy,
+    ...("publicQualityObligations" in task ? { publicQualityObligations: task.publicQualityObligations } : {}),
     maxChanges: task.maxChanges, maxPatchBytes: task.maxPatchBytes }))])));
 
 function frozenTaskContentDigest(task: EvaluationTask): string {
@@ -192,6 +193,7 @@ function frozenTaskContentDigest(task: EvaluationTask): string {
     initiallyAdmittedPaths: task.initiallyAdmittedPaths, availableEvidence: task.availableEvidence,
     visibleVerifier: task.visibleVerifier, candidateModule: task.candidateModule, exportName: task.exportName,
     hiddenCases: task.hiddenCases, qualityPolicy: task.qualityPolicy, maxChanges: task.maxChanges,
+    ...("publicQualityObligations" in task ? { publicQualityObligations: task.publicQualityObligations } : {}),
     maxPatchBytes: task.maxPatchBytes }));
 }
 
@@ -483,6 +485,7 @@ try {
       maxPatchBytesPerIteration: task.maxPatchBytes, maxDiagnosisCharacters: MAX_DIAGNOSIS_CHARACTERS });
     const loopResult = await loop.run({ schemaVersion: 1, repairRequestId: `NYX-QUALITY-REPAIR-${task.taskId}`,
       objective: task.objective, initialObservation, initialFiles, allowedMutationPaths: task.mutationPaths,
+      publicQualityObligations: "publicQualityObligations" in task ? task.publicQualityObligations : undefined,
       availableEvidence: grounded?.initial.availableEvidence ?? task.availableEvidence.map((item) => ({ ...item, kind: "FILE" as const })),
       allowedVerificationToolIds: ["TEST"], baselineExecutions: [{ toolId: "TEST", result: initialExecution }],
       observedAtEpochMs: Date.now() });
