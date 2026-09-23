@@ -2,6 +2,11 @@ name: Omega NYX CLI live isolated one-shot
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - sol/omega-institutional-spine
+    paths:
+      - .github/workflows/omega-nyx-cli-live-one-shot.yml
 
 permissions:
   contents: read
