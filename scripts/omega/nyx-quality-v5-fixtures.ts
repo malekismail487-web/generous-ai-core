@@ -54,6 +54,21 @@ export const NYX_V5_QUALITY_REPAIR_FROZEN_CORE = Object.freeze({
   }),
 });
 
+// The first quality-repair run exposed an incremental-versus-cumulative
+// review defect. Preserve it above; this successor pins the corrected core.
+export const NYX_V5_QUALITY_REPAIR_V2_FROZEN_CORE = Object.freeze({
+  commit: "d4cac1dce71d3b230f6695bf9bbaa24f4b02febe",
+  files: Object.freeze({
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "b4254ef147ca1855a3ce969323411a6953f76eac37b89e0a775eec3ab7f6e6c8",
+    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "65c488963e216a38dd83eb6f8dcf83503f195b39c0849b6eb71805455ae6de26",
+    "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "c60a4cafea93f73042ec09514b884e7de84e2537b816ecd6f389148a9f8ef2aa",
+    "src/lib/codelab/assurance/candidateEngineeringAdmission.ts": "4cefc03c77fdac6a279d06ee73923b2c6c44c834f64fb455a4d4a8f773b9a39e",
+    "src/lib/codelab/assurance/engineeringQualityOracle.ts": "af21863b9f3680330215e5464c5adcbbd050e2f313e7d71741822714e7594931",
+    "src/lib/codelab/assurance/r3EvaluatorIsolation.ts": "88fc1041a194cb2900959212e644dbfa0419a6cf1a994916c233fe13e09d7cfe",
+    "src/lib/codelab/assurance/holdoutAcceptanceIntegrity.ts": "5cf5edf2706dcc5be36683444e4699c5ef962dfee1668a8181e98cb251946c6e",
+  }),
+});
+
 const provenance = "NYX_ENGINEERING_QUALITY_FRESH_HOLDOUT_V5" as const;
 
 function policy(id: string, paths: readonly string[], readonlyPaths: readonly string[] = [],

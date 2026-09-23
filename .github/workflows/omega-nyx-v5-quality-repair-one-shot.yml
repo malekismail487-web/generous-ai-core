@@ -1,4 +1,4 @@
-name: Omega NYX V5 matched public quality-repair diagnostic
+name: Omega NYX V5 cumulative quality-repair diagnostic
 
 on:
   push:

@@ -38,6 +38,17 @@ export const NYX_SCHEDULER_FRONTIER_FROZEN_CORE = Object.freeze({
   }),
 });
 
+// A new candidate-admission epoch must not alter the prior frontier record.
+export const NYX_SCHEDULER_FRONTIER_V2_FROZEN_CORE = Object.freeze({
+  commit: "d4cac1dce71d3b230f6695bf9bbaa24f4b02febe",
+  serialization: "UTF8_CRLF_TO_LF_ONLY",
+  files: Object.freeze({
+    ...NYX_SCHEDULER_FRONTIER_FROZEN_CORE.files,
+    "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "c60a4cafea93f73042ec09514b884e7de84e2537b816ecd6f389148a9f8ef2aa",
+    "src/lib/codelab/assurance/candidateEngineeringAdmission.ts": "4cefc03c77fdac6a279d06ee73923b2c6c44c834f64fb455a4d4a8f773b9a39e",
+  }),
+});
+
 export const NYX_SCHEDULER_EXPERIMENT = Object.freeze({
   chunkId: "NYX-HARD-REJECTION-REPAIR-001", maxCognitionCycles: 5, maxCandidateIterations: 2,
   maxCognitionCorrections: 3, maxWallClockMs: 480_000,

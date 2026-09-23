@@ -12,7 +12,7 @@ import { R3IsolatedHiddenEvaluator } from "../src/lib/codelab/assurance/r3Evalua
 import { NYX_ENGINEERING_QUALITY_V3 } from "./omega/nyx-quality-v3-fixtures";
 import { NYX_ENGINEERING_QUALITY_V4, NYX_V4_FROZEN_CORE } from "./omega/nyx-quality-v4-fixtures";
 import { NYX_ENGINEERING_QUALITY_V5, NYX_V5_FROZEN_CORE,
-  NYX_V5_QUALITY_REPAIR_FROZEN_CORE } from "./omega/nyx-quality-v5-fixtures";
+  NYX_V5_QUALITY_REPAIR_FROZEN_CORE, NYX_V5_QUALITY_REPAIR_V2_FROZEN_CORE } from "./omega/nyx-quality-v5-fixtures";
 import { OMEGA_CANDIDATE_RUNNER_SOURCE, VERIFICATION_INTEGRITY_ANTI_GAMING_CORPUS } from "./omega/verification-integrity-fixtures";
 
 let passed = 0;
@@ -502,6 +502,10 @@ export function probe(marker) {
     const blob = frozenGitBlob(NYX_V5_QUALITY_REPAIR_FROZEN_CORE.commit, path);
     return blob !== null && sha256(blob) === digest;
   }), "V5 quality-repair epoch is pinned without changing the historical V5 core");
+  check(Object.entries(NYX_V5_QUALITY_REPAIR_V2_FROZEN_CORE.files).every(([path, digest]) => {
+    const blob = frozenGitBlob(NYX_V5_QUALITY_REPAIR_V2_FROZEN_CORE.commit, path);
+    return blob !== null && sha256(blob) === digest;
+  }), "cumulative quality-repair successor is pinned independently of both prior V5 epochs");
   const v5TaskDigests = new Set<string>();
   for (const task of NYX_ENGINEERING_QUALITY_V5) {
     v5TaskDigests.add(sha256(canonical(task)));
