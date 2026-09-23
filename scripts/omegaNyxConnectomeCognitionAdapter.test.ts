@@ -10,6 +10,10 @@ import type {
 import { validTheoryResearchContext } from "../src/lib/codelab/research/theoryContracts";
 import { NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE } from
   "../src/lib/codelab/connectome/verifiedBiologicalArchitectureProfile";
+import { NYX_VERIFIED_BIOLOGICAL_ARCHITECTURE_PORTFOLIO } from
+  "../src/lib/codelab/connectome/verifiedBiologicalArchitecturePortfolio";
+import { selectAdaptiveBiologicalArchitecture, validBiologicalAdaptiveSelection } from
+  "../src/lib/codelab/connectome/biologicalAdaptivePolicy";
 
 let passed = 0;
 let failed = 0;
@@ -101,6 +105,33 @@ check(throws(() => buildNyxConnectomeResearchContext(request(), {
 check(profiled.trace.additionalModelCalls === 0 && profiled.trace.grantsAuthority === false,
   "biological topology adds neither model calls nor authority");
 
+const portfolio = NYX_VERIFIED_BIOLOGICAL_ARCHITECTURE_PORTFOLIO;
+const adaptive = selectAdaptiveBiologicalArchitecture({ portfolio, request: request() });
+const adaptiveReplay = selectAdaptiveBiologicalArchitecture({ portfolio, request: request() });
+check(validBiologicalAdaptiveSelection(adaptive, portfolio)
+  && adaptive.selectionDigest === adaptiveReplay.selectionDigest,
+"adaptive profile is valid and deterministic for identical admitted evidence");
+check(adaptive.sourceSelections.length === 2
+  && adaptive.homeostasis.populationBudgetRatio <= portfolio.envelope.maximumPopulationBudgetRatio
+  && adaptive.homeostasis.routingRecurrenceProduct <= portfolio.envelope.maximumRoutingRecurrenceProduct,
+"source selection preserves both organisms and homeostatic bounds");
+const adaptiveContext = buildNyxConnectomeResearchContext(request(), { architecturePortfolio: portfolio });
+check(adaptiveContext.trace.architecture.portfolioDigest === portfolio.portfolioDigest
+  && adaptiveContext.trace.architecture.adaptiveSelectionDigest === adaptive.selectionDigest
+  && adaptiveContext.trace.architecture.cognitiveMode === adaptive.primaryMode,
+"bounded live adapter binds its trace to the exact portfolio and selected cognitive mode");
+check(adaptiveContext.context.report.weakPoints.some((item) => item.includes("absence is not evidence of zero"))
+  && adaptiveContext.context.report.confidence.calibratedProbability === null,
+"cognition receives explicit unknown-annotation limits without invented confidence");
+check(throws(() => buildNyxConnectomeResearchContext(request(), {
+  architectureProfile: NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE, architecturePortfolio: portfolio,
+}), "nyx_connectome_architecture_configuration_ambiguous"),
+"two competing architecture authorities cannot be silently combined");
+check(throws(() => buildNyxConnectomeResearchContext(request(), {
+  architecturePortfolio: { ...portfolio, grantsAuthority: true as false },
+}), "nyx_connectome_architecture_portfolio_invalid"),
+"tampered authority-bearing portfolio fails closed");
+
 const revised = buildNyxConnectomeResearchContext(request({
   cognitionRequestId: "NYX-CONNECTOME-TEST-REQUEST-2",
   availableEvidence: [{ evidenceRef: "FILE:src/policy.mjs", kind: "FILE", relativePath: "src/policy.mjs",
@@ -123,6 +154,34 @@ check(revised.context.report.requests.length === 1
 "available discriminating evidence is represented as a focused request, not assumed truth");
 check(revised.trace.contextDigest !== initial.trace.contextDigest,
   "materially different evidence produces a different bound context identity");
+const revisedAdaptive = selectAdaptiveBiologicalArchitecture({ portfolio, request: request({
+  cognitionRequestId: "NYX-CONNECTOME-ADAPTIVE-REVISED",
+  observation: { ...request().observation, observationId: "OBS-ADAPTIVE-REVISED",
+    epistemicState: "CONFLICTED", unknowns: ["cause unknown"],
+    contradictions: ["two results disagree"] },
+  priorHypotheses: [{ hypothesisId: "PRIOR-ADAPTIVE", parentHypothesisId: null,
+    causalHypothesis: "Only the first element counts.", expectedResult: "All items count.",
+    strategyDigest: "f".repeat(64), disposition: "FALSIFIED", verificationEvidenceRefs: ["EVIDENCE-1"] }],
+}) });
+check(validBiologicalAdaptiveSelection(revisedAdaptive, portfolio)
+  && revisedAdaptive.selectionDigest !== adaptive.selectionDigest
+  && revisedAdaptive.demand.uncertainty > adaptive.demand.uncertainty,
+"conflicting, falsified evidence changes the bounded adaptive selection rather than reusing a fixed profile");
+let boundedSelections = true;
+for (let index = 0; index < 48; index += 1) {
+  const seed = request();
+  const changed = request({ cognitionRequestId: `NYX-CONNECTOME-BOUNDS-${index}`,
+    observation: { ...seed.observation, observationId: `OBS-BOUNDS-${index}`,
+      epistemicState: index % 3 === 0 ? "CONFLICTED" : "SUPPORTED",
+      unknowns: Array.from({ length: index % 7 }, (_, n) => `unknown-${n}`),
+      contradictions: Array.from({ length: index % 5 }, (_, n) => `contradiction-${n}`) },
+    availableEvidence: index % 2 === 0 ? [] : [{ evidenceRef: "FILE:src/total.mjs",
+      kind: "FILE", relativePath: "src/total.mjs", description: "bounded source" }],
+  });
+  const selection = selectAdaptiveBiologicalArchitecture({ portfolio, request: changed });
+  if (!validBiologicalAdaptiveSelection(selection, portfolio)) boundedSelections = false;
+}
+check(boundedSelections, "48 deterministic stress scenarios preserve profile integrity and homeostatic bounds");
 
 let delegatedCalls = 0;
 let delegatedContextValid = false;

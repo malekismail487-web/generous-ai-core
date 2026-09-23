@@ -118,6 +118,8 @@ export interface EpistemicArchitectureProfile {
   readonly grantsAuthority: false;
 }
 
+export type EpistemicArchitectureProfileDraft = Omit<EpistemicArchitectureProfile, "profileDigest">;
+
 interface FlyVisNodeInput {
   readonly name?: unknown;
 }
@@ -487,11 +489,32 @@ function multiplier(value: number, amplitude: number): number {
   return rounded(1 + (bounded(value) - 0.5) * amplitude);
 }
 
-export function compileEpistemicArchitectureProfile(prior: HybridBiologicalPrior): EpistemicArchitectureProfile {
-  if (!validHybridBiologicalPrior(prior)) throw new Error("hybrid_biological_prior_invalid");
-  const metric = prior.aggregateMetrics;
-  const body = { schemaVersion: BIOLOGICAL_CIRCUIT_SCHEMA_VERSION,
-    profileId: `${prior.priorId}:epistemic-profile`, sourcePriorDigest: prior.priorDigest,
+export function sealEpistemicArchitectureProfile(
+  draft: EpistemicArchitectureProfileDraft,
+): EpistemicArchitectureProfile {
+  const profile = immutable({ ...draft, profileDigest: sha256(draft) });
+  if (!validEpistemicArchitectureProfile(profile)) {
+    throw new Error("epistemic_architecture_profile_draft_invalid");
+  }
+  return profile;
+}
+
+export function compileEpistemicArchitectureProfileFromMetrics(input: {
+  readonly profileId: string;
+  readonly sourceDigest: string;
+  readonly metrics: BiologicalTopologyMetrics;
+}): EpistemicArchitectureProfile {
+  if (!validId(input.profileId) || !validSha256(input.sourceDigest)) {
+    throw new Error("epistemic_architecture_profile_identity_invalid");
+  }
+  const metric = input.metrics;
+  const finiteMetrics = Object.values(metric);
+  if (metric.nodes < 2 || metric.edges < 1 || finiteMetrics.some((value) => typeof value !== "number"
+    || !Number.isFinite(value) || value < 0)) {
+    throw new Error("epistemic_architecture_profile_metrics_invalid");
+  }
+  return sealEpistemicArchitectureProfile({ schemaVersion: BIOLOGICAL_CIRCUIT_SCHEMA_VERSION,
+    profileId: input.profileId, sourcePriorDigest: input.sourceDigest,
     evidenceCopiesMultiplier: multiplier(metric.sparsity, 0.35),
     hypothesisCopiesMultiplier: multiplier(metric.recurrentCoreFraction, 0.3),
     falsifierCopiesMultiplier: multiplier(metric.inhibitoryEdgeFraction, 0.5),
@@ -502,8 +525,16 @@ export function compileEpistemicArchitectureProfile(prior: HybridBiologicalPrior
     routingFanoutMultiplier: multiplier(1 - metric.sparsity, 0.5),
     recurrenceCyclesMultiplier: multiplier(metric.recurrentCoreFraction, 0.4),
     authority: BIOLOGICAL_CIRCUIT_AUTHORITY,
-    modelCallsAdded: 0 as const, toolsAdded: 0 as const, grantsAuthority: false as const };
-  return immutable({ ...body, profileDigest: sha256(body) });
+    modelCallsAdded: 0, toolsAdded: 0, grantsAuthority: false });
+}
+
+export function compileEpistemicArchitectureProfile(prior: HybridBiologicalPrior): EpistemicArchitectureProfile {
+  if (!validHybridBiologicalPrior(prior)) throw new Error("hybrid_biological_prior_invalid");
+  return compileEpistemicArchitectureProfileFromMetrics({
+    profileId: `${prior.priorId}:epistemic-profile`,
+    sourceDigest: prior.priorDigest,
+    metrics: prior.aggregateMetrics,
+  });
 }
 
 export function validEpistemicArchitectureProfile(profile: EpistemicArchitectureProfile): boolean {

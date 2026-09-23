@@ -1,5 +1,6 @@
 name: Omega NYX matched connectome ablation
 
+# Live matched trials remain opt-in while the experiment is frozen.
 on:
   workflow_dispatch:
     inputs:
@@ -11,27 +12,6 @@ on:
         options:
           - digital
           - biological
-  push:
-    branches:
-      - sol/omega-institutional-spine
-    paths:
-      - .github/workflows/omega-nyx-connectome-ablation.yml
-      - scripts/omega/nyx-quality-v4-live-eval.ts
-      - scripts/omega/nyx-connectome-ablation-live-eval.ts
-      - scripts/omega/nyx-connectome-ablation.ts
-      - scripts/omega/nyx-connectome-ablation-analysis.ts
-      - scripts/omega/nyx-quality-v5-fixtures.ts
-      - scripts/omegaNyxConnectomeCognitionAdapter.test.ts
-      - scripts/omegaNyxConnectomeAblationAnalysis.test.ts
-      - src/lib/codelab/connectome/nyxConnectomeCognitionAdapter.ts
-      - src/lib/codelab/connectome/epistemicMicrocircuit.ts
-      - src/lib/codelab/connectome/cognitivePopulationRuntime.ts
-      - scripts/omega/nyx-biological-connectome-ablation-live-eval.ts
-      - scripts/omega/nyx-biological-connectome-ablation.ts
-      - scripts/omega/nyx-biological-connectome-ablation-analysis.ts
-      - scripts/omegaNyxBiologicalConnectomeAblationAnalysis.test.ts
-      - src/lib/codelab/connectome/biologicalCircuitIR.ts
-      - src/lib/codelab/connectome/verifiedBiologicalArchitectureProfile.ts
 
 permissions:
   contents: read
@@ -86,7 +66,7 @@ jobs:
           if-no-files-found: error
 
   matched-biological-connectome-ablation:
-    if: github.event_name == 'push' || inputs.experiment == 'biological'
+    if: inputs.experiment == 'biological'
     runs-on: ubuntu-latest
     timeout-minutes: 100
     env:
@@ -112,6 +92,7 @@ jobs:
       - name: Verify biological treatment, evaluator, and authority contracts
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBiologicalCircuitIR.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBiologicalArchitecturePortfolio.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxConnectomeCognitionAdapter.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxBiologicalConnectomeAblationAnalysis.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaDigitalNeuronStability.test.ts

@@ -20,6 +20,16 @@ import {
   validEpistemicArchitectureProfile,
   type EpistemicArchitectureProfile,
 } from "./biologicalCircuitIR";
+import {
+  validBiologicalArchitecturePortfolio,
+  type BiologicalArchitecturePortfolio,
+} from "./biologicalArchitecturePortfolio";
+import {
+  selectAdaptiveBiologicalArchitecture,
+  validBiologicalAdaptiveSelection,
+  type BiologicalAdaptiveSelection,
+  type BiologicalCognitiveMode,
+} from "./biologicalAdaptivePolicy";
 
 export const NYX_CONNECTOME_COGNITION_ADAPTER_STATUS = Object.freeze({
   chunkId: "OMEGA-NYX-CONNECTOME-ABLATION-001",
@@ -57,6 +67,9 @@ export interface NyxConnectomeCognitionTrace {
   readonly architecture: Readonly<{
     profileDigest: string | null;
     sourcePriorDigest: string | null;
+    portfolioDigest: string | null;
+    adaptiveSelectionDigest: string | null;
+    cognitiveMode: BiologicalCognitiveMode | null;
     scale: EpistemicCircuitScale;
     routingFanoutMultiplier: number;
     recurrenceCycles: number;
@@ -77,6 +90,7 @@ export interface NyxConnectomeCognitionAdapter {
 
 export interface NyxConnectomeCognitionConfiguration {
   readonly architectureProfile?: EpistemicArchitectureProfile;
+  readonly architecturePortfolio?: BiologicalArchitecturePortfolio;
 }
 
 const BASE_SCALE: EpistemicCircuitScale = Object.freeze({ evidenceCopies: 4, hypothesisCopies: 8,
@@ -87,13 +101,28 @@ function scaledCopies(value: number, multiplier: number): number {
   return Math.max(1, Math.min(4_096, Math.round(value * multiplier)));
 }
 
-function architecture(configuration: NyxConnectomeCognitionConfiguration): Readonly<{
+function architecture(configuration: NyxConnectomeCognitionConfiguration,
+  request: NyxRepairCognitionRequest): Readonly<{
   profile: EpistemicArchitectureProfile | null;
+  adaptiveSelection: BiologicalAdaptiveSelection | null;
   scale: EpistemicCircuitScale;
   routingFanoutMultiplier: number;
   recurrenceCycles: number;
 }> {
-  const profile = configuration.architectureProfile ?? null;
+  if (configuration.architectureProfile && configuration.architecturePortfolio) {
+    throw new Error("nyx_connectome_architecture_configuration_ambiguous");
+  }
+  if (configuration.architecturePortfolio
+    && !validBiologicalArchitecturePortfolio(configuration.architecturePortfolio)) {
+    throw new Error("nyx_connectome_architecture_portfolio_invalid");
+  }
+  const adaptiveSelection = configuration.architecturePortfolio
+    ? selectAdaptiveBiologicalArchitecture({ portfolio: configuration.architecturePortfolio, request }) : null;
+  if (adaptiveSelection && !validBiologicalAdaptiveSelection(adaptiveSelection,
+    configuration.architecturePortfolio!)) {
+    throw new Error("nyx_connectome_adaptive_selection_invalid");
+  }
+  const profile = configuration.architectureProfile ?? adaptiveSelection?.profile ?? null;
   if (profile && !validEpistemicArchitectureProfile(profile)) {
     throw new Error("nyx_connectome_architecture_profile_invalid");
   }
@@ -106,7 +135,7 @@ function architecture(configuration: NyxConnectomeCognitionConfiguration): Reado
     uncertaintyCopies: scaledCopies(BASE_SCALE.uncertaintyCopies, profile.uncertaintyCopiesMultiplier),
     actionCopies: scaledCopies(BASE_SCALE.actionCopies, profile.actionCopiesMultiplier),
   }) : BASE_SCALE;
-  return Object.freeze({ profile, scale,
+  return Object.freeze({ profile, adaptiveSelection, scale,
     routingFanoutMultiplier: profile?.routingFanoutMultiplier ?? 1,
     recurrenceCycles: profile
       ? Math.max(1, Math.min(128, Math.round(BASE_RECURRENCE_CYCLES * profile.recurrenceCyclesMultiplier)))
@@ -172,13 +201,21 @@ function evidencePackets(request: NyxRepairCognitionRequest): readonly Epistemic
   return Object.freeze(result);
 }
 
-function weakPoints(request: NyxRepairCognitionRequest, decision: EpistemicCircuitDecision): readonly string[] {
+function weakPoints(request: NyxRepairCognitionRequest, decision: EpistemicCircuitDecision,
+  selection: BiologicalAdaptiveSelection | null,
+  portfolio: BiologicalArchitecturePortfolio | undefined): readonly string[] {
   const result: string[] = [
     `Connectome result is ${decision.state}; it is advisory research context and grants no authority.`,
     ...decision.assessments.slice(0, 3).map((assessment, index) =>
       `Rank ${index + 1}: ${assessment.hypothesisId}; peak=${assessment.peakActivation}; `
       + `independentRoots=${assessment.evidenceRoots.length}; actionReady=${assessment.actionCellsFired > 0}.`),
   ];
+  if (selection) result.push(...selection.reasons.map((reason) => `Adaptive architecture rationale: ${reason}.`));
+  if (portfolio) for (const member of portfolio.members) {
+    const unknown = Object.entries(member.annotationCoverage)
+      .filter(([, coverage]) => coverage === 0).map(([field]) => field);
+    if (unknown.length > 0) result.push(`${member.datasetId} has unannotated ${unknown.join(", ")}; absence is not evidence of zero.`);
+  }
   if (request.availableEvidence.length > 0) {
     result.push(`Discriminating evidence remains available: ${request.availableEvidence.map((item) => item.evidenceRef).join(", ")}.`);
   }
@@ -201,7 +238,7 @@ function weakPoints(request: NyxRepairCognitionRequest, decision: EpistemicCircu
 export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionRequest,
   configuration: NyxConnectomeCognitionConfiguration = {}): NyxConnectomeContextResult {
   if (request.theoryResearchContext) throw new Error("nyx_connectome_context_conflicts_with_existing_research_context");
-  const architectureConfiguration = architecture(configuration);
+  const architectureConfiguration = architecture(configuration, request);
   const candidateBinding = request.observation.candidateCommit;
   const circuit = new EpistemicMicrocircuit({
     circuitId: `nyx-connectome-${sha256(request.cognitionRequestId).slice(0, 24)}`,
@@ -249,6 +286,11 @@ export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionReq
         `Local circuit structure is influenced by validated biological profile ${architectureConfiguration.profile.profileDigest}.`,
         "Biological topology is an experimental computational prior, not evidence of intelligence or correctness.",
       ] : []),
+      ...(architectureConfiguration.adaptiveSelection ? [
+        `The bounded profile was selected from portfolio ${architectureConfiguration.adaptiveSelection.portfolioDigest}.`,
+        `The deterministic cognitive mode is ${architectureConfiguration.adaptiveSelection.primaryMode}.`,
+        "Source disagreement is preserved and shrinks uncertain biological influence toward neutral behavior.",
+      ] : []),
     ] });
   const assignmentDigest = theoryDigest(assignment);
   const suffix = sha256(canonical({ request: request.cognitionRequestId, decision,
@@ -267,7 +309,8 @@ export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionReq
       confidence: { calibratedProbability: null, calibrationState: "NOT_CALIBRATED" as const,
         lastModelEstimate: null, distinctEvidenceRoots: decision.independentEvidenceRoots,
         independenceEstablished: false as const, numericalTarget: null },
-      weakPoints: weakPoints(request, decision),
+      weakPoints: weakPoints(request, decision, architectureConfiguration.adaptiveSelection,
+        configuration.architecturePortfolio),
       requests: decision.state === "SUPPORTED_CANDIDATE" && request.availableEvidence.length === 0 ? [] : [{
         question: request.availableEvidence.length > 0
           ? `Would ${request.availableEvidence.map((item) => item.evidenceRef).join(", ")} discriminate the leading causes?`
@@ -295,6 +338,9 @@ export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionReq
       traceDigest: decision.run.snapshot.traceDigest }),
     architecture: Object.freeze({ profileDigest: architectureConfiguration.profile?.profileDigest ?? null,
       sourcePriorDigest: architectureConfiguration.profile?.sourcePriorDigest ?? null,
+      portfolioDigest: architectureConfiguration.adaptiveSelection?.portfolioDigest ?? null,
+      adaptiveSelectionDigest: architectureConfiguration.adaptiveSelection?.selectionDigest ?? null,
+      cognitiveMode: architectureConfiguration.adaptiveSelection?.primaryMode ?? null,
       scale: architectureConfiguration.scale,
       routingFanoutMultiplier: architectureConfiguration.routingFanoutMultiplier,
       recurrenceCycles: architectureConfiguration.recurrenceCycles }),

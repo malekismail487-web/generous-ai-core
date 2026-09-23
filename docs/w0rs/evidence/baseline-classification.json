@@ -4435,6 +4435,7 @@
           "scripts/omegaAuditReconstruction.test.ts",
           "scripts/omegaAuthorityGraph.test.ts",
           "scripts/omegaBaselineDiffAssurance.test.ts",
+          "scripts/omegaBiologicalArchitecturePortfolio.test.ts",
           "scripts/omegaCandidateEngineeringAdmission.test.ts",
           "scripts/omegaClaimLifecycle.test.ts",
           "scripts/omegaDigitalNeuronMicrocircuit.test.ts",
@@ -4675,6 +4676,8 @@
           "src/lib/codelab/assurance/r3EvaluatorIsolation.ts",
           "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts",
           "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts",
+          "src/lib/codelab/connectome/biologicalAdaptivePolicy.ts",
+          "src/lib/codelab/connectome/biologicalArchitecturePortfolio.ts",
           "src/lib/codelab/connectome/biologicalCircuitIR.ts",
           "src/lib/codelab/connectome/cognitivePopulationCompiler.ts",
           "src/lib/codelab/connectome/cognitivePopulationRuntime.ts",
@@ -7266,6 +7269,7 @@
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
         "firstPartyCodeReferences": [
+          "scripts/omegaBiologicalArchitecturePortfolio.test.ts",
           "scripts/omegaNyxConnectomeCognitionAdapter.test.ts",
           "scripts/orchestraO2.test.ts",
           "src/components/SubjectsSection.tsx",
@@ -8115,6 +8119,7 @@
           "scripts/omega/nyx-research-party-live-eval.ts",
           "scripts/omegaAssureR2Evaluator.test.ts",
           "scripts/omegaAuthorityGraph.test.ts",
+          "scripts/omegaBiologicalArchitecturePortfolio.test.ts",
           "scripts/omegaBiologicalCircuitIR.test.ts",
           "scripts/omegaDigitalNeuronMicrocircuit.test.ts",
           "scripts/omegaDigitalNeuronStability.test.ts",

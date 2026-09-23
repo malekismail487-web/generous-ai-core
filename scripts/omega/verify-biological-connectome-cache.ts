@@ -13,6 +13,10 @@ import {
 import { NYX_BIOLOGICAL_SOURCE_REGISTRY } from "../../src/lib/codelab/connectome/biologicalSourceRegistry";
 import { NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE } from
   "../../src/lib/codelab/connectome/verifiedBiologicalArchitectureProfile";
+import { compileBiologicalArchitecturePortfolio } from
+  "../../src/lib/codelab/connectome/biologicalArchitecturePortfolio";
+import { NYX_VERIFIED_BIOLOGICAL_ARCHITECTURE_PORTFOLIO } from
+  "../../src/lib/codelab/connectome/verifiedBiologicalArchitecturePortfolio";
 
 const rootInput = process.env.NYX_CONNECTOME_CACHE_ROOT?.trim();
 if (!rootInput || !isAbsolute(rootInput)) {
@@ -57,6 +61,12 @@ const profile = compileEpistemicArchitectureProfile(prior);
 if (!isDeepStrictEqual(profile, NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE)) {
   throw new Error("committed_biological_profile_does_not_match_pinned_source_artifacts");
 }
+const portfolio = compileBiologicalArchitecturePortfolio({
+  portfolioId: "nyx:biological-architecture-portfolio:v1", circuits: [fly, worm],
+});
+if (!isDeepStrictEqual(portfolio, NYX_VERIFIED_BIOLOGICAL_ARCHITECTURE_PORTFOLIO)) {
+  throw new Error("committed_biological_portfolio_does_not_match_pinned_source_artifacts");
+}
 console.log(JSON.stringify({ result: "VERIFIED", rawDataCommittedToProductRepository: false,
   sources: [
     { datasetId: fly.provenance.datasetId, circuitDigest: fly.circuitDigest,
@@ -65,4 +75,7 @@ console.log(JSON.stringify({ result: "VERIFIED", rawDataCommittedToProductReposi
       topology: analyzeBiologicalTopology(worm) },
   ], prior: { priorId: prior.priorId, priorDigest: prior.priorDigest,
     motifs: prior.motifs.map((item) => ({ kind: item.kind, strength: item.strength })) },
-  profile, secretsAccessed: false, networkAccessed: false, filesModified: false }, null, 2));
+  profile, portfolioDigest: portfolio.portfolioDigest,
+  unknownAnnotations: portfolio.members.map((member) => ({ datasetId: member.datasetId,
+    annotationCoverage: member.annotationCoverage })),
+  secretsAccessed: false, networkAccessed: false, filesModified: false }, null, 2));

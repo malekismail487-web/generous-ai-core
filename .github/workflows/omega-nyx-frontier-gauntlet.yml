@@ -1,29 +1,8 @@
 name: Omega NYX frontier reasoning gauntlet
 
+# Live gauntlets remain opt-in while the experiment is frozen.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - sol/omega-institutional-spine
-    paths:
-      - .github/workflows/omega-nyx-frontier-gauntlet.yml
-      - package.json
-      - scripts/omega/nyx-frontier-reasoning-fixtures.ts
-      - scripts/omega/nyx-frontier-reasoning-live-eval.ts
-      - scripts/omegaFrontierReasoningGauntlet.test.ts
-      - scripts/omega/nyx-quality-v4-live-eval.ts
-      - scripts/omega/nyx-quality-v4-fixtures.ts
-      - scripts/omega/nyx-scheduler-challenge.ts
-      - scripts/omegaSchedulerChallenge.test.ts
-      - scripts/omega/required-suites.json
-      - src/lib/codelab/model/nvidiaNimProvider.ts
-      - src/lib/codelab/model/nvidiaCapacity.ts
-      - src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts
-      - src/lib/codelab/engine/r3BoundedRepairLoop.ts
-      - src/lib/codelab/research/researchPartyAssurance.ts
-      - src/lib/codelab/research/researchPartyContracts.ts
-      - src/lib/codelab/research/sparseTheoryRouter.ts
-      - src/lib/codelab/research/theoryResearchParty.ts
 
 permissions:
   contents: read
