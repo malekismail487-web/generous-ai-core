@@ -8,6 +8,7 @@ on:
       - sol/omega-institutional-spine
     paths:
       - scripts/omega/nyx-biological-connectome-ablation.ts
+      - .github/workflows/omega-nyx-connectome-ablation.yml
   workflow_dispatch:
     inputs:
       experiment:
@@ -106,6 +107,8 @@ jobs:
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaVerificationIntegrity.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaCandidateEngineeringAdmission.test.ts
           npm run typecheck:ratchet
+      - name: Preflight the unchanged NVIDIA model and credential with a bounded live smoke
+        run: npm run omega:nvidia:smoke
       - name: Run frozen matched A/B/C/D/E adaptive biological capability experiment
         run: npm run omega:nyx:biological-connectome-ablation
       - name: Upload sanitized biological ablation report
