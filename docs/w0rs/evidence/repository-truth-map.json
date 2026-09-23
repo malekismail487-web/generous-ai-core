@@ -2167,6 +2167,8 @@
     {
       "name": "NVIDIA_API_KEY",
       "files": [
+        "scripts/omega/nyx-cli-live-eval.ts",
+        "scripts/omega/nyx-cli.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts"
       ]
@@ -2175,6 +2177,8 @@
       "name": "NVIDIA_NIM_MODEL",
       "files": [
         "scripts/omega/nvidia-nim-live-smoke.ts",
+        "scripts/omega/nyx-cli-live-eval.ts",
+        "scripts/omega/nyx-cli.ts",
         "scripts/omega/nyx-contract-compliance.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
         "scripts/omega/nyx-live-r3e.ts",
@@ -2216,6 +2220,8 @@
       "name": "OMEGA_ALLOW_NVIDIA_NETWORK",
       "files": [
         "scripts/omega/nvidia-nim-live-smoke.ts",
+        "scripts/omega/nyx-cli-live-eval.ts",
+        "scripts/omega/nyx-cli.ts",
         "scripts/omega/nyx-contract-compliance.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
         "scripts/omega/nyx-live-r3e.ts",

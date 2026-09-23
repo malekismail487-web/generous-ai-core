@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/46",
+  "suiteVersion": "omega-institutional-suite/47",
   "criticalSuites": [
     "OMEGA-DIGITAL-NEURON-STABILITY",
     "OMEGA-DIGITAL-NEURON-MICROCIRCUIT",
@@ -49,6 +49,7 @@
     "OMEGA-R3-F-LIVE-ENGINEER-ASSURANCE",
     "OMEGA-NYX-ENGINEERING-QUALITY-ASSURANCE",
     "OMEGA-NVIDIA-NIM-PROVIDER",
+    "OMEGA-NYX-CHAT-CLI",
     "OMEGA-VERIFICATION-INTEGRITY",
     "OMEGA-R1-INDEPENDENT-REPLICATION",
     "OMEGA-READ-ONLY-EXECUTOR",
@@ -138,6 +139,7 @@
     { "suiteId": "OMEGA-GROUNDED-REPOSITORY-CONTEXT", "file": "scripts/omegaGroundedRepositoryContext.test.ts" },
     { "suiteId": "OMEGA-GROUNDED-ENGINEERING", "file": "scripts/omegaGroundedEngineering.test.ts" },
     { "suiteId": "OMEGA-NVIDIA-NIM-PROVIDER", "file": "scripts/omegaNvidiaNimProvider.test.ts" },
+    { "suiteId": "OMEGA-NYX-CHAT-CLI", "file": "scripts/omegaNyxChatCli.test.ts" },
     { "suiteId": "OMEGA-VERIFICATION-INTEGRITY", "file": "scripts/omegaVerificationIntegrity.test.ts" },
     { "suiteId": "OMEGA-READ-ONLY-EXECUTOR", "file": "scripts/omegaReadOnlyExecutor.test.ts" },
     { "suiteId": "OMEGA-READ-ONLY-VERTICAL-SLICE", "file": "scripts/omegaReadOnlyVerticalSlice.test.ts" },
