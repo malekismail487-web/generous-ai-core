@@ -57,12 +57,12 @@ jobs:
         run: |
           (cd incremental && node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaCandidateEngineeringAdmission.test.ts)
           (cd cumulative && node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaCandidateEngineeringAdmission.test.ts)
-      - name: Run frozen incremental-review control
-        working-directory: incremental
-        shell: bash
-        run: env -u GITHUB_SHA node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v4-live-eval.ts
       - name: Run frozen cumulative-review candidate
         working-directory: cumulative
+        shell: bash
+        run: env -u GITHUB_SHA node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v4-live-eval.ts
+      - name: Run frozen incremental-review control
+        working-directory: incremental
         shell: bash
         run: env -u GITHUB_SHA node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v4-live-eval.ts
       - name: Validate matched controls before interpreting outcomes
