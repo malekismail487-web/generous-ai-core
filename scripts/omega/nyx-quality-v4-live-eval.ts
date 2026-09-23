@@ -27,7 +27,8 @@ import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readO
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { observeEngineeringExecution, type EngineeringObservation } from "../../src/lib/codelab/observation/r3EngineeringObservation";
 import { NYX_ENGINEERING_QUALITY_V4, NYX_V4_FROZEN_CORE, type NyxQualityV4Task } from "./nyx-quality-v4-fixtures";
-import { NYX_ENGINEERING_QUALITY_V5, NYX_V5_FROZEN_CORE, type NyxQualityV5Task } from "./nyx-quality-v5-fixtures";
+import { NYX_ENGINEERING_QUALITY_V5, NYX_V5_FROZEN_CORE, NYX_V5_QUALITY_REPAIR_FROZEN_CORE,
+  type NyxQualityV5Task } from "./nyx-quality-v5-fixtures";
 import { NYX_CONNECTOME_ABLATION, NYX_CONNECTOME_ABLATION_FROZEN_CORE } from "./nyx-connectome-ablation";
 import { assessNyxConnectomeAblation, type NyxConnectomeAblationArm,
   type NyxConnectomeAblationRecord } from "./nyx-connectome-ablation-analysis";
@@ -54,7 +55,7 @@ import { NYX_CONTEXT_EXPERIMENT as CONTEXT_V1, NYX_CONTEXT_REPAIR_EXPERIMENT, NY
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V4";
 const EXPERIMENT_VARIANT = (process.env.NYX_EXPERIMENT_VARIANT?.trim() || "CURRENT") as NyxCognitionExperimentVariant;
-if (!["V4", "V5", "CHALLENGE", "FRONTIER_CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES", "COMPARISON", "CAPACITY_STATUS", "CONNECTOME_ABLATION", "BIOLOGICAL_CONNECTOME_ABLATION"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
+if (!["V4", "V5", "V5_QUALITY_REPAIR", "CHALLENGE", "FRONTIER_CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES", "COMPARISON", "CAPACITY_STATUS", "CONNECTOME_ABLATION", "BIOLOGICAL_CONNECTOME_ABLATION"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
 if (!["CURRENT", "REASONING_ENABLED", "MINIMAL_REFERENCE"].includes(EXPERIMENT_VARIANT)) throw new Error("unsupported_nyx_experiment_variant");
 const IS_CAPACITY_STATUS = SUITE_ID === "CAPACITY_STATUS";
 const IS_COMPARISON = SUITE_ID === "COMPARISON" || IS_CAPACITY_STATUS;
@@ -91,19 +92,21 @@ const HOLDOUT: readonly EvaluationTask[] = IS_BIOLOGICAL_CONNECTOME_ABLATION
   : IS_COMPARISON ? NYX_CONFIGURATION_COMPARISON.arms.map((comparisonArm) => ({
   ...NYX_CONTEXT_TASKS[1], taskId: `NYX-CONFIG-${comparisonArm}`, comparisonArm,
 })) : IS_CONTEXT ? NYX_CONTEXT_TASKS : IS_CHALLENGE ? [{ ...NYX_SCHEDULER_CHALLENGE, comparisonArm: EXPERIMENT_VARIANT }]
-  : SUITE_ID === "V5" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
+  : SUITE_ID === "V5" || SUITE_ID === "V5_QUALITY_REPAIR" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
 const FROZEN_CORE = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_FROZEN_CORE : IS_COMPARISON ? NYX_CONFIGURATION_FROZEN_CORE : IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_FROZEN_CORE : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_FROZEN_CORE
   : IS_FRONTIER_CHALLENGE ? NYX_SCHEDULER_FRONTIER_FROZEN_CORE
   : IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE
     : IS_BIOLOGICAL_CONNECTOME_ABLATION ? NYX_BIOLOGICAL_CONNECTOME_ABLATION_FROZEN_CORE
       : IS_CONNECTOME_ABLATION ? NYX_CONNECTOME_ABLATION_FROZEN_CORE
-    : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
+    : SUITE_ID === "V5_QUALITY_REPAIR" ? NYX_V5_QUALITY_REPAIR_FROZEN_CORE
+      : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
 const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
   : IS_FRONTIER_CHALLENGE ? "nyx-scheduler-frontier/4"
   : IS_CHALLENGE ? "nyx-scheduler-challenge/1"
     : IS_BIOLOGICAL_CONNECTOME_ABLATION ? NYX_BIOLOGICAL_CONNECTOME_ABLATION.version
       : IS_CONNECTOME_ABLATION ? NYX_CONNECTOME_ABLATION.version
-    : SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
+    : SUITE_ID === "V5_QUALITY_REPAIR" ? "nyx-quality-v5-repair/1"
+      : SUITE_ID === "V5" ? "nyx-quality-v5/1" : "nyx-quality-v4/1";
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
