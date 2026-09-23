@@ -1,14 +1,7 @@
 name: Omega NYX matched connectome ablation
 
-# The narrow push trigger executes one requested adaptive-portfolio trial on the Omega branch.
-# Remove it after the run so future pushes cannot silently consume model compute.
+# Live matched trials remain opt-in; the requested adaptive-portfolio trial has finished.
 on:
-  push:
-    branches:
-      - sol/omega-institutional-spine
-    paths:
-      - scripts/omega/nyx-biological-connectome-ablation.ts
-      - .github/workflows/omega-nyx-connectome-ablation.yml
   workflow_dispatch:
     inputs:
       experiment:
@@ -73,7 +66,7 @@ jobs:
           if-no-files-found: error
 
   matched-biological-connectome-ablation:
-    if: github.event_name == 'push' || inputs.experiment == 'biological'
+    if: inputs.experiment == 'biological'
     runs-on: ubuntu-latest
     timeout-minutes: 130
     env:
