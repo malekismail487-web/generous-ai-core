@@ -4432,6 +4432,7 @@
           "scripts/omega/nyx-scheduler-challenge.ts",
           "scripts/omega/nyx-ui.ts",
           "scripts/omega/nyx-ui/ui.js",
+          "scripts/omega/nyx-web-live-eval.ts",
           "scripts/omega/pre-r2-gate.mjs",
           "scripts/omega/run-tests.mjs",
           "scripts/omega/test-harness.mjs",
