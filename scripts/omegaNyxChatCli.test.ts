@@ -165,6 +165,194 @@ omegaTest("failed isolated candidate returns evidence to NYX for a bounded repai
   }
 });
 
+omegaTest(
+  "rereading after a failed edit observes the isolated candidate, not stale source",
+  async () => {
+    const root = await fixture();
+    const wrong = "export function value() { return 3; }\n";
+    const writer = await NyxIsolatedCandidateWriter.create({
+      sourceRoot: root,
+      editablePath: "src/value.mjs",
+      verifierPath: "tools/verify.mjs",
+      candidateCommit: "d".repeat(40),
+      maxCandidateBytes: 4_096,
+      maxVerifierMs: 5_000,
+    });
+    const r1 = await reader(root);
+    try {
+      const model = provider([
+        JSON.stringify({ kind: "READ_FILE", path: "src/value.mjs" }),
+        JSON.stringify({
+          kind: "PROPOSE_EDIT",
+          path: "src/value.mjs",
+          expectedBaseHash: nyxSha256(SOURCE),
+          replacement: wrong,
+          rationale: "First bounded attempt.",
+        }),
+        JSON.stringify({ kind: "READ_FILE", path: "src/value.mjs" }),
+        JSON.stringify({
+          kind: "PROPOSE_EDIT",
+          path: "src/value.mjs",
+          expectedBaseHash: nyxSha256(wrong),
+          replacement: REPLACEMENT,
+          rationale: "Revise the isolated candidate.",
+        }),
+      ]);
+      const session = NyxChatSession.create({
+        sessionId: "NYX-REOBSERVE-SESSION",
+        model,
+        reader: r1,
+        candidateWriter: writer,
+        editablePaths: ["src/value.mjs"],
+        maxModelCallsPerTurn: 4,
+        maxCandidatesPerTurn: 2,
+        maxTurnMs: 30_000,
+        maxOutputTokens: 1_024,
+      });
+      const result = await session.turn(
+        "Make value() return 2 and inspect failed work before retrying.",
+      );
+      check(
+        result.outcome,
+        "CANDIDATE_VERIFIED",
+        "the second candidate uses the observed isolated base",
+      );
+      check(
+        result.events.filter((event) => event.eventType === "READ").length,
+        2,
+        "source and candidate reads each have evidence",
+      );
+      check(
+        r1.auditLog().length,
+        1,
+        "reread does not silently return to the authoritative source",
+      );
+      assert.equal(
+        await readFile(join(root, "src", "value.mjs"), "utf8"),
+        SOURCE,
+      );
+      const observed = await writer.observeCandidate("src/value.mjs");
+      check(
+        observed.contentSha256,
+        nyxSha256(REPLACEMENT),
+        "candidate read binds to applied content",
+      );
+      await assert.rejects(
+        writer.observeCandidate("src/other.mjs"),
+        /not_observable/,
+      );
+    } finally {
+      r1.terminate(Date.now(), "test_closed");
+      assert.equal((await writer.close()).decision, "CLEANED");
+      await rm(root, { recursive: true });
+    }
+  },
+);
+
+omegaTest(
+  "candidate reobservation fails closed if the authoritative source changes",
+  async () => {
+    const root = await fixture();
+    const writer = await NyxIsolatedCandidateWriter.create({
+      sourceRoot: root,
+      editablePath: "src/value.mjs",
+      verifierPath: "tools/verify.mjs",
+      candidateCommit: "e".repeat(40),
+      maxCandidateBytes: 4_096,
+      maxVerifierMs: 5_000,
+    });
+    try {
+      const applied = await writer.apply({
+        requestId: "source-change",
+        path: "src/value.mjs",
+        expectedBaseHash: nyxSha256(SOURCE),
+        replacement: REPLACEMENT,
+        rationale: "Isolated candidate",
+        observedEvidenceId: "E3",
+      });
+      check(
+        applied.decision,
+        "VERIFIED",
+        "the isolated candidate initially verifies",
+      );
+      await writeFile(
+        join(root, "src", "value.mjs"),
+        "export function value() { return 4; }\n",
+      );
+      await assert.rejects(
+        writer.observeCandidate("src/value.mjs"),
+        /authoritative_source_changed/,
+      );
+    } finally {
+      assert.equal((await writer.close()).decision, "CLEANED");
+      await rm(root, { recursive: true });
+    }
+  },
+);
+
+omegaTest(
+  "an unverified edit cannot inherit the model's claim of success",
+  async () => {
+    const root = await fixture();
+    const wrong = "export function value() { return 3; }\n";
+    const writer = await NyxIsolatedCandidateWriter.create({
+      sourceRoot: root,
+      editablePath: "src/value.mjs",
+      verifierPath: "tools/verify.mjs",
+      candidateCommit: "f".repeat(40),
+      maxCandidateBytes: 4_096,
+      maxVerifierMs: 5_000,
+    });
+    const r1 = await reader(root);
+    try {
+      const model = provider([
+        JSON.stringify({ kind: "READ_FILE", path: "src/value.mjs" }),
+        JSON.stringify({
+          kind: "PROPOSE_EDIT",
+          path: "src/value.mjs",
+          expectedBaseHash: nyxSha256(SOURCE),
+          replacement: wrong,
+          rationale: "A failing attempt.",
+        }),
+        JSON.stringify({
+          kind: "REPLY",
+          message: "Done. This change is verified.",
+        }),
+      ]);
+      const session = NyxChatSession.create({
+        sessionId: "NYX-UNVERIFIED-SESSION",
+        model,
+        reader: r1,
+        candidateWriter: writer,
+        editablePaths: ["src/value.mjs"],
+        maxModelCallsPerTurn: 3,
+        maxCandidatesPerTurn: 2,
+        maxTurnMs: 30_000,
+        maxOutputTokens: 1_024,
+      });
+      const result = await session.turn("Make value() return 2.");
+      check(
+        result.outcome,
+        "CANDIDATE_UNVERIFIED",
+        "Omega's verdict overrides the model's success claim",
+      );
+      assert.match(
+        result.message,
+        /^Omega did not verify the isolated candidate/,
+      );
+      assert.match(result.message, /Unverified model note:/);
+      assert.equal(
+        await readFile(join(root, "src", "value.mjs"), "utf8"),
+        SOURCE,
+      );
+    } finally {
+      r1.terminate(Date.now(), "test_closed");
+      assert.equal((await writer.close()).decision, "CLEANED");
+      await rm(root, { recursive: true });
+    }
+  },
+);
+
 omegaTest("terminal capability checks only an R1-observed authorized file in disposable isolation", async () => {
   const root = await fixture();
   await writeFile(join(root, "src", "broken.mjs"), "export function broken( {\n");

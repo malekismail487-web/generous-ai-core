@@ -28,6 +28,16 @@ export interface NyxCandidateResult {
 
 export interface NyxCandidateWriter {
   apply(request: NyxCandidateRequest): Promise<NyxCandidateResult>;
+  observeCandidate(path: string): Promise<NyxCandidateObservation>;
+}
+
+export interface NyxCandidateObservation {
+  readonly path: string;
+  readonly content: string;
+  readonly contentSha256: string;
+  readonly candidateId: string;
+  readonly evidenceId: string;
+  readonly sourceRepositoryMutated: false;
 }
 
 export type NyxComputerAction = Extract<NyxChatAction,
@@ -82,7 +92,8 @@ export interface NyxChatSessionConfig {
   readonly maxOutputTokens: number;
 }
 
-interface ObservedFile { readonly content: string; readonly hash: string; readonly evidenceId: string; }
+interface ObservedFile { readonly content: string; readonly hash: string; readonly evidenceId: string;
+  readonly origin: "SOURCE" | "ISOLATED_CANDIDATE"; }
 
 const SYSTEM_CONTRACT = `You are NYX, using Nemotron cognition through Omega. Converse naturally, but emit exactly one JSON object per model response. No markdown fence.
 Valid actions: {"kind":"REPLY","message":"..."}, {"kind":"READ_FILE","path":"relative/path"}, {"kind":"LIST_DIRECTORY","path":"relative/path"}, {"kind":"PROPOSE_EDIT","path":"relative/path","expectedBaseHash":"64 lowercase hex characters","replacement":"entire replacement file","rationale":"..."}.
@@ -130,11 +141,14 @@ export class NyxChatSession {
     let lastCandidate: NyxCandidateResult | null = null;
     let malformed = 0;
     const finish = (outcome: NyxChatTurnResult["outcome"], message: string): NyxChatTurnResult => {
+      const surfacedMessage = outcome === "CANDIDATE_UNVERIFIED" && lastCandidate
+        ? `Omega did not verify the isolated candidate (${lastCandidate.reason}). The source repository is unchanged.\n\nUnverified model note: ${message}`
+        : message;
       if (outcome === "REPLIED" || outcome === "CANDIDATE_VERIFIED" || outcome === "CANDIDATE_UNVERIFIED") {
-        this.#history.push({ user: userInput, assistant: message });
+        this.#history.push({ user: userInput, assistant: surfacedMessage });
         if (this.#history.length > 4) this.#history.shift();
       }
-      return { outcome, message, modelCalls, modelTokens: tokensKnown ? modelTokens : null,
+      return { outcome, message: surfacedMessage, modelCalls, modelTokens: tokensKnown ? modelTokens : null,
         candidate: lastCandidate, events: Object.freeze([...events]), sourceRepositoryMutated: false,
         broaderAuthorityGranted: false };
     };
@@ -200,6 +214,28 @@ export class NyxChatSession {
     event: (type: NyxChatEvent["eventType"], request: unknown, result: unknown,
       evidenceClass: NyxChatEvent["evidenceClass"], evidenceId: string, outcome: string) => void): Promise<{ message: string; candidate: NyxCandidateResult | null }> {
     if (action.kind === "READ_FILE" || action.kind === "LIST_DIRECTORY") {
+      const prior = this.#observed.get(action.path);
+      if (action.kind === "READ_FILE" && prior?.origin === "ISOLATED_CANDIDATE") {
+        try {
+          const candidate = await this.#config.candidateWriter!.observeCandidate(action.path);
+          if (candidate.contentSha256 !== prior.hash || nyxContainsSecretLike(candidate.content)) {
+            throw new Error("isolated_candidate_observation_invalid");
+          }
+          this.#observed.set(action.path, { content: candidate.content, hash: candidate.contentSha256,
+            evidenceId: candidate.evidenceId, origin: "ISOLATED_CANDIDATE" });
+          event("READ", action, { origin: "ISOLATED_CANDIDATE", hash: candidate.contentSha256,
+            candidateId: candidate.candidateId }, "E3", candidate.evidenceId, "OBSERVED");
+          return { message: JSON.stringify({ omegaObservation: "OBSERVED", origin: "ISOLATED_CANDIDATE",
+            path: action.path, content: candidate.content, contentSha256: candidate.contentSha256,
+            candidateId: candidate.candidateId, evidenceId: candidate.evidenceId,
+            sourceRepositoryMutated: false }), candidate: null };
+        } catch {
+          event("DENIAL", action, { reason: "isolated_candidate_observation_unavailable" },
+            "E3", `${requestId}-DENIAL`, "REJECTED");
+          return { message: JSON.stringify({ omegaObservation: "REJECTED",
+            reason: "isolated_candidate_observation_unavailable", path: action.path }), candidate: null };
+        }
+      }
       const transaction = await this.#config.reader.execute({ requestId: `${requestId}-R1`,
         tokenId: this.#config.reader.token.tokenId, action: action.kind, resourcePath: action.path,
         observedAtEpochMs: Date.now() });
@@ -213,7 +249,7 @@ export class NyxChatSession {
       if (action.kind === "READ_FILE" && observation.status === "OBSERVED"
         && observation.content !== null && observation.contentSha256 !== null) {
         this.#observed.set(action.path, { content: observation.content, hash: observation.contentSha256,
-          evidenceId: transaction.evidence.evidenceId });
+          evidenceId: transaction.evidence.evidenceId, origin: "SOURCE" });
       }
       event("READ", action, { status: observation.status, hash: observation.contentSha256,
         entries: observation.entries }, "E3", transaction.evidence.evidenceId, observation.status);
@@ -268,7 +304,7 @@ export class NyxChatSession {
     }
     if (candidate.decision !== "REJECTED") {
       this.#observed.set(action.path, { content: action.replacement, hash: nyxSha256(action.replacement),
-        evidenceId: candidate.evidenceId });
+        evidenceId: candidate.evidenceId, origin: "ISOLATED_CANDIDATE" });
     }
     event("CANDIDATE", { requestId, path: action.path, baseHash: action.expectedBaseHash,
       replacementHash: nyxSha256(action.replacement) }, candidate, "E3", candidate.evidenceId, candidate.decision);

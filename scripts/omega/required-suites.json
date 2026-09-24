@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/48",
+  "suiteVersion": "omega-institutional-suite/49",
   "criticalSuites": [
     "OMEGA-DIGITAL-NEURON-STABILITY",
     "OMEGA-DIGITAL-NEURON-MICROCIRCUIT",

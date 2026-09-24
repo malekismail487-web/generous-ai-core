@@ -9,7 +9,7 @@ import { R3BControlledEngineeringExecutor, type R3BEngineeringToolDefinition,
   type R3BExecutionRequest } from "../executor/r3ControlledEngineeringExecution";
 import { ReadOnlyRepositoryExecutor } from "../executor/readOnlyExecutor";
 import { nyxCanonical, nyxSafeRelativePath, nyxSha256 } from "./nyxChatProtocol";
-import type { NyxCandidateRequest, NyxCandidateResult, NyxCandidateWriter } from "./nyxChatSession";
+import type { NyxCandidateObservation, NyxCandidateRequest, NyxCandidateResult, NyxCandidateWriter } from "./nyxChatSession";
 
 export interface NyxIsolatedCandidateConfig {
   readonly sourceRoot: string;
@@ -29,6 +29,9 @@ export class NyxIsolatedCandidateWriter implements NyxCandidateWriter {
   #sequence = 0;
   #closed = false;
   #originalHash: string | null = null;
+  #currentHash: string | null = null;
+  #currentCandidateId: string | null = null;
+  #observationSequence = 0;
 
   private constructor(config: NyxIsolatedCandidateConfig, sourceRoot: string, scratchRoot: string) {
     this.#config = config;
@@ -55,6 +58,33 @@ export class NyxIsolatedCandidateWriter implements NyxCandidateWriter {
   }
 
   get scratchRoot(): string { return this.#scratchRoot; }
+
+  async observeCandidate(path: string): Promise<NyxCandidateObservation> {
+    if (this.#closed || path !== this.#config.editablePath || this.#currentRoot === this.#sourceRoot
+      || this.#currentHash === null || this.#currentCandidateId === null) {
+      throw new Error("isolated_candidate_not_observable");
+    }
+    const source = await readFile(join(this.#sourceRoot, ...path.split("/")), "utf8");
+    if (nyxSha256(source) !== this.#originalHash) throw new Error("authoritative_source_changed_during_session");
+    const now = Date.now();
+    const observationId = `NYX-CANDIDATE-REOBSERVE-${++this.#observationSequence}-${now}`;
+    const reader = await ReadOnlyRepositoryExecutor.create({ executorId: observationId,
+      tokenId: `${observationId}-TOKEN`, repositoryRoot: this.#currentRoot, resourceScopes: [path],
+      issuedAtEpochMs: now - 1_000, expiresAtEpochMs: now + 30_000,
+      constraints: { maxFileBytes: this.#config.maxCandidateBytes, maxDirectoryEntries: 1,
+        allowedExtensions: [extension(path)] },
+      issuer: "NYX-CLI-ISOLATED-HOST", auditIdentity: `${observationId}-AUDIT` });
+    try {
+      const transaction = await reader.execute({ requestId: observationId, tokenId: reader.token.tokenId,
+        action: "READ_FILE", resourcePath: path, observedAtEpochMs: now });
+      const observed = transaction.observation;
+      if (observed.status !== "OBSERVED" || observed.content === null
+        || observed.contentSha256 !== this.#currentHash) throw new Error("isolated_candidate_state_changed");
+      return { path, content: observed.content, contentSha256: observed.contentSha256,
+        candidateId: this.#currentCandidateId, evidenceId: transaction.evidence.evidenceId,
+        sourceRepositoryMutated: false };
+    } finally { reader.terminate(Date.now(), "isolated_candidate_observation_finished"); }
+  }
 
   async apply(request: NyxCandidateRequest): Promise<NyxCandidateResult> {
     const fail = (reason: string): NyxCandidateResult => ({ decision: "REJECTED", reason, candidateId: null,
@@ -145,8 +175,10 @@ export class NyxIsolatedCandidateWriter implements NyxCandidateWriter {
       auditIdentity: applyAudit, observedAtEpochMs: Date.now() };
     const application = await applicator.apply(applyRequest);
     if (application.decision !== "APPLIED") return fail(`isolated_application_${application.decision}:${application.reason}`);
-    this.#currentRoot = cloneRoot;
     if (!this.#config.verifierPath || verifierContent === null) {
+      this.#currentRoot = cloneRoot;
+      this.#currentHash = nyxSha256(request.replacement);
+      this.#currentCandidateId = application.applicationId;
       return { decision: "UNVERIFIED", reason: "isolated_candidate_applied_no_verifier_configured",
         candidateId: application.applicationId, evidenceId: `NYX-CANDIDATE-${nyxSha256(nyxCanonical(application)).slice(0, 32)}`,
         sourceRepositoryMutated: false, authorityGranted: false, verification: "NOT_CONFIGURED", changedPath: request.path };
@@ -174,7 +206,14 @@ export class NyxIsolatedCandidateWriter implements NyxCandidateWriter {
     const actual = await readFile(join(cloneRoot, ...request.path.split("/")), "utf8");
     const sourceNow = await readFile(join(this.#sourceRoot, ...request.path.split("/")), "utf8");
     const sourceUnchanged = nyxSha256(sourceNow) === this.#originalHash;
-    const pass = execution.outcome === "PASS" && actual === request.replacement && sourceUnchanged;
+    if (actual !== request.replacement || !sourceUnchanged) {
+      return fail(actual !== request.replacement
+        ? "candidate_content_changed_during_verification" : "authoritative_source_changed_during_session");
+    }
+    this.#currentRoot = cloneRoot;
+    this.#currentHash = nyxSha256(actual);
+    this.#currentCandidateId = application.applicationId;
+    const pass = execution.outcome === "PASS";
     return { decision: pass ? "VERIFIED" : "UNVERIFIED",
       reason: pass ? "bounded_isolated_test_passed" : `bounded_isolated_test_${execution.outcome.toLowerCase()}`,
       candidateId: application.applicationId, evidenceId: execution.evidence.evidenceId,
