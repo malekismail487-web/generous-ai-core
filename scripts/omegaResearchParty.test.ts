@@ -251,6 +251,23 @@ check(scripted.calls.slice(0, 3).every((item) => item.peerContributions.length =
   "initial hypotheses are generated without peer contamination");
 check(scripted.calls.filter((item) => item.role === "REVISER").every((item) => item.experimentObservations.length >= 1),
   "revisions receive actual experiment evidence");
+check(scripted.calls.slice(0, 3).every((item) => item.predictionFeedback.length === 0),
+  "initial investigators cannot see forecast outcomes or peer-derived feedback");
+check(scripted.calls.filter((item) => item.role === "REVISER").every((item) =>
+  item.predictionFeedback.every((feedback) => {
+    const own = item.privatePriorContributions.at(-1);
+    const observed = item.experimentObservations.find((observation) => observation.experimentId === feedback.experimentId);
+    return own?.contributionId === feedback.contributionId
+      && feedback.predictionId === `${own?.contributionId}-${feedback.experimentId}`
+      && observed?.observationId === feedback.observationId
+      && observed?.evidence.evidenceId === feedback.evidenceId
+      && feedback.disposition === (feedback.expectedOutcome === observed?.outcome
+        ? "SUPPORTED_WITHIN_TEST_SCOPE" : "FALSIFIED_PREDICTION")
+      && feedback.grantsAuthority === false;
+  })), "each reviser receives only its own forecast-error signal bound to actual Omega evidence");
+check(scripted.calls.some((item) => item.predictionFeedback.some((feedback) =>
+  feedback.disposition === "FALSIFIED_PREDICTION")),
+"at least one specialist receives a concrete falsifier instead of only a generic experiment result");
 check(result.contributions.every((item) => item.modelEvidence.evidenceClass === "E1"),
   "all model contributions remain E1 claims regardless of provider transport");
 check(new Set(result.contributions.map((item) => item.modelEvidence.provenanceRoot)).size === 1,
@@ -485,12 +502,15 @@ check(assureResearchParty({ objective: routingCausalObjective(), limits: routing
 
 const validRaw = intentFor("FAILED_AS_COMPLETE", "PROPOSE_HYPOTHESIS", "adapter:theory:0");
 let responseContent = JSON.stringify(validRaw);
+const modelPrompts: Record<string, unknown>[] = [];
 const provider = NvidiaNimProvider.create({ providerId: "THEORY-ADAPTER-TEST", model: "nvidia/nemotron-3-ultra-550b-a55b",
   authorityMode: "TEST_DOUBLE_ONLY", credentialSource: { sourceIdentity: "test-only", read: () => "test-only-secret" },
   maxPromptBytes: 128_000, maxOutputTokens: 2_048, timeoutMs: 5_000,
   transport: async (_input, init) => {
     const authorization = new Headers(init?.headers).get("authorization");
     check(authorization === "Bearer test-only-secret", "provider injects credential only at transport boundary");
+    const body = JSON.parse(String(init?.body));
+    modelPrompts.push(JSON.parse(body.messages[1].content));
     return new Response(JSON.stringify({ choices: [{ message: { content: responseContent }, finish_reason: "stop" }],
       usage: { prompt_tokens: 100, completion_tokens: 100, total_tokens: 200 } }),
     { status: 200, headers: { "content-type": "application/json", "x-request-id": "theory-test" } });
@@ -498,7 +518,7 @@ const provider = NvidiaNimProvider.create({ providerId: "THEORY-ADAPTER-TEST", m
 const adapter = NyxNemotronTheoryCognition.create({ cognitionId: "NYX-THEORY-ADAPTER", provider, limits });
 const adapterRequest: TheoryCognitionRequest = { schemaVersion: 1, requestId: "ADAPTER-REQUEST-1", role: "INVESTIGATOR",
   theoryId: "adapter:theory:0", guardianId: "adapter:guardian:0", objective: objective(),
-  privatePriorContributions: [], peerContributions: [], experimentObservations: [],
+  privatePriorContributions: [], peerContributions: [], experimentObservations: [], predictionFeedback: [],
   instruction: "Produce one bounded mechanism and falsifiable forecasts.", maxOutputTokens: 512,
   observedAtEpochMs: now, deadlineEpochMs: Date.now() + 10_000 };
 const adapted = await adapter.think(adapterRequest);
@@ -508,6 +528,32 @@ check(adapted.evidence.evidenceClass === "E3", "test-double transport remains E3
 check(adapted.evidence.requestDigest?.length === 64 && adapted.evidence.responseDigest?.length === 64,
   "adapter records request and response digests without raw reasoning");
 check(adapted.grantsAuthority === false, "Nemotron cognition grants no Omega authority");
+const reviserRequest = scripted.calls.find((item) => item.role === "REVISER"
+  && item.predictionFeedback.some((feedback) => feedback.disposition === "FALSIFIED_PREDICTION"))!;
+const reviserResponse = await adapter.think({ ...reviserRequest,
+  requestId: "ADAPTER-REVISER-PREDICTION-FEEDBACK", observedAtEpochMs: now,
+  deadlineEpochMs: Date.now() + 10_000, signal: new AbortController().signal });
+check(reviserResponse.evidence.statusCode === 200
+  && JSON.stringify(modelPrompts.at(-1)?.predictionFeedback) === JSON.stringify(reviserRequest.predictionFeedback)
+  && String(modelPrompts.at(-1)?.roleInstruction).includes("Revise falsified claims"),
+  "admitted model prompt exposes evidence-bound forecast errors to the specialist reviser");
+const promptCountBeforeForgery = modelPrompts.length;
+const forgedFeedback = await adapter.think({ ...reviserRequest, requestId: "ADAPTER-FORGED-FEEDBACK",
+  predictionFeedback: reviserRequest.predictionFeedback.map((feedback) => ({ ...feedback,
+    disposition: "SUPPORTED_WITHIN_TEST_SCOPE" as const })), signal: new AbortController().signal });
+check(forgedFeedback.decision === "REJECTED" && forgedFeedback.diagnostics.includes("prediction_feedback_invalid")
+  && modelPrompts.length === promptCountBeforeForgery,
+  "cognition boundary rejects a forged favorable disposition before model inference");
+const crossEntityFeedback = await adapter.think({ ...reviserRequest, requestId: "ADAPTER-CROSS-ENTITY-FEEDBACK",
+  predictionFeedback: reviserRequest.predictionFeedback.map((feedback) => ({ ...feedback,
+    contributionId: "CONTRIBUTION-OTHER-ENTITY" })), signal: new AbortController().signal });
+check(crossEntityFeedback.decision === "REJECTED" && modelPrompts.length === promptCountBeforeForgery,
+  "one specialist cannot import another specialist's forecast as its own evidence");
+const modelClaimFeedback = await adapter.think({ ...reviserRequest, requestId: "ADAPTER-MODEL-CLAIM-FEEDBACK",
+  predictionFeedback: reviserRequest.predictionFeedback.map((feedback) => ({ ...feedback,
+    evidenceClass: "E1" as "E3" })), signal: new AbortController().signal });
+check(modelClaimFeedback.decision === "REJECTED" && modelPrompts.length === promptCountBeforeForgery,
+  "model self-assessment cannot be relabeled as an executed prediction observation");
 responseContent = JSON.stringify({ ...validRaw, shell: "remove everything" });
 const hostile = await adapter.think({ ...adapterRequest, requestId: "ADAPTER-REQUEST-2" });
 check(hostile.decision === "COGNITION_ERROR", "unknown executable-looking model field fails closed");

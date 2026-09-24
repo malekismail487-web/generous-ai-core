@@ -124,11 +124,33 @@ export class TheoryResearchParty {
       }
       try { this.#config.network.assertActive(this.#config.coordinator, entity.lease); }
       catch { failure = "research_party_entity_lease_invalid"; return null; }
+      const latestOwn = role === "REVISER" ? privatePriorContributions.at(-1) : undefined;
+      const predictionFeedback = latestOwn ? observations.flatMap((observation) => {
+        const forecast = latestOwn.intent.forecasts.find((item) => item.experimentId === observation.experimentId);
+        if (!forecast) return [];
+        const predictionId = `${latestOwn.contributionId}-${forecast.experimentId}`;
+        const binding = predictionBindings.find((item) => item.theoryId === entity.theoryId
+          && item.predictionId === predictionId && item.expectedOutcome === forecast.expectedOutcome);
+        if (!binding) { failure = "research_party_prediction_feedback_unbound"; return []; }
+        if (observation.evidence.evidenceClass === "E1") {
+          failure = "research_party_prediction_feedback_not_external_evidence"; return [];
+        }
+        return [immutableTheoryValue({ contributionId: latestOwn.contributionId, predictionId,
+          experimentId: forecast.experimentId, expectedOutcome: forecast.expectedOutcome,
+          observedOutcome: observation.outcome, observationId: observation.observationId,
+          evidenceId: observation.evidence.evidenceId,
+          evidenceClass: observation.evidence.evidenceClass,
+          disposition: forecast.expectedOutcome === observation.outcome
+            ? "SUPPORTED_WITHIN_TEST_SCOPE" as const : "FALSIFIED_PREDICTION" as const,
+          grantsAuthority: false as const })];
+      }) : [];
+      if (failure) return null;
       modelCalls += 1; reservedOutputTokens += this.#config.limits.maxOutputTokensPerCall;
       const requestId = `${this.#config.partyId}-${modelCalls}-${theoryDigest([entity.theoryId, role, instruction]).slice(0, 16)}`;
       const result = await this.#config.cognition.think({ schemaVersion: 1, requestId, role,
         theoryId: entity.theoryId, guardianId: entity.guardianId, objective,
         privatePriorContributions, peerContributions, experimentObservations: observations,
+        predictionFeedback,
         instruction, maxOutputTokens: this.#config.limits.maxOutputTokensPerCall,
         observedAtEpochMs: this.#config.now(), deadlineEpochMs: deadline, signal });
       cognitionEvidence.push(result.evidence);

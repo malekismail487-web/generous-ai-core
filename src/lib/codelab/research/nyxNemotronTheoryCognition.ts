@@ -167,7 +167,7 @@ export class NyxNemotronTheoryCognition {
       : request.role === "FALSIFIER"
         ? "Attack every supplied hypothesis. Produce a concrete discriminating counterexample; do not select a winner."
         : request.role === "REVISER"
-          ? "Revise this entity's own hypothesis using observed counterexamples. Preserve it only if its predictions survived."
+          ? "Compare this entity's own forecasts with predictionFeedback and the observed evidence. Revise falsified claims; preserve only predictions that survived within test scope."
           : "Meta-review evidence coverage and unresolved conflicts. Do not certify truth or invent evidence.";
     const prompt = {
       identity: "NYX_THEORY_ENTITY_COGNITION",
@@ -189,6 +189,10 @@ export class NyxNemotronTheoryCognition {
       experimentObservations: request.experimentObservations.map((item) => ({ observationId: item.observationId,
         experimentId: item.experimentId, outcome: item.outcome, evidenceId: item.evidence.evidenceId,
         evidenceClass: item.evidence.evidenceClass, provenanceRoot: item.evidence.provenanceRoot })),
+      predictionFeedback: request.predictionFeedback.map((item) => ({ contributionId: item.contributionId,
+        predictionId: item.predictionId, experimentId: item.experimentId, expectedOutcome: item.expectedOutcome,
+        observedOutcome: item.observedOutcome, observationId: item.observationId, evidenceId: item.evidenceId,
+        evidenceClass: item.evidenceClass, disposition: item.disposition, grantsAuthority: false })),
       task: request.instruction,
       roleInstruction,
       laws: [
@@ -245,6 +249,29 @@ export class NyxNemotronTheoryCognition {
     if (!Array.isArray(request.experimentObservations) || request.experimentObservations.length > this.#config.limits.maxExperiments
       || request.experimentObservations.some((item) => item.evidence.candidateBinding !== request.objective.candidateBinding
         || item.authorityGranted)) issues.push("observation_context_invalid");
+    const latestOwn = request.role === "REVISER" && Array.isArray(request.privatePriorContributions)
+      ? request.privatePriorContributions.at(-1) : undefined;
+    const forecasts = Array.isArray(latestOwn?.intent?.forecasts) ? latestOwn.intent.forecasts : [];
+    const expectedFeedback = Array.isArray(request.experimentObservations) ? forecasts.flatMap((forecast) =>
+      request.experimentObservations.filter((observation) => observation.experimentId === forecast.experimentId)
+        .map((observation) => ({ forecast, observation }))) : [];
+    if (!Array.isArray(request.predictionFeedback)
+      || request.predictionFeedback.length !== expectedFeedback.length
+      || request.predictionFeedback.length > this.#config.limits.maxExperiments
+      || new Set(request.predictionFeedback.map((item) => item.experimentId)).size !== request.predictionFeedback.length
+      || request.predictionFeedback.some((item) => !theoryKeys(item, ["contributionId", "predictionId",
+        "experimentId", "expectedOutcome", "observedOutcome", "observationId", "evidenceId",
+        "evidenceClass", "disposition", "grantsAuthority"])
+        || item.grantsAuthority !== false || !["E3", "E4"].includes(item.evidenceClass))
+      || expectedFeedback.some(({ forecast, observation }) => !request.predictionFeedback.some((item) =>
+        item.contributionId === latestOwn?.contributionId
+        && item.predictionId === `${latestOwn?.contributionId}-${forecast.experimentId}`
+        && item.experimentId === forecast.experimentId && item.expectedOutcome === forecast.expectedOutcome
+        && item.observedOutcome === observation.outcome && item.observationId === observation.observationId
+        && item.evidenceId === observation.evidence.evidenceId
+        && item.evidenceClass === observation.evidence.evidenceClass
+        && item.disposition === (forecast.expectedOutcome === observation.outcome
+          ? "SUPPORTED_WITHIN_TEST_SCOPE" : "FALSIFIED_PREDICTION")))) issues.push("prediction_feedback_invalid");
     if (request.role === "INVESTIGATOR" && (request.peerContributions.length > 0
       || request.privatePriorContributions.length > 0 || request.experimentObservations.length > 0)) issues.push("investigator_independence_violated");
     if (request.role === "FALSIFIER" && request.peerContributions.length < 1) issues.push("falsifier_targets_missing");

@@ -110,6 +110,20 @@ export interface ResearchExperimentObservation {
   readonly authorityGranted: false;
 }
 
+/** A reviser's own precommitted forecast paired with an Omega-observed outcome. */
+export interface TheoryPredictionFeedback {
+  readonly contributionId: string;
+  readonly predictionId: string;
+  readonly experimentId: string;
+  readonly expectedOutcome: string;
+  readonly observedOutcome: string;
+  readonly observationId: string;
+  readonly evidenceId: string;
+  readonly evidenceClass: "E3" | "E4";
+  readonly disposition: "SUPPORTED_WITHIN_TEST_SCOPE" | "FALSIFIED_PREDICTION";
+  readonly grantsAuthority: false;
+}
+
 export interface ResearchPartyLimits {
   readonly maxEntities: number;
   readonly maxModelCalls: number;
@@ -153,6 +167,7 @@ export interface TheoryCognitionRequest {
   readonly privatePriorContributions: readonly TheoryContribution[];
   readonly peerContributions: readonly TheoryContribution[];
   readonly experimentObservations: readonly ResearchExperimentObservation[];
+  readonly predictionFeedback: readonly TheoryPredictionFeedback[];
   readonly instruction: string;
   readonly maxOutputTokens: number;
   readonly observedAtEpochMs: number;

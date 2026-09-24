@@ -65,6 +65,7 @@ export async function runFlatTheoryBaseline(input: {
       requestId: `${input.baselineId}-${index}-${theoryDigest([input.objective.researchId, index]).slice(0, 16)}`,
       role: "INVESTIGATOR", theoryId, guardianId: `${input.baselineId}:none:${index}`,
       objective: input.objective, privatePriorContributions: [], peerContributions: [], experimentObservations: [],
+      predictionFeedback: [],
       instruction: "Independently select the most likely causal mechanism and predict every catalogued experiment. This flat baseline receives no peer discussion or experimental feedback.",
       maxOutputTokens: input.limits.maxOutputTokensPerCall, observedAtEpochMs: input.now(),
       deadlineEpochMs: deadline, signal });
