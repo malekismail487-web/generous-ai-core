@@ -13,6 +13,7 @@ import pyarrow.parquet as parquet
 
 from flywire_full_map import (MapInvalid, SourceSpec, compare_lesion, compile_map,
                               inspect, open_compiled, sha256_file, simulate)
+from flywire_motif_probe import motif_probe
 
 
 def fixture(root: Path, *, wrong_target_id: bool = False,
@@ -93,6 +94,22 @@ with tempfile.TemporaryDirectory(prefix="nyx-flywire-fixture-") as directory:
     check(null_control["status"] == "COMPARABLE"
           and null_control["difference"]["changedNeurons"] == 0,
           "silencing an inactive cell does not manufacture an effect")
+    triad = (np.arange(4, dtype=np.int64), np.array([0, 2, 3, 4, 4], dtype=np.int64),
+             np.array([1, 2, 2, 0], dtype=np.int32),
+             np.array([5, 5, 5, -5], dtype=np.int32))
+    probe = motif_probe(triad, sample_paths=2_000, null_replicates=3, seed=19)
+    check(probe == motif_probe(triad, sample_paths=2_000, null_replicates=3, seed=19),
+          "motif probe and matched null are reproducible")
+    check(probe["filteredConnections"] == 4 and probe["real"]["cycleClosures"] > 0
+          and probe["real"]["feedforwardClosures"] > 0,
+          "known toy cycle and forward closure are detected")
+    check(probe["motifDefinition"] == "NON_INDUCED_DIRECTED_TWO_PATH_CLOSURE"
+          and probe["grantsAuthority"] is False and len(probe["controls"]) == 3,
+          "probe keeps its statistical scope and authority explicit")
+    rejects(lambda: motif_probe(triad, minimum_synapses=6), "motif_graph_too_small")
+    rejects(lambda: motif_probe(triad, sample_paths=0), "motif_probe_budget_invalid")
+    rejects(lambda: motif_probe((triad[0], triad[1], np.array([1, 2, 2, 7]), triad[3])),
+            "motif_compiled_graph_invalid")
     inconclusive = compare_lesion(arrays, (0,), (1,), 80, max_events=1)
     check(inconclusive["status"] == "INCONCLUSIVE_BUDGET" and "difference" not in inconclusive,
           "budget-limited runs cannot issue a causal comparison")
@@ -143,5 +160,11 @@ if real_root:
     check(comparison["difference"]["changedNeurons"] >= 1
           and comparison["lesion"]["spikeVectorSha256"] != first["spikeVectorSha256"],
           "real-map silencing produces a measurable computational difference")
+    motifs = motif_probe(arrays, sample_paths=20_000, null_replicates=5, seed=1729)
+    check(motifs["filteredConnections"] == 2_700_513 and motifs["samplePathsPerGraph"] == 20_000,
+          "real graph is probed at the explicit five-synapse threshold")
+    check(all(0 <= item["cycleRate"] <= 1 and 0 <= item["feedforwardRate"] <= 1
+              for item in [motifs["real"], *motifs["controls"]]),
+          "measured and null closure rates remain finite probabilities")
 
 print(f"FLYWIRE_FULL_MAP_TESTS_PASSED checks={checks} realData={'yes' if real_root else 'no'}")
