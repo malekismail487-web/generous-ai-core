@@ -306,6 +306,9 @@ export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionReq
         disposition: item.disposition === "FALSIFIED" ? "FALSIFIED_PREDICTION" as const
           : item.disposition === "SUPPORTED" ? "SUPPORTED_WITHIN_TEST_SCOPE" as const
             : item.disposition === "PARTIALLY_SUPPORTED" ? "INCONCLUSIVE" as const : "PENDING" as const })),
+      // This advisory adapter does not own the verifier's per-tool evidence.
+      // It must not fabricate detailed audits from a prior disposition label.
+      predictionAudits: [],
       confidence: { calibratedProbability: null, calibrationState: "NOT_CALIBRATED" as const,
         lastModelEstimate: null, distinctEvidenceRoots: decision.independentEvidenceRoots,
         independenceEstablished: false as const, numericalTarget: null },

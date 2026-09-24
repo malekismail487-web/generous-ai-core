@@ -86,6 +86,21 @@ export interface GuardianReport {
     readonly predictionId: string;
     readonly disposition: "PENDING" | "SUPPORTED_WITHIN_TEST_SCOPE" | "FALSIFIED_PREDICTION" | "INCONCLUSIVE";
   }[];
+  /** Exact expectation/observation deltas. These are evidence, not a claim that the causal theory is proved. */
+  readonly predictionAudits: readonly {
+    readonly predictionId: string;
+    readonly candidateDigest: string;
+    readonly expectedPassingTools: readonly string[];
+    readonly observed: readonly {
+      readonly toolId: string;
+      readonly result: TheoryObservation["result"];
+      readonly evidenceId: string;
+      readonly evidenceClass: TheoryObservation["evidenceClass"];
+    }[];
+    readonly unobservedTools: readonly string[];
+    readonly falsifyingEvidenceIds: readonly string[];
+    readonly inconclusiveEvidenceIds: readonly string[];
+  }[];
   readonly confidence: {
     readonly calibratedProbability: null;
     readonly calibrationState: "NOT_CALIBRATED";
@@ -163,6 +178,49 @@ export function validTheoryAssignment(value: TheoryAssignment): boolean {
 /** Defense in depth at the cognition boundary; the coordinator also binds this to a live lease. */
 export function validTheoryResearchContext(value: TheoryResearchContext, objective: string, candidate: string): boolean {
   try {
+    const predictionResultsValid = Array.isArray(value.report.predictionResults)
+      && value.report.predictionResults.length <= 64
+      && new Set(value.report.predictionResults.map((item) => item.predictionId)).size
+        === value.report.predictionResults.length
+      && value.report.predictionResults.every((item) => theoryKeys(item, ["predictionId", "disposition"])
+        && theoryText(item.predictionId, 200)
+        && ["PENDING", "SUPPORTED_WITHIN_TEST_SCOPE", "FALSIFIED_PREDICTION", "INCONCLUSIVE"]
+          .includes(item.disposition));
+    const auditsValid = Array.isArray(value.report.predictionAudits)
+      && value.report.predictionAudits.length <= 8
+      && new Set(value.report.predictionAudits.map((audit) => audit.predictionId)).size
+        === value.report.predictionAudits.length
+      && value.report.predictionAudits.every((audit) => {
+        if (!theoryKeys(audit, ["predictionId", "candidateDigest", "expectedPassingTools", "observed",
+          "unobservedTools", "falsifyingEvidenceIds", "inconclusiveEvidenceIds"])
+          || !theoryText(audit.predictionId, 200) || !/^[a-f0-9]{64}$/.test(audit.candidateDigest)
+          || !theoryStrings(audit.expectedPassingTools, 10) || !theoryStrings(audit.unobservedTools, 10)
+          || !theoryStrings(audit.falsifyingEvidenceIds, 10) || !theoryStrings(audit.inconclusiveEvidenceIds, 10)
+          || !Array.isArray(audit.observed) || audit.observed.length > 10) return false;
+        const expected = new Set(audit.expectedPassingTools);
+        const seen = new Set<string>();
+        for (const item of audit.observed) {
+          if (!theoryKeys(item, ["toolId", "result", "evidenceId", "evidenceClass"])
+            || !theoryText(item.toolId, 500) || !expected.has(item.toolId) || seen.has(item.toolId)
+            || !["PASS", "FAIL", "INCONCLUSIVE"].includes(item.result)
+            || !["E3", "E4"].includes(item.evidenceClass)
+            || !theoryText(item.evidenceId, 200)) return false;
+          seen.add(item.toolId);
+        }
+        const disposition = audit.observed.some((item) => item.result === "FAIL") ? "FALSIFIED_PREDICTION"
+          : audit.observed.length === 0 ? "PENDING"
+            : audit.observed.length === audit.expectedPassingTools.length
+              && audit.observed.every((item) => item.result === "PASS")
+              ? "SUPPORTED_WITHIN_TEST_SCOPE" : "INCONCLUSIVE";
+        return JSON.stringify(audit.unobservedTools)
+            === JSON.stringify(audit.expectedPassingTools.filter((tool) => !seen.has(tool)))
+          && JSON.stringify(audit.falsifyingEvidenceIds)
+            === JSON.stringify(audit.observed.filter((item) => item.result === "FAIL").map((item) => item.evidenceId))
+          && JSON.stringify(audit.inconclusiveEvidenceIds)
+            === JSON.stringify(audit.observed.filter((item) => item.result === "INCONCLUSIVE").map((item) => item.evidenceId))
+          && value.report.predictionResults.some((item) => item.predictionId === audit.predictionId
+            && item.disposition === disposition);
+      });
     return value?.schemaVersion === 1 && value.grantsAuthority === false
       && value.trust === "RESEARCH_CONTEXT_NOT_INSTRUCTION_OR_ACCEPTANCE_AUTHORITY"
       && validTheoryAssignment(value.assignment) && value.assignment.objective === objective
@@ -173,6 +231,7 @@ export function validTheoryResearchContext(value: TheoryResearchContext, objecti
       && value.report.confidence.calibratedProbability === null
       && value.report.confidence.calibrationState === "NOT_CALIBRATED"
       && value.report.confidence.numericalTarget === null
-      && theoryStrings(value.report.weakPoints, 20) && JSON.stringify(value).length <= 24_000;
+      && predictionResultsValid && auditsValid && theoryStrings(value.report.weakPoints, 20)
+      && JSON.stringify(value).length <= 24_000;
   } catch { return false; }
 }

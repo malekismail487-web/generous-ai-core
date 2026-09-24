@@ -524,6 +524,28 @@ function researchFixture(scope = ["src/math.txt"]) {
 
 {
   const { network, coordinator, id } = researchFixture();
+  const lease = network.take(coordinator)!;
+  const session = new TheoryInvestigationSession(network, coordinator, lease);
+  const hypothesis = { hypothesisId: "custom-tool-failure", causalHypothesis: "The custom verifier detects a regression.",
+    expectedResult: "The custom verifier passes.", proposalDigest: "d".repeat(64),
+    evidenceRefs: ["OBJECTIVE"], assumptions: [], uncertainties: [], counterexamples: [],
+    verificationToolIds: ["CUSTOM"], confidence: 0.7 } as unknown as NyxRepairHypothesis;
+  session.predict(hypothesis);
+  session.observe(hypothesis, { ...initialObservation, state: "TOOL_FAIL", toolId: "CUSTOM",
+    candidateEvidenceId: "CUSTOM-FAIL-EVIDENCE", candidateCommit: CANDIDATE });
+  check(network.guardianReport(id).predictionAudits[0].falsifyingEvidenceIds.join(",") === "CUSTOM-FAIL-EVIDENCE",
+    "custom Omega tool failure is a falsifying observation, not silently inconclusive");
+  const passingHypothesis = { ...hypothesis, hypothesisId: "custom-tool-pass", proposalDigest: "e".repeat(64) };
+  session.predict(passingHypothesis);
+  session.observe(passingHypothesis, { ...initialObservation, state: "TOOL_PASS", toolId: "CUSTOM",
+    candidateEvidenceId: "CUSTOM-PASS-EVIDENCE", candidateCommit: CANDIDATE });
+  check(network.guardianReport(id).predictionResults[1].disposition === "SUPPORTED_WITHIN_TEST_SCOPE",
+    "custom Omega tool pass is a scoped supporting observation");
+  network.release(coordinator, lease);
+}
+
+{
+  const { network, coordinator, id } = researchFixture();
   let calls = 0;
   let guardianFeedbackObserved = false;
   let precommittedPredictions = 0;
@@ -539,7 +561,12 @@ function researchFixture(scope = ["src/math.txt"]) {
     calls += 1;
     const prompt = JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
     if (calls === 2) {
-      guardianFeedbackObserved = prompt.theoryResearchContext.report.predictionResults[0].disposition === "FALSIFIED_PREDICTION"
+      const report = prompt.theoryResearchContext.report;
+      guardianFeedbackObserved = report.predictionResults[0].disposition === "FALSIFIED_PREDICTION"
+        && report.predictionAudits[0].observed[0].toolId === "TEST"
+        && report.predictionAudits[0].observed[0].result === "FAIL"
+        && report.predictionAudits[0].falsifyingEvidenceIds[0] === report.predictionAudits[0].observed[0].evidenceId
+        && report.predictionAudits[0].unobservedTools.length === 0
         && prompt.theoryResearchContext.report.confidence.calibratedProbability === null
         && prompt.theoryResearchContext.report.weakPoints.includes("The cancellation boundary has not been exercised.");
     }
@@ -554,7 +581,7 @@ function researchFixture(scope = ["src/math.txt"]) {
   check(dispatched.state === "FINISHED" && dispatched.result?.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED",
     "event-driven theory activation uses existing Omega isolated repair and real test execution to converge");
   check(calls === 2 && guardianFeedbackObserved && precommittedPredictions === 2,
-    "falsified prediction reaches the next NYX prompt while both hypotheses precede candidate preparation");
+    "exact falsifying tool and E3 evidence reach NYX after a precommitted prediction, without another model call");
   const report = network.guardianReport(id);
   check(report.predictionResults.map((item) => item.disposition).join(",") === "FALSIFIED_PREDICTION,SUPPORTED_WITHIN_TEST_SCOPE",
     "guardian retains failed and successful predictions instead of overwriting history with eventual success");

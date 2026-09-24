@@ -48,8 +48,8 @@ export class TheoryInvestigationSession {
     this.#network.observe(this.#coordinator, this.#lease, {
       predictionId: hypothesis.hypothesisId, candidateDigest: hypothesis.proposalDigest,
       evidenceId: observation.candidateEvidenceId, toolId: observation.toolId,
-      result: ["TEST_PASS", "BUILD_PASS", "TYPECHECK_PASS"].includes(observation.state) ? "PASS"
-        : ["TEST_FAIL", "BUILD_FAIL", "TYPECHECK_FAIL"].includes(observation.state) ? "FAIL" : "INCONCLUSIVE",
+      result: ["TEST_PASS", "BUILD_PASS", "TYPECHECK_PASS", "TOOL_PASS"].includes(observation.state) ? "PASS"
+        : ["TEST_FAIL", "BUILD_FAIL", "TYPECHECK_FAIL", "TOOL_FAIL"].includes(observation.state) ? "FAIL" : "INCONCLUSIVE",
       evidenceClass: observation.evidenceClass, environmentIdentity: observation.environmentIdentity,
       // Same verifier/environment is one provenance group, not independent votes per retry.
       provenanceRoot: `${observation.toolIdentityDigest}:${observation.environmentIdentity}`,

@@ -89,6 +89,11 @@ function assigned(f = fixture()) {
   const report = network.guardianReport(id);
   check(report.predictionResults[0].disposition === "SUPPORTED_WITHIN_TEST_SCOPE" && report.causalTheoryState === "UNKNOWN",
     "passing software tests does not certify a causal scientific theory");
+  check(report.predictionAudits.length === 1
+    && report.predictionAudits[0].observed[0].evidenceId === observation.evidenceId
+    && report.predictionAudits[0].unobservedTools.length === 0
+    && report.predictionAudits[0].falsifyingEvidenceIds.length === 0,
+    "guardian exposes the exact observed prediction outcome without inventing a discrepancy");
   check(report.confidence.lastModelEstimate === 0.99 && report.confidence.calibratedProbability === null
     && report.confidence.numericalTarget === null && !report.confidence.independenceEstablished,
     "guardian refuses to convert self-reported confidence into calibrated certainty or a target of one hundred percent");
@@ -98,6 +103,16 @@ function assigned(f = fixture()) {
     "counterexample suggestions remain distinguishable from executed challenges");
   const context = network.context(coordinator, lease);
   check(validTheoryResearchContext(context, assignment.objective, assignment.candidateBinding), "bound research context validates");
+  const forgedAudit = { ...context, report: { ...context.report, predictionAudits: [{
+    ...context.report.predictionAudits[0], falsifyingEvidenceIds: [observation.evidenceId],
+  }] } } as typeof context;
+  check(!validTheoryResearchContext(forgedAudit, assignment.objective, assignment.candidateBinding),
+    "research context rejects a fabricated falsifying evidence reference");
+  const forgedDisposition = { ...context, report: { ...context.report, predictionResults: [{
+    predictionId: prediction.predictionId, disposition: "FALSIFIED_PREDICTION" as const,
+  }] } };
+  check(!validTheoryResearchContext(forgedDisposition, assignment.objective, assignment.candidateBinding),
+    "research context rejects a falsified label when the bound tool evidence passed");
   check(!validTheoryResearchContext(context, "different objective", assignment.candidateBinding), "cross-objective context is rejected");
   check(!validTheoryResearchContext({ ...context, grantsAuthority: true } as unknown as typeof context,
     assignment.objective, assignment.candidateBinding), "research context cannot declare its own execution authority");
@@ -126,13 +141,33 @@ function assigned(f = fixture()) {
   const { network, coordinator, id, lease } = assigned();
   network.commitPrediction(coordinator, lease, prediction);
   network.observe(coordinator, lease, { ...observation, result: "FAIL" });
-  check(network.guardianReport(id).predictionResults[0].disposition === "FALSIFIED_PREDICTION", "negative execution evidence defeats positive model confidence");
+  const report = network.guardianReport(id);
+  check(report.predictionResults[0].disposition === "FALSIFIED_PREDICTION"
+    && report.predictionAudits[0].falsifyingEvidenceIds.join(",") === observation.evidenceId
+    && report.weakPoints.some((item) => item.includes("predictionAudits evidence")),
+    "negative execution evidence defeats positive model confidence and identifies its exact falsifier");
   network.wake(coordinator, id, { eventId: "dependency", kind: "DEPENDENCY_CHANGED", reason: "The verified source dependency changed." });
   check(network.guardianReport(id).causalTheoryState === "REQUIRES_REVALIDATION" && network.take(coordinator) === null,
     "dependency invalidation suspends cognition until a fresh assignment instead of calling the theory refuted");
   check(throws(() => network.assertActive(coordinator, lease), "theory_activation_not_owned"), "dependency changes revoke in-flight research ownership");
   network.retire(coordinator, id);
   check(network.inspect(id).state === "RETIRED" && "observations" in network.inspect(id), "retirement preserves failed theory evidence");
+}
+{
+  const { network, coordinator, id, lease } = assigned();
+  const multiToolPrediction = { ...prediction, expectedPassingTools: ["TEST", "TYPECHECK", "BUILD"] };
+  network.commitPrediction(coordinator, lease, multiToolPrediction);
+  network.observe(coordinator, lease, { ...observation, result: "INCONCLUSIVE" });
+  network.observe(coordinator, lease, { ...observation, evidenceId: "typecheck-evidence", toolId: "TYPECHECK", result: "FAIL" });
+  const report = network.guardianReport(id);
+  const audit = report.predictionAudits[0];
+  check(report.predictionResults[0].disposition === "FALSIFIED_PREDICTION"
+    && audit.unobservedTools.join(",") === "BUILD"
+    && audit.falsifyingEvidenceIds.join(",") === "typecheck-evidence"
+    && audit.inconclusiveEvidenceIds.join(",") === observation.evidenceId,
+    "guardian separates falsified, inconclusive, and still-unobserved checks on one prediction");
+  check(validTheoryResearchContext(network.context(coordinator, lease), assignment.objective, assignment.candidateBinding),
+    "mixed prediction outcomes retain a valid evidence-bound cognition context");
 }
 {
   const { network, coordinator, id, lease } = assigned();

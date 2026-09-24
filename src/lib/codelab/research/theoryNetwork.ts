@@ -321,6 +321,20 @@ export class TheoryNetwork {
               : "INCONCLUSIVE" as const;
       return { predictionId: prediction.predictionId, disposition };
     });
+    // Keep the latest expectation/observation differences small enough to enter
+    // cognition context. The full immutable prediction and observation history
+    // remains available through inspect(); this projection grants no authority.
+    const predictionAudits = pair.predictions.slice(-8).map((prediction) => {
+      const observed = pair.observations.filter((item) => item.predictionId === prediction.predictionId)
+        .map((item) => ({ toolId: item.toolId, result: item.result, evidenceId: item.evidenceId,
+          evidenceClass: item.evidenceClass }));
+      const seen = new Set(observed.map((item) => item.toolId));
+      return { predictionId: prediction.predictionId, candidateDigest: prediction.candidateDigest,
+        expectedPassingTools: prediction.expectedPassingTools,
+        observed, unobservedTools: prediction.expectedPassingTools.filter((tool) => !seen.has(tool)),
+        falsifyingEvidenceIds: observed.filter((item) => item.result === "FAIL").map((item) => item.evidenceId),
+        inconclusiveEvidenceIds: observed.filter((item) => item.result === "INCONCLUSIVE").map((item) => item.evidenceId) };
+    });
     const latest = pair.predictions.at(-1);
     const weakPoints = [...new Set([
       ...(pair.requiresRevalidation ? ["Changed dependency requires fresh assignment and revalidation."] : []),
@@ -329,12 +343,17 @@ export class TheoryNetwork {
       ...(latest?.proposedCounterexamples.length ? ["Proposed counterexamples are not executed test evidence."] : []),
       ...(predictionResults.some((item) => item.disposition === "FALSIFIED_PREDICTION")
         ? ["A predicted test outcome failed; separate theory, implementation, and evaluator explanations."] : []),
+      ...predictionAudits.slice(-2).flatMap((audit) => [
+        ...audit.observed.filter((item) => item.result === "FAIL")
+          .map((item) => `Prediction ${audit.predictionId.slice(0, 48)}: ${item.toolId.slice(0, 48)} failed; inspect predictionAudits evidence.`),
+        ...audit.unobservedTools.map((tool) => `Prediction ${audit.predictionId.slice(0, 48)}: ${tool.slice(0, 48)} remains unobserved.`),
+      ]),
       "Test agreement does not independently establish the proposed causal mechanism.",
     ])].slice(0, 20);
     return immutableTheoryValue({ theoryId: pair.theoryId, guardianId: pair.guardianId,
       assignmentDigest: pair.assignmentDigest,
       causalTheoryState: pair.requiresRevalidation ? "REQUIRES_REVALIDATION" : "UNKNOWN",
-      predictionResults, confidence: { calibratedProbability: null, calibrationState: "NOT_CALIBRATED",
+      predictionResults, predictionAudits, confidence: { calibratedProbability: null, calibrationState: "NOT_CALIBRATED",
         lastModelEstimate: latest?.modelEstimate ?? null,
         distinctEvidenceRoots: new Set(pair.observations.map((item) => item.provenanceRoot)).size,
         independenceEstablished: false, numericalTarget: null },
