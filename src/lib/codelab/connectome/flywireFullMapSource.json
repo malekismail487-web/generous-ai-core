@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "flywire:fafb-v783-model-input",
+  "scope": "Whole-brain model input from FAFB v783; not the full synapse-point archive or all annotated FAFB neurons",
+  "sourceRepository": "https://github.com/philshiu/Drosophila_brain_model",
+  "sourceCommit": "91bdd1e7dcf193f3e7ca5a8933497fcef63b7960",
+  "researchReference": "https://doi.org/10.1038/s41586-024-07763-9",
+  "dataRelease": "FlyWire FAFB v783",
+  "redistribution": "Raw data stays outside the product repository; review upstream terms before redistribution",
+  "expectedNodes": 138639,
+  "expectedConnections": 15091983,
+  "files": {
+    "Completeness_783.csv": {
+      "bytes": 3327347,
+      "sha256": "bbb847a4cc2caaa7a16349722d220c087317b946d148d4d592d94d250617a311",
+      "gitBlob": "b5a26b82b69a3c2e7fd99cd6810c36fc8f0e492b"
+    },
+    "Connectivity_783.parquet": {
+      "bytes": 100804642,
+      "sha256": "efeb23fb99098e9c390f6869969b2a121a2ee92c833cfc45ecb2c1d8e1af0347",
+      "gitBlob": "d386555d1a5f40ebfa1380bcb05b1fab044855fd"
+    }
+  }
+}

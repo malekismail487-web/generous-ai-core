@@ -1,4 +1,5 @@
 import type { BiologicalSourceProvenance } from "./biologicalCircuitIR";
+import flywireFullMapSource from "./flywireFullMapSource.json" with { type: "json" };
 
 export const NYX_BIOLOGICAL_SOURCE_REGISTRY = Object.freeze({
   schemaVersion: 1,
@@ -32,15 +33,20 @@ export const NYX_BIOLOGICAL_SOURCE_REGISTRY = Object.freeze({
       retrievedAt: "2026-09-17T00:00:00.000Z",
     } satisfies BiologicalSourceProvenance),
     flyWireWholeBrain: Object.freeze({
-      datasetId: "flywire:whole-brain",
+      datasetId: flywireFullMapSource.datasetId,
       organism: "Drosophila melanogaster",
-      nervousSystemRegion: "adult whole brain",
-      sourceRepository: "https://github.com/seung-lab/FlyConnectome",
-      sourceCommit: "9b1790b5553082e1f57921790564c7aae7c9c99a",
+      nervousSystemRegion: "adult whole-brain model input",
+      sourceRepository: flywireFullMapSource.sourceRepository,
+      sourceCommit: flywireFullMapSource.sourceCommit,
       officialMap: "https://codex.flywire.ai/",
-      dataRelease: "FAFB v783",
-      accessState: "METADATA_CLIENT_CACHED_BULK_DATA_NOT_INGESTED",
-      admissionState: "DEFERRED_PENDING_PINNED_CONNECTIVITY_ARTIFACT_AND_LICENSE_REVIEW",
+      dataRelease: flywireFullMapSource.dataRelease,
+      dataScope: flywireFullMapSource.scope,
+      nodeCount: flywireFullMapSource.expectedNodes,
+      connectionRows: flywireFullMapSource.expectedConnections,
+      sourceArtifacts: flywireFullMapSource.files,
+      accessState: "PINNED_MODEL_INPUT_REQUIRES_VERIFIED_LOCAL_CACHE",
+      admissionState: "RESEARCH_RUNTIME_ONLY_NOT_COGNITIVELY_ADMITTED",
+      redistribution: flywireFullMapSource.redistribution,
     }),
     micronsCortical: Object.freeze({
       datasetId: "microns:minnie65",

@@ -46,8 +46,13 @@ check(pinned.envelope.maximumSourceSpecificInfluence <= 0.3
 "portfolio influence and execution authority remain bounded");
 check(!validBiologicalArchitecturePortfolio({ ...pinned, portfolioDigest: "0".repeat(64) }),
   "tampered portfolio digest is rejected");
-const deferredMaps = [NYX_BIOLOGICAL_SOURCE_REGISTRY.sources.flyWireWholeBrain,
-  NYX_BIOLOGICAL_SOURCE_REGISTRY.sources.micronsCortical,
+const flywireMap = NYX_BIOLOGICAL_SOURCE_REGISTRY.sources.flyWireWholeBrain;
+check(flywireMap.accessState === "PINNED_MODEL_INPUT_REQUIRES_VERIFIED_LOCAL_CACHE"
+  && flywireMap.admissionState === "RESEARCH_RUNTIME_ONLY_NOT_COGNITIVELY_ADMITTED"
+  && flywireMap.nodeCount === 138639 && flywireMap.connectionRows === 15091983
+  && !pinned.sourceDatasetIds.includes(flywireMap.datasetId),
+"full FlyWire model input is tracked without falsely promoting its cognitive value");
+const deferredMaps = [NYX_BIOLOGICAL_SOURCE_REGISTRY.sources.micronsCortical,
   NYX_BIOLOGICAL_SOURCE_REGISTRY.sources.wormWiringWholeAnimal];
 check(deferredMaps.every((source) => source.officialMap.startsWith("https://")
   && source.admissionState.startsWith("DEFERRED")
