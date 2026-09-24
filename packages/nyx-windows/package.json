@@ -1,0 +1,19 @@
+{
+  "name": "@malekismail487-web/nyx-local",
+  "version": "0.1.0",
+  "description": "User-scoped Νύξ local engineering chat console",
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "bin": {
+    "nyx": "./nyx.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "files": [
+    "nyx.mjs",
+    "nyx-ui/",
+    "manifest.json",
+    "LICENSE"
+  ]
+}

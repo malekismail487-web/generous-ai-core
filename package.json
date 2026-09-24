@@ -20,6 +20,7 @@
     "omega:nyx:package:check": "node scripts/omega/package-nyx.mjs --check",
     "omega:nyx:package:test": "node scripts/omega/test-nyx-package.mjs",
     "omega:nyx:install:test": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/omega/test-install-nyx.ps1",
+    "omega:nyx:npm-pack": "npm run omega:nyx:package && npm pack ./packages/nyx-windows --pack-destination ./packages/nyx-windows",
     "omega:nyx:text": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-cli.ts",
     "omega:nyx:contract-compliance": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-contract-compliance.ts",
     "omega:nyx:live-engineering": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-live-r3e.ts",

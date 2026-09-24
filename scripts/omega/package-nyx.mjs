@@ -7,6 +7,15 @@ import { build } from "esbuild";
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const outputRoot = join(root, "packages", "nyx-windows");
 const assets = ["index.html", "logo.svg", "ui.css", "ui.js"];
+const npmMetadata = JSON.parse(await readFile(join(outputRoot, "package.json"), "utf8"));
+if (
+  npmMetadata.name !== "@malekismail487-web/nyx-local" ||
+  npmMetadata.bin?.nyx !== "./nyx.mjs" ||
+  npmMetadata.engines?.node !== ">=24" ||
+  npmMetadata.dependencies || npmMetadata.scripts
+) {
+  throw new Error("NYX npm metadata must declare the bounded Node 24 launcher without dependencies or lifecycle scripts");
+}
 const argumentsAfterEntry = process.argv.slice(2);
 const check = argumentsAfterEntry.includes("--check");
 if (argumentsAfterEntry.some((argument) => argument !== "--check")) {
@@ -19,6 +28,7 @@ const bundle = await build({
   platform: "node",
   target: "node24",
   format: "esm",
+  banner: { js: "#!/usr/bin/env node" },
   write: false,
   metafile: true,
   logLevel: "silent",
@@ -31,6 +41,10 @@ if (unexpected.length) {
 if (bundle.outputFiles.length !== 1) throw new Error("expected exactly one bundled runtime");
 
 const files = new Map([["nyx.mjs", Buffer.from(bundle.outputFiles[0].contents)]]);
+files.set(
+  "LICENSE",
+  Buffer.from((await readFile(join(root, "LICENSE"), "utf8")).replace(/\r\n/g, "\n")),
+);
 for (const asset of assets) {
   files.set(
     `nyx-ui/${asset}`,

@@ -11,10 +11,16 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $package = Join-Path $repository 'packages\nyx-windows'
 $installer = Join-Path $PSScriptRoot 'install-nyx.ps1'
 $ref = '0' * 40
-$sha = [Security.Cryptography.SHA256]::Create()
-$stream = [IO.File]::OpenRead((Join-Path $package 'manifest.json'))
-try { $manifestHash = [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '') }
-finally { $stream.Dispose(); $sha.Dispose() }
+$archiveName = 'malekismail487-web-nyx-local-0.1.0.tgz'
+
+function Get-FileSha256([string]$Path) {
+  $sha = [Security.Cryptography.SHA256]::Create()
+  $stream = [IO.File]::OpenRead($Path)
+  try { return [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '') }
+  finally { $stream.Dispose(); $sha.Dispose() }
+}
+
+$manifestHash = Get-FileSha256 (Join-Path $package 'manifest.json')
 
 function Expect-Failure([scriptblock]$Action, [string]$ExpectedMessage) {
   try {
@@ -40,7 +46,7 @@ try {
 
   $tamperedPackage = Join-Path $root 'tampered-package'
   New-Item -ItemType Directory -Path (Join-Path $tamperedPackage 'nyx-ui') -Force | Out-Null
-  foreach ($relative in @('manifest.json', 'nyx.mjs', 'nyx-ui/index.html', 'nyx-ui/logo.svg', 'nyx-ui/ui.css', 'nyx-ui/ui.js')) {
+  foreach ($relative in @('manifest.json', 'nyx.mjs', 'LICENSE', 'nyx-ui/index.html', 'nyx-ui/logo.svg', 'nyx-ui/ui.css', 'nyx-ui/ui.js')) {
     $local = $relative -replace '/', [IO.Path]::DirectorySeparatorChar
     Copy-Item -LiteralPath (Join-Path $package $local) -Destination (Join-Path $tamperedPackage $local)
   }
@@ -48,7 +54,24 @@ try {
   $tamperedRoot = Join-Path $root 'tampered-install'
   Expect-Failure { & $installer -Ref $ref -ExpectedManifestSha256 $manifestHash -PackageDirectory $tamperedPackage -InstallRoot $tamperedRoot -NoPath | Out-Null } 'Package integrity check failed'
   if (Test-Path -LiteralPath (Join-Path $tamperedRoot 'bin\nyx.cmd')) { throw 'Tampered package created an executable launcher.' }
-  Write-Output 'NYX_INSTALLER_TEST: PASS (install, launch, repeat, manifest rejection, file rejection)'
+
+  $packCheck = Join-Path $root 'pack-check'
+  New-Item -ItemType Directory -Path $packCheck | Out-Null
+  & npm.cmd pack $package --pack-destination $packCheck --json | Out-Null
+  if ($LASTEXITCODE -ne 0) { throw 'npm package regeneration failed.' }
+  $committedArchive = Join-Path $package $archiveName
+  $regeneratedArchive = Join-Path $packCheck $archiveName
+  if ((Get-FileSha256 $committedArchive) -ne (Get-FileSha256 $regeneratedArchive)) {
+    throw 'Committed npm archive is stale or not reproducible.'
+  }
+  $npmPrefix = Join-Path $root 'npm-prefix'
+  & npm.cmd install --global $committedArchive --prefix $npmPrefix --ignore-scripts --no-audit --no-fund --offline | Out-Null
+  if ($LASTEXITCODE -ne 0) { throw 'Offline npm install failed.' }
+  $npmLauncher = Join-Path $npmPrefix 'nyx.cmd'
+  if (-not (Test-Path -LiteralPath $npmLauncher -PathType Leaf)) { throw 'npm did not create the nyx command.' }
+  & $npmLauncher --help | Out-Null
+  if ($LASTEXITCODE -ne 0) { throw 'npm-installed nyx command failed.' }
+  Write-Output 'NYX_INSTALLER_TEST: PASS (PowerShell install, tamper rejection, deterministic npm pack, offline npm global install, launch)'
 } finally {
   if (Test-Path -LiteralPath $root) {
     $resolved = [IO.Path]::GetFullPath($root)

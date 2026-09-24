@@ -85,7 +85,7 @@ New-Item -ItemType Directory -Path $bin -Force -ErrorAction Stop | Out-Null
 Assert-NoReparseAncestors $releases
 Assert-NoReparseAncestors $bin
 
-$expectedFiles = @('nyx.mjs', 'nyx-ui/index.html', 'nyx-ui/logo.svg', 'nyx-ui/ui.css', 'nyx-ui/ui.js')
+$expectedFiles = @('nyx.mjs', 'LICENSE', 'nyx-ui/index.html', 'nyx-ui/logo.svg', 'nyx-ui/ui.css', 'nyx-ui/ui.js')
 $stage = $null
 if (Test-Path -LiteralPath $release) {
   Assert-NoReparseAncestors $release

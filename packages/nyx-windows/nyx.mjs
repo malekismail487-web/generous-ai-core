@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // scripts/omega/nyx-ui.ts
 import { execFile as execFile2 } from "node:child_process";
 import { fileURLToPath } from "node:url";
