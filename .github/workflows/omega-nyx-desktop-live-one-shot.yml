@@ -1,0 +1,40 @@
+name: Omega NYX disposable desktop live one-shot
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - sol/omega-institutional-spine
+    paths:
+      - .github/workflows/omega-nyx-desktop-live-one-shot.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-nyx-desktop-live-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  nyx-desktop-live:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - uses: microsoft/setup-WinAppCli@v0.1
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Check injected credential availability without printing it
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Run bounded live model against disposable Windows UI
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-desktop-model-live-eval.ts

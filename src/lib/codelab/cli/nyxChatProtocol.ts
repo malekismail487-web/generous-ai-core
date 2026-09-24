@@ -4,7 +4,12 @@ export type NyxChatAction =
   | { readonly kind: "REPLY"; readonly message: string }
   | { readonly kind: "READ_FILE" | "LIST_DIRECTORY"; readonly path: string }
   | { readonly kind: "PROPOSE_EDIT"; readonly path: string; readonly expectedBaseHash: string;
-      readonly replacement: string; readonly rationale: string };
+      readonly replacement: string; readonly rationale: string }
+  | { readonly kind: "TERMINAL_CHECK"; readonly path: string }
+  | { readonly kind: "DESKTOP_INSPECT" }
+  | { readonly kind: "DESKTOP_INVOKE"; readonly selector: string; readonly observationDigest: string }
+  | { readonly kind: "DESKTOP_SET_VALUE"; readonly selector: string; readonly observationDigest: string;
+      readonly value: string };
 
 export interface NyxChatParseResult {
   readonly action: NyxChatAction | null;
@@ -62,6 +67,25 @@ export function parseNyxChatAction(raw: string, maxReplacementBytes = 32_768): N
     && typeof value.rationale === "string" && value.rationale.trim() && value.rationale.length <= 2_000) {
     return { action: { kind: "PROPOSE_EDIT", path: value.path, expectedBaseHash: value.expectedBaseHash,
       replacement: value.replacement, rationale: value.rationale }, reason: "accepted" };
+  }
+  if (value.kind === "TERMINAL_CHECK" && exactKeys(value, ["kind", "path"]) && nyxSafeRelativePath(value.path)
+    && /\.(?:mjs|cjs|js)$/.test(value.path)) {
+    return { action: { kind: "TERMINAL_CHECK", path: value.path }, reason: "accepted" };
+  }
+  if (value.kind === "DESKTOP_INSPECT" && exactKeys(value, ["kind"])) {
+    return { action: { kind: "DESKTOP_INSPECT" }, reason: "accepted" };
+  }
+  if ((value.kind === "DESKTOP_INVOKE" || value.kind === "DESKTOP_SET_VALUE")
+    && exactKeys(value, value.kind === "DESKTOP_INVOKE" ? ["kind", "selector", "observationDigest"]
+      : ["kind", "selector", "observationDigest", "value"])
+    && typeof value.selector === "string" && /^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(value.selector)
+    && typeof value.observationDigest === "string" && /^[a-f0-9]{64}$/.test(value.observationDigest)) {
+    if (value.kind === "DESKTOP_INVOKE") return { action: { kind: "DESKTOP_INVOKE", selector: value.selector,
+      observationDigest: value.observationDigest }, reason: "accepted" };
+    if (typeof value.value === "string" && value.value.length <= 1_000 && !nyxContainsSecretLike(value.value)) {
+      return { action: { kind: "DESKTOP_SET_VALUE", selector: value.selector,
+        observationDigest: value.observationDigest, value: value.value }, reason: "accepted" };
+    }
   }
   return { action: null, reason: "unknown_or_malformed_typed_action" };
 }
