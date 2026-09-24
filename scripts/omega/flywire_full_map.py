@@ -222,9 +222,10 @@ def open_compiled(root: Path, spec: SourceSpec) -> tuple[dict[str, object], tupl
     return manifest, arrays
 
 
-def simulate(arrays: tuple[np.ndarray, ...], stimulus_indices: tuple[int, ...], steps: int,
-             stimulus_period: int = 5, max_spikes: int = 20_000,
-             max_events: int = 2_000_000) -> dict[str, object]:
+def _simulate(arrays: tuple[np.ndarray, ...], stimulus_indices: tuple[int, ...], steps: int,
+              stimulus_period: int = 5, max_spikes: int = 20_000,
+              max_events: int = 2_000_000,
+              silenced_indices: tuple[int, ...] = ()) -> tuple[dict[str, object], np.ndarray]:
     """Bounded deterministic approximation of the published LIF equations.
 
     The source paper uses Brian2 and Poisson input. Fixed pulses and Euler steps here
@@ -234,7 +235,9 @@ def simulate(arrays: tuple[np.ndarray, ...], stimulus_indices: tuple[int, ...], 
     n = len(nodes)
     if not 1 <= steps <= 500 or not 1 <= stimulus_period <= 100 \
             or not 1 <= len(stimulus_indices) <= 16 or len(set(stimulus_indices)) != len(stimulus_indices) \
-            or any(index < 0 or index >= n for index in stimulus_indices):
+            or any(index < 0 or index >= n for index in stimulus_indices) \
+            or len(silenced_indices) > 16 or len(set(silenced_indices)) != len(silenced_indices) \
+            or any(index < 0 or index >= n for index in silenced_indices):
         raise MapInvalid("simulation_request_out_of_bounds")
     if max_spikes < 1 or max_events < 1:
         raise MapInvalid("simulation_budget_invalid")
@@ -245,7 +248,10 @@ def simulate(arrays: tuple[np.ndarray, ...], stimulus_indices: tuple[int, ...], 
     spike_counts = np.zeros(n, dtype=np.int32)
     pending = [np.zeros(n, dtype=np.float32) for _ in range(3)]
     stimulus = np.asarray(stimulus_indices, dtype=np.int32)
+    silenced = np.zeros(n, dtype=np.bool_)
+    silenced[list(silenced_indices)] = True
     total_spikes = total_events = 0
+    steps_executed = 0
     status = "BOUNDED_RUN_FINISHED"
     for tick in range(steps):
         conductance += pending[tick % 3]
@@ -255,6 +261,7 @@ def simulate(arrays: tuple[np.ndarray, ...], stimulus_indices: tuple[int, ...], 
         active = np.flatnonzero((membrane > threshold) & (refractory == 0))
         if tick % stimulus_period == 0:
             active = np.union1d(active, stimulus)
+        active = active[~silenced[active]]
         event_count = int(np.sum(offsets[active + 1] - offsets[active], dtype=np.int64))
         if total_spikes + len(active) > max_spikes or total_events + event_count > max_events:
             status = "BUDGET_STOPPED"
@@ -271,21 +278,75 @@ def simulate(arrays: tuple[np.ndarray, ...], stimulus_indices: tuple[int, ...], 
             if begin != end:
                 np.add.at(due, targets[begin:end], signed[begin:end] * synaptic_mv)
         refractory[refractory > 0] -= 1
+        steps_executed = tick + 1
     ranked = np.argsort(-spike_counts, kind="stable")[:20]
-    return {"schemaVersion": 1, "status": status, "stepsRequested": steps,
-            "stimulusIndices": list(stimulus_indices), "spikes": total_spikes,
+    result = {"schemaVersion": 1, "status": status, "stepsRequested": steps,
+            "stepsExecuted": steps_executed, "stimulusIndices": list(stimulus_indices),
+            "silencedIndices": list(silenced_indices), "spikes": total_spikes,
             "synapticEvents": total_events,
+            "activeNeurons": int(np.count_nonzero(spike_counts)),
+            "spikeVectorSha256": hashlib.sha256(spike_counts.astype("<i4", copy=False).tobytes()).hexdigest(),
             "topSpikingNeuronIds": [{"neuronId": str(int(nodes[index])), "spikes": int(spike_counts[index])}
                                     for index in ranked if spike_counts[index] > 0],
             "biologicalFidelity": "UNVALIDATED_DISCRETE_APPROXIMATION",
             "modelCalls": 0, "authority": AUTHORITY, "grantsAuthority": False}
+    return result, spike_counts
+
+
+def simulate(arrays: tuple[np.ndarray, ...], stimulus_indices: tuple[int, ...], steps: int,
+             stimulus_period: int = 5, max_spikes: int = 20_000,
+             max_events: int = 2_000_000,
+             silenced_indices: tuple[int, ...] = ()) -> dict[str, object]:
+    return _simulate(arrays, stimulus_indices, steps, stimulus_period, max_spikes,
+                     max_events, silenced_indices)[0]
+
+
+def compare_lesion(arrays: tuple[np.ndarray, ...], stimulus_indices: tuple[int, ...],
+                   silenced_indices: tuple[int, ...], steps: int,
+                   stimulus_period: int = 5, max_spikes: int = 20_000,
+                   max_events: int = 2_000_000) -> dict[str, object]:
+    """Compare matched deterministic runs; never infer biological causality."""
+    if not silenced_indices:
+        raise MapInvalid("comparison_requires_silenced_neuron")
+    baseline, baseline_counts = _simulate(arrays, stimulus_indices, steps, stimulus_period,
+                                          max_spikes, max_events)
+    lesion, lesion_counts = _simulate(arrays, stimulus_indices, steps, stimulus_period,
+                                     max_spikes, max_events, silenced_indices)
+    comparable = baseline["status"] == lesion["status"] == "BOUNDED_RUN_FINISHED"
+    result: dict[str, object] = {
+        "schemaVersion": 1,
+        "status": "COMPARABLE" if comparable else "INCONCLUSIVE_BUDGET",
+        "stimulusIndices": list(stimulus_indices),
+        "silencedIndices": list(silenced_indices),
+        "baseline": baseline,
+        "lesion": lesion,
+        "interpretation": "COMPUTATIONAL_COUNTERFACTUAL_NOT_BIOLOGICAL_CAUSALITY",
+        "modelCalls": 0,
+        "authority": AUTHORITY,
+        "grantsAuthority": False,
+    }
+    if comparable:
+        difference = lesion_counts.astype(np.int64) - baseline_counts
+        nodes = arrays[0]
+        changed = np.flatnonzero(difference)
+        rank = sorted(changed, key=lambda index: (-abs(int(difference[index])), int(index)))[:20]
+        result["difference"] = {
+            "populationSpikeDelta": int(difference.sum()),
+            "changedNeurons": int(len(changed)),
+            "lostActiveNeurons": int(np.count_nonzero((baseline_counts > 0) & (lesion_counts == 0))),
+            "newlyActiveNeurons": int(np.count_nonzero((baseline_counts == 0) & (lesion_counts > 0))),
+            "topChanges": [{"neuronId": str(int(nodes[index])), "spikeDelta": int(difference[index])}
+                           for index in rank],
+        }
+    return result
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("inspect", "compile", "stimulate"))
+    parser.add_argument("command", choices=("inspect", "compile", "stimulate", "compare"))
     parser.add_argument("--data-root", type=Path, required=True)
     parser.add_argument("--stimulus-index", type=int, action="append", default=[])
+    parser.add_argument("--silence-index", type=int, action="append", default=[])
     parser.add_argument("--steps", type=int, default=40)
     arguments = parser.parse_args()
     spec = SourceSpec.from_json(SOURCE_CONTRACT)
@@ -297,7 +358,11 @@ def main() -> int:
         else:
             manifest, arrays = open_compiled(arguments.data_root, spec)
             result = {"sourceDigest": manifest["sourceSha256"],
-                      "experiment": simulate(arrays, tuple(arguments.stimulus_index), arguments.steps)}
+                      "experiment": compare_lesion(arrays, tuple(arguments.stimulus_index),
+                                                   tuple(arguments.silence_index), arguments.steps)
+                      if arguments.command == "compare" else simulate(arrays, tuple(arguments.stimulus_index),
+                                                                       arguments.steps,
+                                                                       silenced_indices=tuple(arguments.silence_index))}
     except (MapInvalid, OSError, ValueError, KeyError) as error:
         print(json.dumps({"status": "REJECTED", "reason": str(error), "grantsAuthority": False}), file=sys.stderr)
         return 1

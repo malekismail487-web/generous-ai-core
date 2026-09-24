@@ -11,8 +11,8 @@ import numpy as np
 import pyarrow as arrow
 import pyarrow.parquet as parquet
 
-from flywire_full_map import (MapInvalid, SourceSpec, compile_map, inspect,
-                              open_compiled, sha256_file, simulate)
+from flywire_full_map import (MapInvalid, SourceSpec, compare_lesion, compile_map,
+                              inspect, open_compiled, sha256_file, simulate)
 
 
 def fixture(root: Path, *, wrong_target_id: bool = False,
@@ -80,14 +80,37 @@ with tempfile.TemporaryDirectory(prefix="nyx-flywire-fixture-") as directory:
           "excitation propagates while inhibition suppresses the competing path")
     check(result["grantsAuthority"] is False and result["biologicalFidelity"] == "UNVALIDATED_DISCRETE_APPROXIMATION",
           "result does not inflate biological fidelity or authority")
+    comparison = compare_lesion(arrays, (0,), (1,), 80)
+    check(comparison["status"] == "COMPARABLE" and comparison["modelCalls"] == 0
+          and comparison["grantsAuthority"] is False, "matched lesion is bounded and authority-neutral")
+    check(comparison["baseline"]["spikeVectorSha256"] == result["spikeVectorSha256"]
+          and comparison["lesion"]["spikes"] < result["spikes"],
+          "baseline is identical and silencing the relay suppresses activity")
+    check(comparison["difference"]["lostActiveNeurons"] >= 2
+          and comparison["difference"]["populationSpikeDelta"] < 0,
+          "counterfactual identifies both relay and downstream loss")
+    null_control = compare_lesion(arrays, (0,), (2,), 80)
+    check(null_control["status"] == "COMPARABLE"
+          and null_control["difference"]["changedNeurons"] == 0,
+          "silencing an inactive cell does not manufacture an effect")
+    inconclusive = compare_lesion(arrays, (0,), (1,), 80, max_events=1)
+    check(inconclusive["status"] == "INCONCLUSIVE_BUDGET" and "difference" not in inconclusive,
+          "budget-limited runs cannot issue a causal comparison")
+    rejects(lambda: compare_lesion(arrays, (0,), (), 80), "comparison_requires_silenced_neuron")
+    rejects(lambda: compare_lesion(arrays, (0,), (4,), 80), "simulation_request_out_of_bounds")
     rejects(lambda: simulate(arrays, (4,), 10), "simulation_request_out_of_bounds")
     rejects(lambda: simulate(arrays, (0,), 0), "simulation_request_out_of_bounds")
     rejects(lambda: compile_map(root, spec), "compiled_target_exists_refusing_overwrite")
+    del nodes, offsets, targets, signed, arrays
+    compiled_weights = root / "compiled/signed_weights.npy"
+    with compiled_weights.open("r+b") as output:
+        output.seek(-1, 2)
+        output.write(b"x")
+    rejects(lambda: open_compiled(root, spec), "compiled_digest_mismatch:signed_weights.npy")
     with (root / "Completeness_783.csv").open("a", encoding="utf-8") as output:
         output.write("9999,True\n")
     rejects(lambda: inspect(root, spec), "source_file_missing_or_wrong_size")
     rejects(lambda: open_compiled(root, spec), "source_file_missing_or_wrong_size")
-    del nodes, offsets, targets, signed, arrays
 
 for wrong_id, wrong_weight, expected in ((True, False, "connection_id_index_mismatch"),
                                          (False, True, "connection_weight_or_sign_invalid")):
@@ -109,5 +132,16 @@ if real_root:
     check(first == second and first["status"] == "BOUNDED_RUN_FINISHED",
           "full-map intervention is reproducible and bounded")
     check(len(first["topSpikingNeuronIds"]) >= 2, "real network propagates beyond stimulus")
+    stimulus_id = int(arrays[0][53_290])
+    downstream_id = next(int(item["neuronId"]) for item in first["topSpikingNeuronIds"]
+                         if int(item["neuronId"]) != stimulus_id)
+    downstream_index = int(np.flatnonzero(arrays[0] == downstream_id)[0])
+    comparison = compare_lesion(arrays, (53_290,), (downstream_index,), 40)
+    check(comparison["status"] == "COMPARABLE"
+          and comparison["baseline"]["spikeVectorSha256"] == first["spikeVectorSha256"],
+          "real-map counterfactual uses exactly the same stimulus and baseline")
+    check(comparison["difference"]["changedNeurons"] >= 1
+          and comparison["lesion"]["spikeVectorSha256"] != first["spikeVectorSha256"],
+          "real-map silencing produces a measurable computational difference")
 
 print(f"FLYWIRE_FULL_MAP_TESTS_PASSED checks={checks} realData={'yes' if real_root else 'no'}")
