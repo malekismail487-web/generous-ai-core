@@ -8,7 +8,7 @@ let openBrowser = true;
 for (let index = 0; index < args.length; index += 1) {
   if (args[index] === "--help" || args[index] === "-h") {
     process.stdout.write(
-      "Νύξ local chat console\nUsage: npm run omega:nyx:cli -- [--repo PATH] [--no-open]\nThe browser UI binds to 127.0.0.1 only. NVIDIA_API_KEY must be injected privately; OMEGA_ALLOW_NVIDIA_NETWORK=1 is required for model use.\n",
+      "Νύξ local chat console\nUsage: nyx [--repo PATH] [--no-open]\nFrom source: npm run omega:nyx:cli -- [--repo PATH] [--no-open]\nThe browser UI binds to 127.0.0.1 only. NVIDIA_API_KEY must be injected privately; OMEGA_ALLOW_NVIDIA_NETWORK=1 is required for model use.\n",
     );
     process.exit(0);
   }

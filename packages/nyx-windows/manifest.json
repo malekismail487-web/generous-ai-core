@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "nyx-local",
+  "nodeMajorMinimum": 24,
+  "files": {
+    "nyx.mjs": "fd934fad0c199e5ac5decde87a046233757f3736aca329285b0ca4c44b4e61f3",
+    "nyx-ui/index.html": "1d3b25fb6800bba10d90a717922bfb7bc272425259c6aa5b5339e087ba10e3ea",
+    "nyx-ui/logo.svg": "b4e64980aa8ce240fe3f21cc2b92f1da2d2dc819ee56b8b95d638ce5637f5842",
+    "nyx-ui/ui.css": "d31436012dec7e516305665742aa21856a822cefccc02ce8c76817cc40a541b1",
+    "nyx-ui/ui.js": "af003c0d064873a1a84edfc5c34ef9df3849dfc4a0bf70884a6735c088da21b9"
+  }
+}

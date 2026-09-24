@@ -1,0 +1,2 @@
+# Distribution hashes must match bytes served by GitHub and checked out on Windows.
+packages/nyx-windows/** -text

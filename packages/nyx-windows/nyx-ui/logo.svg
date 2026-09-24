@@ -1,0 +1,37 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 400 400"
+  role="img"
+  aria-labelledby="title"
+>
+  <title id="title">Νύξ orbital wordmark</title>
+  <defs>
+    <radialGradient id="bg">
+      <stop stop-color="#181922" />
+      <stop offset="1" stop-color="#08090d" />
+    </radialGradient>
+  </defs>
+  <rect width="400" height="400" rx="82" fill="url(#bg)" />
+  <path
+    d="M70 139c25-54 73-83 130-83s105 29 130 83M69 259c25 55 74 85 131 85s106-30 131-85"
+    fill="none"
+    stroke="#f5f1ec"
+    stroke-width="2.6"
+    stroke-linecap="round"
+    opacity=".82"
+  />
+  <circle cx="200" cy="56" r="6.2" fill="#fff" />
+  <circle cx="200" cy="344" r="3" fill="#fff" />
+  <text
+    x="200"
+    y="254"
+    text-anchor="middle"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="134"
+    font-weight="400"
+    letter-spacing="-13"
+    fill="#fff"
+  >
+    Νύξ
+  </text>
+</svg>
