@@ -2060,7 +2060,6 @@
     {
       "name": "LOCALAPPDATA",
       "files": [
-        "scripts/omega/nyx-cli.ts",
         "scripts/omega/nyx-desktop-live-fixture-eval.ts",
         "scripts/omega/nyx-desktop-model-live-eval.ts"
       ]
@@ -2193,7 +2192,6 @@
       "files": [
         "scripts/omega/nvidia-nim-live-smoke.ts",
         "scripts/omega/nyx-cli-live-eval.ts",
-        "scripts/omega/nyx-cli.ts",
         "scripts/omega/nyx-contract-compliance.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
         "scripts/omega/nyx-live-r3e.ts",

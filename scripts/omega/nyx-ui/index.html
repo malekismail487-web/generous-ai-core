@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Νύξ — Engineering Workspace</title>
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/ui.css" />
+    <script defer src="/ui.js"></script>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="rail" aria-label="Workspace and capabilities">
+        <div class="brand">
+          <img class="brand-mark" src="/logo.svg" alt="Νύξ orbital wordmark" />
+          <div>
+            <span class="brand-name">Νύξ</span
+            ><span class="brand-sub">ENGINEERING INTELLIGENCE</span>
+          </div>
+        </div>
+        <div class="rail-section-label">WORKSPACE</div>
+        <div class="project-card">
+          <div class="project-orbit">Ω</div>
+          <div>
+            <div class="project-name" id="project-name">Not connected</div>
+            <div class="project-detail" id="project-detail">
+              Configure a bounded session
+            </div>
+          </div>
+        </div>
+        <div class="rail-section-label">CAPABILITY SURFACE</div>
+        <div class="tool-list" id="tool-list">
+          <div class="tool">
+            <span class="tool-dot"></span><span>Repository observation</span
+            ><small>R1</small>
+          </div>
+          <div class="tool dimmed">
+            <span class="tool-dot"></span><span>Isolated candidate</span
+            ><small>OFF</small>
+          </div>
+          <div class="tool dimmed">
+            <span class="tool-dot"></span><span>Fixed verification</span
+            ><small>OFF</small>
+          </div>
+          <div class="tool dimmed">
+            <span class="tool-dot"></span><span>Scoped terminal</span
+            ><small>OFF</small>
+          </div>
+          <div class="tool dimmed">
+            <span class="tool-dot"></span><span>Selected desktop</span
+            ><small>OFF</small>
+          </div>
+        </div>
+        <div class="rail-bottom">
+          <div class="boundary-dot"></div>
+          <div>
+            <strong>Omega boundary active</strong
+            ><span>No general shell, network, or source writes</span>
+          </div>
+        </div>
+      </aside>
+      <main class="main">
+        <header class="topbar">
+          <div class="topbar-left">
+            <span class="eyebrow">LIVE WORKSPACE</span>
+            <h1>Think with Νύξ</h1>
+          </div>
+          <div class="topbar-right">
+            <span class="live-chip"><i></i> LOCAL SESSION</span
+            ><span class="session-chip" id="session-chip">SETUP REQUIRED</span>
+          </div>
+        </header>
+        <section class="conversation" id="conversation" aria-live="polite">
+          <div class="hero" id="hero">
+            <img src="/logo.svg" alt="" aria-hidden="true" /><span
+              class="eyebrow"
+              >A CONVERSATION GROUNDED IN EVIDENCE</span
+            >
+            <h2>Build with clarity.<br /><em>Verify with reality.</em></h2>
+            <p>
+              Νύξ can inspect a repository, reason about a task, propose an
+              isolated candidate, and return the evidence. You decide what
+              authority is available.
+            </p>
+            <div class="hero-cards">
+              <span>01 · Observe</span><span>02 · Reason</span
+              ><span>03 · Verify</span>
+            </div>
+          </div>
+        </section>
+        <div class="composer-wrap">
+          <form id="composer" class="composer">
+            <textarea
+              id="message"
+              rows="2"
+              maxlength="8000"
+              placeholder="Ask Νύξ to investigate, explain, or engineer…"
+              aria-label="Message Νύξ"
+              disabled
+            ></textarea>
+            <div class="composer-bottom">
+              <span id="composer-hint">Configure your session to begin</span
+              ><button
+                id="send"
+                type="submit"
+                disabled
+                aria-label="Send message"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M5 12h14m-6-6 6 6-6 6"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </form>
+          <div class="fineprint">
+            Νύξ cognition proposes. Omega authorizes and verifies. Model
+            confidence is not acceptance evidence.
+          </div>
+        </div>
+      </main>
+      <aside class="evidence" aria-label="Evidence and session status">
+        <div class="evidence-head">
+          <span class="eyebrow">OBSERVABILITY</span>
+          <h2>Evidence trail</h2>
+          <p>Every tool action is linked to its outcome.</p>
+        </div>
+        <div class="evidence-scroll" id="evidence-list">
+          <div class="empty-evidence">
+            No actions yet.<br />Ask a question to begin.
+          </div>
+        </div>
+        <div class="evidence-foot">
+          <span id="turn-counter">0 / 30 turns</span
+          ><span id="capacity-state">Ready</span>
+        </div>
+      </aside>
+    </div>
+    <div
+      class="overlay"
+      id="setup-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="setup-title"
+    >
+      <div class="setup-card">
+        <div class="setup-head">
+          <img src="/logo.svg" alt="" aria-hidden="true" />
+          <div>
+            <span class="eyebrow">SESSION AUTHORITY</span>
+            <h2 id="setup-title">Set the boundary first</h2>
+            <p>
+              This console stays local. Νύξ only receives the capabilities you
+              select.
+            </p>
+          </div>
+        </div>
+        <form id="setup-form">
+          <label
+            >Repository
+            <input
+              id="setup-repo"
+              required
+              autocomplete="off"
+              spellcheck="false"
+          /></label>
+          <div class="form-grid">
+            <label
+              >Read scopes
+              <input
+                id="setup-scopes"
+                placeholder="src, tests"
+                spellcheck="false"
+              /><small
+                >Comma-separated; default is src when present</small
+              ></label
+            ><label
+              >Editable file
+              <input
+                id="setup-edit"
+                placeholder="Optional relative path"
+                spellcheck="false"
+              /><small
+                >One existing file; candidate remains isolated</small
+              ></label
+            ><label
+              >Verifier
+              <input
+                id="setup-verify"
+                placeholder="Optional .mjs checker"
+                spellcheck="false"
+              /><small>Required for a verified candidate</small></label
+            ><label
+              >Terminal syntax checks
+              <input
+                id="setup-terminal"
+                placeholder="Optional .js/.mjs files"
+                spellcheck="false"
+              /><small>Named files only, disposable copies</small></label
+            >
+          </div>
+          <div class="desktop-row">
+            <label
+              >Desktop PID
+              <input
+                id="setup-desktop"
+                type="number"
+                min="1"
+                placeholder="Optional selected app" /></label
+            ><label class="consent"
+              ><input id="desktop-consent" type="checkbox" /><span
+                >I consent to send selected UI labels to Νύξ. Every click or
+                text entry still needs my approval.</span
+              ></label
+            >
+          </div>
+          <div id="setup-error" class="setup-error" role="alert"></div>
+          <div class="setup-footer">
+            <span
+              >Source writes, general shell, and deployment remain
+              unavailable.</span
+            ><button id="configure" type="submit">
+              Enter workspace <span>→</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div
+      class="overlay hidden"
+      id="approval-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="approval-title"
+    >
+      <div class="approval-card">
+        <span class="eyebrow">HUMAN AUTHORIZATION</span>
+        <h2 id="approval-title">Review Νύξ’s proposed action</h2>
+        <dl id="approval-details"></dl>
+        <p>
+          Approval is for this one action on the selected window. A changed or
+          stale window is rejected.
+        </p>
+        <div class="approval-actions">
+          <button id="deny-action" type="button">Deny</button
+          ><button id="approve-action" type="button">Approve once</button>
+        </div>
+      </div>
+    </div>
+    <div id="toast" class="toast hidden" role="status"></div>
+  </body>
+</html>
