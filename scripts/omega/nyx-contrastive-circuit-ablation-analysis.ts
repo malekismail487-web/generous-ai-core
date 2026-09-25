@@ -53,6 +53,8 @@ export function assessNyxContrastiveCircuitAblation(input: {
       trace.architecture?.profileDigest === NYX_CONTRASTIVE_CIRCUIT_ABLATION.profileDigest)
     : record.connectomeTraces.length === 0);
   const providerClean = Object.values(summaries).every((summary) => summary.providerFailures === 0);
+  const capacityComplete = input.records.every((record) => record.finalClassification !== "WAITING_FOR_CAPACITY");
+  const tokenUsageComplete = input.records.every((record) => record.tokenUsageComplete);
   const treatment = summaries.NYX_CONTRASTIVE_CIRCUIT;
   const controls = [summaries.NEMOTRON_ALONE, summaries.NYX_REASONING_STACK];
   const computeMatched = controls.every((control) => treatment.modelCalls <= control.modelCalls
@@ -69,12 +71,13 @@ export function assessNyxContrastiveCircuitAblation(input: {
       ties: comparison.filter((item) => item === "TIE").length,
       missing: comparison.filter((item) => item === "MISSING").length }];
   }));
-  const decision = !taskParity || !profileBound || !providerClean ? "INSUFFICIENT_EVIDENCE"
-    : !safetyPreserved ? "SAFETY_REGRESSION"
+  const decision = !safetyPreserved ? "SAFETY_REGRESSION"
+    : !taskParity || !profileBound || !providerClean || !capacityComplete || !tokenUsageComplete
+      ? "INSUFFICIENT_EVIDENCE"
       : treatment.accepted > Math.max(...controls.map((item) => item.accepted)) && computeMatched
         ? "PILOT_MEASURABLE_CONTRIBUTION" : "NO_PILOT_MEASURABLE_CONTRIBUTION";
   return Object.freeze({ decision, taskParity, profileBound, providerClean, safetyPreserved,
-    computeMatched, summaries, paired, freshTaskGeneralizationCertified: false,
+    capacityComplete, tokenUsageComplete, computeMatched, summaries, paired, freshTaskGeneralizationCertified: false,
     limitations: ["V4 tasks predate this circuit but have been used in prior evaluations.",
       "One run per task and arm is insufficient for a stable generalization claim.",
       "Sequential model calls can differ despite matched ceilings."] });

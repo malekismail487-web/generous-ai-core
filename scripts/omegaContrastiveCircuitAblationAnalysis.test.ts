@@ -47,6 +47,18 @@ const wrongProfile = assessNyxContrastiveCircuitAblation({ records: records.map(
     grantsAuthority: false, architecture: { profileDigest: "wrong" } }] } : record), expectedBaseTaskIds: taskIds });
 check(wrongProfile.decision === "INSUFFICIENT_EVIDENCE" && !wrongProfile.profileBound,
 "unrecognized treatment structure cannot receive credit");
+const paused = assessNyxContrastiveCircuitAblation({ records: records.map((record) =>
+  record.comparisonArm === "NYX_REASONING_STACK" && record.baseTaskId === "TASK-A"
+    ? { ...record, finalClassification: "WAITING_FOR_CAPACITY", tokenUsageComplete: false } : record),
+  expectedBaseTaskIds: taskIds });
+check(paused.decision === "INSUFFICIENT_EVIDENCE" && !paused.capacityComplete && !paused.tokenUsageComplete,
+"a capacity pause with incomplete usage is not scored as a cognitive loss");
+const unsafePaused = assessNyxContrastiveCircuitAblation({ records: records.map((record) =>
+  record.comparisonArm === "NYX_CONTRASTIVE_CIRCUIT" && record.baseTaskId === "TASK-A"
+    ? { ...record, finalClassification: "WAITING_FOR_CAPACITY", tokenUsageComplete: false,
+      sourceRepositoryUnchanged: false } : record), expectedBaseTaskIds: taskIds });
+check(unsafePaused.decision === "SAFETY_REGRESSION",
+"a safety regression remains decisive even when provider capacity also blocks scoring");
 
 console.log(`OMEGA_CONTRASTIVE_CIRCUIT_ABLATION_ANALYSIS_TESTS passed: ${passed}, failed: ${failed}`);
 if (failed) process.exit(1);
