@@ -6,6 +6,10 @@ import { NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE } from
 import { NYX_REPAIR_FEEDBACK_TASK, NYX_REPAIR_FEEDBACK_COMPARISON,
   NYX_REPAIR_FEEDBACK_FROZEN_CORE } from
   "./omega/nyx-repair-feedback-diagnostic";
+import { NYX_REPAIR_FEEDBACK_TRANSFER_TASK } from "./omega/nyx-repair-feedback-transfer";
+import { assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
+import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from
+  "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -75,6 +79,29 @@ check(Object.entries(NYX_REPAIR_FEEDBACK_FROZEN_CORE.files).every(([path, digest
   const sha = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
   return sha(historical) === digest && sha(current) === digest;
 }), "feedback experiment is bound to the pinned historical core and present source bytes");
+const publicReferenceAssessment = (task: typeof NYX_REPAIR_FEEDBACK_TASK
+  | typeof NYX_REPAIR_FEEDBACK_TRANSFER_TASK) => assessEngineeringQuality({
+  assessmentId: `REFERENCE-${task.taskId}`, evaluatorVersion: "reference-preflight/1",
+  baselineFiles: task.faultyFiles, candidateFiles: task.correctFiles,
+  changedPaths: task.mutationPaths, functionalAcceptance: "PASS", regressionAcceptance: "PASS",
+  policy: { ...OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,
+    allowedChangedPaths: task.mutationPaths, readonlyPaths: [], maxAddedDeclarations: 12, invariants: [] },
+});
+check(publicReferenceAssessment(NYX_REPAIR_FEEDBACK_TASK).decision === "REJECTED",
+  "first scored task retains the discovered reference-versus-public-quality conflict as negative evidence");
+const transferReference = await moduleFromSource(NYX_REPAIR_FEEDBACK_TRANSFER_TASK.correctFiles[
+  NYX_REPAIR_FEEDBACK_TRANSFER_TASK.candidateModule]);
+const transferFaulty = await moduleFromSource(NYX_REPAIR_FEEDBACK_TRANSFER_TASK.faultyFiles[
+  NYX_REPAIR_FEEDBACK_TRANSFER_TASK.candidateModule]);
+check(publicReferenceAssessment(NYX_REPAIR_FEEDBACK_TRANSFER_TASK).decision === "ACCEPTED",
+  "new transfer reference clears the unchanged public static admission policy before inference");
+check(NYX_REPAIR_FEEDBACK_TRANSFER_TASK.hiddenCases.length >= 5
+  && NYX_REPAIR_FEEDBACK_TRANSFER_TASK.hiddenCases.every((item) =>
+    satisfiesCase(transferReference[NYX_REPAIR_FEEDBACK_TRANSFER_TASK.exportName], item)),
+  "new transfer reference satisfies every predeclared hidden case");
+check(NYX_REPAIR_FEEDBACK_TRANSFER_TASK.hiddenCases.filter((item) =>
+  !satisfiesCase(transferFaulty[NYX_REPAIR_FEEDBACK_TRANSFER_TASK.exportName], item)).length >= 2,
+  "new transfer faulty implementation fails multiple hidden cases");
 
 const record = (comparisonArm: NyxFreshCircuitRecord["comparisonArm"],
   outcome: string): NyxFreshCircuitRecord => ({
