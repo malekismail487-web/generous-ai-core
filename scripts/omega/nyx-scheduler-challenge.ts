@@ -60,6 +60,17 @@ export const NYX_SCHEDULER_FRONTIER_V3_FROZEN_CORE = Object.freeze({
   }),
 });
 
+// Parser-location feedback begins a new epoch; V3 remains an immutable record.
+export const NYX_SCHEDULER_FRONTIER_V4_FROZEN_CORE = Object.freeze({
+  commit: "ad0cb3ba5b20f89fe4df8df88805848aa885dabe",
+  serialization: "UTF8_CRLF_TO_LF_ONLY",
+  files: Object.freeze({
+    ...NYX_SCHEDULER_FRONTIER_V3_FROZEN_CORE.files,
+    "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts":
+      "0d40820e9cc721992390184344aa00e8c37d7a9c44fefbe695a4742c1fa2a52a",
+  }),
+});
+
 export const NYX_SCHEDULER_EXPERIMENT = Object.freeze({
   chunkId: "NYX-HARD-REJECTION-REPAIR-001", maxCognitionCycles: 5, maxCandidateIterations: 2,
   maxCognitionCorrections: 3, maxWallClockMs: 480_000,

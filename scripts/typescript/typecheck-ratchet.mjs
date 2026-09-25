@@ -103,15 +103,20 @@ export function loadTypeScriptBaseline(path = BASELINE_PATH) {
 
 export function runTypeScriptRatchet() {
   const baseline = loadTypeScriptBaseline();
-  const compiler = resolve(ROOT, "node_modules/.bin", process.platform === "win32" ? "tsc.exe" : "tsc");
-  const versionRun = spawnSync(compiler, ["--version"], { cwd: ROOT, encoding: "utf8", timeout: 30_000 });
+  // Invoke the pinned TypeScript package through Node. Windows application
+  // control can block package-manager .exe shims while permitting this same
+  // compiler entrypoint; the version and diagnostic ratchet remain unchanged.
+  const compiler = resolve(ROOT, "node_modules/typescript/bin/tsc");
+  const versionRun = spawnSync(process.execPath, [compiler, "--version"], {
+    cwd: ROOT, encoding: "utf8", timeout: 30_000,
+  });
   if (versionRun.error) throw versionRun.error;
   const compilerVersionOutput = `${versionRun.stdout ?? ""}${versionRun.stderr ?? ""}`;
   if (versionRun.status !== 0 || !compilerVersionMatches(compilerVersionOutput, baseline.typescriptVersion)) {
     const observed = parseCompilerVersion(compilerVersionOutput) ?? "UNPARSEABLE";
     throw new Error(`TypeScript compiler version mismatch: expected ${baseline.typescriptVersion}, observed ${observed}.`);
   }
-  const run = spawnSync(compiler, ["--noEmit", "-p", baseline.project, "--pretty", "false"], {
+  const run = spawnSync(process.execPath, [compiler, "--noEmit", "-p", baseline.project, "--pretty", "false"], {
     cwd: ROOT,
     encoding: "utf8",
     timeout: 120_000,

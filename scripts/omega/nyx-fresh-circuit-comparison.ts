@@ -24,6 +24,17 @@ export const NYX_FRESH_CIRCUIT_FROZEN_CORE = Object.freeze({
   }),
 });
 
+// The ledger diagnostic remains pinned to the original parser. Dependency
+// transfer uses the generic parser-location correction as a distinct epoch.
+export const NYX_FRESH_CIRCUIT_TRANSFER_CORE = Object.freeze({
+  commit: "ad0cb3ba5b20f89fe4df8df88805848aa885dabe",
+  files: Object.freeze({
+    ...NYX_FRESH_CIRCUIT_FROZEN_CORE.files,
+    "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts":
+      "0d40820e9cc721992390184344aa00e8c37d7a9c44fefbe695a4742c1fa2a52a",
+  }),
+});
+
 export interface NyxFreshCircuitRecord {
   readonly baseTaskId: string;
   readonly comparisonArm: "NYX_REASONING_STACK" | "NYX_EVIDENCE_GATED_CIRCUIT";

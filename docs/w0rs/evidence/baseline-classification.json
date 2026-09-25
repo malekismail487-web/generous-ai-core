@@ -8131,6 +8131,7 @@
           "scripts/omega/nyx-cli.ts",
           "scripts/omega/nyx-context-experiment.ts",
           "scripts/omega/nyx-desktop-model-live-eval.ts",
+          "scripts/omega/nyx-fresh-circuit-comparison.ts",
           "scripts/omega/nyx-fresh-circuit-topics.ts",
           "scripts/omega/nyx-frontier-reasoning-fixtures.ts",
           "scripts/omega/nyx-quality-confirmation-fixtures.ts",
