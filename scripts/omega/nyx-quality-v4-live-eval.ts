@@ -27,7 +27,7 @@ import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readO
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { observeEngineeringExecution, type EngineeringObservation } from "../../src/lib/codelab/observation/r3EngineeringObservation";
 import { NYX_ENGINEERING_QUALITY_V4, NYX_V4_FROZEN_CORE, type NyxQualityV4Task } from "./nyx-quality-v4-fixtures";
-import { NYX_ENGINEERING_QUALITY_V5, NYX_V5_FROZEN_CORE, NYX_V5_QUALITY_REPAIR_V2_FROZEN_CORE,
+import { NYX_ENGINEERING_QUALITY_V5, NYX_V5_FROZEN_CORE, NYX_V5_QUALITY_REPAIR_V3_FROZEN_CORE,
   type NyxQualityV5Task } from "./nyx-quality-v5-fixtures";
 import { NYX_CONNECTOME_ABLATION, NYX_CONNECTOME_ABLATION_FROZEN_CORE } from "./nyx-connectome-ablation";
 import { assessNyxConnectomeAblation, type NyxConnectomeAblationArm,
@@ -37,7 +37,7 @@ import { NYX_BIOLOGICAL_CONNECTOME_ABLATION,
 import { assessNyxBiologicalConnectomeAblation, type NyxBiologicalConnectomeAblationArm,
   type NyxBiologicalConnectomeAblationRecord } from "./nyx-biological-connectome-ablation-analysis";
 import { NYX_SCHEDULER_CHALLENGE, NYX_SCHEDULER_EXPERIMENT, NYX_SCHEDULER_FROZEN_CORE,
-  NYX_SCHEDULER_FRONTIER_V2_FROZEN_CORE,
+  NYX_SCHEDULER_FRONTIER_V3_FROZEN_CORE,
   type NyxSchedulerChallenge } from "./nyx-scheduler-challenge";
 import { OMEGA_CANDIDATE_RUNNER_SOURCE } from "./verification-integrity-fixtures";
 import { GroundedRepairEvidence } from "../../src/lib/codelab/repository/groundedRepairEvidence";
@@ -99,11 +99,11 @@ const HOLDOUT: readonly EvaluationTask[] = IS_BIOLOGICAL_CONNECTOME_ABLATION
     comparisonArm: "NYX_REASONING_STACK" as const }))
     : SUITE_ID === "V5" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
 const FROZEN_CORE = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_FROZEN_CORE : IS_COMPARISON ? NYX_CONFIGURATION_FROZEN_CORE : IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_FROZEN_CORE : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_FROZEN_CORE
-  : IS_FRONTIER_CHALLENGE ? NYX_SCHEDULER_FRONTIER_V2_FROZEN_CORE
+  : IS_FRONTIER_CHALLENGE ? NYX_SCHEDULER_FRONTIER_V3_FROZEN_CORE
   : IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE
     : IS_BIOLOGICAL_CONNECTOME_ABLATION ? NYX_BIOLOGICAL_CONNECTOME_ABLATION_FROZEN_CORE
       : IS_CONNECTOME_ABLATION ? NYX_CONNECTOME_ABLATION_FROZEN_CORE
-    : SUITE_ID === "V5_QUALITY_REPAIR" ? NYX_V5_QUALITY_REPAIR_V2_FROZEN_CORE
+    : SUITE_ID === "V5_QUALITY_REPAIR" ? NYX_V5_QUALITY_REPAIR_V3_FROZEN_CORE
       : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
 const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
   : IS_FRONTIER_CHALLENGE ? "nyx-scheduler-frontier/4"

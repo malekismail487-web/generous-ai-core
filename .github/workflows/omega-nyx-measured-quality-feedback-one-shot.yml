@@ -1,0 +1,48 @@
+name: Omega NYX measured quality-feedback diagnostic
+
+on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths:
+      - .github/workflows/omega-nyx-measured-quality-feedback-one-shot.yml
+
+permissions:
+  contents: read
+
+jobs:
+  measured-quality-feedback-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      NYX_QUALITY_SUITE: V5_QUALITY_REPAIR
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Confirm encrypted credential is available
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Verify admission feedback, repair loop, and evaluator isolation
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaCandidateEngineeringAdmission.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaR3EBoundedRepairLoop.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaVerificationIntegrity.test.ts
+      - name: Run frozen seven-task quality-repair diagnostic
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v4-live-eval.ts
+      - name: Upload sanitized report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-nyx-measured-quality-feedback-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-quality-v5_quality_repair-*.json
+          if-no-files-found: warn

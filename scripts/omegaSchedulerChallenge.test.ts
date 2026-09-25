@@ -7,6 +7,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { NYX_SCHEDULER_CHALLENGE as task, NYX_SCHEDULER_MUTANTS,
   NYX_SCHEDULER_FROZEN_CORE, NYX_SCHEDULER_FRONTIER_FROZEN_CORE, NYX_SCHEDULER_FRONTIER_V2_FROZEN_CORE,
+  NYX_SCHEDULER_FRONTIER_V3_FROZEN_CORE,
   NYX_SCHEDULER_EXPERIMENT } from "./omega/nyx-scheduler-challenge";
 import { assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
@@ -94,6 +95,11 @@ try {
     return original.status === 0 && hash(original.stdout.replace(/\r\n/g, "\n")) === digest;
   });
   check(successorCoreMatches.every(Boolean), "cumulative quality successor preserves the earlier frontier epoch and pins its new core");
+  const measuredFeedbackCoreMatches = Object.entries(NYX_SCHEDULER_FRONTIER_V3_FROZEN_CORE.files).map(([path, digest]) => {
+    const original = spawnSync("git", ["show", `${NYX_SCHEDULER_FRONTIER_V3_FROZEN_CORE.commit}:${path}`], { encoding: "utf8" });
+    return original.status === 0 && hash(original.stdout.replace(/\r\n/g, "\n")) === digest;
+  });
+  check(measuredFeedbackCoreMatches.every(Boolean), "measured feedback epoch preserves and pins the exact successor core");
   check(NYX_SCHEDULER_EXPERIMENT.maxCognitionCycles === 5
     && NYX_SCHEDULER_EXPERIMENT.maxCandidateIterations === 2
     && NYX_SCHEDULER_EXPERIMENT.maxCognitionCorrections === 3

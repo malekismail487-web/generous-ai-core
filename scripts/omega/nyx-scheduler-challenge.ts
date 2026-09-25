@@ -49,6 +49,17 @@ export const NYX_SCHEDULER_FRONTIER_V2_FROZEN_CORE = Object.freeze({
   }),
 });
 
+export const NYX_SCHEDULER_FRONTIER_V3_FROZEN_CORE = Object.freeze({
+  commit: "4f09e40533270e41caffca164c2d2037fb377d07",
+  serialization: "UTF8_CRLF_TO_LF_ONLY",
+  files: Object.freeze({
+    ...NYX_SCHEDULER_FRONTIER_V2_FROZEN_CORE.files,
+    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "d8d6e6f8f4efc8bee35ae7e1d1a29ad0efceeb37cb195b343616fe7be0559236",
+    "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "3d6b24f088093b049b65284cce906adc74203d9d4a62f25fd8fc458410d55c0a",
+    "src/lib/codelab/assurance/candidateEngineeringAdmission.ts": "f4f1f180197e0a39c069816b8ecf6468bed38d4464404dae2c7a6df37e37e04b",
+  }),
+});
+
 export const NYX_SCHEDULER_EXPERIMENT = Object.freeze({
   chunkId: "NYX-HARD-REJECTION-REPAIR-001", maxCognitionCycles: 5, maxCandidateIterations: 2,
   maxCognitionCorrections: 3, maxWallClockMs: 480_000,
