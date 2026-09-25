@@ -325,7 +325,7 @@ export function isValidFsPath(v: string): boolean {
   if (v.includes("\\")) return false;
   if (v.startsWith("/")) return false;
   if (v.includes("..")) return false;
-  if (/[\u0000-\u001f]/.test(v)) return false;
+  for (const char of v) if (char.charCodeAt(0) < 32) return false;
   return true;
 }
 
@@ -489,7 +489,7 @@ export function validateDraft(raw: unknown): ValidationResult<AgentEventDraft> {
           callId: callId.val!,
           ok: raw.ok,
           summary: s.val!,
-          ...(resultJson !== undefined ? { resultJson } : {}),
+          ...(resultJson !== undefined ? { resultJson: resultJson as string } : {}),
         },
       };
     }
@@ -514,7 +514,7 @@ export function validateDraft(raw: unknown): ValidationResult<AgentEventDraft> {
           kind: "file_delta",
           path: p.val!,
           op: raw.op,
-          ...(raw.contentAfter !== undefined ? { contentAfter: raw.contentAfter } : {}),
+          ...(raw.contentAfter !== undefined ? { contentAfter: raw.contentAfter as string } : {}),
         },
       };
     }

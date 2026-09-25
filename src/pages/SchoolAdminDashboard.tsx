@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { WeeklyPlanBuilder } from '@/components/admin/WeeklyPlanBuilder';
 import { SchoolPerformanceDashboard } from '@/components/admin/SchoolPerformanceDashboard';
+import { LearningSupportPanel } from '@/components/learning/LearningSupportPanel';
 import { BudgetOptimizationReport } from '@/components/admin/BudgetOptimizationReport';
 import { SchoolAdminAppeals } from '@/components/admin/SchoolAdminAppeals';
 import { CurriculumGraphManager } from '@/components/admin/CurriculumGraphManager';
@@ -667,6 +668,7 @@ export default function SchoolAdminDashboard() {
             {/* Performance */}
             <TabsContent value="performance" className="space-y-4 mt-0">
               <SchoolPerformanceDashboard schoolId={school.id} />
+              <LearningSupportPanel role="admin" schoolId={school.id} />
             </TabsContent>
 
             {/* Curriculum */}

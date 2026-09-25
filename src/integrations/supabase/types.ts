@@ -3566,6 +3566,109 @@ export type Database = {
           },
         ]
       }
+      learning_support_checkins: {
+        Row: {
+          actor_id: string
+          created_at: string
+          id: string
+          kind: string
+          plan_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          plan_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_support_checkins_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "learning_support_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_support_plans: {
+        Row: {
+          ale_observed_at: string | null
+          baseline_mastery: number | null
+          created_at: string
+          due_at: string | null
+          family_step: string | null
+          family_visible: boolean
+          goal: string
+          id: string
+          learner_step: string
+          reviewed_at: string | null
+          school_id: string
+          source_kind: string
+          status: string
+          student_id: string
+          subject: string
+          target_mastery: number | null
+          teacher_id: string
+          topic: string
+        }
+        Insert: {
+          ale_observed_at?: string | null
+          baseline_mastery?: number | null
+          created_at?: string
+          due_at?: string | null
+          family_step?: string | null
+          family_visible?: boolean
+          goal: string
+          id?: string
+          learner_step: string
+          reviewed_at?: string | null
+          school_id: string
+          source_kind: string
+          status?: string
+          student_id: string
+          subject: string
+          target_mastery?: number | null
+          teacher_id: string
+          topic: string
+        }
+        Update: {
+          ale_observed_at?: string | null
+          baseline_mastery?: number | null
+          created_at?: string
+          due_at?: string | null
+          family_step?: string | null
+          family_visible?: boolean
+          goal?: string
+          id?: string
+          learner_step?: string
+          reviewed_at?: string | null
+          school_id?: string
+          source_kind?: string
+          status?: string
+          student_id?: string
+          subject?: string
+          target_mastery?: number | null
+          teacher_id?: string
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_support_plans_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learning_style_profiles: {
         Row: {
           conceptual_score: number | null

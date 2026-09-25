@@ -25,6 +25,7 @@ import { AIStudyPlan } from "@/components/student/AIStudyPlan";
 import { GraphCalculator } from "@/components/student/GraphCalculator";
 import { StudentHomeGrid, GridAction } from "@/components/StudentHomeGrid";
 import { WeeklyPlanSection } from "@/components/WeeklyPlanSection";
+import { LearningSupportPanel } from "@/components/learning/LearningSupportPanel";
 import { BannerAd } from "@/components/BannerAd";
 import { FloatingTimer } from "@/components/student/FloatingTimer";
 import { StudentLiveList } from "@/components/student/StudentLiveList";
@@ -146,7 +147,7 @@ const Index = () => {
         );
 
       case 'weeklyplan':
-        return <WeeklyPlanSection />;
+        return <div className="space-y-6"><WeeklyPlanSection />{school && <div className="px-4 pb-6"><LearningSupportPanel role="student" schoolId={school.id} onPractice={() => setActiveTab('subjects')} /></div>}</div>;
 
       case 'mindmaps':
         return <MindMapGenerator />;
