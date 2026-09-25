@@ -14,6 +14,7 @@ import {
   type NyxSchemaDiagnosticCategory,
   type NyxSourceRepresentation,
   type NyxCognitionExperimentVariant,
+  type NyxRepairFeedbackPolicy,
 } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 import { validateNyxSourceSyntax,
   type NyxRepairIntentCompilationMode } from "../src/lib/codelab/cognition/nyxRepairIntentCompiler";
@@ -47,9 +48,11 @@ function provider(transport: NvidiaNimTransport, model = "nvidia/nemotron-3-ultr
     maxPromptBytes: 100_000, maxOutputTokens: 2_048, timeoutMs: 1_000, transport });
 }
 function cognition(transport: NvidiaNimTransport, sourceRepresentation: NyxSourceRepresentation = "TEXT",
-  experimentVariant?: NyxCognitionExperimentVariant, intentCompilationMode?: NyxRepairIntentCompilationMode) {
+  experimentVariant?: NyxCognitionExperimentVariant, intentCompilationMode?: NyxRepairIntentCompilationMode,
+  repairFeedbackPolicy?: NyxRepairFeedbackPolicy) {
   return NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-PRIMARY-COGNITION", provider: provider(transport),
-    maxPromptBytes: 50_000, maxOutputTokens: 1_024, sourceRepresentation, experimentVariant, intentCompilationMode });
+    maxPromptBytes: 50_000, maxOutputTokens: 1_024, sourceRepresentation, experimentVariant,
+    intentCompilationMode, repairFeedbackPolicy });
 }
 
 const source = "export const add = (a: number, b: number) => a + b + 1;\n";
@@ -174,6 +177,69 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
   const locatedSyntax = await validateNyxSourceSyntax("src/value.mjs", "export const x = ;\n");
   check(!locatedSyntax.valid && locatedSyntax.line === 1 && locatedSyntax.column !== null,
     "TypeScript parse failures report a source location for bounded model correction");
+  const rejectedSource = 'const marker = "private-not-for-logs";\nexport function add(a: number, b: number) { return a + ; }\n';
+  const correctionPrompts: Record<string, unknown>[] = [];
+  const correctionTransport: NvidiaNimTransport = async (input, init) => {
+    correctionPrompts.push(JSON.parse((JSON.parse(String(init?.body)) as { messages: Array<{ content: string }> })
+      .messages[1].content) as Record<string, unknown>);
+    const answer = correctionPrompts.length === 1
+      ? intent({ changes: [{ target: "src/math.ts", replacement: rejectedSource }] }) : intent();
+    return transportFor(answer)(input, init);
+  };
+  const feedbackCognition = cognition(correctionTransport, "TEXT", undefined, undefined,
+    "TRANSIENT_REJECTED_SOURCE_WINDOW");
+  const firstCorrection = await feedbackCognition.proposeRepair(request());
+  const failureHistory = [{ failureId: firstCorrection.evidence.evidenceId,
+    cognitionRequestId: "NYX-REPAIR-REQUEST-1", reason: "SCHEMA_INVALID" as const,
+    modelResponseDigest: firstCorrection.evidence.modelResponseDigest,
+    diagnostics: firstCorrection.schemaDiagnostics }];
+  const corrected = await feedbackCognition.proposeRepair(request({ cognitionRequestId: "NYX-REPAIR-REQUEST-2",
+    priorCognitionFailures: failureHistory }));
+  const sourceFeedback = correctionPrompts[1].rejectedSourceFeedback as {
+    target: string; line: number; sourceDigest: string; lines: Array<{ number: number; text: string }>;
+  } | undefined;
+  check(firstCorrection.decision === "COGNITION_ERROR" && corrected.decision === "PROPOSED"
+    && !firstCorrection.evidence.rejectedSourceFeedbackPresented
+    && corrected.evidence.rejectedSourceFeedbackPresented
+    && sourceFeedback?.target === "src/math.ts" && sourceFeedback.line === 2
+    && sourceFeedback.sourceDigest === hash(rejectedSource)
+    && sourceFeedback.lines.some((item) => item.number === 2 && item.text.includes("return a + ;")),
+  "opt-in feedback binds a small rejected-source window to the exact previous response and repair request");
+  check(!JSON.stringify(firstCorrection).includes("private-not-for-logs")
+    && !JSON.stringify(correctionPrompts[1]).includes("private-not-for-logs")
+    && !Object.hasOwn(correctionPrompts[0], "rejectedSourceFeedback"),
+  "rejected source remains out of persisted cognition evidence and string literals are redacted before feedback");
+  const controlPrompts: Record<string, unknown>[] = [];
+  const controlCognition = cognition(async (input, init) => {
+    controlPrompts.push(JSON.parse((JSON.parse(String(init?.body)) as { messages: Array<{ content: string }> })
+      .messages[1].content) as Record<string, unknown>);
+    return transportFor(controlPrompts.length === 1
+      ? intent({ changes: [{ target: "src/math.ts", replacement: rejectedSource }] }) : intent())(input, init);
+  });
+  const controlFirst = await controlCognition.proposeRepair(request());
+  await controlCognition.proposeRepair(request({ cognitionRequestId: "NYX-REPAIR-REQUEST-2",
+    priorCognitionFailures: [{ failureId: controlFirst.evidence.evidenceId,
+      cognitionRequestId: "NYX-REPAIR-REQUEST-1", reason: "SCHEMA_INVALID",
+      modelResponseDigest: controlFirst.evidence.modelResponseDigest,
+      diagnostics: controlFirst.schemaDiagnostics }] }));
+  check(!Object.hasOwn(controlPrompts[1], "rejectedSourceFeedback"),
+    "established diagnostic-only control does not silently gain rejected-source replay");
+  const isolatedPrompts: Record<string, unknown>[] = [];
+  const isolatedCognition = cognition(async (input, init) => {
+    isolatedPrompts.push(JSON.parse((JSON.parse(String(init?.body)) as { messages: Array<{ content: string }> })
+      .messages[1].content) as Record<string, unknown>);
+    return transportFor(isolatedPrompts.length === 1
+      ? intent({ changes: [{ target: "src/math.ts", replacement: rejectedSource }] }) : intent())(input, init);
+  }, "TEXT", undefined, undefined, "TRANSIENT_REJECTED_SOURCE_WINDOW");
+  const isolatedFirst = await isolatedCognition.proposeRepair(request());
+  await isolatedCognition.proposeRepair(request({ cognitionRequestId: "NYX-OTHER-OBJECTIVE",
+    objective: "Investigate a different bounded mathematical contract.",
+    priorCognitionFailures: [{ failureId: isolatedFirst.evidence.evidenceId,
+      cognitionRequestId: "NYX-REPAIR-REQUEST-1", reason: "SCHEMA_INVALID",
+      modelResponseDigest: isolatedFirst.evidence.modelResponseDigest,
+      diagnostics: isolatedFirst.schemaDiagnostics }] }));
+  check(!Object.hasOwn(isolatedPrompts[1], "rejectedSourceFeedback"),
+    "a changed objective cannot inherit process-local rejected source from another task");
   const refusedSyntax = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
     replacement: { lines: [invalidSyntax.trimEnd() + " ".repeat(121)], lineEnding: "LF" } }] })),
   "LINES", undefined, "SAFE_CANONICALIZATION").proposeRepair(request());

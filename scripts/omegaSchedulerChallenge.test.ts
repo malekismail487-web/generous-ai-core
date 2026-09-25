@@ -156,23 +156,14 @@ try {
     && !historical.stdout.includes("NYX_QUALITY_CHALLENGE_HOLDOUT"),
   "new cognition cannot silently rescore the old frozen scheduler epoch");
   const frontier = runOffline("FRONTIER_CHALLENGE");
-  const frontierLine = frontier.stdout.split(/\r?\n/).find((item) => item.startsWith("NYX_QUALITY_FRONTIER_CHALLENGE_HOLDOUT {"));
-  const frontierReport = frontierLine
-    ? JSON.parse(frontierLine.slice("NYX_QUALITY_FRONTIER_CHALLENGE_HOLDOUT ".length)) : null;
-  check(frontier.status === 1 && frontierReport?.evaluationDecision === "INSUFFICIENT_EVIDENCE"
-    && frontierReport.tasks[0].modelCalls === 1 && frontierReport.tasks[0].candidates === 0
-    && frontierReport.sourceRepresentation === "LINES"
-    && frontierReport.tasks[0].sourceRepresentation === "LINES",
-  "current frontier scheduler epoch reaches live driver logic and preserves provider failure as insufficient evidence");
+  check(frontier.status === 1 && frontier.stderr.includes("frontier_challenge_frozen_core_digest_mismatch")
+    && !frontier.stdout.includes("NYX_QUALITY_FRONTIER_CHALLENGE_HOLDOUT"),
+  "changed cognition cannot silently rescore the historical frontier scheduler epoch");
   const reasoningFrontier = runOffline("FRONTIER_CHALLENGE", "REASONING_ENABLED");
-  const reasoningLine = reasoningFrontier.stdout.split(/\r?\n/)
-    .find((item) => item.startsWith("NYX_QUALITY_FRONTIER_CHALLENGE_HOLDOUT {"));
-  const reasoningReport = reasoningLine
-    ? JSON.parse(reasoningLine.slice("NYX_QUALITY_FRONTIER_CHALLENGE_HOLDOUT ".length)) : null;
-  check(reasoningFrontier.status === 1 && reasoningReport?.experimentVariant === "REASONING_ENABLED"
-    && reasoningReport?.tasks[0].comparisonArm === "REASONING_ENABLED"
-    && reasoningReport?.tasks[0].providerDiagnostics[0].experimentVariant === "REASONING_ENABLED",
-  "issuer-selected frontier configuration is attributable across report, task and provider evidence");
+  check(reasoningFrontier.status === 1
+    && reasoningFrontier.stderr.includes("frontier_challenge_frozen_core_digest_mismatch")
+    && !reasoningFrontier.stdout.includes("NYX_QUALITY_FRONTIER_CHALLENGE_HOLDOUT"),
+  "reasoning-enabled variant also refuses historical frontier rescoring after cognition changes");
   const workflow = await readFile(resolve(".github/workflows/omega-nemotron-live-smoke.yml"), "utf8");
   check(workflow.includes("frontier-challenge-only") && workflow.includes("NYX_EXPERIMENT_VARIANT: ${{ inputs.configuration }}")
     && workflow.includes("NYX_QUALITY_SUITE: ${{ inputs.mode == 'frontier-challenge-only' && 'FRONTIER_CHALLENGE' || 'CHALLENGE' }}"),
@@ -181,8 +172,8 @@ try {
   check(frontierWorkflow.includes("for configuration in CURRENT REASONING_ENABLED MINIMAL_REFERENCE")
     && frontierWorkflow.includes('NYX_EXPERIMENT_VARIANT="$configuration"'),
   "branch-triggered frontier workflow compares all cognition configurations on one candidate");
-  check(reasoningFrontier.stdout.includes("nyx-quality-frontier_challenge-reasoning_enabled-"),
-    "frontier report identity prevents one cognition configuration from overwriting another");
+  check(!reasoningFrontier.stdout.includes("nyx-quality-frontier_challenge-reasoning_enabled-"),
+    "historical frontier report identity is not reused for a changed cognition implementation");
   const previousFeedbackEpoch = runOffline("CONTEXT_REPAIR");
   check(previousFeedbackEpoch.status === 1 && previousFeedbackEpoch.stderr.includes("context_repair_frozen_core_digest_mismatch"),
     "typed source experiment cannot silently rescore the previous measurement-feedback epoch");
