@@ -15,7 +15,8 @@ import {
   type NyxSourceRepresentation,
   type NyxCognitionExperimentVariant,
 } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
-import type { NyxRepairIntentCompilationMode } from "../src/lib/codelab/cognition/nyxRepairIntentCompiler";
+import { validateNyxSourceSyntax,
+  type NyxRepairIntentCompilationMode } from "../src/lib/codelab/cognition/nyxRepairIntentCompiler";
 
 let passed = 0;
 let failed = 0;
@@ -170,6 +171,9 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
     && has(stillOverlong, "SOURCE_QUALITY_INVALID"),
   "formatter cannot launder an intrinsically overlong literal through source-quality admission");
   const invalidSyntax = "export function add(a:number,b:number){ return a + ; }\n";
+  const locatedSyntax = await validateNyxSourceSyntax("src/value.mjs", "export const x = ;\n");
+  check(!locatedSyntax.valid && locatedSyntax.line === 1 && locatedSyntax.column !== null,
+    "TypeScript parse failures report a source location for bounded model correction");
   const refusedSyntax = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
     replacement: { lines: [invalidSyntax.trimEnd() + " ".repeat(121)], lineEnding: "LF" } }] })),
   "LINES", undefined, "SAFE_CANONICALIZATION").proposeRepair(request());

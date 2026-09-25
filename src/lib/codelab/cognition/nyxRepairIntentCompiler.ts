@@ -168,7 +168,15 @@ function syntaxLocation(error: unknown): { readonly line: number | null; readonl
 /** Parse-only authority-neutral check using the same language parser as canonical formatting. */
 export async function validateNyxSourceSyntax(path: string, source: string): Promise<NyxSourceSyntaxValidation> {
   const parser = prettierParser(path);
-  if (!parseable(path, source)) return Object.freeze({ valid: false, parser, line: null, column: null });
+  const parsed = ts.createSourceFile(path, source, ts.ScriptTarget.ES2022, true, sourceKind(path));
+  const diagnostics = (parsed as ts.SourceFile & { readonly parseDiagnostics?: readonly ts.Diagnostic[] })
+    .parseDiagnostics ?? [];
+  if (diagnostics.length > 0) {
+    const start = diagnostics[0].start;
+    const position = start === undefined ? null : parsed.getLineAndCharacterOfPosition(start);
+    return Object.freeze({ valid: false, parser, line: position === null ? null : position.line + 1,
+      column: position === null ? null : position.character + 1 });
+  }
   try {
     await format(source, { parser, filepath: path, printWidth: 120, endOfLine: "lf" });
     return Object.freeze({ valid: true, parser, line: null, column: null });
