@@ -450,6 +450,12 @@ export function createNyxConnectomeCognitionAdapter(
         return async (request: NyxRepairCognitionRequest): Promise<NyxRepairCognitionResult> => {
           const augmented = buildNyxConnectomeResearchContext(request, configuration);
           traces.push(augmented.trace);
+          // An unresolved experimental circuit must not perturb the model's
+          // established repair path merely to announce its uncertainty.
+          if (configuration.contextMode === "EVIDENCE_GATED"
+            && augmented.trace.circuitState !== "SUPPORTED_CANDIDATE") {
+            return target.proposeRepair(request);
+          }
           return target.proposeRepair({ ...request, theoryResearchContext: augmented.context });
         };
       }

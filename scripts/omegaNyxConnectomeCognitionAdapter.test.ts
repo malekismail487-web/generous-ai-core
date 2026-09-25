@@ -263,6 +263,33 @@ check(delegatedCalls === 1 && delegatedContextValid,
   "one connectome-augmented request delegates to exactly one established cognition call");
 check(adapter.traces().length === 1 && adapter.traces()[0].cognitionRequestId === "NYX-CONNECTOME-DELEGATION",
   "adapter exposes one attributable trace for the delegated cognition call");
+let gatedDelegatedRequest: NyxRepairCognitionRequest | null = null;
+const gatedBase = {
+  async proposeRepair(input: NyxRepairCognitionRequest): Promise<NyxRepairCognitionResult> {
+    gatedDelegatedRequest = input;
+    return { decision: "NO_ACTION", reason: "test_double", hypothesis: null, evidenceRequest: null,
+      evidence: {} as NyxRepairCognitionResult["evidence"], schemaDiagnostics: [], omegaAuthorityGranted: false };
+  },
+} as unknown as NyxNemotronEngineeringCognition;
+const gatedAdapter = createNyxConnectomeCognitionAdapter(gatedBase, {
+  architectureProfile: NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE, contextMode: "EVIDENCE_GATED",
+});
+const unresolvedRequest = request({ cognitionRequestId: "NYX-GATED-ABSTENTION",
+  observation: { ...request().observation, attributionConfidence: 0, diagnostics: [] } });
+const unresolvedTrace = buildNyxConnectomeResearchContext(unresolvedRequest, {
+  architectureProfile: NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE, contextMode: "EVIDENCE_GATED",
+}).trace;
+check(unresolvedTrace.circuitState === "INSUFFICIENT_EVIDENCE",
+  "an unattributed observation produces an honest circuit abstention");
+await gatedAdapter.cognition.proposeRepair(unresolvedRequest);
+check(gatedDelegatedRequest === unresolvedRequest && gatedAdapter.traces().length === 1
+  && gatedAdapter.traces()[0].circuitState === "INSUFFICIENT_EVIDENCE",
+"an unresolved circuit preserves the exact established model input while retaining an attributable trace");
+const supportedRequest = request({ cognitionRequestId: "NYX-GATED-SUPPORTED-DELEGATION" });
+await gatedAdapter.cognition.proposeRepair(supportedRequest);
+check(gatedDelegatedRequest !== supportedRequest && Boolean(gatedDelegatedRequest?.theoryResearchContext)
+  && gatedAdapter.traces().length === 2 && gatedAdapter.traces()[1].circuitState === "SUPPORTED_CANDIDATE",
+"a supported circuit candidate alone augments the established cognition request");
 check(throws(() => buildNyxConnectomeResearchContext(request({ theoryResearchContext: initial.context })),
   "nyx_connectome_context_conflicts_with_existing_research_context"),
 "adapter fails closed instead of silently replacing an existing research context");
