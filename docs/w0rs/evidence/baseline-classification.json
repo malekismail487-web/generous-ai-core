@@ -4413,6 +4413,8 @@
           "scripts/omega/nyx-connectome-ablation-analysis.ts",
           "scripts/omega/nyx-context-experiment.ts",
           "scripts/omega/nyx-contract-compliance.ts",
+          "scripts/omega/nyx-contrastive-circuit-ablation-analysis.ts",
+          "scripts/omega/nyx-contrastive-circuit-ablation.ts",
           "scripts/omega/nyx-desktop-live-fixture-eval.ts",
           "scripts/omega/nyx-desktop-model-live-eval.ts",
           "scripts/omega/nyx-frontier-reasoning-fixtures.ts",

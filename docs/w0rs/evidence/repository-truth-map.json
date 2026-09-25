@@ -2226,6 +2226,7 @@
       "files": [
         "scripts/omega/nyx-biological-connectome-ablation-live-eval.ts",
         "scripts/omega/nyx-connectome-ablation-live-eval.ts",
+        "scripts/omega/nyx-contrastive-circuit-ablation-live-eval.ts",
         "scripts/omega/nyx-quality-holdout-live-eval.ts",
         "scripts/omega/nyx-quality-v4-live-eval.ts",
         "scripts/omega/nyx-quality-v5-live-eval.ts"
