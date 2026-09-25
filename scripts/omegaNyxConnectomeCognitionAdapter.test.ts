@@ -116,6 +116,18 @@ check(contrastive.trace.population.traceDigest === profiled.trace.population.tra
   && contrastive.trace.contextDigest !== profiled.trace.contextDigest
   && contrastive.trace.additionalModelCalls === 0 && contrastive.trace.grantsAuthority === false,
 "contrastive context changes the interpretation, not the biological circuit, compute calls, or authority");
+const evidenceGated = buildNyxConnectomeResearchContext(request(), {
+  architectureProfile: NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE, contextMode: "EVIDENCE_GATED",
+});
+check(evidenceGated.trace.rankedHypotheses.length === 2
+  && !evidenceGated.trace.rankedHypotheses.some((item) => item.hypothesisId === "revise-falsified-strategy"),
+"evidence-gated circuit does not activate a revision hypothesis without a prior falsifier");
+check(evidenceGated.trace.circuitState === "SUPPORTED_CANDIDATE"
+  && evidenceGated.trace.selectedHypothesis === "repair-observed-cause",
+"ordinary observed failures yield a supported repair candidate instead of a phantom conflict");
+check(evidenceGated.context.report.weakPoints.length < contrastive.context.report.weakPoints.length
+  && evidenceGated.trace.additionalModelCalls === 0 && !evidenceGated.trace.grantsAuthority,
+"evidence-gated circuit transmits a smaller advisory context without extra calls or authority");
 check(throws(() => buildNyxConnectomeResearchContext(request(), {
   contextMode: "UNKNOWN" as "LEGACY",
 }), "nyx_connectome_context_mode_invalid"),
@@ -186,6 +198,16 @@ check(contrastiveRevision.context.report.weakPoints.some((item) => item.includes
   && contrastiveRevision.context.report.weakPoints.some((item) => item.includes("FILE:src/policy.mjs"))
   && contrastiveRevision.context.report.weakPoints.some((item) => item.includes("materially different prediction")),
 "contrastive circuit binds quality, available evidence, and prior falsification without asserting a repair");
+const evidenceGatedRevision = buildNyxConnectomeResearchContext(request({
+  cognitionRequestId: "NYX-CONNECTOME-GATED-REVISION",
+  candidateQualityFeedback: { assessmentId: "QUALITY-GATED", evidenceId: "QUALITY-GATED-EVIDENCE",
+    hypothesisId: "PRIOR-GATED", proposalDigest: "1".repeat(64), applicationId: "APPLICATION-GATED",
+    findings: [{ dimension: "ARCHITECTURAL_FIT", code: "PUBLIC_POLICY_FAILURE", paths: ["src/total.mjs"] }],
+    hiddenEvidenceUsed: false, authorityGranted: false },
+}), { contextMode: "EVIDENCE_GATED" });
+check(evidenceGatedRevision.trace.rankedHypotheses.length === 3
+  && evidenceGatedRevision.context.report.weakPoints.some((item) => item.includes("PUBLIC_POLICY_FAILURE")),
+"evidence-gated circuit restores revision competition only after an admitted quality falsifier");
 const revisedAdaptive = selectAdaptiveBiologicalArchitecture({ portfolio, request: request({
   cognitionRequestId: "NYX-CONNECTOME-ADAPTIVE-REVISED",
   observation: { ...request().observation, observationId: "OBS-ADAPTIVE-REVISED",

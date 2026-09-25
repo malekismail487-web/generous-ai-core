@@ -92,7 +92,7 @@ export interface NyxConnectomeCognitionConfiguration {
   readonly architectureProfile?: EpistemicArchitectureProfile;
   readonly architecturePortfolio?: BiologicalArchitecturePortfolio;
   /** Experimental, authority-neutral translation of circuit competition into falsifiable repair probes. */
-  readonly contextMode?: "LEGACY" | "CONTRASTIVE";
+  readonly contextMode?: "LEGACY" | "CONTRASTIVE" | "EVIDENCE_GATED";
 }
 
 const BASE_SCALE: EpistemicCircuitScale = Object.freeze({ evidenceCopies: 4, hypothesisCopies: 8,
@@ -279,6 +279,28 @@ function contrastiveWeakPoints(request: NyxRepairCognitionRequest,
   return Object.freeze(result.slice(0, 12).map((item) => bounded(item)));
 }
 
+/** Emit only evidence-supported guidance; an unresolved competition is not a reason to enlarge the model prompt. */
+function evidenceGatedWeakPoints(request: NyxRepairCognitionRequest,
+  decision: EpistemicCircuitDecision): readonly string[] {
+  const result: string[] = [];
+  if (decision.state === "SUPPORTED_CANDIDATE" && decision.selectedAction) {
+    result.push(`Uncalibrated circuit recommendation: ${decision.selectedAction} This is advisory, not authority.`);
+  } else {
+    result.push(`Circuit cannot distinguish a strategy (${decision.state}); retain uncertainty rather than treating activation as evidence.`);
+  }
+  const diagnostic = request.observation.diagnostics[0];
+  if (diagnostic) result.push(`Observed ${diagnostic.category}: ${bounded(diagnostic.message, 150)}.`);
+  const finding = request.candidateQualityFeedback?.findings[0];
+  if (finding) result.push(`Public quality falsifier ${finding.dimension}/${finding.code}: ${finding.paths.join(", ")}.`);
+  const prior = request.priorHypotheses.filter((item) => item.disposition === "FALSIFIED").at(-1);
+  if (prior) result.push(`Prior strategy ${prior.strategyDigest.slice(0, 16)} is falsified; make a different prediction.`);
+  if (request.availableEvidence.length > 0) {
+    result.push(`Unobserved discriminating evidence: ${request.availableEvidence.slice(0, 2)
+      .map((item) => item.evidenceRef).join(", ")}.`);
+  }
+  return Object.freeze(result.map((item) => bounded(item, 240)));
+}
+
 /**
  * Builds a deterministic, authority-neutral epistemic review from evidence already admitted by Omega.
  * It neither retrieves new evidence nor asks the model an additional question.
@@ -286,11 +308,13 @@ function contrastiveWeakPoints(request: NyxRepairCognitionRequest,
 export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionRequest,
   configuration: NyxConnectomeCognitionConfiguration = {}): NyxConnectomeContextResult {
   if (request.theoryResearchContext) throw new Error("nyx_connectome_context_conflicts_with_existing_research_context");
-  if (configuration.contextMode !== undefined && !["LEGACY", "CONTRASTIVE"].includes(configuration.contextMode)) {
+  if (configuration.contextMode !== undefined
+    && !["LEGACY", "CONTRASTIVE", "EVIDENCE_GATED"].includes(configuration.contextMode)) {
     throw new Error("nyx_connectome_context_mode_invalid");
   }
   const architectureConfiguration = architecture(configuration, request);
   const candidateBinding = request.observation.candidateCommit;
+  const evidenceGated = configuration.contextMode === "EVIDENCE_GATED";
   const circuit = new EpistemicMicrocircuit({
     circuitId: `nyx-connectome-${sha256(request.cognitionRequestId).slice(0, 24)}`,
     objective: request.objective,
@@ -316,11 +340,12 @@ export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionReq
         supportChannels: ["requirement", "evidence-gap"], contradictionChannels: ["execution-observation"],
         competitionGroup: "engineering-action",
         proposedAction: "Request only the admitted evidence that discriminates among the competing causes." },
-      { hypothesisId: "revise-falsified-strategy",
+      ...(evidenceGated && !request.priorHypotheses.some((item) => item.disposition === "FALSIFIED")
+        && !request.candidateQualityFeedback ? [] : [{ hypothesisId: "revise-falsified-strategy",
         statement: "Prior verification or quality evidence falsifies the current strategy and requires a materially different repair.",
         supportChannels: ["requirement", "repository-snapshot", "prior-strategy-failure", "quality-rejection"],
         contradictionChannels: [], competitionGroup: "engineering-action",
-        proposedAction: "Revise the causal strategy, directly address each falsifier, and preserve unrelated behavior." },
+        proposedAction: "Revise the causal strategy, directly address each falsifier, and preserve unrelated behavior." }]),
     ],
     scale: architectureConfiguration.scale,
     routingFanoutMultiplier: architectureConfiguration.routingFanoutMultiplier,
@@ -363,9 +388,10 @@ export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionReq
       confidence: { calibratedProbability: null, calibrationState: "NOT_CALIBRATED" as const,
         lastModelEstimate: null, distinctEvidenceRoots: decision.independentEvidenceRoots,
         independenceEstablished: false as const, numericalTarget: null },
-      weakPoints: configuration.contextMode === "CONTRASTIVE" ? contrastiveWeakPoints(request, decision)
-        : weakPoints(request, decision, architectureConfiguration.adaptiveSelection,
-          configuration.architecturePortfolio),
+      weakPoints: evidenceGated ? evidenceGatedWeakPoints(request, decision)
+        : configuration.contextMode === "CONTRASTIVE" ? contrastiveWeakPoints(request, decision)
+          : weakPoints(request, decision, architectureConfiguration.adaptiveSelection,
+            configuration.architecturePortfolio),
       requests: decision.state === "SUPPORTED_CANDIDATE" && request.availableEvidence.length === 0 ? [] : [{
         question: request.availableEvidence.length > 0
           ? `Would ${request.availableEvidence.map((item) => item.evidenceRef).join(", ")} discriminate the leading causes?`
