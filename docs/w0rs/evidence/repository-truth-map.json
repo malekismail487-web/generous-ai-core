@@ -2222,6 +2222,12 @@
       ]
     },
     {
+      "name": "NYX_FRESH_CIRCUIT_TOPIC",
+      "files": [
+        "scripts/omega/nyx-quality-v4-live-eval.ts"
+      ]
+    },
+    {
       "name": "NYX_QUALITY_SUITE",
       "files": [
         "scripts/omega/nyx-biological-connectome-ablation-live-eval.ts",

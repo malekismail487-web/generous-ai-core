@@ -1,0 +1,46 @@
+name: Omega NYX fresh circuit topic — ledger
+
+on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths:
+      - .github/workflows/omega-nyx-fresh-circuit-topic-one-shot.yml
+
+permissions:
+  contents: read
+
+jobs:
+  fresh-circuit-topic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      NYX_QUALITY_SUITE: FRESH_CIRCUIT_TOPIC
+      NYX_FRESH_CIRCUIT_TOPIC: LEDGER
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Confirm encrypted credential is available
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Verify frozen topics and paired oracle
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxFreshCircuitTopics.test.ts
+      - name: Run matched-budget ledger diagnostic
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v4-live-eval.ts
+      - name: Upload sanitized report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-nyx-fresh-circuit-ledger-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-quality-fresh_circuit_topic-*.json
+          if-no-files-found: warn
