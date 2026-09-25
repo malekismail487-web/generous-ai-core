@@ -397,7 +397,12 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
     counterexamples: ["Any retained unnecessary branching would repeat the candidate-admission failure."],
   })];
   let calls = 0;
-  const result = await loop(cognition(async () => providerResponse(responses[calls++])), builder(), 2).run(loopRequest());
+  let correctionFeedback: Record<string, unknown> | null = null;
+  const result = await loop(cognition(async (_input, init) => {
+    const prompt = JSON.parse(JSON.parse(String(init?.body)).messages[1].content) as Record<string, unknown>;
+    if (calls === 1) correctionFeedback = prompt.activeRepairDriver as Record<string, unknown>;
+    return providerResponse(responses[calls++]);
+  }), builder(), 2).run(loopRequest());
   check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.modelCallCount === 2 && result.iterations.length === 2,
     "functionally passing but statically rejected candidate receives one bounded quality-driven repair and converges");
   check(result.iterations[0].functionallyPassed && !result.iterations[0].passed
@@ -414,6 +419,12 @@ function loopRequest(overrides: Partial<Parameters<R3BoundedRepairLoop["run"]>[0
     && result.iterations[0].candidateAdmission?.qualityBaselineDigest
       === result.iterations[1].candidateAdmission?.qualityBaselineDigest,
   "quality admission compares both iterations to the same original repository baseline");
+  check(correctionFeedback?.kind === "QUALITY_REJECTION"
+    && (correctionFeedback.findings as Array<{ code: string; paths: string[];
+      measurement?: { observed: number; limit: number } }>).some((finding) =>
+      finding.code === "COMPLEXITY_DELTA" && finding.paths.includes("src/math.txt")
+      && finding.measurement?.observed === 13 && finding.measurement.limit === 8),
+  "the second model call receives a public measured excess and affected path, not an opaque rejection code");
   check(result.candidateAdmissionAcceptance === "ACCEPTED" && result.engineeringQualityAcceptance === "NOT_EVALUATED"
     && !result.authorityGranted && !result.sourceRepositoryWriteAuthority && !result.productionAuthority,
   "final admitted candidate is accepted without conflating public admission with independent quality or broader authority");

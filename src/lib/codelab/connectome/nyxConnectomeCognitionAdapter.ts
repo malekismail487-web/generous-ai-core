@@ -223,7 +223,8 @@ function weakPoints(request: NyxRepairCognitionRequest, decision: EpistemicCircu
     result.push(`Prior strategy ${hypothesis.strategyDigest.slice(0, 16)} is ${hypothesis.disposition}; do not repeat it without new evidence.`);
   }
   for (const finding of request.candidateQualityFeedback?.findings.slice(0, 6) ?? []) {
-    result.push(`Deterministic quality rejection ${finding.dimension}/${finding.code} affects ${finding.paths.join(", ")}.`);
+    result.push(`Deterministic quality rejection ${finding.dimension}/${finding.code} affects ${finding.paths.join(", ")}`
+      + (finding.measurement ? `; observed ${finding.measurement.observed}, limit ${finding.measurement.limit}.` : "."));
   }
   for (const diagnostic of request.observation.diagnostics.slice(0, 4)) {
     result.push(`Observed ${diagnostic.category} failure${diagnostic.code ? ` ${diagnostic.code}` : ""}: ${bounded(diagnostic.message, 280)}`);

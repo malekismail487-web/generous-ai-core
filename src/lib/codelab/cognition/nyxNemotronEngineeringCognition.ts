@@ -57,6 +57,7 @@ export interface NyxCandidateQualityFinding {
   readonly dimension: string;
   readonly code: string;
   readonly paths: readonly string[];
+  readonly measurement?: Readonly<{ observed: number; limit: number }>;
 }
 
 export interface NyxCandidateQualityFeedback {
@@ -769,7 +770,14 @@ export class NyxNemotronEngineeringCognition {
         || !Array.isArray(feedback.findings) || feedback.findings.length < 1 || feedback.findings.length > 50
         || feedback.findings.some((finding) => !finding || typeof finding.dimension !== "string" || !finding.dimension.trim()
           || typeof finding.code !== "string" || !finding.code.trim() || !Array.isArray(finding.paths)
-          || finding.paths.some((path) => !validRelativePath(path)))) issues.push("nyx_cognition_quality_feedback_invalid");
+          || finding.paths.some((path) => !validRelativePath(path))
+          || (finding.measurement !== undefined && (!finding.measurement
+            || !Number.isSafeInteger(finding.measurement.observed)
+            || !Number.isSafeInteger(finding.measurement.limit)
+            || finding.measurement.limit < 0
+            || finding.measurement.observed <= finding.measurement.limit)))) {
+          issues.push("nyx_cognition_quality_feedback_invalid");
+        }
     } else if (request.observation && passingObservation(request.observation)) {
       issues.push("nyx_cognition_quality_feedback_required");
     }

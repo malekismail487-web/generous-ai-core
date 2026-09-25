@@ -80,6 +80,8 @@ export interface CandidateEngineeringAdmissionFinding {
   /** Stable public category. It never contains a hidden assertion or expected answer. */
   readonly code: string;
   readonly paths: readonly string[];
+  /** Public static measurement, when the detector exposes an exact numeric limit. */
+  readonly measurement?: Readonly<{ observed: number; limit: number }>;
 }
 
 export interface CandidateEngineeringAdmissionResult {
@@ -165,10 +167,20 @@ function frozenFinding(dimension: CandidateEngineeringAdmissionDimension, code: 
 }
 
 function publicFinding(dimension: typeof STATIC_DIMENSIONS[number], raw: string,
-  changedPaths: readonly string[]): CandidateEngineeringAdmissionFinding {
+  changedPaths: readonly string[], policy: EngineeringQualityPolicy): CandidateEngineeringAdmissionFinding {
   const prefix = raw.split(":", 1)[0].replace(/[^a-zA-Z0-9]+/g, "_").toUpperCase() || "STATIC_POLICY_FAILURE";
-  const paths = changedPaths.filter((path) => raw === path || raw.includes(`:${path}`));
-  return frozenFinding(dimension, prefix, paths);
+  const matchedPaths = changedPaths.filter((path) => raw === path || raw.includes(`:${path}`));
+  const paths = matchedPaths.length > 0 ? matchedPaths
+    : ["DECLARATION_DELTA", "COMPLEXITY_DELTA", "INVARIANT_FAILED"].includes(prefix) ? changedPaths : [];
+  const numeric = /^(declaration_delta|complexity_delta):(\d+)$/.exec(raw);
+  if (!numeric) return frozenFinding(dimension, prefix, paths);
+  const observed = Number(numeric[2]);
+  const limit = numeric[1] === "declaration_delta" ? policy.maxAddedDeclarations : policy.maxComplexityDelta;
+  if (!Number.isSafeInteger(observed) || !Number.isSafeInteger(limit) || observed <= limit) {
+    return frozenFinding(dimension, prefix, paths);
+  }
+  return Object.freeze({ ...frozenFinding(dimension, prefix, paths),
+    measurement: Object.freeze({ observed, limit }) });
 }
 
 function recomputeDigest<T extends { readonly proposalDigest: string }>(value: T): string {
@@ -387,7 +399,7 @@ function admitStaticEngineeringCandidateInternal(input: unknown): CandidateEngin
   for (const dimension of STATIC_DIMENSIONS) {
     const detector = assessment.dimensions[dimension];
     dimensionDispositions[dimension] = detector.disposition;
-    for (const finding of detector.findings) findings.push(publicFinding(dimension, finding, reviewedPaths));
+    for (const finding of detector.findings) findings.push(publicFinding(dimension, finding, reviewedPaths, policy));
   }
   const staticInsufficient = STATIC_DIMENSIONS.some((dimension) => dimensionDispositions[dimension] === "INSUFFICIENT_EVIDENCE");
   const rejected = STATIC_DIMENSIONS.some((dimension) => dimensionDispositions[dimension] === "FAIL");

@@ -139,7 +139,8 @@ const publicObligation = Object.freeze({ objectiveQuote: "comparePriority helper
 const missingRequiredCall = admitStaticEngineeringCandidate({ ...fixture(), objective,
   publicQualityObligations: [publicObligation] });
 check(missingRequiredCall.decision === "REJECTED" && missingRequiredCall.findings.some((item) =>
-  item.dimension === "ARCHITECTURAL_FIT" && item.code === "INVARIANT_FAILED"),
+  item.dimension === "ARCHITECTURAL_FIT" && item.code === "INVARIANT_FAILED"
+    && item.paths.includes(PATH)),
 "a public objective-bound architecture obligation rejects a missing helper call");
 check(missingRequiredCall.appliedPolicyDigest !== clean.appliedPolicyDigest
   && missingRequiredCall.staticPolicyId === "omega-public-static-candidate/2",
@@ -161,8 +162,10 @@ check(unauthorizedObligation.decision === "INSUFFICIENT_EVIDENCE",
 const declarationHeavy = admitStaticEngineeringCandidate(fixture(undefined,
   "export function add(a, b) { const x=0; const y=0; const z=0; const q=0; const r=0; return a+b+x+y+z+q+r; }\n"));
 check(declarationHeavy.decision === "REJECTED" && declarationHeavy.findings.some((item) =>
-  item.dimension === "UNNECESSARY_COMPLEXITY" && item.code === "DECLARATION_DELTA"),
-"the public complexity bound catches declaration-heavy small repairs");
+  item.dimension === "UNNECESSARY_COMPLEXITY" && item.code === "DECLARATION_DELTA"
+    && item.measurement?.observed === 5 && item.measurement.limit === 4
+    && item.paths.includes(PATH)),
+"the public complexity bound reports the measured excess and affected scope without hidden evidence");
 const originalTinySource = "export function add(a, b) { return a - b; }\n";
 const firstHeavyCandidate = `export function add(a, b) {
   const first = 0;
@@ -180,7 +183,8 @@ const cumulativeReview = admitStaticEngineeringCandidate({ ...fixture(firstHeavy
   qualityBaselineFiles: { [PATH]: originalTinySource } });
 check(incrementalOnly.decision === "ADMITTED", "the incremental-only review reproduces the hidden cumulative-quality gap");
 check(cumulativeReview.decision === "REJECTED" && cumulativeReview.findings.some((item) =>
-  item.dimension === "UNNECESSARY_COMPLEXITY" && item.code === "DECLARATION_DELTA"),
+  item.dimension === "UNNECESSARY_COMPLEXITY" && item.code === "DECLARATION_DELTA"
+    && item.measurement?.observed === 6 && item.measurement.limit === 4),
 "the cumulative review rejects a second repair that remains excessive relative to the original baseline");
 check(cumulativeReview.qualityBaselineDigest === hash(canonical({ [PATH]: originalTinySource }))
   && cumulativeReview.reviewedPaths.length === 1 && cumulativeReview.reviewedPaths[0] === PATH,

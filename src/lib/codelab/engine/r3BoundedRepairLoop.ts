@@ -475,6 +475,7 @@ export class R3BoundedRepairLoop {
           proposalDigest: candidate.proposal.proposalDigest, applicationId: candidate.application.applicationId,
           findings: Object.freeze(candidateAdmission.findings.map((finding) => Object.freeze({
             dimension: finding.dimension, code: finding.code, paths: Object.freeze([...finding.paths]),
+            ...(finding.measurement ? { measurement: finding.measurement } : {}),
           }))), hiddenEvidenceUsed: false, authorityGranted: false });
         currentObservation = verifications[0].observation;
         currentFiles = candidateContexts;
