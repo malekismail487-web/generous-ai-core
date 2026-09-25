@@ -91,6 +91,8 @@ export interface NyxConnectomeCognitionAdapter {
 export interface NyxConnectomeCognitionConfiguration {
   readonly architectureProfile?: EpistemicArchitectureProfile;
   readonly architecturePortfolio?: BiologicalArchitecturePortfolio;
+  /** Experimental, authority-neutral translation of circuit competition into falsifiable repair probes. */
+  readonly contextMode?: "LEGACY" | "CONTRASTIVE";
 }
 
 const BASE_SCALE: EpistemicCircuitScale = Object.freeze({ evidenceCopies: 4, hypothesisCopies: 8,
@@ -233,12 +235,60 @@ function weakPoints(request: NyxRepairCognitionRequest, decision: EpistemicCircu
 }
 
 /**
+ * Convert the existing circuit's competing action hypotheses into a small set
+ * of tests the next observation could disconfirm. This does not infer a code
+ * defect from neural activation, invent evidence, or authorize an action.
+ */
+function contrastiveWeakPoints(request: NyxRepairCognitionRequest,
+  decision: EpistemicCircuitDecision): readonly string[] {
+  const result: string[] = [
+    `Circuit state ${decision.state} is advisory; the following are competing conjectures, not findings or permission.`,
+  ];
+  const diagnostic = request.observation.diagnostics[0];
+  if (diagnostic) {
+    const location = diagnostic.file ? ` in ${diagnostic.file}` : "";
+    result.push(`Observed ${diagnostic.category}${location}: ${bounded(diagnostic.message, 220)}.`);
+    result.push(`Source-cause conjecture: a scoped repair should change the ${request.observation.toolId} failure `
+      + `while preserving the objective and unrelated cases; an unchanged failure falsifies this specific repair.`);
+    result.push(`Competing conjecture: the visible symptom is downstream of a different contract or dependency; `
+      + `test a counterexample that distinguishes it before repeating the same strategy.`);
+  } else {
+    result.push(`No diagnostic identifies a source cause; do not turn circuit activation into a claimed defect.`);
+  }
+  if (request.availableEvidence.length > 0) {
+    result.push(`Discriminating evidence ${request.availableEvidence.slice(0, 3).map((item) => item.evidenceRef).join(", ")} `
+      + `is available but not observed; request it if it can separate the competing causes.`);
+  }
+  const quality = request.candidateQualityFeedback;
+  for (const finding of quality?.findings.slice(0, 3) ?? []) {
+    result.push(`Quality counterexample ${finding.dimension}/${finding.code} in ${finding.paths.join(", ")}`
+      + (finding.measurement ? ` measured ${finding.measurement.observed} against limit ${finding.measurement.limit}` : "")
+      + `; a revised candidate must address this public finding without sacrificing functional behavior.`);
+  }
+  const falsified = request.priorHypotheses.filter((item) => item.disposition === "FALSIFIED").slice(-2);
+  for (const prior of falsified) {
+    result.push(`Strategy ${prior.strategyDigest.slice(0, 16)} was falsified by `
+      + `${prior.verificationEvidenceRefs.slice(0, 3).join(", ") || "the prior verifier"}; `
+      + `a new proposal must make a materially different prediction.`);
+  }
+  if (decision.selectedHypothesis) {
+    result.push(`Circuit-ranked mode ${decision.selectedHypothesis}; challenge it against the competing conjectures above.`);
+  } else {
+    result.push(`Circuit did not select an action; retain uncertainty and use available evidence before guessing.`);
+  }
+  return Object.freeze(result.slice(0, 12).map((item) => bounded(item)));
+}
+
+/**
  * Builds a deterministic, authority-neutral epistemic review from evidence already admitted by Omega.
  * It neither retrieves new evidence nor asks the model an additional question.
  */
 export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionRequest,
   configuration: NyxConnectomeCognitionConfiguration = {}): NyxConnectomeContextResult {
   if (request.theoryResearchContext) throw new Error("nyx_connectome_context_conflicts_with_existing_research_context");
+  if (configuration.contextMode !== undefined && !["LEGACY", "CONTRASTIVE"].includes(configuration.contextMode)) {
+    throw new Error("nyx_connectome_context_mode_invalid");
+  }
   const architectureConfiguration = architecture(configuration, request);
   const candidateBinding = request.observation.candidateCommit;
   const circuit = new EpistemicMicrocircuit({
@@ -313,8 +363,9 @@ export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionReq
       confidence: { calibratedProbability: null, calibrationState: "NOT_CALIBRATED" as const,
         lastModelEstimate: null, distinctEvidenceRoots: decision.independentEvidenceRoots,
         independenceEstablished: false as const, numericalTarget: null },
-      weakPoints: weakPoints(request, decision, architectureConfiguration.adaptiveSelection,
-        configuration.architecturePortfolio),
+      weakPoints: configuration.contextMode === "CONTRASTIVE" ? contrastiveWeakPoints(request, decision)
+        : weakPoints(request, decision, architectureConfiguration.adaptiveSelection,
+          configuration.architecturePortfolio),
       requests: decision.state === "SUPPORTED_CANDIDATE" && request.availableEvidence.length === 0 ? [] : [{
         question: request.availableEvidence.length > 0
           ? `Would ${request.availableEvidence.map((item) => item.evidenceRef).join(", ")} discriminate the leading causes?`

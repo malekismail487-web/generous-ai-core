@@ -105,6 +105,22 @@ check(throws(() => buildNyxConnectomeResearchContext(request(), {
 check(profiled.trace.additionalModelCalls === 0 && profiled.trace.grantsAuthority === false,
   "biological topology adds neither model calls nor authority");
 
+const contrastive = buildNyxConnectomeResearchContext(request(), {
+  architectureProfile: NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE, contextMode: "CONTRASTIVE",
+});
+check(validTheoryResearchContext(contrastive.context, request().objective, candidate)
+  && contrastive.context.report.weakPoints.some((item) => item.includes("unchanged failure falsifies"))
+  && contrastive.context.report.weakPoints.some((item) => item.includes("Competing conjecture")),
+"contrastive circuit emits evidence-bound competing and falsifiable repair probes");
+check(contrastive.trace.population.traceDigest === profiled.trace.population.traceDigest
+  && contrastive.trace.contextDigest !== profiled.trace.contextDigest
+  && contrastive.trace.additionalModelCalls === 0 && contrastive.trace.grantsAuthority === false,
+"contrastive context changes the interpretation, not the biological circuit, compute calls, or authority");
+check(throws(() => buildNyxConnectomeResearchContext(request(), {
+  contextMode: "UNKNOWN" as "LEGACY",
+}), "nyx_connectome_context_mode_invalid"),
+"unknown contrastive mode fails closed");
+
 const portfolio = NYX_VERIFIED_BIOLOGICAL_ARCHITECTURE_PORTFOLIO;
 const adaptive = selectAdaptiveBiologicalArchitecture({ portfolio, request: request() });
 const adaptiveReplay = selectAdaptiveBiologicalArchitecture({ portfolio, request: request() });
@@ -154,6 +170,22 @@ check(revised.context.report.requests.length === 1
 "available discriminating evidence is represented as a focused request, not assumed truth");
 check(revised.trace.contextDigest !== initial.trace.contextDigest,
   "materially different evidence produces a different bound context identity");
+const contrastiveRevision = buildNyxConnectomeResearchContext(request({
+  cognitionRequestId: "NYX-CONNECTOME-CONTRASTIVE-REVISION",
+  availableEvidence: [{ evidenceRef: "FILE:src/policy.mjs", kind: "FILE", relativePath: "src/policy.mjs",
+    description: "Repository-owned calculation policy." }],
+  priorHypotheses: [{ hypothesisId: "PRIOR-CONTRASTIVE", parentHypothesisId: null,
+    causalHypothesis: "Only the first element should count.", expectedResult: "Visible test passes.",
+    strategyDigest: "f".repeat(64), disposition: "FALSIFIED", verificationEvidenceRefs: ["EXECUTION-EVIDENCE-2"] }],
+  candidateQualityFeedback: { assessmentId: "QUALITY-CONTRASTIVE", evidenceId: "QUALITY-EVIDENCE-2",
+    hypothesisId: "PRIOR-CONTRASTIVE", proposalDigest: "1".repeat(64), applicationId: "APPLICATION-3",
+    findings: [{ dimension: "UNNECESSARY_COMPLEXITY", code: "DECLARATION_DELTA", paths: ["src/total.mjs"],
+      measurement: { observed: 7, limit: 4 } }], hiddenEvidenceUsed: false, authorityGranted: false },
+}), { contextMode: "CONTRASTIVE" });
+check(contrastiveRevision.context.report.weakPoints.some((item) => item.includes("measured 7 against limit 4"))
+  && contrastiveRevision.context.report.weakPoints.some((item) => item.includes("FILE:src/policy.mjs"))
+  && contrastiveRevision.context.report.weakPoints.some((item) => item.includes("materially different prediction")),
+"contrastive circuit binds quality, available evidence, and prior falsification without asserting a repair");
 const revisedAdaptive = selectAdaptiveBiologicalArchitecture({ portfolio, request: request({
   cognitionRequestId: "NYX-CONNECTOME-ADAPTIVE-REVISED",
   observation: { ...request().observation, observationId: "OBS-ADAPTIVE-REVISED",
