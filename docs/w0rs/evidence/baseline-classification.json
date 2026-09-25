@@ -4430,6 +4430,7 @@
           "scripts/omega/nyx-quality-v5-fixtures.ts",
           "scripts/omega/nyx-r3f-fixtures.ts",
           "scripts/omega/nyx-r3f-live-eval.ts",
+          "scripts/omega/nyx-repair-feedback-diagnostic.ts",
           "scripts/omega/nyx-research-party-fixtures.ts",
           "scripts/omega/nyx-research-party-live-eval.ts",
           "scripts/omega/nyx-scheduler-challenge.ts",
