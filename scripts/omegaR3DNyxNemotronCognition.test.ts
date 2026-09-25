@@ -177,7 +177,7 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
   const locatedSyntax = await validateNyxSourceSyntax("src/value.mjs", "export const x = ;\n");
   check(!locatedSyntax.valid && locatedSyntax.line === 1 && locatedSyntax.column !== null,
     "TypeScript parse failures report a source location for bounded model correction");
-  const rejectedSource = 'const marker = "private-not-for-logs";\nexport function add(a: number, b: number) { return a + ; }\n';
+  const rejectedSource = 'const marker = "private-not-for-logs"; /* private-comment */\nexport function add(a: number, b: number) { return a + ; }\n';
   const correctionPrompts: Record<string, unknown>[] = [];
   const correctionTransport: NvidiaNimTransport = async (input, init) => {
     correctionPrompts.push(JSON.parse((JSON.parse(String(init?.body)) as { messages: Array<{ content: string }> })
@@ -207,6 +207,7 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
   "opt-in feedback binds a small rejected-source window to the exact previous response and repair request");
   check(!JSON.stringify(firstCorrection).includes("private-not-for-logs")
     && !JSON.stringify(correctionPrompts[1]).includes("private-not-for-logs")
+    && !JSON.stringify(correctionPrompts[1]).includes("private-comment")
     && !Object.hasOwn(correctionPrompts[0], "rejectedSourceFeedback"),
   "rejected source remains out of persisted cognition evidence and string literals are redacted before feedback");
   const controlPrompts: Record<string, unknown>[] = [];

@@ -547,8 +547,8 @@ function redactedRejectedLine(line: string): string {
   let redacted = "";
   for (let index = 0; index < line.length;) {
     const character = line[index];
-    if (character === "/" && line[index + 1] === "/") {
-      redacted += "// [comment-redacted]";
+    if (character === "/" && (line[index + 1] === "/" || line[index + 1] === "*")) {
+      redacted += "[comment-redacted]";
       break;
     }
     if (character === '"' || character === "'" || character === "`") {
