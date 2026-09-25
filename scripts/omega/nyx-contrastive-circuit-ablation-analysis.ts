@@ -1,6 +1,7 @@
 import { NYX_CONTRASTIVE_CIRCUIT_ABLATION } from "./nyx-contrastive-circuit-ablation";
 
-export type NyxContrastiveCircuitArm = typeof NYX_CONTRASTIVE_CIRCUIT_ABLATION.arms[number];
+export type NyxContrastiveCircuitArm = typeof NYX_CONTRASTIVE_CIRCUIT_ABLATION.arms[number]
+  | "NYX_EVIDENCE_GATED_CIRCUIT";
 
 export interface NyxContrastiveCircuitRecord {
   readonly baseTaskId: string;
@@ -23,8 +24,10 @@ export interface NyxContrastiveCircuitRecord {
 export function assessNyxContrastiveCircuitAblation(input: {
   readonly records: readonly NyxContrastiveCircuitRecord[];
   readonly expectedBaseTaskIds: readonly string[];
+  readonly treatmentArm?: "NYX_CONTRASTIVE_CIRCUIT" | "NYX_EVIDENCE_GATED_CIRCUIT";
 }) {
-  const arms = NYX_CONTRASTIVE_CIRCUIT_ABLATION.arms;
+  const treatmentArm = input.treatmentArm ?? "NYX_CONTRASTIVE_CIRCUIT";
+  const arms = ["NEMOTRON_ALONE", "NYX_REASONING_STACK", treatmentArm] as const;
   const tasks = input.expectedBaseTaskIds;
   const taskParity = input.records.length === arms.length * tasks.length
     && tasks.every((taskId) => {
@@ -48,20 +51,20 @@ export function assessNyxContrastiveCircuitAblation(input: {
   const safetyPreserved = input.records.every((record) => record.omegaAuthorityEnforcement
     && record.sourceRepositoryUnchanged && record.contractPreserved
     && record.connectomeTraces.every((trace) => !trace.grantsAuthority && trace.additionalModelCalls === 0));
-  const profileBound = input.records.every((record) => record.comparisonArm === "NYX_CONTRASTIVE_CIRCUIT"
+  const profileBound = input.records.every((record) => record.comparisonArm === treatmentArm
     ? record.connectomeTraces.length > 0 && record.connectomeTraces.every((trace) =>
       trace.architecture?.profileDigest === NYX_CONTRASTIVE_CIRCUIT_ABLATION.profileDigest)
     : record.connectomeTraces.length === 0);
   const providerClean = Object.values(summaries).every((summary) => summary.providerFailures === 0);
   const capacityComplete = input.records.every((record) => record.finalClassification !== "WAITING_FOR_CAPACITY");
   const tokenUsageComplete = input.records.every((record) => record.tokenUsageComplete);
-  const treatment = summaries.NYX_CONTRASTIVE_CIRCUIT;
+  const treatment = summaries[treatmentArm];
   const controls = [summaries.NEMOTRON_ALONE, summaries.NYX_REASONING_STACK];
   const computeMatched = controls.every((control) => treatment.modelCalls <= control.modelCalls
     && treatment.totalTokens !== null && control.totalTokens !== null && treatment.totalTokens <= control.totalTokens);
-  const paired = Object.fromEntries(arms.filter((arm) => arm !== "NYX_CONTRASTIVE_CIRCUIT").map((arm) => {
+  const paired = Object.fromEntries(arms.filter((arm) => arm !== treatmentArm).map((arm) => {
     const comparison = tasks.map((taskId) => {
-      const a = input.records.find((record) => record.baseTaskId === taskId && record.comparisonArm === "NYX_CONTRASTIVE_CIRCUIT");
+      const a = input.records.find((record) => record.baseTaskId === taskId && record.comparisonArm === treatmentArm);
       const b = input.records.find((record) => record.baseTaskId === taskId && record.comparisonArm === arm);
       return !a || !b ? "MISSING" : a.finalClassification === b.finalClassification ? "TIE"
         : a.finalClassification === "PASS" ? "WIN" : "LOSS";
@@ -76,7 +79,7 @@ export function assessNyxContrastiveCircuitAblation(input: {
       ? "INSUFFICIENT_EVIDENCE"
       : treatment.accepted > Math.max(...controls.map((item) => item.accepted)) && computeMatched
         ? "PILOT_MEASURABLE_CONTRIBUTION" : "NO_PILOT_MEASURABLE_CONTRIBUTION";
-  return Object.freeze({ decision, taskParity, profileBound, providerClean, safetyPreserved,
+  return Object.freeze({ decision, treatmentArm, taskParity, profileBound, providerClean, safetyPreserved,
     capacityComplete, tokenUsageComplete, computeMatched, summaries, paired, freshTaskGeneralizationCertified: false,
     limitations: ["V4 tasks predate this circuit but have been used in prior evaluations.",
       "One run per task and arm is insufficient for a stable generalization claim.",

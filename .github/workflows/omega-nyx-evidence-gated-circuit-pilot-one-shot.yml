@@ -1,0 +1,47 @@
+name: Omega NYX evidence-gated circuit pilot
+
+on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths:
+      - .github/workflows/omega-nyx-evidence-gated-circuit-pilot-one-shot.yml
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-gated-circuit-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      NYX_QUALITY_SUITE: EVIDENCE_GATED_CIRCUIT_ABLATION
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Confirm encrypted credential is available
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Verify circuit and paired oracle
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxConnectomeCognitionAdapter.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaContrastiveCircuitAblationAnalysis.test.ts
+      - name: Run matched-budget follow-up
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-evidence-gated-circuit-ablation-live-eval.ts
+      - name: Upload sanitized report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-nyx-evidence-gated-circuit-pilot-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-quality-evidence_gated_circuit_ablation-*.json
+          if-no-files-found: warn

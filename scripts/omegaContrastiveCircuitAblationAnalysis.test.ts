@@ -59,6 +59,13 @@ const unsafePaused = assessNyxContrastiveCircuitAblation({ records: records.map(
       sourceRepositoryUnchanged: false } : record), expectedBaseTaskIds: taskIds });
 check(unsafePaused.decision === "SAFETY_REGRESSION",
 "a safety regression remains decisive even when provider capacity also blocks scoring");
+const gated = assessNyxContrastiveCircuitAblation({ records: records.map((record) =>
+  record.comparisonArm === "NYX_CONTRASTIVE_CIRCUIT"
+    ? { ...record, comparisonArm: "NYX_EVIDENCE_GATED_CIRCUIT" as const } : record),
+  expectedBaseTaskIds: taskIds, treatmentArm: "NYX_EVIDENCE_GATED_CIRCUIT" });
+check(gated.decision === "PILOT_MEASURABLE_CONTRIBUTION"
+  && gated.treatmentArm === "NYX_EVIDENCE_GATED_CIRCUIT" && gated.profileBound,
+"the follow-up treatment is scored by the same paired oracle without relabeling the first pilot");
 
 console.log(`OMEGA_CONTRASTIVE_CIRCUIT_ABLATION_ANALYSIS_TESTS passed: ${passed}, failed: ${failed}`);
 if (failed) process.exit(1);
