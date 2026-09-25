@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { TrendingUp as LensTrend, ClipboardList as LensTask, Megaphone as LensMega } from 'lucide-react';
 import { LiquidLens } from '@/components/motion/LiquidLens';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Heart, BookOpen, ClipboardCheck, Trophy, Bell, LogOut, Flame, TrendingUp } from 'lucide-react';
 import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
 import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
+import { LearningSupportPanel } from '@/components/learning/LearningSupportPanel';
+import type { Tables } from '@/integrations/supabase/types';
 
 type ChildInfo = {
   student_id: string;
@@ -30,64 +32,83 @@ export default function ParentDashboard() {
 
   const [loading, setLoading] = useState(true);
   const [child, setChild] = useState<ChildInfo | null>(null);
-  const [assignments, setAssignments] = useState<any[]>([]);
-  const [submissions, setSubmissions] = useState<any[]>([]);
-  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [children, setChildren] = useState<ChildInfo[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const loadEpoch = useRef(0);
+  const [assignments, setAssignments] = useState<Tables<'assignments'>[]>([]);
+  const [submissions, setSubmissions] = useState<Tables<'submissions'>[]>([]);
+  const [announcements, setAnnouncements] = useState<Tables<'announcements'>[]>([]);
   const [streak, setStreak] = useState<{ current_streak: number; max_streak: number } | null>(null);
-  const [learningProfile, setLearningProfile] = useState<any[]>([]);
+  const [learningProfile, setLearningProfile] = useState<Tables<'student_learning_profiles'>[]>([]);
 
-  useEffect(() => {
-    if (!user) { navigate('/auth'); return; }
-    loadParentData();
-  }, [user]);
-
-  const loadParentData = async () => {
+  const loadParentData = useCallback(async () => {
     if (!user) return;
+    const epoch = ++loadEpoch.current;
     setLoading(true);
+    setLoadError('');
 
     // Get linked child
-    const { data: links } = await supabase
+    const { data: links, error: linksError } = await supabase
       .from('parent_students')
       .select('student_id, school_id')
       .eq('parent_id', user.id);
 
+    if (epoch !== loadEpoch.current) return;
+    if (linksError) { setLoadError(linksError.message); setLoading(false); return; }
     if (!links || links.length === 0) {
+      setChildren([]);
+      setChild(null);
       setLoading(false);
       return;
     }
 
-    const link = links[0];
-    
-    // Get student profile
-    const { data: studentProfile } = await supabase
-      .from('profiles')
-      .select('full_name, grade_level')
-      .eq('id', link.student_id)
-      .maybeSingle();
-
-    setChild({
-      student_id: link.student_id,
-      school_id: link.school_id,
-      student_name: studentProfile?.full_name || 'Student',
-      grade_level: studentProfile?.grade_level || null,
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles').select('id, full_name, grade_level').in('id', links.map(link => link.student_id));
+    if (epoch !== loadEpoch.current) return;
+    if (profilesError) { setLoadError(profilesError.message); setLoading(false); return; }
+    const linkedChildren = links.map(link => {
+      const profile = profiles?.find(item => item.id === link.student_id);
+      return {
+        student_id: link.student_id, school_id: link.school_id,
+        student_name: profile?.full_name || 'Student', grade_level: profile?.grade_level || null,
+      };
     });
+    setChildren(linkedChildren);
+    const selected = linkedChildren.find(item => item.student_id === selectedChildId) || linkedChildren[0];
+    if (selected.student_id !== selectedChildId) setSelectedChildId(selected.student_id);
+    const link = selected;
+
+    setChild(link);
 
     // Load all data in parallel
     const [assignmentsRes, submissionsRes, announcementsRes, streakRes, learningRes] = await Promise.all([
-      supabase.from('assignments').select('*').eq('school_id', link.school_id).order('created_at', { ascending: false }).limit(20),
+      supabase.from('assignments').select('*').eq('school_id', link.school_id)
+        .eq('grade_level', link.grade_level ?? '').order('created_at', { ascending: false }).limit(20),
       supabase.from('submissions').select('*, assignments(title, subject)').eq('student_id', link.student_id).order('submitted_at', { ascending: false }).limit(20),
       supabase.from('announcements').select('*').eq('school_id', link.school_id).order('created_at', { ascending: false }).limit(10),
       supabase.from('daily_streaks').select('current_streak, max_streak').eq('user_id', link.student_id).maybeSingle(),
       supabase.from('student_learning_profiles').select('*').eq('user_id', link.student_id),
     ]);
 
+    if (epoch !== loadEpoch.current) return;
+
     setAssignments(assignmentsRes.data || []);
     setSubmissions(submissionsRes.data || []);
     setAnnouncements(announcementsRes.data || []);
     setStreak(streakRes.data || null);
     setLearningProfile(learningRes.data || []);
+    const firstError = [assignmentsRes.error, submissionsRes.error, announcementsRes.error, streakRes.error, learningRes.error].find(Boolean);
+    if (firstError) setLoadError(firstError.message);
     setLoading(false);
-  };
+  }, [user, selectedChildId]);
+
+  useEffect(() => {
+    if (!user) { navigate('/auth'); return; }
+    const epochRef = loadEpoch;
+    void loadParentData();
+    return () => { epochRef.current++; };
+  }, [user, navigate, loadParentData]);
 
   if (loading) {
     return (
@@ -112,9 +133,9 @@ export default function ParentDashboard() {
     );
   }
 
-  const completedAssignments = submissions.filter(s => s.grade);
+  const completedAssignments = submissions.filter(s => s.grade !== null);
   const avgGrade = completedAssignments.length > 0
-    ? Math.round(completedAssignments.reduce((sum, s) => sum + (parseInt(s.grade) || 0), 0) / completedAssignments.length)
+    ? Math.round(completedAssignments.reduce((sum, s) => sum + (s.grade ?? 0), 0) / completedAssignments.length)
     : null;
 
   return (
@@ -151,6 +172,12 @@ export default function ParentDashboard() {
       </div>
 
       <div className="max-w-4xl mx-auto p-4 space-y-6">
+        {loadError && <p role="alert" className="text-sm text-destructive">{loadError}</p>}
+        {children.length > 1 && <label className="block text-sm font-medium">{isAr ? 'اختر الطالب' : 'Choose learner'}
+          <select className="mt-1 block w-full rounded-md border bg-background p-2" value={selectedChildId} onChange={event => setSelectedChildId(event.target.value)}>
+            {children.map(item => <option key={item.student_id} value={item.student_id}>{item.student_name} {item.grade_level && `· ${item.grade_level}`}</option>)}
+          </select>
+        </label>}
         <TenantExtensionsSection />
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -186,7 +213,7 @@ export default function ParentDashboard() {
 
         {/* Main Tabs */}
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="performance" className="gap-1 text-xs">
               <TrendingUp className="w-3.5 h-3.5" />
               {isAr ? 'الأداء' : 'Performance'}
@@ -199,7 +226,12 @@ export default function ParentDashboard() {
               <Bell className="w-3.5 h-3.5" />
               {isAr ? 'الإعلانات' : 'News'}
             </TabsTrigger>
+            <TabsTrigger value="support" className="gap-1 text-xs"><BookOpen className="w-3.5 h-3.5" />{isAr ? 'الدعم' : 'Support'}</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="support" className="mt-4">
+            <LearningSupportPanel role="family" schoolId={child.school_id} studentId={child.student_id} />
+          </TabsContent>
 
           {/* Performance Tab */}
           <TabsContent value="performance" className="space-y-4 mt-4">
@@ -212,7 +244,7 @@ export default function ParentDashboard() {
                   <p className="text-sm text-muted-foreground text-center py-4">{isAr ? 'لا توجد بيانات بعد' : 'No learning data yet'}</p>
                 ) : (
                   <div className="space-y-3">
-                    {learningProfile.map((lp: any) => (
+                    {learningProfile.map((lp) => (
                       <div key={lp.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div>
                           <p className="font-medium text-sm">{lp.subject}</p>
@@ -242,8 +274,8 @@ export default function ParentDashboard() {
                   <p className="text-sm text-muted-foreground text-center py-4">{isAr ? 'لا توجد واجبات' : 'No assignments yet'}</p>
                 ) : (
                   <div className="space-y-2">
-                    {assignments.slice(0, 10).map((a: any) => {
-                      const sub = submissions.find((s: any) => s.assignment_id === a.id);
+                    {assignments.slice(0, 10).map((a) => {
+                      const sub = submissions.find((s) => s.assignment_id === a.id);
                       return (
                         <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                           <div className="min-w-0 flex-1">
@@ -251,8 +283,8 @@ export default function ParentDashboard() {
                             <p className="text-xs text-muted-foreground">{a.subject} • {new Date(a.created_at).toLocaleDateString()}</p>
                           </div>
                           {sub ? (
-                            <Badge variant={sub.grade ? 'default' : 'secondary'}>
-                              {sub.grade ? `${sub.grade}%` : (isAr ? 'مسلّم' : 'Submitted')}
+                            <Badge variant={sub.grade !== null ? 'default' : 'secondary'}>
+                              {sub.grade !== null ? `${sub.grade}%` : (isAr ? 'مسلّم' : 'Submitted')}
                             </Badge>
                           ) : (
                             <Badge variant="outline">{isAr ? 'لم يسلّم' : 'Not submitted'}</Badge>
@@ -277,7 +309,7 @@ export default function ParentDashboard() {
                   <p className="text-sm text-muted-foreground text-center py-4">{isAr ? 'لا توجد إعلانات' : 'No announcements yet'}</p>
                 ) : (
                   <div className="space-y-3">
-                    {announcements.map((ann: any) => (
+                    {announcements.map((ann) => (
                       <div key={ann.id} className="p-3 rounded-lg bg-muted/50 space-y-1">
                         <p className="font-medium text-sm">{ann.title}</p>
                         <p className="text-xs text-muted-foreground">{ann.body}</p>

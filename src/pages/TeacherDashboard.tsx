@@ -34,6 +34,7 @@ import { TeacherCopilot } from '@/components/teacher/TeacherCopilot';
 import { SubjectsSection } from '@/components/SubjectsSection';
 import { AssignmentPerformanceAnalytics } from '@/components/teacher/AssignmentPerformanceAnalytics';
 import { TeacherLearningStyleReports } from '@/components/teacher/TeacherLearningStyleReports';
+import { LearningSupportPanel } from '@/components/learning/LearningSupportPanel';
 import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
 import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 
@@ -319,7 +320,7 @@ export default function TeacherDashboard() {
         </div>
 
         <Tabs value={tab} onValueChange={setTab} className="space-y-6">
-          <TabsList className="grid grid-cols-8 w-full max-w-6xl">
+          <TabsList className="grid grid-cols-9 w-full max-w-6xl">
             <TabsTrigger value="materials" className="gap-2">
               <Upload className="w-4 h-4" />
               <span className="hidden sm:inline">{tr('materials', language)}</span>
@@ -348,6 +349,10 @@ export default function TeacherDashboard() {
             <TabsTrigger value="insights" className="gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">{tr('insights', language)}</span>
+            </TabsTrigger>
+            <TabsTrigger value="support" className="gap-2">
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Support</span>
             </TabsTrigger>
             <TabsTrigger value="announcements" className="gap-2">
               <Megaphone className="w-4 h-4" />
@@ -458,6 +463,9 @@ export default function TeacherDashboard() {
           {/* Insights Tab - Learning Style Reports + Performance */}
           <TabsContent value="insights" className="space-y-4">
             <TeacherLearningStyleReports schoolId={school.id} />
+          </TabsContent>
+          <TabsContent value="support" className="space-y-4">
+            <LearningSupportPanel role="teacher" schoolId={school.id} />
           </TabsContent>
 
           {/* Announcements Tab */}

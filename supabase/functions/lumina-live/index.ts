@@ -47,6 +47,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authorizeLiveExplanation, eventSequence } from "./authorization.ts";
 
 // ----- Static config ---------------------------------------------------------
 
@@ -117,35 +118,9 @@ function adminClient() {
 interface AuthenticatedUser {
   id: string;
   schoolId: string;
-}
-
-/**
- * Per-token authentication cache (latency).
- *
- * A live lesson issues one request per teacher utterance, each previously
- * paying two blocking round-trips (`auth.getUser` + a `profiles` select)
- * BEFORE the gateway call could even start. Both answers are stable for the
- * lifetime of a lesson, so we memoize them per access token with a short TTL.
- * Security is unchanged: an unverified token is never cached, and the cache
- * key is the token itself, so a revoked/rotated token simply misses.
- */
-const AUTH_TTL_MS = 300_000; // 5 minutes
-const AUTH_CACHE_MAX = 500;
-const authCache = new Map<string, { user: AuthenticatedUser; at: number }>();
-
-function readAuthCache(token: string): AuthenticatedUser | null {
-  const hit = authCache.get(token);
-  if (!hit) return null;
-  if (Date.now() - hit.at > AUTH_TTL_MS) { authCache.delete(token); return null; }
-  return hit.user;
-}
-
-function writeAuthCache(token: string, user: AuthenticatedUser): void {
-  if (authCache.size >= AUTH_CACHE_MAX) {
-    const oldest = authCache.keys().next().value;
-    if (oldest) authCache.delete(oldest);
-  }
-  authCache.set(token, { user, at: Date.now() });
+  gradeLevel: string | null;
+  userType: string;
+  active: boolean;
 }
 
 async function authenticate(req: Request): Promise<AuthenticatedUser | null> {
@@ -154,22 +129,20 @@ async function authenticate(req: Request): Promise<AuthenticatedUser | null> {
   const token = auth.replace("Bearer ", "").trim();
   if (!token) return null;
 
-  const cached = readAuthCache(token);
-  if (cached) return cached;
-
   try {
     const supa = adminClient();
     const { data: { user } } = await supa.auth.getUser(token);
     if (!user) return null;
     const { data: profile } = await supa
       .from("profiles")
-      .select("school_id")
+      .select("school_id, grade_level, user_type, is_active")
       .eq("id", user.id)
       .maybeSingle();
     if (!profile?.school_id) return null;
-    const resolved = { id: user.id, schoolId: profile.school_id };
-    writeAuthCache(token, resolved);
-    return resolved;
+    return {
+      id: user.id, schoolId: profile.school_id, gradeLevel: profile.grade_level,
+      userType: profile.user_type, active: profile.is_active === true,
+    };
   } catch {
     return null;
   }
@@ -435,6 +408,35 @@ serve(async (req) => {
     });
   }
   const { lessonId, event, cachedContext, studentContext, model } = parsed.body;
+
+  // Service-role reads bypass RLS, so the edge function must reproduce the
+  // participant boundary explicitly. It also binds the submitted text to a
+  // durable teacher event; caller-authored event text never reaches inference.
+  const seq = eventSequence(lessonId, event.id);
+  if (seq === null) {
+    return new Response(JSON.stringify({ error: "event_not_found_or_forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const db = adminClient();
+  const [meetingResult, eventResult] = await Promise.all([
+    db.from("live_meetings").select("lesson_id, school_id, grade_level, status")
+      .eq("lesson_id", lessonId).maybeSingle(),
+    db.from("lesson_events").select("lesson_id, school_id, seq, kind, text, priority, teacher_visible, ts")
+      .eq("lesson_id", lessonId).eq("seq", seq).maybeSingle(),
+  ]);
+  if (meetingResult.error || eventResult.error) {
+    return new Response(JSON.stringify({ error: "authorization_unavailable" }), {
+      status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (!authorizeLiveExplanation({
+    schoolId: user.schoolId, gradeLevel: user.gradeLevel, userType: user.userType, active: user.active,
+  }, meetingResult.data, eventResult.data, event)) {
+    return new Response(JSON.stringify({ error: "event_not_found_or_forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const chosenModel = typeof model === "string" && model.length > 0
     ? model : DEFAULT_MODEL;

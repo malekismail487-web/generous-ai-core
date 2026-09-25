@@ -176,7 +176,7 @@ export function attemptRecord(
   msg: MessageEnvelope,
   decision: RouteDecision,
 ): RouteAttemptRecord {
-  return decision.ok
+  return decision.ok === true
     ? {
         messageId: msg.messageId,
         fromAgentId: msg.fromAgentId,
