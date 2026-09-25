@@ -8384,6 +8384,7 @@
           "src/lib/codelab/cli/nyxChatSession.ts",
           "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts",
           "src/lib/codelab/connectome/biologicalCircuitIR.ts",
+          "src/lib/codelab/connectome/epistemicMicrocircuit.ts",
           "src/lib/codelab/connectome/nyxConnectomeCognitionAdapter.ts",
           "src/lib/codelab/engine/linter.ts",
           "src/lib/codelab/engine/loopKernel.ts",

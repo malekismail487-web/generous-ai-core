@@ -31,6 +31,8 @@ export const NYX_CONTRASTIVE_CIRCUIT_FROZEN_CORE = Object.freeze({
   commit: "bfe4d56062b64f6d7770a7a98784d4381dfbaba1",
   files: Object.freeze({
     ...NYX_V5_QUALITY_REPAIR_V3_FROZEN_CORE.files,
+    "src/lib/codelab/connectome/epistemicMicrocircuit.ts":
+      "48667040d4ed3ce04bee131d76377124b599f32eebf334f56def99aaa2b20aa0",
     "src/lib/codelab/connectome/nyxConnectomeCognitionAdapter.ts":
       "4c0a53413badb9e1e540df2cd7a47f2132f61b12399ed114cd05d3274a341fb2",
   }),

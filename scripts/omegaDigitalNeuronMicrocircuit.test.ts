@@ -158,6 +158,46 @@ function evidence(evidenceId: string, channelId: string, root: string, group = r
 
 {
   const circuit = new EpistemicMicrocircuit(definition);
+  circuit.admitEvidence(evidence("forged-a", "dependency-test", "claimed-root-a", "one-shared-origin"));
+  circuit.admitEvidence(evidence("forged-b", "code-guard", "claimed-root-b", "one-shared-origin"));
+  const decision = circuit.run(32);
+  check(decision.state !== "SUPPORTED_CANDIDATE" && decision.selectedAction === null,
+    "two claimed roots in one correlation group cannot fabricate an independent action basis");
+}
+
+{
+  const balanced = { ...definition, circuitId: "nyx-balanced-conflict-1", seed: "balanced-conflict-1",
+    hypotheses: [
+      { ...definition.hypotheses[0], contradictionChannels: [] },
+      { ...definition.hypotheses[1], contradictionChannels: [] },
+    ] };
+  const circuit = new EpistemicMicrocircuit(balanced);
+  for (const [id, channel] of ["dependency-test", "code-guard", "timeout-profile", "slow-clock"].entries()) {
+    circuit.admitEvidence(evidence(`balanced-${id}`, channel, `balanced-independent-${id}`));
+  }
+  const decision = circuit.run(32);
+  check(decision.state === "CONFLICTED" && decision.selectedAction === null
+    && decision.assessments.every((item) => item.directSupportRoots.length === 2
+      && item.directSupportCorrelationGroups.length === 2),
+  "equally independent support for competing causes is recorded as conflict, not an arbitrary action");
+}
+
+{
+  const circuit = new EpistemicMicrocircuit(definition);
+  circuit.admitEvidence(evidence("history-dependency", "dependency-test", "history-order-oracle"));
+  circuit.admitEvidence(evidence("history-source", "code-guard", "history-source-inspection"));
+  const first = circuit.run(32);
+  circuit.admitEvidence(evidence("later-timeout", "timeout-profile", "later-timing-profiler"));
+  circuit.admitEvidence(evidence("later-clock", "slow-clock", "later-clock-inspection"));
+  const revised = circuit.run(32);
+  check(first.state === "SUPPORTED_CANDIDATE" && first.selectedHypothesis === "missing-all-guard",
+    "calibration begins with an independently supported first diagnosis");
+  check(revised.state !== "SUPPORTED_CANDIDATE" || revised.selectedHypothesis !== first.selectedHypothesis,
+    "new contradictory within-task evidence must not leave the first diagnosis unchallenged");
+}
+
+{
+  const circuit = new EpistemicMicrocircuit(definition);
   check(throws(() => circuit.admitEvidence({ ...evidence("wrong-candidate", "code-guard", "root-a"),
     candidateBinding: "b".repeat(40) }), "epistemic_evidence_packet_invalid"),
   "evidence from another candidate fails closed");

@@ -77,6 +77,9 @@ export interface HypothesisPopulationAssessment {
   readonly averageGuardianReliability: number;
   readonly evidenceRoots: readonly string[];
   readonly evidenceCorrelationGroups: readonly string[];
+  /** Direct packet ancestry, independent of whether the sparse topology fired. */
+  readonly directSupportRoots: readonly string[];
+  readonly directSupportCorrelationGroups: readonly string[];
   readonly proposedAction: string;
   readonly actionCellsFired: number;
   readonly actionEvidenceRoots: readonly string[];
@@ -379,6 +382,8 @@ export class EpistemicMicrocircuit {
       const actionFirings = firings.filter((firing) => actionIdSet.has(firing.neuronId));
       const roots = new Set(hypothesisFirings.flatMap((firing) => firing.evidenceRoots));
       const groups = new Set(hypothesisFirings.flatMap((firing) => firing.evidenceCorrelationGroups));
+      const directSupport = this.#evidencePackets.filter((packet) =>
+        hypothesis.supportChannels.includes(packet.channelId));
       const actionRoots = new Set(actionFirings.flatMap((firing) => firing.evidenceRoots));
       const actionGroups = new Set(actionFirings.flatMap((firing) => firing.evidenceCorrelationGroups));
       return immutableConnectomeValue({ hypothesisId: hypothesis.hypothesisId, statement: hypothesis.statement,
@@ -389,6 +394,8 @@ export class EpistemicMicrocircuit {
         averageGuardianReliability: rounded(states.reduce((sum, state) =>
           sum + state.guardian.calibratedReliability, 0) / Math.max(1, states.length)),
         evidenceRoots: [...roots].sort(), evidenceCorrelationGroups: [...groups].sort(),
+        directSupportRoots: [...new Set(directSupport.map((packet) => packet.provenanceRoot))].sort(),
+        directSupportCorrelationGroups: [...new Set(directSupport.map((packet) => packet.correlationGroup))].sort(),
         proposedAction: hypothesis.proposedAction,
         actionCellsFired: actionIds.filter((id) => firedIds.has(id)).length,
         actionEvidenceRoots: [...actionRoots].sort(),
@@ -402,7 +409,19 @@ export class EpistemicMicrocircuit {
     const actionReady = Boolean(first && first.actionCellsFired > 0
       && first.actionEvidenceRoots.length >= this.#compiled.policy.requireIndependentRootsForAction
       && first.actionEvidenceCorrelationGroups.length >= this.#compiled.policy.requireIndependentRootsForAction);
-    const conflicted = Boolean(first && second && Math.abs(margin) < this.#compiled.policy.winnerMargin
+    // Sparse routing can favor one population even when the admitted evidence
+    // supports competing causes equally. Do not promote such topology bias to
+    // an advisory action merely because the winning action cell fired.
+    const competingDirectSupport = Boolean(first && assessments.slice(1).some((alternative) => {
+      const firstDefinition = this.#definition.hypotheses.find((item) => item.hypothesisId === first.hypothesisId);
+      const alternativeDefinition = this.#definition.hypotheses.find((item) =>
+        item.hypothesisId === alternative.hypothesisId);
+      return firstDefinition?.competitionGroup === alternativeDefinition?.competitionGroup
+        && alternative.directSupportRoots.length >= this.#compiled.policy.requireIndependentRootsForAction
+        && alternative.directSupportCorrelationGroups.length >= this.#compiled.policy.requireIndependentRootsForAction;
+    }));
+    const conflicted = competingDirectSupport || Boolean(first && second
+      && Math.abs(margin) < this.#compiled.policy.winnerMargin
       && first.peakActivation >= 0.52 && second.peakActivation >= 0.52);
     const state: EpistemicCircuitDecision["state"] = conflicted ? "CONFLICTED"
       : actionReady ? "SUPPORTED_CANDIDATE" : "INSUFFICIENT_EVIDENCE";
