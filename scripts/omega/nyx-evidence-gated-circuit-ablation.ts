@@ -5,15 +5,15 @@ import { NYX_CONTRASTIVE_CIRCUIT_ABLATION, NYX_CONTRASTIVE_CIRCUIT_FROZEN_CORE }
 export const NYX_EVIDENCE_GATED_CIRCUIT_ABLATION = Object.freeze({
   ...NYX_CONTRASTIVE_CIRCUIT_ABLATION,
   chunkId: "OMEGA-NYX-EVIDENCE-GATED-CIRCUIT-PILOT-001",
-  version: "nyx-evidence-gated-circuit-pilot/1",
+  version: "nyx-evidence-gated-circuit-pilot/2",
   arms: Object.freeze(["NEMOTRON_ALONE", "NYX_REASONING_STACK", "NYX_EVIDENCE_GATED_CIRCUIT"] as const),
 });
 
 export const NYX_EVIDENCE_GATED_CIRCUIT_FROZEN_CORE = Object.freeze({
-  commit: "e28c87206257a2ac7fe0938b7c1299201e89b6b1",
+  commit: "77f90c07c42910ba451084fe6cb58197265eb865",
   files: Object.freeze({
     ...NYX_CONTRASTIVE_CIRCUIT_FROZEN_CORE.files,
     "src/lib/codelab/connectome/nyxConnectomeCognitionAdapter.ts":
-      "fa9d4fd65ab96d48b954e2b92983f2ff5bab0cd9405156d9340b0f9fc83c6b64",
+      "23c74eb0283b83745e4dc90145973ef1fc0fd4e19aec689e49876bdace8c34fb",
   }),
 });
