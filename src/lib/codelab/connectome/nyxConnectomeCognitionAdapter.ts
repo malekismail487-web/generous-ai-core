@@ -315,12 +315,18 @@ export function buildNyxConnectomeResearchContext(request: NyxRepairCognitionReq
   const architectureConfiguration = architecture(configuration, request);
   const candidateBinding = request.observation.candidateCommit;
   const evidenceGated = configuration.contextMode === "EVIDENCE_GATED";
+  // The experimental gated mode reuses one circuit topology across requests.
+  // Request/evidence identities remain distinct in the returned context and trace;
+  // changing the request ID must not randomly rewire the reasoner.
+  const topologyIdentity = evidenceGated ? "nyx-evidence-gated-template-v1"
+    : `nyx-connectome-${sha256(request.cognitionRequestId).slice(0, 24)}`;
   const circuit = new EpistemicMicrocircuit({
-    circuitId: `nyx-connectome-${sha256(request.cognitionRequestId).slice(0, 24)}`,
+    circuitId: topologyIdentity,
     objective: request.objective,
     candidateBinding,
     addressCapacity: "1000000000000000000",
-    seed: `nyx-engineering-${sha256(request.cognitionRequestId).slice(0, 24)}`,
+    seed: evidenceGated ? topologyIdentity
+      : `nyx-engineering-${sha256(request.cognitionRequestId).slice(0, 24)}`,
     channels: [
       { channelId: "requirement", description: "The bounded engineering objective and its required behavior." },
       { channelId: "repository-snapshot", description: "The Omega-admitted repository files and content identities." },

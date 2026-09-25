@@ -125,6 +125,15 @@ check(evidenceGated.trace.rankedHypotheses.length === 2
 check(evidenceGated.trace.circuitState === "SUPPORTED_CANDIDATE"
   && evidenceGated.trace.selectedHypothesis === "repair-observed-cause",
 "ordinary observed failures yield a supported repair candidate instead of a phantom conflict");
+const identityReplays = Array.from({ length: 48 }, (_, index) => buildNyxConnectomeResearchContext(request({
+  cognitionRequestId: `NYX-GATED-IDENTITY-${index}`,
+}), { architectureProfile: NYX_VERIFIED_HYBRID_BIOLOGICAL_PROFILE, contextMode: "EVIDENCE_GATED" }));
+check(identityReplays.every((item) => item.trace.circuitState === evidenceGated.trace.circuitState
+  && item.trace.selectedHypothesis === evidenceGated.trace.selectedHypothesis
+  && item.trace.population.traceDigest === evidenceGated.trace.population.traceDigest),
+"identical evidence cannot change gated topology or decision merely by renaming the request");
+check(new Set(identityReplays.map((item) => item.trace.contextDigest)).size === identityReplays.length,
+"stable topology does not collapse distinct request-bound research contexts");
 check(evidenceGated.context.report.weakPoints.length < contrastive.context.report.weakPoints.length
   && evidenceGated.trace.additionalModelCalls === 0 && !evidenceGated.trace.grantsAuthority,
 "evidence-gated circuit transmits a smaller advisory context without extra calls or authority");
