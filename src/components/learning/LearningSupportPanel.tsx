@@ -191,7 +191,7 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
       </div>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       {notice && <p role="status" className="text-sm text-green-600">{notice}</p>}
-      {role === 'admin' && (
+      {role === 'admin' && !error && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {([['Active', pulse.active], ['Needs review', pulse.awaitingReview], ['Help requests', pulse.needingHelp], ['Overdue', pulse.overdue]] as const).map(([label, value]) => (
             <Card key={label}><CardContent className="p-4"><p className="text-xs text-muted-foreground">{label}</p><strong className="text-2xl">{value}</strong></CardContent></Card>
@@ -229,6 +229,7 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
         </Card>
       )}
       {loading ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading support evidence…</div>
+        : error && plans.length === 0 ? <Card><CardContent className="p-6 text-sm text-muted-foreground">Support data is unavailable; no absence of plans can be inferred.</CardContent></Card>
         : plans.length === 0 ? <Card><CardContent className="p-6 text-sm text-muted-foreground">No support plans yet. A teacher can connect an ALE concept or direct observation to a concrete learning goal.</CardContent></Card>
         : <div className="grid gap-3">{plans.map(plan => {
           const latest = checkins.filter(item => item.plan_id === plan.id).slice(0, 3);

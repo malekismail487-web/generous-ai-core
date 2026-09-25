@@ -20,14 +20,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { useAuth } from '@/hooks/useAuth';
 import { useLessonBackfill } from '@/hooks/useLessonBackfill';
 import { useLuminaLiveSession } from '@/hooks/useLuminaLiveSession';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { MathRenderer } from '@/components/MathRenderer';
+import { seqFromEventId } from '@/lib/lse/sessionInternals';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Volume2, VolumeX, Presentation, Sparkles, Loader2, Radio } from 'lucide-react';
+import { ArrowLeft, Volume2, VolumeX, Presentation, Sparkles, Loader2, Radio, Hand } from 'lucide-react';
 
 interface LiveMeeting {
   id: string;
@@ -47,11 +49,15 @@ export default function StudentLiveRoom() {
   const { meetingId } = useParams<{ meetingId: string }>();
   const navigate = useNavigate();
   const { school, profile, loading, isStudent } = useRoleGuard();
+  const { user } = useAuth();
 
   const [meeting, setMeeting] = useState<LiveMeeting | null>(null);
   const [meetingLoading, setMeetingLoading] = useState(true);
   const [view, setView] = useState<ViewMode>('lumina');
   const [voiceOn, setVoiceOn] = useState(true);
+  const [signaledSeq, setSignaledSeq] = useState<number | null>(null);
+  const [signalPending, setSignalPending] = useState(false);
+  const [signalError, setSignalError] = useState('');
 
   // Load meeting + subscribe for status changes.
   useEffect(() => {
@@ -129,6 +135,22 @@ export default function StudentLiveRoom() {
     if (state && state.timeline.length > 0) return state;
     return backfill.hydratedState ?? state;
   }, [state, backfill.hydratedState]);
+
+  const currentSeq = latest ? seqFromEventId(latest.event.id) : null;
+  const askForAnotherExplanation = async () => {
+    if (!meeting || meeting.status !== 'live' || !user || currentSeq === null || signalPending) return;
+    setSignalPending(true);
+    setSignalError('');
+    const { error } = await supabase.from('live_comprehension_signals').insert({
+      lesson_id: meeting.lesson_id,
+      school_id: meeting.school_id,
+      student_id: user.id,
+      event_seq: currentSeq,
+    });
+    if (error && error.code !== '23505') setSignalError('The request could not reach your teacher. Please try again.');
+    else setSignaledSeq(currentSeq);
+    setSignalPending(false);
+  };
 
   if (loading || meetingLoading) {
     return (
@@ -250,6 +272,19 @@ export default function StudentLiveRoom() {
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Subtitles</div>
                   <div className="text-sm">{latest.text.split('\n').slice(-2).join(' ')}</div>
                 </Card>
+              )}
+
+              {isLive && currentSeq !== null && latest?.event.teacherVisible
+                && latest.status !== 'noop' && latest.event.kind !== 'silence' && latest.event.kind !== 'admin' && (
+                <div className="space-y-2">
+                  <Button variant="outline" className="gap-2" disabled={signalPending || signaledSeq === currentSeq}
+                    onClick={() => void askForAnotherExplanation()}>
+                    <Hand className="h-4 w-4" />
+                    {signaledSeq === currentSeq ? 'Teacher notified for this explanation' : 'I need another explanation'}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">A private signal helps your teacher see that this part needs another example. No personal learning profile is sent.</p>
+                  {signalError && <p role="alert" className="text-xs text-destructive">{signalError}</p>}
+                </div>
               )}
 
               {lastGap && (

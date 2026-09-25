@@ -3566,6 +3566,53 @@ export type Database = {
           },
         ]
       }
+      live_comprehension_signals: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          event_seq: number
+          id: string
+          kind: string
+          lesson_id: string
+          school_id: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          event_seq: number
+          id?: string
+          kind?: string
+          lesson_id: string
+          school_id: string
+          status?: string
+          student_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          event_seq?: number
+          id?: string
+          kind?: string
+          lesson_id?: string
+          school_id?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_comprehension_signals_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learning_support_checkins: {
         Row: {
           actor_id: string

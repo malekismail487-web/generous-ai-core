@@ -29,8 +29,9 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Radio, Copy, Square, Mic, MicOff, Send, Plus } from 'lucide-react';
+import { ArrowLeft, Radio, Copy, Square, Mic, MicOff, Send, Plus, Hand } from 'lucide-react';
 import type { LessonEventKind } from '@/lib/lse/priorityTable';
+import { openComprehensionGroups, type ComprehensionSignal } from '@/lib/lse/comprehensionSignals';
 
 interface LiveMeeting {
   id: string;
@@ -46,6 +47,29 @@ interface LiveMeeting {
   started_at: string | null;
   ended_at: string | null;
 }
+
+interface SpeechResultLike {
+  isFinal: boolean;
+  [index: number]: { transcript: string };
+}
+interface SpeechResultEventLike {
+  resultIndex: number;
+  results: ArrayLike<SpeechResultLike>;
+}
+interface SpeechRecognitionLike {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechResultEventLike) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+}
+type SpeechWindow = {
+  SpeechRecognition?: new () => SpeechRecognitionLike;
+  webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+};
 
 // Must match the exact strings stored on profiles.grade_level ("Grade 8"),
 // otherwise the student-side grade filter in useLiveMeetings never matches.
@@ -87,11 +111,14 @@ export default function TeacherLiveConsole() {
   const [text, setText] = useState('');
   const [conceptRef, setConceptRef] = useState('');
   const [sending, setSending] = useState(false);
+  const [signals, setSignals] = useState<ComprehensionSignal[]>([]);
+  const [signalError, setSignalError] = useState('');
 
   // Web Speech API transcription
   const [micOn, setMicOn] = useState(false);
   const [interim, setInterim] = useState('');
-  const recRef = useRef<any>(null);
+  const recRef = useRef<SpeechRecognitionLike | null>(null);
+  const micActiveRef = useRef(false);
 
   const fetchMeetings = useCallback(async () => {
     if (!user?.id || !school?.id) return;
@@ -153,7 +180,6 @@ export default function TeacherLiveConsole() {
     await fetchMeetings();
     setActive(null);
     toast({ title: 'Meeting ended' });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast, fetchMeetings]);
 
   const emitEvent = useCallback(async (opts: {
@@ -190,8 +216,10 @@ export default function TeacherLiveConsole() {
 
   // --- Web Speech transcription -------------------------------------------
   const startMic = () => {
-    const W: any = typeof window !== 'undefined' ? window : {};
-    const SR = W.SpeechRecognition || W.webkitSpeechRecognition;
+    // Browser vendor speech APIs have inconsistent DOM typings; the capability
+    // is detected at runtime and adapted to the narrow shape used here.
+    const W = typeof window !== 'undefined' ? window as unknown as SpeechWindow : null;
+    const SR = W?.SpeechRecognition || W?.webkitSpeechRecognition;
     if (!SR) {
       toast({
         title: 'Voice not supported',
@@ -204,7 +232,7 @@ export default function TeacherLiveConsole() {
     rec.continuous = true;
     rec.interimResults = true;
     rec.lang = 'en-US';
-    rec.onresult = (ev: any) => {
+    rec.onresult = (ev: SpeechResultEventLike) => {
       let finalChunk = '';
       let interimChunk = '';
       for (let i = ev.resultIndex; i < ev.results.length; i++) {
@@ -218,17 +246,19 @@ export default function TeacherLiveConsole() {
         void emitEvent({ kind: 'discussion', text: cleaned });
       }
     };
-    rec.onerror = () => setMicOn(false);
-    rec.onend = () => { if (micOn) { try { rec.start(); } catch { /* already started */ } } };
+    rec.onerror = () => { micActiveRef.current = false; setMicOn(false); };
+    rec.onend = () => { if (micActiveRef.current) { try { rec.start(); } catch { /* already started */ } } };
     try {
       rec.start();
       recRef.current = rec;
+      micActiveRef.current = true;
       setMicOn(true);
-    } catch (e: any) {
-      toast({ title: 'Mic error', description: String(e?.message ?? e), variant: 'destructive' });
+    } catch (e: unknown) {
+      toast({ title: 'Mic error', description: e instanceof Error ? e.message : String(e), variant: 'destructive' });
     }
   };
   const stopMic = () => {
+    micActiveRef.current = false;
     setMicOn(false);
     setInterim('');
     const rec = recRef.current;
@@ -244,6 +274,40 @@ export default function TeacherLiveConsole() {
       () => toast({ title: 'Copy failed', variant: 'destructive' }),
     );
   };
+
+  const activeLessonId = active?.lesson_id ?? null;
+  const fetchSignals = useCallback(async () => {
+    if (!activeLessonId) { setSignals([]); return; }
+    const { data, error } = await supabase.from('live_comprehension_signals')
+      .select('id, event_seq, status, created_at')
+      .eq('lesson_id', activeLessonId).order('created_at', { ascending: false }).limit(500);
+    if (error) { setSignalError(error.message); setSignals([]); }
+    else { setSignalError(''); setSignals(data ?? []); }
+  }, [activeLessonId]);
+
+  useEffect(() => {
+    if (!activeLessonId) return;
+    setSignals([]);
+    void fetchSignals();
+    const channel = supabase.channel(`live-signals:${activeLessonId}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'live_comprehension_signals',
+        filter: `lesson_id=eq.${activeLessonId}`,
+      }, () => { void fetchSignals(); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [activeLessonId, fetchSignals]);
+
+  const acknowledgeSignals = async (eventSeq: number) => {
+    if (!active || !user) return;
+    const { error } = await supabase.from('live_comprehension_signals')
+      .update({ status: 'acknowledged' })
+      .eq('lesson_id', active.lesson_id).eq('event_seq', eventSeq).eq('status', 'open');
+    if (error) setSignalError(error.message);
+    else await fetchSignals();
+  };
+
+  const openSignals = openComprehensionGroups(signals);
 
   if (loading) return null;
   if (!isTeacher || !school || !profile) return <Navigate to="/" replace />;
@@ -350,6 +414,24 @@ export default function TeacherLiveConsole() {
 
         {active && (
           <div className="space-y-4">
+            <Card>
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Hand className="h-4 w-4" />Learner comprehension signals</CardTitle></CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <p className="text-muted-foreground">Students can request a different explanation without exposing their adaptive profile. Counts are grouped by lesson beat, not student identity.</p>
+                {signalError && <p role="alert" className="text-destructive">{signalError}</p>}
+                {signalError ? <p className="text-muted-foreground">Signal status is unavailable.</p>
+                  : openSignals.length === 0 ? <p className="text-muted-foreground">No open requests.</p>
+                  : openSignals.slice(0, 8).map(group => (
+                    <div key={group.eventSeq} className="flex flex-wrap items-center gap-2 rounded-md border p-3">
+                      <Badge variant="outline">Beat {group.eventSeq}</Badge>
+                      <span className="flex-1">{group.count} learner{group.count === 1 ? '' : 's'} need another example</span>
+                      <Button size="sm" variant="outline" onClick={() => { setKind('example'); setText(''); }}>Prepare example</Button>
+                      <Button size="sm" variant="outline" onClick={() => void acknowledgeSignals(group.eventSeq)}>Mark seen</Button>
+                    </div>
+                  ))}
+                {signals.length === 500 && <p className="text-xs text-muted-foreground">Showing the latest 500 signals only; older counts may be incomplete.</p>}
+              </CardContent>
+            </Card>
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between flex-wrap gap-2">
