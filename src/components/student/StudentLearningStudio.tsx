@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpenCheck, CalendarClock, ClipboardCheck, Compass, HelpCircle, NotebookPen, RefreshCw, LifeBuoy } from 'lucide-react';
+import { BookOpenCheck, CalendarClock, ClipboardCheck, Compass, HelpCircle, NotebookPen, RefreshCw, LifeBuoy, CalendarRange } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
@@ -13,7 +13,7 @@ import type { DueReview, WeakTopic } from '@/lib/mastery';
 import type { SupportPlan } from '@/lib/learningSupport';
 import { lessonRescuePrompt, visibleLessonBeats, type LessonBeat, type LessonMeeting } from '@/lib/connectedLearning';
 import {
-  alignConcepts, buildSchoolActions, learningPrompt, mappedCurriculumPrompt, teacherPlanPrompt,
+  alignConcepts, buildReentryPlan, buildSchoolActions, learningPrompt, mappedCurriculumPrompt, teacherPlanPrompt,
   type ConceptMapRow, type SchoolAssignment, type StandardRow, type StudioTool,
 } from '@/lib/learningStudio';
 
@@ -40,6 +40,7 @@ const TOOLS: { id: StudioTool; en: string; ar: string; icon: typeof BookOpenChec
   { id: 'review', en: 'Recall sprint', ar: 'مراجعة الاسترجاع', icon: CalendarClock, detail: 'Practice the concepts actually due for review', detailAr: 'تدرب على المفاهيم المستحقة للمراجعة' },
   { id: 'curriculum', en: 'Curriculum compass', ar: 'بوصلة المنهج', icon: Compass, detail: 'Connect ALE gaps to verified school standards', detailAr: 'اربط نقاط الضعف بمعايير المنهج الموثقة' },
   { id: 'rescue', en: 'Lesson rescue', ar: 'مساعدة الدرس', icon: LifeBuoy, detail: 'Revisit an exact teacher-published lesson moment', detailAr: 'راجع لحظة محددة نشرها المعلم في الدرس' },
+  { id: 'reentry', en: 'Return-to-school plan', ar: 'خطة العودة للمدرسة', icon: CalendarRange, detail: 'Catch up from real pending work after an absence', detailAr: 'استدرك العمل الحقيقي المعلق بعد الغياب' },
   { id: 'questions', en: 'Ask my teacher', ar: 'اسأل معلمي', icon: HelpCircle, detail: 'Route a specific learning question to the right teacher', detailAr: 'أرسل سؤالاً تعليمياً محدداً إلى المعلم المعني' },
   { id: 'mistakes', en: 'Mistake notebook', ar: 'دفتر الأخطاء', icon: NotebookPen, detail: 'Record, correct and retest a misconception', detailAr: 'سجّل الفكرة الخاطئة وصححها وأعد اختبارها' },
   { id: 'portfolio', en: 'Evidence portfolio', ar: 'ملف أدلة التعلم', icon: BookOpenCheck, detail: 'Show what you tried; teacher feedback stays distinct', detailAr: 'وثّق محاولاتك مع فصل ملاحظات المعلم عنها' },
@@ -58,6 +59,7 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
   const [data, setData] = useState<StudioData>(emptyData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [evidenceIncomplete, setEvidenceIncomplete] = useState(false);
   const [notice, setNotice] = useState('');
   const [saving, setSaving] = useState(false);
   const [subject, setSubject] = useState('');
@@ -70,6 +72,8 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
   const [beats, setBeats] = useState<LessonBeat[]>([]);
   const [beatLoading, setBeatLoading] = useState(false);
   const [rescueQuestion, setRescueQuestion] = useState('');
+  const [absenceStart, setAbsenceStart] = useState('');
+  const [absenceEnd, setAbsenceEnd] = useState('');
   const loadGeneration = useRef(0);
 
   const load = useCallback(async () => {
@@ -80,10 +84,11 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
     }
     setLoading(true);
     setError('');
+    setEvidenceIncomplete(false);
     try {
     const schoolId = school.id;
     const assignmentResult = await supabase.from('assignments')
-      .select('id, teacher_id, title, subject, grade_level, due_date, class_id')
+      .select('id, teacher_id, title, subject, grade_level, due_date, class_id, created_at')
       .eq('school_id', schoolId).order('due_date', { ascending: true }).limit(200);
     const assignmentIds = (assignmentResult.data ?? []).map(item => item.id);
     const submissionBatches = Array.from({ length: Math.ceil(assignmentIds.length / 50) }, (_, index) => assignmentIds.slice(index * 50, (index + 1) * 50));
@@ -113,6 +118,7 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
     const failures = [assignmentResult, submissionResult, planResult, dueResult, weakResult,
       mappingResult, standardResult, recordResult, classResult, meetingResult].filter(result => result.error).map(result => result.error?.message);
     if (failures.length) {
+      setEvidenceIncomplete(true);
       setError(t('Some school evidence is unavailable. No missing data is treated as a passed task.',
         'بعض أدلة المدرسة غير متاحة. لن نعامل البيانات المفقودة كمهام مكتملة.') + ` ${failures.join(' · ')}`);
     }
@@ -145,6 +151,7 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
     setLoading(false);
     } catch {
       if (generation === loadGeneration.current) {
+        setEvidenceIncomplete(true);
         setError(t('School evidence could not be loaded. Please retry.', 'تعذر تحميل أدلة المدرسة. حاول مرة أخرى.'));
         setLoading(false);
       }
@@ -173,6 +180,14 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
   }, [data.meetings, meetingId, tool]);
 
   const actions = useMemo(() => buildSchoolActions(data.assignments, data.submitted, data.plans, data.due), [data]);
+  const reentry = useMemo(() => {
+    if (!absenceStart || !absenceEnd) return { plan: null, error: '' };
+    try {
+      return { plan: buildReentryPlan(data.assignments, data.submitted, data.plans, data.due, absenceStart, absenceEnd), error: '' };
+    } catch {
+      return { plan: null, error: t('Choose a valid past absence window of at most 30 days.', 'اختر فترة غياب سابقة صحيحة لا تتجاوز 30 يوماً.') };
+    }
+  }, [absenceStart, absenceEnd, data, t]);
   const alignments = useMemo(() => alignConcepts(data.weak, data.mappings, data.standards, school?.id ?? ''), [data, school?.id]);
   const subjects = useMemo(() => [...new Set([
     ...data.assignments.map(item => item.subject), ...data.plans.map(item => item.subject),
@@ -264,6 +279,29 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
                   <div className="flex-1"><p className="font-medium">{item.topic}</p><p className="text-xs text-muted-foreground">{item.subject} · {Math.round(item.mastery_score * 100)}% {t('last estimated mastery', 'تقدير الإتقان السابق')}</p></div>
                   <Button size="sm" onClick={() => onTutorPrompt(learningPrompt(item.subject, item.topic, 'review'))}>{t('Quiz me', 'اختبرني')}</Button>
                 </div>)}
+            </section>}
+            {tool === 'reentry' && <section className="space-y-4">
+              <h2 className="font-semibold">{t('Return-to-school plan', 'خطة العودة للمدرسة')}</h2>
+              <p className="text-xs text-muted-foreground">{t('This plan uses visible pending assignments, active teacher support plans and due ALE reviews. It is not an attendance record and cannot know unrecorded class activities. Ask your teacher what else was missed.', 'تستخدم الخطة الواجبات المعلقة وخطط دعم المعلم النشطة ومراجعات المحرك المستحقة. ليست سجلاً للحضور ولا تعرف أنشطة الصف غير المسجلة. اسأل معلمك عما فاتك أيضاً.')}</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-sm">{t('First missed day', 'أول يوم غياب')}<Input type="date" className="mt-1" value={absenceStart} max={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)} onChange={event => setAbsenceStart(event.target.value)} /></label>
+                <label className="text-sm">{t('Last missed day', 'آخر يوم غياب')}<Input type="date" className="mt-1" value={absenceEnd} max={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)} onChange={event => setAbsenceEnd(event.target.value)} /></label>
+              </div>
+              {reentry.error && <p role="alert" className="text-sm text-destructive">{reentry.error}</p>}
+              {evidenceIncomplete && <p role="alert" className="text-sm text-destructive">{t('The catch-up plan is withheld because some school evidence could not be loaded. Refresh to retry.', 'لم تُعرض خطة الاستدراك لتعذر تحميل بعض أدلة المدرسة. حدّث لإعادة المحاولة.')}</p>}
+              {reentry.plan && !evidenceIncomplete && <>
+                <p className="text-xs text-muted-foreground">{reentry.plan.total} {t('visible actions; at most two are suggested per day. Deadlines still take precedence.', 'مهام ظاهرة؛ يُقترح اثنتان على الأكثر يومياً. تظل المواعيد النهائية أولوية.')}</p>
+                {reentry.plan.total === 0 && <Empty>{t('No matching pending school work or due reviews are visible. Check with your teacher for unrecorded lessons.', 'لا تظهر أعمال مدرسية معلقة مطابقة أو مراجعات مستحقة. تحقق مع معلمك من الدروس غير المسجلة.')}</Empty>}
+                {reentry.plan.days.filter(day => day.tasks.length > 0).map(day => <div key={day.day} className="rounded-xl border border-foreground/10 p-3">
+                  <h3 className="text-sm font-semibold">{t('Catch-up step', 'خطوة الاستدراك')} {day.day}</h3>
+                  {day.tasks.map(({ action, source }) => <div key={action.id} className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-foreground/10 p-2 text-sm">
+                    <div className="min-w-0 flex-1"><p className="font-medium">{action.title}</p><p className="text-xs text-muted-foreground">{action.subject} · {source === 'MISSED_WINDOW' ? t('Published or due during absence', 'نُشر أو استحق أثناء الغياب') : source === 'ACTIVE_TEACHER_PLAN' ? t('Active teacher plan', 'خطة معلم نشطة') : t('Due ALE review', 'مراجعة مستحقة من المحرك')} · {formatDate(action.deadline)}</p></div>
+                    <Button size="sm" variant="outline" onClick={() => action.kind === 'review' ? onTutorPrompt(learningPrompt(action.subject, action.topic ?? '', 'review')) : action.kind === 'support' ? onNavigate('weeklyplan') : onNavigate('assignments')}>{t('Open', 'افتح')}</Button>
+                  </div>)}
+                </div>)}
+                {reentry.plan.remaining.length > 0 && <p className="text-xs text-muted-foreground">{reentry.plan.remaining.length} {t('more visible actions remain after these first three steps. Open School priorities for the full queue.', 'مهام ظاهرة أخرى بعد الخطوات الثلاث الأولى. افتح أولويات المدرسة للقائمة الكاملة.')}</p>}
+                <Button size="sm" variant="outline" onClick={() => setTool('questions')}>{t('Ask my teacher what else I missed', 'اسأل معلمي عما فاتني أيضاً')}</Button>
+              </>}
             </section>}
             {tool === 'curriculum' && <section className="space-y-3">
               <h2 className="font-semibold">{t('My concepts in the school curriculum', 'مفاهيمي في المنهج المدرسي')}</h2>

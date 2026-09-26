@@ -1,10 +1,10 @@
 import type { DueReview, WeakTopic } from '@/lib/mastery';
 import type { SupportPlan } from '@/lib/learningSupport';
 
-export type StudioTool = 'priorities' | 'review' | 'curriculum' | 'rescue' | 'questions' | 'mistakes' | 'portfolio';
+export type StudioTool = 'priorities' | 'review' | 'curriculum' | 'rescue' | 'reentry' | 'questions' | 'mistakes' | 'portfolio';
 export type SchoolAssignment = {
   id: string; teacher_id: string; title: string; subject: string;
-  grade_level: string; due_date: string | null; class_id?: string | null;
+  grade_level: string; due_date: string | null; class_id?: string | null; created_at?: string;
 };
 export type SchoolAction = {
   id: string; kind: 'assignment' | 'support' | 'review'; title: string;
@@ -48,6 +48,55 @@ export function buildSchoolActions(
     });
   }
   return actions.sort((a, b) => b.urgency - a.urgency || a.id.localeCompare(b.id));
+}
+
+export interface ReentryTask {
+  action: SchoolAction;
+  source: 'MISSED_WINDOW' | 'ACTIVE_TEACHER_PLAN' | 'DUE_REVIEW';
+}
+export interface ReentryPlan {
+  days: { day: number; tasks: ReentryTask[] }[];
+  remaining: ReentryTask[];
+  total: number;
+}
+
+const utcDay = (value: string): number | null => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const parsed = Date.parse(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed) && new Date(parsed).toISOString().slice(0, 10) === value ? parsed : null;
+};
+
+/** A transparent catch-up queue; it never infers attendance or undocumented lesson content. */
+export function buildReentryPlan(
+  assignments: readonly SchoolAssignment[], submitted: ReadonlySet<string>,
+  plans: readonly SupportPlan[], due: readonly DueReview[],
+  absenceStart: string, absenceEnd: string, now = new Date(),
+): ReentryPlan {
+  const start = utcDay(absenceStart);
+  const end = utcDay(absenceEnd);
+  const today = utcDay(new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10));
+  if (start === null || end === null || today === null || start > end || end > today || end - start > 29 * 86400000) {
+    throw new Error('Choose a valid past absence window of at most 30 days.');
+  }
+  const inWindow = (timestamp: string | null | undefined) => {
+    if (!timestamp) return false;
+    const time = Date.parse(timestamp);
+    return Number.isFinite(time) && time >= start && time < end + 86400000;
+  };
+  const missedIds = new Set(assignments
+    .filter(item => !submitted.has(item.id) && (inWindow(item.created_at) || inWindow(item.due_date)))
+    .map(item => `assignment:${item.id}`));
+  const candidates = buildSchoolActions(assignments, submitted, plans, due, now).flatMap(action => {
+    if (action.kind === 'assignment') return missedIds.has(action.id) ? [{ action, source: 'MISSED_WINDOW' as const }] : [];
+    if (action.kind === 'support') return [{ action, source: 'ACTIVE_TEACHER_PLAN' as const }];
+    return [{ action, source: 'DUE_REVIEW' as const }];
+  });
+  const ordered = candidates.sort((a, b) => b.action.urgency - a.action.urgency || a.action.id.localeCompare(b.action.id));
+  return {
+    days: [0, 1, 2].map(day => ({ day: day + 1, tasks: ordered.slice(day * 2, day * 2 + 2) })),
+    remaining: ordered.slice(6),
+    total: ordered.length,
+  };
 }
 
 export type ConceptAlignment = {
