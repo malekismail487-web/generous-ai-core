@@ -13,6 +13,8 @@ import {
   summarizeSupport, type SupportCheckin, type SupportPlan, type SupportRole,
 } from '@/lib/learningSupport';
 import type { WeakTopic } from '@/lib/mastery';
+import { LearningTransferPanel } from './LearningTransferPanel';
+import { transferSchoolSummary, type TransferCheck, type TransferVerdict } from '@/lib/learningTransfer';
 
 type Learner = { id: string; full_name: string | null; grade_level: string | null };
 
@@ -33,6 +35,8 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
   const ar = language === 'ar';
   const [plans, setPlans] = useState<SupportPlan[]>([]);
   const [checkins, setCheckins] = useState<SupportCheckin[]>([]);
+  const [transferChecks, setTransferChecks] = useState<TransferCheck[]>([]);
+  const [transferLoadFailed, setTransferLoadFailed] = useState(false);
   const [mastery, setMastery] = useState<Map<string, MasteryObservation>>(new Map());
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedLearner, setSelectedLearner] = useState('');
@@ -57,6 +61,7 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
     const generation = ++loadGeneration.current;
     setLoading(true);
     setError('');
+    setTransferLoadFailed(false);
     let query = supabase.from('learning_support_plans').select('*').eq('school_id', schoolId);
     if (role === 'teacher') query = query.eq('teacher_id', user.id);
     if (role === 'student') query = query.eq('student_id', user.id);
@@ -72,15 +77,26 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
       setError(planResult.error.message);
       setPlans([]);
       setCheckins([]);
+      setTransferChecks([]);
+      setTransferLoadFailed(true);
     } else {
       const rows = planResult.data ?? [];
       setPlans(rows);
       if (rows.length) {
-        const checkinResult = await supabase.from('learning_support_checkins')
-          .select('*').in('plan_id', rows.map(row => row.id)).order('created_at', { ascending: false }).limit(500);
+        const [checkinResult, transferResult] = await Promise.all([
+          supabase.from('learning_support_checkins')
+            .select('*').in('plan_id', rows.map(row => row.id)).order('created_at', { ascending: false }).limit(500),
+          role === 'teacher' || role === 'student'
+            ? supabase.from('learning_support_transfer_checks').select('*')
+              .in('plan_id', rows.map(row => row.id)).order('created_at', { ascending: false }).limit(300)
+            : Promise.resolve({ data: [] as TransferCheck[], error: null }),
+        ]);
         if (generation !== loadGeneration.current) return;
         if (checkinResult.error) setError(checkinResult.error.message);
         setCheckins(checkinResult.data ?? []);
+        if (transferResult.error) { setError(transferResult.error.message); setTransferLoadFailed(true); }
+        setTransferChecks((transferResult.data ?? []) as TransferCheck[]);
+        if ((transferResult.data?.length ?? 0) === 300) setError('Transfer checks reached the 300-record display limit; older reviews may be unavailable.');
         const aleLearners = [...new Set(rows.filter(row => row.source_kind === 'ALE_MASTERY').map(row => row.student_id))];
         if (aleLearners.length) {
           const masteryResult = await supabase.from('concept_mastery')
@@ -98,7 +114,7 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
           setMastery(current);
           if ((masteryResult.data?.length ?? 0) === 2000) setError('ALE comparison reached its 2,000-record display limit; some current scores may be unavailable.');
         } else setMastery(new Map());
-      } else { setCheckins([]); setMastery(new Map()); }
+      } else { setCheckins([]); setTransferChecks([]); setMastery(new Map()); }
     }
     if (learnerResult.error) setError(learnerResult.error.message);
     setLearners(learnerResult.data ?? []);
@@ -175,7 +191,59 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
     setSaving(false);
   };
 
+  const createTransferCheck = async (planId: string, prompt: string, criteria: string): Promise<boolean> => {
+    if (!user || role !== 'teacher') return false;
+    setSaving(true); setError(''); setNotice('');
+    try {
+      const { error: writeError } = await supabase.from('learning_support_transfer_checks').insert({
+        plan_id: planId, prompt, success_criteria: criteria,
+      });
+      if (writeError) throw writeError;
+      setNotice(ar ? 'أُرسل الفحص إلى الطالب.' : 'Transfer check assigned to the learner.');
+      await load();
+      return true;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : (ar ? 'تعذر إنشاء الفحص.' : 'Could not create transfer check.'));
+      return false;
+    } finally { setSaving(false); }
+  };
+
+  const submitTransferResponse = async (checkId: string, response: string): Promise<boolean> => {
+    if (!user || role !== 'student') return false;
+    setSaving(true); setError(''); setNotice('');
+    try {
+      const { data: changed, error: writeError } = await supabase.from('learning_support_transfer_checks')
+        .update({ student_response: response, status: 'SUBMITTED' }).eq('id', checkId).eq('student_id', user.id)
+        .eq('status', 'OPEN').select('id').single();
+      if (writeError || !changed) throw writeError ?? new Error('The check is no longer open. Refresh and try again.');
+      setNotice(ar ? 'وصلت إجابتك إلى المعلم. المراجعة مستقلة.' : 'Your answer was submitted; teacher review is separate.');
+      await load();
+      return true;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : (ar ? 'تعذر إرسال الإجابة.' : 'Could not submit response.'));
+      return false;
+    } finally { setSaving(false); }
+  };
+
+  const reviewTransferResponse = async (checkId: string, verdict: TransferVerdict, feedback: string): Promise<boolean> => {
+    if (!user || role !== 'teacher') return false;
+    setSaving(true); setError(''); setNotice('');
+    try {
+      const { data: changed, error: writeError } = await supabase.from('learning_support_transfer_checks')
+        .update({ verdict, teacher_feedback: feedback, status: 'REVIEWED' }).eq('id', checkId).eq('teacher_id', user.id)
+        .eq('status', 'SUBMITTED').select('id').single();
+      if (writeError || !changed) throw writeError ?? new Error('The response is no longer awaiting review.');
+      setNotice(ar ? 'سُجلت مراجعة الفحص؛ لا تُنسب إليها نتيجة سببية تلقائية.' : 'Transfer review recorded; no causal learning claim was inferred.');
+      await load();
+      return true;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : (ar ? 'تعذرت مراجعة الفحص.' : 'Could not review response.'));
+      return false;
+    } finally { setSaving(false); }
+  };
+
   const pulse = summarizeSupport(plans, checkins);
+  const transferSummary = transferSchoolSummary(transferChecks);
   const learnerName = (id: string) => learners.find(learner => learner.id === id)?.full_name || 'Learner';
 
   return (
@@ -191,6 +259,14 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
       </div>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       {notice && <p role="status" className="text-sm text-green-600">{notice}</p>}
+      {role === 'teacher' && !loading && !transferLoadFailed && <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {([
+          [ar ? 'بانتظار الطالب' : 'Awaiting learners', transferSummary.awaitingLearner],
+          [ar ? 'بانتظار المعلم' : 'Awaiting my review', transferSummary.awaitingTeacher],
+          [ar ? 'أظهر الفهم بفحص واحد' : 'One check demonstrated', transferSummary.demonstratedOnOneCheck],
+        ] as const).map(([label, count]) => <Card key={label}><CardContent className="p-3"><p className="text-xs text-muted-foreground">{label}</p><strong className="text-xl">{count}</strong></CardContent></Card>)}
+        <p className="col-span-full text-xs text-muted-foreground">{ar ? 'هذه أعداد سير عمل من أحدث الخطط فقط؛ ليست مقياساً لأثر التعلم.' : 'Workflow counts from the latest plans only; not a measure of learning impact.'}</p>
+      </div>}
       {role === 'admin' && !error && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {([['Active', pulse.active], ['Needs review', pulse.awaitingReview], ['Help requests', pulse.needingHelp], ['Overdue', pulse.overdue]] as const).map(([label, value]) => (
@@ -246,6 +322,11 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
               {plan.source_kind !== 'ALE_MASTERY' && <p className="text-muted-foreground">Source: teacher observation; no ALE measurement claimed.</p>}
               {plan.due_at && <p className="text-muted-foreground">Review by {new Date(plan.due_at).toLocaleDateString()}</p>}
               {latest.length > 0 && <p className="text-muted-foreground">Recent check-ins: {latest.map(item => item.kind.toLowerCase().replace(/_/g, ' ')).join(' · ')}</p>}
+              {(role === 'teacher' || role === 'student') && !transferLoadFailed && <LearningTransferPanel
+                plan={plan} checks={transferChecks.filter(check => check.plan_id === plan.id)} role={role}
+                arabic={ar} saving={saving} onCreate={createTransferCheck}
+                onSubmit={submitTransferResponse} onReview={reviewTransferResponse}
+              />}
               {role === 'student' && plan.status === 'active' && <div className="flex flex-wrap gap-2">{onPractice && <Button size="sm" variant="outline" onClick={onPractice}>Open practice</Button>}<Button size="sm" disabled={saving} onClick={() => void recordCheckin(plan.id, 'PRACTICED')}><BookOpenCheck className="h-4 w-4 mr-1" />I practiced</Button><Button size="sm" variant="outline" disabled={saving} onClick={() => void recordCheckin(plan.id, 'NEEDS_HELP')}>I need help</Button></div>}
               {role === 'family' && plan.status === 'active' && <Button size="sm" variant="outline" disabled={saving} onClick={() => void recordCheckin(plan.id, 'FAMILY_SUPPORTED')}>We supported this step</Button>}
               {role === 'teacher' && <div className="flex gap-2"><Button size="sm" variant="outline" disabled={saving || plan.status === 'review'} onClick={() => void setPlanStatus(plan.id, 'review')}>Review</Button><Button size="sm" variant="outline" disabled={saving || plan.status === 'closed'} onClick={() => void setPlanStatus(plan.id, 'closed')}>Close</Button>{plan.status !== 'active' && <Button size="sm" variant="outline" disabled={saving} onClick={() => void setPlanStatus(plan.id, 'active')}>Reopen</Button>}</div>}

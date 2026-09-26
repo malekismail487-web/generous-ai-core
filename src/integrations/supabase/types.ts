@@ -3716,6 +3716,65 @@ export type Database = {
           },
         ]
       }
+      learning_support_transfer_checks: {
+        Row: {
+          created_at: string
+          id: string
+          plan_id: string
+          prompt: string
+          reviewed_at: string | null
+          school_id: string
+          status: string
+          student_id: string
+          student_response: string | null
+          submitted_at: string | null
+          success_criteria: string
+          teacher_feedback: string | null
+          teacher_id: string
+          verdict: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plan_id: string
+          prompt: string
+          reviewed_at?: string | null
+          school_id?: string
+          status?: string
+          student_id?: string
+          student_response?: string | null
+          submitted_at?: string | null
+          success_criteria: string
+          teacher_feedback?: string | null
+          teacher_id?: string
+          verdict?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plan_id?: string
+          prompt?: string
+          reviewed_at?: string | null
+          school_id?: string
+          status?: string
+          student_id?: string
+          student_response?: string | null
+          submitted_at?: string | null
+          success_criteria?: string
+          teacher_feedback?: string | null
+          teacher_id?: string
+          verdict?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_support_transfer_checks_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "learning_support_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learning_style_profiles: {
         Row: {
           conceptual_score: number | null
