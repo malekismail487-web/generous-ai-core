@@ -14,6 +14,7 @@ import { TenantExtensionsSection } from '@/components/extensions/TenantExtension
 import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 import { LearningSupportPanel } from '@/components/learning/LearningSupportPanel';
 import { FamilyActivityPlanner } from '@/components/learning/FamilyActivityPlanner';
+import { FamilyEvidencePulse } from '@/components/learning/FamilyEvidencePulse';
 import type { Tables } from '@/integrations/supabase/types';
 
 type ChildInfo = {
@@ -232,6 +233,9 @@ export default function ParentDashboard() {
 
           <TabsContent value="support" className="mt-4">
             <FamilyActivityPlanner schoolId={child.school_id} studentId={child.student_id} />
+            <div className="mt-6">
+              <FamilyEvidencePulse schoolId={child.school_id} studentId={child.student_id} />
+            </div>
             <div className="mt-6">
               <LearningSupportPanel role="family" schoolId={child.school_id} studentId={child.student_id} />
             </div>
