@@ -26,6 +26,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
+import { assignmentScanText, auditAssignmentQuestions, describeAssignmentIssue, parseGeneratedQuestions } from '@/lib/assignmentQuality';
 
 const SUBJECTS = [
   'biology', 'physics', 'mathematics', 'chemistry',
@@ -89,6 +90,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const t2 = (en: string, ar: string) => (language === 'ar' ? ar : en);
+  const assignmentAudit = auditAssignmentQuestions(questions);
 
   const reset = () => {
     setStep('configure');
@@ -130,24 +132,20 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
       if (data?.error) throw new Error(data.error);
 
       setGeneratedTitle(title.trim());
-      setQuestions(
-        (data.questions || []).map((q: any) => ({
-          ...q,
-          id: generateId(),
-        }))
-      );
+      const generated = parseGeneratedQuestions(data?.questions);
+      setQuestions(generated.map((q) => ({ ...q, id: generateId() })));
       // Initialize chat with system message
       setChatMessages([{
         role: 'assistant',
-        content: `I've generated ${data.questions?.length || 0} questions about "${title.trim()}". You can ask me to modify, replace, or add questions. For example: "Make question 3 harder" or "Replace question 5 with a diagram-based question."`
+        content: `I've generated ${generated.length} questions about "${title.trim()}". You can ask me to modify, replace, or add questions. For example: "Make question 3 harder" or "Replace question 5 with a diagram-based question."`
       }]);
       setStep('preview');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Generate error:', err);
       toast({
         variant: 'destructive',
         title: t('generationFailed'),
-        description: err.message || t('couldNotGenerate'),
+        description: err instanceof Error ? err.message : t('couldNotGenerate'),
       });
       setStep('configure');
     }
@@ -188,7 +186,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
         role: 'assistant',
         content: data?.message || 'I understand your request. Let me help you refine these questions.'
       }]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Chat error:', err);
       setChatMessages(prev => [...prev, {
         role: 'assistant',
@@ -220,8 +218,9 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       if (data?.questions?.length) {
+        const [replacement] = parseGeneratedQuestions(data.questions);
         setQuestions((prev) =>
-          prev.map((q, i) => (i === questionIndex ? { ...data.questions[0], id: generateId() } : q)),
+          prev.map((q, i) => (i === questionIndex ? { ...replacement, id: generateId() } : q)),
         );
         setRewriteFor(null);
         setRewriteText('');
@@ -229,9 +228,9 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
       } else {
         throw new Error('No question returned');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Regenerate error:', err);
-      toast({ variant: 'destructive', title: t2('Rewrite failed', 'فشلت إعادة الصياغة'), description: err.message });
+      toast({ variant: 'destructive', title: t2('Rewrite failed', 'فشلت إعادة الصياغة'), description: err instanceof Error ? err.message : undefined });
     } finally {
       setBusyId(null);
     }
@@ -253,12 +252,10 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setQuestions((prev) => [
-        ...prev,
-        ...(data.questions || []).map((q: any) => ({ ...q, id: generateId() })),
-      ]);
-    } catch (err: any) {
-      toast({ variant: 'destructive', title: t2('Could not add questions', 'تعذر إضافة أسئلة'), description: err.message });
+      const generated = parseGeneratedQuestions(data?.questions);
+      setQuestions((prev) => [...prev, ...generated.map((q) => ({ ...q, id: generateId() }))]);
+    } catch (err: unknown) {
+      toast({ variant: 'destructive', title: t2('Could not add questions', 'تعذر إضافة أسئلة'), description: err instanceof Error ? err.message : undefined });
     } finally {
       setIsRefining(false);
     }
@@ -269,8 +266,13 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
   };
 
   const handlePublish = async () => {
-    if (questions.length === 0) {
-      toast({ variant: 'destructive', title: t('noQuestionToPublish') });
+    const audit = auditAssignmentQuestions(questions);
+    if (!audit.publishable) {
+      toast({
+        variant: 'destructive',
+        title: t2('Resolve assignment quality findings before publishing', 'عالج ملاحظات جودة الواجب قبل النشر'),
+        description: describeAssignmentIssue(audit.issues.find((issue) => issue.severity === 'blocking')!, language),
+      });
       return;
     }
 
@@ -285,13 +287,13 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
       grade_level: gradeLevel,
       due_date: dueDate || null,
       points: questions.length * 10,
-      questions_json: questions as any,
+      questions_json: questions.map((q) => ({ ...q })),
       source: 'copilot',
     };
 
     const { data: insertedData, error } = await supabase
       .from('assignments')
-      .insert(insertData as any)
+      .insert(insertData)
       .select('id')
       .single();
 
@@ -303,7 +305,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
     }
 
     // Scan assignment content for moderation (fire-and-forget)
-    const scanText = questions.map((q: any) => `${q.question} ${(q.options || []).join(' ')}`).join(' ');
+    const scanText = assignmentScanText(questions);
     import('@/lib/contentScanner').then(({ scanContent }) => {
       scanContent({
         content: scanText.substring(0, 4000),
@@ -481,6 +483,24 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
               </div>
             </div>
 
+            <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm" role="status">
+              <p className="font-medium">{t2('Question quality review', 'مراجعة جودة الأسئلة')}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t2('Structural checks only. Verify facts, fairness, difficulty and answer correctness yourself before publishing.', 'هذه فحوص بنيوية فقط. تحقق بنفسك من الحقائق والإنصاف والصعوبة وصحة الإجابات قبل النشر.')}
+              </p>
+              {assignmentAudit.issues.length === 0 ? (
+                <p className="mt-2 text-green-700 dark:text-green-400">{t2('No structural findings.', 'لا توجد ملاحظات بنيوية.')}</p>
+              ) : (
+                <ul className="mt-2 list-disc space-y-1 ps-5">
+                  {assignmentAudit.issues.map((issue, index) => (
+                    <li key={`${issue.code}-${issue.questionNumber ?? 'all'}-${index}`} className={issue.severity === 'blocking' ? 'text-destructive' : 'text-amber-700 dark:text-amber-400'}>
+                      {describeAssignmentIssue(issue, language)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
             {/* Questions List */}
             <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-1">
               {questions.map((q, index) => (
@@ -656,7 +676,7 @@ export function TeacherCopilot({ schoolId, authUserId, onSuccess }: TeacherCopil
               <Button
                 onClick={handlePublish}
                 className="flex-1 gap-2"
-                disabled={questions.length === 0}
+                disabled={!assignmentAudit.publishable || !!busyId || isRefining || !generatedTitle.trim()}
               >
                 <CheckCircle2 className="w-4 h-4" />
                 {t('publishAssignment')}

@@ -20,6 +20,7 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { tr, getSubjectName, getGradeName } from '@/lib/translations';
 import { useTeacherLockedSubject } from '@/hooks/useTeacherLockedSubject';
 import { RelevanceWarningDialog } from './RelevanceWarningDialog';
+import { auditAssignmentQuestions, describeAssignmentIssue } from '@/lib/assignmentQuality';
 
 const SUBJECTS = [
   { id: 'biology', emoji: '🧬' },
@@ -83,6 +84,7 @@ export function AssignmentQuestionBuilder({
   const [showMetadataForm, setShowMetadataForm] = useState(true);
 
   const { categoryName: lockedName, subjectSlug: lockedSlug, locked } = useTeacherLockedSubject(authUserId);
+  const assignmentAudit = auditAssignmentQuestions(questions);
 
   // Lock subject picker for category-bound teachers
   useEffect(() => {
@@ -127,6 +129,13 @@ export function AssignmentQuestionBuilder({
       correctAnswer
     };
 
+    const audit = auditAssignmentQuestions([...questions, newQuestion]);
+    const finding = audit.issues.find((issue) => issue.severity === 'blocking' && issue.questionNumber === questions.length + 1);
+    if (finding) {
+      toast({ variant: 'destructive', title: describeAssignmentIssue(finding, language) });
+      return;
+    }
+
     setQuestions([...questions, newQuestion]);
     resetQuestionForm();
     toast({ title: t('questionSaved') });
@@ -147,13 +156,13 @@ export function AssignmentQuestionBuilder({
       grade_level: gradeLevel,
       due_date: dueDate || null,
       points: questions.length * 10,
-      questions_json: questions as any,
+      questions_json: questions.map((q) => ({ ...q })),
       relevance_override: override,
     };
 
     const { error } = await supabase
       .from('assignments')
-      .insert(insertData as any);
+      .insert(insertData);
 
     setIsCreating(false);
 
@@ -173,6 +182,11 @@ export function AssignmentQuestionBuilder({
     }
     if (questions.length === 0) {
       toast({ variant: 'destructive', title: t('pleaseAddQuestion') });
+      return;
+    }
+    const audit = auditAssignmentQuestions(questions);
+    if (!audit.publishable) {
+      toast({ variant: 'destructive', title: describeAssignmentIssue(audit.issues.find((issue) => issue.severity === 'blocking')!, language) });
       return;
     }
 
@@ -344,7 +358,7 @@ export function AssignmentQuestionBuilder({
           </div>
         </div>
         {questions.length > 0 && (
-          <Button onClick={createAssignment} disabled={isCreating} className="gap-2">
+          <Button onClick={createAssignment} disabled={isCreating || !assignmentAudit.publishable} className="gap-2">
             <CheckCircle2 className="w-4 h-4" />
             {isCreating ? t('creatingBtn') : t('createAssignmentBtn')}
           </Button>
@@ -355,6 +369,23 @@ export function AssignmentQuestionBuilder({
       {questions.length > 0 && (
         <div className="space-y-3">
           <h3 className="font-semibold text-sm text-muted-foreground">{t('savedQuestionsLabel')}</h3>
+          <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm" role="status">
+            <p className="font-medium">{language === 'ar' ? 'مراجعة جودة الأسئلة' : 'Question quality review'}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {language === 'ar' ? 'الفحص بنيوي فقط؛ راجع صحة الإجابات والحقائق ومستوى الصعوبة قبل النشر.' : 'Structural checks only; review answer correctness, facts and difficulty before publishing.'}
+            </p>
+            {assignmentAudit.issues.length === 0 ? (
+              <p className="mt-2 text-green-700 dark:text-green-400">{language === 'ar' ? 'لا توجد ملاحظات بنيوية.' : 'No structural findings.'}</p>
+            ) : (
+              <ul className="mt-2 list-disc space-y-1 ps-5">
+                {assignmentAudit.issues.map((issue, index) => (
+                  <li key={`${issue.code}-${issue.questionNumber ?? 'all'}-${index}`} className={issue.severity === 'blocking' ? 'text-destructive' : 'text-amber-700 dark:text-amber-400'}>
+                    {describeAssignmentIssue(issue, language)}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <div className="grid gap-3">
             {questions.map((q, index) => (
               <Card key={q.id} className="bg-muted/50">
@@ -460,7 +491,7 @@ export function AssignmentQuestionBuilder({
         <div className="flex justify-center">
           <Button 
             onClick={createAssignment} 
-            disabled={isCreating} 
+            disabled={isCreating || !assignmentAudit.publishable}
             size="lg"
             className="gap-2"
           >
