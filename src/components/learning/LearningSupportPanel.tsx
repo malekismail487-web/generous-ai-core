@@ -39,6 +39,14 @@ type SchoolTransferSummary = {
   not_yet_demonstrated: number | null;
   inconclusive: number | null;
 };
+type GradeAttentionSummary = {
+  grade_label: string;
+  learner_count: number;
+  learners_with_active_plans: number;
+  learners_with_recent_help: number;
+  learners_awaiting_teacher_reply: number;
+  learners_with_reviewed_transfer: number;
+};
 const masteryKey = (student: string, subject: string, topic: string) => `${student}\u0000${subject}\u0000${topic}`;
 const conceptChoice = (item: WeakTopic) => JSON.stringify([item.subject, item.topic]);
 const attentionLabels: Record<TeacherAttentionReason, { en: string; ar: string }> = {
@@ -59,6 +67,7 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
   const [transferChecks, setTransferChecks] = useState<TransferCheck[]>([]);
   const [transferLoadFailed, setTransferLoadFailed] = useState(false);
   const [schoolTransferSummary, setSchoolTransferSummary] = useState<SchoolTransferSummary | null>(null);
+  const [gradeAttention, setGradeAttention] = useState<GradeAttentionSummary[] | null>(null);
   const [linkedQuestions, setLinkedQuestions] = useState<LinkedQuestion[]>([]);
   const [questionDrafts, setQuestionDrafts] = useState<Record<string, string>>({});
   const [questionLoadFailed, setQuestionLoadFailed] = useState(false);
@@ -94,7 +103,7 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
     if (role === 'teacher') query = query.eq('teacher_id', user.id);
     if (role === 'student') query = query.eq('student_id', user.id);
     if (role === 'family' && studentId) query = query.eq('student_id', studentId).eq('family_visible', true);
-    const [planResult, learnerResult, schoolTransferResult] = await Promise.all([
+    const [planResult, learnerResult, schoolTransferResult, gradeAttentionResult] = await Promise.all([
       query.order('created_at', { ascending: false }).limit(100),
       role === 'teacher'
         ? supabase.from('profiles').select('id, full_name, grade_level').eq('school_id', schoolId).eq('user_type', 'student').eq('is_active', true).order('full_name').limit(200)
@@ -102,11 +111,17 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
       role === 'admin'
         ? supabase.rpc('get_school_transfer_summary', { p_school_id: schoolId })
         : Promise.resolve({ data: null, error: null }),
+      role === 'admin'
+        ? supabase.rpc('get_school_learning_attention_by_grade', { p_school_id: schoolId })
+        : Promise.resolve({ data: null, error: null }),
     ]);
     if (generation !== loadGeneration.current) return;
     setSchoolTransferSummary(role === 'admin' && !schoolTransferResult.error
       ? (schoolTransferResult.data?.[0] ?? null) as SchoolTransferSummary | null : null);
     if (schoolTransferResult.error) setError(schoolTransferResult.error.message);
+    setGradeAttention(role === 'admin' && !gradeAttentionResult.error
+      ? (gradeAttentionResult.data ?? []) as GradeAttentionSummary[] : null);
+    if (gradeAttentionResult.error) setError(gradeAttentionResult.error.message);
     if (planResult.error) {
       setError(planResult.error.message);
       setPlans([]);
@@ -376,6 +391,25 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
             <p className="col-span-full text-xs text-muted-foreground">Latest check per plan, past 90 days, minimum three learners. A review is not a causal measure of intervention impact.</p>
           </div>}
           {!loading && !schoolTransferSummary && <p className="text-sm text-muted-foreground">Transfer review summary unavailable; no result was returned.</p>}
+          <Card aria-label="Learning attention by grade cohort">
+            <CardHeader><CardTitle className="text-base">{ar ? 'وصول دعم التعلّم حسب الصف' : 'Learning support reach by grade'}</CardTitle></CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <p className="text-xs text-muted-foreground">{ar
+                ? 'أعداد طلاب لديهم إشارات خدمة مسجلة؛ لا تقارن جودة المعلمين أو أثر التعلم. تُحجب المجموعات الأصغر من ثلاثة طلاب.'
+                : 'Counts of learners with recorded service signals, not teacher quality or learning impact. Cohorts smaller than three learners are withheld.'}</p>
+              {gradeAttention === null ? <p className="text-muted-foreground">{ar ? 'تعذر التحقق من بيانات الصفوف.' : 'Grade cohort evidence unavailable.'}</p>
+                : gradeAttention.length === 0 ? <p className="text-muted-foreground">{ar ? 'لا توجد مجموعات صفية قابلة للعرض.' : 'No grade cohort meets the reporting threshold.'}</p>
+                  : <div className="grid gap-2 md:grid-cols-2">{gradeAttention.map(row => <div key={row.grade_label} className="rounded-md border p-3">
+                    <strong>{row.grade_label}</strong><span className="text-muted-foreground"> · {row.learner_count} {ar ? 'طلاب' : 'learners'}</span>
+                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      <li>{ar ? 'طلاب لديهم خطة نشطة:' : 'Learners with an active plan:'} {row.learners_with_active_plans}</li>
+                      <li>{ar ? 'طلاب أرسلوا طلب مساعدة خلال 30 يوماً:' : 'Learners with a help signal in 30 days:'} {row.learners_with_recent_help}</li>
+                      <li>{ar ? 'طلاب ينتظرون رد المعلم:' : 'Learners awaiting a teacher reply:'} {row.learners_awaiting_teacher_reply}</li>
+                      <li>{ar ? 'طلاب لديهم فحص انتقال راجعه المعلم خلال 90 يوماً:' : 'Learners with a teacher-reviewed transfer check in 90 days:'} {row.learners_with_reviewed_transfer}</li>
+                    </ul>
+                  </div>)}</div>}
+            </CardContent>
+          </Card>
         </div>
       )}
       {role === 'teacher' && (

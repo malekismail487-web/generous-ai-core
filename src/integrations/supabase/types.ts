@@ -8622,6 +8622,17 @@ export type Database = {
           inconclusive: number | null
         }[]
       }
+      get_school_learning_attention_by_grade: {
+        Args: { p_school_id: string }
+        Returns: {
+          grade_label: string
+          learner_count: number
+          learners_with_active_plans: number
+          learners_with_recent_help: number
+          learners_awaiting_teacher_reply: number
+          learners_with_reviewed_transfer: number
+        }[]
+      }
       get_user_school_id: { Args: { user_uuid: string }; Returns: string }
       get_user_tenant_id: { Args: { uid: string }; Returns: string }
       get_weakest_topics:
