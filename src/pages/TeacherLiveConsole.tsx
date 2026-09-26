@@ -32,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Radio, Copy, Square, Mic, MicOff, Send, Plus, Hand } from 'lucide-react';
 import type { LessonEventKind } from '@/lib/lse/priorityTable';
 import { openComprehensionGroups, type ComprehensionSignal } from '@/lib/lse/comprehensionSignals';
+import { signalContextMap, type LessonBeat } from '@/lib/connectedLearning';
 
 interface LiveMeeting {
   id: string;
@@ -112,7 +113,10 @@ export default function TeacherLiveConsole() {
   const [conceptRef, setConceptRef] = useState('');
   const [sending, setSending] = useState(false);
   const [signals, setSignals] = useState<ComprehensionSignal[]>([]);
+  const [signalBeats, setSignalBeats] = useState<Map<number, LessonBeat>>(new Map());
   const [signalError, setSignalError] = useState('');
+  const [draftSourceBeat, setDraftSourceBeat] = useState<number | null>(null);
+  const signalLoadGeneration = useRef(0);
 
   // Web Speech API transcription
   const [micOn, setMicOn] = useState(false);
@@ -203,14 +207,24 @@ export default function TeacherLiveConsole() {
       priority: priorityMap[opts.kind],
       teacher_visible: true,
     });
-    if (error) toast({ title: 'Emit failed', description: error.message, variant: 'destructive' });
+    if (error) {
+      toast({ title: 'Emit failed', description: error.message, variant: 'destructive' });
+      return false;
+    }
+    return true;
   }, [active, user?.id, school?.id, toast]);
 
   const handleSend = async () => {
     if (!active) return;
     setSending(true);
-    await emitEvent({ kind, text, conceptRef });
-    setText('');
+    const sent = await emitEvent({ kind, text, conceptRef });
+    if (sent) {
+      setText('');
+      if (draftSourceBeat !== null && kind === 'example') {
+        await acknowledgeSignals(draftSourceBeat);
+      }
+      setDraftSourceBeat(null);
+    }
     setSending(false);
   };
 
@@ -277,17 +291,33 @@ export default function TeacherLiveConsole() {
 
   const activeLessonId = active?.lesson_id ?? null;
   const fetchSignals = useCallback(async () => {
-    if (!activeLessonId) { setSignals([]); return; }
+    const generation = ++signalLoadGeneration.current;
+    if (!activeLessonId) { setSignals([]); setSignalBeats(new Map()); return; }
     const { data, error } = await supabase.from('live_comprehension_signals')
       .select('id, event_seq, status, created_at')
       .eq('lesson_id', activeLessonId).order('created_at', { ascending: false }).limit(500);
-    if (error) { setSignalError(error.message); setSignals([]); }
-    else { setSignalError(''); setSignals(data ?? []); }
-  }, [activeLessonId]);
+    if (generation !== signalLoadGeneration.current) return;
+    if (error) { setSignalError(error.message); setSignals([]); setSignalBeats(new Map()); return; }
+    const nextSignals = data ?? [];
+    setSignals(nextSignals);
+    const eventSeqs = openComprehensionGroups(nextSignals).slice(0, 8).map(group => group.eventSeq);
+    if (eventSeqs.length === 0) { setSignalError(''); setSignalBeats(new Map()); return; }
+    const { data: events, error: eventError } = await supabase.from('lesson_events')
+      .select('lesson_id, school_id, seq, kind, text, concept_ref, teacher_visible')
+      .eq('lesson_id', activeLessonId).eq('school_id', school?.id ?? '')
+      .eq('teacher_visible', true).in('seq', eventSeqs);
+    if (generation !== signalLoadGeneration.current) return;
+    if (eventError) { setSignalError(eventError.message); setSignalBeats(new Map()); return; }
+    setSignalError('');
+    setSignalBeats(signalContextMap(activeLessonId, school?.id ?? '', eventSeqs, (events ?? []) as LessonBeat[]));
+  }, [activeLessonId, school?.id]);
 
   useEffect(() => {
     if (!activeLessonId) return;
+    const generationRef = signalLoadGeneration;
     setSignals([]);
+    setSignalBeats(new Map());
+    setDraftSourceBeat(null);
     void fetchSignals();
     const channel = supabase.channel(`live-signals:${activeLessonId}`)
       .on('postgres_changes', {
@@ -295,7 +325,7 @@ export default function TeacherLiveConsole() {
         filter: `lesson_id=eq.${activeLessonId}`,
       }, () => { void fetchSignals(); })
       .subscribe();
-    return () => { void supabase.removeChannel(channel); };
+    return () => { generationRef.current++; void supabase.removeChannel(channel); };
   }, [activeLessonId, fetchSignals]);
 
   const acknowledgeSignals = async (eventSeq: number) => {
@@ -424,8 +454,15 @@ export default function TeacherLiveConsole() {
                   : openSignals.slice(0, 8).map(group => (
                     <div key={group.eventSeq} className="flex flex-wrap items-center gap-2 rounded-md border p-3">
                       <Badge variant="outline">Beat {group.eventSeq}</Badge>
-                      <span className="flex-1">{group.count} learner{group.count === 1 ? '' : 's'} need another example</span>
-                      <Button size="sm" variant="outline" onClick={() => { setKind('example'); setText(''); }}>Prepare example</Button>
+                      <div className="min-w-[200px] flex-1">
+                        <p>{group.count} learner{group.count === 1 ? '' : 's'} need another example</p>
+                        {signalBeats.get(group.eventSeq) && <p className="mt-1 text-xs text-muted-foreground">Teacher beat: {signalBeats.get(group.eventSeq)?.text.slice(0, 180)}</p>}
+                      </div>
+                      <Button size="sm" variant="outline" disabled={!signalBeats.has(group.eventSeq)} onClick={() => {
+                        const beat = signalBeats.get(group.eventSeq);
+                        if (!beat) return;
+                        setKind('example'); setText(''); setConceptRef(beat.concept_ref ?? ''); setDraftSourceBeat(group.eventSeq);
+                      }}>Respond to this beat</Button>
                       <Button size="sm" variant="outline" onClick={() => void acknowledgeSignals(group.eventSeq)}>Mark seen</Button>
                     </div>
                   ))}
@@ -483,6 +520,10 @@ export default function TeacherLiveConsole() {
                 </div>
                 <div>
                   <Label>Text to broadcast</Label>
+                  {draftSourceBeat !== null && <p className="mb-2 rounded-md border border-primary/30 bg-primary/5 p-2 text-xs">
+                    Responding to beat #{draftSourceBeat}: {signalBeats.get(draftSourceBeat)?.text ?? 'Source beat unavailable'}.
+                    Write and review a different explanation before sending; learners' identities and ALE profiles are not exposed.
+                  </p>}
                   <Textarea rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder="Now we're moving to how plants convert CO₂ into sugar…" />
                 </div>
                 <div className="flex gap-2">

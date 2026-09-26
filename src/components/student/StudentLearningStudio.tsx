@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpenCheck, CalendarClock, ClipboardCheck, Compass, HelpCircle, NotebookPen, RefreshCw } from 'lucide-react';
+import { BookOpenCheck, CalendarClock, ClipboardCheck, Compass, HelpCircle, NotebookPen, RefreshCw, LifeBuoy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import type { Database } from '@/integrations/supabase/types';
 import type { DueReview, WeakTopic } from '@/lib/mastery';
 import type { SupportPlan } from '@/lib/learningSupport';
+import { lessonRescuePrompt, visibleLessonBeats, type LessonBeat, type LessonMeeting } from '@/lib/connectedLearning';
 import {
   alignConcepts, buildSchoolActions, learningPrompt, mappedCurriculumPrompt, teacherPlanPrompt,
   type ConceptMapRow, type SchoolAssignment, type StandardRow, type StudioTool,
@@ -28,15 +29,17 @@ type StudioData = {
   standards: StandardRow[];
   records: LearningRecord[];
   teachers: Teacher[];
+  meetings: LessonMeeting[];
 };
 const emptyData = (): StudioData => ({
   assignments: [], submitted: new Set(), plans: [], due: [], weak: [],
-  mappings: [], standards: [], records: [], teachers: [],
+  mappings: [], standards: [], records: [], teachers: [], meetings: [],
 });
 const TOOLS: { id: StudioTool; en: string; ar: string; icon: typeof BookOpenCheck; detail: string; detailAr: string }[] = [
   { id: 'priorities', en: 'School priorities', ar: 'أولويات المدرسة', icon: ClipboardCheck, detail: 'Assignments, teacher plans and ALE review in one queue', detailAr: 'واجبات وخطط المعلمين ومراجعات المحرك في قائمة واحدة' },
   { id: 'review', en: 'Recall sprint', ar: 'مراجعة الاسترجاع', icon: CalendarClock, detail: 'Practice the concepts actually due for review', detailAr: 'تدرب على المفاهيم المستحقة للمراجعة' },
   { id: 'curriculum', en: 'Curriculum compass', ar: 'بوصلة المنهج', icon: Compass, detail: 'Connect ALE gaps to verified school standards', detailAr: 'اربط نقاط الضعف بمعايير المنهج الموثقة' },
+  { id: 'rescue', en: 'Lesson rescue', ar: 'مساعدة الدرس', icon: LifeBuoy, detail: 'Revisit an exact teacher-published lesson moment', detailAr: 'راجع لحظة محددة نشرها المعلم في الدرس' },
   { id: 'questions', en: 'Ask my teacher', ar: 'اسأل معلمي', icon: HelpCircle, detail: 'Route a specific learning question to the right teacher', detailAr: 'أرسل سؤالاً تعليمياً محدداً إلى المعلم المعني' },
   { id: 'mistakes', en: 'Mistake notebook', ar: 'دفتر الأخطاء', icon: NotebookPen, detail: 'Record, correct and retest a misconception', detailAr: 'سجّل الفكرة الخاطئة وصححها وأعد اختبارها' },
   { id: 'portfolio', en: 'Evidence portfolio', ar: 'ملف أدلة التعلم', icon: BookOpenCheck, detail: 'Show what you tried; teacher feedback stays distinct', detailAr: 'وثّق محاولاتك مع فصل ملاحظات المعلم عنها' },
@@ -63,6 +66,10 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
   const [correction, setCorrection] = useState('');
   const [nextStep, setNextStep] = useState('');
   const [teacherId, setTeacherId] = useState('');
+  const [meetingId, setMeetingId] = useState('');
+  const [beats, setBeats] = useState<LessonBeat[]>([]);
+  const [beatLoading, setBeatLoading] = useState(false);
+  const [rescueQuestion, setRescueQuestion] = useState('');
   const loadGeneration = useRef(0);
 
   const load = useCallback(async () => {
@@ -85,7 +92,7 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
       data: results.flatMap(result => result.data ?? []),
       error: results.find(result => result.error)?.error ?? null,
     }));
-    const [submissionResult, planResult, dueResult, weakResult, mappingResult, standardResult, recordResult, classResult] = await Promise.all([
+    const [submissionResult, planResult, dueResult, weakResult, mappingResult, standardResult, recordResult, classResult, meetingResult] = await Promise.all([
       submissionPromise,
       supabase.from('learning_support_plans').select('*').eq('school_id', schoolId).eq('student_id', user.id)
         .order('created_at', { ascending: false }).limit(100),
@@ -98,10 +105,13 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
       supabase.from('student_learning_records').select('*').eq('school_id', schoolId).eq('student_id', user.id)
         .order('created_at', { ascending: false }).limit(100),
       supabase.from('student_classes').select('class_id').eq('student_id', user.id).limit(100),
+      supabase.from('live_meetings').select('id, lesson_id, school_id, title, subject, grade_level, status')
+        .eq('school_id', schoolId).eq('grade_level', profile.grade_level ?? '').eq('status', 'ended')
+        .order('ended_at', { ascending: false }).limit(20),
     ]);
     if (generation !== loadGeneration.current) return;
     const failures = [assignmentResult, submissionResult, planResult, dueResult, weakResult,
-      mappingResult, standardResult, recordResult, classResult].filter(result => result.error).map(result => result.error?.message);
+      mappingResult, standardResult, recordResult, classResult, meetingResult].filter(result => result.error).map(result => result.error?.message);
     if (failures.length) {
       setError(t('Some school evidence is unavailable. No missing data is treated as a passed task.',
         'بعض أدلة المدرسة غير متاحة. لن نعامل البيانات المفقودة كمهام مكتملة.') + ` ${failures.join(' · ')}`);
@@ -130,6 +140,7 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
       standards: (standardResult.data ?? []) as StandardRow[],
       records: (recordResult.data ?? []) as LearningRecord[],
       teachers: [...teacherLabels.values()],
+      meetings: (meetingResult.data ?? []) as LessonMeeting[],
     });
     setLoading(false);
     } catch {
@@ -141,6 +152,25 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
   }, [user, school, profile, t]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    const meeting = data.meetings.find(item => item.id === meetingId);
+    if (!meeting || tool !== 'rescue') { setBeats([]); setBeatLoading(false); return; }
+    let cancelled = false;
+    setBeatLoading(true);
+    setBeats([]);
+    void supabase.from('lesson_events')
+      .select('lesson_id, school_id, seq, kind, text, concept_ref, teacher_visible')
+      .eq('lesson_id', meeting.lesson_id).eq('school_id', meeting.school_id)
+      .eq('teacher_visible', true).order('seq', { ascending: false }).limit(100)
+      .then(({ data: rows, error: readError }) => {
+        if (cancelled) return;
+        setBeatLoading(false);
+        if (readError) { setError(readError.message); setBeats([]); return; }
+        setBeats(visibleLessonBeats(meeting, (rows ?? []) as LessonBeat[]));
+      });
+    return () => { cancelled = true; };
+  }, [data.meetings, meetingId, tool]);
 
   const actions = useMemo(() => buildSchoolActions(data.assignments, data.submitted, data.plans, data.due), [data]);
   const alignments = useMemo(() => alignConcepts(data.weak, data.mappings, data.standards, school?.id ?? ''), [data, school?.id]);
@@ -191,12 +221,12 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div><p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{t('School × adaptive intelligence', 'المدرسة × الذكاء التكيفي')}</p>
             <h1 className="text-2xl font-bold">{t('Learning Studio', 'استوديو التعلم')}</h1>
-            <p className="text-sm text-muted-foreground">{t('Six connected tools. School facts, ALE signals and your own reports stay visibly distinct.', 'ست أدوات مترابطة. تبقى حقائق المدرسة وإشارات المحرك وتقاريرك الشخصية منفصلة بوضوح.')}</p></div>
+            <p className="text-sm text-muted-foreground">{t('School facts, ALE signals and your own reports stay visibly distinct.', 'تبقى حقائق المدرسة وإشارات المحرك وتقاريرك الشخصية منفصلة بوضوح.')}</p></div>
           <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}><RefreshCw className="mr-2 h-4 w-4" />{t('Refresh evidence', 'تحديث الأدلة')}</Button>
         </div>
         {error && <div role="alert" className="rounded-xl border border-destructive/40 p-3 text-sm text-destructive">{error}</div>}
         {notice && <div role="status" className="rounded-xl border border-foreground/15 p-3 text-sm">{notice}</div>}
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {TOOLS.map(item => {
             const Icon = item.icon;
             return <button key={item.id} onClick={() => { setTool(item.id); setError(''); setNotice(''); }}
@@ -244,6 +274,31 @@ export function StudentLearningStudio({ onNavigate, onTutorPrompt }: Props) {
                   {item.standardDescription && <p className="mt-2 text-sm">{item.standardDescription}</p>}
                   <Button size="sm" variant="outline" className="mt-2" onClick={() => onTutorPrompt(mappedCurriculumPrompt(item))}>{t('Learn this', 'تعلم هذا')}</Button>
                 </div>)}
+            </section>}
+            {tool === 'rescue' && <section className="space-y-3">
+              <h2 className="font-semibold">{t('Revisit a specific lesson moment', 'راجع لحظة محددة من الدرس')}</h2>
+              <p className="text-xs text-muted-foreground">{t('Only finished lessons for your school and grade are shown. Teacher-published text is lesson context, not proof you learned it.', 'تظهر فقط الدروس المنتهية لمدرستك وصفك. نص المعلم سياق للدرس وليس دليلاً على إتقانك.')}</p>
+              <label className="block text-sm">{t('Lesson', 'الدرس')}
+                <select className="mt-1 w-full rounded-md border border-input bg-background p-2" value={meetingId} onChange={event => { setMeetingId(event.target.value); setRescueQuestion(''); }}>
+                  <option value="">{t('Choose a finished lesson', 'اختر درساً منتهياً')}</option>
+                  {data.meetings.map(meeting => <option key={meeting.id} value={meeting.id}>{meeting.subject || t('Class', 'حصة')} · {meeting.title}</option>)}
+                </select>
+              </label>
+              {data.meetings.length === 0 && <Empty>{t('No authorized finished lessons are visible.', 'لا تظهر دروس منتهية مخوّل لك عرضها.')}</Empty>}
+              {beatLoading ? <p className="text-sm text-muted-foreground">{t('Loading teacher-published moments…', 'جارٍ تحميل اللحظات التي نشرها المعلم…')}</p> :
+                meetingId && beats.length === 0 ? <Empty>{t('No usable published moments were found for this lesson.', 'لم تُعثر على لحظات منشورة مناسبة لهذا الدرس.')}</Empty> : null}
+              {meetingId && beats.length > 0 && <label className="block text-sm">{t('What exactly confused you?', 'ما الذي لم تفهمه بالتحديد؟')}
+                <Textarea className="mt-1" value={rescueQuestion} onChange={event => setRescueQuestion(event.target.value)} maxLength={500} placeholder={t('Explain where you got stuck…', 'اشرح أين توقفت…')} />
+              </label>}
+              {beats.slice(-30).reverse().map(beat => <article key={beat.seq} className="rounded-xl border border-foreground/10 p-3 text-sm">
+                <div className="flex flex-wrap gap-2"><Badge variant="outline">#{beat.seq}</Badge><Badge variant="secondary">{beat.kind}</Badge>{beat.concept_ref && <span className="text-xs text-muted-foreground">{beat.concept_ref}</span>}</div>
+                <p className="mt-2 whitespace-pre-wrap">{beat.text}</p>
+                <Button size="sm" variant="outline" className="mt-2" disabled={rescueQuestion.trim().length < 8} onClick={() => {
+                  const meeting = data.meetings.find(item => item.id === meetingId);
+                  const prompt = meeting && lessonRescuePrompt(meeting, beat, rescueQuestion);
+                  if (prompt) onTutorPrompt(prompt);
+                }}>{t('Ask Lumina for a different explanation', 'اطلب من لومينا شرحاً مختلفاً')}</Button>
+              </article>)}
             </section>}
             {(tool === 'questions' || tool === 'mistakes' || tool === 'portfolio') && <section className="space-y-4">
               <h2 className="font-semibold">{t(TOOLS.find(item => item.id === tool)?.en ?? '', TOOLS.find(item => item.id === tool)?.ar ?? '')}</h2>

@@ -13,6 +13,7 @@ import { Loader2, Heart, BookOpen, ClipboardCheck, Trophy, Bell, LogOut, Flame, 
 import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
 import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 import { LearningSupportPanel } from '@/components/learning/LearningSupportPanel';
+import { FamilyActivityPlanner } from '@/components/learning/FamilyActivityPlanner';
 import type { Tables } from '@/integrations/supabase/types';
 
 type ChildInfo = {
@@ -230,7 +231,10 @@ export default function ParentDashboard() {
           </TabsList>
 
           <TabsContent value="support" className="mt-4">
-            <LearningSupportPanel role="family" schoolId={child.school_id} studentId={child.student_id} />
+            <FamilyActivityPlanner schoolId={child.school_id} studentId={child.student_id} />
+            <div className="mt-6">
+              <LearningSupportPanel role="family" schoolId={child.school_id} studentId={child.student_id} />
+            </div>
           </TabsContent>
 
           {/* Performance Tab */}

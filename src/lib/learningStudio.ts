@@ -1,7 +1,7 @@
 import type { DueReview, WeakTopic } from '@/lib/mastery';
 import type { SupportPlan } from '@/lib/learningSupport';
 
-export type StudioTool = 'priorities' | 'review' | 'curriculum' | 'questions' | 'mistakes' | 'portfolio';
+export type StudioTool = 'priorities' | 'review' | 'curriculum' | 'rescue' | 'questions' | 'mistakes' | 'portfolio';
 export type SchoolAssignment = {
   id: string; teacher_id: string; title: string; subject: string;
   grade_level: string; due_date: string | null; class_id?: string | null;
