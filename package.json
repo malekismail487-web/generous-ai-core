@@ -12,6 +12,7 @@
     "test:learning-transfer": "tsx --tsconfig tsconfig.app.json scripts/learningTransfer.test.ts",
     "test:learning-transfer-db": "tsx scripts/learningTransfer.db.test.ts",
     "test:learning-support-questions-db": "tsx scripts/learningSupportQuestions.db.test.ts",
+    "test:teacher-support-triage": "tsx --tsconfig tsconfig.app.json scripts/teacherSupportTriage.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -16,6 +16,7 @@ import type { WeakTopic } from '@/lib/mastery';
 import { LearningTransferPanel } from './LearningTransferPanel';
 import { transferSchoolSummary, type TransferCheck, type TransferVerdict } from '@/lib/learningTransfer';
 import type { Database } from '@/integrations/supabase/types';
+import { teacherSupportQueue, type TeacherAttentionReason } from '@/lib/teacherSupportTriage';
 
 type Learner = { id: string; full_name: string | null; grade_level: string | null };
 type LinkedQuestion = Database['public']['Tables']['student_learning_records']['Row'];
@@ -40,6 +41,14 @@ type SchoolTransferSummary = {
 };
 const masteryKey = (student: string, subject: string, topic: string) => `${student}\u0000${subject}\u0000${topic}`;
 const conceptChoice = (item: WeakTopic) => JSON.stringify([item.subject, item.topic]);
+const attentionLabels: Record<TeacherAttentionReason, { en: string; ar: string }> = {
+  TRANSFER_AWAITING_REVIEW: { en: 'Review submitted transfer check', ar: 'راجع فحص الانتقال المرسل' },
+  QUESTION_AWAITING_REPLY: { en: 'Reply to learner question', ar: 'أجب عن سؤال الطالب' },
+  RECENT_HELP_SIGNAL: { en: 'Recent help signal', ar: 'طلب مساعدة حديث' },
+  PLAN_AWAITING_REVIEW: { en: 'Review support plan', ar: 'راجع خطة الدعم' },
+  OVERDUE_PLAN: { en: 'Review date passed', ar: 'تجاوز موعد المراجعة' },
+  TRANSFER_NOT_YET: { en: 'Transfer not yet demonstrated', ar: 'لم يُظهر الفهم بعد في الفحص' },
+};
 
 export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: Props) {
   const { user } = useAuth();
@@ -53,6 +62,7 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
   const [linkedQuestions, setLinkedQuestions] = useState<LinkedQuestion[]>([]);
   const [questionDrafts, setQuestionDrafts] = useState<Record<string, string>>({});
   const [questionLoadFailed, setQuestionLoadFailed] = useState(false);
+  const [checkinLoadFailed, setCheckinLoadFailed] = useState(false);
   const [mastery, setMastery] = useState<Map<string, MasteryObservation>>(new Map());
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedLearner, setSelectedLearner] = useState('');
@@ -79,6 +89,7 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
     setError('');
     setTransferLoadFailed(false);
     setQuestionLoadFailed(false);
+    setCheckinLoadFailed(false);
     let query = supabase.from('learning_support_plans').select('*').eq('school_id', schoolId);
     if (role === 'teacher') query = query.eq('teacher_id', user.id);
     if (role === 'student') query = query.eq('student_id', user.id);
@@ -104,6 +115,7 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
       setTransferLoadFailed(true);
       setLinkedQuestions([]);
       setQuestionLoadFailed(true);
+      setCheckinLoadFailed(true);
     } else {
       const rows = planResult.data ?? [];
       setPlans(rows);
@@ -115,21 +127,23 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
             ? supabase.from('learning_support_transfer_checks').select('*')
               .in('plan_id', rows.map(row => row.id)).order('created_at', { ascending: false }).limit(300)
             : Promise.resolve({ data: [] as TransferCheck[], error: null }),
-          role === 'student'
+          role === 'teacher' || role === 'student'
             ? supabase.from('student_learning_records').select('*')
-              .eq('student_id', user.id).in('support_plan_id', rows.map(row => row.id))
+              .eq(role === 'teacher' ? 'teacher_id' : 'student_id', user.id)
+              .in('support_plan_id', rows.map(row => row.id))
               .order('created_at', { ascending: false }).limit(300)
             : Promise.resolve({ data: [] as LinkedQuestion[], error: null }),
         ]);
         if (generation !== loadGeneration.current) return;
-        if (checkinResult.error) setError(checkinResult.error.message);
+        if (checkinResult.error) { setError(checkinResult.error.message); setCheckinLoadFailed(true); }
         setCheckins(checkinResult.data ?? []);
         if (transferResult.error) { setError(transferResult.error.message); setTransferLoadFailed(true); }
         setTransferChecks((transferResult.data ?? []) as TransferCheck[]);
-        if ((transferResult.data?.length ?? 0) === 300) setError('Transfer checks reached the 300-record display limit; older reviews may be unavailable.');
+        if ((transferResult.data?.length ?? 0) === 300) { setError('Transfer checks reached the 300-record display limit; older reviews may be unavailable.'); setTransferLoadFailed(true); }
         if (questionResult.error) { setError(questionResult.error.message); setQuestionLoadFailed(true); }
         setLinkedQuestions((questionResult.data ?? []) as LinkedQuestion[]);
-        if ((questionResult.data?.length ?? 0) === 300) setError('Support questions reached the 300-record display limit; older replies may be unavailable.');
+        if ((questionResult.data?.length ?? 0) === 300) { setError('Support questions reached the 300-record display limit; older replies may be unavailable.'); setQuestionLoadFailed(true); }
+        if ((checkinResult.data?.length ?? 0) === 500) { setError('Support check-ins reached the 500-record display limit; older help signals may be unavailable.'); setCheckinLoadFailed(true); }
         const aleLearners = [...new Set(rows.filter(row => row.source_kind === 'ALE_MASTERY').map(row => row.student_id))];
         if (aleLearners.length) {
           const masteryResult = await supabase.from('concept_mastery')
@@ -300,6 +314,8 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
 
   const pulse = summarizeSupport(plans, checkins);
   const transferSummary = transferSchoolSummary(transferChecks);
+  const attention = role === 'teacher' ? teacherSupportQueue(plans, checkins, transferChecks, linkedQuestions) : [];
+  const attentionIncomplete = transferLoadFailed || questionLoadFailed || checkinLoadFailed || plans.length === 100;
   const learnerName = (id: string) => learners.find(learner => learner.id === id)?.full_name || 'Learner';
 
   return (
@@ -323,6 +339,21 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
         ] as const).map(([label, count]) => <Card key={label}><CardContent className="p-3"><p className="text-xs text-muted-foreground">{label}</p><strong className="text-xl">{count}</strong></CardContent></Card>)}
         <p className="col-span-full text-xs text-muted-foreground">{ar ? 'هذه أعداد سير عمل من أحدث الخطط فقط؛ ليست مقياساً لأثر التعلم.' : 'Workflow counts from the latest plans only; not a measure of learning impact.'}</p>
       </div>}
+      {role === 'teacher' && !loading && <Card aria-label="Teacher support attention queue">
+        <CardHeader><CardTitle className="text-base">{ar ? 'أولويات متابعة الدعم' : 'Support attention queue'}</CardTitle></CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <p className="text-xs text-muted-foreground">{ar ? 'ترتيب لمهام مسجلة فقط، وليس تقديراً لقدرة الطالب أو أثر التدخل.' : 'Ranks recorded workflow obligations only; it is not a student-risk or learning-impact score.'}</p>
+          {attentionIncomplete && <p role="status" className="text-xs text-amber-700">{ar ? 'الأدلة المعروضة غير مكتملة؛ قد توجد مهام أخرى خارج حدود التحميل.' : 'Evidence is incomplete; additional tasks may exist beyond the loaded records.'}</p>}
+          {attention.length === 0 ? <p className="text-muted-foreground">{attentionIncomplete
+            ? (ar ? 'لا توجد مهام ضمن السجلات المحمّلة.' : 'No obligations among loaded records.')
+            : (ar ? 'لا توجد مهام دعم معلقة مسجلة.' : 'No recorded support obligations are pending.')}</p>
+            : <ol className="space-y-2">{attention.slice(0, 10).map(item => <li key={item.planId} className="rounded-md border p-2">
+              <a className="font-medium underline" href={`#support-plan-${item.planId}`}>{learnerName(item.studentId)} · {item.subject} · {item.topic}</a>
+              <p className="text-muted-foreground">{item.reasons.map(reason => ar ? attentionLabels[reason].ar : attentionLabels[reason].en).join(' · ')}</p>
+            </li>)}</ol>}
+          {attention.length > 10 && <p className="text-xs text-muted-foreground">{ar ? `تظهر 10 من ${attention.length} خطط تحتاج إلى انتباه.` : `Showing 10 of ${attention.length} plans needing attention.`}</p>}
+        </CardContent>
+      </Card>}
       {role === 'admin' && !error && (
         <div className="space-y-3">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
