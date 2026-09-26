@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import type { Database } from '@/integrations/supabase/types';
+import { parseTeacherReplyDraft } from '../../../supabase/functions/_shared/teacherReplyDraftContract';
 
 type LearningRecord = Database['public']['Tables']['student_learning_records']['Row'];
 
@@ -18,6 +19,9 @@ export function TeacherLearningInbox({ schoolId }: { schoolId: string }) {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const [drafting, setDrafting] = useState<string | null>(null);
+  const [draftSources, setDraftSources] = useState<Record<string, string[]>>({});
+  const [suggestions, setSuggestions] = useState<Record<string, { reply: string; sources: string[] }>>({});
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -70,6 +74,27 @@ export function TeacherLearningInbox({ schoolId }: { schoolId: string }) {
     }
   };
 
+  const suggestReply = async (record: LearningRecord) => {
+    if (!user || record.kind !== 'QUESTION' || record.teacher_reply !== null || drafting) return;
+    setDrafting(record.id); setError('');
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke('learning-support-draft', {
+        body: { kind: 'teacher_reply', recordId: record.id },
+      });
+      if (invokeError) throw invokeError;
+      const draft = parseTeacherReplyDraft(data?.draft);
+      if (!draft || data?.reviewRequired !== true || !Array.isArray(data.evidenceSources)
+        || data.evidenceSources.length < 1 || data.evidenceSources.length > 2
+        || data.evidenceSources[0] !== 'student_question'
+        || (data.evidenceSources.length === 2 && data.evidenceSources[1] !== 'linked_support_plan')) {
+        throw new Error('Invalid draft response');
+      }
+      setSuggestions(previous => ({ ...previous, [record.id]: { reply: draft.reply, sources: data.evidenceSources } }));
+    } catch {
+      setError(t('AI reply draft unavailable; you can still write your own response.', 'مسودة الرد غير متاحة؛ يمكنك كتابة ردك بنفسك.'));
+    } finally { setDrafting(null); }
+  };
+
   return <section className="space-y-4 rounded-2xl border border-foreground/10 p-4">
     <div><h2 className="font-semibold">{t('Learning questions and evidence', 'أسئلة التعلم وأدلته')}</h2>
       <p className="text-xs text-muted-foreground">{t('Student reports are not verified outcomes. Your reply stays attributable to you.', 'تقارير الطلاب ليست نتائج مثبتة. يبقى ردك منسوباً إليك.')}</p></div>
@@ -84,10 +109,30 @@ export function TeacherLearningInbox({ schoolId }: { schoolId: string }) {
         {record.correction && <p className="text-sm"><strong>{t('Student correction:', 'تصحيح الطالب:')}</strong> {record.correction}</p>}
         {record.next_step && <p className="text-sm"><strong>{t('Proposed next check:', 'التحقق المقترح:')}</strong> {record.next_step}</p>}
         {record.teacher_reply ? <p className="rounded-lg bg-primary/10 p-2 text-sm"><strong>{t('Your feedback:', 'ملاحظاتك:')}</strong> {record.teacher_reply}</p> : <>
-          <Textarea value={drafts[record.id] ?? ''}
+          {record.kind === 'QUESTION' && <div className="space-y-1">
+            <Button size="sm" variant="secondary" disabled={drafting !== null || saving !== null}
+              onClick={() => void suggestReply(record)}>{drafting === record.id ? t('Preparing draft…', 'جارٍ إعداد المسودة…') : t('Prepare AI reply draft', 'اقترح مسودة رد بالذكاء الاصطناعي')}</Button>
+            <p className="text-xs text-muted-foreground">{t('The question text and, if requested, its linked plan goal and practice step go to the AI gateway. No learner identifier is sent. Review and edit before sending; free text may contain personal details.', 'يُرسل نص السؤال، وعند الطلب هدف الخطة المرتبطة وخطوة التدريب، إلى بوابة الذكاء الاصطناعي. لا يُرسل معرّف الطالب. راجع وعدّل قبل الإرسال؛ قد يحتوي النص الحر على تفاصيل شخصية.')}</p>
+          </div>}
+          {suggestions[record.id] && <div className="space-y-2 rounded-lg border bg-muted/40 p-3 text-sm">
+            <p className="font-medium">{t('AI suggestion—not sent', 'اقتراح الذكاء الاصطناعي—لم يُرسل')}</p>
+            <p className="whitespace-pre-wrap">{suggestions[record.id].reply}</p>
+            <p className="text-xs text-muted-foreground">{t('Context used:', 'السياق المستخدم:')} {suggestions[record.id].sources.map(source => source === 'student_question'
+              ? t('learner question', 'سؤال الطالب') : t('linked support plan', 'خطة الدعم المرتبطة')).join(' · ')}</p>
+            <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => {
+              if ((drafts[record.id] ?? '').trim() && !window.confirm(t('Replace your current draft?', 'هل تريد استبدال مسودتك الحالية؟'))) return;
+              setDrafts(previous => ({ ...previous, [record.id]: suggestions[record.id].reply }));
+              setDraftSources(previous => ({ ...previous, [record.id]: suggestions[record.id].sources }));
+              setSuggestions(previous => { const next = { ...previous }; delete next[record.id]; return next; });
+            }}>{t('Use as editable draft', 'استخدمه كمسودة قابلة للتعديل')}</Button>
+              <Button size="sm" variant="ghost" onClick={() => setSuggestions(previous => { const next = { ...previous }; delete next[record.id]; return next; })}>{t('Dismiss', 'تجاهل')}</Button></div>
+          </div>}
+          {draftSources[record.id] && <p className="text-xs text-muted-foreground">{t('AI draft—based on:', 'مسودة الذكاء الاصطناعي—المصادر:')} {draftSources[record.id].map(source => source === 'student_question'
+            ? t('learner question', 'سؤال الطالب') : t('linked support plan', 'خطة الدعم المرتبطة')).join(' · ')}</p>}
+          <Textarea value={drafts[record.id] ?? ''} disabled={drafting === record.id}
             onChange={event => setDrafts(previous => ({ ...previous, [record.id]: event.target.value }))}
             maxLength={2000} aria-label={t('Teacher feedback', 'ملاحظات المعلم')} />
-          <Button size="sm" disabled={saving === record.id} onClick={() => void reply(record)}>{t('Send teacher feedback', 'أرسل ملاحظات المعلم')}</Button>
+          <Button size="sm" disabled={saving === record.id || drafting === record.id} onClick={() => void reply(record)}>{t('Send teacher feedback', 'أرسل ملاحظات المعلم')}</Button>
         </>}
       </article>)}
   </section>;
