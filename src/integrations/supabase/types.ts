@@ -8599,6 +8599,19 @@ export type Database = {
       }
       get_tenant_analytics: { Args: { p_tenant_id?: string }; Returns: Json }
       get_tenant_config: { Args: never; Returns: Json }
+      get_school_transfer_summary: {
+        Args: { p_school_id: string }
+        Returns: {
+          evidence_state: string
+          learner_count: number | null
+          plans_with_checks: number | null
+          awaiting_learner: number | null
+          awaiting_teacher: number | null
+          demonstrated_on_one_check: number | null
+          not_yet_demonstrated: number | null
+          inconclusive: number | null
+        }[]
+      }
       get_user_school_id: { Args: { user_uuid: string }; Returns: string }
       get_user_tenant_id: { Args: { uid: string }; Returns: string }
       get_weakest_topics:

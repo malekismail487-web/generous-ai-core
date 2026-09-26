@@ -26,6 +26,16 @@ interface Props {
 }
 
 type MasteryObservation = { user_id: string; subject: string; topic: string; school_id: string | null; mastery_score: number; updated_at: string };
+type SchoolTransferSummary = {
+  evidence_state: string;
+  learner_count: number | null;
+  plans_with_checks: number | null;
+  awaiting_learner: number | null;
+  awaiting_teacher: number | null;
+  demonstrated_on_one_check: number | null;
+  not_yet_demonstrated: number | null;
+  inconclusive: number | null;
+};
 const masteryKey = (student: string, subject: string, topic: string) => `${student}\u0000${subject}\u0000${topic}`;
 const conceptChoice = (item: WeakTopic) => JSON.stringify([item.subject, item.topic]);
 
@@ -37,6 +47,7 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
   const [checkins, setCheckins] = useState<SupportCheckin[]>([]);
   const [transferChecks, setTransferChecks] = useState<TransferCheck[]>([]);
   const [transferLoadFailed, setTransferLoadFailed] = useState(false);
+  const [schoolTransferSummary, setSchoolTransferSummary] = useState<SchoolTransferSummary | null>(null);
   const [mastery, setMastery] = useState<Map<string, MasteryObservation>>(new Map());
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedLearner, setSelectedLearner] = useState('');
@@ -66,13 +77,19 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
     if (role === 'teacher') query = query.eq('teacher_id', user.id);
     if (role === 'student') query = query.eq('student_id', user.id);
     if (role === 'family' && studentId) query = query.eq('student_id', studentId).eq('family_visible', true);
-    const [planResult, learnerResult] = await Promise.all([
+    const [planResult, learnerResult, schoolTransferResult] = await Promise.all([
       query.order('created_at', { ascending: false }).limit(100),
       role === 'teacher'
         ? supabase.from('profiles').select('id, full_name, grade_level').eq('school_id', schoolId).eq('user_type', 'student').eq('is_active', true).order('full_name').limit(200)
         : Promise.resolve({ data: [] as Learner[], error: null }),
+      role === 'admin'
+        ? supabase.rpc('get_school_transfer_summary', { p_school_id: schoolId })
+        : Promise.resolve({ data: null, error: null }),
     ]);
     if (generation !== loadGeneration.current) return;
+    setSchoolTransferSummary(role === 'admin' && !schoolTransferResult.error
+      ? (schoolTransferResult.data?.[0] ?? null) as SchoolTransferSummary | null : null);
+    if (schoolTransferResult.error) setError(schoolTransferResult.error.message);
     if (planResult.error) {
       setError(planResult.error.message);
       setPlans([]);
@@ -268,11 +285,27 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
         <p className="col-span-full text-xs text-muted-foreground">{ar ? 'هذه أعداد سير عمل من أحدث الخطط فقط؛ ليست مقياساً لأثر التعلم.' : 'Workflow counts from the latest plans only; not a measure of learning impact.'}</p>
       </div>}
       {role === 'admin' && !error && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {([['Active', pulse.active], ['Needs review', pulse.awaitingReview], ['Help requests', pulse.needingHelp], ['Overdue', pulse.overdue]] as const).map(([label, value]) => (
-            <Card key={label}><CardContent className="p-4"><p className="text-xs text-muted-foreground">{label}</p><strong className="text-2xl">{value}</strong></CardContent></Card>
-          ))}
-          <p className="col-span-full text-xs text-muted-foreground">Workflow counts only; not proof of learning impact. Limited to the latest 100 plans and 500 check-ins.</p>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {([['Active', pulse.active], ['Needs review', pulse.awaitingReview], ['Help requests', pulse.needingHelp], ['Overdue', pulse.overdue]] as const).map(([label, value]) => (
+              <Card key={label}><CardContent className="p-4"><p className="text-xs text-muted-foreground">{label}</p><strong className="text-2xl">{value}</strong></CardContent></Card>
+            ))}
+            <p className="col-span-full text-xs text-muted-foreground">Workflow counts only; not proof of learning impact. Limited to the latest 100 plans and 500 check-ins.</p>
+          </div>
+          {schoolTransferSummary?.evidence_state === 'INSUFFICIENT_COHORT' && <p className="text-sm text-muted-foreground">Transfer review summary withheld: fewer than three learners have checks in the past 90 days.</p>}
+          {schoolTransferSummary?.evidence_state === 'AVAILABLE' && <div aria-label="School transfer review summary" className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {([
+              ['Learners with checks', schoolTransferSummary.learner_count],
+              ['Plans with checks', schoolTransferSummary.plans_with_checks],
+              ['Awaiting learner', schoolTransferSummary.awaiting_learner],
+              ['Awaiting teacher', schoolTransferSummary.awaiting_teacher],
+              ['One check demonstrated', schoolTransferSummary.demonstrated_on_one_check],
+              ['Not yet demonstrated', schoolTransferSummary.not_yet_demonstrated],
+              ['Inconclusive', schoolTransferSummary.inconclusive],
+            ] as const).map(([label, value]) => <Card key={label}><CardContent className="p-4"><p className="text-xs text-muted-foreground">{label}</p><strong className="text-2xl">{value}</strong></CardContent></Card>)}
+            <p className="col-span-full text-xs text-muted-foreground">Latest check per plan, past 90 days, minimum three learners. A review is not a causal measure of intervention impact.</p>
+          </div>}
+          {!loading && !schoolTransferSummary && <p className="text-sm text-muted-foreground">Transfer review summary unavailable; no result was returned.</p>}
         </div>
       )}
       {role === 'teacher' && (
