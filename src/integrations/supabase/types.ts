@@ -7171,6 +7171,7 @@ export type Database = {
       student_learning_records: {
         Row: {
           id: string
+          support_plan_id: string | null
           school_id: string
           student_id: string
           teacher_id: string | null
@@ -7186,6 +7187,7 @@ export type Database = {
         }
         Insert: {
           id?: string
+          support_plan_id?: string | null
           school_id: string
           student_id: string
           teacher_id?: string | null
@@ -7201,6 +7203,7 @@ export type Database = {
         }
         Update: {
           id?: string
+          support_plan_id?: string | null
           school_id?: string
           student_id?: string
           teacher_id?: string | null
@@ -7215,6 +7218,13 @@ export type Database = {
           teacher_replied_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "student_learning_records_support_plan_id_fkey"
+            columns: ["support_plan_id"]
+            isOneToOne: false
+            referencedRelation: "learning_support_plans"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "student_learning_records_school_id_fkey"
             columns: ["school_id"]

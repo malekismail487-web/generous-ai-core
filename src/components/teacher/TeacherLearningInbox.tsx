@@ -78,7 +78,8 @@ export function TeacherLearningInbox({ schoolId }: { schoolId: string }) {
       ? <p className="text-sm text-muted-foreground">{t('No records addressed to you.', 'لا توجد سجلات موجهة إليك.')}</p>
       : records.map(record => <article key={record.id} className="space-y-2 rounded-xl border border-foreground/10 p-3">
         <div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{record.kind}</Badge>
-          <strong>{record.topic}</strong><span className="text-xs text-muted-foreground">{record.subject} · {names[record.student_id] ?? t('Student', 'طالب')}</span></div>
+          <strong>{record.topic}</strong><span className="text-xs text-muted-foreground">{record.subject} · {names[record.student_id] ?? t('Student', 'طالب')}</span>
+          {record.support_plan_id && <a className="text-xs underline" href={`#support-plan-${record.support_plan_id}`}>{t('Linked support plan', 'خطة الدعم المرتبطة')}</a>}</div>
         <p className="whitespace-pre-wrap text-sm">{record.body}</p>
         {record.correction && <p className="text-sm"><strong>{t('Student correction:', 'تصحيح الطالب:')}</strong> {record.correction}</p>}
         {record.next_step && <p className="text-sm"><strong>{t('Proposed next check:', 'التحقق المقترح:')}</strong> {record.next_step}</p>}
