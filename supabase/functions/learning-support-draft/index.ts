@@ -10,6 +10,9 @@ import {
 import {
   replyToolChoice, runTeacherReplyWorkflow, teacherReplyTools,
 } from "../_shared/teacherReplyWorkflow.ts";
+import {
+  eligibleLessonEvidence, nextLessonAIMessages, nextLessonAITool, parseAINextLessonDraft,
+} from "../_shared/nextLessonAIDraft.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -55,7 +58,55 @@ serve(async (request) => {
     body = parsed as Record<string, unknown>;
   } catch { return json(400, { error: "invalid_request" }); }
   const kind = body.kind;
-  if (kind !== "support_plan" && kind !== "transfer_check" && kind !== "teacher_reply") return json(400, { error: "invalid_kind" });
+  if (kind !== "support_plan" && kind !== "transfer_check" && kind !== "teacher_reply" && kind !== "next_lesson") return json(400, { error: "invalid_kind" });
+  if (kind === "next_lesson") {
+    if (typeof body.subjectId !== "string" || !uuid.test(body.subjectId)
+      || typeof body.gradeLevel !== "string" || body.gradeLevel.trim().length < 1 || body.gradeLevel.length > 120
+      || typeof body.topic !== "string" || body.topic.trim().length < 2 || body.topic.length > 180
+      || (body.language !== "en" && body.language !== "ar")) return json(400, { error: "invalid_lesson_request" });
+    const [subjectResult, learnerResult, planResult] = await Promise.all([
+      db.from("subjects").select("name").eq("id", body.subjectId).eq("school_id", profile.school_id).maybeSingle(),
+      db.from("profiles").select("id, grade_level").eq("school_id", profile.school_id)
+        .eq("user_type", "student").eq("is_active", true).eq("grade_level", body.gradeLevel).limit(1001),
+      db.from("learning_support_plans")
+        .select("school_id, teacher_id, student_id, status, subject, topic, source_kind")
+        .eq("school_id", profile.school_id).eq("teacher_id", identity.user.id).eq("status", "active").limit(1001),
+    ]);
+    if (subjectResult.error || learnerResult.error || planResult.error) return json(503, { error: "evidence_unavailable" });
+    if (!subjectResult.data) return json(404, { error: "subject_unavailable" });
+    if ((learnerResult.data?.length ?? 0) === 1001 || (planResult.data?.length ?? 0) === 1001) {
+      return json(503, { error: "evidence_incomplete" });
+    }
+    const evidence = eligibleLessonEvidence(
+      profile.school_id, identity.user.id, body.gradeLevel.trim(), subjectResult.data.name, body.topic.trim(),
+      learnerResult.data ?? [], planResult.data ?? [],
+    );
+    if (!evidence) return json(403, { error: "cohort_threshold_not_met" });
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) return json(503, { error: "ai_unavailable" });
+    const tool = nextLessonAITool();
+    try {
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "openai/gpt-5.6-sol", reasoning_effort: "none",
+          messages: nextLessonAIMessages(evidence, body.language),
+          tools: [{ type: "function", function: tool }],
+          tool_choice: { type: "function", function: { name: tool.name } },
+        }),
+        signal: AbortSignal.timeout(25_000),
+      });
+      if (!response.ok) return json(response.status === 429 ? 429 : 503, { error: response.status === 429 ? "rate_limited" : "ai_unavailable" });
+      const result = await response.json();
+      const calls = result?.choices?.[0]?.message?.tool_calls;
+      if (!Array.isArray(calls) || calls.length !== 1 || calls[0]?.function?.name !== tool.name
+        || typeof calls[0]?.function?.arguments !== "string") return json(502, { error: "invalid_ai_draft" });
+      const draft = parseAINextLessonDraft(JSON.parse(calls[0].function.arguments));
+      if (!draft) return json(502, { error: "invalid_ai_draft" });
+      return json(200, { kind, draft, evidence, reviewRequired: true });
+    } catch { return json(503, { error: "ai_unavailable" }); }
+  }
   if (kind === "teacher_reply") {
     if (typeof body.recordId !== "string" || !uuid.test(body.recordId)) return json(400, { error: "invalid_record" });
     const { data: record, error: recordError } = await db.from("student_learning_records")

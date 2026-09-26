@@ -12,6 +12,7 @@ import {
 } from '@/lib/nextLesson';
 import type { SupportPlan } from '@/lib/learningSupport';
 import type { Database } from '@/integrations/supabase/types';
+import { parseAINextLessonDraft } from '../../../supabase/functions/_shared/nextLessonAIDraft';
 
 type Subject = { id: string; name: string };
 type SavedLesson = Database['public']['Tables']['lesson_plans']['Row'];
@@ -43,12 +44,15 @@ export function NextLessonWorkbench({ schoolId, teacherId }: { schoolId: string;
   const [savedId, setSavedId] = useState('');
   const [dirty, setDirty] = useState(false);
   const [published, setPublished] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<NextLessonDraft | null>(null);
   const generation = useRef(0);
 
   const load = useCallback(async () => {
     const current = ++generation.current;
     setLoading(true); setError(''); setNotice(''); setEvidence(emptyEvidence());
     setDraft(null); setSavedId(''); setDirty(false); setPublished(false);
+    setAiSuggestion(null);
     try {
       const [subjectResult, learnerResult, planResult, lessonResult] = await Promise.all([
         supabase.from('subjects').select('id, name').eq('school_id', schoolId).order('name').limit(200),
@@ -90,6 +94,7 @@ export function NextLessonWorkbench({ schoolId, teacherId }: { schoolId: string;
 
   const selectNeed = (nextTopic: string) => {
     setTopic(nextTopic); setSavedId(''); setDirty(true); setPublished(false); setNotice('');
+    setAiSuggestion(null);
     const need = needs.find(item => item.topic === nextTopic);
     setDraft(need ? nextLessonDraft(need, grade, ar) : null);
   };
@@ -105,8 +110,30 @@ export function NextLessonWorkbench({ schoolId, teacherId }: { schoolId: string;
     if (!saved || lesson.is_published) return;
     setSubjectId(lesson.subject_id); setGrade(saved.gradeLevel); setTopic(saved.topic);
     setDraft(saved.sections); setSavedId(lesson.id); setDirty(false); setPublished(false);
+    setAiSuggestion(null);
     setNotice(ar ? 'فُتحت المسودة. يلزم أن تظل الأدلة الحالية مستوفية لحد الخصوصية قبل النشر.'
       : 'Draft opened. Current evidence must still meet the privacy threshold before publication.');
+  };
+
+  const suggestLesson = async () => {
+    if (!selectedNeed || !subject || !grade || aiBusy || saving || published) return;
+    const requestGeneration = generation.current;
+    setAiBusy(true); setError(''); setNotice(''); setAiSuggestion(null);
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke('learning-support-draft', {
+        body: { kind: 'next_lesson', subjectId: subject.id, gradeLevel: grade, topic: selectedNeed.topic, language: ar ? 'ar' : 'en' },
+      });
+      if (invokeError) throw invokeError;
+      if (requestGeneration !== generation.current) return;
+      const suggestion = parseAINextLessonDraft(data?.draft);
+      if (!suggestion || !validNextLessonDraft(suggestion) || data?.reviewRequired !== true
+        || data?.evidence?.topic !== selectedNeed.topic || data?.evidence?.subject !== subject.name
+        || data?.evidence?.gradeLevel !== grade || data?.evidence?.distinctLearners < 3) throw new Error('Invalid AI suggestion');
+      setAiSuggestion(suggestion);
+      setNotice(ar ? 'اقتراح منفصل لم يُحفظ أو يُنشر. راجعه قبل استخدامه.' : 'Separate suggestion; not saved or published. Review before using it.');
+    } catch {
+      if (requestGeneration === generation.current) setError(ar ? 'تعذر إعداد اقتراح الذكاء الاصطناعي؛ ما زالت المسودة اليدوية متاحة.' : 'AI lesson suggestion unavailable; the manual draft remains available.');
+    } finally { setAiBusy(false); }
   };
 
   const save = async () => {
@@ -172,7 +199,7 @@ export function NextLessonWorkbench({ schoolId, teacherId }: { schoolId: string;
         <p className="text-sm text-muted-foreground">{ar
           ? 'تظهر الفجوات المشتركة لثلاثة طلاب على الأقل. المسودة قابلة للتحرير ولا تُنشر تلقائياً.'
           : 'Only needs shared by at least three learners are shown. Drafts are editable and never auto-published.'}</p></div>
-      <Button size="sm" variant="outline" onClick={() => void load()} disabled={loading || saving} aria-label="Refresh next-lesson evidence"><RefreshCw className="h-4 w-4" /></Button>
+      <Button size="sm" variant="outline" onClick={() => void load()} disabled={loading || saving || aiBusy} aria-label="Refresh next-lesson evidence"><RefreshCw className="h-4 w-4" /></Button>
     </div>
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     {notice && <p role="status" className="text-sm">{notice}</p>}
@@ -183,20 +210,34 @@ export function NextLessonWorkbench({ schoolId, teacherId }: { schoolId: string;
           ? 'وصلت القراءة إلى حد العرض؛ قد لا تظهر بعض الفجوات. لا تُفسر الغياب على أنه فهم.'
           : 'A display limit was reached; some needs may be missing. Absence is not evidence of understanding.'}</p>}
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm">{ar ? 'المادة' : 'Subject'}<select className="mt-1 w-full rounded-md border bg-background p-2" value={subjectId}
-            onChange={event => { setSubjectId(event.target.value); setTopic(''); setDraft(null); setSavedId(''); setDirty(false); setPublished(false); }}>
+          <label className="text-sm">{ar ? 'المادة' : 'Subject'}<select className="mt-1 w-full rounded-md border bg-background p-2" value={subjectId} disabled={aiBusy}
+            onChange={event => { setSubjectId(event.target.value); setTopic(''); setDraft(null); setSavedId(''); setDirty(false); setPublished(false); setAiSuggestion(null); }}>
             <option value="">{ar ? 'اختر المادة' : 'Choose subject'}</option>{evidence.subjects.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select></label>
-          <label className="text-sm">{ar ? 'الصف' : 'Grade'}<select className="mt-1 w-full rounded-md border bg-background p-2" value={grade}
-            onChange={event => { setGrade(event.target.value); setTopic(''); setDraft(null); setSavedId(''); setDirty(false); setPublished(false); }}>
+          <label className="text-sm">{ar ? 'الصف' : 'Grade'}<select className="mt-1 w-full rounded-md border bg-background p-2" value={grade} disabled={aiBusy}
+            onChange={event => { setGrade(event.target.value); setTopic(''); setDraft(null); setSavedId(''); setDirty(false); setPublished(false); setAiSuggestion(null); }}>
             <option value="">{ar ? 'اختر الصف' : 'Choose grade'}</option>{grades.map(item => <option key={item} value={item}>{item}</option>)}
           </select></label>
         </div>
         {subjectId && grade && <label className="block text-sm">{ar ? 'فجوة متكررة' : 'Repeated need'}
-          <select className="mt-1 w-full rounded-md border bg-background p-2" value={topic} onChange={event => selectNeed(event.target.value)}>
+          <select className="mt-1 w-full rounded-md border bg-background p-2" value={topic} disabled={aiBusy} onChange={event => selectNeed(event.target.value)}>
             <option value="">{needs.length ? (ar ? 'اختر موضوعاً' : 'Choose a topic') : (ar ? 'لا توجد فجوة تستوفي حد الخصوصية' : 'No need meets the privacy threshold')}</option>
             {needs.map(item => <option key={item.topic} value={item.topic}>{item.topic} · {item.learnerCount} {ar ? 'طلاب' : 'learners'}</option>)}
           </select></label>}
+        {draft && selectedNeed && !published && <div className="space-y-1">
+          <Button size="sm" variant="secondary" disabled={aiBusy || saving} onClick={() => void suggestLesson()}>{aiBusy ? (ar ? 'جارٍ إعداد الاقتراح…' : 'Preparing suggestion…') : (ar ? 'اقترح درساً بالذكاء الاصطناعي' : 'Suggest an AI lesson')}</Button>
+          <p className="text-xs text-muted-foreground">{ar ? 'تُرسل المادة والموضوع والصف وأعداد مجمعة فقط إلى بوابة الذكاء الاصطناعي؛ لا تُرسل معرّفات الطلاب أو إجاباتهم. لا يحدث حفظ أو نشر تلقائي.' : 'Only subject, topic, grade, and aggregate counts go to the AI gateway; no learner IDs or answers. Nothing is saved or published automatically.'}</p>
+        </div>}
+        {aiSuggestion && <Card><CardHeader><CardTitle className="text-base">{ar ? 'اقتراح الذكاء الاصطناعي — غير محفوظ' : 'AI suggestion — not saved'}</CardTitle></CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p className="font-medium">{aiSuggestion.title}</p>
+            {fields.map(field => <p key={field.id} className="whitespace-pre-wrap"><strong>{ar ? field.ar : field.en}:</strong> {aiSuggestion[field.id]}</p>)}
+            <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => {
+              if (!window.confirm(ar ? 'هل تريد استبدال مسودة الدرس الحالية بهذا الاقتراح؟' : 'Replace the current lesson draft with this suggestion?')) return;
+              setDraft(aiSuggestion); setDirty(true); setAiSuggestion(null); setNotice('');
+            }}>{ar ? 'استخدمه كمسودة قابلة للتعديل' : 'Use as editable draft'}</Button>
+              <Button size="sm" variant="ghost" onClick={() => setAiSuggestion(null)}>{ar ? 'تجاهل' : 'Dismiss'}</Button></div>
+          </CardContent></Card>}
         {draft && <Card><CardHeader><CardTitle className="text-base">{ar ? 'راجع وعدّل المسودة' : 'Review and edit the draft'}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {selectedNeed ? <p className="text-xs text-muted-foreground">{selectedNeed.learnerCount} {ar ? 'طلاب مختلفون' : 'distinct learners'} · {selectedNeed.alePlanCount} ALE · {selectedNeed.observationPlanCount} {ar ? 'ملاحظات معلم' : 'teacher observations'}. {ar ? 'ليست دليلاً على الفاعلية.' : 'Not evidence of instructional effectiveness.'}</p>
@@ -208,14 +249,14 @@ export function NextLessonWorkbench({ schoolId, teacherId }: { schoolId: string;
             <p className="text-xs text-muted-foreground">{ar
               ? 'احفظ مسودة أولاً. النشر خطوة منفصلة بإقرار المعلم؛ يمكن لطلاب المدرسة رؤيتها بعد ذلك.'
               : 'Save an unpublished draft first. Publishing requires a separate teacher action and makes it visible to students in this school.'}</p>
-            <div className="flex flex-wrap gap-2"><Button disabled={saving || published || !selectedNeed || (!dirty && !!savedId) || !validNextLessonDraft(draft)} onClick={() => void save()}>{savedId ? (ar ? 'احفظ التعديلات' : 'Save edits') : (ar ? 'احفظ مسودة' : 'Save unpublished draft')}</Button>
-              {savedId && <Button variant="outline" disabled={saving || dirty || !selectedNeed || published} onClick={() => void publish()}>{published ? (ar ? 'منشور' : 'Published') : (ar ? 'وافق وانشر' : 'Approve and publish')}</Button>}
+            <div className="flex flex-wrap gap-2"><Button disabled={saving || aiBusy || published || !selectedNeed || (!dirty && !!savedId) || !validNextLessonDraft(draft)} onClick={() => void save()}>{savedId ? (ar ? 'احفظ التعديلات' : 'Save edits') : (ar ? 'احفظ مسودة' : 'Save unpublished draft')}</Button>
+              {savedId && <Button variant="outline" disabled={saving || aiBusy || dirty || !selectedNeed || published} onClick={() => void publish()}>{published ? (ar ? 'منشور' : 'Published') : (ar ? 'وافق وانشر' : 'Approve and publish')}</Button>}
             </div>
           </CardContent></Card>}
         {evidence.lessons.length > 0 && <div className="space-y-2"><h3 className="font-semibold">{ar ? 'مسودات وخطط سابقة' : 'Saved drafts and plans'}</h3>
           {evidence.lessons.map(lesson => <div key={lesson.id} className="flex flex-wrap items-center gap-2 rounded-lg border p-3 text-sm">
             <span className="min-w-0 flex-1">{lesson.title} · {lesson.is_published ? (ar ? 'منشور' : 'Published') : (ar ? 'مسودة' : 'Draft')}</span>
-            {!lesson.is_published && <Button size="sm" variant="outline" onClick={() => openSaved(lesson)}>{ar ? 'افتح للمراجعة' : 'Open for review'}</Button>}
+            {!lesson.is_published && <Button size="sm" variant="outline" disabled={aiBusy} onClick={() => openSaved(lesson)}>{ar ? 'افتح للمراجعة' : 'Open for review'}</Button>}
           </div>)}
         </div>}
       </>}

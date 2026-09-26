@@ -13,6 +13,7 @@
     "test:learning-transfer-db": "tsx scripts/learningTransfer.db.test.ts",
     "test:learning-support-draft": "tsx scripts/learningSupportDraft.test.ts",
     "test:teacher-reply-draft": "tsx scripts/teacherReplyDraft.test.ts",
+    "test:next-lesson-ai": "tsx --tsconfig tsconfig.app.json scripts/nextLessonAI.test.ts",
     "test:learning-support-questions-db": "tsx scripts/learningSupportQuestions.db.test.ts",
     "test:teacher-support-triage": "tsx --tsconfig tsconfig.app.json scripts/teacherSupportTriage.test.ts",
     "preview": "vite preview"
