@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Plus, Trash2, Calendar, FileText, Upload } from 'lucide-react';
+import { Loader2, Plus, Trash2, Calendar, FileText, Upload, Sparkles } from 'lucide-react';
 import { format, startOfWeek, addDays } from 'date-fns';
+import { parseWeeklyPlanProposal, type WeeklyPlanProposal } from '../../../supabase/functions/_shared/weeklyPlanAI';
 
 const GRADE_LEVELS = [
   'All Grades', 'KG1', 'KG2', 'KG3',
@@ -56,6 +57,40 @@ export function WeeklyPlanBuilder() {
   const [fileUrl, setFileUrl] = useState('');
   const [fileName, setFileName] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [drafting, setDrafting] = useState(false);
+  const [proposal, setProposal] = useState<{ draft: WeeklyPlanProposal; context: string } | null>(null);
+  const planContext = JSON.stringify({ title: title.trim(), gradeLevel, weekStart });
+
+  const suggestActivities = async () => {
+    if (drafting || creating || planType !== 'manual' || title.trim().length < 3) return;
+    const context = planContext;
+    setDrafting(true);
+    setProposal(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('weekly-plan-draft', {
+        body: { title: title.trim(), gradeLevel, weekStart },
+      });
+      if (error || data?.reviewRequired !== true || !Array.isArray(data.catalogSubjects)
+        || !data.catalogSubjects.every((subject: unknown) => typeof subject === 'string')) {
+        throw new Error('The school-scoped proposal was unavailable.');
+      }
+      const draft = parseWeeklyPlanProposal(data.draft, data.catalogSubjects);
+      if (!draft) throw new Error('The proposal did not pass validation.');
+      setProposal({ draft, context });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'AI proposal unavailable',
+        description: error instanceof Error ? error.message : 'Try again later.' });
+    } finally { setDrafting(false); }
+  };
+
+  const useProposal = () => {
+    if (!proposal || proposal.context !== planContext || planType !== 'manual') return;
+    const hasCurrentText = Object.values(dayActivities).some(activities => activities.some(activity => activity.trim()));
+    if (hasCurrentText && !window.confirm('Replace your current weekly activities with this editable proposal?')) return;
+    setDayActivities(Object.fromEntries(DAYS.map(day => [day,
+      proposal.draft[day as keyof WeeklyPlanProposal].map(item => `${item.subject}: ${item.activity}`)])));
+    setProposal(null);
+  };
 
   const fetchPlans = useCallback(async () => {
     if (!school) return;
@@ -118,6 +153,7 @@ export function WeeklyPlanBuilder() {
   };
 
   const handleCreate = async () => {
+    if (drafting) return;
     if (!school || !profile || !title.trim()) {
       toast({ variant: 'destructive', title: 'Please fill in the title' });
       return;
@@ -187,11 +223,11 @@ export function WeeklyPlanBuilder() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label>Title</Label>
-            <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Week Plan Title" />
+            <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Week Plan Title" disabled={drafting} />
           </div>
           <div className="space-y-2">
             <Label>Grade Level</Label>
-            <Select value={gradeLevel} onValueChange={setGradeLevel}>
+            <Select value={gradeLevel} onValueChange={setGradeLevel} disabled={drafting}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {GRADE_LEVELS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
@@ -200,7 +236,7 @@ export function WeeklyPlanBuilder() {
           </div>
           <div className="space-y-2">
             <Label>Week Starting</Label>
-            <Input type="date" value={weekStart} onChange={e => setWeekStart(e.target.value)} />
+            <Input type="date" value={weekStart} onChange={e => setWeekStart(e.target.value)} disabled={drafting} />
           </div>
         </div>
 
@@ -208,11 +244,29 @@ export function WeeklyPlanBuilder() {
           <Label>Plan Type</Label>
           <Tabs value={planType} onValueChange={v => setPlanType(v as 'manual' | 'file')}>
             <TabsList className="grid grid-cols-2 w-full max-w-xs">
-              <TabsTrigger value="manual">Manual Builder</TabsTrigger>
-              <TabsTrigger value="file">Upload File</TabsTrigger>
+              <TabsTrigger value="manual" disabled={drafting}>Manual Builder</TabsTrigger>
+              <TabsTrigger value="file" disabled={drafting}>Upload File</TabsTrigger>
             </TabsList>
 
             <TabsContent value="manual" className="space-y-4 mt-4">
+              <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                <Button type="button" size="sm" variant="secondary" onClick={() => void suggestActivities()}
+                  disabled={drafting || creating || title.trim().length < 3}>
+                  {drafting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                  {drafting ? 'Preparing proposal…' : 'Suggest school-grounded weekly activities'}
+                </Button>
+                <p className="text-xs text-muted-foreground">Your title, grade, week and this school’s subject names go to the AI gateway. Do not put personal details in the title. No learner records are read. AI cannot publish; review each activity before applying or publishing.</p>
+                {proposal && <div className="space-y-2 rounded-md border p-3 text-sm">
+                  <strong>AI proposal — not applied or published</strong>
+                  {DAYS.map(day => <div key={day}><span className="font-medium">{day}:</span>
+                    <ul className="list-disc ps-5">{proposal.draft[day as keyof WeeklyPlanProposal].map((item, index) =>
+                      <li key={index}>{item.subject}: {item.activity}</li>)}</ul></div>)}
+                  {proposal.context !== planContext && <p role="alert" className="text-destructive">Plan details changed. Request a fresh proposal.</p>}
+                  <div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={useProposal}
+                    disabled={proposal.context !== planContext}>Use as editable draft</Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setProposal(null)}>Dismiss</Button></div>
+                </div>}
+              </div>
               {DAYS.map(day => (
                 <div key={day} className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -262,7 +316,7 @@ export function WeeklyPlanBuilder() {
           </Tabs>
         </div>
 
-        <Button onClick={handleCreate} disabled={creating || !title.trim()}>
+        <Button onClick={handleCreate} disabled={creating || drafting || !title.trim()}>
           {creating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
           Publish Weekly Plan
         </Button>
