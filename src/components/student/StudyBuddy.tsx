@@ -93,7 +93,7 @@ function saveStyle(style: string) {
   localStorage.setItem(STYLE_KEY, style);
 }
 
-export function StudyBuddy() {
+export function StudyBuddy({ initialPrompt = '' }: { initialPrompt?: string }) {
   const { user } = useAuth();
   const { currentLevel, profiles, getLevelPrompt, recordChatInteraction } = useAdaptiveLevel();
   const { t, language } = useThemeLanguage();
@@ -788,6 +788,7 @@ Be warm, encouraging, and intellectually stimulating. You're not just answering 
           </div>
           <ChatInput
             onSend={sendMessage}
+            initialValue={initialPrompt}
             disabled={isLoading}
           />
         </div>

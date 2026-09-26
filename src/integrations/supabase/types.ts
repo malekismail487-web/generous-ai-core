@@ -7109,6 +7109,62 @@ export type Database = {
         }
         Relationships: []
       }
+      student_learning_records: {
+        Row: {
+          id: string
+          school_id: string
+          student_id: string
+          teacher_id: string | null
+          kind: string
+          subject: string
+          topic: string
+          body: string
+          correction: string | null
+          next_step: string | null
+          teacher_reply: string | null
+          created_at: string
+          teacher_replied_at: string | null
+        }
+        Insert: {
+          id?: string
+          school_id: string
+          student_id: string
+          teacher_id?: string | null
+          kind: string
+          subject: string
+          topic: string
+          body: string
+          correction?: string | null
+          next_step?: string | null
+          teacher_reply?: string | null
+          created_at?: string
+          teacher_replied_at?: string | null
+        }
+        Update: {
+          id?: string
+          school_id?: string
+          student_id?: string
+          teacher_id?: string | null
+          kind?: string
+          subject?: string
+          topic?: string
+          body?: string
+          correction?: string | null
+          next_step?: string | null
+          teacher_reply?: string | null
+          created_at?: string
+          teacher_replied_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_learning_records_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subjects: {
         Row: {
           color: string | null

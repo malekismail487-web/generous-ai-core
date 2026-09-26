@@ -14,10 +14,11 @@ export interface ChatAttachment {
 interface ChatInputProps {
   onSend: (message: string, attachments?: ChatAttachment[]) => void;
   disabled?: boolean;
+  initialValue?: string;
 }
 
-export function ChatInput({ onSend, disabled }: ChatInputProps) {
-  const [input, setInput] = useState("");
+export function ChatInput({ onSend, disabled, initialValue = '' }: ChatInputProps) {
+  const [input, setInput] = useState(initialValue);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

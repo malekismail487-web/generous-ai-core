@@ -5,7 +5,7 @@ import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import {
   Brain, Layers, BookOpen, FlipHorizontal, ClipboardList,
   FileText, GraduationCap, Flame, Calendar, Podcast,
-  Target, Trophy, Timer, BookOpenCheck, Megaphone, MapPin, LineChart,
+  Target, Trophy, Timer, BookOpenCheck, Megaphone, MapPin, LineChart, Compass,
 } from 'lucide-react';
 import { LuminaLogo } from '@/components/LuminaLogo';
 import { SmartNudges } from '@/components/student/SmartNudges';
@@ -16,7 +16,7 @@ export type GridAction =
   | 'mindmaps' | 'subjects' | 'examination' | 'flashcards' | 'notes' | 'sat'
   | 'assignments' | 'reports' | 'weeklyplan' | 'podcasts' | 'studybuddy'
   | 'goals' | 'leaderboard' | 'focustimer' | 'aiplans' | 'announcements'
-  | 'trips' | 'settings' | 'graphcalc';
+  | 'trips' | 'settings' | 'graphcalc' | 'learningstudio';
 
 interface StudentHomeGridProps {
   onNavigate: (action: GridAction) => void;
@@ -38,6 +38,7 @@ const RING_ITEMS: { id: GridAction; icon: typeof Brain; label: string; labelAr: 
 // Branch items
 const BRANCH_ITEMS: { id: GridAction; icon: typeof Brain; label: string; labelAr: string; schoolOnly?: boolean }[] = [
   { id: 'assignments', icon: FileText, label: 'Assignments', labelAr: 'الواجبات', schoolOnly: true },
+  { id: 'learningstudio', icon: Compass, label: 'Learning Studio', labelAr: 'استوديو التعلم', schoolOnly: true },
   { id: 'weeklyplan', icon: Calendar, label: 'Weekly Plan', labelAr: 'الخطة', schoolOnly: true },
   { id: 'leaderboard', icon: Trophy, label: 'Ranking', labelAr: 'الترتيب' },
   { id: 'goals', icon: Target, label: 'Goals', labelAr: 'أهداف' },

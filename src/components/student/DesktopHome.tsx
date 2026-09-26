@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Brain, Layers, BookOpen, FlipHorizontal, ClipboardList, FileText,
   GraduationCap, Calendar, Podcast, Target, Trophy, Timer, BookOpenCheck,
-  Megaphone, MapPin, LineChart, Flame, ArrowUpRight,
+  Megaphone, MapPin, LineChart, Flame, ArrowUpRight, Compass,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStreak } from '@/hooks/useStreak';
@@ -36,6 +36,7 @@ const TILES: Tile[] = [
   { id: 'notes', icon: ClipboardList, label: 'Notes', labelAr: 'ملاحظات', note: 'Everything kept', noteAr: 'كل ما حفظته', span: 'col-span-1 row-span-1' },
   { id: 'graphcalc', icon: LineChart, label: 'Graphs', labelAr: 'رسوم', note: 'Plot it out', noteAr: 'ارسمها', span: 'col-span-1 row-span-1' },
   { id: 'assignments', icon: FileText, label: 'Assignments', labelAr: 'الواجبات', note: 'From your teachers', noteAr: 'من معلميك', span: 'col-span-2 row-span-1', schoolOnly: true },
+  { id: 'learningstudio', icon: Compass, label: 'Learning studio', labelAr: 'استوديو التعلم', note: 'Six school-connected tools', noteAr: 'ست أدوات مدرسية مترابطة', span: 'col-span-2 row-span-1', schoolOnly: true },
   { id: 'weeklyplan', icon: Calendar, label: 'Weekly plan', labelAr: 'الخطة', note: 'Sunday to Thursday', noteAr: 'الأحد إلى الخميس', span: 'col-span-1 row-span-1', schoolOnly: true },
   { id: 'leaderboard', icon: Trophy, label: 'Ranking', labelAr: 'الترتيب', note: 'Your school only', noteAr: 'مدرستك فقط', span: 'col-span-1 row-span-1' },
   { id: 'goals', icon: Target, label: 'Goals', labelAr: 'أهداف', note: 'Small, daily', noteAr: 'صغيرة ويومية', span: 'col-span-1 row-span-1' },

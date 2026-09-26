@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { useThemeLanguage } from '@/hooks/useThemeLanguage';
 import { useLiveMeetings } from '@/hooks/useLiveMeetings';
 
-export type TabType = 'home' | 'weeklyplan' | 'profile' | 'mindmaps' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'assignments' | 'reports' | 'podcasts' | 'studybuddy' | 'goals' | 'leaderboard' | 'focustimer' | 'aiplans' | 'announcements' | 'trips' | 'graphcalc' | 'live';
+export type TabType = 'home' | 'weeklyplan' | 'profile' | 'mindmaps' | 'subjects' | 'notes' | 'flashcards' | 'examination' | 'sat' | 'assignments' | 'reports' | 'podcasts' | 'studybuddy' | 'goals' | 'leaderboard' | 'focustimer' | 'aiplans' | 'announcements' | 'trips' | 'graphcalc' | 'live' | 'learningstudio';
 
 interface BottomNavProps {
   activeTab: TabType;

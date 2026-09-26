@@ -26,6 +26,7 @@ import { GraphCalculator } from "@/components/student/GraphCalculator";
 import { StudentHomeGrid, GridAction } from "@/components/StudentHomeGrid";
 import { WeeklyPlanSection } from "@/components/WeeklyPlanSection";
 import { LearningSupportPanel } from "@/components/learning/LearningSupportPanel";
+import { StudentLearningStudio } from "@/components/student/StudentLearningStudio";
 import { BannerAd } from "@/components/BannerAd";
 import { FloatingTimer } from "@/components/student/FloatingTimer";
 import { StudentLiveList } from "@/components/student/StudentLiveList";
@@ -48,6 +49,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [tutorPrompt, setTutorPrompt] = useState('');
+  useEffect(() => { if (activeTab !== 'studybuddy') setTutorPrompt(''); }, [activeTab]);
   const navigate = useNavigate();
   const isDesktop = !useIsMobile();
 
@@ -171,7 +174,12 @@ const Index = () => {
       case 'reports':
         return profile ? <StudentReportCards studentId={profile.id} /> : null;
       case 'studybuddy':
-        return <StudyBuddy />;
+        return <StudyBuddy initialPrompt={tutorPrompt} />;
+      case 'learningstudio':
+        return <StudentLearningStudio onNavigate={setActiveTab} onTutorPrompt={(prompt) => {
+          setTutorPrompt(prompt);
+          setActiveTab('studybuddy');
+        }} />;
       case 'goals':
         return <GoalTracker />;
       case 'leaderboard':
@@ -211,6 +219,7 @@ const Index = () => {
     : activeTab === 'trips' ? t('Trips', 'الرحلات')
     : activeTab === 'graphcalc' ? t('Graph Calculator', 'حاسبة الرسوم')
     : activeTab === 'weeklyplan' ? t('Weekly Plan', 'الخطة الأسبوعية')
+    : activeTab === 'learningstudio' ? t('Learning Studio', 'استوديو التعلم')
     : activeTab === 'live' ? t('Live Rooms', 'الغرف المباشرة')
     : activeTab === 'profile' ? t('Profile', 'الملف الشخصي')
     : t('Home', 'الرئيسية');

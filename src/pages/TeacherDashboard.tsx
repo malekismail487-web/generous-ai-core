@@ -35,6 +35,7 @@ import { SubjectsSection } from '@/components/SubjectsSection';
 import { AssignmentPerformanceAnalytics } from '@/components/teacher/AssignmentPerformanceAnalytics';
 import { TeacherLearningStyleReports } from '@/components/teacher/TeacherLearningStyleReports';
 import { LearningSupportPanel } from '@/components/learning/LearningSupportPanel';
+import { TeacherLearningInbox } from '@/components/teacher/TeacherLearningInbox';
 import { TenantExtensionsSection } from '@/components/extensions/TenantExtensionsSection';
 import { ActorBackdrop } from '@/components/motion/ActorBackdrop';
 
@@ -466,6 +467,7 @@ export default function TeacherDashboard() {
           </TabsContent>
           <TabsContent value="support" className="space-y-4">
             <LearningSupportPanel role="teacher" schoolId={school.id} />
+            <TeacherLearningInbox schoolId={school.id} />
           </TabsContent>
 
           {/* Announcements Tab */}
