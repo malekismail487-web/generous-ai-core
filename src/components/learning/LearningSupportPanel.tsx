@@ -17,6 +17,7 @@ import { LearningTransferPanel } from './LearningTransferPanel';
 import { transferSchoolSummary, type TransferCheck, type TransferVerdict } from '@/lib/learningTransfer';
 import type { Database } from '@/integrations/supabase/types';
 import { teacherSupportQueue, type TeacherAttentionReason } from '@/lib/teacherSupportTriage';
+import { parseLearningDraft } from '../../../supabase/functions/_shared/learningDraftContract';
 
 type Learner = { id: string; full_name: string | null; grade_level: string | null };
 type LinkedQuestion = Database['public']['Tables']['student_learning_records']['Row'];
@@ -87,6 +88,7 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
   const [dueDate, setDueDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [draftingPlan, setDraftingPlan] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const loadGeneration = useRef(0);
@@ -240,6 +242,41 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
     if (writeError) setError(writeError.message);
     else { setNotice('Check-in recorded. Your teacher can see the update.'); await load(); }
     setSaving(false);
+  };
+
+  const suggestSupportPlan = async () => {
+    if (!user || role !== 'teacher' || !subject.trim() || !topic.trim()) return;
+    setDraftingPlan(true); setError(''); setNotice('');
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke('learning-support-draft', {
+        body: { kind: 'support_plan', subject: subject.trim(), topic: topic.trim() },
+      });
+      if (invokeError) throw invokeError;
+      const draft = parseLearningDraft('support_plan', data?.draft);
+      if (!draft || data?.reviewRequired !== true) throw new Error('The AI draft could not be validated.');
+      setGoal(draft.goal); setLearnerStep(draft.learnerStep); setFamilyStep(draft.familyStep);
+      setNotice(ar ? 'مسودة فقط؛ راجعها قبل إنشاء الخطة.' : 'Draft only; review it before creating the plan.');
+    } catch {
+      setError(ar ? 'تعذر إعداد المسودة. يمكنك كتابة الخطة يدوياً.' : 'AI draft unavailable; you can still write the plan manually.');
+    } finally { setDraftingPlan(false); }
+  };
+
+  const suggestTransferCheck = async (planId: string): Promise<{ prompt: string; criteria: string } | null> => {
+    if (!user || role !== 'teacher') return null;
+    setError(''); setNotice('');
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke('learning-support-draft', {
+        body: { kind: 'transfer_check', planId },
+      });
+      if (invokeError) throw invokeError;
+      const draft = parseLearningDraft('transfer_check', data?.draft);
+      if (!draft || data?.reviewRequired !== true) throw new Error('The AI draft could not be validated.');
+      setNotice(ar ? 'مسودة فقط؛ راجع السؤال والمعيار قبل الإرسال.' : 'Draft only; review the question and criteria before assigning.');
+      return draft;
+    } catch {
+      setError(ar ? 'تعذر إعداد المسودة. يمكنك كتابة الفحص يدوياً.' : 'AI draft unavailable; you can still write the check manually.');
+      return null;
+    }
   };
 
   const askSupportQuestion = async (plan: SupportPlan) => {
@@ -417,27 +454,29 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
           <CardHeader><CardTitle className="text-base">Create an evidence-linked support plan</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <label className="block text-sm">Learner
-              <select className="mt-1 w-full rounded-md border bg-background p-2" value={selectedLearner} onChange={event => { setSelectedLearner(event.target.value); setSelectedConcept(''); }}>
+              <select className="mt-1 w-full rounded-md border bg-background p-2" value={selectedLearner} disabled={draftingPlan} onChange={event => { setSelectedLearner(event.target.value); setSelectedConcept(''); }}>
                 <option value="">Select learner</option>{learners.map(learner => <option key={learner.id} value={learner.id}>{learner.full_name} {learner.grade_level && `· ${learner.grade_level}`}</option>)}
               </select>
             </label>
             <label className="block text-sm">Evidence source
-              <select className="mt-1 w-full rounded-md border bg-background p-2" value={source} onChange={event => setSource(event.target.value as typeof source)}>
+              <select className="mt-1 w-full rounded-md border bg-background p-2" value={source} disabled={draftingPlan} onChange={event => setSource(event.target.value as typeof source)}>
                 <option value="ALE_MASTERY">Measured ALE mastery</option><option value="TEACHER_OBSERVATION">Teacher observation (not an ALE measurement)</option>
               </select>
             </label>
             {source === 'ALE_MASTERY' ? <label className="block text-sm">ALE concept
-              <select className="mt-1 w-full rounded-md border bg-background p-2" value={selectedConcept} onChange={event => pickConcept(event.target.value)} disabled={!selectedLearner}>
+              <select className="mt-1 w-full rounded-md border bg-background p-2" value={selectedConcept} onChange={event => pickConcept(event.target.value)} disabled={!selectedLearner || draftingPlan}>
                 <option value="">{weak.length ? 'Select measured concept' : 'No measured concepts available'}</option>
                 {weak.map((item, index) => <option key={`${conceptChoice(item)}:${index}`} value={conceptChoice(item)}>{item.subject} · {item.topic} · {Math.round(Number(item.mastery_score) * 100)}%</option>)}
               </select>
-            </label> : <div className="grid sm:grid-cols-2 gap-2"><Input aria-label="Subject" placeholder="Subject" value={subject} onChange={event => setSubject(event.target.value)} maxLength={120} /><Input aria-label="Topic" placeholder="Topic" value={topic} onChange={event => setTopic(event.target.value)} maxLength={180} /></div>}
+            </label> : <div className="grid sm:grid-cols-2 gap-2"><Input aria-label="Subject" placeholder="Subject" value={subject} disabled={draftingPlan} onChange={event => setSubject(event.target.value)} maxLength={120} /><Input aria-label="Topic" placeholder="Topic" value={topic} disabled={draftingPlan} onChange={event => setTopic(event.target.value)} maxLength={180} /></div>}
             <Textarea aria-label="Learning goal" placeholder="Observable learning goal" value={goal} onChange={event => setGoal(event.target.value)} maxLength={1000} />
             <Textarea aria-label="Learner step" placeholder="One concrete practice step" value={learnerStep} onChange={event => setLearnerStep(event.target.value)} maxLength={1000} />
+            <Button size="sm" variant="secondary" onClick={() => void suggestSupportPlan()} disabled={saving || draftingPlan || !subject.trim() || !topic.trim()}>{draftingPlan ? 'Drafting…' : 'Suggest AI plan draft'}</Button>
+            <p className="text-xs text-muted-foreground">Only subject and topic are sent for drafting. The AI does not see the learner identity or ALE score; the teacher must review before creating a plan.</p>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={familyVisible} onChange={event => setFamilyVisible(event.target.checked)} />Share a bounded home-support step with linked family</label>
             {familyVisible && <Textarea aria-label="Family step" placeholder="Practical support at home (no private teacher notes)" value={familyStep} onChange={event => setFamilyStep(event.target.value)} maxLength={1000} />}
             <label className="block text-sm">Review by <Input type="date" value={dueDate} onChange={event => setDueDate(event.target.value)} /></label>
-            <Button onClick={() => void createPlan()} disabled={saving || !selectedLearner || !subject.trim() || !topic.trim() || goal.trim().length < 5 || learnerStep.trim().length < 5 || (familyVisible && familyStep.trim().length < 5)}>Create support plan</Button>
+            <Button onClick={() => void createPlan()} disabled={saving || draftingPlan || !selectedLearner || !subject.trim() || !topic.trim() || goal.trim().length < 5 || learnerStep.trim().length < 5 || (familyVisible && familyStep.trim().length < 5)}>Create support plan</Button>
           </CardContent>
         </Card>
       )}
@@ -461,7 +500,7 @@ export function LearningSupportPanel({ role, schoolId, studentId, onPractice }: 
               {latest.length > 0 && <p className="text-muted-foreground">Recent check-ins: {latest.map(item => item.kind.toLowerCase().replace(/_/g, ' ')).join(' · ')}</p>}
               {(role === 'teacher' || role === 'student') && !transferLoadFailed && <LearningTransferPanel
                 plan={plan} checks={transferChecks.filter(check => check.plan_id === plan.id)} role={role}
-                arabic={ar} saving={saving} onCreate={createTransferCheck}
+                arabic={ar} saving={saving} onSuggest={suggestTransferCheck} onCreate={createTransferCheck}
                 onSubmit={submitTransferResponse} onReview={reviewTransferResponse}
               />}
               {role === 'student' && !questionLoadFailed && <div className="space-y-2 rounded-lg border p-3" aria-label="Support plan questions">

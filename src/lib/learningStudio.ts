@@ -86,7 +86,7 @@ export function buildReentryPlan(
   const missedIds = new Set(assignments
     .filter(item => !submitted.has(item.id) && (inWindow(item.created_at) || inWindow(item.due_date)))
     .map(item => `assignment:${item.id}`));
-  const candidates = buildSchoolActions(assignments, submitted, plans, due, now).flatMap(action => {
+  const candidates = buildSchoolActions(assignments, submitted, plans, due, now).flatMap<ReentryTask>(action => {
     if (action.kind === 'assignment') return missedIds.has(action.id) ? [{ action, source: 'MISSED_WINDOW' as const }] : [];
     if (action.kind === 'support') return [{ action, source: 'ACTIVE_TEACHER_PLAN' as const }];
     return [{ action, source: 'DUE_REVIEW' as const }];

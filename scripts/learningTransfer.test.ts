@@ -66,6 +66,7 @@ test('transfer interface shows action only to the appropriate role', () => {
     teacher_feedback: null,
   } as TransferCheck;
   const handlers = {
+    onSuggest: async () => null,
     onCreate: async () => true,
     onSubmit: async () => true,
     onReview: async () => true,

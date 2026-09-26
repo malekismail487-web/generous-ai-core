@@ -15,6 +15,7 @@ interface Props {
   role: Role;
   arabic: boolean;
   saving: boolean;
+  onSuggest: (planId: string) => Promise<{ prompt: string; criteria: string } | null>;
   onCreate: (planId: string, prompt: string, criteria: string) => Promise<boolean>;
   onSubmit: (checkId: string, response: string) => Promise<boolean>;
   onReview: (checkId: string, verdict: TransferVerdict, feedback: string) => Promise<boolean>;
@@ -68,8 +69,9 @@ function TransferProbe({ check, role, arabic: ar, saving, onSubmit, onReview }: 
   </article>;
 }
 
-export function LearningTransferPanel({ plan, checks, role, arabic: ar, saving, onCreate, onSubmit, onReview }: Props) {
+export function LearningTransferPanel({ plan, checks, role, arabic: ar, saving, onSuggest, onCreate, onSubmit, onReview }: Props) {
   const [draftOpen, setDraftOpen] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [criteria, setCriteria] = useState('');
   const ordered = [...checks].sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
@@ -94,9 +96,18 @@ export function LearningTransferPanel({ plan, checks, role, arabic: ar, saving, 
       {!draftOpen && <Button size="sm" variant="outline" onClick={() => setDraftOpen(true)}>{ar ? 'أنشئ فحصاً جديداً' : 'Create a transfer check'}</Button>}
       {draftOpen && <div className="space-y-2 rounded-lg border p-3">
         <p className="text-xs text-muted-foreground">{ar ? 'استخدم مسألة جديدة تكشف التطبيق، لا تكرار المثال. لا تضع الإجابة في المعيار الظاهر للطالب.' : 'Use a genuinely new application, not the practiced example. Do not reveal the answer in criteria visible to the learner.'}</p>
+        <Button size="sm" variant="secondary" disabled={saving || suggesting} onClick={async () => {
+          setSuggesting(true);
+          try {
+            const suggestion = await onSuggest(plan.id);
+            if (suggestion) { setPrompt(suggestion.prompt); setCriteria(suggestion.criteria); }
+          } finally { setSuggesting(false); }
+        }}>{suggesting ? (ar ? 'جارٍ إعداد المسودة…' : 'Drafting…') : (ar ? 'اقترح مسودة بالذكاء الاصطناعي' : 'Suggest AI draft')}</Button>
+        <p className="text-xs text-muted-foreground">{ar ? 'يُرسل موضوع الخطة وهدفها وخطوة التدريب إلى بوابة الذكاء الاصطناعي. لا تُرسل معرّفات الطالب أو درجته؛ تجنب كتابة اسمه في نص الخطة.' : 'The plan subject, topic, goal, and practice step go to the AI gateway. Learner ID and score are omitted; avoid names in plan text.'}</p>
+        <p className="text-xs text-muted-foreground">{ar ? 'المسودة ليست فحصاً منشوراً. راجع المسألة والمعيار قبل الإرسال.' : 'A draft is not assigned. Review the problem and criteria before sending.'}</p>
         <label className="block text-xs font-medium">{ar ? 'المسألة الجديدة' : 'New problem'}<Textarea className="mt-1" maxLength={2000} value={prompt} onChange={event => setPrompt(event.target.value)} /></label>
         <label className="block text-xs font-medium">{ar ? 'ما الذي يثبت الفهم؟' : 'Observable success criteria'}<Textarea className="mt-1" maxLength={1000} value={criteria} onChange={event => setCriteria(event.target.value)} /></label>
-        <div className="flex gap-2"><Button size="sm" disabled={saving || !validTransferPrompt(prompt, criteria)} onClick={async () => {
+        <div className="flex gap-2"><Button size="sm" disabled={saving || suggesting || !validTransferPrompt(prompt, criteria)} onClick={async () => {
           if (await onCreate(plan.id, prompt.trim(), criteria.trim())) { setPrompt(''); setCriteria(''); setDraftOpen(false); }
         }}>{ar ? 'أرسل الفحص' : 'Assign check'}</Button><Button size="sm" variant="ghost" onClick={() => setDraftOpen(false)}>{ar ? 'إلغاء' : 'Cancel'}</Button></div>
       </div>}
