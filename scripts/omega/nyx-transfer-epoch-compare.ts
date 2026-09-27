@@ -63,6 +63,8 @@ export function assessNyxTransferEpoch(reports: readonly EpochReport[]) {
     if (report.suiteIdentity !== "TRANSFER_EPOCH" || report.experimentVariant !== arm
       || report.candidateCommit !== first.candidateCommit || report.modelId !== first.modelId
       || report.evaluatorDigest !== first.evaluatorDigest
+      || report.sourceRepresentation !== NYX_TRANSFER_EPOCH.sourceRepresentation
+      || report.intentCompilationMode !== NYX_TRANSFER_EPOCH.intentCompilationMode
       || report.sourceRepresentation !== first.sourceRepresentation
       || report.intentCompilationMode !== first.intentCompilationMode
       || stable(report.taskFixtureDigests) !== stable(first.taskFixtureDigests)

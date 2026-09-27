@@ -94,7 +94,8 @@ check(/^[a-f0-9]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
   }));
   const reports: readonly EpochReport[] = arms.map((arm) => ({ suiteIdentity: "TRANSFER_EPOCH",
     candidateCommit: "a".repeat(40), modelId: "nemotron-test", evaluatorDigest: "b".repeat(64),
-    experimentVariant: arm, sourceRepresentation: "TEXT", intentCompilationMode: "STRICT",
+    experimentVariant: arm, sourceRepresentation: NYX_TRANSFER_EPOCH.sourceRepresentation,
+    intentCompilationMode: NYX_TRANSFER_EPOCH.intentCompilationMode,
     taskFixtureDigests: Object.fromEntries(NYX_TRANSFER_EPOCH_TASKS.map((task) => [task.taskId, hash(task.taskId)])),
     configuredBudget: { maxCognitionCyclesPerTask: 3, sameAcrossArms: true },
     frozenCorePreserved: true, contractChangedDuringScoredEval: false,

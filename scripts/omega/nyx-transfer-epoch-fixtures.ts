@@ -4,8 +4,8 @@ import type { NyxQualityV5Task } from "./nyx-quality-v5-fixtures";
 
 /** Predeclared, distinct coding-transfer problems. These are not proof or scientific-discovery benchmarks. */
 export const NYX_TRANSFER_EPOCH = Object.freeze({
-  chunkId: "NYX-TRANSFER-MATCHED-001",
-  version: "nyx-transfer-matched/1",
+  chunkId: "NYX-TRANSFER-MATCHED-002",
+  version: "nyx-transfer-matched/2",
   arms: Object.freeze(["MINIMAL_REFERENCE", "CURRENT", "REASONING_ENABLED"] as const),
   domainScope: Object.freeze(["MATHEMATICAL_PROGRAMMING", "SCIENTIFIC_DATA_PROGRAMMING",
     "EVIDENCE_LOGIC_PROGRAMMING", "REPOSITORY_DEPENDENCY_PROGRAMMING"] as const),
@@ -14,6 +14,8 @@ export const NYX_TRANSFER_EPOCH = Object.freeze({
   cognitionCorrectionsPerTask: 2,
   outputTokensPerCall: 1_536,
   wallClockMsPerTask: 180_000,
+  sourceRepresentation: "LINES" as const,
+  intentCompilationMode: "SAFE_CANONICALIZATION" as const,
   authority: "DISPOSABLE_REPOSITORY_ONLY" as const,
   broadGeneralizationCertified: false,
 });
