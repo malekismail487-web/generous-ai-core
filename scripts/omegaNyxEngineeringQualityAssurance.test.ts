@@ -13,6 +13,8 @@ import { NYX_ENGINEERING_QUALITY_V4 } from "./omega/nyx-quality-v4-fixtures";
 import { NYX_ENGINEERING_QUALITY_V5 } from "./omega/nyx-quality-v5-fixtures";
 import { NYX_REPAIR_FEEDBACK_TASK } from "./omega/nyx-repair-feedback-diagnostic";
 import { NYX_REPAIR_FEEDBACK_TRANSFER_TASK } from "./omega/nyx-repair-feedback-transfer";
+import { NYX_TRANSFER_EPOCH, NYX_TRANSFER_EPOCH_TASKS } from "./omega/nyx-transfer-epoch-fixtures";
+import { assessNyxTransferEpoch, type EpochReport, type TaskResult } from "./omega/nyx-transfer-epoch-compare";
 import { assessNyxQualityReference, requireAdmissibleQualityReferences } from "./omega/nyx-quality-reference-preflight";
 
 let passed = 0;
@@ -65,6 +67,55 @@ check(/^[a-f0-9]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
   check(rejectedBeforeInference, "inadmissible quality task fails closed before live model inference");
 }
 
+{
+  const references = requireAdmissibleQualityReferences(NYX_TRANSFER_EPOCH_TASKS);
+  check(NYX_TRANSFER_EPOCH_TASKS.length === 4 && NYX_TRANSFER_EPOCH.domainScope.length === 4
+    && new Set(NYX_TRANSFER_EPOCH_TASKS.map((task) => task.taskId)).size === 4,
+  "fresh matched transfer epoch has four distinct task identities and domains");
+  check(references.every((result) => result.decision === "ADMISSIBLE"),
+  "fresh transfer reference solutions satisfy the exact engineering quality oracle");
+  check(NYX_TRANSFER_EPOCH_TASKS.every((task) => task.provenance === "NYX_TRANSFER_MATCHED_FRESH_2026_09_27"
+    && task.mutationPaths.every((path) => task.initiallyAdmittedPaths.includes(path))),
+  "fresh transfer tasks have explicit provenance and bounded mutation scope");
+}
+
+{
+  const arms = NYX_TRANSFER_EPOCH.arms;
+  const tasksFor = (arm: typeof arms[number]): readonly TaskResult[] => NYX_TRANSFER_EPOCH_TASKS.map((task, index) => ({
+    taskId: task.taskId, frozenTaskContentDigest: hash(task.taskId), comparisonArm: arm,
+    finalClassification: arm === "MINIMAL_REFERENCE" && index > 0 ? "FAIL" : "PASS",
+    hiddenAcceptance: arm === "MINIMAL_REFERENCE" && index > 0 ? "FAIL" : "PASS",
+    engineeringQuality: arm === "MINIMAL_REFERENCE" && index > 0 ? "NOT_EVALUATED" : "ACCEPTED",
+    modelCalls: 1, totalTokens: 100, tokenUsageComplete: true, durationMs: 100,
+    repairIterations: 0, publicQualityRevisionCycles: 0,
+    failureClass: arm === "MINIMAL_REFERENCE" && index > 0 ? "MODEL_REPAIR_FAILURE" : "NONE",
+    providerDiagnostics: [{ failureCategory: null }], sourceRepositoryUnchanged: true,
+    omegaAuthorityEnforcement: true,
+  }));
+  const reports: readonly EpochReport[] = arms.map((arm) => ({ suiteIdentity: "TRANSFER_EPOCH",
+    candidateCommit: "a".repeat(40), modelId: "nemotron-test", evaluatorDigest: "b".repeat(64),
+    experimentVariant: arm, sourceRepresentation: "TEXT", intentCompilationMode: "STRICT",
+    taskFixtureDigests: Object.fromEntries(NYX_TRANSFER_EPOCH_TASKS.map((task) => [task.taskId, hash(task.taskId)])),
+    configuredBudget: { maxCognitionCyclesPerTask: 3, sameAcrossArms: true },
+    frozenCorePreserved: true, contractChangedDuringScoredEval: false,
+    authority: { authorityIncrease: false, sourceRepositoryMutation: false },
+    aggregateMetrics: { falseAcceptanceRate: 0, falseQualityAcceptanceRate: 0 },
+    tasks: tasksFor(arm),
+  }));
+  check(assessNyxTransferEpoch(reports).decision === "TENTATIVE_EFFICIENT_UPLIFT",
+    "matched transfer analyzer recognizes observed quality uplift without claiming broad certification");
+  let mismatchRejected = false;
+  try { assessNyxTransferEpoch([reports[0], { ...reports[1], modelId: "different-model" }, reports[2]]); }
+  catch (error) { mismatchRejected = String(error).includes("transfer_epoch_unmatched_conditions"); }
+  check(mismatchRejected, "matched transfer analyzer rejects a model mismatch");
+  check(assessNyxTransferEpoch([reports[0], { ...reports[1], tasks: reports[1].tasks.map((task, index) =>
+    index === 0 ? { ...task, providerDiagnostics: [{ failureCategory: "RATE_LIMIT" }] } : task) }, reports[2]])
+    .decision === "INCONCLUSIVE_PROVIDER_OR_USAGE", "provider failures cannot be credited as model weakness or uplift");
+  check(assessNyxTransferEpoch([reports[0], { ...reports[1], aggregateMetrics: {
+    falseAcceptanceRate: 0.25, falseQualityAcceptanceRate: 0 } }, reports[2]])
+    .decision === "SAFETY_REGRESSION", "false acceptance outranks positive task results");
+}
+
 const parent = await mkdtemp(join(tmpdir(), "nyx-quality-assurance-"));
 try {
   for (const task of [...NYX_ENGINEERING_QUALITY_HOLDOUT, ...NYX_ENGINEERING_QUALITY_CONFIRMATION]) {
@@ -87,6 +138,39 @@ try {
     check(faultyVisible.status !== 0, `${task.taskId} seeded defect fails its visible oracle`);
     check(task.initiallyAdmittedPaths.every((path) => !path.startsWith("tools/"))
       && task.mutationPaths.every((path) => !path.startsWith("tools/")), `${task.taskId} never exposes verifier assets as mutation targets`);
+  }
+  for (const task of NYX_TRANSFER_EPOCH_TASKS) {
+    const correctRoot = join(parent, task.taskId, "correct");
+    const faultyRoot = join(parent, task.taskId, "faulty");
+    for (const root of [correctRoot, faultyRoot]) {
+      for (const [path, content] of Object.entries(task.correctFiles)) {
+        await mkdir(dirname(join(root, path)), { recursive: true });
+        await writeFile(join(root, path), content, "utf8");
+      }
+      await mkdir(join(root, "tools"), { recursive: true });
+      await writeFile(join(root, "tools", "verify-visible.mjs"), task.visibleVerifier, "utf8");
+    }
+    for (const [path, content] of Object.entries(task.faultyFiles)) await writeFile(join(faultyRoot, path), content, "utf8");
+    const correctVisible = spawnSync(process.execPath, [join(correctRoot, "tools", "verify-visible.mjs")], { cwd: correctRoot });
+    const faultyVisible = spawnSync(process.execPath, [join(faultyRoot, "tools", "verify-visible.mjs")], { cwd: faultyRoot });
+    check(correctVisible.status === 0 && faultyVisible.status !== 0,
+      `${task.taskId} reference passes and seeded defect fails visible verifier`);
+    for (const hiddenCase of task.hiddenCases) {
+      const runner = `import { ${task.exportName} as fn } from "./${task.candidateModule}";\n`
+        + `const args = ${JSON.stringify(hiddenCase.args)};\n`
+        + `try { const value = fn(...args); console.log(JSON.stringify({kind:"RETURN",value,argsAfter:args})); }\n`
+        + `catch (error) { console.log(JSON.stringify({kind:"THROW",errorName:error?.name})); }`;
+      const run = spawnSync(process.execPath, ["--input-type=module", "--eval", runner],
+        { cwd: correctRoot, encoding: "utf8", timeout: 5_000 });
+      let actual: unknown = null;
+      try { actual = JSON.parse(run.stdout.trim()); } catch { /* Rejected below. */ }
+      const expected = hiddenCase.expectation.kind === "RETURN"
+        ? { kind: "RETURN", value: hiddenCase.expectation.value,
+          argsAfter: hiddenCase.expectation.argsAfter ?? hiddenCase.args }
+        : { kind: "THROW", errorName: hiddenCase.expectation.errorName };
+      check(run.status === 0 && JSON.stringify(actual) === JSON.stringify(expected),
+        `${task.taskId}/${hiddenCase.caseId} reference satisfies predeclared hidden expectation`);
+    }
   }
 } finally { await rm(parent, { recursive: true, force: true }); }
 

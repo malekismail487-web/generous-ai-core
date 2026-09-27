@@ -1,0 +1,73 @@
+name: Omega NYX fresh matched coding transfer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths:
+      - .github/workflows/omega-nyx-transfer-matched.yml
+      - scripts/omega/nyx-transfer-epoch-fixtures.ts
+      - scripts/omega/nyx-transfer-epoch-compare.ts
+      - scripts/omega/nyx-quality-v4-live-eval.ts
+      - scripts/omegaNyxEngineeringQualityAssurance.test.ts
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-nyx-transfer-matched-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  matched-transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      NYX_QUALITY_SUITE: TRANSFER_EPOCH
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Confirm configured secret without exposing it
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Verify evaluator, fixture reference, provider, and authority contracts
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaVerificationIntegrity.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxEngineeringQualityAssurance.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaCandidateEngineeringAdmission.test.ts
+      - name: Run three predeclared cognition configurations
+        shell: bash
+        run: |
+          set -euo pipefail
+          for variant in MINIMAL_REFERENCE CURRENT REASONING_ENABLED; do
+            NYX_EXPERIMENT_VARIANT="$variant" node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v4-live-eval.ts
+          done
+      - name: Compare matched evidence
+        shell: bash
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-transfer-epoch-compare.ts \
+            "$RUNNER_TEMP/nyx-quality-transfer_epoch-minimal_reference-${GITHUB_SHA:0:12}.json" \
+            "$RUNNER_TEMP/nyx-quality-transfer_epoch-current-${GITHUB_SHA:0:12}.json" \
+            "$RUNNER_TEMP/nyx-quality-transfer_epoch-reasoning_enabled-${GITHUB_SHA:0:12}.json"
+      - name: Upload sanitized per-arm and comparison reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-nyx-transfer-matched-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/nyx-quality-transfer_epoch-*.json
+            ${{ runner.temp }}/nyx-transfer-matched-*.json
+          if-no-files-found: warn

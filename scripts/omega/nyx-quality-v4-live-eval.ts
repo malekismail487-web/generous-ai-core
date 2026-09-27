@@ -50,6 +50,8 @@ import { NYX_REPAIR_FEEDBACK_TASK, NYX_REPAIR_FEEDBACK_COMPARISON,
 import { NYX_REPAIR_FEEDBACK_TRANSFER_TASK, NYX_REPAIR_FEEDBACK_TRANSFER,
   type NyxRepairFeedbackTransferTask } from "./nyx-repair-feedback-transfer";
 import { requireAdmissibleQualityReferences } from "./nyx-quality-reference-preflight";
+import { NYX_TRANSFER_EPOCH, NYX_TRANSFER_EPOCH_FROZEN_CORE, NYX_TRANSFER_EPOCH_TASKS } from
+  "./nyx-transfer-epoch-fixtures";
 import { NYX_SCHEDULER_CHALLENGE, NYX_SCHEDULER_EXPERIMENT, NYX_SCHEDULER_FROZEN_CORE,
   NYX_SCHEDULER_FRONTIER_V3_FROZEN_CORE,
   NYX_SCHEDULER_FRONTIER_V4_FROZEN_CORE,
@@ -71,9 +73,10 @@ const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-5
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V4";
 const EXPERIMENT_VARIANT = (SUITE_ID === "V5_QUALITY_REPAIR" ? "REASONING_ENABLED"
   : process.env.NYX_EXPERIMENT_VARIANT?.trim() || "CURRENT") as NyxCognitionExperimentVariant;
-if (!["V4", "V5", "V5_QUALITY_REPAIR", "CHALLENGE", "FRONTIER_CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES", "COMPARISON", "CAPACITY_STATUS", "CONNECTOME_ABLATION", "BIOLOGICAL_CONNECTOME_ABLATION", "CONTRASTIVE_CIRCUIT_ABLATION", "EVIDENCE_GATED_CIRCUIT_ABLATION", "FRESH_CIRCUIT_TOPIC", "REPAIR_FEEDBACK_DIAGNOSTIC", "REPAIR_FEEDBACK_TRANSFER"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
+if (!["V4", "V5", "V5_QUALITY_REPAIR", "CHALLENGE", "FRONTIER_CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES", "COMPARISON", "CAPACITY_STATUS", "CONNECTOME_ABLATION", "BIOLOGICAL_CONNECTOME_ABLATION", "CONTRASTIVE_CIRCUIT_ABLATION", "EVIDENCE_GATED_CIRCUIT_ABLATION", "FRESH_CIRCUIT_TOPIC", "REPAIR_FEEDBACK_DIAGNOSTIC", "REPAIR_FEEDBACK_TRANSFER", "TRANSFER_EPOCH"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
 if (!["CURRENT", "REASONING_ENABLED", "MINIMAL_REFERENCE"].includes(EXPERIMENT_VARIANT)) throw new Error("unsupported_nyx_experiment_variant");
 const IS_CAPACITY_STATUS = SUITE_ID === "CAPACITY_STATUS";
+const IS_TRANSFER_EPOCH = SUITE_ID === "TRANSFER_EPOCH";
 const IS_V5_QUALITY_REPAIR = SUITE_ID === "V5_QUALITY_REPAIR";
 const IS_COMPARISON = SUITE_ID === "COMPARISON" || IS_CAPACITY_STATUS;
 const IS_CONNECTOME_ABLATION = SUITE_ID === "CONNECTOME_ABLATION";
@@ -141,6 +144,8 @@ const HOLDOUT: readonly EvaluationTask[] = IS_REPAIR_FEEDBACK_DIAGNOSTIC
   ? NYX_ENGINEERING_QUALITY_V5.flatMap((task) => CONNECTOME_ABLATION_ARMS.map((comparisonArm) => ({
     ...task, taskId: `${task.taskId}-${comparisonArm}`, baseTaskId: task.taskId, comparisonArm,
   })))
+  : IS_TRANSFER_EPOCH ? NYX_TRANSFER_EPOCH_TASKS.map((task) => ({ ...task,
+    comparisonArm: EXPERIMENT_VARIANT }))
   : IS_COMPARISON ? NYX_CONFIGURATION_COMPARISON.arms.map((comparisonArm) => ({
   ...NYX_CONTEXT_TASKS[1], taskId: `NYX-CONFIG-${comparisonArm}`, comparisonArm,
 })) : IS_CONTEXT ? NYX_CONTEXT_TASKS : IS_CHALLENGE ? [{ ...NYX_SCHEDULER_CHALLENGE, comparisonArm: EXPERIMENT_VARIANT }]
@@ -148,6 +153,7 @@ const HOLDOUT: readonly EvaluationTask[] = IS_REPAIR_FEEDBACK_DIAGNOSTIC
     comparisonArm: "NYX_REASONING_STACK" as const }))
     : SUITE_ID === "V5" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
 const FROZEN_CORE = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_FROZEN_CORE : IS_COMPARISON ? NYX_CONFIGURATION_FROZEN_CORE : IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_FROZEN_CORE : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_FROZEN_CORE
+  : IS_TRANSFER_EPOCH ? NYX_TRANSFER_EPOCH_FROZEN_CORE
   : IS_FRONTIER_CHALLENGE ? NYX_SCHEDULER_FRONTIER_V4_FROZEN_CORE
   : IS_DIAGNOSTIC ? NYX_SCHEDULER_FROZEN_CORE
     : IS_REPAIR_FEEDBACK_DIAGNOSTIC ? NYX_REPAIR_FEEDBACK_FROZEN_CORE
@@ -160,6 +166,7 @@ const FROZEN_CORE = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_FROZEN_CORE : IS_CO
     : SUITE_ID === "V5_QUALITY_REPAIR" ? NYX_V5_QUALITY_REPAIR_V3_FROZEN_CORE
       : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
 const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
+  : IS_TRANSFER_EPOCH ? NYX_TRANSFER_EPOCH.version
   : IS_FRONTIER_CHALLENGE ? "nyx-scheduler-frontier/5"
   : IS_CHALLENGE ? "nyx-scheduler-challenge/1"
     : IS_REPAIR_FEEDBACK_TRANSFER ? NYX_REPAIR_FEEDBACK_TRANSFER.version
@@ -763,6 +770,7 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
     sourceRepresentation: SOURCE_REPRESENTATION,
     intentCompilationMode: INTENT_COMPILATION_MODE,
     experimentVariant: IS_REPAIR_FEEDBACK_DIAGNOSTIC ? "MATCHED_REPAIR_FEEDBACK_POLICY"
+      : IS_TRANSFER_EPOCH ? EXPERIMENT_VARIANT
       : IS_FRESH_CIRCUIT_TOPIC ? "MATCHED_FRESH_CIRCUIT_TOPIC"
       : IS_EVIDENCE_GATED_CIRCUIT_ABLATION ? "MATCHED_EVIDENCE_GATED_CIRCUIT_ABLATION"
       : IS_CONTRASTIVE_CIRCUIT_ABLATION ? "MATCHED_CONTRASTIVE_CIRCUIT_ABLATION"
@@ -894,7 +902,21 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
     generalizationCertified: false,
     limitation: "One predeclared fresh task and one repetition: interface diagnostic, not a circuit or frontier capability claim.",
   } : null;
-  const publishedReport = IS_REPAIR_FEEDBACK_DIAGNOSTIC ? { ...result,
+  const publishedReport = IS_TRANSFER_EPOCH ? { ...result,
+    chunkId: NYX_TRANSFER_EPOCH.chunkId,
+    evaluationDecision: !safetyPreserved ? "SAFETY_REGRESSION"
+      : providerFailureTasks.length > 0 || capacityPausedTasks.length > 0 ? "INSUFFICIENT_EVIDENCE"
+        : successes.length === HOLDOUT.length ? "ALL_TASKS_ACCEPTED_IN_ISOLATION"
+          : "PARTIAL_OR_FAILED_IN_ISOLATION",
+    institutionalReadinessCertified: false, broadGeneralizationAssessed: false,
+    modelComparisonWinner: "NOT_DECIDED_BY_SINGLE_ARM",
+    taskDomains: NYX_TRANSFER_EPOCH.domainScope,
+    configuredBudget: { maxCognitionCyclesPerTask: MAX_COGNITION_CYCLES_PER_TASK,
+      maxCandidateIterationsPerTask: MAX_CANDIDATE_ITERATIONS_PER_TASK,
+      maxCognitionCorrectionsPerTask: MAX_COGNITION_CORRECTIONS_PER_TASK,
+      maxOutputTokensPerCall: MAX_OUTPUT_TOKENS, maxPromptBytesPerCall: 48_000,
+      maxWallClockMsPerTask: MAX_WALL_CLOCK_MS_PER_TASK, sameAcrossArms: true },
+  } : IS_REPAIR_FEEDBACK_DIAGNOSTIC ? { ...result,
     chunkId: IS_REPAIR_FEEDBACK_TRANSFER ? NYX_REPAIR_FEEDBACK_TRANSFER.chunkId
       : NYX_REPAIR_FEEDBACK_COMPARISON.chunkId,
     evaluationDecision: feedbackAssessment!.decision, feedbackAssessment,
@@ -993,7 +1015,7 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
       requiredAcceptedTasks: IS_CONTEXT ? HOLDOUT.length : 1,
       allHiddenCasesRequired: true, engineeringQualityRequired: true, safetyPreservationRequired: true,
       populationClaim: "NONE_SINGLE_DIAGNOSTIC" } } : report;
-  const configurationSuffix = IS_CHALLENGE ? `-${EXPERIMENT_VARIANT.toLowerCase()}` : "";
+  const configurationSuffix = IS_CHALLENGE || IS_TRANSFER_EPOCH ? `-${EXPERIMENT_VARIANT.toLowerCase()}` : "";
   const reportPath = join(process.env.RUNNER_TEMP?.trim() || tmpdir(),
     `nyx-quality-${SUITE_ID.toLowerCase()}${configurationSuffix}-${CANDIDATE.slice(0, 12)}.json`);
   await writeFile(reportPath, `${JSON.stringify(publishedReport, null, 2)}\n`, "utf8");

@@ -8,7 +8,7 @@ export type NyxQualityV5TaskClass = NyxQualityHoldoutTaskClass | "ARCHITECTURE_S
 export interface NyxQualityV5Task {
   readonly taskId: string;
   readonly taskClass: NyxQualityV5TaskClass;
-  readonly provenance: "NYX_ENGINEERING_QUALITY_FRESH_HOLDOUT_V5";
+  readonly provenance: "NYX_ENGINEERING_QUALITY_FRESH_HOLDOUT_V5" | "NYX_TRANSFER_MATCHED_FRESH_2026_09_27";
   readonly objective: string;
   readonly initialDefect: string;
   readonly correctFiles: Readonly<Record<string, string>>;
