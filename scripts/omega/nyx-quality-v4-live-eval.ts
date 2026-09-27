@@ -12,8 +12,6 @@ import {
   type NyxCognitionExperimentVariant,
 } from "../../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 import { assessEngineeringQuality } from "../../src/lib/codelab/assurance/engineeringQualityOracle";
-import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from
-  "../../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { isFalseAcceptance, meetsAuthoritativeAcceptancePrerequisites,
   type HoldoutAcceptanceRecord } from "../../src/lib/codelab/assurance/holdoutAcceptanceIntegrity";
 import { R3IsolatedHiddenEvaluator } from "../../src/lib/codelab/assurance/r3EvaluatorIsolation";
@@ -51,6 +49,7 @@ import { NYX_REPAIR_FEEDBACK_TASK, NYX_REPAIR_FEEDBACK_COMPARISON,
   NYX_REPAIR_FEEDBACK_FROZEN_CORE, type NyxRepairFeedbackTask } from "./nyx-repair-feedback-diagnostic";
 import { NYX_REPAIR_FEEDBACK_TRANSFER_TASK, NYX_REPAIR_FEEDBACK_TRANSFER,
   type NyxRepairFeedbackTransferTask } from "./nyx-repair-feedback-transfer";
+import { requireAdmissibleQualityReferences } from "./nyx-quality-reference-preflight";
 import { NYX_SCHEDULER_CHALLENGE, NYX_SCHEDULER_EXPERIMENT, NYX_SCHEDULER_FROZEN_CORE,
   NYX_SCHEDULER_FRONTIER_V3_FROZEN_CORE,
   NYX_SCHEDULER_FRONTIER_V4_FROZEN_CORE,
@@ -230,19 +229,9 @@ const REPAIR_FEEDBACK_PIN_PRESERVED = !IS_REPAIR_FEEDBACK_DIAGNOSTIC ||
       { cwd: resolve(".") })) === digest);
 if (!FROZEN_CORE_PRESERVED) throw new Error(`${SUITE_ID.toLowerCase()}_frozen_core_digest_mismatch`);
 if (!REPAIR_FEEDBACK_PIN_PRESERVED) throw new Error("repair_feedback_diagnostic_historical_pin_mismatch");
-if (IS_REPAIR_FEEDBACK_TRANSFER) {
-  const reference = assessEngineeringQuality({ assessmentId: "NYX-REPAIR-FEEDBACK-REFERENCE-PREFLIGHT",
-    evaluatorVersion: NYX_REPAIR_FEEDBACK_TRANSFER.version,
-    baselineFiles: NYX_REPAIR_FEEDBACK_TRANSFER_TASK.faultyFiles,
-    candidateFiles: NYX_REPAIR_FEEDBACK_TRANSFER_TASK.correctFiles,
-    changedPaths: NYX_REPAIR_FEEDBACK_TRANSFER_TASK.mutationPaths,
-    functionalAcceptance: "PASS", regressionAcceptance: "PASS",
-    policy: { ...OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,
-      allowedChangedPaths: NYX_REPAIR_FEEDBACK_TRANSFER_TASK.mutationPaths,
-      readonlyPaths: [], invariants: [], maxAddedDeclarations: 12 },
-  });
-  if (reference.decision !== "ACCEPTED") throw new Error("repair_feedback_transfer_reference_quality_gate_failed");
-}
+// CAPACITY_STATUS is an inherited delivery-path control, not a fresh coding-
+// quality comparison. Its reference is retained for historical replay only.
+if (!IS_CAPACITY_STATUS) requireAdmissibleQualityReferences(HOLDOUT);
 const EVALUATOR_DIGEST = sha256(canonical({
   driver: sha256(await readFile(new URL(import.meta.url))),
   isolation: sha256(await readFile(new URL("../../src/lib/codelab/assurance/r3EvaluatorIsolation.ts", import.meta.url))),

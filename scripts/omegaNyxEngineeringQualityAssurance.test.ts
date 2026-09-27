@@ -9,6 +9,11 @@ import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import type { EngineeringObservation } from "../src/lib/codelab/observation/r3EngineeringObservation";
 import { NYX_ENGINEERING_QUALITY_CONFIRMATION } from "./omega/nyx-quality-confirmation-fixtures";
 import { NYX_ENGINEERING_QUALITY_HOLDOUT } from "./omega/nyx-quality-holdout-fixtures";
+import { NYX_ENGINEERING_QUALITY_V4 } from "./omega/nyx-quality-v4-fixtures";
+import { NYX_ENGINEERING_QUALITY_V5 } from "./omega/nyx-quality-v5-fixtures";
+import { NYX_REPAIR_FEEDBACK_TASK } from "./omega/nyx-repair-feedback-diagnostic";
+import { NYX_REPAIR_FEEDBACK_TRANSFER_TASK } from "./omega/nyx-repair-feedback-transfer";
+import { assessNyxQualityReference, requireAdmissibleQualityReferences } from "./omega/nyx-quality-reference-preflight";
 
 let passed = 0;
 let failed = 0;
@@ -40,6 +45,25 @@ check(NYX_ENGINEERING_QUALITY_CONFIRMATION.every((task) => task.mutationPaths.ev
 check(/^[a-f0-9]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
   && NYX_SEMANTIC_REPAIR_CONTRACT_VERSION === "nyx-causal-engineering-intent/9",
 "current cognition contract has an explicit version and deterministic digest; historical scores remain frozen");
+
+{
+  const admissible = [...NYX_ENGINEERING_QUALITY_V4, ...NYX_ENGINEERING_QUALITY_V5,
+    NYX_REPAIR_FEEDBACK_TRANSFER_TASK];
+  const results = requireAdmissibleQualityReferences(admissible);
+  check(results.length === admissible.length && results.every((result) => result.decision === "ADMISSIBLE"),
+    "V4/V5 and fresh transfer reference solutions pass their exact candidate quality policies");
+  check(requireAdmissibleQualityReferences([{ ...admissible[0], taskId: "PAIRED-A", baseTaskId: "PAIRED" },
+    { ...admissible[0], taskId: "PAIRED-B", baseTaskId: "PAIRED" }]).length === 1,
+    "paired comparison arms preflight one shared reference contract");
+  const historicalDiagnostic = assessNyxQualityReference(NYX_REPAIR_FEEDBACK_TASK);
+  check(historicalDiagnostic.decision === "REJECTED_REFERENCE"
+    && historicalDiagnostic.failedDimensions.includes("UNNECESSARY_COMPLEXITY"),
+    "historical repair-feedback task is explicitly recognized as reference-inadmissible");
+  let rejectedBeforeInference = false;
+  try { requireAdmissibleQualityReferences([NYX_REPAIR_FEEDBACK_TASK]); }
+  catch (error) { rejectedBeforeInference = String(error).includes("nyx_quality_reference_not_admissible:"); }
+  check(rejectedBeforeInference, "inadmissible quality task fails closed before live model inference");
+}
 
 const parent = await mkdtemp(join(tmpdir(), "nyx-quality-assurance-"));
 try {
