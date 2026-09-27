@@ -53,8 +53,8 @@ check(/^[a-f0-9]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
   check(results.length === admissible.length && results.every((result) => result.decision === "ADMISSIBLE"),
     "V4/V5 and fresh transfer reference solutions pass their exact candidate quality policies");
   check(requireAdmissibleQualityReferences([{ ...admissible[0], taskId: "PAIRED-A", baseTaskId: "PAIRED" },
-    { ...admissible[0], taskId: "PAIRED-B", baseTaskId: "PAIRED" }]).length === 1,
-    "paired comparison arms preflight one shared reference contract");
+    { ...admissible[0], taskId: "PAIRED-B", baseTaskId: "PAIRED" }]).length === 2,
+    "each paired arm is preflighted even when it shares a base task identity");
   const historicalDiagnostic = assessNyxQualityReference(NYX_REPAIR_FEEDBACK_TASK);
   check(historicalDiagnostic.decision === "REJECTED_REFERENCE"
     && historicalDiagnostic.failedDimensions.includes("UNNECESSARY_COMPLEXITY"),

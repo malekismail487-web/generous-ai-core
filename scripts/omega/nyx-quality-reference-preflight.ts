@@ -44,12 +44,9 @@ export function assessNyxQualityReference(task: NyxQualityReferenceTask): NyxQua
 }
 
 export function requireAdmissibleQualityReferences(tasks: readonly NyxQualityReferenceTask[]): readonly NyxQualityReferenceResult[] {
-  const seen = new Set<string>();
   const results: NyxQualityReferenceResult[] = [];
   for (const task of tasks) {
     const taskId = task.baseTaskId ?? task.taskId;
-    if (seen.has(taskId)) continue;
-    seen.add(taskId);
     const result = assessNyxQualityReference(task);
     if (result.decision !== "ADMISSIBLE") {
       throw new Error(`nyx_quality_reference_not_admissible:${taskId}:${result.decision}`
