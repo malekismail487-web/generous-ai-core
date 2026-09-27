@@ -14,6 +14,7 @@ import { NYX_ENGINEERING_QUALITY_V5 } from "./omega/nyx-quality-v5-fixtures";
 import { NYX_REPAIR_FEEDBACK_TASK } from "./omega/nyx-repair-feedback-diagnostic";
 import { NYX_REPAIR_FEEDBACK_TRANSFER_TASK } from "./omega/nyx-repair-feedback-transfer";
 import { NYX_TRANSFER_EPOCH, NYX_TRANSFER_EPOCH_TASKS } from "./omega/nyx-transfer-epoch-fixtures";
+import { NYX_TRANSFER_FOLLOWUP, NYX_TRANSFER_FOLLOWUP_TASKS } from "./omega/nyx-transfer-followup-fixtures";
 import { assessNyxTransferEpoch, type EpochReport, type TaskResult } from "./omega/nyx-transfer-epoch-compare";
 import { assessNyxQualityReference, requireAdmissibleQualityReferences } from "./omega/nyx-quality-reference-preflight";
 
@@ -80,6 +81,20 @@ check(/^[a-f0-9]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
 }
 
 {
+  const references = requireAdmissibleQualityReferences(NYX_TRANSFER_FOLLOWUP_TASKS);
+  check(NYX_TRANSFER_FOLLOWUP_TASKS.length === 4 && references.every((result) => result.decision === "ADMISSIBLE"),
+    "fresh follow-up references pass the unchanged quality oracle");
+  check(NYX_TRANSFER_FOLLOWUP_TASKS.every((task) =>
+    task.provenance === "NYX_TRANSFER_FOLLOWUP_FRESH_2026_09_27"
+    && task.mutationPaths.every((path) => task.initiallyAdmittedPaths.includes(path)))
+    && NYX_TRANSFER_FOLLOWUP.outputTokensPerCall > NYX_TRANSFER_EPOCH.outputTokensPerCall,
+  "follow-up tasks are distinct and scoped; shared output limit addresses observed truncation");
+  check(new Set([...NYX_TRANSFER_EPOCH_TASKS, ...NYX_TRANSFER_FOLLOWUP_TASKS]
+    .map((task) => task.taskId)).size === 8,
+  "follow-up tasks are not reused from the prior scored epoch");
+}
+
+{
   const arms = NYX_TRANSFER_EPOCH.arms;
   const tasksFor = (arm: typeof arms[number]): readonly TaskResult[] => NYX_TRANSFER_EPOCH_TASKS.map((task, index) => ({
     taskId: task.taskId, frozenTaskContentDigest: hash(task.taskId), comparisonArm: arm,
@@ -115,6 +130,27 @@ check(/^[a-f0-9]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
   check(assessNyxTransferEpoch([reports[0], { ...reports[1], aggregateMetrics: {
     falseAcceptanceRate: 0.25, falseQualityAcceptanceRate: 0 } }, reports[2]])
     .decision === "SAFETY_REGRESSION", "false acceptance outranks positive task results");
+  const followupReports = reports.map((report) => ({
+    ...report, suiteIdentity: "TRANSFER_FOLLOWUP",
+    taskFixtureDigests: Object.fromEntries(NYX_TRANSFER_FOLLOWUP_TASKS.map((task) => [task.taskId, hash(task.taskId)])),
+    tasks: report.tasks.map((task, index) => ({
+      ...task, taskId: NYX_TRANSFER_FOLLOWUP_TASKS[index].taskId,
+      frozenTaskContentDigest: hash(NYX_TRANSFER_FOLLOWUP_TASKS[index].taskId),
+      cognitionFailures: index === 1 ? [{ reason: "OUTPUT_TRUNCATED" }, { reason: "SCHEMA_INVALID" }] : [],
+      hiddenIsolationEvidence: index === 2 ? { executedCases: 5, passedCases: 4 } : null,
+    })),
+  })) as readonly EpochReport[];
+  const followupAssessment = assessNyxTransferEpoch(followupReports);
+  check(followupAssessment.chunkId === NYX_TRANSFER_FOLLOWUP.chunkId
+    && followupAssessment.pairedOutcomes[1].arms.CURRENT.truncations === 1
+    && followupAssessment.pairedOutcomes[1].arms.CURRENT.invalidSource === 1
+    && followupAssessment.pairedOutcomes[2].arms.CURRENT.hiddenCasesPassed === 4,
+  "follow-up analyzer separates transport, source, and hidden-case failure evidence");
+  let substitutionRejected = false;
+  try { assessNyxTransferEpoch(followupReports.map((report) => ({
+    ...report, tasks: report.tasks.map((task, index) => index === 0 ? { ...task, taskId: "SUBSTITUTED" } : task),
+  }))); } catch (error) { substitutionRejected = String(error).includes("transfer_epoch_task_population_invalid"); }
+  check(substitutionRejected, "follow-up analyzer rejects task substitution across all arms");
 }
 
 const parent = await mkdtemp(join(tmpdir(), "nyx-quality-assurance-"));
@@ -140,7 +176,7 @@ try {
     check(task.initiallyAdmittedPaths.every((path) => !path.startsWith("tools/"))
       && task.mutationPaths.every((path) => !path.startsWith("tools/")), `${task.taskId} never exposes verifier assets as mutation targets`);
   }
-  for (const task of NYX_TRANSFER_EPOCH_TASKS) {
+  for (const task of [...NYX_TRANSFER_EPOCH_TASKS, ...NYX_TRANSFER_FOLLOWUP_TASKS]) {
     const correctRoot = join(parent, task.taskId, "correct");
     const faultyRoot = join(parent, task.taskId, "faulty");
     for (const root of [correctRoot, faultyRoot]) {

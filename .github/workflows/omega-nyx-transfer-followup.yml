@@ -1,13 +1,21 @@
-name: Omega NYX fresh matched coding transfer
+name: Omega NYX coding-transfer follow-up
 
 on:
   workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths:
+      - .github/workflows/omega-nyx-transfer-followup.yml
+      - scripts/omega/nyx-transfer-followup-fixtures.ts
+      - scripts/omega/nyx-transfer-epoch-compare.ts
+      - scripts/omega/nyx-quality-v4-live-eval.ts
+      - scripts/omegaNyxEngineeringQualityAssurance.test.ts
 
 permissions:
   contents: read
 
 concurrency:
-  group: omega-nyx-transfer-matched-${{ github.ref }}
+  group: omega-nyx-transfer-followup-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -18,7 +26,7 @@ jobs:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-      NYX_QUALITY_SUITE: TRANSFER_EPOCH
+      NYX_QUALITY_SUITE: TRANSFER_FOLLOWUP
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,32 +42,32 @@ jobs:
       - name: Confirm configured secret without exposing it
         shell: bash
         run: test -n "$NVIDIA_API_KEY"
-      - name: Verify evaluator, fixture reference, provider, and authority contracts
+      - name: Verify unchanged acceptance, provider, authority, and fresh fixtures
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaVerificationIntegrity.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxEngineeringQualityAssurance.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaCandidateEngineeringAdmission.test.ts
-      - name: Run three predeclared cognition configurations
+      - name: Run three matched cognition configurations
         shell: bash
         run: |
           set -euo pipefail
           for variant in MINIMAL_REFERENCE CURRENT REASONING_ENABLED; do
             NYX_EXPERIMENT_VARIANT="$variant" node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quality-v4-live-eval.ts
           done
-      - name: Compare matched evidence
+      - name: Compare paired outcomes and realized compute
         shell: bash
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-transfer-epoch-compare.ts \
-            "$RUNNER_TEMP/nyx-quality-transfer_epoch-minimal_reference-${GITHUB_SHA:0:12}.json" \
-            "$RUNNER_TEMP/nyx-quality-transfer_epoch-current-${GITHUB_SHA:0:12}.json" \
-            "$RUNNER_TEMP/nyx-quality-transfer_epoch-reasoning_enabled-${GITHUB_SHA:0:12}.json"
-      - name: Upload sanitized per-arm and comparison reports
+            "$RUNNER_TEMP/nyx-quality-transfer_followup-minimal_reference-${GITHUB_SHA:0:12}.json" \
+            "$RUNNER_TEMP/nyx-quality-transfer_followup-current-${GITHUB_SHA:0:12}.json" \
+            "$RUNNER_TEMP/nyx-quality-transfer_followup-reasoning_enabled-${GITHUB_SHA:0:12}.json"
+      - name: Upload sanitized per-arm and paired reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: omega-nyx-transfer-matched-${{ github.sha }}
+          name: omega-nyx-transfer-followup-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/nyx-quality-transfer_epoch-*.json
+            ${{ runner.temp }}/nyx-quality-transfer_followup-*.json
             ${{ runner.temp }}/nyx-transfer-matched-*.json
           if-no-files-found: warn
