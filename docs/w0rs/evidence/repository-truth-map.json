@@ -2291,7 +2291,8 @@
       "files": [
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
         "scripts/omega/nyx-quality-v4-live-eval.ts",
-        "scripts/omega/nyx-research-party-live-eval.ts"
+        "scripts/omega/nyx-research-party-live-eval.ts",
+        "scripts/omega/nyx-transfer-epoch-compare.ts"
       ]
     },
     {
