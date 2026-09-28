@@ -4436,6 +4436,8 @@
           "scripts/omega/nyx-research-party-fixtures.ts",
           "scripts/omega/nyx-research-party-live-eval.ts",
           "scripts/omega/nyx-scheduler-challenge.ts",
+          "scripts/omega/nyx-source-emission-diagnostics.ts",
+          "scripts/omega/nyx-source-emission-live.ts",
           "scripts/omega/nyx-transfer-epoch-compare.ts",
           "scripts/omega/nyx-transfer-epoch-fixtures.ts",
           "scripts/omega/nyx-transfer-followup-fixtures.ts",

@@ -2200,6 +2200,7 @@
         "scripts/omega/nyx-quality-v4-live-eval.ts",
         "scripts/omega/nyx-r3f-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
+        "scripts/omega/nyx-source-emission-live.ts",
         "scripts/omega/nyx-web-live-eval.ts"
       ]
     },
@@ -2213,6 +2214,12 @@
       "name": "NYX_CONTRACT_TRIALS",
       "files": [
         "scripts/omega/nyx-contract-compliance.ts"
+      ]
+    },
+    {
+      "name": "NYX_EMISSION_TRIALS",
+      "files": [
+        "scripts/omega/nyx-source-emission-live.ts"
       ]
     },
     {
@@ -2252,6 +2259,7 @@
         "scripts/omega/nyx-quality-v4-live-eval.ts",
         "scripts/omega/nyx-r3f-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
+        "scripts/omega/nyx-source-emission-live.ts",
         "scripts/omega/nyx-web-live-eval.ts"
       ]
     },
