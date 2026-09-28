@@ -15,7 +15,8 @@ import { NYX_REPAIR_FEEDBACK_TASK } from "./omega/nyx-repair-feedback-diagnostic
 import { NYX_REPAIR_FEEDBACK_TRANSFER_TASK } from "./omega/nyx-repair-feedback-transfer";
 import { NYX_TRANSFER_EPOCH, NYX_TRANSFER_EPOCH_TASKS } from "./omega/nyx-transfer-epoch-fixtures";
 import { NYX_TRANSFER_FOLLOWUP, NYX_TRANSFER_FOLLOWUP_TASKS } from "./omega/nyx-transfer-followup-fixtures";
-import { assessNyxTransferEpoch, type EpochReport, type TaskResult } from "./omega/nyx-transfer-epoch-compare";
+import { assessNyxTransferEpoch, nyxTransferReportIdentity,
+  type EpochReport, type TaskResult } from "./omega/nyx-transfer-epoch-compare";
 import { assessNyxQualityReference, requireAdmissibleQualityReferences } from "./omega/nyx-quality-reference-preflight";
 
 let passed = 0;
@@ -92,6 +93,11 @@ check(/^[a-f0-9]{64}$/.test(NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST)
   check(new Set([...NYX_TRANSFER_EPOCH_TASKS, ...NYX_TRANSFER_FOLLOWUP_TASKS]
     .map((task) => task.taskId)).size === 8,
   "follow-up tasks are not reused from the prior scored epoch");
+  const identities = NYX_TRANSFER_FOLLOWUP.arms.map((arm) =>
+    nyxTransferReportIdentity("TRANSFER_FOLLOWUP", arm, "a".repeat(40)));
+  check(new Set(identities.map((identity) => identity.fileName)).size === 3
+    && identities.every((identity, index) => identity.experimentVariant === NYX_TRANSFER_FOLLOWUP.arms[index]),
+  "all live arms retain distinct report identities and cannot overwrite one another");
 }
 
 {

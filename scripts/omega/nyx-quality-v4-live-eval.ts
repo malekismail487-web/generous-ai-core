@@ -54,6 +54,7 @@ import { NYX_TRANSFER_EPOCH, NYX_TRANSFER_EPOCH_FROZEN_CORE, NYX_TRANSFER_EPOCH_
   "./nyx-transfer-epoch-fixtures";
 import { NYX_TRANSFER_FOLLOWUP, NYX_TRANSFER_FOLLOWUP_FROZEN_CORE, NYX_TRANSFER_FOLLOWUP_TASKS } from
   "./nyx-transfer-followup-fixtures";
+import { nyxTransferReportIdentity } from "./nyx-transfer-epoch-compare";
 import { NYX_SCHEDULER_CHALLENGE, NYX_SCHEDULER_EXPERIMENT, NYX_SCHEDULER_FROZEN_CORE,
   NYX_SCHEDULER_FRONTIER_V3_FROZEN_CORE,
   NYX_SCHEDULER_FRONTIER_V4_FROZEN_CORE,
@@ -187,6 +188,8 @@ const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
 const QUALITY_ORACLE_VERSION = "omega-quality-oracle/1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
+const TRANSFER_REPORT_IDENTITY = IS_ANY_TRANSFER
+  ? nyxTransferReportIdentity(SUITE_ID, EXPERIMENT_VARIANT, CANDIDATE) : null;
 const MAX_COGNITION_CYCLES_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxCognitionCycles : 3;
 const MAX_CANDIDATE_ITERATIONS_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxCandidateIterations : 3;
 const MAX_COGNITION_CORRECTIONS_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxCognitionCorrections : 2;
@@ -797,7 +800,7 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
     sourceRepresentation: SOURCE_REPRESENTATION,
     intentCompilationMode: INTENT_COMPILATION_MODE,
     experimentVariant: IS_REPAIR_FEEDBACK_DIAGNOSTIC ? "MATCHED_REPAIR_FEEDBACK_POLICY"
-      : IS_TRANSFER_EPOCH ? EXPERIMENT_VARIANT
+      : TRANSFER_REPORT_IDENTITY ? TRANSFER_REPORT_IDENTITY.experimentVariant
       : IS_FRESH_CIRCUIT_TOPIC ? "MATCHED_FRESH_CIRCUIT_TOPIC"
       : IS_EVIDENCE_GATED_CIRCUIT_ABLATION ? "MATCHED_EVIDENCE_GATED_CIRCUIT_ABLATION"
       : IS_CONTRASTIVE_CIRCUIT_ABLATION ? "MATCHED_CONTRASTIVE_CIRCUIT_ABLATION"
@@ -1042,9 +1045,10 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
       requiredAcceptedTasks: IS_CONTEXT ? HOLDOUT.length : 1,
       allHiddenCasesRequired: true, engineeringQualityRequired: true, safetyPreservationRequired: true,
       populationClaim: "NONE_SINGLE_DIAGNOSTIC" } } : report;
-  const configurationSuffix = IS_CHALLENGE || IS_TRANSFER_EPOCH ? `-${EXPERIMENT_VARIANT.toLowerCase()}` : "";
+  const configurationSuffix = IS_CHALLENGE ? `-${EXPERIMENT_VARIANT.toLowerCase()}` : "";
   const reportPath = join(process.env.RUNNER_TEMP?.trim() || tmpdir(),
-    `nyx-quality-${SUITE_ID.toLowerCase()}${configurationSuffix}-${CANDIDATE.slice(0, 12)}.json`);
+    TRANSFER_REPORT_IDENTITY?.fileName
+      ?? `nyx-quality-${SUITE_ID.toLowerCase()}${configurationSuffix}-${CANDIDATE.slice(0, 12)}.json`);
   await writeFile(reportPath, `${JSON.stringify(publishedReport, null, 2)}\n`, "utf8");
   console.log(`NYX_QUALITY_${SUITE_ID}_HOLDOUT ${JSON.stringify(publishedReport)}`);
   console.log(`NYX_QUALITY_${SUITE_ID}_REPORT_PATH ${reportPath}`);

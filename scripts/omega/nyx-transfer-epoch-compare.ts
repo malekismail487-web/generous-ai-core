@@ -5,6 +5,14 @@ import { NYX_TRANSFER_EPOCH_TASKS } from "./nyx-transfer-epoch-fixtures";
 import { NYX_TRANSFER_FOLLOWUP, NYX_TRANSFER_FOLLOWUP_TASKS } from "./nyx-transfer-followup-fixtures";
 
 type Arm = typeof NYX_TRANSFER_EPOCH.arms[number];
+export function nyxTransferReportIdentity(suiteIdentity: string, arm: Arm, candidateCommit: string) {
+  if (!["TRANSFER_EPOCH", "TRANSFER_FOLLOWUP"].includes(suiteIdentity)
+    || !NYX_TRANSFER_EPOCH.arms.includes(arm) || !/^[a-f0-9]{40}$/.test(candidateCommit)) {
+    throw new Error("transfer_epoch_report_identity_invalid");
+  }
+  return Object.freeze({ experimentVariant: arm,
+    fileName: `nyx-quality-${suiteIdentity.toLowerCase()}-${arm.toLowerCase()}-${candidateCommit.slice(0, 12)}.json` });
+}
 export interface TaskResult {
   readonly taskId: string;
   readonly frozenTaskContentDigest: string;
