@@ -1,0 +1,45 @@
+name: Omega NYX source-emission development diagnosis
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths:
+      - .github/workflows/omega-nyx-source-emission-dev.yml
+      - scripts/omega/nyx-source-emission-diagnostics.ts
+      - scripts/omega/nyx-source-emission-live.ts
+      - scripts/omegaNyxSourceEmissionReliability.test.ts
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-nyx-source-emission-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      NYX_EMISSION_TRIALS: "2"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Check development classifier before live use
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxSourceEmissionReliability.test.ts
+      - name: Confirm configured secret without exposing it
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Diagnose source emission without candidate admission
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-source-emission-live.ts
