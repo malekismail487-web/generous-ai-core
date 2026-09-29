@@ -1,9 +1,6 @@
 name: Omega NYX emission-recovery fresh transfer
 
 on:
-  push:
-    branches:
-      - sol/omega-institutional-spine
   workflow_dispatch:
 
 permissions:
