@@ -4,10 +4,11 @@ import { NYX_TRANSFER_EPOCH } from "./nyx-transfer-epoch-fixtures";
 import { NYX_TRANSFER_EPOCH_TASKS } from "./nyx-transfer-epoch-fixtures";
 import { NYX_TRANSFER_FOLLOWUP, NYX_TRANSFER_FOLLOWUP_TASKS } from "./nyx-transfer-followup-fixtures";
 import { NYX_EMISSION_TRANSFER, NYX_EMISSION_TRANSFER_TASKS } from "./nyx-emission-transfer-fixtures";
+import { NYX_ADMISSION_GUIDANCE, NYX_ADMISSION_GUIDANCE_TASKS } from "./nyx-admission-guidance-fixtures";
 
 type Arm = typeof NYX_TRANSFER_EPOCH.arms[number];
 export function nyxTransferReportIdentity(suiteIdentity: string, arm: Arm, candidateCommit: string) {
-  if (!["TRANSFER_EPOCH", "TRANSFER_FOLLOWUP", "EMISSION_TRANSFER"].includes(suiteIdentity)
+  if (!["TRANSFER_EPOCH", "TRANSFER_FOLLOWUP", "EMISSION_TRANSFER", "ADMISSION_GUIDANCE"].includes(suiteIdentity)
     || !NYX_TRANSFER_EPOCH.arms.includes(arm) || !/^[a-f0-9]{40}$/.test(candidateCommit)) {
     throw new Error("transfer_epoch_report_identity_invalid");
   }
@@ -67,10 +68,12 @@ function sum(items: readonly TaskResult[], key: "modelCalls" | "totalTokens" | "
 
 export function assessNyxTransferEpoch(reports: readonly EpochReport[]) {
   const suite = reports[0]?.suiteIdentity;
-  const contract = suite === "EMISSION_TRANSFER" ? NYX_EMISSION_TRANSFER
+  const contract = suite === "ADMISSION_GUIDANCE" ? NYX_ADMISSION_GUIDANCE
+    : suite === "EMISSION_TRANSFER" ? NYX_EMISSION_TRANSFER
     : suite === "TRANSFER_FOLLOWUP" ? NYX_TRANSFER_FOLLOWUP
     : suite === "TRANSFER_EPOCH" ? NYX_TRANSFER_EPOCH : null;
-  const expectedTasks = suite === "EMISSION_TRANSFER" ? NYX_EMISSION_TRANSFER_TASKS
+  const expectedTasks = suite === "ADMISSION_GUIDANCE" ? NYX_ADMISSION_GUIDANCE_TASKS
+    : suite === "EMISSION_TRANSFER" ? NYX_EMISSION_TRANSFER_TASKS
     : suite === "TRANSFER_FOLLOWUP" ? NYX_TRANSFER_FOLLOWUP_TASKS
     : suite === "TRANSFER_EPOCH" ? NYX_TRANSFER_EPOCH_TASKS : null;
   if (!contract || !expectedTasks) throw new Error("transfer_epoch_unknown_suite");
@@ -153,7 +156,7 @@ export function assessNyxTransferEpoch(reports: readonly EpochReport[]) {
     readonly durationMs: number; readonly failureClasses: Readonly<Record<string, number>>;
     readonly outcomeClasses: Readonly<Record<string, number>>;
   }>;
-  if (suite === "EMISSION_TRANSFER") {
+  if (suite === "EMISSION_TRANSFER" || suite === "ADMISSION_GUIDANCE") {
     const current = armMetrics.CURRENT;
     const reasoning = armMetrics.REASONING_ENABLED;
     const matchedPairs = pairedOutcomes.filter((item) => item.currentVsReasoning.realizedComputeMatched);
