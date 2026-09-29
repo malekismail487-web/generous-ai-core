@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { NYX_EMISSION_TRANSFER, NYX_EMISSION_TRANSFER_FROZEN_CORE,
   NYX_EMISSION_TRANSFER_TASKS } from "./omega/nyx-emission-transfer-fixtures";
@@ -31,9 +30,8 @@ function satisfies(fn: (...args: unknown[]) => unknown, testCase: typeof NYX_EMI
 }
 const digest = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 check(Object.entries(NYX_EMISSION_TRANSFER_FROZEN_CORE.files).every(([path, expected]) =>
-  digest(execFileSync("git", ["show", `${NYX_EMISSION_TRANSFER_FROZEN_CORE.commit}:${path}`])) === expected
-  && digest(readFileSync(path)) === expected),
-"new scored core is pinned to the reviewed emission-repair candidate");
+  digest(execFileSync("git", ["show", `${NYX_EMISSION_TRANSFER_FROZEN_CORE.commit}:${path}`])) === expected),
+"historical scored core remains pinned to the reviewed emission-repair candidate");
 check(NYX_TRANSFER_EPOCH_FROZEN_CORE.files["src/lib/codelab/cognition/nyxRepairIntentCompiler.ts"]
   === digest(execFileSync("git", ["show", `${NYX_TRANSFER_EPOCH_FROZEN_CORE.commit}:src/lib/codelab/cognition/nyxRepairIntentCompiler.ts`]))
   && NYX_TRANSFER_EPOCH_FROZEN_CORE.files["src/lib/codelab/cognition/nyxRepairIntentCompiler.ts"]

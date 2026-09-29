@@ -38,6 +38,9 @@ export const OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 = Object.freeze({
   policyId: "omega-public-static-candidate/2",
 } as const);
 
+export const OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES = 3;
+export const OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS = 4;
+
 export interface CandidateEngineeringLineage {
   readonly hypothesisId: string;
   readonly hypothesisDigest: string;
@@ -172,10 +175,13 @@ function publicFinding(dimension: typeof STATIC_DIMENSIONS[number], raw: string,
   const matchedPaths = changedPaths.filter((path) => raw === path || raw.includes(`:${path}`));
   const paths = matchedPaths.length > 0 ? matchedPaths
     : ["DECLARATION_DELTA", "COMPLEXITY_DELTA", "INVARIANT_FAILED"].includes(prefix) ? changedPaths : [];
-  const numeric = /^(declaration_delta|complexity_delta):(\d+)$/.exec(raw);
-  if (!numeric) return frozenFinding(dimension, prefix, paths);
-  const observed = Number(numeric[2]);
-  const limit = numeric[1] === "declaration_delta" ? policy.maxAddedDeclarations : policy.maxComplexityDelta;
+  const delta = /^(declaration_delta|complexity_delta):(\d+)$/.exec(raw);
+  const perFile = /^(complexity_limit|nesting_limit):(.+):(\d+)$/.exec(raw);
+  if (!delta && (!perFile || !changedPaths.includes(perFile[2]))) return frozenFinding(dimension, prefix, paths);
+  const observed = Number(delta?.[2] ?? perFile?.[3]);
+  const limit = delta?.[1] === "declaration_delta" ? policy.maxAddedDeclarations
+    : delta?.[1] === "complexity_delta" ? policy.maxComplexityDelta
+      : perFile?.[1] === "complexity_limit" ? policy.maxCyclomaticComplexity : policy.maxNestingDepth;
   if (!Number.isSafeInteger(observed) || !Number.isSafeInteger(limit) || observed <= limit) {
     return frozenFinding(dimension, prefix, paths);
   }
@@ -375,10 +381,12 @@ function admitStaticEngineeringCandidateInternal(input: unknown): CandidateEngin
   // A one-file repair of a tiny existing function should not need an entire new
   // declaration forest. Larger files retain the broader, less false-positive-prone limit.
   const tinySingleFileRepair = reviewedPaths.length === 1
-    && (qualityBaseline[reviewedPaths[0]]?.split(/\r?\n/).filter((line) => line.trim()).length ?? Infinity) <= 3;
+    && (qualityBaseline[reviewedPaths[0]]?.split(/\r?\n/).filter((line) => line.trim()).length ?? Infinity)
+      <= OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES;
   const policy: EngineeringQualityPolicy = Object.freeze({ ...OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,
     allowedChangedPaths: Object.freeze([...request.allowedMutationPaths]), readonlyPaths: Object.freeze([]),
-    maxAddedDeclarations: tinySingleFileRepair ? 4 : OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.maxAddedDeclarations,
+    maxAddedDeclarations: tinySingleFileRepair ? OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS
+      : OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.maxAddedDeclarations,
     invariants: Object.freeze((request.publicQualityObligations ?? []).map((item) => item.invariant)) });
   const appliedPolicyDigest = sha256(canonical({ policy, publicQualityObligations: request.publicQualityObligations ?? [],
     objective: request.publicQualityObligations?.length ? request.objective : null }));

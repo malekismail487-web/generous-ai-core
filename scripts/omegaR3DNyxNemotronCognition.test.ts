@@ -589,6 +589,33 @@ function schemaKeys(value: unknown): string[] {
     hypothesisId: prior.hypothesisId, proposalDigest: prior.proposalDigest, applicationId: "APPLICATION-QUALITY-1",
     findings: [{ dimension: "READABILITY", code: "EXCESSIVE_LINE_LENGTH", paths: ["src/math.ts"] }],
     hiddenEvidenceUsed: false as const, authorityGranted: false as const };
+  let firstPrompt: Record<string, unknown> = {};
+  await cognition(async (input, init) => {
+    firstPrompt = JSON.parse((JSON.parse(String(init?.body)) as { messages: Array<{ content: string }> })
+      .messages[1].content) as Record<string, unknown>;
+    return transportFor(intent())(input, init);
+  }).proposeRepair(request());
+  const limits = (firstPrompt.constraints as { publicStaticAdmission: Record<string, unknown> }).publicStaticAdmission;
+  check(limits.policyId === "omega-public-static-candidate/2"
+    && limits.assessedAgainst === "ORIGINAL_OBSERVED_REPOSITORY_STATE"
+    && limits.maxCyclomaticComplexityPerChangedFile === 12 && limits.maxComplexityDelta === 8
+    && (limits.tinySingleChangedFileRule as Record<string, unknown>).maxAddedDeclarations === 4
+    && !Object.hasOwn(firstPrompt, "qualityRepairGoal"),
+  "first attempt receives exact public static bounds without fabricated rejection feedback");
+  let revisionPrompt: Record<string, unknown> = {};
+  await cognition(async (input, init) => {
+    revisionPrompt = JSON.parse((JSON.parse(String(init?.body)) as { messages: Array<{ content: string }> })
+      .messages[1].content) as Record<string, unknown>;
+    return transportFor(intent())(input, init);
+  }).proposeRepair(request({ observation: passingObservation, priorHypotheses,
+    candidateQualityFeedback: { ...feedback, findings: [{ dimension: "UNNECESSARY_COMPLEXITY",
+      code: "COMPLEXITY_DELTA", paths: ["src/math.ts"], measurement: { observed: 11, limit: 8 } }] } }));
+  check((revisionPrompt.qualityRepairGoal as string).includes("Preserve passing behavior")
+    && (revisionPrompt.activeRepairDriver as { findings: Array<{ measurement: { observed: number; limit: number } }> })
+      .findings[0].measurement.observed === 11
+    && (revisionPrompt.activeRepairDriver as { findings: Array<{ measurement: { observed: number; limit: number } }> })
+      .findings[0].measurement.limit === 8,
+  "quality retry receives the bound rejection, numeric excess, and cumulative simplification objective");
   const validRevision = await evaluate(intent({ failureInterpretation: "Visible behavior passed but the candidate failed static quality admission." }), {
     observation: passingObservation, priorHypotheses, candidateQualityFeedback: feedback,
   });

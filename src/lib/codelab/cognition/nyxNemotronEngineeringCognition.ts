@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto";
 import { isAbsolute } from "node:path";
+import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,
+  OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS,
+  OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES } from "../assurance/candidateEngineeringAdmission";
 import { NvidiaNimProvider, type NvidiaNimEvidence } from "../model/nvidiaNimProvider";
 import type { EngineeringObservation } from "../observation/r3EngineeringObservation";
 import { validTheoryResearchContext, type TheoryResearchContext } from "../research/theoryContracts";
@@ -381,6 +384,22 @@ export const NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS = Object.freeze(["expectedBaseH
 export const NYX_FORBIDDEN_SEMANTIC_REPLACEMENT_PATTERNS = Object.freeze([
   "shell_recursive_delete", "shell_command_interpreter", "node_child_process", "runtime_process_spawn",
 ] as const);
+export const NYX_PUBLIC_STATIC_QUALITY_GUIDANCE = Object.freeze({
+  policyId: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.policyId,
+  assessedAgainst: "ORIGINAL_OBSERVED_REPOSITORY_STATE",
+  maxChangedFiles: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.maxChangedFiles,
+  maxChangedLines: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.maxChangedLines,
+  maxCandidateBytes: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.maxCandidateBytes,
+  maxCyclomaticComplexityPerChangedFile: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.maxCyclomaticComplexity,
+  maxComplexityDelta: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.maxComplexityDelta,
+  maxNestingDepthPerChangedFile: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.maxNestingDepth,
+  maxAddedDeclarations: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.maxAddedDeclarations,
+  tinySingleChangedFileRule: Object.freeze({
+    atMostNonblankOriginalLines: OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES,
+    maxAddedDeclarations: OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS,
+  }),
+  interpretation: "These are public static admission bounds, not proof of functional correctness. A passing visible test does not waive them.",
+});
 export const NYX_REPAIR_SYSTEM_INSTRUCTION = "You are Νύξ engineering cognition running on NVIDIA Nemotron 3 Ultra. Act like a disciplined software engineer: diagnose causally, cite admitted evidence, state the invariant, challenge the repair with bounded counterexamples, and revise falsified or quality-rejected candidates instead of perturbing them. Produce complete, parseable, readable source that preserves unrelated behavior and repository conventions. If Omega supplies sanitized diagnostics from an invalid prior intent or a deterministic quality rejection, correct every listed violation without repeating it. Return only one strict JSON semantic engineering intent with no markdown or commentary. You propose; Omega authorizes.";
 export const NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST = sha256(canonical({
   version: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
@@ -392,6 +411,7 @@ export const NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST = sha256(canonical({
   systemInstruction: NYX_REPAIR_SYSTEM_INSTRUCTION,
   forbiddenReplacementPatterns: NYX_FORBIDDEN_SEMANTIC_REPLACEMENT_PATTERNS,
   sourceMeasurementPolicy: NYX_SOURCE_MEASUREMENT_POLICY,
+  publicStaticQualityGuidance: NYX_PUBLIC_STATIC_QUALITY_GUIDANCE,
   sourceRepresentations: ["TEXT", "LINES"], sourceLinesPolicy: NYX_SOURCE_LINES_POLICY,
   intentCompiler: NYX_REPAIR_INTENT_COMPILER_STATUS,
   authorityBoundary: "Omega derives trusted execution metadata and independently authorizes every action.",
@@ -669,6 +689,7 @@ export class NyxNemotronEngineeringCognition {
       constraints: { output: "JSON_SCHEMA", maxChanges: contract.bounds.changes, maxPatchBytes: contract.bounds.patchBytes,
         maxCounterexamples: contract.bounds.counterexamples, fieldBounds: contract.bounds,
         sourceQuality: request.sourceQualityConstraints,
+        publicStaticAdmission: NYX_PUBLIC_STATIC_QUALITY_GUIDANCE,
         sourceRepresentation: contract.sourceRepresentation, sourceLinesPolicy: contract.sourceLinesPolicy,
         sourceLanguageContracts,
         omegaVerificationPlan: request.allowedVerificationToolIds,
@@ -681,6 +702,7 @@ export class NyxNemotronEngineeringCognition {
         evidenceRef: qualityFeedback.evidenceId, hypothesisId: qualityFeedback.hypothesisId,
         findings: qualityFeedback.findings } : { kind: "EXECUTION_OBSERVATION", observationId: request.observation.observationId,
         evidenceRef: request.observation.candidateEvidenceId },
+      ...(qualityFeedback ? { qualityRepairGoal: "The candidate passed available execution checks but failed public static admission. Preserve passing behavior while replacing unnecessary branches and declarations. Meet every reported limit against the original observed repository state; do not merely append code or reformat it." } : {}),
       observation: { observationId: request.observation.observationId, state: request.observation.state,
         baselineComparison: request.observation.baselineComparison, candidateAttribution: request.observation.candidateAttribution,
         attributionConfidence: request.observation.attributionConfidence, epistemicState: request.observation.epistemicState,

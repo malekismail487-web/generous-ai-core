@@ -166,6 +166,19 @@ check(declarationHeavy.decision === "REJECTED" && declarationHeavy.findings.some
     && item.measurement?.observed === 5 && item.measurement.limit === 4
     && item.paths.includes(PATH)),
 "the public complexity bound reports the measured excess and affected scope without hidden evidence");
+const branchHeavy = admitStaticEngineeringCandidate(fixture(undefined,
+  `export function add(a, b) {\n${Array.from({ length: 13 }, (_, index) =>
+    `  if (a === ${index}) return b + ${index};`).join("\n")}\n  return a + b;\n}\n`));
+check(branchHeavy.decision === "REJECTED" && branchHeavy.findings.some((item) =>
+  item.code === "COMPLEXITY_LIMIT" && item.paths.includes(PATH)
+    && item.measurement?.observed === 14 && item.measurement.limit === 12),
+"public per-file complexity rejection carries exact observed and allowed values");
+const nestedHeavy = admitStaticEngineeringCandidate(fixture(undefined,
+  `export function add(a, b) { ${"if (a) { ".repeat(5)}return a + b; ${"} ".repeat(5)} }\n`));
+check(nestedHeavy.decision === "REJECTED" && nestedHeavy.findings.some((item) =>
+  item.code === "NESTING_LIMIT" && item.paths.includes(PATH)
+    && item.measurement?.observed === 5 && item.measurement.limit === 4),
+"public nesting rejection carries exact observed and allowed values");
 const originalTinySource = "export function add(a, b) { return a - b; }\n";
 const firstHeavyCandidate = `export function add(a, b) {
   const first = 0;
