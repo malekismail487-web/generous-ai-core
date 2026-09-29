@@ -27,6 +27,7 @@ export const NYX_TRANSFER_EPOCH_FROZEN_CORE = Object.freeze({
   files: Object.freeze({
     "src/lib/codelab/model/nvidiaNimProvider.ts": "b4254ef147ca1855a3ce969323411a6953f76eac37b89e0a775eec3ab7f6e6c8",
     "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "cb0f1331436804e9595cbd341a9021baec3b09b7bdd0bd0106b99a92a5f291f6",
+    "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts": "0d40820e9cc721992390184344aa00e8c37d7a9c44fefbe695a4742c1fa2a52a",
     "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "3d6b24f088093b049b65284cce906adc74203d9d4a62f25fd8fc458410d55c0a",
     "src/lib/codelab/assurance/candidateEngineeringAdmission.ts": "f4f1f180197e0a39c069816b8ecf6468bed38d4464404dae2c7a6df37e37e04b",
     "src/lib/codelab/assurance/engineeringQualityOracle.ts": "af21863b9f3680330215e5464c5adcbbd050e2f313e7d71741822714e7594931",

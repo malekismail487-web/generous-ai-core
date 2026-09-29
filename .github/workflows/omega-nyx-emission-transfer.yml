@@ -2,14 +2,6 @@ name: Omega NYX emission-recovery fresh transfer
 
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths:
-      - .github/workflows/omega-nyx-emission-transfer.yml
-      - scripts/omega/nyx-emission-transfer-fixtures.ts
-      - scripts/omega/nyx-quality-v4-live-eval.ts
-      - scripts/omega/nyx-transfer-epoch-compare.ts
-      - scripts/omegaNyxEmissionTransfer.test.ts
 
 permissions:
   contents: read

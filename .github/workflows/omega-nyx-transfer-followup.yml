@@ -2,14 +2,6 @@ name: Omega NYX coding-transfer follow-up
 
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths:
-      - .github/workflows/omega-nyx-transfer-followup.yml
-      - scripts/omega/nyx-transfer-followup-fixtures.ts
-      - scripts/omega/nyx-transfer-epoch-compare.ts
-      - scripts/omega/nyx-quality-v4-live-eval.ts
-      - scripts/omegaNyxEngineeringQualityAssurance.test.ts
 
 permissions:
   contents: read

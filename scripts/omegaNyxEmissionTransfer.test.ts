@@ -5,6 +5,7 @@ import { assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeri
 import { NYX_EMISSION_TRANSFER, NYX_EMISSION_TRANSFER_FROZEN_CORE,
   NYX_EMISSION_TRANSFER_TASKS } from "./omega/nyx-emission-transfer-fixtures";
 import { assessNyxTransferEpoch, type EpochReport } from "./omega/nyx-transfer-epoch-compare";
+import { NYX_TRANSFER_EPOCH_FROZEN_CORE } from "./omega/nyx-transfer-epoch-fixtures";
 
 let passed = 0;
 const failures: string[] = [];
@@ -33,6 +34,11 @@ check(Object.entries(NYX_EMISSION_TRANSFER_FROZEN_CORE.files).every(([path, expe
   digest(execFileSync("git", ["show", `${NYX_EMISSION_TRANSFER_FROZEN_CORE.commit}:${path}`])) === expected
   && digest(readFileSync(path)) === expected),
 "new scored core is pinned to the reviewed emission-repair candidate");
+check(NYX_TRANSFER_EPOCH_FROZEN_CORE.files["src/lib/codelab/cognition/nyxRepairIntentCompiler.ts"]
+  === digest(execFileSync("git", ["show", `${NYX_TRANSFER_EPOCH_FROZEN_CORE.commit}:src/lib/codelab/cognition/nyxRepairIntentCompiler.ts`]))
+  && NYX_TRANSFER_EPOCH_FROZEN_CORE.files["src/lib/codelab/cognition/nyxRepairIntentCompiler.ts"]
+    !== NYX_EMISSION_TRANSFER_FROZEN_CORE.files["src/lib/codelab/cognition/nyxRepairIntentCompiler.ts"],
+"historical transfer cannot silently adopt the new source compiler while retaining its frozen-core claim");
 check(NYX_EMISSION_TRANSFER_TASKS.length === 3
   && new Set(NYX_EMISSION_TRANSFER_TASKS.map((task) => task.taskClass)).size === 3
   && NYX_EMISSION_TRANSFER.sourceRepresentation === "TEXT"
