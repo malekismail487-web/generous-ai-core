@@ -1,4 +1,5 @@
 name: Omega NYX fresh admission-guidance transfer
+# The first scored run is triggered by the frozen-fixture introduction.
 
 on:
   workflow_dispatch:
