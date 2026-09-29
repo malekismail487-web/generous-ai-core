@@ -158,6 +158,38 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
   check(repeatedCompilation.evidence.intentCompilation.outputDigest === compilation.outputDigest
     && repeatedCompilation.hypothesis?.proposalDigest === compiled.hypothesis?.proposalDigest,
   "intent compilation is deterministic for identical model output and request constraints");
+  const textCompiled = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
+    replacement: minified }] })), "TEXT", undefined, "SAFE_CANONICALIZATION").proposeRepair(request());
+  check(textCompiled.decision === "PROPOSED" && textCompiled.hypothesis !== null
+    && textCompiled.hypothesis.changes[0].replacementContent.split("\n").every((line) => line.length <= 120)
+    && textCompiled.evidence.intentCompilation.operations.some((item) => item.kind === "CANONICALIZE_PARSEABLE_SOURCE")
+    && textCompiled.evidence.intentCompilation.semanticPreservationClaim
+      === "PARSEABLE_SOURCE_FORMAT_REQUIRES_EXECUTION_VERIFICATION"
+    && !textCompiled.omegaAuthorityGranted && !textCompiled.hypothesis.applyAuthorized,
+  "opt-in TEXT canonicalization admits parseable minified source without execution authority");
+  const textStrict = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
+    replacement: minified }] })), "TEXT", undefined, "STRICT").proposeRepair(request());
+  check(textStrict.decision === "COGNITION_ERROR" && textStrict.hypothesis === null
+    && has(textStrict, "SOURCE_QUALITY_INVALID"),
+  "STRICT TEXT mode retains its original measured readability rejection");
+  const invalidTextSource = "export function add(a:number,b:number){return a+;}\n";
+  const invalidText = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
+    replacement: invalidTextSource }] })), "TEXT", undefined, "SAFE_CANONICALIZATION").proposeRepair(request());
+  check(invalidText.decision === "COGNITION_ERROR" && invalidText.hypothesis === null
+    && invalidText.schemaDiagnostics.some((item) => item.category === "SOURCE_QUALITY_INVALID"
+      && item.observed.startsWith("syntax_error_")),
+  "TEXT canonicalization cannot launder malformed TypeScript through syntax admission");
+  const invalidMinifiedText = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
+    replacement: invalidTextSource + " ".repeat(121) }] })), "TEXT", undefined, "SAFE_CANONICALIZATION")
+    .proposeRepair(request());
+  check(invalidMinifiedText.decision === "COGNITION_ERROR" && invalidMinifiedText.hypothesis === null,
+  "overlong malformed TEXT also fails closed before patch proposal");
+  const unbreakableText = `export const token = "${"x".repeat(160)}";\n`;
+  const unbreakableTextResult = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts",
+    replacement: unbreakableText }] })), "TEXT", undefined, "SAFE_CANONICALIZATION").proposeRepair(request());
+  check(unbreakableTextResult.decision === "COGNITION_ERROR" && unbreakableTextResult.hypothesis === null
+    && has(unbreakableTextResult, "SOURCE_QUALITY_INVALID"),
+  "TEXT formatter cannot launder an intrinsically overlong literal through readability admission");
   const complexExpression = "export const describe=(items:Array<{id:string;priority:number;enabled:boolean}>)=>items.filter((item)=>item.enabled&&item.priority>0).map((item)=>({identifier:item.id,normalizedPriority:Math.min(100,Math.max(0,item.priority)),description:`${item.id}:${item.priority}`}));\n";
   const compiledComplex = await cognition(transportFor(intent({ changes: [{ target: "src/math.ts", replacement: {
     lines: complexExpression.split("\n"), lineEnding: "LF" } }] })), "LINES", undefined, "SAFE_CANONICALIZATION")

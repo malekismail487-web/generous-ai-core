@@ -9,6 +9,8 @@ on:
       - scripts/omega/nyx-source-emission-diagnostics.ts
       - scripts/omega/nyx-source-emission-live.ts
       - scripts/omegaNyxSourceEmissionReliability.test.ts
+      - scripts/omegaR3DNyxNemotronCognition.test.ts
+      - src/lib/codelab/cognition/nyxRepairIntentCompiler.ts
 
 permissions:
   contents: read

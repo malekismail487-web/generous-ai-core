@@ -7,7 +7,7 @@ export type NyxRepairIntentCompilationMode = "STRICT" | "SAFE_CANONICALIZATION";
 
 export const NYX_REPAIR_INTENT_COMPILER_STATUS = Object.freeze({
   compilerId: "OMEGA_NYX_REPAIR_INTENT_COMPILER",
-  compilerVersion: "nyx-repair-intent-compiler/2",
+  compilerVersion: "nyx-repair-intent-compiler/3",
   formatterIdentity: "prettier/3.9.6",
   supportedModes: Object.freeze(["STRICT", "SAFE_CANONICALIZATION"] as const),
   transformsExecutableTargets: false,
@@ -27,7 +27,7 @@ export interface NyxIntentCompilationOperation {
 
 export interface NyxIntentCompilationEvidence {
   readonly compilerId: "OMEGA_NYX_REPAIR_INTENT_COMPILER";
-  readonly compilerVersion: "nyx-repair-intent-compiler/2";
+  readonly compilerVersion: "nyx-repair-intent-compiler/3";
   readonly formatterIdentity: "prettier/3.9.6";
   readonly mode: NyxRepairIntentCompilationMode;
   readonly outcome: "NOT_REQUESTED" | "UNCHANGED" | "COMPILED" | "REFUSED";
@@ -114,7 +114,7 @@ function evidence(request: NyxRepairIntentCompilationRequest, inputDigest: strin
   outcome: NyxIntentCompilationEvidence["outcome"], refusalReason: string | null,
   operations: readonly NyxIntentCompilationOperation[]): NyxIntentCompilationEvidence {
   return Object.freeze({ compilerId: "OMEGA_NYX_REPAIR_INTENT_COMPILER",
-    compilerVersion: "nyx-repair-intent-compiler/2", formatterIdentity: "prettier/3.9.6",
+    compilerVersion: "nyx-repair-intent-compiler/3", formatterIdentity: "prettier/3.9.6",
     mode: request.mode, outcome, inputDigest, outputDigest,
     refusalReason, operations: Object.freeze(operations.map(frozenOperation)),
     semanticPreservationClaim: operations.some((item) => item.kind === "CANONICALIZE_PARSEABLE_SOURCE")
@@ -230,26 +230,32 @@ export async function compileNyxRepairIntent(input: unknown,
       beforeCount: before.length, afterCount: boundedCounterexamples.length });
   }
 
-  if (request.sourceRepresentation === "LINES" && Array.isArray(output.changes)) {
+  if (Array.isArray(output.changes)) {
     const compiledChanges = [...output.changes];
     for (const [index, value] of compiledChanges.entries()) {
       if (!value || typeof value !== "object" || Array.isArray(value)) continue;
       const change = value as Record<string, unknown>;
       if (Object.keys(change).some((key) => key !== "target" && key !== "replacement")
         || typeof change.target !== "string") continue;
-      const replacement = asStructuredSource(change.replacement);
-      if (!replacement || replacement.lines.length > request.maxSourceLines
-        || !replacement.lines.some((line) => line.length > request.maxLineLength)) continue;
-      const separator = replacement.lineEnding === "LF" ? "\n" : "\r\n";
-      const original = replacement.lines.join(separator);
+      const replacement = request.sourceRepresentation === "LINES"
+        ? asStructuredSource(change.replacement) : null;
+      if (request.sourceRepresentation === "LINES" && (!replacement
+        || replacement.lines.length > request.maxSourceLines
+        || !replacement.lines.some((line) => line.length > request.maxLineLength))) continue;
+      if (request.sourceRepresentation === "TEXT" && typeof change.replacement !== "string") continue;
+      const original = request.sourceRepresentation === "TEXT" ? change.replacement as string
+        : replacement!.lines.join(replacement!.lineEnding === "LF" ? "\n" : "\r\n");
+      if (request.sourceRepresentation === "TEXT"
+        && !original.split(/\r\n|\n|\r/).some((line) => line.length > request.maxLineLength)) continue;
       if (Buffer.byteLength(original, "utf8") > request.maxPatchBytes) continue;
       const formatted = await formatParseableSource(change.target, original, request.maxLineLength);
       if (formatted === null || formatted === original || Buffer.byteLength(formatted, "utf8") > request.maxPatchBytes) continue;
       const formattedLines = formatted.split("\n");
       if (formattedLines.length > request.maxSourceLines
         || formattedLines.some((line) => line.length > request.maxLineLength || /[\r\n\u2028\u2029]/.test(line))) continue;
-      const structured = Object.freeze({ lines: Object.freeze(formattedLines), lineEnding: replacement.lineEnding });
-      compiledChanges[index] = Object.freeze({ ...change, replacement: structured });
+      const compiledReplacement = request.sourceRepresentation === "TEXT" ? formatted
+        : Object.freeze({ lines: Object.freeze(formattedLines), lineEnding: replacement!.lineEnding });
+      compiledChanges[index] = Object.freeze({ ...change, replacement: compiledReplacement });
       operations.push({ kind: "CANONICALIZE_PARSEABLE_SOURCE", path: `$.changes[${index}].replacement`,
         beforeDigest: digest(original), afterDigest: digest(formatted) });
     }
