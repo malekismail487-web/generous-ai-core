@@ -3,10 +3,11 @@ import { join } from "node:path";
 import { NYX_TRANSFER_EPOCH } from "./nyx-transfer-epoch-fixtures";
 import { NYX_TRANSFER_EPOCH_TASKS } from "./nyx-transfer-epoch-fixtures";
 import { NYX_TRANSFER_FOLLOWUP, NYX_TRANSFER_FOLLOWUP_TASKS } from "./nyx-transfer-followup-fixtures";
+import { NYX_EMISSION_TRANSFER, NYX_EMISSION_TRANSFER_TASKS } from "./nyx-emission-transfer-fixtures";
 
 type Arm = typeof NYX_TRANSFER_EPOCH.arms[number];
 export function nyxTransferReportIdentity(suiteIdentity: string, arm: Arm, candidateCommit: string) {
-  if (!["TRANSFER_EPOCH", "TRANSFER_FOLLOWUP"].includes(suiteIdentity)
+  if (!["TRANSFER_EPOCH", "TRANSFER_FOLLOWUP", "EMISSION_TRANSFER"].includes(suiteIdentity)
     || !NYX_TRANSFER_EPOCH.arms.includes(arm) || !/^[a-f0-9]{40}$/.test(candidateCommit)) {
     throw new Error("transfer_epoch_report_identity_invalid");
   }
@@ -27,6 +28,7 @@ export interface TaskResult {
   readonly repairIterations: number;
   readonly publicQualityRevisionCycles: number;
   readonly failureClass: string;
+  readonly outcomeClass?: string;
   readonly cognitionFailures?: readonly { readonly reason: string }[];
   readonly providerDiagnostics: readonly { readonly failureCategory: string | null;
     readonly finishReason?: string | null }[];
@@ -65,9 +67,11 @@ function sum(items: readonly TaskResult[], key: "modelCalls" | "totalTokens" | "
 
 export function assessNyxTransferEpoch(reports: readonly EpochReport[]) {
   const suite = reports[0]?.suiteIdentity;
-  const contract = suite === "TRANSFER_FOLLOWUP" ? NYX_TRANSFER_FOLLOWUP
+  const contract = suite === "EMISSION_TRANSFER" ? NYX_EMISSION_TRANSFER
+    : suite === "TRANSFER_FOLLOWUP" ? NYX_TRANSFER_FOLLOWUP
     : suite === "TRANSFER_EPOCH" ? NYX_TRANSFER_EPOCH : null;
-  const expectedTasks = suite === "TRANSFER_FOLLOWUP" ? NYX_TRANSFER_FOLLOWUP_TASKS
+  const expectedTasks = suite === "EMISSION_TRANSFER" ? NYX_EMISSION_TRANSFER_TASKS
+    : suite === "TRANSFER_FOLLOWUP" ? NYX_TRANSFER_FOLLOWUP_TASKS
     : suite === "TRANSFER_EPOCH" ? NYX_TRANSFER_EPOCH_TASKS : null;
   if (!contract || !expectedTasks) throw new Error("transfer_epoch_unknown_suite");
   const arms = contract.arms;
@@ -140,12 +144,34 @@ export function assessNyxTransferEpoch(reports: readonly EpochReport[]) {
       durationMs: sum(tasks, "durationMs"),
       failureClasses: Object.fromEntries([...new Set(tasks.map((task) => task.failureClass))].sort()
         .map((failureClass) => [failureClass, tasks.filter((task) => task.failureClass === failureClass).length])),
+      outcomeClasses: Object.fromEntries([...new Set(tasks.map((task) => task.outcomeClass ?? "UNCLASSIFIED"))].sort()
+        .map((outcomeClass) => [outcomeClass, tasks.filter((task) => task.outcomeClass === outcomeClass).length])),
     }];
   })) as Record<Arm, {
     readonly functionalAccepted: number; readonly qualityAccepted: number; readonly repairAttempts: number;
     readonly qualityRevisionCycles: number; readonly modelCalls: number; readonly totalTokens: number;
     readonly durationMs: number; readonly failureClasses: Readonly<Record<string, number>>;
+    readonly outcomeClasses: Readonly<Record<string, number>>;
   }>;
+  if (suite === "EMISSION_TRANSFER") {
+    const current = armMetrics.CURRENT;
+    const reasoning = armMetrics.REASONING_ENABLED;
+    const matchedPairs = pairedOutcomes.filter((item) => item.currentVsReasoning.realizedComputeMatched);
+    const decision = safetyRegression ? "SAFETY_REGRESSION"
+      : providerIncomplete ? "INCONCLUSIVE_PROVIDER_OR_USAGE"
+        : reasoning.qualityAccepted <= current.qualityAccepted ? "NO_OBSERVED_REASONING_QUALITY_ADVANTAGE"
+          : matchedPairs.length !== taskIds.length || reasoning.totalTokens > current.totalTokens
+            ? "QUALITY_ADVANTAGE_AT_EXTRA_OR_UNMATCHED_COMPUTE"
+            : "TENTATIVE_REASONING_ADVANTAGE_REPLICATION_REQUIRED";
+    return Object.freeze({ schemaVersion: 3, chunkId: contract.chunkId, decision,
+      candidateCommit: first.candidateCommit, modelId: first.modelId,
+      evaluatorDigest: first.evaluatorDigest, taskIds, armMetrics, pairedOutcomes,
+      matchedConfiguredBudgets: true, currentVsReasoningRealizedComputeMatchedTasks: matchedPairs.length,
+      falseAcceptanceRate: 0, defaultConfigurationChanged: false,
+      reasoningLayerPromoted: false, broadGeneralizationCertified: false,
+      limitation: "Three fresh tasks and one live pass per arm. Provider failure, unmatched realized compute, or absent replication prevents promotion.",
+    });
+  }
   const minimal = armMetrics.MINIMAL_REFERENCE;
   const current = armMetrics.CURRENT;
   const reasoning = armMetrics.REASONING_ENABLED;
@@ -169,7 +195,9 @@ export function assessNyxTransferEpoch(reports: readonly EpochReport[]) {
 }
 
 if (process.argv[1]?.endsWith("nyx-transfer-epoch-compare.ts")) {
-  if (process.argv.length !== 5) throw new Error("transfer_epoch_requires_three_report_paths");
+  if (process.argv.length !== 4 && process.argv.length !== 5) {
+    throw new Error("transfer_epoch_requires_two_or_three_report_paths");
+  }
   const reports = await Promise.all(process.argv.slice(2).map(async (path) =>
     JSON.parse(await readFile(path, "utf8")) as EpochReport));
   const assessment = assessNyxTransferEpoch(reports);

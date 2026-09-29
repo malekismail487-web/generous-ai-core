@@ -54,6 +54,8 @@ import { NYX_TRANSFER_EPOCH, NYX_TRANSFER_EPOCH_FROZEN_CORE, NYX_TRANSFER_EPOCH_
   "./nyx-transfer-epoch-fixtures";
 import { NYX_TRANSFER_FOLLOWUP, NYX_TRANSFER_FOLLOWUP_FROZEN_CORE, NYX_TRANSFER_FOLLOWUP_TASKS } from
   "./nyx-transfer-followup-fixtures";
+import { NYX_EMISSION_TRANSFER, NYX_EMISSION_TRANSFER_FROZEN_CORE, NYX_EMISSION_TRANSFER_TASKS } from
+  "./nyx-emission-transfer-fixtures";
 import { nyxTransferReportIdentity } from "./nyx-transfer-epoch-compare";
 import { NYX_SCHEDULER_CHALLENGE, NYX_SCHEDULER_EXPERIMENT, NYX_SCHEDULER_FROZEN_CORE,
   NYX_SCHEDULER_FRONTIER_V3_FROZEN_CORE,
@@ -76,12 +78,13 @@ const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-5
 const SUITE_ID = process.env.NYX_QUALITY_SUITE?.trim() || "V4";
 const EXPERIMENT_VARIANT = (SUITE_ID === "V5_QUALITY_REPAIR" ? "REASONING_ENABLED"
   : process.env.NYX_EXPERIMENT_VARIANT?.trim() || "CURRENT") as NyxCognitionExperimentVariant;
-if (!["V4", "V5", "V5_QUALITY_REPAIR", "CHALLENGE", "FRONTIER_CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES", "COMPARISON", "CAPACITY_STATUS", "CONNECTOME_ABLATION", "BIOLOGICAL_CONNECTOME_ABLATION", "CONTRASTIVE_CIRCUIT_ABLATION", "EVIDENCE_GATED_CIRCUIT_ABLATION", "FRESH_CIRCUIT_TOPIC", "REPAIR_FEEDBACK_DIAGNOSTIC", "REPAIR_FEEDBACK_TRANSFER", "TRANSFER_EPOCH", "TRANSFER_FOLLOWUP"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
+if (!["V4", "V5", "V5_QUALITY_REPAIR", "CHALLENGE", "FRONTIER_CHALLENGE", "CONTEXT", "CONTEXT_REPAIR", "CONTEXT_LINES", "COMPARISON", "CAPACITY_STATUS", "CONNECTOME_ABLATION", "BIOLOGICAL_CONNECTOME_ABLATION", "CONTRASTIVE_CIRCUIT_ABLATION", "EVIDENCE_GATED_CIRCUIT_ABLATION", "FRESH_CIRCUIT_TOPIC", "REPAIR_FEEDBACK_DIAGNOSTIC", "REPAIR_FEEDBACK_TRANSFER", "TRANSFER_EPOCH", "TRANSFER_FOLLOWUP", "EMISSION_TRANSFER"].includes(SUITE_ID)) throw new Error("unsupported_nyx_quality_suite");
 if (!["CURRENT", "REASONING_ENABLED", "MINIMAL_REFERENCE"].includes(EXPERIMENT_VARIANT)) throw new Error("unsupported_nyx_experiment_variant");
 const IS_CAPACITY_STATUS = SUITE_ID === "CAPACITY_STATUS";
 const IS_TRANSFER_EPOCH = SUITE_ID === "TRANSFER_EPOCH";
 const IS_TRANSFER_FOLLOWUP = SUITE_ID === "TRANSFER_FOLLOWUP";
-const IS_ANY_TRANSFER = IS_TRANSFER_EPOCH || IS_TRANSFER_FOLLOWUP;
+const IS_EMISSION_TRANSFER = SUITE_ID === "EMISSION_TRANSFER";
+const IS_ANY_TRANSFER = IS_TRANSFER_EPOCH || IS_TRANSFER_FOLLOWUP || IS_EMISSION_TRANSFER;
 const IS_V5_QUALITY_REPAIR = SUITE_ID === "V5_QUALITY_REPAIR";
 const IS_COMPARISON = SUITE_ID === "COMPARISON" || IS_CAPACITY_STATUS;
 const IS_CONNECTOME_ABLATION = SUITE_ID === "CONNECTOME_ABLATION";
@@ -110,7 +113,7 @@ const IS_CONTEXT = SUITE_ID === "CONTEXT" || IS_CONTEXT_REPAIR || IS_CONTEXT_LIN
 const SOURCE_REPRESENTATION = IS_CONTEXT_LINES || IS_COMPARISON || IS_FRONTIER_CHALLENGE
   || IS_V5_QUALITY_REPAIR
   || IS_BIOLOGICAL_CONNECTOME_ABLATION || IS_CIRCUIT_COMPARISON
-  || IS_REPAIR_FEEDBACK_DIAGNOSTIC || IS_ANY_TRANSFER ? "LINES" : "TEXT";
+  || IS_REPAIR_FEEDBACK_DIAGNOSTIC || (IS_ANY_TRANSFER && !IS_EMISSION_TRANSFER) ? "LINES" : "TEXT";
 const INTENT_COMPILATION_MODE = IS_FRONTIER_CHALLENGE || IS_V5_QUALITY_REPAIR || IS_BIOLOGICAL_CONNECTOME_ABLATION
   || IS_CIRCUIT_COMPARISON || IS_REPAIR_FEEDBACK_DIAGNOSTIC || IS_ANY_TRANSFER
   ? "SAFE_CANONICALIZATION" : "STRICT";
@@ -149,7 +152,8 @@ const HOLDOUT: readonly EvaluationTask[] = IS_REPAIR_FEEDBACK_DIAGNOSTIC
   ? NYX_ENGINEERING_QUALITY_V5.flatMap((task) => CONNECTOME_ABLATION_ARMS.map((comparisonArm) => ({
     ...task, taskId: `${task.taskId}-${comparisonArm}`, baseTaskId: task.taskId, comparisonArm,
   })))
-  : IS_ANY_TRANSFER ? (IS_TRANSFER_FOLLOWUP ? NYX_TRANSFER_FOLLOWUP_TASKS : NYX_TRANSFER_EPOCH_TASKS).map((task) => ({ ...task,
+  : IS_ANY_TRANSFER ? (IS_EMISSION_TRANSFER ? NYX_EMISSION_TRANSFER_TASKS
+    : IS_TRANSFER_FOLLOWUP ? NYX_TRANSFER_FOLLOWUP_TASKS : NYX_TRANSFER_EPOCH_TASKS).map((task) => ({ ...task,
     comparisonArm: EXPERIMENT_VARIANT }))
   : IS_COMPARISON ? NYX_CONFIGURATION_COMPARISON.arms.map((comparisonArm) => ({
   ...NYX_CONTEXT_TASKS[1], taskId: `NYX-CONFIG-${comparisonArm}`, comparisonArm,
@@ -158,6 +162,7 @@ const HOLDOUT: readonly EvaluationTask[] = IS_REPAIR_FEEDBACK_DIAGNOSTIC
     comparisonArm: "NYX_REASONING_STACK" as const }))
     : SUITE_ID === "V5" ? NYX_ENGINEERING_QUALITY_V5 : NYX_ENGINEERING_QUALITY_V4;
 const FROZEN_CORE = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_FROZEN_CORE : IS_COMPARISON ? NYX_CONFIGURATION_FROZEN_CORE : IS_CONTEXT_LINES ? NYX_CONTEXT_LINES_FROZEN_CORE : IS_CONTEXT_REPAIR ? NYX_CONTEXT_REPAIR_FROZEN_CORE
+  : IS_EMISSION_TRANSFER ? NYX_EMISSION_TRANSFER_FROZEN_CORE
   : IS_TRANSFER_FOLLOWUP ? NYX_TRANSFER_FOLLOWUP_FROZEN_CORE
   : IS_TRANSFER_EPOCH ? NYX_TRANSFER_EPOCH_FROZEN_CORE
   : IS_FRONTIER_CHALLENGE ? NYX_SCHEDULER_FRONTIER_V4_FROZEN_CORE
@@ -172,6 +177,7 @@ const FROZEN_CORE = IS_CAPACITY_STATUS ? NYX_CAPACITY_STATUS_FROZEN_CORE : IS_CO
     : SUITE_ID === "V5_QUALITY_REPAIR" ? NYX_V5_QUALITY_REPAIR_V3_FROZEN_CORE
       : SUITE_ID === "V5" ? NYX_V5_FROZEN_CORE : NYX_V4_FROZEN_CORE;
 const EVALUATOR_VERSION = IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.version
+  : IS_EMISSION_TRANSFER ? NYX_EMISSION_TRANSFER.version
   : IS_TRANSFER_FOLLOWUP ? NYX_TRANSFER_FOLLOWUP.version
   : IS_TRANSFER_EPOCH ? NYX_TRANSFER_EPOCH.version
   : IS_FRONTIER_CHALLENGE ? "nyx-scheduler-frontier/5"
@@ -193,10 +199,12 @@ const TRANSFER_REPORT_IDENTITY = IS_ANY_TRANSFER
 const MAX_COGNITION_CYCLES_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxCognitionCycles : 3;
 const MAX_CANDIDATE_ITERATIONS_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxCandidateIterations : 3;
 const MAX_COGNITION_CORRECTIONS_PER_TASK = IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxCognitionCorrections : 2;
-const MAX_WALL_CLOCK_MS_PER_TASK = IS_TRANSFER_FOLLOWUP ? NYX_TRANSFER_FOLLOWUP.wallClockMsPerTask
+const MAX_WALL_CLOCK_MS_PER_TASK = IS_EMISSION_TRANSFER ? NYX_EMISSION_TRANSFER.wallClockMsPerTask
+  : IS_TRANSFER_FOLLOWUP ? NYX_TRANSFER_FOLLOWUP.wallClockMsPerTask
   : IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.maxWallClockMs
   : IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxWallClockMs : 180_000;
-const MAX_OUTPUT_TOKENS = IS_TRANSFER_FOLLOWUP ? NYX_TRANSFER_FOLLOWUP.outputTokensPerCall
+const MAX_OUTPUT_TOKENS = IS_EMISSION_TRANSFER ? NYX_EMISSION_TRANSFER.outputTokensPerCall
+  : IS_TRANSFER_FOLLOWUP ? NYX_TRANSFER_FOLLOWUP.outputTokensPerCall
   : IS_CONTEXT ? NYX_CONTEXT_EXPERIMENT.maxOutputTokensPerCall
   : IS_CHALLENGE ? NYX_SCHEDULER_EXPERIMENT.maxOutputTokensPerCall : 1_536;
 if (IS_TRANSFER_FOLLOWUP && (SOURCE_REPRESENTATION !== NYX_TRANSFER_FOLLOWUP.sourceRepresentation
@@ -207,6 +215,15 @@ if (IS_TRANSFER_FOLLOWUP && (SOURCE_REPRESENTATION !== NYX_TRANSFER_FOLLOWUP.sou
   || MAX_OUTPUT_TOKENS !== NYX_TRANSFER_FOLLOWUP.outputTokensPerCall
   || MAX_WALL_CLOCK_MS_PER_TASK !== NYX_TRANSFER_FOLLOWUP.wallClockMsPerTask)) {
   throw new Error("transfer_followup_integration_control_mismatch");
+}
+if (IS_EMISSION_TRANSFER && (SOURCE_REPRESENTATION !== NYX_EMISSION_TRANSFER.sourceRepresentation
+  || INTENT_COMPILATION_MODE !== NYX_EMISSION_TRANSFER.intentCompilationMode
+  || MAX_COGNITION_CYCLES_PER_TASK !== NYX_EMISSION_TRANSFER.modelCallsPerTask
+  || MAX_CANDIDATE_ITERATIONS_PER_TASK !== NYX_EMISSION_TRANSFER.candidateIterationsPerTask
+  || MAX_COGNITION_CORRECTIONS_PER_TASK !== NYX_EMISSION_TRANSFER.cognitionCorrectionsPerTask
+  || MAX_OUTPUT_TOKENS !== NYX_EMISSION_TRANSFER.outputTokensPerCall
+  || MAX_WALL_CLOCK_MS_PER_TASK !== NYX_EMISSION_TRANSFER.wallClockMsPerTask)) {
+  throw new Error("emission_transfer_integration_control_mismatch");
 }
 if (IS_TRANSFER_EPOCH && (SOURCE_REPRESENTATION !== NYX_TRANSFER_EPOCH.sourceRepresentation
   || INTENT_COMPILATION_MODE !== NYX_TRANSFER_EPOCH.intentCompilationMode
@@ -374,6 +391,21 @@ function failureClass(result: R3BoundedRepairResult, hidden: string, quality: st
   if (result.outcome === "COGNITION_ERROR") return "MODEL_REASONING_FAILURE";
   return "MODEL_REPAIR_FAILURE";
 }
+function emissionTransferOutcomeClass(result: R3BoundedRepairResult, hidden: string, quality: string,
+  evidence: readonly NyxRepairCognitionEvidence[], accepted: boolean): string {
+  if (accepted) return "QUALITY_ACCEPTED";
+  if (result.outcome === "WAITING_FOR_CAPACITY") return "PROVIDER_CAPACITY";
+  if (result.reason.includes("provider_") || result.reason.includes("credential_")) return "PROVIDER_FAILURE";
+  if (hidden === "FAIL") return "HIDDEN_CASE_FAILURE";
+  if (result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && quality === "REJECTED") return "QUALITY_REJECTION";
+  if (result.iterations.length > 0 && result.outcome !== "FUNCTIONALLY_REPAIRED_VERIFIED") return "FUNCTIONAL_FAILURE";
+  if (evidence.some((item) => item.modelFinishReason === "length")
+    || result.cognitionFailures.some((item) => item.reason === "OUTPUT_TRUNCATED")) return "TRUNCATION";
+  if (result.cognitionFailures.some((item) => item.diagnostics.some((diagnostic) =>
+    diagnostic.observed.startsWith("syntax_error_")))) return "SYNTAX_REJECTION";
+  if (quality === "REJECTED") return "QUALITY_REJECTION";
+  return "OTHER_UNVERIFIED_FAILURE";
+}
 
 function proposal(sourceRoot: string, task: EvaluationTask, label: string,
   changes: readonly R2GProposedChange[]): R2GPatchProposal {
@@ -416,6 +448,7 @@ try {
       experimentVariant: cognitionVariantFor(task), intentCompilationMode: INTENT_COMPILATION_MODE,
       ...(IS_REPAIR_FEEDBACK_DIAGNOSTIC ? { repairFeedbackPolicy: task.comparisonArm as
         "DIAGNOSTIC_ONLY" | "TRANSIENT_REJECTED_SOURCE_WINDOW" }
+        : IS_EMISSION_TRANSFER ? { repairFeedbackPolicy: NYX_EMISSION_TRANSFER.repairFeedbackPolicy }
         : IS_TRANSFER_FOLLOWUP ? { repairFeedbackPolicy: NYX_TRANSFER_FOLLOWUP.repairFeedbackPolicy } : {}) });
     const connectomeAdapter = task.comparisonArm === "NYX_CONNECTOME"
       ? createNyxConnectomeCognitionAdapter(baseCognition)
@@ -724,6 +757,8 @@ try {
       finalClassification: accepted ? "PASS" : loopResult.outcome === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY" : "FAIL",
       firstCandidateSuccess: accepted && loopResult.iterations.length === 1,
       failureClass: failureClass(loopResult, hiddenResult, qualityResult), totalTokens: tokens,
+      ...(IS_EMISSION_TRANSFER ? { outcomeClass: emissionTransferOutcomeClass(loopResult, hiddenResult,
+        qualityResult, modelEvidence, accepted) } : {}),
       promptTokens, completionTokens,
       calibrationSamples: loopResult.iterations.filter((item) => item.hypothesis.confidence !== null)
         .map((item) => ({ confidence: item.hypothesis.confidence,
@@ -933,14 +968,16 @@ if (taskResults.length === HOLDOUT.length || IS_CONTEXT && taskResults.length > 
     limitation: "One predeclared fresh task and one repetition: interface diagnostic, not a circuit or frontier capability claim.",
   } : null;
   const publishedReport = IS_ANY_TRANSFER ? { ...result,
-    chunkId: IS_TRANSFER_FOLLOWUP ? NYX_TRANSFER_FOLLOWUP.chunkId : NYX_TRANSFER_EPOCH.chunkId,
+    chunkId: IS_EMISSION_TRANSFER ? NYX_EMISSION_TRANSFER.chunkId
+      : IS_TRANSFER_FOLLOWUP ? NYX_TRANSFER_FOLLOWUP.chunkId : NYX_TRANSFER_EPOCH.chunkId,
     evaluationDecision: !safetyPreserved ? "SAFETY_REGRESSION"
       : providerFailureTasks.length > 0 || capacityPausedTasks.length > 0 ? "INSUFFICIENT_EVIDENCE"
         : successes.length === HOLDOUT.length ? "ALL_TASKS_ACCEPTED_IN_ISOLATION"
           : "PARTIAL_OR_FAILED_IN_ISOLATION",
     institutionalReadinessCertified: false, broadGeneralizationAssessed: false,
     modelComparisonWinner: "NOT_DECIDED_BY_SINGLE_ARM",
-    taskDomains: IS_TRANSFER_FOLLOWUP ? NYX_TRANSFER_FOLLOWUP.domainScope : NYX_TRANSFER_EPOCH.domainScope,
+    taskDomains: IS_EMISSION_TRANSFER ? NYX_EMISSION_TRANSFER.domainScope
+      : IS_TRANSFER_FOLLOWUP ? NYX_TRANSFER_FOLLOWUP.domainScope : NYX_TRANSFER_EPOCH.domainScope,
     configuredBudget: { maxCognitionCyclesPerTask: MAX_COGNITION_CYCLES_PER_TASK,
       maxCandidateIterationsPerTask: MAX_CANDIDATE_ITERATIONS_PER_TASK,
       maxCognitionCorrectionsPerTask: MAX_COGNITION_CORRECTIONS_PER_TASK,

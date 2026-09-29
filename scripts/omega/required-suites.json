@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/52",
+  "suiteVersion": "omega-institutional-suite/53",
   "criticalSuites": [
     "OMEGA-DIGITAL-NEURON-STABILITY",
     "OMEGA-DIGITAL-NEURON-MICROCIRCUIT",
@@ -137,6 +137,7 @@
     { "suiteId": "OMEGA-R3-F-LIVE-ENGINEER-ASSURANCE", "file": "scripts/omegaR3FLiveEngineerAssurance.test.ts" },
     { "suiteId": "OMEGA-NYX-ENGINEERING-QUALITY-ASSURANCE", "file": "scripts/omegaNyxEngineeringQualityAssurance.test.ts" },
     { "suiteId": "OMEGA-NYX-SOURCE-EMISSION-RELIABILITY", "file": "scripts/omegaNyxSourceEmissionReliability.test.ts" },
+    { "suiteId": "OMEGA-NYX-EMISSION-TRANSFER", "file": "scripts/omegaNyxEmissionTransfer.test.ts" },
     { "suiteId": "OMEGA-BIOLOGICAL-ARCHITECTURE-PORTFOLIO", "file": "scripts/omegaBiologicalArchitecturePortfolio.test.ts" },
     { "suiteId": "OMEGA-SCHEDULER-CHALLENGE", "file": "scripts/omegaSchedulerChallenge.test.ts" },
     { "suiteId": "OMEGA-GROUNDED-REPOSITORY-CONTEXT", "file": "scripts/omegaGroundedRepositoryContext.test.ts" },
