@@ -5,6 +5,7 @@ import { verifyFiniteRefutation, type FiniteRefutation } from "../src/lib/codela
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { PROOF_TRANSFER_TASKS, PROOF_TRANSFER_EPOCH, PROOF_TRANSFER_CORPUS_DIGEST } from "./omega/nyx-proof-transfer-fixtures";
 import { WORKBENCH_TRANSFER_TASKS, transferPayload, verifyTransferCertificate } from "./omega/nyx-workbench-transfer-fixtures";
+import { verifiedRefutationObservation } from "./omega/nyx-frontier-workbench";
 
 let passed = 0; let failed = 0;
 function check(condition: unknown, label: string) { if (condition) passed++; else { failed++; console.error(`x ${label}`); } }
@@ -141,7 +142,13 @@ check(liveFixtureProofs === 5, "five genuine finite refutation cases, three non-
 const liveSource = readFileSync("scripts/omega/nyx-workbench-transfer-live-eval.ts", "utf8");
 check(!liveSource.includes("PROOF-COLOR-ODD-WHEEL") && !liveSource.includes("PROOF-HYPOTHESIS-JOINT-CONFLICT"), "live correction never special-cases frozen task identities");
 check(liveSource.includes('arm === "PROOF_WORKBENCH" ? result.payload?.refutation ?? null : null'), "current arm receives no proof evidence accidentally");
-check(liveSource.includes('refutationVerification.decision === "SUPPORTED" ? refutation : null'), "unverified refutation cannot be advertised as supported");
+check(liveSource.includes('verifiedRefutationObservation(task.problem, refutation)'), "live presentation must invoke the actual independent checker");
+const compact = verifiedRefutationObservation(odd, oddProof);
+check(compact.verification.decision === "SUPPORTED" && compact.modelObservation?.proofDigest === theoryDigest(oddProof), "compact presentation binds the complete proof");
+check(JSON.stringify(compact.modelObservation).length < JSON.stringify(oddProof).length, "proof presentation reduces repetitive model input without changing native proof");
+check(compact.modelObservation?.taskAcceptanceRequiresSeparateVerifier && !compact.modelObservation?.grantsAuthority, "compact support cannot certify entire task or grant authority");
+check(verifiedRefutationObservation(odd,{...oddProof,problemDigest:"wrong"}).modelObservation === null, "incorrect proof has no supported model presentation");
+check(verifiedRefutationObservation(odd,accessor).modelObservation === null && getters === 0, "renderer never exposes malformed/accessor proof");
 console.log(`NYX_FINITE_REFUTATION_DIFFERENTIAL ${JSON.stringify({tasks:192,unsatisfiable,mismatches,forgedAccepted,scope:"BOUNDED_FINITE_PROOFS_NOT_GENERAL_INTELLIGENCE"})}`);
 console.log(`OMEGA_FINITE_REFUTATION_TESTS passed: ${passed}, failed: ${failed}`);
 process.exitCode = failed ? 1 : 0;

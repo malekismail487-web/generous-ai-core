@@ -4,8 +4,9 @@ import type { TransferTask } from "./nyx-workbench-transfer-fixtures";
 
 /** Frozen new cases; the original transfer corpus and acceptance oracle are not edited. */
 export const PROOF_TRANSFER_EPOCH = Object.freeze({
-  version: "nyx-proof-transfer/1", chunkId: "NYX-PROOF-BEARING-REASONING-001",
-  previousEvaluatedCandidate: "1e9f0f645f68caae5bf807e0ec75440a72827ec8",
+  version: "nyx-proof-transfer/2", chunkId: "NYX-PROOF-BEARING-REASONING-001",
+  previousEvaluatedCandidate: "e6645ef63b13b8615eab322248ac0c5d18bbddbb",
+  correction:"COMPACT_VERIFIED_OBSTRUCTION_PRESENTATION_FULL_NATIVE_PROOF_PRESERVED",
   mechanism: "CHECKABLE_FINITE_REFUTATIONS_NOT_OPAQUE_SEARCH_STATUS",
   maxDeclineReconsiderationsPerTask: 1, seed: 970031,
   maxCallsPerTask: 3, maxCallsPerArm: 24, maxOutputTokensPerCall: 2048,

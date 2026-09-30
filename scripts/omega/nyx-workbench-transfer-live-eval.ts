@@ -9,7 +9,7 @@ import { BoundedReasoningSession } from "../../src/lib/codelab/research/boundedR
 import { verifyFiniteRefutation } from "../../src/lib/codelab/research/finiteRefutationVerifier";
 import { immutableTheoryValue, theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { frontierExchangeSchema, parseFrontierExchange, frontierArtifactReviewPrompt,
-  materializeFrontierArtifact, parseArtifactDecline, type ArtifactDeclineDiagnostic } from "./nyx-frontier-workbench";
+  materializeFrontierArtifact, parseArtifactDecline, verifiedRefutationObservation, type ArtifactDeclineDiagnostic } from "./nyx-frontier-workbench";
 import { frontierProviderSchema } from "./nyx-frontier-reasoning-fixtures";
 import { WORKBENCH_TRANSFER_EPOCH, WORKBENCH_TRANSFER_TASKS,
   WORKBENCH_TRANSFER_CORPUS_DIGEST, transferCertificateSchema, transferPayload, verifyTransferCertificate,
@@ -122,12 +122,12 @@ async function run(task: TransferTask, arm: Arm): Promise<TaskResult> {
           const result = session!.analyze(exchange.request);
           toolWorkUnits += result.workUnits; toolElapsedMs += result.elapsedMs; toolResultDigest = result.resultDigest;
           const refutation = arm === "PROOF_WORKBENCH" ? result.payload?.refutation ?? null : null;
-          if (refutation !== null) refutationVerification = verifyFiniteRefutation(task.problem, refutation);
+          const checkedRefutation = refutation === null ? null : verifiedRefutationObservation(task.problem, refutation);
+          refutationVerification = checkedRefutation?.verification ?? null;
           observation = immutableTheoryValue({problemDigest: session!.problemDigest,
             decision: result.status === "BUDGET_EXHAUSTED" ? "INSUFFICIENT_EVIDENCE" : "CANDIDATE_CONSTRUCTED_NOT_ACCEPTED",
             certificateFields: result.status === "BUDGET_EXHAUSTED" ? null : {status: result.status, payload: transferPayload(task.problem, result.payload)},
-            ...(refutationVerification ? {finiteRefutation: refutationVerification.decision === "SUPPORTED" ? refutation : null,
-              refutationVerification} : {}),
+            ...(checkedRefutation ? {finiteRefutation:checkedRefutation.modelObservation} : {}),
             assumptions: ["Conditional result for the supplied finite domain and admitted observations; independent verification required."],
             evidenceDigests: [result.resultDigest], workUnits: result.workUnits, elapsedMs: result.elapsedMs, grantsAuthority: false});
           record("ANALYSIS_RETURNED_NOT_ACCEPTED", ["Review the bound proposed result, or state a specific obstruction."]); continue;

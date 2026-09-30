@@ -2,6 +2,33 @@ import { BoundedReasoningSession, NYX_REASONING_WORKBENCH, type ColoringProblem,
   type PredictionTable, type ReachabilityProblem, type ReasoningProblem, type ReasoningToolResult } from
   "../../src/lib/codelab/research/boundedReasoningWorkbench";
 import { immutableTheoryValue, theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
+import { verifyFiniteRefutation, type FiniteRefutation } from "../../src/lib/codelab/research/finiteRefutationVerifier";
+
+/** Lossless proof stays in the native artifact; cognition receives the checked obstruction, not repetitive serialization. */
+export function verifiedRefutationObservation(problem: ReasoningProblem, supplied: unknown) {
+  const verification = verifyFiniteRefutation(problem, supplied);
+  if (verification.decision !== "SUPPORTED") return immutableTheoryValue({verification, modelObservation:null});
+  const proof = supplied as FiniteRefutation;
+  let obstruction: Readonly<Record<string, unknown>>;
+  if (proof.kind === "COLORING_CLIQUE_OBSTRUCTION" && problem.kind === "COLORING") obstruction = {
+    mutuallyAdjacentVertices:proof.vertices, distinctColorsRequired:proof.vertices.length,
+    availableColors:problem.colors, implication:"Pairwise adjacent vertices need distinct colors; this clique exceeds the palette, so no proper coloring exists." };
+  else if (proof.kind === "COLORING_SEARCH_REFUTATION" && problem.kind === "COLORING") obstruction = {
+    checkedNodes:proof.nodes.length, checkedColorBranches:proof.nodes.reduce((n,node)=>n+node.branches.length,0),
+    palette:problem.colors, implication:"Every possible palette choice is covered at each decision node. Every terminal branch has an actual edge-color conflict; all recursive branches are refuted. Therefore no full proper coloring exists." };
+  else if (proof.kind === "REACHABILITY_CLOSED_INVARIANT") obstruction = {closedStates:proof.states,
+    implication:"The set contains the initial state, is closed under all supplied transitions, and contains no unsafe state. Thus none is reachable in this graph."};
+  else if (proof.kind === "PREDICTION_NON_IDENTIFIABILITY") obstruction = {indistinguishableMechanisms:proof.mechanismIds,
+    implication:"These two distinct mechanisms have identical forecasts in every declared experiment. No subset can distinguish them."};
+  else if (proof.kind === "HYPOTHESIS_CONFLICT") obstruction = {falsifierFields:["mechanism","experiment","expected","observed","evidenceRef"],
+    falsifiers:proof.witnesses.map(w=>[w.mechanismId,w.experimentId,w.expectedOutcome,w.observedOutcome,w.evidenceRef]),
+    implication:"Every declared mechanism contradicts an admitted observation. An empty survivor set is a supported conflict report, not a supported theory."};
+  else throw new Error("verified_refutation_presentation_domain_mismatch");
+  return immutableTheoryValue({verification, modelObservation:{property:verification.property, obstruction,
+    proofDigest:verification.proofDigest, evidenceDigest:verification.evidenceDigest,
+    evidenceClass:"E3",verificationState:"SUPPORTED",scope:verification.scope,
+    taskAcceptanceRequiresSeparateVerifier:true,grantsAuthority:false}});
+}
 
 export const FRONTIER_WORKBENCH_EPOCH = Object.freeze({
   version: "nyx-frontier-workbench-epoch/3", modelCallsPerStage: 5, candidateSubmissionsPerStage: 3,
