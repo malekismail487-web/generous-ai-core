@@ -32,6 +32,7 @@ if (!process.env.NVIDIA_API_KEY?.trim()) {
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const diagnosticOnly = process.env.OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY === "1";
+const policyComparison = process.env.OMEGA_NYX_RESEARCH_POLICY_COMPARISON === "1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
 const limits: ResearchPartyLimits = Object.freeze({ maxEntities: 8, maxModelCalls: 11, maxExperiments: 3,
@@ -102,8 +103,9 @@ function provisionRequest(config: R2AIsolatedLifecycleConfig, taskId: string, ob
       evaluatorVersion: config.evaluatorVersion, environmentIdentity: config.environmentIdentity } };
 }
 
-async function createOmegaExperimentRunner(task: NyxResearchPartyLiveTask, objective: ResearchPartyObjective) {
-  const taskRoot = join(parent, task.taskId.toLowerCase());
+async function createOmegaExperimentRunner(task: NyxResearchPartyLiveTask, objective: ResearchPartyObjective,
+  variant = "") {
+  const taskRoot = join(parent, `${task.taskId.toLowerCase()}${variant ? `-${variant}` : ""}`);
   const sourceRoot = join(taskRoot, "source");
   const sandboxRoot = join(taskRoot, "sandboxes");
   await mkdir(join(sourceRoot, "src"), { recursive: true });
@@ -194,6 +196,71 @@ async function createOmegaExperimentRunner(task: NyxResearchPartyLiveTask, objec
       probeSource: await readFile(join(sourceRoot, "tools", "probe.mjs"), "utf8") }) === sourceDigestBefore };
 }
 
+async function createParty(task: NyxResearchPartyLiveTask, objective: ResearchPartyObjective,
+  identity: string, experimentPolicy?: "REVISE_AFTER_OBSERVATION" | "EXHAUST_PRECOMMITTED_FORECASTS") {
+  const coordinator = {};
+  const network = TheoryNetwork.create({ namespace: `nyx-live-party-${identity}`, addressCapacity: "1000000000000",
+    maxAssignedPairs: 100, maxConcurrentActivations: 8, maxTotalActivations: 100,
+    maxEvents: 1_000, maxPredictionsPerTheory: 64, maxObservationsPerTheory: 128,
+    maxRelations: 1_000, maxFanout: 16, maxMessages: 1_000, activationLifetimeMs: 10 * 60_000,
+    now: () => Date.now() }, coordinator);
+  const omega = await createOmegaExperimentRunner(task, objective, identity);
+  const party = TheoryResearchParty.create({ partyId: `${task.taskId}-PARTY-${identity}`, network,
+    coordinator, cognition, experiments: omega.runner, limits, investigatorCount: 3,
+    now: () => Date.now(), experimentPolicy });
+  return { party, omega };
+}
+
+if (policyComparison) {
+  // One task is the default live commissioning bound; three requires explicit selection.
+  const tasks = NYX_RESEARCH_PARTY_LIVE_TASKS.slice(0,
+    process.env.OMEGA_NYX_RESEARCH_COMPARE_TASKS === "3" ? 3 : 1);
+  const records: Record<string, unknown>[] = [];
+  let providerBlocked = false;
+  let acceptanceViolations = 0;
+  try {
+    for (const [index, task] of tasks.entries()) {
+      const objective = task.objective(CANDIDATE, Date.now());
+      const arms = index % 2 === 0 ? ["REVISE_AFTER_OBSERVATION", "EXHAUST_PRECOMMITTED_FORECASTS"] as const
+        : ["EXHAUST_PRECOMMITTED_FORECASTS", "REVISE_AFTER_OBSERVATION"] as const;
+      for (const [position, policy] of arms.entries()) {
+        const { party, omega } = await createParty(task, objective, `${index}-${position}`, policy);
+        const result = await party.investigate(objective);
+        const assurance = assureResearchParty({ objective, limits, result,
+          groundTruth: { taskId: task.taskId, expectedMechanismId: task.expectedMechanismId,
+            oracleDigest: task.oracleDigest, oracleProvenanceRoot: task.oracleProvenanceRoot, hiddenFromCognition: true } });
+        const sourceUnchanged = await omega.sourceUnchanged();
+        const failures = result.cognitionEvidence.filter(item => item.statusCode !== 200).length;
+        if (failures) providerBlocked = true;
+        if (!sourceUnchanged || result.authorityGranted || (assurance.decision === "ACCEPT"
+          && result.decision.selectedMechanismId !== task.expectedMechanismId)) acceptanceViolations += 1;
+        records.push({ taskId: task.taskId, policy, assurance, decision: result.decision,
+          resourceUsage: result.resourceUsage, providerFailures: failures,
+          cognitionEvidence: result.cognitionEvidence, evidenceChainComplete: result.evidenceChainComplete,
+          contributionsByRole: Object.fromEntries(["INVESTIGATOR", "FALSIFIER", "REVISER", "META_REVIEWER"]
+            .map(role => [role, result.contributions.filter(item => item.role === role).length])),
+          sourceRepositoryUnchanged: sourceUnchanged, authorityGranted: result.authorityGranted });
+        console.log(`NYX_RESEARCH_POLICY_ARM ${JSON.stringify(records.at(-1))}`);
+        // No expensive capability rerun around an unavailable provider.
+        if (providerBlocked) break;
+      }
+      if (providerBlocked) break;
+    }
+    const report = { schemaVersion: 1, chunkId: "NYX-EVIDENCE-FIRST-LIVE-001", candidateCommit: CANDIDATE,
+      model: MODEL, corpusDigest: theoryDigest(tasks.map(task => task.oracleDigest)), matchedLimits: limits,
+      requestedTasks: tasks.length, completedArms: records.length, providerBlocked, acceptanceViolations,
+      evidence: { cognition: "E4", experimentsAndOracle: "E3", independentInstitutionalReplication: false },
+      realizedComputeMatched: false, broadPromotion: false,
+      verdict: providerBlocked ? "INCONCLUSIVE_PROVIDER_FAILURE" : "BOUNDED_LIVE_COMPARISON_ONLY",
+      records };
+    await writeFile(join(process.env.RUNNER_TEMP?.trim() || tmpdir(),
+      `nyx-research-party-live-policy-${CANDIDATE.slice(0, 12)}.json`), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+    console.log(`NYX_RESEARCH_POLICY_REPORT ${JSON.stringify(report)}`);
+    if (providerBlocked || acceptanceViolations > 0 || records.some(record =>
+      record.policy === "EXHAUST_PRECOMMITTED_FORECASTS"
+      && (record.assurance as { decision: string }).decision !== "ACCEPT")) process.exitCode = 1;
+  } finally { await rm(parent, { recursive: true, force: true }); }
+} else {
 const taskResults: Record<string, unknown>[] = [];
 let partyAccepted = 0;
 let baselineCorrect = 0;
@@ -205,16 +272,7 @@ const providerStatusCounts: Record<string, number> = {};
 try {
   for (const [index, task] of NYX_RESEARCH_PARTY_LIVE_TASKS.entries()) {
     const objective = task.objective(CANDIDATE, Date.now());
-    const networkCoordinator = {};
-    const network = TheoryNetwork.create({ namespace: `nyx-live-party-${index}`, addressCapacity: "1000000000000",
-      maxAssignedPairs: 100, maxConcurrentActivations: 8, maxTotalActivations: 100,
-      maxEvents: 1_000, maxPredictionsPerTheory: 64, maxObservationsPerTheory: 128,
-      maxRelations: 1_000, maxFanout: 16, maxMessages: 1_000, activationLifetimeMs: 10 * 60_000,
-      now: () => Date.now() }, networkCoordinator);
-    const omega = await createOmegaExperimentRunner(task, objective);
-    const party = TheoryResearchParty.create({ partyId: `${task.taskId}-PARTY`, network,
-      coordinator: networkCoordinator, cognition, experiments: omega.runner, limits, investigatorCount: 3,
-      now: () => Date.now() });
+    const { party, omega } = await createParty(task, objective, String(index));
     let partyResult;
     let flatResult;
     // Alternate order to reduce systematic provider-order advantage.
@@ -274,4 +332,5 @@ try {
     || sourceMutationFailures !== 0 || authorityFailures !== 0) process.exitCode = 1;
 } finally {
   await rm(parent, { recursive: true, force: true });
+}
 }

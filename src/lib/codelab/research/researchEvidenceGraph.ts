@@ -117,7 +117,7 @@ export class ResearchEvidenceGraph {
     }
     if (this.#evidence.has(contribution.modelEvidence.evidenceId)) throw new Error("research_evidence_identity_duplicate");
     const previousId = this.#latestByTheory.get(contribution.theoryId);
-    if (previousId && contribution.intent.decision !== "REVISE_HYPOTHESIS") {
+    if (previousId && !["REVISE_HYPOTHESIS", "NO_CONCLUSION"].includes(contribution.intent.decision)) {
       throw new Error("research_theory_requires_revision_lineage");
     }
     this.#evidence.set(contribution.modelEvidence.evidenceId, { item: contribution.modelEvidence, stale: false });
@@ -171,34 +171,49 @@ export class ResearchEvidenceGraph {
     const contributionId = this.#latestByTheory.get(theoryId);
     const contribution = contributionId ? this.#contributions.get(contributionId)?.contribution : null;
     if (!contribution) throw new Error("research_hypothesis_unknown");
-    const support: string[] = [];
-    const falsification: string[] = [];
-    const unresolved: string[] = [];
+    const support = new Set<string>();
+    const falsification = new Set<string>();
+    const unresolved = new Set<string>();
     const roots = new Set<string>();
-    let stale = this.#evidence.get(contribution.modelEvidence.evidenceId)?.stale ?? true;
-    for (const ref of contribution.intent.evidenceRefs) stale ||= this.#evidence.get(ref)?.stale ?? true;
-    for (const forecast of contribution.intent.forecasts) {
+    // A revision is not permission to erase exact counterexamples. Within the
+    // same entity/mechanism lineage, retain all precommitted predictions. A new
+    // mechanism is evaluated separately; abstention does not replace a claim.
+    const lineage = [...this.#contributions.values()].map(item => item.contribution).filter(item =>
+      item.theoryId === theoryId && item.intent.mechanismId === contribution.intent.mechanismId
+      && ["PROPOSE_HYPOTHESIS", "REVISE_HYPOTHESIS"].includes(item.intent.decision));
+    let stale = false;
+    for (const claim of lineage) {
+      stale ||= this.#evidence.get(claim.modelEvidence.evidenceId)?.stale ?? true;
+      for (const ref of claim.intent.evidenceRefs) stale ||= this.#evidence.get(ref)?.stale ?? true;
+    }
+    for (const forecast of lineage.flatMap(item => item.intent.forecasts)) {
       const observationId = this.#observationByExperiment.get(forecast.experimentId);
       const observation = observationId ? this.#observations.get(observationId)?.observation : null;
       if (!observation || this.#evidence.get(observation.evidence.evidenceId)?.stale) {
-        unresolved.push(forecast.experimentId); continue;
+        unresolved.add(forecast.experimentId); continue;
       }
       roots.add(observation.evidence.provenanceRoot);
-      (observation.outcome === forecast.expectedOutcome ? support : falsification).push(observation.observationId);
+      (observation.outcome === forecast.expectedOutcome ? support : falsification).add(observation.observationId);
     }
     const state: ResearchHypothesisAssessment["state"] = stale ? "STALE"
-      : support.length > 0 && falsification.length > 0 ? "CONFLICTED"
-        : falsification.length > 0 ? "REFUTED" : support.length > 0 && unresolved.length === 0 ? "SUPPORTED"
+      : support.size > 0 && falsification.size > 0 ? "CONFLICTED"
+        : falsification.size > 0 ? "REFUTED" : support.size > 0 && unresolved.size === 0 ? "SUPPORTED"
           : "INSUFFICIENT_EVIDENCE";
     return immutableTheoryValue({ theoryId, mechanismId: contribution.intent.mechanismId, state,
-      supportingObservationIds: support, falsifyingObservationIds: falsification,
-      unresolvedExperimentIds: unresolved, distinctEvidenceRoots: roots.size,
+      supportingObservationIds: [...support], falsifyingObservationIds: [...falsification],
+      unresolvedExperimentIds: [...unresolved], distinctEvidenceRoots: roots.size,
       modelEstimate: contribution.intent.modelEstimate, calibratedProbability: null });
   }
 
   selectNextExperiment(maxRemainingCost: number): ResearchExperiment | null {
     if (!Number.isSafeInteger(maxRemainingCost) || maxRemainingCost < 0) throw new Error("research_cost_budget_invalid");
-    const hypotheses = this.#latestHypotheses().filter((item) => this.assessment(item.theoryId).state !== "REFUTED");
+    const hypotheses = this.#latestHypotheses().filter((item) => {
+      const assessment = this.assessment(item.theoryId);
+      // Forecasts in this contract are exact deterministic outcomes, not noisy
+      // probabilistic predictions. A counterexample vetoes the unchanged claim;
+      // mixed support remains CONFLICTED in its historical assessment.
+      return assessment.state !== "STALE" && assessment.falsifyingObservationIds.length === 0;
+    });
     if (hypotheses.length < 1) return null;
     const candidates = this.#objective.experimentCatalog.filter((experiment) =>
       !this.#observationByExperiment.has(experiment.experimentId) && experiment.costUnits <= maxRemainingCost
@@ -223,7 +238,7 @@ export class ResearchEvidenceGraph {
     const hypotheses = this.#latestHypotheses();
     const assessments = hypotheses.map((item) => this.assessment(item.theoryId));
     const supported = assessments.filter((item) => item.state === "SUPPORTED");
-    const viable = assessments.filter((item) => !["REFUTED", "STALE"].includes(item.state));
+    const viable = assessments.filter((item) => item.state !== "STALE" && item.falsifyingObservationIds.length === 0);
     const supportedMechanisms = new Set(supported.map((item) => item.mechanismId).filter(Boolean));
     const viableMechanisms = new Set(viable.map((item) => item.mechanismId).filter(Boolean));
     // Several entities may converge on one empirically supported mechanism. This is
@@ -238,7 +253,8 @@ export class ResearchEvidenceGraph {
       }
     }
     const state: ResearchPartyDecision["state"] = selected ? "SUPPORTED_WITHIN_MODELED_FAMILY"
-      : assessments.length > 0 && assessments.every((item) => item.state === "REFUTED") ? "REFUTED_MODELED_FAMILY"
+      : assessments.length > 0 && assessments.every((item) => item.state !== "STALE"
+        && item.falsifyingObservationIds.length > 0) ? "REFUTED_MODELED_FAMILY"
         : "INSUFFICIENT_EVIDENCE";
     return immutableTheoryValue({ state, selectedTheoryId: selected?.theoryId ?? null,
       selectedMechanismId: selected?.mechanismId ?? null,

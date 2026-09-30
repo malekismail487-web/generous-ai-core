@@ -28,6 +28,8 @@ export interface TheoryResearchPartyConfig {
   readonly investigatorCount: number;
   readonly now: () => number;
   readonly perspectiveRouter?: TheoryPerspectiveRouter;
+  /** Experimental sequencing only: neither policy adds tools, evidence, or authority. */
+  readonly experimentPolicy?: "REVISE_AFTER_OBSERVATION" | "EXHAUST_PRECOMMITTED_FORECASTS";
 }
 
 interface EntityRuntime {
@@ -62,7 +64,9 @@ export class TheoryResearchParty {
       || config.investigatorCount + 2 > config.limits.maxEntities || typeof config.now !== "function"
       || typeof config.cognition?.think !== "function" || typeof config.cognition?.profile !== "function"
       || typeof config.experiments?.run !== "function" || !config.coordinator || typeof config.coordinator !== "object"
-      || (config.perspectiveRouter !== undefined && typeof config.perspectiveRouter?.route !== "function")) {
+      || (config.perspectiveRouter !== undefined && typeof config.perspectiveRouter?.route !== "function")
+      || (config.experimentPolicy !== undefined && !["REVISE_AFTER_OBSERVATION",
+        "EXHAUST_PRECOMMITTED_FORECASTS"].includes(config.experimentPolicy))) {
       throw new Error("theory_research_party_configuration_invalid");
     }
     return new TheoryResearchParty(config);
@@ -277,6 +281,14 @@ export class TheoryResearchParty {
         const unobservedRemain = objective.experimentCatalog.some((experiment) =>
           !observations.some((observation) => observation.experimentId === experiment.experimentId));
         if (!unobservedRemain) break;
+        // Predictions were committed before any outcome was known. Gather their
+        // remaining external evidence before asking the model to rewrite them.
+        // If the modeled family is exhausted, use the existing revision path;
+        // this policy never manufactures a replacement hypothesis or observation.
+        if (this.#config.experimentPolicy === "EXHAUST_PRECOMMITTED_FORECASTS") {
+          if (observations.length >= this.#config.limits.maxExperiments) break;
+          if (graph.selectNextExperiment(this.#config.limits.maxCostUnits - experimentCostUnits)) continue;
+        }
         peakParallelModelExecutions = Math.max(peakParallelModelExecutions, investigators.length);
         const falsifierContribution = contributions.find((item) => item.role === "FALSIFIER");
         await Promise.all(investigators.map(async (entity) => {
