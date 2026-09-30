@@ -2047,6 +2047,12 @@
       ]
     },
     {
+      "name": "GITHUB_RUN_ID",
+      "files": [
+        "scripts/omega/nyx-workbench-transfer-live-eval.ts"
+      ]
+    },
+    {
       "name": "GITHUB_SHA",
       "files": [
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
@@ -2055,7 +2061,8 @@
         "scripts/omega/nyx-quality-holdout-live-eval.ts",
         "scripts/omega/nyx-quality-v4-live-eval.ts",
         "scripts/omega/nyx-r3f-live-eval.ts",
-        "scripts/omega/nyx-research-party-live-eval.ts"
+        "scripts/omega/nyx-research-party-live-eval.ts",
+        "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
     },
     {
@@ -2186,7 +2193,8 @@
         "scripts/omega/nyx-desktop-model-live-eval.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
-        "scripts/omega/nyx-web-live-eval.ts"
+        "scripts/omega/nyx-web-live-eval.ts",
+        "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
     },
     {
@@ -2202,7 +2210,8 @@
         "scripts/omega/nyx-r3f-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
         "scripts/omega/nyx-source-emission-live.ts",
-        "scripts/omega/nyx-web-live-eval.ts"
+        "scripts/omega/nyx-web-live-eval.ts",
+        "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
     },
     {
@@ -2267,7 +2276,8 @@
         "scripts/omega/nyx-r3f-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
         "scripts/omega/nyx-source-emission-live.ts",
-        "scripts/omega/nyx-web-live-eval.ts"
+        "scripts/omega/nyx-web-live-eval.ts",
+        "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
     },
     {

@@ -75,6 +75,46 @@ const FRONTIER_ARTIFACT_SCHEMA = Object.freeze({ type: "object", additionalPrope
     problemDigest: { type: "string" }, resultDigest: { type: "string" }, confidence: { type: "number" },
   } });
 
+export const ARTIFACT_DECLINE_REASONS = Object.freeze([
+  "INSUFFICIENT_EVIDENCE", "CONFLICTING_EVIDENCE", "INVALID_ARTIFACT", "SCOPE_MISMATCH",
+  "UNVERIFIED_TOOL_RESULT", "OTHER",
+] as const);
+export interface ArtifactDeclineDiagnostic {
+  readonly reasonCode: typeof ARTIFACT_DECLINE_REASONS[number];
+  readonly blockingFacts: readonly string[];
+  readonly evidenceRefs: readonly string[];
+  readonly confidence: number;
+}
+const DECLINE_SCHEMA = Object.freeze({ type: "object", additionalProperties: false,
+  required: ["schemaVersion", "operation", "problemDigest", "resultDigest", "reasonCode", "blockingFacts", "evidenceRefs", "confidence"],
+  properties: { schemaVersion: { type: "integer", enum: [1] },
+    operation: { type: "string", enum: ["DECLINE_ANALYSIS_ARTIFACT"] },
+    problemDigest: { type: "string" }, resultDigest: { type: "string" },
+    reasonCode: { type: "string", enum: ARTIFACT_DECLINE_REASONS },
+    blockingFacts: { type: "array", items: { type: "string" } },
+    evidenceRefs: { type: "array", items: { type: "string" } }, confidence: { type: "number" } } });
+
+/** Bounded externally inspectable reasons, not private reasoning or an acceptance override. */
+export function parseArtifactDecline(observation: Readonly<Record<string, unknown>>, value: unknown): ArtifactDeclineDiagnostic {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("artifact_decline_invalid");
+  if (Object.getPrototypeOf(value) !== Object.prototype || Object.values(Object.getOwnPropertyDescriptors(value))
+    .some(property => !Object.hasOwn(property, "value"))) throw new Error("artifact_decline_invalid");
+  const request = value as Record<string, unknown>;
+  const strings = (items: unknown, maximum: number) => Array.isArray(items) && items.length <= maximum
+    && items.every(item => typeof item === "string" && item.length > 0 && item.length <= 240 && !item.includes("\0"))
+    && new Set(items).size === items.length;
+  if (Object.keys(request).sort().join(",") !== "blockingFacts,confidence,evidenceRefs,operation,problemDigest,reasonCode,resultDigest,schemaVersion"
+    || request.schemaVersion !== 1 || request.operation !== "DECLINE_ANALYSIS_ARTIFACT"
+    || request.problemDigest !== observation.problemDigest || request.resultDigest !== theoryDigest(observation)
+    || !ARTIFACT_DECLINE_REASONS.includes(request.reasonCode as ArtifactDeclineDiagnostic["reasonCode"])
+    || !strings(request.blockingFacts, 4) || !(request.blockingFacts as string[]).length
+    || !strings(request.evidenceRefs, 8) || typeof request.confidence !== "number"
+    || !Number.isFinite(request.confidence) || request.confidence < 0 || request.confidence > 1)
+    throw new Error("artifact_decline_invalid");
+  return immutableTheoryValue({ reasonCode: request.reasonCode, blockingFacts: request.blockingFacts,
+    evidenceRefs: request.evidenceRefs, confidence: request.confidence }) as ArtifactDeclineDiagnostic;
+}
+
 /** Evaluation adapter owns only predeclared public problem data. No reference answers or hidden target access. */
 export function createFrontierWorkbench(stageId: string, sourcePrompt: Readonly<Record<string, unknown>>,
   deadlineEpochMs: number) {
@@ -143,11 +183,11 @@ export function createFrontierWorkbench(stageId: string, sourcePrompt: Readonly<
 }
 
 export function frontierExchangeSchema(certificateSchema: Readonly<Record<string, unknown>>, toolsAvailable: boolean,
-  artifactAvailable = false) {
+  artifactAvailable = false, diagnosticReview = false) {
   if (artifactAvailable) return { type: "object", additionalProperties: false,
     required: ["action", "analysisRequest", "certificate"], properties: {
       action: { type: "string", enum: ["SUBMIT_ANALYSIS_ARTIFACT", "DECLINE_ANALYSIS_ARTIFACT"] },
-      analysisRequest: { anyOf: [FRONTIER_ARTIFACT_SCHEMA, { type: "null" }] },
+      analysisRequest: { anyOf: [FRONTIER_ARTIFACT_SCHEMA, diagnosticReview ? DECLINE_SCHEMA : { type: "null" }] },
       certificate: { type: "null" } } };
   return { type: "object", additionalProperties: false, required: ["action", "analysisRequest", "certificate"],
     properties: { action: { type: "string", enum: ["SUBMIT_CERTIFICATE", ...(toolsAvailable ? ["REQUEST_ANALYSIS"] : []),
@@ -156,16 +196,20 @@ export function frontierExchangeSchema(certificateSchema: Readonly<Record<string
       certificate: { anyOf: [certificateSchema, { type: "null" }] } } };
 }
 
-export function parseFrontierExchange(value: unknown, toolsAvailable: boolean, artifactAvailable = false):
+export function parseFrontierExchange(value: unknown, toolsAvailable: boolean, artifactAvailable = false,
+  diagnosticReview = false):
   { readonly action: "SUBMIT_CERTIFICATE"; readonly certificate: unknown }
-  | { readonly action: "DECLINE_ANALYSIS_ARTIFACT" }
+  | { readonly action: "DECLINE_ANALYSIS_ARTIFACT"; readonly request?: unknown }
   | { readonly action: "REQUEST_ANALYSIS" | "SUBMIT_ANALYSIS_ARTIFACT"; readonly request: unknown } {
   if (!value || typeof value !== "object" || Array.isArray(value)
     || Object.keys(value).sort().join(",") !== "action,analysisRequest,certificate") throw new Error("frontier_exchange_malformed");
   const exchange = value as { action: string; analysisRequest: unknown; certificate: unknown };
   if (artifactAvailable) {
+    if (diagnosticReview && exchange.action === "DECLINE_ANALYSIS_ARTIFACT" && exchange.certificate === null
+      && exchange.analysisRequest && typeof exchange.analysisRequest === "object") return {
+        action: "DECLINE_ANALYSIS_ARTIFACT", request: exchange.analysisRequest };
     if (exchange.action === "DECLINE_ANALYSIS_ARTIFACT" && exchange.analysisRequest === null
-      && exchange.certificate === null) return { action: "DECLINE_ANALYSIS_ARTIFACT" };
+      && exchange.certificate === null && !diagnosticReview) return { action: "DECLINE_ANALYSIS_ARTIFACT" };
     if (exchange.action === "SUBMIT_ANALYSIS_ARTIFACT" && exchange.certificate === null
       && exchange.analysisRequest && typeof exchange.analysisRequest === "object") return {
         action: "SUBMIT_ANALYSIS_ARTIFACT", request: exchange.analysisRequest };
@@ -182,12 +226,14 @@ export function parseFrontierExchange(value: unknown, toolsAvailable: boolean, a
 
 /** Review is an explicit model choice, not another request to regenerate a constructed solution. */
 export function frontierArtifactReviewPrompt(problem: Readonly<Record<string, unknown>>,
-  observation: Readonly<Record<string, unknown>>, feedback: readonly string[]) {
+  observation: Readonly<Record<string, unknown>>, feedback: readonly string[], diagnosticReview = false) {
   return immutableTheoryValue({ phase: "REVIEW_CONSTRUCTED_ARTIFACT", problem,
     computationalObservation: observation, verifierFeedback: feedback,
     artifactReference: { schemaVersion: 1, operation: "SUBMIT_ANALYSIS_ARTIFACT",
       problemDigest: observation.problemDigest, resultDigest: theoryDigest(observation) },
     outputContract: "Choose SUBMIT_ANALYSIS_ARTIFACT or DECLINE_ANALYSIS_ARTIFACT. Return only {action,analysisRequest,certificate:null}. To submit, analysisRequest is the exact artifactReference plus confidence in [0,1]. To decline, analysisRequest=null. Do not emit certificate fields or generate a replacement solution in this review phase. Submission proposes the immutable artifact; the unchanged independent verifier may still reject it. Confidence and a valid digest are not acceptance.",
+    ...(diagnosticReview ? { outputContract: "Choose SUBMIT_ANALYSIS_ARTIFACT or DECLINE_ANALYSIS_ARTIFACT. Return only {action,analysisRequest,certificate:null}. To submit, use the exact artifactReference plus confidence in [0,1]. To decline, use those same digests with operation DECLINE_ANALYSIS_ARTIFACT, reasonCode from the supplied list, 1..4 short blockingFacts, 0..8 evidenceRefs, and confidence in [0,1]. Do not regenerate certificate fields. Report the specific obstruction, not a demand for certainty. Submission proposes a conditional finite-domain result for independent verification; it does not assert universal real-world truth or grant authority.",
+      declineReasonCodes: ARTIFACT_DECLINE_REASONS } : {}),
     grantsAuthority: false });
 }
 
