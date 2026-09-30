@@ -31,6 +31,7 @@ if (!process.env.NVIDIA_API_KEY?.trim()) {
 }
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
+const diagnosticOnly = process.env.OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY === "1";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
 const limits: ResearchPartyLimits = Object.freeze({ maxEntities: 8, maxModelCalls: 11, maxExperiments: 3,
@@ -38,8 +39,42 @@ const limits: ResearchPartyLimits = Object.freeze({ maxEntities: 8, maxModelCall
   maxOutputTokensPerCall: 768, maxTotalOutputTokens: 8_448, maxCostUnits: 10 });
 const provider = NvidiaNimProvider.create({ providerId: "NYX-RESEARCH-PARTY-LIVE-NEMOTRON", model: MODEL,
   authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
-  maxPromptBytes: 96_000, maxOutputTokens: 1_024, timeoutMs: 90_000 });
+  maxPromptBytes: 96_000, maxOutputTokens: diagnosticOnly ? 1_536 : 1_024, timeoutMs: 90_000 });
 const cognition = NyxNemotronTheoryCognition.create({ cognitionId: "NYX-RESEARCH-PARTY-LIVE-COGNITION", provider, limits });
+if (diagnosticOnly) {
+  const started = Date.now(); const deadline = started + 10 * 60_000;
+  const observations: Record<string, unknown>[] = [];
+  const sourceBefore = execFileSync("git", ["status", "--porcelain=v1"], {encoding:"utf8"});
+  if (sourceBefore.trim()) throw new Error("clean_diagnostic_checkout_required");
+  for (const [at, task] of NYX_RESEARCH_PARTY_LIVE_TASKS.entries()) {
+    const budgets = at % 2 === 0 ? [768,1536] : [1536,768];
+    for (const maxOutputTokens of budgets) {
+      if (Date.now() >= deadline) throw new Error("diagnostic_wall_clock_budget_exhausted");
+      const observedAt = Date.now(); const objective = task.objective(CANDIDATE, observedAt);
+      const probeLimits = {...limits,maxOutputTokensPerCall:maxOutputTokens,maxTotalOutputTokens:maxOutputTokens*limits.maxModelCalls};
+      const probe = NyxNemotronTheoryCognition.create({cognitionId:"NYX-RESEARCH-OUTPUT-BUDGET-DIAGNOSTIC",provider,limits:probeLimits});
+      const result = await probe.think({schemaVersion:1,requestId:`DIAGNOSTIC-${task.taskId}-${maxOutputTokens}`,
+        role:"INVESTIGATOR",theoryId:`DIAGNOSTIC:${task.taskId}`,guardianId:`GUARDIAN:${task.taskId}`,
+        objective,privatePriorContributions:[],peerContributions:[],experimentObservations:[],predictionFeedback:[],
+        instruction:"Independently select the most likely causal mechanism and predict every catalogued experiment. This flat baseline receives no peer discussion or experimental feedback.",
+        maxOutputTokens,observedAtEpochMs:observedAt,deadlineEpochMs:Math.min(deadline,objective.expiryEpochMs)});
+      const record = {taskId:task.taskId,maxOutputTokens,decision:result.decision,reason:result.reason,
+        diagnostics:result.diagnostics,intentDecision:result.intent?.decision??null,
+        intentDigest:result.intent?theoryDigest(result.intent):null,evidence:result.evidence,
+        elapsedMs:Date.now()-observedAt,grantsAuthority:false};
+      observations.push(record); console.log(`NYX_RESEARCH_OUTPUT_DIAGNOSTIC ${JSON.stringify(record)}`);
+    }
+  }
+  if (execFileSync("git", ["status", "--porcelain=v1"], {encoding:"utf8"}) !== sourceBefore) throw new Error("diagnostic_source_changed");
+  const report = {schemaVersion:1,chunkId:"NYX-RESEARCH-OUTPUT-DIAGNOSTIC-001",candidate:CANDIDATE,model:MODEL,
+    observations,maximumModelCalls:6,sourceRepositoryUnchanged:true,rawReasoningPersisted:false,
+    authorityIncrease:false,capabilityPromotion:false,
+    scope:"OUTPUT_BUDGET_DIAGNOSIS_NOT_COMPUTE_MATCHED_CAPABILITY_IMPROVEMENT",startedAtEpochMs:started,finishedAtEpochMs:Date.now()};
+  await writeFile(join(process.env.RUNNER_TEMP?.trim()||tmpdir(),`nyx-research-party-live-diagnostic-${CANDIDATE.slice(0,12)}.json`),
+    `${JSON.stringify(report,null,2)}\n`,{encoding:"utf8",mode:0o600});
+  console.log(`NYX_RESEARCH_OUTPUT_DIAGNOSTIC_REPORT ${JSON.stringify(report)}`);
+  process.exit(0); // Diagnostic completion is not hypothesis support or successful research.
+}
 const parent = await mkdtemp(join(tmpdir(), "nyx-research-party-live-"));
 
 function hash(value: Uint8Array | string): string { return createHash("sha256").update(value).digest("hex"); }

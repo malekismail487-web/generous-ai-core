@@ -184,7 +184,7 @@ await rejects(() => directGraph.recordObservation(makeObservation("EXP-A-FAILED"
   "observation before prediction is rejected");
 const graphTheory = "nyx-party:theory:direct";
 const directIntent = intentFor("FAILED_AS_COMPLETE", "PROPOSE_HYPOTHESIS", graphTheory);
-const directEvidence = immutableResearchValue({ evidenceId: "E1-DIRECT", evidenceClass: "E1", kind: "MODEL_CONTRIBUTION",
+const directEvidence = immutableResearchValue({ evidenceId: "E1-DIRECT", evidenceClass: "E1" as const, kind: "MODEL_CONTRIBUTION" as const,
   summary: "Model-generated claim, not truth evidence.", contentDigest: theoryDigest(directIntent), provenanceRoot: "MODEL-NEMOTRON",
   freshnessDependencies: [`CANDIDATE:${CANDIDATE}`], observedAtEpochMs: now, candidateBinding: CANDIDATE,
   grantsAuthority: false as const });
@@ -502,7 +502,9 @@ check(assureResearchParty({ objective: routingCausalObjective(), limits: routing
 
 const validRaw = intentFor("FAILED_AS_COMPLETE", "PROPOSE_HYPOTHESIS", "adapter:theory:0");
 let responseContent = JSON.stringify(validRaw);
+let responseFinishReason = "stop";
 const modelPrompts: Record<string, unknown>[] = [];
+const requestedOutputBudgets: number[] = [];
 const provider = NvidiaNimProvider.create({ providerId: "THEORY-ADAPTER-TEST", model: "nvidia/nemotron-3-ultra-550b-a55b",
   authorityMode: "TEST_DOUBLE_ONLY", credentialSource: { sourceIdentity: "test-only", read: () => "test-only-secret" },
   maxPromptBytes: 128_000, maxOutputTokens: 2_048, timeoutMs: 5_000,
@@ -510,8 +512,9 @@ const provider = NvidiaNimProvider.create({ providerId: "THEORY-ADAPTER-TEST", m
     const authorization = new Headers(init?.headers).get("authorization");
     check(authorization === "Bearer test-only-secret", "provider injects credential only at transport boundary");
     const body = JSON.parse(String(init?.body));
+    requestedOutputBudgets.push(body.max_tokens);
     modelPrompts.push(JSON.parse(body.messages[1].content));
-    return new Response(JSON.stringify({ choices: [{ message: { content: responseContent }, finish_reason: "stop" }],
+    return new Response(JSON.stringify({ choices: [{ message: { content: responseContent }, finish_reason: responseFinishReason }],
       usage: { prompt_tokens: 100, completion_tokens: 100, total_tokens: 200 } }),
     { status: 200, headers: { "content-type": "application/json", "x-request-id": "theory-test" } });
   } });
@@ -528,6 +531,24 @@ check(adapted.evidence.evidenceClass === "E3", "test-double transport remains E3
 check(adapted.evidence.requestDigest?.length === 64 && adapted.evidence.responseDigest?.length === 64,
   "adapter records request and response digests without raw reasoning");
 check(adapted.grantsAuthority === false, "Nemotron cognition grants no Omega authority");
+responseFinishReason = "length";
+const truncated = await adapter.think({ ...adapterRequest, requestId: "ADAPTER-TRUNCATED-JSON" });
+check(truncated.decision === "COGNITION_ERROR" && truncated.intent === null
+  && truncated.diagnostics.includes("finish_reason_not_stop"),
+  "HTTP 200 with length termination fails closed even when the visible JSON happens to parse");
+check(truncated.evidence.finishReason === "length" && truncated.grantsAuthority === false,
+  "output truncation remains distinct, observable, and authority-neutral");
+responseFinishReason = "stop";
+const diagnosticAdapter = NyxNemotronTheoryCognition.create({ cognitionId: "NYX-THEORY-DIAGNOSTIC",
+  provider, limits: { ...limits, maxOutputTokensPerCall: 1_536, maxTotalOutputTokens: 16_896 } });
+for (const outputBudget of [768, 1_536]) {
+  const result = await diagnosticAdapter.think({ ...adapterRequest,
+    requestId: `ADAPTER-BUDGET-${outputBudget}`, maxOutputTokens: outputBudget });
+  check(result.decision === "CONTRIBUTION" && requestedOutputBudgets.at(-1) === outputBudget,
+    `diagnostic ${outputBudget}-token arm preserves the typed contract and requested provider budget`);
+  check(result.grantsAuthority === false && result.intent?.mechanismId === validRaw.mechanismId,
+    "changing a test output ceiling neither grants authority nor substitutes a hidden answer");
+}
 const reviserRequest = scripted.calls.find((item) => item.role === "REVISER"
   && item.predictionFeedback.some((feedback) => feedback.disposition === "FALSIFIED_PREDICTION"))!;
 const reviserResponse = await adapter.think({ ...reviserRequest,

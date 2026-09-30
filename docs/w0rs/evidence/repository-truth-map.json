@@ -2287,6 +2287,12 @@
       ]
     },
     {
+      "name": "OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY",
+      "files": [
+        "scripts/omega/nyx-research-party-live-eval.ts"
+      ]
+    },
+    {
       "name": "OMEGA_PREVIOUS_TEST_MANIFEST_PATH",
       "files": [
         "scripts/omega/run-tests.mjs"
