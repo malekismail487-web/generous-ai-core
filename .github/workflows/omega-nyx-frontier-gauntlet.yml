@@ -2,6 +2,9 @@ name: Omega NYX frontier reasoning gauntlet
 
 # Live gauntlets remain opt-in while the experiment is frozen.
 on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [scripts/omega/nyx-frontier-workbench.ts]
   workflow_dispatch:
     inputs:
       workbench_comparison:
@@ -70,7 +73,7 @@ jobs:
             exit 1
           fi
       - name: Run frozen baseline and computational-workbench comparison
-        if: inputs.workbench_comparison
+        if: github.event_name == 'push' || inputs.workbench_comparison
         shell: bash
         run: |
           set +e

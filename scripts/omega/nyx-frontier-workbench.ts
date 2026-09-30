@@ -7,6 +7,7 @@ export const FRONTIER_WORKBENCH_EPOCH = Object.freeze({
   version: "nyx-frontier-workbench-epoch/3", modelCallsPerStage: 5, candidateSubmissionsPerStage: 3,
   previousEvaluatedCandidate: "70727b5f096334f9ab24ba109d94b41fa9c31bb2",
   correction: "SEPARATE_ARTIFACT_REVIEW_FROM_CERTIFICATE_GENERATION",
+  reviewProtocol: "EXPLICIT_SUBMIT_OR_DECLINE_NO_REGENERATION",
   toolRequestsPerStage: 1, maxWorkUnitsPerSession: 50_000, maxElapsedMsPerSession: 2_000,
   independentInstitutionalReplication: false, comparisonScope: "TOOL_ABLATION_NOT_MATCHED_TOOL_COMPUTE",
 });
