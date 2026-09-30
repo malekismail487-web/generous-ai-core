@@ -585,6 +585,9 @@ check(JSON.stringify(suppliedContract.allowedDecisions) === JSON.stringify(["PRO
 check(JSON.stringify(suppliedContract.nonHypothesisFields) === JSON.stringify({ mechanismId: null,
   causalMechanism: null, forecasts: [], requestedExperimentIds: [], revisionOfTheoryId: null }),
   "non-hypothesis field rules are advertised before inference rather than relaxed after malformed output");
+check((modelPrompts.at(-1)?.laws as string[]).some(law => law.includes("tentative conjecture"))
+  && (modelPrompts.at(-1)?.laws as string[]).some(law => law.includes("Only observed evidence may support it")),
+  "investigation can propose uncertainty-bearing experiments without promoting a conjecture into evidence");
 responseFinishReason = "length";
 const truncated = await adapter.think({ ...adapterRequest, requestId: "ADAPTER-TRUNCATED-JSON" });
 check(truncated.decision === "COGNITION_ERROR" && truncated.intent === null

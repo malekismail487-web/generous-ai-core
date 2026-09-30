@@ -36,10 +36,10 @@ const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
 const limits: ResearchPartyLimits = Object.freeze({ maxEntities: 8, maxModelCalls: 11, maxExperiments: 3,
   maxEvidenceItems: 128, maxWallClockMs: 15 * 60_000, maxPromptBytesPerCall: 64_000,
-  maxOutputTokensPerCall: 768, maxTotalOutputTokens: 8_448, maxCostUnits: 10 });
+  maxOutputTokensPerCall: 1_536, maxTotalOutputTokens: 16_896, maxCostUnits: 10 });
 const provider = NvidiaNimProvider.create({ providerId: "NYX-RESEARCH-PARTY-LIVE-NEMOTRON", model: MODEL,
   authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
-  maxPromptBytes: 96_000, maxOutputTokens: diagnosticOnly ? 1_536 : 1_024, timeoutMs: 90_000 });
+  maxPromptBytes: 96_000, maxOutputTokens: 1_536, timeoutMs: 90_000 });
 const cognition = NyxNemotronTheoryCognition.create({ cognitionId: "NYX-RESEARCH-PARTY-LIVE-COGNITION", provider, limits });
 if (diagnosticOnly) {
   const started = Date.now(); const deadline = started + 10 * 60_000;
