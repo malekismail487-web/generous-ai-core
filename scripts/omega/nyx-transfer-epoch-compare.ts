@@ -114,6 +114,8 @@ export function assessNyxTransferEpoch(reports: readonly EpochReport[]) {
     || report.tasks.some((task) => !task.sourceRepositoryUnchanged || !task.omegaAuthorityEnforcement));
   const providerIncomplete = reports.some((report) => report.tasks.some((task) => !task.tokenUsageComplete
     || task.providerDiagnostics.some((diagnostic) => diagnostic.failureCategory !== null)));
+  const integrationIncomplete = reports.some((report) => report.tasks.some((task) =>
+    task.modelCalls === 0 || task.failureClass === "INTEGRATION_FAILURE"));
   const pairedOutcomes = taskIds.map((taskId) => {
     const pair = Object.fromEntries(arms.map((arm) => {
       const task = byArm.get(arm)!.tasks.find((item) => item.taskId === taskId)!;
@@ -164,6 +166,7 @@ export function assessNyxTransferEpoch(reports: readonly EpochReport[]) {
     const reasoning = armMetrics.REASONING_ENABLED;
     const matchedPairs = pairedOutcomes.filter((item) => item.currentVsReasoning.realizedComputeMatched);
     const decision = safetyRegression ? "SAFETY_REGRESSION"
+      : integrationIncomplete ? "INCONCLUSIVE_INTEGRATION"
       : providerIncomplete ? "INCONCLUSIVE_PROVIDER_OR_USAGE"
         : reasoning.qualityAccepted <= current.qualityAccepted ? "NO_OBSERVED_REASONING_QUALITY_ADVANTAGE"
           : matchedPairs.length !== taskIds.length || reasoning.totalTokens > current.totalTokens
@@ -187,6 +190,7 @@ export function assessNyxTransferEpoch(reports: readonly EpochReport[]) {
   const computeComparable = [current, reasoning].some((treatment) => treatment.qualityAccepted > minimal.qualityAccepted
     && treatment.modelCalls <= minimal.modelCalls && treatment.totalTokens <= minimal.totalTokens);
   const decision = safetyRegression ? "SAFETY_REGRESSION"
+    : integrationIncomplete ? "INCONCLUSIVE_INTEGRATION"
     : providerIncomplete ? "INCONCLUSIVE_PROVIDER_OR_USAGE"
       : qualityUplift <= 0 ? "NO_OBSERVED_QUALITY_UPLIFT"
         : computeComparable ? "TENTATIVE_EFFICIENT_UPLIFT" : "OBSERVED_UPLIFT_WITH_MORE_MODEL_COMPUTE";

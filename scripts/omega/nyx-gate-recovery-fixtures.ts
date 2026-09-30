@@ -15,7 +15,7 @@ function task(index: number, helperPath: string, helperName: string, helperSourc
   goodSource: string, faultySource: string): NyxQualityV5Task {
   const original = NYX_ADMISSION_GUIDANCE_TASKS[index];
   const importPath = `./${helperPath.split("/").at(-1)}`;
-  const quote = `Keep validation in the existing ${helperName} helper and call it through its existing import.`;
+  const quote = `Keep validation in the existing ${helperName} helper and call it through its existing import '${importPath}'.`;
   const invariants: readonly QualityInvariant[] = Object.freeze([
     { invariantId: "REUSE_VALIDATOR_IMPORT", dimension: "ARCHITECTURAL_FIT", kind: "REQUIRED_IMPORT",
       path: original.candidateModule, value: importPath },

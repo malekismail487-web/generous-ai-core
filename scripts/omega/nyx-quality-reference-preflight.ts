@@ -3,10 +3,12 @@ import { assessEngineeringQuality, type EngineeringQualityPolicy,
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,
   OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS,
   OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES,
+  validPublicQualityObligations,
   type PublicObjectiveQualityObligation } from "../../src/lib/codelab/assurance/candidateEngineeringAdmission";
 
 export interface NyxQualityReferenceTask {
   readonly taskId: string;
+  readonly objective?: string;
   readonly baseTaskId?: string;
   readonly faultyFiles: Readonly<Record<string, string>>;
   readonly correctFiles: Readonly<Record<string, string>>;
@@ -91,6 +93,12 @@ export function assessNyxAdmissionReference(task: NyxQualityReferenceTask): NyxQ
 }
 
 export function requireAdmissibleReferenceGates(tasks: readonly NyxQualityReferenceTask[]): void {
+  for (const task of tasks) {
+    if (task.publicQualityObligations !== undefined && !validPublicQualityObligations(
+      task.objective, task.mutationPaths, task.publicQualityObligations)) {
+      throw new Error(`nyx_reference_public_obligations_invalid:${task.taskId}`);
+    }
+  }
   requireAdmissibleQualityReferences(tasks);
   for (const task of tasks) {
     const result = assessNyxAdmissionReference(task);

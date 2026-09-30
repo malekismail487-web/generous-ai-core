@@ -116,5 +116,13 @@ let mixedEpochRejected = false;
 try { assessNyxTransferEpoch([recoveryReports[0], report("REASONING_ENABLED")]); }
 catch (error) { mixedEpochRejected = String(error).includes("transfer_epoch_unmatched_conditions"); }
 check(mixedEpochRejected, "recovery and historical task populations cannot be mixed for comparison");
+let unboundImportRejected = false;
+try { requireAdmissibleReferenceGates([{ ...NYX_GATE_RECOVERY_TASKS[0],
+  objective: NYX_GATE_RECOVERY_TASKS[0].objective.replace("'./window-input.mjs'", "its module") }]); }
+catch (error) { unboundImportRejected = String(error).includes("nyx_reference_public_obligations_invalid"); }
+check(unboundImportRejected, "unbound public import obligation aborts before inference");
+check(assessNyxTransferEpoch(recoveryReports.map((r) => ({ ...r,
+  tasks: r.tasks.map((t) => ({ ...t, modelCalls: 0, totalTokens: 0, failureClass: "INTEGRATION_FAILURE" })) })))
+  .decision === "INCONCLUSIVE_INTEGRATION", "zero-inference integration failure cannot become a model-quality conclusion");
 console.log(`OMEGA_NYX_ADMISSION_GUIDANCE passed: ${passed}, failed: ${failures.length}`);
 if (failures.length) process.exitCode = 1;

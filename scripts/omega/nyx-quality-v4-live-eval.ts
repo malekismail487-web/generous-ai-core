@@ -411,6 +411,7 @@ function cognitionEvidence(result: R3BoundedRepairResult): readonly NyxRepairCog
     .filter((item, index, all) => all.findIndex((candidate) => candidate.evidenceId === item.evidenceId) === index);
 }
 function failureClass(result: R3BoundedRepairResult, hidden: string, quality: string): string {
+  if (result.reason === "bounded_repair_request_invalid") return "INTEGRATION_FAILURE";
   if (result.outcome === "WAITING_FOR_CAPACITY") return "WAITING_FOR_CAPACITY";
   if (result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && hidden === "PASS" && quality === "ACCEPTED") return "NONE";
   if (hidden === "FAIL" || result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && hidden !== "PASS") return "VERIFICATION_FAILURE";
