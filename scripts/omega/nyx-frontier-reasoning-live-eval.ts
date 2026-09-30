@@ -6,6 +6,8 @@ import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment,
   type NvidiaNimEvidence } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { ReasoningObligationGraph, type ObligationWorkPacket } from
   "../../src/lib/codelab/research/reasoningObligationGraph";
+import { createFrontierWorkbench, frontierExchangeSchema, parseFrontierExchange,
+  FRONTIER_WORKBENCH_EPOCH } from "./nyx-frontier-workbench";
 import {
   FRONTIER_CAUSAL_CONCLUSION_SCHEMA,
   FRONTIER_CAUSAL_PLAN_SCHEMA,
@@ -41,6 +43,9 @@ if (!process.env.NVIDIA_API_KEY?.trim()) {
 }
 
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
+const VARIANT = process.env.NYX_FRONTIER_VARIANT?.trim() || "LEGACY";
+if (!["LEGACY", "BASELINE", "WORKBENCH"].includes(VARIANT)) throw new Error("frontier_variant_invalid");
+const workbenchEpoch = VARIANT !== "LEGACY";
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
 const startedAt = Date.now();
@@ -79,6 +84,7 @@ interface StageAttempt {
   readonly revisionMode: ReturnType<typeof frontierRevisionMode>;
   readonly candidateDigest: string | null;
   readonly repeatedRejectedCandidate: boolean;
+  readonly confidence: number | null;
 }
 
 interface StageResult {
@@ -96,6 +102,8 @@ interface StageResult {
 
 let modelCalls = 0;
 const modelEvidence: SanitizedModelEvidence[] = [];
+const computationalEvidence: Array<Readonly<Record<string, unknown>>> = [];
+const protocolFailures: Array<Readonly<Record<string, unknown>>> = [];
 
 function sanitized(evidence: NvidiaNimEvidence): SanitizedModelEvidence {
   return Object.freeze({ evidenceClass: evidence.evidenceClass, requestDigest: evidence.requestDigest,
@@ -114,7 +122,7 @@ function stageFailure(callAttempt: number, candidateSubmission: number | null,
     verificationEvidenceDigest: null, obligationAcceptanceState: null,
     unresolvedObligationIds: Object.freeze([]), falsifiedObligationIds: Object.freeze([]),
     revisionMode: callAttempt > 0 ? frontierRevisionMode(callAttempt) : "INITIAL",
-    candidateDigest: null, repeatedRejectedCandidate: false });
+    candidateDigest: null, repeatedRejectedCandidate: false, confidence: null });
 }
 
 function obligationRuntime(stageId: string) {
@@ -152,6 +160,8 @@ async function runStage(input: {
   let candidateSubmissions = 0;
   let providerFailures = 0;
   const rejectedCandidateDigests = new Set<string>();
+  const workbench = VARIANT === "WORKBENCH" ? createFrontierWorkbench(input.stageId, input.prompt([]), deadlineEpochMs) : null;
+  let computationalObservation: Readonly<Record<string, unknown>> | null = null;
   while (callAttempts < NYX_FRONTIER_GAUNTLET.maxCallsPerStage
     && candidateSubmissions < NYX_FRONTIER_GAUNTLET.maxCandidateSubmissionsPerStage
     && providerFailures < NYX_FRONTIER_GAUNTLET.maxProviderFailuresPerStage) {
@@ -161,9 +171,14 @@ async function runStage(input: {
       break;
     }
     const revisionMode = frontierRevisionMode(callAttempts);
-    const prompt = frontierRevisionPrompt(input.prompt(feedback), previousRejectedCandidate, feedback,
+    const reasoningPrompt = frontierRevisionPrompt(input.prompt(feedback), previousRejectedCandidate, feedback,
       obligationGraph.workPacket(), revisionMode);
-    const requestId = `${input.stageId}-CALL-${callAttempts}-${frontierDigest([CANDIDATE, input.stageId, callAttempts]).slice(0, 16)}`;
+    const toolsAvailable = workbench !== null && computationalObservation === null;
+    const prompt = workbenchEpoch ? { ...reasoningPrompt, computationalObservation,
+      availableTool: toolsAvailable ? workbench!.descriptor : null,
+      exchangeContract: "Return {action, analysisRequest, certificate}. For SUBMIT_CERTIFICATE: analysisRequest=null and certificate=the required original certificate. For REQUEST_ANALYSIS: certificate=null and analysisRequest=exactly {schemaVersion:1,operation:ANALYZE_FINITE_PROBLEM,problemDigest:the availableTool digest}. Analysis does not certify acceptance. Never invent tools. If available, request bounded analysis before guessing an exact certificate.",
+    } : reasoningPrompt;
+    const requestId = `${input.stageId}-${VARIANT}-CALL-${callAttempts}-${frontierDigest([CANDIDATE, VARIANT, input.stageId, callAttempts]).slice(0, 16)}`;
     modelCalls += 1;
     const completion = await provider.complete({ schemaVersion: 1, requestId,
       messages: [
@@ -172,7 +187,7 @@ async function runStage(input: {
       ], maxTokens: NYX_FRONTIER_GAUNTLET.maxOutputTokensPerCall,
       temperature: revisionMode === "INITIAL" ? 0 : revisionMode === "TARGETED_CORRECTION" ? 0.15 : 0.35,
       responseFormat: { type: "JSON_SCHEMA", name: input.stageId.toLowerCase().replace(/-/g, "_").slice(0, 63),
-        schema: frontierProviderSchema(input.schema) }, inferencePolicy: "REASONING_JSON",
+        schema: frontierProviderSchema(workbenchEpoch ? frontierExchangeSchema(input.schema, toolsAvailable) : input.schema) }, inferencePolicy: "REASONING_JSON",
       observedAtEpochMs: Date.now(), deadlineEpochMs });
     modelEvidence.push(sanitized(completion.evidence));
     if (completion.decision !== "COMPLETED" || completion.content === null) {
@@ -183,8 +198,8 @@ async function runStage(input: {
       attempts.push(stageFailure(callAttempts, null, feedback, completion.evidence));
       continue;
     }
-    candidateSubmissions += 1;
     if (completion.finishReason !== "stop") {
+      candidateSubmissions += 1;
       feedback = mergeFrontierFeedback(feedback, ["RETURN_ONE_COMPLETE_JSON_OBJECT"]);
       attempts.push(stageFailure(callAttempts, candidateSubmissions, feedback, completion.evidence));
       continue;
@@ -192,10 +207,32 @@ async function runStage(input: {
     let parsed: unknown;
     try { parsed = JSON.parse(completion.content); }
     catch {
+      candidateSubmissions += 1;
       feedback = mergeFrontierFeedback(feedback, ["RETURN_STRICT_JSON_WITHOUT_MARKDOWN"]);
       attempts.push(stageFailure(callAttempts, candidateSubmissions, feedback, completion.evidence));
       continue;
     }
+    if (workbenchEpoch) {
+      try {
+        const exchange = parseFrontierExchange(parsed, toolsAvailable);
+        if (exchange.action === "REQUEST_ANALYSIS") {
+          computationalObservation = workbench!.analyze(exchange.request);
+          computationalEvidence.push({ stageId: input.stageId, requestModelDigest: completion.evidence.requestDigest,
+            requestResponseDigest: completion.evidence.responseDigest, ...computationalObservation,
+            solverEvidence: workbench!.evidence() });
+          feedback = mergeFrontierFeedback(feedback, ["BOUNDED_ANALYSIS_RETURNED_SUBMIT_INDEPENDENTLY_CHECKABLE_CERTIFICATE"]);
+          continue;
+        }
+        parsed = exchange.certificate;
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "frontier_exchange_failure";
+        protocolFailures.push({ stageId: input.stageId, callAttempt: callAttempts, reason });
+        feedback = mergeFrontierFeedback(feedback, [reason]);
+        attempts.push(stageFailure(callAttempts, null, feedback, completion.evidence));
+        continue;
+      }
+    }
+    candidateSubmissions += 1;
     const candidateDigest = frontierDigest(parsed);
     const repeatedRejectedCandidate = rejectedCandidateDigests.has(candidateDigest);
     const verification = input.verify(parsed);
@@ -239,16 +276,22 @@ async function runStage(input: {
       obligationAcceptanceState: obligationPacket.acceptanceState,
       unresolvedObligationIds: obligationPacket.unresolved.map((item) => item.obligationId),
       falsifiedObligationIds: obligationPacket.falsified.map((item) => item.obligationId),
-      revisionMode, candidateDigest, repeatedRejectedCandidate }));
-    if (verification.accepted && obligationAccepted) return Object.freeze({ stageId: input.stageId, accepted: true,
+      revisionMode, candidateDigest, repeatedRejectedCandidate,
+      confidence: typeof (parsed as Record<string, unknown>)?.confidence === "number"
+        && Number.isFinite((parsed as Record<string, unknown>).confidence)
+        && Number((parsed as Record<string, unknown>).confidence) >= 0
+        && Number((parsed as Record<string, unknown>).confidence) <= 1
+        ? Number((parsed as Record<string, unknown>).confidence) : null }));
+    if (verification.accepted && obligationAccepted) { workbench?.revoke(); return Object.freeze({ stageId: input.stageId, accepted: true,
       attempts: Object.freeze(attempts), value: parsed as Record<string, unknown>,
       correctedAfterFeedback: candidateSubmissions > 1, modelCalls: callAttempts, candidateSubmissions, providerFailures,
-      obligationPacket, obligationGraphDigest: obligationGraph.snapshot().integrityDigest });
+      obligationPacket, obligationGraphDigest: obligationGraph.snapshot().integrityDigest }); }
     rejectedCandidateDigests.add(candidateDigest);
     previousRejectedCandidate = parsed as Record<string, unknown>;
     feedback = admittedFindings;
   }
   const obligationPacket = obligationGraph.workPacket();
+  workbench?.revoke();
   return Object.freeze({ stageId: input.stageId, accepted: false, attempts: Object.freeze(attempts), value: null,
     correctedAfterFeedback: false, modelCalls: callAttempts, candidateSubmissions, providerFailures,
     obligationPacket, obligationGraphDigest: obligationGraph.snapshot().integrityDigest });
@@ -287,9 +330,13 @@ const correctedAfterFeedback = stages.filter((stage) => stage.correctedAfterFeed
 const accepted = graph.accepted && protocol.accepted && causalPlan.accepted && causalConclusion.accepted
   && sourceRepositoryUnchanged && outputBudgetPreserved;
 const report = Object.freeze({ schemaVersion: 1, chunkId: NYX_FRONTIER_GAUNTLET.chunkId,
-  evaluatorVersion: NYX_FRONTIER_GAUNTLET.version, candidateCommit: CANDIDATE, model: MODEL,
+  evaluatorVersion: workbenchEpoch ? FRONTIER_WORKBENCH_EPOCH.version : NYX_FRONTIER_GAUNTLET.version,
+  experimentVariant: VARIANT, candidateCommit: CANDIDATE, model: MODEL,
   scope: NYX_FRONTIER_GAUNTLET.scope, decision: accepted ? "VERIFIED_ON_BOUNDED_GAUNTLET" : "NOT_VERIFIED",
-  reasoningArchitecture: "OBLIGATION_DIRECTED_NYX_WITH_INDEPENDENT_DETERMINISTIC_ORACLES",
+  reasoningArchitecture: VARIANT === "WORKBENCH" ? "NYX_WITH_BOUNDED_CONSTRUCTIVE_ALGORITHMS_AND_UNCHANGED_ORACLES"
+    : "OBLIGATION_DIRECTED_NYX_WITH_INDEPENDENT_DETERMINISTIC_ORACLES",
+  computationalEvidence: Object.freeze(computationalEvidence), protocolFailures: Object.freeze(protocolFailures),
+  toolComparison: workbenchEpoch ? FRONTIER_WORKBENCH_EPOCH.comparisonScope : null,
   evidence: Object.freeze({ liveModelCognition: "E4", deterministicGraphOracle: "E3",
     exhaustiveProtocolOracle: "E3", controlledCausalObservations: "E3",
     modelSelfCertification: false, independentInstitutionalReplication: false }),
@@ -317,7 +364,7 @@ const report = Object.freeze({ schemaVersion: 1, chunkId: NYX_FRONTIER_GAUNTLET.
     shellAuthority: false, generalNetworkAuthority: false, credentialAccess: false, productionAuthority: false }),
 });
 const reportRoot = process.env.RUNNER_TEMP?.trim() || tmpdir();
-const reportPath = join(reportRoot, `nyx-frontier-reasoning-${CANDIDATE.slice(0, 12)}.json`);
+const reportPath = join(reportRoot, `nyx-frontier-reasoning-${VARIANT.toLowerCase()}-${CANDIDATE.slice(0, 12)}.json`);
 await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 console.log(`NYX_FRONTIER_GAUNTLET_REPORT ${JSON.stringify(report)}`);
 if (!accepted) process.exitCode = 1;

@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/54",
+  "suiteVersion": "omega-institutional-suite/55",
   "criticalSuites": [
+    "OMEGA-BOUNDED-REASONING-WORKBENCH",
     "OMEGA-DIGITAL-NEURON-STABILITY",
     "OMEGA-DIGITAL-NEURON-MICROCIRCUIT",
     "OMEGA-FRONTIER-REASONING-GAUNTLET",
@@ -63,6 +64,7 @@
   ],
   "informationalSuites": [],
   "requiredSuites": [
+    { "suiteId": "OMEGA-BOUNDED-REASONING-WORKBENCH", "file": "scripts/omegaBoundedReasoningWorkbench.test.ts" },
     { "suiteId": "OMEGA-BIOLOGICAL-CIRCUIT-IR", "file": "scripts/omegaBiologicalCircuitIR.test.ts" },
     { "suiteId": "OMEGA-DIGITAL-NEURON-STABILITY", "file": "scripts/omegaDigitalNeuronStability.test.ts" },
     { "suiteId": "OMEGA-DIGITAL-NEURON-MICROCIRCUIT", "file": "scripts/omegaDigitalNeuronMicrocircuit.test.ts" },

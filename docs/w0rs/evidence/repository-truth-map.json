@@ -2050,6 +2050,7 @@
       "name": "GITHUB_SHA",
       "files": [
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
+        "scripts/omega/nyx-frontier-workbench-compare.ts",
         "scripts/omega/nyx-live-r3e.ts",
         "scripts/omega/nyx-quality-holdout-live-eval.ts",
         "scripts/omega/nyx-quality-v4-live-eval.ts",
@@ -2235,6 +2236,12 @@
       ]
     },
     {
+      "name": "NYX_FRONTIER_VARIANT",
+      "files": [
+        "scripts/omega/nyx-frontier-reasoning-live-eval.ts"
+      ]
+    },
+    {
       "name": "NYX_QUALITY_SUITE",
       "files": [
         "scripts/omega/nyx-biological-connectome-ablation-live-eval.ts",
@@ -2298,6 +2305,7 @@
       "name": "RUNNER_TEMP",
       "files": [
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
+        "scripts/omega/nyx-frontier-workbench-compare.ts",
         "scripts/omega/nyx-quality-v4-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
         "scripts/omega/nyx-transfer-epoch-compare.ts"
