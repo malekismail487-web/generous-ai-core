@@ -97,6 +97,54 @@ export const NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA = providerCompatibleSchema(
   NYX_THEORY_INTENT_JSON_SCHEMA,
 ) as Readonly<Record<string, unknown>>;
 
+/** Bind generation to this request's vocabulary; the local parser remains the acceptance authority. */
+export function theoryIntentSchemaForRequest(request: TheoryCognitionRequest): Readonly<Record<string, unknown>> {
+  const base = NYX_THEORY_INTENT_JSON_SCHEMA;
+  const peers = request.peerContributions.map(item => item.theoryId);
+  const experiments = request.objective.experimentCatalog;
+  const unobserved = experiments.filter(item => !request.experimentObservations
+    .some(observation => observation.experimentId === item.experimentId));
+  const emptyArray = { type: "array", enum: [[]] };
+  const counterexamples = peers.length === 0 ? emptyArray : { ...base.properties.counterexamples,
+    items: { anyOf: experiments.map(item => ({ ...base.properties.counterexamples.items, properties: {
+      ...base.properties.counterexamples.items.properties,
+      targetTheoryId: { type: "string", enum: peers },
+      experimentId: { type: "string", enum: [item.experimentId] },
+      disconfirmingOutcome: { type: "string", enum: item.possibleOutcomes },
+    } })) } };
+  const shared = { ...base.properties,
+    evidenceRefs: { ...base.properties.evidenceRefs, items: { type: "string", enum: [...new Set([
+      ...request.objective.admittedEvidence.map(item => item.evidenceId),
+      ...request.experimentObservations.map(item => item.evidence.evidenceId),
+    ])] } }, counterexamples };
+  const choices: Record<string, unknown>[] = [{ ...base, properties: { ...shared,
+    decision: { type: "string", enum: ["NO_CONCLUSION"] }, mechanismId: { type: "null" },
+    causalMechanism: { type: "null" }, forecasts: emptyArray, requestedExperimentIds: emptyArray,
+    revisionOfTheoryId: { type: "null" },
+  } }];
+  if ((request.role === "INVESTIGATOR" || request.role === "REVISER") && unobserved.length > 0) {
+    choices.push({ ...base, properties: { ...shared,
+      decision: { type: "string", enum: [request.role === "INVESTIGATOR" ? "PROPOSE_HYPOTHESIS" : "REVISE_HYPOTHESIS"] },
+      mechanismId: { type: "string", enum: request.objective.mechanismCatalog.map(item => item.mechanismId) },
+      causalMechanism: base.properties.causalMechanism.anyOf[0],
+      forecasts: { ...base.properties.forecasts, items: { anyOf: unobserved.map(item => ({
+        ...base.properties.forecasts.items, properties: { ...base.properties.forecasts.items.properties,
+          experimentId: { type: "string", enum: [item.experimentId] },
+          expectedOutcome: { type: "string", enum: item.possibleOutcomes },
+        } })) } },
+      requestedExperimentIds: { ...base.properties.requestedExperimentIds,
+        items: { type: "string", enum: unobserved.map(item => item.experimentId) } },
+      revisionOfTheoryId: request.role === "INVESTIGATOR" ? { type: "null" }
+        : { type: "string", enum: [request.theoryId] },
+    } });
+  } else if (request.role === "FALSIFIER" && peers.length > 0) {
+    choices.push({ ...choices[0], properties: { ...choices[0].properties as Record<string, unknown>,
+      decision: { type: "string", enum: ["CHALLENGE"] }, counterexamples,
+    } });
+  }
+  return providerCompatibleSchema({ type: "object", anyOf: choices }) as Readonly<Record<string, unknown>>;
+}
+
 function sha256(value: string): string { return createHash("sha256").update(value).digest("hex"); }
 function token(value: unknown): value is string { return typeof value === "string" && validResearchId(value); }
 
@@ -227,7 +275,7 @@ export class NyxNemotronTheoryCognition {
     const completion = await this.#config.provider.complete({ schemaVersion: 1, requestId: request.requestId,
       messages: [{ role: "system", content: "You are one bounded specialist cognition process inside NYX. You reason; Omega alone authorizes actions and admits evidence. Never claim that model agreement is experimental proof." },
         { role: "user", content: serialized }], maxTokens: request.maxOutputTokens, temperature: request.role === "INVESTIGATOR" ? 0.35 : 0,
-      responseFormat: { type: "JSON_SCHEMA", name: "nyx_theory_intent", schema: NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA },
+      responseFormat: { type: "JSON_SCHEMA", name: "nyx_theory_intent", schema: theoryIntentSchemaForRequest(request) },
       inferencePolicy: "REASONING_JSON", observedAtEpochMs: request.observedAtEpochMs,
       deadlineEpochMs: request.deadlineEpochMs, signal: request.signal });
     if (completion.decision !== "COMPLETED" || completion.content === null) {

@@ -1,7 +1,8 @@
+import { createRequire } from "node:module";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { runFlatTheoryBaseline } from "../src/lib/codelab/research/flatTheoryBaseline";
 import { NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA, NYX_THEORY_INTENT_JSON_SCHEMA,
-  NyxNemotronTheoryCognition } from "../src/lib/codelab/research/nyxNemotronTheoryCognition";
+  NyxNemotronTheoryCognition, theoryIntentSchemaForRequest } from "../src/lib/codelab/research/nyxNemotronTheoryCognition";
 import { assureResearchParty } from "../src/lib/codelab/research/researchPartyAssurance";
 import { immutableResearchValue, researchObjectiveDigest, validResearchLimits, validResearchObjective,
   type ResearchExperimentObservation, type ResearchPartyLimits, type ResearchPartyObjective,
@@ -524,6 +525,52 @@ const adapterRequest: TheoryCognitionRequest = { schemaVersion: 1, requestId: "A
   privatePriorContributions: [], peerContributions: [], experimentObservations: [], predictionFeedback: [],
   instruction: "Produce one bounded mechanism and falsifiable forecasts.", maxOutputTokens: 512,
   observedAtEpochMs: now, deadlineEpochMs: Date.now() + 10_000 };
+// Existing frozen ESLint dependency; an external schema implementation, not our intent parser.
+const require = createRequire(import.meta.url);
+const Ajv = require("ajv");
+check(require("ajv/package.json").version === "6.12.6", "schema oracle uses the frozen Ajv dependency");
+const schemaOracle = new Ajv({ allErrors: true });
+const constrained = schemaOracle.compile(theoryIntentSchemaForRequest(adapterRequest));
+check(constrained(validRaw), "request-bound schema accepts a valid investigator hypothesis");
+const noConclusion = { ...validRaw, decision: "NO_CONCLUSION", mechanismId: null, causalMechanism: null,
+  forecasts: [], requestedExperimentIds: [], revisionOfTheoryId: null };
+check(constrained(noConclusion), "request-bound schema preserves honest uncertainty");
+check(!constrained({ ...validRaw, decision: "NO_CONCLUSION" }), "decode schema rejects mixed decision fields");
+check(!constrained({ ...validRaw, revisionOfTheoryId: adapterRequest.theoryId }),
+  "decode schema rejects invented proposal revision lineage");
+check(!constrained({ ...validRaw, evidenceRefs: ["E-NOT-ADMITTED"] }), "decode schema binds admitted evidence vocabulary");
+check(!constrained({ ...validRaw, counterexamples: [{ targetTheoryId: adapterRequest.theoryId,
+  experimentId: "EXP-A-FAILED", disconfirmingOutcome: "BLOCKED", rationale: "Not a supplied peer." }] }),
+  "decode schema represents an empty peer set as an empty counterexample array");
+check(!constrained({ ...validRaw, forecasts: [{ experimentId: "EXP-NOT-ADMITTED",
+  expectedOutcome: "BLOCKED", rationale: "Unknown experiment." }] }), "decode schema rejects unknown experiments");
+check(!constrained({ ...validRaw, forecasts: [{ experimentId: "EXP-A-FAILED",
+  expectedOutcome: "UNKNOWN-OUTCOME", rationale: "Unknown outcome." }] }), "decode schema binds each experiment's own outcomes");
+check(schemaOracle.compile(theoryIntentSchemaForRequest({ ...adapterRequest, role: "META_REVIEWER" }))(noConclusion)
+  && !schemaOracle.compile(theoryIntentSchemaForRequest({ ...adapterRequest, role: "META_REVIEWER" }))(validRaw),
+  "meta-reviewer schema cannot become a hypothesis generator or authoritative verifier");
+check(!schemaKeys(theoryIntentSchemaForRequest(adapterRequest)).some(key =>
+  ["minLength", "maxLength", "minItems", "maxItems", "uniqueItems", "minimum", "maximum"].includes(key)),
+  "request-bound decoding retains the supported transport subset while local bounds stay authoritative");
+const falsifierSchema = schemaOracle.compile(theoryIntentSchemaForRequest({ ...adapterRequest,
+  role: "FALSIFIER", peerContributions: [directContribution] }));
+const challenge = { ...noConclusion, decision: "CHALLENGE", counterexamples: [{
+  targetTheoryId: directContribution.theoryId, experimentId: "EXP-A-FAILED",
+  disconfirmingOutcome: "BLOCKED", rationale: "A blocking outcome falsifies the precommitted dispatch prediction." }] };
+check(falsifierSchema(challenge), "falsifier can issue a concrete counterexample against a supplied peer");
+check(!falsifierSchema({ ...challenge, counterexamples: [{ ...challenge.counterexamples[0],
+  targetTheoryId: "ANOTHER-THEORY" }] }), "falsifier cannot widen its peer target set through generation");
+const priorObservation = makeObservation("EXP-A-FAILED");
+const revisedIntent = intentFor("FAILED_AS_COMPLETE", "REVISE_HYPOTHESIS", adapterRequest.theoryId, [priorObservation]);
+const revisionSchema = schemaOracle.compile(theoryIntentSchemaForRequest({ ...adapterRequest,
+  role: "REVISER", experimentObservations: [priorObservation] }));
+check(revisionSchema(revisedIntent), "reviser can precommit fresh forecasts under its own lineage");
+check(!revisionSchema({ ...revisedIntent, revisionOfTheoryId: "ANOTHER-THEORY" }),
+  "reviser cannot steal another theory's lineage");
+check(!revisionSchema({ ...revisedIntent, forecasts: validRaw.forecasts }),
+  "generation schema forbids predicting an outcome already observed");
+check(Buffer.byteLength(JSON.stringify(theoryIntentSchemaForRequest(adapterRequest)), "utf8") < 32_768,
+  "bounded fixture schema stays within the existing provider schema-byte envelope");
 const adapted = await adapter.think(adapterRequest);
 check(adapted.decision === "CONTRIBUTION", `Nemotron adapter admits strict typed theory output: ${JSON.stringify(adapted)}`);
 check(adapted.intent?.mechanismId === "FAILED_AS_COMPLETE", "adapter preserves selected mechanism");
