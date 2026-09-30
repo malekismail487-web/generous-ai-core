@@ -1,11 +1,12 @@
 import type { QualityInvariant } from "../../src/lib/codelab/assurance/engineeringQualityOracle";
+import { OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT } from "../../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import type { NyxQualityV5Task } from "./nyx-quality-v5-fixtures";
 import { NYX_ADMISSION_GUIDANCE, NYX_ADMISSION_GUIDANCE_FROZEN_CORE,
   NYX_ADMISSION_GUIDANCE_TASKS } from "./nyx-admission-guidance-fixtures";
 
 /** Reissued source instances, same functional oracles. Not comparable to the earlier tiny-stub baselines. */
 export const NYX_GATE_RECOVERY = Object.freeze({ ...NYX_ADMISSION_GUIDANCE,
-  chunkId: "NYX-REFERENCE-GATE-RECOVERY-001", version: "nyx-gate-recovery/1",
+  chunkId: "NYX-PUBLIC-IMMUTABILITY-REPAIR-001", version: "nyx-gate-recovery/2",
   sourceInstanceScope: "NEW_MODULAR_BASELINES_SAME_PREDECLARED_FUNCTIONAL_ORACLES",
   comparedWithHistoricalRun: false,
 });
@@ -25,7 +26,7 @@ function task(index: number, helperPath: string, helperName: string, helperSourc
   return Object.freeze({ ...original,
     taskId: original.taskId.replace("NYX-GUIDANCE", "NYX-GATE-RECOVERY"),
     provenance: "NYX_GATE_RECOVERY_SOURCE_2026_09_30",
-    objective: `${original.objective} ${quote} The validator is read-only.`,
+    objective: `${original.objective} ${quote} The validator is read-only. ${OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT}`,
     correctFiles: Object.freeze({ [original.candidateModule]: goodSource, [helperPath]: helperSource }),
     faultyFiles: Object.freeze({ [original.candidateModule]: faultySource }),
     initiallyAdmittedPaths: Object.freeze([original.candidateModule, helperPath]),
@@ -33,8 +34,10 @@ function task(index: number, helperPath: string, helperName: string, helperSourc
       policyId: original.qualityPolicy.policyId.replace("ADMISSION-GUIDANCE", "GATE-RECOVERY"),
       readonlyPaths: Object.freeze([helperPath]),
       invariants: Object.freeze([...original.qualityPolicy.invariants, ...invariants]) }),
-    publicQualityObligations: Object.freeze(invariants.map((invariant) => Object.freeze({
-      objectiveQuote: quote, invariant }))),
+    publicQualityObligations: Object.freeze([...invariants.map((invariant) => Object.freeze({
+      objectiveQuote: quote, invariant })), Object.freeze({
+      objectiveQuote: OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT,
+      invariant: original.qualityPolicy.invariants.find((item) => item.kind === "NO_PARAMETER_MUTATION")! })]),
   });
 }
 

@@ -40,6 +40,8 @@ export const OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 = Object.freeze({
 
 export const OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES = 3;
 export const OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS = 4;
+/** Canonical caller-owned public requirement; no hidden assertions or inferred permissions. */
+export const OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT = "Do not mutate input parameters.";
 
 export interface CandidateEngineeringLineage {
   readonly hypothesisId: string;
@@ -155,8 +157,12 @@ export function validPublicQualityObligations(objective: unknown, allowedPaths: 
       || entry.objectiveQuote.length > 240 || !objective.includes(entry.objectiveQuote)
       || !nonEmpty(entry.invariant.invariantId) || ids.has(entry.invariant.invariantId)
       || entry.invariant.dimension !== "ARCHITECTURAL_FIT"
-      || !["REQUIRED_CALL", "REQUIRED_IMPORT"].includes(String(entry.invariant.kind))
-      || !validPath(entry.invariant.path) || !paths.has(entry.invariant.path)
+      || !validPath(entry.invariant.path) || !paths.has(entry.invariant.path)) return false;
+    if (entry.invariant.kind === "NO_PARAMETER_MUTATION") {
+      if (entry.objectiveQuote !== OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT
+        || entry.invariant.value !== undefined
+        || !/\.(?:[cm]?[jt]s|[jt]sx)$/.test(entry.invariant.path)) return false;
+    } else if (!["REQUIRED_CALL", "REQUIRED_IMPORT"].includes(String(entry.invariant.kind))
       || !nonEmpty(entry.invariant.value) || entry.invariant.value.length > 120
       || !entry.objectiveQuote.includes(entry.invariant.value)) return false;
     ids.add(entry.invariant.invariantId);
@@ -171,6 +177,10 @@ function frozenFinding(dimension: CandidateEngineeringAdmissionDimension, code: 
 
 function publicFinding(dimension: typeof STATIC_DIMENSIONS[number], raw: string,
   changedPaths: readonly string[], policy: EngineeringQualityPolicy): CandidateEngineeringAdmissionFinding {
+  const failedInvariant = raw.startsWith("invariant_failed:")
+    ? policy.invariants.find((item) => item.invariantId === raw.slice("invariant_failed:".length)) : undefined;
+  if (failedInvariant?.kind === "NO_PARAMETER_MUTATION") return frozenFinding(dimension,
+    "INPUT_PARAMETER_MUTATION_RISK", [failedInvariant.path]);
   const prefix = raw.split(":", 1)[0].replace(/[^a-zA-Z0-9]+/g, "_").toUpperCase() || "STATIC_POLICY_FAILURE";
   const matchedPaths = changedPaths.filter((path) => raw === path || raw.includes(`:${path}`));
   const paths = matchedPaths.length > 0 ? matchedPaths

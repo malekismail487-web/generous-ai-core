@@ -611,6 +611,9 @@ function schemaKeys(value: unknown): string[] {
     candidateQualityFeedback: { ...feedback, findings: [{ dimension: "UNNECESSARY_COMPLEXITY",
       code: "COMPLEXITY_DELTA", paths: ["src/math.ts"], measurement: { observed: 11, limit: 8 } }] } }));
   check((revisionPrompt.qualityRepairGoal as string).includes("Preserve passing behavior")
+    && (revisionPrompt.qualityRepairGoal as string).includes("Copy borrowed data")
+    && ((revisionPrompt.constraints as { publicStaticAdmission: { borrowedInputDiscipline: string } })
+      .publicStaticAdmission.borrowedInputDiscipline).includes("imported or unknown helper returns")
     && (revisionPrompt.activeRepairDriver as { findings: Array<{ measurement: { observed: number; limit: number } }> })
       .findings[0].measurement.observed === 11
     && (revisionPrompt.activeRepairDriver as { findings: Array<{ measurement: { observed: number; limit: number } }> })

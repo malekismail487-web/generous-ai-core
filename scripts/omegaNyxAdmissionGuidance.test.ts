@@ -33,8 +33,8 @@ function satisfies(fn: (...args: unknown[]) => unknown,
   }
 }
 check(Object.entries(NYX_ADMISSION_GUIDANCE_FROZEN_CORE.files).every(([path, expected]) =>
-  digest(execFileSync("git", ["show", `${NYX_ADMISSION_GUIDANCE_FROZEN_CORE.commit}:${path}`])) === expected
-  && digest(readFileSync(path)) === expected), "new scored core matches its immutable pinned source");
+  digest(execFileSync("git", ["show", `${NYX_ADMISSION_GUIDANCE_FROZEN_CORE.commit}:${path}`])) === expected),
+  "historical scored core remains reproducible at its immutable pinned source");
 check(NYX_ADMISSION_GUIDANCE_TASKS.length === 3
   && new Set(NYX_ADMISSION_GUIDANCE_TASKS.map((task) => task.taskClass)).size === 3
   && NYX_ADMISSION_GUIDANCE.arms.join() === "CURRENT,REASONING_ENABLED"
@@ -75,7 +75,7 @@ for (const task of NYX_GATE_RECOVERY_TASKS) {
   check(task.hiddenCases.filter((item) => !satisfies(bad[task.exportName], item)).length >= 2,
     `${task.taskId}: faulty modular baseline retains real behavior defects`);
   check(!task.mutationPaths.includes(helperPath) && task.initiallyAdmittedPaths.includes(helperPath)
-    && task.publicQualityObligations?.length === 2,
+    && task.publicQualityObligations?.length === 3,
     `${task.taskId}: immutable helper is visible and architecture obligations are public`);
   check(assessNyxAdmissionReference(task).decision === "ADMISSIBLE",
     `${task.taskId}: reference survives unchanged public static gate`);

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { admitStaticEngineeringCandidate, OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1,
+  OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT,
   validPublicQualityObligations, type CandidateEngineeringAdmissionRequest } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { NYX_ENGINEERING_QUALITY_V5 } from "./omega/nyx-quality-v5-fixtures";
 import type { NyxRepairHypothesis } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
@@ -159,6 +160,29 @@ const unauthorizedObligation = admitStaticEngineeringCandidate({ ...fixture(), o
     path: "src/other.mjs" } }] });
 check(unauthorizedObligation.decision === "INSUFFICIENT_EVIDENCE",
   "a public obligation cannot expand the authorized mutation scope");
+const immutableObligation = { objectiveQuote: OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT,
+  invariant: { invariantId: "PUBLIC_IMMUTABILITY", dimension: "ARCHITECTURAL_FIT" as const,
+    kind: "NO_PARAMETER_MUTATION" as const, path: PATH } };
+const immutableReview = (after: string) => admitStaticEngineeringCandidate({
+  ...fixture("export function add(values) { return values; }\n", after),
+  objective: OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT, publicQualityObligations: [immutableObligation] });
+const mutatingReview = immutableReview("export function add(values) { return values.sort(); }\n");
+check(mutatingReview.decision === "REJECTED" && mutatingReview.findings.some((finding) =>
+  finding.code === "INPUT_PARAMETER_MUTATION_RISK" && finding.paths.includes(PATH)),
+  "objective-bound input immutability rejects in-place sorting before final evaluation");
+check(immutableReview("export function add(values) { return [...values].sort(); }\n").decision === "ADMITTED",
+  "explicit owned-container sorting satisfies the same unweakened mutation detector");
+check(immutableReview("export function add(values) { const borrowed=untrusted(values); return borrowed.reverse(); }\n")
+  .decision === "REJECTED", "unknown helper returns are conservatively treated as borrowed input");
+check(!validPublicQualityObligations("Changing inputs is allowed.", [PATH], [immutableObligation])
+  && !validPublicQualityObligations(OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT, [PATH],
+    [{ ...immutableObligation, invariant: { ...immutableObligation.invariant, value: "bypass" } }])
+  && !validPublicQualityObligations(OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT, [PATH],
+    [{ ...immutableObligation, invariant: { ...immutableObligation.invariant, path: "src/other.mjs" } }]),
+  "input immutability requires explicit public language, no arbitrary value and authorized scope");
+check(!validPublicQualityObligations(OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT, ["src/data.txt"],
+  [{ ...immutableObligation, invariant: { ...immutableObligation.invariant, path: "src/data.txt" } }]),
+  "a plaintext resource cannot claim source-level input-ownership verification");
 const declarationHeavy = admitStaticEngineeringCandidate(fixture(undefined,
   "export function add(a, b) { const x=0; const y=0; const z=0; const q=0; const r=0; return a+b+x+y+z+q+r; }\n"));
 check(declarationHeavy.decision === "REJECTED" && declarationHeavy.findings.some((item) =>

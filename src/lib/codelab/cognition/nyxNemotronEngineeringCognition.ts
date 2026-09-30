@@ -16,7 +16,7 @@ export const NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS = Object.freeze({
   newCapability: "NYX_NEMOTRON_REPAIR_HYPOTHESIS_PROPOSAL",
   cognitionIdentity: "NYX_PRIMARY_COGNITION",
   cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA",
-  semanticContract: "nyx-causal-engineering-intent/9",
+  semanticContract: "nyx-causal-engineering-intent/10",
   causalHypothesisLineage: true,
   boundedCounterexampleReasoning: true,
   qualityRejectionRepairFeedback: true,
@@ -316,7 +316,7 @@ export const NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA = providerCompatibleSchema(
   NYX_REPAIR_INTENT_JSON_SCHEMA,
 ) as Readonly<Record<string, unknown>>;
 
-export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/9" as const;
+export const NYX_SEMANTIC_REPAIR_CONTRACT_VERSION = "nyx-causal-engineering-intent/10" as const;
 export const NYX_SEMANTIC_ACTIONS = Object.freeze(["PROPOSE_EDIT", "REQUEST_EVIDENCE", "NO_ACTION"] as const);
 
 export type NyxSourceRepresentation = "TEXT" | "LINES";
@@ -399,6 +399,7 @@ export const NYX_PUBLIC_STATIC_QUALITY_GUIDANCE = Object.freeze({
     maxAddedDeclarations: OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS,
   }),
   interpretation: "These are public static admission bounds, not proof of functional correctness. A passing visible test does not waive them.",
+  borrowedInputDiscipline: "When the objective forbids input mutation, imported or unknown helper returns are conservatively treated as possible input aliases. Allocate owned containers before in-place sorting/reversing; copy nested records before modifying their fields. Do not silence or bypass the detector.",
 });
 export const NYX_REPAIR_SYSTEM_INSTRUCTION = "You are Νύξ engineering cognition running on NVIDIA Nemotron 3 Ultra. Act like a disciplined software engineer: diagnose causally, cite admitted evidence, state the invariant, challenge the repair with bounded counterexamples, and revise falsified or quality-rejected candidates instead of perturbing them. Produce complete, parseable, readable source that preserves unrelated behavior and repository conventions. If Omega supplies sanitized diagnostics from an invalid prior intent or a deterministic quality rejection, correct every listed violation without repeating it. Return only one strict JSON semantic engineering intent with no markdown or commentary. You propose; Omega authorizes.";
 export const NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST = sha256(canonical({
@@ -702,7 +703,7 @@ export class NyxNemotronEngineeringCognition {
         evidenceRef: qualityFeedback.evidenceId, hypothesisId: qualityFeedback.hypothesisId,
         findings: qualityFeedback.findings } : { kind: "EXECUTION_OBSERVATION", observationId: request.observation.observationId,
         evidenceRef: request.observation.candidateEvidenceId },
-      ...(qualityFeedback ? { qualityRepairGoal: "The candidate passed available execution checks but failed public static admission. Preserve passing behavior while replacing unnecessary branches and declarations. Meet every reported limit against the original observed repository state; do not merely append code or reformat it." } : {}),
+      ...(qualityFeedback ? { qualityRepairGoal: "The candidate passed available execution checks but failed public static admission. Preserve passing behavior while correcting every reported requirement, including architecture and input immutability. Replace unnecessary branches and declarations; meet every limit against the original observed repository state. Copy borrowed data before in-place operations rather than silencing checks or merely appending code." } : {}),
       observation: { observationId: request.observation.observationId, state: request.observation.state,
         baselineComparison: request.observation.baselineComparison, candidateAttribution: request.observation.candidateAttribution,
         attributionConfidence: request.observation.attributionConfidence, epistemicState: request.observation.epistemicState,
