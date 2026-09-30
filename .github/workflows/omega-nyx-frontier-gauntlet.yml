@@ -8,9 +8,6 @@ on:
         description: Run the bounded constructive-tool ablation, not the legacy engineering suites
         type: boolean
         default: false
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/nyx-frontier-workbench.ts]
 
 permissions:
   contents: read
@@ -73,7 +70,7 @@ jobs:
             exit 1
           fi
       - name: Run frozen baseline and computational-workbench comparison
-        if: github.event_name == 'push' || inputs.workbench_comparison
+        if: inputs.workbench_comparison
         shell: bash
         run: |
           set +e
