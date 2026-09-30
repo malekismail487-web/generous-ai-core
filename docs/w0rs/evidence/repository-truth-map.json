@@ -2262,6 +2262,12 @@
       ]
     },
     {
+      "name": "NYX_TRANSFER_PROOF_ABLATION",
+      "files": [
+        "scripts/omega/nyx-workbench-transfer-live-eval.ts"
+      ]
+    },
+    {
       "name": "OMEGA_ALLOW_NVIDIA_NETWORK",
       "files": [
         "scripts/omega/nvidia-nim-live-smoke.ts",

@@ -6,13 +6,20 @@ import { join } from "node:path";
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment, type NvidiaNimEvidence } from
   "../../src/lib/codelab/model/nvidiaNimProvider";
 import { BoundedReasoningSession } from "../../src/lib/codelab/research/boundedReasoningWorkbench";
+import { verifyFiniteRefutation } from "../../src/lib/codelab/research/finiteRefutationVerifier";
 import { immutableTheoryValue, theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { frontierExchangeSchema, parseFrontierExchange, frontierArtifactReviewPrompt,
   materializeFrontierArtifact, parseArtifactDecline, type ArtifactDeclineDiagnostic } from "./nyx-frontier-workbench";
 import { frontierProviderSchema } from "./nyx-frontier-reasoning-fixtures";
-import { WORKBENCH_TRANSFER_EPOCH as EPOCH, WORKBENCH_TRANSFER_TASKS as TASKS,
+import { WORKBENCH_TRANSFER_EPOCH, WORKBENCH_TRANSFER_TASKS,
   WORKBENCH_TRANSFER_CORPUS_DIGEST, transferCertificateSchema, transferPayload, verifyTransferCertificate,
   type TransferTask } from "./nyx-workbench-transfer-fixtures";
+import { PROOF_TRANSFER_EPOCH, PROOF_TRANSFER_TASKS, PROOF_TRANSFER_CORPUS_DIGEST } from "./nyx-proof-transfer-fixtures";
+
+const PROOF_ABLATION = process.env.NYX_TRANSFER_PROOF_ABLATION === "1";
+const EPOCH = PROOF_ABLATION ? PROOF_TRANSFER_EPOCH : WORKBENCH_TRANSFER_EPOCH;
+const TASKS = PROOF_ABLATION ? PROOF_TRANSFER_TASKS : WORKBENCH_TRANSFER_TASKS;
+const CORPUS_DIGEST = PROOF_ABLATION ? PROOF_TRANSFER_CORPUS_DIGEST : WORKBENCH_TRANSFER_CORPUS_DIGEST;
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim()) {
   console.error("NYX_WORKBENCH_TRANSFER: BLOCKED_AUTHORITY_OR_MISSING_INJECTED_SECRET"); process.exit(2);
@@ -27,7 +34,8 @@ if (git("status", "--porcelain=v1").trim()) throw new Error("clean_evaluation_ch
 const provider = NvidiaNimProvider.create({ providerId: "NYX-WORKBENCH-TRANSFER", model: MODEL,
   authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
   maxPromptBytes: 128_000, maxOutputTokens: EPOCH.maxOutputTokensPerCall, timeoutMs: 120_000 });
-type Arm = "BASELINE" | "WORKBENCH";
+type Arm = "BASELINE" | "WORKBENCH" | "CURRENT_WORKBENCH" | "PROOF_WORKBENCH";
+const ARMS: readonly Arm[] = PROOF_ABLATION ? ["CURRENT_WORKBENCH", "PROOF_WORKBENCH"] : ["BASELINE", "WORKBENCH"];
 interface Attempt {
   call: number; outcome: string; findings: readonly string[]; candidateDigest: string | null;
   verificationDigest: string | null; confidence: number | null; decline: ArtifactDeclineDiagnostic | null;
@@ -37,8 +45,9 @@ interface TaskResult {
   repairAttempts: number; elapsedMs: number; attempts: readonly Attempt[];
   evidence: readonly ReturnType<typeof sanitized>[]; toolWorkUnits: number; toolElapsedMs: number;
   toolRequests: number; toolResultDigest: string | null; declinedArtifactAcceptedByOfflineOracle: boolean | null;
+  refutationVerification: ReturnType<typeof verifyFiniteRefutation> | null;
 }
-const calls: Record<Arm, number> = {BASELINE: 0, WORKBENCH: 0};
+const calls: Record<Arm, number> = {BASELINE: 0, WORKBENCH: 0, CURRENT_WORKBENCH: 0, PROOF_WORKBENCH: 0};
 function sanitized(e: NvidiaNimEvidence) {
   return { evidenceId: e.evidenceId, evidenceClass: e.evidenceClass, requestDigest: e.requestDigest,
     responseDigest: e.responseDigest, statusCode: e.statusCode, providerRequestId: e.providerRequestId,
@@ -56,8 +65,8 @@ async function run(task: TransferTask, arm: Arm): Promise<TaskResult> {
   const began = Date.now(); const taskDeadline = Math.min(deadline, began + EPOCH.maxTaskMs);
   if (began >= deadline) return {arm, taskId: task.taskId, accepted: false, outcome: "BUDGET_UNEXECUTED", calls: 0,
     submissions: 0, repairAttempts: 0, elapsedMs: 0, attempts: [], evidence: [], toolWorkUnits: 0, toolElapsedMs: 0,
-    toolRequests: 0, toolResultDigest: null, declinedArtifactAcceptedByOfflineOracle: null};
-  const session = arm === "WORKBENCH" ? BoundedReasoningSession.create(task.problem,
+    toolRequests: 0, toolResultDigest: null, declinedArtifactAcceptedByOfflineOracle: null, refutationVerification: null};
+  const session = arm !== "BASELINE" ? BoundedReasoningSession.create(task.problem,
     {maxWorkUnits: EPOCH.maxToolWorkUnits, maxElapsedMs: EPOCH.maxToolElapsedMs,
       maxRequests: EPOCH.maxToolRequestsPerTask, expiresAtEpochMs: taskDeadline}) : null;
   const attempts: Attempt[] = []; const evidence: ReturnType<typeof sanitized>[] = [];
@@ -65,12 +74,14 @@ async function run(task: TransferTask, arm: Arm): Promise<TaskResult> {
   let feedback: readonly string[] = []; let previous: unknown = null;
   let toolRequests = 0; let toolWorkUnits = 0; let toolElapsedMs = 0; let toolResultDigest: string | null = null;
   let offlineAccepted: boolean | null = null; let submissions = 0; let accepted = false;
+  let refutationVerification: ReturnType<typeof verifyFiniteRefutation> | null = null;
   let outcome = "BUDGET_UNEXECUTED";
   const base = { taskId: task.taskId, objective: task.objective, problem: task.problem,
     certificateContract: { schemaVersion: 1, decision: "SUBMIT", status: "CONSTRUCTED / EXHAUSTIVE_NO_WITNESS / INSUFFICIENT_EVIDENCE",
       payload: payloadContract(task), confidence: "number 0..1", uncertainties: "0..8 bounded strings" },
     absenceContract: "Only after exhaustive finite analysis, absent coloring/clique or unsafe trace uses EXHAUSTIVE_NO_WITNESS with payload={finiteDomainExhausted:true}. Budget exhaustion is not absence.",
     acceptance: "Submission is a proposal checked by a separate deterministic oracle. Valid uncertainty is acceptable; invented certainty is not.",
+    refutationContract: "A finiteRefutation, if supplied, explains a precise obstruction and is checked by a separate bounded proof checker. Its verification supports only the stated finite property, not the whole task or a real-world claim. It grants no authority and does not force submission.",
     authority: "NO_EXECUTION_OR_NETWORK_OR_REPOSITORY_AUTHORITY" };
   try {
     for (let at = 1; at <= EPOCH.maxCallsPerTask; at++) {
@@ -110,9 +121,13 @@ async function run(task: TransferTask, arm: Arm): Promise<TaskResult> {
           toolRequests++;
           const result = session!.analyze(exchange.request);
           toolWorkUnits += result.workUnits; toolElapsedMs += result.elapsedMs; toolResultDigest = result.resultDigest;
+          const refutation = arm === "PROOF_WORKBENCH" ? result.payload?.refutation ?? null : null;
+          if (refutation !== null) refutationVerification = verifyFiniteRefutation(task.problem, refutation);
           observation = immutableTheoryValue({problemDigest: session!.problemDigest,
             decision: result.status === "BUDGET_EXHAUSTED" ? "INSUFFICIENT_EVIDENCE" : "CANDIDATE_CONSTRUCTED_NOT_ACCEPTED",
             certificateFields: result.status === "BUDGET_EXHAUSTED" ? null : {status: result.status, payload: transferPayload(task.problem, result.payload)},
+            ...(refutationVerification ? {finiteRefutation: refutationVerification.decision === "SUPPORTED" ? refutation : null,
+              refutationVerification} : {}),
             assumptions: ["Conditional result for the supplied finite domain and admitted observations; independent verification required."],
             evidenceDigests: [result.resultDigest], workUnits: result.workUnits, elapsedMs: result.elapsedMs, grantsAuthority: false});
           record("ANALYSIS_RETURNED_NOT_ACCEPTED", ["Review the bound proposed result, or state a specific obstruction."]); continue;
@@ -155,7 +170,8 @@ async function run(task: TransferTask, arm: Arm): Promise<TaskResult> {
   } finally { session?.revoke(); }
   const result = immutableTheoryValue({arm, taskId: task.taskId, accepted, outcome, calls: evidence.length, submissions,
     repairAttempts: Math.max(0, submissions - 1), elapsedMs: Date.now() - began, attempts, evidence,
-    toolWorkUnits, toolElapsedMs, toolRequests, toolResultDigest, declinedArtifactAcceptedByOfflineOracle: offlineAccepted});
+    toolWorkUnits, toolElapsedMs, toolRequests, toolResultDigest, declinedArtifactAcceptedByOfflineOracle: offlineAccepted,
+    refutationVerification});
   console.log(`TRANSFER_TASK arm=${arm} task=${task.taskId} outcome=${outcome} calls=${result.calls}`);
   return result;
 }
@@ -163,7 +179,7 @@ async function run(task: TransferTask, arm: Arm): Promise<TaskResult> {
 const results: TaskResult[] = [];
 for (const [at, task] of TASKS.entries()) {
   // Precommitted alternating order; fresh model context per arm, no answer sharing.
-  const order: Arm[] = at % 2 === 0 ? ["BASELINE", "WORKBENCH"] : ["WORKBENCH", "BASELINE"];
+  const order = at % 2 === 0 ? ARMS : [...ARMS].reverse();
   for (const arm of order) results.push(await run(task, arm));
 }
 function metrics(arm: Arm) {
@@ -187,6 +203,11 @@ function metrics(arm: Arm) {
     repairAttempts: selected.reduce((n,r) => n+r.repairAttempts,0),
     elapsedMs: selected.reduce((n,r) => n+r.elapsedMs,0), toolRequests: selected.reduce((n,r) => n+r.toolRequests,0),
     toolWorkUnits: selected.reduce((n,r) => n+r.toolWorkUnits,0), toolElapsedMs: selected.reduce((n,r) => n+r.toolElapsedMs,0),
+    supportedRefutations: selected.filter(r => r.refutationVerification?.decision === "SUPPORTED").length,
+    rejectedRefutations: selected.filter(r => r.refutationVerification?.decision === "REJECTED").length,
+    inconclusiveRefutations: selected.filter(r => r.refutationVerification?.decision === "INSUFFICIENT_EVIDENCE").length,
+    refutationVerifierWorkUnits: selected.reduce((n,r) => n + (r.refutationVerification?.workUnits ?? 0),0),
+    refutationVerifierElapsedMs: selected.reduce((n,r) => n + (r.refutationVerification?.elapsedMs ?? 0),0),
     submittedCandidateBrierScore: scored.length ? scored.reduce((n,a) => n + (a.confidence! - Number(a.outcome === "ACCEPTED")) ** 2,0) / scored.length : null,
     calibrationScope: "DESCRIPTIVE_DEPENDENT_SUBMISSIONS_NOT_GENERAL_CALIBRATION_CERTIFICATION",
     acceptedPerReportedMillionTokens: knownUsage.length === observations.length && knownUsage.reduce((a,b)=>a+b,0) > 0
@@ -194,20 +215,34 @@ function metrics(arm: Arm) {
 }
 const sourceAfter = theoryDigest({index: git("ls-files", "-s"), status: git("status", "--porcelain=v1")});
 if (sourceAfter !== sourceBefore) throw new Error("source_repository_changed_during_evaluation");
-const arms = [metrics("BASELINE"), metrics("WORKBENCH")];
-const pairs = TASKS.map(task => ({taskId: task.taskId, baseline: results.find(r=>r.taskId === task.taskId && r.arm === "BASELINE")!.outcome,
-  workbench: results.find(r=>r.taskId === task.taskId && r.arm === "WORKBENCH")!.outcome}));
+const arms = ARMS.map(metrics);
+const pairs = TASKS.map(task => ({taskId: task.taskId, baseline: results.find(r=>r.taskId === task.taskId && r.arm === ARMS[0])!.outcome,
+  workbench: results.find(r=>r.taskId === task.taskId && r.arm === ARMS[1])!.outcome}));
 const contaminated = arms.some(a => a.providerFailures > 0 || a.recoveredProviderDisruptions > 0);
 const unexecuted = results.some(r => r.calls === 0);
 const verdict = contaminated || unexecuted ? "INCONCLUSIVE_PROVIDER_OR_BUDGET_CONTAMINATED"
   : arms[1].accepted > arms[0].accepted ? "FRESH_TASK_ADVANTAGE_OBSERVED_REPLICATION_REQUIRED" : "NO_ACCEPTANCE_ADVANTAGE_OBSERVED";
+const reportedComputeRatio = arms[0].reportedTokens > 0 && arms.every(a => a.unknownUsageCalls === 0)
+  ? arms[1].reportedTokens / arms[0].reportedTokens : null;
+const baselineOnly = results.filter(r => r.arm === ARMS[0] && r.accepted
+  && !results.find(other => other.arm === ARMS[1] && other.taskId === r.taskId)!.accepted).length;
+const candidateOnly = results.filter(r => r.arm === ARMS[1] && r.accepted
+  && !results.find(other => other.arm === ARMS[0] && other.taskId === r.taskId)!.accepted).length;
 const report = {schemaVersion: 1, chunkId: EPOCH.chunkId, candidate: CANDIDATE, model: MODEL, epoch: EPOCH,
-  corpusDigest: WORKBENCH_TRANSFER_CORPUS_DIGEST,
+  corpusDigest: CORPUS_DIGEST, proofAblation: PROOF_ABLATION, comparedArms: ARMS,
   evaluatorSourceDigest: theoryDigest(readFileSync("scripts/omega/nyx-workbench-transfer-fixtures.ts", "utf8")),
+  activeCorpusSourceDigest: theoryDigest(readFileSync(PROOF_ABLATION ? "scripts/omega/nyx-proof-transfer-fixtures.ts"
+    : "scripts/omega/nyx-workbench-transfer-fixtures.ts", "utf8")),
+  constructorSourceDigest: theoryDigest(readFileSync("src/lib/codelab/research/boundedReasoningWorkbench.ts", "utf8")),
+  refutationVerifierSourceDigest: theoryDigest(readFileSync("src/lib/codelab/research/finiteRefutationVerifier.ts", "utf8")),
   executionIdentity: process.env.GITHUB_RUN_ID ?? "LOCAL_AUTHORIZED_RUN", environment: {platform: process.platform, node: process.version},
   startedAtEpochMs: startedAt, finishedAtEpochMs: Date.now(), verdict, arms, pairs, results,
   sourceStateBefore: sourceBefore, sourceStateAfter: sourceAfter, sourceRepositoryUnchanged: true,
   matchedModelAndCallTokenLimits: true, matchedRealizedModelCompute: false, matchedToolCompute: false,
+  realizedReportedTokenRatio: reportedComputeRatio,
+  withinFivePercentReportedTokens: reportedComputeRatio !== null && reportedComputeRatio >= 0.95 && reportedComputeRatio <= 1.05,
+  pairedOutcomes: {baselineOnlyAccepted:baselineOnly,candidateOnlyAccepted:candidateOnly,
+    uncertainty:"EIGHT_PAIRED_TASKS_INSUFFICIENT_FOR_BROAD_FRONTIER_GENERALIZATION"},
   realizedComputeMustBeCompared: true, independentInstitutionalReplication: false, broadPromotion: false,
   falseAcceptanceRate: "NOT_EXTERNALLY_MEASURED_NEGATIVE_CONTROLS_VERIFIED_LOCALLY",
   evidenceClasses: {liveProvider: "E4", finiteAcceptanceOracle: "E3_LESS_CORRELATED_ALGORITHM_NOT_EXTERNAL_INSTITUTION"},

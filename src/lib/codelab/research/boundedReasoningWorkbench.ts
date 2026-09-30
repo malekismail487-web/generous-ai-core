@@ -1,8 +1,9 @@
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
+import type { FiniteRefutation, ColoringRefutationNode } from "./finiteRefutationVerifier";
 
 /** Constructive algorithms, not a second model or an acceptance authority. */
 export const NYX_REASONING_WORKBENCH = Object.freeze({
-  version: "nyx-bounded-reasoning-workbench/1",
+  version: "nyx-bounded-reasoning-workbench/2",
   grantsAuthority: false,
   maxInputBytes: 128_000,
   planCoverage: Object.freeze({ status: "PARTIAL_JUST_IN_TIME",
@@ -87,6 +88,7 @@ function plainData(value: unknown, ancestors = new Set<object>(), counter = { no
   if (!value || typeof value !== "object" || ancestors.has(value)) return false;
   if (!Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype
     && Object.getPrototypeOf(value) !== null) return false;
+  if (Array.isArray(value) && Reflect.ownKeys(value).length !== value.length + 1) return false;
   if (Reflect.ownKeys(value).some((key) => typeof key !== "string")) return false;
   ancestors.add(value);
   for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(value))) {
@@ -152,13 +154,51 @@ class WorkBudget {
   }
 }
 interface Construction { readonly status: ReasoningToolResult["status"]; readonly payload: Record<string, unknown> }
-function noWitness(): Construction { return { status: "EXHAUSTIVE_NO_WITNESS", payload: { finiteDomainExhausted: true } }; }
+function noWitness(refutation?: FiniteRefutation): Construction {
+  return { status: "EXHAUSTIVE_NO_WITNESS", payload: { finiteDomainExhausted: true,
+    ...(refutation ? { refutation } : {}) } };
+}
 
 function colorGraph(problem: ColoringProblem, budget: WorkBudget): Construction {
   const adjacent = problem.vertices.map(() => new Set<number>());
   const index = new Map(problem.vertices.map((vertex, at) => [vertex, at]));
   for (const [a, b] of problem.edges) { budget.tick(); adjacent[index.get(a)!].add(index.get(b)!); adjacent[index.get(b)!].add(index.get(a)!); }
+  function clique(size: number, selected: number[], available: number[]): number[] | null {
+    budget.tick();
+    if (selected.length === size) return selected;
+    if (selected.length + available.length < size) return null;
+    for (let at = 0; at < available.length; at += 1) {
+      budget.tick();
+      const vertex = available[at];
+      const found = clique(size, [...selected, vertex], available.slice(at + 1).filter((next) => adjacent[vertex].has(next)));
+      if (found) return found;
+    }
+    return null;
+  }
+  // A bounded structural obstruction is stronger than an opaque "search finished" flag.
+  // Limit this preliminary search: failure to find a clique is never itself an absence proof.
+  const obstructionBudgetStart = budget.units;
+  function obstruction(selected: number[], available: number[]): number[] | null {
+    budget.tick();
+    if (selected.length > problem.colors.length) return selected;
+    if (budget.units - obstructionBudgetStart >= 128
+      || selected.length + available.length <= problem.colors.length) return null;
+    for (let at = 0; at < available.length; at++) {
+      budget.tick();
+      if (budget.units - obstructionBudgetStart >= 128) return null;
+      const vertex = available[at];
+      const found = obstruction([...selected, vertex], available.slice(at + 1).filter(next => adjacent[vertex].has(next)));
+      if (found) return found;
+    }
+    return null;
+  }
+  const blocked = obstruction([], problem.vertices.map((_, at) => at));
+  if (blocked) return noWitness({ schemaVersion: 1, kind: "COLORING_CLIQUE_OBSTRUCTION",
+    problemDigest: theoryDigest(problem), vertices: blocked.map(at => problem.vertices[at]) });
   const assignment = Array<number>(problem.vertices.length).fill(-1);
+  const nodes: ColoringRefutationNode[] = [];
+  let proofBoundExceeded = false;
+  let lastFailedNode: number | null = null;
   function search(remaining: number): boolean {
     budget.tick();
     if (remaining === 0) return true;
@@ -173,29 +213,27 @@ function colorGraph(problem: ColoringProblem, budget: WorkBudget): Construction 
       }
     }
     const forbidden = new Set([...adjacent[chosen]].map((neighbor) => assignment[neighbor]));
+    const branches: ColoringRefutationNode["branches"][number][] = [];
     for (const color of problem.colors) {
       budget.tick();
-      if (forbidden.has(color)) continue;
+      if (forbidden.has(color)) {
+        const neighbor = [...adjacent[chosen]].find(next => assignment[next] === color)!;
+        branches.push({ color, child: null, conflictWith: problem.vertices[neighbor] }); continue;
+      }
       assignment[chosen] = color;
       if (search(remaining - 1)) return true;
+      branches.push({ color, child: lastFailedNode, conflictWith: null });
       assignment[chosen] = -1;
     }
+    // Resource-limited proof emission does not change the solver's truth claim or its verifier.
+    if (nodes.length >= 1024 || proofBoundExceeded) { proofBoundExceeded = true; lastFailedNode = null; }
+    else { lastFailedNode = nodes.length; nodes.push({ vertex: problem.vertices[chosen], branches }); }
     return false;
   }
-  if (!search(assignment.length)) return noWitness();
-  function clique(selected: number[], available: number[]): number[] | null {
-    budget.tick();
-    if (selected.length === problem.cliqueSize) return selected;
-    if (selected.length + available.length < problem.cliqueSize) return null;
-    for (let at = 0; at < available.length; at += 1) {
-      budget.tick();
-      const vertex = available[at];
-      const found = clique([...selected, vertex], available.slice(at + 1).filter((next) => adjacent[vertex].has(next)));
-      if (found) return found;
-    }
-    return null;
-  }
-  const witness = clique([], problem.vertices.map((_, at) => at));
+  if (!search(assignment.length)) return noWitness(!proofBoundExceeded && lastFailedNode !== null
+    ? { schemaVersion: 1, kind: "COLORING_SEARCH_REFUTATION", problemDigest: theoryDigest(problem), nodes, root: lastFailedNode }
+    : undefined);
+  const witness = clique(problem.cliqueSize, [], problem.vertices.map((_, at) => at));
   if (!witness) return noWitness();
   return { status: "CONSTRUCTED", payload: {
     coloring: problem.vertices.map((vertex, at) => ({ vertex, color: assignment[at] })),
@@ -228,10 +266,19 @@ function explore(problem: ReachabilityProblem, budget: WorkBudget): Construction
     }
   }
   return { status: "EXHAUSTIVE_NO_WITNESS", payload: { finiteDomainExhausted: true,
+    refutation: { schemaVersion: 1, kind: "REACHABILITY_CLOSED_INVARIANT", problemDigest: theoryDigest(problem), states: queue },
     exploredStates: parent.size, scope: "SUPPLIED_FINITE_GRAPH_ONLY_NOT_REAL_SYSTEM_SAFETY" } };
 }
 
 function selectExperiments(problem: ExperimentSelectionProblem, budget: WorkBudget): Construction {
+  // Check information-theoretic nonidentifiability before enumerating experiment subsets.
+  const fullForecasts = new Map<string, string>();
+  for (const row of problem.predictions) {
+    budget.tick(); const signature = JSON.stringify(row.outcomes); const previous = fullForecasts.get(signature);
+    if (previous !== undefined) return noWitness({ schemaVersion: 1, kind: "PREDICTION_NON_IDENTIFIABILITY",
+      problemDigest: theoryDigest(problem), mechanismIds: [previous, row.mechanismId] });
+    fullForecasts.set(signature, row.mechanismId);
+  }
   function separates(indices: number[]): boolean {
     const seen = new Set<string>();
     for (const row of problem.predictions) {
@@ -261,17 +308,25 @@ function selectExperiments(problem: ExperimentSelectionProblem, budget: WorkBudg
 
 function eliminate(problem: HypothesisEliminationProblem, budget: WorkBudget): Construction {
   const survivors: string[] = []; const ruledOutMechanismIds: string[] = [];
+  const witnesses: { mechanismId: string; experimentId: string; evidenceRef: string; expectedOutcome: string; observedOutcome: string }[] = [];
   for (const row of problem.predictions) {
     let consistent = true;
     for (const observation of problem.observations) {
       budget.tick();
-      if (row.outcomes[problem.experimentIds.indexOf(observation.experimentId)] !== observation.outcome) consistent = false;
+      const expectedOutcome = row.outcomes[problem.experimentIds.indexOf(observation.experimentId)];
+      if (expectedOutcome !== observation.outcome) {
+        if (consistent) witnesses.push({ mechanismId: row.mechanismId, experimentId: observation.experimentId,
+          evidenceRef: observation.evidenceRef, expectedOutcome, observedOutcome: observation.outcome });
+        consistent = false;
+      }
     }
     (consistent ? survivors : ruledOutMechanismIds).push(row.mechanismId);
   }
   return { status: survivors.length === 1 ? "CONSTRUCTED" : "INSUFFICIENT_EVIDENCE", payload: {
     mechanismId: survivors.length === 1 ? survivors[0] : null, survivors, ruledOutMechanismIds,
     evidenceRefs: problem.observations.map((observation) => observation.evidenceRef),
+    ...(survivors.length === 0 ? { refutation: { schemaVersion: 1, kind: "HYPOTHESIS_CONFLICT",
+      problemDigest: theoryDigest(problem), witnesses } } : {}),
     conflict: survivors.length === 0, scope: "CONDITIONAL_ON_SUPPLIED_FORECASTS_AND_ADMITTED_OBSERVATIONS" } };
 }
 

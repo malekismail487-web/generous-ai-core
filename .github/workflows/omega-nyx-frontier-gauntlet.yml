@@ -2,6 +2,10 @@ name: Omega NYX frontier reasoning gauntlet
 
 # Live gauntlets remain opt-in while the experiment is frozen.
 on:
+  # One bounded commissioning run; remove this trigger immediately after dispatch.
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [scripts/omega/nyx-workbench-transfer-live-eval.ts]
   workflow_dispatch:
     inputs:
       workbench_comparison:
@@ -10,6 +14,10 @@ on:
         default: false
       transfer_comparison:
         description: Run only the fresh eight-task finite transfer comparison
+        type: boolean
+        default: false
+      proof_comparison:
+        description: Compare current workbench against proof-bearing workbench on eight frozen new tasks
         type: boolean
         default: false
 
@@ -48,12 +56,13 @@ jobs:
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaFrontierReasoningGauntlet.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBoundedReasoningWorkbench.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxWorkbenchTransfer.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaFiniteRefutation.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaVerificationIntegrity.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaSchedulerChallenge.test.ts
           npm run typecheck:ratchet
       - name: Run live frontier reasoning and engineering gauntlets
-        if: github.event_name == 'workflow_dispatch' && !inputs.workbench_comparison && !inputs.transfer_comparison
+        if: github.event_name == 'workflow_dispatch' && !inputs.workbench_comparison && !inputs.transfer_comparison && !inputs.proof_comparison
         shell: bash
         run: |
           npm run omega:nvidia:smoke
@@ -75,7 +84,7 @@ jobs:
             exit 1
           fi
       - name: Run frozen baseline and computational-workbench comparison
-        if: inputs.workbench_comparison && !inputs.transfer_comparison
+        if: inputs.workbench_comparison && !inputs.transfer_comparison && !inputs.proof_comparison
         shell: bash
         run: |
           set +e
@@ -86,7 +95,12 @@ jobs:
           set -e
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-frontier-workbench-compare.ts
       - name: Run fresh paired finite reasoning transfer comparison
-        if: inputs.transfer_comparison
+        if: inputs.transfer_comparison && !inputs.proof_comparison
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-workbench-transfer-live-eval.ts
+      - name: Run frozen paired proof-evidence ablation
+        if: github.event_name == 'push' || inputs.proof_comparison
+        env:
+          NYX_TRANSFER_PROOF_ABLATION: "1"
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-workbench-transfer-live-eval.ts
       - name: Upload sanitized live reports
         if: always()
