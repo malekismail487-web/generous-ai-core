@@ -7,7 +7,7 @@ import { NYX_ADMISSION_GUIDANCE, NYX_ADMISSION_GUIDANCE_FROZEN_CORE,
 import { assessNyxTransferEpoch, nyxTransferReportIdentity,
   type EpochReport } from "./omega/nyx-transfer-epoch-compare";
 import { assessNyxAdmissionReference, requireAdmissibleReferenceGates } from "./omega/nyx-quality-reference-preflight";
-import { NYX_GATE_RECOVERY, NYX_GATE_RECOVERY_TASKS } from "./omega/nyx-gate-recovery-fixtures";
+import { NYX_GATE_RECOVERY, NYX_GATE_RECOVERY_FROZEN_CORE, NYX_GATE_RECOVERY_TASKS } from "./omega/nyx-gate-recovery-fixtures";
 
 let passed = 0;
 const failures: string[] = [];
@@ -35,6 +35,9 @@ function satisfies(fn: (...args: unknown[]) => unknown,
 check(Object.entries(NYX_ADMISSION_GUIDANCE_FROZEN_CORE.files).every(([path, expected]) =>
   digest(execFileSync("git", ["show", `${NYX_ADMISSION_GUIDANCE_FROZEN_CORE.commit}:${path}`])) === expected),
   "historical scored core remains reproducible at its immutable pinned source");
+check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected]) =>
+  digest(execFileSync("git", ["show", `${NYX_GATE_RECOVERY_FROZEN_CORE.commit}:${path}`])) === expected
+  && digest(readFileSync(path)) === expected), "current ownership-repair core matches its immutable frozen source");
 check(NYX_ADMISSION_GUIDANCE_TASKS.length === 3
   && new Set(NYX_ADMISSION_GUIDANCE_TASKS.map((task) => task.taskClass)).size === 3
   && NYX_ADMISSION_GUIDANCE.arms.join() === "CURRENT,REASONING_ENABLED"

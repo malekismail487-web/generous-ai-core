@@ -1,8 +1,12 @@
 name: Omega NYX reference-gate recovery comparison
-# Subsequent live epochs require an explicit dispatch to avoid accidental API consumption.
+# One explicitly authorized ownership-repair epoch; remove push trigger after scoring.
 
 on:
   workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths:
+      - scripts/omega/nyx-gate-recovery-fixtures.ts
 
 permissions:
   contents: read

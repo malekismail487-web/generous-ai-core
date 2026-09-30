@@ -9,8 +9,15 @@ export const NYX_GATE_RECOVERY = Object.freeze({ ...NYX_ADMISSION_GUIDANCE,
   chunkId: "NYX-PUBLIC-IMMUTABILITY-REPAIR-001", version: "nyx-gate-recovery/2",
   sourceInstanceScope: "NEW_MODULAR_BASELINES_SAME_PREDECLARED_FUNCTIONAL_ORACLES",
   comparedWithHistoricalRun: false,
+  previousEvaluatedCandidate: "33829c4c71b35aef6707e30f0f50e30b9804accd",
 });
-export const NYX_GATE_RECOVERY_FROZEN_CORE = NYX_ADMISSION_GUIDANCE_FROZEN_CORE;
+export const NYX_GATE_RECOVERY_FROZEN_CORE = Object.freeze({
+  commit: "8d5c671267a8ff805907d2c65c9b28def65d0fe5",
+  files: Object.freeze({ ...NYX_ADMISSION_GUIDANCE_FROZEN_CORE.files,
+    "src/lib/codelab/assurance/candidateEngineeringAdmission.ts": "e501022e0c82a3602d127f1cfee77082fc1e571cb494841b6137726d3ef74f60",
+    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "e7621acc7573111877c66afadb2404cb108c0786929c9898ccefaa1dd6edd9cd",
+  }),
+});
 
 function task(index: number, helperPath: string, helperName: string, helperSource: string,
   goodSource: string, faultySource: string): NyxQualityV5Task {
