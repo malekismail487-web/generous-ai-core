@@ -7,7 +7,8 @@ import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment,
 import { ReasoningObligationGraph, type ObligationWorkPacket } from
   "../../src/lib/codelab/research/reasoningObligationGraph";
 import { createFrontierWorkbench, frontierExchangeSchema, parseFrontierExchange,
-  FRONTIER_WORKBENCH_EPOCH } from "./nyx-frontier-workbench";
+  materializeFrontierArtifact, FRONTIER_WORKBENCH_EPOCH } from "./nyx-frontier-workbench";
+import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import {
   FRONTIER_CAUSAL_CONCLUSION_SCHEMA,
   FRONTIER_CAUSAL_PLAN_SCHEMA,
@@ -174,9 +175,14 @@ async function runStage(input: {
     const reasoningPrompt = frontierRevisionPrompt(input.prompt(feedback), previousRejectedCandidate, feedback,
       obligationGraph.workPacket(), revisionMode);
     const toolsAvailable = workbench !== null && computationalObservation === null;
+    const artifactAvailable = VARIANT === "WORKBENCH"
+      && computationalObservation?.decision === "CANDIDATE_CONSTRUCTED_NOT_ACCEPTED";
     const prompt = workbenchEpoch ? { ...reasoningPrompt, computationalObservation,
       availableTool: toolsAvailable ? workbench!.descriptor : null,
-      exchangeContract: "Return {action, analysisRequest, certificate}. For SUBMIT_CERTIFICATE: analysisRequest=null and certificate=the required original certificate. For REQUEST_ANALYSIS: certificate=null and analysisRequest=exactly {schemaVersion:1,operation:ANALYZE_FINITE_PROBLEM,problemDigest:the availableTool digest}. Analysis does not certify acceptance. Never invent tools. If available, request bounded analysis before guessing an exact certificate.",
+      availableArtifactSubmission: artifactAvailable ? { schemaVersion: 1, operation: "SUBMIT_ANALYSIS_ARTIFACT",
+        problemDigest: computationalObservation!.problemDigest, resultDigest: theoryDigest(computationalObservation),
+        independentVerificationStillRequired: true } : null,
+      exchangeContract: "Return {action, analysisRequest, certificate}. For SUBMIT_CERTIFICATE: analysisRequest=null and certificate=the required original certificate. For REQUEST_ANALYSIS: certificate=null and analysisRequest=exactly {schemaVersion:1,operation:ANALYZE_FINITE_PROBLEM,problemDigest:the availableTool digest}. If availableArtifactSubmission exists, prefer action SUBMIT_ANALYSIS_ARTIFACT, certificate=null, analysisRequest={schemaVersion:1,operation:SUBMIT_ANALYSIS_ARTIFACT,problemDigest:the given digest,resultDigest:the given digest,confidence:your number between 0 and 1}. Do not retype generated certificate fields. Omega materializes the exact bound proposal and independently verifies it. Analysis or a digest never implies acceptance. Never invent tools. If available, request bounded analysis before guessing an exact certificate.",
     } : reasoningPrompt;
     const requestId = `${input.stageId}-${VARIANT}-CALL-${callAttempts}-${frontierDigest([CANDIDATE, VARIANT, input.stageId, callAttempts]).slice(0, 16)}`;
     modelCalls += 1;
@@ -187,7 +193,7 @@ async function runStage(input: {
       ], maxTokens: NYX_FRONTIER_GAUNTLET.maxOutputTokensPerCall,
       temperature: revisionMode === "INITIAL" ? 0 : revisionMode === "TARGETED_CORRECTION" ? 0.15 : 0.35,
       responseFormat: { type: "JSON_SCHEMA", name: input.stageId.toLowerCase().replace(/-/g, "_").slice(0, 63),
-        schema: frontierProviderSchema(workbenchEpoch ? frontierExchangeSchema(input.schema, toolsAvailable) : input.schema) }, inferencePolicy: "REASONING_JSON",
+        schema: frontierProviderSchema(workbenchEpoch ? frontierExchangeSchema(input.schema, toolsAvailable, artifactAvailable) : input.schema) }, inferencePolicy: "REASONING_JSON",
       observedAtEpochMs: Date.now(), deadlineEpochMs });
     modelEvidence.push(sanitized(completion.evidence));
     if (completion.decision !== "COMPLETED" || completion.content === null) {
@@ -214,7 +220,7 @@ async function runStage(input: {
     }
     if (workbenchEpoch) {
       try {
-        const exchange = parseFrontierExchange(parsed, toolsAvailable);
+        const exchange = parseFrontierExchange(parsed, toolsAvailable, artifactAvailable);
         if (exchange.action === "REQUEST_ANALYSIS") {
           computationalObservation = workbench!.analyze(exchange.request);
           computationalEvidence.push({ stageId: input.stageId, requestModelDigest: completion.evidence.requestDigest,
@@ -223,7 +229,8 @@ async function runStage(input: {
           feedback = mergeFrontierFeedback(feedback, ["BOUNDED_ANALYSIS_RETURNED_SUBMIT_INDEPENDENTLY_CHECKABLE_CERTIFICATE"]);
           continue;
         }
-        parsed = exchange.certificate;
+        parsed = exchange.action === "SUBMIT_ANALYSIS_ARTIFACT"
+          ? materializeFrontierArtifact(computationalObservation!, input.schema, exchange.request) : exchange.certificate;
       } catch (error) {
         const reason = error instanceof Error ? error.message : "frontier_exchange_failure";
         protocolFailures.push({ stageId: input.stageId, callAttempt: callAttempts, reason });

@@ -2,9 +2,11 @@ import { readFileSync } from "node:fs";
 import { BoundedReasoningSession, type ReasoningProblem, type ColoringProblem, type ReachabilityProblem,
   type ExperimentSelectionProblem, type HypothesisEliminationProblem } from "../src/lib/codelab/research/boundedReasoningWorkbench";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
-import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema } from "./omega/nyx-frontier-workbench";
+import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema,
+  materializeFrontierArtifact } from "./omega/nyx-frontier-workbench";
 import { graphPrompt, protocolPrompt, causalPlanPrompt, causalConclusionPrompt, executeCausalExperiments,
-  verifyGraphSubmission, verifyProtocolSubmission, verifyCausalPlan, verifyCausalConclusion } from "./omega/nyx-frontier-reasoning-fixtures";
+  verifyGraphSubmission, verifyProtocolSubmission, verifyCausalPlan, verifyCausalConclusion,
+  FRONTIER_GRAPH_SCHEMA } from "./omega/nyx-frontier-reasoning-fixtures";
 
 let passed = 0; let failed = 0;
 function check(condition: unknown, label: string): void {
@@ -190,6 +192,26 @@ check(throws(() => parseFrontierExchange({ action: "SHELL", analysisRequest: nul
   "unknown executable actions remain forbidden");
 check(frontierExchangeSchema({}, false).properties.action.enum.length === 1,
   "baseline schema exposes only certificate submission");
+const graphArtifact = tool("FRONTIER_GRAPH", graphPrompt());
+const artifactRequest = { schemaVersion: 1, operation: "SUBMIT_ANALYSIS_ARTIFACT",
+  problemDigest: graphArtifact.problemDigest, resultDigest: theoryDigest(graphArtifact), confidence: 0.75 };
+check(verifyGraphSubmission(materializeFrontierArtifact(graphArtifact, FRONTIER_GRAPH_SCHEMA, artifactRequest)).accepted,
+  "digest-bound native artifact survives independent verification without model source re-emission");
+check(throws(() => materializeFrontierArtifact(graphArtifact, FRONTIER_GRAPH_SCHEMA,
+  { ...artifactRequest, resultDigest: "forged" })), "forged analysis digest cannot substitute an artifact");
+check(throws(() => materializeFrontierArtifact(graphArtifact, FRONTIER_GRAPH_SCHEMA,
+  { ...artifactRequest, problemDigest: "another-task" })), "cross-task artifact reference fails closed");
+check(throws(() => materializeFrontierArtifact(graphArtifact, FRONTIER_GRAPH_SCHEMA,
+  { ...artifactRequest, confidence: 1.01 })), "model confidence cannot escape the unchanged certificate range");
+check(throws(() => materializeFrontierArtifact(graphArtifact, FRONTIER_GRAPH_SCHEMA,
+  { ...artifactRequest, certificateFields: {} })), "model reference cannot overwrite generated certificate fields");
+check(throws(() => parseFrontierExchange({ action: "SUBMIT_ANALYSIS_ARTIFACT", analysisRequest: artifactRequest,
+  certificate: null }, false, false)), "baseline cannot acquire artifact submission through textual requests");
+const deceptiveArtifact = { ...graphArtifact, certificateFields: { coloring: [], clique: [] } };
+const deceptiveCandidate = materializeFrontierArtifact(deceptiveArtifact, FRONTIER_GRAPH_SCHEMA,
+  { ...artifactRequest, resultDigest: theoryDigest(deceptiveArtifact) });
+check(!verifyGraphSubmission(deceptiveCandidate).accepted,
+  "validly bound but incorrect tool artifact is still rejected by the original independent oracle");
 const coreSource = readFileSync("src/lib/codelab/research/boundedReasoningWorkbench.ts", "utf8");
 const adapterSource = readFileSync("scripts/omega/nyx-frontier-workbench.ts", "utf8");
 check(!coreSource.includes("frontier-reasoning-fixtures") && !adapterSource.includes("referenceGraph")

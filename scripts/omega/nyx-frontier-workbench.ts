@@ -4,7 +4,9 @@ import { BoundedReasoningSession, NYX_REASONING_WORKBENCH, type ColoringProblem,
 import { immutableTheoryValue, theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 
 export const FRONTIER_WORKBENCH_EPOCH = Object.freeze({
-  version: "nyx-frontier-workbench-epoch/1", modelCallsPerStage: 5, candidateSubmissionsPerStage: 3,
+  version: "nyx-frontier-workbench-epoch/2", modelCallsPerStage: 5, candidateSubmissionsPerStage: 3,
+  previousEvaluatedCandidate: "55661d1fc92f5e3747879dde089ba6ed5113bae6",
+  correction: "DIGEST_BOUND_ARTIFACT_SUBMISSION_NOT_MODEL_RETRANSCRIPTION",
   toolRequestsPerStage: 1, maxWorkUnitsPerSession: 50_000, maxElapsedMsPerSession: 2_000,
   independentInstitutionalReplication: false, comparisonScope: "TOOL_ABLATION_NOT_MATCHED_TOOL_COMPUTE",
 });
@@ -65,6 +67,11 @@ export const FRONTIER_TOOL_SCHEMA = Object.freeze({ type: "object", additionalPr
   required: ["schemaVersion", "operation", "problemDigest"], properties: {
     schemaVersion: { type: "integer", enum: [1] }, operation: { type: "string", enum: ["ANALYZE_FINITE_PROBLEM"] },
     problemDigest: { type: "string" },
+  } });
+const FRONTIER_ARTIFACT_SCHEMA = Object.freeze({ type: "object", additionalProperties: false,
+  required: ["schemaVersion", "operation", "problemDigest", "resultDigest", "confidence"], properties: {
+    schemaVersion: { type: "integer", enum: [1] }, operation: { type: "string", enum: ["SUBMIT_ANALYSIS_ARTIFACT"] },
+    problemDigest: { type: "string" }, resultDigest: { type: "string" }, confidence: { type: "number" },
   } });
 
 /** Evaluation adapter owns only predeclared public problem data. No reference answers or hidden target access. */
@@ -134,16 +141,18 @@ export function createFrontierWorkbench(stageId: string, sourcePrompt: Readonly<
     analyze, evidence: () => Object.freeze([...evidence]), revoke: () => { revoked = true; } });
 }
 
-export function frontierExchangeSchema(certificateSchema: Readonly<Record<string, unknown>>, toolsAvailable: boolean) {
+export function frontierExchangeSchema(certificateSchema: Readonly<Record<string, unknown>>, toolsAvailable: boolean,
+  artifactAvailable = false) {
   return { type: "object", additionalProperties: false, required: ["action", "analysisRequest", "certificate"],
-    properties: { action: { type: "string", enum: toolsAvailable ? ["SUBMIT_CERTIFICATE", "REQUEST_ANALYSIS"] : ["SUBMIT_CERTIFICATE"] },
-      analysisRequest: { anyOf: [FRONTIER_TOOL_SCHEMA, { type: "null" }] },
+    properties: { action: { type: "string", enum: ["SUBMIT_CERTIFICATE", ...(toolsAvailable ? ["REQUEST_ANALYSIS"] : []),
+      ...(artifactAvailable ? ["SUBMIT_ANALYSIS_ARTIFACT"] : [])] },
+      analysisRequest: { anyOf: [FRONTIER_TOOL_SCHEMA, FRONTIER_ARTIFACT_SCHEMA, { type: "null" }] },
       certificate: { anyOf: [certificateSchema, { type: "null" }] } } };
 }
 
-export function parseFrontierExchange(value: unknown, toolsAvailable: boolean):
+export function parseFrontierExchange(value: unknown, toolsAvailable: boolean, artifactAvailable = false):
   { readonly action: "SUBMIT_CERTIFICATE"; readonly certificate: unknown }
-  | { readonly action: "REQUEST_ANALYSIS"; readonly request: unknown } {
+  | { readonly action: "REQUEST_ANALYSIS" | "SUBMIT_ANALYSIS_ARTIFACT"; readonly request: unknown } {
   if (!value || typeof value !== "object" || Array.isArray(value)
     || Object.keys(value).sort().join(",") !== "action,analysisRequest,certificate") throw new Error("frontier_exchange_malformed");
   const exchange = value as { action: string; analysisRequest: unknown; certificate: unknown };
@@ -153,5 +162,26 @@ export function parseFrontierExchange(value: unknown, toolsAvailable: boolean):
   if (toolsAvailable && exchange.action === "REQUEST_ANALYSIS" && exchange.certificate === null
     && exchange.analysisRequest && typeof exchange.analysisRequest === "object") return {
       action: "REQUEST_ANALYSIS", request: exchange.analysisRequest };
+  if (artifactAvailable && exchange.action === "SUBMIT_ANALYSIS_ARTIFACT" && exchange.certificate === null
+    && exchange.analysisRequest && typeof exchange.analysisRequest === "object") return {
+      action: "SUBMIT_ANALYSIS_ARTIFACT", request: exchange.analysisRequest };
   throw new Error("frontier_exchange_not_authorized");
+}
+
+/** A reference selects a prebound proposal; it never replaces the independent acceptance check. */
+export function materializeFrontierArtifact(observation: Readonly<Record<string, unknown>>,
+  schema: Readonly<Record<string, unknown>>, value: unknown): Readonly<Record<string, unknown>> {
+  const request = value as Record<string, unknown>;
+  if (!request || typeof request !== "object" || Array.isArray(request)
+    || Object.keys(request).sort().join(",") !== "confidence,operation,problemDigest,resultDigest,schemaVersion"
+    || request.schemaVersion !== 1 || request.operation !== "SUBMIT_ANALYSIS_ARTIFACT"
+    || request.problemDigest !== observation.problemDigest || request.resultDigest !== theoryDigest(observation)
+    || typeof request.confidence !== "number" || !Number.isFinite(request.confidence)
+    || request.confidence < 0 || request.confidence > 1
+    || observation.decision !== "CANDIDATE_CONSTRUCTED_NOT_ACCEPTED" || !observation.certificateFields)
+    throw new Error("frontier_artifact_reference_not_authorized");
+  const properties = schema.properties as Record<string, { enum?: unknown[] }>;
+  return immutableTheoryValue({ schemaVersion: properties.schemaVersion.enum![0],
+    decision: properties.decision.enum![0], ...(observation.certificateFields as object),
+    uncertainties: observation.assumptions, confidence: request.confidence });
 }
