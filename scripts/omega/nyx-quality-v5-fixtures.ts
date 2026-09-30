@@ -10,7 +10,7 @@ export interface NyxQualityV5Task {
   readonly taskClass: NyxQualityV5TaskClass;
   readonly provenance: "NYX_ENGINEERING_QUALITY_FRESH_HOLDOUT_V5" | "NYX_TRANSFER_MATCHED_FRESH_2026_09_27"
     | "NYX_TRANSFER_FOLLOWUP_FRESH_2026_09_27" | "NYX_EMISSION_TRANSFER_FRESH_2026_09_29"
-    | "NYX_ADMISSION_GUIDANCE_FRESH_2026_09_29";
+    | "NYX_ADMISSION_GUIDANCE_FRESH_2026_09_29" | "NYX_GATE_RECOVERY_SOURCE_2026_09_30";
   readonly objective: string;
   readonly initialDefect: string;
   readonly correctFiles: Readonly<Record<string, string>>;

@@ -6,6 +6,8 @@ import { NYX_ADMISSION_GUIDANCE, NYX_ADMISSION_GUIDANCE_FROZEN_CORE,
   NYX_ADMISSION_GUIDANCE_TASKS } from "./omega/nyx-admission-guidance-fixtures";
 import { assessNyxTransferEpoch, nyxTransferReportIdentity,
   type EpochReport } from "./omega/nyx-transfer-epoch-compare";
+import { assessNyxAdmissionReference, requireAdmissibleReferenceGates } from "./omega/nyx-quality-reference-preflight";
+import { NYX_GATE_RECOVERY, NYX_GATE_RECOVERY_TASKS } from "./omega/nyx-gate-recovery-fixtures";
 
 let passed = 0;
 const failures: string[] = [];
@@ -52,6 +54,32 @@ for (const task of NYX_ADMISSION_GUIDANCE_TASKS) {
     (dimension) => [dimension, quality.dimensions[dimension].findings]))}`);
   check(quality.decision === "ACCEPTED", `${task.taskId}: reference passes unchanged engineering-quality oracle`);
 }
+check(NYX_ADMISSION_GUIDANCE_TASKS.every((task) => assessNyxAdmissionReference(task).decision === "REJECTED_REFERENCE"),
+"historical guidance references are inadmissible at the earlier static gate despite passing final task quality");
+let blockedBeforeInference = false;
+try { requireAdmissibleReferenceGates(NYX_ADMISSION_GUIDANCE_TASKS); }
+catch (error) { blockedBeforeInference = String(error).includes("nyx_admission_reference_not_admissible:"); }
+check(blockedBeforeInference, "incompatible evaluation gates abort before provider inference");
+requireAdmissibleReferenceGates(NYX_GATE_RECOVERY_TASKS);
+check(NYX_GATE_RECOVERY.comparedWithHistoricalRun === false,
+  "modular reissued sources are not represented as comparable historical baselines");
+for (const task of NYX_GATE_RECOVERY_TASKS) {
+  const helperPath = task.qualityPolicy.readonlyPaths[0];
+  const importPath = `./${helperPath.split("/").at(-1)}`;
+  const helperUrl = `data:text/javascript;base64,${Buffer.from(task.correctFiles[helperPath]).toString("base64")}`;
+  const load = (source: string) => fromSource(source.replace(JSON.stringify(importPath), JSON.stringify(helperUrl)));
+  const good = await load(task.correctFiles[task.candidateModule]);
+  const bad = await load(task.faultyFiles[task.candidateModule]);
+  check(task.hiddenCases.every((item) => satisfies(good[task.exportName], item)),
+    `${task.taskId}: modular reference satisfies unchanged hidden oracle`);
+  check(task.hiddenCases.filter((item) => !satisfies(bad[task.exportName], item)).length >= 2,
+    `${task.taskId}: faulty modular baseline retains real behavior defects`);
+  check(!task.mutationPaths.includes(helperPath) && task.initiallyAdmittedPaths.includes(helperPath)
+    && task.publicQualityObligations?.length === 2,
+    `${task.taskId}: immutable helper is visible and architecture obligations are public`);
+  check(assessNyxAdmissionReference(task).decision === "ADMISSIBLE",
+    `${task.taskId}: reference survives unchanged public static gate`);
+}
 check(nyxTransferReportIdentity("ADMISSION_GUIDANCE", "CURRENT", "f".repeat(40)).fileName
   === "nyx-quality-admission_guidance-current-ffffffffffff.json",
 "paired report identity is deterministic");
@@ -76,5 +104,17 @@ const noAdvantage = assessNyxTransferEpoch([report("CURRENT"), report("REASONING
 check(noAdvantage.decision === "NO_OBSERVED_REASONING_QUALITY_ADVANTAGE"
   && noAdvantage.reasoningLayerPromoted === false,
 "new suite cannot promote reasoning without observed accepted-task gain");
+const recoveryReports = (["CURRENT", "REASONING_ENABLED"] as const).map((arm) => ({ ...report(arm),
+  suiteIdentity: "GATE_RECOVERY", taskFixtureDigests: Object.fromEntries(NYX_GATE_RECOVERY_TASKS.map(
+    (task) => [task.taskId, "d".repeat(64)])), tasks: report(arm).tasks.map((result, index) => ({
+    ...result, taskId: NYX_GATE_RECOVERY_TASKS[index].taskId })) }));
+const recoveryComparison = assessNyxTransferEpoch(recoveryReports);
+check(recoveryComparison.reasoningLayerPromoted === false
+  && recoveryComparison.decision === "NO_OBSERVED_REASONING_QUALITY_ADVANTAGE",
+  "recovery comparison preserves no-promotion rule under equal failing outcomes");
+let mixedEpochRejected = false;
+try { assessNyxTransferEpoch([recoveryReports[0], report("REASONING_ENABLED")]); }
+catch (error) { mixedEpochRejected = String(error).includes("transfer_epoch_unmatched_conditions"); }
+check(mixedEpochRejected, "recovery and historical task populations cannot be mixed for comparison");
 console.log(`OMEGA_NYX_ADMISSION_GUIDANCE passed: ${passed}, failed: ${failures.length}`);
 if (failures.length) process.exitCode = 1;

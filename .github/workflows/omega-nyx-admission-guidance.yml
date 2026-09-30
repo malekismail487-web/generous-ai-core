@@ -1,12 +1,12 @@
-name: Omega NYX fresh admission-guidance transfer
-# The first scored run is triggered by the frozen-fixture introduction.
+name: Omega NYX reference-gate recovery comparison
+# Reissued modular sources: unchanged functional oracles and unchanged quality gates.
 
 on:
   workflow_dispatch:
   push:
     branches: [sol/omega-institutional-spine]
     paths:
-      - scripts/omega/nyx-admission-guidance-fixtures.ts
+      - scripts/omega/nyx-gate-recovery-fixtures.ts
       - .github/workflows/omega-nyx-admission-guidance.yml
 
 permissions:
@@ -24,7 +24,7 @@ jobs:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-      NYX_QUALITY_SUITE: ADMISSION_GUIDANCE
+      NYX_QUALITY_SUITE: GATE_RECOVERY
     steps:
       - uses: actions/checkout@v4
         with:
@@ -57,14 +57,14 @@ jobs:
         shell: bash
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-transfer-epoch-compare.ts \
-            "$RUNNER_TEMP/nyx-quality-admission_guidance-current-${GITHUB_SHA:0:12}.json" \
-            "$RUNNER_TEMP/nyx-quality-admission_guidance-reasoning_enabled-${GITHUB_SHA:0:12}.json"
+            "$RUNNER_TEMP/nyx-quality-gate_recovery-current-${GITHUB_SHA:0:12}.json" \
+            "$RUNNER_TEMP/nyx-quality-gate_recovery-reasoning_enabled-${GITHUB_SHA:0:12}.json"
       - name: Upload sanitized per-arm and paired reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: omega-nyx-admission-guidance-${{ github.sha }}
+          name: omega-nyx-gate-recovery-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/nyx-quality-admission_guidance-*.json
+            ${{ runner.temp }}/nyx-quality-gate_recovery-*.json
             ${{ runner.temp }}/nyx-transfer-matched-*.json
           if-no-files-found: warn
