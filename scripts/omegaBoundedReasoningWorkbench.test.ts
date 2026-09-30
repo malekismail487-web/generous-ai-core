@@ -3,7 +3,7 @@ import { BoundedReasoningSession, type ReasoningProblem, type ColoringProblem, t
   type ExperimentSelectionProblem, type HypothesisEliminationProblem } from "../src/lib/codelab/research/boundedReasoningWorkbench";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema,
-  materializeFrontierArtifact } from "./omega/nyx-frontier-workbench";
+  materializeFrontierArtifact, frontierArtifactReviewPrompt } from "./omega/nyx-frontier-workbench";
 import { graphPrompt, protocolPrompt, causalPlanPrompt, causalConclusionPrompt, executeCausalExperiments,
   verifyGraphSubmission, verifyProtocolSubmission, verifyCausalPlan, verifyCausalConclusion,
   FRONTIER_GRAPH_SCHEMA } from "./omega/nyx-frontier-reasoning-fixtures";
@@ -212,6 +212,24 @@ const deceptiveCandidate = materializeFrontierArtifact(deceptiveArtifact, FRONTI
   { ...artifactRequest, resultDigest: theoryDigest(deceptiveArtifact) });
 check(!verifyGraphSubmission(deceptiveCandidate).accepted,
   "validly bound but incorrect tool artifact is still rejected by the original independent oracle");
+const reviewSchema = frontierExchangeSchema(FRONTIER_GRAPH_SCHEMA, false, true);
+check(reviewSchema.properties.action.enum.join(",") === "SUBMIT_ANALYSIS_ARTIFACT,DECLINE_ANALYSIS_ARTIFACT"
+  && reviewSchema.properties.certificate.type === "null",
+  "constructed-artifact review exposes no certificate regeneration path");
+check(parseFrontierExchange({ action: "DECLINE_ANALYSIS_ARTIFACT", analysisRequest: null,
+  certificate: null }, false, true).action === "DECLINE_ANALYSIS_ARTIFACT",
+  "model may decline a constructed artifact instead of being forced to submit");
+check(throws(() => parseFrontierExchange({ action: "SUBMIT_CERTIFICATE", analysisRequest: null,
+  certificate: deceptiveCandidate }, false, true)), "review phase cannot smuggle replacement certificate fields");
+check(throws(() => parseFrontierExchange({ action: "DECLINE_ANALYSIS_ARTIFACT", analysisRequest: artifactRequest,
+  certificate: null }, false, true)), "decline cannot also request artifact submission");
+check(throws(() => parseFrontierExchange({ action: "DECLINE_ANALYSIS_ARTIFACT", analysisRequest: null,
+  certificate: null }, false, false)), "baseline cannot invoke a nonexistent artifact-review capability");
+const reviewPrompt = frontierArtifactReviewPrompt(graphPrompt(), graphArtifact, []);
+check(reviewPrompt.phase === "REVIEW_CONSTRUCTED_ARTIFACT"
+  && !Object.prototype.hasOwnProperty.call(reviewPrompt, "revisionInstruction")
+  && (reviewPrompt.artifactReference as Record<string, unknown>).resultDigest === theoryDigest(graphArtifact),
+  "review prompt binds the proposal without contradictory generation instructions");
 const coreSource = readFileSync("src/lib/codelab/research/boundedReasoningWorkbench.ts", "utf8");
 const adapterSource = readFileSync("scripts/omega/nyx-frontier-workbench.ts", "utf8");
 check(!coreSource.includes("frontier-reasoning-fixtures") && !adapterSource.includes("referenceGraph")

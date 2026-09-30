@@ -4,9 +4,9 @@ import { BoundedReasoningSession, NYX_REASONING_WORKBENCH, type ColoringProblem,
 import { immutableTheoryValue, theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 
 export const FRONTIER_WORKBENCH_EPOCH = Object.freeze({
-  version: "nyx-frontier-workbench-epoch/2", modelCallsPerStage: 5, candidateSubmissionsPerStage: 3,
-  previousEvaluatedCandidate: "55661d1fc92f5e3747879dde089ba6ed5113bae6",
-  correction: "DIGEST_BOUND_ARTIFACT_SUBMISSION_NOT_MODEL_RETRANSCRIPTION",
+  version: "nyx-frontier-workbench-epoch/3", modelCallsPerStage: 5, candidateSubmissionsPerStage: 3,
+  previousEvaluatedCandidate: "70727b5f096334f9ab24ba109d94b41fa9c31bb2",
+  correction: "SEPARATE_ARTIFACT_REVIEW_FROM_CERTIFICATE_GENERATION",
   toolRequestsPerStage: 1, maxWorkUnitsPerSession: 50_000, maxElapsedMsPerSession: 2_000,
   independentInstitutionalReplication: false, comparisonScope: "TOOL_ABLATION_NOT_MATCHED_TOOL_COMPUTE",
 });
@@ -143,6 +143,11 @@ export function createFrontierWorkbench(stageId: string, sourcePrompt: Readonly<
 
 export function frontierExchangeSchema(certificateSchema: Readonly<Record<string, unknown>>, toolsAvailable: boolean,
   artifactAvailable = false) {
+  if (artifactAvailable) return { type: "object", additionalProperties: false,
+    required: ["action", "analysisRequest", "certificate"], properties: {
+      action: { type: "string", enum: ["SUBMIT_ANALYSIS_ARTIFACT", "DECLINE_ANALYSIS_ARTIFACT"] },
+      analysisRequest: { anyOf: [FRONTIER_ARTIFACT_SCHEMA, { type: "null" }] },
+      certificate: { type: "null" } } };
   return { type: "object", additionalProperties: false, required: ["action", "analysisRequest", "certificate"],
     properties: { action: { type: "string", enum: ["SUBMIT_CERTIFICATE", ...(toolsAvailable ? ["REQUEST_ANALYSIS"] : []),
       ...(artifactAvailable ? ["SUBMIT_ANALYSIS_ARTIFACT"] : [])] },
@@ -152,20 +157,37 @@ export function frontierExchangeSchema(certificateSchema: Readonly<Record<string
 
 export function parseFrontierExchange(value: unknown, toolsAvailable: boolean, artifactAvailable = false):
   { readonly action: "SUBMIT_CERTIFICATE"; readonly certificate: unknown }
+  | { readonly action: "DECLINE_ANALYSIS_ARTIFACT" }
   | { readonly action: "REQUEST_ANALYSIS" | "SUBMIT_ANALYSIS_ARTIFACT"; readonly request: unknown } {
   if (!value || typeof value !== "object" || Array.isArray(value)
     || Object.keys(value).sort().join(",") !== "action,analysisRequest,certificate") throw new Error("frontier_exchange_malformed");
   const exchange = value as { action: string; analysisRequest: unknown; certificate: unknown };
+  if (artifactAvailable) {
+    if (exchange.action === "DECLINE_ANALYSIS_ARTIFACT" && exchange.analysisRequest === null
+      && exchange.certificate === null) return { action: "DECLINE_ANALYSIS_ARTIFACT" };
+    if (exchange.action === "SUBMIT_ANALYSIS_ARTIFACT" && exchange.certificate === null
+      && exchange.analysisRequest && typeof exchange.analysisRequest === "object") return {
+        action: "SUBMIT_ANALYSIS_ARTIFACT", request: exchange.analysisRequest };
+    throw new Error("frontier_artifact_review_requires_reference_or_decline");
+  }
   if (exchange.action === "SUBMIT_CERTIFICATE" && exchange.analysisRequest === null && exchange.certificate
     && typeof exchange.certificate === "object" && !Array.isArray(exchange.certificate)) return {
       action: "SUBMIT_CERTIFICATE", certificate: exchange.certificate };
   if (toolsAvailable && exchange.action === "REQUEST_ANALYSIS" && exchange.certificate === null
     && exchange.analysisRequest && typeof exchange.analysisRequest === "object") return {
       action: "REQUEST_ANALYSIS", request: exchange.analysisRequest };
-  if (artifactAvailable && exchange.action === "SUBMIT_ANALYSIS_ARTIFACT" && exchange.certificate === null
-    && exchange.analysisRequest && typeof exchange.analysisRequest === "object") return {
-      action: "SUBMIT_ANALYSIS_ARTIFACT", request: exchange.analysisRequest };
   throw new Error("frontier_exchange_not_authorized");
+}
+
+/** Review is an explicit model choice, not another request to regenerate a constructed solution. */
+export function frontierArtifactReviewPrompt(problem: Readonly<Record<string, unknown>>,
+  observation: Readonly<Record<string, unknown>>, feedback: readonly string[]) {
+  return immutableTheoryValue({ phase: "REVIEW_CONSTRUCTED_ARTIFACT", problem,
+    computationalObservation: observation, verifierFeedback: feedback,
+    artifactReference: { schemaVersion: 1, operation: "SUBMIT_ANALYSIS_ARTIFACT",
+      problemDigest: observation.problemDigest, resultDigest: theoryDigest(observation) },
+    outputContract: "Choose SUBMIT_ANALYSIS_ARTIFACT or DECLINE_ANALYSIS_ARTIFACT. Return only {action,analysisRequest,certificate:null}. To submit, analysisRequest is the exact artifactReference plus confidence in [0,1]. To decline, analysisRequest=null. Do not emit certificate fields or generate a replacement solution in this review phase. Submission proposes the immutable artifact; the unchanged independent verifier may still reject it. Confidence and a valid digest are not acceptance.",
+    grantsAuthority: false });
 }
 
 /** A reference selects a prebound proposal; it never replaces the independent acceptance check. */

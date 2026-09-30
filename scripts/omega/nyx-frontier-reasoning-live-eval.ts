@@ -7,7 +7,7 @@ import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment,
 import { ReasoningObligationGraph, type ObligationWorkPacket } from
   "../../src/lib/codelab/research/reasoningObligationGraph";
 import { createFrontierWorkbench, frontierExchangeSchema, parseFrontierExchange,
-  materializeFrontierArtifact, FRONTIER_WORKBENCH_EPOCH } from "./nyx-frontier-workbench";
+  materializeFrontierArtifact, frontierArtifactReviewPrompt, FRONTIER_WORKBENCH_EPOCH } from "./nyx-frontier-workbench";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import {
   FRONTIER_CAUSAL_CONCLUSION_SCHEMA,
@@ -177,7 +177,9 @@ async function runStage(input: {
     const toolsAvailable = workbench !== null && computationalObservation === null;
     const artifactAvailable = VARIANT === "WORKBENCH"
       && computationalObservation?.decision === "CANDIDATE_CONSTRUCTED_NOT_ACCEPTED";
-    const prompt = workbenchEpoch ? { ...reasoningPrompt, computationalObservation,
+    const prompt = artifactAvailable
+      ? frontierArtifactReviewPrompt(input.prompt([]), computationalObservation!, feedback)
+      : workbenchEpoch ? { ...reasoningPrompt, computationalObservation,
       availableTool: toolsAvailable ? workbench!.descriptor : null,
       availableArtifactSubmission: artifactAvailable ? { schemaVersion: 1, operation: "SUBMIT_ANALYSIS_ARTIFACT",
         problemDigest: computationalObservation!.problemDigest, resultDigest: theoryDigest(computationalObservation),
@@ -221,6 +223,10 @@ async function runStage(input: {
     if (workbenchEpoch) {
       try {
         const exchange = parseFrontierExchange(parsed, toolsAvailable, artifactAvailable);
+        if (exchange.action === "DECLINE_ANALYSIS_ARTIFACT") {
+          attempts.push(stageFailure(callAttempts, null, ["ARTIFACT_DECLINED_BY_MODEL"], completion.evidence));
+          break;
+        }
         if (exchange.action === "REQUEST_ANALYSIS") {
           computationalObservation = workbench!.analyze(exchange.request);
           computationalEvidence.push({ stageId: input.stageId, requestModelDigest: completion.evidence.requestDigest,
