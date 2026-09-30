@@ -8,12 +8,6 @@ on:
         required: false
         type: boolean
         default: false
-  # Commission exactly one bounded contract-repair diagnostic on the R&D branch.
-  push:
-    branches:
-      - sol/omega-institutional-spine
-    paths:
-      - src/lib/codelab/research/nyxNemotronTheoryCognition.ts
 
 permissions:
   contents: read
@@ -28,7 +22,7 @@ jobs:
     timeout-minutes: 50
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
-      OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: "1"
+      OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: ${{ inputs.diagnostic_only && '1' || '0' }}
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
     steps:
