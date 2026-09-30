@@ -246,6 +246,7 @@ try {
     taskResults.push({ taskId: task.taskId, executionOrder: index % 2 === 0 ? "PARTY_THEN_FLAT" : "FLAT_THEN_PARTY",
       expectedMechanismDigest: theoryDigest(task.expectedMechanismId),
       party: { assuranceDecision: assurance.decision, decision: partyResult.decision.state,
+        decisionReason: partyResult.decision.reason, cognitionEvidence: partyResult.cognitionEvidence,
         selectedMechanismDigest: partyResult.decision.selectedMechanismId ? theoryDigest(partyResult.decision.selectedMechanismId) : null,
         modelCalls: partyResult.resourceUsage.modelCalls, experiments: partyResult.resourceUsage.experiments,
         totalTokens: partyResult.resourceUsage.totalTokens, evidenceChainComplete: partyResult.evidenceChainComplete,
@@ -253,6 +254,7 @@ try {
         addressability: partyResult.addressability, authorityGranted: partyResult.authorityGranted,
         findings: assurance.findings },
       flat: { decision: flatResult.decision,
+        decisionReason: flatResult.reason, cognitionEvidence: flatResult.cognitionEvidence,
         selectedMechanismDigest: flatResult.selectedMechanismId ? theoryDigest(flatResult.selectedMechanismId) : null,
         correct: flatCorrect, modelCalls: flatResult.resourceUsage.modelCalls, totalTokens: flatResult.resourceUsage.totalTokens,
         authorityGranted: flatResult.authorityGranted }, sourceRepositoryUnchanged: sourceUnchanged });
