@@ -1,13 +1,8 @@
 name: Omega NYX reference-gate recovery comparison
-# Reissued modular sources: unchanged functional oracles and unchanged quality gates.
+# Subsequent live epochs require an explicit dispatch to avoid accidental API consumption.
 
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths:
-      - scripts/omega/nyx-gate-recovery-fixtures.ts
-      - .github/workflows/omega-nyx-admission-guidance.yml
 
 permissions:
   contents: read
