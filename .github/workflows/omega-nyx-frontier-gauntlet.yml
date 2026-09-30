@@ -2,10 +2,6 @@ name: Omega NYX frontier reasoning gauntlet
 
 # Live gauntlets remain opt-in while the experiment is frozen.
 on:
-  # One bounded commissioning run; remove this trigger immediately after dispatch.
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/nyx-workbench-transfer-live-eval.ts]
   workflow_dispatch:
     inputs:
       workbench_comparison:
@@ -98,7 +94,7 @@ jobs:
         if: inputs.transfer_comparison && !inputs.proof_comparison
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-workbench-transfer-live-eval.ts
       - name: Run frozen paired proof-evidence ablation
-        if: github.event_name == 'push' || inputs.proof_comparison
+        if: inputs.proof_comparison
         env:
           NYX_TRANSFER_PROOF_ABLATION: "1"
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-workbench-transfer-live-eval.ts
