@@ -531,6 +531,13 @@ check(adapted.evidence.evidenceClass === "E3", "test-double transport remains E3
 check(adapted.evidence.requestDigest?.length === 64 && adapted.evidence.responseDigest?.length === 64,
   "adapter records request and response digests without raw reasoning");
 check(adapted.grantsAuthority === false, "Nemotron cognition grants no Omega authority");
+const suppliedContract = modelPrompts.at(-1)?.outputContract as Record<string, unknown>;
+check(JSON.stringify(suppliedContract.allowedDecisions) === JSON.stringify(["PROPOSE_HYPOTHESIS", "NO_CONCLUSION"])
+  && JSON.stringify(suppliedContract.counterexampleTargetTheoryIds) === "[]",
+  "isolated investigator prompt explicitly forbids imaginary peer targets without restricting honest uncertainty");
+check(JSON.stringify(suppliedContract.nonHypothesisFields) === JSON.stringify({ mechanismId: null,
+  causalMechanism: null, forecasts: [], requestedExperimentIds: [], revisionOfTheoryId: null }),
+  "non-hypothesis field rules are advertised before inference rather than relaxed after malformed output");
 responseFinishReason = "length";
 const truncated = await adapter.think({ ...adapterRequest, requestId: "ADAPTER-TRUNCATED-JSON" });
 check(truncated.decision === "COGNITION_ERROR" && truncated.intent === null
@@ -584,6 +591,21 @@ responseContent = JSON.stringify({ ...validRaw, evidenceRefs: ["E-NOT-ADMITTED"]
 const invented = await adapter.think({ ...adapterRequest, requestId: "ADAPTER-REQUEST-3" });
 check(invented.decision === "COGNITION_ERROR", "invented evidence reference fails closed");
 check(invented.diagnostics.includes("evidence_reference_unknown"), "invented evidence receives a typed diagnostic");
+responseContent = JSON.stringify({ ...validRaw, counterexamples: [{ targetTheoryId: adapterRequest.theoryId,
+  experimentId: "EXP-A-FAILED", disconfirmingOutcome: "BLOCKED", rationale: "A self-target is not a supplied peer." }] });
+const selfTarget = await adapter.think({ ...adapterRequest, requestId: "ADAPTER-SELF-TARGET" });
+check(selfTarget.decision === "COGNITION_ERROR" && selfTarget.diagnostics.includes("counterexample_binding_invalid"),
+  "explicit prompt guidance does not make self-targeted counterexamples admissible");
+responseContent = JSON.stringify({ ...validRaw, decision: "NO_CONCLUSION" });
+const mixedDecision = await adapter.think({ ...adapterRequest, requestId: "ADAPTER-MIXED-DECISION" });
+check(mixedDecision.decision === "COGNITION_ERROR"
+  && mixedDecision.diagnostics.includes("non_hypothesis_contains_hypothesis_fields"),
+  "a NO_CONCLUSION response with hypothesis fields still fails the unchanged semantic parser");
+responseContent = JSON.stringify({ ...validRaw, decision: "NO_CONCLUSION", mechanismId: null,
+  causalMechanism: null, forecasts: [], requestedExperimentIds: [], revisionOfTheoryId: null });
+const uncertainty = await adapter.think({ ...adapterRequest, requestId: "ADAPTER-HONEST-UNCERTAINTY" });
+check(uncertainty.decision === "CONTRIBUTION" && uncertainty.intent?.decision === "NO_CONCLUSION",
+  "well-formed uncertainty remains a valid contribution and is never manufactured into a supported hypothesis");
 
 const evidenceBoundRuntime = network();
 const evidenceBoundParty = TheoryResearchParty.create({ partyId: "PARTY-EVIDENCE-BOUND",
