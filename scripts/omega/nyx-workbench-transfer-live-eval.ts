@@ -125,7 +125,14 @@ async function run(task: TransferTask, arm: Arm): Promise<TaskResult> {
           const checked = verifyTransferCertificate(task, proposal); offlineAccepted = checked.accepted;
           record(checked.accepted ? "UNWARRANTED_ABSTENTION" : "JUSTIFIED_DECLINE", ["MODEL_DECLINED_BOUND_ARTIFACT"],
             theoryDigest(proposal), checked.evidenceDigest, diagnostic.confidence, diagnostic);
-          // Diagnostic is self-report, not proof of cause; refusal is never forced into acceptance.
+          // One bounded reconsideration uses the SAME oracle available to both arms.
+          // This is feedback, never automatic submission; an explicit refusal remains legal.
+          feedback = checked.accepted ? ["Independent finite-domain oracle: the proposed structured report satisfies this task's contract.",
+            "Reporting uncertainty or contradictory observations is distinct from asserting a surviving hypothesis is true.",
+            "Reconsider once, or maintain your refusal with the specific unmet objective/evidence requirement."]
+            : [...checked.findings, "The independent oracle rejected the proposal. Do not submit unsupported claims."];
+          if (attempts.filter(a => a.decline !== null).length <= EPOCH.maxDeclineReconsiderationsPerTask
+            && at < EPOCH.maxCallsPerTask) continue;
           break;
         }
         const candidate = exchange.action === "SUBMIT_CERTIFICATE" ? exchange.certificate
@@ -176,6 +183,7 @@ function metrics(arm: Arm) {
     schemaFailures: attempts.filter(a => ["SYNTAX_REJECTION", "CERTIFICATE_SCHEMA_REJECTION", "PROTOCOL_OR_AUTHORIZATION_REJECTION"].includes(a.outcome)).length,
     functionalFailures: attempts.filter(a => a.outcome === "FUNCTIONAL_FAILURE").length,
     unwarrantedAbstentions: attempts.filter(a => a.outcome === "UNWARRANTED_ABSTENTION").length,
+    declineReconsiderationCalls: selected.reduce((n,r) => n + r.attempts.filter((a,i) => i > 0 && r.attempts[i-1].decline !== null).length,0),
     repairAttempts: selected.reduce((n,r) => n+r.repairAttempts,0),
     elapsedMs: selected.reduce((n,r) => n+r.elapsedMs,0), toolRequests: selected.reduce((n,r) => n+r.toolRequests,0),
     toolWorkUnits: selected.reduce((n,r) => n+r.toolWorkUnits,0), toolElapsedMs: selected.reduce((n,r) => n+r.toolElapsedMs,0),
@@ -207,7 +215,8 @@ const report = {schemaVersion: 1, chunkId: EPOCH.chunkId, candidate: CANDIDATE, 
     generalNetworkAuthority: false, sourceMutationAuthority: false, productionAuthority: false},
   supportCriterion: "Fresh accepted-task advantage without increasing reported model compute; repeat on a new frozen set before broader adoption.",
   falsificationCriterion: "No acceptance advantage or worse capability-per-compute; never weaken oracle or exclude failed tasks."};
-await writeFile(join(tmpdir(), `nyx-workbench-transfer-${CANDIDATE.slice(0,12)}.json`), `${JSON.stringify(report,null,2)}\n`, {encoding: "utf8", mode: 0o600});
+const reportRoot = process.env.RUNNER_TEMP?.trim() || tmpdir();
+await writeFile(join(reportRoot, `nyx-workbench-transfer-${CANDIDATE.slice(0,12)}.json`), `${JSON.stringify(report,null,2)}\n`, {encoding: "utf8", mode: 0o600});
 console.log(`NYX_WORKBENCH_TRANSFER_REPORT ${JSON.stringify(report)}`);
 // A completed comparison is not equivalent to every task passing or the hypothesis being supported.
 console.log(`NYX_WORKBENCH_TRANSFER verdict=${verdict} accepted=${arms[0].accepted}/${TASKS.length},${arms[1].accepted}/${TASKS.length}`);

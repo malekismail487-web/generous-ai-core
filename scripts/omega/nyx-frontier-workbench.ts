@@ -233,7 +233,8 @@ export function frontierArtifactReviewPrompt(problem: Readonly<Record<string, un
       problemDigest: observation.problemDigest, resultDigest: theoryDigest(observation) },
     outputContract: "Choose SUBMIT_ANALYSIS_ARTIFACT or DECLINE_ANALYSIS_ARTIFACT. Return only {action,analysisRequest,certificate:null}. To submit, analysisRequest is the exact artifactReference plus confidence in [0,1]. To decline, analysisRequest=null. Do not emit certificate fields or generate a replacement solution in this review phase. Submission proposes the immutable artifact; the unchanged independent verifier may still reject it. Confidence and a valid digest are not acceptance.",
     ...(diagnosticReview ? { outputContract: "Choose SUBMIT_ANALYSIS_ARTIFACT or DECLINE_ANALYSIS_ARTIFACT. Return only {action,analysisRequest,certificate:null}. To submit, use the exact artifactReference plus confidence in [0,1]. To decline, use those same digests with operation DECLINE_ANALYSIS_ARTIFACT, reasonCode from the supplied list, 1..4 short blockingFacts, 0..8 evidenceRefs, and confidence in [0,1]. Do not regenerate certificate fields. Report the specific obstruction, not a demand for certainty. Submission proposes a conditional finite-domain result for independent verification; it does not assert universal real-world truth or grant authority.",
-      declineReasonCodes: ARTIFACT_DECLINE_REASONS } : {}),
+      declineReasonCodes: ARTIFACT_DECLINE_REASONS,
+      epistemicContract: "A truthful structured report of INSUFFICIENT_EVIDENCE, multiple survivors, zero survivors, or conflicting admitted observations can itself be a correct answer. Submitting such a report does not establish a hypothesis as true, repair the conflict, or manufacture certainty. Decline when the proposed report violates the objective or evidence contract, not merely because its conclusion reports uncertainty." } : {}),
     grantsAuthority: false });
 }
 

@@ -1,7 +1,10 @@
 name: Omega NYX frontier reasoning gauntlet
 
-# Live gauntlets remain opt-in while the experiment is frozen.
+# One bounded correction run; restore dispatch-only after the candidate is admitted to CI.
 on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [scripts/omega/nyx-workbench-transfer-live-eval.ts]
   workflow_dispatch:
     inputs:
       workbench_comparison:
@@ -86,7 +89,7 @@ jobs:
           set -e
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-frontier-workbench-compare.ts
       - name: Run fresh paired finite reasoning transfer comparison
-        if: inputs.transfer_comparison
+        if: github.event_name == 'push' || inputs.transfer_comparison
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-workbench-transfer-live-eval.ts
       - name: Upload sanitized live reports
         if: always()

@@ -2318,7 +2318,9 @@
         "scripts/omega/nyx-frontier-workbench-compare.ts",
         "scripts/omega/nyx-quality-v4-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
-        "scripts/omega/nyx-transfer-epoch-compare.ts"
+        "scripts/omega/nyx-transfer-epoch-compare.ts",
+        "scripts/omega/nyx-workbench-transfer-live-eval.ts",
+        "scripts/omegaNyxWorkbenchTransfer.test.ts"
       ]
     },
     {

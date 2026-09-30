@@ -3,7 +3,10 @@ import type { ColoringProblem, PredictionTable, ReasoningProblem, ReachabilityPr
 import { immutableTheoryValue, theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 
 export const WORKBENCH_TRANSFER_EPOCH = Object.freeze({
-  version: "nyx-workbench-transfer/1", chunkId: "NYX-WORKBENCH-TRANSFER-001",
+  version: "nyx-workbench-transfer/2", chunkId: "NYX-WORKBENCH-TRANSFER-001",
+  previousEvaluatedCandidate: "6963109dcd81b5262df8fd78f92c053706ea9a83",
+  correction: "REPORTING_UNCERTAINTY_IS_NOT_ASSERTING_UNSUPPORTED_CERTAINTY",
+  maxDeclineReconsiderationsPerTask: 1,
   seed: 830017, maxCallsPerTask: 3, maxCallsPerArm: 24, maxOutputTokensPerCall: 2048,
   maxWallClockMs: 1_800_000, maxTaskMs: 240_000, maxToolRequestsPerTask: 1,
   maxToolWorkUnits: 50_000, maxToolElapsedMs: 2_000,

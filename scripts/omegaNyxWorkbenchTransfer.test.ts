@@ -87,6 +87,13 @@ check(parseFrontierExchange({action: "DECLINE_ANALYSIS_ARTIFACT", analysisReques
 check(throws(() => parseFrontierExchange({action: "SUBMIT_CERTIFICATE", analysisRequest: null, certificate: solutions[5]}, false, true, true)),
   "review phase cannot regenerate/override the bound artifact");
 check(JSON.stringify(frontierArtifactReviewPrompt({}, observation, [], true)).includes("conditional finite-domain"), "review does not demand universal certainty");
+check(JSON.stringify(frontierArtifactReviewPrompt({}, observation, [], true)).includes("truthful structured report of INSUFFICIENT_EVIDENCE"),
+  "reporting a conflict is distinct from asserting a hypothesis is true");
+const liveSource = readFileSync("scripts/omega/nyx-workbench-transfer-live-eval.ts", "utf8");
+check(!liveSource.includes("TRANSFER-HYPOTHESIS-CONFLICTED"), "reconsideration does not special-case the observed failed task");
+check(liveSource.includes("process.env.RUNNER_TEMP?.trim() || tmpdir()"), "sanitized report reaches the existing CI artifact directory");
+check(WORKBENCH_TRANSFER_EPOCH.maxDeclineReconsiderationsPerTask === 1 && WORKBENCH_TRANSFER_EPOCH.maxCallsPerTask === 3,
+  "reconsideration cannot enlarge the precommitted model-call budget");
 check(JSON.stringify(frontierExchangeSchema(transferCertificateSchema(), false, true, true)).includes("blockingFacts"), "diagnostic schema exposes bounded reasons");
 const fixturesSource = readFileSync("scripts/omega/nyx-workbench-transfer-fixtures.ts", "utf8");
 check(!/import\s*\{[^}]*BoundedReasoningSession/.test(fixturesSource), "evaluator never uses solver as its acceptance oracle");
