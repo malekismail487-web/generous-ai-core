@@ -8,13 +8,6 @@ on:
         required: false
         type: boolean
         default: false
-  # Commission one end-to-end configuration recovery run on the R&D branch.
-  push:
-    branches:
-      - sol/omega-institutional-spine
-    paths:
-      - scripts/omega/nyx-research-party-live-eval.ts
-
 permissions:
   contents: read
 
