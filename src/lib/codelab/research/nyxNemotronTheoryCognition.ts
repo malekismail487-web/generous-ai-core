@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { NvidiaNimProvider } from "../model/nvidiaNimProvider";
+import { validHypothesisAllocation } from "./hypothesisCoverage";
 import { immutableTheoryValue, theoryDigest, theoryKeys, theoryStrings, theoryText } from "./theoryContracts";
 import { validResearchId, validResearchLimits, validResearchObjective, type ResearchPartyLimits,
   type TheoryCognitionIntent, type TheoryCognitionRequest, type TheoryCognitionResult,
@@ -249,6 +250,8 @@ export class NyxNemotronTheoryCognition {
         predictionId: item.predictionId, experimentId: item.experimentId, expectedOutcome: item.expectedOutcome,
         observedOutcome: item.observedOutcome, observationId: item.observationId, evidenceId: item.evidenceId,
         evidenceClass: item.evidenceClass, disposition: item.disposition, grantsAuthority: false })),
+      ...(request.hypothesisAllocation ? { hypothesisAllocation: request.hypothesisAllocation,
+        allocationInstruction: "Investigate preferredMechanismIds first to avoid duplicated exploration. Derive each forecast from its mechanism and exact probe inputs; do not guess labels. Recheck arithmetic, order, units and boundary conditions. The allocation is not evidence, is not a verdict, and does not restrict valid alternatives. A forecast mismatch may be a bad derivation, not an impossible mechanism. Never force a conclusion to fill a slot; abstain when necessary." } : {}),
       task: request.instruction,
       roleInstruction,
       outputContract: {
@@ -350,6 +353,7 @@ export class NyxNemotronTheoryCognition {
     if (request.role === "FALSIFIER" && request.peerContributions.length < 1) issues.push("falsifier_targets_missing");
     if (request.role === "REVISER" && (request.privatePriorContributions.length < 1
       || request.experimentObservations.length < 1)) issues.push("revision_evidence_missing");
+    if (!validHypothesisAllocation(request)) issues.push("hypothesis_allocation_invalid");
     return [...new Set(issues)];
   }
 

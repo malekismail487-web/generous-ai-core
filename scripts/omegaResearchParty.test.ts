@@ -12,6 +12,7 @@ import { ResearchEvidenceGraph } from "../src/lib/codelab/research/researchEvide
 import { TheoryNetwork } from "../src/lib/codelab/research/theoryNetwork";
 import { immutableTheoryValue, theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { TheoryResearchParty, type TheoryCognitionEngine } from "../src/lib/codelab/research/theoryResearchParty";
+import { allocateHypothesisCoverage, validHypothesisAllocation } from "../src/lib/codelab/research/hypothesisCoverage";
 import { fixedTheoryPerspectiveRouter, routeFixedTheoryPerspectives, routeSparseTheoryPerspectives,
   validTheoryPerspectiveRoute }
   from "../src/lib/codelab/research/sparseTheoryRouter";
@@ -816,4 +817,61 @@ check(evidenceBoundResult.decision.state === "BLOCKED"
 check(evidenceBoundResult.resourceUsage.modelCalls === 0 && evidenceBoundResult.resourceUsage.experiments === 0,
   "an over-budget initial evidence set consumes no model or experiment resources");
 
+// Allocation is a bounded, reproducible scheduling hint, never a hidden answer.
+const cohortIds = [adapterRequest.theoryId, "adapter:theory:1", "adapter:theory:2"];
+const allocationInput = { objective: adapterRequest.objective, cohortTheoryIds: cohortIds,
+  contributions: [], observations: [], phaseOrdinal: 0, policy: "COVERAGE_AWARE" as const };
+const allocation = allocateHypothesisCoverage(allocationInput);
+check(allocation.length === 3 && new Set(allocation.flatMap(item => item.preferredMechanismIds)).size === 4,
+  "every catalogued alternative is allocated without materializing extra entities or model calls");
+check(allocation.every(item => item.grantsAuthority === false
+  && item.interpretation === "EXPLORATION_GUIDANCE_NOT_EVIDENCE"), "allocation has no evidence or authority status");
+check(theoryDigest(allocation) === theoryDigest(allocateHypothesisCoverage(allocationInput)),
+  "coverage allocation is deterministic and independent of model confidence");
+check(Object.isFrozen(allocation) && Object.isFrozen(allocation[0].preferredMechanismIds),
+  "allocation and nested exploration scope are immutable");
+const allocatedRequest = { ...adapterRequest, hypothesisAllocation: allocation[0] };
+check(validHypothesisAllocation(allocatedRequest), "request-bound allocation recomputes from independent initial context");
+for (const mutation of [
+  { theoryId: cohortIds[1] }, { contextDigest: "a".repeat(64) }, { objectiveDigest: "b".repeat(64) },
+  { preferredMechanismIds: ["INVENTED"] }, { grantsAuthority: true }, { policy: "MAGIC" },
+  { phaseOrdinal: 1 }, { observedExperimentIds: ["EXP-A-FAILED"] },
+  { cohortTheoryIds: [cohortIds[0], cohortIds[0]] }, { rankedMechanismIds: [...allocation[0].rankedMechanismIds].reverse() },
+]) {
+  const malformed = { ...allocatedRequest, hypothesisAllocation: { ...allocation[0], ...mutation } } as TheoryCognitionRequest;
+  const before = modelPrompts.length;
+  const rejected = await adapter.think(malformed);
+  check(rejected.decision === "REJECTED" && rejected.diagnostics.includes("hypothesis_allocation_invalid")
+    && modelPrompts.length === before, "tampered allocation is rejected before provider dispatch");
+}
+responseContent = JSON.stringify(validRaw); responseFinishReason = "stop";
+const guided = await adapter.think(allocatedRequest);
+check(guided.decision === "CONTRIBUTION" && modelPrompts.at(-1)?.hypothesisAllocation !== undefined,
+  "Nemotron receives structured allocation while retaining the original intent/parser contract");
+check(guided.intent?.mechanismId === validRaw.mechanismId,
+  "valid alternatives remain admissible; exploration guidance cannot override acceptance or force an answer");
+for (const invalid of [
+  { cohortTheoryIds: [cohortIds[0]] }, { phaseOrdinal: -1 }, { phaseOrdinal: 65 },
+  { phaseOrdinal: Number.NaN }, { policy: "MAGIC" }, { contributions: [directContribution] },
+]) {
+  await rejects(() => allocateHypothesisCoverage({ ...allocationInput, ...invalid } as typeof allocationInput),
+    /hypothesis_allocation_/, "malformed, unbounded or contaminated initial allocations fail closed");
+}
+const duplicated = [0, 1, 2].map((index) => ({ ...directContribution,
+  objectiveDigest: researchObjectiveDigest(adapterRequest.objective),
+  theoryId: cohortIds[index], contributionId: `DUPLICATE-${index}` }));
+const revisedAllocation = allocateHypothesisCoverage({ ...allocationInput, contributions: duplicated,
+  observations: [makeObservation("EXP-A-FAILED")], phaseOrdinal: 1 });
+check(revisedAllocation.every(item => item.rankedMechanismIds.at(-1) === directIntent.mechanismId),
+  "three duplicate conjectures shift exploration toward unrepresented alternatives");
+check(revisedAllocation.every(item => item.rankedMechanismIds.includes(directIntent.mechanismId)),
+  "a forecast mismatch never blacklists its mechanism or deletes evidence");
+check(allocateHypothesisCoverage({ ...allocationInput, contributions: duplicated.map(item => ({ ...item,
+  intent: { ...item.intent, modelEstimate: 0 } })), observations: [makeObservation("EXP-A-FAILED")],
+  phaseOrdinal: 1 }).every((item, index) => theoryDigest(item) === theoryDigest(revisedAllocation[index])),
+"uncalibrated confidence cannot alter coverage scheduling or its context binding");
+const overSubscribed = allocateHypothesisCoverage({ ...allocationInput, cohortTheoryIds: Array.from({ length: 6 },
+  (_, index) => `oversubscribed:${index}`) });
+check(overSubscribed.every(item => item.preferredMechanismIds.length > 0),
+  "more investigators than hypotheses yields explicit bounded reuse, not a false diversity claim");
 console.log(`OMEGA_RESEARCH_PARTY_TEST_SUMMARY passed: ${checks}, failed: 0`);

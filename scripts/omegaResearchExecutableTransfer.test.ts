@@ -1,10 +1,12 @@
 import { Script, createContext } from "node:vm";
-import { spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { checkpointDigest, readFrontierCheckpoint, verifyFrontierCheckpoint } from "./omega/test-harness.mjs";
 import { validResearchObjective } from "../src/lib/codelab/research/researchPartyContracts";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { NYX_RESEARCH_TRANSFER_TASKS, NYX_RESEARCH_TRANSFER_CORPUS_DIGEST } from "./omega/nyx-research-transfer-fixtures";
+import { NYX_HYPOTHESIS_COVERAGE_TASKS, NYX_HYPOTHESIS_COVERAGE_CORPUS_DIGEST }
+  from "./omega/nyx-hypothesis-coverage-fixtures";
 
 let checks = 0;
 function check(value: unknown, message: string): asserts value {
@@ -24,6 +26,9 @@ const candidate = "f".repeat(40);
 const corpus = NYX_RESEARCH_TRANSFER_TASKS;
 check(corpus.length === 3 && new Set(corpus.map(task => task.taskId)).size === 3, "three distinct frozen transfer tasks");
 check(NYX_RESEARCH_TRANSFER_CORPUS_DIGEST === theoryDigest(corpus.map(task => task.oracleDigest)), "frozen corpus digest reconstructs");
+check(NYX_HYPOTHESIS_COVERAGE_TASKS.length === 3 && NYX_HYPOTHESIS_COVERAGE_CORPUS_DIGEST
+  === theoryDigest(NYX_HYPOTHESIS_COVERAGE_TASKS.map(task => task.oracleDigest)),
+"new cross-domain development corpus has a reconstructable identity before live execution");
 for (const override of [
   { OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: "UNKNOWN-TASK" },
   { OMEGA_NYX_RESEARCH_CORPUS: "LEGACY" },
@@ -43,7 +48,7 @@ for (const override of [
   check(result.stdout === "" && !result.stderr.includes("synthetic-test-only"),
     "rejected selection neither emits a model result nor discloses credential injection");
 }
-for (const task of corpus) {
+for (const task of [...corpus, ...NYX_HYPOTHESIS_COVERAGE_TASKS]) {
   const objective = task.objective(candidate, 1_000);
   check(validResearchObjective(objective, 1_000), `${task.taskId}: strict objective contract`);
   check(task.probeSource !== undefined && !task.probeSource.includes("const outcomes"), `${task.taskId}: actual calculation, not answer lookup`);
@@ -60,13 +65,26 @@ for (const task of corpus) {
     catch (error) { check(String(error).includes("exit_3"), `${task.taskId}: malformed probe rejected`); }
   }
   try { task.outcome("UNKNOWN-EXPERIMENT"); throw new Error("unknown_oracle_accepted"); }
-  catch (error) { check(String(error).includes("transfer_unknown_experiment"), `${task.taskId}: oracle refuses unknown identity`); }
+  catch (error) { check(/(?:transfer|coverage)_unknown_experiment/.test(String(error)), `${task.taskId}: oracle refuses unknown identity`); }
   const otherTime = task.objective(candidate, 500_000);
   check(otherTime.expiryEpochMs - 500_000 === objective.expiryEpochMs - 1_000,
     `${task.taskId}: independent arms have identical validity durations`);
   const clean = (value: typeof objective) => ({ ...value, expiryEpochMs: 0,
     admittedEvidence: value.admittedEvidence.map(item => ({ ...item, observedAtEpochMs: 0 })) });
   check(theoryDigest(clean(objective)) === theoryDigest(clean(otherTime)), `${task.taskId}: timestamps do not change problem semantics`);
+}
+for (const [task, original, replacement] of [
+  [NYX_HYPOTHESIS_COVERAGE_TASKS[0], "queue = []", "queue.shift()"],
+  [NYX_HYPOTHESIS_COVERAGE_TASKS[1], "f(g(inputs[i]))", "g(f(inputs[i]))"],
+  [NYX_HYPOTHESIS_COVERAGE_TASKS[2], "x + ((v+velocity)/2)*dt", "x + v*dt"],
+] as const) {
+  // Queue's first 'queue = []' is its declaration; mutate the overflow branch only.
+  const source = task === NYX_HYPOTHESIS_COVERAGE_TASKS[0]
+    ? task.probeSource!.replace("if (queue.length === 2) queue = []", "if (queue.length === 2) queue.shift()")
+    : task.probeSource!.replace(original, replacement);
+  check(source !== task.probeSource && task.objective(candidate, 1_000).experimentCatalog.some(experiment =>
+    run(source, experiment.toolId) !== task.outcome(experiment.experimentId)),
+  "independent new-family oracle detects a syntactically valid wrong runtime implementation");
 }
 
 // Oracle destruction tests: different valid implementations must not inherit the
@@ -98,9 +116,15 @@ const gaps = JSON.parse(readFileSync(`${archiveRoot}capability-gaps.json`, "utf8
 const reports = Object.fromEntries(checkpoint.reports.map((item: { file: string }) =>
   [item.file, JSON.parse(readFileSync(`${archiveRoot}${item.file}`, "utf8"))]));
 const verifyArchive = (state = checkpoint, registry = gaps, reportMap = reports,
-  source = (path: string) => readFileSync(path, "utf8")) => verifyFrontierCheckpoint(
+  source = (path: string) => execFileSync("git", ["show", `${checkpoint.runtimeBaselineCommit}:${path}`],
+    { encoding: "utf8", timeout: 10_000 })) => verifyFrontierCheckpoint(
   state, registry, (file: string) => reportMap[file], source);
-check(readFrontierCheckpoint().decision === "ACCEPT", "complete sanitized archive reconstructs from source and execution bindings");
+check(readFrontierCheckpoint(undefined, "HISTORICAL_BASELINE").decision === "ACCEPT",
+  "complete sanitized archive reconstructs against its immutable historical source, not a future candidate");
+const currentCheckpoint = readFrontierCheckpoint();
+check(currentCheckpoint.decision === "REJECT" && currentCheckpoint.findings.some((item: string) =>
+  item.startsWith("RUNTIME_SOURCE_CHANGED:")) && currentCheckpoint.certifiesCurrentRuntime === false,
+"changed runtime cannot inherit historical capability evidence; current candidate requires fresh revalidation");
 check(verifyArchive().scope === "ARCHIVE_RECONSTRUCTION_NOT_CAPABILITY_CERTIFICATION"
   && verifyArchive().grantsAuthority === false, "archive integrity never grants authority or frontier certification");
 check(checkpointDigest({ b: 2, a: [1, 3] }) === checkpointDigest({ a: [1, 3], b: 2 })

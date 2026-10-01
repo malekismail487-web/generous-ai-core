@@ -8,7 +8,8 @@ import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src
 import { NyxNemotronTheoryCognition } from "../../src/lib/codelab/research/nyxNemotronTheoryCognition";
 import { OmegaResearchExperimentRunner } from "../../src/lib/codelab/research/omegaResearchExperimentRunner";
 import { assureResearchParty } from "../../src/lib/codelab/research/researchPartyAssurance";
-import type { ResearchPartyLimits, ResearchPartyObjective } from "../../src/lib/codelab/research/researchPartyContracts";
+import type { HypothesisAllocationPolicy, ResearchPartyLimits, ResearchPartyObjective }
+  from "../../src/lib/codelab/research/researchPartyContracts";
 import { TheoryNetwork } from "../../src/lib/codelab/research/theoryNetwork";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { TheoryResearchParty } from "../../src/lib/codelab/research/theoryResearchParty";
@@ -21,6 +22,7 @@ import { R3BControlledEngineeringExecutor, type R3BEngineeringToolDefinition,
 import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readOnlyExecutor";
 import { NYX_RESEARCH_PARTY_LIVE_TASKS, type NyxResearchPartyLiveTask } from "./nyx-research-party-fixtures";
 import { NYX_RESEARCH_TRANSFER_TASKS } from "./nyx-research-transfer-fixtures";
+import { NYX_HYPOTHESIS_COVERAGE_TASKS } from "./nyx-hypothesis-coverage-fixtures";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1") {
   console.error("NYX_RESEARCH_PARTY_LIVE result=BLOCKED reason=explicit_nvidia_network_authorization_missing");
@@ -34,11 +36,16 @@ if (!process.env.NVIDIA_API_KEY?.trim()) {
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const diagnosticOnly = process.env.OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY === "1";
 const policyComparison = process.env.OMEGA_NYX_RESEARCH_POLICY_COMPARISON === "1";
+const allocationComparison = process.env.OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON === "1";
 const maxParallelModelExecutions = Number(process.env.OMEGA_NYX_RESEARCH_MODEL_CONCURRENCY || "3");
 if (![1, 2, 3].includes(maxParallelModelExecutions)) throw new Error("research_model_concurrency_invalid");
 const corpus = process.env.OMEGA_NYX_RESEARCH_CORPUS || "LEGACY";
-if (!["LEGACY", "EXECUTABLE_TRANSFER_V1"].includes(corpus)
+if (!["LEGACY", "EXECUTABLE_TRANSFER_V1", "HYPOTHESIS_COVERAGE_DEVELOPMENT_V1"].includes(corpus)
   || (corpus !== "LEGACY" && (!policyComparison || diagnosticOnly))) throw new Error("research_corpus_selection_invalid");
+if (allocationComparison !== (corpus === "HYPOTHESIS_COVERAGE_DEVELOPMENT_V1")
+  || (allocationComparison && (!policyComparison || diagnosticOnly))) {
+  throw new Error("research_allocation_comparison_selection_invalid");
+}
 const focusedTaskId = process.env.OMEGA_NYX_RESEARCH_COMPARE_TASK_ID?.trim() || null;
 if (focusedTaskId && (!policyComparison || diagnosticOnly || corpus !== "EXECUTABLE_TRANSFER_V1"
   || !NYX_RESEARCH_TRANSFER_TASKS.some(task => task.taskId === focusedTaskId))) {
@@ -217,7 +224,8 @@ async function createOmegaExperimentRunner(task: NyxResearchPartyLiveTask, objec
 }
 
 async function createParty(task: NyxResearchPartyLiveTask, objective: ResearchPartyObjective,
-  identity: string, experimentPolicy?: "REVISE_AFTER_OBSERVATION" | "EXHAUST_PRECOMMITTED_FORECASTS") {
+  identity: string, experimentPolicy?: "REVISE_AFTER_OBSERVATION" | "EXHAUST_PRECOMMITTED_FORECASTS",
+  hypothesisAllocationPolicy?: HypothesisAllocationPolicy) {
   const coordinator = {};
   const network = TheoryNetwork.create({ namespace: `nyx-live-party-${identity}`, addressCapacity: "1000000000000",
     maxAssignedPairs: 100, maxConcurrentActivations: 8, maxTotalActivations: 100,
@@ -227,13 +235,14 @@ async function createParty(task: NyxResearchPartyLiveTask, objective: ResearchPa
   const omega = await createOmegaExperimentRunner(task, objective, identity);
   const party = TheoryResearchParty.create({ partyId: `${task.taskId}-PARTY-${identity}`, network,
     coordinator, cognition, experiments: omega.runner, limits, investigatorCount: 3,
-    now: () => Date.now(), experimentPolicy, maxParallelModelExecutions });
+    now: () => Date.now(), experimentPolicy, maxParallelModelExecutions, hypothesisAllocationPolicy });
   return { party, omega };
 }
 
 if (policyComparison) {
   // One task is the default live commissioning bound; three requires explicit selection.
-  const corpusTasks = corpus === "LEGACY" ? NYX_RESEARCH_PARTY_LIVE_TASKS : NYX_RESEARCH_TRANSFER_TASKS;
+  const corpusTasks = corpus === "LEGACY" ? NYX_RESEARCH_PARTY_LIVE_TASKS
+    : allocationComparison ? NYX_HYPOTHESIS_COVERAGE_TASKS : NYX_RESEARCH_TRANSFER_TASKS;
   const tasks = focusedTaskId ? corpusTasks.filter(task => task.taskId === focusedTaskId)
     : corpusTasks.slice(0, process.env.OMEGA_NYX_RESEARCH_COMPARE_TASKS === "3" ? 3 : 1);
   const records: Record<string, unknown>[] = [];
@@ -241,14 +250,20 @@ if (policyComparison) {
   let acceptanceViolations = 0;
   try {
     for (const [index, task] of tasks.entries()) {
-      const orderedArms = index % 2 === 0 ? ["REVISE_AFTER_OBSERVATION", "EXHAUST_PRECOMMITTED_FORECASTS"] as const
-        : ["EXHAUST_PRECOMMITTED_FORECASTS", "REVISE_AFTER_OBSERVATION"] as const;
+      const orderedArms = allocationComparison
+        ? (index % 2 === 0 ? ["INDEPENDENT", "ROTATING_PARTITION", "COVERAGE_AWARE"] as const
+          : ["COVERAGE_AWARE", "ROTATING_PARTITION", "INDEPENDENT"] as const)
+        : (index % 2 === 0 ? ["REVISE_AFTER_OBSERVATION", "EXHAUST_PRECOMMITTED_FORECASTS"] as const
+          : ["EXHAUST_PRECOMMITTED_FORECASTS", "REVISE_AFTER_OBSERVATION"] as const);
       const arms = focusedPolicy ? orderedArms.filter(policy => policy === focusedPolicy) : orderedArms;
       for (const [position, policy] of arms.entries()) {
         // Each arm receives a fresh, equal lifetime; earlier provider waits must
         // not consume the second arm's authority or objective validity window.
         const objective = task.objective(CANDIDATE, Date.now());
-        const { party, omega } = await createParty(task, objective, `${index}-${position}`, policy);
+        const { party, omega } = await createParty(task, objective, `${index}-${position}`,
+          allocationComparison ? "EXHAUST_PRECOMMITTED_FORECASTS"
+            : policy as "REVISE_AFTER_OBSERVATION" | "EXHAUST_PRECOMMITTED_FORECASTS",
+          policy === "ROTATING_PARTITION" || policy === "COVERAGE_AWARE" ? policy : undefined);
         const result = await party.investigate(objective);
         const assurance = assureResearchParty({ objective, limits, result,
           groundTruth: { taskId: task.taskId, expectedMechanismId: task.expectedMechanismId,
@@ -272,6 +287,13 @@ if (policyComparison) {
             timedOutAttempts: result.cognitionEvidence.reduce((sum, item) => sum + (item.delivery?.timedOutAttempts ?? 0), 0),
             capacityWaitMs: result.cognitionEvidence.reduce((sum, item) => sum + (item.delivery?.capacityWaitMs ?? 0), 0) },
           cognitionEvidence: result.cognitionEvidence, evidenceChainComplete: result.evidenceChainComplete,
+          ...(allocationComparison ? { hypothesisAllocations: result.hypothesisAllocations,
+            catalogMechanisms: objective.mechanismCatalog.length,
+            initialDistinctMechanisms: new Set(result.contributions.filter(item => item.role === "INVESTIGATOR")
+              .map(item => item.intent.mechanismId).filter(Boolean)).size,
+            totalDistinctMechanisms: new Set(result.contributions.map(item => item.intent.mechanismId).filter(Boolean)).size,
+            predictedExperiments: new Set(result.contributions.flatMap(item => item.intent.forecasts
+              .map(forecast => forecast.experimentId))).size } : {}),
           contributionsByRole: Object.fromEntries(["INVESTIGATOR", "FALSIFIER", "REVISER", "META_REVIEWER"]
             .map(role => [role, result.contributions.filter(item => item.role === role).length])),
           sourceRepositoryUnchanged: sourceUnchanged, authorityGranted: result.authorityGranted });
@@ -283,18 +305,41 @@ if (policyComparison) {
     }
     const executionBlocked = records.some(record =>
       (record.decision as { reason: string }).reason === "research_party_experiment_infrastructure_failure");
-    const candidateFailed = records.some(record => record.policy === "EXHAUST_PRECOMMITTED_FORECASTS"
+    const candidateFailed = records.some(record => record.policy === (allocationComparison
+      ? "COVERAGE_AWARE" : "EXHAUST_PRECOMMITTED_FORECASTS")
       && (record.assurance as { decision: string }).decision !== "ACCEPT");
-    const report = { schemaVersion: 1, chunkId: "NYX-EVIDENCE-FIRST-LIVE-001", candidateCommit: CANDIDATE,
+    const realizedCompute = tasks.map(task => {
+      const arms = records.filter(record => record.taskId === task.taskId);
+      const usages = arms.map(record => record.resourceUsage as { modelCalls: number; experiments: number;
+        totalTokens: number | null; wallClockMs: number });
+      const known = usages.every(usage => usage.totalTokens !== null);
+      const tokens = usages.map(usage => usage.totalTokens ?? 0);
+      return { taskId: task.taskId, complete: arms.length === (allocationComparison ? 3 : 2),
+        modelCallsMatched: new Set(usages.map(usage => usage.modelCalls)).size === 1,
+        experimentsMatched: new Set(usages.map(usage => usage.experiments)).size === 1,
+        tokenUsageKnown: known, tokenSpreadFraction: known && tokens.length > 0 && Math.max(...tokens) > 0
+          ? (Math.max(...tokens) - Math.min(...tokens)) / Math.max(...tokens) : null,
+        wallClockSpreadMs: usages.length ? Math.max(...usages.map(usage => usage.wallClockMs))
+          - Math.min(...usages.map(usage => usage.wallClockMs)) : null };
+    });
+    const report = { schemaVersion: 1, chunkId: allocationComparison ? "NYX-HYPOTHESIS-COVERAGE-LIVE-001"
+      : "NYX-EVIDENCE-FIRST-LIVE-001", candidateCommit: CANDIDATE,
       model: MODEL, corpus, corpusDigest: theoryDigest(tasks.map(task => task.oracleDigest)), matchedLimits: limits,
-      comparisonScope: focusedPolicy ? "SINGLE_ARM_CONTINUATION_NOT_PAIRED"
+      comparisonScope: allocationComparison ? "THREE_ARM_DEVELOPMENT_NOT_HELDOUT_GENERALIZATION"
+        : focusedPolicy ? "SINGLE_ARM_CONTINUATION_NOT_PAIRED"
         : focusedTaskId ? "FOCUSED_REGRESSION_ONLY" : "FROZEN_CORPUS_COMPARISON",
       selectedTaskIds: tasks.map(task => task.taskId),
-      selectedPolicy: focusedPolicy, requestedArms: tasks.length * (focusedPolicy ? 1 : 2),
+      selectedPolicy: focusedPolicy, requestedArms: tasks.length * (allocationComparison ? 3 : focusedPolicy ? 1 : 2),
       scheduling: { maxParallelModelExecutions, peerViewsFrozenBeforePhase: true, grantsAuthority: false },
       requestedTasks: tasks.length, completedArms: records.length, providerBlocked, executionBlocked, acceptanceViolations,
       evidence: { cognition: "E4", experimentsAndOracle: "E3", independentInstitutionalReplication: false },
-      realizedComputeMatched: false, broadPromotion: false,
+      realizedComputeMatched: realizedCompute.every(item => item.complete && item.modelCallsMatched
+        && item.experimentsMatched && item.tokenUsageKnown && item.tokenSpreadFraction === 0),
+      realizedCompute, broadPromotion: false,
+      computeMatchingDefinition: "EQUAL_REPORTED_MODEL_TOKENS_CALL_RESERVATIONS_EXPERIMENT_COUNTS_NOT_GPU_TIME_OR_LATENCY",
+      ...(allocationComparison ? { evaluationTier: "DEVELOPMENT", freshHeldoutClaim: false,
+        simplerSameBudgetControl: "ROTATING_PARTITION", oracleUnchanged: true,
+        allocationIsEvidence: false, defaultPolicyChanged: false } : {}),
       verdict: providerBlocked ? "INCONCLUSIVE_PROVIDER_FAILURE" : executionBlocked ? "INCONCLUSIVE_EXECUTION_FAILURE"
         : candidateFailed ? "EMPIRICALLY_NOT_YET_VERIFIED" : "BOUNDED_LIVE_COMPARISON_ONLY",
       records };

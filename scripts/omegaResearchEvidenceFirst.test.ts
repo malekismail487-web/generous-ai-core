@@ -9,6 +9,7 @@ import { TheoryNetwork } from "../src/lib/codelab/research/theoryNetwork";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { TheoryResearchParty, type TheoryCognitionEngine,
   type TheoryResearchPartyConfig } from "../src/lib/codelab/research/theoryResearchParty";
+import { validHypothesisAllocation } from "../src/lib/codelab/research/hypothesisCoverage";
 
 let checks = 0;
 function check(condition: unknown, label: string): asserts condition {
@@ -23,7 +24,7 @@ const LIMITS: ResearchPartyLimits = Object.freeze({ maxEntities: 5, maxModelCall
   maxPromptBytesPerCall: 64_000, maxOutputTokensPerCall: 512,
   maxTotalOutputTokens: 5_632, maxCostUnits: 3 });
 type Policy = NonNullable<TheoryResearchPartyConfig["experimentPolicy"]>;
-type Mode = "HEALTHY" | "REVISER_PROVIDER_FAILURE" | "INCOMPLETE_FORECASTS";
+type Mode = "HEALTHY" | "REVISER_PROVIDER_FAILURE" | "INCOMPLETE_FORECASTS" | "DUPLICATE_SELECTION";
 type Table = readonly (readonly string[])[];
 
 // New finite tables, not the scheduler/cache/retry live fixtures. The expected
@@ -41,7 +42,7 @@ function objective(table: Table, caseId: string): ResearchPartyObjective {
       candidateBinding: CANDIDATE, grantsAuthority: false }],
     experimentCatalog: table[0].map((_, index) => ({ experimentId: `EXP-${index}`,
       toolId: `PROBE-${index}`, question: `Measure the exact outcome of probe ${index}.`,
-      possibleOutcomes: ["ZERO", "ONE"], costUnits: 1, authority: "RUN_TEST_IN_SANDBOX",
+      possibleOutcomes: [...new Set(["ZERO", "ONE", ...table.flat()])], costUnits: 1, authority: "RUN_TEST_IN_SANDBOX",
       scope: ["probe.ts"], mutatesCandidate: false })),
     successCriteria: ["An external oracle accepts a uniquely supported mechanism, not model votes."],
     expiryEpochMs: 100_000 });
@@ -88,8 +89,12 @@ class TableCognition implements TheoryCognitionEngine {
   profile() { return Object.freeze({ model: "scheduling-test-double" }); }
   async think(request: TheoryCognitionRequest): Promise<TheoryCognitionResult> {
     this.calls.push(immutableResearchValue(request));
+    if (!validHypothesisAllocation(request)) throw new Error("allocation_does_not_match_phase_frozen_context");
     if (request.role === "INVESTIGATOR") {
-      return reply(request, hypothesis(request, this.table, this.#investigator++ % 3,
+      const ordinal = this.#investigator++;
+      const row = this.mode === "DUPLICATE_SELECTION"
+        ? Number(request.hypothesisAllocation?.preferredMechanismIds[0]?.split("-")[1] ?? 0) : ordinal % 3;
+      return reply(request, hypothesis(request, this.table, row,
         this.mode === "INCOMPLETE_FORECASTS"));
     }
     if (request.role === "REVISER") {
@@ -131,7 +136,8 @@ function observation(target: ResearchPartyObjective, index: number, outcome: str
 
 async function run(table: Table, actual: readonly string[], caseId: string, policy: Policy,
   mode: Mode = "HEALTHY", overrides: Partial<ResearchPartyLimits> = {},
-  corrupt?: (value: ResearchExperimentObservation) => ResearchExperimentObservation) {
+  corrupt?: (value: ResearchExperimentObservation) => ResearchExperimentObservation,
+  hypothesisAllocationPolicy?: TheoryResearchPartyConfig["hypothesisAllocationPolicy"]) {
   const coordinator = {};
   const network = TheoryNetwork.create({ namespace: "evidence-first-test", addressCapacity: "1000000000000",
     maxAssignedPairs: 20, maxConcurrentActivations: 5, maxTotalActivations: 20, maxEvents: 1_000,
@@ -141,7 +147,7 @@ async function run(table: Table, actual: readonly string[], caseId: string, poli
   const limits = { ...LIMITS, ...overrides };
   const cognition = new TableCognition(table, mode);
   const config: TheoryResearchPartyConfig = { partyId: `PARTY-${caseId}`, network, coordinator,
-    cognition, limits, investigatorCount: 3, now: () => NOW, experimentPolicy: policy,
+    cognition, limits, investigatorCount: 3, now: () => NOW, experimentPolicy: policy, hypothesisAllocationPolicy,
     experiments: { run: async (experiment) => {
       const index = Number(experiment.experimentId.split("-")[1]);
       const value = observation(target, index, actual[index]);
@@ -283,6 +289,59 @@ check(graph.decision().state === "INSUFFICIENT_EVIDENCE" && graph.selectNextExpe
 
 const oracleSha256 = createHash("sha256").update(readFileSync(
   new URL("../src/lib/codelab/research/researchPartyAssurance.ts", import.meta.url))).digest("hex");
+// Explicit fault injection, not live model capability. A shared simulated model
+// collapses its independent selection to one row unless given allocation guidance.
+// The simpler rotating partition must receive exactly the same opportunity as C.
+const allocationAggregate = { pairedCases: 0, independentAccepted: 0, rotatingAccepted: 0,
+  coverageAccepted: 0, realizedCallsMatched: true, realizedTokensMatched: true,
+  realizedExperimentsMatched: true, falseAcceptances: 0 };
+const permutations = [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+for (const [permutationIndex, permutation] of permutations.entries()) for (let truth = 0; truth < 3; truth++) {
+  const values = permutation.map(index => [`VALUE-${index}`]);
+  const id = `ALLOCATION-FAULT-${permutationIndex}-${truth}`;
+  const armResults = [];
+  for (const allocationPolicy of [undefined, "ROTATING_PARTITION", "COVERAGE_AWARE"] as const) {
+    const arm = await run(values, values[truth], id, EVIDENCE_FIRST, "DUPLICATE_SELECTION",
+      { maxExperiments: 1, maxCostUnits: 1 }, undefined, allocationPolicy);
+    armResults.push(arm);
+    check(arm.cognition.calls.slice(0, 3).every(request => request.peerContributions.length === 0
+      && request.experimentObservations.length === 0), "allocation does not leak peers or hidden experimental outcomes");
+    check(arm.result.hypothesisAllocations?.every(item => item.grantsAuthority === false),
+      "all executed allocation identities remain authority-neutral");
+  }
+  const [baseline, rotating, coverage] = armResults;
+  check(rotating.assurance.decision === "ACCEPT" && coverage.assurance.decision === "ACCEPT",
+    "both generic allocation mechanisms repair injected selection collapse under the unchanged oracle");
+  check(coverage.result.resourceUsage.modelCalls === baseline.result.resourceUsage.modelCalls
+    && rotating.result.resourceUsage.modelCalls === baseline.result.resourceUsage.modelCalls
+    && coverage.result.resourceUsage.totalTokens === baseline.result.resourceUsage.totalTokens
+    && rotating.result.resourceUsage.totalTokens === baseline.result.resourceUsage.totalTokens
+    && armResults.every(arm => arm.result.resourceUsage.experiments === 1),
+  "all three fault-injection arms have matched realized calls, reported tokens and external experiments");
+  check(new Set(coverage.result.contributions.filter(item => item.role === "INVESTIGATOR")
+    .map(item => item.intent.mechanismId)).size === 3,
+  "coverage improvement is observed in generated conjectures, not just allocated identifiers");
+  allocationAggregate.pairedCases++;
+  allocationAggregate.independentAccepted += Number(baseline.assurance.decision === "ACCEPT");
+  allocationAggregate.rotatingAccepted += Number(rotating.assurance.decision === "ACCEPT");
+  allocationAggregate.coverageAccepted += Number(coverage.assurance.decision === "ACCEPT");
+}
+// Exercise adaptation over multiple revisions, including serial and parallel
+// delivery. This oracle is unchanged; no performance assertion is manufactured.
+for (const policy of ["ROTATING_PARTITION", "COVERAGE_AWARE"] as const) {
+  const adaptive = await run([rows[0], rows[2], rows[4], rows[7]], rows[3],
+    `ALLOCATION-ABSENT-${policy}`, REVISE, "HEALTHY", {}, undefined, policy);
+  check(adaptive.assurance.decision !== "ACCEPT", "exploration cannot certify an absent true mechanism");
+  check(adaptive.cognition.calls.some(item => item.hypothesisAllocation?.phaseOrdinal === 1),
+    "revision allocation consumes the original revision calls rather than adding model executions");
+  check(adaptive.result.observations.length > 0 && adaptive.result.evidenceChainComplete,
+    "adaptive allocation preserves failed experiments and the admitted evidence chain");
+}
+console.log(`NYX_HYPOTHESIS_COVERAGE_E3_REPORT ${JSON.stringify({ schemaVersion: 1,
+  chunkId: "NYX-HYPOTHESIS-COVERAGE-001", oracleSha256, allocationAggregate,
+  evidenceClass: "E3", actualCognition: "TEST_DOUBLE", liveCapabilityImprovement: "UNVERIFIED",
+  interpretation: "Selection-collapse fault injection; C does not beat the simpler partition control. No promotion.",
+  broadPromotion: false, authorityGranted: false })}`);
 console.log(`NYX_EVIDENCE_FIRST_E3_REPORT ${JSON.stringify({ schemaVersion: 1,
   chunkId: "NYX-EVIDENCE-FIRST-SEQUENCING-001", corpusDigest: theoryDigest(corpus), oracleSha256,
   evidenceClass: "E3", actualCognition: "TEST_DOUBLE", matchedLimits: LIMITS, aggregate,

@@ -169,11 +169,30 @@ export interface TheoryCognitionRequest {
   readonly peerContributions: readonly TheoryContribution[];
   readonly experimentObservations: readonly ResearchExperimentObservation[];
   readonly predictionFeedback: readonly TheoryPredictionFeedback[];
+  /** Optional exploration guidance. It is neither evidence nor an acceptance constraint. */
+  readonly hypothesisAllocation?: TheoryHypothesisAllocation;
   readonly instruction: string;
   readonly maxOutputTokens: number;
   readonly observedAtEpochMs: number;
   readonly deadlineEpochMs: number;
   readonly signal?: AbortSignal;
+}
+
+export type HypothesisAllocationPolicy = "ROTATING_PARTITION" | "COVERAGE_AWARE";
+
+export interface TheoryHypothesisAllocation {
+  readonly schemaVersion: 1;
+  readonly policy: HypothesisAllocationPolicy;
+  readonly objectiveDigest: string;
+  readonly contextDigest: string;
+  readonly phaseOrdinal: number;
+  readonly theoryId: string;
+  readonly cohortTheoryIds: readonly string[];
+  readonly rankedMechanismIds: readonly string[];
+  readonly preferredMechanismIds: readonly string[];
+  readonly observedExperimentIds: readonly string[];
+  readonly interpretation: "EXPLORATION_GUIDANCE_NOT_EVIDENCE";
+  readonly grantsAuthority: false;
 }
 
 export interface TheoryCognitionEvidence {
@@ -257,6 +276,7 @@ export interface ResearchPartyResult {
     decision: TheoryCognitionResult["decision"]; reason: string; diagnostics: readonly string[];
     outcomeClass: ReturnType<typeof researchCognitionOutcomeClass> }>[];
   readonly cognitiveRouting: TheoryPerspectiveRoute | null;
+  readonly hypothesisAllocations?: readonly TheoryHypothesisAllocation[];
   readonly resourceUsage: ResearchPartyResourceUsage;
   readonly addressability: {
     readonly reservedTheorySlots: string;

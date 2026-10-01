@@ -2287,6 +2287,12 @@
       ]
     },
     {
+      "name": "OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON",
+      "files": [
+        "scripts/omega/nyx-research-party-live-eval.ts"
+      ]
+    },
+    {
       "name": "OMEGA_NYX_RESEARCH_COMPARE_POLICY",
       "files": [
         "scripts/omega/nyx-research-party-live-eval.ts"

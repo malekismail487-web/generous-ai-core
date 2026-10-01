@@ -1,11 +1,13 @@
 import { TheoryNetwork } from "./theoryNetwork";
 import { immutableTheoryValue, theoryDigest, type TheoryLease } from "./theoryContracts";
 import { ResearchEvidenceGraph } from "./researchEvidenceGraph";
+import { allocateHypothesisCoverage } from "./hypothesisCoverage";
 import { sparseTheoryPerspectiveRouter, validTheoryPerspectiveRoute,
   type TheoryPerspectiveRouter } from "./sparseTheoryRouter";
 import { researchObjectiveDigest, researchCognitionOutcomeClass, validResearchLimits, validResearchObjective,
   type ResearchExperiment, type ResearchExperimentObservation, type ResearchPartyLimits,
   type ResearchPartyObjective, type ResearchPartyResult, type ResearchRole, type TheoryCognitionEvidence,
+  type HypothesisAllocationPolicy, type TheoryHypothesisAllocation,
   type TheoryCognitionRequest, type TheoryCognitionResult, type TheoryContribution } from "./researchPartyContracts";
 
 export interface TheoryCognitionEngine {
@@ -32,6 +34,8 @@ export interface TheoryResearchPartyConfig {
   readonly perspectiveRouter?: TheoryPerspectiveRouter;
   /** Experimental sequencing only: neither policy adds tools, evidence, or authority. */
   readonly experimentPolicy?: "REVISE_AFTER_OBSERVATION" | "EXHAUST_PRECOMMITTED_FORECASTS";
+  /** Opt-in exploration intervention. The default cognition/acceptance behavior is unchanged. */
+  readonly hypothesisAllocationPolicy?: HypothesisAllocationPolicy;
 }
 
 interface EntityRuntime {
@@ -70,7 +74,9 @@ export class TheoryResearchParty {
       || typeof config.experiments?.run !== "function" || !config.coordinator || typeof config.coordinator !== "object"
       || (config.perspectiveRouter !== undefined && typeof config.perspectiveRouter?.route !== "function")
       || (config.experimentPolicy !== undefined && !["REVISE_AFTER_OBSERVATION",
-        "EXHAUST_PRECOMMITTED_FORECASTS"].includes(config.experimentPolicy))) {
+        "EXHAUST_PRECOMMITTED_FORECASTS"].includes(config.experimentPolicy))
+      || (config.hypothesisAllocationPolicy !== undefined && !["ROTATING_PARTITION",
+        "COVERAGE_AWARE"].includes(config.hypothesisAllocationPolicy))) {
       throw new Error("theory_research_party_configuration_invalid");
     }
     return new TheoryResearchParty(config);
@@ -90,6 +96,8 @@ export class TheoryResearchParty {
     const cognitionEvidence: TheoryCognitionEvidence[] = [];
     const cognitionOutcomes: NonNullable<ResearchPartyResult["cognitionOutcomes"]>[number][] = [];
     const predictionBindings: NetworkPredictionBinding[] = [];
+    const hypothesisAllocations: TheoryHypothesisAllocation[] = [];
+    let allocationPhase = 0;
     let cognitiveRouting: ResearchPartyResult["cognitiveRouting"] = null;
     let modelCalls = 0;
     let reservedOutputTokens = 0;
@@ -109,7 +117,8 @@ export class TheoryResearchParty {
         independentAcceptance: false as const, grantsAuthority: false as const }) : graph.decision();
       const metrics = this.#config.network.metrics();
       return immutableTheoryValue({ researchId: objective.researchId, decision, contributions, observations,
-        cognitionEvidence, cognitionOutcomes, cognitiveRouting, resourceUsage: { modelCalls, experiments: observations.length, experimentCostUnits,
+        cognitionEvidence, cognitionOutcomes, cognitiveRouting, hypothesisAllocations,
+        resourceUsage: { modelCalls, experiments: observations.length, experimentCostUnits,
           promptTokens: usageComplete ? knownPromptTokens : null, completionTokens: usageComplete ? knownCompletionTokens : null,
           totalTokens: usageComplete ? knownTotalTokens : null, wallClockMs: elapsed },
         addressability: { reservedTheorySlots: metrics.reservedAddressSlots,
@@ -130,7 +139,8 @@ export class TheoryResearchParty {
       }
     };
     const call = async (entity: EntityRuntime, role: ResearchRole, instruction: string,
-      privatePriorContributions: readonly TheoryContribution[], peerContributions: readonly TheoryContribution[]): Promise<TheoryContribution | null> => {
+      privatePriorContributions: readonly TheoryContribution[], peerContributions: readonly TheoryContribution[],
+      hypothesisAllocation?: TheoryHypothesisAllocation): Promise<TheoryContribution | null> => {
       if (!timeLeft()) { failure = signal.aborted ? "research_party_cancelled" : "research_party_time_budget_exhausted"; return null; }
       if (modelCalls >= this.#config.limits.maxModelCalls
         || reservedOutputTokens + this.#config.limits.maxOutputTokensPerCall > this.#config.limits.maxTotalOutputTokens) {
@@ -163,11 +173,12 @@ export class TheoryResearchParty {
       }) : [];
       if (failure) return null;
       modelCalls += 1; reservedOutputTokens += this.#config.limits.maxOutputTokensPerCall;
+      if (hypothesisAllocation) hypothesisAllocations.push(hypothesisAllocation);
       const requestId = `${this.#config.partyId}-${modelCalls}-${theoryDigest([entity.theoryId, role, instruction]).slice(0, 16)}`;
       const result = await this.#config.cognition.think({ schemaVersion: 1, requestId, role,
         theoryId: entity.theoryId, guardianId: entity.guardianId, objective,
         privatePriorContributions, peerContributions, experimentObservations: observations,
-        predictionFeedback,
+        predictionFeedback, ...(hypothesisAllocation ? { hypothesisAllocation } : {}),
         instruction, maxOutputTokens: this.#config.limits.maxOutputTokensPerCall,
         observedAtEpochMs: this.#config.now(), deadlineEpochMs: deadline, signal });
       cognitionEvidence.push(result.evidence);
@@ -276,8 +287,15 @@ export class TheoryResearchParty {
       }
       if (failure || entities.length !== entityCount) return finish();
       const investigators = entities.filter((item) => item.initialRole === "INVESTIGATOR");
+      const allocatePhase = (phaseOrdinal: number) => this.#config.hypothesisAllocationPolicy
+        ? allocateHypothesisCoverage({ objective, cohortTheoryIds: investigators.map(item => item.theoryId),
+          contributions: phaseOrdinal === 0 ? [] : investigators.flatMap(entity =>
+            [...contributions].reverse().find(item => item.theoryId === entity.theoryId
+              && ["INVESTIGATOR", "REVISER"].includes(item.role)) ?? []),
+          observations, phaseOrdinal, policy: this.#config.hypothesisAllocationPolicy }) : [];
+      const initialAllocations = allocatePhase(0);
       await runCognitionPhase(investigators.map((entity, index) => () => call(entity, "INVESTIGATOR",
-        `Generate an independent causal hypothesis from the ${cognitiveRouting!.assignments[index].perspectiveId} compartment. ${cognitiveRouting!.assignments[index].instruction} Predict every catalogued experiment and request the most discriminating ones.`, [], [])));
+        `Generate an independent causal hypothesis from the ${cognitiveRouting!.assignments[index].perspectiveId} compartment. ${cognitiveRouting!.assignments[index].instruction} Predict every catalogued experiment and request the most discriminating ones.`, [], [], initialAllocations[index])));
       if (failure) return finish();
       const hypotheses = contributions.filter((item) => item.intent.decision === "PROPOSE_HYPOTHESIS");
       if (hypotheses.length < 2) { failure = "research_party_insufficient_independent_hypotheses"; return finish(); }
@@ -312,13 +330,15 @@ export class TheoryResearchParty {
         });
         // Freeze all peer views before this phase, even when inference is serial.
         // Later entities must not see earlier revisions from the same phase.
+        const revisionAllocations = allocatePhase(++allocationPhase);
         const revisionJobs = revisers.map((entity) => {
           const own = contributions.filter((item) => item.theoryId === entity.theoryId);
           const latestPeers = investigators.filter((item) => item.theoryId !== entity.theoryId).map((peer) =>
             [...contributions].reverse().find((item) => item.theoryId === peer.theoryId
               && ["INVESTIGATOR", "REVISER"].includes(item.role))).filter((item): item is TheoryContribution => Boolean(item));
           if (falsifierContribution) latestPeers.push(falsifierContribution);
-          return () => call(entity, "REVISER", "Revise your own mechanism using every observed counterexample. Forecast only experiments that have not yet been observed; do not defend a falsified mechanism.", own, latestPeers);
+          return () => call(entity, "REVISER", "Revise your own mechanism using every observed counterexample. Forecast only experiments that have not yet been observed; do not defend a falsified mechanism.", own, latestPeers,
+            revisionAllocations.find(item => item.theoryId === entity.theoryId));
         });
         await runCognitionPhase(revisionJobs);
         if (failure) break;

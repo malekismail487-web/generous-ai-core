@@ -1,6 +1,9 @@
 name: Omega NYX research party live evaluation
 
 on:
+  push:
+    branches: ['sol/omega-institutional-spine']
+    paths: ['.github/workflows/omega-nyx-research-party-live-eval.yml']
   workflow_dispatch:
     inputs:
       diagnostic_only:
@@ -10,6 +13,11 @@ on:
         default: false
       policy_comparison:
         description: Compare evidence-first and revision-after-observation through the same Omega oracle
+        required: false
+        type: boolean
+        default: false
+      allocation_comparison:
+        description: Three-arm hypothesis coverage development comparison; requires the matching development corpus
         required: false
         type: boolean
         default: false
@@ -23,7 +31,7 @@ on:
         description: Frozen causal task corpus
         required: false
         type: choice
-        options: ['LEGACY', 'EXECUTABLE_TRANSFER_V1']
+        options: ['LEGACY', 'EXECUTABLE_TRANSFER_V1', 'HYPOTHESIS_COVERAGE_DEVELOPMENT_V1']
         default: 'LEGACY'
       model_concurrency:
         description: Matched model delivery concurrency for both policy arms
@@ -51,15 +59,17 @@ concurrency:
 
 jobs:
   nyx-research-party-live:
+    if: github.event_name != 'push' || contains(github.event.head_commit.message, '[nyx-coverage-live]')
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 145
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
       OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: ${{ inputs.diagnostic_only && '1' || '0' }}
-      OMEGA_NYX_RESEARCH_POLICY_COMPARISON: ${{ inputs.policy_comparison && '1' || '0' }}
+      OMEGA_NYX_RESEARCH_POLICY_COMPARISON: ${{ (github.event_name == 'push' || inputs.policy_comparison) && '1' || '0' }}
+      OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON: ${{ (github.event_name == 'push' || inputs.allocation_comparison) && '1' || '0' }}
       OMEGA_NYX_RESEARCH_COMPARE_TASKS: ${{ inputs.comparison_tasks || '1' }}
-      OMEGA_NYX_RESEARCH_CORPUS: ${{ inputs.corpus || 'LEGACY' }}
-      OMEGA_NYX_RESEARCH_MODEL_CONCURRENCY: ${{ inputs.model_concurrency || '3' }}
+      OMEGA_NYX_RESEARCH_CORPUS: ${{ github.event_name == 'push' && 'HYPOTHESIS_COVERAGE_DEVELOPMENT_V1' || inputs.corpus || 'LEGACY' }}
+      OMEGA_NYX_RESEARCH_MODEL_CONCURRENCY: ${{ github.event_name == 'push' && '1' || inputs.model_concurrency || '3' }}
       OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: ${{ inputs.comparison_task_id || '' }}
       OMEGA_NYX_RESEARCH_COMPARE_POLICY: ${{ inputs.comparison_policy || '' }}
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b

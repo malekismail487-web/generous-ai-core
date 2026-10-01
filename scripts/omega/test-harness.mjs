@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -335,8 +336,17 @@ export function verifyFrontierCheckpoint(checkpoint, gaps, readReport, readSourc
     scope: "ARCHIVE_RECONSTRUCTION_NOT_CAPABILITY_CERTIFICATION", grantsAuthority: false };
 }
 
-export function readFrontierCheckpoint(root = resolve(dirname(fileURLToPath(import.meta.url)), "../..")) {
+export function readFrontierCheckpoint(root = resolve(dirname(fileURLToPath(import.meta.url)), "../.."),
+  sourceMode = "CURRENT_WORKTREE") {
+  if (!["CURRENT_WORKTREE", "HISTORICAL_BASELINE"].includes(sourceMode)) throw new Error("checkpoint_source_mode_invalid");
   const json = path => JSON.parse(readFileSync(resolve(root, path), "utf8"));
-  return verifyFrontierCheckpoint(json(`${FRONTIER_CHECKPOINT_DIRECTORY}/checkpoint.json`), json(`${FRONTIER_CHECKPOINT_DIRECTORY}/capability-gaps.json`),
-    file => json(`${FRONTIER_CHECKPOINT_DIRECTORY}/${file}`), path => readFileSync(resolve(root, path), "utf8"));
+  const checkpoint = json(`${FRONTIER_CHECKPOINT_DIRECTORY}/checkpoint.json`);
+  if (!/^[a-f0-9]{40}$/.test(checkpoint.runtimeBaselineCommit)) throw new Error("checkpoint_runtime_reference_invalid");
+  const result = verifyFrontierCheckpoint(checkpoint, json(`${FRONTIER_CHECKPOINT_DIRECTORY}/capability-gaps.json`),
+    file => json(`${FRONTIER_CHECKPOINT_DIRECTORY}/${file}`), path => sourceMode === "HISTORICAL_BASELINE"
+      ? execFileSync("git", ["show", `${checkpoint.runtimeBaselineCommit}:${path}`],
+        { cwd: root, encoding: "utf8", timeout: 10_000, maxBuffer: 1_000_000 })
+      : readFileSync(resolve(root, path), "utf8"));
+  return { ...result, sourceMode, runtimeBaselineCommit: checkpoint.runtimeBaselineCommit,
+    certifiesCurrentRuntime: false };
 }
