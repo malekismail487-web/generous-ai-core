@@ -44,6 +44,12 @@ if (focusedTaskId && (!policyComparison || diagnosticOnly || corpus !== "EXECUTA
   || !NYX_RESEARCH_TRANSFER_TASKS.some(task => task.taskId === focusedTaskId))) {
   throw new Error("research_focused_task_selection_invalid");
 }
+// Resume only an unexecuted arm without rerunning completed stochastic samples.
+// This is not a paired comparison and cannot promote a policy.
+const focusedPolicy = process.env.OMEGA_NYX_RESEARCH_COMPARE_POLICY?.trim() || null;
+if (focusedPolicy && (!focusedTaskId || !["REVISE_AFTER_OBSERVATION", "EXHAUST_PRECOMMITTED_FORECASTS"].includes(focusedPolicy))) {
+  throw new Error("research_focused_policy_selection_invalid");
+}
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
 const limits: ResearchPartyLimits = Object.freeze({ maxEntities: 8, maxModelCalls: 11, maxExperiments: 3,
@@ -235,8 +241,9 @@ if (policyComparison) {
   let acceptanceViolations = 0;
   try {
     for (const [index, task] of tasks.entries()) {
-      const arms = index % 2 === 0 ? ["REVISE_AFTER_OBSERVATION", "EXHAUST_PRECOMMITTED_FORECASTS"] as const
+      const orderedArms = index % 2 === 0 ? ["REVISE_AFTER_OBSERVATION", "EXHAUST_PRECOMMITTED_FORECASTS"] as const
         : ["EXHAUST_PRECOMMITTED_FORECASTS", "REVISE_AFTER_OBSERVATION"] as const;
+      const arms = focusedPolicy ? orderedArms.filter(policy => policy === focusedPolicy) : orderedArms;
       for (const [position, policy] of arms.entries()) {
         // Each arm receives a fresh, equal lifetime; earlier provider waits must
         // not consume the second arm's authority or objective validity window.
@@ -280,8 +287,10 @@ if (policyComparison) {
       && (record.assurance as { decision: string }).decision !== "ACCEPT");
     const report = { schemaVersion: 1, chunkId: "NYX-EVIDENCE-FIRST-LIVE-001", candidateCommit: CANDIDATE,
       model: MODEL, corpus, corpusDigest: theoryDigest(tasks.map(task => task.oracleDigest)), matchedLimits: limits,
-      comparisonScope: focusedTaskId ? "FOCUSED_REGRESSION_ONLY" : "FROZEN_CORPUS_COMPARISON",
+      comparisonScope: focusedPolicy ? "SINGLE_ARM_CONTINUATION_NOT_PAIRED"
+        : focusedTaskId ? "FOCUSED_REGRESSION_ONLY" : "FROZEN_CORPUS_COMPARISON",
       selectedTaskIds: tasks.map(task => task.taskId),
+      selectedPolicy: focusedPolicy, requestedArms: tasks.length * (focusedPolicy ? 1 : 2),
       scheduling: { maxParallelModelExecutions, peerViewsFrozenBeforePhase: true, grantsAuthority: false },
       requestedTasks: tasks.length, completedArms: records.length, providerBlocked, executionBlocked, acceptanceViolations,
       evidence: { cognition: "E4", experimentsAndOracle: "E3", independentInstitutionalReplication: false },

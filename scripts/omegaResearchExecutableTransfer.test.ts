@@ -26,6 +26,8 @@ for (const override of [
   { OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: "UNKNOWN-TASK" },
   { OMEGA_NYX_RESEARCH_CORPUS: "LEGACY" },
   { OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: "1" },
+  { OMEGA_NYX_RESEARCH_COMPARE_POLICY: "INVENTED_POLICY" },
+  { OMEGA_NYX_RESEARCH_COMPARE_POLICY: "EXHAUST_PRECOMMITTED_FORECASTS", OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: "" },
 ]) {
   const result = spawnSync(process.execPath, ["--experimental-strip-types", "--import",
     "./scripts/w0rs/register-typescript-loader.mjs", "scripts/omega/nyx-research-party-live-eval.ts"], {
@@ -34,7 +36,7 @@ for (const override of [
       OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: "0", OMEGA_NYX_RESEARCH_CORPUS: "EXECUTABLE_TRANSFER_V1",
       OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: corpus[1].taskId, ...override },
   });
-  check(result.status !== 0 && /research_(focused_task|corpus)_selection_invalid/.test(result.stderr),
+  check(result.status !== 0 && /research_(focused_task|focused_policy|corpus)_selection_invalid/.test(result.stderr),
     "invalid focused selection fails before provider construction or network dispatch");
   check(result.stdout === "" && !result.stderr.includes("synthetic-test-only"),
     "rejected selection neither emits a model result nor discloses credential injection");
