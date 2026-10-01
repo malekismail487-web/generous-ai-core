@@ -3,7 +3,7 @@ import { immutableTheoryValue, theoryDigest, type TheoryLease } from "./theoryCo
 import { ResearchEvidenceGraph } from "./researchEvidenceGraph";
 import { sparseTheoryPerspectiveRouter, validTheoryPerspectiveRoute,
   type TheoryPerspectiveRouter } from "./sparseTheoryRouter";
-import { researchObjectiveDigest, validResearchLimits, validResearchObjective,
+import { researchObjectiveDigest, researchCognitionOutcomeClass, validResearchLimits, validResearchObjective,
   type ResearchExperiment, type ResearchExperimentObservation, type ResearchPartyLimits,
   type ResearchPartyObjective, type ResearchPartyResult, type ResearchRole, type TheoryCognitionEvidence,
   type TheoryCognitionRequest, type TheoryCognitionResult, type TheoryContribution } from "./researchPartyContracts";
@@ -160,7 +160,7 @@ export class TheoryResearchParty {
         observedAtEpochMs: this.#config.now(), deadlineEpochMs: deadline, signal });
       cognitionEvidence.push(result.evidence);
       cognitionOutcomes.push(immutableTheoryValue({ requestId, role, decision: result.decision,
-        reason: result.reason, diagnostics: result.diagnostics }));
+        reason: result.reason, diagnostics: result.diagnostics, outcomeClass: researchCognitionOutcomeClass(result) }));
       if (result.evidence.promptTokens === null || result.evidence.completionTokens === null
         || result.evidence.totalTokens === null) usageComplete = false;
       else { knownPromptTokens += result.evidence.promptTokens; knownCompletionTokens += result.evidence.completionTokens;
@@ -292,9 +292,15 @@ export class TheoryResearchParty {
           if (observations.length >= this.#config.limits.maxExperiments) break;
           if (graph.selectNextExperiment(this.#config.limits.maxCostUnits - experimentCostUnits)) continue;
         }
-        peakParallelModelExecutions = Math.max(peakParallelModelExecutions, investigators.length);
         const falsifierContribution = contributions.find((item) => item.role === "FALSIFIER");
-        await Promise.all(investigators.map(async (entity) => {
+        const revisers = investigators.filter((entity) => {
+          const latest = contributions.filter((item) => item.theoryId === entity.theoryId).at(-1);
+          // A failed or abstaining investigator has no hypothesis to revise.
+          // Do not consume a call reservation or invent another entity's history.
+          return latest !== undefined && ["PROPOSE_HYPOTHESIS", "REVISE_HYPOTHESIS"].includes(latest.intent.decision);
+        });
+        peakParallelModelExecutions = Math.max(peakParallelModelExecutions, revisers.length);
+        await Promise.all(revisers.map(async (entity) => {
           const own = contributions.filter((item) => item.theoryId === entity.theoryId);
           const latestPeers = investigators.filter((item) => item.theoryId !== entity.theoryId).map((peer) =>
             [...contributions].reverse().find((item) => item.theoryId === peer.theoryId

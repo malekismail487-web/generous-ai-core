@@ -4,7 +4,7 @@ import { runFlatTheoryBaseline } from "../src/lib/codelab/research/flatTheoryBas
 import { NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA, NYX_THEORY_INTENT_JSON_SCHEMA,
   NyxNemotronTheoryCognition, theoryIntentSchemaForRequest } from "../src/lib/codelab/research/nyxNemotronTheoryCognition";
 import { assureResearchParty } from "../src/lib/codelab/research/researchPartyAssurance";
-import { immutableResearchValue, researchObjectiveDigest, validResearchLimits, validResearchObjective,
+import { immutableResearchValue, researchObjectiveDigest, researchCognitionOutcomeClass, validResearchLimits, validResearchObjective,
   type ResearchExperimentObservation, type ResearchPartyLimits, type ResearchPartyObjective,
   type TheoryCognitionIntent, type TheoryCognitionRequest, type TheoryCognitionResult,
   type TheoryContribution } from "../src/lib/codelab/research/researchPartyContracts";
@@ -662,6 +662,56 @@ responseContent = JSON.stringify({ ...validRaw, decision: "NO_CONCLUSION", mecha
 const uncertainty = await adapter.think({ ...adapterRequest, requestId: "ADAPTER-HONEST-UNCERTAINTY" });
 check(uncertainty.decision === "CONTRIBUTION" && uncertainty.intent?.decision === "NO_CONCLUSION",
   "well-formed uncertainty remains a valid contribution and is never manufactured into a supported hypothesis");
+
+// A live provider failure exposed a scheduler bug: the blank investigator was
+// asked to revise twice, consuming reservations for requests rejected locally.
+// Exercise both failed inference and honest abstention without task-specific repair.
+for (const blankMode of ["FAILED", "ABSTAINED"] as const) {
+  const partialRuntime = network();
+  const base = new ScriptedPartyCognition();
+  let investigatorIndex = 0;
+  let blankTheoryId = "";
+  const requests: TheoryCognitionRequest[] = [];
+  const partialCognition: TheoryCognitionEngine = { profile: () => base.profile(), think: async request => {
+    requests.push(request);
+    const normal = await base.think(request);
+    if (request.role !== "INVESTIGATOR" || investigatorIndex++ !== 1) return normal;
+    blankTheoryId = request.theoryId;
+    if (blankMode === "ABSTAINED") return cognitionResult(request, { ...normal.intent!, decision: "NO_CONCLUSION",
+      mechanismId: null, causalMechanism: null, forecasts: [], counterexamples: [], requestedExperimentIds: [] });
+    return { ...normal, decision: "COGNITION_ERROR", reason: "nvidia_provider_http_503", intent: null,
+      evidence: { ...normal.evidence, evidenceClass: "E4", responseDigest: null, statusCode: 503,
+        promptTokens: null, completionTokens: null, totalTokens: null, finishReason: null } };
+  } };
+  const partialLimits = { ...limits, maxModelCalls: 9, maxTotalOutputTokens: 9 * limits.maxOutputTokensPerCall };
+  const partialResult = await TheoryResearchParty.create({ partyId: `PARTY-PARTIAL-${blankMode}`,
+    network: partialRuntime.value, coordinator: partialRuntime.coordinator, cognition: partialCognition,
+    limits: partialLimits, investigatorCount: 3, now: () => now,
+    experiments: { run: async experiment => makeObservation(experiment.experimentId) } }).investigate(objective());
+  check(!requests.some(request => request.role === "REVISER" && request.theoryId === blankTheoryId),
+    "a blank specialist is never revised with invented private history");
+  check(requests.filter(request => request.role === "REVISER").every(request =>
+    request.privatePriorContributions.length > 0 && request.experimentObservations.length > 0),
+    "each scheduled revision has actual own history and external evidence");
+  check(partialResult.resourceUsage.modelCalls === 9 && requests.length === 9,
+    "partial-party scheduling avoids the two invalid call reservations within the same ceiling");
+  const partialAssurance = assureResearchParty({ objective: objective(), limits: partialLimits, result: partialResult,
+    groundTruth: { taskId: objective().researchId, expectedMechanismId: "FAILED_AS_COMPLETE",
+      oracleDigest: theoryDigest("partial-party-independent-oracle"), oracleProvenanceRoot: "PARTIAL-PARTY-ORACLE",
+      hiddenFromCognition: true } });
+  check(partialAssurance.decision === "ACCEPT" && partialResult.resourceUsage.experiments === 3,
+    "two valid hypotheses still require all oracle evidence and unchanged independent acceptance");
+  check(!partialResult.authorityGranted && partialResult.evidenceChainComplete,
+    "partial-party recovery cannot grant authority or omit evidence");
+  check(partialResult.cognitionOutcomes?.filter(item => item.outcomeClass === "PROVIDER_FAILURE").length
+    === (blankMode === "FAILED" ? 1 : 0), "provider failure and honest abstention remain separate");
+}
+check(researchCognitionOutcomeClass(hostile) === "MODEL_OUTPUT_REJECTION",
+  "HTTP-200 schema rejection is not classified as provider unavailability");
+check(researchCognitionOutcomeClass(truncated) === "OUTPUT_TRUNCATION",
+  "truncated output is distinct from invalid schema and functional reasoning failure");
+check(researchCognitionOutcomeClass(forgedFeedback) === "INTEGRATION_REJECTION",
+  "a local authority/evidence rejection with no HTTP status is not a provider failure");
 
 const evidenceBoundRuntime = network();
 const evidenceBoundParty = TheoryResearchParty.create({ partyId: "PARTY-EVIDENCE-BOUND",

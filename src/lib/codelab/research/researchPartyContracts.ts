@@ -202,6 +202,18 @@ export interface TheoryCognitionResult {
   readonly grantsAuthority: false;
 }
 
+/** Diagnostic classification only; no category supplies acceptance or authority. */
+export function researchCognitionOutcomeClass(result: TheoryCognitionResult):
+  "CONTRIBUTION" | "PROVIDER_FAILURE" | "INTEGRATION_REJECTION" | "OUTPUT_TRUNCATION"
+  | "MODEL_OUTPUT_REJECTION" | "UNKNOWN_FAILURE" {
+  if (result.decision === "CONTRIBUTION") return "CONTRIBUTION";
+  if (result.evidence.evidenceClass === "E4" && result.evidence.statusCode !== 200) return "PROVIDER_FAILURE";
+  if (result.decision === "REJECTED" || result.decision === "BLOCKED") return "INTEGRATION_REJECTION";
+  if (result.evidence.finishReason !== null && result.evidence.finishReason !== "stop") return "OUTPUT_TRUNCATION";
+  if (["theory_cognition_schema_invalid", "theory_cognition_non_json"].includes(result.reason)) return "MODEL_OUTPUT_REJECTION";
+  return "UNKNOWN_FAILURE";
+}
+
 export interface ResearchHypothesisAssessment {
   readonly theoryId: string;
   readonly mechanismId: string | null;
@@ -242,7 +254,8 @@ export interface ResearchPartyResult {
   readonly observations: readonly ResearchExperimentObservation[];
   readonly cognitionEvidence: readonly TheoryCognitionEvidence[];
   readonly cognitionOutcomes?: readonly Readonly<{ requestId: string; role: ResearchRole;
-    decision: TheoryCognitionResult["decision"]; reason: string; diagnostics: readonly string[] }>[];
+    decision: TheoryCognitionResult["decision"]; reason: string; diagnostics: readonly string[];
+    outcomeClass: ReturnType<typeof researchCognitionOutcomeClass> }>[];
   readonly cognitiveRouting: TheoryPerspectiveRoute | null;
   readonly resourceUsage: ResearchPartyResourceUsage;
   readonly addressability: {

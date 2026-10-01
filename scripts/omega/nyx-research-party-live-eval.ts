@@ -239,13 +239,16 @@ if (policyComparison) {
           groundTruth: { taskId: task.taskId, expectedMechanismId: task.expectedMechanismId,
             oracleDigest: task.oracleDigest, oracleProvenanceRoot: task.oracleProvenanceRoot, hiddenFromCognition: true } });
         const sourceUnchanged = await omega.sourceUnchanged();
-        const failures = result.cognitionEvidence.filter(item => item.statusCode !== 200).length;
+        const failures = result.cognitionOutcomes?.filter(item => item.outcomeClass === "PROVIDER_FAILURE").length ?? 0;
         if (failures) providerBlocked = true;
         if (!sourceUnchanged || result.authorityGranted || (assurance.decision === "ACCEPT"
           && result.decision.selectedMechanismId !== task.expectedMechanismId)) acceptanceViolations += 1;
         records.push({ taskId: task.taskId, policy, assurance, decision: result.decision,
           resourceUsage: result.resourceUsage, providerFailures: failures,
           cognitionOutcomes: result.cognitionOutcomes,
+          cognitionOutcomeCounts: Object.fromEntries(["CONTRIBUTION", "PROVIDER_FAILURE", "INTEGRATION_REJECTION",
+            "OUTPUT_TRUNCATION", "MODEL_OUTPUT_REJECTION", "UNKNOWN_FAILURE"].map(outcomeClass =>
+              [outcomeClass, result.cognitionOutcomes?.filter(item => item.outcomeClass === outcomeClass).length ?? 0])),
           transport: { telemetryComplete: result.cognitionEvidence.every(item => item.delivery != null),
             httpAttempts: result.cognitionEvidence.reduce((sum, item) => sum + (item.delivery?.httpAttempts ?? 0), 0),
             transientResponses: result.cognitionEvidence.reduce((sum, item) => sum + (item.delivery?.transientUnavailableResponses ?? 0), 0),
@@ -315,7 +318,7 @@ try {
     if (!sourceUnchanged) sourceMutationFailures += 1;
     if (partyResult.authorityGranted || flatResult.authorityGranted) authorityFailures += 1;
     const cognitionEvidence = [...partyResult.cognitionEvidence, ...flatResult.cognitionEvidence];
-    providerFailures += cognitionEvidence.filter((item) => item.statusCode !== 200).length;
+    providerFailures += cognitionEvidence.filter((item) => item.evidenceClass === "E4" && item.statusCode !== 200).length;
     for (const item of cognitionEvidence) {
       const key = item.statusCode === null ? "NO_STATUS" : String(item.statusCode);
       providerStatusCounts[key] = (providerStatusCounts[key] ?? 0) + 1;
