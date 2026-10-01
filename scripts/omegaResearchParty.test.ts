@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { runFlatTheoryBaseline } from "../src/lib/codelab/research/flatTheoryBaseline";
-import { NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA, NYX_THEORY_INTENT_JSON_SCHEMA,
+import { NYX_DERIVATION_CHECK_INSTRUCTION, NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA, NYX_THEORY_INTENT_JSON_SCHEMA,
   NyxNemotronTheoryCognition, theoryIntentSchemaForRequest } from "../src/lib/codelab/research/nyxNemotronTheoryCognition";
 import { assureResearchParty } from "../src/lib/codelab/research/researchPartyAssurance";
 import { immutableResearchValue, researchObjectiveDigest, researchCognitionOutcomeClass, validResearchLimits, validResearchObjective,
@@ -850,6 +850,29 @@ check(guided.decision === "CONTRIBUTION" && modelPrompts.at(-1)?.hypothesisAlloc
   "Nemotron receives structured allocation while retaining the original intent/parser contract");
 check(guided.intent?.mechanismId === validRaw.mechanismId,
   "valid alternatives remain admissible; exploration guidance cannot override acceptance or force an answer");
+check(modelPrompts.at(-1)?.derivationInstruction === undefined,
+  "legacy cognition prompts remain unchanged unless the derivation control is explicitly enabled");
+const controlConfig = { cognitionId: "NYX-DERIVATION-CONTROL", provider, limits, derivationChecks: true };
+const controlledAdapter = NyxNemotronTheoryCognition.create(controlConfig);
+controlConfig.derivationChecks = false;
+const controlPlain = await controlledAdapter.think(adapterRequest);
+const plainPrompt = modelPrompts.at(-1)!;
+const controlAllocated = await controlledAdapter.think(allocatedRequest);
+const allocatedPrompt = modelPrompts.at(-1)!;
+check(plainPrompt.derivationInstruction === NYX_DERIVATION_CHECK_INSTRUCTION
+  && allocatedPrompt.derivationInstruction === plainPrompt.derivationInstruction,
+"both ablation arms receive byte-identical derivation guidance from an immutable configuration snapshot");
+const { hypothesisAllocation: ignoredAllocation, allocationInstruction: ignoredInstruction, ...sharedPrompt } = allocatedPrompt;
+check(theoryDigest(sharedPrompt) === theoryDigest(plainPrompt) && ignoredAllocation !== undefined
+  && typeof ignoredInstruction === "string" && !ignoredInstruction.includes("Recheck arithmetic"),
+"coverage ablation changes only explicit allocation fields, not the remaining task, evidence or derivation prompt");
+check(controlPlain.decision === "CONTRIBUTION" && controlAllocated.decision === "CONTRIBUTION"
+  && controlPlain.grantsAuthority === false && controlAllocated.grantsAuthority === false
+  && controlPlain.evidence.totalTokens === controlAllocated.evidence.totalTokens
+  && requestedOutputBudgets.at(-1) === requestedOutputBudgets.at(-2),
+"controlled guidance retains the unchanged strict intent parser, model budget, and authority boundary");
+await rejects(() => NyxNemotronTheoryCognition.create({ ...controlConfig, derivationChecks: "true" as unknown as boolean }),
+  /configuration_invalid/, "malformed derivation configuration cannot silently enable a treatment");
 for (const invalid of [
   { cohortTheoryIds: [cohortIds[0]] }, { phaseOrdinal: -1 }, { phaseOrdinal: 65 },
   { phaseOrdinal: Number.NaN }, { policy: "MAGIC" }, { contributions: [directContribution] },

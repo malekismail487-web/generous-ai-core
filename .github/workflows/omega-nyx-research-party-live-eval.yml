@@ -1,6 +1,10 @@
 name: Omega NYX research party live evaluation
 
 on:
+  # Temporary one-shot commissioning path; removed after this bounded dispatch.
+  push:
+    branches: ['sol/omega-institutional-spine']
+    paths: ['.github/workflows/omega-nyx-research-party-live-eval.yml']
   workflow_dispatch:
     inputs:
       diagnostic_only:
@@ -14,7 +18,7 @@ on:
         type: boolean
         default: false
       allocation_comparison:
-        description: Three-arm hypothesis coverage development comparison; requires the matching development corpus
+        description: Coverage comparison or paired derivation-controlled transfer; requires the matching corpus
         required: false
         type: boolean
         default: false
@@ -28,10 +32,10 @@ on:
         description: Frozen causal task corpus
         required: false
         type: choice
-        options: ['LEGACY', 'EXECUTABLE_TRANSFER_V1', 'HYPOTHESIS_COVERAGE_DEVELOPMENT_V1']
+        options: ['LEGACY', 'EXECUTABLE_TRANSFER_V1', 'HYPOTHESIS_COVERAGE_DEVELOPMENT_V1', 'COVERAGE_TRANSFER_V1']
         default: 'LEGACY'
       model_concurrency:
-        description: Matched model delivery concurrency for both policy arms
+        description: Matched model delivery concurrency for all policy arms
         required: false
         type: choice
         options: ['1', '2', '3']
@@ -56,16 +60,17 @@ concurrency:
 
 jobs:
   nyx-research-party-live:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-coverage-transfer-live]')
     runs-on: ubuntu-latest
     timeout-minutes: 145
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
       OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: ${{ inputs.diagnostic_only && '1' || '0' }}
-      OMEGA_NYX_RESEARCH_POLICY_COMPARISON: ${{ inputs.policy_comparison && '1' || '0' }}
-      OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON: ${{ inputs.allocation_comparison && '1' || '0' }}
-      OMEGA_NYX_RESEARCH_COMPARE_TASKS: ${{ inputs.comparison_tasks || '1' }}
-      OMEGA_NYX_RESEARCH_CORPUS: ${{ inputs.corpus || 'LEGACY' }}
-      OMEGA_NYX_RESEARCH_MODEL_CONCURRENCY: ${{ inputs.model_concurrency || '3' }}
+      OMEGA_NYX_RESEARCH_POLICY_COMPARISON: ${{ github.event_name == 'push' && '1' || inputs.policy_comparison && '1' || '0' }}
+      OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON: ${{ github.event_name == 'push' && '1' || inputs.allocation_comparison && '1' || '0' }}
+      OMEGA_NYX_RESEARCH_COMPARE_TASKS: ${{ github.event_name == 'push' && '3' || inputs.comparison_tasks || '1' }}
+      OMEGA_NYX_RESEARCH_CORPUS: ${{ github.event_name == 'push' && 'COVERAGE_TRANSFER_V1' || inputs.corpus || 'LEGACY' }}
+      OMEGA_NYX_RESEARCH_MODEL_CONCURRENCY: ${{ github.event_name == 'push' && '1' || inputs.model_concurrency || '3' }}
       OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: ${{ inputs.comparison_task_id || '' }}
       OMEGA_NYX_RESEARCH_COMPARE_POLICY: ${{ inputs.comparison_policy || '' }}
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
@@ -89,6 +94,12 @@ jobs:
         env:
           NVIDIA_API_KEY: ''
           OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON: '0'
+          OMEGA_NYX_RESEARCH_CORPUS: 'LEGACY'
+          OMEGA_NYX_RESEARCH_POLICY_COMPARISON: '0'
+          OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: '0'
+          OMEGA_NYX_RESEARCH_COMPARE_TASKS: '1'
+          OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: ''
+          OMEGA_NYX_RESEARCH_COMPARE_POLICY: ''
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaResearchParty.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaResearchEvidenceFirst.test.ts

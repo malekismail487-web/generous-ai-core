@@ -92,3 +92,4 @@ console.log('STATE_' + position + '_' + velocity);`,
 
 export const NYX_HYPOTHESIS_COVERAGE_TASKS = Object.freeze([queue, affine, kinematics]);
 export const NYX_HYPOTHESIS_COVERAGE_CORPUS_DIGEST = theoryDigest(NYX_HYPOTHESIS_COVERAGE_TASKS.map(item => item.oracleDigest));
+export { task as createCoverageTask };

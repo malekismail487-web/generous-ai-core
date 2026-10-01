@@ -8,6 +8,8 @@ import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { NYX_RESEARCH_TRANSFER_TASKS, NYX_RESEARCH_TRANSFER_CORPUS_DIGEST } from "./omega/nyx-research-transfer-fixtures";
 import { NYX_HYPOTHESIS_COVERAGE_TASKS, NYX_HYPOTHESIS_COVERAGE_CORPUS_DIGEST }
   from "./omega/nyx-hypothesis-coverage-fixtures";
+import { NYX_COVERAGE_TRANSFER_TASKS, NYX_COVERAGE_TRANSFER_CORPUS_DIGEST } from "./omega/nyx-coverage-transfer-fixtures";
+import { analyzeCoverageTransfer, type CoverageTransferArm } from "../src/lib/codelab/research/coverageTransferAnalysis";
 
 let checks = 0;
 function check(value: unknown, message: string): asserts value {
@@ -30,6 +32,11 @@ check(NYX_RESEARCH_TRANSFER_CORPUS_DIGEST === theoryDigest(corpus.map(task => ta
 check(NYX_HYPOTHESIS_COVERAGE_TASKS.length === 3 && NYX_HYPOTHESIS_COVERAGE_CORPUS_DIGEST
   === theoryDigest(NYX_HYPOTHESIS_COVERAGE_TASKS.map(task => task.oracleDigest)),
 "new cross-domain development corpus has a reconstructable identity before live execution");
+check(NYX_COVERAGE_TRANSFER_CORPUS_DIGEST === theoryDigest(NYX_COVERAGE_TRANSFER_TASKS.map(task => task.oracleDigest))
+  && new Set(NYX_COVERAGE_TRANSFER_TASKS.map(task => task.objective(candidate, 1_000).domain)).size === 3
+  && NYX_COVERAGE_TRANSFER_TASKS.every(task => ![...corpus, ...NYX_HYPOTHESIS_COVERAGE_TASKS]
+    .some(previous => previous.taskId === task.taskId || previous.oracleDigest === task.oracleDigest)),
+"allocation transfer freezes three new domain families without rewriting inspected regression tasks");
 for (const override of [
   { OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: "UNKNOWN-TASK" },
   { OMEGA_NYX_RESEARCH_CORPUS: "LEGACY" },
@@ -69,7 +76,7 @@ for (const override of [
     && rejected.stdout === "" && !rejected.stderr.includes("synthetic-test-only"),
   "incompatible allocation/corpus/diagnostic selectors fail closed before any provider dispatch");
 }
-for (const task of [...corpus, ...NYX_HYPOTHESIS_COVERAGE_TASKS]) {
+for (const task of [...corpus, ...NYX_HYPOTHESIS_COVERAGE_TASKS, ...NYX_COVERAGE_TRANSFER_TASKS]) {
   const objective = task.objective(candidate, 1_000);
   check(validResearchObjective(objective, 1_000), `${task.taskId}: strict objective contract`);
   check(task.probeSource !== undefined && !task.probeSource.includes("const outcomes"), `${task.taskId}: actual calculation, not answer lookup`);
@@ -93,6 +100,68 @@ for (const task of [...corpus, ...NYX_HYPOTHESIS_COVERAGE_TASKS]) {
   const clean = (value: typeof objective) => ({ ...value, expiryEpochMs: 0,
     admittedEvidence: value.admittedEvidence.map(item => ({ ...item, observedAtEpochMs: 0 })) });
   check(theoryDigest(clean(objective)) === theoryDigest(clean(otherTime)), `${task.taskId}: timestamps do not change problem semantics`);
+}
+for (const [task, original, replacement] of [
+  [NYX_COVERAGE_TRANSFER_TASKS[0], "firstProposal + secondProposal - s", "secondProposal"],
+  [NYX_COVERAGE_TRANSFER_TASKS[1], "let row=1;row>=0;row--", "let row=0;row<2;row++"],
+  [NYX_COVERAGE_TRANSFER_TASKS[2], "Math.min(a,raw) : -Math.min(b,-raw)", "Math.min(b,raw) : -Math.min(a,-raw)"],
+] as const) {
+  const altered = task.probeSource!.replace(original, replacement);
+  check(altered !== task.probeSource && task.objective(candidate, 1_000).experimentCatalog.some(experiment =>
+    run(altered, experiment.toolId) !== task.outcome(experiment.experimentId)),
+  "transfer oracle detects plausible wrong transaction, recurrence or flux semantics without relaxing syntax");
+}
+
+const transferIds = NYX_COVERAGE_TRANSFER_TASKS.map(task => task.taskId);
+const analysisArm = (taskId: string, policy: CoverageTransferArm["policy"], accepted: boolean,
+  tokens: number | null = 1000): CoverageTransferArm => ({ taskId, policy,
+    assurance: { decision: accepted ? "ACCEPT" : "INSUFFICIENT_EVIDENCE" },
+    resourceUsage: { modelCalls: 8, experiments: 3, totalTokens: tokens, wallClockMs: 100 } });
+const analysisRecords = transferIds.flatMap((id, index) => [analysisArm(id, "DERIVATION_ONLY", index !== 0),
+  analysisArm(id, "ROTATING_PARTITION", index !== 1)]);
+const paired = analyzeCoverageTransfer(transferIds, analysisRecords);
+check(paired.completePairs === 3 && paired.wins === 1 && paired.losses === 1 && paired.ties === 1,
+  "paired analysis preserves wins, losses and ties rather than selecting successful arms");
+check(paired.pairs.every(pair => pair.exactRealizedComputeMatch) && paired.computeComparableWins === 1
+  && !paired.broadPromotion && !paired.grantsAuthority && paired.calibration === "NOT_ESTABLISHED",
+"matched descriptive evidence cannot certify broad cognition, calibration or authority");
+const incomplete = analyzeCoverageTransfer(transferIds, analysisRecords.slice(0, 1));
+check(incomplete.completePairs === 0 && incomplete.wins === 0
+  && incomplete.pairs.every(pair => !pair.exactRealizedComputeMatch && !pair.withinDeclaredTokenEnvelope),
+"missing arms remain incomplete, never matched successes");
+for (const tokens of [null, 0, 1300, 1090]) {
+  const value = analyzeCoverageTransfer([transferIds[0]], [analysisArm(transferIds[0], "DERIVATION_ONLY", false),
+    analysisArm(transferIds[0], "ROTATING_PARTITION", true, tokens)]);
+  check(value.pairs[0].exactRealizedComputeMatch === false
+    && value.computeComparableWins === (tokens === 1090 ? 1 : 0),
+  "unknown, zero and excess usage differ from the predeclared ten-percent token envelope; none claims exact equality");
+}
+const unequalCalls = analyzeCoverageTransfer([transferIds[0]], [analysisRecords[0],
+  { ...analysisRecords[1], resourceUsage: { ...analysisRecords[1].resourceUsage, modelCalls: 11 } }]);
+check(unequalCalls.wins === 1 && unequalCalls.computeComparableWins === 0,
+  "extra model calls cannot masquerade as a compute-comparable win");
+for (const altered of [
+  [analysisRecords[0], analysisRecords[0]],
+  [{ ...analysisRecords[0], taskId: "UNKNOWN" }],
+  [{ ...analysisRecords[0], resourceUsage: { ...analysisRecords[0].resourceUsage, totalTokens: -1 } }],
+  [{ ...analysisRecords[0], assurance: { decision: "PASSED" } }],
+]) {
+  try { analyzeCoverageTransfer(transferIds, altered as CoverageTransferArm[]); throw new Error("analysis_accepted_invalid"); }
+  catch (error) { check(String(error).includes("coverage_transfer_analysis_record_invalid"),
+    "duplicate, foreign, invalid usage and dishonest acceptance-state records fail closed"); }
+}
+for (const override of [{ OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON: "0" },
+  { OMEGA_NYX_RESEARCH_COMPARE_TASKS: "9" }, { OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: transferIds[0] }]) {
+  const invalid = spawnSync(process.execPath, ["--experimental-strip-types", "--import",
+    "./scripts/w0rs/register-typescript-loader.mjs", "scripts/omega/nyx-research-party-live-eval.ts"], {
+    encoding: "utf8", timeout: 10_000, env: { ...process.env, NVIDIA_API_KEY: "synthetic-test-only",
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1", OMEGA_NYX_RESEARCH_POLICY_COMPARISON: "1",
+      OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON: "1", OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: "0",
+      OMEGA_NYX_RESEARCH_CORPUS: "COVERAGE_TRANSFER_V1", OMEGA_NYX_RESEARCH_COMPARE_TASKS: "3",
+      OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: "", OMEGA_NYX_RESEARCH_COMPARE_POLICY: "", ...override },
+  });
+  check(invalid.status !== 0 && /research_(allocation_comparison|task_count|focused_task)_selection_invalid/.test(invalid.stderr)
+    && invalid.stdout === "", "invalid transfer selection fails before provider construction and network");
 }
 for (const [task, original, replacement] of [
   [NYX_HYPOTHESIS_COVERAGE_TASKS[0], "queue = []", "queue.shift()"],

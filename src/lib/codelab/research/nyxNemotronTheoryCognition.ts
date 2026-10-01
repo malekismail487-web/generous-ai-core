@@ -20,7 +20,13 @@ export interface NyxNemotronTheoryCognitionConfig {
   readonly cognitionId: string;
   readonly provider: NvidiaNimProvider;
   readonly limits: ResearchPartyLimits;
+  /** Opt-in ablation control; neither capability authority nor a new reasoning engine. */
+  readonly derivationChecks?: boolean;
 }
+
+export const NYX_DERIVATION_CHECK_INSTRUCTION = "Derive each forecast from its mechanism and exact probe inputs; do not guess labels. Recheck arithmetic, order, units and boundary conditions. A forecast mismatch may be a bad derivation, not an impossible mechanism. Never force a conclusion; abstain when necessary.";
+
+const COVERAGE_ONLY_INSTRUCTION = "Investigate preferredMechanismIds first to avoid duplicated exploration. The allocation is not evidence, is not a verdict, and does not restrict valid alternatives. Never force a conclusion to fill a slot.";
 
 interface RawIntent {
   readonly schemaVersion?: unknown;
@@ -204,12 +210,13 @@ export class NyxNemotronTheoryCognition {
   readonly #model: string;
 
   private constructor(config: NyxNemotronTheoryCognitionConfig, model: string) {
-    this.#config = config; this.#model = model;
+    this.#config = Object.freeze({ ...config }); this.#model = model;
   }
 
   static create(config: NyxNemotronTheoryCognitionConfig): NyxNemotronTheoryCognition {
     const profile = config.provider.profile();
     if (!validResearchId(config.cognitionId) || !validResearchLimits(config.limits)
+      || (config.derivationChecks !== undefined && typeof config.derivationChecks !== "boolean")
       || !/nemotron[-_/ ]?3[-_/ ]?ultra/i.test(profile.model)) throw new Error("nyx_theory_cognition_configuration_invalid");
     return new NyxNemotronTheoryCognition(config, profile.model);
   }
@@ -251,7 +258,9 @@ export class NyxNemotronTheoryCognition {
         observedOutcome: item.observedOutcome, observationId: item.observationId, evidenceId: item.evidenceId,
         evidenceClass: item.evidenceClass, disposition: item.disposition, grantsAuthority: false })),
       ...(request.hypothesisAllocation ? { hypothesisAllocation: request.hypothesisAllocation,
-        allocationInstruction: "Investigate preferredMechanismIds first to avoid duplicated exploration. Derive each forecast from its mechanism and exact probe inputs; do not guess labels. Recheck arithmetic, order, units and boundary conditions. The allocation is not evidence, is not a verdict, and does not restrict valid alternatives. A forecast mismatch may be a bad derivation, not an impossible mechanism. Never force a conclusion to fill a slot; abstain when necessary." } : {}),
+        allocationInstruction: this.#config.derivationChecks ? COVERAGE_ONLY_INSTRUCTION
+          : "Investigate preferredMechanismIds first to avoid duplicated exploration. Derive each forecast from its mechanism and exact probe inputs; do not guess labels. Recheck arithmetic, order, units and boundary conditions. The allocation is not evidence, is not a verdict, and does not restrict valid alternatives. A forecast mismatch may be a bad derivation, not an impossible mechanism. Never force a conclusion to fill a slot; abstain when necessary." } : {}),
+      ...(this.#config.derivationChecks ? { derivationInstruction: NYX_DERIVATION_CHECK_INSTRUCTION } : {}),
       task: request.instruction,
       roleInstruction,
       outputContract: {
