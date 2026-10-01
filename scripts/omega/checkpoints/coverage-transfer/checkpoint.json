@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "checkpointId": "NYX-COVERAGE-TRANSFER-CHECKPOINT-001",
+  "chunkId": "NYX-COVERAGE-TRANSFER-001",
+  "runtimeBaselineCommit": "f59db5cb712fd724ad1c9d22691ba07f227f53b0",
+  "previousRuntimeReference": "0c9f2a0eda075caedaabf128cc3d80328ce39d5e",
+  "reportFile": "comparison.json",
+  "canonicalReportSha256": "a9a569df3c2d0d65cb83d82d51e70fdf874af7c812179e7951ab4dc53fbe1c87",
+  "runtimeSourceHashes": {
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "21edc5ca21bbb735e8175ac350ee148fac3af43f638df620ab0cb8446b04c388",
+    "src/lib/codelab/research/nyxNemotronTheoryCognition.ts": "3ef9060544c849908e267329dafa4f95b6212b92d925e8ec0d9726030bf6809e",
+    "src/lib/codelab/research/theoryResearchParty.ts": "d36a9ce07628143dda8346003f8ea1bce180d798ac71fb4df5f4ad2d0084706f",
+    "src/lib/codelab/research/hypothesisCoverage.ts": "f90d79008b2c5e042024236f361c2bc42d72bf579d370d8d769bba6dd4159e3c",
+    "src/lib/codelab/research/researchPartyContracts.ts": "ceea1c1ce5fe3d375eddb3dd7effb387a512882d3a9434d27192b4a23dbc867c",
+    "src/lib/codelab/research/researchPartyAssurance.ts": "bff3296c1e840c38a314568de2888883cba7b81c2132dfa34b8c826151adc759",
+    "src/lib/codelab/research/coverageTransferAnalysis.ts": "a717444d4acac8680b221819394a949ac82c10855ca439931f1ad38e5d4056d5",
+    "scripts/omega/nyx-hypothesis-coverage-fixtures.ts": "bec9306bc249fec0d65ec7e2c0f79c869c846cfd96d11a4faaccb4dc111f23df",
+    "scripts/omega/nyx-coverage-transfer-fixtures.ts": "24d243ad44c708d12e6d5cd10c1b3340cbe538fce10955c87b122fcefa831be9",
+    "scripts/omega/nyx-research-party-live-eval.ts": "a7e9cd607634472547655b70be5a1396a640d04b24da8cad7e742b1c9dd97639"
+  },
+  "dispatchWorkflowSha256": "fd1c05f059948990c435d728393427da0b32c274f51f60b3787ce689c4dc649b",
+  "integrityClassification": "SELF_CONTAINED_HASH_MANIFEST_NOT_SIGNED_CUSTODY",
+  "runtimeHashCanonicalization": "SHA256_UTF8_SOURCE_NORMALIZED_CRLF_TO_LF",
+  "sourceEvidence": {
+    "repository": "malekismail487-web/generous-ai-core",
+    "runId": 36904187872,
+    "jobId": 110510483541,
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36904187872",
+    "runConclusion": "failure",
+    "deterministicPreflight": "PASSED",
+    "providerSmoke": "COMPLETED_SENTINEL_OBSERVED",
+    "sourceRepositoryUnchanged": true
+  },
+  "scope": "PAIRED_FRESH_DEVELOPMENT_TRANSFER_IDENTICAL_DERIVATION_GUIDANCE",
+  "evaluationTier": "DEVELOPMENT",
+  "corpusDigest": "1b7b2ed1f928c22d196fca0b88ed1d802ccc60989fde2ab5b3525f0620429497",
+  "coverageStatus": "PARTIAL_JUST_IN_TIME",
+  "maturity": "IMPLEMENTED_AND_LOCALLY_VERIFIED",
+  "liveComparisonState": "INCONCLUSIVE_PROVIDER_FAILURE",
+  "epistemicState": "INSUFFICIENT_EVIDENCE",
+  "certifiesCurrentRuntime": false,
+  "defaultPolicyChanged": false,
+  "broadPromotion": false,
+  "authorityIncrease": false,
+  "frontierBenchmarkReadinessProbability": null,
+  "hypothesis": "Rotating allocation improves exact mechanism identification over no allocation when both receive identical derivation guidance.",
+  "supportCriterion": "More accepted paired outcomes under comparable realized calls, experiments and the predeclared token envelope, replicated on further fresh families before promotion.",
+  "falsificationCriterion": "No reproducible acceptance or resource-efficiency advantage, or additional failures relative to the simpler control.",
+  "observedFinding": "The derivation-only transaction arm was oracle-accepted. A falsifier HTTP 500 and a meta-review scalar schema rejection prevented a complete paired campaign. This is not evidence for or against allocation superiority.",
+  "incompleteArms": [
+    {
+      "taskId": "NYX-TRANSFER-SNAPSHOT",
+      "policy": "ROTATING_PARTITION",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    },
+    {
+      "taskId": "NYX-TRANSFER-COUPLED",
+      "policy": "DERIVATION_ONLY",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    },
+    {
+      "taskId": "NYX-TRANSFER-COUPLED",
+      "policy": "ROTATING_PARTITION",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    },
+    {
+      "taskId": "NYX-TRANSFER-MASS",
+      "policy": "DERIVATION_ONLY",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    },
+    {
+      "taskId": "NYX-TRANSFER-MASS",
+      "policy": "ROTATING_PARTITION",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    }
+  ],
+  "resourceSummary": {
+    "requestedArms": 6,
+    "completedArms": 1,
+    "modelCallReservations": 5,
+    "httpAttempts": 5,
+    "experiments": 3,
+    "reportedTokenLowerBound": 11190,
+    "completeTokenTotal": null,
+    "smokeModelCallReservations": 1,
+    "smokeReportedTokens": 121,
+    "comparisonArmWallClockMs": 85043,
+    "knownMonetaryCost": null,
+    "gpuTime": null
+  },
+  "failureClassification": {
+    "provider": "HTTP_500",
+    "providerBodyOrRootCause": "NOT_CAPTURED",
+    "retryPolicy": "HTTP_500_NOT_AUTORETRIED_UNDER_EXISTING_POLICY",
+    "modelOutput": "MODEL_OUTPUT_REJECTION_INTENT_SCALAR_INVALID",
+    "exactRejectedScalar": "UNKNOWN_RAW_OUTPUT_NOT_RETAINED",
+    "integrationDefectEstablished": false,
+    "outputTruncations": 0,
+    "falseAcceptances": 0
+  },
+  "promotionDecision": "NOT_PROMOTED_INCOMPLETE_COMPARISON",
+  "nextDependency": "Provider-stable complete paired campaign; preserve this inspected first arm as development evidence, never label a favorable rerun as blind validation.",
+  "planCoverage": {
+    "status": "PARTIAL_JUST_IN_TIME",
+    "direct": [
+      "Competing hypotheses and derivation checks",
+      "Architecture ablation at comparable resources",
+      "Explicit uncertainty and missing-data handling",
+      "Evidence provenance and exact replay"
+    ],
+    "supporting": [
+      "Independent assurance kernel",
+      "Internal complexity must pay rent",
+      "Capability is not authority"
+    ],
+    "deferred": [
+      "Public frontier benchmarks",
+      "Recursive self-improvement",
+      "Additional connectome layers",
+      "Device integration"
+    ],
+    "conflicts": [
+      "The previous pilot confounded allocation with stronger derivation guidance; this experiment isolates that treatment without rewriting the earlier source."
+    ]
+  }
+}

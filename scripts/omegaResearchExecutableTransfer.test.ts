@@ -307,6 +307,53 @@ check(coverageCheckpoint.integrityClassification === "SELF_CONTAINED_HASH_MANIFE
   && coverageReport.evidence.cognition === "E4" && coverageReport.evidence.experimentsAndOracle === "E3"
   && coverageReport.evidence.independentInstitutionalReplication === false,
 "self-contained reconstruction remains distinct from signed custody and institutional replication");
+// A successful partial arm must not wash away a failed, unpaired campaign.
+const transferRoot = "scripts/omega/checkpoints/coverage-transfer/";
+const transferCheckpoint = JSON.parse(readFileSync(`${transferRoot}checkpoint.json`, "utf8"));
+const transferReport = JSON.parse(readFileSync(`${transferRoot}comparison.json`, "utf8"));
+check(transferCheckpoint.schemaVersion === 1 && transferCheckpoint.reportFile === "comparison.json"
+  && checkpointDigest(transferReport) === transferCheckpoint.canonicalReportSha256,
+"transfer archive retains the complete sanitized report, not just its successful first arm");
+check(transferReport.candidateCommit === transferCheckpoint.runtimeBaselineCommit
+  && /^[a-f0-9]{40}$/.test(transferCheckpoint.runtimeBaselineCommit)
+  && transferReport.corpusDigest === NYX_COVERAGE_TRANSFER_CORPUS_DIGEST,
+"failed campaign is bound to the exact exercised candidate and frozen development corpus");
+for (const [path, expected] of Object.entries(transferCheckpoint.runtimeSourceHashes)) {
+  check(/^(src|scripts)\/[A-Za-z0-9_./-]+\.(ts|mjs)$/.test(path) && !path.split("/").includes(".."),
+    "transfer historical reconstruction cannot request arbitrary paths");
+  const source = execFileSync("git", ["show", `${transferCheckpoint.runtimeBaselineCommit}:${path}`],
+    { encoding: "utf8", timeout: 10_000 }).replace(/\r\n/g, "\n");
+  check(createHash("sha256").update(source).digest("hex") === expected,
+    "transfer evidence reconstructs against the historical source, not an unexercised later runtime");
+}
+const dispatchSource = execFileSync("git", ["show", `${transferCheckpoint.runtimeBaselineCommit}:.github/workflows/omega-nyx-research-party-live-eval.yml`],
+  { encoding: "utf8", timeout: 10_000 }).replace(/\r\n/g, "\n");
+check(createHash("sha256").update(dispatchSource).digest("hex") === transferCheckpoint.dispatchWorkflowSha256,
+  "historical dispatch configuration remains reconstructable after restoring manual-only operation");
+check(transferReport.requestedArms === 6 && transferReport.completedArms === 1
+  && transferReport.records.length === 1 && transferCheckpoint.incompleteArms.length === 5,
+"unexecuted arms stay visibly missing rather than becoming negative or positive model results");
+check(transferReport.records[0].policy === "DERIVATION_ONLY"
+  && transferReport.records[0].assurance.decision === "ACCEPT"
+  && transferReport.providerBlocked && transferReport.verdict === "INCONCLUSIVE_PROVIDER_FAILURE",
+"first-arm correctness cannot turn provider interruption into comparative success");
+check(transferReport.records[0].cognitionOutcomeCounts.PROVIDER_FAILURE === 1
+  && transferReport.records[0].cognitionOutcomeCounts.MODEL_OUTPUT_REJECTION === 1
+  && transferReport.records[0].cognitionOutcomeCounts.OUTPUT_TRUNCATION === 0,
+"HTTP failure, model scalar rejection and truncation remain distinct empirical classes");
+check(transferReport.records[0].resourceUsage.totalTokens === null
+  && transferCheckpoint.resourceSummary.completeTokenTotal === null
+  && transferCheckpoint.resourceSummary.reportedTokenLowerBound === 11190,
+"partial reported usage is a lower bound, not an invented complete token total");
+check(checkpointDigest(analyzeCoverageTransfer(transferReport.selectedTaskIds, transferReport.records))
+  === checkpointDigest(transferReport.pairedAnalysis)
+  && transferReport.pairedAnalysis.completePairs === 0 && !transferReport.realizedComputeMatched,
+"recomputed analysis preserves zero completed pairs and no realized compute match");
+check(transferCheckpoint.promotionDecision === "NOT_PROMOTED_INCOMPLETE_COMPARISON"
+  && transferCheckpoint.certifiesCurrentRuntime === false && transferCheckpoint.authorityIncrease === false
+  && !transferReport.broadPromotion && !transferReport.defaultPolicyChanged
+  && transferReport.acceptanceViolations === 0 && transferReport.records[0].sourceRepositoryUnchanged,
+"archived failure neither promotes allocation nor weakens the preserved source and authority boundaries");
 console.log(`NYX_EXECUTABLE_TRANSFER_PREFLIGHT ${JSON.stringify({ schemaVersion: 1,
   corpusDigest: NYX_RESEARCH_TRANSFER_CORPUS_DIGEST, actualCognition: "NOT_EXECUTED",
   oracleMutantsRejected: 3, evidenceClass: "E3", broadPromotion: false, authorityGranted: false })}`);
