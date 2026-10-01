@@ -194,6 +194,65 @@ function provider(transport: NvidiaNimTransport, credential = "test-credential-n
     "local cancellation is distinguished from timeout");
 }
 
+// A response cleanup or body reader is not trusted to honor AbortSignal.
+// Keep this watchdog outside the adapter so a broken bound fails this test.
+async function settleBounded<T>(pending: Promise<T>): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try { return await Promise.race([pending, new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), 1_000); })]); }
+  finally { if (timer) clearTimeout(timer); }
+}
+{
+  let aborted = false; let cleanupAttempted = false;
+  const result = await settleBounded(provider(async (_url, init) => {
+    init?.signal?.addEventListener("abort", () => { aborted = true; }, { once: true });
+    return { ok: false, status: 503, headers: new Headers(), body: { cancel: () => {
+      cleanupAttempted = true; return new Promise<void>(() => {});
+    } } } as unknown as Response;
+  }, undefined, 100).complete(request()));
+  check(result?.reason === "nvidia_provider_http_503" && result.evidence.statusCode === 503,
+    "unfinished error-body cancellation cannot suppress an observed HTTP failure");
+  check(aborted && cleanupAttempted && result?.content === null && !result?.executorAuthorityGranted,
+    "error cleanup aborts the transport without exposing content or granting authority");
+}
+for (const stalledPhase of ["TRANSPORT", "BODY"] as const) {
+  let aborted = false;
+  const result = await settleBounded(provider(async (_url, init) => {
+    init?.signal?.addEventListener("abort", () => { aborted = true; }, { once: true });
+    if (stalledPhase === "TRANSPORT") return new Promise<Response>(() => {});
+    return { ok: true, status: 200, headers: new Headers(), json: () => new Promise(() => {}) } as unknown as Response;
+  }, undefined, 100).complete(request()));
+  check(result?.reason === "nvidia_provider_timeout" && result.evidence.failureCategory === "PROVIDER_TIMEOUT",
+    `${stalledPhase}: ignored transport abort still settles as timeout, not invalid JSON or cognition`);
+  check(aborted && result?.evidence.responseDigest === null && !result?.executorAuthorityGranted,
+    `${stalledPhase}: unfinished output cannot survive the timeout as evidence or authority`);
+}
+{
+  const external = new AbortController();
+  const pending = provider(async () => ({ ok: true, status: 200, headers: new Headers(),
+    json: () => new Promise(() => {}) }) as unknown as Response).complete(request({ signal: external.signal }));
+  await new Promise<void>(resolve => setImmediate(resolve)); external.abort();
+  const result = await settleBounded(pending);
+  check(result?.reason === "nvidia_provider_cancelled" && result.evidence.retryability === "NO",
+    "caller cancellation during an unresponsive body read remains cancellation, not retryable timeout");
+}
+{
+  let release: ((value: Response) => void) | undefined;
+  const pending = provider(async () => new Promise<Response>(resolve => { release = resolve; }), undefined, 100).complete(request());
+  const result = await settleBounded(pending);
+  release?.(new Response(JSON.stringify({ choices: [{ message: { content: "late-content" }, finish_reason: "stop" }] })));
+  await new Promise<void>(resolve => setImmediate(resolve));
+  check(result?.reason === "nvidia_provider_timeout" && result.content === null && result.evidence.responseDigest === null,
+    "late transport success cannot replace a settled timeout or certify late generated content");
+}
+{
+  const external = new AbortController(); let dispatches = 0;
+  const pending = provider(async () => { dispatches += 1; return new Response("must-not-dispatch"); })
+    .complete(request({ signal: external.signal }));
+  external.abort(); const result = await settleBounded(pending);
+  check(dispatches === 0 && result?.evidence.networkAttempted === false && result.reason === "nvidia_provider_cancelled",
+    "cancellation before the dispatch microtask prevents networking and preserves honest attempt attribution");
+}
+
 {
   const source = nvidiaNimCredentialFromEnvironment({ NVIDIA_API_KEY: "environment-only-test-value" });
   check(source.sourceIdentity === "environment:NVIDIA_API_KEY" && source.read() === "environment-only-test-value", "environment credential source reads only the designated variable");

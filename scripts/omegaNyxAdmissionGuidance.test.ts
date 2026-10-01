@@ -8,7 +8,7 @@ import { assessNyxTransferEpoch, nyxTransferReportIdentity,
   type EpochReport } from "./omega/nyx-transfer-epoch-compare";
 import { assessNyxAdmissionReference, requireAdmissibleReferenceGates } from "./omega/nyx-quality-reference-preflight";
 import { NYX_GATE_RECOVERY, NYX_GATE_RECOVERY_FROZEN_CORE, NYX_GATE_RECOVERY_TASKS,
-  NYX_GATE_RECOVERY_TRANSPORT_REVISION } from "./omega/nyx-gate-recovery-fixtures";
+  NYX_GATE_RECOVERY_TRANSPORT_REVISION, NYX_GATE_RECOVERY_DEADLINE_REVISION } from "./omega/nyx-gate-recovery-fixtures";
 
 let passed = 0;
 const failures: string[] = [];
@@ -41,7 +41,7 @@ check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected
   "historical ownership-repair core remains immutable and reproducible");
 check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected]) =>
   digest(readFileSync(path)) === (path === NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath
-    ? NYX_GATE_RECOVERY_TRANSPORT_REVISION.sourceSha256 : expected)),
+    ? NYX_GATE_RECOVERY_DEADLINE_REVISION.sourceSha256 : expected)),
   "current ownership-repair core admits only the exact registered transport revision");
 const originalProvider = execFileSync("git", ["show",
   `${NYX_GATE_RECOVERY_FROZEN_CORE.commit}:${NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath}`], { encoding: "utf8" });
@@ -60,12 +60,22 @@ check(originalProvider.split(oldRetryBlock).length === 2 && originalProvider.spl
 const reviewedProvider = originalProvider.replace(oldRetryBlock,
   "&& transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries) {\n")
   .replace(oldHeaderHandling, newHeaderHandling);
-check(readFileSync(NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath, "utf8") === reviewedProvider,
-  "no prompt, parser, token, model, retry-count, or authority change hides inside the approved transport diff");
+const recoveryProvider = execFileSync("git", ["show",
+  `${NYX_GATE_RECOVERY_DEADLINE_REVISION.predecessor}:${NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath}`], { encoding: "utf8" });
+check(recoveryProvider === reviewedProvider && digest(Buffer.from(recoveryProvider)) === NYX_GATE_RECOVERY_TRANSPORT_REVISION.sourceSha256,
+  "previous exact two-hunk recovery revision remains reproducible without rewriting history");
+const deadlineProvider = readFileSync(NYX_GATE_RECOVERY_DEADLINE_REVISION.changedPath, "utf8");
+const attemptStart = "  async #attempt("; const resultStart = "  #result(";
+check(deadlineProvider.split(attemptStart)[0] === recoveryProvider.split(attemptStart)[0]
+  && deadlineProvider.split(resultStart)[1] === recoveryProvider.split(resultStart)[1],
+  "deadline repair cannot change prompts, parsers, model budgets, retry allowances, or evidence/authority contracts");
 check(!NYX_GATE_RECOVERY_TRANSPORT_REVISION.historicalScoresComparable
   && !NYX_GATE_RECOVERY_TRANSPORT_REVISION.acceptanceOracleChanged
   && !NYX_GATE_RECOVERY_TRANSPORT_REVISION.authorityIncrease,
   "new transport source cannot inherit an old comparison identity or relax acceptance");
+check(!NYX_GATE_RECOVERY_DEADLINE_REVISION.historicalScoresComparable
+  && !NYX_GATE_RECOVERY_DEADLINE_REVISION.acceptanceOracleChanged && !NYX_GATE_RECOVERY_DEADLINE_REVISION.authorityIncrease,
+  "deadline repair is a new source identity, not retroactive capability or authority promotion");
 check(NYX_ADMISSION_GUIDANCE_TASKS.length === 3
   && new Set(NYX_ADMISSION_GUIDANCE_TASKS.map((task) => task.taskClass)).size === 3
   && NYX_ADMISSION_GUIDANCE.arms.join() === "CURRENT,REASONING_ENABLED"

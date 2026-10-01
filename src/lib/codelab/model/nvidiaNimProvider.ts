@@ -408,14 +408,25 @@ export class NvidiaNimProvider {
     if (signal.aborted) { signal.removeEventListener("abort", abort); return this.#result("BLOCKED", "nvidia_provider_cancelled",
       null, null, requestDigest, null, null, emptyUsage(), false); }
     let timeoutTriggered = false;
+    let networkAttempted = false;
     const timeout = setTimeout(() => { timeoutTriggered = true; controller.abort(); }, Math.min(this.#config.timeoutMs, remainingMs));
+    const bounded = <T>(operation: () => Promise<T>): Promise<T> => new Promise((resolve, reject) => {
+      const aborted = () => { cleanup(); reject(new DOMException("Provider request aborted", "AbortError")); };
+      const cleanup = () => controller.signal.removeEventListener("abort", aborted);
+      if (controller.signal.aborted) { aborted(); return; }
+      controller.signal.addEventListener("abort", aborted, { once: true });
+      Promise.resolve().then(() => { controller.signal.throwIfAborted(); return operation(); })
+        .then(value => { cleanup(); resolve(value); }, error => { cleanup(); reject(error); });
+    });
     try {
-      this.#capacity?.recordDispatch();
-      const response = await this.#transport(NVIDIA_NIM_CHAT_COMPLETIONS_URL, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${credential}`, Accept: "application/json", "Content-Type": "application/json" },
-        body,
-        signal: controller.signal,
+      const response = await bounded(() => {
+        this.#capacity?.recordDispatch(); networkAttempted = true;
+        return this.#transport!(NVIDIA_NIM_CHAT_COMPLETIONS_URL, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${credential}`, Accept: "application/json", "Content-Type": "application/json" },
+          body,
+          signal: controller.signal,
+        });
       });
       const providerRequestId = safeProviderRequestId(response.headers.get("x-request-id") ?? response.headers.get("request-id"));
       if (!response.ok) {
@@ -425,15 +436,20 @@ export class NvidiaNimProvider {
         if ([429, 502, 503, 504].includes(response.status)) {
           this.#capacity?.defer(response.headers.get("retry-after"));
         }
-        // Error bodies are not model input or evidence; release the response without persisting it.
-        try { await response.body?.cancel(); } catch { /* transport cleanup cannot make rejection successful */ }
+        // Error bodies are not evidence. Abort the transport, then release the
+        // body best-effort: cleanup must never keep a known HTTP failure pending.
+        controller.abort();
+        try { void response.body?.cancel().catch(() => undefined); } catch { /* cleanup cannot change the HTTP outcome */ }
         return this.#result("PROVIDER_ERROR", `nvidia_provider_http_${response.status}`, null, null, requestDigest, null,
           response.status, emptyUsage(), true, providerRequestId);
       }
       let parsed: ProviderResponse;
-      try { parsed = await response.json() as ProviderResponse; }
-      catch { return this.#result("PROVIDER_ERROR", "nvidia_provider_response_not_json", null, null, requestDigest, null,
-        response.status, emptyUsage(), true, providerRequestId); }
+      try { parsed = await bounded(() => response.json()) as ProviderResponse; }
+      catch (error) {
+        if (controller.signal.aborted) throw error;
+        return this.#result("PROVIDER_ERROR", "nvidia_provider_response_not_json", null, null, requestDigest, null,
+          response.status, emptyUsage(), true, providerRequestId);
+      }
       const content = parsed.choices?.[0]?.message?.content;
       const rawFinishReason = parsed.choices?.[0]?.finish_reason;
       const reasoning = parsed.choices?.[0]?.message?.reasoning_content;
@@ -452,10 +468,10 @@ export class NvidiaNimProvider {
       return this.#result("COMPLETED", "nvidia_nim_completion_observed", content,
         finishReason, requestDigest, sha256(content), response.status, usage, true, providerRequestId, reasoningOutputBytes);
     } catch (error) {
-      const reason = error instanceof Error && error.name === "AbortError"
-        ? timeoutTriggered ? "nvidia_provider_timeout" : "nvidia_provider_cancelled"
-        : "nvidia_provider_transport_failure";
-      return this.#result("PROVIDER_ERROR", reason, null, null, requestDigest, null, null, emptyUsage(), true);
+      const reason = timeoutTriggered ? "nvidia_provider_timeout"
+        : signal.aborted || (error instanceof Error && error.name === "AbortError")
+          ? "nvidia_provider_cancelled" : "nvidia_provider_transport_failure";
+      return this.#result("PROVIDER_ERROR", reason, null, null, requestDigest, null, null, emptyUsage(), networkAttempted);
     } finally {
       clearTimeout(timeout);
       signal.removeEventListener("abort", abort);

@@ -28,6 +28,13 @@ export const NYX_GATE_RECOVERY_TRANSPORT_REVISION = Object.freeze({
   changedBehavior: "HONOR_TRANSIENT_RETRY_AFTER_AND_SHARE_EXHAUSTED_COOLDOWN",
   historicalScoresComparable: false, acceptanceOracleChanged: false, authorityIncrease: false,
 });
+export const NYX_GATE_RECOVERY_DEADLINE_REVISION = Object.freeze({
+  chunkId: "NYX-PROVIDER-DEADLINE-001", predecessor: "a5d08fc29e1e18cb760d1cbf7617ccf4d2831c9c",
+  changedPath: NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath,
+  sourceSha256: "21edc5ca21bbb735e8175ac350ee148fac3af43f638df620ab0cb8446b04c388",
+  changedBehavior: "BOUNDED_TRANSPORT_AND_BODY_SETTLEMENT_WITH_NONBLOCKING_ERROR_CLEANUP",
+  historicalScoresComparable: false, acceptanceOracleChanged: false, authorityIncrease: false,
+});
 
 function task(index: number, helperPath: string, helperName: string, helperSource: string,
   goodSource: string, faultySource: string): NyxQualityV5Task {
