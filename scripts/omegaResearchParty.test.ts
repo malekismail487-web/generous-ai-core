@@ -271,6 +271,9 @@ check(scripted.calls.some((item) => item.predictionFeedback.some((feedback) =>
 "at least one specialist receives a concrete falsifier instead of only a generic experiment result");
 check(result.contributions.every((item) => item.modelEvidence.evidenceClass === "E1"),
   "all model contributions remain E1 claims regardless of provider transport");
+check(result.cognitionOutcomes?.length === result.resourceUsage.modelCalls
+  && new Set(result.cognitionOutcomes.map(item => item.requestId)).size === result.resourceUsage.modelCalls,
+  "every cognition call has distinct sanitized outcome provenance, including rejected calls");
 check(new Set(result.contributions.map((item) => item.modelEvidence.provenanceRoot)).size === 1,
   "same-model contributions preserve their correlation root");
 
@@ -572,6 +575,9 @@ check(!revisionSchema({ ...revisedIntent, forecasts: validRaw.forecasts }),
 check(Buffer.byteLength(JSON.stringify(theoryIntentSchemaForRequest(adapterRequest)), "utf8") < 32_768,
   "bounded fixture schema stays within the existing provider schema-byte envelope");
 const adapted = await adapter.think(adapterRequest);
+check(adapted.evidence.delivery?.httpAttempts === 1 && adapted.evidence.delivery.transientUnavailableResponses === 0
+  && adapted.evidence.delivery.authorityRenewed === false,
+  "research cognition preserves provider delivery telemetry without renewing authority");
 check(adapted.decision === "CONTRIBUTION", `Nemotron adapter admits strict typed theory output: ${JSON.stringify(adapted)}`);
 check(adapted.intent?.mechanismId === "FAILED_AS_COMPLETE", "adapter preserves selected mechanism");
 check(adapted.evidence.evidenceClass === "E3", "test-double transport remains E3");

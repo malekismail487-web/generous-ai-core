@@ -20,6 +20,7 @@ import { R3BControlledEngineeringExecutor, type R3BEngineeringToolDefinition,
   type R3BExecutionRequest } from "../../src/lib/codelab/executor/r3ControlledEngineeringExecution";
 import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readOnlyExecutor";
 import { NYX_RESEARCH_PARTY_LIVE_TASKS, type NyxResearchPartyLiveTask } from "./nyx-research-party-fixtures";
+import { NYX_RESEARCH_TRANSFER_TASKS } from "./nyx-research-transfer-fixtures";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1") {
   console.error("NYX_RESEARCH_PARTY_LIVE result=BLOCKED reason=explicit_nvidia_network_authorization_missing");
@@ -33,6 +34,9 @@ if (!process.env.NVIDIA_API_KEY?.trim()) {
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const diagnosticOnly = process.env.OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY === "1";
 const policyComparison = process.env.OMEGA_NYX_RESEARCH_POLICY_COMPARISON === "1";
+const corpus = process.env.OMEGA_NYX_RESEARCH_CORPUS || "LEGACY";
+if (!["LEGACY", "EXECUTABLE_TRANSFER_V1"].includes(corpus)
+  || (corpus !== "LEGACY" && (!policyComparison || diagnosticOnly))) throw new Error("research_corpus_selection_invalid");
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
 const limits: ResearchPartyLimits = Object.freeze({ maxEntities: 8, maxModelCalls: 11, maxExperiments: 3,
@@ -116,7 +120,7 @@ async function createOmegaExperimentRunner(task: NyxResearchPartyLiveTask, objec
   await writeFile(join(sourceRoot, "src", "marker.txt"), markerBefore, "utf8");
   const outcomeByTool = Object.fromEntries(objective.experimentCatalog.map((experiment) =>
     [experiment.toolId, task.outcome(experiment.experimentId)]));
-  const probeSource = [
+  const probeSource = task.probeSource ?? [
     "const outcomes = Object.freeze(" + JSON.stringify(outcomeByTool) + ");",
     "const toolId = process.argv[2];",
     "if (!Object.prototype.hasOwnProperty.call(outcomes, toolId)) process.exit(3);",
@@ -216,17 +220,19 @@ async function createParty(task: NyxResearchPartyLiveTask, objective: ResearchPa
 
 if (policyComparison) {
   // One task is the default live commissioning bound; three requires explicit selection.
-  const tasks = NYX_RESEARCH_PARTY_LIVE_TASKS.slice(0,
+  const tasks = (corpus === "LEGACY" ? NYX_RESEARCH_PARTY_LIVE_TASKS : NYX_RESEARCH_TRANSFER_TASKS).slice(0,
     process.env.OMEGA_NYX_RESEARCH_COMPARE_TASKS === "3" ? 3 : 1);
   const records: Record<string, unknown>[] = [];
   let providerBlocked = false;
   let acceptanceViolations = 0;
   try {
     for (const [index, task] of tasks.entries()) {
-      const objective = task.objective(CANDIDATE, Date.now());
       const arms = index % 2 === 0 ? ["REVISE_AFTER_OBSERVATION", "EXHAUST_PRECOMMITTED_FORECASTS"] as const
         : ["EXHAUST_PRECOMMITTED_FORECASTS", "REVISE_AFTER_OBSERVATION"] as const;
       for (const [position, policy] of arms.entries()) {
+        // Each arm receives a fresh, equal lifetime; earlier provider waits must
+        // not consume the second arm's authority or objective validity window.
+        const objective = task.objective(CANDIDATE, Date.now());
         const { party, omega } = await createParty(task, objective, `${index}-${position}`, policy);
         const result = await party.investigate(objective);
         const assurance = assureResearchParty({ objective, limits, result,
@@ -239,6 +245,13 @@ if (policyComparison) {
           && result.decision.selectedMechanismId !== task.expectedMechanismId)) acceptanceViolations += 1;
         records.push({ taskId: task.taskId, policy, assurance, decision: result.decision,
           resourceUsage: result.resourceUsage, providerFailures: failures,
+          cognitionOutcomes: result.cognitionOutcomes,
+          transport: { telemetryComplete: result.cognitionEvidence.every(item => item.delivery != null),
+            httpAttempts: result.cognitionEvidence.reduce((sum, item) => sum + (item.delivery?.httpAttempts ?? 0), 0),
+            transientResponses: result.cognitionEvidence.reduce((sum, item) => sum + (item.delivery?.transientUnavailableResponses ?? 0), 0),
+            rateLimitedResponses: result.cognitionEvidence.reduce((sum, item) => sum + (item.delivery?.rateLimitedResponses ?? 0), 0),
+            timedOutAttempts: result.cognitionEvidence.reduce((sum, item) => sum + (item.delivery?.timedOutAttempts ?? 0), 0),
+            capacityWaitMs: result.cognitionEvidence.reduce((sum, item) => sum + (item.delivery?.capacityWaitMs ?? 0), 0) },
           cognitionEvidence: result.cognitionEvidence, evidenceChainComplete: result.evidenceChainComplete,
           contributionsByRole: Object.fromEntries(["INVESTIGATOR", "FALSIFIER", "REVISER", "META_REVIEWER"]
             .map(role => [role, result.contributions.filter(item => item.role === role).length])),
@@ -254,7 +267,7 @@ if (policyComparison) {
     const candidateFailed = records.some(record => record.policy === "EXHAUST_PRECOMMITTED_FORECASTS"
       && (record.assurance as { decision: string }).decision !== "ACCEPT");
     const report = { schemaVersion: 1, chunkId: "NYX-EVIDENCE-FIRST-LIVE-001", candidateCommit: CANDIDATE,
-      model: MODEL, corpusDigest: theoryDigest(tasks.map(task => task.oracleDigest)), matchedLimits: limits,
+      model: MODEL, corpus, corpusDigest: theoryDigest(tasks.map(task => task.oracleDigest)), matchedLimits: limits,
       requestedTasks: tasks.length, completedArms: records.length, providerBlocked, executionBlocked, acceptanceViolations,
       evidence: { cognition: "E4", experimentsAndOracle: "E3", independentInstitutionalReplication: false },
       realizedComputeMatched: false, broadPromotion: false,

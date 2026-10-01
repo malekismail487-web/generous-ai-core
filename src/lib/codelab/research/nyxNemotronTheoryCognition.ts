@@ -405,6 +405,7 @@ export class NyxNemotronTheoryCognition {
         promptTokens: providerEvidence?.usage.promptTokens ?? null,
         completionTokens: providerEvidence?.usage.completionTokens ?? null,
         totalTokens: providerEvidence?.usage.totalTokens ?? null, finishReason: providerEvidence?.finishReason ?? null,
+        delivery: providerEvidence?.delivery ?? null,
         grantsAuthority: false }, grantsAuthority: false });
   }
 }

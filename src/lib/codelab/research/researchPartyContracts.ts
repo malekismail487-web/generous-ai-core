@@ -1,4 +1,5 @@
 import { immutableTheoryValue, theoryDigest, theoryKeys, theoryStrings, theoryText } from "./theoryContracts";
+import type { NvidiaNimDeliveryEvidence } from "../model/nvidiaNimProvider";
 
 export type ResearchDomain = "SOFTWARE" | "MATHEMATICS" | "SCIENCE";
 export type ResearchRole = "INVESTIGATOR" | "FALSIFIER" | "REVISER" | "META_REVIEWER";
@@ -187,6 +188,8 @@ export interface TheoryCognitionEvidence {
   readonly completionTokens: number | null;
   readonly totalTokens: number | null;
   readonly finishReason: string | null;
+  /** Transport telemetry, not a vote or authorization signal. Older E3 fixtures may omit it. */
+  readonly delivery?: NvidiaNimDeliveryEvidence | null;
   readonly grantsAuthority: false;
 }
 
@@ -238,6 +241,8 @@ export interface ResearchPartyResult {
   readonly contributions: readonly TheoryContribution[];
   readonly observations: readonly ResearchExperimentObservation[];
   readonly cognitionEvidence: readonly TheoryCognitionEvidence[];
+  readonly cognitionOutcomes?: readonly Readonly<{ requestId: string; role: ResearchRole;
+    decision: TheoryCognitionResult["decision"]; reason: string; diagnostics: readonly string[] }>[];
   readonly cognitiveRouting: TheoryPerspectiveRoute | null;
   readonly resourceUsage: ResearchPartyResourceUsage;
   readonly addressability: {

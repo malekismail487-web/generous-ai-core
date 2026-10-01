@@ -8,6 +8,8 @@ export interface NyxResearchPartyLiveTask {
   readonly objective: (candidateBinding: string, now: number) => ResearchPartyObjective;
   readonly outcome: (experimentId: string) => string;
   readonly oracleDigest: string;
+  /** Optional actual probe program; never included in the cognition objective. */
+  readonly probeSource?: string;
 }
 
 function sourceEvidence(candidateBinding: string, now: number, taskId: string, summary: string) {

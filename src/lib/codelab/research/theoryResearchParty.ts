@@ -84,6 +84,7 @@ export class TheoryResearchParty {
     const contributions: TheoryContribution[] = [];
     const observations: ResearchExperimentObservation[] = [];
     const cognitionEvidence: TheoryCognitionEvidence[] = [];
+    const cognitionOutcomes: NonNullable<ResearchPartyResult["cognitionOutcomes"]>[number][] = [];
     const predictionBindings: NetworkPredictionBinding[] = [];
     let cognitiveRouting: ResearchPartyResult["cognitiveRouting"] = null;
     let modelCalls = 0;
@@ -104,7 +105,7 @@ export class TheoryResearchParty {
         independentAcceptance: false as const, grantsAuthority: false as const }) : graph.decision();
       const metrics = this.#config.network.metrics();
       return immutableTheoryValue({ researchId: objective.researchId, decision, contributions, observations,
-        cognitionEvidence, cognitiveRouting, resourceUsage: { modelCalls, experiments: observations.length, experimentCostUnits,
+        cognitionEvidence, cognitionOutcomes, cognitiveRouting, resourceUsage: { modelCalls, experiments: observations.length, experimentCostUnits,
           promptTokens: usageComplete ? knownPromptTokens : null, completionTokens: usageComplete ? knownCompletionTokens : null,
           totalTokens: usageComplete ? knownTotalTokens : null, wallClockMs: elapsed },
         addressability: { reservedTheorySlots: metrics.reservedAddressSlots,
@@ -158,6 +159,8 @@ export class TheoryResearchParty {
         instruction, maxOutputTokens: this.#config.limits.maxOutputTokensPerCall,
         observedAtEpochMs: this.#config.now(), deadlineEpochMs: deadline, signal });
       cognitionEvidence.push(result.evidence);
+      cognitionOutcomes.push(immutableTheoryValue({ requestId, role, decision: result.decision,
+        reason: result.reason, diagnostics: result.diagnostics }));
       if (result.evidence.promptTokens === null || result.evidence.completionTokens === null
         || result.evidence.totalTokens === null) usageComplete = false;
       else { knownPromptTokens += result.evidence.promptTokens; knownCompletionTokens += result.evidence.completionTokens;
