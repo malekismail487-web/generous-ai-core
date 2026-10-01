@@ -40,6 +40,7 @@ for (const override of [
     "./scripts/w0rs/register-typescript-loader.mjs", "scripts/omega/nyx-research-party-live-eval.ts"], {
     encoding: "utf8", timeout: 10_000, env: { ...process.env, NVIDIA_API_KEY: "synthetic-test-only",
       OMEGA_ALLOW_NVIDIA_NETWORK: "1", OMEGA_NYX_RESEARCH_POLICY_COMPARISON: "1",
+      OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON: "0",
       OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: "0", OMEGA_NYX_RESEARCH_CORPUS: "EXECUTABLE_TRANSFER_V1",
       OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: corpus[1].taskId, ...override },
   });
@@ -47,6 +48,25 @@ for (const override of [
     "invalid focused selection fails before provider construction or network dispatch");
   check(result.stdout === "" && !result.stderr.includes("synthetic-test-only"),
     "rejected selection neither emits a model result nor discloses credential injection");
+}
+for (const override of [
+  { OMEGA_NYX_RESEARCH_CORPUS: "LEGACY" },
+  { OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON: "0" },
+  { OMEGA_NYX_RESEARCH_POLICY_COMPARISON: "0" },
+  { OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: "1" },
+  { OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: "NYX-COVERAGE-QUEUE" },
+]) {
+  const rejected = spawnSync(process.execPath, ["--experimental-strip-types", "--import",
+    "./scripts/w0rs/register-typescript-loader.mjs", "scripts/omega/nyx-research-party-live-eval.ts"], {
+    encoding: "utf8", timeout: 10_000, env: { ...process.env, NVIDIA_API_KEY: "synthetic-test-only",
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1", OMEGA_NYX_RESEARCH_POLICY_COMPARISON: "1",
+      OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON: "1", OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: "0",
+      OMEGA_NYX_RESEARCH_CORPUS: "HYPOTHESIS_COVERAGE_DEVELOPMENT_V1",
+      OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: "", OMEGA_NYX_RESEARCH_COMPARE_POLICY: "", ...override },
+  });
+  check(rejected.status !== 0 && /research_(allocation_comparison|corpus|focused_task)_selection_invalid/.test(rejected.stderr)
+    && rejected.stdout === "" && !rejected.stderr.includes("synthetic-test-only"),
+  "incompatible allocation/corpus/diagnostic selectors fail closed before any provider dispatch");
 }
 for (const task of [...corpus, ...NYX_HYPOTHESIS_COVERAGE_TASKS]) {
   const objective = task.objective(candidate, 1_000);

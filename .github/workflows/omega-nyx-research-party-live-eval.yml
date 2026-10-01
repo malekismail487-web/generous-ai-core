@@ -90,6 +90,9 @@ jobs:
         shell: bash
         run: test -n "$NVIDIA_API_KEY"
       - name: Verify research-party, provider, authority, and TypeScript contracts
+        env:
+          NVIDIA_API_KEY: ''
+          OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON: '0'
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaResearchParty.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaResearchEvidenceFirst.test.ts
