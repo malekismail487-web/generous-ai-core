@@ -1,0 +1,1583 @@
+{
+  "schemaVersion": 1,
+  "chunkId": "NYX-HYPOTHESIS-COVERAGE-LIVE-001",
+  "candidateCommit": "0c9f2a0eda075caedaabf128cc3d80328ce39d5e",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b",
+  "corpus": "HYPOTHESIS_COVERAGE_DEVELOPMENT_V1",
+  "corpusDigest": "523747da3e580eebbf26e6be39731c34313d8b2cd9576636d326bd3aa53b58c8",
+  "matchedLimits": {
+    "maxEntities": 8,
+    "maxModelCalls": 11,
+    "maxExperiments": 3,
+    "maxEvidenceItems": 128,
+    "maxWallClockMs": 900000,
+    "maxPromptBytesPerCall": 64000,
+    "maxOutputTokensPerCall": 1536,
+    "maxTotalOutputTokens": 16896,
+    "maxCostUnits": 10
+  },
+  "comparisonScope": "THREE_ARM_DEVELOPMENT_NOT_HELDOUT_GENERALIZATION",
+  "selectedTaskIds": [
+    "NYX-COVERAGE-QUEUE"
+  ],
+  "selectedPolicy": null,
+  "requestedArms": 3,
+  "scheduling": {
+    "maxParallelModelExecutions": 1,
+    "peerViewsFrozenBeforePhase": true,
+    "grantsAuthority": false
+  },
+  "requestedTasks": 1,
+  "completedArms": 3,
+  "providerBlocked": false,
+  "executionBlocked": false,
+  "acceptanceViolations": 0,
+  "evidence": {
+    "cognition": "E4",
+    "experimentsAndOracle": "E3",
+    "independentInstitutionalReplication": false
+  },
+  "realizedComputeMatched": false,
+  "realizedCompute": [
+    {
+      "taskId": "NYX-COVERAGE-QUEUE",
+      "complete": true,
+      "modelCallsMatched": true,
+      "experimentsMatched": true,
+      "tokenUsageKnown": true,
+      "tokenSpreadFraction": 0.0345320314360562,
+      "wallClockSpreadMs": 63568
+    }
+  ],
+  "broadPromotion": false,
+  "computeMatchingDefinition": "EQUAL_REPORTED_MODEL_TOKENS_CALL_RESERVATIONS_EXPERIMENT_COUNTS_NOT_GPU_TIME_OR_LATENCY",
+  "evaluationTier": "DEVELOPMENT",
+  "freshHeldoutClaim": false,
+  "simplerSameBudgetControl": "ROTATING_PARTITION",
+  "oracleUnchanged": true,
+  "allocationIsEvidence": false,
+  "defaultPolicyChanged": false,
+  "verdict": "BOUNDED_LIVE_COMPARISON_ONLY",
+  "records": [
+    {
+      "taskId": "NYX-COVERAGE-QUEUE",
+      "policy": "INDEPENDENT",
+      "assurance": {
+        "decision": "INSUFFICIENT_EVIDENCE",
+        "reason": "party_did_not_establish_one_oracle_correct_mechanism",
+        "functionalAcceptance": false,
+        "evidenceIntegrityAcceptance": true,
+        "authorityBoundaryAcceptance": true,
+        "resourceAcceptance": true,
+        "findings": [],
+        "evidenceClass": "E3",
+        "independence": "INDEPENDENT_ORACLE_IMPLEMENTATION_SAME_REPOSITORY",
+        "evaluatorDigest": "e3bd9d15c168037fe2965fa55e6290e5bedbae735f97fe33bf5caa9a453bd22e",
+        "grantsAuthority": false
+      },
+      "decision": {
+        "state": "REFUTED_MODELED_FAMILY",
+        "selectedTheoryId": null,
+        "selectedMechanismId": null,
+        "reason": "all_modeled_hypotheses_falsified",
+        "assessments": [
+          {
+            "theoryId": "nyx-live-party-0-0:theory:0",
+            "mechanismId": "RESET_OVERFLOW",
+            "state": "CONFLICTED",
+            "supportingObservationIds": [
+              "OBS-d72898b74509dc62eb3a650878d8611871d138ec17cd56b4"
+            ],
+            "falsifyingObservationIds": [
+              "OBS-58662aae64479f5e9a21320a8e634534410a6704cc1808ac"
+            ],
+            "unresolvedExperimentIds": [],
+            "distinctEvidenceRoots": 2,
+            "modelEstimate": 0.7,
+            "calibratedProbability": null
+          },
+          {
+            "theoryId": "nyx-live-party-0-0:theory:1",
+            "mechanismId": "RESET_OVERFLOW",
+            "state": "CONFLICTED",
+            "supportingObservationIds": [
+              "OBS-d72898b74509dc62eb3a650878d8611871d138ec17cd56b4"
+            ],
+            "falsifyingObservationIds": [
+              "OBS-58662aae64479f5e9a21320a8e634534410a6704cc1808ac"
+            ],
+            "unresolvedExperimentIds": [],
+            "distinctEvidenceRoots": 2,
+            "modelEstimate": 0.75,
+            "calibratedProbability": null
+          },
+          {
+            "theoryId": "nyx-live-party-0-0:theory:2",
+            "mechanismId": "DROP_OLDEST",
+            "state": "CONFLICTED",
+            "supportingObservationIds": [
+              "OBS-d72898b74509dc62eb3a650878d8611871d138ec17cd56b4"
+            ],
+            "falsifyingObservationIds": [
+              "OBS-8cdcda166d3f9ceb7365b42002d65bdbee95828b1b508ada",
+              "OBS-58662aae64479f5e9a21320a8e634534410a6704cc1808ac"
+            ],
+            "unresolvedExperimentIds": [],
+            "distinctEvidenceRoots": 3,
+            "modelEstimate": 0.75,
+            "calibratedProbability": null
+          }
+        ],
+        "decisiveEvidenceIds": [
+          "RESEARCH-R3B-EVIDENCE-200eb7def127c86ad3577b89e6e7f18a",
+          "RESEARCH-R3B-EVIDENCE-7d3093166c0f9f849f580608a1346877",
+          "RESEARCH-R3B-EVIDENCE-d0b014adc9645d56f8277d38cdfd9887"
+        ],
+        "independentAcceptance": false,
+        "grantsAuthority": false
+      },
+      "resourceUsage": {
+        "modelCalls": 8,
+        "experiments": 3,
+        "experimentCostUnits": 3,
+        "promptTokens": 26111,
+        "completionTokens": 6321,
+        "totalTokens": 32432,
+        "wallClockMs": 258159
+      },
+      "providerFailures": 0,
+      "peakParallelModelExecutions": 1,
+      "cognitionOutcomes": [
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-0-1-df1fe4f2e2fdc6fd",
+          "role": "INVESTIGATOR",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-0-2-f93b0a8823c044c8",
+          "role": "INVESTIGATOR",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-0-3-47c63aaa6399b08e",
+          "role": "INVESTIGATOR",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-0-4-b99d1b4f170372be",
+          "role": "FALSIFIER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-0-5-27b3c49fdf5b0a49",
+          "role": "REVISER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-0-6-1caa8467060389b8",
+          "role": "REVISER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-0-7-afbc204322c657e7",
+          "role": "REVISER",
+          "decision": "COGNITION_ERROR",
+          "reason": "theory_cognition_schema_invalid",
+          "diagnostics": [
+            "intent_scalar_invalid"
+          ],
+          "outcomeClass": "MODEL_OUTPUT_REJECTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-0-8-4ab029857437e433",
+          "role": "META_REVIEWER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        }
+      ],
+      "cognitionOutcomeCounts": {
+        "CONTRIBUTION": 7,
+        "PROVIDER_FAILURE": 0,
+        "INTEGRATION_REJECTION": 0,
+        "OUTPUT_TRUNCATION": 0,
+        "MODEL_OUTPUT_REJECTION": 1,
+        "UNKNOWN_FAILURE": 0
+      },
+      "transport": {
+        "telemetryComplete": true,
+        "httpAttempts": 8,
+        "transientResponses": 0,
+        "rateLimitedResponses": 0,
+        "timedOutAttempts": 0,
+        "capacityWaitMs": 0
+      },
+      "cognitionEvidence": [
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/75688d472ce2d1e72d7f1ebb6f29d4de48d8e2a21b02d239df4915f86c1cc937",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "75688d472ce2d1e72d7f1ebb6f29d4de48d8e2a21b02d239df4915f86c1cc937",
+          "responseDigest": "417388aca49e5525c1576cbcaac79caed892bdad589d9034da5b40de843a2dd3",
+          "statusCode": 200,
+          "promptTokens": 1344,
+          "completionTokens": 562,
+          "totalTokens": 1906,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/4ae081a8584c71e7a49ebc197a0241254dbb5146d226fdae4697d4f859514d7f",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "4ae081a8584c71e7a49ebc197a0241254dbb5146d226fdae4697d4f859514d7f",
+          "responseDigest": "a7ec4fc91fdcb88e375221341b8f9f32035334048ba560cf2c72cfeaec8ab082",
+          "statusCode": 200,
+          "promptTokens": 1344,
+          "completionTokens": 589,
+          "totalTokens": 1933,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/08777d99aee1899fd632d2accbe10a8bb2293c6b6b37fd31f4b6b1e0dcbbe7d1",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "08777d99aee1899fd632d2accbe10a8bb2293c6b6b37fd31f4b6b1e0dcbbe7d1",
+          "responseDigest": "da9a5a7d2307c13e2c931679ab6488ff84d42249a448f866e1b3898e5878ff55",
+          "statusCode": 200,
+          "promptTokens": 1336,
+          "completionTokens": 573,
+          "totalTokens": 1909,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/c0f2eee93ad5ae3a2c284c6d6a4377147b2a6e968c91ece7da685010d5abe2f0",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "c0f2eee93ad5ae3a2c284c6d6a4377147b2a6e968c91ece7da685010d5abe2f0",
+          "responseDigest": "f44bf3b8f5cfd0bed2a1eee568da46fd7ae90b226e2e54d52e219ccdc6c970be",
+          "statusCode": 200,
+          "promptTokens": 3112,
+          "completionTokens": 832,
+          "totalTokens": 3944,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/fe8d9856ab15e131eed8e8f08f4fe9fecbb92b3ab25bb8fc5773ccdc9c21226f",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "fe8d9856ab15e131eed8e8f08f4fe9fecbb92b3ab25bb8fc5773ccdc9c21226f",
+          "responseDigest": "1d4f794d6d49a2d11968dae37495a3f20ede1b4cd561c78c96ca74a26a9ec5e9",
+          "statusCode": 200,
+          "promptTokens": 4328,
+          "completionTokens": 673,
+          "totalTokens": 5001,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/28ea78d9dc7fc51114e1476b285c6b5a3a45101a94545afca9c12a04f817e059",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "28ea78d9dc7fc51114e1476b285c6b5a3a45101a94545afca9c12a04f817e059",
+          "responseDigest": "33b282a6b099922894b9217df4cd44ede6e725e84aabed4d3c0b10b981c0483a",
+          "statusCode": 200,
+          "promptTokens": 4336,
+          "completionTokens": 917,
+          "totalTokens": 5253,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/2aae2c16b3c0fa419f09a63929fcd3c86b925a42afd850f2f69e80186b062c76",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "2aae2c16b3c0fa419f09a63929fcd3c86b925a42afd850f2f69e80186b062c76",
+          "responseDigest": "e08de8eb9bc87c594c1570242788e84303fec0d3b3ab2c90e36bc42e479ffe1f",
+          "statusCode": 200,
+          "promptTokens": 4330,
+          "completionTokens": 1078,
+          "totalTokens": 5408,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/3bc072a4a4264e81883c1366d8d5b2beb2896435c96c0291910560702c4a6c1d",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "3bc072a4a4264e81883c1366d8d5b2beb2896435c96c0291910560702c4a6c1d",
+          "responseDigest": "e823a3c128c9e743a6544af8bd9d881727859303a891aea93e0406829710b388",
+          "statusCode": 200,
+          "promptTokens": 5981,
+          "completionTokens": 1097,
+          "totalTokens": 7078,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        }
+      ],
+      "evidenceChainComplete": true,
+      "hypothesisAllocations": [],
+      "catalogMechanisms": 4,
+      "initialDistinctMechanisms": 1,
+      "totalDistinctMechanisms": 2,
+      "predictedExperiments": 3,
+      "contributionsByRole": {
+        "INVESTIGATOR": 3,
+        "FALSIFIER": 1,
+        "REVISER": 2,
+        "META_REVIEWER": 1
+      },
+      "sourceRepositoryUnchanged": true,
+      "authorityGranted": false
+    },
+    {
+      "taskId": "NYX-COVERAGE-QUEUE",
+      "policy": "ROTATING_PARTITION",
+      "assurance": {
+        "decision": "ACCEPT",
+        "reason": "hidden_oracle_and_evidence_contract_accept",
+        "functionalAcceptance": true,
+        "evidenceIntegrityAcceptance": true,
+        "authorityBoundaryAcceptance": true,
+        "resourceAcceptance": true,
+        "findings": [],
+        "evidenceClass": "E3",
+        "independence": "INDEPENDENT_ORACLE_IMPLEMENTATION_SAME_REPOSITORY",
+        "evaluatorDigest": "e3bd9d15c168037fe2965fa55e6290e5bedbae735f97fe33bf5caa9a453bd22e",
+        "grantsAuthority": false
+      },
+      "decision": {
+        "state": "SUPPORTED_WITHIN_MODELED_FAMILY",
+        "selectedTheoryId": "nyx-live-party-0-1:theory:0",
+        "selectedMechanismId": "RESET_OVERFLOW",
+        "reason": "one_hypothesis_survives_complete_precommitted_predictions",
+        "assessments": [
+          {
+            "theoryId": "nyx-live-party-0-1:theory:0",
+            "mechanismId": "RESET_OVERFLOW",
+            "state": "SUPPORTED",
+            "supportingObservationIds": [
+              "OBS-ec604e13092289bdad1be893ec35db6fb055c5a45a645b81",
+              "OBS-7827c52ae353d4d32bd27466f1218ad02d3b13db180277c3"
+            ],
+            "falsifyingObservationIds": [],
+            "unresolvedExperimentIds": [],
+            "distinctEvidenceRoots": 2,
+            "modelEstimate": 0.75,
+            "calibratedProbability": null
+          },
+          {
+            "theoryId": "nyx-live-party-0-1:theory:1",
+            "mechanismId": "RESET_OVERFLOW",
+            "state": "SUPPORTED",
+            "supportingObservationIds": [
+              "OBS-ec604e13092289bdad1be893ec35db6fb055c5a45a645b81",
+              "OBS-7827c52ae353d4d32bd27466f1218ad02d3b13db180277c3"
+            ],
+            "falsifyingObservationIds": [],
+            "unresolvedExperimentIds": [],
+            "distinctEvidenceRoots": 2,
+            "modelEstimate": 0.7,
+            "calibratedProbability": null
+          },
+          {
+            "theoryId": "nyx-live-party-0-1:theory:2",
+            "mechanismId": "RESET_OVERFLOW",
+            "state": "CONFLICTED",
+            "supportingObservationIds": [
+              "OBS-ec604e13092289bdad1be893ec35db6fb055c5a45a645b81"
+            ],
+            "falsifyingObservationIds": [
+              "OBS-7827c52ae353d4d32bd27466f1218ad02d3b13db180277c3"
+            ],
+            "unresolvedExperimentIds": [],
+            "distinctEvidenceRoots": 2,
+            "modelEstimate": 0.75,
+            "calibratedProbability": null
+          }
+        ],
+        "decisiveEvidenceIds": [
+          "RESEARCH-R3B-EVIDENCE-7f84fe904d93ec8710279b6f36221c48",
+          "RESEARCH-R3B-EVIDENCE-f8b07f4ff06beb8c4ad5154090f8fa49"
+        ],
+        "independentAcceptance": false,
+        "grantsAuthority": false
+      },
+      "resourceUsage": {
+        "modelCalls": 8,
+        "experiments": 3,
+        "experimentCostUnits": 3,
+        "promptTokens": 28356,
+        "completionTokens": 5236,
+        "totalTokens": 33592,
+        "wallClockMs": 250731
+      },
+      "providerFailures": 0,
+      "peakParallelModelExecutions": 1,
+      "cognitionOutcomes": [
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-1-1-8d4c45406c24cc95",
+          "role": "INVESTIGATOR",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-1-2-3fb303ce9b6bb731",
+          "role": "INVESTIGATOR",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-1-3-b2b56ea6523f396d",
+          "role": "INVESTIGATOR",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-1-4-797b03d05304ce11",
+          "role": "FALSIFIER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-1-5-38004bb2e2305bdb",
+          "role": "REVISER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-1-6-4e1496ff9366612f",
+          "role": "REVISER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-1-7-6ad7c4907e2b148d",
+          "role": "REVISER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-1-8-7db591995f859073",
+          "role": "META_REVIEWER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        }
+      ],
+      "cognitionOutcomeCounts": {
+        "CONTRIBUTION": 8,
+        "PROVIDER_FAILURE": 0,
+        "INTEGRATION_REJECTION": 0,
+        "OUTPUT_TRUNCATION": 0,
+        "MODEL_OUTPUT_REJECTION": 0,
+        "UNKNOWN_FAILURE": 0
+      },
+      "transport": {
+        "telemetryComplete": true,
+        "httpAttempts": 8,
+        "transientResponses": 0,
+        "rateLimitedResponses": 0,
+        "timedOutAttempts": 0,
+        "capacityWaitMs": 0
+      },
+      "cognitionEvidence": [
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/23ce9a7de4cb6cf2f52a0b43d519b5d3d59714788751ad7a60e67380dc7c3a8e",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "23ce9a7de4cb6cf2f52a0b43d519b5d3d59714788751ad7a60e67380dc7c3a8e",
+          "responseDigest": "9e854420e8a3c3241221f8a829557cc83ef55cc8c792c82e64d71d9fc83eae4a",
+          "statusCode": 200,
+          "promptTokens": 1747,
+          "completionTokens": 545,
+          "totalTokens": 2292,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/62519ebabda4ed472c57497aeb9867bbf6faf505ca9da04752f8e81a5e37eba3",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "62519ebabda4ed472c57497aeb9867bbf6faf505ca9da04752f8e81a5e37eba3",
+          "responseDigest": "f125042162b70ed9ac61b9c596e89854e17aa8376e35fbc6e07de5d5e006c2a0",
+          "statusCode": 200,
+          "promptTokens": 1738,
+          "completionTokens": 545,
+          "totalTokens": 2283,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/aeab250c131d68d6b6f4fec8a337b7908c497ad1bba02f5783dd6924690f01c0",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "aeab250c131d68d6b6f4fec8a337b7908c497ad1bba02f5783dd6924690f01c0",
+          "responseDigest": "4a1e660100fe88798746f173628060addec431aa6bc7d4ef0133513d787c06b3",
+          "statusCode": 200,
+          "promptTokens": 1730,
+          "completionTokens": 523,
+          "totalTokens": 2253,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/19862a762f787cacc2f3ccedefdb88260e3a163e1f2178df8f08a5586959098f",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "19862a762f787cacc2f3ccedefdb88260e3a163e1f2178df8f08a5586959098f",
+          "responseDigest": "bde62d44773264a9a77ec3e37c28adbc942d94fc241be410575ba0951abb4101",
+          "statusCode": 200,
+          "promptTokens": 2932,
+          "completionTokens": 947,
+          "totalTokens": 3879,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/69c8cfba8c1419aca986da4209ff6388074389e168d7e2e7b801ef3b45ed1b37",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "69c8cfba8c1419aca986da4209ff6388074389e168d7e2e7b801ef3b45ed1b37",
+          "responseDigest": "258d13a13df40f48462d76bc8d99ff59f3692a349e5248f3453a29c36d08efac",
+          "statusCode": 200,
+          "promptTokens": 4646,
+          "completionTokens": 678,
+          "totalTokens": 5324,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/7d9b04ec974b950e2bb6aa7122e8fa8ba1bfa7f2147c13de6d85757a96df1a70",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "7d9b04ec974b950e2bb6aa7122e8fa8ba1bfa7f2147c13de6d85757a96df1a70",
+          "responseDigest": "73e4ff0b6261f5a150d0ea880d8530c5d1380fdcd159492e5d4a2f2dc761e59a",
+          "statusCode": 200,
+          "promptTokens": 4647,
+          "completionTokens": 504,
+          "totalTokens": 5151,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/20e206598eacd88006b931e9d67b6ce8b432cf683828f36f481a04e925b1b8cb",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "20e206598eacd88006b931e9d67b6ce8b432cf683828f36f481a04e925b1b8cb",
+          "responseDigest": "d33a9c6b20b86b2652e7c85820f9a631a6ad7d933f9201cbd0ed2dce99e1d043",
+          "statusCode": 200,
+          "promptTokens": 4649,
+          "completionTokens": 823,
+          "totalTokens": 5472,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/35a9c7a0b65e2ec02929b7d54eb3c67d78e78f99bbebe4409238a6fdaa77ab7f",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "35a9c7a0b65e2ec02929b7d54eb3c67d78e78f99bbebe4409238a6fdaa77ab7f",
+          "responseDigest": "7e9aee198644d2f8cd53f5fa910c28a37ee6c00398bd59566c000806e92a26e9",
+          "statusCode": 200,
+          "promptTokens": 6267,
+          "completionTokens": 671,
+          "totalTokens": 6938,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        }
+      ],
+      "evidenceChainComplete": true,
+      "hypothesisAllocations": [
+        {
+          "schemaVersion": 1,
+          "policy": "ROTATING_PARTITION",
+          "objectiveDigest": "647d3d9b71a1075dcd6995cf095c307b721245096bb0b47f7ad25ab6d64782b3",
+          "contextDigest": "eae98ac1ec30b34846c77f10b70f040d70f3f1d38c123953d00a4a4867da0b0a",
+          "phaseOrdinal": 0,
+          "theoryId": "nyx-live-party-0-1:theory:0",
+          "cohortTheoryIds": [
+            "nyx-live-party-0-1:theory:0",
+            "nyx-live-party-0-1:theory:1",
+            "nyx-live-party-0-1:theory:2"
+          ],
+          "rankedMechanismIds": [
+            "DROP_OLDEST",
+            "DROP_NEWEST",
+            "UNBOUNDED",
+            "RESET_OVERFLOW"
+          ],
+          "preferredMechanismIds": [
+            "DROP_OLDEST",
+            "RESET_OVERFLOW"
+          ],
+          "observedExperimentIds": [],
+          "interpretation": "EXPLORATION_GUIDANCE_NOT_EVIDENCE",
+          "grantsAuthority": false
+        },
+        {
+          "schemaVersion": 1,
+          "policy": "ROTATING_PARTITION",
+          "objectiveDigest": "647d3d9b71a1075dcd6995cf095c307b721245096bb0b47f7ad25ab6d64782b3",
+          "contextDigest": "eae98ac1ec30b34846c77f10b70f040d70f3f1d38c123953d00a4a4867da0b0a",
+          "phaseOrdinal": 0,
+          "theoryId": "nyx-live-party-0-1:theory:1",
+          "cohortTheoryIds": [
+            "nyx-live-party-0-1:theory:0",
+            "nyx-live-party-0-1:theory:1",
+            "nyx-live-party-0-1:theory:2"
+          ],
+          "rankedMechanismIds": [
+            "DROP_OLDEST",
+            "DROP_NEWEST",
+            "UNBOUNDED",
+            "RESET_OVERFLOW"
+          ],
+          "preferredMechanismIds": [
+            "DROP_NEWEST"
+          ],
+          "observedExperimentIds": [],
+          "interpretation": "EXPLORATION_GUIDANCE_NOT_EVIDENCE",
+          "grantsAuthority": false
+        },
+        {
+          "schemaVersion": 1,
+          "policy": "ROTATING_PARTITION",
+          "objectiveDigest": "647d3d9b71a1075dcd6995cf095c307b721245096bb0b47f7ad25ab6d64782b3",
+          "contextDigest": "eae98ac1ec30b34846c77f10b70f040d70f3f1d38c123953d00a4a4867da0b0a",
+          "phaseOrdinal": 0,
+          "theoryId": "nyx-live-party-0-1:theory:2",
+          "cohortTheoryIds": [
+            "nyx-live-party-0-1:theory:0",
+            "nyx-live-party-0-1:theory:1",
+            "nyx-live-party-0-1:theory:2"
+          ],
+          "rankedMechanismIds": [
+            "DROP_OLDEST",
+            "DROP_NEWEST",
+            "UNBOUNDED",
+            "RESET_OVERFLOW"
+          ],
+          "preferredMechanismIds": [
+            "UNBOUNDED"
+          ],
+          "observedExperimentIds": [],
+          "interpretation": "EXPLORATION_GUIDANCE_NOT_EVIDENCE",
+          "grantsAuthority": false
+        },
+        {
+          "schemaVersion": 1,
+          "policy": "ROTATING_PARTITION",
+          "objectiveDigest": "647d3d9b71a1075dcd6995cf095c307b721245096bb0b47f7ad25ab6d64782b3",
+          "contextDigest": "6f9541296159843d44d4284e07fc444ad6265402733c2c91b52d1c1350e86881",
+          "phaseOrdinal": 1,
+          "theoryId": "nyx-live-party-0-1:theory:0",
+          "cohortTheoryIds": [
+            "nyx-live-party-0-1:theory:0",
+            "nyx-live-party-0-1:theory:1",
+            "nyx-live-party-0-1:theory:2"
+          ],
+          "rankedMechanismIds": [
+            "RESET_OVERFLOW",
+            "DROP_OLDEST",
+            "DROP_NEWEST",
+            "UNBOUNDED"
+          ],
+          "preferredMechanismIds": [
+            "RESET_OVERFLOW",
+            "UNBOUNDED"
+          ],
+          "observedExperimentIds": [
+            "NYX-COVERAGE-QUEUE-EXP-0"
+          ],
+          "interpretation": "EXPLORATION_GUIDANCE_NOT_EVIDENCE",
+          "grantsAuthority": false
+        },
+        {
+          "schemaVersion": 1,
+          "policy": "ROTATING_PARTITION",
+          "objectiveDigest": "647d3d9b71a1075dcd6995cf095c307b721245096bb0b47f7ad25ab6d64782b3",
+          "contextDigest": "6f9541296159843d44d4284e07fc444ad6265402733c2c91b52d1c1350e86881",
+          "phaseOrdinal": 1,
+          "theoryId": "nyx-live-party-0-1:theory:1",
+          "cohortTheoryIds": [
+            "nyx-live-party-0-1:theory:0",
+            "nyx-live-party-0-1:theory:1",
+            "nyx-live-party-0-1:theory:2"
+          ],
+          "rankedMechanismIds": [
+            "RESET_OVERFLOW",
+            "DROP_OLDEST",
+            "DROP_NEWEST",
+            "UNBOUNDED"
+          ],
+          "preferredMechanismIds": [
+            "DROP_OLDEST"
+          ],
+          "observedExperimentIds": [
+            "NYX-COVERAGE-QUEUE-EXP-0"
+          ],
+          "interpretation": "EXPLORATION_GUIDANCE_NOT_EVIDENCE",
+          "grantsAuthority": false
+        },
+        {
+          "schemaVersion": 1,
+          "policy": "ROTATING_PARTITION",
+          "objectiveDigest": "647d3d9b71a1075dcd6995cf095c307b721245096bb0b47f7ad25ab6d64782b3",
+          "contextDigest": "6f9541296159843d44d4284e07fc444ad6265402733c2c91b52d1c1350e86881",
+          "phaseOrdinal": 1,
+          "theoryId": "nyx-live-party-0-1:theory:2",
+          "cohortTheoryIds": [
+            "nyx-live-party-0-1:theory:0",
+            "nyx-live-party-0-1:theory:1",
+            "nyx-live-party-0-1:theory:2"
+          ],
+          "rankedMechanismIds": [
+            "RESET_OVERFLOW",
+            "DROP_OLDEST",
+            "DROP_NEWEST",
+            "UNBOUNDED"
+          ],
+          "preferredMechanismIds": [
+            "DROP_NEWEST"
+          ],
+          "observedExperimentIds": [
+            "NYX-COVERAGE-QUEUE-EXP-0"
+          ],
+          "interpretation": "EXPLORATION_GUIDANCE_NOT_EVIDENCE",
+          "grantsAuthority": false
+        }
+      ],
+      "catalogMechanisms": 4,
+      "initialDistinctMechanisms": 3,
+      "totalDistinctMechanisms": 4,
+      "predictedExperiments": 3,
+      "contributionsByRole": {
+        "INVESTIGATOR": 3,
+        "FALSIFIER": 1,
+        "REVISER": 3,
+        "META_REVIEWER": 1
+      },
+      "sourceRepositoryUnchanged": true,
+      "authorityGranted": false
+    },
+    {
+      "taskId": "NYX-COVERAGE-QUEUE",
+      "policy": "COVERAGE_AWARE",
+      "assurance": {
+        "decision": "ACCEPT",
+        "reason": "hidden_oracle_and_evidence_contract_accept",
+        "functionalAcceptance": true,
+        "evidenceIntegrityAcceptance": true,
+        "authorityBoundaryAcceptance": true,
+        "resourceAcceptance": true,
+        "findings": [],
+        "evidenceClass": "E3",
+        "independence": "INDEPENDENT_ORACLE_IMPLEMENTATION_SAME_REPOSITORY",
+        "evaluatorDigest": "e3bd9d15c168037fe2965fa55e6290e5bedbae735f97fe33bf5caa9a453bd22e",
+        "grantsAuthority": false
+      },
+      "decision": {
+        "state": "SUPPORTED_WITHIN_MODELED_FAMILY",
+        "selectedTheoryId": "nyx-live-party-0-2:theory:0",
+        "selectedMechanismId": "RESET_OVERFLOW",
+        "reason": "one_hypothesis_survives_complete_precommitted_predictions",
+        "assessments": [
+          {
+            "theoryId": "nyx-live-party-0-2:theory:0",
+            "mechanismId": "RESET_OVERFLOW",
+            "state": "SUPPORTED",
+            "supportingObservationIds": [
+              "OBS-383523d01ea7eaf354f00ec5db13f4ef67efdb40f7d8554d",
+              "OBS-518751f5578b855bc532a1fa8c633ef3cf8e01d8045316a3"
+            ],
+            "falsifyingObservationIds": [],
+            "unresolvedExperimentIds": [],
+            "distinctEvidenceRoots": 2,
+            "modelEstimate": 0.6,
+            "calibratedProbability": null
+          },
+          {
+            "theoryId": "nyx-live-party-0-2:theory:1",
+            "mechanismId": "RESET_OVERFLOW",
+            "state": "SUPPORTED",
+            "supportingObservationIds": [
+              "OBS-383523d01ea7eaf354f00ec5db13f4ef67efdb40f7d8554d",
+              "OBS-518751f5578b855bc532a1fa8c633ef3cf8e01d8045316a3"
+            ],
+            "falsifyingObservationIds": [],
+            "unresolvedExperimentIds": [],
+            "distinctEvidenceRoots": 2,
+            "modelEstimate": 0.8,
+            "calibratedProbability": null
+          },
+          {
+            "theoryId": "nyx-live-party-0-2:theory:2",
+            "mechanismId": "RESET_OVERFLOW",
+            "state": "SUPPORTED",
+            "supportingObservationIds": [
+              "OBS-383523d01ea7eaf354f00ec5db13f4ef67efdb40f7d8554d",
+              "OBS-518751f5578b855bc532a1fa8c633ef3cf8e01d8045316a3"
+            ],
+            "falsifyingObservationIds": [],
+            "unresolvedExperimentIds": [],
+            "distinctEvidenceRoots": 2,
+            "modelEstimate": 0.8,
+            "calibratedProbability": null
+          }
+        ],
+        "decisiveEvidenceIds": [
+          "RESEARCH-R3B-EVIDENCE-290ee2396f5a0cd2a02be4716fd53811",
+          "RESEARCH-R3B-EVIDENCE-41328ff21210f75cf96521b79d14c4e8"
+        ],
+        "independentAcceptance": false,
+        "grantsAuthority": false
+      },
+      "resourceUsage": {
+        "modelCalls": 8,
+        "experiments": 3,
+        "experimentCostUnits": 3,
+        "promptTokens": 28128,
+        "completionTokens": 5387,
+        "totalTokens": 33515,
+        "wallClockMs": 314299
+      },
+      "providerFailures": 0,
+      "peakParallelModelExecutions": 1,
+      "cognitionOutcomes": [
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-2-1-934dd1396b42c329",
+          "role": "INVESTIGATOR",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-2-2-7bbbb46a9d45744b",
+          "role": "INVESTIGATOR",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-2-3-bcff149d66c2fa03",
+          "role": "INVESTIGATOR",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-2-4-c509ea8a20729e0b",
+          "role": "FALSIFIER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-2-5-3c64e138b7eefb8d",
+          "role": "REVISER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-2-6-94527c3f3cc05d89",
+          "role": "REVISER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-2-7-f765677d13aab692",
+          "role": "REVISER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        },
+        {
+          "requestId": "NYX-COVERAGE-QUEUE-PARTY-0-2-8-738fac83cc9a0de9",
+          "role": "META_REVIEWER",
+          "decision": "CONTRIBUTION",
+          "reason": "theory_cognition_intent_validated",
+          "diagnostics": [],
+          "outcomeClass": "CONTRIBUTION"
+        }
+      ],
+      "cognitionOutcomeCounts": {
+        "CONTRIBUTION": 8,
+        "PROVIDER_FAILURE": 0,
+        "INTEGRATION_REJECTION": 0,
+        "OUTPUT_TRUNCATION": 0,
+        "MODEL_OUTPUT_REJECTION": 0,
+        "UNKNOWN_FAILURE": 0
+      },
+      "transport": {
+        "telemetryComplete": true,
+        "httpAttempts": 9,
+        "transientResponses": 1,
+        "rateLimitedResponses": 0,
+        "timedOutAttempts": 0,
+        "capacityWaitMs": 60000
+      },
+      "cognitionEvidence": [
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/db604d39bfa575242e057eb8d990677cc6dc6c4d538dd4feaeabf4461b53d063",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "db604d39bfa575242e057eb8d990677cc6dc6c4d538dd4feaeabf4461b53d063",
+          "responseDigest": "198087467efefd5b58cd0e07e659fcea0e3223a7bad25772d4db6dbe61b6b6cb",
+          "statusCode": 200,
+          "promptTokens": 1740,
+          "completionTokens": 580,
+          "totalTokens": 2320,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 2,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 1,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 60000,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/f8304098ffd9b097dfb0ef1d5ba24a07680aa551bb2d6f29fdc0ca176f158c02",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "f8304098ffd9b097dfb0ef1d5ba24a07680aa551bb2d6f29fdc0ca176f158c02",
+          "responseDigest": "6af7f802ec278e92e34d32a410af784ab32244b0ebc06b7ae372c32ea7fbe422",
+          "statusCode": 200,
+          "promptTokens": 1731,
+          "completionTokens": 580,
+          "totalTokens": 2311,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/03392716e0d2f61df96c74363e8417867b633ee3ddd4999ff23163ab143e92ca",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "03392716e0d2f61df96c74363e8417867b633ee3ddd4999ff23163ab143e92ca",
+          "responseDigest": "aefd9b6f1095bdd7b125c9d0b8b9709625eaa1f0c8be77a3894eb4b5dbd3f796",
+          "statusCode": 200,
+          "promptTokens": 1723,
+          "completionTokens": 496,
+          "totalTokens": 2219,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/8b6a77d464d0f4d54f346cafc7f0314c31069435bc383753ffd96e68fe909beb",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "8b6a77d464d0f4d54f346cafc7f0314c31069435bc383753ffd96e68fe909beb",
+          "responseDigest": "b7f157710b33b81d28a79510e715fcc3d65fd5ac651557ad766bc5bd54290685",
+          "statusCode": 200,
+          "promptTokens": 2982,
+          "completionTokens": 941,
+          "totalTokens": 3923,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/7ee4b8116106a39b68ab7b9fbbc74f01b65c89cdbae07fab80b3382f1fd1d18c",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "7ee4b8116106a39b68ab7b9fbbc74f01b65c89cdbae07fab80b3382f1fd1d18c",
+          "responseDigest": "1dcb771ed2a4e884ee56a8d338734c73e6cdc8cac11714c1aff6add080f885bd",
+          "statusCode": 200,
+          "promptTokens": 4683,
+          "completionTokens": 510,
+          "totalTokens": 5193,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/de654d50345c14269b97c65aa0353a6414486762d0a1acdc43bf1da7770b20fe",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "de654d50345c14269b97c65aa0353a6414486762d0a1acdc43bf1da7770b20fe",
+          "responseDigest": "d7c4c6c444553e002aacb234efe604e3f8c19427bda40ee8e2f09bae871f3395",
+          "statusCode": 200,
+          "promptTokens": 4678,
+          "completionTokens": 548,
+          "totalTokens": 5226,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/d8f33d01c65bab553f2fcf2a0468ad0bea0a3e270501ef1e14296b49f6ff171b",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "d8f33d01c65bab553f2fcf2a0468ad0bea0a3e270501ef1e14296b49f6ff171b",
+          "responseDigest": "f87145432d4a904757d41ca48aed55b81ac1f602570a615979f57b0b494481b5",
+          "statusCode": 200,
+          "promptTokens": 4676,
+          "completionTokens": 530,
+          "totalTokens": 5206,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        },
+        {
+          "evidenceId": "evidence://nyx-theory-cognition/7052231e0829bbdb4753295a80057a43c4ff0dea31073f07f5d960a21f13131d",
+          "evidenceClass": "E4",
+          "providerId": "NYX-RESEARCH-PARTY-LIVE-NEMOTRON",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "7052231e0829bbdb4753295a80057a43c4ff0dea31073f07f5d960a21f13131d",
+          "responseDigest": "badb12f9cea358aeae891e606e9dbb2566b3e94e911a111ecaa8ab6c933227a8",
+          "statusCode": 200,
+          "promptTokens": 5915,
+          "completionTokens": 1202,
+          "totalTokens": 7117,
+          "finishReason": "stop",
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 0,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "DELIVERED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false
+          },
+          "grantsAuthority": false
+        }
+      ],
+      "evidenceChainComplete": true,
+      "hypothesisAllocations": [
+        {
+          "schemaVersion": 1,
+          "policy": "COVERAGE_AWARE",
+          "objectiveDigest": "ec213e1d07f327891d2cac790fc3930236fa7b60567f663bbd643e106b548cbb",
+          "contextDigest": "81eedd60746a307ce368b3a28d93262cc081e8af994077686a19aeff4fcef9c2",
+          "phaseOrdinal": 0,
+          "theoryId": "nyx-live-party-0-2:theory:0",
+          "cohortTheoryIds": [
+            "nyx-live-party-0-2:theory:0",
+            "nyx-live-party-0-2:theory:1",
+            "nyx-live-party-0-2:theory:2"
+          ],
+          "rankedMechanismIds": [
+            "DROP_OLDEST",
+            "DROP_NEWEST",
+            "UNBOUNDED",
+            "RESET_OVERFLOW"
+          ],
+          "preferredMechanismIds": [
+            "DROP_OLDEST",
+            "RESET_OVERFLOW"
+          ],
+          "observedExperimentIds": [],
+          "interpretation": "EXPLORATION_GUIDANCE_NOT_EVIDENCE",
+          "grantsAuthority": false
+        },
+        {
+          "schemaVersion": 1,
+          "policy": "COVERAGE_AWARE",
+          "objectiveDigest": "ec213e1d07f327891d2cac790fc3930236fa7b60567f663bbd643e106b548cbb",
+          "contextDigest": "81eedd60746a307ce368b3a28d93262cc081e8af994077686a19aeff4fcef9c2",
+          "phaseOrdinal": 0,
+          "theoryId": "nyx-live-party-0-2:theory:1",
+          "cohortTheoryIds": [
+            "nyx-live-party-0-2:theory:0",
+            "nyx-live-party-0-2:theory:1",
+            "nyx-live-party-0-2:theory:2"
+          ],
+          "rankedMechanismIds": [
+            "DROP_OLDEST",
+            "DROP_NEWEST",
+            "UNBOUNDED",
+            "RESET_OVERFLOW"
+          ],
+          "preferredMechanismIds": [
+            "DROP_NEWEST"
+          ],
+          "observedExperimentIds": [],
+          "interpretation": "EXPLORATION_GUIDANCE_NOT_EVIDENCE",
+          "grantsAuthority": false
+        },
+        {
+          "schemaVersion": 1,
+          "policy": "COVERAGE_AWARE",
+          "objectiveDigest": "ec213e1d07f327891d2cac790fc3930236fa7b60567f663bbd643e106b548cbb",
+          "contextDigest": "81eedd60746a307ce368b3a28d93262cc081e8af994077686a19aeff4fcef9c2",
+          "phaseOrdinal": 0,
+          "theoryId": "nyx-live-party-0-2:theory:2",
+          "cohortTheoryIds": [
+            "nyx-live-party-0-2:theory:0",
+            "nyx-live-party-0-2:theory:1",
+            "nyx-live-party-0-2:theory:2"
+          ],
+          "rankedMechanismIds": [
+            "DROP_OLDEST",
+            "DROP_NEWEST",
+            "UNBOUNDED",
+            "RESET_OVERFLOW"
+          ],
+          "preferredMechanismIds": [
+            "UNBOUNDED"
+          ],
+          "observedExperimentIds": [],
+          "interpretation": "EXPLORATION_GUIDANCE_NOT_EVIDENCE",
+          "grantsAuthority": false
+        },
+        {
+          "schemaVersion": 1,
+          "policy": "COVERAGE_AWARE",
+          "objectiveDigest": "ec213e1d07f327891d2cac790fc3930236fa7b60567f663bbd643e106b548cbb",
+          "contextDigest": "10744d1dece1655b59256bb9a4e84c0a85cb7ba34dc81a14163eb1eb29f04d94",
+          "phaseOrdinal": 1,
+          "theoryId": "nyx-live-party-0-2:theory:0",
+          "cohortTheoryIds": [
+            "nyx-live-party-0-2:theory:0",
+            "nyx-live-party-0-2:theory:1",
+            "nyx-live-party-0-2:theory:2"
+          ],
+          "rankedMechanismIds": [
+            "RESET_OVERFLOW",
+            "DROP_OLDEST",
+            "DROP_NEWEST",
+            "UNBOUNDED"
+          ],
+          "preferredMechanismIds": [
+            "RESET_OVERFLOW",
+            "UNBOUNDED"
+          ],
+          "observedExperimentIds": [
+            "NYX-COVERAGE-QUEUE-EXP-0"
+          ],
+          "interpretation": "EXPLORATION_GUIDANCE_NOT_EVIDENCE",
+          "grantsAuthority": false
+        },
+        {
+          "schemaVersion": 1,
+          "policy": "COVERAGE_AWARE",
+          "objectiveDigest": "ec213e1d07f327891d2cac790fc3930236fa7b60567f663bbd643e106b548cbb",
+          "contextDigest": "10744d1dece1655b59256bb9a4e84c0a85cb7ba34dc81a14163eb1eb29f04d94",
+          "phaseOrdinal": 1,
+          "theoryId": "nyx-live-party-0-2:theory:1",
+          "cohortTheoryIds": [
+            "nyx-live-party-0-2:theory:0",
+            "nyx-live-party-0-2:theory:1",
+            "nyx-live-party-0-2:theory:2"
+          ],
+          "rankedMechanismIds": [
+            "RESET_OVERFLOW",
+            "DROP_OLDEST",
+            "DROP_NEWEST",
+            "UNBOUNDED"
+          ],
+          "preferredMechanismIds": [
+            "DROP_OLDEST"
+          ],
+          "observedExperimentIds": [
+            "NYX-COVERAGE-QUEUE-EXP-0"
+          ],
+          "interpretation": "EXPLORATION_GUIDANCE_NOT_EVIDENCE",
+          "grantsAuthority": false
+        },
+        {
+          "schemaVersion": 1,
+          "policy": "COVERAGE_AWARE",
+          "objectiveDigest": "ec213e1d07f327891d2cac790fc3930236fa7b60567f663bbd643e106b548cbb",
+          "contextDigest": "10744d1dece1655b59256bb9a4e84c0a85cb7ba34dc81a14163eb1eb29f04d94",
+          "phaseOrdinal": 1,
+          "theoryId": "nyx-live-party-0-2:theory:2",
+          "cohortTheoryIds": [
+            "nyx-live-party-0-2:theory:0",
+            "nyx-live-party-0-2:theory:1",
+            "nyx-live-party-0-2:theory:2"
+          ],
+          "rankedMechanismIds": [
+            "RESET_OVERFLOW",
+            "DROP_OLDEST",
+            "DROP_NEWEST",
+            "UNBOUNDED"
+          ],
+          "preferredMechanismIds": [
+            "DROP_NEWEST"
+          ],
+          "observedExperimentIds": [
+            "NYX-COVERAGE-QUEUE-EXP-0"
+          ],
+          "interpretation": "EXPLORATION_GUIDANCE_NOT_EVIDENCE",
+          "grantsAuthority": false
+        }
+      ],
+      "catalogMechanisms": 4,
+      "initialDistinctMechanisms": 3,
+      "totalDistinctMechanisms": 4,
+      "predictedExperiments": 3,
+      "contributionsByRole": {
+        "INVESTIGATOR": 3,
+        "FALSIFIER": 1,
+        "REVISER": 3,
+        "META_REVIEWER": 1
+      },
+      "sourceRepositoryUnchanged": true,
+      "authorityGranted": false
+    }
+  ]
+}

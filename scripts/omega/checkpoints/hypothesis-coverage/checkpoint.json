@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "checkpointId": "NYX-HYPOTHESIS-COVERAGE-CHECKPOINT-001",
+  "chunkId": "NYX-HYPOTHESIS-COVERAGE-001",
+  "runtimeBaselineCommit": "0c9f2a0eda075caedaabf128cc3d80328ce39d5e",
+  "previousRuntimeReference": "c9133d5d8f50e430fe499fa4c3d3b3b127212131",
+  "reportFile": "comparison.json",
+  "canonicalReportSha256": "4f7ca8fa6186cb12135c233695596da85782b343a21a99aa3790c102edf717f6",
+  "integrityClassification": "SELF_CONTAINED_HASH_MANIFEST_NOT_SIGNED_CUSTODY",
+  "runtimeHashCanonicalization": "SHA256_UTF8_SOURCE_NORMALIZED_CRLF_TO_LF",
+  "runtimeSourceHashes": {
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "21edc5ca21bbb735e8175ac350ee148fac3af43f638df620ab0cb8446b04c388",
+    "src/lib/codelab/research/nyxNemotronTheoryCognition.ts": "9b72e1a9bc67fedf0fc05cde254e7707f42fbb03002e5dcde6b92a275f414dd1",
+    "src/lib/codelab/research/theoryResearchParty.ts": "d36a9ce07628143dda8346003f8ea1bce180d798ac71fb4df5f4ad2d0084706f",
+    "src/lib/codelab/research/hypothesisCoverage.ts": "f90d79008b2c5e042024236f361c2bc42d72bf579d370d8d769bba6dd4159e3c",
+    "src/lib/codelab/research/researchPartyContracts.ts": "ceea1c1ce5fe3d375eddb3dd7effb387a512882d3a9434d27192b4a23dbc867c",
+    "src/lib/codelab/research/researchPartyAssurance.ts": "bff3296c1e840c38a314568de2888883cba7b81c2132dfa34b8c826151adc759",
+    "scripts/omega/nyx-hypothesis-coverage-fixtures.ts": "fbf5f67414256dcec428cc476e422d54222f368a0f9366322bae430b49c65664",
+    "scripts/omega/nyx-research-party-live-eval.ts": "7888456e1adda3cd2682adcf244aa98197cc17b077a74a873c23b1ad15a5a603"
+  },
+  "sourceEvidence": {
+    "repository": "malekismail487-web/generous-ai-core",
+    "runId": 36898350060,
+    "jobId": 110490947544,
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36898350060",
+    "preflightFailedRun": 36897757525,
+    "preflightFailure": "LIVE_SELECTOR_LEAKED_INTO_DETERMINISTIC_SUBPROCESS_BEFORE_MODEL_CALLS",
+    "correctedByCommit": "0c9f2a0eda075caedaabf128cc3d80328ce39d5e",
+    "sourceRepositoryUnchanged": true
+  },
+  "scope": "ONE_DEVELOPMENT_QUEUE_TASK_THREE_ARMS_NOT_HELDOUT_GENERALIZATION",
+  "maturity": "IMPLEMENTED_AND_LOCALLY_VERIFIED",
+  "epistemicState": "INSUFFICIENT_EVIDENCE_FOR_BROAD_PROMOTION",
+  "defaultPolicyChanged": false,
+  "authorityIncrease": false,
+  "certifiesCurrentRuntime": false,
+  "broadPromotion": false,
+  "frontierBenchmarkReadinessProbability": null,
+  "finding": "Both allocation arms were accepted; the unallocated arm failed with mismatched predictions and one schema rejection. Adaptive coverage did not outperform rotating partition. Calls and experiment counts match, but token usage does not.",
+  "alternativeExplanations": [
+    "Single stochastic sample per arm.",
+    "Allocator instruction also encourages explicit derivation checks; coverage and instruction effects are not isolated.",
+    "Different realized prompt/completion token totals.",
+    "One transient provider response added 60 seconds to the adaptive arm.",
+    "Task is a small finite development probe, not a frontier benchmark."
+  ],
+  "resourceSummary": {
+    "comparisonModelCalls": 24,
+    "comparisonReportedTokens": 99539,
+    "smokeModelCalls": 1,
+    "smokeReportedTokens": 121,
+    "comparisonHttpAttempts": 25,
+    "comparisonExperiments": 9,
+    "knownMonetaryCost": null,
+    "gpuTime": null
+  },
+  "promotionDecision": "NOT_PROMOTED_OVER_SIMPLER_CONTROL",
+  "nextDependency": "Fresh unseen task families with repeated outcomes and compute-aware controls before default adoption.",
+  "planCoverage": {
+    "status": "PARTIAL_JUST_IN_TIME",
+    "direct": [
+      "Hypothesis search and competing explanations",
+      "Prediction-versus-observation feedback",
+      "Architectural ablation and marginal value",
+      "Evidence provenance and freshness"
+    ],
+    "supporting": [
+      "Independent assurance kernel",
+      "Internal complexity must pay rent",
+      "Capability is not authority"
+    ],
+    "deferred": [
+      "Public sealed benchmark execution",
+      "Recursive self-improvement",
+      "Additional brain/connectome layers",
+      "Device integration"
+    ],
+    "conflicts": []
+  }
+}

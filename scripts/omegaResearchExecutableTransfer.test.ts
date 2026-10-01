@@ -1,4 +1,5 @@
 import { Script, createContext } from "node:vm";
+import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { checkpointDigest, readFrontierCheckpoint, verifyFrontierCheckpoint } from "./omega/test-harness.mjs";
@@ -197,6 +198,46 @@ erasedRef.verdict = erasedFailure[erasedRef.file].verdict;
 erasedRef.canonicalReportSha256 = checkpointDigest(erasedFailure[erasedRef.file]);
 check(verifyArchive(erasedFailureBinding, gaps, erasedFailure).decision === "REJECT",
   "rehashed artifact metadata cannot erase the final science negative finding");
+// Preserve the observed negative arm and simpler-control tie, not just green CI.
+// This reconstructs historical evidence; it never certifies a later candidate.
+const coverageRoot = "scripts/omega/checkpoints/hypothesis-coverage/";
+const coverageCheckpoint = JSON.parse(readFileSync(`${coverageRoot}checkpoint.json`, "utf8"));
+const coverageReport = JSON.parse(readFileSync(`${coverageRoot}comparison.json`, "utf8"));
+check(coverageCheckpoint.schemaVersion === 1 && coverageCheckpoint.reportFile === "comparison.json"
+  && checkpointDigest(coverageReport) === coverageCheckpoint.canonicalReportSha256,
+"sanitized coverage report retains canonical integrity and explicit schema");
+check(coverageReport.candidateCommit === coverageCheckpoint.runtimeBaselineCommit
+  && /^[a-f0-9]{40}$/.test(coverageCheckpoint.runtimeBaselineCommit), "coverage evidence binds an exact historical candidate");
+for (const [path, expected] of Object.entries(coverageCheckpoint.runtimeSourceHashes)) {
+  check(/^(src|scripts)\/[A-Za-z0-9_./-]+\.(ts|mjs)$/.test(path) && !path.split("/").includes(".."),
+    "historical runtime paths are bounded source identities, not arbitrary reads");
+  const source = execFileSync("git", ["show", `${coverageCheckpoint.runtimeBaselineCommit}:${path}`],
+    { encoding: "utf8", timeout: 10_000 }).replace(/\r\n/g, "\n");
+  check(createHash("sha256").update(source).digest("hex") === expected,
+    "coverage checkpoint reconstructs against its actually exercised source");
+}
+check(coverageReport.records.length === 3 && coverageReport.records.map((r: { policy: string }) => r.policy).join(",")
+  === "INDEPENDENT,ROTATING_PARTITION,COVERAGE_AWARE", "all three distinct live arms remain preserved");
+check(coverageReport.records[0].assurance.decision === "INSUFFICIENT_EVIDENCE"
+  && coverageReport.records[0].cognitionOutcomeCounts.MODEL_OUTPUT_REJECTION === 1
+  && coverageReport.records.slice(1).every((r: { assurance: { decision: string } }) => r.assurance.decision === "ACCEPT"),
+"baseline prediction/schema failure is not erased by both guided-arm successes");
+check(coverageReport.records.every((r: { resourceUsage: { modelCalls: number; experiments: number } }) =>
+  r.resourceUsage.modelCalls === 8 && r.resourceUsage.experiments === 3)
+  && coverageReport.realizedComputeMatched === false && coverageReport.realizedCompute[0].tokenSpreadFraction > 0,
+"matched call/experiment counts are not misrepresented as matched realized tokens");
+check(coverageReport.records.every((r: { providerFailures: number; sourceRepositoryUnchanged: boolean;
+  authorityGranted: boolean; evidenceChainComplete: boolean }) => r.providerFailures === 0
+  && r.sourceRepositoryUnchanged && !r.authorityGranted && r.evidenceChainComplete),
+"live coverage record preserves functioning transport, custody, and unchanged source authority");
+check(coverageCheckpoint.promotionDecision === "NOT_PROMOTED_OVER_SIMPLER_CONTROL"
+  && coverageCheckpoint.certifiesCurrentRuntime === false && coverageCheckpoint.authorityIncrease === false
+  && coverageReport.broadPromotion === false && coverageReport.freshHeldoutClaim === false
+  && coverageReport.defaultPolicyChanged === false, "one development result cannot promote default cognition or authority");
+check(coverageCheckpoint.integrityClassification === "SELF_CONTAINED_HASH_MANIFEST_NOT_SIGNED_CUSTODY"
+  && coverageReport.evidence.cognition === "E4" && coverageReport.evidence.experimentsAndOracle === "E3"
+  && coverageReport.evidence.independentInstitutionalReplication === false,
+"self-contained reconstruction remains distinct from signed custody and institutional replication");
 console.log(`NYX_EXECUTABLE_TRANSFER_PREFLIGHT ${JSON.stringify({ schemaVersion: 1,
   corpusDigest: NYX_RESEARCH_TRANSFER_CORPUS_DIGEST, actualCognition: "NOT_EXECUTED",
   oracleMutantsRejected: 3, evidenceClass: "E3", broadPromotion: false, authorityGranted: false })}`);
