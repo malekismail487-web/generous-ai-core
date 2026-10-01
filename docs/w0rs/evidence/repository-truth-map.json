@@ -2287,6 +2287,12 @@
       ]
     },
     {
+      "name": "OMEGA_NYX_RESEARCH_COMPARE_TASK_ID",
+      "files": [
+        "scripts/omega/nyx-research-party-live-eval.ts"
+      ]
+    },
+    {
       "name": "OMEGA_NYX_RESEARCH_COMPARE_TASKS",
       "files": [
         "scripts/omega/nyx-research-party-live-eval.ts"
