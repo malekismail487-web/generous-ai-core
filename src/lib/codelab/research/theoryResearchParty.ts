@@ -26,6 +26,8 @@ export interface TheoryResearchPartyConfig {
   readonly experiments: ResearchExperimentRunner;
   readonly limits: ResearchPartyLimits;
   readonly investigatorCount: number;
+  /** Delivery-pressure experiment only. Default preserves existing parallel scheduling. */
+  readonly maxParallelModelExecutions?: number;
   readonly now: () => number;
   readonly perspectiveRouter?: TheoryPerspectiveRouter;
   /** Experimental sequencing only: neither policy adds tools, evidence, or authority. */
@@ -62,6 +64,8 @@ export class TheoryResearchParty {
     if (!config.partyId?.trim() || !validResearchLimits(config.limits)
       || !Number.isSafeInteger(config.investigatorCount) || config.investigatorCount < 2
       || config.investigatorCount + 2 > config.limits.maxEntities || typeof config.now !== "function"
+      || (config.maxParallelModelExecutions !== undefined && (!Number.isSafeInteger(config.maxParallelModelExecutions)
+        || config.maxParallelModelExecutions < 1 || config.maxParallelModelExecutions > config.investigatorCount))
       || typeof config.cognition?.think !== "function" || typeof config.cognition?.profile !== "function"
       || typeof config.experiments?.run !== "function" || !config.coordinator || typeof config.coordinator !== "object"
       || (config.perspectiveRouter !== undefined && typeof config.perspectiveRouter?.route !== "function")
@@ -117,6 +121,14 @@ export class TheoryResearchParty {
         authorityGranted: false as const });
     };
     const timeLeft = (): boolean => !signal.aborted && this.#config.now() < deadline;
+    const runCognitionPhase = async (jobs: readonly (() => Promise<TheoryContribution | null>)[]) => {
+      const width = this.#config.maxParallelModelExecutions ?? this.#config.investigatorCount;
+      for (let start = 0; start < jobs.length && !failure; start += width) {
+        const batch = jobs.slice(start, start + width);
+        peakParallelModelExecutions = Math.max(peakParallelModelExecutions, batch.length);
+        await Promise.all(batch.map(job => job()));
+      }
+    };
     const call = async (entity: EntityRuntime, role: ResearchRole, instruction: string,
       privatePriorContributions: readonly TheoryContribution[], peerContributions: readonly TheoryContribution[]): Promise<TheoryContribution | null> => {
       if (!timeLeft()) { failure = signal.aborted ? "research_party_cancelled" : "research_party_time_budget_exhausted"; return null; }
@@ -264,8 +276,7 @@ export class TheoryResearchParty {
       }
       if (failure || entities.length !== entityCount) return finish();
       const investigators = entities.filter((item) => item.initialRole === "INVESTIGATOR");
-      peakParallelModelExecutions = Math.max(peakParallelModelExecutions, investigators.length);
-      await Promise.all(investigators.map((entity, index) => call(entity, "INVESTIGATOR",
+      await runCognitionPhase(investigators.map((entity, index) => () => call(entity, "INVESTIGATOR",
         `Generate an independent causal hypothesis from the ${cognitiveRouting!.assignments[index].perspectiveId} compartment. ${cognitiveRouting!.assignments[index].instruction} Predict every catalogued experiment and request the most discriminating ones.`, [], [])));
       if (failure) return finish();
       const hypotheses = contributions.filter((item) => item.intent.decision === "PROPOSE_HYPOTHESIS");
@@ -299,15 +310,17 @@ export class TheoryResearchParty {
           // Do not consume a call reservation or invent another entity's history.
           return latest !== undefined && ["PROPOSE_HYPOTHESIS", "REVISE_HYPOTHESIS"].includes(latest.intent.decision);
         });
-        peakParallelModelExecutions = Math.max(peakParallelModelExecutions, revisers.length);
-        await Promise.all(revisers.map(async (entity) => {
+        // Freeze all peer views before this phase, even when inference is serial.
+        // Later entities must not see earlier revisions from the same phase.
+        const revisionJobs = revisers.map((entity) => {
           const own = contributions.filter((item) => item.theoryId === entity.theoryId);
           const latestPeers = investigators.filter((item) => item.theoryId !== entity.theoryId).map((peer) =>
             [...contributions].reverse().find((item) => item.theoryId === peer.theoryId
               && ["INVESTIGATOR", "REVISER"].includes(item.role))).filter((item): item is TheoryContribution => Boolean(item));
           if (falsifierContribution) latestPeers.push(falsifierContribution);
-          return call(entity, "REVISER", "Revise your own mechanism using every observed counterexample. Forecast only experiments that have not yet been observed; do not defend a falsified mechanism.", own, latestPeers);
-        }));
+          return () => call(entity, "REVISER", "Revise your own mechanism using every observed counterexample. Forecast only experiments that have not yet been observed; do not defend a falsified mechanism.", own, latestPeers);
+        });
+        await runCognitionPhase(revisionJobs);
         if (failure) break;
       }
       if (failure) return finish();

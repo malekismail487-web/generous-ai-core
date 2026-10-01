@@ -663,6 +663,41 @@ const uncertainty = await adapter.think({ ...adapterRequest, requestId: "ADAPTER
 check(uncertainty.decision === "CONTRIBUTION" && uncertainty.intent?.decision === "NO_CONCLUSION",
   "well-formed uncertainty remains a valid contribution and is never manufactured into a supported hypothesis");
 
+for (const width of [1, 2, 3]) {
+  const scheduledRuntime = network(); const base = new ScriptedPartyCognition();
+  let active = 0; let peak = 0;
+  const cognition: TheoryCognitionEngine = { profile: () => base.profile(), think: async request => {
+    active += 1; peak = Math.max(peak, active);
+    try { await Promise.resolve(); return await base.think(request); } finally { active -= 1; }
+  } };
+  const scheduledResult = await TheoryResearchParty.create({ partyId: `PARTY-SCHEDULE-${width}`,
+    network: scheduledRuntime.value, coordinator: scheduledRuntime.coordinator, cognition,
+    limits, investigatorCount: 3, maxParallelModelExecutions: width, now: () => now,
+    experiments: { run: async experiment => makeObservation(experiment.experimentId) } }).investigate(objective());
+  check(peak === width && scheduledResult.addressability.simultaneousModelExecutions === width && active === 0,
+    "configured inference width is enforced and reported as real overlap, not entity population");
+  check(scheduledResult.resourceUsage.modelCalls === result.resourceUsage.modelCalls
+    && scheduledResult.resourceUsage.totalTokens === result.resourceUsage.totalTokens,
+    "serial delivery cannot obtain more scripted model calls or tokens than parallel delivery");
+  check(scheduledResult.decision.selectedMechanismId === result.decision.selectedMechanismId
+    && scheduledResult.evidenceChainComplete && !scheduledResult.authorityGranted,
+    "delivery width preserves causal selection, evidence custody, and zero authority");
+  const peerSignature = (request: TheoryCognitionRequest) => [request.role, request.experimentObservations.length,
+    request.peerContributions.map(item => [item.theoryId, item.role, item.intent.mechanismId, item.intent.forecasts])];
+  check(JSON.stringify(base.calls.map(peerSignature)) === JSON.stringify(scripted.calls.map(peerSignature)),
+    "serial revisers cannot see earlier same-phase revisions that parallel revisers never saw");
+  check(base.calls.slice(0, 3).every(request => request.peerContributions.length === 0
+    && request.experimentObservations.length === 0), "serial investigators remain independent before observation");
+}
+for (const width of [0, -1, 4, 1.5, NaN]) {
+  const invalidRuntime = network();
+  await rejects(() => TheoryResearchParty.create({ partyId: "PARTY-INVALID-WIDTH", network: invalidRuntime.value,
+    coordinator: invalidRuntime.coordinator, cognition: new ScriptedPartyCognition(), limits,
+    investigatorCount: 3, maxParallelModelExecutions: width, now: () => now,
+    experiments: { run: async experiment => makeObservation(experiment.experimentId) } }),
+  /configuration_invalid/, "invalid or excessive delivery concurrency fails closed");
+}
+
 // A live provider failure exposed a scheduler bug: the blank investigator was
 // asked to revise twice, consuming reservations for requests rejected locally.
 // Exercise both failed inference and honest abstention without task-specific repair.

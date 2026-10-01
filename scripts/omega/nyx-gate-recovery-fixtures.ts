@@ -19,6 +19,16 @@ export const NYX_GATE_RECOVERY_FROZEN_CORE = Object.freeze({
   }),
 });
 
+// The historical scored core above stays immutable. This explicit transport-only
+// revision is not eligible for comparison using that historical core identity.
+export const NYX_GATE_RECOVERY_TRANSPORT_REVISION = Object.freeze({
+  chunkId: "NYX-PROVIDER-RECOVERY-001", predecessor: NYX_GATE_RECOVERY_FROZEN_CORE.commit,
+  changedPath: "src/lib/codelab/model/nvidiaNimProvider.ts",
+  sourceSha256: "75fd8f9d3726d65aa3a1e8fb855af88ae44b140c508c840a7159ea4daf055493",
+  changedBehavior: "HONOR_TRANSIENT_RETRY_AFTER_AND_SHARE_EXHAUSTED_COOLDOWN",
+  historicalScoresComparable: false, acceptanceOracleChanged: false, authorityIncrease: false,
+});
+
 function task(index: number, helperPath: string, helperName: string, helperSource: string,
   goodSource: string, faultySource: string): NyxQualityV5Task {
   const original = NYX_ADMISSION_GUIDANCE_TASKS[index];

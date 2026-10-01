@@ -342,6 +342,45 @@ const success = () => new Response(JSON.stringify({ choices: [{ message: { conte
     "cancellation at countdown completion is rechecked before credential read or dispatch");
 }
 
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
+  const starts: number[] = []; const bodies: string[] = [];
+  const client = capacityProvider(gate, async (_url, init) => {
+    starts.push(clock.time); bodies.push(String(init?.body));
+    return starts.length === 1 ? new Response(null, { status: 503, headers: { "retry-after": "75" } }) : success();
+  });
+  const result = await drive(client.complete(request()), clock);
+  check(result.decision === "COMPLETED" && starts[1] - starts[0] === 75000,
+    "503 recovery honors server Retry-After rather than assuming exactly one minute");
+  check(result.evidence.delivery?.capacityWaitMs === 75000 && new Set(bodies).size === 1,
+    "transient retry preserves the frozen payload and reports actual server-directed wait");
+}
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
+  const starts: number[] = [];
+  const client = capacityProvider(gate, async () => {
+    starts.push(clock.time);
+    return starts.length <= 2 ? new Response(null, { status: 503, headers: { "retry-after": "75" } }) : success();
+  });
+  const stopped = await drive(client.complete(request()), clock);
+  check(stopped.decision === "PROVIDER_ERROR" && starts.length === 2,
+    "server timing cannot expand the finite transient retry allowance");
+  const following = await drive(client.complete(request({ requestId: "AFTER-EXHAUSTED-503" })), clock);
+  check(following.decision === "COMPLETED" && starts[2] - starts[1] === 75000,
+    "an exhausted request still protects queued clients with the server cooldown");
+}
+{
+  const clock = new ManualClock(); let calls = 0;
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => {
+    calls += 1; return new Response(null, { status: 504, headers: { "retry-after": "120" } });
+  });
+  const result = await drive(client.complete(request({ deadlineEpochMs: NOW + 90000 })), clock);
+  check(calls === 1 && result.decision === "WAITING_FOR_CAPACITY" && result.content === null,
+    "server recovery beyond caller expiry stops without renewing authority or inventing output");
+  check(result.evidence.delivery?.notBeforeEpochMs === NOW + 120000 && !result.evidence.delivery.authorityRenewed,
+    "blocked transient recovery records the real earliest server resumption time");
+}
+
 check(NVIDIA_CAPACITY_POLICY.requestsPerMinute === 40, "configured request ceiling is forty, not four");
 for (const [header, expected] of [["12", 12000], ["0", 0], [" 3 ", 3000], [null, 60000], ["-1", 60000],
   ["1.5", 60000], ["1e3", 60000], ["10ms", 60000], ["2026", 2026000], ["nonsense", 60000]] as const) {

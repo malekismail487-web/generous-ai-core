@@ -2305,6 +2305,12 @@
       ]
     },
     {
+      "name": "OMEGA_NYX_RESEARCH_MODEL_CONCURRENCY",
+      "files": [
+        "scripts/omega/nyx-research-party-live-eval.ts"
+      ]
+    },
+    {
       "name": "OMEGA_NYX_RESEARCH_POLICY_COMPARISON",
       "files": [
         "scripts/omega/nyx-research-party-live-eval.ts"

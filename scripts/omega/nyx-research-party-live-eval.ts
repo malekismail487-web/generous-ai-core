@@ -34,6 +34,8 @@ if (!process.env.NVIDIA_API_KEY?.trim()) {
 const MODEL = process.env.NVIDIA_NIM_MODEL?.trim() || "nvidia/nemotron-3-ultra-550b-a55b";
 const diagnosticOnly = process.env.OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY === "1";
 const policyComparison = process.env.OMEGA_NYX_RESEARCH_POLICY_COMPARISON === "1";
+const maxParallelModelExecutions = Number(process.env.OMEGA_NYX_RESEARCH_MODEL_CONCURRENCY || "3");
+if (![1, 2, 3].includes(maxParallelModelExecutions)) throw new Error("research_model_concurrency_invalid");
 const corpus = process.env.OMEGA_NYX_RESEARCH_CORPUS || "LEGACY";
 if (!["LEGACY", "EXECUTABLE_TRANSFER_V1"].includes(corpus)
   || (corpus !== "LEGACY" && (!policyComparison || diagnosticOnly))) throw new Error("research_corpus_selection_invalid");
@@ -214,7 +216,7 @@ async function createParty(task: NyxResearchPartyLiveTask, objective: ResearchPa
   const omega = await createOmegaExperimentRunner(task, objective, identity);
   const party = TheoryResearchParty.create({ partyId: `${task.taskId}-PARTY-${identity}`, network,
     coordinator, cognition, experiments: omega.runner, limits, investigatorCount: 3,
-    now: () => Date.now(), experimentPolicy });
+    now: () => Date.now(), experimentPolicy, maxParallelModelExecutions });
   return { party, omega };
 }
 
@@ -245,6 +247,7 @@ if (policyComparison) {
           && result.decision.selectedMechanismId !== task.expectedMechanismId)) acceptanceViolations += 1;
         records.push({ taskId: task.taskId, policy, assurance, decision: result.decision,
           resourceUsage: result.resourceUsage, providerFailures: failures,
+          peakParallelModelExecutions: result.addressability.simultaneousModelExecutions,
           cognitionOutcomes: result.cognitionOutcomes,
           cognitionOutcomeCounts: Object.fromEntries(["CONTRIBUTION", "PROVIDER_FAILURE", "INTEGRATION_REJECTION",
             "OUTPUT_TRUNCATION", "MODEL_OUTPUT_REJECTION", "UNKNOWN_FAILURE"].map(outcomeClass =>
@@ -271,6 +274,7 @@ if (policyComparison) {
       && (record.assurance as { decision: string }).decision !== "ACCEPT");
     const report = { schemaVersion: 1, chunkId: "NYX-EVIDENCE-FIRST-LIVE-001", candidateCommit: CANDIDATE,
       model: MODEL, corpus, corpusDigest: theoryDigest(tasks.map(task => task.oracleDigest)), matchedLimits: limits,
+      scheduling: { maxParallelModelExecutions, peerViewsFrozenBeforePhase: true, grantsAuthority: false },
       requestedTasks: tasks.length, completedArms: records.length, providerBlocked, executionBlocked, acceptanceViolations,
       evidence: { cognition: "E4", experimentsAndOracle: "E3", independentInstitutionalReplication: false },
       realizedComputeMatched: false, broadPromotion: false,

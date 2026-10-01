@@ -7,7 +7,8 @@ import { NYX_ADMISSION_GUIDANCE, NYX_ADMISSION_GUIDANCE_FROZEN_CORE,
 import { assessNyxTransferEpoch, nyxTransferReportIdentity,
   type EpochReport } from "./omega/nyx-transfer-epoch-compare";
 import { assessNyxAdmissionReference, requireAdmissibleReferenceGates } from "./omega/nyx-quality-reference-preflight";
-import { NYX_GATE_RECOVERY, NYX_GATE_RECOVERY_FROZEN_CORE, NYX_GATE_RECOVERY_TASKS } from "./omega/nyx-gate-recovery-fixtures";
+import { NYX_GATE_RECOVERY, NYX_GATE_RECOVERY_FROZEN_CORE, NYX_GATE_RECOVERY_TASKS,
+  NYX_GATE_RECOVERY_TRANSPORT_REVISION } from "./omega/nyx-gate-recovery-fixtures";
 
 let passed = 0;
 const failures: string[] = [];
@@ -36,8 +37,35 @@ check(Object.entries(NYX_ADMISSION_GUIDANCE_FROZEN_CORE.files).every(([path, exp
   digest(execFileSync("git", ["show", `${NYX_ADMISSION_GUIDANCE_FROZEN_CORE.commit}:${path}`])) === expected),
   "historical scored core remains reproducible at its immutable pinned source");
 check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected]) =>
-  digest(execFileSync("git", ["show", `${NYX_GATE_RECOVERY_FROZEN_CORE.commit}:${path}`])) === expected
-  && digest(readFileSync(path)) === expected), "current ownership-repair core matches its immutable frozen source");
+  digest(execFileSync("git", ["show", `${NYX_GATE_RECOVERY_FROZEN_CORE.commit}:${path}`])) === expected),
+  "historical ownership-repair core remains immutable and reproducible");
+check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected]) =>
+  digest(readFileSync(path)) === (path === NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath
+    ? NYX_GATE_RECOVERY_TRANSPORT_REVISION.sourceSha256 : expected)),
+  "current ownership-repair core admits only the exact registered transport revision");
+const originalProvider = execFileSync("git", ["show",
+  `${NYX_GATE_RECOVERY_FROZEN_CORE.commit}:${NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath}`], { encoding: "utf8" });
+const oldRetryBlock = "&& transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries) {\n          this.#capacity.defer(null);\n";
+const oldHeaderHandling = "        if (response.status === 429) this.#capacity?.defer(response.headers.get(\"retry-after\"));";
+const newHeaderHandling = [
+  "        // Respect server recovery timing for transient outages as well as 429.",
+  "        // Apply it even when this request exhausts its retry allowance so other",
+  "        // queued requests cannot immediately stampede an unavailable endpoint.",
+  "        if ([429, 502, 503, 504].includes(response.status)) {",
+  "          this.#capacity?.defer(response.headers.get(\"retry-after\"));",
+  "        }",
+].join("\n");
+check(originalProvider.split(oldRetryBlock).length === 2 && originalProvider.split(oldHeaderHandling).length === 2,
+  "registered transport correction binds exactly two unique historical source locations");
+const reviewedProvider = originalProvider.replace(oldRetryBlock,
+  "&& transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries) {\n")
+  .replace(oldHeaderHandling, newHeaderHandling);
+check(readFileSync(NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath, "utf8") === reviewedProvider,
+  "no prompt, parser, token, model, retry-count, or authority change hides inside the approved transport diff");
+check(!NYX_GATE_RECOVERY_TRANSPORT_REVISION.historicalScoresComparable
+  && !NYX_GATE_RECOVERY_TRANSPORT_REVISION.acceptanceOracleChanged
+  && !NYX_GATE_RECOVERY_TRANSPORT_REVISION.authorityIncrease,
+  "new transport source cannot inherit an old comparison identity or relax acceptance");
 check(NYX_ADMISSION_GUIDANCE_TASKS.length === 3
   && new Set(NYX_ADMISSION_GUIDANCE_TASKS.map((task) => task.taskClass)).size === 3
   && NYX_ADMISSION_GUIDANCE.arms.join() === "CURRENT,REASONING_ENABLED"
