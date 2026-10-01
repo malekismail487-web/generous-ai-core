@@ -1,0 +1,338 @@
+{
+  "schemaVersion": 1,
+  "registryId": "NYX-FRONTIER-CEILING-GAPS-001",
+  "maintainer": "Malek",
+  "scope": "CURRENT_THIRD_CAMPAIGN_AND_FOCUSED_CONTINUATIONS",
+  "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+  "broadPromotion": false,
+  "grantsAuthority": false,
+  "gaps": [
+    {
+      "gapId": "NYX-GAP-TRANSIENT-RECOVERY",
+      "observedWeakness": "Transient HTTP 503 responses exhausted live requests and contaminated comparison coverage.",
+      "failureClass": "PROVIDER_FAILURE",
+      "diagnosis": {
+        "category": "PROVIDER",
+        "state": "SUPPORTED",
+        "scope": "Observed live requests; no inference about unobserved provider internals."
+      },
+      "evidence": [
+        "RECOVERY-ATTEMPT-1",
+        "RECOVERY-ATTEMPT-2",
+        "DEADLINE-COMPARISON",
+        "SCIENCE-CONTINUATION"
+      ],
+      "alternativeExplanations": [
+        "Provider overload",
+        "Provider maintenance",
+        "Upstream inference failure"
+      ],
+      "generalCapabilityHypothesis": "Respecting server Retry-After and sharing exhausted-request cooldown prevents premature redispatch; it cannot guarantee service availability.",
+      "proposedIntervention": "Existing transport retry/cooldown repair; bounded retries remain.",
+      "developmentTasks": [
+        "scripts/omegaNvidiaNimProvider.test.ts: retry-after and shared cooldown cases"
+      ],
+      "mechanismOnResult": {
+        "scope": "E3 protocol tests",
+        "result": "PASS"
+      },
+      "mechanismOffResult": {
+        "scope": "Predecessor source",
+        "result": "Did not honor transient Retry-After consistently; no compute-matched live ablation."
+      },
+      "simplerControlResult": null,
+      "computeDelta": {
+        "modelCallsAdded": 0,
+        "latency": "Waiting follows server timing; live delays recorded per arm.",
+        "realizedComputeMatched": false
+      },
+      "regressionFindings": [
+        "137 provider checks pass",
+        "Provider 503 still occurs"
+      ],
+      "freshTransferResult": null,
+      "admissionStatus": "VERIFIED_PROTOCOL_CORRECTION_NOT_COGNITIVE_PROMOTION"
+    },
+    {
+      "gapId": "NYX-GAP-DEADLINE-SETTLEMENT",
+      "observedWeakness": "Abort-insensitive transport/body cleanup could outlive the configured request deadline.",
+      "failureClass": "TIMEOUT_DEADLINE_DEFECT",
+      "diagnosis": {
+        "category": "TRANSPORT",
+        "state": "SUPPORTED",
+        "scope": "Deterministic uncooperative transport and response-body reproductions, not a demonstrated cause of every earlier live delay."
+      },
+      "evidence": [
+        "src/lib/codelab/model/nvidiaNimProvider.ts",
+        "scripts/omegaNvidiaNimProvider.test.ts",
+        "DEADLINE-COMPARISON"
+      ],
+      "alternativeExplanations": [
+        "Earlier live delay also contained legitimate Retry-After waits; the apparent stalled rerun completed normally."
+      ],
+      "generalCapabilityHypothesis": "Explicit abort settlement and nonblocking error-body cancellation bound caller completion even if the injected transport ignores abort.",
+      "proposedIntervention": "Implemented bounded settlement; historical baseline hashes preserved.",
+      "developmentTasks": [
+        "Never-settling HTTP error body cancellation",
+        "Abort-insensitive fetch",
+        "Late successful body after timeout",
+        "Pre-dispatch cancellation"
+      ],
+      "mechanismOnResult": {
+        "result": "PASS",
+        "scope": "Deterministic reproduction",
+        "http503ElapsedMs": 13
+      },
+      "mechanismOffResult": {
+        "result": "PENDING",
+        "scope": "Same error-body reproduction",
+        "observedAfterMs": 525,
+        "configuredTimeoutMs": 100,
+        "deadlineMs": 250
+      },
+      "simplerControlResult": {
+        "result": "REJECTED",
+        "mechanism": "AbortSignal alone",
+        "reason": "Does not settle a transport that ignores abort."
+      },
+      "computeDelta": {
+        "modelCallsAdded": 0,
+        "modelTokensAdded": 0,
+        "liveComputeMatched": false
+      },
+      "regressionFindings": [
+        "Nine added provider regression checks pass"
+      ],
+      "freshTransferResult": null,
+      "admissionStatus": "VERIFIED_TRANSPORT_RELIABILITY_NOT_COGNITIVE_PROMOTION"
+    },
+    {
+      "gapId": "NYX-GAP-HYPOTHESIS-TARGET-BINDING",
+      "observedWeakness": "Counterexample protocol admitted targets that were peer commentary rather than admitted hypotheses, breaking graph reconstruction.",
+      "failureClass": "EVIDENCE_GRAPH_MISMATCH",
+      "diagnosis": {
+        "category": "INTERFACE",
+        "state": "SUPPORTED",
+        "scope": "E3 causal reproductions; live math B was functionally correct but chain-invalid. Raw offending reasoning was not persisted."
+      },
+      "evidence": [
+        "DEADLINE-COMPARISON",
+        "COUNTEREXAMPLE-MATH-REGRESSION",
+        "scripts/omegaResearchParty.test.ts"
+      ],
+      "alternativeExplanations": [
+        "Changes in mathematical conclusions also reflect stochastic inference; chain repair alone does not explain all answer changes."
+      ],
+      "generalCapabilityHypothesis": "Schema, parser, prompt and graph must agree that only admitted PROPOSE/REVISE hypotheses may be falsification targets.",
+      "proposedIntervention": "Generic target-kind validation at both protocol and graph boundary; no task-specific mechanism/answer mapping.",
+      "developmentTasks": [
+        "Unknown target",
+        "Self target",
+        "FALSIFIER commentary target",
+        "NO_CONCLUSION target",
+        "Valid hypothesis target",
+        "Invalid edge cannot poison subsequent valid graph"
+      ],
+      "mechanismOnResult": {
+        "result": "PASS",
+        "scope": "E3 negative/positive graph tests and focused math regression",
+        "mathArmsAccepted": 2,
+        "mathArmsExecuted": 2
+      },
+      "mechanismOffResult": {
+        "result": "INVALID_TARGET_ADMITTED",
+        "scope": "E3 predecessor reproduction; live math B chain incomplete"
+      },
+      "simplerControlResult": {
+        "result": "REJECTED",
+        "mechanism": "Ignore incomplete chain",
+        "reason": "Would weaken assurance; not implemented."
+      },
+      "computeDelta": {
+        "nominalLimitsChanged": false,
+        "mathCurrentTotalTokens": 65510,
+        "mathExperimentalTotalTokens": 42461,
+        "realizedComputeMatched": false
+      },
+      "regressionFindings": [
+        "195 research-party checks pass including 13 additions",
+        "Three repeated deterministic replays pass"
+      ],
+      "freshTransferResult": null,
+      "admissionStatus": "VERIFIED_PROTOCOL_CORRECTION_FOCUSED_REGRESSION_ONLY"
+    },
+    {
+      "gapId": "NYX-GAP-OUTPUT-TRUNCATION",
+      "observedWeakness": "Some live requests reached finish_reason=length at the frozen 1536 output-token ceiling.",
+      "failureClass": "TRUNCATION",
+      "diagnosis": {
+        "category": "INTERFACE",
+        "state": "SUPPORTED",
+        "scope": "Observed output never reached strict complete-intent admission; not counted as hidden-case reasoning failure."
+      },
+      "evidence": [
+        "DEADLINE-COMPARISON",
+        "SCIENCE-CONTINUATION",
+        "SCIENCE-UNEXECUTED-ARM"
+      ],
+      "alternativeExplanations": [
+        "Verbose generation",
+        "Reasoning consumes provider output budget",
+        "Sampling variation; focused math produced no truncations"
+      ],
+      "generalCapabilityHypothesis": "A shorter protocol representation or deterministic artifact reuse may reduce emission failures without increasing model budget; effect remains untested in this epoch.",
+      "proposedIntervention": "Measure finish reasons independently; develop only on separate synthetic requests, retain strict parser and current oracle.",
+      "developmentTasks": [],
+      "mechanismOnResult": null,
+      "mechanismOffResult": {
+        "result": "OBSERVED_TRUNCATIONS",
+        "scope": "Existing frozen protocol"
+      },
+      "simplerControlResult": null,
+      "computeDelta": null,
+      "regressionFindings": [
+        "No output ceiling, parser or oracle relaxation"
+      ],
+      "freshTransferResult": null,
+      "admissionStatus": "OPEN_NOT_ADMITTED"
+    },
+    {
+      "gapId": "NYX-GAP-CAUSAL-FORECASTS",
+      "observedWeakness": "The remaining science arm delivered all eight requests with no final provider failure and intact evidence, but investigated CLAMP_EDGE and ZERO_PAD only; no candidate established the correct mechanism. Two revisions were truncated.",
+      "failureClass": "INCOMPLETE_OR_WRONG_REASONING",
+      "diagnosis": {
+        "category": "COGNITION",
+        "state": "SUPPORTED",
+        "scope": "Initial/revised hypothesis coverage is incomplete in the final science B record. It is not a pure reasoning-only comparison because two revisions truncated. Correct mechanism cannot be inferred from a model confidence meter."
+      },
+      "evidence": [
+        "DEADLINE-COMPARISON",
+        "COUNTEREXAMPLE-MATH-REGRESSION",
+        "SCIENCE-CONTINUATION",
+        "SCIENCE-UNEXECUTED-ARM"
+      ],
+      "alternativeExplanations": [
+        "Convergent independent investigators duplicated a mechanism",
+        "Incorrect finite forecast derivation",
+        "Two truncated revisions prevented full repair",
+        "A fixed investigation population did not cover the declared catalog",
+        "Sampling variation"
+      ],
+      "generalCapabilityHypothesis": "Prospectively diversified hypothesis allocation and explicit coverage accounting may prevent premature family-wide abstention without more realized model compute; exact workbench computation is a separate hypothesis for forecast errors.",
+      "proposedIntervention": "Build independent development families isolating duplicate hypothesis selection from forecast arithmetic. Compare current allocation, equal-budget diversity allocation, and a simpler same-call sampling control; do not special-case diffusion or encode its correct answer.",
+      "developmentTasks": [],
+      "mechanismOnResult": null,
+      "mechanismOffResult": {
+        "result": "INSUFFICIENT_EVIDENCE",
+        "scope": "Final science B: 3 experiments, 8 calls, complete evidence chain, 2 truncations, 2 distinct selected mechanism IDs",
+        "tokens": 44301,
+        "wallClockMs": 653156
+      },
+      "simplerControlResult": null,
+      "computeDelta": {
+        "modelCalls": 8,
+        "totalTokens": 44301,
+        "modelInterventionExecuted": false
+      },
+      "regressionFindings": [
+        "No task-answer-key fixes",
+        "No cognitive mechanism admitted on these inspected tasks"
+      ],
+      "freshTransferResult": null,
+      "admissionStatus": "OPEN_CAPABILITY_FAILURE_NOT_PROMOTED"
+    },
+    {
+      "gapId": "NYX-GAP-COMPUTE-CONTROL",
+      "observedWeakness": "Equal resource ceilings did not yield equal realized calls/tokens, and provider failures leave some token totals unknown.",
+      "failureClass": "EVALUATION_CONFOUND",
+      "diagnosis": {
+        "category": "EVALUATION",
+        "state": "SUPPORTED",
+        "scope": "Current comparison is two NYX policies, not raw-model/equivalent-tools/current/candidate four-arm evaluation."
+      },
+      "evidence": [
+        "RECOVERY-ATTEMPT-1",
+        "RECOVERY-ATTEMPT-2",
+        "DEADLINE-COMPARISON",
+        "COUNTEREXAMPLE-MATH-REGRESSION",
+        "SCIENCE-CONTINUATION",
+        "SCIENCE-UNEXECUTED-ARM"
+      ],
+      "alternativeExplanations": [
+        "Earlier experimental acceptance can reduce work without proving architecture superiority",
+        "Different hypotheses can change repair depth",
+        "Missing usage telemetry must not be replaced by zero"
+      ],
+      "generalCapabilityHypothesis": "Prospectively normalized compute, paired fresh tasks and equivalent tool controls are required before attributing advantage to architecture.",
+      "proposedIntervention": "Freeze a fresh development/validation epoch before further model-backed comparisons; keep old probes in DEVELOPMENT.",
+      "developmentTasks": [],
+      "mechanismOnResult": null,
+      "mechanismOffResult": null,
+      "simplerControlResult": null,
+      "computeDelta": {
+        "mathCurrent": {
+          "calls": 11,
+          "tokens": 65510,
+          "wallClockMs": 605462
+        },
+        "mathExperimental": {
+          "calls": 8,
+          "tokens": 42461,
+          "wallClockMs": 321795
+        },
+        "realizedComputeMatched": false
+      },
+      "regressionFindings": [
+        "All recorded provider incidents retained",
+        "No policy promotion",
+        "No recalibration from model confidence"
+      ],
+      "freshTransferResult": null,
+      "admissionStatus": "OPEN_NO_ARCHITECTURE_COMPARISON_CLAIM"
+    },
+    {
+      "gapId": "NYX-GAP-GENERATED-INVENTORY",
+      "observedWeakness": "CI rejected a stale generated repository inventory after a new focused-selection environment variable was introduced.",
+      "failureClass": "EVALUATION_INFRASTRUCTURE_FAILURE",
+      "diagnosis": {
+        "category": "EVALUATION",
+        "state": "SUPPORTED",
+        "scope": "Inventory generation/check only; not a cognitive failure."
+      },
+      "evidence": [
+        "github-run:36863706639/job:110373885664",
+        "github-run:36885968696/job:110449222923",
+        "docs/w0rs/evidence/repository-truth-map.json"
+      ],
+      "alternativeExplanations": [],
+      "generalCapabilityHypothesis": "Regenerating the existing inventory preserves its ratchet without weakening the checker.",
+      "proposedIntervention": "Run existing inventory generator and retain failed CI as evidence.",
+      "developmentTasks": [
+        "node scripts/w0rs/inventory.mjs --check"
+      ],
+      "mechanismOnResult": {
+        "result": "PASS",
+        "scope": "Fresh CI at a8ecd20"
+      },
+      "mechanismOffResult": {
+        "result": "FAIL",
+        "scope": "CI at f5ff816"
+      },
+      "simplerControlResult": {
+        "result": "REJECTED",
+        "mechanism": "Remove failing inventory check",
+        "reason": "Would weaken verification."
+      },
+      "computeDelta": {
+        "modelCallsAdded": 0
+      },
+      "regressionFindings": [
+        "TypeScript zero",
+        "Production build succeeded",
+        "Secret scanner zero findings"
+      ],
+      "freshTransferResult": null,
+      "admissionStatus": "VERIFIED_MAINTENANCE_CORRECTION"
+    }
+  ]
+}

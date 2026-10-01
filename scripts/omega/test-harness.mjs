@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
-import { relative, resolve, sep } from "node:path";
+import { dirname, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
 const PRIVATE_R1_EVALUATOR = "scripts/evaluation/omegaR1PrivateEval.ts";
@@ -218,4 +219,124 @@ export function compareExecutionManifests(previous, current, classifications = [
     changedSourceDigests: Object.freeze(changedSourceDigests), addedSemanticIds: Object.freeze(addedSemanticIds), removedSemanticIds: Object.freeze(removedSemanticIds),
     classifications: Object.freeze(classifications.map((item) => Object.freeze({ ...item }))), issues: Object.freeze(issues),
   });
+}
+
+// Sanitized research checkpoint reconstruction; reuses this harness's canonical hashing.
+const FRONTIER_CHECKPOINT_DIRECTORY = "scripts/omega/checkpoints/frontier-ceiling";
+const GAP_FIELDS = ["gapId", "observedWeakness", "failureClass", "diagnosis", "evidence",
+  "alternativeExplanations", "generalCapabilityHypothesis", "proposedIntervention", "developmentTasks",
+  "mechanismOnResult", "mechanismOffResult", "simplerControlResult", "computeDelta", "regressionFindings",
+  "freshTransferResult", "admissionStatus"];
+
+export function checkpointDigest(value) { return sha256(canonicalize(value)); }
+
+/** Reproducibility check only. A self-contained hash manifest is not signed E4 custody. */
+export function verifyFrontierCheckpoint(checkpoint, gaps, readReport, readSource) {
+  const findings = [];
+  const require = (condition, label) => { if (!condition) findings.push(label); };
+  const sha = value => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+  require(checkpoint?.schemaVersion === 1 && gaps?.schemaVersion === 1, "UNSUPPORTED_SCHEMA_VERSION");
+  if (findings.length) return { decision: "REJECT", findings };
+  require(checkpoint.checkpointId === "NYX-FRONTIER-CEILING-CHECKPOINT-001", "CHECKPOINT_ID_MISMATCH");
+  require(checkpoint.highConfidenceFrontierReadiness === false && checkpoint.broadPromotion === false
+    && checkpoint.authorityIncrease === false && gaps.grantsAuthority === false && gaps.broadPromotion === false,
+  "UNSUPPORTED_PROMOTION_OR_AUTHORITY");
+  require(checkpoint.integrityClassification === "SELF_CONTAINED_HASH_MANIFEST_NOT_SIGNED_CUSTODY",
+    "CUSTODY_STRENGTH_MISREPRESENTED");
+  require(checkpoint.registryDigest === checkpointDigest(gaps), "GAP_REGISTRY_DIGEST_MISMATCH");
+  require(Array.isArray(gaps.gaps) && gaps.gaps.length > 0, "GAP_REGISTRY_EMPTY");
+  for (const gap of gaps.gaps ?? []) {
+    require(GAP_FIELDS.every(field => Object.hasOwn(gap, field)), `GAP_FIELDS_MISSING:${gap.gapId}`);
+    require(["SUPPORTED", "INSUFFICIENT_EVIDENCE", "UNKNOWN"].includes(gap.diagnosis?.state),
+      `DIAGNOSIS_STATE_INVALID:${gap.gapId}`);
+    require(Array.isArray(gap.evidence) && gap.evidence.length > 0, `GAP_EVIDENCE_MISSING:${gap.gapId}`);
+  }
+  require(new Set((gaps.gaps ?? []).map(gap => gap.gapId)).size === gaps.gaps?.length, "DUPLICATE_GAP_ID");
+  const corpus = checkpoint.evaluationTiers?.find(tier => tier.corpus === "EXECUTABLE_TRANSFER_V1");
+  require(corpus?.tier === "DEVELOPMENT" && corpus.freshHeldoutClaim === false,
+    "INSPECTED_CORPUS_NOT_DEMOTED");
+  require(checkpoint.comparison?.realizedComputeMatched === false
+    && checkpoint.comparison?.fourArmFoundationModelControlExecuted === false,
+  "COMPARISON_SCOPE_OVERCLAIM");
+  require(Array.isArray(checkpoint.reports) && checkpoint.reports.length >= 5, "REPORT_HISTORY_MISSING");
+  require(new Set((checkpoint.reports ?? []).map(item => item.reportId)).size === checkpoint.reports?.length,
+    "DUPLICATE_REPORT_ID");
+  const archive = new Map();
+  for (const reference of checkpoint.reports ?? []) {
+    if (!/^[a-z0-9-]+\.json$/.test(reference.file)) { findings.push("REPORT_PATH_INVALID"); continue; }
+    try {
+      const report = readReport(reference.file);
+      archive.set(reference.reportId, report);
+      require(sha(reference.canonicalReportSha256) && checkpointDigest(report) === reference.canonicalReportSha256,
+        `REPORT_DIGEST_MISMATCH:${reference.reportId}`);
+      require(sha(reference.zipSha256) && reference.artifactDigestMeaning === "ORIGINAL_UPLOADED_ZIP_NOT_NORMALIZED_REPORT",
+        `ARTIFACT_IDENTITY_MISREPRESENTED:${reference.reportId}`);
+      require(Number.isSafeInteger(reference.runId) && Number.isSafeInteger(reference.jobId)
+        && Number.isSafeInteger(reference.artifactId), `EXECUTION_ID_MISSING:${reference.reportId}`);
+      require(report.schemaVersion === 1 && report.candidateCommit === reference.candidateCommit
+        && report.verdict === reference.verdict && report.completedArms === reference.completedArms,
+      `EXECUTION_BINDING_MISMATCH:${reference.reportId}`);
+      require(report.model === checkpoint.comparison.model
+        && checkpointDigest(report.matchedLimits) === checkpointDigest(checkpoint.comparison.matchedLimits),
+      `MODEL_OR_LIMITS_CHANGED:${reference.reportId}`);
+      require(report.broadPromotion === false && report.realizedComputeMatched === false
+        && report.records?.length === report.completedArms, `REPORT_SCOPE_INVALID:${reference.reportId}`);
+      require(report.scheduling?.maxParallelModelExecutions === 1
+        && report.scheduling?.peerViewsFrozenBeforePhase === true, `SCHEDULING_MISMATCH:${reference.reportId}`);
+      for (const record of report.records ?? []) {
+        require(record.cognitionEvidence?.length === record.resourceUsage.modelCalls
+          && record.cognitionOutcomes?.length === record.resourceUsage.modelCalls,
+        `CALL_TELEMETRY_MISMATCH:${reference.reportId}:${record.taskId}`);
+        if (record.providerFailures > 0) require(record.resourceUsage.totalTokens === null,
+          `MISSING_PROVIDER_USAGE_CONCEALED:${reference.reportId}:${record.taskId}`);
+        if (record.assurance?.decision === "ACCEPT") require(record.assurance.functionalAcceptance
+          && record.assurance.evidenceIntegrityAcceptance && record.evidenceChainComplete
+          && record.sourceRepositoryUnchanged && record.authorityGranted === false,
+        `ACCEPTANCE_PREREQUISITE_MISSING:${reference.reportId}:${record.taskId}`);
+      }
+    } catch { findings.push(`REPORT_UNREADABLE:${reference.reportId}`); }
+  }
+  // Keep the causal predecessor failure; success cannot replace it in the archive.
+  const previousMath = archive.get("DEADLINE-COMPARISON")?.records?.find(record =>
+    record.taskId === "NYX-TRANSFER-REDUCTION" && record.policy === "EXHAUST_PRECOMMITTED_FORECASTS");
+  const revisedMath = archive.get("COUNTEREXAMPLE-MATH-REGRESSION")?.records?.find(record =>
+    record.taskId === "NYX-TRANSFER-REDUCTION" && record.policy === "EXHAUST_PRECOMMITTED_FORECASTS");
+  require(previousMath?.assurance.decision === "REJECT" && previousMath.assurance.functionalAcceptance === true
+    && previousMath.evidenceChainComplete === false, "CAUSAL_PREDECESSOR_FAILURE_ERASED");
+  require(previousMath?.assurance.evaluatorDigest === revisedMath?.assurance.evaluatorDigest,
+    "MATH_ORACLE_CHANGED");
+  require(archive.get("SCIENCE-CONTINUATION")?.providerBlocked === true,
+    "SCIENCE_PROVIDER_FAILURE_ERASED");
+  const science = archive.get("SCIENCE-UNEXECUTED-ARM");
+  require(science?.comparisonScope === "SINGLE_ARM_CONTINUATION_NOT_PAIRED"
+    && science.requestedArms === 1 && science.records.length === 1
+    && science.verdict === "EMPIRICALLY_NOT_YET_VERIFIED"
+    && science.records[0].evidenceChainComplete === true && science.records[0].providerFailures === 0
+    && science.records[0].assurance.decision === "INSUFFICIENT_EVIDENCE",
+  "SCIENCE_NEGATIVE_RESULT_OR_SCOPE_CHANGED");
+  const records = [...archive.values()].flatMap(report => report.records ?? []);
+  const usage = checkpoint.aggregateUsage;
+  require(usage?.recordedArms === records.length
+    && usage.modelCallReservations === records.reduce((sum, record) => sum + record.resourceUsage.modelCalls, 0)
+    && usage.httpAttempts === records.reduce((sum, record) => sum + record.transport.httpAttempts, 0)
+    && usage.knownReportedTokensLowerBound === records.reduce((sum, record) => sum + (record.resourceUsage.totalTokens ?? 0), 0)
+    && usage.armsWithUnknownTokenTotals === records.filter(record => record.resourceUsage.totalTokens === null).length
+    && usage.actualTotalTokens === null && usage.estimatedDollarCost === null,
+  "AGGREGATE_USAGE_OR_MISSINGNESS_CHANGED");
+  for (const [path, expected] of Object.entries(checkpoint.runtimeSourceHashes ?? {})) {
+    if (!/^(src\/lib\/codelab\/|scripts\/omega\/)[a-zA-Z0-9/.-]+\.(ts|mjs)$/.test(path)
+      || path.split("/").includes("..")) { findings.push("SOURCE_PATH_INVALID"); continue; }
+    try { require(sha(expected) && createHash("sha256").update(readSource(path).replace(/\r\n/g, "\n"))
+      .digest("hex") === expected, `RUNTIME_SOURCE_CHANGED:${path}`); }
+    catch { findings.push(`SOURCE_UNREADABLE:${path}`); }
+  }
+  require(Object.keys(checkpoint.runtimeSourceHashes ?? {}).length >= 4, "RUNTIME_SOURCE_BINDING_MISSING");
+  return { decision: findings.length ? "REJECT" : "ACCEPT", findings, evidenceClass: "E3",
+    scope: "ARCHIVE_RECONSTRUCTION_NOT_CAPABILITY_CERTIFICATION", grantsAuthority: false };
+}
+
+export function readFrontierCheckpoint(root = resolve(dirname(fileURLToPath(import.meta.url)), "../..")) {
+  const json = path => JSON.parse(readFileSync(resolve(root, path), "utf8"));
+  return verifyFrontierCheckpoint(json(`${FRONTIER_CHECKPOINT_DIRECTORY}/checkpoint.json`), json(`${FRONTIER_CHECKPOINT_DIRECTORY}/capability-gaps.json`),
+    file => json(`${FRONTIER_CHECKPOINT_DIRECTORY}/${file}`), path => readFileSync(resolve(root, path), "utf8"));
 }

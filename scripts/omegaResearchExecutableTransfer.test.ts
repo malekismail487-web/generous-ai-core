@@ -1,5 +1,7 @@
 import { Script, createContext } from "node:vm";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { checkpointDigest, readFrontierCheckpoint, verifyFrontierCheckpoint } from "./omega/test-harness.mjs";
 import { validResearchObjective } from "../src/lib/codelab/research/researchPartyContracts";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { NYX_RESEARCH_TRANSFER_TASKS, NYX_RESEARCH_TRANSFER_CORPUS_DIGEST } from "./omega/nyx-research-transfer-fixtures";
@@ -88,6 +90,69 @@ check(run(brokenDiffusion, `${diffusion.taskId}-PROBE-0`) !== diffusion.outcome(
   "independent oracle detects incorrect boundary operator");
 check(new Set(corpus.map(task => task.objective(candidate, 1_000).domain)).size === 3,
   "software, mathematics, and simulated science remain distinct transfer families");
+
+// Archive checks cannot certify cognition; they prevent rewriting failed runs as successes.
+const archiveRoot = "scripts/omega/checkpoints/frontier-ceiling/";
+const checkpoint = JSON.parse(readFileSync(`${archiveRoot}checkpoint.json`, "utf8"));
+const gaps = JSON.parse(readFileSync(`${archiveRoot}capability-gaps.json`, "utf8"));
+const reports = Object.fromEntries(checkpoint.reports.map((item: { file: string }) =>
+  [item.file, JSON.parse(readFileSync(`${archiveRoot}${item.file}`, "utf8"))]));
+const verifyArchive = (state = checkpoint, registry = gaps, reportMap = reports,
+  source = (path: string) => readFileSync(path, "utf8")) => verifyFrontierCheckpoint(
+  state, registry, (file: string) => reportMap[file], source);
+check(readFrontierCheckpoint().decision === "ACCEPT", "complete sanitized archive reconstructs from source and execution bindings");
+check(verifyArchive().scope === "ARCHIVE_RECONSTRUCTION_NOT_CAPABILITY_CERTIFICATION"
+  && verifyArchive().grantsAuthority === false, "archive integrity never grants authority or frontier certification");
+check(checkpointDigest({ b: 2, a: [1, 3] }) === checkpointDigest({ a: [1, 3], b: 2 })
+  && checkpointDigest({ a: [1, 3] }) !== checkpointDigest({ a: [3, 1] }),
+"canonical digest ignores object ordering but preserves evidence sequence");
+for (const mutation of [
+  (value: typeof checkpoint) => { value.schemaVersion = 2; },
+  (value: typeof checkpoint) => { value.highConfidenceFrontierReadiness = true; },
+  (value: typeof checkpoint) => { value.authorityIncrease = true; },
+  (value: typeof checkpoint) => { value.comparison.realizedComputeMatched = true; },
+  (value: typeof checkpoint) => { value.evaluationTiers[0].tier = "SEALED_FINAL"; },
+  (value: typeof checkpoint) => { value.reports[0].file = "../../credentials.json"; },
+  (value: typeof checkpoint) => { value.reports[0].artifactDigestMeaning = "SIGNED_E4_CUSTODY"; },
+  (value: typeof checkpoint) => { value.reports.splice(value.reports.findIndex((r: { reportId: string }) => r.reportId === "DEADLINE-COMPARISON"), 1); },
+  (value: typeof checkpoint) => { value.runtimeSourceHashes = {}; },
+]) {
+  const altered = structuredClone(checkpoint); mutation(altered);
+  check(verifyArchive(altered).decision === "REJECT", "scope, version, custody and historical-failure mutations fail closed");
+}
+const alteredGaps = structuredClone(gaps); delete alteredGaps.gaps[0].alternativeExplanations;
+check(verifyArchive(checkpoint, alteredGaps).decision === "REJECT", "registry tampering and missing competing explanations are detected");
+const alteredGapBinding = { ...checkpoint, registryDigest: checkpointDigest(alteredGaps) };
+check(verifyArchive(alteredGapBinding, alteredGaps).decision === "REJECT", "rehashed registry still requires competing explanations");
+for (const mutation of [
+  (report: typeof reports[string]) => { report.completedArms += 1; },
+  (report: typeof reports[string]) => { report.matchedLimits.maxModelCalls += 1; },
+  (report: typeof reports[string]) => { report.records[0].resourceUsage.totalTokens = 0; },
+  (report: typeof reports[string]) => { report.records[0].resourceUsage.modelCalls += 1; },
+]) {
+  const alteredReports = structuredClone(reports); const altered = structuredClone(checkpoint);
+  mutation(alteredReports["recovery-attempt-1.json"]);
+  const ref = altered.reports.find((r: { file: string }) => r.file === "recovery-attempt-1.json");
+  ref.canonicalReportSha256 = checkpointDigest(alteredReports[ref.file]);
+  check(verifyArchive(altered, gaps, alteredReports).decision === "REJECT",
+    "even a recomputed self-manifest cannot hide limits, missing usage or call-count inconsistencies");
+}
+const changedOracle = structuredClone(reports); const changedBinding = structuredClone(checkpoint);
+changedOracle["counterexample-math-regression.json"].records.forEach((r: typeof reports[string]) => {
+  r.assurance.evaluatorDigest = "0".repeat(64);
+});
+changedBinding.reports.find((r: { file: string }) => r.file === "counterexample-math-regression.json").canonicalReportSha256 =
+  checkpointDigest(changedOracle["counterexample-math-regression.json"]);
+check(verifyArchive(changedBinding, gaps, changedOracle).decision === "REJECT", "changed math oracle cannot masquerade as the preserved regression");
+check(verifyArchive(checkpoint, gaps, reports, () => "altered runtime source").decision === "REJECT",
+  "runtime dependency changes require checkpoint revalidation");
+const erasedFailure = structuredClone(reports); const erasedFailureBinding = structuredClone(checkpoint);
+erasedFailure["science-unexecuted-arm.json"].verdict = "BOUNDED_LIVE_COMPARISON_ONLY";
+const erasedRef = erasedFailureBinding.reports.find((r: { file: string }) => r.file === "science-unexecuted-arm.json");
+erasedRef.verdict = erasedFailure[erasedRef.file].verdict;
+erasedRef.canonicalReportSha256 = checkpointDigest(erasedFailure[erasedRef.file]);
+check(verifyArchive(erasedFailureBinding, gaps, erasedFailure).decision === "REJECT",
+  "rehashed artifact metadata cannot erase the final science negative finding");
 console.log(`NYX_EXECUTABLE_TRANSFER_PREFLIGHT ${JSON.stringify({ schemaVersion: 1,
   corpusDigest: NYX_RESEARCH_TRANSFER_CORPUS_DIGEST, actualCognition: "NOT_EXECUTED",
   oracleMutantsRejected: 3, evidenceClass: "E3", broadPromotion: false, authorityGranted: false })}`);

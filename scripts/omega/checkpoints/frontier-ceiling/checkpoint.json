@@ -1,0 +1,384 @@
+{
+  "schemaVersion": 1,
+  "checkpointId": "NYX-FRONTIER-CEILING-CHECKPOINT-001",
+  "program": "FRONTIER_BENCHMARK_CEILING_BLIND_GENERALIZATION",
+  "operator": "Malek",
+  "runtimeBaselineCommit": "35423e4b2e9999c6099880954b693b7efcbad2a7",
+  "checkpointCommitBinding": "ENCLOSING_GIT_COMMIT_NOT_SELF_EMBEDDED",
+  "integrityClassification": "SELF_CONTAINED_HASH_MANIFEST_NOT_SIGNED_CUSTODY",
+  "reportCanonicalization": "RECURSIVELY_SORT_OBJECT_KEYS_PRESERVE_ARRAY_ORDER_JSON_SHA256",
+  "runtimeHashCanonicalization": "SHA256_UTF8_SOURCE_NORMALIZED_CRLF_TO_LF",
+  "runtimeSourceHashes": {
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "21edc5ca21bbb735e8175ac350ee148fac3af43f638df620ab0cb8446b04c388",
+    "src/lib/codelab/research/nyxNemotronTheoryCognition.ts": "f9bdffa7ba8fa8b4d7a767317a8bbaf7d0c46ed995a60ec02cd9c3360cd5b9d2",
+    "src/lib/codelab/research/theoryResearchParty.ts": "a0265ccb8f7aef342c348c601ab5b6aff0e7bc3d19663642832aaecb66c2771e",
+    "src/lib/codelab/research/researchEvidenceGraph.ts": "7ccdab58f60197cd859d069b3d8a843b1bc5f24b56ad0cd54f5258028e721368",
+    "src/lib/codelab/research/researchPartyAssurance.ts": "bff3296c1e840c38a314568de2888883cba7b81c2132dfa34b8c826151adc759",
+    "scripts/omega/nyx-research-transfer-fixtures.ts": "57d772509292f3b4ceed815e2de9c7fd53812236000b211d27f9663375dacecb"
+  },
+  "registryDigest": "f158daaf8434d8b16f58baae238335e2b02aac1804bad032c384d1243a697bd9",
+  "currentHypothesis": "Protocol reliability must be isolated from prediction derivation and hypothesis coverage before admitting a general cognitive intervention. Exact workbench computation may replace fragile finite calculations, but needs development controls and fresh transfer.",
+  "continuation": {
+    "thirdCampaignRun": 36859343810,
+    "status": "CONTINUATION_FINISHED_INCONCLUSIVE_NOT_A_CLEAN_PAIRED_EPOCH",
+    "math": "FOCUSED_REGRESSION_ACCEPTED_BOTH_ARMS",
+    "scienceA": "INCONCLUSIVE_PROVIDER_FAILURE",
+    "scienceB": "EMPIRICALLY_NOT_YET_VERIFIED",
+    "scienceBRun": 36888754992,
+    "scienceBDetails": {
+      "finalProviderFailures": 0,
+      "evidenceChainComplete": true,
+      "experiments": 3,
+      "calls": 8,
+      "totalTokens": 44301,
+      "outputTruncations": 2,
+      "distinctHypothesisMechanisms": 2,
+      "declaredCatalogMechanisms": 4
+    },
+    "prohibitedInterpretation": "Combining best samples across candidates into a single clean matched campaign"
+  },
+  "comparison": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "matchedLimits": {
+      "maxEntities": 8,
+      "maxModelCalls": 11,
+      "maxExperiments": 3,
+      "maxEvidenceItems": 128,
+      "maxWallClockMs": 900000,
+      "maxPromptBytesPerCall": 64000,
+      "maxOutputTokensPerCall": 1536,
+      "maxTotalOutputTokens": 16896,
+      "maxCostUnits": 10
+    },
+    "realizedComputeMatched": false,
+    "fourArmFoundationModelControlExecuted": false,
+    "arms": [
+      "REVISE_AFTER_OBSERVATION",
+      "EXHAUST_PRECOMMITTED_FORECASTS"
+    ],
+    "notCompared": [
+      "RAW_FOUNDATION_MODEL",
+      "FOUNDATION_MODEL_WITH_EQUIVALENT_TOOLS"
+    ],
+    "callAndTokenMissingness": "UNKNOWN_REMAINS_NULL_NOT_ZERO"
+  },
+  "highConfidenceFrontierReadiness": false,
+  "broadPromotion": false,
+  "authorityIncrease": false,
+  "capabilityConfidenceProbability": null,
+  "confidenceReason": "Tiny inspected probes, unequal realized compute, no external sealed benchmark results, no institutional replication and incomplete science coverage do not support the requested readiness estimate.",
+  "evaluationTiers": [
+    {
+      "corpus": "EXECUTABLE_TRANSFER_V1",
+      "tier": "DEVELOPMENT",
+      "originalFullCorpusDigest": "4d81bd5b637acaea021dda0991318c8afbc66cd0522bee786dd6dcc122e92072",
+      "freshHeldoutClaim": false,
+      "reason": "Inspected and repeated during protocol diagnosis; retained as regression evidence."
+    },
+    {
+      "tier": "VALIDATION",
+      "status": "NOT_YET_FROZEN_FOR_NEW_MECHANISM",
+      "answersAvailableToCognition": false
+    },
+    {
+      "tier": "SEALED_FINAL",
+      "status": "NOT_EXECUTED",
+      "answersAvailableToCognition": false
+    }
+  ],
+  "benchmarkReadiness": [
+    {
+      "family": "ARC_STYLE",
+      "state": "INSUFFICIENT_EVIDENCE",
+      "externalBenchmarkExecuted": false
+    },
+    {
+      "family": "HLE_STYLE",
+      "state": "INSUFFICIENT_EVIDENCE",
+      "externalBenchmarkExecuted": false
+    },
+    {
+      "family": "SWE_STYLE",
+      "state": "INSUFFICIENT_EVIDENCE",
+      "externalBenchmarkExecuted": false
+    },
+    {
+      "family": "TERMINAL_STYLE",
+      "state": "INSUFFICIENT_EVIDENCE",
+      "externalBenchmarkExecuted": false
+    },
+    {
+      "family": "FRONTIER_MATH_STYLE",
+      "state": "INSUFFICIENT_EVIDENCE",
+      "externalBenchmarkExecuted": false
+    }
+  ],
+  "reports": [
+    {
+      "reportId": "RECOVERY-ATTEMPT-1",
+      "file": "recovery-attempt-1.json",
+      "runId": 36856709044,
+      "jobId": 110350798999,
+      "artifactId": 11158769521,
+      "zipSha256": "ccc6392fb9af4bdc75c5185ce4704add37825f2a34970d317b39df27aa64aa3c",
+      "candidateCommit": "a5d08fc29e1e18cb760d1cbf7617ccf4d2831c9c",
+      "verdict": "INCONCLUSIVE_PROVIDER_FAILURE",
+      "completedArms": 1,
+      "copyForm": "PARSED_LOG_REPORT_NORMALIZED_JSON_NOT_ORIGINAL_ZIP",
+      "source": "GITHUB_ACTIONS_JOB_LOG",
+      "artifactDigestMeaning": "ORIGINAL_UPLOADED_ZIP_NOT_NORMALIZED_REPORT",
+      "runUrl": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36856709044",
+      "jobUrl": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36856709044/job/110350798999",
+      "canonicalReportSha256": "292d56c1ad6d555e7c6e337f0dfd577f0a6d43dc9ac3f8246a6fed9507191a93"
+    },
+    {
+      "reportId": "RECOVERY-ATTEMPT-2",
+      "file": "recovery-attempt-2.json",
+      "runId": 36856709044,
+      "jobId": 110352910833,
+      "artifactId": 11160122906,
+      "zipSha256": "1f917fbceb1be0c72010ead2c0c2d1097ccd1652fb30c605925a2a882260274e",
+      "candidateCommit": "a5d08fc29e1e18cb760d1cbf7617ccf4d2831c9c",
+      "verdict": "INCONCLUSIVE_PROVIDER_FAILURE",
+      "completedArms": 2,
+      "copyForm": "PARSED_LOG_REPORT_NORMALIZED_JSON_NOT_ORIGINAL_ZIP",
+      "source": "GITHUB_ACTIONS_JOB_LOG",
+      "artifactDigestMeaning": "ORIGINAL_UPLOADED_ZIP_NOT_NORMALIZED_REPORT",
+      "runUrl": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36856709044",
+      "jobUrl": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36856709044/job/110352910833",
+      "canonicalReportSha256": "1ad7f5f850d3630140a0273c3f0538e49113b26e681c90b3bb2f4f21f556bf10"
+    },
+    {
+      "reportId": "DEADLINE-COMPARISON",
+      "file": "deadline-comparison.json",
+      "runId": 36859343810,
+      "jobId": 110359417088,
+      "artifactId": 11162726998,
+      "zipSha256": "e177bcca4a5f9eb0ed5a30fab972440cc9cee3c69bba952e6f398fc03a100189",
+      "candidateCommit": "c652ebd76e6feb7e62e4368c577df77a483c653e",
+      "verdict": "INCONCLUSIVE_PROVIDER_FAILURE",
+      "completedArms": 5,
+      "copyForm": "PARSED_LOG_REPORT_NORMALIZED_JSON_NOT_ORIGINAL_ZIP",
+      "source": "GITHUB_ACTIONS_JOB_LOG",
+      "artifactDigestMeaning": "ORIGINAL_UPLOADED_ZIP_NOT_NORMALIZED_REPORT",
+      "runUrl": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36859343810",
+      "jobUrl": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36859343810/job/110359417088",
+      "canonicalReportSha256": "36a56651934f48f7038146858d9accddf3cff83d6e62930ccb7f1fc8b239fb80"
+    },
+    {
+      "reportId": "COUNTEREXAMPLE-MATH-REGRESSION",
+      "file": "counterexample-math-regression.json",
+      "runId": 36863627750,
+      "jobId": 110373630310,
+      "artifactId": 11163430970,
+      "zipSha256": "b046c88a93613ec1dc39276ff076569d91cad4989f86e5b803797162783b9a16",
+      "candidateCommit": "43c53878febea84ad4c4cf553cd1a9314eedda73",
+      "verdict": "BOUNDED_LIVE_COMPARISON_ONLY",
+      "completedArms": 2,
+      "copyForm": "PARSED_LOG_REPORT_NORMALIZED_JSON_NOT_ORIGINAL_ZIP",
+      "source": "GITHUB_ACTIONS_JOB_LOG",
+      "artifactDigestMeaning": "ORIGINAL_UPLOADED_ZIP_NOT_NORMALIZED_REPORT",
+      "runUrl": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36863627750",
+      "jobUrl": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36863627750/job/110373630310",
+      "canonicalReportSha256": "1abfbd8c39ecaa94375398f6693798c523c9cb9699b073ea7479048bc64eaf25"
+    },
+    {
+      "reportId": "SCIENCE-CONTINUATION",
+      "file": "science-continuation.json",
+      "runId": 36885890747,
+      "jobId": 110448959029,
+      "artifactId": 11175220739,
+      "zipSha256": "40d0b0387c2211cf0e49bda825e003fff3e586dfdc1a227fb2bf434e4b1e83c0",
+      "candidateCommit": "8ace0d6757fd2a36f8db0a178c1d70b9a9415928",
+      "verdict": "INCONCLUSIVE_PROVIDER_FAILURE",
+      "completedArms": 1,
+      "copyForm": "PARSED_LOG_REPORT_NORMALIZED_JSON_NOT_ORIGINAL_ZIP",
+      "source": "GITHUB_ACTIONS_JOB_LOG",
+      "artifactDigestMeaning": "ORIGINAL_UPLOADED_ZIP_NOT_NORMALIZED_REPORT",
+      "runUrl": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36885890747",
+      "jobUrl": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36885890747/job/110448959029",
+      "canonicalReportSha256": "9267d8cf4f37d3597fecb06da84583a970bbd9ac917833ae161dac242b642232"
+    },
+    {
+      "reportId": "SCIENCE-UNEXECUTED-ARM",
+      "file": "science-unexecuted-arm.json",
+      "runId": 36888754992,
+      "jobId": 110458697746,
+      "artifactId": 11176197190,
+      "zipSha256": "69b3ab8322d7f29a334b9e712fae8784e84672394bf3c3498193b801f6071b7b",
+      "candidateCommit": "3af37614c14422321e12b131ad01cd725f2ff236",
+      "verdict": "EMPIRICALLY_NOT_YET_VERIFIED",
+      "completedArms": 1,
+      "copyForm": "PARSED_LOG_REPORT_NORMALIZED_JSON_NOT_ORIGINAL_ZIP",
+      "source": "GITHUB_ACTIONS_JOB_LOG",
+      "artifactDigestMeaning": "ORIGINAL_UPLOADED_ZIP_NOT_NORMALIZED_REPORT",
+      "runUrl": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36888754992",
+      "jobUrl": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36888754992/job/110458697746",
+      "canonicalReportSha256": "98729d1dbc96faafd1fb205a3e86bee57523fe2d0aede42ba9fa66427d6a0f6d"
+    }
+  ],
+  "experimentsCompleted": [
+    "137 E3 provider regression checks",
+    "195 E3 research-party checks",
+    "Three repeated deterministic graph replays",
+    "72 E3 transfer/oracle checks followed by 76 checks after single-arm selection validation",
+    "Third campaign and focused math regression; science continuation preserved separately",
+    "Remaining unexecuted science B arm ran once with identical limits and oracle; rejected without final provider failure"
+  ],
+  "failures": [
+    "RECOVERY-ATTEMPT-1: two final HTTP503 failures; software A rejected",
+    "RECOVERY-ATTEMPT-2: software B accepted but final provider failure; math/science unexecuted",
+    "DEADLINE-COMPARISON: math B functionally correct with incomplete evidence; math A wrong conclusion; science A incomplete with provider failure; science B unexecuted",
+    "SCIENCE-CONTINUATION: two final HTTP503 failures, one truncation, uncommitted prediction, second arm unexecuted",
+    "Generated inventory failed CI at f5ff816 and was repaired without removing check",
+    "SCIENCE-UNEXECUTED-ARM: intact evidence, but all selected hypotheses falsified/conflicted; correct mechanism not established; two output truncations"
+  ],
+  "successfulMechanisms": [
+    {
+      "mechanism": "SHARED_TRANSIENT_RETRY_AFTER",
+      "status": "VERIFIED_PROTOCOL_REPAIR_NOT_PROVIDER_AVAILABILITY"
+    },
+    {
+      "mechanism": "EXPLICIT_PROVIDER_SETTLEMENT_DEADLINE",
+      "status": "VERIFIED_E3"
+    },
+    {
+      "mechanism": "HYPOTHESIS_ONLY_COUNTEREXAMPLE_TARGETS",
+      "status": "VERIFIED_E3_AND_FOCUSED_E4_REGRESSION"
+    }
+  ],
+  "rejectedMechanisms": [
+    {
+      "mechanism": "ABORT_SIGNAL_ALONE",
+      "scope": "Uncooperative transport development reproduction",
+      "reason": "Cannot force promise settlement"
+    },
+    {
+      "mechanism": "IGNORE_CHAIN_FAILURE",
+      "scope": "Proposed workaround only, not deployed",
+      "reason": "Would weaken evidence gate"
+    },
+    {
+      "mechanism": "PROMOTE_EXPERIMENTAL_POLICY_FROM_FOCUSED_MATH",
+      "scope": "Promotion decision",
+      "reason": "No fresh, realized-compute-controlled replicated advantage"
+    }
+  ],
+  "nextExactAction": {
+    "state": "DEVELOPMENT_ONLY_NO_POLICY_PROMOTION",
+    "gapId": "NYX-GAP-CAUSAL-FORECASTS",
+    "action": "Freeze independent synthetic development families with duplicated versus diverse initial hypotheses and separately controlled forecast errors. Evaluate a general coverage-aware allocation intervention against current allocation and a simpler same-call sampling control under prospectively matched model/resource/tool limits.",
+    "beforeImplementation": "Audit existing investigator allocation, reviser feedback and workbench routing. Do not encode diffusion boundary semantics or the frozen probe answer.",
+    "afterDevelopment": "Only if ablation improves accepted inference per realized compute, freeze fresh validation tasks not seen during implementation; sealed benchmark answers remain unavailable.",
+    "doNotDo": [
+      "Rerun this inspected science probe until green",
+      "Treat a complete evidence chain as a correct theory",
+      "Admit a brain layer without this failure-class job",
+      "Promote from mixed/cross-candidate outcomes"
+    ]
+  },
+  "outstandingProviderInfrastructureIssues": [
+    {
+      "state": "OBSERVED",
+      "issue": "NVIDIA503 persists despite recovered timing and bounded transport",
+      "humanActionRequired": false
+    },
+    {
+      "state": "OBSERVED",
+      "issue": "1536-output-token truncations in frozen protocol",
+      "humanActionRequired": false
+    }
+  ],
+  "unchangedBoundaries": {
+    "productionAuthority": false,
+    "sourceMutationByNyx": false,
+    "generalShell": false,
+    "generalNetwork": false,
+    "deviceAuthority": false,
+    "mainTouched": false,
+    "sec003": "BLOCKED_EXTERNAL_LOVABLE_MONTHLY_LIMIT"
+  },
+  "notifications": {
+    "sent": false,
+    "destination": null,
+    "reason": "No separate notification requested",
+    "mechanism": null,
+    "result": "NOT_SENT"
+  },
+  "planCoverage": {
+    "status": "PARTIAL_JUST_IN_TIME",
+    "direct": [
+      "EXECUTABLE_EVIDENCE_OUTRANKS_CONFIDENCE",
+      "NO_OBSERVATION_WITHOUT_EVIDENCE",
+      "FRONTIER_PROGRESS_MUST_SURVIVE_REPLAY",
+      "INTERNAL_COMPLEXITY_MUST_PAY_RENT"
+    ],
+    "supporting": [
+      "GENERATOR_REQUIRES_DETECTOR",
+      "DETECTOR_REQUIRES_VALIDATION",
+      "CAPABILITY_PER_COMPUTE",
+      "PROXY_VALIDITY",
+      "REALITY_OVER_PREDICTION"
+    ],
+    "deferred": [
+      "NEW_CONNECTOME_LAYERS",
+      "RECURSION",
+      "DEVICE_INTEGRATION",
+      "FOUNDATION_MODEL_TRAINING"
+    ],
+    "conflicts": []
+  },
+  "preservationScope": {
+    "startOfContinuationCommit": "2623500e73e54bc9c94d5bfbe6e1f2391b623096",
+    "historicalScoredCore": "8d5c671267a8ff805907d2c65c9b28def65d0fe5",
+    "archive": "SANITIZED_REPORTS_FROM_THIS_CONTINUATION",
+    "priorEvidence": "RETAINED_IN_REPOSITORY_HISTORY_AND_GITHUB_ARTIFACTS_NOT_LOSSLESSLY_RECONCILED",
+    "noHistoricalEvidenceDeleted": true
+  },
+  "infrastructureVerification": {
+    "ciCandidate": "35423e4b2e9999c6099880954b693b7efcbad2a7",
+    "ciRun": 36888804466,
+    "ciJob": 110458858966,
+    "ciResult": "PASS",
+    "executedOmegaChecks": 6916,
+    "productionBuild": {
+      "modules": 3930,
+      "elapsedSeconds": 12.26,
+      "environment": "GITHUB_UBUNTU"
+    },
+    "typescript": {
+      "version": "5.8.3",
+      "baseline": 0,
+      "current": 0,
+      "new": 0
+    },
+    "secrets": {
+      "trackedTextFiles": 1082,
+      "findings": 0
+    },
+    "archiveChangesLocalChecks": {
+      "omegaSuites": 98,
+      "passedChecks": 6937,
+      "failedSuites": 0,
+      "scope": "LOCAL_STAGED_CANDIDATE_BEFORE_PUBLICATION",
+      "archiveAndTransferChecks": 97,
+      "trackedTextFilesScanned": 1090,
+      "secretFindings": 0
+    },
+    "unexecuted": {
+      "denoChecks": 220,
+      "databaseChecks": 31
+    }
+  },
+  "aggregateUsage": {
+    "scope": "ALL_RECORDED_ARMS_INCLUDING_REPEATS_NOT_INDEPENDENT_TASK_POPULATION",
+    "recordedArms": 12,
+    "modelCallReservations": 96,
+    "httpAttempts": 120,
+    "knownReportedTokensLowerBound": 376524,
+    "armsWithUnknownTokenTotals": 4,
+    "wallClockArmSumMs": 5593732,
+    "actualTotalTokens": null,
+    "estimatedDollarCost": null
+  }
+}
