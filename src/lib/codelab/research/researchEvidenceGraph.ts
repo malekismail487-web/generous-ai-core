@@ -89,7 +89,8 @@ export class ResearchEvidenceGraph {
     for (const counterexample of intent.counterexamples) {
       const experiment = this.#experiment(counterexample?.experimentId);
       if (!counterexample || !theoryKeys(counterexample, ["targetTheoryId", "experimentId", "disconfirmingOutcome", "rationale"])
-        || !validResearchId(counterexample.targetTheoryId) || !experiment
+        || !validResearchId(counterexample.targetTheoryId) || counterexample.targetTheoryId === theoryId
+        || !this.#latestByTheory.has(counterexample.targetTheoryId) || !experiment
         || !experiment.possibleOutcomes.includes(counterexample.disconfirmingOutcome)
         || !theoryText(counterexample.rationale, 1_000)) return false;
     }

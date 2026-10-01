@@ -39,6 +39,11 @@ if (![1, 2, 3].includes(maxParallelModelExecutions)) throw new Error("research_m
 const corpus = process.env.OMEGA_NYX_RESEARCH_CORPUS || "LEGACY";
 if (!["LEGACY", "EXECUTABLE_TRANSFER_V1"].includes(corpus)
   || (corpus !== "LEGACY" && (!policyComparison || diagnosticOnly))) throw new Error("research_corpus_selection_invalid");
+const focusedTaskId = process.env.OMEGA_NYX_RESEARCH_COMPARE_TASK_ID?.trim() || null;
+if (focusedTaskId && (!policyComparison || diagnosticOnly || corpus !== "EXECUTABLE_TRANSFER_V1"
+  || !NYX_RESEARCH_TRANSFER_TASKS.some(task => task.taskId === focusedTaskId))) {
+  throw new Error("research_focused_task_selection_invalid");
+}
 const CANDIDATE = process.env.GITHUB_SHA?.trim()
   || execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve("."), encoding: "utf8" }).trim();
 const limits: ResearchPartyLimits = Object.freeze({ maxEntities: 8, maxModelCalls: 11, maxExperiments: 3,
@@ -222,8 +227,9 @@ async function createParty(task: NyxResearchPartyLiveTask, objective: ResearchPa
 
 if (policyComparison) {
   // One task is the default live commissioning bound; three requires explicit selection.
-  const tasks = (corpus === "LEGACY" ? NYX_RESEARCH_PARTY_LIVE_TASKS : NYX_RESEARCH_TRANSFER_TASKS).slice(0,
-    process.env.OMEGA_NYX_RESEARCH_COMPARE_TASKS === "3" ? 3 : 1);
+  const corpusTasks = corpus === "LEGACY" ? NYX_RESEARCH_PARTY_LIVE_TASKS : NYX_RESEARCH_TRANSFER_TASKS;
+  const tasks = focusedTaskId ? corpusTasks.filter(task => task.taskId === focusedTaskId)
+    : corpusTasks.slice(0, process.env.OMEGA_NYX_RESEARCH_COMPARE_TASKS === "3" ? 3 : 1);
   const records: Record<string, unknown>[] = [];
   let providerBlocked = false;
   let acceptanceViolations = 0;
@@ -274,6 +280,8 @@ if (policyComparison) {
       && (record.assurance as { decision: string }).decision !== "ACCEPT");
     const report = { schemaVersion: 1, chunkId: "NYX-EVIDENCE-FIRST-LIVE-001", candidateCommit: CANDIDATE,
       model: MODEL, corpus, corpusDigest: theoryDigest(tasks.map(task => task.oracleDigest)), matchedLimits: limits,
+      comparisonScope: focusedTaskId ? "FOCUSED_REGRESSION_ONLY" : "FROZEN_CORPUS_COMPARISON",
+      selectedTaskIds: tasks.map(task => task.taskId),
       scheduling: { maxParallelModelExecutions, peerViewsFrozenBeforePhase: true, grantsAuthority: false },
       requestedTasks: tasks.length, completedArms: records.length, providerBlocked, executionBlocked, acceptanceViolations,
       evidence: { cognition: "E4", experimentsAndOracle: "E3", independentInstitutionalReplication: false },

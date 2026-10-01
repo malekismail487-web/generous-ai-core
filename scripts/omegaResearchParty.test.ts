@@ -214,6 +214,37 @@ check(invalidated.length >= 4, "dependency invalidation reaches source, claim, a
 check(directGraph.assessment(graphTheory).state === "STALE", "changed candidate makes prior claim stale, not refuted");
 check(directGraph.snapshot().grantsAuthority === false, "evidence graph grants no authority");
 
+// Counterexample targets are causal claims, not merely materialized entity IDs.
+// A reviewer or abstaining entity has no hypothesis for the graph to falsify.
+function counterexampleContribution(id: string, target: string | null): TheoryContribution {
+  const intent: TheoryCognitionIntent = { ...directIntent, decision: target ? "CHALLENGE" : "NO_CONCLUSION",
+    mechanismId: null, causalMechanism: null, forecasts: [], requestedExperimentIds: [], revisionOfTheoryId: null,
+    counterexamples: target ? [{ targetTheoryId: target, experimentId: "EXP-A-FAILED",
+      disconfirmingOutcome: "BLOCKED", rationale: "This outcome would contradict the dispatch forecast." }] : [] };
+  const modelEvidence = { ...directEvidence, evidenceId: `E1-${id}`, contentDigest: theoryDigest(intent) };
+  const base = { ...directBase, contributionId: id, theoryId: `nyx-party:theory:${id}`, role: "FALSIFIER" as const,
+    intent, modelEvidence };
+  return immutableResearchValue({ ...base, contributionDigest: theoryDigest({ contributionId: base.contributionId,
+    theoryId: base.theoryId, guardianId: base.guardianId, role: base.role, objectiveDigest: base.objectiveDigest,
+    intent, modelEvidenceId: modelEvidence.evidenceId, committedAtEpochMs: base.committedAtEpochMs }), grantsAuthority: false });
+}
+{
+  const graph = new ResearchEvidenceGraph(objective(), now);
+  graph.commitContribution(directContribution);
+  const reviewer = counterexampleContribution("REVIEWER-WITHOUT-HYPOTHESIS", null);
+  graph.commitContribution(reviewer);
+  for (const target of ["nyx-party:theory:unknown", reviewer.theoryId]) {
+    const before = theoryDigest(graph.snapshot());
+    await rejects(() => graph.commitContribution(counterexampleContribution(`INVALID-${target.split(":").at(-1)}`, target)),
+      /research_contribution_invalid/, "unknown and non-hypothesis targets are rejected at graph admission");
+    check(theoryDigest(graph.snapshot()) === before && graph.chainComplete(),
+      "rejected counterexample leaves evidence and contribution custody unchanged");
+  }
+  graph.commitContribution(counterexampleContribution("VALID-CHALLENGE", directContribution.theoryId));
+  check(graph.chainComplete() && graph.snapshot().contributions.length === 3,
+    "valid challenges retain the full admitted causal evidence chain");
+}
+
 const runtime = network();
 const scripted = new ScriptedPartyCognition();
 const party = TheoryResearchParty.create({ partyId: "PARTY-HELDOUT-SCHEDULER", network: runtime.value,
@@ -563,6 +594,31 @@ const challenge = { ...noConclusion, decision: "CHALLENGE", counterexamples: [{
 check(falsifierSchema(challenge), "falsifier can issue a concrete counterexample against a supplied peer");
 check(!falsifierSchema({ ...challenge, counterexamples: [{ ...challenge.counterexamples[0],
   targetTheoryId: "ANOTHER-THEORY" }] }), "falsifier cannot widen its peer target set through generation");
+const commentaryPeer = counterexampleContribution("COMMENTARY-PEER", null);
+const mixedPeerRequest: TheoryCognitionRequest = { ...adapterRequest, role: "META_REVIEWER",
+  requestId: "ADAPTER-COUNTEREXAMPLE-TARGETS", peerContributions: [directContribution, commentaryPeer]
+    .map(item => ({ ...item, objectiveDigest: researchObjectiveDigest(adapterRequest.objective) })) };
+const mixedPeerSchema = schemaOracle.compile(theoryIntentSchemaForRequest(mixedPeerRequest));
+const reviewChallenge = { ...noConclusion, counterexamples: challenge.counterexamples };
+check(mixedPeerSchema(reviewChallenge), "reviewer can challenge an actual precommitted peer hypothesis");
+const commentaryChallenge = { ...reviewChallenge, counterexamples: [{ ...challenge.counterexamples[0],
+  targetTheoryId: commentaryPeer.theoryId }] };
+check(!mixedPeerSchema(commentaryChallenge), "decode schema excludes commentary-only peer targets");
+check(!schemaOracle.compile(theoryIntentSchemaForRequest({ ...mixedPeerRequest,
+  peerContributions: mixedPeerRequest.peerContributions.slice(1) }))(commentaryChallenge),
+  "no hypothesis peers means no counterexample edges even when entity IDs exist");
+responseContent = JSON.stringify(commentaryChallenge);
+const rejectedCommentaryTarget = await adapter.think(mixedPeerRequest);
+check(rejectedCommentaryTarget.decision === "COGNITION_ERROR"
+  && rejectedCommentaryTarget.diagnostics.includes("counterexample_binding_invalid"),
+  "semantic parser independently rejects reviewer targets rather than trusting guided decoding");
+check(JSON.stringify((modelPrompts.at(-1)?.outputContract as Record<string, unknown>).counterexampleTargetTheoryIds)
+  === JSON.stringify([directContribution.theoryId]), "model sees the same hypothesis-only target contract as admission");
+responseContent = JSON.stringify(reviewChallenge);
+const admittedReviewTarget = await adapter.think({ ...mixedPeerRequest, requestId: "ADAPTER-VALID-REVIEW-TARGET" });
+check(admittedReviewTarget.decision === "CONTRIBUTION" && admittedReviewTarget.intent?.counterexamples.length === 1,
+  "restricting invalid edges preserves real hypothesis falsification");
+responseContent = JSON.stringify(validRaw);
 const priorObservation = makeObservation("EXP-A-FAILED");
 const revisedIntent = intentFor("FAILED_AS_COMPLETE", "REVISE_HYPOTHESIS", adapterRequest.theoryId, [priorObservation]);
 const revisionSchema = schemaOracle.compile(theoryIntentSchemaForRequest({ ...adapterRequest,

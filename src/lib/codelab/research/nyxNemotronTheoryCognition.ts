@@ -97,10 +97,18 @@ export const NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA = providerCompatibleSchema(
   NYX_THEORY_INTENT_JSON_SCHEMA,
 ) as Readonly<Record<string, unknown>>;
 
+// Materialized reviewers/abstaining entities are not causal claims. Targeting
+// them creates an unresolvable evidence edge even when their IDs are known.
+function counterexampleTargetTheoryIds(request: TheoryCognitionRequest): string[] {
+  return [...new Set(request.peerContributions.filter(item =>
+    ["PROPOSE_HYPOTHESIS", "REVISE_HYPOTHESIS"].includes(item.intent.decision))
+    .map(item => item.theoryId))];
+}
+
 /** Bind generation to this request's vocabulary; the local parser remains the acceptance authority. */
 export function theoryIntentSchemaForRequest(request: TheoryCognitionRequest): Readonly<Record<string, unknown>> {
   const base = NYX_THEORY_INTENT_JSON_SCHEMA;
-  const peers = request.peerContributions.map(item => item.theoryId);
+  const peers = counterexampleTargetTheoryIds(request);
   const experiments = request.objective.experimentCatalog;
   const unobserved = experiments.filter(item => !request.experimentObservations
     .some(observation => observation.experimentId === item.experimentId));
@@ -172,7 +180,7 @@ function parseForecasts(value: unknown, allowed: Map<string, readonly string[]>,
 function parseCounterexamples(value: unknown, request: TheoryCognitionRequest,
   allowed: Map<string, readonly string[]>, diagnostics: string[]): TheoryCounterexample[] {
   if (!Array.isArray(value) || value.length > 32) { diagnostics.push("counterexamples_invalid"); return []; }
-  const targets = new Set(request.peerContributions.map((item) => item.theoryId));
+  const targets = new Set(counterexampleTargetTheoryIds(request));
   const result: TheoryCounterexample[] = [];
   for (const item of value) {
     if (!item || typeof item !== "object" || Array.isArray(item)
@@ -247,7 +255,7 @@ export class NyxNemotronTheoryCognition {
         allowedDecisions: request.role === "INVESTIGATOR" ? ["PROPOSE_HYPOTHESIS", "NO_CONCLUSION"]
           : request.role === "FALSIFIER" ? ["CHALLENGE", "NO_CONCLUSION"]
             : request.role === "REVISER" ? ["REVISE_HYPOTHESIS", "NO_CONCLUSION"] : ["NO_CONCLUSION"],
-        counterexampleTargetTheoryIds: request.peerContributions.map(item => item.theoryId),
+        counterexampleTargetTheoryIds: counterexampleTargetTheoryIds(request),
         forecastExperimentIds: request.objective.experimentCatalog
           .filter(item => !request.experimentObservations.some(observation => observation.experimentId === item.experimentId))
           .map(item => item.experimentId),
@@ -263,7 +271,7 @@ export class NyxNemotronTheoryCognition {
         "A PROPOSE_HYPOTHESIS is a tentative conjecture with falsifiable forecasts, not a claim of established truth. Missing experimental evidence is a reason to propose an authorized discriminating experiment, not to claim certainty.",
         "Prefer NO_CONCLUSION when you cannot formulate a valid testable conjecture. You may propose one catalogued mechanism with explicit uncertainty even when several remain plausible. Only observed evidence may support it.",
         "A challenge is a proposed test, not evidence that a hypothesis is false.",
-        "counterexamples target only outputContract.counterexampleTargetTheoryIds. If that list is empty, counterexamples must be []. Never invent a target or use your own theory/guardian ID.",
+        "counterexamples target only outputContract.counterexampleTargetTheoryIds: peers with precommitted hypotheses, not reviewers or abstaining entities. If that list is empty, counterexamples must be []. Never invent a target or use your own theory/guardian ID. Put concerns about review commentary in uncertainties.",
         "NO_CONCLUSION and CHALLENGE use outputContract.nonHypothesisFields exactly; put unresolved questions in uncertainties, not hypothesis fields.",
         "PROPOSE_HYPOTHESIS uses revisionOfTheoryId=null. REVISE_HYPOTHESIS uses your exact theoryId and forecasts only experiments not yet observed.",
         "Return exactly one strict JSON object matching the schema.",

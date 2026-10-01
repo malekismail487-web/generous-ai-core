@@ -1,4 +1,5 @@
 import { Script, createContext } from "node:vm";
+import { spawnSync } from "node:child_process";
 import { validResearchObjective } from "../src/lib/codelab/research/researchPartyContracts";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { NYX_RESEARCH_TRANSFER_TASKS, NYX_RESEARCH_TRANSFER_CORPUS_DIGEST } from "./omega/nyx-research-transfer-fixtures";
@@ -21,6 +22,23 @@ const candidate = "f".repeat(40);
 const corpus = NYX_RESEARCH_TRANSFER_TASKS;
 check(corpus.length === 3 && new Set(corpus.map(task => task.taskId)).size === 3, "three distinct frozen transfer tasks");
 check(NYX_RESEARCH_TRANSFER_CORPUS_DIGEST === theoryDigest(corpus.map(task => task.oracleDigest)), "frozen corpus digest reconstructs");
+for (const override of [
+  { OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: "UNKNOWN-TASK" },
+  { OMEGA_NYX_RESEARCH_CORPUS: "LEGACY" },
+  { OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: "1" },
+]) {
+  const result = spawnSync(process.execPath, ["--experimental-strip-types", "--import",
+    "./scripts/w0rs/register-typescript-loader.mjs", "scripts/omega/nyx-research-party-live-eval.ts"], {
+    encoding: "utf8", timeout: 10_000, env: { ...process.env, NVIDIA_API_KEY: "synthetic-test-only",
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1", OMEGA_NYX_RESEARCH_POLICY_COMPARISON: "1",
+      OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: "0", OMEGA_NYX_RESEARCH_CORPUS: "EXECUTABLE_TRANSFER_V1",
+      OMEGA_NYX_RESEARCH_COMPARE_TASK_ID: corpus[1].taskId, ...override },
+  });
+  check(result.status !== 0 && /research_(focused_task|corpus)_selection_invalid/.test(result.stderr),
+    "invalid focused selection fails before provider construction or network dispatch");
+  check(result.stdout === "" && !result.stderr.includes("synthetic-test-only"),
+    "rejected selection neither emits a model result nor discloses credential injection");
+}
 for (const task of corpus) {
   const objective = task.objective(candidate, 1_000);
   check(validResearchObjective(objective, 1_000), `${task.taskId}: strict objective contract`);
