@@ -16,6 +16,8 @@ import {
   type R3BEngineeringToolDefinition,
   type R3BExecutionRequest,
 } from "../src/lib/codelab/executor/r3ControlledEngineeringExecution";
+import { OmegaResearchExperimentRunner } from "../src/lib/codelab/research/omegaResearchExperimentRunner";
+import { validResearchObjective, type ResearchPartyObjective } from "../src/lib/codelab/research/researchPartyContracts";
 
 let passed = 0;
 let failed = 0;
@@ -154,6 +156,71 @@ function request(h: Harness, toolId: string, overrides: Partial<R3BExecutionRequ
 }
 
 async function cleanup(h: Harness): Promise<void> { await rm(h.parent, { recursive: true, force: true }); }
+
+{
+  const h = await makeHarness("multi-probe");
+  try {
+    const tools = await Promise.all([0, 1, 2].map(index => definition(h, "pass", {
+      toolId: `RESEARCH-PROBE-${index}`, toolKind: "TEST" })));
+    const target: ResearchPartyObjective = { schemaVersion: 1, researchId: "MULTI-PROBE-REGRESSION",
+      objective: "Execute three approved observations without reusing a single-use capability.",
+      domain: "SOFTWARE", candidateBinding: CANDIDATE, scope: ["src/candidate.txt"],
+      mechanismCatalog: [{ mechanismId: "WORKING", description: "The approved probe succeeds." },
+        { mechanismId: "FAILING", description: "The approved probe fails." }], admittedEvidence: [{
+          evidenceId: "E-MULTI-PROBE-SOURCE", evidenceClass: "E3", kind: "SOURCE",
+          summary: "The frozen test entrypoint is hash-bound to the approved disposable candidate.",
+          contentDigest: tools[0].expectedEntrypointSha256, provenanceRoot: "MULTI-PROBE-SOURCE",
+          freshnessDependencies: [`CANDIDATE:${CANDIDATE}`], observedAtEpochMs: NOW,
+          candidateBinding: CANDIDATE, grantsAuthority: false }],
+      experimentCatalog: tools.map((tool, index) => ({ experimentId: `EXP-${index}`, toolId: tool.toolId,
+        question: "Does this independently authorized probe return its declared result?",
+        possibleOutcomes: ["BUILD_OK", "FAILED"], costUnits: 1, authority: "RUN_TEST_IN_SANDBOX",
+        scope: ["src/candidate.txt"], mutatesCandidate: false })),
+      successCriteria: ["All three external observations are independently attributable."], expiryEpochMs: NOW + 300_000 };
+    check(validResearchObjective(target, NOW), "real multi-probe fixture uses a valid bounded research objective");
+    const shared = await R3BControlledEngineeringExecutor.create({ ...h.config, tools });
+    const sharedBindings = tools.map((tool, index) => ({ experimentId: `EXP-${index}`,
+      verification: { toolId: tool.toolId, executor: shared, request: request(h, tool.toolId, {
+        requestId: `SHARED-REQUEST-${index}`, executionId: `SHARED-EXECUTION-${index}` }) },
+      outcomeByOutputDigest: { [hash("BUILD_OK")]: "BUILD_OK" } }));
+    let sharedRejected = false;
+    try { OmegaResearchExperimentRunner.create(sharedBindings); }
+    catch (error) { sharedRejected = String(error).includes("single_use_executor_shared"); }
+    check(sharedRejected, "research catalog rejects a shared single-use executor before consuming model calls");
+    const first = await shared.execute(sharedBindings[0].verification.request);
+    const second = await shared.execute(sharedBindings[1].verification.request);
+    check(first.outcome === "PASS" && second.outcome === "BLOCKED" && second.reason.includes("already_used"),
+      "real process execution reproduces the original second-probe replay denial");
+    const bindings = await Promise.all(tools.map(async (tool, index) => {
+      const capabilityId = `MULTI-PROBE-CAP-${index}`;
+      const auditIdentity = `MULTI-PROBE-AUDIT-${index}`;
+      const independent = await R3BControlledEngineeringExecutor.create({ ...h.config,
+        executorId: `MULTI-PROBE-EXECUTOR-${index}`, tools: [tool],
+        capability: { ...h.config.capability, capabilityId, auditIdentity } });
+      return { experimentId: `EXP-${index}`, verification: { toolId: tool.toolId, executor: independent,
+        request: request(h, tool.toolId, { requestId: `MULTI-REQUEST-${index}`, executionId: `MULTI-EXECUTION-${index}`,
+          capabilityId, auditIdentity }) }, outcomeByOutputDigest: { [hash("BUILD_OK")]: "BUILD_OK" } };
+    }));
+    const runner = OmegaResearchExperimentRunner.create(bindings);
+    const observationIds = new Set<string>();
+    for (const index of [2, 0, 1]) {
+      const observed = await runner.run(target.experimentCatalog[index], target, new AbortController().signal);
+      observationIds.add(observed.evidence.evidenceId);
+      check(observed.outcome === "BUILD_OK" && observed.evidence.evidenceClass === "E3" && !observed.authorityGranted,
+        `independently authorized probe ${index} emits admissible evidence in non-catalog order`);
+    }
+    check(observationIds.size === 3, "each completed real probe has its own evidence identity");
+    let replayRejected = false;
+    try { await runner.run(target.experimentCatalog[0], target, new AbortController().signal); }
+    catch (error) { replayRejected = String(error).includes("not_authorized"); }
+    check(replayRejected, "multi-probe correction preserves experiment replay rejection");
+    const executorReplay = await bindings[0].verification.executor.execute(bindings[0].verification.request);
+    check(executorReplay.outcome === "BLOCKED" && executorReplay.reason.includes("already_used"),
+      "per-probe executor authority remains irrevocably single-use");
+    check(await readFile(join(h.sourceRoot, "src", "candidate.txt"), "utf8") === "base",
+      "multi-probe research leaves the source repository unchanged");
+  } finally { await cleanup(h); }
+}
 
 {
   const h = await makeHarness("pass"); const tool = await definition(h, "pass"); const runner = await executor(h, tool);

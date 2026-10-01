@@ -171,26 +171,29 @@ async function createOmegaExperimentRunner(task: NyxResearchPartyLiveTask, objec
     toolId: experiment.toolId, toolKind: "TEST", toolVersion: "nyx-research-probe/1", entrypoint,
     expectedEntrypointSha256: entrypointDigest, arguments: [experiment.toolId], workingDirectory: ".",
     timeoutMs: 5_000, maxOutputBytes: 1_024, allowedMutationPrefixes: [], allowChildProcesses: false }));
-  const executor = await R3BControlledEngineeringExecutor.create({ executorId: `${task.taskId}-R3B`,
+  const bindings = await Promise.all(objective.experimentCatalog.map(async (experiment, index) => {
+    const capabilityId = `${task.taskId}-R3B-CAP-${index}`;
+    const auditIdentity = `${task.taskId}-R3B-AUDIT-${index}`;
+    // One authorized probe owns one single-use executor; never reset its guard.
+    const executor = await R3BControlledEngineeringExecutor.create({ executorId: `${task.taskId}-R3B-${index}`,
     candidateCommit: CANDIDATE, evaluatorVersion: "nyx-research-party-live/1",
     environmentIdentity: lifecycleConfig.environmentIdentity, authorityMode: "ISOLATED_CANDIDATE_NOT_GRANTED",
     disposableRepositoryRoot: cloneRoot, disposableRepositoryId: application.disposableRepositoryId,
     applicator, appliedCandidate: application,
-    capability: { capabilityId: `${task.taskId}-R3B-CAP`, issuer: "OMEGA-ISOLATED-EVALUATION-AUTHORITY",
-      auditIdentity: `${task.taskId}-R3B-AUDIT`, issuedAtEpochMs: observedAt - 1_000,
-      expiresAtEpochMs: observedAt + 15 * 60_000 }, tools: definitions,
+    capability: { capabilityId, issuer: "OMEGA-ISOLATED-EVALUATION-AUTHORITY",
+      auditIdentity, issuedAtEpochMs: observedAt - 1_000,
+      expiresAtEpochMs: observedAt + 15 * 60_000 }, tools: [definitions[index]],
     maxRepositoryFiles: 100, maxRepositoryBytes: 500_000, maxTimeoutMs: 10_000, maxOutputBytes: 10_000 });
-  const bindings = objective.experimentCatalog.map((experiment, index) => {
     const request: R3BExecutionRequest = { schemaVersion: 1, requestId: `${task.taskId}-R3B-REQUEST-${index}`,
       executionId: `${task.taskId}-R3B-EXECUTION-${index}`, authority: "RUN_AUTHORIZED_ENGINEERING_TOOL",
       toolId: experiment.toolId, disposableRepositoryId: application.disposableRepositoryId,
       applicationId: application.applicationId, proposalDigest: application.proposalDigest,
-      capabilityId: `${task.taskId}-R3B-CAP`, issuer: "OMEGA-ISOLATED-EVALUATION-AUTHORITY",
-      auditIdentity: `${task.taskId}-R3B-AUDIT`, environmentIdentity: lifecycleConfig.environmentIdentity,
+      capabilityId, issuer: "OMEGA-ISOLATED-EVALUATION-AUTHORITY",
+      auditIdentity, environmentIdentity: lifecycleConfig.environmentIdentity,
       observedAtEpochMs: observedAt + 2_000 + index };
     return { experimentId: experiment.experimentId, verification: { toolId: experiment.toolId, executor, request },
       outcomeByOutputDigest: Object.fromEntries(experiment.possibleOutcomes.map((outcome) => [hash(outcome), outcome])) };
-  });
+  }));
   return { runner: OmegaResearchExperimentRunner.create(bindings), sourceRoot, sourceDigestBefore,
     sourceUnchanged: async () => theoryDigest({ markerBefore: await readFile(join(sourceRoot, "src", "marker.txt"), "utf8"),
       probeSource: await readFile(join(sourceRoot, "tools", "probe.mjs"), "utf8") }) === sourceDigestBefore };
@@ -246,19 +249,22 @@ if (policyComparison) {
       }
       if (providerBlocked) break;
     }
+    const executionBlocked = records.some(record =>
+      (record.decision as { reason: string }).reason === "research_party_experiment_infrastructure_failure");
+    const candidateFailed = records.some(record => record.policy === "EXHAUST_PRECOMMITTED_FORECASTS"
+      && (record.assurance as { decision: string }).decision !== "ACCEPT");
     const report = { schemaVersion: 1, chunkId: "NYX-EVIDENCE-FIRST-LIVE-001", candidateCommit: CANDIDATE,
       model: MODEL, corpusDigest: theoryDigest(tasks.map(task => task.oracleDigest)), matchedLimits: limits,
-      requestedTasks: tasks.length, completedArms: records.length, providerBlocked, acceptanceViolations,
+      requestedTasks: tasks.length, completedArms: records.length, providerBlocked, executionBlocked, acceptanceViolations,
       evidence: { cognition: "E4", experimentsAndOracle: "E3", independentInstitutionalReplication: false },
       realizedComputeMatched: false, broadPromotion: false,
-      verdict: providerBlocked ? "INCONCLUSIVE_PROVIDER_FAILURE" : "BOUNDED_LIVE_COMPARISON_ONLY",
+      verdict: providerBlocked ? "INCONCLUSIVE_PROVIDER_FAILURE" : executionBlocked ? "INCONCLUSIVE_EXECUTION_FAILURE"
+        : candidateFailed ? "EMPIRICALLY_NOT_YET_VERIFIED" : "BOUNDED_LIVE_COMPARISON_ONLY",
       records };
     await writeFile(join(process.env.RUNNER_TEMP?.trim() || tmpdir(),
       `nyx-research-party-live-policy-${CANDIDATE.slice(0, 12)}.json`), `${JSON.stringify(report, null, 2)}\n`, "utf8");
     console.log(`NYX_RESEARCH_POLICY_REPORT ${JSON.stringify(report)}`);
-    if (providerBlocked || acceptanceViolations > 0 || records.some(record =>
-      record.policy === "EXHAUST_PRECOMMITTED_FORECASTS"
-      && (record.assurance as { decision: string }).decision !== "ACCEPT")) process.exitCode = 1;
+    if (providerBlocked || executionBlocked || acceptanceViolations > 0 || candidateFailed) process.exitCode = 1;
   } finally { await rm(parent, { recursive: true, force: true }); }
 } else {
 const taskResults: Record<string, unknown>[] = [];

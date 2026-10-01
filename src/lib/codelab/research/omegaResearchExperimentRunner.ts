@@ -34,6 +34,11 @@ export class OmegaResearchExperimentRunner implements ResearchExperimentRunner {
         throw new Error("omega_research_experiment_binding_invalid");
       }
     }
+    // R3B authority is single-use, regardless of how many tools its catalog has.
+    // Sharing that executor across experiments guarantees a replay denial.
+    if (new Set(bindings.map(item => item.verification.executor)).size !== bindings.length) {
+      throw new Error("omega_research_single_use_executor_shared");
+    }
     return new OmegaResearchExperimentRunner(bindings);
   }
 

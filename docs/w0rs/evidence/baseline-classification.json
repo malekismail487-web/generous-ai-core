@@ -8216,6 +8216,7 @@
           "scripts/omegaR2EIsolatedTransaction.test.ts",
           "scripts/omegaR2NyxLineage.test.ts",
           "scripts/omegaR3ADisposablePatch.test.ts",
+          "scripts/omegaR3BControlledExecution.test.ts",
           "scripts/omegaR3CEngineeringObservation.test.ts",
           "scripts/omegaR3DNyxNemotronCognition.test.ts",
           "scripts/omegaR3EBoundedRepairLoop.test.ts",

@@ -1,6 +1,9 @@
 name: Omega NYX research party live evaluation
 
 on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [scripts/omega/nyx-research-party-live-eval.ts]
   workflow_dispatch:
     inputs:
       diagnostic_only:
@@ -28,12 +31,13 @@ concurrency:
 
 jobs:
   nyx-research-party-live:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-evidence-first-live]')
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
       OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: ${{ inputs.diagnostic_only && '1' || '0' }}
-      OMEGA_NYX_RESEARCH_POLICY_COMPARISON: ${{ inputs.policy_comparison && '1' || '0' }}
+      OMEGA_NYX_RESEARCH_POLICY_COMPARISON: ${{ (github.event_name == 'push' || inputs.policy_comparison) && '1' || '0' }}
       OMEGA_NYX_RESEARCH_COMPARE_TASKS: ${{ inputs.comparison_tasks || '1' }}
       NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
@@ -56,6 +60,7 @@ jobs:
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaResearchParty.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaResearchEvidenceFirst.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaR3BControlledExecution.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaR2CompositionSecuritySpec.test.ts
           npm run typecheck:ratchet
