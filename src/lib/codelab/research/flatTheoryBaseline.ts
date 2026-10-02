@@ -70,6 +70,7 @@ export async function runFlatTheoryBaseline(input: {
       maxOutputTokens: input.limits.maxOutputTokensPerCall, observedAtEpochMs: input.now(),
       deadlineEpochMs: deadline, signal });
     modelCalls += 1; cognitionEvidence.push(result.evidence);
+    if ((result.evidence.delivery?.httpAttempts ?? 1) > 1) usageComplete = false;
     if (result.evidence.promptTokens === null || result.evidence.completionTokens === null
       || result.evidence.totalTokens === null) usageComplete = false;
     else { promptTokens += result.evidence.promptTokens; completionTokens += result.evidence.completionTokens;

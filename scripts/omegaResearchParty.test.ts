@@ -897,4 +897,60 @@ const overSubscribed = allocateHypothesisCoverage({ ...allocationInput, cohortTh
   (_, index) => `oversubscribed:${index}`) });
 check(overSubscribed.every(item => item.preferredMechanismIds.length > 0),
   "more investigators than hypotheses yields explicit bounded reuse, not a false diversity claim");
+// Field names are diagnostic metadata; malformed values and raw reasoning are not.
+for (const [field, value, diagnostic] of [
+  ["schemaVersion", 2, "schema_version"], ["decision", "INVALID", "decision"],
+  ["thesis", " ", "thesis"], ["evidenceRefs", ["E-SOURCE", "E-SOURCE"], "evidence_refs"],
+  ["assumptions", [""], "assumptions"], ["uncertainties", Array(17).fill("x"), "uncertainties"],
+  ["requestedExperimentIds", "invalid-array", "requested_experiment_ids"],
+  ["modelEstimate", 80, "model_estimate"], ["modelEstimate", -1, "model_estimate"],
+] as const) {
+  responseContent = JSON.stringify({ ...validRaw, [field]: value });
+  const result = await adapter.think({ ...adapterRequest, requestId: `ADAPTER-SCALAR-${field}` });
+  check(result.decision === "COGNITION_ERROR" && result.intent === null
+    && result.diagnostics.includes("intent_scalar_invalid")
+    && result.diagnostics.includes(`intent_scalar_${diagnostic}_invalid`),
+  "strict scalar rejection identifies the affected field without substituting or coercing a value");
+  check(result.diagnostics.every(item => /^[a-z_]+$/.test(item)) && !result.grantsAuthority,
+    "diagnostics contain only bounded contract codes, not raw content or execution authority");
+}
+for (const modelEstimate of [0, 1, null]) {
+  responseContent = JSON.stringify({ ...validRaw, modelEstimate });
+  check((await adapter.think(adapterRequest)).decision === "CONTRIBUTION",
+    "scalar diagnostics preserve the exact previously allowed confidence endpoints and abstention");
+}
+const scalarRules = (modelPrompts.at(-1)!.outputContract as Record<string, unknown>).scalarRules as {
+  thesis: { maxCharacters: number }; modelEstimate: { minimum: number; maximum: number };
+  stringLists: { assumptions: number; uncertainties: number }; maxCharactersPerStringListItem: number };
+check(scalarRules.thesis.maxCharacters === NYX_THEORY_INTENT_JSON_SCHEMA.properties.thesis.maxLength
+  && scalarRules.modelEstimate.minimum === NYX_THEORY_INTENT_JSON_SCHEMA.properties.modelEstimate.anyOf[0].minimum
+  && scalarRules.modelEstimate.maximum === NYX_THEORY_INTENT_JSON_SCHEMA.properties.modelEstimate.anyOf[0].maximum
+  && scalarRules.stringLists.assumptions === NYX_THEORY_INTENT_JSON_SCHEMA.properties.assumptions.maxItems
+  && scalarRules.stringLists.uncertainties === NYX_THEORY_INTENT_JSON_SCHEMA.properties.uncertainties.maxItems
+  && scalarRules.maxCharactersPerStringListItem === NYX_THEORY_INTENT_JSON_SCHEMA.properties.uncertainties.items.maxLength,
+"advertised scalar bounds match the unchanged local admission schema");
+responseContent = JSON.stringify(validRaw);
+for (const attempts of [1, 2]) {
+  const accountingRuntime = network(); const scriptedAccounting = new ScriptedPartyCognition();
+  const accountingCognition: TheoryCognitionEngine = {
+    profile: () => scriptedAccounting.profile(), think: async request => {
+      const result = await scriptedAccounting.think(request);
+      return { ...result, evidence: { ...result.evidence, delivery: { policy: "nvidia-capacity/1",
+        requestsPerMinute: 40, scope: "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT", httpAttempts: attempts,
+        transientUnavailableResponses: attempts - 1, rateLimitedResponses: 0, timedOutAttempts: 0,
+        capacityWaitMs: 0, state: "DELIVERED", notBeforeEpochMs: null, authorityRenewed: false } } };
+    } };
+  const result = await TheoryResearchParty.create({ partyId: `PARTY-ATTEMPT-USAGE-${attempts}`,
+    network: accountingRuntime.value, coordinator: accountingRuntime.coordinator, cognition: accountingCognition,
+    limits, investigatorCount: 3, now: () => now,
+    experiments: { run: async experiment => makeObservation(experiment.experimentId) } }).investigate(objective());
+  const flat = await runFlatTheoryBaseline({ baselineId: `FLAT-ATTEMPT-USAGE-${attempts}`,
+    cognition: accountingCognition, objective: objective(), limits, now: () => now });
+  check((attempts === 1 ? result.resourceUsage.totalTokens !== null : result.resourceUsage.totalTokens === null)
+    && (attempts === 1 ? flat.resourceUsage.totalTokens !== null : flat.resourceUsage.totalTokens === null),
+  "successful retry usage is incomplete in both arms, rather than a false exact compute match");
+  check(result.cognitionEvidence.every(item => item.totalTokens === 200)
+    && result.cognitionEvidence.every(item => item.delivery?.httpAttempts === attempts),
+  "final-attempt usage and transport attempts remain available for descriptive lower bounds");
+}
 console.log(`OMEGA_RESEARCH_PARTY_TEST_SUMMARY passed: ${checks}, failed: 0`);

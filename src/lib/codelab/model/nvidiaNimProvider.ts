@@ -364,7 +364,7 @@ export class NvidiaNimProvider {
       if (previous.evidence.networkAttempted) httpAttempts += 1;
       if (previous.evidence.statusCode === 429) rateLimitedResponses += 1;
       if (previous.evidence.statusCode === 429 && this.#capacity) { waitVisible = true; continue; }
-      if ([502, 503, 504].includes(previous.evidence.statusCode ?? 0)) {
+      if ([500, 502, 503, 504].includes(previous.evidence.statusCode ?? 0)) {
         transientUnavailableResponses += 1;
         if (this.#capacity
           && transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries) {
@@ -433,7 +433,7 @@ export class NvidiaNimProvider {
         // Respect server recovery timing for transient outages as well as 429.
         // Apply it even when this request exhausts its retry allowance so other
         // queued requests cannot immediately stampede an unavailable endpoint.
-        if ([429, 502, 503, 504].includes(response.status)) {
+        if ([429, 500, 502, 503, 504].includes(response.status)) {
           this.#capacity?.defer(response.headers.get("retry-after"));
         }
         // Error bodies are not evidence. Abort the transport, then release the

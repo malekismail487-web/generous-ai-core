@@ -184,6 +184,9 @@ export class TheoryResearchParty {
       cognitionEvidence.push(result.evidence);
       cognitionOutcomes.push(immutableTheoryValue({ requestId, role, decision: result.decision,
         reason: result.reason, diagnostics: result.diagnostics, outcomeClass: researchCognitionOutcomeClass(result) }));
+      // Delivered usage covers only the final HTTP attempt. Discarded failed
+      // attempts may have consumed model compute; never call that a full total.
+      if ((result.evidence.delivery?.httpAttempts ?? 1) > 1) usageComplete = false;
       if (result.evidence.promptTokens === null || result.evidence.completionTokens === null
         || result.evidence.totalTokens === null) usageComplete = false;
       else { knownPromptTokens += result.evidence.promptTokens; knownCompletionTokens += result.evidence.completionTokens;

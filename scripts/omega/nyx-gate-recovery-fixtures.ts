@@ -35,6 +35,14 @@ export const NYX_GATE_RECOVERY_DEADLINE_REVISION = Object.freeze({
   changedBehavior: "BOUNDED_TRANSPORT_AND_BODY_SETTLEMENT_WITH_NONBLOCKING_ERROR_CLEANUP",
   historicalScoresComparable: false, acceptanceOracleChanged: false, authorityIncrease: false,
 });
+// Separate delivery revision: old scored sources and score identities stay pinned.
+export const NYX_GATE_RECOVERY_SERVER_ERROR_REVISION = Object.freeze({
+  chunkId: "NYX-PROVIDER-SERVER-ERROR-RECOVERY-001", predecessor: "1e98f2ce6f0dfcb1dfbef720da6bae00c6ec4b5b",
+  changedPath: NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath,
+  sourceSha256: "8575ff7120acc0a4f0464bd3082538998a51fbe77f88a6d108814bcb46a7e8f2",
+  changedBehavior: "HTTP_500_SHARES_EXISTING_ONE_RETRY_COOLDOWN_WITHOUT_AUTHORITY_RENEWAL",
+  historicalScoresComparable: false, acceptanceOracleChanged: false, authorityIncrease: false,
+});
 
 function task(index: number, helperPath: string, helperName: string, helperSource: string,
   goodSource: string, faultySource: string): NyxQualityV5Task {

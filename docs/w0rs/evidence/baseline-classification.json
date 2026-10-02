@@ -8205,6 +8205,7 @@
           "scripts/omegaFrontierReasoningGauntlet.test.ts",
           "scripts/omegaGroundedEngineering.test.ts",
           "scripts/omegaNvidiaNimProvider.test.ts",
+          "scripts/omegaNyxAdmissionGuidance.test.ts",
           "scripts/omegaNyxBiologicalConnectomeAblationAnalysis.test.ts",
           "scripts/omegaNyxChatCli.test.ts",
           "scripts/omegaNyxConnectomeCognitionAdapter.test.ts",

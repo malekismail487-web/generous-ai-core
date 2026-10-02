@@ -519,12 +519,45 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
   check(malformed.decision === "REJECTED" && calls === 0, "malformed expiry fails closed rather than disabling the deadline");
 }
 {
-  for (const status of [401, 403]) {
+  for (const status of [400, 401, 403, 422]) {
     const clock = new ManualClock(); let calls = 0;
     const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => { calls += 1; return new Response(null, { status }); });
     const result = await drive(client.complete(request()), clock);
     check(calls === 1 && result.decision === "PROVIDER_ERROR", `HTTP ${status} is not an unbounded rate-limit retry`);
   }
+}
+{
+  const clock = new ManualClock(); const bodies: string[] = []; let calls = 0;
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async (_url, init) => {
+    calls += 1; bodies.push(String(init?.body));
+    return calls === 1 ? new Response(null, { status: 500, headers: { "retry-after": "75" } }) : success();
+  });
+  const result = await drive(client.complete(request()), clock);
+  check(result.decision === "COMPLETED" && calls === 2 && new Set(bodies).size === 1,
+    "HTTP 500 can recover through one frozen-payload retry, not regenerated or expanded cognition");
+  check(result.evidence.delivery?.transientUnavailableResponses === 1
+    && result.evidence.delivery.capacityWaitMs === 75000 && !result.executorAuthorityGranted,
+    "server-directed HTTP 500 recovery preserves finite delivery and authority boundaries");
+}
+{
+  const clock = new ManualClock(); let calls = 0;
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => {
+    calls += 1; return new Response(null, { status: 500 });
+  });
+  const result = await drive(client.complete(request()), clock);
+  check(result.decision === "PROVIDER_ERROR" && calls === 2
+    && result.evidence.delivery?.transientUnavailableResponses === 2,
+    "persistent HTTP 500 remains an observable failure after one bounded retry");
+}
+{
+  const clock = new ManualClock(); let calls = 0;
+  const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => {
+    calls += 1; return new Response(null, { status: 500 });
+  });
+  const result = await drive(client.complete(request({ deadlineEpochMs: NOW + 30000 })), clock);
+  check(result.decision === "WAITING_FOR_CAPACITY" && calls === 1
+    && result.evidence.delivery?.notBeforeEpochMs === NOW + 60000,
+    "HTTP 500 recovery cannot renew a caller's deadline to force success");
 }
 {
   const clock = new ManualClock(); const events: NvidiaNimCapacityProgress[] = []; let calls = 0;
