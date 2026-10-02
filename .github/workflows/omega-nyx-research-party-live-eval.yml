@@ -1,6 +1,9 @@
 name: Omega NYX research party live evaluation
 
 on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-research-party-live-eval.yml]
   workflow_dispatch:
     inputs:
       diagnostic_only:
@@ -56,10 +59,12 @@ concurrency:
 
 jobs:
   nyx-research-party-live:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-request-diagnosis]')
     runs-on: ubuntu-latest
     timeout-minutes: 145
     env:
       OMEGA_ALLOW_NVIDIA_NETWORK: "1"
+      OMEGA_NVIDIA_REQUEST_COMPATIBILITY: ${{ github.event_name == 'push' && '1' || '0' }}
       OMEGA_NYX_RESEARCH_DIAGNOSTIC_ONLY: ${{ inputs.diagnostic_only && '1' || '0' }}
       OMEGA_NYX_RESEARCH_POLICY_COMPARISON: ${{ inputs.policy_comparison && '1' || '0' }}
       OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARISON: ${{ inputs.allocation_comparison && '1' || '0' }}
@@ -106,6 +111,7 @@ jobs:
       - name: Check live provider availability before capability evaluation
         run: npm run omega:nvidia:smoke
       - name: Run bounded live research-party evaluation
+        if: env.OMEGA_NVIDIA_REQUEST_COMPATIBILITY != '1'
         run: npm run omega:nyx:research-party-live
       - name: Upload sanitized live report
         if: always()
