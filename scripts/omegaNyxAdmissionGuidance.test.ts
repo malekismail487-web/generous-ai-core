@@ -10,7 +10,8 @@ import { assessNyxAdmissionReference, requireAdmissibleReferenceGates } from "./
 import { NYX_GATE_RECOVERY, NYX_GATE_RECOVERY_FROZEN_CORE, NYX_GATE_RECOVERY_TASKS,
   NYX_GATE_RECOVERY_TRANSPORT_REVISION, NYX_GATE_RECOVERY_DEADLINE_REVISION,
   NYX_GATE_RECOVERY_SERVER_ERROR_REVISION, NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION,
-  NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION } from "./omega/nyx-gate-recovery-fixtures";
+  NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION,
+  NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION } from "./omega/nyx-gate-recovery-fixtures";
 
 let passed = 0;
 const failures: string[] = [];
@@ -43,7 +44,7 @@ check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected
   "historical ownership-repair core remains immutable and reproducible");
 check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected]) =>
   digest(readFileSync(path)) === (path === NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath
-    ? NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.sourceSha256 : expected)),
+    ? NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.sourceSha256 : expected)),
   "current ownership-repair core admits only the exact registered answer-reservation transport revision");
 const boundedProvider = execFileSync("git", ["show",
   `${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.predecessor}:${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.changedPath}`],
@@ -55,10 +56,24 @@ const reservationAdditions = [
   "      ...(request.reasoningBudgetTokens !== undefined ? { reasoning_budget: request.reasoningBudgetTokens } : {}),\n",
   "    if (request.reasoningBudgetTokens !== undefined && (!Number.isSafeInteger(request.reasoningBudgetTokens)\n      || request.reasoningBudgetTokens < 0 || request.reasoningBudgetTokens >= request.maxTokens\n      || request.inferencePolicy !== \"REASONING_JSON\"\n      || this.#config.model !== \"nvidia/nemotron-3-ultra-550b-a55b\")) issues.push(\"completion_reasoning_budget_invalid\");\n",
 ];
-const currentProvider = readFileSync(NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.changedPath, "utf8");
-check(reservationAdditions.every(addition => currentProvider.split(addition).length === 2)
-  && reservationAdditions.reduce((source, addition) => source.replace(addition, ""), currentProvider) === boundedProvider,
+const reservationProvider = execFileSync("git", ["show",
+  `${NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.predecessor}:${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.changedPath}`],
+{ encoding: "utf8" });
+check(reservationAdditions.every(addition => reservationProvider.split(addition).length === 2)
+  && reservationAdditions.reduce((source, addition) => source.replace(addition, ""), reservationProvider) === boundedProvider
+  && digest(Buffer.from(reservationProvider)) === NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.sourceSha256,
 "answer reservation changes only its typed field, digest-bound payload, and fail-closed validation; retries, authority, and evidence remain unchanged");
+const budgetPayloadLine = "      ...(request.reasoningBudgetTokens !== undefined ? { reasoning_budget: request.reasoningBudgetTokens } : {}),\n";
+const templateLocation = "force_nonempty_content: true,\n";
+const currentProvider = readFileSync(NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.changedPath, "utf8");
+check(reservationProvider.split(budgetPayloadLine).length === 2 && reservationProvider.split(templateLocation).length === 2
+  && currentProvider === reservationProvider.replace(budgetPayloadLine, "")
+    .replace(templateLocation, `${templateLocation}${budgetPayloadLine.replace(/^      /, "          ")}`),
+"compatibility correction moves one exact payload field into the documented template location without changing any other behavior");
+check(!NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.historicalScoresComparable
+  && !NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.acceptanceOracleChanged
+  && !NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.authorityIncrease,
+"HTTP-400 correction preserves the rejected attempt instead of inheriting a successful runtime identity");
 check(!NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.historicalScoresComparable
   && !NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.acceptanceOracleChanged
   && !NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.outputCeilingChanged

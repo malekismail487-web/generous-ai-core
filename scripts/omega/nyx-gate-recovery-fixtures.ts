@@ -61,6 +61,15 @@ export const NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION = Object.freeze({
   outputCeilingChanged: false, providerEnforcementMeasured: false,
   source: "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-ultra-550b-a55b-infer",
 });
+export const NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION = Object.freeze({
+  chunkId: "NYX-ANSWER-RESERVATION-COMPATIBILITY-001", predecessor: "52a3bcf4103d8bc2cfc89946f261903958667ee8",
+  changedPath: NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath,
+  sourceSha256: "0f2988eb5168a0d351e6d00a006096435f4b0ad3148bd0f0a7a1d75ee5d29708",
+  changedBehavior: "USE_DOCUMENTED_CHAT_TEMPLATE_REASONING_BUDGET_AFTER_TOP_LEVEL_HTTP_400",
+  historicalScoresComparable: false, acceptanceOracleChanged: false, authorityIncrease: false,
+  outputCeilingChanged: false, providerEnforcementMeasured: false,
+  source: NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.source,
+});
 
 function task(index: number, helperPath: string, helperName: string, helperSource: string,
   goodSource: string, faultySource: string): NyxQualityV5Task {

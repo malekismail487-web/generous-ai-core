@@ -785,11 +785,13 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
   const base = request({ responseFormat: "JSON_OBJECT", inferencePolicy: "REASONING_JSON", reasoningEffort: "MEDIUM" });
   const original = await client.complete(base);
   const reserved = await client.complete({ ...base, reasoningBudgetTokens: 16 } as NvidiaNimCompletionRequest);
-  check(bodies[1].reasoning_budget === 16 && bodies[1].max_tokens === base.maxTokens,
+  check((bodies[1].chat_template_kwargs as Record<string, unknown>).reasoning_budget === 16
+    && !("reasoning_budget" in bodies[1]) && bodies[1].max_tokens === base.maxTokens,
     "explicit thinking budget reserves answer room without increasing the total completion ceiling");
   check(original.evidence.requestDigest !== reserved.evidence.requestDigest && reserved.evidence.usage.totalTokens === 32,
     "thinking budget is bound to request identity rather than inferred from observed output length");
-  check(!("reasoning_budget" in bodies[0]), "omission preserves historical provider request behavior");
+  check(!("reasoning_budget" in (bodies[0].chat_template_kwargs as Record<string, unknown>)),
+    "omission preserves historical provider request behavior");
   for (const value of [-1, 128, 129, 1.5, Number.NaN, Infinity, "16"]) {
     const rejected = await client.complete({ ...base, reasoningBudgetTokens: value } as NvidiaNimCompletionRequest);
     check(rejected.decision === "REJECTED" && !rejected.evidence.networkAttempted,

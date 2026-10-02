@@ -551,7 +551,7 @@ const provider = NvidiaNimProvider.create({ providerId: "THEORY-ADAPTER-TEST", m
     check(authorization === "Bearer test-only-secret", "provider injects credential only at transport boundary");
     const body = JSON.parse(String(init?.body));
     requestedOutputBudgets.push(body.max_tokens);
-    requestedThinkingBudgets.push(body.reasoning_budget);
+    requestedThinkingBudgets.push(body.chat_template_kwargs?.reasoning_budget);
     templateControls.push(body.chat_template_kwargs);
     modelPrompts.push(JSON.parse(body.messages[1].content));
     return new Response(JSON.stringify({ choices: [{ message: { content: responseContent }, finish_reason: responseFinishReason }],

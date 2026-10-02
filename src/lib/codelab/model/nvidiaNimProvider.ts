@@ -277,10 +277,10 @@ export class NvidiaNimProvider {
     const responseFormat = responseFormatPayload(request.responseFormat);
     const payload = { model: this.#config.model, messages: request.messages, max_tokens: request.maxTokens,
       temperature: request.temperature, stream: false,
-      ...(request.reasoningBudgetTokens !== undefined ? { reasoning_budget: request.reasoningBudgetTokens } : {}),
       ...(responseFormat ? { response_format: responseFormat } : {}),
       ...(request.inferencePolicy === "CONSTRAINED_JSON" || request.inferencePolicy === "REASONING_JSON"
         ? { chat_template_kwargs: { enable_thinking: request.inferencePolicy === "REASONING_JSON", force_nonempty_content: true,
+          ...(request.reasoningBudgetTokens !== undefined ? { reasoning_budget: request.reasoningBudgetTokens } : {}),
           ...(request.reasoningEffort === "MEDIUM" ? { medium_effort: true } : {}) } }
         : {}) };
     const requestDigest = sha256(canonical({ requestId, ...payload }));
