@@ -750,13 +750,18 @@
       "function": "lumina-live",
       "file": "supabase/functions/lumina-live/index.ts",
       "serviceRoleReferenceLines": [
-        113
+        112
       ],
       "jwtVerification": "supabase-default",
       "repositoryCallers": [
         {
           "file": "src/hooks/useLuminaLiveSession.tsx",
           "line": 134,
+          "transport": "raw-url"
+        },
+        {
+          "file": "scripts/omegaLuminaLiveBoundary.test.ts",
+          "line": 64,
           "transport": "raw-url"
         }
       ],

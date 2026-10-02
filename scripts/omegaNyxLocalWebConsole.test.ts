@@ -256,13 +256,31 @@ omegaTest(
       assert.equal(answer.status, 200);
       assert.equal((await answer.json()).message, "Received: Hello");
       assert.equal(turned, 1);
+      // A request waiting on body bytes must already own the mutation lane.
+      // Otherwise two valid requests can both pass the pre-await busy check.
+      const slowReply = new Promise<number | undefined>((resolveStatus, reject) => {
+        const slow = request(`${origin}/api/turn`, { method: "POST", headers }, response => {
+          response.resume(); response.on("end", () => resolveStatus(response.statusCode));
+        });
+        slow.on("error", reject); slow.write('{"message":"Slow');
+        void (async () => {
+          try {
+            await new Promise(resolve => setTimeout(resolve, 20));
+            const contender = await fetch(`${origin}/api/turn`, { method: "POST", headers,
+              body: JSON.stringify({ message: "Concurrent" }) });
+            assert.equal(contender.status, 409, "body parsing cannot open a second execution lane");
+            slow.end('"}');
+          } catch (error) { slow.destroy(); reject(error); }
+        })();
+      });
+      assert.equal(await slowReply, 200); assert.equal(turned, 2);
       const hostile = await fetch(`${origin}/api/turn`, {
         method: "POST",
         headers: { ...headers, Origin: "https://outside.example" },
         body: JSON.stringify({ message: "unsafe" }),
       });
       assert.equal(hostile.status, 403);
-      assert.equal(turned, 1);
+      assert.equal(turned, 2);
     } finally {
       assert.equal((await server.close()).cleaned, true);
     }

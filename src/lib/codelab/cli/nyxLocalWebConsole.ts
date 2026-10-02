@@ -274,13 +274,14 @@ export class NyxLocalWebConsole {
           this.#json(res, 409, { error: "session_already_configured" });
           return;
         }
-        const parsed = parseSetup(await bodyJson(req));
-        if (!parsed) {
-          this.#json(res, 400, { error: "invalid_authority_configuration" });
-          return;
-        }
+        // Own the lane before the first await, including request-body parsing.
         this.#busy = true;
         try {
+          const parsed = parseSetup(await bodyJson(req));
+          if (!parsed) {
+            this.#json(res, 400, { error: "invalid_authority_configuration" });
+            return;
+          }
           this.#runtime = await (
             this.#config.createRuntime ?? createNyxLocalRuntime
           )(parsed, {
@@ -312,20 +313,20 @@ export class NyxLocalWebConsole {
           });
           return;
         }
-        const value = await bodyJson(req);
-        if (
-          !value ||
-          typeof value !== "object" ||
-          Array.isArray(value) ||
-          !exactKeys(value as Record<string, unknown>, ["message"]) ||
-          typeof (value as { message?: unknown }).message !== "string"
-        ) {
-          this.#json(res, 400, { error: "invalid_chat_message" });
-          return;
-        }
         this.#busy = true;
-        this.#turns += 1;
         try {
+          const value = await bodyJson(req);
+          if (
+            !value ||
+            typeof value !== "object" ||
+            Array.isArray(value) ||
+            !exactKeys(value as Record<string, unknown>, ["message"]) ||
+            typeof (value as { message?: unknown }).message !== "string"
+          ) {
+            this.#json(res, 400, { error: "invalid_chat_message" });
+            return;
+          }
+          this.#turns += 1;
           const result = await this.#runtime.session.turn(
             (value as { message: string }).message,
           );

@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdtemp, mkdir, readFile, rm, symlink, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
-import { NyxChatSession, type NyxComputerHost } from "../src/lib/codelab/cli/nyxChatSession";
+import { NyxChatSession, type NyxComputerHost, type NyxChatSessionConfig } from "../src/lib/codelab/cli/nyxChatSession";
 import { NyxIsolatedCandidateWriter } from "../src/lib/codelab/cli/nyxIsolatedCandidate";
+import type { NyxIsolatedCandidateConfig } from "../src/lib/codelab/cli/nyxIsolatedCandidate";
 import { NyxScopedComputerHost, type NyxHostCommandRunner } from "../src/lib/codelab/cli/nyxScopedComputerHost";
 import { nyxContainsSecretLike, nyxSha256, parseNyxChatAction } from "../src/lib/codelab/cli/nyxChatProtocol";
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
@@ -54,6 +55,94 @@ function provider(outputs: readonly string[]): NvidiaNimProvider {
     { status: 200, headers: { "content-type": "application/json" } }) });
 }
 
+omegaTest("parseable length-terminated output never reaches a repository action", async () => {
+  const root = await fixture(); const r1 = await reader(root);
+  try {
+    const model = NvidiaNimProvider.create({ providerId: "NYX-LENGTH-TEST", model: "nvidia/nemotron-3-ultra-550b-a55b",
+      authorityMode: "TEST_DOUBLE_ONLY", credentialSource: { sourceIdentity: "test-double", read: () => "synthetic-test-only" },
+      maxPromptBytes: 64_000, maxOutputTokens: 1_024, timeoutMs: 5_000,
+      transport: async () => new Response(JSON.stringify({ choices: [{ message: { content:
+        JSON.stringify({ kind: "READ_FILE", path: "src/value.mjs" }) }, finish_reason: "length" }],
+        usage: { total_tokens: 123, prompt_tokens: 23, completion_tokens: 100 } }), { status: 200 }) });
+    const session = NyxChatSession.create({ sessionId: "NYX-LENGTH", model, reader: r1, candidateWriter: null,
+      editablePaths: [], maxModelCallsPerTurn: 1, maxCandidatesPerTurn: 0, maxTurnMs: 20_000, maxOutputTokens: 1_024 });
+    const result = await session.turn("Inspect the authorized file.");
+    check(result.outcome, "MODEL_FAILURE", "parseable truncated completion cannot authorize repository action"); assert.equal(r1.auditLog().length, 0);
+    assert.equal(result.modelTokens, 123); assert.equal(result.modelCalls, 1);
+    assert.deepEqual(result.events.map(item => item.eventType), ["MODEL", "DENIAL"]);
+  } finally { r1.terminate(Date.now(), "test_closed"); await rm(root, { recursive: true }); }
+});
+
+omegaTest("session ownership rejects overlapping turns and releases after a rejected delivery", async () => {
+  const root = await fixture(); const r1 = await reader(root);
+  let release!: () => void; const gate = new Promise<void>(resolve => { release = resolve; });
+  let calls = 0;
+  const base = provider([JSON.stringify({ kind: "REPLY", message: "Ready." })]);
+  const model = { complete: async (request: Parameters<typeof base.complete>[0]) => {
+    calls += 1; if (calls === 1) { await gate; throw new Error("synthetic_delivery_failure"); }
+    return base.complete(request);
+  } };
+  const session = NyxChatSession.create({ sessionId: "NYX-OWNERSHIP", model, reader: r1, candidateWriter: null,
+    editablePaths: [], maxModelCallsPerTurn: 1, maxCandidatesPerTurn: 0, maxTurnMs: 20_000, maxOutputTokens: 1_024 });
+  try {
+    const first = session.turn("First task");
+    const assertion = assert.rejects(session.turn("Concurrent task"), /nyx_chat_turn_already_active/);
+    release(); await assertion;
+    assert.equal((await first).outcome, "MODEL_FAILURE");
+    assert.equal((await session.turn("Next task")).outcome, "REPLIED");
+    check(calls, 2, "overlapping turn spends no call and rejected delivery releases ownership"); assert.equal(r1.auditLog().length, 0);
+  } finally { release(); r1.terminate(Date.now(), "test_closed"); await rm(root, { recursive: true }); }
+});
+
+omegaTest("caller configuration mutation cannot expand an existing session", async () => {
+  const root = await fixture(); const r1 = await reader(root); const paths: string[] = [];
+  const config: NyxChatSessionConfig = { sessionId: "NYX-FROZEN-POLICY", model: provider([
+    JSON.stringify({ kind: "SHELL", command: "whoami" }), JSON.stringify({ kind: "REPLY", message: "No authority." })]),
+    reader: r1, candidateWriter: null, editablePaths: paths, maxModelCallsPerTurn: 1,
+    maxCandidatesPerTurn: 0, maxTurnMs: 20_000, maxOutputTokens: 1_024 };
+  const session = NyxChatSession.create(config);
+  Object.assign(config, { maxModelCallsPerTurn: 12 }); paths.push("src/value.mjs");
+  try {
+    const result = await session.turn("Request an unavailable operation.");
+    check(result.outcome, "BUDGET_EXHAUSTED", "caller mutation cannot increase an existing finite call budget"); assert.equal(result.modelCalls, 1);
+    assert.equal(r1.auditLog().length, 0);
+  } finally { r1.terminate(Date.now(), "test_closed"); await rm(root, { recursive: true }); }
+});
+
+omegaTest("a late successful delivery cannot authorize an action after the turn expires", async () => {
+  const root = await fixture(); const r1 = await reader(root);
+  const base = provider([JSON.stringify({ kind: "READ_FILE", path: "src/value.mjs" })]);
+  const model = { complete: async (request: Parameters<typeof base.complete>[0]) => {
+    const response = await base.complete(request);
+    await new Promise(resolve => setTimeout(resolve, 1_100));
+    return response;
+  } };
+  try {
+    const session = NyxChatSession.create({ sessionId: "NYX-LATE-DELIVERY", model, reader: r1,
+      candidateWriter: null, editablePaths: [], maxModelCallsPerTurn: 1, maxCandidatesPerTurn: 0,
+      maxTurnMs: 1_000, maxOutputTokens: 1_024 });
+    const result = await session.turn("Inspect the authorized file.");
+    check(result.outcome, "BUDGET_EXHAUSTED", "late successful delivery cannot authorize an expired action"); assert.equal(result.modelCalls, 1);
+    assert.equal(result.modelTokens, 200); assert.equal(r1.auditLog().length, 0);
+    assert.deepEqual(result.events.map(item => item.eventType), ["MODEL"]);
+  } finally { r1.terminate(Date.now(), "test_closed"); await rm(root, { recursive: true }); }
+});
+
+omegaTest("malformed input releases session ownership without any model or tool execution", async () => {
+  const root = await fixture(); const r1 = await reader(root);
+  try {
+    const config: NyxChatSessionConfig = { sessionId: "NYX-INPUT-OWNERSHIP", model: provider([
+      JSON.stringify({ kind: "REPLY", message: "Ready." })]), reader: r1,
+      candidateWriter: null, editablePaths: [], maxModelCallsPerTurn: 1, maxCandidatesPerTurn: 0,
+      maxTurnMs: 20_000, maxOutputTokens: 1_024 };
+    assert.throws(() => NyxChatSession.create({ ...config, editablePaths: ["../outside.mjs"] }), /policy_invalid/);
+    const session = NyxChatSession.create(config);
+    await assert.rejects(session.turn(""), /user_input_outside_bounds/);
+    check((await session.turn("A valid request")).outcome, "REPLIED", "malformed input releases session ownership without operational rescue");
+    assert.equal(r1.auditLog().length, 0);
+  } finally { r1.terminate(Date.now(), "test_closed"); await rm(root, { recursive: true }); }
+});
+
 omegaTest("typed protocol rejects arbitrary executable text and malformed edit targets", () => {
   assert.equal(parseNyxChatAction("rm -rf /*").action, null);
   assert.equal(parseNyxChatAction(JSON.stringify({ kind: "SHELL", command: "whoami" })).action, null);
@@ -84,6 +173,75 @@ omegaTest("real R2A/R3A/R3B candidate stays isolated and passes fixed verifier",
   } finally {
     assert.equal((await writer.close()).decision, "CLEANED");
     await rm(root, { recursive: true });
+  }
+});
+
+omegaTest("isolated writer rejects a concurrent proposal rather than losing candidate ownership", async () => {
+  const root = await fixture();
+  const writer = await NyxIsolatedCandidateWriter.create({ sourceRoot: root, editablePath: "src/value.mjs",
+    verifierPath: "tools/verify.mjs", candidateCommit: "d".repeat(40), maxCandidateBytes: 4_096, maxVerifierMs: 5_000 });
+  const request = { requestId: "owned", path: "src/value.mjs", expectedBaseHash: nyxSha256(SOURCE),
+    replacement: REPLACEMENT, rationale: "Bounded repair.", observedEvidenceId: "E3-BASE" };
+  try {
+    const first = writer.apply(request);
+    const contender = writer.apply({ ...request, requestId: "contender", replacement: "export function value() { return 3; }\n" });
+    const [accepted, rejected] = await Promise.all([first, contender]);
+    check(rejected.decision, "REJECTED", "isolated writer owns one proposal lane even across different session callers");
+    assert.equal(rejected.reason, "candidate_operation_already_active"); assert.equal(accepted.decision, "VERIFIED");
+    assert.equal((await writer.observeCandidate(request.path)).content, REPLACEMENT);
+    assert.equal(await readFile(join(root, "src/value.mjs"), "utf8"), SOURCE);
+  } finally { await writer.close(); await rm(root, { recursive: true }); }
+});
+
+omegaTest("termination drains an owned candidate before cleanup and forbids subsequent writes", async () => {
+  const root = await fixture();
+  const writer = await NyxIsolatedCandidateWriter.create({ sourceRoot: root, editablePath: "src/value.mjs",
+    verifierPath: "tools/verify.mjs", candidateCommit: "e".repeat(40), maxCandidateBytes: 4_096, maxVerifierMs: 5_000 });
+  const request = { requestId: "closing", path: "src/value.mjs", expectedBaseHash: nyxSha256(SOURCE),
+    replacement: REPLACEMENT, rationale: "Bounded repair.", observedEvidenceId: "E3-BASE" };
+  try {
+    const results = await Promise.allSettled([writer.apply(request), writer.close()]);
+    check(results[0].status, "fulfilled", "cleanup cannot remove a disposable root while its owned verifier is running");
+    if (results[0].status === "fulfilled") assert.equal(results[0].value.decision, "VERIFIED");
+    assert.equal(results[1].status, "fulfilled");
+    if (results[1].status === "fulfilled") assert.equal(results[1].value.decision, "CLEANED");
+    await assert.rejects(lstat(writer.scratchRoot), { code: "ENOENT" });
+    assert.equal((await writer.apply(request)).reason, "candidate_writer_closed");
+    assert.equal(await readFile(join(root, "src/value.mjs"), "utf8"), SOURCE);
+  } finally { await writer.close(); await rm(writer.scratchRoot, { recursive: true, force: true }); await rm(root, { recursive: true }); }
+});
+
+omegaTest("writer policy cannot be expanded by mutating the caller configuration", async () => {
+  const root = await fixture();
+  const config: NyxIsolatedCandidateConfig = { sourceRoot: root, editablePath: "src/value.mjs",
+    verifierPath: "tools/verify.mjs", candidateCommit: "f".repeat(40), maxCandidateBytes: 1, maxVerifierMs: 5_000 };
+  const pendingWriter = NyxIsolatedCandidateWriter.create(config);
+  Object.assign(config, { maxCandidateBytes: 4_096 }); // While create is suspended in its first filesystem await.
+  const writer = await pendingWriter;
+  try {
+    const result = await writer.apply({ requestId: "policy", path: "src/value.mjs", expectedBaseHash: nyxSha256(SOURCE),
+      replacement: REPLACEMENT, rationale: "Bounded repair.", observedEvidenceId: "E3-BASE" });
+    check(result.reason, "candidate_scope_or_size_rejected", "writer byte authority is a creation-time snapshot, not mutable caller state");
+  } finally { await writer.close(); await rm(root, { recursive: true }); }
+});
+
+omegaTest("repeated termination preserves a real alias quarantine instead of inventing cleanup", async () => {
+  const root = await fixture(); const outside = await mkdtemp(join(tmpdir(), "nyx-quarantine-target-"));
+  const writer = await NyxIsolatedCandidateWriter.create({ sourceRoot: root, editablePath: "src/value.mjs",
+    verifierPath: null, candidateCommit: "a".repeat(40), maxCandidateBytes: 4_096, maxVerifierMs: 5_000 });
+  const alias = join(writer.scratchRoot, "alias");
+  try {
+    await writeFile(join(outside, "marker"), "fixture-only");
+    await symlink(outside, alias, process.platform === "win32" ? "junction" : "dir");
+    assert.equal((await writer.close()).decision, "QUARANTINED");
+    check((await writer.close()).decision, "QUARANTINED", "cleanup retry cannot convert retained alias material into CLEANED evidence");
+    assert.equal(await readFile(join(outside, "marker"), "utf8"), "fixture-only");
+    assert.equal((await lstat(alias)).isSymbolicLink(), true);
+  } finally {
+    const link = await lstat(alias).catch(() => null);
+    if (link?.isSymbolicLink()) await unlink(alias); // Unlink only the fixture alias; never traverse its target.
+    await rm(writer.scratchRoot, { recursive: true, force: true });
+    await rm(root, { recursive: true }); await rm(outside, { recursive: true });
   }
 });
 

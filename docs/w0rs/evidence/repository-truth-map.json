@@ -2014,6 +2014,12 @@
         "transport": "raw-url"
       },
       {
+        "name": "lumina-live",
+        "file": "scripts/omegaLuminaLiveBoundary.test.ts",
+        "line": 64,
+        "transport": "raw-url"
+      },
+      {
         "name": "scan-content",
         "file": "supabase/functions/chat/index.ts",
         "line": 47,

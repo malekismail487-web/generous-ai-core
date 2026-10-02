@@ -4488,6 +4488,7 @@
           "scripts/omegaGroundedRepositoryContext.test.ts",
           "scripts/omegaHarnessGenealogy.test.mjs",
           "scripts/omegaHarnessIntegrity.test.mjs",
+          "scripts/omegaLuminaLiveBoundary.test.ts",
           "scripts/omegaNvidiaNimProvider.test.ts",
           "scripts/omegaNyxAdmissionGuidance.test.ts",
           "scripts/omegaNyxChatCli.test.ts",
@@ -7326,6 +7327,7 @@
       "evidence": {
         "firstPartyCodeReferences": [
           "scripts/omegaBiologicalArchitecturePortfolio.test.ts",
+          "scripts/omegaLuminaLiveBoundary.test.ts",
           "scripts/omegaNyxConnectomeCognitionAdapter.test.ts",
           "scripts/orchestraO2.test.ts",
           "src/components/SubjectsSection.tsx",
@@ -7993,8 +7995,7 @@
           "src/pages/Index.tsx",
           "src/pages/SchoolAdminDashboard.tsx",
           "supabase/functions/_shared/unifiedObjective_test.ts",
-          "supabase/functions/chat/index.ts",
-          "supabase/functions/lumina-live/index.ts"
+          "supabase/functions/chat/index.ts"
         ]
       }
     },

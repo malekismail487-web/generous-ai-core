@@ -21,7 +21,7 @@
 // Load-bearing guarantees:
 //   1. AUTH: caller must present a valid Supabase JWT; the resolved user must
 //      have a school-scoped profile. Requests without a `school_id` are
-//      rejected 403.
+//      rejected 401.
 //   2. CANCELLATION: `req.signal` (client disconnect) aborts the upstream
 //      gateway request via a linked `AbortController`. This is what makes the
 //      Stage A7 priority scheduler safe to preempt in-flight streams without
@@ -59,9 +59,8 @@ const corsHeaders = {
 
 const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-// Chosen for Stage A4: balanced Gemini model — low latency suits the p95
-// < 1.5s Phase A acceptance target; multimodal capacity is unused here but
-// harmless. Model routing is deliberately out of scope until Phase C4.
+// Fixed existing gateway model; this handler does not choose or evaluate
+// model providers. Model routing is deliberately out of scope here.
 const DEFAULT_MODEL = "openai/gpt-5.6-sol";
 
 // Bounded input caps. These exist to protect the gateway request size and
@@ -119,57 +118,26 @@ interface AuthenticatedUser {
   schoolId: string;
 }
 
-/**
- * Per-token authentication cache (latency).
- *
- * A live lesson issues one request per teacher utterance, each previously
- * paying two blocking round-trips (`auth.getUser` + a `profiles` select)
- * BEFORE the gateway call could even start. Both answers are stable for the
- * lifetime of a lesson, so we memoize them per access token with a short TTL.
- * Security is unchanged: an unverified token is never cached, and the cache
- * key is the token itself, so a revoked/rotated token simply misses.
- */
-const AUTH_TTL_MS = 300_000; // 5 minutes
-const AUTH_CACHE_MAX = 500;
-const authCache = new Map<string, { user: AuthenticatedUser; at: number }>();
-
-function readAuthCache(token: string): AuthenticatedUser | null {
-  const hit = authCache.get(token);
-  if (!hit) return null;
-  if (Date.now() - hit.at > AUTH_TTL_MS) { authCache.delete(token); return null; }
-  return hit.user;
-}
-
-function writeAuthCache(token: string, user: AuthenticatedUser): void {
-  if (authCache.size >= AUTH_CACHE_MAX) {
-    const oldest = authCache.keys().next().value;
-    if (oldest) authCache.delete(oldest);
-  }
-  authCache.set(token, { user, at: Date.now() });
-}
-
 async function authenticate(req: Request): Promise<AuthenticatedUser | null> {
   const auth = req.headers.get("authorization");
-  if (!auth) return null;
-  const token = auth.replace("Bearer ", "").trim();
-  if (!token) return null;
-
-  const cached = readAuthCache(token);
-  if (cached) return cached;
+  const match = auth && /^Bearer\s+(\S+)$/i.exec(auth.trim());
+  if (!match) return null;
+  const token = match[1];
 
   try {
     const supa = adminClient();
-    const { data: { user } } = await supa.auth.getUser(token);
-    if (!user) return null;
-    const { data: profile } = await supa
+    // Revalidate admission and school membership for every request. A token
+    // cache cannot know that the same token's backend decision has changed.
+    // This does not claim stronger revocation semantics than Supabase offers.
+    const { data: { user }, error: authError } = await supa.auth.getUser(token);
+    if (authError || !user) return null;
+    const { data: profile, error: profileError } = await supa
       .from("profiles")
       .select("school_id")
       .eq("id", user.id)
       .maybeSingle();
-    if (!profile?.school_id) return null;
-    const resolved = { id: user.id, schoolId: profile.school_id };
-    writeAuthCache(token, resolved);
-    return resolved;
+    if (profileError || !profile?.school_id) return null;
+    return { id: user.id, schoolId: profile.school_id };
   } catch {
     return null;
   }
@@ -187,7 +155,7 @@ interface ValidationOk { ok: true; body: RequestBody; }
 interface ValidationErr { ok: false; message: string; }
 
 function validate(raw: unknown): ValidationOk | ValidationErr {
-  if (!raw || typeof raw !== "object") {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return { ok: false, message: "body_must_be_object" };
   }
   const b = raw as Record<string, unknown>;
@@ -196,7 +164,7 @@ function validate(raw: unknown): ValidationOk | ValidationErr {
   if (!lessonId) return { ok: false, message: "lessonId_required" };
 
   const ev = b.event as Record<string, unknown> | undefined;
-  if (!ev || typeof ev !== "object") {
+  if (!ev || typeof ev !== "object" || Array.isArray(ev)) {
     return { ok: false, message: "event_required" };
   }
   if (typeof ev.id !== "string" || !ev.id) {
@@ -224,14 +192,33 @@ function validate(raw: unknown): ValidationOk | ValidationErr {
   if (typeof ev.teacherVisible !== "boolean") {
     return { ok: false, message: "event.teacherVisible_required_bool" };
   }
+  if (ev.conceptRef !== undefined && typeof ev.conceptRef !== "string") {
+    return { ok: false, message: "event.conceptRef_invalid" };
+  }
 
   const ctx = b.cachedContext as Record<string, unknown> | undefined;
-  if (!ctx || typeof ctx !== "object") {
+  if (!ctx || typeof ctx !== "object" || Array.isArray(ctx)) {
     return { ok: false, message: "cachedContext_required" };
   }
   if (!Array.isArray(ctx.conceptStack) || !Array.isArray(ctx.recentTimeline) ||
       !Array.isArray(ctx.prerequisitesCovered)) {
     return { ok: false, message: "cachedContext_shape_invalid" };
+  }
+  const isConcept = (value: unknown): boolean => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    const concept = value as Record<string, unknown>;
+    return typeof concept.id === "string" && typeof concept.label === "string";
+  };
+  if ((ctx.currentConcept !== null && !isConcept(ctx.currentConcept)) ||
+      !ctx.conceptStack.every(isConcept) ||
+      !ctx.prerequisitesCovered.every(value => typeof value === "string") ||
+      !ctx.recentTimeline.every(value => {
+        if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+        const entry = value as Record<string, unknown>;
+        return typeof entry.kind === "string" && VALID_KINDS.has(entry.kind as LessonEventKind) &&
+          typeof entry.text === "string";
+      })) {
+    return { ok: false, message: "cachedContext_entries_invalid" };
   }
 
   return { ok: true, body: raw as RequestBody };
@@ -359,29 +346,36 @@ async function* parseUpstreamStream(
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    // Frames are separated by blank lines per SSE; within a frame, `data: ` lines
-    // carry the JSON payload. We split on newlines and process `data:` prefixes.
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const rawLine of lines) {
-      const line = rawLine.trim();
-      if (!line.startsWith("data:")) continue;
-      const payload = line.slice(5).trim();
-      if (payload === "[DONE]") { yield null; return; }
-      try {
-        const parsed = JSON.parse(payload);
-        const delta = parsed?.choices?.[0]?.delta?.content;
-        if (typeof delta === "string" && delta.length > 0) {
-          yield delta;
-        }
-      } catch {
-        // Malformed frame — skip, per SSE resilience contract.
-      }
+  const parseLine = (rawLine: string): string | null | undefined => {
+    const line = rawLine.trim();
+    if (!line.startsWith("data:")) return undefined;
+    const payload = line.slice(5).trim();
+    if (payload === "[DONE]") return null;
+    try {
+      const delta = JSON.parse(payload)?.choices?.[0]?.delta?.content;
+      return typeof delta === "string" && delta.length > 0 ? delta : undefined;
+    } catch {
+      return undefined; // Keep the established malformed-frame resilience.
     }
+  };
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      // EOF can carry a final complete data line without a trailing newline.
+      if (done && buffer) { lines.push(buffer); buffer = ""; }
+      for (const line of lines) {
+        const delta = parseLine(line);
+        if (delta !== undefined) yield delta;
+        if (delta === null) return;
+      }
+      if (done) return;
+    }
+  } finally {
+    try { await reader.cancel(); } catch { /* already closed or disconnected */ }
+    reader.releaseLock();
   }
 }
 
@@ -519,11 +513,8 @@ serve(async (req) => {
           }
           controller.enqueue(sseFrame("token", { delta }));
         }
-        // Upstream ended without a `[DONE]` sentinel — treat as normal stop
-        // rather than an error so the client's session state advances.
-        controller.enqueue(sseFrame("done", { reason: "stop" }));
-        controller.close();
-        cleanup();
+        // Partial output is observable, but it is not a completed explanation.
+        throw new Error("upstream_stream_incomplete");
       } catch (err) {
         const aborted = req.signal.aborted ||
           (err instanceof DOMException && err.name === "AbortError");

@@ -1,6 +1,6 @@
 import type { ReadOnlyRepositoryExecutor } from "../executor/readOnlyExecutor";
 import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult, NvidiaNimMessage } from "../model/nvidiaNimProvider";
-import { nyxCanonical, nyxContainsSecretLike, nyxSha256, parseNyxChatAction, type NyxChatAction } from "./nyxChatProtocol";
+import { nyxCanonical, nyxContainsSecretLike, nyxSafeRelativePath, nyxSha256, parseNyxChatAction, type NyxChatAction } from "./nyxChatProtocol";
 
 export interface NyxChatModel {
   complete(request: NvidiaNimCompletionRequest): Promise<NvidiaNimCompletionResult>;
@@ -104,8 +104,11 @@ export class NyxChatSession {
   readonly #history: { user: string; assistant: string }[] = [];
   readonly #observed = new Map<string, ObservedFile>();
   #turnNumber = 0;
+  #turnActive = false;
 
-  private constructor(config: NyxChatSessionConfig) { this.#config = config; }
+  private constructor(config: NyxChatSessionConfig) {
+    this.#config = Object.freeze({ ...config, editablePaths: Object.freeze([...config.editablePaths]) });
+  }
 
   static create(config: NyxChatSessionConfig): NyxChatSession {
     if (!config.sessionId || !Number.isSafeInteger(config.maxModelCallsPerTurn) || config.maxModelCallsPerTurn < 1
@@ -113,13 +116,22 @@ export class NyxChatSession {
       || config.maxCandidatesPerTurn < 0 || config.maxCandidatesPerTurn > 4
       || !Number.isSafeInteger(config.maxTurnMs) || config.maxTurnMs < 1_000 || config.maxTurnMs > 600_000
       || !Number.isSafeInteger(config.maxOutputTokens) || config.maxOutputTokens < 128
-      || config.maxOutputTokens > 16_384 || new Set(config.editablePaths).size !== config.editablePaths.length) {
+      || config.maxOutputTokens > 16_384 || !Array.isArray(config.editablePaths)
+      || config.editablePaths.some(path => !nyxSafeRelativePath(path))
+      || new Set(config.editablePaths).size !== config.editablePaths.length) {
       throw new Error("nyx_chat_session_policy_invalid");
     }
     return new NyxChatSession(config);
   }
 
   async turn(userInput: string): Promise<NyxChatTurnResult> {
+    if (this.#turnActive) throw new Error("nyx_chat_turn_already_active");
+    this.#turnActive = true;
+    try { return await this.#runTurn(userInput); }
+    finally { this.#turnActive = false; }
+  }
+
+  async #runTurn(userInput: string): Promise<NyxChatTurnResult> {
     if (!userInput.trim() || userInput.length > 8_000) throw new Error("user_input_outside_bounds");
     if (nyxContainsSecretLike(userInput)) throw new Error("user_input_credential_pattern_blocked");
     this.#turnNumber += 1;
@@ -174,6 +186,12 @@ export class NyxChatSession {
       if (response.decision !== "COMPLETED" || !response.content) {
         return finish("MODEL_FAILURE", `Model delivery ended: ${response.evidence.failureCategory ?? response.reason}. No source files changed.`);
       }
+      if (response.finishReason !== "stop") {
+        event("DENIAL", { requestId }, { reason: "model_completion_incomplete", finishReason: response.finishReason },
+          "E3", `${requestId}-DENIAL`, "REJECTED");
+        return finish("MODEL_FAILURE", "The model completion was incomplete; Omega executed no action from it.");
+      }
+      if (Date.now() >= deadline) return finish("BUDGET_EXHAUSTED", "The turn expired before action authorization; no late result was executed.");
       const parsed = parseNyxChatAction(response.content);
       if (!parsed.action) {
         malformed += 1;

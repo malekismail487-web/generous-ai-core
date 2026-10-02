@@ -20,6 +20,14 @@ export interface NyxIsolatedCandidateConfig {
   readonly maxVerifierMs: number;
 }
 
+type CandidateCleanupResult = Readonly<{ decision: "CLEANED" | "QUARANTINED"; path: string }>;
+
+function rejectedCandidate(request: NyxCandidateRequest, reason: string): NyxCandidateResult {
+  return { decision: "REJECTED", reason, candidateId: null,
+    evidenceId: `NYX-CANDIDATE-REJECTED-${nyxSha256(`${request.requestId}:${reason}`).slice(0, 24)}`,
+    sourceRepositoryMutated: false, authorityGranted: false, verification: "NOT_CONFIGURED", changedPath: null };
+}
+
 /** Host-owned packaging, never an agent tool. Only two explicitly selected source files can enter a clone. */
 export class NyxIsolatedCandidateWriter implements NyxCandidateWriter {
   readonly #config: NyxIsolatedCandidateConfig;
@@ -32,15 +40,19 @@ export class NyxIsolatedCandidateWriter implements NyxCandidateWriter {
   #currentHash: string | null = null;
   #currentCandidateId: string | null = null;
   #observationSequence = 0;
+  #operationCompletion: Promise<void> | null = null;
+  #closePromise: Promise<CandidateCleanupResult> | null = null;
 
   private constructor(config: NyxIsolatedCandidateConfig, sourceRoot: string, scratchRoot: string) {
-    this.#config = config;
+    this.#config = Object.freeze({ ...config });
     this.#sourceRoot = sourceRoot;
     this.#scratchRoot = scratchRoot;
     this.#currentRoot = sourceRoot;
   }
 
   static async create(config: NyxIsolatedCandidateConfig): Promise<NyxIsolatedCandidateWriter> {
+    // Capture policy before validation or the first filesystem await.
+    config = Object.freeze({ ...config });
     if (!nyxSafeRelativePath(config.editablePath) || (config.verifierPath !== null && !nyxSafeRelativePath(config.verifierPath))
       || config.verifierPath === config.editablePath || !/^[a-f0-9]{40}$/.test(config.candidateCommit)
       || !Number.isSafeInteger(config.maxCandidateBytes) || config.maxCandidateBytes < 1 || config.maxCandidateBytes > 65_536
@@ -59,7 +71,20 @@ export class NyxIsolatedCandidateWriter implements NyxCandidateWriter {
 
   get scratchRoot(): string { return this.#scratchRoot; }
 
+  #ownOperation(): () => void {
+    let release!: () => void;
+    this.#operationCompletion = new Promise<void>(resolve => { release = resolve; });
+    return () => { this.#operationCompletion = null; release(); };
+  }
+
   async observeCandidate(path: string): Promise<NyxCandidateObservation> {
+    if (this.#closed || this.#operationCompletion) throw new Error("isolated_candidate_not_observable");
+    const release = this.#ownOperation();
+    try { return await this.#observeOwnedCandidate(path); }
+    finally { release(); }
+  }
+
+  async #observeOwnedCandidate(path: string): Promise<NyxCandidateObservation> {
     if (this.#closed || path !== this.#config.editablePath || this.#currentRoot === this.#sourceRoot
       || this.#currentHash === null || this.#currentCandidateId === null) {
       throw new Error("isolated_candidate_not_observable");
@@ -87,9 +112,15 @@ export class NyxIsolatedCandidateWriter implements NyxCandidateWriter {
   }
 
   async apply(request: NyxCandidateRequest): Promise<NyxCandidateResult> {
-    const fail = (reason: string): NyxCandidateResult => ({ decision: "REJECTED", reason, candidateId: null,
-      evidenceId: `NYX-CANDIDATE-REJECTED-${nyxSha256(`${request.requestId}:${reason}`).slice(0, 24)}`,
-      sourceRepositoryMutated: false, authorityGranted: false, verification: "NOT_CONFIGURED", changedPath: null });
+    if (this.#closed) return rejectedCandidate(request, "candidate_writer_closed");
+    if (this.#operationCompletion) return rejectedCandidate(request, "candidate_operation_already_active");
+    const release = this.#ownOperation();
+    try { return await this.#applyOwnedCandidate(request); }
+    finally { release(); }
+  }
+
+  async #applyOwnedCandidate(request: NyxCandidateRequest): Promise<NyxCandidateResult> {
+    const fail = (reason: string): NyxCandidateResult => rejectedCandidate(request, reason);
     if (this.#closed) return fail("candidate_writer_closed");
     if (request.path !== this.#config.editablePath || !nyxSafeRelativePath(request.path)
       || Buffer.byteLength(request.replacement, "utf8") > this.#config.maxCandidateBytes) return fail("candidate_scope_or_size_rejected");
@@ -222,18 +253,31 @@ export class NyxIsolatedCandidateWriter implements NyxCandidateWriter {
   }
 
   /** A failed preflight leaves scratch material quarantined, rather than broadening deletion. */
-  async close(): Promise<{ readonly decision: "CLEANED" | "QUARANTINED"; readonly path: string }> {
-    if (this.#closed) return { decision: "CLEANED", path: this.#scratchRoot };
+  close(): Promise<CandidateCleanupResult> {
+    if (this.#closePromise) return this.#closePromise;
     this.#closed = true;
-    const canonicalTmp = await realpath(tmpdir());
-    const canonicalScratch = await realpath(this.#scratchRoot);
-    if (dirname(canonicalScratch) !== canonicalTmp || !canonicalScratch.split(sep).at(-1)?.startsWith("nyx-cli-")) {
-      return { decision: "QUARANTINED", path: this.#scratchRoot };
+    this.#closePromise = this.#cleanup(this.#operationCompletion);
+    return this.#closePromise;
+  }
+
+  async #cleanup(ownedOperation: Promise<void> | null): Promise<CandidateCleanupResult> {
+    // Closing freezes new operations immediately; cleanup joins the already
+    // authorized operation instead of deleting beneath its reader/verifier.
+    if (ownedOperation) await ownedOperation;
+    const quarantine = (): CandidateCleanupResult => Object.freeze({ decision: "QUARANTINED", path: this.#scratchRoot });
+    try {
+      const canonicalTmp = await realpath(tmpdir());
+      const canonicalScratch = await realpath(this.#scratchRoot);
+      if (dirname(canonicalScratch) !== canonicalTmp || !canonicalScratch.split(sep).at(-1)?.startsWith("nyx-cli-")) {
+        return quarantine();
+      }
+      if (!(await safeTree(canonicalScratch))) return quarantine();
+      await rm(canonicalScratch, { recursive: true, force: false });
+      return Object.freeze({ decision: "CLEANED", path: this.#scratchRoot });
+    } catch {
+      // Unknown/failed cleanup is never rewritten as proof of deletion.
+      return quarantine();
     }
-    if (!(await safeTree(canonicalScratch))) return { decision: "QUARANTINED", path: this.#scratchRoot };
-    try { await rm(canonicalScratch, { recursive: true, force: false }); }
-    catch { return { decision: "QUARANTINED", path: this.#scratchRoot }; }
-    return { decision: "CLEANED", path: this.#scratchRoot };
   }
 }
 

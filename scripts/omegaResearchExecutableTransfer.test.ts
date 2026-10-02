@@ -624,6 +624,57 @@ check(controls.records[0].exactSyntheticAnswer && controls.records[2].exactSynth
 check(answerDiagnosis.interpretation.reasoningBudgetOnThisHostedEndpoint === "REJECTED_HTTP_400"
   && !answerDiagnosis.interpretation.defaultPromoted && !answerDiagnosis.interpretation.oracleWeakened,
   "an opt-in transport setting stays experimentally rejected rather than falsely promoted");
+const directEmission = JSON.parse(readFileSync("scripts/omega/checkpoints/direct-emission/comparison.json", "utf8"));
+check(checkpointDigest(directEmission) === "f8a48f411d3628596d45e976a06d5fb6bb09ed5c7efc36a17839455475f5e671",
+  "direct-emission archive preserves both real failed attempts without rewriting historical evidence");
+check(directEmission.candidateCommit === "e4f642c272ad159882aaa913e6ba1d64bd59dacc"
+  && directEmission.runs.length === 2 && directEmission.runs[0].jobId === 110883250442
+  && directEmission.runs[1].jobId === 110888280889 && directEmission.runs.every((run: { runId: number }) => run.runId === 37020856344),
+  "one candidate and one controlled rerun retain exact hosted execution identities");
+for (const [path, expected] of Object.entries(directEmission.candidateSourceDigests)) {
+  check(/^(?:src|scripts|\.github\/workflows)\/[A-Za-z0-9_./-]+\.(?:ts|mjs|yml)$/.test(path)
+    && !path.split("/").includes(".."), "direct-emission reconstruction is limited to enumerated implementation and evaluator sources");
+  const source = execFileSync("git", ["show", `${directEmission.candidateCommit}:${path}`], { encoding: "utf8", timeout: 10_000 });
+  check(createHash("sha256").update(source.replace(/\r\n/g, "\n")).digest("hex") === expected,
+    "model adapter, executor, independent oracle, and dispatched workflow remain bound to the actual candidate");
+}
+const directReports = directEmission.runs.map((run: { report: typeof custodyReport }) => run.report);
+for (const report of directReports) {
+  const arm = report.records[0];
+  check(report.candidateCommit === directEmission.candidateCommit && report.corpusDigest === NYX_COVERAGE_TRANSFER_V3_CORPUS_DIGEST
+    && report.requestedArms === 6 && report.completedArms === 1 && report.records.length === 1,
+    "both attempts preserve five genuinely unexecuted arms, not hidden successful or failed task scores");
+  check(report.emissionPolicy.emissionMode === "CONSTRAINED_JSON" && report.emissionPolicy.sharedAcrossArms
+    && report.emissionPolicy.requestedThinkingBudgetTokens === null && !report.emissionPolicy.outputTokenCeilingChanged
+    && checkpointDigest(report.matchedLimits) === checkpointDigest(directReports[0].matchedLimits),
+    "both attempts use the explicitly supported emission configuration with unchanged common resource ceilings");
+  check(arm.cognitionOutcomeCounts.PROVIDER_FAILURE === 1 && arm.cognitionOutcomeCounts.OUTPUT_TRUNCATION === 0
+    && arm.cognitionOutcomeCounts.MODEL_OUTPUT_REJECTION === 0 && arm.resourceUsage.totalTokens === null
+    && report.verdict === "INCONCLUSIVE_PROVIDER_FAILURE" && report.providerBlocked && !report.executionBlocked,
+    "delivery timeout and 503 remain separate from malformed output, truncation, and demonstrated reasoning failure");
+  check(checkpointDigest(analyzeCoverageTransfer(report.selectedTaskIds, report.records)) === checkpointDigest(report.pairedAnalysis)
+    && report.pairedAnalysis.completePairs === 0 && !report.realizedComputeMatched && !report.broadPromotion
+    && report.acceptanceViolations === 0 && arm.sourceRepositoryUnchanged && !arm.authorityGranted,
+    "partial E4 observations cannot establish matched-compute gains or grant authority");
+}
+const firstDirect = directReports[0].records[0];
+check(firstDirect.cognitionOutcomeCounts.CONTRIBUTION === 4 && firstDirect.resourceUsage.experiments === 3
+  && firstDirect.resourceUsage.modelCalls === 5 && firstDirect.transport.httpAttempts === 9
+  && firstDirect.transport.timedOutAttempts === 3 && firstDirect.transport.capacityWaitMs === 240004
+  && firstDirect.assurance.decision === "REJECT" && firstDirect.assurance.findings.includes("EVIDENCE_CHAIN_INCOMPLETE"),
+  "real useful contributions and local experiments do not override the missing review and rejected evidence chain");
+check(firstDirect.cognitionEvidence.reduce((sum: number, item: { totalTokens: number | null }) => sum + (item.totalTokens ?? 0), 0) === 11473
+  && directEmission.interpretation.firstAttempt.reportedTokenLowerBound === 11473,
+  "delivered tokens form only a measured lower bound when timeout consumption is unknown");
+const repeatDirect = directReports[1].records[0];
+check(repeatDirect.cognitionOutcomeCounts.CONTRIBUTION === 0 && repeatDirect.resourceUsage.experiments === 0
+  && repeatDirect.resourceUsage.modelCalls === 1 && repeatDirect.transport.httpAttempts === 2
+  && repeatDirect.cognitionEvidence[0].statusCode === 503 && repeatDirect.transport.timedOutAttempts === 0,
+  "one bounded rerun exhausts provider recovery before any useful task work, rather than fabricating capability evidence");
+check(!directEmission.interpretation.capabilityImprovementDemonstrated && !directEmission.interpretation.certifiesCurrentRuntime
+  && !directEmission.interpretation.defaultPromoted && !directEmission.interpretation.truncationReductionCausallyEstablished
+  && directEmission.planCoverage.status === "PARTIAL / JUST-IN-TIME",
+  "supporting reliability progress preserves honest maturity and incomplete corpus coverage");
 console.log(`NYX_EXECUTABLE_TRANSFER_PREFLIGHT ${JSON.stringify({ schemaVersion: 1,
   corpusDigest: NYX_RESEARCH_TRANSFER_CORPUS_DIGEST, actualCognition: "NOT_EXECUTED",
   oracleMutantsRejected: 3, evidenceClass: "E3", broadPromotion: false, authorityGranted: false })}`);
