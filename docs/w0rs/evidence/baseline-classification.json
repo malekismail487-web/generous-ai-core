@@ -8480,6 +8480,7 @@
           "src/lib/codelab/research/dependencyReadinessSpecialist.ts",
           "src/lib/codelab/research/finiteRefutationVerifier.ts",
           "src/lib/codelab/research/nyxNemotronTheoryCognition.ts",
+          "src/lib/codelab/research/nyxQuantitativeReasoning.ts",
           "src/lib/codelab/research/reasoningObligationGraph.ts",
           "src/lib/codelab/research/researchEvidenceGraph.ts",
           "src/lib/codelab/research/sparseTheoryRouter.ts",

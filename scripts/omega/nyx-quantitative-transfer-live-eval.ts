@@ -6,7 +6,14 @@ import {join} from "node:path";
 import {NvidiaNimProvider,nvidiaNimCredentialFromEnvironment} from "../../src/lib/codelab/model/nvidiaNimProvider";
 import {runNyxQuantitativeTask,type QuantitativeArm,type QuantitativeRun} from "../../src/lib/codelab/research/nyxQuantitativeReasoning";
 import {theoryDigest} from "../../src/lib/codelab/research/theoryContracts";
-import {QUANTITATIVE_EPOCH as EPOCH,QUANTITATIVE_TASKS as TASKS,QUANTITATIVE_CORPUS_DIGEST,verifyQuantitativeSubmission} from "./nyx-quantitative-transfer-fixtures";
+import {QUANTITATIVE_EPOCH,QUANTITATIVE_TASKS,QUANTITATIVE_CORPUS_DIGEST,verifyQuantitativeSubmission} from "./nyx-quantitative-transfer-fixtures";
+import {FRESH_QUANTITATIVE_EPOCH,FRESH_QUANTITATIVE_TASKS,FRESH_QUANTITATIVE_CORPUS_DIGEST,verifyFreshQuantitativeSubmission} from "./nyx-quantitative-fresh-fixtures";
+
+const fresh=process.env.NYX_QUANTITATIVE_FRESH==="1";
+const EPOCH=fresh?FRESH_QUANTITATIVE_EPOCH:QUANTITATIVE_EPOCH;
+const TASKS=fresh?FRESH_QUANTITATIVE_TASKS:QUANTITATIVE_TASKS;
+const CORPUS_DIGEST=fresh?FRESH_QUANTITATIVE_CORPUS_DIGEST:QUANTITATIVE_CORPUS_DIGEST;
+const verify=fresh?verifyFreshQuantitativeSubmission:verifyQuantitativeSubmission;
 
 if(process.env.OMEGA_ALLOW_NVIDIA_NETWORK!=="1"||!process.env.NVIDIA_API_KEY?.trim()) {
   console.error("NYX_QUANTITATIVE_TRANSFER: BLOCKED_AUTHORITY_OR_MISSING_INJECTED_SECRET");process.exit(2);
@@ -29,7 +36,7 @@ for(let index=0;index<TASKS.length;index++) for(let offset=0;offset<ARMS.length;
   const result=await runNyxQuantitativeTask({arm,...task,
     limits:{maxCalls:EPOCH.maxCallsPerTask,maxOutputTokens:EPOCH.maxOutputTokensPerCall,maxTaskMs:EPOCH.maxTaskMs,
       expiresAtEpochMs:expires,maxToolRequests:EPOCH.maxToolRequests,maxToolWorkUnits:EPOCH.maxToolWorkUnits,maxToolElapsedMs:EPOCH.maxToolElapsedMs},
-    complete:request=>provider.complete(request),verify:certificate=>verifyQuantitativeSubmission(task,certificate)});
+    complete:request=>provider.complete(request),verify:certificate=>verify(task,certificate)});
   results.push(result);
   console.log(`NYX_QUANTITATIVE_TASK ${JSON.stringify({taskId:task.taskId,arm,outcome:result.outcome,calls:result.calls,
     reportedTokens:result.attempts.reduce((n,a)=>n+(a.modelEvidence.usage.totalTokens??0),0),toolWorkUnits:result.toolWorkUnits,elapsedMs:result.elapsedMs})}`);
@@ -46,10 +53,11 @@ const summaries=ARMS.map(arm=>{
     recoveredProviderDisruptions:attempts.reduce((n,a)=>n+(a.modelEvidence.delivery?.rateLimitedResponses??0)
       +(a.modelEvidence.delivery?.transientUnavailableResponses??0)+(a.modelEvidence.delivery?.timedOutAttempts??0),0),
     truncations:attempts.filter(a=>a.outcome==="TRUNCATION").length,
-    protocolOrAuthorizationFailures:attempts.filter(a=>/REJECTION/.test(a.outcome)&&a.outcome!=="FUNCTIONAL_OR_CERTIFICATE_REJECTION").length,
-    functionalOrSchemaRejections:attempts.filter(a=>a.outcome==="FUNCTIONAL_OR_CERTIFICATE_REJECTION").length,
-    verifierTriggeredRevisions:selected.reduce((n,r)=>n+r.attempts.filter((a,i)=>i>0&&r.attempts[i-1].outcome==="FUNCTIONAL_OR_CERTIFICATE_REJECTION").length,0),
-    repairDepth:selected.map(r=>({taskId:r.taskId,rejectedSubmissions:r.attempts.filter(a=>a.outcome==="FUNCTIONAL_OR_CERTIFICATE_REJECTION").length})),
+    protocolOrAuthorizationFailures:attempts.filter(a=>/REJECTION/.test(a.outcome)&&!["FUNCTIONAL_REJECTION","CERTIFICATE_SCHEMA_REJECTION"].includes(a.outcome)).length,
+    certificateSchemaRejections:attempts.filter(a=>a.outcome==="CERTIFICATE_SCHEMA_REJECTION").length,
+    functionalRejections:attempts.filter(a=>a.outcome==="FUNCTIONAL_REJECTION").length,
+    verifierTriggeredRevisions:selected.reduce((n,r)=>n+r.attempts.filter((a,i)=>i>0&&["FUNCTIONAL_REJECTION","CERTIFICATE_SCHEMA_REJECTION"].includes(r.attempts[i-1].outcome)).length,0),
+    repairDepth:selected.map(r=>({taskId:r.taskId,rejectedSubmissions:r.attempts.filter(a=>["FUNCTIONAL_REJECTION","CERTIFICATE_SCHEMA_REJECTION"].includes(a.outcome)).length})),
     toolRequests:selected.reduce((n,r)=>n+r.toolRequests,0),toolWorkUnits:selected.reduce((n,r)=>n+r.toolWorkUnits,0),
     toolElapsedMs:selected.reduce((n,r)=>n+r.toolElapsedMs,0),elapsedMs:selected.reduce((n,r)=>n+r.elapsedMs,0),
     submittedCandidateBrierScore:submitted.length?submitted.reduce((n,a)=>n+(a.confidence!-Number(a.outcome==="ACCEPTED"))**2,0)/submitted.length:null};
@@ -60,10 +68,11 @@ const stable=summaries.every(s=>s.providerFailures===0&&s.recoveredProviderDisru
 const nativeAdvantage=complete&&stable&&workbench.accepted>reasoning.accepted&&workbench.reportedTokens<=reasoning.reportedTokens;
 const sourceAfter=theoryDigest({index:git("ls-files","-s"),status:git("status","--porcelain")});
 if(sourceAfter!==sourceBefore) throw Error("source_repository_changed_during_evaluation");
-const sources=["src/lib/codelab/research/boundedReasoningWorkbench.ts","src/lib/codelab/research/exactQuantitativeDerivation.ts",
+const sources=["src/lib/codelab/research/analysisArtifactReference.ts","src/lib/codelab/research/boundedReasoningWorkbench.ts","src/lib/codelab/research/exactQuantitativeDerivation.ts",
   "src/lib/codelab/research/nyxQuantitativeReasoning.ts","src/lib/codelab/model/nvidiaNimProvider.ts",
-  "scripts/omega/nyx-quantitative-transfer-fixtures.ts","scripts/omega/nyx-quantitative-transfer-live-eval.ts"];
-const report={schemaVersion:1,chunkId:EPOCH.chunkId,candidate,model,epoch:EPOCH,corpusDigest:QUANTITATIVE_CORPUS_DIGEST,
+  "src/lib/codelab/model/nvidiaCapacity.ts","src/lib/codelab/research/theoryContracts.ts",
+  "scripts/omega/nyx-quantitative-transfer-fixtures.ts","scripts/omega/nyx-quantitative-fresh-fixtures.ts","scripts/omega/nyx-quantitative-transfer-live-eval.ts"];
+const report={schemaVersion:1,chunkId:EPOCH.chunkId,candidate,model,epoch:EPOCH,corpusDigest:CORPUS_DIGEST,
   sourceDigests:Object.fromEntries(sources.map(path=>[path,theoryDigest(readFileSync(path,"utf8"))])),
   executionIdentity:process.env.GITHUB_RUN_ID??"LOCAL_AUTHORIZED_RUN",environment:{platform:process.platform,node:process.version},
   startedAtEpochMs:began,finishedAtEpochMs:Date.now(),complete,providerStable:stable,summaries,results,
@@ -77,7 +86,8 @@ const report={schemaVersion:1,chunkId:EPOCH.chunkId,candidate,model,epoch:EPOCH,
   calibrationScope:"DESCRIPTIVE_DEPENDENT_SUBMISSIONS_FOUR_TASKS_NOT_GENERAL_CALIBRATION",
   falseAcceptanceEvidence:"NEGATIVE_ORACLE_CONTROLS_LOCAL_ONLY_NOT_EXTERNALLY_MEASURED",
   sourceBefore,sourceAfter,sourceRepositoryUnchanged:true,
-  populationScope:"FRESH_MODEL_UNSEEN_PUBLIC_DEVELOPER_AUTHORED_FINITE_TASKS_NOT_PRIVATE_INSTITUTIONAL_HOLDOUT",
+  populationScope:fresh?"FRESH_MODEL_UNSEEN_PARAMETERS_EXISTING_FAMILIES_AFTER_PROTOCOL_REPAIR_NOT_PRIVATE_INSTITUTIONAL_HOLDOUT"
+    :"FRESH_MODEL_UNSEEN_PUBLIC_DEVELOPER_AUTHORED_FINITE_TASKS_NOT_PRIVATE_INSTITUTIONAL_HOLDOUT",
   security:{credentialPersisted:false,rawReasoningPersisted:false,generalNetworkAuthority:false,
     shellAuthority:false,repositoryMutation:false,productionAuthority:false},broadPromotion:false};
 await writeFile(join(process.env.RUNNER_TEMP??tmpdir(),`nyx-quantitative-transfer-${candidate.slice(0,12)}.json`),`${JSON.stringify(report,null,2)}\n`,{encoding:"utf8",mode:0o600});

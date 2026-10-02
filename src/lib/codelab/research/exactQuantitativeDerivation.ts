@@ -32,36 +32,40 @@ export function validQuantitativeProblem(value: QuantitativeProblem): boolean {
     && new Set(value.constants.map(c => c?.id)).size === value.constants.length
     && value.constants.every(c => ownKeys(c, ["id", "value"]) && id(c.id) && literal(c.value));
 }
-export function validQuantitativeProgram(problem: QuantitativeProblem, value: unknown): value is QuantitativeProgram {
+export function quantitativeProgramFinding(problem: QuantitativeProblem, value: unknown): string | null {
   if (!ownKeys(value, ["schemaVersion", "registers", "blocks", "outputs"]) || value.schemaVersion !== 1
     || !Array.isArray(value.registers) || value.registers.length > EXACT_DERIVATION_POLICY.maxRegisters
     || !Array.isArray(value.blocks) || value.blocks.length > EXACT_DERIVATION_POLICY.maxBlocks
-    || !Array.isArray(value.outputs) || value.outputs.length < 1 || value.outputs.length > EXACT_DERIVATION_POLICY.maxOutputs) return false;
+    || !Array.isArray(value.outputs) || value.outputs.length < 1 || value.outputs.length > EXACT_DERIVATION_POLICY.maxOutputs) return "PROGRAM_SHAPE_OR_COLLECTION_BOUND";
   const constants = new Set(problem.constants.map(c => c.id));
   const available = new Set(constants);
   const registers = new Set<string>();
-  for (const register of value.registers) {
+  for (const [at,register] of value.registers.entries()) {
     if (!ownKeys(register, ["id", "source"]) || !id(register.id) || !id(register.source)
-      || !available.has(register.source) || available.has(register.id)) return false;
+      || !available.has(register.source) || available.has(register.id)) return `REGISTER_BINDING:${at}`;
     registers.add(register.id); available.add(register.id);
   }
   let steps = 0;
-  for (const block of value.blocks) {
+  for (const [at,block] of value.blocks.entries()) {
     if (!ownKeys(block, ["iterations", "mode", "steps"]) || !Number.isSafeInteger(block.iterations)
       || Number(block.iterations) < 1 || Number(block.iterations) > EXACT_DERIVATION_POLICY.maxIterations
       || !["SEQUENTIAL", "SIMULTANEOUS"].includes(String(block.mode)) || !Array.isArray(block.steps)
-      || block.steps.length < 1 || (steps += block.steps.length) > EXACT_DERIVATION_POLICY.maxSteps) return false;
+      || block.steps.length < 1 || (steps += block.steps.length) > EXACT_DERIVATION_POLICY.maxSteps) return `BLOCK_SHAPE_OR_STEP_ITERATION_BOUND:${at}`;
     const targets = new Set<string>();
-    for (const step of block.steps) {
-      if (!ownKeys(step, ["target", "op", "left", "right"]) || !id(step.target) || !registers.has(step.target)
-        || !["ADD", "SUB", "MUL", "DIV", "MIN", "MAX"].includes(String(step.op))
-        || !id(step.left) || !available.has(step.left) || !id(step.right) || !available.has(step.right)
-        || block.mode === "SIMULTANEOUS" && targets.has(step.target)) return false;
+    for (const [column,step] of block.steps.entries()) {
+      if (!ownKeys(step, ["target", "op", "left", "right"])) return `STEP_SHAPE:${at}.${column}`;
+      if (!id(step.target) || !registers.has(step.target)) return `STEP_TARGET_NOT_MUTABLE_REGISTER:${at}.${column}`;
+      if (!["ADD", "SUB", "MUL", "DIV", "MIN", "MAX"].includes(String(step.op))) return `STEP_OPERATION:${at}.${column}`;
+      if (!id(step.left) || !available.has(step.left) || !id(step.right) || !available.has(step.right)) return `STEP_SOURCE_NOT_BOUND:${at}.${column}`;
+      if (block.mode === "SIMULTANEOUS" && targets.has(step.target)) return `SIMULTANEOUS_TARGET_DUPLICATED:${at}.${column}`;
       targets.add(step.target);
     }
   }
   return new Set(value.outputs.map(o => o?.label)).size === value.outputs.length
-    && value.outputs.every(o => ownKeys(o, ["label", "source"]) && id(o.label) && id(o.source) && available.has(o.source));
+    && value.outputs.every(o => ownKeys(o, ["label", "source"]) && id(o.label) && id(o.source) && available.has(o.source))?null:"OUTPUT_BINDING";
+}
+export function validQuantitativeProgram(problem: QuantitativeProblem, value: unknown): value is QuantitativeProgram {
+  return quantitativeProgramFinding(problem,value)===null;
 }
 
 class ArithmeticBoundary extends Error {}

@@ -1,10 +1,12 @@
 import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { BoundedReasoningSession, type ReasoningProblem, type ColoringProblem, type ReachabilityProblem,
   type ExperimentSelectionProblem, type HypothesisEliminationProblem } from "../src/lib/codelab/research/boundedReasoningWorkbench";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { QUANTITATIVE_TASKS, expectedQuantities, referenceQuantitativeProgram, verifyQuantitativeSubmission } from "./omega/nyx-quantitative-transfer-fixtures";
 import type { QuantitativeProblem, QuantitativeProgram } from "../src/lib/codelab/research/exactQuantitativeDerivation";
-import { runNyxQuantitativeTask } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
+import { runNyxQuantitativeTask, quantitativeExchangeSchema } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
+import { FRESH_QUANTITATIVE_TASKS,referenceFreshQuantitativeProgram,verifyFreshQuantitativeSubmission } from "./omega/nyx-quantitative-fresh-fixtures";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema,
   materializeFrontierArtifact, frontierArtifactReviewPrompt } from "./omega/nyx-frontier-workbench";
@@ -336,7 +338,7 @@ const cognition=NvidiaNimProvider.create({providerId:"TEST-QUANTITATIVE",model:"
     const exchange=cognitionCalls===1?{action:"SHELL",analysisRequest:null,certificate:null}:cognitionCalls===2?
       {action:"REQUEST_ANALYSIS",analysisRequest:{schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:prompt.availableTool.problemDigest,
         program:referenceQuantitativeProgram(cognitionTask)},certificate:null}:
-      {action:"SUBMIT",analysisRequest:null,certificate:{outputs:prompt.previousObservation.payload.outputs,confidence:0.9}};
+      {action:"SUBMIT_ANALYSIS_ARTIFACT",analysisRequest:{...prompt.artifactReference,confidence:0.9},certificate:null};
     return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(exchange)},finish_reason:"stop"}],
       usage:{prompt_tokens:100,completion_tokens:50,total_tokens:150}}),{status:200,headers:{"Content-Type":"application/json"}});
   }});
@@ -351,6 +353,27 @@ check(liveComposition.attempts[0].outcome==="PROTOCOL_REJECTION" && !liveComposi
   "unknown model shell output cannot acquire action authority, and remains correctable within finite budget");
 check(liveComposition.attempts[1].outcome==="DERIVATION_RETURNED_NOT_ACCEPTED" && liveComposition.attempts[1].resultDigest!==null,
   "exact quantitative result carries evidence without being accepted by its generator");
+const controlSchema=quantitativeExchangeSchema(cognitionTask.outputLabels,false,false,theoryDigest(cognitionTask.problem));
+check(JSON.stringify(controlSchema.properties.action)==='{"type":"string","enum":["SUBMIT"]}'
+  && !JSON.stringify(controlSchema).includes("ANALYZE_FINITE_PROBLEM"),"control provider schema exposes only existing action rather than tempting unavailable tool use");
+for(const task of FRESH_QUANTITATIVE_TASKS) {
+  const result=calculation(task.problem,referenceFreshQuantitativeProgram(task));
+  check(verifyFreshQuantitativeSubmission(task,{outputs:result.payload!.outputs,confidence:1}).accepted,
+    `unchanged exact engine transfers to unseen parameters for ${task.taskId}`);
+}
+const preservedNegative=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v1/comparison.json","utf8"));
+check(preservedNegative.complete&&preservedNegative.providerStable&&preservedNegative.results.length===12
+  &&preservedNegative.summaries.every((s:{accepted:number})=>s.accepted===0),"first negative live protocol experiment preserved without rewriting its result");
+check(preservedNegative.candidate==="c2a69187cea0280db2f3060326df50ba5e3f38d2"
+  &&preservedNegative.matchedRealizedCompute===false&&!preservedNegative.broadPromotion,
+  "failed quantitative comparison stays bound to actual candidate, with no broader capability promotion");
+check(theoryDigest(preservedNegative)==="304945fdd03eae04dcf3416eb5998370232753d7af799bbfb8a43953d6c0de64","negative live report remains byte-semantically faithful to immutable E4 job logs");
+for(const [path,digest] of Object.entries(preservedNegative.sourceDigests)) {
+  if(typeof path!=="string"||path.includes("..")||!path.endsWith(".ts")||!path.startsWith("src/")&&!path.startsWith("scripts/"))
+    throw Error("invalid_archived_source_path");
+  check(theoryDigest(execFileSync("git",["show",`${preservedNegative.candidate}:${path}`],{encoding:"utf8"}))===digest,
+    `negative live evidence reconstructs its historical source identity ${path}`);
+}
 let controlToolUsed=false;
 const deniedControl=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_MEDIUM",limits:{...limits,maxCalls:1},
   complete:async()=>{

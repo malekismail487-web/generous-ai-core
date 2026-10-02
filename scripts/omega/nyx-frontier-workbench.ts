@@ -3,6 +3,7 @@ import { BoundedReasoningSession, NYX_REASONING_WORKBENCH, type ColoringProblem,
   "../../src/lib/codelab/research/boundedReasoningWorkbench";
 import { immutableTheoryValue, theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { verifyFiniteRefutation, type FiniteRefutation } from "../../src/lib/codelab/research/finiteRefutationVerifier";
+import { materializeAnalysisArtifactFields } from "../../src/lib/codelab/research/analysisArtifactReference";
 
 /** Lossless proof stays in the native artifact; cognition receives the checked obstruction, not repetitive serialization. */
 export function verifiedRefutationObservation(problem: ReasoningProblem, supplied: unknown) {
@@ -268,17 +269,9 @@ export function frontierArtifactReviewPrompt(problem: Readonly<Record<string, un
 /** A reference selects a prebound proposal; it never replaces the independent acceptance check. */
 export function materializeFrontierArtifact(observation: Readonly<Record<string, unknown>>,
   schema: Readonly<Record<string, unknown>>, value: unknown): Readonly<Record<string, unknown>> {
-  const request = value as Record<string, unknown>;
-  if (!request || typeof request !== "object" || Array.isArray(request)
-    || Object.keys(request).sort().join(",") !== "confidence,operation,problemDigest,resultDigest,schemaVersion"
-    || request.schemaVersion !== 1 || request.operation !== "SUBMIT_ANALYSIS_ARTIFACT"
-    || request.problemDigest !== observation.problemDigest || request.resultDigest !== theoryDigest(observation)
-    || typeof request.confidence !== "number" || !Number.isFinite(request.confidence)
-    || request.confidence < 0 || request.confidence > 1
-    || observation.decision !== "CANDIDATE_CONSTRUCTED_NOT_ACCEPTED" || !observation.certificateFields)
-    throw new Error("frontier_artifact_reference_not_authorized");
+  const proposal = materializeAnalysisArtifactFields(observation, value);
   const properties = schema.properties as Record<string, { enum?: unknown[] }>;
   return immutableTheoryValue({ schemaVersion: properties.schemaVersion.enum![0],
-    decision: properties.decision.enum![0], ...(observation.certificateFields as object),
-    uncertainties: observation.assumptions, confidence: request.confidence });
+    decision: properties.decision.enum![0], ...proposal.fields,
+    uncertainties: observation.assumptions, confidence: proposal.confidence });
 }

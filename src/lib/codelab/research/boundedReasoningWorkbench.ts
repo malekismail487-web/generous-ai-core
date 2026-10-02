@@ -1,6 +1,6 @@
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
 import type { FiniteRefutation, ColoringRefutationNode } from "./finiteRefutationVerifier";
-import { deriveQuantities, validQuantitativeProblem, validQuantitativeProgram, EXACT_DERIVATION_POLICY,
+import { deriveQuantities, validQuantitativeProblem, validQuantitativeProgram, quantitativeProgramFinding, EXACT_DERIVATION_POLICY,
   type QuantitativeProblem, type QuantitativeProgram } from "./exactQuantitativeDerivation";
 
 /** Constructive algorithms, not a second model or an acceptance authority. */
@@ -373,8 +373,10 @@ export class BoundedReasoningSession {
         : ["schemaVersion", "operation", "problemDigest"])
       || request.schemaVersion !== 1 || request.operation !== "ANALYZE_FINITE_PROBLEM"
       || request.problemDigest !== this.problemDigest) throw new Error("reasoning_request_not_authorized");
-    if (this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" && !validQuantitativeProgram(this.#problem, request.program))
-      throw new Error("quantitative_program_invalid");
+    if (this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION") {
+      const finding=quantitativeProgramFinding(this.#problem,request.program);
+      if(finding)throw new Error(`quantitative_program_invalid:${finding}`);
+    }
     if (this.#requests >= this.#limits.maxRequests || this.#workUnits >= this.#limits.maxWorkUnits)
       throw new Error("reasoning_session_budget_exhausted");
     this.#requests += 1;
