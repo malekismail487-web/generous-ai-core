@@ -9,6 +9,7 @@ import { NYX_RESEARCH_TRANSFER_TASKS, NYX_RESEARCH_TRANSFER_CORPUS_DIGEST } from
 import { NYX_HYPOTHESIS_COVERAGE_TASKS, NYX_HYPOTHESIS_COVERAGE_CORPUS_DIGEST }
   from "./omega/nyx-hypothesis-coverage-fixtures";
 import { NYX_COVERAGE_TRANSFER_TASKS, NYX_COVERAGE_TRANSFER_CORPUS_DIGEST } from "./omega/nyx-coverage-transfer-fixtures";
+import { NYX_COVERAGE_TRANSFER_V2_TASKS, NYX_COVERAGE_TRANSFER_V2_CORPUS_DIGEST } from "./omega/nyx-coverage-transfer-v2-fixtures";
 import { analyzeCoverageTransfer, type CoverageTransferArm } from "../src/lib/codelab/research/coverageTransferAnalysis";
 
 let checks = 0;
@@ -76,7 +77,13 @@ for (const override of [
     && rejected.stdout === "" && !rejected.stderr.includes("synthetic-test-only"),
   "incompatible allocation/corpus/diagnostic selectors fail closed before any provider dispatch");
 }
-for (const task of [...corpus, ...NYX_HYPOTHESIS_COVERAGE_TASKS, ...NYX_COVERAGE_TRANSFER_TASKS]) {
+check(NYX_COVERAGE_TRANSFER_V2_TASKS.length === 3
+  && new Set(NYX_COVERAGE_TRANSFER_V2_TASKS.map(task => task.objective(candidate, 1000).domain)).size === 3
+  && NYX_COVERAGE_TRANSFER_V2_CORPUS_DIGEST === theoryDigest(NYX_COVERAGE_TRANSFER_V2_TASKS.map(task => task.oracleDigest))
+  && NYX_COVERAGE_TRANSFER_V2_TASKS.every(task => ![...corpus, ...NYX_HYPOTHESIS_COVERAGE_TASKS,
+    ...NYX_COVERAGE_TRANSFER_TASKS].some(old => old.taskId === task.taskId || old.oracleDigest === task.oracleDigest)),
+  "fresh v2 corpus preserves inspected v1 tasks and spans three different mechanism families");
+for (const task of [...corpus, ...NYX_HYPOTHESIS_COVERAGE_TASKS, ...NYX_COVERAGE_TRANSFER_TASKS, ...NYX_COVERAGE_TRANSFER_V2_TASKS]) {
   const objective = task.objective(candidate, 1_000);
   check(validResearchObjective(objective, 1_000), `${task.taskId}: strict objective contract`);
   check(task.probeSource !== undefined && !task.probeSource.includes("const outcomes"), `${task.taskId}: actual calculation, not answer lookup`);
@@ -100,6 +107,16 @@ for (const task of [...corpus, ...NYX_HYPOTHESIS_COVERAGE_TASKS, ...NYX_COVERAGE
   const clean = (value: typeof objective) => ({ ...value, expiryEpochMs: 0,
     admittedEvidence: value.admittedEvidence.map(item => ({ ...item, observedAtEpochMs: 0 })) });
   check(theoryDigest(clean(objective)) === theoryDigest(clean(otherTime)), `${task.taskId}: timestamps do not change problem semantics`);
+}
+for (const [task, before, after] of [
+  [NYX_COVERAGE_TRANSFER_V2_TASKS[0], "if(alive) lastSuccessfulTouch=t", "if(false) lastSuccessfulTouch=t"],
+  [NYX_COVERAGE_TRANSFER_V2_TASKS[1], "[p,q]", "[q,p]"],
+  [NYX_COVERAGE_TRANSFER_V2_TASKS[2], "for(const reaction of reactions)", "for(const reaction of [...reactions].reverse())"],
+] as const) {
+  const altered = task.probeSource!.replace(before, after);
+  check(altered !== task.probeSource && task.objective(candidate, 1000).experimentCatalog.some(experiment =>
+    run(altered, experiment.toolId) !== task.outcome(experiment.experimentId)),
+    "fresh manual oracle rejects plausible wrong lifetime, mapping order and shared-resource semantics");
 }
 for (const [task, original, replacement] of [
   [NYX_COVERAGE_TRANSFER_TASKS[0], "firstProposal + secondProposal - s", "secondProposal"],

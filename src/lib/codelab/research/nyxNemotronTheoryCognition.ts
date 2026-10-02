@@ -22,11 +22,15 @@ export interface NyxNemotronTheoryCognitionConfig {
   readonly limits: ResearchPartyLimits;
   /** Opt-in ablation control; neither capability authority nor a new reasoning engine. */
   readonly derivationChecks?: boolean;
+  /** Opt-in emission reliability experiment. Does not change local admission. */
+  readonly boundedOutput?: boolean;
 }
 
 export const NYX_DERIVATION_CHECK_INSTRUCTION = "Derive each forecast from its mechanism and exact probe inputs; do not guess labels. Recheck arithmetic, order, units and boundary conditions. A forecast mismatch may be a bad derivation, not an impossible mechanism. Never force a conclusion; abstain when necessary.";
 
 const COVERAGE_ONLY_INSTRUCTION = "Investigate preferredMechanismIds first to avoid duplicated exploration. The allocation is not evidence, is not a verdict, and does not restrict valid alternatives. Never force a conclusion to fill a slot.";
+
+export const NYX_BOUNDED_OUTPUT_INSTRUCTION = "Reason concisely within the supplied total completion budget and reserve room for the complete JSON answer. Keep thesis, causalMechanism, and rationales compact; do not repeat catalogs or narrate private reasoning. Preserve every required field, forecast, evidence reference, and genuine uncertainty. For falsification, examine every target but return one concise discriminating counterexample per target, not an exhaustive list of equivalent tests. Compactness never licenses guessing, omitting required predictions, fabricated evidence, or false certainty. If unresolved, return a valid NO_CONCLUSION with the actual uncertainty.";
 
 interface RawIntent {
   readonly schemaVersion?: unknown;
@@ -217,6 +221,8 @@ export class NyxNemotronTheoryCognition {
     const profile = config.provider.profile();
     if (!validResearchId(config.cognitionId) || !validResearchLimits(config.limits)
       || (config.derivationChecks !== undefined && typeof config.derivationChecks !== "boolean")
+      || (config.boundedOutput !== undefined && typeof config.boundedOutput !== "boolean")
+      || (config.boundedOutput === true && profile.model !== "nvidia/nemotron-3-ultra-550b-a55b")
       || !/nemotron[-_/ ]?3[-_/ ]?ultra/i.test(profile.model)) throw new Error("nyx_theory_cognition_configuration_invalid");
     return new NyxNemotronTheoryCognition(config, profile.model);
   }
@@ -264,6 +270,9 @@ export class NyxNemotronTheoryCognition {
       task: request.instruction,
       roleInstruction,
       outputContract: {
+        ...(this.#config.boundedOutput ? { completionBudget: { maxTokens: request.maxOutputTokens,
+          scope: "TOTAL_PROVIDER_COMPLETION_NOT_GUARANTEED_ANSWER_TOKENS",
+          instruction: NYX_BOUNDED_OUTPUT_INSTRUCTION, hardThinkingTokenLimit: false } } : {}),
         allowedDecisions: request.role === "INVESTIGATOR" ? ["PROPOSE_HYPOTHESIS", "NO_CONCLUSION"]
           : request.role === "FALSIFIER" ? ["CHALLENGE", "NO_CONCLUSION"]
             : request.role === "REVISER" ? ["REVISE_HYPOTHESIS", "NO_CONCLUSION"] : ["NO_CONCLUSION"],
@@ -304,6 +313,7 @@ export class NyxNemotronTheoryCognition {
         { role: "user", content: serialized }], maxTokens: request.maxOutputTokens, temperature: request.role === "INVESTIGATOR" ? 0.35 : 0,
       responseFormat: { type: "JSON_SCHEMA", name: "nyx_theory_intent", schema: theoryIntentSchemaForRequest(request) },
       inferencePolicy: "REASONING_JSON", observedAtEpochMs: request.observedAtEpochMs,
+      ...(this.#config.boundedOutput ? { reasoningEffort: "MEDIUM" as const } : {}),
       deadlineEpochMs: request.deadlineEpochMs, signal: request.signal });
     if (completion.decision !== "COMPLETED" || completion.content === null) {
       const decision = completion.decision === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY"

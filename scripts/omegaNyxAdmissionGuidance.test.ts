@@ -9,7 +9,7 @@ import { assessNyxTransferEpoch, nyxTransferReportIdentity,
 import { assessNyxAdmissionReference, requireAdmissibleReferenceGates } from "./omega/nyx-quality-reference-preflight";
 import { NYX_GATE_RECOVERY, NYX_GATE_RECOVERY_FROZEN_CORE, NYX_GATE_RECOVERY_TASKS,
   NYX_GATE_RECOVERY_TRANSPORT_REVISION, NYX_GATE_RECOVERY_DEADLINE_REVISION,
-  NYX_GATE_RECOVERY_SERVER_ERROR_REVISION } from "./omega/nyx-gate-recovery-fixtures";
+  NYX_GATE_RECOVERY_SERVER_ERROR_REVISION, NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION } from "./omega/nyx-gate-recovery-fixtures";
 
 let passed = 0;
 const failures: string[] = [];
@@ -42,8 +42,8 @@ check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected
   "historical ownership-repair core remains immutable and reproducible");
 check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected]) =>
   digest(readFileSync(path)) === (path === NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath
-    ? NYX_GATE_RECOVERY_SERVER_ERROR_REVISION.sourceSha256 : expected)),
-  "current ownership-repair core admits only the exact registered transport revision");
+    ? NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION.sourceSha256 : expected)),
+  "current ownership-repair core admits only the exact registered output-policy transport revision");
 const originalProvider = execFileSync("git", ["show",
   `${NYX_GATE_RECOVERY_FROZEN_CORE.commit}:${NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath}`], { encoding: "utf8" });
 const oldRetryBlock = "&& transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries) {\n          this.#capacity.defer(null);\n";
@@ -73,7 +73,8 @@ check(deadlineProvider.split(attemptStart)[0] === recoveryProvider.split(attempt
   "deadline repair cannot change prompts, parsers, model budgets, retry allowances, or evidence/authority contracts");
 check(digest(Buffer.from(deadlineProvider)) === NYX_GATE_RECOVERY_DEADLINE_REVISION.sourceSha256,
   "the preceding deadline revision remains immutable rather than rebaselined to the newer retry policy");
-const serverProvider = readFileSync(NYX_GATE_RECOVERY_SERVER_ERROR_REVISION.changedPath, "utf8");
+const serverProvider = execFileSync("git", ["show",
+  `${NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION.predecessor}:${NYX_GATE_RECOVERY_SERVER_ERROR_REVISION.changedPath}`], { encoding: "utf8" });
 const serverRetryBefore = "[502, 503, 504].includes(previous.evidence.statusCode ?? 0)";
 const serverCooldownBefore = "[429, 502, 503, 504].includes(response.status)";
 check(deadlineProvider.split(serverRetryBefore).length === 2
@@ -87,6 +88,12 @@ check(!NYX_GATE_RECOVERY_SERVER_ERROR_REVISION.historicalScoresComparable
   && !NYX_GATE_RECOVERY_SERVER_ERROR_REVISION.acceptanceOracleChanged
   && !NYX_GATE_RECOVERY_SERVER_ERROR_REVISION.authorityIncrease,
 "server-error recovery cannot inherit historical scores or promote authority");
+check(digest(Buffer.from(serverProvider)) === NYX_GATE_RECOVERY_SERVER_ERROR_REVISION.sourceSha256
+  && !NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION.historicalScoresComparable
+  && !NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION.acceptanceOracleChanged
+  && !NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION.outputCeilingChanged
+  && !NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION.authorityIncrease,
+  "new output policy cannot rebaseline old server-recovery scores, acceptance, compute ceilings or authority");
 check(!NYX_GATE_RECOVERY_TRANSPORT_REVISION.historicalScoresComparable
   && !NYX_GATE_RECOVERY_TRANSPORT_REVISION.acceptanceOracleChanged
   && !NYX_GATE_RECOVERY_TRANSPORT_REVISION.authorityIncrease,

@@ -541,6 +541,7 @@ let responseContent = JSON.stringify(validRaw);
 let responseFinishReason = "stop";
 const modelPrompts: Record<string, unknown>[] = [];
 const requestedOutputBudgets: number[] = [];
+const templateControls: unknown[] = [];
 const provider = NvidiaNimProvider.create({ providerId: "THEORY-ADAPTER-TEST", model: "nvidia/nemotron-3-ultra-550b-a55b",
   authorityMode: "TEST_DOUBLE_ONLY", credentialSource: { sourceIdentity: "test-only", read: () => "test-only-secret" },
   maxPromptBytes: 128_000, maxOutputTokens: 2_048, timeoutMs: 5_000,
@@ -549,6 +550,7 @@ const provider = NvidiaNimProvider.create({ providerId: "THEORY-ADAPTER-TEST", m
     check(authorization === "Bearer test-only-secret", "provider injects credential only at transport boundary");
     const body = JSON.parse(String(init?.body));
     requestedOutputBudgets.push(body.max_tokens);
+    templateControls.push(body.chat_template_kwargs);
     modelPrompts.push(JSON.parse(body.messages[1].content));
     return new Response(JSON.stringify({ choices: [{ message: { content: responseContent }, finish_reason: responseFinishReason }],
       usage: { prompt_tokens: 100, completion_tokens: 100, total_tokens: 200 } }),
@@ -659,6 +661,37 @@ check(truncated.decision === "COGNITION_ERROR" && truncated.intent === null
 check(truncated.evidence.finishReason === "length" && truncated.grantsAuthority === false,
   "output truncation remains distinct, observable, and authority-neutral");
 responseFinishReason = "stop";
+const compactAdapter = NyxNemotronTheoryCognition.create({ cognitionId: "NYX-COMPACT-EMISSION",
+  provider, limits, boundedOutput: true });
+for (const role of ["INVESTIGATOR", "FALSIFIER", "REVISER", "META_REVIEWER"] as const) {
+  const roleRequest = role === "REVISER" ? scripted.calls.find(item => item.role === "REVISER")!
+    : { ...adapterRequest, role, peerContributions: role === "INVESTIGATOR" ? [] : [{ ...directContribution,
+      objectiveDigest: researchObjectiveDigest(adapterRequest.objective) }] };
+  responseContent = JSON.stringify(role === "INVESTIGATOR" ? validRaw : role === "FALSIFIER" ? challenge
+    : role === "REVISER" ? intentFor("FAILED_AS_COMPLETE", "REVISE_HYPOTHESIS", roleRequest.theoryId,
+      roleRequest.experimentObservations) : noConclusion);
+  const result = await compactAdapter.think({ ...roleRequest, requestId: `COMPACT-${role}`,
+    observedAtEpochMs: now, deadlineEpochMs: Date.now() + 10_000, signal: new AbortController().signal });
+  const budget = (modelPrompts.at(-1)?.outputContract as Record<string, unknown>).completionBudget as Record<string, unknown>;
+  check(result.decision === "CONTRIBUTION" && !result.grantsAuthority,
+    `compact emission preserves valid ${role} contributions and independent authority`);
+  check(budget.maxTokens === roleRequest.maxOutputTokens && budget.hardThinkingTokenLimit === false
+    && String(budget.instruction).includes("genuine uncertainty"),
+    "all roles see the actual total budget and compactness cannot erase uncertainty");
+  check(JSON.stringify(templateControls.at(-1)) === JSON.stringify({ enable_thinking: true,
+    force_nonempty_content: true, medium_effort: true }) && requestedOutputBudgets.at(-1) === roleRequest.maxOutputTokens,
+    "bounded output uses documented effort with unchanged per-call token ceiling");
+}
+responseContent = JSON.stringify(validRaw);
+responseFinishReason = "length";
+const compactTruncation = await compactAdapter.think({ ...adapterRequest, requestId: "COMPACT-LENGTH" });
+check(compactTruncation.intent === null && compactTruncation.diagnostics.includes("finish_reason_not_stop"),
+  "compact policy never salvages a truncated but parseable candidate");
+responseFinishReason = "stop";
+responseContent = JSON.stringify({ ...validRaw, evidenceRefs: ["FABRICATED-EVIDENCE"] });
+check((await compactAdapter.think({ ...adapterRequest, requestId: "COMPACT-FABRICATION" })).diagnostics
+  .includes("evidence_reference_unknown"), "compact policy never weakens local evidence validation");
+responseContent = JSON.stringify(validRaw);
 const diagnosticAdapter = NyxNemotronTheoryCognition.create({ cognitionId: "NYX-THEORY-DIAGNOSTIC",
   provider, limits: { ...limits, maxOutputTokensPerCall: 1_536, maxTotalOutputTokens: 16_896 } });
 for (const outputBudget of [768, 1_536]) {

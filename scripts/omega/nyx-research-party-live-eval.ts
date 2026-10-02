@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { runFlatTheoryBaseline } from "../../src/lib/codelab/research/flatTheoryBaseline";
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
-import { NYX_DERIVATION_CHECK_INSTRUCTION, NyxNemotronTheoryCognition } from "../../src/lib/codelab/research/nyxNemotronTheoryCognition";
+import { NYX_BOUNDED_OUTPUT_INSTRUCTION, NYX_DERIVATION_CHECK_INSTRUCTION, NyxNemotronTheoryCognition } from "../../src/lib/codelab/research/nyxNemotronTheoryCognition";
 import { analyzeCoverageTransfer, type CoverageTransferArm } from "../../src/lib/codelab/research/coverageTransferAnalysis";
 import { OmegaResearchExperimentRunner } from "../../src/lib/codelab/research/omegaResearchExperimentRunner";
 import { assureResearchParty } from "../../src/lib/codelab/research/researchPartyAssurance";
@@ -25,6 +25,7 @@ import { NYX_RESEARCH_PARTY_LIVE_TASKS, type NyxResearchPartyLiveTask } from "./
 import { NYX_RESEARCH_TRANSFER_TASKS } from "./nyx-research-transfer-fixtures";
 import { NYX_HYPOTHESIS_COVERAGE_TASKS } from "./nyx-hypothesis-coverage-fixtures";
 import { NYX_COVERAGE_TRANSFER_TASKS } from "./nyx-coverage-transfer-fixtures";
+import { NYX_COVERAGE_TRANSFER_V2_TASKS } from "./nyx-coverage-transfer-v2-fixtures";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1") {
   console.error("NYX_RESEARCH_PARTY_LIVE result=BLOCKED reason=explicit_nvidia_network_authorization_missing");
@@ -42,8 +43,9 @@ const allocationComparison = process.env.OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARI
 const maxParallelModelExecutions = Number(process.env.OMEGA_NYX_RESEARCH_MODEL_CONCURRENCY || "3");
 if (![1, 2, 3].includes(maxParallelModelExecutions)) throw new Error("research_model_concurrency_invalid");
 const corpus = process.env.OMEGA_NYX_RESEARCH_CORPUS || "LEGACY";
-const derivationTransfer = corpus === "COVERAGE_TRANSFER_V1";
-if (!["LEGACY", "EXECUTABLE_TRANSFER_V1", "HYPOTHESIS_COVERAGE_DEVELOPMENT_V1", "COVERAGE_TRANSFER_V1"].includes(corpus)
+const boundedOutput = corpus === "COVERAGE_TRANSFER_V2";
+const derivationTransfer = corpus === "COVERAGE_TRANSFER_V1" || boundedOutput;
+if (!["LEGACY", "EXECUTABLE_TRANSFER_V1", "HYPOTHESIS_COVERAGE_DEVELOPMENT_V1", "COVERAGE_TRANSFER_V1", "COVERAGE_TRANSFER_V2"].includes(corpus)
   || (corpus !== "LEGACY" && (!policyComparison || diagnosticOnly))) throw new Error("research_corpus_selection_invalid");
 if (allocationComparison !== (corpus === "HYPOTHESIS_COVERAGE_DEVELOPMENT_V1" || derivationTransfer)
   || (allocationComparison && (!policyComparison || diagnosticOnly))) {
@@ -71,7 +73,7 @@ const provider = NvidiaNimProvider.create({ providerId: "NYX-RESEARCH-PARTY-LIVE
   authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
   maxPromptBytes: 96_000, maxOutputTokens: 1_536, timeoutMs: 90_000 });
 const cognition = NyxNemotronTheoryCognition.create({ cognitionId: "NYX-RESEARCH-PARTY-LIVE-COGNITION", provider, limits,
-  ...(derivationTransfer ? { derivationChecks: true } : {}) });
+  ...(derivationTransfer ? { derivationChecks: true } : {}), ...(boundedOutput ? { boundedOutput: true } : {}) });
 if (diagnosticOnly) {
   const started = Date.now(); const deadline = started + 10 * 60_000;
   const observations: Record<string, unknown>[] = [];
@@ -248,7 +250,7 @@ async function createParty(task: NyxResearchPartyLiveTask, objective: ResearchPa
 if (policyComparison) {
   // One task is the default live commissioning bound; three requires explicit selection.
   const corpusTasks = corpus === "LEGACY" ? NYX_RESEARCH_PARTY_LIVE_TASKS
-    : derivationTransfer ? NYX_COVERAGE_TRANSFER_TASKS
+    : boundedOutput ? NYX_COVERAGE_TRANSFER_V2_TASKS : derivationTransfer ? NYX_COVERAGE_TRANSFER_TASKS
     : allocationComparison ? NYX_HYPOTHESIS_COVERAGE_TASKS : NYX_RESEARCH_TRANSFER_TASKS;
   const tasks = focusedTaskId ? corpusTasks.filter(task => task.taskId === focusedTaskId)
     : corpusTasks.slice(0, process.env.OMEGA_NYX_RESEARCH_COMPARE_TASKS === "3" ? 3 : 1);
@@ -351,13 +353,17 @@ if (policyComparison) {
       realizedCompute, broadPromotion: false,
       computeMatchingDefinition: "EQUAL_REPORTED_MODEL_TOKENS_CALL_RESERVATIONS_EXPERIMENT_COUNTS_NOT_GPU_TIME_OR_LATENCY",
       ...(allocationComparison ? { evaluationTier: "DEVELOPMENT", freshHeldoutClaim: false,
-        simplerSameBudgetControl: "ROTATING_PARTITION", oracleUnchanged: true,
+        simplerSameBudgetControl: derivationTransfer ? "DERIVATION_ONLY" : "ROTATING_PARTITION", oracleUnchanged: true,
         allocationIsEvidence: false, defaultPolicyChanged: false } : {}),
       ...(derivationTransfer ? { treatmentControls: { identicalDerivationInstruction: true,
         derivationInstructionDigest: theoryDigest(NYX_DERIVATION_CHECK_INSTRUCTION),
         initialPeerVisibility: "NONE", sequencingPolicy: "EXHAUST_PRECOMMITTED_FORECASTS",
         armOrdering: "COUNTERBALANCED_BY_TASK_INDEX", fixedTaskOrder: true,
         extraCallsForAllocation: 0, evaluationPopulation: "THREE_NEW_FINITE_MECHANISM_FAMILIES" },
+        emissionPolicy: { boundedOutput, mediumEffort: boundedOutput,
+          instructionDigest: boundedOutput ? theoryDigest(NYX_BOUNDED_OUTPUT_INSTRUCTION) : null,
+          hardThinkingTokenLimit: false, outputTokenCeilingChanged: false, localParserChanged: false,
+          sharedAcrossArms: true, infrastructureNotCapabilityClaim: true },
         pairedAnalysis: analyzeCoverageTransfer(tasks.map(task => task.taskId), records as unknown as CoverageTransferArm[]) } : {}),
       verdict: providerBlocked ? "INCONCLUSIVE_PROVIDER_FAILURE" : executionBlocked ? "INCONCLUSIVE_EXECUTION_FAILURE"
         : candidateFailed ? "EMPIRICALLY_NOT_YET_VERIFIED" : "BOUNDED_LIVE_COMPARISON_ONLY",

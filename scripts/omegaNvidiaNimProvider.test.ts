@@ -739,6 +739,38 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
     "reasoning mode still requires the response contract");
 }
 
+{
+  const bodies: Record<string, unknown>[] = [];
+  const client = NvidiaNimProvider.create({ providerId: "MEDIUM-EFFORT-TEST",
+    model: "nvidia/nemotron-3-ultra-550b-a55b", authorityMode: "TEST_DOUBLE_ONLY",
+    credentialSource: { sourceIdentity: "test-only", read: () => "synthetic-test-only" },
+    maxPromptBytes: 4096, maxOutputTokens: 128, timeoutMs: 1000,
+    transport: async (_input, init) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return new Response(JSON.stringify({ choices: [{ message: { content: "{}" }, finish_reason: "stop" }],
+        usage: { prompt_tokens: 12, completion_tokens: 20, total_tokens: 32 } }), { status: 200 });
+    } });
+  const base = request({ responseFormat: "JSON_OBJECT", inferencePolicy: "REASONING_JSON" });
+  const original = await client.complete(base);
+  const compact = await client.complete({ ...base, reasoningEffort: "MEDIUM" });
+  check(JSON.stringify(bodies[1].chat_template_kwargs) === JSON.stringify({ enable_thinking: true,
+    force_nonempty_content: true, medium_effort: true }), "medium effort retains thinking and nonempty strict output");
+  check(bodies.every(body => body.max_tokens === base.maxTokens) && bodies.length === 2,
+    "emission policy adds neither model calls nor output tokens");
+  check(original.evidence.requestDigest !== compact.evidence.requestDigest
+    && compact.evidence.usage.totalTokens === 32 && !compact.executorAuthorityGranted,
+    "effort setting is digest-bound and usage remains observed rather than estimated");
+  for (const override of [{ inferencePolicy: undefined }, { inferencePolicy: "CONSTRAINED_JSON" },
+    { reasoningEffort: "UNBOUNDED" }]) {
+    const invalid = await client.complete({ ...base, reasoningEffort: "MEDIUM", ...override } as NvidiaNimCompletionRequest);
+    check(invalid.decision === "REJECTED" && invalid.evidence.networkAttempted === false,
+      "malformed or incompatible effort request fails before transport");
+  }
+  check(bodies.length === 2, "rejected effort cannot consume hidden inference");
+  check((await provider(async () => { throw new Error("must_not_send"); }).complete({ ...base,
+    reasoningEffort: "MEDIUM" })).decision === "REJECTED", "unsupported model cannot silently inherit Ultra template controls");
+}
+
 assert(NVIDIA_NIM_PROVIDER_STATUS.newCapability === "BOUNDED_NVIDIA_NIM_CHAT_COMPLETION", "chunk reports exact model capability gain");
 assert(NVIDIA_NIM_PROVIDER_STATUS.liveNetworkAuthorityGranted === false && !NVIDIA_NIM_PROVIDER_STATUS.productionEligible,
   "provider adapter does not grant live or production authority by construction");

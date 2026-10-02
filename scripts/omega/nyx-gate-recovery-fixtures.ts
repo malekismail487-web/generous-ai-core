@@ -43,6 +43,15 @@ export const NYX_GATE_RECOVERY_SERVER_ERROR_REVISION = Object.freeze({
   changedBehavior: "HTTP_500_SHARES_EXISTING_ONE_RETRY_COOLDOWN_WITHOUT_AUTHORITY_RENEWAL",
   historicalScoresComparable: false, acceptanceOracleChanged: false, authorityIncrease: false,
 });
+export const NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION = Object.freeze({
+  chunkId: "NYX-BOUNDED-OUTPUT-RELIABILITY-001", predecessor: "efcfaa86d4657e6462c20e54445c2c49b8abec53",
+  changedPath: NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath,
+  sourceSha256: "6fdea92b31b426e601f78cde69a7db08a0fd56762703e5249b6de9a58edefc45",
+  changedBehavior: "EXPLICIT_ULTRA_MEDIUM_EFFORT_REJECTED_FOR_UNSUPPORTED_OR_INCOMPATIBLE_REQUESTS",
+  historicalScoresComparable: false, acceptanceOracleChanged: false, authorityIncrease: false,
+  outputCeilingChanged: false, hardThinkingTokenLimit: false,
+  source: "https://build.nvidia.com/nvidia/nemotron-3-ultra-550b-a55b/modelcard",
+});
 
 function task(index: number, helperPath: string, helperName: string, helperSource: string,
   goodSource: string, faultySource: string): NyxQualityV5Task {

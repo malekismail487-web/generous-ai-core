@@ -71,6 +71,8 @@ export interface NvidiaNimCompletionRequest {
    * Omission preserves the provider's default chat-template behavior.
    */
   readonly inferencePolicy?: "CONSTRAINED_JSON" | "REASONING_JSON";
+  /** Explicit Ultra template setting, not a hard thinking-token ceiling. */
+  readonly reasoningEffort?: "MEDIUM";
   readonly observedAtEpochMs: number;
   /** Caller-owned run expiry; capacity waiting cannot renew it. Never supplied to the model. */
   readonly deadlineEpochMs?: number;
@@ -275,7 +277,8 @@ export class NvidiaNimProvider {
       temperature: request.temperature, stream: false,
       ...(responseFormat ? { response_format: responseFormat } : {}),
       ...(request.inferencePolicy === "CONSTRAINED_JSON" || request.inferencePolicy === "REASONING_JSON"
-        ? { chat_template_kwargs: { enable_thinking: request.inferencePolicy === "REASONING_JSON", force_nonempty_content: true } }
+        ? { chat_template_kwargs: { enable_thinking: request.inferencePolicy === "REASONING_JSON", force_nonempty_content: true,
+          ...(request.reasoningEffort === "MEDIUM" ? { medium_effort: true } : {}) } }
         : {}) };
     const requestDigest = sha256(canonical({ requestId, ...payload }));
     const issues: string[] = [];
@@ -290,6 +293,9 @@ export class NvidiaNimProvider {
     if (request.responseFormat !== undefined && responseFormat === null) issues.push("completion_response_format_invalid");
     if (request.inferencePolicy !== undefined && !["CONSTRAINED_JSON", "REASONING_JSON"].includes(request.inferencePolicy)) issues.push("completion_inference_policy_invalid");
     if (request.inferencePolicy !== undefined && responseFormat === null) issues.push("completion_constrained_json_requires_response_format");
+    if (request.reasoningEffort !== undefined && (request.reasoningEffort !== "MEDIUM"
+      || request.inferencePolicy !== "REASONING_JSON"
+      || this.#config.model !== "nvidia/nemotron-3-ultra-550b-a55b")) issues.push("completion_reasoning_effort_invalid");
     if (Buffer.byteLength(canonical(request.messages), "utf8") > this.#config.maxPromptBytes) issues.push("completion_prompt_bound_exceeded");
     if (issues.length > 0) return this.#result("REJECTED", [...new Set(issues)].join(","), null, null, requestDigest, null, null, emptyUsage(), false);
     // Serialize once: queued requests and retries cannot silently pick up caller mutations.
