@@ -594,6 +594,36 @@ check(checkpointDigest(analyzeCoverageTransfer(custodyReport.selectedTaskIds, cu
 check(custodyCheckpoint.planCoverage.status === "PARTIAL / JUST-IN-TIME"
   && custodyCheckpoint.safeguards.manualOnlyLiveWorkflowRestored && !custodyCheckpoint.safeguards.acceptanceOracleWeakened,
 "available plan alignment and preserved trust are recorded without claiming complete corpus coverage");
+const answerDiagnosis = JSON.parse(readFileSync("scripts/omega/checkpoints/answer-configuration/diagnosis.json", "utf8"));
+check(checkpointDigest(answerDiagnosis) === "46cdbde90f5260a21165cf8e4ce6ff3882e398011970d1559330dc7fcc1936ab",
+  "configuration evidence binds immutable sanitized failed attempts and successful probe controls");
+check(answerDiagnosis.earliestAttempt.taskArmsAttempted === 0 && answerDiagnosis.earliestAttempt.smokeStatus === 503,
+  "an unavailable smoke check is not an executed task or a reasoning failure");
+for (const entry of [answerDiagnosis.topLevelBudget, answerDiagnosis.templateBudget]) {
+  const report = entry.report;
+  const arm = report.records[0];
+  check(report.requestedArms === 6 && report.completedArms === 1 && report.verdict === "INCONCLUSIVE_PROVIDER_FAILURE"
+    && report.corpusDigest === NYX_COVERAGE_TRANSFER_V3_CORPUS_DIGEST,
+  "both rejected request placements retain the frozen corpus and five unexecuted arms");
+  check(arm.resourceUsage.modelCalls === 1 && arm.resourceUsage.experiments === 0
+    && arm.cognitionEvidence[0].statusCode === 400 && arm.cognitionEvidence[0].totalTokens === null
+    && arm.cognitionOutcomeCounts.OUTPUT_TRUNCATION === 0 && arm.cognitionOutcomeCounts.CONTRIBUTION === 0,
+  "HTTP 400 before useful inference is configuration rejection, not failed hidden reasoning or zero-cost success");
+  check(arm.sourceRepositoryUnchanged && !arm.authorityGranted && !report.broadPromotion
+    && !report.realizedComputeMatched && report.acceptanceViolations === 0,
+  "a failed configuration experiment cannot bypass preserved authority or establish a compute-matched gain");
+}
+const controls = answerDiagnosis.threeSettingProbe.report;
+check(controls.records.map((item: { variant: string }) => item.variant).join() === "MEDIUM_REASONING,BUDGETED_REASONING,DIRECT_JSON"
+  && controls.records.map((item: { evidence: { statusCode: number } }) => item.evidence.statusCode).join() === "200,400,200",
+  "the actual hosted probe isolates an unsupported budget from a dead endpoint or absent credential");
+check(controls.records[0].exactSyntheticAnswer && controls.records[2].exactSyntheticAnswer
+  && controls.maximumModelCalls === 3 && controls.maxOutputTokensPerCall === 1536
+  && !controls.capabilityPromotion && !controls.rawContentPersisted && !controls.authorityIncrease,
+  "synthetic response compatibility establishes neither task intelligence nor increased authority");
+check(answerDiagnosis.interpretation.reasoningBudgetOnThisHostedEndpoint === "REJECTED_HTTP_400"
+  && !answerDiagnosis.interpretation.defaultPromoted && !answerDiagnosis.interpretation.oracleWeakened,
+  "an opt-in transport setting stays experimentally rejected rather than falsely promoted");
 console.log(`NYX_EXECUTABLE_TRANSFER_PREFLIGHT ${JSON.stringify({ schemaVersion: 1,
   corpusDigest: NYX_RESEARCH_TRANSFER_CORPUS_DIGEST, actualCognition: "NOT_EXECUTED",
   oracleMutantsRejected: 3, evidenceClass: "E3", broadPromotion: false, authorityGranted: false })}`);
