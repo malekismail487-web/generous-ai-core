@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "chunkId": "NYX-PREDICTION-CUSTODY-RECOVERY-001",
+  "comparisonChunkId": "NYX-COVERAGE-TRANSFER-V3-001",
+  "status": "VERIFIED_PARTIAL_AND_NEGATIVE_EVIDENCE",
+  "maturity": "VERIFIED",
+  "verificationScope": "ARCHIVED_RUN_AND_LOCAL_DETERMINISTIC_CORRECTIONS_NOT_BROAD_CAPABILITY",
+  "candidateCommit": "f68d0158e860c94ba4fd88e63e9a5b9d0e523cbd",
+  "previousRuntimeReference": "4e7a5b67716669234284c373e518ae112b45e8ca",
+  "run": {
+    "runId": 37002767608,
+    "jobId": 110824006924,
+    "conclusion": "FAILURE",
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/37002767608"
+  },
+  "reportPath": "scripts/omega/checkpoints/prediction-custody/comparison.json",
+  "canonicalReportSha256": "f18d60e657946e27025d8447b42ebd8a6f3a5fb3307b3d8a9479ce8804320c0c",
+  "candidateSourceDigests": {
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "6fdea92b31b426e601f78cde69a7db08a0fd56762703e5249b6de9a58edefc45",
+    "src/lib/codelab/research/nyxNemotronTheoryCognition.ts": "61838934344d8024813eb1d2a2acf078c29eafd624966965e14a850740adfe17",
+    "src/lib/codelab/research/theoryResearchParty.ts": "20ce4be8fb465f72e54dca3fc4c80a7fb9bf27f61213c72c3189839b53f566b6",
+    "src/lib/codelab/research/theoryNetwork.ts": "fc5489edb71bad22f22b87b0da12af6f2725001d8f6a18c676dedb2217c0ef62",
+    "src/lib/codelab/research/theoryContracts.ts": "7b0f89629f40913b39c6be5fa3fd5cffb59b506e0912870f3acfd54e68190742",
+    "src/lib/codelab/research/researchPartyContracts.ts": "580752403cb5375543217251c4021f39035eefc52aee32913b96779b5e019482",
+    "src/lib/codelab/research/researchEvidenceGraph.ts": "b2488507286e537991ab07e1fe5d8972ff9ae7adb34c31aae1f18d34b540f0e1",
+    "src/lib/codelab/research/hypothesisCoverage.ts": "f90d79008b2c5e042024236f361c2bc42d72bf579d370d8d769bba6dd4159e3c",
+    "src/lib/codelab/research/sparseTheoryRouter.ts": "fe801dd8be20285c2463999a4362f8970bb4679811d0ceaf4cb6368831d469a8",
+    "src/lib/codelab/research/researchPartyAssurance.ts": "bff3296c1e840c38a314568de2888883cba7b81c2132dfa34b8c826151adc759",
+    "src/lib/codelab/research/coverageTransferAnalysis.ts": "a717444d4acac8680b221819394a949ac82c10855ca439931f1ad38e5d4056d5",
+    "scripts/omega/nyx-research-party-live-eval.ts": "9df3e8b83b72d4b4af41265da6748413aa731508b1cc03a4974157f9ab9db1f7",
+    "scripts/omega/nyx-coverage-transfer-v3-fixtures.ts": "7579842517eaaf93a9fab525a7e879f373d78e8db4dfb882403f539062b8b5ac",
+    ".github/workflows/omega-nyx-research-party-live-eval.yml": "1b197dd82c1693068a8743e093d60a838eceb5bb5b39d09bf0eda280e2d98510"
+  },
+  "postEvaluationCorrectionDigests": {
+    "src/lib/codelab/research/nyxNemotronTheoryCognition.ts": "f1a7de4347e3c5c9cbcb241b2ec1d5b736212fa90e9a18581cc6f3b4fc44ae5c",
+    "src/lib/codelab/research/theoryResearchParty.ts": "6cc752f0e182be92885df371831db581a51a55d86756dffa2e7c4a6121948102",
+    "src/lib/codelab/research/hypothesisCoverage.ts": "17a600bfc149ed1dbbe1a73a0129e3be1954b5a5ad543718de6b89a20ca100bf",
+    "scripts/omegaResearchParty.test.ts": "02e38508ecfae3d264b469beb9942407d716478d8a3f85dce274b1b4fa2c2e57"
+  },
+  "integrity": "SELF_CONTAINED_HASH_MANIFEST_NOT_SIGNED_CUSTODY",
+  "corpus": "COVERAGE_TRANSFER_V3",
+  "corpusDigest": "f674d818be6a5b6baf630f57733bee8ead75e4bd8e35d1247584ee230301f4bc",
+  "requestedArms": 6,
+  "completedArms": 4,
+  "acceptedArms": 2,
+  "missingArms": [
+    {
+      "taskId": "NYX-TRANSFER-EXCHANGE",
+      "policies": [
+        "DERIVATION_ONLY",
+        "ROTATING_PARTITION"
+      ],
+      "reason": "CAMPAIGN_STOPPED_AFTER_EXHAUSTED_PROVIDER_RECOVERY"
+    }
+  ],
+  "resourceSummary": {
+    "logicalModelCalls": 19,
+    "httpAttempts": 25,
+    "experiments": 9,
+    "reportedTokenLowerBound": 65575,
+    "totalModelTokens": null,
+    "smoke": {
+      "calls": 1,
+      "reportedTokens": 121,
+      "separateFromComparison": true
+    },
+    "wallClockMs": 952544,
+    "capacityWaitMs": 360002,
+    "transientResponses": 6,
+    "timedOutAttempts": 1,
+    "rateLimitedResponses": 0,
+    "monetaryCost": "NOT_MEASURED",
+    "gpuTime": "NOT_MEASURED",
+    "failedAttemptConsumption": "UNKNOWN"
+  },
+  "findings": [
+    {
+      "kind": "FUNCTIONAL_SUCCESS",
+      "scope": "NYX-TRANSFER-EVENTLOG",
+      "detail": "Both arms passed the hidden exact oracle, with all three precommitted observations; no default policy advantage."
+    },
+    {
+      "kind": "OUTPUT_TRUNCATION",
+      "scope": "NYX-TRANSFER-QUOTIENT/ROTATING_PARTITION",
+      "detail": "One investigator ended with length despite opt-in medium effort; rejected output was never admitted."
+    },
+    {
+      "kind": "EXPLORATION_AND_REVISION_FAILURE",
+      "scope": "NYX-TRANSFER-QUOTIENT/ROTATING_PARTITION",
+      "detail": "Admitted forecasts match their named mechanism semantics. The correct unrepresented alternative was assigned to an ineligible revision slot; both actual revisers chose another mechanism falsified by the last observation."
+    },
+    {
+      "kind": "PROVIDER_FAILURE",
+      "scope": "NYX-TRANSFER-QUOTIENT/DERIVATION_ONLY",
+      "detail": "HTTP 503 after bounded recovery; arm stopped at two logical calls, before experiments."
+    }
+  ],
+  "correctedDefects": [
+    {
+      "id": "CUSTODY_LIST_CONTRACT_MISMATCH",
+      "evidence": "Failing then passing regression; generation and graph bounds narrowed to network limits, no uncertainty truncation."
+    },
+    {
+      "id": "COMPOSITE_PREDICTION_ID_OVERFLOW",
+      "evidence": "Maximal legal experiment identity survives the complete deterministic graph/network loop; short historical IDs retained."
+    },
+    {
+      "id": "PARTIAL_FORECAST_BATCH_ADMISSION",
+      "evidence": "Oversized batch rejected by read-only preflight before graph admission."
+    },
+    {
+      "id": "COUNTEREXAMPLE_SUMMARY_BOUND_MISMATCH",
+      "evidence": "A legal 1000-character rationale survives unchanged; custody stores a digest reference."
+    },
+    {
+      "id": "MALFORMED_LINEAGE_ID_EXCEPTION",
+      "evidence": "New regression reproduced helper throw; validation guard rejects before inference. Post-evaluation correction, not live-exercised."
+    },
+    {
+      "id": "INELIGIBLE_REVISION_ALLOCATION_SLOT",
+      "evidence": "Live trace found the missing slot. Fault-injection test failed before repair and passed after partitioning actual eligible revisers; seven calls unchanged. Post-evaluation correction, not live-exercised."
+    },
+    {
+      "id": "MUTABLE_HISTORICAL_REQUEST_VIEW",
+      "evidence": "Retained request failed context reconstruction after later observations; immutable cognition payload snapshots preserve the original context. AbortSignal remains host-owned."
+    }
+  ],
+  "safeguards": {
+    "authorityIncrease": false,
+    "modelGetsGeneralShell": false,
+    "modelGetsGeneralNetwork": false,
+    "modelGetsSourceRepositoryWrites": false,
+    "productionAuthority": false,
+    "acceptanceOracleWeakened": false,
+    "outputCeilingIncreased": false,
+    "callCeilingIncreased": false,
+    "leaseRenewal": false,
+    "historicalArchivesRewritten": false,
+    "rawModelReasoningArchived": false,
+    "credentialArchived": false,
+    "manualOnlyLiveWorkflowRestored": true
+  },
+  "evidenceIndependence": {
+    "cognition": "E4",
+    "executionAndOracle": "E3",
+    "oracleRelation": "SEPARATE_REPRESENTATION_SAME_REPOSITORY_AND_ENGINEERING_PATH",
+    "independentInstitutionalReplication": false
+  },
+  "acceptanceCriterion": "Consistent fresh compute-normalized acceptance or repair-efficiency advantage without weakening the oracle.",
+  "falsificationCriterion": "Missing arms, unknown realized compute, or no repeatable acceptance advantage prevent promotion; a deterministic counterexample vetoes an unchanged claim.",
+  "result": {
+    "capabilityImprovementDemonstrated": false,
+    "computeComparableWins": 0,
+    "realizedComputeMatched": false,
+    "calibration": "NOT_ESTABLISHED",
+    "broadPromotion": false,
+    "defaultPolicyChanged": false,
+    "certifiesCurrentRuntime": false
+  },
+  "unresolved": [
+    "PROVIDER_HTTP_503_EXHAUSTED",
+    "OUTPUT_TRUNCATION_OBSERVED_NOT_ELIMINATED",
+    "POST_EVALUATION_REPAIRS_REQUIRE_FRESH_LIVE_VALIDATION",
+    "SCIENCE_ARMS_NOT_EXECUTED",
+    "MATCHED_REALIZED_COMPUTE_NOT_ESTABLISHED"
+  ],
+  "planCoverage": {
+    "status": "PARTIAL / JUST-IN-TIME",
+    "directlyImplemented": [
+      "EVIDENCE > CONFIDENCE",
+      "NO OBSERVATION WITHOUT EVIDENCE",
+      "REQUIREMENT_TO_EVIDENCE_TRACEABILITY",
+      "FAILED_IDEAS_REMAIN_PRESERVED",
+      "STRICT_CONTRACT_AND_LEASE_ENFORCEMENT"
+    ],
+    "supporting": [
+      "Ω DCCLXXX ASSURANCE KERNEL",
+      "INTERNAL COMPLEXITY MUST PAY RENT",
+      "CAPABILITY != AUTHORITY",
+      "VERIFICATION(DESIGN) != VERIFICATION(CAPABILITY)"
+    ],
+    "deferred": [
+      "CONNECTOME_EXPANSION",
+      "RECURSION",
+      "DEVICE_INTEGRATION",
+      "WEIGHT_LEVEL_RESEARCH"
+    ],
+    "conflicts": [],
+    "supersededOperationalApproaches": [
+      "Allocate repair work to the original logical cohort even when some members cannot revise.",
+      "Admit a graph contribution before discovering its forecast set exceeds prediction custody."
+    ]
+  },
+  "humanIntervention": {
+    "strategicDirection": "USER_REQUESTED_GENERAL_NON_MEMORIZING_REPAIR",
+    "operationalRescueDuringModelTasks": 0
+  },
+  "nextDependency": "Provider-stable fresh evaluation of the post-run general corrections; no additional authority."
+}

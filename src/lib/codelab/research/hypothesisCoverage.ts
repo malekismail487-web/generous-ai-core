@@ -57,7 +57,7 @@ export function allocateHypothesisCoverage(input: CoverageInput): readonly Theor
   if (!validResearchObjective(input.objective, 0)
     || !Array.isArray(input.contributions) || input.contributions.length > 128
     || !Array.isArray(input.observations) || input.observations.length > 32
-    || !Array.isArray(ids) || ids.length < 2 || ids.length > 14
+    || !Array.isArray(ids) || ids.length < (input.phaseOrdinal === 0 ? 2 : 1) || ids.length > 14
     || ids.some(id => !validResearchId(id)) || new Set(ids).size !== ids.length
     || !Number.isSafeInteger(input.phaseOrdinal) || input.phaseOrdinal < 0 || input.phaseOrdinal > 64
     || !["ROTATING_PARTITION", "COVERAGE_AWARE"].includes(input.policy)

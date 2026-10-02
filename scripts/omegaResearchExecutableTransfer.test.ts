@@ -543,6 +543,57 @@ for (const task of NYX_COVERAGE_TRANSFER_V3_TASKS) {
     run(mutant, experiment.toolId) !== task.outcome(experiment.experimentId)),
   "unchanged independent outcomes reject tie, rounding, and ordering mutants instead of certifying their own implementation");
 }
+const custodyRoot = "scripts/omega/checkpoints/prediction-custody/";
+const custodyCheckpoint = JSON.parse(readFileSync(`${custodyRoot}checkpoint.json`, "utf8"));
+const custodyReport = JSON.parse(readFileSync(`${custodyRoot}comparison.json`, "utf8"));
+check(checkpointDigest(custodyReport) === custodyCheckpoint.canonicalReportSha256
+  && custodyReport.candidateCommit === "f68d0158e860c94ba4fd88e63e9a5b9d0e523cbd"
+  && custodyReport.candidateCommit === custodyCheckpoint.candidateCommit,
+"custody recovery archive binds the exact partial E4 report to its exercised candidate, not later repairs");
+for (const [path, expected] of Object.entries(custodyCheckpoint.candidateSourceDigests)) {
+  check(/^(?:src|scripts|\.github\/workflows)\/[A-Za-z0-9_./-]+\.(?:ts|mjs|yml)$/.test(path)
+    && !path.split("/").includes(".."), "reconstruction reads only bounded enumerated source paths");
+  const source = execFileSync("git", ["show", `${custodyReport.candidateCommit}:${path}`], { encoding: "utf8", timeout: 10_000 });
+  check(createHash("sha256").update(source.replace(/\r\n/g, "\n")).digest("hex") === expected,
+    "custody recovery reproduces actual model, executor, assurance, and one-time dispatch sources");
+}
+check(custodyReport.corpusDigest === NYX_COVERAGE_TRANSFER_V3_CORPUS_DIGEST && custodyReport.completedArms === 4
+  && custodyReport.requestedArms === 6 && custodyCheckpoint.missingArms.length === 1
+  && custodyCheckpoint.missingArms[0].policies.length === 2,
+"two science arms remain explicitly unexecuted rather than converted into success or reasoning failure");
+check(custodyReport.records.filter((record: { assurance: { decision: string } }) => record.assurance.decision === "ACCEPT").length === 2
+  && custodyCheckpoint.acceptedArms === 2 && custodyReport.records.every((record: { sourceRepositoryUnchanged: boolean; authorityGranted: boolean }) =>
+    record.sourceRepositoryUnchanged && !record.authorityGranted) && custodyReport.acceptanceViolations === 0,
+"two independently oracle-accepted development successes preserve their narrow scope and all negative boundaries");
+const quotient = custodyReport.records.find((record: { taskId: string; policy: string }) =>
+  record.taskId === "NYX-TRANSFER-QUOTIENT" && record.policy === "ROTATING_PARTITION");
+check(quotient.cognitionOutcomeCounts.OUTPUT_TRUNCATION === 1 && quotient.cognitionOutcomeCounts.PROVIDER_FAILURE === 0
+  && quotient.cognitionOutcomeCounts.MODEL_OUTPUT_REJECTION === 0 && quotient.resourceUsage.totalTokens === 28725
+  && quotient.assurance.decision === "INSUFFICIENT_EVIDENCE",
+"one delivery truncation and a valid-output exploration failure remain distinct with fully measured tokens in that arm");
+check(quotient.forecastAudit.filter((claim: { role: string }) => claim.role === "REVISER").every((claim: { mechanismId: string }) =>
+  claim.mechanismId === "TOWARD_ZERO") && quotient.hypothesisAllocations.filter((allocation: { phaseOrdinal: number }) =>
+    allocation.phaseOrdinal === 1).every((allocation: { theoryId: string; cohortTheoryIds: string[]; preferredMechanismIds: string[] }) =>
+      allocation.cohortTheoryIds.length === 3 && !allocation.preferredMechanismIds.includes("NEAREST")),
+"the historical missing repair slot is preserved; corrected scheduling must not retroactively recertify the failed run");
+const stopped = custodyReport.records.at(-1);
+check(stopped.decision.reason === "research_party_provider_unavailable" && stopped.resourceUsage.modelCalls === 2
+  && stopped.resourceUsage.experiments === 0 && stopped.cognitionOutcomes.at(-1).reason === "nvidia_provider_http_503"
+  && stopped.resourceUsage.totalTokens === null && custodyReport.verdict === "INCONCLUSIVE_PROVIDER_FAILURE",
+"bounded provider exhaustion terminates the epoch without pretending that failed attempt compute is known");
+check(custodyReport.records.reduce((sum: number, record: { cognitionEvidence: { totalTokens: number | null }[] }) =>
+  sum + record.cognitionEvidence.reduce((subtotal, item) => subtotal + (item.totalTokens ?? 0), 0), 0) === 65575
+  && custodyCheckpoint.resourceSummary.reportedTokenLowerBound === 65575
+  && custodyCheckpoint.resourceSummary.logicalModelCalls === 19 && custodyCheckpoint.resourceSummary.httpAttempts === 25,
+"call count, HTTP attempts, reported lower-bound tokens, and unknown complete consumption are separate accounting facts");
+check(checkpointDigest(analyzeCoverageTransfer(custodyReport.selectedTaskIds, custodyReport.records))
+  === checkpointDigest(custodyReport.pairedAnalysis) && custodyReport.pairedAnalysis.computeComparableWins === 0
+  && !custodyReport.realizedComputeMatched && !custodyCheckpoint.result.capabilityImprovementDemonstrated
+  && !custodyCheckpoint.result.certifiesCurrentRuntime && !custodyCheckpoint.result.broadPromotion,
+"positive instances and E3 repairs cannot fabricate a matched-compute gain or certify a later runtime");
+check(custodyCheckpoint.planCoverage.status === "PARTIAL / JUST-IN-TIME"
+  && custodyCheckpoint.safeguards.manualOnlyLiveWorkflowRestored && !custodyCheckpoint.safeguards.acceptanceOracleWeakened,
+"available plan alignment and preserved trust are recorded without claiming complete corpus coverage");
 console.log(`NYX_EXECUTABLE_TRANSFER_PREFLIGHT ${JSON.stringify({ schemaVersion: 1,
   corpusDigest: NYX_RESEARCH_TRANSFER_CORPUS_DIGEST, actualCognition: "NOT_EXECUTED",
   oracleMutantsRejected: 3, evidenceClass: "E3", broadPromotion: false, authorityGranted: false })}`);

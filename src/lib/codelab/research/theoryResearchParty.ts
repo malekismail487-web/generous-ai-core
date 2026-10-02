@@ -178,13 +178,13 @@ export class TheoryResearchParty {
       modelCalls += 1; reservedOutputTokens += this.#config.limits.maxOutputTokensPerCall;
       if (hypothesisAllocation) hypothesisAllocations.push(hypothesisAllocation);
       const requestId = `${this.#config.partyId}-${modelCalls}-${theoryDigest([entity.theoryId, role, instruction]).slice(0, 16)}`;
-      const result = await this.#config.cognition.think({ schemaVersion: 1, requestId, role,
+      const result = await this.#config.cognition.think(Object.freeze({ ...immutableTheoryValue({ schemaVersion: 1 as const, requestId, role,
         theoryId: entity.theoryId, guardianId: entity.guardianId, objective,
         privatePriorContributions, peerContributions, experimentObservations: observations,
         predictionFeedback, ...(hypothesisAllocation ? { hypothesisAllocation } : {}),
         instruction, maxOutputTokens: this.#config.limits.maxOutputTokensPerCall,
         observedAtEpochMs: this.#config.now(),
-        deadlineEpochMs: Math.min(deadline, entity.lease.expiresAtEpochMs), signal });
+        deadlineEpochMs: Math.min(deadline, entity.lease.expiresAtEpochMs) }), signal }));
       cognitionEvidence.push(result.evidence);
       cognitionOutcomes.push(immutableTheoryValue({ requestId, role, decision: result.decision,
         reason: result.reason, diagnostics: result.diagnostics, outcomeClass: researchCognitionOutcomeClass(result) }));
@@ -317,8 +317,8 @@ export class TheoryResearchParty {
       }
       if (failure || entities.length !== entityCount) return finish();
       const investigators = entities.filter((item) => item.initialRole === "INVESTIGATOR");
-      const allocatePhase = (phaseOrdinal: number) => this.#config.hypothesisAllocationPolicy
-        ? allocateHypothesisCoverage({ objective, cohortTheoryIds: investigators.map(item => item.theoryId),
+      const allocatePhase = (phaseOrdinal: number, cohort = investigators) => this.#config.hypothesisAllocationPolicy
+        ? allocateHypothesisCoverage({ objective, cohortTheoryIds: cohort.map(item => item.theoryId),
           contributions: phaseOrdinal === 0 ? [] : investigators.flatMap(entity =>
             [...contributions].reverse().find(item => item.theoryId === entity.theoryId
               && ["INVESTIGATOR", "REVISER"].includes(item.role)) ?? []),
@@ -360,7 +360,8 @@ export class TheoryResearchParty {
         });
         // Freeze all peer views before this phase, even when inference is serial.
         // Later entities must not see earlier revisions from the same phase.
-        const revisionAllocations = allocatePhase(++allocationPhase);
+        if (revisers.length === 0) break;
+        const revisionAllocations = allocatePhase(++allocationPhase, revisers);
         const revisionJobs = revisers.map((entity) => {
           const own = contributions.filter((item) => item.theoryId === entity.theoryId);
           const latestPeers = investigators.filter((item) => item.theoryId !== entity.theoryId).map((peer) =>

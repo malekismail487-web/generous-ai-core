@@ -1163,4 +1163,83 @@ for (const statusCode of [503, 200]) {
   check(result.resourceUsage.totalTokens === null && runtime.value.metrics().activePairs === 0,
     "unknown provider consumption stays unknown and every stopped activation is released");
 }
+const longRationaleRuntime = network(); const longRationaleScripted = new ScriptedPartyCognition();
+let longRationaleInvestigators = 0;
+const longRationaleCognition: TheoryCognitionEngine = { profile: () => longRationaleScripted.profile(), think: async request => {
+  const response = await longRationaleScripted.think(request);
+  if (request.role === "INVESTIGATOR") return cognitionResult(request,
+    intentFor(["STRICT", "PENDING_AS_COMPLETE", "CANCELLED_AS_COMPLETE"][longRationaleInvestigators++],
+      "PROPOSE_HYPOTHESIS", request.theoryId));
+  if (request.role === "REVISER") return cognitionResult(request, { ...response.intent!, counterexamples: [{
+    targetTheoryId: request.peerContributions.find(item => item.intent.mechanismId !== null)!.theoryId,
+    experimentId: "EXP-A-FAILED", disconfirmingOutcome: "DISPATCHED", rationale: "x".repeat(1_000),
+  }] });
+  return response;
+} };
+const longRationaleResult = await TheoryResearchParty.create({ partyId: "PARTY-COUNTEREXAMPLE-REFERENCE",
+  network: longRationaleRuntime.value, coordinator: longRationaleRuntime.coordinator, cognition: longRationaleCognition,
+  limits, investigatorCount: 3, maxParallelModelExecutions: 1, now: () => now,
+  experiments: { run: async item => makeObservation(item.experimentId) } }).investigate(objective());
+check(longRationaleResult.decision.state === "SUPPORTED_WITHIN_MODELED_FAMILY"
+  && longRationaleResult.contributions.some(item => item.role === "REVISER"
+    && item.intent.counterexamples[0].rationale.length === 1_000),
+"long legal counterexample rationale survives revision intact while prediction custody uses a bounded digest reference");
+check(longRationaleResult.evidenceChainComplete && longRationaleRuntime.value.metrics().activePairs === 0,
+  "counterexample references preserve provenance and lease termination without granting authority");
+const malformedOwn = { ...directContribution, theoryId: adapterRequest.theoryId, contributionId: "invalid id" };
+const malformedObservation = makeObservation("EXP-A-FAILED");
+const malformedFeedbackRequest: TheoryCognitionRequest = { ...adapterRequest, role: "REVISER",
+  privatePriorContributions: [malformedOwn], experimentObservations: [malformedObservation], predictionFeedback: [{
+    contributionId: malformedOwn.contributionId, predictionId: "IGNORED", experimentId: "EXP-A-FAILED",
+    expectedOutcome: "DISPATCHED", observedOutcome: "DISPATCHED", observationId: malformedObservation.observationId,
+    evidenceId: malformedObservation.evidence.evidenceId, evidenceClass: "E3", disposition: "SUPPORTED_WITHIN_TEST_SCOPE",
+    grantsAuthority: false,
+  }] };
+const callsBeforeMalformed = modelPrompts.length;
+const rejectedMalformedFeedback = await adapter.think(malformedFeedbackRequest);
+check(rejectedMalformedFeedback.decision === "REJECTED" && rejectedMalformedFeedback.intent === null
+  && rejectedMalformedFeedback.diagnostics.includes("prediction_feedback_invalid") && modelPrompts.length === callsBeforeMalformed,
+"malformed lineage identities fail closed with a diagnostic before inference, rather than throwing during feedback reconstruction");
+const droppedRuntime = network(); let droppedInitial = 0;
+const droppedRequests: TheoryCognitionRequest[] = [];
+const droppedScripted = new ScriptedPartyCognition();
+const droppedCognition: TheoryCognitionEngine = { profile: () => droppedScripted.profile(), think: async request => {
+  droppedRequests.push(request);
+  if (request.role === "INVESTIGATOR") {
+    if (droppedInitial++ === 0) return { ...cognitionResult(request, validRaw as TheoryCognitionIntent),
+      decision: "COGNITION_ERROR", intent: null, reason: "theory_cognition_incomplete_output",
+      diagnostics: ["finish_reason_not_stop"], evidence: { ...cognitionResult(request, validRaw as TheoryCognitionIntent).evidence,
+        finishReason: "length" } };
+    return cognitionResult(request, intentFor(droppedInitial === 2 ? "STRICT" : "PENDING_AS_COMPLETE",
+      "PROPOSE_HYPOTHESIS", request.theoryId));
+  }
+  if (request.role === "REVISER") return cognitionResult(request,
+    intentFor(request.hypothesisAllocation!.preferredMechanismIds[0], "REVISE_HYPOTHESIS",
+      request.theoryId, request.experimentObservations));
+  return droppedScripted.think(request);
+} };
+const droppedResult = await TheoryResearchParty.create({ partyId: "PARTY-REASSIGN-DROPPED-SLOT",
+  network: droppedRuntime.value, coordinator: droppedRuntime.coordinator, cognition: droppedCognition,
+  limits, investigatorCount: 3, maxParallelModelExecutions: 1, hypothesisAllocationPolicy: "ROTATING_PARTITION",
+  experimentPolicy: "EXHAUST_PRECOMMITTED_FORECASTS", now: () => now,
+  experiments: { run: async item => makeObservation(item.experimentId) } }).investigate(objective());
+const activeRevisionRequests = droppedRequests.filter(request => request.role === "REVISER");
+check(activeRevisionRequests.length === 2 && activeRevisionRequests.every(request =>
+  request.hypothesisAllocation?.cohortTheoryIds.length === 2 && validHypothesisAllocation(request)),
+"repair partitions are bound to actual eligible revisers, not silent or failed logical slots");
+check(new Set(activeRevisionRequests.flatMap(request => request.hypothesisAllocation!.preferredMechanismIds)).size
+  === objective().mechanismCatalog.length,
+"every mechanism retains an active exploration owner after one investigator loses its output");
+check(droppedRequests.every(request => Object.isFrozen(request) && Object.isFrozen(request.experimentObservations))
+  && activeRevisionRequests.every(request => request.experimentObservations.length < droppedResult.observations.length),
+"each cognition request preserves its immutable historical view when later experiments add observations");
+check(assureResearchParty({ objective: objective(), limits, result: droppedResult, groundTruth: {
+  taskId: objective().researchId, expectedMechanismId: "FAILED_AS_COMPLETE", oracleDigest: theoryDigest("dropped-slot-oracle"),
+  oracleProvenanceRoot: "DROPPED-SLOT-ORACLE", hiddenFromCognition: true } }).decision === "ACCEPT"
+  && droppedResult.resourceUsage.modelCalls === 7 && !droppedResult.authorityGranted,
+"missing-slot correction can recover a simulated interface failure without extra calls, oracle access or weakened acceptance");
+const singleReviserAllocation = allocateHypothesisCoverage({ ...allocationInput, cohortTheoryIds: [cohortIds[0]],
+  contributions: [duplicated[0]], observations: [makeObservation("EXP-A-FAILED")], phaseOrdinal: 1 });
+check(singleReviserAllocation.length === 1 && singleReviserAllocation[0].preferredMechanismIds.length === 4,
+  "a single remaining eligible reviser retains coverage without pretending to be two independent reasoners");
 console.log(`OMEGA_RESEARCH_PARTY_TEST_SUMMARY passed: ${checks}, failed: 0`);

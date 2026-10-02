@@ -366,7 +366,8 @@ export class NyxNemotronTheoryCognition {
         "evidenceClass", "disposition", "grantsAuthority"])
         || item.grantsAuthority !== false || !["E3", "E4"].includes(item.evidenceClass))
       || expectedFeedback.some(({ forecast, observation }) => !request.predictionFeedback.some((item) =>
-        item.contributionId === latestOwn?.contributionId
+        validResearchId(latestOwn?.contributionId) && validResearchId(forecast.experimentId)
+        && item.contributionId === latestOwn?.contributionId
         && item.predictionId === researchPredictionId(latestOwn!.contributionId, forecast.experimentId)
         && item.experimentId === forecast.experimentId && item.expectedOutcome === forecast.expectedOutcome
         && item.observedOutcome === observation.outcome && item.observationId === observation.observationId
