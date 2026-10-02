@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/nyx-quantitative-fresh-fixtures.ts]
+    paths: [.github/workflows/omega-nyx-quantitative-transfer.yml]
 
 permissions:
   contents: read
@@ -19,6 +19,8 @@ jobs:
     timeout-minutes: 65
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
