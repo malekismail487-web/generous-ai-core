@@ -41,8 +41,10 @@ export function quantitativeProgramFinding(problem: QuantitativeProblem, value: 
   const available = new Set(constants);
   const registers = new Set<string>();
   for (const [at,register] of value.registers.entries()) {
-    if (!ownKeys(register, ["id", "source"]) || !id(register.id) || !id(register.source)
-      || !available.has(register.source) || available.has(register.id)) return `REGISTER_BINDING:${at}`;
+    if (!ownKeys(register, ["id", "source"])) return `REGISTER_SHAPE:${at}`;
+    if (!id(register.id)) return `REGISTER_ID_INVALID:${at}`;
+    if (!id(register.source)||!available.has(register.source)) return `REGISTER_SOURCE_NOT_BOUND:${at}`;
+    if (available.has(register.id)) return `REGISTER_ID_ALREADY_BOUND:${at}`;
     registers.add(register.id); available.add(register.id);
   }
   let steps = 0;

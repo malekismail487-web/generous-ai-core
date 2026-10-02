@@ -360,6 +360,10 @@ export class BoundedReasoningSession {
   descriptor(): Readonly<Record<string, unknown>> {
     return Object.freeze({ schemaVersion: 1, operation: "ANALYZE_FINITE_PROBLEM", problemDigest: this.problemDigest,
       kind: this.#problem.kind, maxWorkUnits: this.#limits.maxWorkUnits, maxRequests: this.#limits.maxRequests,
+      remainingWorkUnits: Math.max(0, this.#limits.maxWorkUnits - this.#workUnits),
+      remainingRequests: Math.max(0, this.#limits.maxRequests - this.#requests),
+      available: !this.#revoked && this.#now() < this.#limits.expiresAtEpochMs
+        && this.#requests < this.#limits.maxRequests && this.#workUnits < this.#limits.maxWorkUnits,
       grantsAuthority: false, outputIsNotAcceptance: true,
       ...(this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" ? { programRequired: true,
         programPolicy: EXACT_DERIVATION_POLICY } : {}) });

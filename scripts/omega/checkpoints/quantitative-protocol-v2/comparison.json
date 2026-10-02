@@ -1,0 +1,2767 @@
+{
+  "schemaVersion": 1,
+  "chunkId": "NYX-EXACT-DERIVATION-TRANSFER-002",
+  "candidate": "cdc4ba1bdd1933c3d01b1fbcb6f5b18c8525dbee",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b",
+  "epoch": {
+    "chunkId": "NYX-EXACT-DERIVATION-TRANSFER-002",
+    "version": 2,
+    "maxCallsPerTask": 4,
+    "maxOutputTokensPerCall": 4096,
+    "maxTaskMs": 360000,
+    "maxWallClockMs": 3600000,
+    "maxToolRequests": 2,
+    "maxToolWorkUnits": 100000,
+    "maxToolElapsedMs": 2000,
+    "hypothesis": "Model-authored exact derivations reduce quantitative failures versus medium-effort reasoning alone.",
+    "supportCriterion": "Higher fresh-task acceptance at no greater reported model tokens, including native work cost; independently replicate before broader promotion.",
+    "falsificationCriterion": "No acceptance gain or worse capability per compute, or a semantic/oracle regression.",
+    "population": "FRESH_MODEL_UNSEEN_PARAMETERS_EXISTING_FOUR_FAMILIES_AFTER_PROTOCOL_REPAIR_NOT_NEW_DOMAIN_FAMILIES",
+    "confidenceRequirement": "Paired descriptive outcomes only; no broad significance from four tasks.",
+    "planCoverage": {
+      "status": "PARTIAL_JUST_IN_TIME",
+      "direct": [
+        "GENERATOR_REQUIRES_DETECTOR",
+        "SEMANTIC_SEARCH_EFFICIENCY",
+        "EXECUTABLE_EVIDENCE_OUTRANKS_CONFIDENCE",
+        "VERIFIED_CAPABILITY_PER_COMPUTE"
+      ],
+      "supporting": [
+        "NO_SELF_CERTIFICATION",
+        "NO_AUTHORITY_WITHOUT_SCOPE"
+      ],
+      "deferred": [
+        "MODEL_TRAINING",
+        "OPEN_ENDED_PROOF",
+        "DEVICE_INTEGRATION"
+      ],
+      "conflicts": [],
+      "superseded": [
+        "MORE_ORCHESTRATION_WITHOUT_REPAIRING_OBSERVED_NUMERICAL_FAILURES"
+      ]
+    },
+    "protocolCorrection": "AVAILABLE_ACTION_SCHEMA_AND_EXISTING_ARTIFACT_CUSTODY"
+  },
+  "corpusDigest": "8c2d5d0a1151f1e7ad77150f4515d660decfb86cf560c8fccb5a62720e4ed7b6",
+  "sourceDigests": {
+    "src/lib/codelab/research/analysisArtifactReference.ts": "a17ee808039141e4086d5c25ab30dc60b4461d56f24ed94bef6fd85dafe7847b",
+    "src/lib/codelab/research/boundedReasoningWorkbench.ts": "b0a73eb0a3bdccd3c3d2183b463aeb1f4f7f68be5bedc385c33480c0ae24658e",
+    "src/lib/codelab/research/exactQuantitativeDerivation.ts": "1c216a17c577461aa204213bd1ef78497459ba3fcdf65466f526e6f822e828c3",
+    "src/lib/codelab/research/nyxQuantitativeReasoning.ts": "9eaa30407534cfcdb835c4607d383175d5bbc3021baea5b995ad366ee3b694ae",
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "a2db31550f181d4605a6c2da04dc2cf508e45a5eac9aed8da3c872911a009623",
+    "src/lib/codelab/model/nvidiaCapacity.ts": "9203a696224854592f026f6bfbf9e13c6619ab39ffc7d7ce0fddc8d7b78f7927",
+    "src/lib/codelab/research/theoryContracts.ts": "4dd491ceacc7c24bfa48680b532c89cbd952a3d3bad59bbf779c572690be2268",
+    "scripts/omega/nyx-quantitative-transfer-fixtures.ts": "0d1c581ee515e01a0c19e1063bdc0194d9894a9923b2490106ec9b21621411fc",
+    "scripts/omega/nyx-quantitative-fresh-fixtures.ts": "45776bcc3879281317b042c203a24011d007546fd2781c4c9abad4f08682f55f",
+    "scripts/omega/nyx-quantitative-transfer-live-eval.ts": "b3ee6369f66e360dac5d20816632db3fd92bcfa8ffd2629eb1b34fe50d74f32c"
+  },
+  "executionIdentity": "37077143273",
+  "environment": {
+    "platform": "linux",
+    "node": "v24.21.0"
+  },
+  "startedAtEpochMs": 1790983272762,
+  "finishedAtEpochMs": 1790983602027,
+  "complete": true,
+  "providerStable": true,
+  "summaries": [
+    {
+      "arm": "CURRENT_DIRECT",
+      "executed": 4,
+      "accepted": 0,
+      "firstCallAccepted": 0,
+      "firstSubmissionAccepted": 0,
+      "calls": 16,
+      "reportedTokens": 16214,
+      "unknownUsageCalls": 0,
+      "providerFailures": 0,
+      "recoveredProviderDisruptions": 0,
+      "truncations": 2,
+      "protocolOrAuthorizationFailures": 0,
+      "certificateSchemaRejections": 0,
+      "functionalRejections": 14,
+      "verifierTriggeredRevisions": 12,
+      "repairDepth": [
+        {
+          "taskId": "FRESH-1",
+          "rejectedSubmissions": 3
+        },
+        {
+          "taskId": "FRESH-2",
+          "rejectedSubmissions": 3
+        },
+        {
+          "taskId": "FRESH-3",
+          "rejectedSubmissions": 4
+        },
+        {
+          "taskId": "FRESH-4",
+          "rejectedSubmissions": 4
+        }
+      ],
+      "toolRequests": 0,
+      "toolWorkUnits": 0,
+      "toolElapsedMs": 0,
+      "elapsedMs": 144548,
+      "submittedCandidateBrierScore": 1
+    },
+    {
+      "arm": "REASONING_MEDIUM",
+      "executed": 4,
+      "accepted": 0,
+      "firstCallAccepted": 0,
+      "firstSubmissionAccepted": 0,
+      "calls": 16,
+      "reportedTokens": 12047,
+      "unknownUsageCalls": 0,
+      "providerFailures": 0,
+      "recoveredProviderDisruptions": 0,
+      "truncations": 1,
+      "protocolOrAuthorizationFailures": 0,
+      "certificateSchemaRejections": 0,
+      "functionalRejections": 15,
+      "verifierTriggeredRevisions": 12,
+      "repairDepth": [
+        {
+          "taskId": "FRESH-1",
+          "rejectedSubmissions": 3
+        },
+        {
+          "taskId": "FRESH-2",
+          "rejectedSubmissions": 4
+        },
+        {
+          "taskId": "FRESH-3",
+          "rejectedSubmissions": 4
+        },
+        {
+          "taskId": "FRESH-4",
+          "rejectedSubmissions": 4
+        }
+      ],
+      "toolRequests": 0,
+      "toolWorkUnits": 0,
+      "toolElapsedMs": 0,
+      "elapsedMs": 98689,
+      "submittedCandidateBrierScore": 0.9973466666666667
+    },
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "executed": 4,
+      "accepted": 1,
+      "firstCallAccepted": 0,
+      "firstSubmissionAccepted": 1,
+      "calls": 16,
+      "reportedTokens": 24335,
+      "unknownUsageCalls": 0,
+      "providerFailures": 0,
+      "recoveredProviderDisruptions": 0,
+      "truncations": 0,
+      "protocolOrAuthorizationFailures": 12,
+      "certificateSchemaRejections": 0,
+      "functionalRejections": 0,
+      "verifierTriggeredRevisions": 0,
+      "repairDepth": [
+        {
+          "taskId": "FRESH-1",
+          "rejectedSubmissions": 0
+        },
+        {
+          "taskId": "FRESH-2",
+          "rejectedSubmissions": 0
+        },
+        {
+          "taskId": "FRESH-3",
+          "rejectedSubmissions": 0
+        },
+        {
+          "taskId": "FRESH-4",
+          "rejectedSubmissions": 0
+        }
+      ],
+      "toolRequests": 3,
+      "toolWorkUnits": 104320,
+      "toolElapsedMs": 25,
+      "elapsedMs": 86009,
+      "submittedCandidateBrierScore": 0.00010000000000000018
+    }
+  ],
+  "results": [
+    {
+      "arm": "CURRENT_DIRECT",
+      "taskId": "FRESH-1",
+      "accepted": false,
+      "outcome": "TRUNCATION",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 1,
+          "proposalDigest": "d1682f02aad307d4f1261ed143732810e8f2b4f3ef90ee36930d5af841235fed",
+          "resultDigest": "dcffd9a2d1e347118740b3550b6ec18a891783efe49ec2845ce481a872618b50",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-97920f4079d72fd7f1060f6029735e6a",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "97920f4079d72fd7f1060f6029735e6a55a8d6fe7d011a98e4a492146552dfda",
+            "responseDigest": "01bfacdc3892b98fdfdb0b8009f3a361877e42b4347f6a545714b7b08c909562",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 399,
+              "completionTokens": 91,
+              "totalTokens": 490
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 1,
+          "proposalDigest": "d1682f02aad307d4f1261ed143732810e8f2b4f3ef90ee36930d5af841235fed",
+          "resultDigest": "dcffd9a2d1e347118740b3550b6ec18a891783efe49ec2845ce481a872618b50",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-e2cf041863fa8c669f5735ca9752d297",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "e2cf041863fa8c669f5735ca9752d2976c0e1e26dcbc3ab67c92c2f3d4b7a3cf",
+            "responseDigest": "87d60025bddd71a67267380c38080322b0b0b2bd9bad4fb4bdf718d947d09f31",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 434,
+              "completionTokens": 89,
+              "totalTokens": 523
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 1,
+          "proposalDigest": "938ae3b33543eb803c84d265d4afb9f87348a7f414d661ff53c1ca0024447336",
+          "resultDigest": "93dc99af3dd9f1c86c1953a0d85dc594013d41a2c4e4967f51ccaaab78594073",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-7634781cd39cfaebf92630711f0933f8",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "7634781cd39cfaebf92630711f0933f820c3a794a4309d4864050c3260ebee39",
+            "responseDigest": "6b33b9c2d7f9b57cfc25ffe6a92b52fc43723308e80fb02c77303be0a4f90da5",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 434,
+              "completionTokens": 93,
+              "totalTokens": 527
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "TRUNCATION",
+          "findings": [
+            "Provider output budget was exhausted; token usage is preserved."
+          ],
+          "confidence": null,
+          "proposalDigest": null,
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-e973dc4fee2cfae4aecc561bcd3d5c59",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "e973dc4fee2cfae4aecc561bcd3d5c5953dfbca0e98c5b4b0423acb761c9ff23",
+            "responseDigest": "180299eca5e4cb2951758d6ec5f328e0d2212f3bb9086e9e52c0cc165b521401",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "length",
+            "usage": {
+              "promptTokens": 434,
+              "completionTokens": 4096,
+              "totalTokens": 4530
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 74741,
+      "calls": 4,
+      "toolRequests": 0,
+      "toolWorkUnits": 0,
+      "toolElapsedMs": 0,
+      "acceptedCertificate": null,
+      "authorityIncrease": false
+    },
+    {
+      "arm": "REASONING_MEDIUM",
+      "taskId": "FRESH-1",
+      "accepted": false,
+      "outcome": "TRUNCATION",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 1,
+          "proposalDigest": "58499c42c43b11d031c383674aec40b044edcbb4b4d6ef1670d5fe63c501c1af",
+          "resultDigest": "7305fa33db5b775859ace7b97769ab2692f66d89f6b4741b565c8fb7593e6e2e",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-53df1048169a179dafbdc3d16e553ce9",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "53df1048169a179dafbdc3d16e553ce92de578d33acfa14887427870f02bdbb9",
+            "responseDigest": "732437e854d69d5d0282bc542d810a67ec8592d7681a0c4f9f8100063784d276",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 407,
+              "completionTokens": 63,
+              "totalTokens": 470
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 1,
+          "proposalDigest": "e61347ef99cdf92ada604aa5586806c3ca70e144a6d57f6181df765f1686cca1",
+          "resultDigest": "c9d22533031b75bbe348ca6dc8cfacccc54e96e0f0fb39ae847940dd8ffac74f",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-98e1788fcd8fb513463d3fa212aa1fb0",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "98e1788fcd8fb513463d3fa212aa1fb05c3ae3809602dff5bb3240a7629ff281",
+            "responseDigest": "025c756a78f61ed2c94c24d55a969b94a0fdc69cfc61fd11cf1519253be48354",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 442,
+              "completionTokens": 76,
+              "totalTokens": 518
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 1,
+          "proposalDigest": "58499c42c43b11d031c383674aec40b044edcbb4b4d6ef1670d5fe63c501c1af",
+          "resultDigest": "7305fa33db5b775859ace7b97769ab2692f66d89f6b4741b565c8fb7593e6e2e",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-bcc3b8184ff92f765e3f6bafc1bb7f7a",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "bcc3b8184ff92f765e3f6bafc1bb7f7ad07c4253d1fd0b86416d956227ade8e1",
+            "responseDigest": "732437e854d69d5d0282bc542d810a67ec8592d7681a0c4f9f8100063784d276",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 442,
+              "completionTokens": 63,
+              "totalTokens": 505
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "TRUNCATION",
+          "findings": [
+            "Provider output budget was exhausted; token usage is preserved."
+          ],
+          "confidence": null,
+          "proposalDigest": null,
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-c5dbd38c8f2b7836d5ae83fd5b97b6a0",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "c5dbd38c8f2b7836d5ae83fd5b97b6a01e45248c46f5bec39c4db5b01f337a51",
+            "responseDigest": "6cae99d478e342c0ae20fd934cd9994ead057650669b8d8318a5f27efd7275b7",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "length",
+            "usage": {
+              "promptTokens": 442,
+              "completionTokens": 4096,
+              "totalTokens": 4538
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 64266,
+      "calls": 4,
+      "toolRequests": 0,
+      "toolWorkUnits": 0,
+      "toolElapsedMs": 0,
+      "acceptedCertificate": null,
+      "authorityIncrease": false
+    },
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "taskId": "FRESH-1",
+      "accepted": false,
+      "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "quantitative_program_invalid:REGISTER_BINDING:2",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "0482294c2b49266cca5eb36f9db20c716267b338a1f65371a76c2c0c0382da06",
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-103498fa3cf64ba885d9c8186a062a6e",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "103498fa3cf64ba885d9c8186a062a6e5e4fc88516f9e2cbc86345b46672a54d",
+            "responseDigest": "28548352356644d6762ebb5673b1afc9aa966ad81f74065ff6ecf4e1679fa462",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 945,
+              "completionTokens": 348,
+              "totalTokens": 1293
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "quantitative_program_invalid:REGISTER_BINDING:2",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "fbacca32907dec38cf38051c8fa2166cd743cf506fc5ef7f3263e9eec40ba930",
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-432de97ff44ac775c5be869a1e61f3d4",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "432de97ff44ac775c5be869a1e61f3d4b2bb78b3fcbd0244e42a4ab8663455ed",
+            "responseDigest": "d70ac339d21246c13a53ffe7737c91d68f9ed1d9c4bb249a6b13878d238cc43e",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 990,
+              "completionTokens": 506,
+              "totalTokens": 1496
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "quantitative_program_invalid:REGISTER_BINDING:2",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "fbacca32907dec38cf38051c8fa2166cd743cf506fc5ef7f3263e9eec40ba930",
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-78c4f211257029c8162982ce22947ad0",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "78c4f211257029c8162982ce22947ad06a499119f209476641a289bbf86a6463",
+            "responseDigest": "1fb3fb4f205920d4f0da592712839a004b6d21cc29b790446c33b6e81041afbc",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 990,
+              "completionTokens": 513,
+              "totalTokens": 1503
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "quantitative_program_invalid:REGISTER_BINDING:2",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "fbacca32907dec38cf38051c8fa2166cd743cf506fc5ef7f3263e9eec40ba930",
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-dedacb02bf62acc03928f36fc79d6467",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "dedacb02bf62acc03928f36fc79d64678521880861d030abd57fecb35e0db2b4",
+            "responseDigest": "d70ac339d21246c13a53ffe7737c91d68f9ed1d9c4bb249a6b13878d238cc43e",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 990,
+              "completionTokens": 506,
+              "totalTokens": 1496
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 23067,
+      "calls": 4,
+      "toolRequests": 0,
+      "toolWorkUnits": 0,
+      "toolElapsedMs": 0,
+      "acceptedCertificate": null,
+      "authorityIncrease": false
+    },
+    {
+      "arm": "REASONING_MEDIUM",
+      "taskId": "FRESH-2",
+      "accepted": false,
+      "outcome": "FUNCTIONAL_REJECTION",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 0.99,
+          "proposalDigest": "052328424c4f963c4dfcaf3db7030ceb46c47d2f84d7177ebea7f9e5de76f918",
+          "resultDigest": "a6665fb42f7609790fedfc180e4f117ffa1ba80fc7f5b73725fe2a64cb138126",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-975141e207216d93b77f373f1d711102",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "975141e207216d93b77f373f1d71110296c3606aea425dc350e24b8e2e1d2820",
+            "responseDigest": "2ac52ce8e9d82bba456b7ffac4a84a0fd890984866b9ba35e67ce223c3a9f976",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 421,
+              "completionTokens": 63,
+              "totalTokens": 484
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 1,
+          "proposalDigest": "58499c42c43b11d031c383674aec40b044edcbb4b4d6ef1670d5fe63c501c1af",
+          "resultDigest": "a4ca99d67523878a85c3ebebb203f9453a1afe9388294db9dfa51caf601c4e9e",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-ed8f808795768e643e02d41b8af44d74",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "ed8f808795768e643e02d41b8af44d748ec07c88405d6f3c51887f8ccc008726",
+            "responseDigest": "7a9a20708c4785c1d68288300ca106ce3ce5acec5de54315db4593e045f4dc58",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 456,
+              "completionTokens": 71,
+              "totalTokens": 527
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 1,
+          "proposalDigest": "58499c42c43b11d031c383674aec40b044edcbb4b4d6ef1670d5fe63c501c1af",
+          "resultDigest": "a4ca99d67523878a85c3ebebb203f9453a1afe9388294db9dfa51caf601c4e9e",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-1305f8d8819f936cdb078ed2aa969347",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "1305f8d8819f936cdb078ed2aa969347b236edb92dcd45fd7ef451f9982a4da2",
+            "responseDigest": "7a9a20708c4785c1d68288300ca106ce3ce5acec5de54315db4593e045f4dc58",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 456,
+              "completionTokens": 71,
+              "totalTokens": 527
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 101,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 0.99,
+          "proposalDigest": "052328424c4f963c4dfcaf3db7030ceb46c47d2f84d7177ebea7f9e5de76f918",
+          "resultDigest": "a6665fb42f7609790fedfc180e4f117ffa1ba80fc7f5b73725fe2a64cb138126",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-dcaf54fe468f0cda47facfacf2d15e96",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "dcaf54fe468f0cda47facfacf2d15e9605c40f92d026e2783912e482c73fa79d",
+            "responseDigest": "2ac52ce8e9d82bba456b7ffac4a84a0fd890984866b9ba35e67ce223c3a9f976",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 456,
+              "completionTokens": 64,
+              "totalTokens": 520
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 379,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 11857,
+      "calls": 4,
+      "toolRequests": 0,
+      "toolWorkUnits": 0,
+      "toolElapsedMs": 0,
+      "acceptedCertificate": null,
+      "authorityIncrease": false
+    },
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "taskId": "FRESH-2",
+      "accepted": false,
+      "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "DERIVATION_INSUFFICIENT",
+          "findings": [
+            "Review the computed quantities against the ORIGINAL objective. Submit a certificate or propose a bounded correction."
+          ],
+          "confidence": null,
+          "proposalDigest": "1e1f5d21b6d04f14e990cfd856fb41d12f49635661b0a4014df4859133f60688",
+          "resultDigest": "30c685314d400831da6c89faf2aef6732f3b620a15052630902f31bbde090879",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-bd98cdc007a3b8a73fc518f8b17ee486",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "bd98cdc007a3b8a73fc518f8b17ee486a9a7c624c40d4e89bc88e4735dda5a90",
+            "responseDigest": "4d4928068935f1e90df23d70016c58e7bfe93fda2b3ae6b76d1b2af68e56e117",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 957,
+              "completionTokens": 294,
+              "totalTokens": 1251
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "REQUEST_SCOPE_OR_LIFETIME_REJECTED",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "7f77657367fc3d40b65499633456869c5f99ead8a2798da167e951eb9383f9f3",
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-348cae5037833f045d3d297f223180ce",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "348cae5037833f045d3d297f223180ce13cc706e977a5d4a58cc8408e42ff2bc",
+            "responseDigest": "c7b8bbf39fec36a2978b6840bba2d3d3269b7443f39f8563377cbb4f81b9e6ff",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1313,
+              "completionTokens": 340,
+              "totalTokens": 1653
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "REQUEST_SCOPE_OR_LIFETIME_REJECTED",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "35030731f058982932ca2f0af3d06108e3cf866a934f01387703180763a68ede",
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-b11e7c2ef9d5c33de33b35b15ab2bc32",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "b11e7c2ef9d5c33de33b35b15ab2bc32f038dbcd0b57211b6d5f5a68f592b230",
+            "responseDigest": "725a4e3aa1a37dc5cc9a4575a2130997fce6e92942fe99094f2a84d625fac92d",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1336,
+              "completionTokens": 393,
+              "totalTokens": 1729
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "REQUEST_SCOPE_OR_LIFETIME_REJECTED",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "35030731f058982932ca2f0af3d06108e3cf866a934f01387703180763a68ede",
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-bdc61a4c2558ef77bc74f1e002accd2c",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "bdc61a4c2558ef77bc74f1e002accd2c879f23a430116126f14194881ee927cb",
+            "responseDigest": "725a4e3aa1a37dc5cc9a4575a2130997fce6e92942fe99094f2a84d625fac92d",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1336,
+              "completionTokens": 393,
+              "totalTokens": 1729
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 16539,
+      "calls": 4,
+      "toolRequests": 1,
+      "toolWorkUnits": 100000,
+      "toolElapsedMs": 23,
+      "acceptedCertificate": null,
+      "authorityIncrease": false
+    },
+    {
+      "arm": "CURRENT_DIRECT",
+      "taskId": "FRESH-2",
+      "accepted": false,
+      "outcome": "TRUNCATION",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 1,
+          "proposalDigest": "b52b84a4af9324cfe0690c8ffe6bb59b3631bc3f25740621a53a46038800dd77",
+          "resultDigest": "f010e345fd1fd48e5304aa0930a4c92fc162170c2954e15014dd048d4134173f",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-75592a844aef3d69b1549664d0a121b4",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "75592a844aef3d69b1549664d0a121b4375e6b9129db6abd60278185c1979f14",
+            "responseDigest": "cc9a439d22cb2d23a11b6c1f35a43abfbd43dad2173168b817c806e2dabe4b5f",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 413,
+              "completionTokens": 121,
+              "totalTokens": 534
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 1,
+          "proposalDigest": "b52b84a4af9324cfe0690c8ffe6bb59b3631bc3f25740621a53a46038800dd77",
+          "resultDigest": "f010e345fd1fd48e5304aa0930a4c92fc162170c2954e15014dd048d4134173f",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-33923edbfe756da39c8a7731e2b245b6",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "33923edbfe756da39c8a7731e2b245b608b1490b26717ad287412084b11e8fdb",
+            "responseDigest": "cc9a439d22cb2d23a11b6c1f35a43abfbd43dad2173168b817c806e2dabe4b5f",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 448,
+              "completionTokens": 121,
+              "totalTokens": 569
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:x",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:y"
+          ],
+          "confidence": 1,
+          "proposalDigest": "b52b84a4af9324cfe0690c8ffe6bb59b3631bc3f25740621a53a46038800dd77",
+          "resultDigest": "f010e345fd1fd48e5304aa0930a4c92fc162170c2954e15014dd048d4134173f",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-0a9a13cf73736355129692e6c4631370",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "0a9a13cf73736355129692e6c4631370229827ab530a460f2e40240016236105",
+            "responseDigest": "cc9a439d22cb2d23a11b6c1f35a43abfbd43dad2173168b817c806e2dabe4b5f",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 448,
+              "completionTokens": 121,
+              "totalTokens": 569
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "TRUNCATION",
+          "findings": [
+            "Provider output budget was exhausted; token usage is preserved."
+          ],
+          "confidence": null,
+          "proposalDigest": null,
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-7956080a10966ef6ac335bad9d56db4d",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "7956080a10966ef6ac335bad9d56db4d08064dacdf0b401f80e1014f017092d2",
+            "responseDigest": "180299eca5e4cb2951758d6ec5f328e0d2212f3bb9086e9e52c0cc165b521401",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "length",
+            "usage": {
+              "promptTokens": 448,
+              "completionTokens": 4096,
+              "totalTokens": 4544
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 56094,
+      "calls": 4,
+      "toolRequests": 0,
+      "toolWorkUnits": 0,
+      "toolElapsedMs": 0,
+      "acceptedCertificate": null,
+      "authorityIncrease": false
+    },
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "taskId": "FRESH-3",
+      "accepted": true,
+      "outcome": "ACCEPTED",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "quantitative_program_invalid:REGISTER_BINDING:2",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "3399bd86dcd0466330a67eaef59acfd3de8d6100b1e18dc8579d468b3412f8f9",
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-cadfaf4ad8abcda434a1428094191b5d",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "cadfaf4ad8abcda434a1428094191b5dfc7a52ff3cf64f5cd5859ba51c49e3ea",
+            "responseDigest": "426ca1e850410d18aeebabac7a8f822f6d8396912a7d543e0b0f9677d8ffe8b8",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 962,
+              "completionTokens": 460,
+              "totalTokens": 1422
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "DERIVATION_RETURNED_NOT_ACCEPTED",
+          "findings": [
+            "Review the computed quantities against the ORIGINAL objective. Submit a certificate or propose a bounded correction."
+          ],
+          "confidence": null,
+          "proposalDigest": "65a7b5b91634f1135bf670b91872bd9daa8dc69a358abd20c670cc0200943ab2",
+          "resultDigest": "c6291d828d2a6e932dee16a357dedf66e6e8b40bc85ff5bb1dfcaa2a4302c4f1",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-5c937d1e449c39989114a092b9636c99",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "5c937d1e449c39989114a092b9636c9900bf6701e4f80607c343c5d8b9e16115",
+            "responseDigest": "2b9405b0d4a214ad1b6afddb2280c7e8d76e79a98cd07677644d10aebd98cfd8",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1007,
+              "completionTokens": 429,
+              "totalTokens": 1436
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "DERIVATION_RETURNED_NOT_ACCEPTED",
+          "findings": [
+            "Review the computed quantities against the ORIGINAL objective. Submit a certificate or propose a bounded correction."
+          ],
+          "confidence": null,
+          "proposalDigest": "251eee4f0c68b36a0b0b4722f7ed1892f1480a55940956b1dc33605ea2e7603e",
+          "resultDigest": "b4a9830632e3996139bb693a6ac1aead43e2ace93c840ca8eba3e87022841b29",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-bbcf3b827b873d1069c60ffd0c983838",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "bbcf3b827b873d1069c60ffd0c9838383a98a67c74a7054068df4bd9a2a10824",
+            "responseDigest": "7a738391257d02249dbe518f2969a6eb9335d636501a5ae82e3b4ced35919819",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1665,
+              "completionTokens": 439,
+              "totalTokens": 2104
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "ACCEPTED",
+          "findings": [],
+          "confidence": 0.99,
+          "proposalDigest": "85a8e0b122486eacc0b71da85a37a9ade0cd8d9e43fc274008fdb0cd6edba955",
+          "resultDigest": "944209045f3edf341fa0c5fab785fa3a512f0b3c1e5cdd39504f90a7aa104ac6",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-f18d4d80b9bb060fab13ca0eb0690e7a",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "f18d4d80b9bb060fab13ca0eb0690e7ac47fc2c54e1cd82b87708367d5388061",
+            "responseDigest": "e7db48b97a24de3f4f40f3b6550f01ac4fcc609252f8e133eb26a609ff53f922",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1446,
+              "completionTokens": 201,
+              "totalTokens": 1647
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 25452,
+      "calls": 4,
+      "toolRequests": 2,
+      "toolWorkUnits": 4320,
+      "toolElapsedMs": 2,
+      "acceptedCertificate": {
+        "outputs": [
+          {
+            "label": "stock",
+            "value": "245974316386044/241658985007517"
+          },
+          {
+            "label": "shipped",
+            "value": "447947602401826/9415285130163"
+          }
+        ],
+        "confidence": 0.99
+      },
+      "authorityIncrease": false
+    },
+    {
+      "arm": "CURRENT_DIRECT",
+      "taskId": "FRESH-3",
+      "accepted": false,
+      "outcome": "FUNCTIONAL_REJECTION",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:stock",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:shipped"
+          ],
+          "confidence": 1,
+          "proposalDigest": "3af82b01706948d32ead0510067aaee015a42e0370b159bd26467d244da66629",
+          "resultDigest": "58542590b58c848f8c83b1339755a4a7860b4cff80a18531fdb2ee992bc41eb6",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-8dd75d1a8bc69f1fc819c0302072646f",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "8dd75d1a8bc69f1fc819c0302072646f368efbb4398b479dfb0ab4e810f4a1ee",
+            "responseDigest": "6206861e8e7a24c86cdd08d3dad75f7eda65a10ed31be0b2ef6304081c608917",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 418,
+              "completionTokens": 94,
+              "totalTokens": 512
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:stock",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:shipped"
+          ],
+          "confidence": 1,
+          "proposalDigest": "d3c5a505d5946c30b9caf2723da81681a3b213d855f76065019ea49c1fee5115",
+          "resultDigest": "ab57421c97cca857864f818791f35f06429b06c8fc502e8d683cd400b9316aeb",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-c738d70ddc436877222ef04eb4f58437",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "c738d70ddc436877222ef04eb4f58437bf8a463e119413f09cbdf549e5139e37",
+            "responseDigest": "678b95924fa8a620cd649ac72cd3c8e1386a89ebb9c5382f93e832ae25d044f7",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 455,
+              "completionTokens": 93,
+              "totalTokens": 548
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:stock",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:shipped"
+          ],
+          "confidence": 1,
+          "proposalDigest": "1787be2b1c37b89e3195b73af987a9dd960b6947b85a2d800fb0caadf250b7c3",
+          "resultDigest": "ded768c20278918529cdc0d0c9a705320942c1b63ec837b41b1b023c07b63c79",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-1e1216efe5b229aa510c793c867439a3",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "1e1216efe5b229aa510c793c867439a3ba6663092139991ccb8a3ed111834a5c",
+            "responseDigest": "d8a8b23c70c762d947d73cbca08abb1caf2a899491e211917e131f30745a8f0e",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 455,
+              "completionTokens": 56,
+              "totalTokens": 511
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:stock",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:shipped"
+          ],
+          "confidence": 1,
+          "proposalDigest": "1e3e28fb1ca6f8c78d117d63fc04172624b059c5a708b0f0bfbbd38365965734",
+          "resultDigest": "d27801c205da7518200d143152892f0953398766f5bfec450ac4d177049763c7",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-f5ef1f4b9283943cfc9c6e7bf8e080e0",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "f5ef1f4b9283943cfc9c6e7bf8e080e0dba2e36d6e82f4efdac62532232bb731",
+            "responseDigest": "d9a5e70db9f555b40c9040cd8cd77e9caee51f71cedf2633f755034637087268",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 455,
+              "completionTokens": 93,
+              "totalTokens": 548
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 12,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 6646,
+      "calls": 4,
+      "toolRequests": 0,
+      "toolWorkUnits": 0,
+      "toolElapsedMs": 0,
+      "acceptedCertificate": null,
+      "authorityIncrease": false
+    },
+    {
+      "arm": "REASONING_MEDIUM",
+      "taskId": "FRESH-3",
+      "accepted": false,
+      "outcome": "FUNCTIONAL_REJECTION",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:stock",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:shipped"
+          ],
+          "confidence": 1,
+          "proposalDigest": "725d5ef134a1d9abb7409a1bfc511490bfef1e3f916958bb0071d24b24417c38",
+          "resultDigest": "c3cde87fbd90c97813c6a1ec111ba1c3a7c7ca94a7130feef8c4eb7c9afdced6",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-cb0f37c62fb0f523b1a008d05d0972cf",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "cb0f37c62fb0f523b1a008d05d0972cfd87d3ec36874147c4c2f5ce8a4b8db52",
+            "responseDigest": "849a47cbd5aea83d82a9881763aa39d78328da83b8362ac9c4c6d3293a52a00d",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 426,
+              "completionTokens": 71,
+              "totalTokens": 497
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 109,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:stock",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:shipped"
+          ],
+          "confidence": 1,
+          "proposalDigest": "725d5ef134a1d9abb7409a1bfc511490bfef1e3f916958bb0071d24b24417c38",
+          "resultDigest": "c3cde87fbd90c97813c6a1ec111ba1c3a7c7ca94a7130feef8c4eb7c9afdced6",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-d7e16872f9d3f4c1499c79759dd0c933",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "d7e16872f9d3f4c1499c79759dd0c933741a55d49388c88a0bf10bd393a16a1a",
+            "responseDigest": "8ba829bf92886e8cc386da85076ee0ea28c847c3e561ad449b3bf841f67a5cb5",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 463,
+              "completionTokens": 78,
+              "totalTokens": 541
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 212,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:stock",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:shipped"
+          ],
+          "confidence": 1,
+          "proposalDigest": "2a1883a9994d81460cb41d98074924779e89aeefd60294757d54f9b0a6e78997",
+          "resultDigest": "106961a0cbede20acd1c283d1146b7382cd20fdc21191da5cde51e23bc1997ba",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-160ac4db38c0fb5df0790df5bd5b84c6",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "160ac4db38c0fb5df0790df5bd5b84c66ca9c45689daf31cb1aad71961c33528",
+            "responseDigest": "51b4da4fff55f3c860f6b4ab48697cf41bdca69154fce8fbf9a229af3eb3a103",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 463,
+              "completionTokens": 83,
+              "totalTokens": 546
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 301,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:stock",
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:shipped"
+          ],
+          "confidence": 1,
+          "proposalDigest": "91b3cc082e91d7e0d3c9c0064947e42e1e59677869eb852c71bb77b434f52086",
+          "resultDigest": "c0d53ddc1b38a59b51180a385c5eda9b10d451873e50a9c044d96148d88f7806",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-7a6845fa20779bfa2bd0a0d6308e1b35",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "7a6845fa20779bfa2bd0a0d6308e1b3593e551cd598935a5c3768a000493a711",
+            "responseDigest": "b65b297f53062f41bc34299361ee956dd07c20863a20c6998e9c0be0b02d8b2b",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 463,
+              "completionTokens": 84,
+              "totalTokens": 547
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 6466,
+      "calls": 4,
+      "toolRequests": 0,
+      "toolWorkUnits": 0,
+      "toolElapsedMs": 0,
+      "acceptedCertificate": null,
+      "authorityIncrease": false
+    },
+    {
+      "arm": "CURRENT_DIRECT",
+      "taskId": "FRESH-4",
+      "accepted": false,
+      "outcome": "FUNCTIONAL_REJECTION",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:probability"
+          ],
+          "confidence": 1,
+          "proposalDigest": "7d40b3457b08edde58489d3ce493ee0ee062830943ca498f37da8168431a2b64",
+          "resultDigest": "7fb8cfc4f7884bf9ffab44baea7a4e71a15cff329d2c8b30df12585af6c40c41",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-ccda8ecd0c7df727817c0de92c58a610",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "ccda8ecd0c7df727817c0de92c58a610b8dc3ad510dcf119267e0c4ecbd2c94e",
+            "responseDigest": "6db779d4868f9154aea4e3989337104f5eca4a98832828f4ce796120aec2f386",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 365,
+              "completionTokens": 73,
+              "totalTokens": 438
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 310,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:probability"
+          ],
+          "confidence": 1,
+          "proposalDigest": "cd96677e54141faaa91ecdbab340135d16905f86d75302391b7a72fc64e9690a",
+          "resultDigest": "e7698abce8587e59680ae748349205ed6998517b8f455b5d394ff1fc29040d9c",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-937a1b5e6bcfaf9cef2771f2e3d66c5f",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "937a1b5e6bcfaf9cef2771f2e3d66c5f7862a2659420410682960e24d8461dd0",
+            "responseDigest": "9d8a483bf3818fa9809ec4c03ce86ec14dc2b28a81da5b390a78962661e01b4f",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 384,
+              "completionTokens": 74,
+              "totalTokens": 458
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 389,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:probability"
+          ],
+          "confidence": 1,
+          "proposalDigest": "fb64c74c0a7e2d21df3365b99b98fcaedba59a337e6857dddd57e651fc6ba1ce",
+          "resultDigest": "2d44c7e56857278c434e7bad98ef7d8b7b2edd14e27e52ad1e91e7fa44bbc401",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-aa21a31acdd39d5bb01fa0bb4b800d8b",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "aa21a31acdd39d5bb01fa0bb4b800d8bde2dd1ea366efc7aa1d3fbd5f5418bf3",
+            "responseDigest": "ba87d7441be837098a6da04d37a68e19ed89d20ebbcfced528d5e088a88b45de",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 384,
+              "completionTokens": 74,
+              "totalTokens": 458
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:probability"
+          ],
+          "confidence": 1,
+          "proposalDigest": "79341c2b9c8303038b56f1acfd07a603fb8095de3bff353e47f7387f6eee4c6d",
+          "resultDigest": "82d0670dfcfba9f913f94badf30d71c18709e89f0bada8d29ff566bc315e58a0",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-6bd0cad18e3d7f465a79122eee14a3ae",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "6bd0cad18e3d7f465a79122eee14a3ae543fead3785fb44ff76bc103e24fa45f",
+            "responseDigest": "6aa8454a667de0461e86ab390c790aa431378502b5dee0e4d885948837b8acd3",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 384,
+              "completionTokens": 71,
+              "totalTokens": 455
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 228,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 7067,
+      "calls": 4,
+      "toolRequests": 0,
+      "toolWorkUnits": 0,
+      "toolElapsedMs": 0,
+      "acceptedCertificate": null,
+      "authorityIncrease": false
+    },
+    {
+      "arm": "REASONING_MEDIUM",
+      "taskId": "FRESH-4",
+      "accepted": false,
+      "outcome": "FUNCTIONAL_REJECTION",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:probability"
+          ],
+          "confidence": 1,
+          "proposalDigest": "9c1307de4c8bb90f9e3df8b9c21fb193a185c39d362fa0f6de9edc33fbc68115",
+          "resultDigest": "2e903a0db05030ceec7b29bfbe9280a199f15e3e08ec3a4eda7ec932d19db588",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-c0c6853b60a67c304fe85f1075073060",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "c0c6853b60a67c304fe85f1075073060ad0e14fe2d25032defec01f0ba8764e2",
+            "responseDigest": "f6c43b8767b3ae8c79193276aaee5e4b6b3b006b0e8be459f7727078e90c2a54",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 373,
+              "completionTokens": 61,
+              "totalTokens": 434
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 178,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:probability"
+          ],
+          "confidence": 1,
+          "proposalDigest": "f0b43a81ecfd5b6db6f3d55b00e1ec2fde138487c9365fa9ccd5b795c5892118",
+          "resultDigest": "70ddfd7ddc4f2ff03abf3297d458183377b0d6181c18e43a2de3501e5c6c9698",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-567c87b17c294cd701ad279f3d78c20c",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "567c87b17c294cd701ad279f3d78c20c1fa0062207273d8d772179a1a78506a7",
+            "responseDigest": "5fb143cd42612f71f3cf649d22e8f3152b7931653982b5ae4ed9b0710d469ad6",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 392,
+              "completionTokens": 73,
+              "totalTokens": 465
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:probability"
+          ],
+          "confidence": 1,
+          "proposalDigest": "f0b43a81ecfd5b6db6f3d55b00e1ec2fde138487c9365fa9ccd5b795c5892118",
+          "resultDigest": "70ddfd7ddc4f2ff03abf3297d458183377b0d6181c18e43a2de3501e5c6c9698",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-343a0d8a5c41132b4a91e8ed66144e5a",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "343a0d8a5c41132b4a91e8ed66144e5a0fb2822ff72ed83e5acd2dc3f31b3acf",
+            "responseDigest": "5fb143cd42612f71f3cf649d22e8f3152b7931653982b5ae4ed9b0710d469ad6",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 392,
+              "completionTokens": 72,
+              "totalTokens": 464
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 58,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:probability"
+          ],
+          "confidence": 1,
+          "proposalDigest": "79341c2b9c8303038b56f1acfd07a603fb8095de3bff353e47f7387f6eee4c6d",
+          "resultDigest": "82d0670dfcfba9f913f94badf30d71c18709e89f0bada8d29ff566bc315e58a0",
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-cd08763bb5360cda564d6db7ecd07a4b",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "cd08763bb5360cda564d6db7ecd07a4b994f20a17caf3f9be8f4c44382d29b40",
+            "responseDigest": "6aa8454a667de0461e86ab390c790aa431378502b5dee0e4d885948837b8acd3",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 392,
+              "completionTokens": 72,
+              "totalTokens": 464
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 16100,
+      "calls": 4,
+      "toolRequests": 0,
+      "toolWorkUnits": 0,
+      "toolElapsedMs": 0,
+      "acceptedCertificate": null,
+      "authorityIncrease": false
+    },
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "taskId": "FRESH-4",
+      "accepted": false,
+      "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "quantitative_program_invalid:REGISTER_BINDING:0",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "82caa7032542d8cb3108498ae73a32d96890a6a5eda373deda68aeeaace6973a",
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-572a55ee5cb2dbb55a767815a93f6101",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "572a55ee5cb2dbb55a767815a93f61017b03686763db82da78aad7f8cb6ed13c",
+            "responseDigest": "d20a31a5291f89b2cbeb9902f3cb961973d1b2e94fd74b1042a8588387bbb5bd",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 910,
+              "completionTokens": 375,
+              "totalTokens": 1285
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "quantitative_program_invalid:REGISTER_BINDING:1",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "07aefd7a71c2c05bc3ef9bc511125a708f82b746005f782bf3d6e505d979bddf",
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-e70acaa15111d83919c2c1e2fafd9909",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "e70acaa15111d83919c2c1e2fafd99091c7e9c5eae30c85322994ed2d0d451fb",
+            "responseDigest": "649585fae5609c01a555e78a9ff6d2fae9c0fbac51bc540c22732fa4f9a1fbb0",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 955,
+              "completionTokens": 429,
+              "totalTokens": 1384
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "quantitative_program_invalid:REGISTER_BINDING:0",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "f3720d324e5051624e98d6699a9a0af5a63e9b900d8c08ed0105a981d9acb3fe",
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-ce2aec36c507784c03692e2933f912a0",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "ce2aec36c507784c03692e2933f912a017b5a06dd2df7e35fd5d1bddc03f002f",
+            "responseDigest": "c41397c1dff8b3315d2137fc04e9d2e2529f86609dc925e74535d63dd9ad62b5",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 955,
+              "completionTokens": 572,
+              "totalTokens": 1527
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "quantitative_program_invalid:REGISTER_BINDING:0",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "822b40234ecb74979f9abb64fb8abe22542b689365fe1bd26eac9760f99ded83",
+          "resultDigest": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-f5fc613b5b4e18f12029f3eda39d8ee2",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "f5fc613b5b4e18f12029f3eda39d8ee20d8dc67cf07cb2453f77294718507480",
+            "responseDigest": "8d350198989ec9dcfca912dee3849bc57b815bebf2d7d61e9bb8f5e49e057a37",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 955,
+              "completionTokens": 425,
+              "totalTokens": 1380
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 20951,
+      "calls": 4,
+      "toolRequests": 0,
+      "toolWorkUnits": 0,
+      "toolElapsedMs": 0,
+      "acceptedCertificate": null,
+      "authorityIncrease": false
+    }
+  ],
+  "verdict": "NO_COMPUTE_DEFENSIBLE_ACCEPTANCE_ADVANTAGE",
+  "pairs": [
+    {
+      "taskId": "FRESH-1",
+      "outcomes": [
+        {
+          "arm": "CURRENT_DIRECT",
+          "result": "TRUNCATION"
+        },
+        {
+          "arm": "REASONING_MEDIUM",
+          "result": "TRUNCATION"
+        },
+        {
+          "arm": "REASONING_WITH_WORKBENCH",
+          "result": "AUTHORIZATION_OR_IR_REJECTION"
+        }
+      ]
+    },
+    {
+      "taskId": "FRESH-2",
+      "outcomes": [
+        {
+          "arm": "CURRENT_DIRECT",
+          "result": "TRUNCATION"
+        },
+        {
+          "arm": "REASONING_MEDIUM",
+          "result": "FUNCTIONAL_REJECTION"
+        },
+        {
+          "arm": "REASONING_WITH_WORKBENCH",
+          "result": "AUTHORIZATION_OR_IR_REJECTION"
+        }
+      ]
+    },
+    {
+      "taskId": "FRESH-3",
+      "outcomes": [
+        {
+          "arm": "CURRENT_DIRECT",
+          "result": "FUNCTIONAL_REJECTION"
+        },
+        {
+          "arm": "REASONING_MEDIUM",
+          "result": "FUNCTIONAL_REJECTION"
+        },
+        {
+          "arm": "REASONING_WITH_WORKBENCH",
+          "result": "ACCEPTED"
+        }
+      ]
+    },
+    {
+      "taskId": "FRESH-4",
+      "outcomes": [
+        {
+          "arm": "CURRENT_DIRECT",
+          "result": "FUNCTIONAL_REJECTION"
+        },
+        {
+          "arm": "REASONING_MEDIUM",
+          "result": "FUNCTIONAL_REJECTION"
+        },
+        {
+          "arm": "REASONING_WITH_WORKBENCH",
+          "result": "AUTHORIZATION_OR_IR_REJECTION"
+        }
+      ]
+    }
+  ],
+  "identicalModel": true,
+  "identicalTaskSet": true,
+  "identicalOracle": true,
+  "matchedCallAndOutputTokenCeilings": true,
+  "matchedRealizedCompute": false,
+  "nativeWorkMustBeAccountedSeparately": true,
+  "toolAblation": "MEDIUM_REASONING_WITH_VS_WITHOUT_EXACT_IR",
+  "reasoningConfigurationAblation": "CURRENT_DIRECT_VS_MEDIUM_REASONING",
+  "frozenBeforeLive": true,
+  "independentEvidenceClass": "E3_INDEPENDENT_DOMAIN_ALGORITHMS_NOT_EXTERNAL_INSTITUTION",
+  "liveEvidenceClass": "E4",
+  "calibrationScope": "DESCRIPTIVE_DEPENDENT_SUBMISSIONS_FOUR_TASKS_NOT_GENERAL_CALIBRATION",
+  "falseAcceptanceEvidence": "NEGATIVE_ORACLE_CONTROLS_LOCAL_ONLY_NOT_EXTERNALLY_MEASURED",
+  "sourceBefore": "6c0de18e47c2f53b2a75fa11adc8bae7d72be511b2f88f5cd2ba0be33b0efdb8",
+  "sourceAfter": "6c0de18e47c2f53b2a75fa11adc8bae7d72be511b2f88f5cd2ba0be33b0efdb8",
+  "sourceRepositoryUnchanged": true,
+  "populationScope": "FRESH_MODEL_UNSEEN_PARAMETERS_EXISTING_FAMILIES_AFTER_PROTOCOL_REPAIR_NOT_PRIVATE_INSTITUTIONAL_HOLDOUT",
+  "security": {
+    "credentialPersisted": false,
+    "rawReasoningPersisted": false,
+    "generalNetworkAuthority": false,
+    "shellAuthority": false,
+    "repositoryMutation": false,
+    "productionAuthority": false
+  },
+  "broadPromotion": false
+}

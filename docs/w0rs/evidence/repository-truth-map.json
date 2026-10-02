@@ -2279,6 +2279,12 @@
       ]
     },
     {
+      "name": "NYX_QUANTITATIVE_SLOT_TRANSFER",
+      "files": [
+        "scripts/omega/nyx-quantitative-transfer-live-eval.ts"
+      ]
+    },
+    {
       "name": "NYX_TRANSFER_PROOF_ABLATION",
       "files": [
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
