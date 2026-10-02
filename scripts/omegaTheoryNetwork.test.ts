@@ -223,5 +223,23 @@ function assigned(f = fixture()) {
     "software integration cannot pretend to execute a mathematical proof or laboratory experiment");
   check(network.metrics().activePairs === 0 && !unsupported.grantsAuthority, "blocked domain releases activation without promoting authority");
 }
+{
+  const { network, coordinator } = fixture();
+  const { firstId } = network.reserve(coordinator, "2");
+  const secondId = firstId.replace(/:0$/, ":1");
+  network.assign(coordinator, firstId, assignment);
+  network.assign(coordinator, secondId, assignment);
+  network.wake(coordinator, firstId, { eventId: "other-phase", kind: "ASSIGNMENT", reason: "Earlier queued work." });
+  network.wake(coordinator, secondId, { eventId: "requested-phase", kind: "ASSIGNMENT", reason: "The intended phase starts now." });
+  const targeted = network.take(coordinator, secondId)!;
+  check(targeted.theoryId === secondId && network.inspect(firstId).state === "QUEUED",
+    "targeted phase activation cannot consume another entity's earlier queue entry");
+  check(network.take(coordinator, secondId) === null,
+    "targeted activation cannot duplicate an existing active lease");
+  check(network.take(coordinator)?.theoryId === firstId,
+    "targeted scheduling preserves ordinary queue order for unrelated work");
+  check(throws(() => network.take({}, firstId), "theory_coordinator_ownership_required"),
+    "targeted scheduling retains coordinator ownership enforcement");
+}
 console.log(`Omega theory network tests - passed: ${passed}, failed: ${failed}`);
 if (failed > 0) process.exit(1);

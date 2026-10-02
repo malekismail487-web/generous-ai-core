@@ -258,6 +258,7 @@ export class R3BControlledEngineeringExecutor {
   readonly #baseline: Manifest;
   readonly #tools: ReadonlyMap<string, AdmittedTool>;
   #used = false;
+  #executing = false;
   #revoked = false;
 
   private constructor(config: R3BControlledExecutionConfig, root: string, rootIdentity: string,
@@ -270,6 +271,12 @@ export class R3BControlledEngineeringExecutor {
   }
 
   static async create(config: R3BControlledExecutionConfig): Promise<R3BControlledEngineeringExecutor> {
+    // Own policy before the first await. Applied-candidate object identity is
+    // retained because the applicator independently attests that exact object.
+    config = Object.freeze({ ...config, capability: Object.freeze({ ...config.capability }),
+      tools: Object.freeze(config.tools.map(tool => Object.freeze({ ...tool,
+        arguments: Object.freeze([...tool.arguments]),
+        allowedMutationPrefixes: Object.freeze([...tool.allowedMutationPrefixes]) }))) });
     if (config.authorityMode !== "ISOLATED_CANDIDATE_NOT_GRANTED") throw new Error("production_authority_not_permitted");
     if (!/^[0-9a-f]{40}$/.test(config.candidateCommit) || !config.executorId.trim() || !config.evaluatorVersion.trim()
       || !config.environmentIdentity.trim() || !config.capability.capabilityId.trim() || !config.capability.issuer.trim()
@@ -341,6 +348,20 @@ export class R3BControlledEngineeringExecutor {
   }
 
   async execute(request: R3BExecutionRequest): Promise<R3BExecutionResult> {
+    const retained = Object.freeze({ ...request });
+    if (this.#executing) {
+      const at = Date.now();
+      return this.#result("BLOCKED", "engineering_execution_already_in_progress", retained, null,
+        at, at, null, null, "", "", false, null, [], [], false);
+    }
+    // Reserve synchronously before filesystem admission awaits. A failed
+    // admission releases this lane; a dispatched capability remains single-use.
+    this.#executing = true;
+    try { return await this.#executeReserved(retained); }
+    finally { this.#executing = false; }
+  }
+
+  async #executeReserved(request: R3BExecutionRequest): Promise<R3BExecutionResult> {
     const startedAtEpochMs = Date.now();
     const tool = this.#tools.get(typeof request.toolId === "string" ? request.toolId : "");
     const preflightIssues = await this.#preflight(request, tool);
@@ -349,6 +370,11 @@ export class R3BControlledEngineeringExecutor {
         startedAtEpochMs, Date.now(), null, null, "", "", false, null, [], [], false);
     }
     this.#used = true;
+    const remainingLifetimeMs = this.#config.capability.expiresAtEpochMs - Date.now();
+    if (remainingLifetimeMs <= 0) {
+      return this.#result("BLOCKED", "engineering_execution_capability_expired", request, tool,
+        startedAtEpochMs, Date.now(), null, null, "", "", false, null, [], [], false);
+    }
     const environment = safeEnvironment();
     const args = ["--permission", `--allow-fs-read=${this.#root}`];
     for (const mutationRoot of tool.allowedMutationRoots) args.push(`--allow-fs-write=${mutationRoot}`);
@@ -375,7 +401,7 @@ export class R3BControlledEngineeringExecutor {
     child.stderr.on("data", (chunk: Buffer) => { stderr = append(stderr, chunk); });
     const timeout = setTimeout(async () => {
       timedOut = true; terminationAttempted = true; await terminateProcessTree(child);
-    }, tool.definition.timeoutMs);
+    }, Math.min(tool.definition.timeoutMs, remainingLifetimeMs));
     const outputMonitor = setInterval(async () => {
       if (outputExceeded && child.exitCode === null) { terminationAttempted = true; await terminateProcessTree(child); }
     }, 10);
@@ -425,7 +451,9 @@ export class R3BControlledEngineeringExecutor {
       || request.auditIdentity !== this.#config.capability.auditIdentity) issues.push("engineering_execution_capability_identity_mismatch");
     if (request.environmentIdentity !== this.#config.environmentIdentity) issues.push("engineering_execution_environment_mismatch");
     if (!Number.isFinite(request.observedAtEpochMs) || request.observedAtEpochMs < this.#config.capability.issuedAtEpochMs
-      || request.observedAtEpochMs >= this.#config.capability.expiresAtEpochMs) issues.push("engineering_execution_capability_expired");
+      || request.observedAtEpochMs >= this.#config.capability.expiresAtEpochMs
+      || Date.now() < this.#config.capability.issuedAtEpochMs
+      || Date.now() >= this.#config.capability.expiresAtEpochMs) issues.push("engineering_execution_capability_expired");
     try {
       const [root, stats, current] = await Promise.all([realpath(this.#config.disposableRepositoryRoot),
         lstat(this.#config.disposableRepositoryRoot), repositoryManifest(this.#root, this.#config.maxRepositoryFiles, this.#config.maxRepositoryBytes)]);

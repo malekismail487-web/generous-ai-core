@@ -366,6 +366,42 @@ async function cleanup(h: Harness): Promise<void> { await rm(h.parent, { recursi
   await cleanup(h);
 }
 
+{
+  const h = await makeHarness("single-use-race");
+  try {
+    const tool = await definition(h, "delayedPass"); const runner = await executor(h, tool);
+    const results = await Promise.all([runner.execute(request(h, tool.toolId)),
+      runner.execute(request(h, tool.toolId, { requestId: "CONTENDER", executionId: "CONTENDER" }))]);
+    check(results.filter(item => item.outcome === "PASS").length === 1
+      && results.filter(item => item.outcome === "BLOCKED").length === 1,
+      "concurrent requests cannot both consume a single-use execution capability");
+  } finally { await cleanup(h); }
+}
+{
+  const h = await makeHarness("backdated-expiry");
+  try {
+    const tool = await definition(h, "pass");
+    const issuedAtEpochMs = Date.now() - 60_000; const expiresAtEpochMs = Date.now() - 1;
+    const runner = await R3BControlledEngineeringExecutor.create({ ...h.config, tools: [tool],
+      capability: { ...h.config.capability, issuedAtEpochMs, expiresAtEpochMs } });
+    const result = await runner.execute(request(h, tool.toolId, { observedAtEpochMs: issuedAtEpochMs + 1 }));
+    check(result.outcome === "BLOCKED" && result.reason.includes("capability_expired"),
+      "backdated caller timestamps cannot revive an execution capability already expired on the host");
+  } finally { await cleanup(h); }
+}
+{
+  const h = await makeHarness("owned-configuration");
+  try {
+    const tool = await definition(h, "pass");
+    const capability = { ...h.config.capability };
+    const runner = await R3BControlledEngineeringExecutor.create({ ...h.config, tools: [tool], capability });
+    capability.expiresAtEpochMs += 60_000;
+    const result = await runner.execute(request(h, tool.toolId, {
+      observedAtEpochMs: h.config.capability.expiresAtEpochMs + 1 }));
+    check(result.outcome === "BLOCKED" && result.reason.includes("capability_expired"),
+      "caller mutation cannot extend the executor's admitted capability lifetime");
+  } finally { await cleanup(h); }
+}
 assert(R3_B_ISOLATED_CANDIDATE_STATUS.newCapability === "CONTROLLED_BUILD_TEST_EXECUTION", "chunk reports exact R3-B capability gain");
 assert(R3_B_ISOLATED_CANDIDATE_STATUS.isolation === "PROCESS_LOCAL_NODE_PERMISSION_SEATBELT_NOT_HOSTILE_CODE_SANDBOX", "isolation claim explicitly avoids hostile-code sandbox overstatement");
 assert(R3_B_ISOLATED_CANDIDATE_STATUS.authorityGranted === false && !R3_B_ISOLATED_CANDIDATE_STATUS.productionEligible, "R3-B remains implemented and verified only in isolation");

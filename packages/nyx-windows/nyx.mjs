@@ -1520,6 +1520,7 @@ var R3BControlledEngineeringExecutor = class _R3BControlledEngineeringExecutor {
   #baseline;
   #tools;
   #used = false;
+  #executing = false;
   #revoked = false;
   constructor(config, root, rootIdentity, baseline, tools) {
     this.#config = config;
@@ -1529,6 +1530,15 @@ var R3BControlledEngineeringExecutor = class _R3BControlledEngineeringExecutor {
     this.#tools = tools;
   }
   static async create(config) {
+    config = Object.freeze({
+      ...config,
+      capability: Object.freeze({ ...config.capability }),
+      tools: Object.freeze(config.tools.map((tool) => Object.freeze({
+        ...tool,
+        arguments: Object.freeze([...tool.arguments]),
+        allowedMutationPrefixes: Object.freeze([...tool.allowedMutationPrefixes])
+      })))
+    });
     if (config.authorityMode !== "ISOLATED_CANDIDATE_NOT_GRANTED") throw new Error("production_authority_not_permitted");
     if (!/^[0-9a-f]{40}$/.test(config.candidateCommit) || !config.executorId.trim() || !config.evaluatorVersion.trim() || !config.environmentIdentity.trim() || !config.capability.capabilityId.trim() || !config.capability.issuer.trim() || !config.capability.auditIdentity.trim()) throw new Error("execution_candidate_identity_invalid");
     if (!Number.isFinite(config.capability.issuedAtEpochMs) || !Number.isFinite(config.capability.expiresAtEpochMs) || config.capability.expiresAtEpochMs <= config.capability.issuedAtEpochMs) throw new Error("execution_capability_lifetime_invalid");
@@ -1602,6 +1612,35 @@ var R3BControlledEngineeringExecutor = class _R3BControlledEngineeringExecutor {
     return Object.freeze({ ...R3_B_ISOLATED_CANDIDATE_STATUS, used: this.#used, revoked: this.#revoked });
   }
   async execute(request) {
+    const retained = Object.freeze({ ...request });
+    if (this.#executing) {
+      const at = Date.now();
+      return this.#result(
+        "BLOCKED",
+        "engineering_execution_already_in_progress",
+        retained,
+        null,
+        at,
+        at,
+        null,
+        null,
+        "",
+        "",
+        false,
+        null,
+        [],
+        [],
+        false
+      );
+    }
+    this.#executing = true;
+    try {
+      return await this.#executeReserved(retained);
+    } finally {
+      this.#executing = false;
+    }
+  }
+  async #executeReserved(request) {
     const startedAtEpochMs = Date.now();
     const tool = this.#tools.get(typeof request.toolId === "string" ? request.toolId : "");
     const preflightIssues = await this.#preflight(request, tool);
@@ -1625,6 +1664,26 @@ var R3BControlledEngineeringExecutor = class _R3BControlledEngineeringExecutor {
       );
     }
     this.#used = true;
+    const remainingLifetimeMs = this.#config.capability.expiresAtEpochMs - Date.now();
+    if (remainingLifetimeMs <= 0) {
+      return this.#result(
+        "BLOCKED",
+        "engineering_execution_capability_expired",
+        request,
+        tool,
+        startedAtEpochMs,
+        Date.now(),
+        null,
+        null,
+        "",
+        "",
+        false,
+        null,
+        [],
+        [],
+        false
+      );
+    }
     const environment = safeEnvironment();
     const args2 = ["--permission", `--allow-fs-read=${this.#root}`];
     for (const mutationRoot of tool.allowedMutationRoots) args2.push(`--allow-fs-write=${mutationRoot}`);
@@ -1678,7 +1737,7 @@ var R3BControlledEngineeringExecutor = class _R3BControlledEngineeringExecutor {
       timedOut = true;
       terminationAttempted = true;
       await terminateProcessTree(child);
-    }, tool.definition.timeoutMs);
+    }, Math.min(tool.definition.timeoutMs, remainingLifetimeMs));
     const outputMonitor = setInterval(async () => {
       if (outputExceeded && child.exitCode === null) {
         terminationAttempted = true;
@@ -1755,7 +1814,7 @@ var R3BControlledEngineeringExecutor = class _R3BControlledEngineeringExecutor {
     if (request.disposableRepositoryId !== this.#config.disposableRepositoryId || request.applicationId !== this.#config.appliedCandidate.applicationId || request.proposalDigest !== this.#config.appliedCandidate.proposalDigest) issues.push("applied_candidate_binding_mismatch");
     if (request.capabilityId !== this.#config.capability.capabilityId || request.issuer !== this.#config.capability.issuer || request.auditIdentity !== this.#config.capability.auditIdentity) issues.push("engineering_execution_capability_identity_mismatch");
     if (request.environmentIdentity !== this.#config.environmentIdentity) issues.push("engineering_execution_environment_mismatch");
-    if (!Number.isFinite(request.observedAtEpochMs) || request.observedAtEpochMs < this.#config.capability.issuedAtEpochMs || request.observedAtEpochMs >= this.#config.capability.expiresAtEpochMs) issues.push("engineering_execution_capability_expired");
+    if (!Number.isFinite(request.observedAtEpochMs) || request.observedAtEpochMs < this.#config.capability.issuedAtEpochMs || request.observedAtEpochMs >= this.#config.capability.expiresAtEpochMs || Date.now() < this.#config.capability.issuedAtEpochMs || Date.now() >= this.#config.capability.expiresAtEpochMs) issues.push("engineering_execution_capability_expired");
     try {
       const [root, stats, current] = await Promise.all([
         realpath3(this.#config.disposableRepositoryRoot),

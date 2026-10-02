@@ -82,7 +82,7 @@ export class TheoryResearchParty {
       || (config.stopOnProviderFailure !== undefined && typeof config.stopOnProviderFailure !== "boolean")) {
       throw new Error("theory_research_party_configuration_invalid");
     }
-    return new TheoryResearchParty(config);
+    return new TheoryResearchParty(Object.freeze({ ...config, limits: immutableTheoryValue(config.limits) }));
   }
 
   async investigate(objective: ResearchPartyObjective, signal = new AbortController().signal): Promise<ResearchPartyResult> {
@@ -110,6 +110,7 @@ export class TheoryResearchParty {
     let usageComplete = true;
     let experimentCostUnits = 0;
     let peakParallelModelExecutions = 0;
+    let peakActiveReasoners = 0;
     let failure: string | null = null;
     const deadline = Math.min(objective.expiryEpochMs, started + this.#config.limits.maxWallClockMs);
     const entityCount = this.#config.investigatorCount + 2;
@@ -125,7 +126,7 @@ export class TheoryResearchParty {
           promptTokens: usageComplete ? knownPromptTokens : null, completionTokens: usageComplete ? knownCompletionTokens : null,
           totalTokens: usageComplete ? knownTotalTokens : null, wallClockMs: elapsed },
         addressability: { reservedTheorySlots: metrics.reservedAddressSlots,
-          materializedTheoryGuardianPairs: entityCount, peakActiveReasoners: entities.length,
+          materializedTheoryGuardianPairs: entityCount, peakActiveReasoners,
           simultaneousModelExecutions: peakParallelModelExecutions, distributedExecutionImplemented: false as const },
         evidenceChainComplete: !failure && graph.chainComplete(),
         actualReasoningEngine: cognitionEvidence.some((item) => item.evidenceClass === "E4")
@@ -307,15 +308,26 @@ export class TheoryResearchParty {
               : "Audit the party's evidence coverage without self-certifying the answer.",
           domain: objective.domain, candidateBinding: objective.candidateBinding, scope: objective.scope,
           assumptions: ["The bounded mechanism catalog may be incomplete.", "Model agreement is not experimental evidence."] });
-        this.#config.network.wake(this.#config.coordinator, theoryId, { eventId: `${this.#config.partyId}-${role}-${index}`,
-          kind: "ASSIGNMENT", reason: "Research-party phase assignment." });
       }
-      for (const role of roles) {
-        const lease = this.#config.network.take(this.#config.coordinator);
-        if (!lease) { failure = "research_party_activation_capacity_unavailable"; break; }
-        entities.push({ theoryId: lease.theoryId, guardianId: lease.guardianId, initialRole: role, lease });
+      // Roles wait dormant until their phase begins. Taking a lease here for
+      // the final reviewer would spend its lifetime on other entities' work.
+      // Each role is activated once; existing leases are never renewed.
+      const activateRole = (role: ResearchRole, index: number): EntityRuntime | null => {
+        const theoryId = `${namespace}${first + BigInt(index)}`;
+        this.#config.network.wake(this.#config.coordinator, theoryId, {
+          eventId: `${this.#config.partyId}-${role}-${index}`, kind: "ASSIGNMENT",
+          reason: "Research-party phase starts." });
+        const lease = this.#config.network.take(this.#config.coordinator, theoryId);
+        if (!lease) { failure = "research_party_activation_capacity_unavailable"; return null; }
+        const entity = { theoryId: lease.theoryId, guardianId: lease.guardianId, initialRole: role, lease };
+        entities.push(entity);
+        peakActiveReasoners = Math.max(peakActiveReasoners, this.#config.network.metrics().activePairs);
+        return entity;
+      };
+      for (let index = 0; index < this.#config.investigatorCount; index++) {
+        if (!activateRole("INVESTIGATOR", index)) break;
       }
-      if (failure || entities.length !== entityCount) return finish();
+      if (failure) return finish();
       const investigators = entities.filter((item) => item.initialRole === "INVESTIGATOR");
       const allocatePhase = (phaseOrdinal: number, cohort = investigators) => this.#config.hypothesisAllocationPolicy
         ? allocateHypothesisCoverage({ objective, cohortTheoryIds: cohort.map(item => item.theoryId),
@@ -329,7 +341,8 @@ export class TheoryResearchParty {
       if (failure) return finish();
       const hypotheses = contributions.filter((item) => item.intent.decision === "PROPOSE_HYPOTHESIS");
       if (hypotheses.length < 2) { failure = "research_party_insufficient_independent_hypotheses"; return finish(); }
-      const falsifier = entities.find((item) => item.initialRole === "FALSIFIER")!;
+      const falsifier = activateRole("FALSIFIER", this.#config.investigatorCount);
+      if (!falsifier) return finish();
       await call(falsifier, "FALSIFIER", "Attack each hypothesis with a catalogued experiment/outcome that would disconfirm it. Do not select by confidence or majority.", [], hypotheses);
       if (failure) return finish();
       while (observations.length < this.#config.limits.maxExperiments) {
@@ -375,7 +388,8 @@ export class TheoryResearchParty {
         if (failure) break;
       }
       if (failure) return finish();
-      const reviewer = entities.find((item) => item.initialRole === "META_REVIEWER")!;
+      const reviewer = activateRole("META_REVIEWER", this.#config.investigatorCount + 1);
+      if (!reviewer) return finish();
       await call(reviewer, "META_REVIEWER",
         "Summarize unresolved conflicts and evidence gaps. Return NO_CONCLUSION; Omega's deterministic graph makes the acceptance decision.", [], contributions.filter((item) => item.role !== "META_REVIEWER"));
       return finish();

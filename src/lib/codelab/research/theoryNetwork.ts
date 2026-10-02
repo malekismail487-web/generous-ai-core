@@ -173,8 +173,9 @@ export class TheoryNetwork {
     return "QUEUED";
   }
 
-  take(coordinator: object): TheoryLease | null {
+  take(coordinator: object, requestedTheoryId?: string): TheoryLease | null {
     this.#own(coordinator);
+    if (requestedTheoryId !== undefined) this.#pair(requestedTheoryId);
     const now = this.#now();
     if (!Number.isSafeInteger(now + this.#config.activationLifetimeMs)) throw new Error("theory_expiry_invalid");
     for (const [id, active] of this.#active) {
@@ -187,6 +188,7 @@ export class TheoryNetwork {
     if (this.#active.size >= this.#config.maxConcurrentActivations
       || this.#activations >= this.#config.maxTotalActivations) return null;
     for (const [id] of this.#queue) {
+      if (requestedTheoryId !== undefined && id !== requestedTheoryId) continue;
       const pair = this.#pair(id);
       if (pair.state === "ACTIVE" || pair.requiresRevalidation) continue;
       this.#queue.delete(id);

@@ -1089,8 +1089,11 @@ for (const wallClockMs of [10_000, 120_000]) {
     network: timelyRuntime.value, coordinator: timelyRuntime.coordinator, cognition: timely,
     limits: timelyLimits, investigatorCount: 3, maxParallelModelExecutions: 1, now: () => now,
     experiments: { run: async experiment => makeObservation(experiment.experimentId) } }).investigate(stableObjective);
-  check(requests.length > 1 && requests.every(request => request.deadlineEpochMs === expectedDeadline),
-    "the earliest party or lease deadline binds every call without silently widening it");
+  check(requests.length > 1 && requests.every(request => request.deadlineEpochMs ===
+    (["FALSIFIER", "META_REVIEWER"].includes(request.role)
+      ? Math.min(savedNow + wallClockMs, request.observedAtEpochMs + 60_000, 100_000)
+      : expectedDeadline)),
+    "each phase uses its first activation deadline while investigators retain their original lease");
   check(assureResearchParty({ objective: stableObjective, limits: timelyLimits, result: timelyResult,
     groundTruth: { taskId: stableObjective.researchId, expectedMechanismId: "FAILED_AS_COMPLETE",
       oracleDigest: theoryDigest("timely-response-oracle"), oracleProvenanceRoot: "TIMELY-ORACLE",
@@ -1299,4 +1302,37 @@ const singleReviserAllocation = allocateHypothesisCoverage({ ...allocationInput,
   contributions: [duplicated[0]], observations: [makeObservation("EXP-A-FAILED")], phaseOrdinal: 1 });
 check(singleReviserAllocation.length === 1 && singleReviserAllocation[0].preferredMechanismIds.length === 4,
   "a single remaining eligible reviser retains coverage without pretending to be two independent reasoners");
+// The final reviewer must receive its existing bounded lease when its work
+// starts. Queue waiting is not cognition and must not consume that lease.
+{
+  const savedNow = now; const runtime = network(); const scripted = new ScriptedPartyCognition();
+  const requests: TheoryCognitionRequest[] = []; const originalObjective = objective();
+  let reviewerStarted = 0;
+  const cognition: TheoryCognitionEngine = { profile: () => scripted.profile(), think: async request => {
+    requests.push(request);
+    if (request.role === "META_REVIEWER") { reviewerStarted = now; now += 35_000; }
+    else now += 5_000;
+    return scripted.think(request);
+  } };
+  const result = await TheoryResearchParty.create({ partyId: "PARTY-DEFERRED-REVIEW-LEASE",
+    network: runtime.value, coordinator: runtime.coordinator, cognition, limits,
+    investigatorCount: 3, maxParallelModelExecutions: 1,
+    experimentPolicy: "EXHAUST_PRECOMMITTED_FORECASTS", now: () => now,
+    experiments: { run: async item => { now += 3_000; return makeObservation(item.experimentId); } } })
+    .investigate(originalObjective);
+  check(assureResearchParty({ objective: originalObjective, limits, result, groundTruth: {
+    taskId: originalObjective.researchId, expectedMechanismId: "FAILED_AS_COMPLETE",
+    oracleDigest: theoryDigest("deferred-review-oracle"), oracleProvenanceRoot: "DEFERRED-REVIEW-ORACLE",
+    hiddenFromCognition: true } }).decision === "ACCEPT",
+    "queued reviewer receives a usable lease after earlier phases without changing task acceptance");
+  check(now > savedNow + 60_000 && result.resourceUsage.modelCalls === 5
+    && result.resourceUsage.experiments === 3 && result.resourceUsage.totalTokens === 1_000,
+    "deferred-role scheduling solves the same causal task at unchanged realized model and experiment cost");
+  check(requests.find(item => item.role === "META_REVIEWER")?.deadlineEpochMs
+    === Math.min(reviewerStarted + 60_000, originalObjective.expiryEpochMs),
+    "reviewer deadline remains bounded by its first activation and the original objective expiry");
+  check(runtime.value.metrics().activePairs === 0 && !result.authorityGranted,
+    "deferred scheduling terminates every owned lease without granting or renewing execution authority");
+  now = savedNow;
+}
 console.log(`OMEGA_RESEARCH_PARTY_TEST_SUMMARY passed: ${checks}, failed: 0`);
