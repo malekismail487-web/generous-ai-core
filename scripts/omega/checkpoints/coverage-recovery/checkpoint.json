@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "checkpointId": "NYX-COVERAGE-RECOVERY-CHECKPOINT-001",
+  "chunkId": "NYX-PROVIDER-SERVER-ERROR-RECOVERY-001",
+  "correctiveChunkId": "NYX-RESEARCH-LEASE-SETTLEMENT-001",
+  "runtimeBaselineCommit": "b3d722494478ebaa24caffa4cc8821b2682df87f",
+  "previousRuntimeReference": "f59db5cb712fd724ad1c9d22691ba07f227f53b0",
+  "reportFile": "comparison.json",
+  "canonicalReportSha256": "1d338a923f0b88cbeb06f58dcf0d6f74029dd0801391ef319daa3347388b5934",
+  "runtimeSourceHashes": {
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "8575ff7120acc0a4f0464bd3082538998a51fbe77f88a6d108814bcb46a7e8f2",
+    "src/lib/codelab/research/nyxNemotronTheoryCognition.ts": "f2a60a8b719577c756836ef87069ceb8edce3d986cdf89b8addb88de5add5805",
+    "src/lib/codelab/research/theoryResearchParty.ts": "9d8eefdee3fa36d44c3bab11b1af61e5ceb7f8b532b41aaf2eb6bde40602b3e5",
+    "src/lib/codelab/research/hypothesisCoverage.ts": "f90d79008b2c5e042024236f361c2bc42d72bf579d370d8d769bba6dd4159e3c",
+    "src/lib/codelab/research/researchPartyContracts.ts": "ceea1c1ce5fe3d375eddb3dd7effb387a512882d3a9434d27192b4a23dbc867c",
+    "src/lib/codelab/research/researchPartyAssurance.ts": "bff3296c1e840c38a314568de2888883cba7b81c2132dfa34b8c826151adc759",
+    "src/lib/codelab/research/coverageTransferAnalysis.ts": "a717444d4acac8680b221819394a949ac82c10855ca439931f1ad38e5d4056d5",
+    "scripts/omega/nyx-hypothesis-coverage-fixtures.ts": "bec9306bc249fec0d65ec7e2c0f79c869c846cfd96d11a4faaccb4dc111f23df",
+    "scripts/omega/nyx-coverage-transfer-fixtures.ts": "24d243ad44c708d12e6d5cd10c1b3340cbe538fce10955c87b122fcefa831be9",
+    "scripts/omega/nyx-research-party-live-eval.ts": "a7e9cd607634472547655b70be5a1396a640d04b24da8cad7e742b1c9dd97639",
+    "src/lib/codelab/research/flatTheoryBaseline.ts": "760cbebcd8b88c0f08e9c12633dffae6ab5572895e7fb1db46a869940b1d4e7d"
+  },
+  "dispatchWorkflowSha256": "3c13978e30921885310f4e8997b1c9e19d2be4d2696e92541fe304a0103d994c",
+  "integrityClassification": "SELF_CONTAINED_HASH_MANIFEST_NOT_SIGNED_CUSTODY",
+  "runtimeHashCanonicalization": "SHA256_UTF8_SOURCE_NORMALIZED_CRLF_TO_LF",
+  "sourceEvidence": {
+    "repository": "malekismail487-web/generous-ai-core",
+    "runId": 36989688845,
+    "jobId": 110782738246,
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36989688845",
+    "runConclusion": "failure",
+    "deterministicPreflight": "PASSED",
+    "providerSmoke": "COMPLETED_SENTINEL_OBSERVED",
+    "sourceRepositoryUnchanged": true
+  },
+  "scope": "REPEATED_DEVELOPMENT_COMPARISON_NOT_BLIND_GENERALIZATION",
+  "evaluationTier": "DEVELOPMENT",
+  "corpusDigest": "1b7b2ed1f928c22d196fca0b88ed1d802ccc60989fde2ab5b3525f0620429497",
+  "coverageStatus": "PARTIAL_JUST_IN_TIME",
+  "maturity": "IMPLEMENTED_AND_LOCALLY_VERIFIED",
+  "liveComparisonState": "INCONCLUSIVE_PROVIDER_FAILURE",
+  "epistemicState": "INSUFFICIENT_EVIDENCE",
+  "certifiesCurrentRuntime": false,
+  "defaultPolicyChanged": false,
+  "broadPromotion": false,
+  "authorityIncrease": false,
+  "frontierBenchmarkReadinessProbability": null,
+  "hypothesis": "Rotating allocation improves exact mechanism identification over no allocation under identical derivation guidance.",
+  "supportCriterion": "Replicated acceptance or efficiency advantage at comparable realized resources on fresh families.",
+  "falsificationCriterion": "No reproducible advantage, extra failures, or inferior capability per compute against the simpler control.",
+  "observedFinding": "One repeated development pair: simpler control rejected after truncation and late lease settlement; rotating allocation oracle-accepted despite one exhausted HTTP 503 retry. Four arms remain unexecuted. Usage is incomplete and calls/experiments differ. No compute-comparable win or promotion.",
+  "incompleteArms": [
+    {
+      "taskId": "NYX-TRANSFER-COUPLED",
+      "policy": "DERIVATION_ONLY",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    },
+    {
+      "taskId": "NYX-TRANSFER-COUPLED",
+      "policy": "ROTATING_PARTITION",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    },
+    {
+      "taskId": "NYX-TRANSFER-MASS",
+      "policy": "DERIVATION_ONLY",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    },
+    {
+      "taskId": "NYX-TRANSFER-MASS",
+      "policy": "ROTATING_PARTITION",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    }
+  ],
+  "resourceSummary": {
+    "requestedArms": 6,
+    "completedArms": 2,
+    "modelCallReservations": 15,
+    "httpAttempts": 22,
+    "experiments": 5,
+    "reportedTokenLowerBound": 61580,
+    "completeTokenTotal": null,
+    "smokeModelCallReservations": 1,
+    "smokeReportedTokens": 121,
+    "comparisonArmWallClockMs": 1411868,
+    "capacityWaitMs": 479975,
+    "transientUnavailableResponses": 4,
+    "timedOutAttempts": 4,
+    "rateLimitedResponses": 0,
+    "knownMonetaryCost": null,
+    "gpuTime": null
+  },
+  "failureClassification": {
+    "provider": "PERSISTENT_HTTP_503_AFTER_ONE_TRANSIENT_RETRY",
+    "providerBodyOrRootCause": "NOT_CAPTURED",
+    "recoveredTransientStatusCodes": "NOT_RETAINED",
+    "outputTruncations": 1,
+    "modelScalarRejections": 0,
+    "falseAcceptances": 0,
+    "integration": "LEASE_EXPIRED_DURING_COGNITION_AWAIT_BEFORE_PREDICTION_PRECOMMIT",
+    "integrationReproduction": "E3_CLOCK_CONTROLLED_LATE_VALID_RESPONSE_REPRODUCES_EXPIRED_LEASE_REJECTION",
+    "remainingAlternatives": [
+      "The exact rejected model content is not retained.",
+      "Provider timing and output variability confound the descriptive one-pair result."
+    ]
+  },
+  "correctiveFinding": {
+    "originalGuard": "PRE_DISPATCH_ONLY",
+    "correction": "CAP_REQUEST_TO_LEASE_EXPIRY_AND_RECHECK_AFTER_DELIVERY_BEFORE_GRAPH_ADMISSION",
+    "maturity": "LOCALLY_VERIFIED_E3_NOT_LIVE_REVALIDATED",
+    "authorityRenewed": false,
+    "oracleChanged": false,
+    "resourceCeilingsIncreased": false,
+    "lateDeliveryEvidenceRetained": true,
+    "regressionCases": [
+      "LEASE_EXPIRED",
+      "LEASE_RETIRED",
+      "CANCELLED",
+      "OBJECTIVE_EXPIRED",
+      "TIMELY_BEFORE_LEASE_EXPIRY",
+      "TIMELY_BEFORE_PARTY_DEADLINE"
+    ]
+  },
+  "promotionDecision": "NOT_PROMOTED_PROVIDER_CONFOUNDED_UNMATCHED_PARTIAL_COMPARISON",
+  "nextDependency": "Fresh provider-stable paired epoch under the repaired lease-bound request semantics; do not merge outcomes from different runtime candidates or reuse this inspected pair as blind validation.",
+  "planCoverage": {
+    "status": "PARTIAL_JUST_IN_TIME",
+    "direct": [
+      "Scoped authority expires without implicit renewal",
+      "Execution evidence outranks model confidence",
+      "Failure classification before architectural intervention",
+      "Matched-resource ablation and honest incomplete usage",
+      "Retain negative findings and source provenance"
+    ],
+    "supporting": [
+      "Minimal independent assurance kernel",
+      "Trust-gate monotonicity",
+      "Internal complexity must pay rent"
+    ],
+    "deferred": [
+      "Public frontier benchmarks",
+      "Broad reasoning promotion",
+      "Recursive self-improvement",
+      "Additional connectome layers",
+      "Device integration"
+    ],
+    "conflicts": [
+      "A delivery retry can cross a shorter theory lease even when the party budget remains; narrow delivery and reject late admission rather than renew authority."
+    ]
+  }
+}

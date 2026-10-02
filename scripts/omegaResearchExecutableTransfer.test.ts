@@ -354,6 +354,80 @@ check(transferCheckpoint.promotionDecision === "NOT_PROMOTED_INCOMPLETE_COMPARIS
   && !transferReport.broadPromotion && !transferReport.defaultPolicyChanged
   && transferReport.acceptanceViolations === 0 && transferReport.records[0].sourceRepositoryUnchanged,
 "archived failure neither promotes allocation nor weakens the preserved source and authority boundaries");
+// Preserve recovery failures, incomparable resource use, and the rejected arm.
+// Replaying an archive is not live certification of the subsequent lease repair.
+const recoveryRoot = "scripts/omega/checkpoints/coverage-recovery/";
+const recoveryCheckpoint = JSON.parse(readFileSync(`${recoveryRoot}checkpoint.json`, "utf8"));
+const recoveryReport = JSON.parse(readFileSync(`${recoveryRoot}comparison.json`, "utf8"));
+check(recoveryCheckpoint.schemaVersion === 1 && recoveryCheckpoint.reportFile === "comparison.json"
+  && checkpointDigest(recoveryReport) === recoveryCheckpoint.canonicalReportSha256
+  && recoveryCheckpoint.canonicalReportSha256 === "1d338a923f0b88cbeb06f58dcf0d6f74029dd0801391ef319daa3347388b5934",
+"recovery archive preserves the full sanitized observed report, including its negative finding");
+check(recoveryReport.candidateCommit === recoveryCheckpoint.runtimeBaselineCommit
+  && recoveryReport.candidateCommit === "b3d722494478ebaa24caffa4cc8821b2682df87f"
+  && recoveryReport.corpusDigest === transferReport.corpusDigest,
+"recovery evidence binds its exact revised candidate without replacing the preceding run or task corpus");
+for (const [path, expected] of Object.entries(recoveryCheckpoint.runtimeSourceHashes)) {
+  check(/^(src|scripts)\/[A-Za-z0-9_./-]+\.(ts|mjs)$/.test(path) && !path.split("/").includes(".."),
+    "recovery reconstruction is confined to enumerated source paths");
+  const historical = execFileSync("git", ["show", `${recoveryCheckpoint.runtimeBaselineCommit}:${path}`],
+    { encoding: "utf8", timeout: 10_000 }).replace(/\r\n/g, "\n");
+  check(createHash("sha256").update(historical).digest("hex") === expected,
+    "retry and scalar-diagnostic revision is reconstructed against the actual exercised runtime");
+}
+const recoveryDispatch = execFileSync("git", ["show",
+  `${recoveryCheckpoint.runtimeBaselineCommit}:.github/workflows/omega-nyx-research-party-live-eval.yml`],
+{ encoding: "utf8", timeout: 10_000 }).replace(/\r\n/g, "\n");
+check(createHash("sha256").update(recoveryDispatch).digest("hex") === recoveryCheckpoint.dispatchWorkflowSha256,
+  "recovery dispatch remains attributable after returning the live workflow to manual-only");
+check(recoveryReport.completedArms === 2 && recoveryReport.requestedArms === 6
+  && recoveryReport.records.length === 2 && recoveryCheckpoint.incompleteArms.length === 4,
+"four unexecuted arms remain missing, not invented outcomes or hidden successes");
+const [recoveryControl, recoveryAllocated] = recoveryReport.records;
+check(recoveryControl.policy === "DERIVATION_ONLY" && recoveryControl.assurance.decision === "REJECT"
+  && recoveryControl.decision.reason === "research_party_prediction_not_precommitted"
+  && recoveryControl.cognitionOutcomeCounts.OUTPUT_TRUNCATION === 1
+  && !recoveryControl.evidenceChainComplete,
+"the rejected control retains its truncation and incomplete precommit chain despite a successful sibling arm");
+check(recoveryAllocated.policy === "ROTATING_PARTITION" && recoveryAllocated.assurance.decision === "ACCEPT"
+  && recoveryAllocated.cognitionOutcomeCounts.PROVIDER_FAILURE === 1
+  && recoveryAllocated.cognitionEvidence.some((item: { statusCode: number; delivery: { httpAttempts: number } }) =>
+    item.statusCode === 503 && item.delivery.httpAttempts === 2),
+"oracle acceptance is distinct from the persistent provider failure that stopped the paired campaign");
+check(recoveryReport.records.every((record: typeof recoveryControl) => record.resourceUsage.totalTokens === null)
+  && recoveryReport.records.reduce((sum: number, record: typeof recoveryControl) =>
+    sum + record.cognitionEvidence.reduce((subtotal: number, item: { totalTokens: number | null }) =>
+      subtotal + (item.totalTokens ?? 0), 0), 0) === recoveryCheckpoint.resourceSummary.reportedTokenLowerBound
+  && recoveryCheckpoint.resourceSummary.reportedTokenLowerBound === 61580,
+"final-response usage remains a lower bound rather than full compute accounting for discarded attempts");
+check(recoveryReport.records.reduce((sum: number, record: typeof recoveryControl) =>
+  sum + record.resourceUsage.modelCalls, 0) === 15
+  && recoveryReport.records.reduce((sum: number, record: typeof recoveryControl) =>
+    sum + record.transport.httpAttempts, 0) === 22
+  && recoveryReport.records.reduce((sum: number, record: typeof recoveryControl) =>
+    sum + record.resourceUsage.experiments, 0) === 5,
+"logical calls, actual HTTP attempts and authorized experiments remain separate resource dimensions");
+check(checkpointDigest(analyzeCoverageTransfer(recoveryReport.selectedTaskIds, recoveryReport.records))
+  === checkpointDigest(recoveryReport.pairedAnalysis)
+  && recoveryReport.pairedAnalysis.completePairs === 1 && recoveryReport.pairedAnalysis.wins === 1
+  && recoveryReport.pairedAnalysis.computeComparableWins === 0 && !recoveryReport.realizedComputeMatched,
+"a descriptive one-pair win at unequal calls and experiments cannot become a compute-matched advantage");
+check(recoveryCheckpoint.certifiesCurrentRuntime === false && recoveryCheckpoint.authorityIncrease === false
+  && recoveryCheckpoint.frontierBenchmarkReadinessProbability === null
+  && !recoveryReport.broadPromotion && !recoveryReport.defaultPolicyChanged
+  && recoveryReport.acceptanceViolations === 0
+  && recoveryReport.records.every((record: typeof recoveryControl) => record.sourceRepositoryUnchanged
+    && !record.authorityGranted),
+"partial development evidence grants neither authority, default promotion, nor broad benchmark confidence");
+check(recoveryCheckpoint.correctiveFinding.maturity === "LOCALLY_VERIFIED_E3_NOT_LIVE_REVALIDATED"
+  && recoveryCheckpoint.correctiveFinding.authorityRenewed === false
+  && recoveryCheckpoint.correctiveFinding.oracleChanged === false
+  && recoveryCheckpoint.correctiveFinding.resourceCeilingsIncreased === false,
+"specifying and locally testing the lease repair cannot retroactively repair the observed live failure");
+check(recoveryCheckpoint.integrityClassification === "SELF_CONTAINED_HASH_MANIFEST_NOT_SIGNED_CUSTODY"
+  && recoveryReport.evidence.cognition === "E4" && recoveryReport.evidence.experimentsAndOracle === "E3"
+  && !recoveryReport.evidence.independentInstitutionalReplication,
+"archive replay and E3 oracle independence remain weaker than institutional replication or signed custody");
 console.log(`NYX_EXECUTABLE_TRANSFER_PREFLIGHT ${JSON.stringify({ schemaVersion: 1,
   corpusDigest: NYX_RESEARCH_TRANSFER_CORPUS_DIGEST, actualCognition: "NOT_EXECUTED",
   oracleMutantsRejected: 3, evidenceClass: "E3", broadPromotion: false, authorityGranted: false })}`);

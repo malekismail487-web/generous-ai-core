@@ -953,4 +953,61 @@ for (const attempts of [1, 2]) {
     && result.cognitionEvidence.every(item => item.delivery?.httpAttempts === attempts),
   "final-attempt usage and transport attempts remain available for descriptive lower bounds");
 }
+// A live delivery crossed the activation lifetime after its pre-dispatch check.
+// Reproduce independently of task content, transport speed, or hidden answers.
+for (const mode of ["LEASE_EXPIRED", "LEASE_RETIRED", "CANCELLED", "OBJECTIVE_EXPIRED"] as const) {
+  const savedNow = now; const delayedRuntime = network(); const controller = new AbortController();
+  const scripted = new ScriptedPartyCognition(); const requests: TheoryCognitionRequest[] = [];
+  const delayed: TheoryCognitionEngine = { profile: () => scripted.profile(), think: async request => {
+    requests.push(request); const response = await scripted.think(request);
+    if (mode === "LEASE_EXPIRED") now = request.deadlineEpochMs!;
+    if (mode === "LEASE_RETIRED") delayedRuntime.value.retire(delayedRuntime.coordinator, request.theoryId);
+    if (mode === "CANCELLED") controller.abort();
+    if (mode === "OBJECTIVE_EXPIRED") now = 100_000;
+    return response;
+  } };
+  const delayedResult = await TheoryResearchParty.create({ partyId: `PARTY-LATE-${mode}`,
+    network: delayedRuntime.value, coordinator: delayedRuntime.coordinator, cognition: delayed,
+    limits, investigatorCount: 3, maxParallelModelExecutions: 1, now: () => now,
+    experiments: { run: async experiment => makeObservation(experiment.experimentId) } })
+    .investigate(objective(), controller.signal);
+  check(requests.length === 1 && requests[0].deadlineEpochMs === savedNow + 60_000,
+    "cognition deadline is narrowed to the existing lease, never a renewed party lifetime");
+  check(delayedResult.decision.state === "BLOCKED" && delayedResult.contributions.length === 0
+    && delayedResult.observations.length === 0 && !delayedResult.evidenceChainComplete,
+  "late, retired, or cancelled cognition cannot partially enter the evidence graph");
+  check(delayedResult.decision.reason === (mode === "CANCELLED" ? "research_party_cancelled"
+    : mode === "OBJECTIVE_EXPIRED" ? "research_party_time_budget_exhausted"
+    : "research_party_entity_lease_invalid_after_cognition"),
+  "lease expiry, cancellation and objective expiry remain explicit rather than a generic precommit failure");
+  check(delayedResult.cognitionEvidence.length === 1 && delayedResult.resourceUsage.modelCalls === 1
+    && delayedResult.resourceUsage.totalTokens === 200 && !delayedResult.authorityGranted,
+  "discarded late cognition still retains delivery evidence and actual resource accounting");
+  check(delayedRuntime.value.metrics().activePairs === 0,
+    "late-result rejection releases all owned activations without renewing them");
+  now = savedNow;
+}
+for (const wallClockMs of [10_000, 120_000]) {
+  const savedNow = now; const timelyRuntime = network(); const scripted = new ScriptedPartyCognition();
+  const expectedDeadline = Math.min(savedNow + wallClockMs, savedNow + 60_000, 100_000);
+  const requests: TheoryCognitionRequest[] = []; const stableObjective = objective();
+  const timely: TheoryCognitionEngine = { profile: () => scripted.profile(), think: async request => {
+    requests.push(request); now = expectedDeadline - 1; return scripted.think(request);
+  } };
+  const timelyLimits = { ...limits, maxWallClockMs: wallClockMs };
+  const timelyResult = await TheoryResearchParty.create({ partyId: `PARTY-TIMELY-${wallClockMs}`,
+    network: timelyRuntime.value, coordinator: timelyRuntime.coordinator, cognition: timely,
+    limits: timelyLimits, investigatorCount: 3, maxParallelModelExecutions: 1, now: () => now,
+    experiments: { run: async experiment => makeObservation(experiment.experimentId) } }).investigate(stableObjective);
+  check(requests.length > 1 && requests.every(request => request.deadlineEpochMs === expectedDeadline),
+    "the earliest party or lease deadline binds every call without silently widening it");
+  check(assureResearchParty({ objective: stableObjective, limits: timelyLimits, result: timelyResult,
+    groundTruth: { taskId: stableObjective.researchId, expectedMechanismId: "FAILED_AS_COMPLETE",
+      oracleDigest: theoryDigest("timely-response-oracle"), oracleProvenanceRoot: "TIMELY-ORACLE",
+      hiddenFromCognition: true } }).decision === "ACCEPT" && timelyResult.evidenceChainComplete,
+  "valid responses strictly before expiry still require and pass the unchanged independent oracle");
+  check(timelyRuntime.value.metrics().activePairs === 0 && !timelyResult.authorityGranted,
+    "timely acceptance cannot renew leases or retain active authority after termination");
+  now = savedNow;
+}
 console.log(`OMEGA_RESEARCH_PARTY_TEST_SUMMARY passed: ${checks}, failed: 0`);
