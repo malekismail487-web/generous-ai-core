@@ -1,0 +1,104 @@
+import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult, NvidiaNimEvidence } from "../model/nvidiaNimProvider";
+import { BoundedReasoningSession } from "./boundedReasoningWorkbench";
+import type { QuantitativeProblem } from "./exactQuantitativeDerivation";
+import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
+
+export type QuantitativeArm = "CURRENT_DIRECT" | "REASONING_MEDIUM" | "REASONING_WITH_WORKBENCH";
+export interface QuantitativeRunLimits { readonly maxCalls: number; readonly maxOutputTokens: number;
+  readonly maxTaskMs: number; readonly expiresAtEpochMs: number; readonly maxToolRequests: number;
+  readonly maxToolWorkUnits: number; readonly maxToolElapsedMs: number }
+export interface QuantitativeAcceptance { readonly accepted: boolean; readonly findings: readonly string[];
+  readonly verificationDigest: string }
+export interface QuantitativeAttempt { readonly call: number; readonly outcome: string; readonly findings: readonly string[];
+  readonly proposalDigest: string | null; readonly resultDigest: string | null; readonly confidence: number | null;
+  readonly modelEvidence: NvidiaNimEvidence }
+export interface QuantitativeRun {
+  readonly arm: QuantitativeArm; readonly taskId: string; readonly accepted: boolean; readonly outcome: string;
+  readonly attempts: readonly QuantitativeAttempt[]; readonly elapsedMs: number; readonly calls: number;
+  readonly toolRequests: number; readonly toolWorkUnits: number; readonly toolElapsedMs: number;
+  readonly acceptedCertificate: unknown; readonly authorityIncrease: false;
+}
+function keys(v: unknown,names:string[]): v is Record<string,unknown> {return !!v && typeof v==="object" && !Array.isArray(v)
+  && Object.keys(v).sort().join("\0")===names.sort().join("\0");}
+/** Composition of existing NYX inference, Omega computation, and an externally owned oracle.
+ * The completion callback is cognition, not an authority mechanism. It never receives the verifier.
+ */
+export async function runNyxQuantitativeTask(input: {
+  readonly arm: QuantitativeArm; readonly taskId: string; readonly objective: string;
+  readonly problem: QuantitativeProblem; readonly outputLabels: readonly string[]; readonly limits: QuantitativeRunLimits;
+  readonly complete: (request: NvidiaNimCompletionRequest) => Promise<NvidiaNimCompletionResult>;
+  readonly verify: (certificate: unknown) => QuantitativeAcceptance; readonly now?: () => number;
+}): Promise<QuantitativeRun> {
+  const now=input.now??Date.now;const started=now();
+  const limits=Object.freeze({...input.limits});
+  for(const [key,value] of Object.entries(limits)) if(!Number.isSafeInteger(value)||value<1) throw Error(`quantitative_limit_invalid:${key}`);
+  if(limits.maxCalls>8||limits.maxOutputTokens>8192||limits.maxTaskMs>900000||limits.maxToolRequests>8
+    ||limits.maxToolWorkUnits>1000000||limits.maxToolElapsedMs>10000||limits.expiresAtEpochMs<=started)
+    throw Error("quantitative_limits_not_authorized");
+  if(!["CURRENT_DIRECT","REASONING_MEDIUM","REASONING_WITH_WORKBENCH"].includes(input.arm)) throw Error("quantitative_arm_invalid");
+  const expires=Math.min(limits.expiresAtEpochMs,started+limits.maxTaskMs);
+  // Validate and own the finite constants even in controls. No model-supplied input replacement.
+  const session=BoundedReasoningSession.create(input.problem,{maxWorkUnits:limits.maxToolWorkUnits,
+    maxElapsedMs:limits.maxToolElapsedMs,maxRequests:limits.maxToolRequests,expiresAtEpochMs:expires},now);
+  const task=immutableTheoryValue(JSON.parse(JSON.stringify({taskId:input.taskId,objective:input.objective,
+    problem:input.problem,outputLabels:input.outputLabels})));
+  const complete=input.complete;const verify=input.verify;const arm=input.arm;
+  const attempts:QuantitativeAttempt[]=[];let observation:unknown=null;let feedback:readonly string[]=[];
+  let accepted=false;let acceptedCertificate:unknown=null;let outcome="BUDGET_UNEXECUTED";
+  let toolRequests=0;let toolWorkUnits=0;let toolElapsedMs=0;
+  const contract={action:"REQUEST_ANALYSIS or SUBMIT",analysisRequest:"null on SUBMIT; otherwise {schemaVersion:1,operation:ANALYZE_FINITE_PROBLEM,problemDigest,program}",
+    certificate:"null on REQUEST_ANALYSIS; otherwise {outputs:[{label:string,value:canonical reduced rational string}],confidence:number 0..1}",
+    program:"{schemaVersion:1,registers:[{id,source}],blocks:[{iterations,mode:SEQUENTIAL or SIMULTANEOUS,steps:[{target,op:ADD/SUB/MUL/DIV/MIN/MAX,left,right}]}],outputs:[{label,source}]}",
+    programSemantics:"Only named constants and initialized registers may be read. Register initializers can reference earlier registers. "
+      +"All targets must be registers. Sequential steps read current registers; simultaneous steps read one pre-block-iteration snapshot, with unique targets. "
+      +"For simultaneous multi-operation equations, use temp registers or stages. A block repeats its steps exactly iterations times. "
+      +"Constants are immutable. No literal expressions, scripts, functions, shell commands, or additional tools. Outputs are exact reduced rationals, not decimal approximations.",
+    acceptance:"The tool only evaluates YOUR equations. Correct arithmetic does not prove the model is appropriate. Independent verification judges the original objective."};
+  try {
+    for(let call=1;call<=limits.maxCalls && now()<expires;call++) {
+      const available=arm==="REASONING_WITH_WORKBENCH" && toolRequests<limits.maxToolRequests;
+      const prompt={...task,contract,availableTool:available?session.descriptor():null,
+        previousObservation:observation,verificationFeedback:feedback,
+        authority:"FINITE_PURE_COMPUTATION_ONLY_NO_FILES_SHELL_NETWORK_CREDENTIALS_OR_ACCEPTANCE_AUTHORITY"};
+      const completion=await complete({schemaVersion:1,requestId:`QUANT-${arm}-${task.taskId}-${call}-${session.problemDigest.slice(0,12)}`,
+        messages:[{role:"system",content:"You are NYX cognition solving a bounded quantitative objective. Emit one strict JSON exchange only. "
+          +"Unknown tools and executable text have no authority. Use exact mathematics; every certificate is independently evaluated."},
+          {role:"user",content:JSON.stringify(prompt)}],maxTokens:limits.maxOutputTokens,temperature:0,responseFormat:"JSON_OBJECT",
+        inferencePolicy:arm==="CURRENT_DIRECT"?"CONSTRAINED_JSON":"REASONING_JSON",
+        ...(arm==="CURRENT_DIRECT"?{}:{reasoningEffort:"MEDIUM" as const}),observedAtEpochMs:now(),deadlineEpochMs:expires});
+      let confidence:number|null=null;let proposalDigest:string|null=null;let resultDigest:string|null=null;
+      const record=(state:string,findings:readonly string[])=>{outcome=state;feedback=findings;
+        attempts.push(immutableTheoryValue({call,outcome:state,findings,confidence,proposalDigest,resultDigest,modelEvidence:completion.evidence}));};
+      if(now()>=expires){record("LATE_RESPONSE_NOT_ADMITTED",["Original run expiry elapsed; no action was executed."]);break;}
+      if(completion.evidence.statusCode===200 && completion.evidence.finishReason==="length"){
+        record("TRUNCATION",["Provider output budget was exhausted; token usage is preserved."]);continue;}
+      if(completion.decision!=="COMPLETED"||completion.content===null){record("PROVIDER_FAILURE",[completion.evidence.failureCategory??completion.decision]);continue;}
+      if(completion.finishReason!=="stop"){record(completion.finishReason==="length"?"TRUNCATION":"NONSTOP_REJECTION",["Complete JSON required."]);continue;}
+      let value:unknown;
+      try {value=JSON.parse(completion.content);}catch{record("JSON_SYNTAX_REJECTION",["Return one strict JSON object, without Markdown."]);continue;}
+      if(!keys(value,["action","analysisRequest","certificate"])){record("PROTOCOL_REJECTION",["Exactly action,analysisRequest,certificate are required."]);continue;}
+      proposalDigest=theoryDigest(value);
+      if(value.action==="REQUEST_ANALYSIS") {
+        if(!available||value.certificate!==null){record("AUTHORIZATION_REJECTION",["No available computation capability or invalid request envelope."]);continue;}
+        try {
+          const result=session.analyze(value.analysisRequest);toolRequests++;toolWorkUnits+=result.workUnits;toolElapsedMs+=result.elapsedMs;
+          resultDigest=result.resultDigest;observation=result;
+          record(result.status==="CONSTRUCTED"?"DERIVATION_RETURNED_NOT_ACCEPTED":"DERIVATION_INSUFFICIENT",[
+            "Review the computed quantities against the ORIGINAL objective. Submit a certificate or propose a bounded correction."]);
+        } catch {
+          record("AUTHORIZATION_OR_IR_REJECTION",["Request must bind the available problem, use only initialized/authorized names, "
+            +"immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."]);
+        }
+        continue;
+      }
+      if(value.action!=="SUBMIT"||value.analysisRequest!==null){record("PROTOCOL_REJECTION",["Unknown action or unexpected analysis request. Text cannot become a tool."]);continue;}
+      const checked=verify(value.certificate);resultDigest=checked.verificationDigest;
+      const proposed=value.certificate as {confidence?:unknown};
+      confidence=typeof proposed?.confidence==="number"&&Number.isFinite(proposed.confidence)&&proposed.confidence>=0&&proposed.confidence<=1?proposed.confidence:null;
+      accepted=checked.accepted;record(accepted?"ACCEPTED":"FUNCTIONAL_OR_CERTIFICATE_REJECTION",checked.findings);
+      if(accepted){acceptedCertificate=immutableTheoryValue(value.certificate);break;}
+    }
+  } finally {session.revoke();}
+  return immutableTheoryValue({arm,taskId:task.taskId,accepted,outcome,attempts,elapsedMs:Math.max(0,now()-started),calls:attempts.length,
+    toolRequests,toolWorkUnits,toolElapsedMs,acceptedCertificate,authorityIncrease:false});
+}

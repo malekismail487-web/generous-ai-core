@@ -17,7 +17,8 @@ export const WORKBENCH_TRANSFER_EPOCH = Object.freeze({
     supporting: ["INSUFFICIENT_EVIDENCE_IS_VALID", "VERIFIED_CAPABILITY_PER_COMPUTE"],
     deferred: ["OPEN_ENDED_RESEARCH", "MODEL_WEIGHT_ADAPTATION", "DEVICE_AUTHORITY"], conflicts: [] },
 });
-export interface TransferTask { readonly taskId: string; readonly objective: string; readonly problem: ReasoningProblem }
+export interface TransferTask { readonly taskId: string; readonly objective: string;
+  readonly problem: Exclude<ReasoningProblem, { readonly kind: "EXACT_QUANTITATIVE_DERIVATION" }> }
 export interface TransferCertificate { readonly schemaVersion: 1; readonly decision: "SUBMIT";
   readonly status: string; readonly payload: Readonly<Record<string, unknown>>;
   readonly confidence: number; readonly uncertainties: readonly string[] }

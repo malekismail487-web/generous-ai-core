@@ -2,6 +2,10 @@ import { readFileSync } from "node:fs";
 import { BoundedReasoningSession, type ReasoningProblem, type ColoringProblem, type ReachabilityProblem,
   type ExperimentSelectionProblem, type HypothesisEliminationProblem } from "../src/lib/codelab/research/boundedReasoningWorkbench";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
+import { QUANTITATIVE_TASKS, expectedQuantities, referenceQuantitativeProgram, verifyQuantitativeSubmission } from "./omega/nyx-quantitative-transfer-fixtures";
+import type { QuantitativeProblem, QuantitativeProgram } from "../src/lib/codelab/research/exactQuantitativeDerivation";
+import { runNyxQuantitativeTask } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
+import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema,
   materializeFrontierArtifact, frontierArtifactReviewPrompt } from "./omega/nyx-frontier-workbench";
 import { graphPrompt, protocolPrompt, causalPlanPrompt, causalConclusionPrompt, executeCausalExperiments,
@@ -172,7 +176,7 @@ function tool(stage: string, prompt: Readonly<Record<string, unknown>>) {
   const result = adapter.analyze({ schemaVersion: 1, operation: descriptor.operation, problemDigest: descriptor.problemDigest });
   adapter.revoke(); return result;
 }
-function candidate(result: Readonly<Record<string, unknown>>, decision: string) {
+function candidate(result: Readonly<Record<string, unknown>>, decision: string): Record<string, unknown> {
   return { schemaVersion: 1, decision, ...(result.certificateFields as object), uncertainties: [], confidence: 0.8 };
 }
 check(verifyGraphSubmission(candidate(tool("FRONTIER_GRAPH", graphPrompt()), "SUBMIT")).accepted,
@@ -239,5 +243,110 @@ console.log(`NYX_WORKBENCH_DIFFERENTIAL_EVIDENCE ${JSON.stringify({ graphTasks: 
   greedyBaselineSolved: baselineSolved, workbenchSolved: constructed, graphOracleMismatches: mismatches,
   stateTasks: 24, reachabilityMismatches, experimentTasks: 24, selectionMismatches,
   scope: "GENERATED_FINITE_TASKS_NOT_LIVE_MODEL_OR_FRONTIER_CERTIFICATION" })}`);
+function calculation(problem: QuantitativeProblem, program: unknown, maximum = 100_000) {
+  const session=BoundedReasoningSession.create(problem,{maxWorkUnits:maximum,maxElapsedMs:2000,maxRequests:1,expiresAtEpochMs:Date.now()+10000});
+  try {return session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program});}
+  finally {session.revoke();}
+}
+for(const task of QUANTITATIVE_TASKS) {
+  const result=calculation(task.problem,referenceQuantitativeProgram(task));
+  check(result.status==="CONSTRUCTED" && verifyQuantitativeSubmission(task,{outputs:result.payload!.outputs,confidence:1}).accepted,
+    `exact ${task.taskId} computation agrees with independent domain oracle`);
+  const outputs=expectedQuantities(task);
+  check(!verifyQuantitativeSubmission(task,{outputs:outputs.map((o,i)=>i?o:{...o,value:"0"}),confidence:1}).accepted,
+    `independent ${task.taskId} oracle rejects wrong arithmetic even at maximum confidence`);
+  check(!verifyQuantitativeSubmission(task,{outputs:[...outputs,{...outputs[0]}],confidence:1}).accepted,
+    `independent ${task.taskId} oracle rejects duplicate or extra outputs`);
+  check(calculation(task.problem,referenceQuantitativeProgram(task),1).status==="BUDGET_EXHAUSTED",
+    `exact ${task.taskId} exhaustion is not accepted partial arithmetic`);
+}
+const numerical:QuantitativeProblem={kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"a",value:"2"},{id:"b",value:"3"},{id:"zero",value:"0"}]};
+const basic:QuantitativeProgram={schemaVersion:1,registers:[{id:"x",source:"a"},{id:"y",source:"b"}],blocks:[
+  {iterations:1,mode:"SIMULTANEOUS",steps:[{target:"x",op:"ADD",left:"x",right:"y"},{target:"y",op:"SUB",left:"x",right:"y"}]}],
+  outputs:[{label:"x",source:"x"},{label:"y",source:"y"}]};
+check(JSON.stringify(calculation(numerical,basic).payload!.outputs)==='[{"label":"x","value":"5"},{"label":"y","value":"-1"}]',
+  "simultaneous derivation preserves pre-update operands");
+check(JSON.stringify(calculation(numerical,{...basic,blocks:[{...basic.blocks[0],mode:"SEQUENTIAL"}]}).payload!.outputs)
+  ==='[{"label":"x","value":"5"},{"label":"y","value":"2"}]',"sequential derivation reads updated operands");
+for(const op of ["ADD","SUB","MUL","DIV","MIN","MAX"] as const) for(let a=-4;a<=4;a++) for(let b=-3;b<=3;b++) {
+  if(op==="DIV" && b===0) continue;
+  const p:QuantitativeProblem={kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"a",value:String(a)},{id:"b",value:String(b)}]};
+  const program={...basic,registers:[{id:"x",source:"a"}],blocks:[{iterations:1,mode:"SEQUENTIAL",steps:[{target:"x",op,left:"a",right:"b"}]}],outputs:[{label:"x",source:"x"}]};
+  const value=((calculation(p,program).payload!.outputs as {value:string}[])[0].value).split("/").map(Number);
+  const expected=op==="ADD"?a+b:op==="SUB"?a-b:op==="MUL"?a*b:op==="DIV"?a/b:op==="MIN"?Math.min(a,b):Math.max(a,b);
+  check(Math.abs(value[0]/(value[1]??1)-expected)<1e-12,`exact ${op} agrees with separate small-domain arithmetic ${a},${b}`);
+}
+const invalidPrograms:unknown[]=[{...basic,shell:"echo"},{...basic,schemaVersion:2},{...basic,registers:[{id:"a",source:"b"}]},
+  {...basic,registers:[{id:"x",source:"not_authorized"}]},{...basic,outputs:[{label:"x",source:"outside"}]},
+  {...basic,blocks:[{...basic.blocks[0],iterations:1025}]},{...basic,blocks:[{...basic.blocks[0],iterations:-1}]},
+  {...basic,blocks:[{...basic.blocks[0],mode:"PARALLEL"}]},
+  {...basic,blocks:[{...basic.blocks[0],steps:[{target:"a",op:"ADD",left:"a",right:"b"}]}]},
+  {...basic,blocks:[{...basic.blocks[0],steps:[...basic.blocks[0].steps,basic.blocks[0].steps[0]]}]},
+  {...basic,blocks:[{...basic.blocks[0],steps:[{target:"x",op:"EVAL",left:"a",right:"b"}]}]},
+  {...basic,outputs:[basic.outputs[0],basic.outputs[0]]}];
+for(const [at,program] of invalidPrograms.entries()) check(throws(()=>calculation(numerical,program)),`invalid quantitative authority/program ${at} fails closed`);
+let programGetter=false;
+const hostProgram={...basic};Object.defineProperty(hostProgram,"blocks",{enumerable:true,get(){programGetter=true;return basic.blocks;}});
+check(throws(()=>calculation(numerical,hostProgram))&&!programGetter,"model-authored IR accessors are rejected without execution");
+check(throws(()=>calculation({...numerical,constants:[{id:"a",value:"1/0"}]},basic)),"zero-denominator constant rejected before arithmetic");
+const divided=calculation(numerical,{...basic,blocks:[{iterations:1,mode:"SEQUENTIAL",steps:[{target:"x",op:"DIV",left:"a",right:"zero"}]}]});
+check(divided.status==="INSUFFICIENT_EVIDENCE" && divided.payload!.errorCode==="DIVISION_BY_ZERO" && divided.payload!.outputs===null,
+  "mathematical domain failure produces no partially successful certificate");
+const expanded=calculation(numerical,{...basic,blocks:[{iterations:16,mode:"SEQUENTIAL",steps:[{target:"x",op:"MUL",left:"x",right:"x"}]}]});
+check(expanded.status==="INSUFFICIENT_EVIDENCE" && expanded.payload!.errorCode==="INTEGER_BOUND_EXCEEDED",
+  "finite repeated squaring cannot allocate unbounded integers");
+const wrongMix=referenceQuantitativeProgram(QUANTITATIVE_TASKS[0]);
+const wrongCalculation=calculation(QUANTITATIVE_TASKS[0].problem,{...wrongMix,blocks:[{...wrongMix.blocks[0],steps:[
+  ...wrongMix.blocks[0].steps.filter(step=>step.target!=="d"),wrongMix.blocks[0].steps.find(step=>step.target==="d")!]}]});
+check(!verifyQuantitativeSubmission(QUANTITATIVE_TASKS[0],{outputs:wrongCalculation.payload!.outputs,confidence:1}).accepted,
+  "exact arithmetic cannot launder an incorrect state-update model through independent acceptance");
+check(!readFileSync("src/lib/codelab/research/exactQuantitativeDerivation.ts","utf8").includes("quantitative-transfer-fixtures"),
+  "production arithmetic machinery cannot import frozen oracle answers");
+const cognitionTask=QUANTITATIVE_TASKS[0];let cognitionCalls=0;let verifierCalls=0;
+let oracleGetter=false;const maliciousOracleInput={outputs:expectedQuantities(cognitionTask)};
+Object.defineProperty(maliciousOracleInput,"confidence",{enumerable:true,get(){oracleGetter=true;return 1;}});
+check(!verifyQuantitativeSubmission(cognitionTask,maliciousOracleInput).accepted&&!oracleGetter,
+  "independent quantitative detector cannot execute candidate accessors");
+for(const malformed of [null,undefined,[],"text",new Date(),{outputs:expectedQuantities(cognitionTask),confidence:NaN}])
+  check(!verifyQuantitativeSubmission(cognitionTask,malformed).accepted,"malformed quantitative certificate fails closed without oracle crash");
+const cognition=NvidiaNimProvider.create({providerId:"TEST-QUANTITATIVE",model:"nvidia/nemotron-3-ultra-550b-a55b",authorityMode:"TEST_DOUBLE_ONLY",
+  credentialSource:{read:()=>"test-only-non-secret",sourceIdentity:"DETERMINISTIC_TEST_DOUBLE"},maxPromptBytes:32000,maxOutputTokens:4096,timeoutMs:1000,
+  transport:async(_url,init)=>{
+    cognitionCalls++;const request=JSON.parse(String(init?.body));const prompt=JSON.parse(request.messages[1].content);
+    const exchange=cognitionCalls===1?{action:"SHELL",analysisRequest:null,certificate:null}:cognitionCalls===2?
+      {action:"REQUEST_ANALYSIS",analysisRequest:{schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:prompt.availableTool.problemDigest,
+        program:referenceQuantitativeProgram(cognitionTask)},certificate:null}:
+      {action:"SUBMIT",analysisRequest:null,certificate:{outputs:prompt.previousObservation.payload.outputs,confidence:0.9}};
+    return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(exchange)},finish_reason:"stop"}],
+      usage:{prompt_tokens:100,completion_tokens:50,total_tokens:150}}),{status:200,headers:{"Content-Type":"application/json"}});
+  }});
+const limits={maxCalls:4,maxOutputTokens:4096,maxTaskMs:10000,expiresAtEpochMs:Date.now()+20000,maxToolRequests:2,maxToolWorkUnits:100000,maxToolElapsedMs:2000};
+let capturedCompletion: Awaited<ReturnType<typeof cognition.complete>>;
+const liveComposition=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_WITH_WORKBENCH",limits,
+  complete:async request=>{capturedCompletion=await cognition.complete(request);return capturedCompletion;},
+  verify:certificate=>{verifierCalls++;return verifyQuantitativeSubmission(cognitionTask,certificate);}});
+check(liveComposition.accepted && cognitionCalls===3 && verifierCalls===1 && liveComposition.toolRequests===1,
+  "NYX cognition independently requests existing Omega arithmetic then submits to external verifier");
+check(liveComposition.attempts[0].outcome==="PROTOCOL_REJECTION" && !liveComposition.authorityIncrease,
+  "unknown model shell output cannot acquire action authority, and remains correctable within finite budget");
+check(liveComposition.attempts[1].outcome==="DERIVATION_RETURNED_NOT_ACCEPTED" && liveComposition.attempts[1].resultDigest!==null,
+  "exact quantitative result carries evidence without being accepted by its generator");
+let controlToolUsed=false;
+const deniedControl=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_MEDIUM",limits:{...limits,maxCalls:1},
+  complete:async()=>{
+    controlToolUsed=true;
+    return {...capturedCompletion,content:JSON.stringify({action:"REQUEST_ANALYSIS",analysisRequest:{schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",
+      problemDigest:theoryDigest(cognitionTask.problem),program:referenceQuantitativeProgram(cognitionTask)},certificate:null})};
+  },verify:certificate=>verifyQuantitativeSubmission(cognitionTask,certificate)});
+check(controlToolUsed&&!deniedControl.accepted&&deniedControl.toolRequests===0&&deniedControl.outcome==="AUTHORIZATION_REJECTION",
+  "control reasoning cannot gain unavailable workbench authority by emitting a valid tool request");
+let staleClock=1000;
+const late=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_WITH_WORKBENCH",now:()=>staleClock,
+  limits:{...limits,maxCalls:1,expiresAtEpochMs:1002},complete:async()=>{
+    staleClock=1002;
+    return {...capturedCompletion,content:JSON.stringify({action:"SUBMIT",analysisRequest:null,certificate:{outputs:expectedQuantities(cognitionTask),confidence:1}})};
+  },verify:()=>{throw Error("expired_model_cannot_invoke_verifier");}});
+check(!late.accepted&&late.outcome==="LATE_RESPONSE_NOT_ADMITTED"&&late.toolRequests===0
+  &&late.attempts[0].modelEvidence.usage.totalTokens===150,"late model response is unadmitted but spent compute remains accounted");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

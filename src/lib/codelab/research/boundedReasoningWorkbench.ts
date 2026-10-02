@@ -1,9 +1,11 @@
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
 import type { FiniteRefutation, ColoringRefutationNode } from "./finiteRefutationVerifier";
+import { deriveQuantities, validQuantitativeProblem, validQuantitativeProgram, EXACT_DERIVATION_POLICY,
+  type QuantitativeProblem } from "./exactQuantitativeDerivation";
 
 /** Constructive algorithms, not a second model or an acceptance authority. */
 export const NYX_REASONING_WORKBENCH = Object.freeze({
-  version: "nyx-bounded-reasoning-workbench/2",
+  version: "nyx-bounded-reasoning-workbench/3",
   grantsAuthority: false,
   maxInputBytes: 128_000,
   planCoverage: Object.freeze({ status: "PARTIAL_JUST_IN_TIME",
@@ -40,7 +42,7 @@ export interface HypothesisEliminationProblem extends PredictionTable {
     readonly evidenceRef: string }[];
 }
 export type ReasoningProblem = ColoringProblem | ReachabilityProblem | ExperimentSelectionProblem
-  | HypothesisEliminationProblem;
+  | HypothesisEliminationProblem | QuantitativeProblem;
 export interface ReasoningLimits {
   readonly maxWorkUnits: number;
   readonly maxElapsedMs: number;
@@ -111,6 +113,7 @@ function validProblem(value: unknown): value is ReasoningProblem {
   if (!plainData(value) || new TextEncoder().encode(JSON.stringify(value)).byteLength
     > NYX_REASONING_WORKBENCH.maxInputBytes) return false;
   const p = value as ReasoningProblem;
+  if (p?.kind === "EXACT_QUANTITATIVE_DERIVATION") return validQuantitativeProblem(p);
   if (p?.kind === "COLORING") return keys(p, ["kind", "vertices", "edges", "colors", "cliqueSize"])
     && strings(p.vertices, 96) && Array.isArray(p.colors) && p.colors.length > 0 && p.colors.length <= 8
     && p.colors.every((color) => integer(color, 1, 256)) && new Set(p.colors).size === p.colors.length
@@ -354,14 +357,21 @@ export class BoundedReasoningSession {
   descriptor(): Readonly<Record<string, unknown>> {
     return Object.freeze({ schemaVersion: 1, operation: "ANALYZE_FINITE_PROBLEM", problemDigest: this.problemDigest,
       kind: this.#problem.kind, maxWorkUnits: this.#limits.maxWorkUnits, maxRequests: this.#limits.maxRequests,
-      grantsAuthority: false, outputIsNotAcceptance: true });
+      grantsAuthority: false, outputIsNotAcceptance: true,
+      ...(this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" ? { programRequired: true,
+        programPolicy: EXACT_DERIVATION_POLICY } : {}) });
   }
   revoke(): void { this.#revoked = true; }
   analyze(request: unknown): ReasoningToolResult {
     if (this.#revoked || this.#now() >= this.#limits.expiresAtEpochMs) throw new Error("reasoning_session_unavailable");
-    if (!plainData(request) || !keys(request, ["schemaVersion", "operation", "problemDigest"])
+    const quantitative = this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION";
+    if (!plainData(request) || new TextEncoder().encode(JSON.stringify(request)).byteLength > NYX_REASONING_WORKBENCH.maxInputBytes
+      || !keys(request, quantitative ? ["schemaVersion", "operation", "problemDigest", "program"]
+        : ["schemaVersion", "operation", "problemDigest"])
       || request.schemaVersion !== 1 || request.operation !== "ANALYZE_FINITE_PROBLEM"
       || request.problemDigest !== this.problemDigest) throw new Error("reasoning_request_not_authorized");
+    if (this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" && !validQuantitativeProgram(this.#problem, request.program))
+      throw new Error("quantitative_program_invalid");
     if (this.#requests >= this.#limits.maxRequests || this.#workUnits >= this.#limits.maxWorkUnits)
       throw new Error("reasoning_session_budget_exhausted");
     this.#requests += 1;
@@ -372,7 +382,8 @@ export class BoundedReasoningSession {
       if (this.#problem.kind === "COLORING") construction = colorGraph(this.#problem, budget);
       else if (this.#problem.kind === "REACHABILITY") construction = explore(this.#problem, budget);
       else if (this.#problem.kind === "EXPERIMENT_SELECTION") construction = selectExperiments(this.#problem, budget);
-      else construction = eliminate(this.#problem, budget);
+      else if (this.#problem.kind === "HYPOTHESIS_ELIMINATION") construction = eliminate(this.#problem, budget);
+      else if (validQuantitativeProgram(this.#problem, request.program)) construction = deriveQuantities(this.#problem, request.program, budget);
     } catch (error) { if (!(error instanceof SearchBudgetExceeded)) throw error; }
     this.#workUnits += budget.units;
     const result = { version: NYX_REASONING_WORKBENCH.version, inputDigest: this.problemDigest,
