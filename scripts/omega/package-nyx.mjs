@@ -48,7 +48,7 @@ files.set(
 for (const asset of assets) {
   files.set(
     `nyx-ui/${asset}`,
-    await readFile(join(root, "scripts", "omega", "nyx-ui", asset)),
+    Buffer.from((await readFile(join(root, "scripts", "omega", "nyx-ui", asset), "utf8")).replace(/\r\n/g, "\n")),
   );
 }
 const hashes = Object.fromEntries(

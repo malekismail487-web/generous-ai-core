@@ -11,7 +11,9 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $package = Join-Path $repository 'packages\nyx-windows'
 $installer = Join-Path $PSScriptRoot 'install-nyx.ps1'
 $ref = '0' * 40
-$archiveName = 'malekismail487-web-nyx-local-0.1.0.tgz'
+$packageVersion = (Get-Content -LiteralPath (Join-Path $package 'package.json') -Raw | ConvertFrom-Json).version
+if ($packageVersion -notmatch '^\d+\.\d+\.\d+$') { throw 'Unexpected NYX package version.' }
+$archiveName = "malekismail487-web-nyx-local-$packageVersion.tgz"
 
 function Get-FileSha256([string]$Path) {
   $sha = [Security.Cryptography.SHA256]::Create()

@@ -1,6 +1,6 @@
 {
   "name": "@malekismail487-web/nyx-local",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "User-scoped Νύξ local engineering chat console",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",

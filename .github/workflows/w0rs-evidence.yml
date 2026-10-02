@@ -42,6 +42,10 @@ jobs:
           scripts/omega/nyx-research-party-live-eval.ts
       - name: Build production bundle without deployment
         run: npm run build
+      - name: Verify packaged NYX matches source and launches without credentials
+        run: |
+          node scripts/omega/package-nyx.mjs --check
+          node scripts/omega/test-nyx-package.mjs
       - name: Verify generated repository inventories
         run: node scripts/w0rs/inventory.mjs --check
       - name: Verify deterministic migration-failure evidence

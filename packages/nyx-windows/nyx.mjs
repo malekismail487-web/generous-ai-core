@@ -100,16 +100,26 @@ var NyxChatSession = class _NyxChatSession {
   #history = [];
   #observed = /* @__PURE__ */ new Map();
   #turnNumber = 0;
+  #turnActive = false;
   constructor(config) {
-    this.#config = config;
+    this.#config = Object.freeze({ ...config, editablePaths: Object.freeze([...config.editablePaths]) });
   }
   static create(config) {
-    if (!config.sessionId || !Number.isSafeInteger(config.maxModelCallsPerTurn) || config.maxModelCallsPerTurn < 1 || config.maxModelCallsPerTurn > 12 || !Number.isSafeInteger(config.maxCandidatesPerTurn) || config.maxCandidatesPerTurn < 0 || config.maxCandidatesPerTurn > 4 || !Number.isSafeInteger(config.maxTurnMs) || config.maxTurnMs < 1e3 || config.maxTurnMs > 6e5 || !Number.isSafeInteger(config.maxOutputTokens) || config.maxOutputTokens < 128 || config.maxOutputTokens > 16384 || new Set(config.editablePaths).size !== config.editablePaths.length) {
+    if (!config.sessionId || !Number.isSafeInteger(config.maxModelCallsPerTurn) || config.maxModelCallsPerTurn < 1 || config.maxModelCallsPerTurn > 12 || !Number.isSafeInteger(config.maxCandidatesPerTurn) || config.maxCandidatesPerTurn < 0 || config.maxCandidatesPerTurn > 4 || !Number.isSafeInteger(config.maxTurnMs) || config.maxTurnMs < 1e3 || config.maxTurnMs > 6e5 || !Number.isSafeInteger(config.maxOutputTokens) || config.maxOutputTokens < 128 || config.maxOutputTokens > 16384 || !Array.isArray(config.editablePaths) || config.editablePaths.some((path) => !nyxSafeRelativePath(path)) || new Set(config.editablePaths).size !== config.editablePaths.length) {
       throw new Error("nyx_chat_session_policy_invalid");
     }
     return new _NyxChatSession(config);
   }
   async turn(userInput) {
+    if (this.#turnActive) throw new Error("nyx_chat_turn_already_active");
+    this.#turnActive = true;
+    try {
+      return await this.#runTurn(userInput);
+    } finally {
+      this.#turnActive = false;
+    }
+  }
+  async #runTurn(userInput) {
     if (!userInput.trim() || userInput.length > 8e3) throw new Error("user_input_outside_bounds");
     if (nyxContainsSecretLike(userInput)) throw new Error("user_input_credential_pattern_blocked");
     this.#turnNumber += 1;
@@ -192,6 +202,18 @@ Unverified model note: ${message}` : message;
       if (response.decision !== "COMPLETED" || !response.content) {
         return finish("MODEL_FAILURE", `Model delivery ended: ${response.evidence.failureCategory ?? response.reason}. No source files changed.`);
       }
+      if (response.finishReason !== "stop") {
+        event(
+          "DENIAL",
+          { requestId },
+          { reason: "model_completion_incomplete", finishReason: response.finishReason },
+          "E3",
+          `${requestId}-DENIAL`,
+          "REJECTED"
+        );
+        return finish("MODEL_FAILURE", "The model completion was incomplete; Omega executed no action from it.");
+      }
+      if (Date.now() >= deadline) return finish("BUDGET_EXHAUSTED", "The turn expired before action authorization; no late result was executed.");
       const parsed = parseNyxChatAction(response.content);
       if (!parsed.action) {
         malformed += 1;
@@ -2084,6 +2106,18 @@ var ReadOnlyRepositoryExecutor = class _ReadOnlyRepositoryExecutor {
 };
 
 // src/lib/codelab/cli/nyxIsolatedCandidate.ts
+function rejectedCandidate(request, reason) {
+  return {
+    decision: "REJECTED",
+    reason,
+    candidateId: null,
+    evidenceId: `NYX-CANDIDATE-REJECTED-${nyxSha256(`${request.requestId}:${reason}`).slice(0, 24)}`,
+    sourceRepositoryMutated: false,
+    authorityGranted: false,
+    verification: "NOT_CONFIGURED",
+    changedPath: null
+  };
+}
 var NyxIsolatedCandidateWriter = class _NyxIsolatedCandidateWriter {
   #config;
   #sourceRoot;
@@ -2095,13 +2129,16 @@ var NyxIsolatedCandidateWriter = class _NyxIsolatedCandidateWriter {
   #currentHash = null;
   #currentCandidateId = null;
   #observationSequence = 0;
+  #operationCompletion = null;
+  #closePromise = null;
   constructor(config, sourceRoot, scratchRoot) {
-    this.#config = config;
+    this.#config = Object.freeze({ ...config });
     this.#sourceRoot = sourceRoot;
     this.#scratchRoot = scratchRoot;
     this.#currentRoot = sourceRoot;
   }
   static async create(config) {
+    config = Object.freeze({ ...config });
     if (!nyxSafeRelativePath(config.editablePath) || config.verifierPath !== null && !nyxSafeRelativePath(config.verifierPath) || config.verifierPath === config.editablePath || !/^[a-f0-9]{40}$/.test(config.candidateCommit) || !Number.isSafeInteger(config.maxCandidateBytes) || config.maxCandidateBytes < 1 || config.maxCandidateBytes > 65536 || !Number.isSafeInteger(config.maxVerifierMs) || config.maxVerifierMs < 100 || config.maxVerifierMs > 3e4) {
       throw new Error("nyx_candidate_config_invalid");
     }
@@ -2117,7 +2154,26 @@ var NyxIsolatedCandidateWriter = class _NyxIsolatedCandidateWriter {
   get scratchRoot() {
     return this.#scratchRoot;
   }
+  #ownOperation() {
+    let release;
+    this.#operationCompletion = new Promise((resolve7) => {
+      release = resolve7;
+    });
+    return () => {
+      this.#operationCompletion = null;
+      release();
+    };
+  }
   async observeCandidate(path) {
+    if (this.#closed || this.#operationCompletion) throw new Error("isolated_candidate_not_observable");
+    const release = this.#ownOperation();
+    try {
+      return await this.#observeOwnedCandidate(path);
+    } finally {
+      release();
+    }
+  }
+  async #observeOwnedCandidate(path) {
     if (this.#closed || path !== this.#config.editablePath || this.#currentRoot === this.#sourceRoot || this.#currentHash === null || this.#currentCandidateId === null) {
       throw new Error("isolated_candidate_not_observable");
     }
@@ -2163,16 +2219,17 @@ var NyxIsolatedCandidateWriter = class _NyxIsolatedCandidateWriter {
     }
   }
   async apply(request) {
-    const fail = (reason) => ({
-      decision: "REJECTED",
-      reason,
-      candidateId: null,
-      evidenceId: `NYX-CANDIDATE-REJECTED-${nyxSha256(`${request.requestId}:${reason}`).slice(0, 24)}`,
-      sourceRepositoryMutated: false,
-      authorityGranted: false,
-      verification: "NOT_CONFIGURED",
-      changedPath: null
-    });
+    if (this.#closed) return rejectedCandidate(request, "candidate_writer_closed");
+    if (this.#operationCompletion) return rejectedCandidate(request, "candidate_operation_already_active");
+    const release = this.#ownOperation();
+    try {
+      return await this.#applyOwnedCandidate(request);
+    } finally {
+      release();
+    }
+  }
+  async #applyOwnedCandidate(request) {
+    const fail = (reason) => rejectedCandidate(request, reason);
     if (this.#closed) return fail("candidate_writer_closed");
     if (request.path !== this.#config.editablePath || !nyxSafeRelativePath(request.path) || Buffer.byteLength(request.replacement, "utf8") > this.#config.maxCandidateBytes) return fail("candidate_scope_or_size_rejected");
     if (!/^[a-f0-9]{64}$/.test(request.expectedBaseHash)) return fail("candidate_base_hash_invalid");
@@ -2427,21 +2484,27 @@ var NyxIsolatedCandidateWriter = class _NyxIsolatedCandidateWriter {
     };
   }
   /** A failed preflight leaves scratch material quarantined, rather than broadening deletion. */
-  async close() {
-    if (this.#closed) return { decision: "CLEANED", path: this.#scratchRoot };
+  close() {
+    if (this.#closePromise) return this.#closePromise;
     this.#closed = true;
-    const canonicalTmp = await realpath5(tmpdir());
-    const canonicalScratch = await realpath5(this.#scratchRoot);
-    if (dirname2(canonicalScratch) !== canonicalTmp || !canonicalScratch.split(sep5).at(-1)?.startsWith("nyx-cli-")) {
-      return { decision: "QUARANTINED", path: this.#scratchRoot };
-    }
-    if (!await safeTree(canonicalScratch)) return { decision: "QUARANTINED", path: this.#scratchRoot };
+    this.#closePromise = this.#cleanup(this.#operationCompletion);
+    return this.#closePromise;
+  }
+  async #cleanup(ownedOperation) {
+    if (ownedOperation) await ownedOperation;
+    const quarantine = () => Object.freeze({ decision: "QUARANTINED", path: this.#scratchRoot });
     try {
+      const canonicalTmp = await realpath5(tmpdir());
+      const canonicalScratch = await realpath5(this.#scratchRoot);
+      if (dirname2(canonicalScratch) !== canonicalTmp || !canonicalScratch.split(sep5).at(-1)?.startsWith("nyx-cli-")) {
+        return quarantine();
+      }
+      if (!await safeTree(canonicalScratch)) return quarantine();
       await rm(canonicalScratch, { recursive: true, force: false });
+      return Object.freeze({ decision: "CLEANED", path: this.#scratchRoot });
     } catch {
-      return { decision: "QUARANTINED", path: this.#scratchRoot };
+      return quarantine();
     }
-    return { decision: "CLEANED", path: this.#scratchRoot };
   }
 };
 function inside(root, candidate) {
@@ -2975,7 +3038,12 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
       temperature: request.temperature,
       stream: false,
       ...responseFormat ? { response_format: responseFormat } : {},
-      ...request.inferencePolicy === "CONSTRAINED_JSON" || request.inferencePolicy === "REASONING_JSON" ? { chat_template_kwargs: { enable_thinking: request.inferencePolicy === "REASONING_JSON", force_nonempty_content: true } } : {}
+      ...request.inferencePolicy === "CONSTRAINED_JSON" || request.inferencePolicy === "REASONING_JSON" ? { chat_template_kwargs: {
+        enable_thinking: request.inferencePolicy === "REASONING_JSON",
+        force_nonempty_content: true,
+        ...request.reasoningBudgetTokens !== void 0 ? { reasoning_budget: request.reasoningBudgetTokens } : {},
+        ...request.reasoningEffort === "MEDIUM" ? { medium_effort: true } : {}
+      } } : {}
     };
     const requestDigest = sha2563(canonical4({ requestId, ...payload }));
     const issues = [];
@@ -2989,6 +3057,8 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
     if (request.responseFormat !== void 0 && responseFormat === null) issues.push("completion_response_format_invalid");
     if (request.inferencePolicy !== void 0 && !["CONSTRAINED_JSON", "REASONING_JSON"].includes(request.inferencePolicy)) issues.push("completion_inference_policy_invalid");
     if (request.inferencePolicy !== void 0 && responseFormat === null) issues.push("completion_constrained_json_requires_response_format");
+    if (request.reasoningEffort !== void 0 && (request.reasoningEffort !== "MEDIUM" || request.inferencePolicy !== "REASONING_JSON" || this.#config.model !== "nvidia/nemotron-3-ultra-550b-a55b")) issues.push("completion_reasoning_effort_invalid");
+    if (request.reasoningBudgetTokens !== void 0 && (!Number.isSafeInteger(request.reasoningBudgetTokens) || request.reasoningBudgetTokens < 0 || request.reasoningBudgetTokens >= request.maxTokens || request.inferencePolicy !== "REASONING_JSON" || this.#config.model !== "nvidia/nemotron-3-ultra-550b-a55b")) issues.push("completion_reasoning_budget_invalid");
     if (Buffer.byteLength(canonical4(request.messages), "utf8") > this.#config.maxPromptBytes) issues.push("completion_prompt_bound_exceeded");
     if (issues.length > 0) return this.#result("REJECTED", [...new Set(issues)].join(","), null, null, requestDigest, null, null, emptyUsage(), false);
     const body = JSON.stringify(payload);
@@ -3091,10 +3161,9 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
         waitVisible = true;
         continue;
       }
-      if ([502, 503, 504].includes(previous.evidence.statusCode ?? 0)) {
+      if ([500, 502, 503, 504].includes(previous.evidence.statusCode ?? 0)) {
         transientUnavailableResponses += 1;
         if (this.#capacity && transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries) {
-          this.#capacity.defer(null);
           waitVisible = true;
           continue;
         }
@@ -3165,23 +3234,52 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
       );
     }
     let timeoutTriggered = false;
+    let networkAttempted = false;
     const timeout = setTimeout(() => {
       timeoutTriggered = true;
       controller.abort();
     }, Math.min(this.#config.timeoutMs, remainingMs));
+    const bounded = (operation) => new Promise((resolve7, reject) => {
+      const aborted = () => {
+        cleanup();
+        reject(new DOMException("Provider request aborted", "AbortError"));
+      };
+      const cleanup = () => controller.signal.removeEventListener("abort", aborted);
+      if (controller.signal.aborted) {
+        aborted();
+        return;
+      }
+      controller.signal.addEventListener("abort", aborted, { once: true });
+      Promise.resolve().then(() => {
+        controller.signal.throwIfAborted();
+        return operation();
+      }).then((value) => {
+        cleanup();
+        resolve7(value);
+      }, (error) => {
+        cleanup();
+        reject(error);
+      });
+    });
     try {
-      this.#capacity?.recordDispatch();
-      const response = await this.#transport(NVIDIA_NIM_CHAT_COMPLETIONS_URL, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${credential}`, Accept: "application/json", "Content-Type": "application/json" },
-        body,
-        signal: controller.signal
+      const response = await bounded(() => {
+        this.#capacity?.recordDispatch();
+        networkAttempted = true;
+        return this.#transport(NVIDIA_NIM_CHAT_COMPLETIONS_URL, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${credential}`, Accept: "application/json", "Content-Type": "application/json" },
+          body,
+          signal: controller.signal
+        });
       });
       const providerRequestId = safeProviderRequestId(response.headers.get("x-request-id") ?? response.headers.get("request-id"));
       if (!response.ok) {
-        if (response.status === 429) this.#capacity?.defer(response.headers.get("retry-after"));
+        if ([429, 500, 502, 503, 504].includes(response.status)) {
+          this.#capacity?.defer(response.headers.get("retry-after"));
+        }
+        controller.abort();
         try {
-          await response.body?.cancel();
+          void response.body?.cancel().catch(() => void 0);
         } catch {
         }
         return this.#result(
@@ -3199,8 +3297,9 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
       }
       let parsed;
       try {
-        parsed = await response.json();
-      } catch {
+        parsed = await bounded(() => response.json());
+      } catch (error) {
+        if (controller.signal.aborted) throw error;
         return this.#result(
           "PROVIDER_ERROR",
           "nvidia_provider_response_not_json",
@@ -3267,8 +3366,8 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
         reasoningOutputBytes
       );
     } catch (error) {
-      const reason = error instanceof Error && error.name === "AbortError" ? timeoutTriggered ? "nvidia_provider_timeout" : "nvidia_provider_cancelled" : "nvidia_provider_transport_failure";
-      return this.#result("PROVIDER_ERROR", reason, null, null, requestDigest, null, null, emptyUsage(), true);
+      const reason = timeoutTriggered ? "nvidia_provider_timeout" : signal.aborted || error instanceof Error && error.name === "AbortError" ? "nvidia_provider_cancelled" : "nvidia_provider_transport_failure";
+      return this.#result("PROVIDER_ERROR", reason, null, null, requestDigest, null, null, emptyUsage(), networkAttempted);
     } finally {
       clearTimeout(timeout);
       signal.removeEventListener("abort", abort);
@@ -3648,13 +3747,13 @@ var NyxLocalWebConsole = class {
           this.#json(res, 409, { error: "session_already_configured" });
           return;
         }
-        const parsed = parseSetup(await bodyJson(req));
-        if (!parsed) {
-          this.#json(res, 400, { error: "invalid_authority_configuration" });
-          return;
-        }
         this.#busy = true;
         try {
+          const parsed = parseSetup(await bodyJson(req));
+          if (!parsed) {
+            this.#json(res, 400, { error: "invalid_authority_configuration" });
+            return;
+          }
           this.#runtime = await (this.#config.createRuntime ?? createNyxLocalRuntime)(parsed, {
             environment: this.#config.environment,
             approveDesktopAction: (action) => this.#approvals.request(action),
@@ -3682,14 +3781,14 @@ var NyxLocalWebConsole = class {
           });
           return;
         }
-        const value = await bodyJson(req);
-        if (!value || typeof value !== "object" || Array.isArray(value) || !exactKeys2(value, ["message"]) || typeof value.message !== "string") {
-          this.#json(res, 400, { error: "invalid_chat_message" });
-          return;
-        }
         this.#busy = true;
-        this.#turns += 1;
         try {
+          const value = await bodyJson(req);
+          if (!value || typeof value !== "object" || Array.isArray(value) || !exactKeys2(value, ["message"]) || typeof value.message !== "string") {
+            this.#json(res, 400, { error: "invalid_chat_message" });
+            return;
+          }
+          this.#turns += 1;
           const result = await this.#runtime.session.turn(
             value.message
           );
