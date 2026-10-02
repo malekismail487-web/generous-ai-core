@@ -445,6 +445,82 @@ check(recoveryCheckpoint.integrityClassification === "SELF_CONTAINED_HASH_MANIFE
   && recoveryReport.evidence.cognition === "E4" && recoveryReport.evidence.experimentsAndOracle === "E3"
   && !recoveryReport.evidence.independentInstitutionalReplication,
 "archive replay and E3 oracle independence remain weaker than institutional replication or signed custody");
+// A new delivery configuration and fresh corpus do not erase earlier failures.
+const boundedRoot = "scripts/omega/checkpoints/bounded-output/";
+const boundedCheckpoint = JSON.parse(readFileSync(`${boundedRoot}checkpoint.json`, "utf8"));
+const boundedReport = JSON.parse(readFileSync(`${boundedRoot}comparison.json`, "utf8"));
+check(boundedCheckpoint.schemaVersion === 1 && boundedCheckpoint.reportFile === "comparison.json"
+  && checkpointDigest(boundedReport) === boundedCheckpoint.canonicalReportSha256
+  && boundedCheckpoint.canonicalReportSha256 === "050dcd1780a5e6a75fbe00f7fc703253d0754d54d59a4cc642a88acb1cab2c3d",
+  "bounded-output archive preserves the exact negative E4 report rather than regenerating a successful one");
+check(boundedReport.candidateCommit === boundedCheckpoint.runtimeBaselineCommit
+  && boundedReport.candidateCommit === "05e92b46db43e2d72e8ad93cfa9ac99e5d48df3d"
+  && boundedReport.corpus === "COVERAGE_TRANSFER_V2"
+  && boundedReport.corpusDigest === NYX_COVERAGE_TRANSFER_V2_CORPUS_DIGEST
+  && boundedReport.corpusDigest !== recoveryReport.corpusDigest,
+  "fresh runtime and corpus identities cannot be conflated with the inspected recovery pair");
+for (const [path, expected] of Object.entries(boundedCheckpoint.runtimeSourceHashes)) {
+  check(/^(src|scripts)\/[A-Za-z0-9_./-]+\.(ts|mjs)$/.test(path) && !path.split("/").includes(".."),
+    "bounded-output source reconstruction is confined to enumerated dependencies");
+  const source = execFileSync("git", ["show", `${boundedReport.candidateCommit}:${path}`],
+    { encoding: "utf8", timeout: 10_000 }).replace(/\r\n/g, "\n");
+  check(createHash("sha256").update(source).digest("hex") === expected,
+    "output configuration, lease settlement, graph, oracle and fresh task source bind to the exercised candidate");
+}
+const dispatch = execFileSync("git", ["show",
+  `${boundedReport.candidateCommit}:.github/workflows/omega-nyx-research-party-live-eval.yml`],
+{ encoding: "utf8", timeout: 10_000 }).replace(/\r\n/g, "\n");
+check(createHash("sha256").update(dispatch).digest("hex") === boundedCheckpoint.dispatchWorkflowSha256,
+  "live dispatch attribution survives removal of its one-off push trigger");
+check(boundedReport.completedArms === 1 && boundedReport.requestedArms === 6
+  && boundedReport.records.length === 1 && boundedCheckpoint.incompleteArms.length === 5
+  && boundedCheckpoint.incompleteArms.every((arm: { taskId: string; policy: string; state: string }) =>
+    arm.state === "NOT_EXECUTED" && !boundedReport.records.some((r: { taskId: string; policy: string }) =>
+      r.taskId === arm.taskId && r.policy === arm.policy)),
+  "five missing arms are neither fabricated results nor hidden successful samples");
+const boundedControl = boundedReport.records[0];
+check(boundedControl.assurance.decision === "INSUFFICIENT_EVIDENCE"
+  && boundedControl.assurance.evidenceIntegrityAcceptance && boundedControl.assurance.authorityBoundaryAcceptance
+  && boundedControl.cognitionOutcomeCounts.PROVIDER_FAILURE === 2
+  && boundedControl.cognitionEvidence.filter((e: { statusCode: number; delivery: { httpAttempts: number } }) =>
+    e.statusCode === 503 && e.delivery.httpAttempts === 2).length === 2,
+  "two exhausted provider retries remain external delivery failures rather than reasoning scores");
+check(boundedControl.cognitionOutcomeCounts.OUTPUT_TRUNCATION === 0
+  && boundedControl.cognitionOutcomeCounts.MODEL_OUTPUT_REJECTION === 1
+  && boundedControl.cognitionOutcomes.some((outcome: { diagnostics: string[] }) =>
+    outcome.diagnostics.includes("intent_scalar_thesis_invalid"))
+  && boundedCheckpoint.reliabilityObservation.causalTruncationReductionEstablished === false,
+  "no observed truncation in five deliveries is limited evidence, not a causal fix or absence of scalar errors");
+check(boundedControl.decision.state === "REFUTED_MODELED_FAMILY"
+  && boundedControl.decision.assessments.some((assessment: { mechanismId: string; falsifyingObservationIds: string[] }) =>
+    assessment.mechanismId === "READ_SLIDING" && assessment.falsifyingObservationIds.length > 0),
+  "selecting the correct mechanism name does not override independently falsified forecasts");
+check(boundedControl.resourceUsage.totalTokens === null && boundedControl.transport.httpAttempts === 9
+  && boundedControl.resourceUsage.modelCalls === 7 && boundedControl.resourceUsage.experiments === 2
+  && boundedControl.cognitionEvidence.reduce((sum: number, item: { totalTokens: number | null }) =>
+    sum + (item.totalTokens ?? 0), 0) === 17857
+  && boundedCheckpoint.resourceSummary.reportedTokenLowerBound === 17857,
+  "seven calls, nine HTTP attempts, two experiments and incomplete token consumption stay distinct");
+check(checkpointDigest(analyzeCoverageTransfer(boundedReport.selectedTaskIds, boundedReport.records))
+  === checkpointDigest(boundedReport.pairedAnalysis) && boundedReport.pairedAnalysis.completePairs === 0
+  && boundedReport.pairedAnalysis.computeComparableWins === 0 && !boundedReport.realizedComputeMatched,
+  "an incomplete epoch cannot establish matched compute or a cognitive gain");
+check(boundedReport.matchedLimits.maxOutputTokensPerCall === recoveryReport.matchedLimits.maxOutputTokensPerCall
+  && checkpointDigest(boundedReport.matchedLimits) === checkpointDigest(recoveryReport.matchedLimits)
+  && boundedReport.emissionPolicy.sharedAcrossArms && !boundedReport.emissionPolicy.localParserChanged
+  && !boundedReport.emissionPolicy.hardThinkingTokenLimit,
+  "emission experiment preserves common budgets and does not claim a server-enforced thinking cap");
+const parser = (source: string) => source.split("  #parseIntent(")[1].split("  #result(")[0];
+check(parser(readFileSync("src/lib/codelab/research/nyxNemotronTheoryCognition.ts", "utf8")) === parser(execFileSync("git", ["show",
+  `${boundedCheckpoint.previousRuntimeReference}:src/lib/codelab/research/nyxNemotronTheoryCognition.ts`], { encoding: "utf8" })),
+  "general output repair does not edit the authoritative semantic parser");
+check(boundedReport.verdict === "INCONCLUSIVE_PROVIDER_FAILURE" && boundedReport.providerBlocked
+  && !boundedReport.executionBlocked && boundedReport.acceptanceViolations === 0
+  && !boundedReport.broadPromotion && !boundedReport.defaultPolicyChanged
+  && !boundedCheckpoint.authorityIncrease && !boundedCheckpoint.capabilityImprovementDemonstrated
+  && !boundedCheckpoint.certifiesCurrentRuntime && boundedControl.sourceRepositoryUnchanged,
+  "infrastructure work and preserved trust remain supporting progress, not frontier capability certification");
+
 console.log(`NYX_EXECUTABLE_TRANSFER_PREFLIGHT ${JSON.stringify({ schemaVersion: 1,
   corpusDigest: NYX_RESEARCH_TRANSFER_CORPUS_DIGEST, actualCognition: "NOT_EXECUTED",
   oracleMutantsRejected: 3, evidenceClass: "E3", broadPromotion: false, authorityGranted: false })}`);

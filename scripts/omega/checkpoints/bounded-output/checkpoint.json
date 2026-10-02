@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "checkpointId": "NYX-BOUNDED-OUTPUT-CHECKPOINT-001",
+  "chunkId": "NYX-COVERAGE-TRANSFER-V2-001",
+  "supportingChunkId": "NYX-BOUNDED-OUTPUT-RELIABILITY-001",
+  "runtimeBaselineCommit": "05e92b46db43e2d72e8ad93cfa9ac99e5d48df3d",
+  "previousRuntimeReference": "efcfaa86d4657e6462c20e54445c2c49b8abec53",
+  "reportFile": "comparison.json",
+  "canonicalReportSha256": "050dcd1780a5e6a75fbe00f7fc703253d0754d54d59a4cc642a88acb1cab2c3d",
+  "runtimeSourceHashes": {
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "6fdea92b31b426e601f78cde69a7db08a0fd56762703e5249b6de9a58edefc45",
+    "src/lib/codelab/research/nyxNemotronTheoryCognition.ts": "cdb51439fed06faeedd7b45c897214f6491c03fa4cc3533fb1a637a6e413abc8",
+    "src/lib/codelab/research/theoryResearchParty.ts": "eb81b193c7f162561c614b8743121d063f89ed44c2e944481fe0de1331bdb98a",
+    "src/lib/codelab/research/hypothesisCoverage.ts": "f90d79008b2c5e042024236f361c2bc42d72bf579d370d8d769bba6dd4159e3c",
+    "src/lib/codelab/research/researchPartyContracts.ts": "ceea1c1ce5fe3d375eddb3dd7effb387a512882d3a9434d27192b4a23dbc867c",
+    "src/lib/codelab/research/researchPartyAssurance.ts": "bff3296c1e840c38a314568de2888883cba7b81c2132dfa34b8c826151adc759",
+    "src/lib/codelab/research/researchEvidenceGraph.ts": "7ccdab58f60197cd859d069b3d8a843b1bc5f24b56ad0cd54f5258028e721368",
+    "src/lib/codelab/research/coverageTransferAnalysis.ts": "a717444d4acac8680b221819394a949ac82c10855ca439931f1ad38e5d4056d5",
+    "scripts/omega/nyx-coverage-transfer-v2-fixtures.ts": "ea21250440de67b2d37af1ca514860fb14f5dd4443d0bbbf83a86f82fa8cbe84",
+    "scripts/omega/nyx-hypothesis-coverage-fixtures.ts": "bec9306bc249fec0d65ec7e2c0f79c869c846cfd96d11a4faaccb4dc111f23df",
+    "scripts/omega/nyx-research-party-live-eval.ts": "c860030431050e7c46a7e2a6adbea931255bc27c35de91520459a3858a05ddbb"
+  },
+  "dispatchWorkflowSha256": "78469efd6eb127dd6f9773d5d3ef230b0db5471e6d75b6a6291cd2365adb7923",
+  "integrityClassification": "SELF_CONTAINED_HASH_MANIFEST_NOT_SIGNED_CUSTODY",
+  "runtimeHashCanonicalization": "SHA256_UTF8_SOURCE_NORMALIZED_CRLF_TO_LF",
+  "sourceEvidence": {
+    "repository": "malekismail487-web/generous-ai-core",
+    "runId": 36999004254,
+    "jobId": 110812137800,
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/36999004254",
+    "runConclusion": "failure",
+    "deterministicPreflight": "PASSED",
+    "providerSmoke": "COMPLETED_SENTINEL_OBSERVED",
+    "sourceRepositoryUnchanged": true
+  },
+  "scope": "FRESH_TO_LIVE_NYX_AUTHOR_DESIGNED_DEVELOPMENT_COMPARISON_NOT_SEALED_VALIDATION",
+  "evaluationTier": "DEVELOPMENT",
+  "corpusDigest": "3e22f8ee070d1c56f8aede0dd3b8eafb2eb0d15684f3066a4c14e7f1c746f031",
+  "coverageStatus": "PARTIAL_JUST_IN_TIME",
+  "reliabilityMaturity": "IMPLEMENTED_AND_LOCALLY_VERIFIED",
+  "liveComparisonState": "INCONCLUSIVE_PROVIDER_FAILURE",
+  "epistemicState": "INSUFFICIENT_EVIDENCE",
+  "certifiesCurrentRuntime": false,
+  "defaultPolicyChanged": false,
+  "broadPromotion": false,
+  "authorityIncrease": false,
+  "capabilityImprovementDemonstrated": false,
+  "hypothesis": "Allocation improves evidence-backed mechanism identification over identical derivation guidance without extra model compute.",
+  "supportCriterion": "Reproducible acceptance or efficiency advantage on fresh cross-domain tasks with observed comparable resources and preserved independent oracles.",
+  "falsificationCriterion": "No reproducible advantage, inferior capability per compute, or additional failures versus the simpler control.",
+  "competingExplanations": [
+    "Provider delivery instability prevents clean paired observation.",
+    "A correct mechanism name can carry incorrectly derived forecasts; coverage and derivation are different failure classes.",
+    "Medium-effort and compact prompt controls may affect reasoning quality as well as emission, so both comparison arms use identical settings."
+  ],
+  "measurement": {
+    "population": "Three newly frozen software, mathematics and toy science families; six counterbalanced arms.",
+    "maximumLogicalCallsPerArm": 11,
+    "maximumOutputTokensPerCall": 1536,
+    "maximumExperimentsPerArm": 3,
+    "maximumWallClockMsPerArm": 900000,
+    "tokenSpreadEnvelope": 0.1,
+    "exactComputeMatchRequiredForExactClaim": true,
+    "gpuCompute": "NOT_MEASURED",
+    "calibration": "NOT_ESTABLISHED"
+  },
+  "incompleteArms": [
+    {
+      "taskId": "NYX-TRANSFER-TTL",
+      "policy": "ROTATING_PARTITION",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    },
+    {
+      "taskId": "NYX-TRANSFER-PERMUTATION",
+      "policy": "DERIVATION_ONLY",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    },
+    {
+      "taskId": "NYX-TRANSFER-PERMUTATION",
+      "policy": "ROTATING_PARTITION",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    },
+    {
+      "taskId": "NYX-TRANSFER-CHEMISTRY",
+      "policy": "DERIVATION_ONLY",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    },
+    {
+      "taskId": "NYX-TRANSFER-CHEMISTRY",
+      "policy": "ROTATING_PARTITION",
+      "state": "NOT_EXECUTED",
+      "reason": "CAMPAIGN_STOPPED_ON_PROVIDER_FAILURE"
+    }
+  ],
+  "resourceSummary": {
+    "requestedArms": 6,
+    "completedArms": 1,
+    "completePairs": 0,
+    "modelCallReservations": 7,
+    "httpAttempts": 9,
+    "experiments": 2,
+    "reportedTokenLowerBound": 17857,
+    "completeTokenTotal": null,
+    "smokeModelCallReservations": 1,
+    "smokeReportedTokens": 121,
+    "comparisonArmWallClockMs": 371246,
+    "capacityWaitMs": 239996,
+    "transientUnavailableResponses": 4,
+    "timedOutAttempts": 0,
+    "rateLimitedResponses": 0,
+    "knownMonetaryCost": null,
+    "gpuTime": null
+  },
+  "reliabilityObservation": {
+    "configuration": "EXPLICIT_ULTRA_MEDIUM_EFFORT_PLUS_BUDGET_BOUND_COMPACT_OUTPUT",
+    "providerControlReference": "https://build.nvidia.com/nvidia/nemotron-3-ultra-550b-a55b/modelcard",
+    "deliveredCompletions": 5,
+    "outputTruncations": 0,
+    "scalarRejections": 1,
+    "invalidScalarField": "THESIS",
+    "rawRejectedContentRetained": false,
+    "exactScalarViolation": "UNKNOWN_NOT_RECONSTRUCTED",
+    "hardThinkingTokenLimit": false,
+    "outputCeilingsIncreased": false,
+    "extraRepairModelCalls": 0,
+    "localParserChanged": false,
+    "independentAcceptanceChanged": false,
+    "causalTruncationReductionEstablished": false
+  },
+  "failureClassification": {
+    "provider": "TWO_PERSISTENT_HTTP_503_DELIVERIES_EACH_AFTER_ONE_TRANSIENT_RETRY",
+    "providerBodyOrRootCause": "NOT_CAPTURED",
+    "modelOutput": "META_REVIEWER_THESIS_SCALAR_INVALID",
+    "reasoning": "PRECOMMITTED_FORECASTS_FALSIFIED_ON_NEW_TTL_TASK",
+    "forecastErrorGranularity": "RAW_FORECASTS_NOT_ARCHIVED_DO_NOT_INFER_EXACT_ARITHMETIC_OR_BOUNDARY_ERROR",
+    "falseAcceptances": 0,
+    "leaseFailureObserved": false,
+    "sourceMutation": false,
+    "authorityDelta": false
+  },
+  "promotionDecision": "NOT_PROMOTED_INCOMPLETE_PROVIDER_CONFOUNDED_COMPARISON",
+  "blocker": "PROVIDER_STABILITY_REQUIRED_FOR_MATCHED_LIVE_EVIDENCE",
+  "nextDependency": "Complete a clean paired fresh evaluation epoch once provider stability is available; preserve this negative run and do not merge candidates or infer outcomes for unexecuted arms.",
+  "planCoverage": {
+    "status": "PARTIAL_JUST_IN_TIME",
+    "direct": [
+      "Bounded inference compute",
+      "Executable evidence outranks model confidence",
+      "Failure classification before architecture",
+      "Matched-resource ablation",
+      "Preserve falsification and provenance"
+    ],
+    "supporting": [
+      "Shared cognition with entity-local state",
+      "Independent assurance",
+      "Trust-gate monotonicity",
+      "Internal complexity must pay rent"
+    ],
+    "deferred": [
+      "New cognitive mechanisms pending clean failure diagnosis",
+      "Connectome expansion",
+      "Recursive self-improvement",
+      "Device integration",
+      "Production deployment",
+      "Public frontier benchmarks"
+    ],
+    "conflicts": [
+      "A requirement to produce positive results cannot override unknown compute or an externally blocked comparison. Preserve negative evidence rather than relax the oracle."
+    ]
+  }
+}
