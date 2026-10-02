@@ -31,6 +31,12 @@ jobs:
         run: node scripts/omega/run-tests.mjs
       - name: Preserve TypeScript zero ratchet
         run: npm run typecheck:ratchet
+      - name: Typecheck research evaluation and recovery scripts
+        run: >-
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext
+          --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck
+          scripts/omegaNvidiaNimProvider.test.ts scripts/omegaResearchParty.test.ts
+          scripts/omegaNyxAdmissionGuidance.test.ts scripts/omega/nyx-research-party-live-eval.ts
       - name: Build production bundle without deployment
         run: npm run build
       - name: Verify generated repository inventories

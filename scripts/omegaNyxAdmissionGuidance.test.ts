@@ -168,8 +168,8 @@ const recoveryReports = (["CURRENT", "REASONING_ENABLED"] as const).map((arm) =>
     (task) => [task.taskId, "d".repeat(64)])), tasks: report(arm).tasks.map((result, index) => ({
     ...result, taskId: NYX_GATE_RECOVERY_TASKS[index].taskId })) }));
 const recoveryComparison = assessNyxTransferEpoch(recoveryReports);
-check(recoveryComparison.reasoningLayerPromoted === false
-  && recoveryComparison.decision === "NO_OBSERVED_REASONING_QUALITY_ADVANTAGE",
+check(recoveryComparison.decision === "NO_OBSERVED_REASONING_QUALITY_ADVANTAGE"
+  && recoveryComparison.reasoningLayerPromoted === false,
   "recovery comparison preserves no-promotion rule under equal failing outcomes");
 let mixedEpochRejected = false;
 try { assessNyxTransferEpoch([recoveryReports[0], report("REASONING_ENABLED")]); }
