@@ -733,6 +733,32 @@ for (const overrides of [{ boundedOutput: false }, { reasoningBudgetTokens: -1 }
   check(rejected, "invalid cognition reservation fails closed at configuration");
 }
 responseContent = JSON.stringify(validRaw);
+const directAdapter = NyxNemotronTheoryCognition.create({ cognitionId: "NYX-DIRECT-EMISSION",
+  provider, limits, boundedOutput: true, emissionMode: "CONSTRAINED_JSON" });
+const beforeDirect = modelPrompts.length;
+const directResult = await directAdapter.think({ ...adapterRequest, requestId: "DIRECT-EMISSION" });
+check(directResult.decision === "CONTRIBUTION" && !directResult.grantsAuthority
+  && modelPrompts.length === beforeDirect + 1, "explicit direct emission preserves one inference and typed admission");
+check(JSON.stringify(templateControls.at(-1)) === JSON.stringify({ enable_thinking: false, force_nonempty_content: true })
+  && requestedThinkingBudgets.at(-1) === undefined && requestedOutputBudgets.at(-1) === adapterRequest.maxOutputTokens,
+  "direct configuration cannot carry thinking effort or unsupported reservation and does not increase compute");
+check(((modelPrompts.at(-1)!.outputContract as Record<string, unknown>).completionBudget as Record<string, unknown>)
+  .emissionMode === "CONSTRAINED_JSON", "prompt explicitly binds the chosen output configuration");
+responseFinishReason = "length";
+const beforeDirectLength = modelPrompts.length;
+check((await directAdapter.think({ ...adapterRequest, requestId: "DIRECT-LENGTH" })).intent === null
+  && modelPrompts.length === beforeDirectLength + 1, "direct truncation fails without fallback inference or admission");
+responseFinishReason = "stop";
+responseContent = JSON.stringify({ ...validRaw, evidenceRefs: ["FABRICATED-EVIDENCE"] });
+check((await directAdapter.think({ ...adapterRequest, requestId: "DIRECT-FABRICATION" })).diagnostics.includes("evidence_reference_unknown"),
+  "direct emission retains independent evidence admission");
+for (const overrides of [{ boundedOutput: false }, { reasoningBudgetTokens: 256 }, { emissionMode: "UNKNOWN" as "CONSTRAINED_JSON" }]) {
+  let rejected = false;
+  try { NyxNemotronTheoryCognition.create({ cognitionId: "NYX-INVALID-DIRECT", provider, limits,
+    boundedOutput: true, emissionMode: "CONSTRAINED_JSON", ...overrides }); } catch { rejected = true; }
+  check(rejected, "direct emission rejects incompatible configuration before inference");
+}
+responseContent = JSON.stringify(validRaw);
 const reviserRequest = scripted.calls.find((item) => item.role === "REVISER"
   && item.predictionFeedback.some((feedback) => feedback.disposition === "FALSIFIED_PREDICTION"))!;
 const reviserResponse = await adapter.think({ ...reviserRequest,

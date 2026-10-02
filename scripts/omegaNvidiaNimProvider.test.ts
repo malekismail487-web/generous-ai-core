@@ -9,6 +9,7 @@ import {
 } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { NvidiaCapacityCoordinator, NVIDIA_CAPACITY_POLICY, nvidiaRetryAfterMs,
   type CapacityClock } from "../src/lib/codelab/model/nvidiaCapacity";
+import { execFileSync } from "node:child_process";
 
 let passed = 0;
 let failed = 0;
@@ -806,6 +807,34 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
   check((await provider(async () => { throw new Error("must_not_send"); }).complete({ ...base,
     reasoningEffort: undefined, reasoningBudgetTokens: 16 } as NvidiaNimCompletionRequest)).decision === "REJECTED",
   "Ultra-specific thinking reservation cannot silently transfer to another model");
+}
+
+{
+  const child = execFileSync(process.execPath, ["--experimental-strip-types", "--import",
+    "./scripts/w0rs/register-typescript-loader.mjs", "--input-type=module", "--eval", `
+      let calls=0;
+      globalThis.fetch=async (url, init)=>{
+        if(url!==${JSON.stringify(NVIDIA_NIM_CHAT_COMPLETIONS_URL)}) throw Error('wrong_endpoint');
+        const body=JSON.parse(init.body); calls++;
+        if(calls>3||body.max_tokens!==1536||body.temperature!==0) throw Error('diagnostic_budget_changed');
+        if(body.chat_template_kwargs.reasoning_budget!==undefined) return new Response('{}',{status:400});
+        return new Response(JSON.stringify({choices:[{message:{content:'{"ready":true}'},finish_reason:'stop'}],
+          usage:{prompt_tokens:10,completion_tokens:5,total_tokens:15}}),{status:200});
+      };
+      await import('./scripts/omega/nvidia-nim-live-smoke.ts');
+    `], { encoding: "utf8", timeout: 10_000, env: { ...process.env,
+      OMEGA_ALLOW_NVIDIA_NETWORK: "1", OMEGA_NVIDIA_REQUEST_COMPATIBILITY: "1",
+      NVIDIA_NIM_MODEL: "nvidia/nemotron-3-ultra-550b-a55b", NVIDIA_API_KEY: "synthetic-diagnostic-only" } });
+  const line = child.split("\n").find(item => item.startsWith("NVIDIA_REQUEST_COMPATIBILITY_REPORT "))!;
+  const report = JSON.parse(line.slice("NVIDIA_REQUEST_COMPATIBILITY_REPORT ".length));
+  check(report.records.length === 3 && report.maximumModelCalls === 3
+    && report.records.map((item: { evidence: { statusCode: number } }) => item.evidence.statusCode).join() === "200,400,200",
+  "offline diagnostic fault injection distinguishes a budget-specific HTTP rejection from model failure");
+  check(report.records[0].exactSyntheticAnswer && !report.records[1].exactSyntheticAnswer
+    && report.records[2].exactSyntheticAnswer && !report.capabilityPromotion && !report.authorityIncrease,
+  "configuration diagnosis preserves failed controls and cannot certify task capability");
+  check(!child.includes("synthetic-diagnostic-only") && !report.rawContentPersisted,
+    "diagnostic output contains neither synthetic credential nor raw model answer or reasoning");
 }
 
 assert(NVIDIA_NIM_PROVIDER_STATUS.newCapability === "BOUNDED_NVIDIA_NIM_CHAT_COMPLETION", "chunk reports exact model capability gain");

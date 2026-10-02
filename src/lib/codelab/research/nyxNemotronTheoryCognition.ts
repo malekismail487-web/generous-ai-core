@@ -24,6 +24,8 @@ export interface NyxNemotronTheoryCognitionConfig {
   readonly derivationChecks?: boolean;
   /** Opt-in emission reliability experiment. Does not change local admission. */
   readonly boundedOutput?: boolean;
+  /** Explicit configuration ablation, never an automatic retry or parser fallback. */
+  readonly emissionMode?: "REASONING_JSON" | "CONSTRAINED_JSON";
   /** Opt-in output reservation within the existing total completion ceiling, shared across comparison arms. */
   readonly reasoningBudgetTokens?: number;
 }
@@ -224,6 +226,9 @@ export class NyxNemotronTheoryCognition {
     if (!validResearchId(config.cognitionId) || !validResearchLimits(config.limits)
       || (config.derivationChecks !== undefined && typeof config.derivationChecks !== "boolean")
       || (config.boundedOutput !== undefined && typeof config.boundedOutput !== "boolean")
+      || (config.emissionMode !== undefined && !["REASONING_JSON", "CONSTRAINED_JSON"].includes(config.emissionMode))
+      || (config.emissionMode === "CONSTRAINED_JSON" && (config.boundedOutput !== true
+        || config.reasoningBudgetTokens !== undefined))
       || (config.boundedOutput === true && profile.model !== "nvidia/nemotron-3-ultra-550b-a55b")
       || (config.reasoningBudgetTokens !== undefined && (config.boundedOutput !== true
         || !Number.isSafeInteger(config.reasoningBudgetTokens) || config.reasoningBudgetTokens < 0
@@ -277,6 +282,7 @@ export class NyxNemotronTheoryCognition {
       outputContract: {
         ...(this.#config.boundedOutput ? { completionBudget: { maxTokens: request.maxOutputTokens,
           scope: "TOTAL_PROVIDER_COMPLETION_NOT_GUARANTEED_ANSWER_TOKENS",
+          emissionMode: this.#config.emissionMode ?? "REASONING_JSON",
           instruction: NYX_BOUNDED_OUTPUT_INSTRUCTION, hardThinkingTokenLimit: false,
           ...(this.#config.reasoningBudgetTokens !== undefined ? {
             requestedThinkingBudgetTokens: this.#config.reasoningBudgetTokens,
@@ -323,8 +329,9 @@ export class NyxNemotronTheoryCognition {
       messages: [{ role: "system", content: "You are one bounded specialist cognition process inside NYX. You reason; Omega alone authorizes actions and admits evidence. Never claim that model agreement is experimental proof." },
         { role: "user", content: serialized }], maxTokens: request.maxOutputTokens, temperature: request.role === "INVESTIGATOR" ? 0.35 : 0,
       responseFormat: { type: "JSON_SCHEMA", name: "nyx_theory_intent", schema: theoryIntentSchemaForRequest(request) },
-      inferencePolicy: "REASONING_JSON", observedAtEpochMs: request.observedAtEpochMs,
-      ...(this.#config.boundedOutput ? { reasoningEffort: "MEDIUM" as const } : {}),
+      inferencePolicy: this.#config.emissionMode ?? "REASONING_JSON", observedAtEpochMs: request.observedAtEpochMs,
+      ...(this.#config.boundedOutput && this.#config.emissionMode !== "CONSTRAINED_JSON"
+        ? { reasoningEffort: "MEDIUM" as const } : {}),
       ...(this.#config.reasoningBudgetTokens !== undefined ? { reasoningBudgetTokens: this.#config.reasoningBudgetTokens } : {}),
       deadlineEpochMs: request.deadlineEpochMs, signal: request.signal });
     if (completion.decision !== "COMPLETED" || completion.content === null) {

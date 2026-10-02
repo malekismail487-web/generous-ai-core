@@ -4407,6 +4407,7 @@
           "scripts/lsePriorityScheduler.test.ts",
           "scripts/lseSessionInternals.test.ts",
           "scripts/o7verdict.ts",
+          "scripts/omega/nvidia-nim-live-smoke.ts",
           "scripts/omega/nyx-admission-guidance-fixtures.ts",
           "scripts/omega/nyx-biological-connectome-ablation-analysis.ts",
           "scripts/omega/nyx-cli-live-eval.ts",
