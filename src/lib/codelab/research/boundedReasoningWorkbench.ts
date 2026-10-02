@@ -1,7 +1,7 @@
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
 import type { FiniteRefutation, ColoringRefutationNode } from "./finiteRefutationVerifier";
 import { deriveQuantities, validQuantitativeProblem, validQuantitativeProgram, EXACT_DERIVATION_POLICY,
-  type QuantitativeProblem } from "./exactQuantitativeDerivation";
+  type QuantitativeProblem, type QuantitativeProgram } from "./exactQuantitativeDerivation";
 
 /** Constructive algorithms, not a second model or an acceptance authority. */
 export const NYX_REASONING_WORKBENCH = Object.freeze({
@@ -53,6 +53,9 @@ export interface ReasoningToolRequest {
   readonly schemaVersion: 1;
   readonly operation: "ANALYZE_FINITE_PROBLEM";
   readonly problemDigest: string;
+}
+export interface QuantitativeToolRequest extends ReasoningToolRequest {
+  readonly program: QuantitativeProgram;
 }
 export interface ReasoningToolResult {
   readonly version: string;

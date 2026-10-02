@@ -2,9 +2,6 @@ name: Omega NYX exact-derivation transfer
 
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/nyx-quantitative-transfer-fixtures.ts]
 
 permissions:
   contents: read

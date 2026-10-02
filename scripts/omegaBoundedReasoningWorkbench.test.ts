@@ -295,6 +295,26 @@ check(divided.status==="INSUFFICIENT_EVIDENCE" && divided.payload!.errorCode==="
 const expanded=calculation(numerical,{...basic,blocks:[{iterations:16,mode:"SEQUENTIAL",steps:[{target:"x",op:"MUL",left:"x",right:"x"}]}]});
 check(expanded.status==="INSUFFICIENT_EVIDENCE" && expanded.payload!.errorCode==="INTEGER_BOUND_EXCEEDED",
   "finite repeated squaring cannot allocate unbounded integers");
+const boundCalculation=BoundedReasoningSession.create(numerical,{maxWorkUnits:1000,maxElapsedMs:1000,maxRequests:1,expiresAtEpochMs:Date.now()+10000});
+const numericRequest={schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:boundCalculation.problemDigest,program:basic};
+for(const bad of [{...numericRequest,problemDigest:"stale"},{...numericRequest,operation:"SHELL"},
+  {...numericRequest,constants:[{id:"replacement",value:"1"}]},{...numericRequest,maxWorkUnits:1000000}])
+  check(throws(()=>boundCalculation.analyze(bad)),"quantitative intent cannot replace scope, operation or trusted budget");
+boundCalculation.analyze(numericRequest);
+check(throws(()=>boundCalculation.analyze(numericRequest)),"quantitative requests consume the same nonrenewable session limit");
+boundCalculation.revoke();
+check(throws(()=>boundCalculation.analyze(numericRequest)),"quantitative revocation does not leave a hidden computation capability");
+for(let seed=1;seed<=48;seed++) {
+  const a=seed%7-3;const b=seed%5+1;const cycles=seed%4+1;
+  const dynamic:QuantitativeProblem={kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"a",value:String(a)},{id:"b",value:String(b)}]};
+  for(const mode of ["SEQUENTIAL","SIMULTANEOUS"] as const) {
+    const candidateProgram={...basic,blocks:[{...basic.blocks[0],iterations:cycles,mode}]};
+    let x=a;let y=b;
+    for(let iteration=0;iteration<cycles;iteration++){const previousX=x;const previousY=y;x=previousX+previousY;y=(mode==="SIMULTANEOUS"?previousX:x)-previousY;}
+    check(JSON.stringify(calculation(dynamic,candidateProgram).payload!.outputs)===JSON.stringify([{label:"x",value:String(x)},{label:"y",value:String(y)}]),
+      `independent direct recurrence agrees across fresh integer inputs ${seed},${mode}`);
+  }
+}
 const wrongMix=referenceQuantitativeProgram(QUANTITATIVE_TASKS[0]);
 const wrongCalculation=calculation(QUANTITATIVE_TASKS[0].problem,{...wrongMix,blocks:[{...wrongMix.blocks[0],steps:[
   ...wrongMix.blocks[0].steps.filter(step=>step.target!=="d"),wrongMix.blocks[0].steps.find(step=>step.target==="d")!]}]});

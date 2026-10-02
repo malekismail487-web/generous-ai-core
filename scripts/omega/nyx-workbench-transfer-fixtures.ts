@@ -78,7 +78,7 @@ export function transferCertificateSchema() {
 }
 
 /** Projection changes representation only; the verifier, not this function, checks truth. */
-export function transferPayload(problem: ReasoningProblem, value: Readonly<Record<string, unknown>> | null) {
+export function transferPayload(problem: TransferTask["problem"], value: Readonly<Record<string, unknown>> | null) {
   const p = value ?? {};
   const fields = p.finiteDomainExhausted === true ? ["finiteDomainExhausted"]
     : problem.kind === "COLORING" ? ["coloring", "clique"]
