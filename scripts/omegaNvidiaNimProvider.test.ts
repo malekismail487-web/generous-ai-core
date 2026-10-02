@@ -159,6 +159,22 @@ function provider(transport: NvidiaNimTransport, credential = "test-credential-n
 }
 
 {
+  const result = await provider(async () => new Response("null", { status: 200 })).complete(request());
+  check(result.evidence.statusCode === 200
+    && result.evidence.failureCategory === "PROVIDER_RESPONSE_SCHEMA_ERROR",
+    "a delivered JSON null is a response-shape failure rather than an invented transport outage");
+}
+{
+  const result = await provider(async () => new Response(JSON.stringify({ choices: [{
+    message: { content: null, reasoning_content: "synthetic incomplete reasoning" }, finish_reason: "length" }],
+    usage: { prompt_tokens: 100, completion_tokens: 200, total_tokens: 300 } }), { status: 200 }))
+    .complete(request());
+  check(result.decision === "PROVIDER_ERROR" && result.finishReason === "length"
+    && result.evidence.usage.totalTokens === 300 && result.evidence.usage.completionTokens === 200,
+    "reported compute survives a length-limited response with no final answer content");
+}
+
+{
   const expectations = [
     { status: 400, category: "PROVIDER_REQUEST_REJECTED", retryability: "NO" },
     { status: 422, category: "PROVIDER_REQUEST_REJECTED", retryability: "NO" },

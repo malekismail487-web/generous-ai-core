@@ -235,7 +235,8 @@ export function researchCognitionOutcomeClass(result: TheoryCognitionResult):
   if (result.decision === "CONTRIBUTION") return "CONTRIBUTION";
   if (result.evidence.evidenceClass === "E4" && result.evidence.statusCode !== 200) return "PROVIDER_FAILURE";
   if (result.decision === "REJECTED" || result.decision === "BLOCKED") return "INTEGRATION_REJECTION";
-  if (result.evidence.finishReason !== null && result.evidence.finishReason !== "stop") return "OUTPUT_TRUNCATION";
+  if (result.evidence.finishReason === "length") return "OUTPUT_TRUNCATION";
+  if (result.evidence.finishReason !== null && result.evidence.finishReason !== "stop") return "MODEL_OUTPUT_REJECTION";
   if (["theory_cognition_schema_invalid", "theory_cognition_non_json"].includes(result.reason)) return "MODEL_OUTPUT_REJECTION";
   return "UNKNOWN_FAILURE";
 }

@@ -11,7 +11,8 @@ import { NYX_GATE_RECOVERY, NYX_GATE_RECOVERY_FROZEN_CORE, NYX_GATE_RECOVERY_TAS
   NYX_GATE_RECOVERY_TRANSPORT_REVISION, NYX_GATE_RECOVERY_DEADLINE_REVISION,
   NYX_GATE_RECOVERY_SERVER_ERROR_REVISION, NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION,
   NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION,
-  NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION } from "./omega/nyx-gate-recovery-fixtures";
+  NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION,
+  NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION } from "./omega/nyx-gate-recovery-fixtures";
 
 let passed = 0;
 const failures: string[] = [];
@@ -44,8 +45,10 @@ check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected
   "historical ownership-repair core remains immutable and reproducible");
 check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected]) =>
   digest(readFileSync(path)) === (path === NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath
-    ? NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.sourceSha256 : expected)),
-  "current ownership-repair core admits only the exact registered answer-reservation transport revision");
+    ? NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.sourceSha256
+    : path === NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.cognitionPath
+      ? NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.cognitionSourceSha256 : expected)),
+  "current ownership-repair core admits only the exact registered response-accounting transport revision");
 const boundedProvider = execFileSync("git", ["show",
   `${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.predecessor}:${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.changedPath}`],
 { encoding: "utf8" });
@@ -66,10 +69,25 @@ check(reservationAdditions.every(addition => reservationProvider.split(addition)
 const budgetPayloadLine = "      ...(request.reasoningBudgetTokens !== undefined ? { reasoning_budget: request.reasoningBudgetTokens } : {}),\n";
 const templateLocation = "force_nonempty_content: true,\n";
 const currentProvider = readFileSync(NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.changedPath, "utf8");
+const compatibilityProvider = execFileSync("git", ["show",
+  `${NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.predecessor}:${NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.changedPath}`],
+{ encoding: "utf8" });
 check(reservationProvider.split(budgetPayloadLine).length === 2 && reservationProvider.split(templateLocation).length === 2
-  && currentProvider === reservationProvider.replace(budgetPayloadLine, "")
-    .replace(templateLocation, `${templateLocation}${budgetPayloadLine.replace(/^      /, "          ")}`),
+  && compatibilityProvider === reservationProvider.replace(budgetPayloadLine, "")
+    .replace(templateLocation, `${templateLocation}${budgetPayloadLine.replace(/^      /, "          ")}`)
+  && digest(Buffer.from(compatibilityProvider)) === NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.sourceSha256,
 "compatibility correction moves one exact payload field into the documented template location without changing any other behavior");
+check(currentProvider.split("  async #attempt(")[0] === compatibilityProvider.split("  async #attempt(")[0]
+  .replace('|| reason === "nvidia_provider_response_finish_reason_invalid")',
+    '|| reason === "nvidia_provider_response_finish_reason_invalid" || reason === "nvidia_provider_response_shape_invalid")')
+  && currentProvider.split("  #result(")[1] === compatibilityProvider.split("  #result(")[1],
+"response accounting cannot change request payloads, inference settings, retries, budgets, or result authority");
+check(!NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.historicalScoresComparable
+  && !NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.acceptanceOracleChanged
+  && !NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.authorityIncrease
+  && !NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.outputCeilingChanged
+  && !NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.requestPayloadChanged,
+"response accounting does not inherit historical scores or weaken acceptance and compute contracts");
 check(!NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.historicalScoresComparable
   && !NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.acceptanceOracleChanged
   && !NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.authorityIncrease,

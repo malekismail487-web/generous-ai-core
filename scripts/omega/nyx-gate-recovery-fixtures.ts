@@ -71,6 +71,19 @@ export const NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION = Object.freeze({
   source: NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.source,
 });
 
+// Response classification/accounting is a new runtime identity, not a rescore
+// of the earlier answer-reservation experiment. Its request contract is unchanged.
+export const NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION = Object.freeze({
+  chunkId: "NYX-RESPONSE-ACCOUNTING-001", predecessor: "84aad2995385cb72badbf1aea078bf8487aded5a",
+  changedPath: NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath,
+  sourceSha256: "f3c93d782dff85c6183b4041cff333c65e1861f3505a74b6dfa835787179b603",
+  cognitionPath: "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts",
+  cognitionSourceSha256: "9cc9de557038c34c7e7489030c808463ea06b4711892e264095335890c122d41",
+  changedBehavior: "CLASSIFY_INVALID_RESPONSE_SHAPE_AND_RETAIN_USAGE_WITHOUT_FINAL_CONTENT",
+  historicalScoresComparable: false, acceptanceOracleChanged: false, authorityIncrease: false,
+  outputCeilingChanged: false, requestPayloadChanged: false,
+});
+
 function task(index: number, helperPath: string, helperName: string, helperSource: string,
   goodSource: string, faultySource: string): NyxQualityV5Task {
   const original = NYX_ADMISSION_GUIDANCE_TASKS[index];

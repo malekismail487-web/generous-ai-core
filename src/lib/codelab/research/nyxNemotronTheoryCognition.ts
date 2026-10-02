@@ -334,6 +334,10 @@ export class NyxNemotronTheoryCognition {
         ? { reasoningEffort: "MEDIUM" as const } : {}),
       ...(this.#config.reasoningBudgetTokens !== undefined ? { reasoningBudgetTokens: this.#config.reasoningBudgetTokens } : {}),
       deadlineEpochMs: request.deadlineEpochMs, signal: request.signal });
+    if (completion.evidence.statusCode === 200 && completion.finishReason === "length") {
+      return this.#result("COGNITION_ERROR", "theory_cognition_incomplete_output", null,
+        completion.evidence, ["finish_reason_not_stop"]);
+    }
     if (completion.decision !== "COMPLETED" || completion.content === null) {
       const decision = completion.decision === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY"
         : completion.decision === "BLOCKED" ? "BLOCKED" : completion.decision === "REJECTED" ? "REJECTED" : "COGNITION_ERROR";

@@ -1335,4 +1335,33 @@ check(singleReviserAllocation.length === 1 && singleReviserAllocation[0].preferr
     "deferred scheduling terminates every owned lease without granting or renewing execution authority");
   now = savedNow;
 }
+{
+  const savedNow = now; const controller = new AbortController();
+  const baseline = await runFlatTheoryBaseline({ baselineId: "FLAT-LATE-RESULT", objective: objective(), limits,
+    now: () => now, signal: controller.signal, cognition: { profile: () => ({ model: "TEST-DOUBLE" }),
+      think: async request => { const response = cognitionResult(request,
+        intentFor("FAILED_AS_COMPLETE", "PROPOSE_HYPOTHESIS", request.theoryId));
+        now = request.deadlineEpochMs; return response; } } });
+  check(baseline.intents.length === 0 && baseline.selectedMechanismId === null
+    && baseline.resourceUsage.modelCalls === 1 && baseline.resourceUsage.totalTokens === 200,
+    "flat control rejects cognition delivered after its deadline while preserving spent compute");
+  now = savedNow;
+}
+{
+  const emptyOutputProvider = NvidiaNimProvider.create({ providerId: "TRUNCATED-EMPTY-OUTPUT",
+    model: "nvidia/nemotron-3-ultra-550b-a55b", authorityMode: "TEST_DOUBLE_ONLY",
+    credentialSource: { sourceIdentity: "test-only", read: () => "test-only-credential-material" },
+    maxPromptBytes: 96_000, maxOutputTokens: 1_536, timeoutMs: 1_000, transport: async () =>
+      new Response(JSON.stringify({ choices: [{ message: { content: "" }, finish_reason: "length" }],
+        usage: { prompt_tokens: 100, completion_tokens: 200, total_tokens: 300 } }), { status: 200 }) });
+  const result = await NyxNemotronTheoryCognition.create({ cognitionId: "EMPTY-TRUNCATION",
+    provider: emptyOutputProvider, limits }).think(adapterRequest);
+  check(researchCognitionOutcomeClass(result) === "OUTPUT_TRUNCATION" && result.intent === null
+    && result.evidence.totalTokens === 300,
+    "reasoning-only truncation remains an output-limit failure with compute instead of a provider outage");
+  for (const finishReason of ["content_filter", "tool_calls", "function_call"] as const) {
+    check(researchCognitionOutcomeClass({ ...result, evidence: { ...result.evidence, finishReason } })
+      === "MODEL_OUTPUT_REJECTION", "other stopped output cannot masquerade as token-budget truncation");
+  }
+}
 console.log(`OMEGA_RESEARCH_PARTY_TEST_SUMMARY passed: ${checks}, failed: 0`);

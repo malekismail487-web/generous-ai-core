@@ -675,6 +675,49 @@ check(!directEmission.interpretation.capabilityImprovementDemonstrated && !direc
   && !directEmission.interpretation.defaultPromoted && !directEmission.interpretation.truncationReductionCausallyEstablished
   && directEmission.planCoverage.status === "PARTIAL / JUST-IN-TIME",
   "supporting reliability progress preserves honest maturity and incomplete corpus coverage");
+const phaseComparison = JSON.parse(readFileSync("scripts/omega/checkpoints/phase-scheduling/comparison.json", "utf8"));
+check(checkpointDigest(phaseComparison) === "9cb9b6909ac375acf585550e96551e3666b723c1e67e08233b8f6cdc96531404"
+  && phaseComparison.integrityClassification === "SELF_CONTAINED_HASH_MANIFEST_NOT_SIGNED_CUSTODY",
+  "stable comparison retains its complete sanitized report without claiming signed custody");
+check(phaseComparison.candidateCommit === "84aad2995385cb72badbf1aea078bf8487aded5a"
+  && phaseComparison.runId === 37057265859 && phaseComparison.jobId === 111004911993,
+  "stable observations are bound to the exact evaluated source and actual hosted execution");
+for (const [path, expected] of Object.entries(phaseComparison.candidateSourceDigests)) {
+  check(/^(?:src|scripts|\.github\/workflows)\/[A-Za-z0-9_./-]+\.(?:ts|mjs|yml)$/.test(path)
+    && !path.split("/").includes(".."), "stable comparison source reconstruction uses only enumerated non-secret paths");
+  const source = execFileSync("git", ["show", `${phaseComparison.candidateCommit}:${path}`], { encoding: "utf8", timeout: 10_000 });
+  check(createHash("sha256").update(source.replace(/\r\n/g, "\n")).digest("hex") === expected,
+    "stable comparison preserves implementation, evaluator and workflow identities rather than certifying changed code");
+}
+const phaseReport = phaseComparison.report;
+check(phaseReport.candidateCommit === phaseComparison.candidateCommit
+  && phaseReport.corpusDigest === NYX_COVERAGE_TRANSFER_V3_CORPUS_DIGEST
+  && phaseReport.completedArms === 6 && phaseReport.requestedArms === 6
+  && !phaseReport.providerBlocked && !phaseReport.executionBlocked,
+  "all requested arms actually ran with a functioning provider and experiment substrate");
+check(phaseReport.records.every((arm: typeof firstDirect) => arm.providerFailures === 0
+  && arm.transport.httpAttempts === arm.resourceUsage.modelCalls
+  && arm.cognitionOutcomeCounts.OUTPUT_TRUNCATION === 0 && arm.evidenceChainComplete
+  && arm.sourceRepositoryUnchanged && !arm.authorityGranted),
+  "stable reasoning failures are not relabeled as delivery failures or increased authority");
+check(phaseReport.records.reduce((sum: number, arm: typeof firstDirect) => sum + arm.resourceUsage.modelCalls, 0) === 37
+  && phaseReport.records.reduce((sum: number, arm: typeof firstDirect) => sum + arm.resourceUsage.totalTokens, 0) === 155601
+  && phaseReport.records.filter((arm: typeof firstDirect) => arm.assurance.decision === "ACCEPT"
+    && arm.policy === "DERIVATION_ONLY").length === 2
+  && phaseReport.records.filter((arm: typeof firstDirect) => arm.assurance.decision === "ACCEPT"
+    && arm.policy === "ROTATING_PARTITION").length === 1,
+  "actual compute and unfavorable candidate outcomes survive archival rather than selective reporting");
+check(checkpointDigest(analyzeCoverageTransfer(phaseReport.selectedTaskIds, phaseReport.records))
+  === checkpointDigest(phaseReport.pairedAnalysis)
+  && phaseReport.pairedAnalysis.wins === 0 && phaseReport.pairedAnalysis.losses === 1
+  && phaseReport.pairedAnalysis.completePairs === 3 && !phaseReport.realizedComputeMatched
+  && phaseReport.acceptanceViolations === 0,
+  "independent paired analysis reproduces no gain and unequal realized compute without weakening the oracle");
+check(!phaseComparison.interpretation.reasoningGainDemonstrated
+  && !phaseComparison.interpretation.allocationPolicyPromoted && !phaseComparison.interpretation.certifiesCurrentRuntime
+  && !phaseReport.broadPromotion && !phaseReport.freshHeldoutClaim
+  && phaseComparison.planCoverage.status === "PARTIAL / JUST-IN-TIME",
+  "complete infrastructure execution is not converted into cognition, held-out or broad frontier certification");
 console.log(`NYX_EXECUTABLE_TRANSFER_PREFLIGHT ${JSON.stringify({ schemaVersion: 1,
   corpusDigest: NYX_RESEARCH_TRANSFER_CORPUS_DIGEST, actualCognition: "NOT_EXECUTED",
   oracleMutantsRejected: 3, evidenceClass: "E3", broadPromotion: false, authorityGranted: false })}`);

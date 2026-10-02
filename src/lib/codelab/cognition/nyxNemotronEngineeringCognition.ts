@@ -762,6 +762,11 @@ export class NyxNemotronEngineeringCognition {
       responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema: contract.providerSchema },
       inferencePolicy: this.#experimentVariant === "CURRENT" ? "CONSTRAINED_JSON" : "REASONING_JSON",
       observedAtEpochMs: request.observedAtEpochMs, deadlineEpochMs: request.deadlineEpochMs, signal: request.signal });
+    if (completion.evidence.statusCode === 200 && completion.finishReason === "length") {
+      return this.#result("COGNITION_ERROR", "nyx_cognition_output_truncated", request, null, null,
+        completion.evidence, [diagnostic("UNEXPECTED_STRUCTURE", "$", "complete strict JSON response", "finish_reason_length")],
+        undefined, feedbackPresented);
+    }
     if (completion.decision !== "COMPLETED" || completion.content === null) {
       const decision = completion.decision === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY"
         : completion.decision === "BLOCKED" ? "BLOCKED" : completion.decision === "REJECTED" ? "REJECTED" : "COGNITION_ERROR";

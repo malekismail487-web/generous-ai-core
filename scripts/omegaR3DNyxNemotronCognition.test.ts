@@ -743,6 +743,13 @@ function schemaKeys(value: unknown): string[] {
   check(truncated.decision === "COGNITION_ERROR" && truncated.reason === "nyx_cognition_output_truncated"
     && truncated.evidence.modelFinishReason === "length" && truncated.hypothesis === null,
   "length-terminated model output is attributable but never admitted as an executable hypothesis");
+  const emptyTruncated = await cognition(async () => new Response(JSON.stringify({
+    choices: [{ message: { content: null }, finish_reason: "length" }],
+    usage: { prompt_tokens: 100, completion_tokens: 200, total_tokens: 300 },
+  }), { status: 200 })).proposeRepair(request());
+  check(emptyTruncated.reason === "nyx_cognition_output_truncated" && emptyTruncated.hypothesis === null
+    && emptyTruncated.evidence.modelUsage.totalTokens === 300,
+    "engineering cognition retains consumed output tokens when truncation leaves no final source action");
   const unavailable = await cognition(async () => new Response(JSON.stringify({ error: "unavailable" }), { status: 503 })).proposeRepair(request());
   check(unavailable.decision === "COGNITION_ERROR" && unavailable.reason === "nvidia_provider_http_503" && unavailable.hypothesis === null,
     "provider failure remains distinct from model contract failure");

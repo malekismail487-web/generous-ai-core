@@ -75,6 +75,10 @@ export async function runFlatTheoryBaseline(input: {
       || result.evidence.totalTokens === null) usageComplete = false;
     else { promptTokens += result.evidence.promptTokens; completionTokens += result.evidence.completionTokens;
       totalTokens += result.evidence.totalTokens; }
+    if (signal.aborted || input.now() >= deadline) {
+      reason = signal.aborted ? "flat_baseline_cancelled" : "flat_baseline_budget_exhausted";
+      break;
+    }
     if (result.decision === "CONTRIBUTION" && result.intent?.decision === "PROPOSE_HYPOTHESIS") intents.push(result.intent);
     else if (["BLOCKED", "WAITING_FOR_CAPACITY"].includes(result.decision)) { reason = result.reason; break; }
   }

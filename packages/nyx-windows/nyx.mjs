@@ -3046,7 +3046,7 @@ function failureDiagnostics(reason, statusCode) {
   if (reason === "nvidia_provider_timeout") return { category: "PROVIDER_TIMEOUT", retryability: "YES" };
   if (reason === "nvidia_provider_cancelled") return { category: "PROVIDER_CANCELLED", retryability: "NO" };
   if (reason === "nvidia_provider_transport_failure") return { category: "PROVIDER_TRANSPORT_ERROR", retryability: "UNKNOWN" };
-  if (reason === "nvidia_provider_response_not_json" || reason === "nvidia_provider_response_missing_content" || reason === "nvidia_provider_response_finish_reason_invalid") {
+  if (reason === "nvidia_provider_response_not_json" || reason === "nvidia_provider_response_missing_content" || reason === "nvidia_provider_response_finish_reason_invalid" || reason === "nvidia_provider_response_shape_invalid") {
     return { category: "PROVIDER_RESPONSE_SCHEMA_ERROR", retryability: "NO" };
   }
   if (statusCode === 401 || statusCode === 403) return { category: "PROVIDER_AUTH_FAILURE", retryability: "NO" };
@@ -3372,6 +3372,25 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
           providerRequestId
         );
       }
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return this.#result(
+          "PROVIDER_ERROR",
+          "nvidia_provider_response_shape_invalid",
+          null,
+          null,
+          requestDigest,
+          null,
+          response.status,
+          emptyUsage(),
+          true,
+          providerRequestId
+        );
+      }
+      const usage = Object.freeze({
+        promptTokens: finiteInteger(parsed.usage?.prompt_tokens),
+        completionTokens: finiteInteger(parsed.usage?.completion_tokens),
+        totalTokens: finiteInteger(parsed.usage?.total_tokens)
+      });
       const content = parsed.choices?.[0]?.message?.content;
       const rawFinishReason = parsed.choices?.[0]?.finish_reason;
       const reasoning = parsed.choices?.[0]?.message?.reasoning_content;
@@ -3385,7 +3404,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
           requestDigest,
           null,
           response.status,
-          emptyUsage(),
+          usage,
           true,
           providerRequestId,
           reasoningOutputBytes
@@ -3401,16 +3420,11 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
           requestDigest,
           sha2563(content),
           response.status,
-          emptyUsage(),
+          usage,
           true,
           providerRequestId
         );
       }
-      const usage = Object.freeze({
-        promptTokens: finiteInteger(parsed.usage?.prompt_tokens),
-        completionTokens: finiteInteger(parsed.usage?.completion_tokens),
-        totalTokens: finiteInteger(parsed.usage?.total_tokens)
-      });
       return this.#result(
         "COMPLETED",
         "nvidia_nim_completion_observed",

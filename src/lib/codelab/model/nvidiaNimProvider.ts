@@ -223,7 +223,7 @@ function failureDiagnostics(reason: string, statusCode: number | null): {
   if (reason === "nvidia_provider_cancelled") return { category: "PROVIDER_CANCELLED", retryability: "NO" };
   if (reason === "nvidia_provider_transport_failure") return { category: "PROVIDER_TRANSPORT_ERROR", retryability: "UNKNOWN" };
   if (reason === "nvidia_provider_response_not_json" || reason === "nvidia_provider_response_missing_content"
-    || reason === "nvidia_provider_response_finish_reason_invalid") {
+    || reason === "nvidia_provider_response_finish_reason_invalid" || reason === "nvidia_provider_response_shape_invalid") {
     return { category: "PROVIDER_RESPONSE_SCHEMA_ERROR", retryability: "NO" };
   }
   if (statusCode === 401 || statusCode === 403) return { category: "PROVIDER_AUTH_FAILURE", retryability: "NO" };
@@ -463,21 +463,25 @@ export class NvidiaNimProvider {
         return this.#result("PROVIDER_ERROR", "nvidia_provider_response_not_json", null, null, requestDigest, null,
           response.status, emptyUsage(), true, providerRequestId);
       }
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return this.#result("PROVIDER_ERROR", "nvidia_provider_response_shape_invalid", null, null,
+          requestDigest, null, response.status, emptyUsage(), true, providerRequestId);
+      }
+      const usage = Object.freeze({ promptTokens: finiteInteger(parsed.usage?.prompt_tokens),
+        completionTokens: finiteInteger(parsed.usage?.completion_tokens), totalTokens: finiteInteger(parsed.usage?.total_tokens) });
       const content = parsed.choices?.[0]?.message?.content;
       const rawFinishReason = parsed.choices?.[0]?.finish_reason;
       const reasoning = parsed.choices?.[0]?.message?.reasoning_content;
       const reasoningOutputBytes = typeof reasoning === "string" ? Buffer.byteLength(reasoning, "utf8") : null;
       if (typeof content !== "string" || !content.trim()) {
         return this.#result("PROVIDER_ERROR", "nvidia_provider_response_missing_content", null, safeFinishReason(rawFinishReason), requestDigest, null,
-          response.status, emptyUsage(), true, providerRequestId, reasoningOutputBytes);
+          response.status, usage, true, providerRequestId, reasoningOutputBytes);
       }
       const finishReason = safeFinishReason(rawFinishReason);
       if (finishReason === null) {
         return this.#result("PROVIDER_ERROR", "nvidia_provider_response_finish_reason_invalid", null, null, requestDigest,
-          sha256(content), response.status, emptyUsage(), true, providerRequestId);
+          sha256(content), response.status, usage, true, providerRequestId);
       }
-      const usage = Object.freeze({ promptTokens: finiteInteger(parsed.usage?.prompt_tokens),
-        completionTokens: finiteInteger(parsed.usage?.completion_tokens), totalTokens: finiteInteger(parsed.usage?.total_tokens) });
       return this.#result("COMPLETED", "nvidia_nim_completion_observed", content,
         finishReason, requestDigest, sha256(content), response.status, usage, true, providerRequestId, reasoningOutputBytes);
     } catch (error) {
