@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/66",
+  "suiteVersion": "omega-institutional-suite/67",
   "criticalSuites": [
     "OMEGA-FINITE-REFUTATION",
     "OMEGA-NYX-WORKBENCH-TRANSFER",

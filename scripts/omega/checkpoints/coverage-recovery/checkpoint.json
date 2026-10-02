@@ -100,6 +100,7 @@
     "outputTruncations": 1,
     "modelScalarRejections": 0,
     "falseAcceptances": 0,
+    "falseAcceptanceMetricScope": "HIDDEN_MECHANISM_ORACLE_ONLY_NOT_FULL_LIFECYCLE_CERTIFICATION",
     "integration": "LEASE_EXPIRED_DURING_COGNITION_AWAIT_BEFORE_PREDICTION_PRECOMMIT",
     "integrationReproduction": "E3_CLOCK_CONTROLLED_LATE_VALID_RESPONSE_REPRODUCES_EXPIRED_LEASE_REJECTION",
     "remainingAlternatives": [
@@ -115,6 +116,7 @@
     "oracleChanged": false,
     "resourceCeilingsIncreased": false,
     "lateDeliveryEvidenceRetained": true,
+    "roleCoverage": ["INVESTIGATOR", "FALSIFIER", "REVISER", "META_REVIEWER"],
     "regressionCases": [
       "LEASE_EXPIRED",
       "LEASE_RETIRED",

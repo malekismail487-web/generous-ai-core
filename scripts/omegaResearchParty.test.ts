@@ -1010,4 +1010,31 @@ for (const wallClockMs of [10_000, 120_000]) {
     "timely acceptance cannot renew leases or retain active authority after termination");
   now = savedNow;
 }
+for (const lateRole of ["FALSIFIER", "REVISER", "META_REVIEWER"] as const) {
+  const savedNow = now; const runtime = network(); const scripted = new ScriptedPartyCognition();
+  const originalObjective = objective();
+  const cognition: TheoryCognitionEngine = { profile: () => scripted.profile(), think: async request => {
+    const response = await scripted.think(request);
+    if (request.role === lateRole) now = request.deadlineEpochMs!;
+    return response;
+  } };
+  const result = await TheoryResearchParty.create({ partyId: `PARTY-LATE-ROLE-${lateRole}`,
+    network: runtime.value, coordinator: runtime.coordinator, cognition, limits,
+    investigatorCount: 3, maxParallelModelExecutions: 1, now: () => now,
+    experiments: { run: async experiment => makeObservation(experiment.experimentId) } }).investigate(originalObjective);
+  check(result.decision.state === "BLOCKED"
+    && result.decision.reason === "research_party_entity_lease_invalid_after_cognition"
+    && !result.contributions.some(item => item.role === lateRole),
+  "post-delivery ownership applies to challenge, revision and no-conclusion review, not just forecasts");
+  check(result.cognitionOutcomes?.at(-1)?.role === lateRole
+    && result.cognitionEvidence.length === result.contributions.length + 1,
+  "rejected late-role delivery remains attributable without deleting previously committed contributions");
+  check(assureResearchParty({ objective: originalObjective, limits, result,
+    groundTruth: { taskId: originalObjective.researchId, expectedMechanismId: "FAILED_AS_COMPLETE",
+      oracleDigest: theoryDigest("late-role-oracle"), oracleProvenanceRoot: "LATE-ROLE-ORACLE",
+      hiddenFromCognition: true } }).decision === "REJECT"
+    && runtime.value.metrics().activePairs === 0 && !result.authorityGranted,
+  "an otherwise correct mechanism cannot override a failed ownership/evidence-chain requirement");
+  now = savedNow;
+}
 console.log(`OMEGA_RESEARCH_PARTY_TEST_SUMMARY passed: ${checks}, failed: 0`);
