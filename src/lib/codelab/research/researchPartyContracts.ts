@@ -3,6 +3,13 @@ import type { NvidiaNimDeliveryEvidence } from "../model/nvidiaNimProvider";
 
 export type ResearchDomain = "SOFTWARE" | "MATHEMATICS" | "SCIENCE";
 export type ResearchRole = "INVESTIGATOR" | "FALSIFIER" | "REVISER" | "META_REVIEWER";
+
+/** Retain historical short identities; hash long composite IDs without losing binding. */
+export function researchPredictionId(contributionId: string, experimentId: string): string {
+  if (!validResearchId(contributionId) || !validResearchId(experimentId)) throw new Error("research_prediction_identity_invalid");
+  const legacy = `${contributionId}-${experimentId}`;
+  return legacy.length <= 200 ? legacy : `PREDICTION-${theoryDigest([contributionId, experimentId])}`;
+}
 export type TheoryPerspectiveId = "STATE_TRANSITION" | "BOUNDARY_ADVERSARY" | "DATA_CONTROL_FLOW"
   | "INTEGRATION_EFFECT" | "CONCURRENCY_ORDERING" | "RESOURCE_LIFECYCLE" | "IDENTITY_AUTHORIZATION"
   | "TEMPORAL_EXPIRY" | "NUMERICAL_INVARIANT" | "CAUSAL_INTERVENTION" | "REPRESENTATION_ENCODING"

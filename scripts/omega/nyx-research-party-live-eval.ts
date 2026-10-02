@@ -26,6 +26,7 @@ import { NYX_RESEARCH_TRANSFER_TASKS } from "./nyx-research-transfer-fixtures";
 import { NYX_HYPOTHESIS_COVERAGE_TASKS } from "./nyx-hypothesis-coverage-fixtures";
 import { NYX_COVERAGE_TRANSFER_TASKS } from "./nyx-coverage-transfer-fixtures";
 import { NYX_COVERAGE_TRANSFER_V2_TASKS } from "./nyx-coverage-transfer-v2-fixtures";
+import { NYX_COVERAGE_TRANSFER_V3_TASKS } from "./nyx-coverage-transfer-v3-fixtures";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1") {
   console.error("NYX_RESEARCH_PARTY_LIVE result=BLOCKED reason=explicit_nvidia_network_authorization_missing");
@@ -43,9 +44,9 @@ const allocationComparison = process.env.OMEGA_NYX_HYPOTHESIS_ALLOCATION_COMPARI
 const maxParallelModelExecutions = Number(process.env.OMEGA_NYX_RESEARCH_MODEL_CONCURRENCY || "3");
 if (![1, 2, 3].includes(maxParallelModelExecutions)) throw new Error("research_model_concurrency_invalid");
 const corpus = process.env.OMEGA_NYX_RESEARCH_CORPUS || "LEGACY";
-const boundedOutput = corpus === "COVERAGE_TRANSFER_V2";
+const boundedOutput = ["COVERAGE_TRANSFER_V2", "COVERAGE_TRANSFER_V3"].includes(corpus);
 const derivationTransfer = corpus === "COVERAGE_TRANSFER_V1" || boundedOutput;
-if (!["LEGACY", "EXECUTABLE_TRANSFER_V1", "HYPOTHESIS_COVERAGE_DEVELOPMENT_V1", "COVERAGE_TRANSFER_V1", "COVERAGE_TRANSFER_V2"].includes(corpus)
+if (!["LEGACY", "EXECUTABLE_TRANSFER_V1", "HYPOTHESIS_COVERAGE_DEVELOPMENT_V1", "COVERAGE_TRANSFER_V1", "COVERAGE_TRANSFER_V2", "COVERAGE_TRANSFER_V3"].includes(corpus)
   || (corpus !== "LEGACY" && (!policyComparison || diagnosticOnly))) throw new Error("research_corpus_selection_invalid");
 if (allocationComparison !== (corpus === "HYPOTHESIS_COVERAGE_DEVELOPMENT_V1" || derivationTransfer)
   || (allocationComparison && (!policyComparison || diagnosticOnly))) {
@@ -243,13 +244,15 @@ async function createParty(task: NyxResearchPartyLiveTask, objective: ResearchPa
   const omega = await createOmegaExperimentRunner(task, objective, identity);
   const party = TheoryResearchParty.create({ partyId: `${task.taskId}-PARTY-${identity}`, network,
     coordinator, cognition, experiments: omega.runner, limits, investigatorCount: 3,
-    now: () => Date.now(), experimentPolicy, maxParallelModelExecutions, hypothesisAllocationPolicy });
+    now: () => Date.now(), experimentPolicy, maxParallelModelExecutions, hypothesisAllocationPolicy,
+    ...(boundedOutput ? { stopOnProviderFailure: true } : {}) });
   return { party, omega };
 }
 
 if (policyComparison) {
   // One task is the default live commissioning bound; three requires explicit selection.
   const corpusTasks = corpus === "LEGACY" ? NYX_RESEARCH_PARTY_LIVE_TASKS
+    : corpus === "COVERAGE_TRANSFER_V3" ? NYX_COVERAGE_TRANSFER_V3_TASKS
     : boundedOutput ? NYX_COVERAGE_TRANSFER_V2_TASKS : derivationTransfer ? NYX_COVERAGE_TRANSFER_TASKS
     : allocationComparison ? NYX_HYPOTHESIS_COVERAGE_TASKS : NYX_RESEARCH_TRANSFER_TASKS;
   const tasks = focusedTaskId ? corpusTasks.filter(task => task.taskId === focusedTaskId)
@@ -299,6 +302,18 @@ if (policyComparison) {
             timedOutAttempts: result.cognitionEvidence.reduce((sum, item) => sum + (item.delivery?.timedOutAttempts ?? 0), 0),
             capacityWaitMs: result.cognitionEvidence.reduce((sum, item) => sum + (item.delivery?.capacityWaitMs ?? 0), 0) },
           cognitionEvidence: result.cognitionEvidence, evidenceChainComplete: result.evidenceChainComplete,
+          forecastAudit: result.contributions.filter(item => item.intent.mechanismId !== null).map(item => ({
+            contributionId: item.contributionId, contributionDigest: item.contributionDigest, theoryId: item.theoryId,
+            role: item.role, mechanismId: item.intent.mechanismId, evidenceRefs: item.intent.evidenceRefs,
+            forecasts: item.intent.forecasts.map(forecast => {
+              const observation = result.observations.find(observed => observed.experimentId === forecast.experimentId);
+              return { experimentId: forecast.experimentId, expectedOutcome: forecast.expectedOutcome,
+                observationId: observation?.observationId ?? null, evidenceId: observation?.evidence.evidenceId ?? null,
+                observedOutcome: observation?.outcome ?? null,
+                disposition: !observation ? "NOT_OBSERVED" : observation.outcome === forecast.expectedOutcome
+                  ? "MATCHED_PRECOMMITMENT" : "FALSIFIED_PRECOMMITMENT" };
+            }), grantsAuthority: false,
+          })),
           ...(allocationComparison ? { hypothesisAllocations: result.hypothesisAllocations,
             catalogMechanisms: objective.mechanismCatalog.length,
             initialDistinctMechanisms: new Set(result.contributions.filter(item => item.role === "INVESTIGATOR")
@@ -362,7 +377,9 @@ if (policyComparison) {
         extraCallsForAllocation: 0, evaluationPopulation: "THREE_NEW_FINITE_MECHANISM_FAMILIES" },
         emissionPolicy: { boundedOutput, mediumEffort: boundedOutput,
           instructionDigest: boundedOutput ? theoryDigest(NYX_BOUNDED_OUTPUT_INSTRUCTION) : null,
-          hardThinkingTokenLimit: false, outputTokenCeilingChanged: false, localParserChanged: false,
+          hardThinkingTokenLimit: false, outputTokenCeilingChanged: false,
+          localParserChanged: true, parserRevision: "PREDICTION_CUSTODY_INTERSECTION_V1",
+          providerExhaustionStopsArm: boundedOutput,
           sharedAcrossArms: true, infrastructureNotCapabilityClaim: true },
         pairedAnalysis: analyzeCoverageTransfer(tasks.map(task => task.taskId), records as unknown as CoverageTransferArm[]) } : {}),
       verdict: providerBlocked ? "INCONCLUSIVE_PROVIDER_FAILURE" : executionBlocked ? "INCONCLUSIVE_EXECUTION_FAILURE"

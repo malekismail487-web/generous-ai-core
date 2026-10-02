@@ -1,10 +1,10 @@
 import { TheoryNetwork } from "./theoryNetwork";
-import { immutableTheoryValue, theoryDigest, type TheoryLease } from "./theoryContracts";
+import { immutableTheoryValue, theoryDigest, type TheoryLease, type TheoryPrediction } from "./theoryContracts";
 import { ResearchEvidenceGraph } from "./researchEvidenceGraph";
 import { allocateHypothesisCoverage } from "./hypothesisCoverage";
 import { sparseTheoryPerspectiveRouter, validTheoryPerspectiveRoute,
   type TheoryPerspectiveRouter } from "./sparseTheoryRouter";
-import { researchObjectiveDigest, researchCognitionOutcomeClass, validResearchLimits, validResearchObjective,
+import { researchObjectiveDigest, researchCognitionOutcomeClass, researchPredictionId, validResearchLimits, validResearchObjective,
   type ResearchExperiment, type ResearchExperimentObservation, type ResearchPartyLimits,
   type ResearchPartyObjective, type ResearchPartyResult, type ResearchRole, type TheoryCognitionEvidence,
   type HypothesisAllocationPolicy, type TheoryHypothesisAllocation,
@@ -36,6 +36,8 @@ export interface TheoryResearchPartyConfig {
   readonly experimentPolicy?: "REVISE_AFTER_OBSERVATION" | "EXHAUST_PRECOMMITTED_FORECASTS";
   /** Opt-in exploration intervention. The default cognition/acceptance behavior is unchanged. */
   readonly hypothesisAllocationPolicy?: HypothesisAllocationPolicy;
+  /** Evaluation delivery policy only: stop after existing provider recovery is exhausted. */
+  readonly stopOnProviderFailure?: boolean;
 }
 
 interface EntityRuntime {
@@ -76,7 +78,8 @@ export class TheoryResearchParty {
       || (config.experimentPolicy !== undefined && !["REVISE_AFTER_OBSERVATION",
         "EXHAUST_PRECOMMITTED_FORECASTS"].includes(config.experimentPolicy))
       || (config.hypothesisAllocationPolicy !== undefined && !["ROTATING_PARTITION",
-        "COVERAGE_AWARE"].includes(config.hypothesisAllocationPolicy))) {
+        "COVERAGE_AWARE"].includes(config.hypothesisAllocationPolicy))
+      || (config.stopOnProviderFailure !== undefined && typeof config.stopOnProviderFailure !== "boolean")) {
       throw new Error("theory_research_party_configuration_invalid");
     }
     return new TheoryResearchParty(config);
@@ -155,7 +158,7 @@ export class TheoryResearchParty {
       const predictionFeedback = latestOwn ? observations.flatMap((observation) => {
         const forecast = latestOwn.intent.forecasts.find((item) => item.experimentId === observation.experimentId);
         if (!forecast) return [];
-        const predictionId = `${latestOwn.contributionId}-${forecast.experimentId}`;
+        const predictionId = researchPredictionId(latestOwn.contributionId, forecast.experimentId);
         const binding = predictionBindings.find((item) => item.theoryId === entity.theoryId
           && item.predictionId === predictionId && item.expectedOutcome === forecast.expectedOutcome);
         if (!binding) { failure = "research_party_prediction_feedback_unbound"; return []; }
@@ -201,6 +204,9 @@ export class TheoryResearchParty {
       }
       if (result.decision !== "CONTRIBUTION" || !result.intent) {
         if (["WAITING_FOR_CAPACITY", "BLOCKED"].includes(result.decision)) failure = result.reason;
+        if (this.#config.stopOnProviderFailure && researchCognitionOutcomeClass(result) === "PROVIDER_FAILURE") {
+          failure = "research_party_provider_unavailable";
+        }
         return null;
       }
       try { this.#config.network.assertActive(this.#config.coordinator, entity.lease); }
@@ -220,21 +226,32 @@ export class TheoryResearchParty {
           role, objectiveDigest: researchObjectiveDigest(objective), intent: result.intent,
           modelEvidenceId: modelEvidence.evidenceId, committedAtEpochMs: contributionBase.committedAtEpochMs }),
         grantsAuthority: false as const });
+      const predictions: TheoryPrediction[] = ["PROPOSE_HYPOTHESIS", "REVISE_HYPOTHESIS"].includes(contribution.intent.decision)
+        ? contribution.intent.forecasts.map(forecast => ({
+          predictionId: researchPredictionId(contribution.contributionId, forecast.experimentId),
+          statement: contribution.intent.causalMechanism!, expectedResult: forecast.expectedOutcome,
+          candidateDigest: theoryDigest({ contribution: contribution.contributionDigest,
+            experimentId: forecast.experimentId, expectedOutcome: forecast.expectedOutcome }),
+          evidenceRefs: contribution.intent.evidenceRefs, assumptions: contribution.intent.assumptions,
+          uncertainties: contribution.intent.uncertainties,
+          // Full counterexamples remain in the contribution. Custody stores
+          // references rather than lossy excerpts exceeding its text bound.
+          proposedCounterexamples: contribution.intent.counterexamples.slice(0, 5).map(item => `COUNTEREXAMPLE:${theoryDigest(item)}`),
+          expectedPassingTools: [objective.experimentCatalog.find(item => item.experimentId === forecast.experimentId)?.toolId ?? ""],
+          modelEstimate: contribution.intent.modelEstimate,
+        })) : [];
+      if (predictions.length) {
+        try { this.#config.network.assertPredictionsAdmissible(this.#config.coordinator, entity.lease, predictions); }
+        catch { failure = "research_party_prediction_not_precommitted"; return null; }
+      }
       try { graph.commitContribution(contribution); }
       catch { failure = "research_party_contribution_not_admitted"; return null; }
       contributions.push(contribution);
       if (["PROPOSE_HYPOTHESIS", "REVISE_HYPOTHESIS"].includes(contribution.intent.decision)) {
-        for (const forecast of contribution.intent.forecasts) {
-          const experiment = objective.experimentCatalog.find((item) => item.experimentId === forecast.experimentId)!;
-          const predictionId = `${contribution.contributionId}-${forecast.experimentId}`;
-          const candidateDigest = theoryDigest({ contribution: contribution.contributionDigest,
-            experimentId: forecast.experimentId, expectedOutcome: forecast.expectedOutcome });
-          try { this.#config.network.commitPrediction(this.#config.coordinator, entity.lease, {
-            predictionId, statement: contribution.intent.causalMechanism!, expectedResult: forecast.expectedOutcome,
-            candidateDigest, evidenceRefs: contribution.intent.evidenceRefs,
-            assumptions: contribution.intent.assumptions, uncertainties: contribution.intent.uncertainties,
-            proposedCounterexamples: contribution.intent.counterexamples.map((item) => item.rationale).slice(0, 5),
-            expectedPassingTools: [experiment.toolId], modelEstimate: contribution.intent.modelEstimate }); }
+        for (const [index, forecast] of contribution.intent.forecasts.entries()) {
+          const prediction = predictions[index];
+          const { predictionId, candidateDigest } = prediction;
+          try { this.#config.network.commitPrediction(this.#config.coordinator, entity.lease, prediction); }
           catch { failure = "research_party_prediction_not_precommitted"; return null; }
           predictionBindings.push({ theoryId: entity.theoryId, experimentId: forecast.experimentId,
             predictionId, candidateDigest, expectedOutcome: forecast.expectedOutcome, lease: entity.lease });

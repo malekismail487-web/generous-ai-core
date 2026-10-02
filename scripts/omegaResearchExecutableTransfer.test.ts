@@ -10,6 +10,7 @@ import { NYX_HYPOTHESIS_COVERAGE_TASKS, NYX_HYPOTHESIS_COVERAGE_CORPUS_DIGEST }
   from "./omega/nyx-hypothesis-coverage-fixtures";
 import { NYX_COVERAGE_TRANSFER_TASKS, NYX_COVERAGE_TRANSFER_CORPUS_DIGEST } from "./omega/nyx-coverage-transfer-fixtures";
 import { NYX_COVERAGE_TRANSFER_V2_TASKS, NYX_COVERAGE_TRANSFER_V2_CORPUS_DIGEST } from "./omega/nyx-coverage-transfer-v2-fixtures";
+import { NYX_COVERAGE_TRANSFER_V3_TASKS, NYX_COVERAGE_TRANSFER_V3_CORPUS_DIGEST } from "./omega/nyx-coverage-transfer-v3-fixtures";
 import { analyzeCoverageTransfer, type CoverageTransferArm } from "../src/lib/codelab/research/coverageTransferAnalysis";
 
 let checks = 0;
@@ -511,9 +512,9 @@ check(boundedReport.matchedLimits.maxOutputTokensPerCall === recoveryReport.matc
   && !boundedReport.emissionPolicy.hardThinkingTokenLimit,
   "emission experiment preserves common budgets and does not claim a server-enforced thinking cap");
 const parser = (source: string) => source.split("  #parseIntent(")[1].split("  #result(")[0];
-check(parser(readFileSync("src/lib/codelab/research/nyxNemotronTheoryCognition.ts", "utf8")) === parser(execFileSync("git", ["show",
+check(parser(execFileSync("git", ["show", `${boundedReport.candidateCommit}:src/lib/codelab/research/nyxNemotronTheoryCognition.ts`], { encoding: "utf8" })) === parser(execFileSync("git", ["show",
   `${boundedCheckpoint.previousRuntimeReference}:src/lib/codelab/research/nyxNemotronTheoryCognition.ts`], { encoding: "utf8" })),
-  "general output repair does not edit the authoritative semantic parser");
+  "historical output repair preserved its authoritative parser; later revisions cannot rewrite that evidence");
 check(boundedReport.verdict === "INCONCLUSIVE_PROVIDER_FAILURE" && boundedReport.providerBlocked
   && !boundedReport.executionBlocked && boundedReport.acceptanceViolations === 0
   && !boundedReport.broadPromotion && !boundedReport.defaultPolicyChanged
@@ -521,6 +522,27 @@ check(boundedReport.verdict === "INCONCLUSIVE_PROVIDER_FAILURE" && boundedReport
   && !boundedCheckpoint.certifiesCurrentRuntime && boundedControl.sourceRepositoryUnchanged,
   "infrastructure work and preserved trust remain supporting progress, not frontier capability certification");
 
+check(NYX_COVERAGE_TRANSFER_V3_TASKS.length === 3 && NYX_COVERAGE_TRANSFER_V3_CORPUS_DIGEST
+  === theoryDigest(NYX_COVERAGE_TRANSFER_V3_TASKS.map(task => task.oracleDigest))
+  && NYX_COVERAGE_TRANSFER_V3_TASKS.every(task => ![...NYX_COVERAGE_TRANSFER_V2_TASKS, ...NYX_COVERAGE_TRANSFER_TASKS]
+    .some(previous => task.taskId === previous.taskId || task.oracleDigest === previous.oracleDigest)),
+"fresh contract-recovery corpus is frozen independently of previously observed answers");
+for (const task of NYX_COVERAGE_TRANSFER_V3_TASKS) {
+  const objective = task.objective(candidate, 1_000);
+  check(validResearchObjective(objective, 1_000) && !JSON.stringify(objective).includes(task.oracleDigest),
+    "fresh objective carries neither selected implementation nor manual hidden oracle");
+  for (const experiment of objective.experimentCatalog) {
+    const observed = run(task.probeSource, experiment.toolId);
+    check(observed === task.outcome(experiment.experimentId) && experiment.possibleOutcomes.includes(observed),
+      "fresh executable observation agrees with the independently represented exact acceptance oracle");
+  }
+  const mutant = task.taskId.endsWith("EVENTLOG") ? task.probeSource.replace("event[1]>selected[1]", "event[1]>=selected[1]")
+    : task.taskId.endsWith("QUOTIENT") ? task.probeSource.replace("Math.round", "Math.trunc")
+      : task.probeSource.replace("[1,0]", "[0,1]");
+  check(mutant !== task.probeSource && objective.experimentCatalog.some(experiment =>
+    run(mutant, experiment.toolId) !== task.outcome(experiment.experimentId)),
+  "unchanged independent outcomes reject tie, rounding, and ordering mutants instead of certifying their own implementation");
+}
 console.log(`NYX_EXECUTABLE_TRANSFER_PREFLIGHT ${JSON.stringify({ schemaVersion: 1,
   corpusDigest: NYX_RESEARCH_TRANSFER_CORPUS_DIGEST, actualCognition: "NOT_EXECUTED",
   oracleMutantsRejected: 3, evidenceClass: "E3", broadPromotion: false, authorityGranted: false })}`);

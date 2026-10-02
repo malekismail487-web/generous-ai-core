@@ -1,4 +1,4 @@
-import { immutableTheoryValue, theoryDigest, theoryKeys, theoryStrings, theoryText } from "./theoryContracts";
+import { immutableTheoryValue, theoryDigest, theoryKeys, theoryStrings, theoryText, THEORY_PREDICTION_LIST_BOUNDS } from "./theoryContracts";
 import { researchObjectiveDigest, validResearchEvidence, validResearchId, validResearchObjective,
   type ResearchExperiment, type ResearchExperimentObservation, type ResearchHypothesisAssessment,
   type ResearchPartyDecision, type ResearchPartyObjective, type TheoryCognitionIntent,
@@ -53,8 +53,9 @@ export class ResearchEvidenceGraph {
     if (!intent || !theoryKeys(intent, ["schemaVersion", "decision", "thesis", "mechanismId", "causalMechanism",
       "evidenceRefs", "assumptions", "uncertainties", "forecasts", "counterexamples", "requestedExperimentIds",
       "revisionOfTheoryId", "modelEstimate"]) || intent.schemaVersion !== 1 || !DECISIONS.has(intent.decision)
-      || !theoryText(intent.thesis, 2_000) || !theoryStrings(intent.evidenceRefs, 32)
-      || !theoryStrings(intent.assumptions, 16) || !theoryStrings(intent.uncertainties, 16)
+      || !theoryText(intent.thesis, 2_000) || !theoryStrings(intent.evidenceRefs, THEORY_PREDICTION_LIST_BOUNDS.evidenceRefs)
+      || !theoryStrings(intent.assumptions, THEORY_PREDICTION_LIST_BOUNDS.assumptions)
+      || !theoryStrings(intent.uncertainties, THEORY_PREDICTION_LIST_BOUNDS.uncertainties)
       || !theoryStrings(intent.requestedExperimentIds, 32)
       || (intent.modelEstimate !== null && (typeof intent.modelEstimate !== "number"
         || !Number.isFinite(intent.modelEstimate) || intent.modelEstimate < 0 || intent.modelEstimate > 1))

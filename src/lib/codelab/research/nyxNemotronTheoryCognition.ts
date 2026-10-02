@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { NvidiaNimProvider } from "../model/nvidiaNimProvider";
 import { validHypothesisAllocation } from "./hypothesisCoverage";
-import { immutableTheoryValue, theoryDigest, theoryKeys, theoryStrings, theoryText } from "./theoryContracts";
-import { validResearchId, validResearchLimits, validResearchObjective, type ResearchPartyLimits,
+import { immutableTheoryValue, theoryDigest, theoryKeys, theoryStrings, theoryText, THEORY_PREDICTION_LIST_BOUNDS } from "./theoryContracts";
+import { researchPredictionId, validResearchId, validResearchLimits, validResearchObjective, type ResearchPartyLimits,
   type TheoryCognitionIntent, type TheoryCognitionRequest, type TheoryCognitionResult,
   type TheoryCounterexample, type TheoryForecast } from "./researchPartyContracts";
 
@@ -26,7 +26,7 @@ export interface NyxNemotronTheoryCognitionConfig {
   readonly boundedOutput?: boolean;
 }
 
-export const NYX_DERIVATION_CHECK_INSTRUCTION = "Derive each forecast from its mechanism and exact probe inputs; do not guess labels. Recheck arithmetic, order, units and boundary conditions. A forecast mismatch may be a bad derivation, not an impossible mechanism. Never force a conclusion; abstain when necessary.";
+export const NYX_DERIVATION_CHECK_INSTRUCTION = "Derive each forecast from its mechanism and exact probe inputs; do not guess labels. Separate initial state, the ordered transformations, resulting state, and observable encoding. Carry updated state into the next transformation only when that mechanism specifies it. Check the resulting observable with a second calculation where practical. Put a compact checkable calculation in the forecast rationale, not private reasoning. Recheck arithmetic, order, units and boundary conditions. A forecast mismatch may be a bad derivation, not an impossible mechanism. Never copy an observed outcome into an unobserved prediction or force a conclusion; abstain when necessary.";
 
 const COVERAGE_ONLY_INSTRUCTION = "Investigate preferredMechanismIds first to avoid duplicated exploration. The allocation is not evidence, is not a verdict, and does not restrict valid alternatives. Never force a conclusion to fill a slot.";
 
@@ -63,11 +63,11 @@ export const NYX_THEORY_INTENT_JSON_SCHEMA = Object.freeze({
     thesis: { type: "string", minLength: 1, maxLength: 2_000 },
     mechanismId: { anyOf: [{ type: "string", minLength: 1, maxLength: 200 }, { type: "null" }] },
     causalMechanism: { anyOf: [{ type: "string", minLength: 1, maxLength: 2_000 }, { type: "null" }] },
-    evidenceRefs: { type: "array", maxItems: 32, uniqueItems: true,
+    evidenceRefs: { type: "array", maxItems: THEORY_PREDICTION_LIST_BOUNDS.evidenceRefs, uniqueItems: true,
       items: { type: "string", minLength: 1, maxLength: 200 } },
-    assumptions: { type: "array", maxItems: 16, uniqueItems: true,
+    assumptions: { type: "array", maxItems: THEORY_PREDICTION_LIST_BOUNDS.assumptions, uniqueItems: true,
       items: { type: "string", minLength: 1, maxLength: 500 } },
-    uncertainties: { type: "array", maxItems: 16, uniqueItems: true,
+    uncertainties: { type: "array", maxItems: THEORY_PREDICTION_LIST_BOUNDS.uncertainties, uniqueItems: true,
       items: { type: "string", minLength: 1, maxLength: 500 } },
     forecasts: { type: "array", maxItems: 64, items: { type: "object", additionalProperties: false,
       required: ["experimentId", "expectedOutcome", "rationale"], properties: {
@@ -288,7 +288,7 @@ export class NyxNemotronTheoryCognition {
         // local admission contract before generation; never coerce output later.
         scalarRules: { thesis: { nonBlank: true, maxCharacters: 2_000 },
           modelEstimate: { nullable: true, minimum: 0, maximum: 1, notPercentage: true },
-          stringLists: { evidenceRefs: 32, assumptions: 16, uncertainties: 16, requestedExperimentIds: 32 },
+          stringLists: { ...THEORY_PREDICTION_LIST_BOUNDS, requestedExperimentIds: 32 },
           uniqueStringListItems: true, maxCharactersPerStringListItem: 500, nonBlankStringListItems: true },
       },
       laws: [
@@ -300,6 +300,7 @@ export class NyxNemotronTheoryCognition {
         "A challenge is a proposed test, not evidence that a hypothesis is false.",
         "counterexamples target only outputContract.counterexampleTargetTheoryIds: peers with precommitted hypotheses, not reviewers or abstaining entities. If that list is empty, counterexamples must be []. Never invent a target or use your own theory/guardian ID. Put concerns about review commentary in uncertainties.",
         "NO_CONCLUSION and CHALLENGE use outputContract.nonHypothesisFields exactly; put unresolved questions in uncertainties, not hypothesis fields.",
+        "Every decision, including NO_CONCLUSION, requires a nonblank thesis stating the bounded conclusion or actual evidence gap. Do not emit an empty thesis to mean abstention.",
         "PROPOSE_HYPOTHESIS uses revisionOfTheoryId=null. REVISE_HYPOTHESIS uses your exact theoryId and forecasts only experiments not yet observed.",
         "Return exactly one strict JSON object matching the schema.",
       ],
@@ -366,7 +367,7 @@ export class NyxNemotronTheoryCognition {
         || item.grantsAuthority !== false || !["E3", "E4"].includes(item.evidenceClass))
       || expectedFeedback.some(({ forecast, observation }) => !request.predictionFeedback.some((item) =>
         item.contributionId === latestOwn?.contributionId
-        && item.predictionId === `${latestOwn?.contributionId}-${forecast.experimentId}`
+        && item.predictionId === researchPredictionId(latestOwn!.contributionId, forecast.experimentId)
         && item.experimentId === forecast.experimentId && item.expectedOutcome === forecast.expectedOutcome
         && item.observedOutcome === observation.outcome && item.observationId === observation.observationId
         && item.evidenceId === observation.evidence.evidenceId
@@ -390,9 +391,9 @@ export class NyxNemotronTheoryCognition {
       ["schema_version", raw.schemaVersion === 1],
       ["decision", ["PROPOSE_HYPOTHESIS", "CHALLENGE", "REVISE_HYPOTHESIS", "NO_CONCLUSION"].includes(raw.decision as string)],
       ["thesis", theoryText(raw.thesis, 2_000)],
-      ["evidence_refs", theoryStrings(raw.evidenceRefs, 32)],
-      ["assumptions", theoryStrings(raw.assumptions, 16)],
-      ["uncertainties", theoryStrings(raw.uncertainties, 16)],
+      ["evidence_refs", theoryStrings(raw.evidenceRefs, THEORY_PREDICTION_LIST_BOUNDS.evidenceRefs)],
+      ["assumptions", theoryStrings(raw.assumptions, THEORY_PREDICTION_LIST_BOUNDS.assumptions)],
+      ["uncertainties", theoryStrings(raw.uncertainties, THEORY_PREDICTION_LIST_BOUNDS.uncertainties)],
       ["requested_experiment_ids", theoryStrings(raw.requestedExperimentIds, 32)],
       ["model_estimate", raw.modelEstimate === null || (typeof raw.modelEstimate === "number"
         && Number.isFinite(raw.modelEstimate) && raw.modelEstimate >= 0 && raw.modelEstimate <= 1)],
@@ -400,6 +401,9 @@ export class NyxNemotronTheoryCognition {
     const invalidScalars = scalarChecks.filter(([, valid]) => !valid);
     if (invalidScalars.length) {
       diagnostics.push("intent_scalar_invalid", ...invalidScalars.map(([field]) => `intent_scalar_${field}_invalid`));
+      if (!theoryText(raw.thesis, 2_000)) diagnostics.push(typeof raw.thesis !== "string"
+        ? "intent_scalar_thesis_type_invalid" : raw.thesis.trim().length === 0
+          ? "intent_scalar_thesis_blank" : "intent_scalar_thesis_bound_exceeded");
     }
     const evidence = new Set(request.objective.admittedEvidence.map((item) => item.evidenceId));
     for (const observation of request.experimentObservations) evidence.add(observation.evidence.evidenceId);

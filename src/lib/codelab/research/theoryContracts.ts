@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto";
 
+/** Intersection used at generation, graph admission and prediction custody. */
+export const THEORY_PREDICTION_LIST_BOUNDS = Object.freeze({ evidenceRefs: 20, assumptions: 10, uncertainties: 10 });
+
 /** Records and research context do not confer any Omega execution capability. */
 export interface TheoryAssignment {
   readonly objective: string;

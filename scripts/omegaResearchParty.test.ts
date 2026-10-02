@@ -4,7 +4,7 @@ import { runFlatTheoryBaseline } from "../src/lib/codelab/research/flatTheoryBas
 import { NYX_DERIVATION_CHECK_INSTRUCTION, NYX_NVIDIA_THEORY_INTENT_JSON_SCHEMA, NYX_THEORY_INTENT_JSON_SCHEMA,
   NyxNemotronTheoryCognition, theoryIntentSchemaForRequest } from "../src/lib/codelab/research/nyxNemotronTheoryCognition";
 import { assureResearchParty } from "../src/lib/codelab/research/researchPartyAssurance";
-import { immutableResearchValue, researchObjectiveDigest, researchCognitionOutcomeClass, validResearchLimits, validResearchObjective,
+import { immutableResearchValue, researchObjectiveDigest, researchCognitionOutcomeClass, researchPredictionId, validResearchLimits, validResearchObjective,
   type ResearchExperimentObservation, type ResearchPartyLimits, type ResearchPartyObjective,
   type TheoryCognitionIntent, type TheoryCognitionRequest, type TheoryCognitionResult,
   type TheoryContribution } from "../src/lib/codelab/research/researchPartyContracts";
@@ -149,11 +149,11 @@ function makeObservation(experimentId: string, mechanism = "FAILED_AS_COMPLETE")
     executionIdentity, outputDigest, authorityGranted: false });
 }
 
-function network() {
+function network(maxPredictionsPerTheory = 32) {
   const coordinator = {};
   const value = TheoryNetwork.create({ namespace: "nyx-party", addressCapacity: "1000000000000",
     maxAssignedPairs: 100, maxConcurrentActivations: 8, maxTotalActivations: 100,
-    maxEvents: 1_000, maxPredictionsPerTheory: 32, maxObservationsPerTheory: 64,
+    maxEvents: 1_000, maxPredictionsPerTheory, maxObservationsPerTheory: 64,
     maxRelations: 1_000, maxFanout: 16, maxMessages: 1_000, activationLifetimeMs: 60_000, now: () => now }, coordinator);
   return { value, coordinator };
 }
@@ -1069,5 +1069,98 @@ for (const lateRole of ["FALSIFIER", "REVISER", "META_REVIEWER"] as const) {
     && runtime.value.metrics().activePairs === 0 && !result.authorityGranted,
   "an otherwise correct mechanism cannot override a failed ownership/evidence-chain requirement");
   now = savedNow;
+}
+// Regression: locally valid output must also fit the downstream prediction
+// contract. No truncation/coercion of a model's uncertainty is permitted.
+for (const field of ["assumptions", "uncertainties"] as const) {
+  responseContent = JSON.stringify({ ...validRaw, [field]: Array.from({ length: 11 }, (_, i) => `bounded-item-${i}`) });
+  const rejected = await adapter.think(adapterRequest);
+  check(rejected.intent === null && rejected.diagnostics.includes(`intent_scalar_${field}_invalid`),
+    "generation admission rejects lists that cannot be precommitted by the theory network");
+}
+responseContent = JSON.stringify(validRaw);
+for (const [value, code] of [[null, "type_invalid"], [" \t", "blank"], ["x".repeat(2_001), "bound_exceeded"]] as const) {
+  responseContent = JSON.stringify({ ...noConclusion, thesis: value });
+  const rejected = await adapter.think({ ...adapterRequest, role: "META_REVIEWER" });
+  check(rejected.intent === null && rejected.diagnostics.includes(`intent_scalar_thesis_${code}`),
+    "abstention rejects invalid thesis values with precise sanitized diagnosis, not fabricated replacement text");
+  check(!JSON.stringify(rejected.diagnostics).includes("xxx"), "diagnosis never returns rejected model content");
+}
+for (const count of [20, 21]) {
+  const supplied = Array.from({ length: count }, (_, index) => evidence(`REF-${index}`, "SOURCE", `Source ${index}`));
+  const currentObjective = { ...objective(), admittedEvidence: supplied };
+  responseContent = JSON.stringify({ ...validRaw, evidenceRefs: supplied.map(item => item.evidenceId),
+    assumptions: Array.from({ length: 10 }, (_, index) => `Assumption ${index}`),
+    uncertainties: Array.from({ length: 10 }, (_, index) => `Uncertainty ${index}`) });
+  const parsed = await adapter.think({ ...adapterRequest, objective: currentObjective });
+  check((parsed.intent !== null) === (count === 20),
+    "exact custody list endpoints are admitted; one excess item is rejected without truncation");
+}
+responseContent = JSON.stringify(validRaw);
+const undersizedRuntime = network(1);
+const undersized = await TheoryResearchParty.create({ partyId: "PARTY-PREFLIGHT-BUDGET",
+  network: undersizedRuntime.value, coordinator: undersizedRuntime.coordinator,
+  cognition: new ScriptedPartyCognition(), experiments: { run: async item => makeObservation(item.experimentId) },
+  limits, investigatorCount: 3, maxParallelModelExecutions: 1, now: () => now }).investigate(objective());
+check(undersized.decision.reason === "research_party_prediction_not_precommitted"
+  && undersized.contributions.length === 0 && undersized.observations.length === 0,
+"forecast batch exceeding custody capacity is rejected before partial graph admission or experimentation");
+check(undersized.resourceUsage.modelCalls === 1 && undersizedRuntime.value.metrics().activePairs === 0,
+  "preflight preserves spent compute and releases leases on rejection");
+const longExperimentId = "PROBE-" + "a".repeat(194);
+const longObjective = { ...objective(), experimentCatalog: [{ ...objective().experimentCatalog[0],
+  experimentId: longExperimentId }] };
+check(validResearchObjective(longObjective, now), "maximal legal experiment identity remains supported");
+const longRuntime = network(); let longCalls = 0;
+const longCognition: TheoryCognitionEngine = { profile: () => ({ model: "identity-test-double" }), think: async request => {
+  longCalls++;
+  const conclusion = { ...noConclusion, evidenceRefs: ["E-SOURCE"], counterexamples: [] } as TheoryCognitionIntent;
+  const intent = request.role === "INVESTIGATOR" ? { ...validRaw,
+    mechanismId: longCalls === 1 ? "FAILED_AS_COMPLETE" : "STRICT",
+    forecasts: [{ experimentId: longExperimentId, expectedOutcome: longCalls === 1 ? "DISPATCHED" : "BLOCKED",
+      rationale: "Independent terminal-state prediction." }], requestedExperimentIds: [longExperimentId],
+    assumptions: Array.from({ length: 10 }, (_, i) => `Assumption ${i}`),
+    uncertainties: Array.from({ length: 10 }, (_, i) => `Uncertainty ${i}`) } as TheoryCognitionIntent : conclusion;
+  return cognitionResult(request, intent);
+} };
+const longResult = await TheoryResearchParty.create({ partyId: "PARTY-LONG-IDENTITY",
+  network: longRuntime.value, coordinator: longRuntime.coordinator, cognition: longCognition,
+  limits, investigatorCount: 2, maxParallelModelExecutions: 1, now: () => now,
+  experiments: { run: async () => {
+    const executionIdentity = "EXEC-LONG"; const outputDigest = theoryDigest("DISPATCHED");
+    const experiment = longObjective.experimentCatalog[0]; const outcome = "DISPATCHED";
+    const content = { experimentId: longExperimentId, toolId: experiment.toolId, outcome, executionIdentity, outputDigest };
+    return { ...makeObservation("EXP-A-FAILED"), experimentId: longExperimentId, observationId: "OBS-LONG",
+      executionIdentity, outputDigest, evidence: { ...makeObservation("EXP-A-FAILED").evidence,
+        contentDigest: theoryDigest(content) } };
+  } } }).investigate(longObjective);
+check(longResult.decision.state === "SUPPORTED_WITHIN_MODELED_FAMILY" && longResult.observations.length === 1,
+  "maximal experiment identities and list bounds survive the complete graph/network/observation loop");
+const contributionId = longResult.contributions[0].contributionId;
+check(researchPredictionId(contributionId, longExperimentId).length <= 200
+  && researchPredictionId(contributionId, longExperimentId) !== researchPredictionId(contributionId, longExperimentId.slice(0, -1))
+  && researchPredictionId("CONTRIBUTION-DIRECT", "EXP-A") === "CONTRIBUTION-DIRECT-EXP-A",
+"bounded composite identities retain binding and preserve historical short identities");
+for (const statusCode of [503, 200]) {
+  const runtime = network(); const scripted = new ScriptedPartyCognition(); let calls = 0;
+  const cognition: TheoryCognitionEngine = { profile: () => scripted.profile(), think: async request => {
+    const result = await scripted.think(request);
+    if (++calls !== 1) return result;
+    return { ...result, decision: "COGNITION_ERROR", intent: null,
+      reason: statusCode === 503 ? "nvidia_nim_http_failure" : "theory_cognition_schema_invalid",
+      diagnostics: statusCode === 200 ? ["intent_scalar_thesis_blank"] : [],
+      evidence: { ...result.evidence, evidenceClass: "E4", statusCode,
+        promptTokens: null, completionTokens: null, totalTokens: null } };
+  } };
+  const result = await TheoryResearchParty.create({ partyId: `PARTY-DELIVERY-STOP-${statusCode}`,
+    network: runtime.value, coordinator: runtime.coordinator, cognition, limits, investigatorCount: 3,
+    maxParallelModelExecutions: 1, stopOnProviderFailure: true, now: () => now,
+    experiments: { run: async item => makeObservation(item.experimentId) } }).investigate(objective());
+  check(statusCode === 503 ? result.resourceUsage.modelCalls === 1
+    && result.decision.reason === "research_party_provider_unavailable" : result.resourceUsage.modelCalls > 1
+    && result.decision.reason !== "research_party_provider_unavailable",
+  "exhausted delivery halts the epoch, but valid HTTP model/schema failure is not misclassified as a provider outage");
+  check(result.resourceUsage.totalTokens === null && runtime.value.metrics().activePairs === 0,
+    "unknown provider consumption stays unknown and every stopped activation is released");
 }
 console.log(`OMEGA_RESEARCH_PARTY_TEST_SUMMARY passed: ${checks}, failed: 0`);

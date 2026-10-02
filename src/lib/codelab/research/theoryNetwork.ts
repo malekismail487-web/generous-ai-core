@@ -1,4 +1,4 @@
-import { immutableTheoryValue, theoryDigest, theoryKeys, theoryStrings, theoryText, validTheoryAssignment,
+import { immutableTheoryValue, theoryDigest, theoryKeys, theoryStrings, theoryText, validTheoryAssignment, THEORY_PREDICTION_LIST_BOUNDS,
   type CommittedTheoryPrediction, type GuardianReport, type RecordedTheoryObservation, type TheoryAssignment,
   type TheoryLease, type TheoryMessage, type TheoryObservation, type TheoryPrediction, type TheoryRelation,
   type TheoryResearchContext, type TheoryWakeEvent } from "./theoryContracts";
@@ -221,27 +221,41 @@ export class TheoryNetwork {
   }
 
   commitPrediction(coordinator: object, lease: TheoryLease, prediction: TheoryPrediction): string {
+    this.assertPredictionsAdmissible(coordinator, lease, [prediction]);
     const pair = this.#live(coordinator, lease);
-    if (!prediction || !theoryKeys(prediction, ["predictionId", "statement", "expectedResult", "candidateDigest",
-      "evidenceRefs", "assumptions", "uncertainties", "proposedCounterexamples", "expectedPassingTools", "modelEstimate"])
-      || !theoryText(prediction.predictionId, 200) || !theoryText(prediction.statement)
-      || !theoryText(prediction.expectedResult) || !/^[a-f0-9]{64}$/.test(prediction.candidateDigest)
-      || !theoryStrings(prediction.evidenceRefs) || prediction.evidenceRefs.length === 0
-      || !theoryStrings(prediction.assumptions, 10) || !theoryStrings(prediction.uncertainties, 10)
-      || !theoryStrings(prediction.proposedCounterexamples, 5)
-      || !theoryStrings(prediction.expectedPassingTools, 10) || prediction.expectedPassingTools.length === 0
-      || (prediction.modelEstimate !== null && (typeof prediction.modelEstimate !== "number"
-        || !Number.isFinite(prediction.modelEstimate) || prediction.modelEstimate < 0 || prediction.modelEstimate > 1))) {
-      throw new Error("theory_prediction_invalid");
-    }
-    if (pair.predictions.some((item) => item.predictionId === prediction.predictionId)) {
-      throw new Error("theory_prediction_already_committed");
-    }
-    if (pair.predictions.length >= this.#config.maxPredictionsPerTheory) throw new Error("theory_prediction_budget_exhausted");
     const committed = immutableTheoryValue({ ...prediction, committedAtOrder: ++this.#order,
       digest: theoryDigest(prediction) });
     pair.predictions.push(committed);
     return committed.digest;
+  }
+
+  /** Read-only batch preflight: do not partially admit an oversized forecast set. */
+  assertPredictionsAdmissible(coordinator: object, lease: TheoryLease, predictions: readonly TheoryPrediction[]): void {
+    const pair = this.#live(coordinator, lease);
+    if (!Array.isArray(predictions) || predictions.length === 0
+      || pair.predictions.length + predictions.length > this.#config.maxPredictionsPerTheory) {
+      throw new Error("theory_prediction_budget_exhausted");
+    }
+    const identities = new Set(pair.predictions.map(item => item.predictionId));
+    for (const prediction of predictions) {
+      if (!prediction || !theoryKeys(prediction, ["predictionId", "statement", "expectedResult", "candidateDigest",
+        "evidenceRefs", "assumptions", "uncertainties", "proposedCounterexamples", "expectedPassingTools", "modelEstimate"])
+        || !theoryText(prediction.predictionId, 200) || !theoryText(prediction.statement)
+        || !theoryText(prediction.expectedResult) || !/^[a-f0-9]{64}$/.test(prediction.candidateDigest)
+        || !theoryStrings(prediction.evidenceRefs, THEORY_PREDICTION_LIST_BOUNDS.evidenceRefs) || prediction.evidenceRefs.length === 0
+        || !theoryStrings(prediction.assumptions, THEORY_PREDICTION_LIST_BOUNDS.assumptions)
+        || !theoryStrings(prediction.uncertainties, THEORY_PREDICTION_LIST_BOUNDS.uncertainties)
+        || !theoryStrings(prediction.proposedCounterexamples, 5)
+        || !theoryStrings(prediction.expectedPassingTools, 10) || prediction.expectedPassingTools.length === 0
+        || (prediction.modelEstimate !== null && (typeof prediction.modelEstimate !== "number"
+          || !Number.isFinite(prediction.modelEstimate) || prediction.modelEstimate < 0 || prediction.modelEstimate > 1))) {
+        throw new Error("theory_prediction_invalid");
+      }
+      if (identities.has(prediction.predictionId)) {
+        throw new Error("theory_prediction_already_committed");
+      }
+      identities.add(prediction.predictionId);
+    }
   }
 
   observe(coordinator: object, lease: TheoryLease, observation: TheoryObservation): void {
