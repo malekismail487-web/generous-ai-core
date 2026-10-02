@@ -542,6 +542,7 @@ let responseFinishReason = "stop";
 const modelPrompts: Record<string, unknown>[] = [];
 const requestedOutputBudgets: number[] = [];
 const templateControls: unknown[] = [];
+const requestedThinkingBudgets: (number | undefined)[] = [];
 const provider = NvidiaNimProvider.create({ providerId: "THEORY-ADAPTER-TEST", model: "nvidia/nemotron-3-ultra-550b-a55b",
   authorityMode: "TEST_DOUBLE_ONLY", credentialSource: { sourceIdentity: "test-only", read: () => "test-only-secret" },
   maxPromptBytes: 128_000, maxOutputTokens: 2_048, timeoutMs: 5_000,
@@ -550,6 +551,7 @@ const provider = NvidiaNimProvider.create({ providerId: "THEORY-ADAPTER-TEST", m
     check(authorization === "Bearer test-only-secret", "provider injects credential only at transport boundary");
     const body = JSON.parse(String(init?.body));
     requestedOutputBudgets.push(body.max_tokens);
+    requestedThinkingBudgets.push(body.reasoning_budget);
     templateControls.push(body.chat_template_kwargs);
     modelPrompts.push(JSON.parse(body.messages[1].content));
     return new Response(JSON.stringify({ choices: [{ message: { content: responseContent }, finish_reason: responseFinishReason }],
@@ -702,6 +704,35 @@ for (const outputBudget of [768, 1_536]) {
   check(result.grantsAuthority === false && result.intent?.mechanismId === validRaw.mechanismId,
     "changing a test output ceiling neither grants authority nor substitutes a hidden answer");
 }
+const reservedAdapter = NyxNemotronTheoryCognition.create({ cognitionId: "NYX-RESERVED-EMISSION",
+  provider, limits, boundedOutput: true, reasoningBudgetTokens: 256 });
+const reservationCallsBefore = modelPrompts.length;
+const reservedResult = await reservedAdapter.think({ ...adapterRequest, requestId: "RESERVED-EMISSION" });
+const reservationBudget = (modelPrompts.at(-1)!.outputContract as Record<string, unknown>).completionBudget as Record<string, unknown>;
+check(reservedResult.decision === "CONTRIBUTION" && modelPrompts.length === reservationCallsBefore + 1
+  && requestedThinkingBudgets.at(-1) === 256 && requestedOutputBudgets.at(-1) === adapterRequest.maxOutputTokens,
+"thinking reservation reuses one shared inference call and preserves the existing completion ceiling");
+check(reservationBudget.requestedThinkingBudgetTokens === 256 && reservationBudget.enforcementMeasured === false
+  && reservationBudget.nominalAnswerReservationTokens === adapterRequest.maxOutputTokens - 256,
+"cognition advertises an explicit answer reservation without pretending to measure server enforcement");
+const beforeTooSmall = modelPrompts.length;
+check((await reservedAdapter.think({ ...adapterRequest, requestId: "RESERVATION-TOO-SMALL", maxOutputTokens: 256 })).decision === "REJECTED"
+  && modelPrompts.length === beforeTooSmall, "a request smaller than its reservation fails before inference rather than increasing compute");
+responseFinishReason = "length";
+check((await reservedAdapter.think({ ...adapterRequest, requestId: "RESERVATION-STILL-TRUNCATED" })).intent === null,
+"a requested thinking budget never licenses admission of length-terminated output");
+responseFinishReason = "stop";
+responseContent = JSON.stringify({ ...validRaw, evidenceRefs: ["FABRICATED-EVIDENCE"] });
+check((await reservedAdapter.think({ ...adapterRequest, requestId: "RESERVATION-FABRICATION" })).diagnostics.includes("evidence_reference_unknown"),
+"answer reservation preserves the unchanged evidence oracle and strict intent parser");
+for (const overrides of [{ boundedOutput: false }, { reasoningBudgetTokens: -1 }, { reasoningBudgetTokens: 1.5 },
+  { reasoningBudgetTokens: limits.maxOutputTokensPerCall }]) {
+  let rejected = false;
+  try { NyxNemotronTheoryCognition.create({ cognitionId: "NYX-INVALID-RESERVATION", provider, limits,
+    boundedOutput: true, reasoningBudgetTokens: 256, ...overrides }); } catch { rejected = true; }
+  check(rejected, "invalid cognition reservation fails closed at configuration");
+}
+responseContent = JSON.stringify(validRaw);
 const reviserRequest = scripted.calls.find((item) => item.role === "REVISER"
   && item.predictionFeedback.some((feedback) => feedback.disposition === "FALSIFIED_PREDICTION"))!;
 const reviserResponse = await adapter.think({ ...reviserRequest,

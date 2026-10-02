@@ -771,6 +771,41 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
     reasoningEffort: "MEDIUM" })).decision === "REJECTED", "unsupported model cannot silently inherit Ultra template controls");
 }
 
+{
+  const bodies: Record<string, unknown>[] = [];
+  const client = NvidiaNimProvider.create({ providerId: "THINKING-RESERVATION-TEST",
+    model: "nvidia/nemotron-3-ultra-550b-a55b", authorityMode: "TEST_DOUBLE_ONLY",
+    credentialSource: { sourceIdentity: "test-only", read: () => "synthetic-test-only" },
+    maxPromptBytes: 4096, maxOutputTokens: 128, timeoutMs: 1000,
+    transport: async (_input, init) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return new Response(JSON.stringify({ choices: [{ message: { content: "{}" }, finish_reason: "stop" }],
+        usage: { prompt_tokens: 12, completion_tokens: 20, total_tokens: 32 } }), { status: 200 });
+    } });
+  const base = request({ responseFormat: "JSON_OBJECT", inferencePolicy: "REASONING_JSON", reasoningEffort: "MEDIUM" });
+  const original = await client.complete(base);
+  const reserved = await client.complete({ ...base, reasoningBudgetTokens: 16 } as NvidiaNimCompletionRequest);
+  check(bodies[1].reasoning_budget === 16 && bodies[1].max_tokens === base.maxTokens,
+    "explicit thinking budget reserves answer room without increasing the total completion ceiling");
+  check(original.evidence.requestDigest !== reserved.evidence.requestDigest && reserved.evidence.usage.totalTokens === 32,
+    "thinking budget is bound to request identity rather than inferred from observed output length");
+  check(!("reasoning_budget" in bodies[0]), "omission preserves historical provider request behavior");
+  for (const value of [-1, 128, 129, 1.5, Number.NaN, Infinity, "16"]) {
+    const rejected = await client.complete({ ...base, reasoningBudgetTokens: value } as NvidiaNimCompletionRequest);
+    check(rejected.decision === "REJECTED" && !rejected.evidence.networkAttempted,
+      "invalid or unbounded thinking reservation fails before transport");
+  }
+  for (const inferencePolicy of [undefined, "CONSTRAINED_JSON"] as const) {
+    check((await client.complete({ ...base, reasoningEffort: undefined, inferencePolicy,
+      reasoningBudgetTokens: 16 } as NvidiaNimCompletionRequest)).decision === "REJECTED",
+    "thinking reservation requires explicitly enabled reasoning");
+  }
+  check(bodies.length === 2, "invalid reservations cannot consume hidden model calls");
+  check((await provider(async () => { throw new Error("must_not_send"); }).complete({ ...base,
+    reasoningEffort: undefined, reasoningBudgetTokens: 16 } as NvidiaNimCompletionRequest)).decision === "REJECTED",
+  "Ultra-specific thinking reservation cannot silently transfer to another model");
+}
+
 assert(NVIDIA_NIM_PROVIDER_STATUS.newCapability === "BOUNDED_NVIDIA_NIM_CHAT_COMPLETION", "chunk reports exact model capability gain");
 assert(NVIDIA_NIM_PROVIDER_STATUS.liveNetworkAuthorityGranted === false && !NVIDIA_NIM_PROVIDER_STATUS.productionEligible,
   "provider adapter does not grant live or production authority by construction");

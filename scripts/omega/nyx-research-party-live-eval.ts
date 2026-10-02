@@ -45,6 +45,10 @@ const maxParallelModelExecutions = Number(process.env.OMEGA_NYX_RESEARCH_MODEL_C
 if (![1, 2, 3].includes(maxParallelModelExecutions)) throw new Error("research_model_concurrency_invalid");
 const corpus = process.env.OMEGA_NYX_RESEARCH_CORPUS || "LEGACY";
 const boundedOutput = ["COVERAGE_TRANSFER_V2", "COVERAGE_TRANSFER_V3"].includes(corpus);
+// Provider-documented reservation, not an increase in total completion compute.
+// See https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-ultra-550b-a55b-infer
+// Freeze before inference; never tune it against an individual task's oracle.
+const reasoningBudgetTokens = boundedOutput ? 256 : undefined;
 const derivationTransfer = corpus === "COVERAGE_TRANSFER_V1" || boundedOutput;
 if (!["LEGACY", "EXECUTABLE_TRANSFER_V1", "HYPOTHESIS_COVERAGE_DEVELOPMENT_V1", "COVERAGE_TRANSFER_V1", "COVERAGE_TRANSFER_V2", "COVERAGE_TRANSFER_V3"].includes(corpus)
   || (corpus !== "LEGACY" && (!policyComparison || diagnosticOnly))) throw new Error("research_corpus_selection_invalid");
@@ -74,7 +78,8 @@ const provider = NvidiaNimProvider.create({ providerId: "NYX-RESEARCH-PARTY-LIVE
   authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
   maxPromptBytes: 96_000, maxOutputTokens: 1_536, timeoutMs: 90_000 });
 const cognition = NyxNemotronTheoryCognition.create({ cognitionId: "NYX-RESEARCH-PARTY-LIVE-COGNITION", provider, limits,
-  ...(derivationTransfer ? { derivationChecks: true } : {}), ...(boundedOutput ? { boundedOutput: true } : {}) });
+  ...(derivationTransfer ? { derivationChecks: true } : {}),
+  ...(boundedOutput ? { boundedOutput: true, reasoningBudgetTokens } : {}) });
 if (diagnosticOnly) {
   const started = Date.now(); const deadline = started + 10 * 60_000;
   const observations: Record<string, unknown>[] = [];
@@ -376,6 +381,9 @@ if (policyComparison) {
         armOrdering: "COUNTERBALANCED_BY_TASK_INDEX", fixedTaskOrder: true,
         extraCallsForAllocation: 0, evaluationPopulation: "THREE_NEW_FINITE_MECHANISM_FAMILIES" },
         emissionPolicy: { boundedOutput, mediumEffort: boundedOutput,
+          requestedThinkingBudgetTokens: reasoningBudgetTokens ?? null,
+          nominalAnswerReservationTokens: reasoningBudgetTokens === undefined ? null : limits.maxOutputTokensPerCall - reasoningBudgetTokens,
+          thinkingBudgetEnforcementMeasured: false,
           instructionDigest: boundedOutput ? theoryDigest(NYX_BOUNDED_OUTPUT_INSTRUCTION) : null,
           hardThinkingTokenLimit: false, outputTokenCeilingChanged: false,
           localParserChanged: true, parserRevision: "PREDICTION_CUSTODY_INTERSECTION_V1",

@@ -9,7 +9,8 @@ import { assessNyxTransferEpoch, nyxTransferReportIdentity,
 import { assessNyxAdmissionReference, requireAdmissibleReferenceGates } from "./omega/nyx-quality-reference-preflight";
 import { NYX_GATE_RECOVERY, NYX_GATE_RECOVERY_FROZEN_CORE, NYX_GATE_RECOVERY_TASKS,
   NYX_GATE_RECOVERY_TRANSPORT_REVISION, NYX_GATE_RECOVERY_DEADLINE_REVISION,
-  NYX_GATE_RECOVERY_SERVER_ERROR_REVISION, NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION } from "./omega/nyx-gate-recovery-fixtures";
+  NYX_GATE_RECOVERY_SERVER_ERROR_REVISION, NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION,
+  NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION } from "./omega/nyx-gate-recovery-fixtures";
 
 let passed = 0;
 const failures: string[] = [];
@@ -42,8 +43,27 @@ check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected
   "historical ownership-repair core remains immutable and reproducible");
 check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected]) =>
   digest(readFileSync(path)) === (path === NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath
-    ? NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION.sourceSha256 : expected)),
-  "current ownership-repair core admits only the exact registered output-policy transport revision");
+    ? NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.sourceSha256 : expected)),
+  "current ownership-repair core admits only the exact registered answer-reservation transport revision");
+const boundedProvider = execFileSync("git", ["show",
+  `${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.predecessor}:${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.changedPath}`],
+{ encoding: "utf8" });
+check(digest(Buffer.from(boundedProvider)) === NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION.sourceSha256,
+  "historical medium-effort provider is preserved at its exact predecessor rather than rebaselined");
+const reservationAdditions = [
+  "  /** Explicit hosted Ultra reasoning_budget. Nonnegative and strictly below maxTokens; never unlimited. */\n  readonly reasoningBudgetTokens?: number;\n",
+  "      ...(request.reasoningBudgetTokens !== undefined ? { reasoning_budget: request.reasoningBudgetTokens } : {}),\n",
+  "    if (request.reasoningBudgetTokens !== undefined && (!Number.isSafeInteger(request.reasoningBudgetTokens)\n      || request.reasoningBudgetTokens < 0 || request.reasoningBudgetTokens >= request.maxTokens\n      || request.inferencePolicy !== \"REASONING_JSON\"\n      || this.#config.model !== \"nvidia/nemotron-3-ultra-550b-a55b\")) issues.push(\"completion_reasoning_budget_invalid\");\n",
+];
+const currentProvider = readFileSync(NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.changedPath, "utf8");
+check(reservationAdditions.every(addition => currentProvider.split(addition).length === 2)
+  && reservationAdditions.reduce((source, addition) => source.replace(addition, ""), currentProvider) === boundedProvider,
+"answer reservation changes only its typed field, digest-bound payload, and fail-closed validation; retries, authority, and evidence remain unchanged");
+check(!NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.historicalScoresComparable
+  && !NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.acceptanceOracleChanged
+  && !NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.outputCeilingChanged
+  && !NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.authorityIncrease,
+"new reservation cannot inherit historical scores or weaken compute and acceptance gates");
 const originalProvider = execFileSync("git", ["show",
   `${NYX_GATE_RECOVERY_FROZEN_CORE.commit}:${NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath}`], { encoding: "utf8" });
 const oldRetryBlock = "&& transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries) {\n          this.#capacity.defer(null);\n";
