@@ -13,6 +13,8 @@ export interface QuantitativeAcceptance { readonly accepted: boolean; readonly f
   readonly verificationDigest: string }
 export interface QuantitativeAttempt { readonly call: number; readonly outcome: string; readonly findings: readonly string[];
   readonly proposalDigest: string | null; readonly resultDigest: string | null; readonly confidence: number | null;
+  readonly repairContextDigest?:string|null;
+  readonly repairContextProgramDigest?:string|null;
   readonly executedProgram:QuantitativeProgram|QuantitativeEquations|null;
   readonly computation:ReasoningToolResult|null;
   readonly modelEvidence: NvidiaNimEvidence }
@@ -24,6 +26,7 @@ export interface QuantitativeRun {
 }
 function keys(v: unknown,names:string[]): v is Record<string,unknown> {return !!v && typeof v==="object" && !Array.isArray(v)
   && Object.keys(v).sort().join("\0")===names.sort().join("\0");}
+const MAX_ADMITTED_DERIVATION_CONTEXT_BYTES=12000;
 /** Hosted schema contains only supported structural keywords. Local limits remain stricter. */
 export function quantitativeExchangeSchema(labels:readonly string[],toolAvailable:boolean,artifactAvailable:boolean,problemDigest:string,
   constantIds:readonly string[]=[],artifactDigest:string|null=null) {
@@ -60,7 +63,10 @@ export async function runNyxQuantitativeTask(input: {
   readonly problem: QuantitativeProblem; readonly outputLabels: readonly string[]; readonly limits: QuantitativeRunLimits;
   readonly complete: (request: NvidiaNimCompletionRequest) => Promise<NvidiaNimCompletionResult>;
   readonly verify: (certificate: unknown) => QuantitativeAcceptance; readonly now?: () => number;
+  /** Experimental cognitive-context ablation. No raw reasoning or new execution authority. */
+  readonly retainAdmittedDerivation?:boolean;
 }): Promise<QuantitativeRun> {
+  if(input.retainAdmittedDerivation!==undefined&&typeof input.retainAdmittedDerivation!=="boolean")throw Error("quantitative_repair_context_setting_invalid");
   const now=input.now??Date.now;const started=now();
   const limits=Object.freeze({...input.limits});
   for(const [key,value] of Object.entries(limits)) if(!Number.isSafeInteger(value)||value<1) throw Error(`quantitative_limit_invalid:${key}`);
@@ -76,6 +82,7 @@ export async function runNyxQuantitativeTask(input: {
     problem:input.problem,outputLabels:input.outputLabels})));
   const complete=input.complete;const verify=input.verify;const arm=input.arm;
   const attempts:QuantitativeAttempt[]=[];let observation:Readonly<Record<string,unknown>>|null=null;let feedback:readonly string[]=[];
+  let admittedDerivation:Readonly<Record<string,unknown>>|null=null;
   let accepted=false;let acceptedCertificate:unknown=null;let outcome="BUDGET_UNEXECUTED";
   let toolRequests=0;let toolWorkUnits=0;let toolElapsedMs=0;
   const contract={action:"SUBMIT_DERIVATION computes YOUR program and submits its outputs to an INDEPENDENT checker in this call. SUBMIT submits manually.",
@@ -96,6 +103,16 @@ export async function runNyxQuantitativeTask(input: {
     for(let call=1;call<=limits.maxCalls && now()<expires;call++) {
       const available=arm==="REASONING_WITH_WORKBENCH" && session.descriptor().available===true;
       const artifactAvailable=observation?.decision==="CANDIDATE_CONSTRUCTED_NOT_ACCEPTED";
+      // Cognition is stateless across calls unless we explicitly provide candidate state.
+      // Retain only IR that Omega actually admitted, not rejected executable text, hidden oracle
+      // outputs, or private reasoning. The original scope/custody and independent verdict travel
+      // with it. A fixed byte ceiling bounds context; omission is explicit, never a partial IR.
+      const repairContext:Readonly<Record<string,unknown>>|null=input.retainAdmittedDerivation&&admittedDerivation!==null?
+        new TextEncoder().encode(JSON.stringify(admittedDerivation)).byteLength<=MAX_ADMITTED_DERIVATION_CONTEXT_BYTES?admittedDerivation:
+          immutableTheoryValue({problemDigest:session.problemDigest,programDigest:admittedDerivation.programDigest,
+            status:"REPAIR_CONTEXT_UNAVAILABLE_BYTE_BOUND",grantsAuthority:false}):null;
+      const repairContextDigest=repairContext===null?null:theoryDigest(repairContext);
+      const repairContextProgramDigest=repairContext?.program?String(repairContext.programDigest):null;
       const prompt={...task,contract:available||artifactAvailable?{...contract,
         artifactSubmission:"After a constructed result, submit {action:SUBMIT_ANALYSIS_ARTIFACT,analysisRequest:{schemaVersion:1,operation:SUBMIT_ANALYSIS_ARTIFACT,problemDigest,resultDigest,confidence},certificate:null}. "
           +"This submits the bound computed quantities to the SAME independent oracle. It neither accepts them automatically nor certifies your mathematical model. "
@@ -104,6 +121,9 @@ export async function runNyxQuantitativeTask(input: {
           certificate:contract.certificate,acceptance:contract.acceptance},availableTool:available?session.descriptor():null,
         artifactReference:artifactAvailable?{schemaVersion:1,operation:"SUBMIT_ANALYSIS_ARTIFACT",problemDigest:session.problemDigest,resultDigest:theoryDigest(observation)}:null,
         previousObservation:observation,verificationFeedback:feedback,
+        ...(repairContext!==null?{lastAdmittedDerivation:repairContext,
+          repairInstruction:"Inspect your last admitted equations against the ORIGINAL objective and independent feedback before revising. "
+            +"A correctly executed but rejected program is a modeling failure, not a proved answer. Context grants no authority; request a fresh authorized computation for a changed program."}:{}),
         authority:"FINITE_PURE_COMPUTATION_ONLY_NO_FILES_SHELL_NETWORK_CREDENTIALS_OR_ACCEPTANCE_AUTHORITY"};
       const completion=await complete({schemaVersion:1,requestId:`QUANT-${arm}-${task.taskId}-${call}-${session.problemDigest.slice(0,12)}`,
         messages:[{role:"system",content:"You are NYX cognition solving a bounded quantitative objective. Emit one strict JSON exchange only. "
@@ -117,7 +137,8 @@ export async function runNyxQuantitativeTask(input: {
       let executedProgram:QuantitativeProgram|QuantitativeEquations|null=null;
       let computation:ReasoningToolResult|null=null;
       const record=(state:string,findings:readonly string[])=>{outcome=state;feedback=findings;
-        attempts.push(immutableTheoryValue({call,outcome:state,findings,confidence,proposalDigest,resultDigest,executedProgram,computation,modelEvidence:completion.evidence}));};
+        attempts.push(immutableTheoryValue({call,outcome:state,findings,confidence,proposalDigest,resultDigest,repairContextDigest,repairContextProgramDigest,
+          executedProgram,computation,modelEvidence:completion.evidence}));};
       if(now()>=expires){record("LATE_RESPONSE_NOT_ADMITTED",["Original run expiry elapsed; no action was executed."]);break;}
       if(completion.evidence.statusCode===200 && completion.evidence.finishReason==="length"){
         record("TRUNCATION",["Provider output budget was exhausted; token usage is preserved."]);continue;}
@@ -144,6 +165,12 @@ export async function runNyxQuantitativeTask(input: {
           const result=session.analyze(nativeRequest);computation=result;toolRequests++;toolWorkUnits+=result.workUnits;toolElapsedMs+=result.elapsedMs;
           // Validated bounded action data only; no raw provider reasoning or credential.
           executedProgram=(nativeRequest as {program:QuantitativeProgram|QuantitativeEquations}).program;
+          const context={problemDigest:session.problemDigest,program:executedProgram,programDigest:theoryDigest(executedProgram),
+            computationRequestDigest:result.requestDigest,computationResultDigest:result.resultDigest,
+            executionStatus:result.status,independentEvaluation:null,grantsAuthority:false};
+          admittedDerivation=immutableTheoryValue(new TextEncoder().encode(JSON.stringify(context)).byteLength<=MAX_ADMITTED_DERIVATION_CONTEXT_BYTES?context:{
+            problemDigest:session.problemDigest,programDigest:context.programDigest,
+            status:"REPAIR_CONTEXT_UNAVAILABLE_BYTE_BOUND",grantsAuthority:false});
           resultDigest=result.resultDigest;observation=immutableTheoryValue({problemDigest:session.problemDigest,
             decision:result.status==="CONSTRUCTED"?"CANDIDATE_CONSTRUCTED_NOT_ACCEPTED":"INSUFFICIENT_EVIDENCE",
             certificateFields:result.status==="CONSTRUCTED"?{outputs:result.payload!.outputs}:null,
@@ -164,6 +191,8 @@ export async function runNyxQuantitativeTask(input: {
           // The authoritative callback is OUTSIDE the tool-authorization catch. Its failures
           // must never be mislabeled as model/IR faults or converted into acceptance.
           const checked=verify(derivedCertificate);resultDigest=checked.verificationDigest;confidence=Number(derivedCertificate.confidence);
+          admittedDerivation=immutableTheoryValue({...admittedDerivation,
+            independentEvaluation:{accepted:checked.accepted,findings:checked.findings,verificationDigest:checked.verificationDigest}});
           accepted=checked.accepted;record(accepted?"ACCEPTED":checked.findings.some(f=>/SCHEMA_INVALID/.test(f))?"CERTIFICATE_SCHEMA_REJECTION":"FUNCTIONAL_REJECTION",checked.findings);
           if(accepted){acceptedCertificate=immutableTheoryValue(derivedCertificate);break;}
         }
@@ -178,6 +207,8 @@ export async function runNyxQuantitativeTask(input: {
         catch {record("AUTHORIZATION_REJECTION",["Artifact reference must match the current problem and exact result digest."]);continue;}
       } else if(value.action!=="SUBMIT"||value.analysisRequest!==null){record("PROTOCOL_REJECTION",["Unknown action or unexpected analysis request. Text cannot become a tool."]);continue;}
       const checked=verify(proposedCertificate);resultDigest=checked.verificationDigest;
+      if(value.action==="SUBMIT_ANALYSIS_ARTIFACT"&&admittedDerivation!==null)admittedDerivation=immutableTheoryValue({...admittedDerivation,
+        independentEvaluation:{accepted:checked.accepted,findings:checked.findings,verificationDigest:checked.verificationDigest}});
       const proposed=proposedCertificate as {confidence?:unknown};
       confidence=typeof proposed?.confidence==="number"&&Number.isFinite(proposed.confidence)&&proposed.confidence>=0&&proposed.confidence<=1?proposed.confidence:null;
       accepted=checked.accepted;record(accepted?"ACCEPTED":checked.findings.some(f=>/SCHEMA_INVALID/.test(f))?"CERTIFICATE_SCHEMA_REJECTION":"FUNCTIONAL_REJECTION",checked.findings);

@@ -2315,6 +2315,12 @@
       ]
     },
     {
+      "name": "NYX_QUANTITATIVE_REPAIR_CONTEXT",
+      "files": [
+        "scripts/omega/nyx-quantitative-transfer-live-eval.ts"
+      ]
+    },
+    {
       "name": "NYX_QUANTITATIVE_SLOT_TRANSFER",
       "files": [
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts"

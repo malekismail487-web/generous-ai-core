@@ -12,6 +12,7 @@ import { COUPLED_TRANSFER_TASKS, COUPLED_TRANSFER_CORPUS_DIGEST, coupledExpected
   type FeedbackComparisonRun } from "./omega/nyx-quantitative-coupled-transfer-fixtures";
 import type { NvidiaNimCompletionRequest } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { PROTOCOL_REPAIR_TASKS,protocolRepairExpectedQuantities,verifyProtocolRepairSubmission } from "./omega/nyx-quantitative-protocol-repair-fixtures";
+import { REPAIR_CONTEXT_TASKS,repairContextExpectedQuantities,verifyRepairContextSubmission } from "./omega/nyx-quantitative-repair-context-fixtures";
 let passed=0,failed=0;
 function check(v:unknown,label:string){if(v)passed++;else{failed++;console.error(`x ${label}`);}}
 const throws=(f:()=>unknown)=>{try{f();return false;}catch{return true;}};
@@ -154,6 +155,18 @@ for(const [index,task] of PROTOCOL_REPAIR_TASKS.entries()) {
       `reference exists only in tests and establishes unchanged computational feasibility ${task.taskId}`);
   } finally {session.revoke();}
 }
+for(const [index,task] of REPAIR_CONTEXT_TASKS.entries()) {
+  check(theoryDigest(task.problem)!==theoryDigest(PROTOCOL_REPAIR_TASKS[index].problem),"context trial freezes new parameters before inference");
+  const expected={outputs:repairContextExpectedQuantities(task),confidence:1};
+  check(verifyRepairContextSubmission(task,expected).accepted
+    &&createQuantitativeConstraintFeedback(theoryDigest(task),task.outputLabels,task.publicConditions).evaluate(expected).status==="SATISFIED_NOT_ACCEPTED",
+    `context-trial independent oracle agrees with public requirements ${task.taskId}`);
+  const session=BoundedReasoningSession.create(task.problem,{maxRequests:2,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+10000});
+  try {const result=session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program:programs[index]});
+    check(result.status==="CONSTRUCTED"&&verifyRepairContextSubmission(task,{outputs:result.payload!.outputs,confidence:1}).accepted,
+      `test-only reference establishes feasibility without changing the live computation envelope ${task.taskId}`);
+  }finally{session.revoke();}
+}
 
 // Correct the archived comparison's causal interpretation without rewriting its original result.
 const unexposed=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-constraint-v1/comparison.json","utf8"));
@@ -185,6 +198,14 @@ for(const run of exposed.results) {
       "external oracle reproduces successful domains AND rejects the same incorrectly formulated sample-space candidate");
   }}finally{session.revoke();}
 }
+const protocolResult=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v7/comparison.json","utf8"));
+check(theoryDigest(protocolResult)==="c0571d5bae2d1044b54dc6581dfa64c0590b79f83da1559c0e34bc50e4210e3a"
+  &&protocolResult.candidate==="25bb0e019e89dbdf869e77190add8afc8b69fa79"&&protocolResult.complete&&!protocolResult.providerStable
+  &&protocolResult.summaries.every((s:{accepted:number;calls:number})=>s.accepted===3&&s.calls===7)
+  &&protocolResult.verdict==="INCONCLUSIVE_PROVIDER_OR_BUDGET"&&!protocolResult.broadPromotion,
+  "provider-contaminated trial preserves real failures and successes without manufacturing repair benefit");
+check(protocolResult.results.flatMap((r:{attempts:readonly {findings:readonly string[]}[]})=>r.attempts).every((a:{findings:readonly string[]})=>
+  !a.findings.includes("DERIVATION_CERTIFICATE_REQUIRES_ONLY_FINITE_CONFIDENCE_0_TO_1")),"mixed certificate envelopes disappeared, not mathematical-model rejection");
 
 // Replay real, failed mathematical candidates. No model solution is supplied by this diagnostic.
 const prior=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v6/comparison.json","utf8"));
@@ -268,5 +289,54 @@ const changed=scripted.map(r=>r.comparisonArm==="CONSTRAINT_FEEDBACK"?{...r,shar
 check(!assessConstraintFeedbackComparison(changed,["COUPLED-E3"],true).causalPromotionEligible,"different first-request custody cannot pass causal matching");
 const outcomes=scripted.map(r=>r.comparisonArm==="CONSTRAINT_FEEDBACK"?{...r,attempts:r.attempts.map((a,i)=>i? a:{...a,outcome:"ACCEPTED"})}:r);
 check(!assessConstraintFeedbackComparison(outcomes,["COUPLED-E3"],true).causalPromotionEligible,"same response identities with inconsistent first admission are not comparable");
+
+// Candidate-state repair is tested with scripted cognition, not represented as an E4 gain.
+const contextProblem={kind:"EXACT_QUANTITATIVE_DERIVATION" as const,constants:[{id:"zero",value:"0"},{id:"one",value:"1"}]};
+const contextProvider=NvidiaNimProvider.create({providerId:"CONTEXT-WIRING",model:"nvidia/nemotron-3-ultra-550b-a55b",authorityMode:"TEST_DOUBLE_ONLY",
+  credentialSource:{sourceIdentity:"test-double:context",read:()=>"test-only-credential-material"},maxPromptBytes:32000,maxOutputTokens:512,timeoutMs:1000,
+  transport:async(_url,init)=>{
+    const prompt=JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
+    const context=prompt.lastAdmittedDerivation;
+    const repair=context?.program?.cycles[0].phases[0].expressions[0].op==="ADD"
+      &&context.independentEvaluation?.accepted===false&&context.programDigest===theoryDigest(context.program)
+      &&context.problemDigest===theoryDigest(contextProblem);
+    const program:QuantitativeEquations={schemaVersion:2,initialState:[],cycles:[{iterations:1,phases:[{
+      expressions:[expression(0,repair?"DIV":"ADD","one","one")],updates:[{slot:"r0",source:"e0"}]}]}],outputs:[{label:"p",source:"r0"}]};
+    return new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{role:"assistant",content:JSON.stringify({action:"SUBMIT_DERIVATION",
+      analysisRequest:{problemDigest:theoryDigest(contextProblem),program},certificate:{confidence:0.9}})}}],
+      usage:{prompt_tokens:20,completion_tokens:20,total_tokens:40}}),{status:200});
+  }});
+const contextPair=createSharedFirstProposal(r=>contextProvider.complete(r));const contextRuns:FeedbackComparisonRun[]=[];
+for(const retainAdmittedDerivation of [false,true]) {
+  const branch=contextPair.branch();const result=await runNyxQuantitativeTask({arm:"REASONING_WITH_WORKBENCH",taskId:"CONTEXT-E3",objective:"Return p exactly equal to 1.",
+    problem:contextProblem,outputLabels:["p"],retainAdmittedDerivation,
+    limits:{maxCalls:2,maxOutputTokens:512,maxTaskMs:10000,expiresAtEpochMs:Date.now()+10000,maxToolRequests:2,maxToolWorkUnits:1000,maxToolElapsedMs:100},
+    complete:r=>branch.complete(r),verify:diagnostic.decorate(cert=>({accepted:(cert as {outputs:{value:string}[]}).outputs[0].value==="1",
+      findings:(cert as {outputs:{value:string}[]}).outputs[0].value==="1"?[]:["VALUE_MISMATCH"],verificationDigest:theoryDigest(cert)}),true)});
+  check(result.accepted===retainAdmittedDerivation&&result.calls===2&&result.toolRequests===2&&!result.authorityIncrease,
+    "scripted cognition needs its exact failed candidate to diagnose rather than regenerate blindly; limits and verifier are unchanged");
+  check(result.attempts[0].repairContextDigest===null&&result.attempts[0].repairContextProgramDigest===null,"no repair context exists before an actually admitted candidate");
+  check((result.attempts[1].repairContextProgramDigest!==null)===retainAdmittedDerivation,"only the intended ablation delivers last admitted candidate state");
+  contextRuns.push({...result,sharedProposal:branch.accounting().receipt,
+    comparisonArm:retainAdmittedDerivation?"PUBLIC_FEEDBACK_WITH_CONTEXT":"PUBLIC_FEEDBACK_NO_CONTEXT"});
+}
+const contextAssessment=assessConstraintFeedbackComparison(contextRuns,["CONTEXT-E3"],true,"ADMITTED_DERIVATION_CONTEXT");
+check(contextAssessment.firstProposalMatched&&contextAssessment.exposures.length===1&&contextAssessment.causalPromotionEligible,
+  "E3 detector recognizes actual equal-prefix context exposure, not a first-call stochastic difference");
+const dropped=contextRuns.map(r=>({...r,attempts:r.attempts.map(a=>({...a,repairContextProgramDigest:null}))}));
+check(!assessConstraintFeedbackComparison(dropped,["CONTEXT-E3"],true,"ADMITTED_DERIVATION_CONTEXT").causalPromotionEligible,
+  "configuration opt-in alone cannot stand in for actual failed-program context delivery");
+let boundedContextObserved=false;await runNyxQuantitativeTask({arm:"REASONING_WITH_WORKBENCH",taskId:"CONTEXT-BOUNDED",objective:"Reject a valid candidate for testing.",
+  problem:contextProblem,outputLabels:["p"],retainAdmittedDerivation:true,
+  limits:{maxCalls:2,maxOutputTokens:512,maxTaskMs:10000,expiresAtEpochMs:Date.now()+10000,maxToolRequests:2,maxToolWorkUnits:1000,maxToolElapsedMs:100},
+  complete:async r=>{const prompt=JSON.parse(r.messages[1].content);if(prompt.lastAdmittedDerivation)boundedContextObserved=
+    prompt.lastAdmittedDerivation.status==="REPAIR_CONTEXT_UNAVAILABLE_BYTE_BOUND"&&!prompt.lastAdmittedDerivation.program;
+    return contextProvider.complete(r);},verify:cert=>({accepted:false,findings:["X".repeat(13000)],verificationDigest:theoryDigest(cert)})});
+check(boundedContextObserved,"oversized retained candidate/evaluation state is explicitly unavailable, never silently truncated into a misleading partial program");
+check(await rejected(()=>runNyxQuantitativeTask({arm:"REASONING_WITH_WORKBENCH",taskId:"CONTEXT-MALFORMED",objective:"No inference allowed.",
+  problem:contextProblem,outputLabels:["p"],retainAdmittedDerivation:"yes" as unknown as boolean,
+  limits:{maxCalls:2,maxOutputTokens:512,maxTaskMs:10000,expiresAtEpochMs:Date.now()+10000,maxToolRequests:2,maxToolWorkUnits:1000,maxToolElapsedMs:100},
+  complete:()=>{throw Error("malformed_setting_cannot_infer");},verify:()=>{throw Error("malformed_setting_cannot_verify");}})),
+  "context configuration must be an explicit boolean, not truthy coercion");
 console.log(`OMEGA_QUANTITATIVE_CONSTRAINT_FEEDBACK_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if(failed)process.exitCode=1;

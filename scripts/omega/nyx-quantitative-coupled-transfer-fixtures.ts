@@ -95,9 +95,11 @@ export interface FeedbackComparisonRun extends QuantitativeRun {
 /** Authoritative comparison classification, separate from both cognition and its diagnostic.
  * An outcome difference is not proof of treatment benefit when no treatment was delivered.
  */
-export function assessConstraintFeedbackComparison(results:readonly FeedbackComparisonRun[],taskIds:readonly string[],providerStable:boolean) {
+export function assessConstraintFeedbackComparison(results:readonly FeedbackComparisonRun[],taskIds:readonly string[],providerStable:boolean,
+  intervention:"PUBLIC_CONSTRAINT_FEEDBACK"|"ADMITTED_DERIVATION_CONTEXT"="PUBLIC_CONSTRAINT_FEEDBACK") {
   const selected=(arm:string)=>results.filter(r=>r.comparisonArm===arm);
-  const control=selected("GENERIC_FEEDBACK"),diagnostic=selected("CONSTRAINT_FEEDBACK");
+  const control=selected(intervention==="ADMITTED_DERIVATION_CONTEXT"?"PUBLIC_FEEDBACK_NO_CONTEXT":"GENERIC_FEEDBACK"),
+    diagnostic=selected(intervention==="ADMITTED_DERIVATION_CONTEXT"?"PUBLIC_FEEDBACK_WITH_CONTEXT":"CONSTRAINT_FEEDBACK");
   const complete=results.length===2*taskIds.length&&taskIds.every(id=>
     control.filter(r=>r.taskId===id).length===1&&diagnostic.filter(r=>r.taskId===id).length===1);
   const firstProposalMatched=complete&&taskIds.every(id=>{
@@ -112,7 +114,10 @@ export function assessConstraintFeedbackComparison(results:readonly FeedbackComp
   });
   const exposures=diagnostic.flatMap(r=>r.attempts.flatMap((a,i)=>{
     const next=r.attempts[i+1];
-    return a.outcome==="FUNCTIONAL_REJECTION"&&a.findings.some(f=>f.startsWith("PUBLIC_NECESSARY_CONDITION_VIOLATED:"))
+    const delivered=intervention==="ADMITTED_DERIVATION_CONTEXT"?a.executedProgram!=null
+      &&next?.repairContextProgramDigest===theoryDigest(a.executedProgram)&&next.repairContextDigest!=null:
+        a.findings.some(f=>f.startsWith("PUBLIC_NECESSARY_CONDITION_VIOLATED:"));
+    return a.outcome==="FUNCTIONAL_REJECTION"&&delivered
       &&next?.modelEvidence.statusCode===200&&next.modelEvidence.networkAttempted
       ?[{taskId:r.taskId,feedbackAfterCall:a.call,nextCall:next.call,repaired:r.accepted}]:[];
   }));
@@ -127,6 +132,6 @@ export function assessConstraintFeedbackComparison(results:readonly FeedbackComp
     advantage?"OBSERVED_OUTCOME_DIFFERENCE_WITHOUT_CAUSAL_FEEDBACK_EXPOSURE":"FEEDBACK_HYPOTHESIS_NOT_EXERCISED":!firstProposalMatched?
       "FEEDBACK_EXERCISED_INITIAL_PROPOSAL_NOT_MATCHED":advantage&&(recoveredAdvantage||b.accepted===a.accepted)?
         "NARROW_EXPOSED_REPAIR_ADVANTAGE_REPLICATION_REQUIRED":"NO_COMPUTE_DEFENSIBLE_FEEDBACK_ADVANTAGE";
-  return immutableTheoryValue({complete,firstProposalMatched,exposures,control:a,diagnostic:b,verdict,
+  return immutableTheoryValue({intervention,complete,firstProposalMatched,exposures,control:a,diagnostic:b,verdict,
     causalPromotionEligible:verdict==="NARROW_EXPOSED_REPAIR_ADVANTAGE_REPLICATION_REQUIRED",broadPromotion:false});
 }

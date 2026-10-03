@@ -16,6 +16,7 @@ import {CONSTRAINT_TRANSFER_EPOCH,CONSTRAINT_TRANSFER_TASKS,CONSTRAINT_TRANSFER_
 import {COUPLED_TRANSFER_EPOCH,COUPLED_TRANSFER_TASKS,COUPLED_TRANSFER_CORPUS_DIGEST,verifyCoupledTransferSubmission,
   createSharedFirstProposal,assessConstraintFeedbackComparison,type SharedProposalReceipt} from "./nyx-quantitative-coupled-transfer-fixtures";
 import {PROTOCOL_REPAIR_EPOCH,PROTOCOL_REPAIR_TASKS,PROTOCOL_REPAIR_CORPUS_DIGEST,verifyProtocolRepairSubmission} from "./nyx-quantitative-protocol-repair-fixtures";
+import {REPAIR_CONTEXT_EPOCH,REPAIR_CONTEXT_TASKS,REPAIR_CONTEXT_CORPUS_DIGEST,verifyRepairContextSubmission} from "./nyx-quantitative-repair-context-fixtures";
 import {createQuantitativeConstraintFeedback,type QuantitativeConstraintAssessment} from "../../src/lib/codelab/research/quantitativeConstraintFeedback";
 import type {QuantitativeTask} from "./nyx-quantitative-transfer-fixtures";
 
@@ -24,14 +25,15 @@ const slotTransfer=process.env.NYX_QUANTITATIVE_SLOT_TRANSFER==="1";
 const equationTransfer=process.env.NYX_QUANTITATIVE_EQUATION_TRANSFER==="1";
 const composedTransfer=process.env.NYX_QUANTITATIVE_COMPOSED_TRANSFER==="1";
 const commandTransfer=process.env.NYX_QUANTITATIVE_COMMAND_TRANSFER==="1";
-const protocolRepair=process.env.NYX_QUANTITATIVE_PROTOCOL_REPAIR==="1";
+const repairContext=process.env.NYX_QUANTITATIVE_REPAIR_CONTEXT==="1";
+const protocolRepair=repairContext||process.env.NYX_QUANTITATIVE_PROTOCOL_REPAIR==="1";
 const coupledFeedback=protocolRepair||process.env.NYX_QUANTITATIVE_COUPLED_FEEDBACK==="1";
 const constraintFeedback=coupledFeedback||process.env.NYX_QUANTITATIVE_CONSTRAINT_FEEDBACK==="1";
-const EPOCH=protocolRepair?PROTOCOL_REPAIR_EPOCH:coupledFeedback?COUPLED_TRANSFER_EPOCH:constraintFeedback?CONSTRAINT_TRANSFER_EPOCH:commandTransfer?COMMAND_TRANSFER_EPOCH:composedTransfer?COMPOSED_TRANSFER_EPOCH:equationTransfer?EQUATION_TRANSFER_EPOCH:slotTransfer?SLOT_TRANSFER_EPOCH:fresh?FRESH_QUANTITATIVE_EPOCH:QUANTITATIVE_EPOCH;
-const TASKS=protocolRepair?PROTOCOL_REPAIR_TASKS:coupledFeedback?COUPLED_TRANSFER_TASKS:constraintFeedback?CONSTRAINT_TRANSFER_TASKS:commandTransfer?COMMAND_TRANSFER_TASKS:composedTransfer?COMPOSED_TRANSFER_TASKS:equationTransfer?EQUATION_TRANSFER_TASKS:slotTransfer?SLOT_TRANSFER_TASKS:fresh?FRESH_QUANTITATIVE_TASKS:QUANTITATIVE_TASKS;
-const CORPUS_DIGEST=protocolRepair?PROTOCOL_REPAIR_CORPUS_DIGEST:coupledFeedback?COUPLED_TRANSFER_CORPUS_DIGEST:constraintFeedback?CONSTRAINT_TRANSFER_CORPUS_DIGEST:commandTransfer?COMMAND_TRANSFER_CORPUS_DIGEST:composedTransfer?COMPOSED_TRANSFER_CORPUS_DIGEST:equationTransfer?EQUATION_TRANSFER_CORPUS_DIGEST:slotTransfer?SLOT_TRANSFER_CORPUS_DIGEST:fresh?FRESH_QUANTITATIVE_CORPUS_DIGEST:QUANTITATIVE_CORPUS_DIGEST;
+const EPOCH=repairContext?REPAIR_CONTEXT_EPOCH:protocolRepair?PROTOCOL_REPAIR_EPOCH:coupledFeedback?COUPLED_TRANSFER_EPOCH:constraintFeedback?CONSTRAINT_TRANSFER_EPOCH:commandTransfer?COMMAND_TRANSFER_EPOCH:composedTransfer?COMPOSED_TRANSFER_EPOCH:equationTransfer?EQUATION_TRANSFER_EPOCH:slotTransfer?SLOT_TRANSFER_EPOCH:fresh?FRESH_QUANTITATIVE_EPOCH:QUANTITATIVE_EPOCH;
+const TASKS=repairContext?REPAIR_CONTEXT_TASKS:protocolRepair?PROTOCOL_REPAIR_TASKS:coupledFeedback?COUPLED_TRANSFER_TASKS:constraintFeedback?CONSTRAINT_TRANSFER_TASKS:commandTransfer?COMMAND_TRANSFER_TASKS:composedTransfer?COMPOSED_TRANSFER_TASKS:equationTransfer?EQUATION_TRANSFER_TASKS:slotTransfer?SLOT_TRANSFER_TASKS:fresh?FRESH_QUANTITATIVE_TASKS:QUANTITATIVE_TASKS;
+const CORPUS_DIGEST=repairContext?REPAIR_CONTEXT_CORPUS_DIGEST:protocolRepair?PROTOCOL_REPAIR_CORPUS_DIGEST:coupledFeedback?COUPLED_TRANSFER_CORPUS_DIGEST:constraintFeedback?CONSTRAINT_TRANSFER_CORPUS_DIGEST:commandTransfer?COMMAND_TRANSFER_CORPUS_DIGEST:composedTransfer?COMPOSED_TRANSFER_CORPUS_DIGEST:equationTransfer?EQUATION_TRANSFER_CORPUS_DIGEST:slotTransfer?SLOT_TRANSFER_CORPUS_DIGEST:fresh?FRESH_QUANTITATIVE_CORPUS_DIGEST:QUANTITATIVE_CORPUS_DIGEST;
 const originalVerify=commandTransfer?verifyCommandTransferSubmission:composedTransfer?verifyComposedTransferSubmission:equationTransfer?verifyEquationTransferSubmission:slotTransfer?verifySlotTransferSubmission:fresh?verifyFreshQuantitativeSubmission:verifyQuantitativeSubmission;
-const verify=(task:QuantitativeTask,certificate:unknown)=>protocolRepair?verifyProtocolRepairSubmission(task as ConstraintTransferTask,certificate):coupledFeedback?verifyCoupledTransferSubmission(task as ConstraintTransferTask,certificate)
+const verify=(task:QuantitativeTask,certificate:unknown)=>repairContext?verifyRepairContextSubmission(task as ConstraintTransferTask,certificate):protocolRepair?verifyProtocolRepairSubmission(task as ConstraintTransferTask,certificate):coupledFeedback?verifyCoupledTransferSubmission(task as ConstraintTransferTask,certificate)
   :constraintFeedback?verifyConstraintTransferSubmission(task as ConstraintTransferTask,certificate):originalVerify(task,certificate);
 
 if(process.env.OMEGA_ALLOW_NVIDIA_NETWORK!=="1"||!process.env.NVIDIA_API_KEY?.trim()) {
@@ -46,8 +48,9 @@ const provider=NvidiaNimProvider.create({providerId:"NYX-QUANTITATIVE-TRANSFER",
   credentialSource:nvidiaNimCredentialFromEnvironment(process.env),maxPromptBytes:32000,
   maxOutputTokens:EPOCH.maxOutputTokensPerCall,timeoutMs:120000});
 const began=Date.now();const expires=began+EPOCH.maxWallClockMs;
-type ComparisonArm=QuantitativeArm|"GENERIC_FEEDBACK"|"CONSTRAINT_FEEDBACK";
-const ARMS:readonly ComparisonArm[]=constraintFeedback?["GENERIC_FEEDBACK","CONSTRAINT_FEEDBACK"]:["CURRENT_DIRECT","REASONING_MEDIUM","REASONING_WITH_WORKBENCH"];
+type ComparisonArm=QuantitativeArm|"GENERIC_FEEDBACK"|"CONSTRAINT_FEEDBACK"|"PUBLIC_FEEDBACK_NO_CONTEXT"|"PUBLIC_FEEDBACK_WITH_CONTEXT";
+const ARMS:readonly ComparisonArm[]=repairContext?["PUBLIC_FEEDBACK_NO_CONTEXT","PUBLIC_FEEDBACK_WITH_CONTEXT"]:
+  constraintFeedback?["GENERIC_FEEDBACK","CONSTRAINT_FEEDBACK"]:["CURRENT_DIRECT","REASONING_MEDIUM","REASONING_WITH_WORKBENCH"];
 const results:(QuantitativeRun&{comparisonArm:ComparisonArm;constraintAssessments:readonly QuantitativeConstraintAssessment[];
   verificationElapsedMs:number;sharedProposal:SharedProposalReceipt|null;allocatedElapsedMs:number;
   physicalInference:{calls:number;reportedTokens:number;unknownUsageCalls:number;httpAttempts:number}})[]=[];
@@ -59,7 +62,7 @@ for(let index=0;index<TASKS.length;index++) {
   if(Date.now()>=expires) break;
   const constraintAssessments:QuantitativeConstraintAssessment[]=[];let verificationElapsedMs=0;
   const diagnostic=constraintFeedback?createQuantitativeConstraintFeedback(theoryDigest(task),task.outputLabels,(task as ConstraintTransferTask).publicConditions):null;
-  const evaluator=diagnostic?diagnostic.decorate(certificate=>verify(task,certificate),arm==="CONSTRAINT_FEEDBACK",assessment=>constraintAssessments.push(assessment))
+  const evaluator=diagnostic?diagnostic.decorate(certificate=>verify(task,certificate),repairContext||arm==="CONSTRAINT_FEEDBACK",assessment=>constraintAssessments.push(assessment))
     :(certificate:unknown)=>verify(task,certificate);
   const branch=shared?.branch();const sharedPrefixElapsedMs=offset>0?shared?.prefixElapsedMs()??0:0;
   const remainingTaskMs=EPOCH.maxTaskMs-sharedPrefixElapsedMs;
@@ -67,6 +70,7 @@ for(let index=0;index<TASKS.length;index++) {
   const result:QuantitativeRun=remainingTaskMs<=0?{arm:"REASONING_WITH_WORKBENCH",taskId:task.taskId,accepted:false,
     outcome:"SHARED_PREFIX_TASK_BUDGET_EXHAUSTED",attempts:[],elapsedMs:0,calls:0,toolRequests:0,toolWorkUnits:0,
     toolElapsedMs:0,acceptedCertificate:null,authorityIncrease:false}:await runNyxQuantitativeTask({arm:constraintFeedback?"REASONING_WITH_WORKBENCH":arm as QuantitativeArm,...task,
+    retainAdmittedDerivation:repairContext&&arm==="PUBLIC_FEEDBACK_WITH_CONTEXT",
     limits:{maxCalls:EPOCH.maxCallsPerTask,maxOutputTokens:EPOCH.maxOutputTokensPerCall,maxTaskMs:remainingTaskMs,
       expiresAtEpochMs:expires,maxToolRequests:EPOCH.maxToolRequests,maxToolWorkUnits:EPOCH.maxToolWorkUnits,maxToolElapsedMs:EPOCH.maxToolElapsedMs},
     complete:branch?request=>branch.complete(request):async request=>{const response=await provider.complete(request);physicalCalls++;
@@ -116,13 +120,15 @@ const complete=results.length===TASKS.length*ARMS.length;
 const stable=summaries.every(s=>s.providerFailures===0&&s.recoveredProviderDisruptions===0&&s.unknownUsageCalls===0);
 const nativeAdvantage=complete&&stable&&(workbench.accepted>reasoning.accepted&&workbench.reportedTokens<=reasoning.reportedTokens
   ||constraintFeedback&&workbench.accepted>0&&workbench.accepted===reasoning.accepted&&workbench.reportedTokens<reasoning.reportedTokens&&workbench.calls<=reasoning.calls);
-const feedbackAssessment=constraintFeedback?assessConstraintFeedbackComparison(results,TASKS.map(t=>t.taskId),stable):null;
+const feedbackAssessment=constraintFeedback?assessConstraintFeedbackComparison(results,TASKS.map(t=>t.taskId),stable,
+  repairContext?"ADMITTED_DERIVATION_CONTEXT":"PUBLIC_CONSTRAINT_FEEDBACK"):null;
 const sourceAfter=theoryDigest({index:git("ls-files","-s"),status:git("status","--porcelain")});
 if(sourceAfter!==sourceBefore) throw Error("source_repository_changed_during_evaluation");
 const sources=["src/lib/codelab/research/analysisArtifactReference.ts","src/lib/codelab/research/boundedReasoningWorkbench.ts","src/lib/codelab/research/exactQuantitativeDerivation.ts",
   "src/lib/codelab/research/quantitativeConstraintFeedback.ts","scripts/omega/nyx-quantitative-constraint-transfer-fixtures.ts",
   "scripts/omega/nyx-quantitative-coupled-transfer-fixtures.ts",
   "scripts/omega/nyx-quantitative-protocol-repair-fixtures.ts",
+  "scripts/omega/nyx-quantitative-repair-context-fixtures.ts",
   "src/lib/codelab/research/quantitativeEquationCompiler.ts",
   "src/lib/codelab/research/nyxQuantitativeReasoning.ts","src/lib/codelab/model/nvidiaNimProvider.ts",
   "src/lib/codelab/model/nvidiaCapacity.ts","src/lib/codelab/research/theoryContracts.ts",
@@ -144,7 +150,8 @@ const report={schemaVersion:1,chunkId:EPOCH.chunkId,candidate,model,epoch:EPOCH,
     {calls:0,reportedTokens:0,httpAttempts:0}),
   computeAccounting:coupledFeedback?"SHARED_PREFIX_ALLOCATED_TO_EACH_ARM_PHYSICAL_INFERENCE_COUNTED_ONCE_EACH_ARM_RUNS_OMEGA_INDEPENDENTLY":null,
   toolAblation:constraintFeedback?"NONE_BOTH_ARMS_HAVE_IDENTICAL_EXACT_IR":"MEDIUM_REASONING_WITH_VS_WITHOUT_EXACT_IR",
-  feedbackAblation:constraintFeedback?"IDENTICAL_PUBLIC_REQUIREMENTS_AND_ORACLE_DIFFERENT_COUNTEREXAMPLE_DELIVERY_ONLY":null,
+  feedbackAblation:repairContext?"NONE_IDENTICAL_PUBLIC_CONSTRAINT_FEEDBACK_BOTH_ARMS":constraintFeedback?"IDENTICAL_PUBLIC_REQUIREMENTS_AND_ORACLE_DIFFERENT_COUNTEREXAMPLE_DELIVERY_ONLY":null,
+  contextAblation:repairContext?"SAME_FIRST_PROPOSAL_AND_FEEDBACK_WITH_VS_WITHOUT_LAST_ADMITTED_EQUATIONS_AND_VERDICT":null,
   reasoningConfigurationAblation:constraintFeedback?"NONE_BOTH_ARMS_MEDIUM":"CURRENT_DIRECT_VS_MEDIUM_REASONING",frozenBeforeLive:true,
   independentEvidenceClass:"E3_INDEPENDENT_DOMAIN_ALGORITHMS_NOT_EXTERNAL_INSTITUTION",liveEvidenceClass:"E4",
   calibrationScope:"DESCRIPTIVE_DEPENDENT_SUBMISSIONS_FOUR_TASKS_NOT_GENERAL_CALIBRATION",

@@ -4440,6 +4440,7 @@
           "scripts/omega/nyx-quality-v4-live-eval.ts",
           "scripts/omega/nyx-quality-v5-fixtures.ts",
           "scripts/omega/nyx-quantitative-constraint-transfer-fixtures.ts",
+          "scripts/omega/nyx-quantitative-repair-context-fixtures.ts",
           "scripts/omega/nyx-quantitative-transfer-fixtures.ts",
           "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
           "scripts/omega/nyx-r3f-fixtures.ts",
