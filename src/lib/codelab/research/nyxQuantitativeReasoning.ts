@@ -1,5 +1,5 @@
 import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult, NvidiaNimEvidence } from "../model/nvidiaNimProvider";
-import { BoundedReasoningSession } from "./boundedReasoningWorkbench";
+import { BoundedReasoningSession,type ReasoningToolResult } from "./boundedReasoningWorkbench";
 import { EXACT_DERIVATION_OPERATIONS,type QuantitativeProblem,type QuantitativeProgram } from "./exactQuantitativeDerivation";
 import { equationNames,type QuantitativeEquations } from "./quantitativeEquationCompiler";
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
@@ -14,6 +14,7 @@ export interface QuantitativeAcceptance { readonly accepted: boolean; readonly f
 export interface QuantitativeAttempt { readonly call: number; readonly outcome: string; readonly findings: readonly string[];
   readonly proposalDigest: string | null; readonly resultDigest: string | null; readonly confidence: number | null;
   readonly executedProgram:QuantitativeProgram|QuantitativeEquations|null;
+  readonly computation:ReasoningToolResult|null;
   readonly modelEvidence: NvidiaNimEvidence }
 export interface QuantitativeRun {
   readonly arm: QuantitativeArm; readonly taskId: string; readonly accepted: boolean; readonly outcome: string;
@@ -37,11 +38,11 @@ export function quantitativeExchangeSchema(labels:readonly string[],toolAvailabl
       expressions:array(object({id:{type:"string",enum:expressions},op:{type:"string",enum:EXACT_DERIVATION_OPERATIONS},left:expressionSource,right:expressionSource})),
       updates:array(object({slot:registerId,source:expressionSource}))}))})),
     outputs:array(object({label:{type:"string",enum:labels},source}))});
-  const tool=object({schemaVersion:constant(1),operation:constant("ANALYZE_FINITE_PROBLEM"),problemDigest:constant(problemDigest),program});
+  const tool=object({problemDigest:constant(problemDigest),program});
   const artifact=object({schemaVersion:constant(1),operation:constant("SUBMIT_ANALYSIS_ARTIFACT"),problemDigest:constant(problemDigest),
     resultDigest:artifactDigest===null?string:constant(artifactDigest),confidence:{type:"number"}});
   const certificate=object({outputs:array(object({label:{type:"string",enum:labels},value:string})),confidence:{type:"number"}});
-  return object({action:{type:"string",enum:["SUBMIT",...(toolAvailable?["SUBMIT_DERIVATION","REQUEST_ANALYSIS"]:[]),
+  return object({action:{type:"string",enum:["SUBMIT",...(toolAvailable?["SUBMIT_DERIVATION"]:[]),
     ...(artifactAvailable?["SUBMIT_ANALYSIS_ARTIFACT","DECLINE_ANALYSIS_ARTIFACT"]:[])]},
     analysisRequest:{anyOf:[{type:"null"},...(toolAvailable?[tool]:[]),...(artifactAvailable?[artifact]:[])]},
     certificate:toolAvailable||artifactAvailable?{anyOf:[{type:"null"},certificate,...(toolAvailable?[object({confidence:{type:"number"}})]:[])]}:certificate});
@@ -72,9 +73,9 @@ export async function runNyxQuantitativeTask(input: {
   const attempts:QuantitativeAttempt[]=[];let observation:Readonly<Record<string,unknown>>|null=null;let feedback:readonly string[]=[];
   let accepted=false;let acceptedCertificate:unknown=null;let outcome="BUDGET_UNEXECUTED";
   let toolRequests=0;let toolWorkUnits=0;let toolElapsedMs=0;
-  const contract={action:"Prefer SUBMIT_DERIVATION to compute YOUR program and have its outputs independently checked in this call. REQUEST_ANALYSIS computes without submitting; SUBMIT submits manually.",
-    analysisRequest:"null on SUBMIT; otherwise {schemaVersion:1,operation:ANALYZE_FINITE_PROBLEM,problemDigest,program}",
-    certificate:"SUBMIT_DERIVATION requires {confidence:number 0..1}. REQUEST_ANALYSIS requires null. SUBMIT requires {outputs:[{label:string,value:canonical reduced rational string}],confidence:number 0..1}",
+  const contract={action:"SUBMIT_DERIVATION computes YOUR program and submits its outputs to an INDEPENDENT checker in this call. SUBMIT submits manually.",
+    analysisRequest:"On SUBMIT_DERIVATION EXACTLY {problemDigest,program}. NO operation, outer schemaVersion, confidence, or extra fields. The adapter owns the native tool header. On SUBMIT: null.",
+    certificate:"SUBMIT_DERIVATION requires ONLY {confidence:number 0..1}. SUBMIT requires {outputs:[{label:string,value:canonical reduced rational string}],confidence:number 0..1}",
     program:"{schemaVersion:2,initialState:[{slot,source}],cycles:[{iterations,phases:[{expressions:[{id,op,left,right}],updates:[{slot,source}]}]}],outputs:[{label,source}]}",
     programSemantics:"All 16 state slots in the schema exist and start at zero; initialState overrides selected slots from named constants. "
       +"A phase evaluates immutable expressions in listed dependency order, then commits its distinct slot updates SIMULTANEOUSLY. "
@@ -109,8 +110,9 @@ export async function runNyxQuantitativeTask(input: {
         ...(arm==="CURRENT_DIRECT"?{}:{reasoningEffort:"MEDIUM" as const}),observedAtEpochMs:now(),deadlineEpochMs:expires});
       let confidence:number|null=null;let proposalDigest:string|null=null;let resultDigest:string|null=null;
       let executedProgram:QuantitativeProgram|QuantitativeEquations|null=null;
+      let computation:ReasoningToolResult|null=null;
       const record=(state:string,findings:readonly string[])=>{outcome=state;feedback=findings;
-        attempts.push(immutableTheoryValue({call,outcome:state,findings,confidence,proposalDigest,resultDigest,executedProgram,modelEvidence:completion.evidence}));};
+        attempts.push(immutableTheoryValue({call,outcome:state,findings,confidence,proposalDigest,resultDigest,executedProgram,computation,modelEvidence:completion.evidence}));};
       if(now()>=expires){record("LATE_RESPONSE_NOT_ADMITTED",["Original run expiry elapsed; no action was executed."]);break;}
       if(completion.evidence.statusCode===200 && completion.evidence.finishReason==="length"){
         record("TRUNCATION",["Provider output budget was exhausted; token usage is preserved."]);continue;}
@@ -126,11 +128,16 @@ export async function runNyxQuantitativeTask(input: {
         if(!available||(!compound&&value.certificate!==null)||(compound&&(typeof submittedConfidence!=="number"
           ||!Number.isFinite(submittedConfidence)||submittedConfidence<0||submittedConfidence>1))){
           record("AUTHORIZATION_REJECTION",["No available computation capability or invalid request envelope."]);continue;}
+        if(compound&&!keys(value.analysisRequest,["problemDigest","program"])) {
+          record("PROTOCOL_REJECTION",["SUBMIT_DERIVATION analysisRequest requires EXACTLY problemDigest and program; do not include native header or confidence fields."]);continue;
+        }
+        const nativeRequest=compound?{schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",
+          problemDigest:(value.analysisRequest as Record<string,unknown>).problemDigest,program:(value.analysisRequest as Record<string,unknown>).program}:value.analysisRequest;
         let derivedCertificate:Readonly<Record<string,unknown>>|null=null;
         try {
-          const result=session.analyze(value.analysisRequest);toolRequests++;toolWorkUnits+=result.workUnits;toolElapsedMs+=result.elapsedMs;
+          const result=session.analyze(nativeRequest);computation=result;toolRequests++;toolWorkUnits+=result.workUnits;toolElapsedMs+=result.elapsedMs;
           // Validated bounded action data only; no raw provider reasoning or credential.
-          executedProgram=(value.analysisRequest as {program:QuantitativeProgram|QuantitativeEquations}).program;
+          executedProgram=(nativeRequest as {program:QuantitativeProgram|QuantitativeEquations}).program;
           resultDigest=result.resultDigest;observation=immutableTheoryValue({problemDigest:session.problemDigest,
             decision:result.status==="CONSTRUCTED"?"CANDIDATE_CONSTRUCTED_NOT_ACCEPTED":"INSUFFICIENT_EVIDENCE",
             certificateFields:result.status==="CONSTRUCTED"?{outputs:result.payload!.outputs}:null,
@@ -142,7 +149,7 @@ export async function runNyxQuantitativeTask(input: {
           } else record(result.status==="CONSTRUCTED"?"DERIVATION_RETURNED_NOT_ACCEPTED":"DERIVATION_INSUFFICIENT",[
             "Review the computed quantities against the ORIGINAL objective. Submit a certificate or propose a bounded correction."]);
         } catch(error) {
-          const reason=error instanceof Error&&/^quantitative_(?:program|equations)_invalid:[A-Z_]+(?::[0-9]+(?:\.[0-9]+)?)?$/.test(error.message)
+          const reason=error instanceof Error&&/^(?:quantitative_(?:program|equations)_invalid:[A-Z_]+(?::[0-9]+(?:\.[0-9]+)?)?|reasoning_request_invalid:[A-Z_]+)$/.test(error.message)
             ?error.message:error instanceof Error&&error.message==="reasoning_session_budget_exhausted"?"NATIVE_WORK_BUDGET_EXHAUSTED":"REQUEST_SCOPE_OR_LIFETIME_REJECTED";
           record("AUTHORIZATION_OR_IR_REJECTION",[reason,"Request must bind the available problem, use only initialized/authorized names, "
             +"immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."]);

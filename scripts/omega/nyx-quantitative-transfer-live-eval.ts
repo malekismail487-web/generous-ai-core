@@ -11,15 +11,17 @@ import {FRESH_QUANTITATIVE_EPOCH,FRESH_QUANTITATIVE_TASKS,FRESH_QUANTITATIVE_COR
 import {SLOT_TRANSFER_EPOCH,SLOT_TRANSFER_TASKS,SLOT_TRANSFER_CORPUS_DIGEST,verifySlotTransferSubmission} from "./nyx-quantitative-slot-transfer-fixtures";
 import {EQUATION_TRANSFER_EPOCH,EQUATION_TRANSFER_TASKS,EQUATION_TRANSFER_CORPUS_DIGEST,verifyEquationTransferSubmission} from "./nyx-quantitative-equation-transfer-fixtures";
 import {COMPOSED_TRANSFER_EPOCH,COMPOSED_TRANSFER_TASKS,COMPOSED_TRANSFER_CORPUS_DIGEST,verifyComposedTransferSubmission} from "./nyx-quantitative-composed-transfer-fixtures";
+import {COMMAND_TRANSFER_EPOCH,COMMAND_TRANSFER_TASKS,COMMAND_TRANSFER_CORPUS_DIGEST,verifyCommandTransferSubmission} from "./nyx-quantitative-command-transfer-fixtures";
 
 const fresh=process.env.NYX_QUANTITATIVE_FRESH==="1";
 const slotTransfer=process.env.NYX_QUANTITATIVE_SLOT_TRANSFER==="1";
 const equationTransfer=process.env.NYX_QUANTITATIVE_EQUATION_TRANSFER==="1";
 const composedTransfer=process.env.NYX_QUANTITATIVE_COMPOSED_TRANSFER==="1";
-const EPOCH=composedTransfer?COMPOSED_TRANSFER_EPOCH:equationTransfer?EQUATION_TRANSFER_EPOCH:slotTransfer?SLOT_TRANSFER_EPOCH:fresh?FRESH_QUANTITATIVE_EPOCH:QUANTITATIVE_EPOCH;
-const TASKS=composedTransfer?COMPOSED_TRANSFER_TASKS:equationTransfer?EQUATION_TRANSFER_TASKS:slotTransfer?SLOT_TRANSFER_TASKS:fresh?FRESH_QUANTITATIVE_TASKS:QUANTITATIVE_TASKS;
-const CORPUS_DIGEST=composedTransfer?COMPOSED_TRANSFER_CORPUS_DIGEST:equationTransfer?EQUATION_TRANSFER_CORPUS_DIGEST:slotTransfer?SLOT_TRANSFER_CORPUS_DIGEST:fresh?FRESH_QUANTITATIVE_CORPUS_DIGEST:QUANTITATIVE_CORPUS_DIGEST;
-const verify=composedTransfer?verifyComposedTransferSubmission:equationTransfer?verifyEquationTransferSubmission:slotTransfer?verifySlotTransferSubmission:fresh?verifyFreshQuantitativeSubmission:verifyQuantitativeSubmission;
+const commandTransfer=process.env.NYX_QUANTITATIVE_COMMAND_TRANSFER==="1";
+const EPOCH=commandTransfer?COMMAND_TRANSFER_EPOCH:composedTransfer?COMPOSED_TRANSFER_EPOCH:equationTransfer?EQUATION_TRANSFER_EPOCH:slotTransfer?SLOT_TRANSFER_EPOCH:fresh?FRESH_QUANTITATIVE_EPOCH:QUANTITATIVE_EPOCH;
+const TASKS=commandTransfer?COMMAND_TRANSFER_TASKS:composedTransfer?COMPOSED_TRANSFER_TASKS:equationTransfer?EQUATION_TRANSFER_TASKS:slotTransfer?SLOT_TRANSFER_TASKS:fresh?FRESH_QUANTITATIVE_TASKS:QUANTITATIVE_TASKS;
+const CORPUS_DIGEST=commandTransfer?COMMAND_TRANSFER_CORPUS_DIGEST:composedTransfer?COMPOSED_TRANSFER_CORPUS_DIGEST:equationTransfer?EQUATION_TRANSFER_CORPUS_DIGEST:slotTransfer?SLOT_TRANSFER_CORPUS_DIGEST:fresh?FRESH_QUANTITATIVE_CORPUS_DIGEST:QUANTITATIVE_CORPUS_DIGEST;
+const verify=commandTransfer?verifyCommandTransferSubmission:composedTransfer?verifyComposedTransferSubmission:equationTransfer?verifyEquationTransferSubmission:slotTransfer?verifySlotTransferSubmission:fresh?verifyFreshQuantitativeSubmission:verifyQuantitativeSubmission;
 
 if(process.env.OMEGA_ALLOW_NVIDIA_NETWORK!=="1"||!process.env.NVIDIA_API_KEY?.trim()) {
   console.error("NYX_QUANTITATIVE_TRANSFER: BLOCKED_AUTHORITY_OR_MISSING_INJECTED_SECRET");process.exit(2);
@@ -79,7 +81,8 @@ const sources=["src/lib/codelab/research/analysisArtifactReference.ts","src/lib/
   "src/lib/codelab/research/nyxQuantitativeReasoning.ts","src/lib/codelab/model/nvidiaNimProvider.ts",
   "src/lib/codelab/model/nvidiaCapacity.ts","src/lib/codelab/research/theoryContracts.ts",
   "scripts/omega/nyx-quantitative-transfer-fixtures.ts","scripts/omega/nyx-quantitative-fresh-fixtures.ts","scripts/omega/nyx-quantitative-slot-transfer-fixtures.ts",
-  "scripts/omega/nyx-quantitative-equation-transfer-fixtures.ts","scripts/omega/nyx-quantitative-composed-transfer-fixtures.ts","scripts/omega/nyx-quantitative-transfer-live-eval.ts"];
+  "scripts/omega/nyx-quantitative-equation-transfer-fixtures.ts","scripts/omega/nyx-quantitative-composed-transfer-fixtures.ts",
+  "scripts/omega/nyx-quantitative-command-transfer-fixtures.ts","scripts/omega/nyx-quantitative-transfer-live-eval.ts"];
 const report={schemaVersion:1,chunkId:EPOCH.chunkId,candidate,model,epoch:EPOCH,corpusDigest:CORPUS_DIGEST,
   sourceDigests:Object.fromEntries(sources.map(path=>[path,theoryDigest(readFileSync(path,"utf8"))])),
   executionIdentity:process.env.GITHUB_RUN_ID??"LOCAL_AUTHORIZED_RUN",environment:{platform:process.platform,node:process.version},

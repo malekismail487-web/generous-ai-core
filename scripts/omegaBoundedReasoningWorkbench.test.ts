@@ -10,6 +10,7 @@ import { FRESH_QUANTITATIVE_TASKS,referenceFreshQuantitativeProgram,verifyFreshQ
 import { SLOT_TRANSFER_TASKS,referenceSlotTransferProgram,verifySlotTransferSubmission } from "./omega/nyx-quantitative-slot-transfer-fixtures";
 import { EQUATION_TRANSFER_TASKS,verifyEquationTransferSubmission } from "./omega/nyx-quantitative-equation-transfer-fixtures";
 import { COMPOSED_TRANSFER_TASKS,verifyComposedTransferSubmission } from "./omega/nyx-quantitative-composed-transfer-fixtures";
+import { COMMAND_TRANSFER_TASKS,verifyCommandTransferSubmission } from "./omega/nyx-quantitative-command-transfer-fixtures";
 import { equationNames,lowerQuantitativeEquations,type QuantitativeEquations } from "../src/lib/codelab/research/quantitativeEquationCompiler";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema,
@@ -471,12 +472,36 @@ for(const [i,task] of COMPOSED_TRANSFER_TASKS.entries()) {
   check(verifyComposedTransferSubmission(task,{outputs:calculation(task.problem,lowered).payload!.outputs,confidence:1}).accepted,
     `unweakened domain oracle covers fifth frozen population ${task.taskId}`);
 }
-const compoundRequest={action:"SUBMIT_DERIVATION",analysisRequest:{schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",
-  problemDigest:theoryDigest(cognitionTask.problem),program:liftTestProgram(cognitionTask,referenceQuantitativeProgram(cognitionTask))},certificate:{confidence:0.9}};
+const compoundRequest={action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(cognitionTask.problem),
+  program:liftTestProgram(cognitionTask,referenceQuantitativeProgram(cognitionTask))},certificate:{confidence:0.9}};
 const compound=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_WITH_WORKBENCH",limits:{...limits,maxCalls:1},
   complete:async()=>({...capturedCompletion,content:JSON.stringify(compoundRequest)}),verify:certificate=>verifyQuantitativeSubmission(cognitionTask,certificate)});
 check(compound.accepted&&compound.calls===1&&compound.toolRequests===1&&compound.attempts[0].executedProgram!==null,
   "explicit compound intent computes, preserves action evidence, and invokes the SAME external oracle without an acknowledgement model call");
+check(compound.attempts[0].computation?.inputDigest===theoryDigest(cognitionTask.problem)
+  &&compound.attempts[0].computation?.requestDigest===theoryDigest({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",...compoundRequest.analysisRequest})
+  &&compound.attempts[0].computation?.acceptanceRequiresIndependentVerifier===true,
+  "model intent and fixed native envelope retain distinct attributable identities, without automatic acceptance");
+const malformedCompound=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_WITH_WORKBENCH",limits:{...limits,maxCalls:1},
+  complete:async()=>({...capturedCompletion,content:JSON.stringify({...compoundRequest,analysisRequest:{...compoundRequest.analysisRequest,schemaVersion:2}})}),
+  verify:()=>{throw Error("malformed_compound_cannot_reach_oracle");}});
+check(malformedCompound.outcome==="PROTOCOL_REJECTION"&&malformedCompound.toolRequests===0,
+  "adapter refuses extra compound fields instead of silently fixing an unauthorized model request");
+const mismatchedCompound=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_WITH_WORKBENCH",limits:{...limits,maxCalls:1},
+  complete:async()=>({...capturedCompletion,content:JSON.stringify({...compoundRequest,analysisRequest:{...compoundRequest.analysisRequest,problemDigest:"different-bound-scope"}})}),
+  verify:()=>{throw Error("mismatched_scope_cannot_reach_oracle");}});
+check(mismatchedCompound.toolRequests===0&&mismatchedCompound.attempts[0].findings[0]==="reasoning_request_invalid:PROBLEM_BINDING",
+  "adapter-owned native header does not replace or excuse a model's mismatched scope");
+for(const [i,task] of COMMAND_TRANSFER_TASKS.entries()) {
+  const reference=referenceSlotTransferProgram({...task,taskId:SLOT_TRANSFER_TASKS[i].taskId});
+  const lowered=lowerQuantitativeEquations(task.problem,liftTestProgram(task,reference));
+  check(verifyCommandTransferSubmission(task,{outputs:calculation(task.problem,lowered).payload!.outputs,confidence:1}).accepted,
+    `unchanged mathematical semantics pass the sixth population oracle ${task.taskId}`);
+}
+const fifthNegative=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v5/comparison.json","utf8"));
+check(fifthNegative.candidate==="f87b9dd419321dae0f00fdc86c22d293e7ed965c"&&fifthNegative.complete
+  &&fifthNegative.summaries[2].accepted===0&&fifthNegative.summaries[2].protocolOrAuthorizationFailures===15&&!fifthNegative.broadPromotion,
+  "failed compound-contract experiment remains preserved as integration failure rather than an invented model capability result");
 const deniedCompound=await runNyxQuantitativeTask({...cognitionTask,arm:"CURRENT_DIRECT",limits:{...limits,maxCalls:1},
   complete:async()=>({...capturedCompletion,content:JSON.stringify(compoundRequest)}),verify:()=>{throw Error("unavailable_action_cannot_reach_oracle");}});
 check(!deniedCompound.accepted&&deniedCompound.toolRequests===0&&deniedCompound.outcome==="AUTHORIZATION_REJECTION",
@@ -514,7 +539,7 @@ check(preservedNegative.candidate==="c2a69187cea0280db2f3060326df50ba5e3f38d2"
   &&preservedNegative.matchedRealizedCompute===false&&!preservedNegative.broadPromotion,
   "failed quantitative comparison stays bound to actual candidate, with no broader capability promotion");
 check(theoryDigest(preservedNegative)==="304945fdd03eae04dcf3416eb5998370232753d7af799bbfb8a43953d6c0de64","negative live report remains byte-semantically faithful to immutable E4 job logs");
-for(const report of [preservedNegative,secondNegative,thirdNegative,fourthNegative]) for(const [path,digest] of Object.entries(report.sourceDigests)) {
+for(const report of [preservedNegative,secondNegative,thirdNegative,fourthNegative,fifthNegative]) for(const [path,digest] of Object.entries(report.sourceDigests)) {
   if(typeof path!=="string"||path.includes("..")||!path.endsWith(".ts")||!path.startsWith("src/")&&!path.startsWith("scripts/"))
     throw Error("invalid_archived_source_path");
   check(theoryDigest(execFileSync("git",["show",`${report.candidate}:${path}`],{encoding:"utf8"}))===digest,

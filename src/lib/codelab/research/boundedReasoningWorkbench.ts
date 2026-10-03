@@ -374,11 +374,14 @@ export class BoundedReasoningSession {
     if (this.#revoked || this.#now() >= this.#limits.expiresAtEpochMs) throw new Error("reasoning_session_unavailable");
     const quantitative = this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION";
     const operationStarted=quantitative?this.#now():undefined;
-    if (!plainData(request) || new TextEncoder().encode(JSON.stringify(request)).byteLength > NYX_REASONING_WORKBENCH.maxInputBytes
-      || !keys(request, quantitative ? ["schemaVersion", "operation", "problemDigest", "program"]
-        : ["schemaVersion", "operation", "problemDigest"])
-      || request.schemaVersion !== 1 || request.operation !== "ANALYZE_FINITE_PROBLEM"
-      || request.problemDigest !== this.problemDigest) throw new Error("reasoning_request_not_authorized");
+    if (!plainData(request))throw new Error("reasoning_request_invalid:NON_DATA");
+    if (new TextEncoder().encode(JSON.stringify(request)).byteLength > NYX_REASONING_WORKBENCH.maxInputBytes)
+      throw new Error("reasoning_request_invalid:BYTE_BOUND");
+    if (!keys(request, quantitative ? ["schemaVersion", "operation", "problemDigest", "program"]
+      : ["schemaVersion", "operation", "problemDigest"]))throw new Error("reasoning_request_invalid:HEADER_SHAPE");
+    if(request.schemaVersion!==1)throw new Error("reasoning_request_invalid:HEADER_VERSION");
+    if(request.operation!=="ANALYZE_FINITE_PROBLEM")throw new Error("reasoning_request_invalid:OPERATION");
+    if(request.problemDigest!==this.problemDigest)throw new Error("reasoning_request_invalid:PROBLEM_BINDING");
     let executedProgram:QuantitativeProgram|null=null;
     if (this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION") {
       executedProgram=(request.program as Partial<QuantitativeEquations>)?.schemaVersion===2
