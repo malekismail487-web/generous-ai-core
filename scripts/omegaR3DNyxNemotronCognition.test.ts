@@ -85,6 +85,34 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
 }
 
 {
+  let payload: Record<string,unknown>={};
+  const local=NyxNemotronEngineeringCognition.create({cognitionId:"LOCAL-DELIVERY-TEST",maxPromptBytes:50000,maxOutputTokens:1024,
+    structuredOutputMode:"STRICT_LOCAL",provider:provider(async(url,init)=>{
+      payload=JSON.parse(String(init?.body));return transportFor(intent())(url,init);
+    })});
+  const result=await local.proposeRepair(request());
+  check(result.decision==="PROPOSED"&&!Object.hasOwn(payload,"response_format")&&!result.omegaAuthorityGranted,
+    "existing strict-local delivery reaches unchanged cognition validation without hosted grammar or new authority");
+  const invalid=NyxNemotronEngineeringCognition.create({cognitionId:"LOCAL-INVALID-TEST",maxPromptBytes:50000,maxOutputTokens:1024,
+    structuredOutputMode:"STRICT_LOCAL",provider:provider(transportFor(intent({changes:[{target:"../escape.ts",replacement:repaired}]})))});
+  check((await invalid.proposeRepair(request())).decision==="COGNITION_ERROR",
+    "strict-local transport cannot bypass target confinement");
+  const malformed=NyxNemotronEngineeringCognition.create({cognitionId:"LOCAL-SYNTAX-TEST",maxPromptBytes:50000,maxOutputTokens:1024,
+    structuredOutputMode:"STRICT_LOCAL",provider:provider(transportFor(intent({changes:[{target:"src/math.ts",replacement:"export const add = ( ;"}]})))});
+  check((await malformed.proposeRepair(request())).schemaDiagnostics.some(d=>d.category==="SOURCE_QUALITY_INVALID"),
+    "strict-local transport cannot bypass source parser or ordinary admission");
+  const unknown=NyxNemotronEngineeringCognition.create({cognitionId:"LOCAL-SCHEMA-TEST",maxPromptBytes:50000,maxOutputTokens:1024,
+    structuredOutputMode:"STRICT_LOCAL",provider:provider(transportFor(intent({shell:"echo not authorized"})))});
+  check((await unknown.proposeRepair(request())).decision==="COGNITION_ERROR",
+    "strict-local transport cannot admit model-invented executable fields");
+  let rejected=false;
+  try {NyxNemotronEngineeringCognition.create({cognitionId:"MODE-INVALID",provider:provider(transportFor(intent())),
+    maxPromptBytes:50000,maxOutputTokens:1024,structuredOutputMode:"UNRESTRICTED" as "STRICT_LOCAL"});}
+  catch {rejected=true;}
+  check(rejected,"unknown delivery modes fail closed before invocation");
+}
+
+{
   const lines = ["export function add(a: number, b: number) {", "  return a + b;", "}", "", "// café 🙂 ", ""];
   for (const lineEnding of ["LF", "CRLF"] as const) {
     const expectedSource = lines.join(lineEnding === "LF" ? "\n" : "\r\n");

@@ -1,7 +1,7 @@
 /** Exact source refinement, not a replacement of any historical scored-source identity. */
 export const NYX_ARC_CORE_REFINEMENT = Object.freeze({
   predecessor: "513845addbe6146a4ad1b08a68176bff1b5f8b24",
-  purpose: "MATCH_INFERENCE_PROPAGATE_CANCELLATION_AND_PRESERVE_E4_SUPPORTED_HOSTED_ARRAY_BOUNDS",
+  purpose: "MATCH_INFERENCE_CANCELLATION_ARRAY_BOUNDS_AND_OPT_IN_EXISTING_STRICT_LOCAL_DELIVERY",
   historicalScoresComparable: false, acceptanceOracleChanged: false, authorityIncrease: false,
   defaultInferencePolicyChanged: false,
 });
@@ -21,6 +21,9 @@ const changes: Record<string, readonly (readonly [string, string, number?])[]> =
       '    schema, providerSchema: providerCompatibleSchema(schema, preserveProviderArrayBounds) as Readonly<Record<string, unknown>>,\n'],
     ['', '  /** Host-only legacy ablation. E4 probes established omitted hosted arrays stop at 32 items. */\n  readonly preserveProviderArrayBounds?: boolean;\n'],
     ['', '    if (config.preserveProviderArrayBounds !== undefined && typeof config.preserveProviderArrayBounds !== "boolean") {\n      throw new Error("nyx_provider_array_bounds_policy_invalid");\n    }\n'],
+    ['', '  /** Host-only delivery control. Local intent, syntax, scope and quality checks remain mandatory. */\n  readonly structuredOutputMode?: "STRICT_LOCAL";\n'],
+    ['', '    if (config.structuredOutputMode !== undefined && config.structuredOutputMode !== "STRICT_LOCAL") {\n      throw new Error("nyx_structured_output_mode_invalid");\n    }\n'],
+    ['', '      ...(this.#config.structuredOutputMode === "STRICT_LOCAL" ? { structuredOutputMode: "STRICT_LOCAL" as const } : {}),\n'],
     ['    const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation);\n',
       '    const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation, this.#config.preserveProviderArrayBounds);\n', 2],
     ['', '  /** Explicit comparison control. Omission preserves each established variant\'s inference policy. */\n  readonly comparisonInferencePolicy?: "CONSTRAINED_JSON" | "REASONING_JSON";\n'],

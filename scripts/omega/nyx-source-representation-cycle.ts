@@ -11,6 +11,7 @@ import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, assessRepre
 import { inferUsage, classifyArcLoopFailure } from "./benchmarks/nyxArcAdapter";
 import { inspectNyxSourceEmission } from "./nyx-source-emission-diagnostics";
 import { ARRAY_BOUND_TRANSFER_TASKS } from "./benchmarks/arrayBoundTransferTasks";
+import { SOURCE_LITERAL_TRANSFER_TASKS } from "./benchmarks/sourceLiteralTransferTasks";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
   throw Error("source_representation_cycle_requires_injected_secret_and_explicit_network");
@@ -21,11 +22,15 @@ if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") 
 const original = theoryDigest(git("ls-files", "-s"));
 const model = "nvidia/nemotron-3-ultra-550b-a55b";
 const boundsComparison = process.env.NYX_ARRAY_BOUND_COMPARISON === "1";
-const selectedTasks = boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
-const frozen = {model, temperature: 0, inferencePolicy: "CONSTRAINED_JSON", maxOutputTokens: 8192,
+const localDeliveryComparison=process.env.NYX_STRICT_LOCAL_COMPARISON==="1";
+if(boundsComparison&&localDeliveryComparison)throw Error("comparison_variables_must_not_be_combined");
+const variants=localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
+const selectedTasks = localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
+const frozen = {model, temperature: 0, inferencePolicy: "CONSTRAINED_JSON", maxOutputTokens: localDeliveryComparison?4096:8192,
   providerTimeoutMs: 65000, logicalCallsPerTask: 2, candidateIterationsPerTask: 2, toolCallsPerTask: 3,
   wallClockMsPerTask: 155000, globalWallClockMs: 1350000, maxPatchBytes: 12000,
-  maxPromptBytes: 48000, realizedTolerance: 0.1, changedVariable: boundsComparison
+  maxPromptBytes: 48000, realizedTolerance: 0.1, changedVariable: localDeliveryComparison
+    ?"EXISTING_HOSTED_VS_STRICT_LOCAL_DELIVERY_ONLY":boundsComparison
     ? "HOSTED_MAX_ITEMS_PRESERVED_VS_OMITTED_ONLY" : "EXISTING_TEXT_VS_LINES_SOURCE_REPRESENTATION_ONLY",
   publicFeedback: "IDENTICAL_PUBLIC_TEST_FAILURE_AND_STATIC_ADMISSION", authority: "EXISTING_R3_ISOLATED_ONLY",
   sourceMutations: false, generalShell: false, generalNetwork: false, production: false,
@@ -33,7 +38,7 @@ const frozen = {model, temperature: 0, inferencePolicy: "CONSTRAINED_JSON", maxO
 const sourceDigests = Object.fromEntries(await Promise.all([
   "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts", "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts",
   "src/lib/codelab/engine/r3BoundedRepairLoop.ts", "scripts/omega/benchmarks/sourceRepresentationTasks.ts",
-  "scripts/omega/benchmarks/arrayBoundTransferTasks.ts"
+  "scripts/omega/benchmarks/arrayBoundTransferTasks.ts", "scripts/omega/benchmarks/sourceLiteralTransferTasks.ts"
 ].map(async path => [path, contentHash(await readFile(path, "utf8"))])));
 const began = Date.now(); const globalDeadline = began + frozen.globalWallClockMs;
 const tasks = selectedTasks.map(t => ({id: t.id, tier: t.tier, domain: t.domain,
@@ -43,9 +48,8 @@ console.log(`NYX_REPRESENTATION_FREEZE ${JSON.stringify({candidate, frozen, sour
 const results: any[] = [];
 for (const [index, task] of selectedTasks.entries()) {
   // Balanced order, not selected by the model or observed outcome.
-  const variants = boundsComparison ? ["LEGACY_OMITTED", "CORRECTED_BOUNDED"] : ["LINES", "TEXT"];
   for (const variant of (index % 2 ? variants.slice().reverse() : variants)) {
-    const representation = boundsComparison ? "LINES" : variant as "TEXT" | "LINES";
+    const representation = boundsComparison||localDeliveryComparison ? "LINES" : variant as "TEXT" | "LINES";
     const preserveProviderArrayBounds = !boundsComparison || variant === "CORRECTED_BOUNDED";
     if (Date.now() >= globalDeadline) {results.push({id: task.id, variant, representation, state: "BLOCKED_GLOBAL_BUDGET"}); continue;}
     const started = Date.now(); const deadline = Math.min(globalDeadline, started + frozen.wallClockMsPerTask);
@@ -74,7 +78,8 @@ for (const [index, task] of selectedTasks.entries()) {
       const cognition = NyxNemotronEngineeringCognition.create({cognitionId: "NYX-SOURCE-REPRESENTATION-EXISTING-COGNITION",
         provider, maxPromptBytes: frozen.maxPromptBytes, maxOutputTokens: frozen.maxOutputTokens, sourceRepresentation: representation,
         intentCompilationMode: "SAFE_CANONICALIZATION", repairFeedbackPolicy: "TRANSIENT_REJECTED_SOURCE_WINDOW",
-        experimentVariant: "CURRENT", comparisonInferencePolicy: "CONSTRAINED_JSON", preserveProviderArrayBounds});
+        experimentVariant: "CURRENT", comparisonInferencePolicy: "CONSTRAINED_JSON", preserveProviderArrayBounds,
+        ...(variant==="STRICT_LOCAL"?{structuredOutputMode:"STRICT_LOCAL" as const}:{})});
       const loop = R3BoundedRepairLoop.create({loopId: `REPRESENTATION-${task.id}-${representation}`, evaluatorVersion: "source-representation-cycle/1",
         observerIdentity: "OMEGA-REPRESENTATION-OBSERVER", cognition,
         candidateBuilder: {builderIdentity: "OMEGA-REPRESENTATION-EXISTING-R3", prepare: h => session.prepare(h)},
@@ -155,11 +160,13 @@ const pairs = tasks.map(task => {
 });
 const sourceUnchanged = original === theoryDigest(git("ls-files", "-s")) && !git("status", "--porcelain");
 const report = {schemaVersion: 1, candidate, frozen, sourceDigests, tasks, results, pairs, sourceUnchanged,
-  hypothesis: boundsComparison
+  hypothesis: localDeliveryComparison
+    ? "Existing strict-local delivery preserves source semantics and improves fresh engineering outcomes while all local authority, syntax and quality gates remain unchanged."
+    :boundsComparison
     ? "Preserving explicit hosted array bounds removes the reproduced 32-line source ceiling and improves fresh transfer without changing local acceptance."
     : "Using existing TEXT rather than LINES reduces interface/source failures across fresh engineering tasks without weakening acceptance or increasing realized compute.",
   falsification: "No reproducible syntax/correctness improvement across development and fresh transfer at matched realized compute.",
-  summaries: (boundsComparison ? ["LEGACY_OMITTED", "CORRECTED_BOUNDED"] : ["LINES", "TEXT"]).map(variant => {
+  summaries: variants.map(variant => {
     const rows = results.filter(r => r.variant === variant);
     return {variant, accepted: rows.filter(r => r.accepted).length,
       functionallyAccepted:rows.filter(r=>r.functionalAccepted).length,qualityAccepted:rows.filter(r=>r.qualityAccepted).length,

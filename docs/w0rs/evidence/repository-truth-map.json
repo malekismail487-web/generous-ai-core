@@ -2377,6 +2377,12 @@
       ]
     },
     {
+      "name": "NYX_STRICT_LOCAL_COMPARISON",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_TRANSFER_PROOF_ABLATION",
       "files": [
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"

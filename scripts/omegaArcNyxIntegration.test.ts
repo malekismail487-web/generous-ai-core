@@ -11,6 +11,7 @@ import { prepareTask } from "./omega/benchmarks/tasks";
 import type { ArmSpec, CampaignSpec } from "./omega/benchmarks/contracts";
 import { ARC_PUBLIC_EPOCH_SELECTION, ARC_ARRAY_BOUND_TRANSFER_SELECTION } from "./omega/nyx-arc-benchmark-epoch";
 import { ARRAY_BOUND_TRANSFER_TASKS } from "./omega/benchmarks/arrayBoundTransferTasks";
+import { SOURCE_LITERAL_TRANSFER_TASKS } from "./omega/benchmarks/sourceLiteralTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -223,6 +224,18 @@ for (const [reason, expected] of [["truncated", "TRUNCATION"], ["provider_timeou
 // Independent test-only solutions validate the experiment's oracle and real execution path.
 // These sources never enter a model prompt or the downloaded benchmark corpus.
 const representationReferences: Record<string, string> = {
+  "TEXT-PROTOCOL-TOKEN": `export function transform(input) {
+    const escaped = ${JSON.stringify({"\\":"\\\\",'"':'\\"',"\n":"\\n","\r":"\\r","\t":"\\t"})};
+    return String.fromCharCode(34) + Array.from(input, c => escaped[c] ?? c).join("") + String.fromCharCode(34);
+  }`,
+  "GROUPED-TRANSITION-TRACE": `export function transform(input) {
+    const state={totals:new Map(),value:0,output:[]};
+    input.forEach(event=>state.totals.set(event.time,(state.totals.get(event.time)??0)+event.delta));
+    [...state.totals].sort(([a],[b])=>a-b).forEach(([time,delta])=>{
+      state.value+=delta;if(delta!==0)state.output.push({time,value:state.value});
+    });
+    return state.output;
+  }`,
   "QUOTED-RECORD": `export function transform(input) {
     const fields=[];let field="";let quoted=false;
     for(let index=0;index<input.length;index++) {
@@ -269,7 +282,7 @@ const representationReferences: Record<string, string> = {
     return lines;
   }`,
 };
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS]) {
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);

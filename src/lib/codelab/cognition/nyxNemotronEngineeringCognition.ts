@@ -447,6 +447,8 @@ export interface NyxNemotronEngineeringCognitionConfig {
   readonly comparisonInferencePolicy?: "CONSTRAINED_JSON" | "REASONING_JSON";
   /** Host-only legacy ablation. E4 probes established omitted hosted arrays stop at 32 items. */
   readonly preserveProviderArrayBounds?: boolean;
+  /** Host-only delivery control. Local intent, syntax, scope and quality checks remain mandatory. */
+  readonly structuredOutputMode?: "STRICT_LOCAL";
   /** Evaluation-only, process-local feedback. Never changes executable authority or acceptance. */
   readonly repairFeedbackPolicy?: NyxRepairFeedbackPolicy;
 }
@@ -645,6 +647,9 @@ export class NyxNemotronEngineeringCognition {
     if (config.preserveProviderArrayBounds !== undefined && typeof config.preserveProviderArrayBounds !== "boolean") {
       throw new Error("nyx_provider_array_bounds_policy_invalid");
     }
+    if (config.structuredOutputMode !== undefined && config.structuredOutputMode !== "STRICT_LOCAL") {
+      throw new Error("nyx_structured_output_mode_invalid");
+    }
     if (config.experimentVariant !== undefined && !["CURRENT", "REASONING_ENABLED", "MINIMAL_REFERENCE"].includes(config.experimentVariant)) {
       throw new Error("nyx_experiment_variant_invalid");
     }
@@ -771,6 +776,7 @@ export class NyxNemotronEngineeringCognition {
         : NYX_REPAIR_SYSTEM_INSTRUCTION },
         { role: "user", content: serializedPrompt }], maxTokens: this.#config.maxOutputTokens, temperature: 0,
       responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema: contract.providerSchema },
+      ...(this.#config.structuredOutputMode === "STRICT_LOCAL" ? { structuredOutputMode: "STRICT_LOCAL" as const } : {}),
       inferencePolicy: this.#config.comparisonInferencePolicy
         ?? (this.#experimentVariant === "CURRENT" ? "CONSTRAINED_JSON" : "REASONING_JSON"),
       observedAtEpochMs: request.observedAtEpochMs, deadlineEpochMs: request.deadlineEpochMs, signal: request.signal });
