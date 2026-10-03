@@ -272,13 +272,33 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
     "identical invalid output after actionable feedback terminates without consuming a third call");
   check(result.cognitionFailures.length === 2 && preparations === 0,
     "no-progress termination retains both rejection observations without candidate mutation");
-  const late = await loop(cognition(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 150));
+  // Isolate the loop's post-cognition deadline guard from provider timeouts and
+  // host scheduling. The old 100ms timer also used a future observation stamp,
+  // so CI could reject before inference rather than exercise late admission.
+  const hostNow = Date.now;
+  let logicalNow = hostNow();
+  let lateTransportCalls = 0;
+  const lateCognition = cognition(async () => {
+    lateTransportCalls += 1;
     return providerResponse(modelResponse(CORRECT_SOURCE));
-  }), unusedBuilder, 2, undefined, 100).run(loopRequest());
-  check(late.outcome === "EXHAUSTED" && late.reason === "repair_wall_clock_budget_exhausted"
-    && late.modelCallCount === 1 && preparations === 0,
-  "valid but late cognition cannot initiate mutation after the loop deadline");
+  });
+  const proposeRepair = lateCognition.proposeRepair.bind(lateCognition);
+  lateCognition.proposeRepair = async (request) => {
+    const proposal = await proposeRepair(request);
+    check(proposal.decision === "PROPOSED", "late fixture delivers a valid proposal before advancing time");
+    logicalNow += 101;
+    return proposal;
+  };
+  try {
+    Date.now = () => logicalNow;
+    const late = await loop(lateCognition, unusedBuilder, 2, undefined, 100)
+      .run(loopRequest({ observedAtEpochMs: logicalNow }));
+    check(late.outcome === "EXHAUSTED" && late.reason === "repair_wall_clock_budget_exhausted"
+      && late.modelCallCount === 1 && lateTransportCalls === 1 && preparations === 0,
+    "valid but late cognition cannot initiate mutation after the loop deadline");
+  } finally {
+    Date.now = hostNow;
+  }
 }
 
 {
