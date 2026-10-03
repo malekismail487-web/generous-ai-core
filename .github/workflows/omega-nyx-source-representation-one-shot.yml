@@ -1,9 +1,6 @@
 name: Omega NYX cross-domain source representation ablation
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/nyx-source-representation-cycle.ts]
 permissions:
   contents: read
 concurrency:

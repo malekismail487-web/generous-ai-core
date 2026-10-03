@@ -1,0 +1,2205 @@
+{
+  "schemaVersion": 1,
+  "candidate": "9649ec6bae130b3350da8c7afc59af6d17633eaf",
+  "selection": {
+    "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+    "partition": "data/evaluation",
+    "population": 120,
+    "selection": "FIRST_EIGHT_LEXICOGRAPHIC_PATHS",
+    "taskIds": [
+      "0934a4d8",
+      "135a2760",
+      "136b0064",
+      "13e47133",
+      "142ca369",
+      "16b78196",
+      "16de56c4",
+      "1818057f"
+    ],
+    "oraclePolicy": "WITHHELD_OUTPUTS_EVALUATOR_ONLY_NO_BENCHMARK_FEEDBACK_RETRIES",
+    "contamination": "PUBLIC_EVALUATION_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"
+  },
+  "modelConfiguration": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "temperature": 0,
+    "inferencePolicy": "CONSTRAINED_JSON",
+    "maxOutputTokens": 8192,
+    "maxProviderPromptBytes": 64000,
+    "timeoutMs": 65000
+  },
+  "authority": {
+    "existingIsolatedR1R2R3": true,
+    "sourceWrites": false,
+    "production": false,
+    "unrestrictedShell": false,
+    "generalNetwork": false,
+    "credentialEnvironmentForwarding": false,
+    "candidateNetworkIsolation": "NOT_PROVEN",
+    "hostileCodeSandbox": false
+  },
+  "tools": {
+    "tool": "EXISTING_R3B_TEST",
+    "maxChangedFiles": 1,
+    "maxPatchBytes": 12000,
+    "timeoutMs": 2000,
+    "publicFeedback": "FULL_DUMP",
+    "sourceRepresentation": "LINES",
+    "dataEncoding": "LOSSLESS_COMPACT_JSON",
+    "acceptance": "UNCHANGED_PUBLIC_EXAMPLES_STATIC_ADMISSION_AND_PRIVATE_EXACT_TWO_GUESS_SCORER"
+  },
+  "campaign": {
+    "schemaVersion": 1,
+    "campaign": {
+      "schemaVersion": 1,
+      "campaignId": "NYX-ARC-PUBLIC-EVALUATION-BASELINE-001",
+      "environmentIdentity": "linux-x64-node-v24.21.0",
+      "executionIdentity": "github-actions-37125272663",
+      "frozenAtEpochMs": 1791033033176,
+      "expiresAtEpochMs": 1791035933176,
+      "taskDigests": [
+        "3b9af70782da92d1ed43be1a903f0ad324f5e0117638c8590c83eed3139f640f",
+        "270a7af676472ece6dda9a9d8520160c04faaac4aac7323eb64b8af5aa923abc",
+        "5d321ef19cfec1c4a537ef1cd3df2e46b468a6efdb35b5ddc4ec47a6499cfdb6",
+        "9ff5f2ef638edaadfb772a730e69be6ce846d3aa44d36d895a0949b81cef36de",
+        "5ff121f57b50d8047cf056b7513f95936eeecc172c5780dceb66509ac38d404b",
+        "c5f4e3e39b72daf5843c0e36ebd11e8ca884777bff3ebce997c5322d9023633c",
+        "2e7623b94be6fc0d2b8e91f9c41dfe8baf6beef8a2b54bf873d00f12e4a441c1",
+        "dfbef4f515ca0072585bcb71b98b0bfbaabda3e53a5ecb88be09d39da35cee52"
+      ],
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "modelConfigDigest": "ccd6326c3df036a1be45677b7a66ce1307ac6aa4a16c139b50abbf49501d63da",
+      "authorityDigest": "512228fd46fa945c639a0287d881d0ae7c12e67434014dc2e8b2ecd619f1c62f",
+      "toolEnvelopeDigest": "06c19b3325c9df1b2d82afe834bce4d9e1c9593d1b09e18bf57e54aab7cab133",
+      "verifierVersion": "arc-exact-two-predictions/1",
+      "verifierSourceDigest": "6d77bd3f7caf7074570f69bf50ecb87180e5c4094fcdd8a1a7286ff99d34ce1d",
+      "limits": {
+        "maxCallsPerTask": 2,
+        "maxReportedTokensPerTask": 100000,
+        "maxToolCallsPerTask": 3,
+        "maxToolWorkUnitsPerTask": 600,
+        "maxAttemptsPerTask": 1,
+        "maxArtifactBytes": 50000,
+        "maxWallClockMsPerTask": 155000,
+        "maxWallClockMs": 2800000
+      },
+      "realizedComputeTolerance": 0.1
+    },
+    "campaignDigest": "7f36b71185d0dc2c3a039d3589e6cfd0a4ab91280302a1043788f7090f4d4c5e",
+    "arms": [
+      {
+        "arm": "RAW_MODEL",
+        "version": "nyx-existing-r3-arc/1",
+        "sourceDigest": "623180b8b0d65e54c24a3e8cb7267461553d979363c77e4095b1cefb6f8b5189",
+        "inferenceMode": "LIVE_PROVIDER_E4",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "modelConfigDigest": "ccd6326c3df036a1be45677b7a66ce1307ac6aa4a16c139b50abbf49501d63da",
+        "authorityDigest": "512228fd46fa945c639a0287d881d0ae7c12e67434014dc2e8b2ecd619f1c62f",
+        "toolEnvelopeDigest": "fe2f3b4ef49492d81cb350fb689bf9f9dff6cfd1817d72d6ff9fe3350e3d5e6a",
+        "supportedCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ]
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "version": "nyx-existing-r3-arc/1",
+        "sourceDigest": "fc5f8132e0cb59a2802e360e4d7cf15971ba77787784a501b45f9b3139165358",
+        "inferenceMode": "LIVE_PROVIDER_E4",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "modelConfigDigest": "ccd6326c3df036a1be45677b7a66ce1307ac6aa4a16c139b50abbf49501d63da",
+        "authorityDigest": "512228fd46fa945c639a0287d881d0ae7c12e67434014dc2e8b2ecd619f1c62f",
+        "toolEnvelopeDigest": "06c19b3325c9df1b2d82afe834bce4d9e1c9593d1b09e18bf57e54aab7cab133",
+        "supportedCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ]
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "version": "nyx-existing-r3-arc/1",
+        "sourceDigest": "39e4cbebd374faeb41f43b52fe9bbd0df39287bb23faf135b7b49f4822493ff5",
+        "inferenceMode": "LIVE_PROVIDER_E4",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "modelConfigDigest": "ccd6326c3df036a1be45677b7a66ce1307ac6aa4a16c139b50abbf49501d63da",
+        "authorityDigest": "512228fd46fa945c639a0287d881d0ae7c12e67434014dc2e8b2ecd619f1c62f",
+        "toolEnvelopeDigest": "06c19b3325c9df1b2d82afe834bce4d9e1c9593d1b09e18bf57e54aab7cab133",
+        "supportedCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ]
+      }
+    ],
+    "tasks": [
+      {
+        "schemaVersion": 1,
+        "taskId": "0934a4d8",
+        "family": "ARC_AGI",
+        "tier": "VALIDATION",
+        "source": {
+          "dataset": "arcprize/ARC-AGI-2 public evaluation",
+          "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+          "contentDigest": "327d69f9112d9068d851e096fd7472e7b5ccdfb30f9927efaa51bd8e50d946a2",
+          "visibility": "PUBLIC",
+          "kind": "DATASET_TASK",
+          "provenance": "https://github.com/arcprize/ARC-AGI-2/blob/f3283f727488ad98fe575ea6a5ac981e4a188e49/data/evaluation/0934a4d8.json; public subset, not protected leaderboard evaluation."
+        },
+        "inputDigest": "81b38188c5d62658a730cf38952148c6b086d5880b5ee34bab219dbf58e028cb",
+        "privateOracleDigest": "d924d13b3383ee8dd01d957d9151812a432ad093deea8a59fedb9a54f5fa5015",
+        "requiredCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ],
+        "taskDigest": "3b9af70782da92d1ed43be1a903f0ad324f5e0117638c8590c83eed3139f640f"
+      },
+      {
+        "schemaVersion": 1,
+        "taskId": "135a2760",
+        "family": "ARC_AGI",
+        "tier": "VALIDATION",
+        "source": {
+          "dataset": "arcprize/ARC-AGI-2 public evaluation",
+          "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+          "contentDigest": "947b8589a0f942ae7f48d2f7ebb961cb213320868756e4bf46145251df4d3ba8",
+          "visibility": "PUBLIC",
+          "kind": "DATASET_TASK",
+          "provenance": "https://github.com/arcprize/ARC-AGI-2/blob/f3283f727488ad98fe575ea6a5ac981e4a188e49/data/evaluation/135a2760.json; public subset, not protected leaderboard evaluation."
+        },
+        "inputDigest": "2ee36bd848460465bcb071f05c43f7c581c0fddc7c9a6aeb3c30eede8730d695",
+        "privateOracleDigest": "1f46d58da67916884c93fb97beb9cd99a7251e8e2edc726be4e659a208c401ac",
+        "requiredCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ],
+        "taskDigest": "270a7af676472ece6dda9a9d8520160c04faaac4aac7323eb64b8af5aa923abc"
+      },
+      {
+        "schemaVersion": 1,
+        "taskId": "136b0064",
+        "family": "ARC_AGI",
+        "tier": "VALIDATION",
+        "source": {
+          "dataset": "arcprize/ARC-AGI-2 public evaluation",
+          "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+          "contentDigest": "8fe6f8c797d25ccf5e0b4dc935905f140efaf51db0a1dedf7c47bfae8ba5e376",
+          "visibility": "PUBLIC",
+          "kind": "DATASET_TASK",
+          "provenance": "https://github.com/arcprize/ARC-AGI-2/blob/f3283f727488ad98fe575ea6a5ac981e4a188e49/data/evaluation/136b0064.json; public subset, not protected leaderboard evaluation."
+        },
+        "inputDigest": "b5909a557f7972dd0c89fdbceced5f80ea36021e35c4e61ef4a742ae73eab3d2",
+        "privateOracleDigest": "800a8b6babcc2ff5b00957006c69bea796242564b647290ca58b340749d927b3",
+        "requiredCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ],
+        "taskDigest": "5d321ef19cfec1c4a537ef1cd3df2e46b468a6efdb35b5ddc4ec47a6499cfdb6"
+      },
+      {
+        "schemaVersion": 1,
+        "taskId": "13e47133",
+        "family": "ARC_AGI",
+        "tier": "VALIDATION",
+        "source": {
+          "dataset": "arcprize/ARC-AGI-2 public evaluation",
+          "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+          "contentDigest": "5d3322941026b37b80628f8a227ff5dc7d339b703f402ed5f777fc6d79aabaa9",
+          "visibility": "PUBLIC",
+          "kind": "DATASET_TASK",
+          "provenance": "https://github.com/arcprize/ARC-AGI-2/blob/f3283f727488ad98fe575ea6a5ac981e4a188e49/data/evaluation/13e47133.json; public subset, not protected leaderboard evaluation."
+        },
+        "inputDigest": "47b0f910fcc3683a3108d6931102fc9cbb9fd6d94bc2fb17777473e2bcf51e8e",
+        "privateOracleDigest": "b33e9158502ae2a9b47409546ef96c00d13b57434cf2bdc0dda2a1bb08b06d48",
+        "requiredCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ],
+        "taskDigest": "9ff5f2ef638edaadfb772a730e69be6ce846d3aa44d36d895a0949b81cef36de"
+      },
+      {
+        "schemaVersion": 1,
+        "taskId": "142ca369",
+        "family": "ARC_AGI",
+        "tier": "VALIDATION",
+        "source": {
+          "dataset": "arcprize/ARC-AGI-2 public evaluation",
+          "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+          "contentDigest": "99f54e21aef0506efa75348fc14ef4c4d11b9ef3aaf3ca881971abdb043c509b",
+          "visibility": "PUBLIC",
+          "kind": "DATASET_TASK",
+          "provenance": "https://github.com/arcprize/ARC-AGI-2/blob/f3283f727488ad98fe575ea6a5ac981e4a188e49/data/evaluation/142ca369.json; public subset, not protected leaderboard evaluation."
+        },
+        "inputDigest": "7c238849470d35e6328fc8f6bb0b5bb3207783c15d5c8c8f7343cd1b87b4f75e",
+        "privateOracleDigest": "d7ec0235979632bd261515e69cc6aa9ed8336e8d226699b304f6ea4ca26fca3f",
+        "requiredCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ],
+        "taskDigest": "5ff121f57b50d8047cf056b7513f95936eeecc172c5780dceb66509ac38d404b"
+      },
+      {
+        "schemaVersion": 1,
+        "taskId": "16b78196",
+        "family": "ARC_AGI",
+        "tier": "VALIDATION",
+        "source": {
+          "dataset": "arcprize/ARC-AGI-2 public evaluation",
+          "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+          "contentDigest": "367ac5a99940c068af67361b60a116edc16f04f2ad804463cc308ee7fe383ed1",
+          "visibility": "PUBLIC",
+          "kind": "DATASET_TASK",
+          "provenance": "https://github.com/arcprize/ARC-AGI-2/blob/f3283f727488ad98fe575ea6a5ac981e4a188e49/data/evaluation/16b78196.json; public subset, not protected leaderboard evaluation."
+        },
+        "inputDigest": "3c39fcb0f7df417a48f1c63fc5954c671afe19e422d5abc87298d1b8b20f7f6f",
+        "privateOracleDigest": "862144cda7f044d3f9817a60c140a5d960b0ac95a362c08bff5f54d0d6070886",
+        "requiredCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ],
+        "taskDigest": "c5f4e3e39b72daf5843c0e36ebd11e8ca884777bff3ebce997c5322d9023633c"
+      },
+      {
+        "schemaVersion": 1,
+        "taskId": "16de56c4",
+        "family": "ARC_AGI",
+        "tier": "VALIDATION",
+        "source": {
+          "dataset": "arcprize/ARC-AGI-2 public evaluation",
+          "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+          "contentDigest": "900c82bc49a353ed1191266da8b18e3f54851997617f81c11b51284df9da2c1e",
+          "visibility": "PUBLIC",
+          "kind": "DATASET_TASK",
+          "provenance": "https://github.com/arcprize/ARC-AGI-2/blob/f3283f727488ad98fe575ea6a5ac981e4a188e49/data/evaluation/16de56c4.json; public subset, not protected leaderboard evaluation."
+        },
+        "inputDigest": "04f2c3b7aed8c16f787c41eb38d771d28bed8c54f4c649596974d8457a24edfd",
+        "privateOracleDigest": "1411c2ee7381abc1cf349eeb07b71310d99301f71e5efd9ac24b514eaa74ddea",
+        "requiredCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ],
+        "taskDigest": "2e7623b94be6fc0d2b8e91f9c41dfe8baf6beef8a2b54bf873d00f12e4a441c1"
+      },
+      {
+        "schemaVersion": 1,
+        "taskId": "1818057f",
+        "family": "ARC_AGI",
+        "tier": "VALIDATION",
+        "source": {
+          "dataset": "arcprize/ARC-AGI-2 public evaluation",
+          "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+          "contentDigest": "f53140586767c3d587cac6d58fa45958f5e93439ec1e03b002a1f676a441d805",
+          "visibility": "PUBLIC",
+          "kind": "DATASET_TASK",
+          "provenance": "https://github.com/arcprize/ARC-AGI-2/blob/f3283f727488ad98fe575ea6a5ac981e4a188e49/data/evaluation/1818057f.json; public subset, not protected leaderboard evaluation."
+        },
+        "inputDigest": "0265ca0e12c23d27db0ee44aa97e835dd18288f6405cbdcb4b22dfe723355a35",
+        "privateOracleDigest": "68cd2665e9e7e3878ac8775936268a9eaa2ea0c4eb087ebd3dd54a313b548591",
+        "requiredCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ],
+        "taskDigest": "dfbef4f515ca0072585bcb71b98b0bfbaabda3e53a5ecb88be09d39da35cee52"
+      }
+    ],
+    "runs": [
+      {
+        "arm": "RAW_MODEL",
+        "taskDigest": "3b9af70782da92d1ed43be1a903f0ad324f5e0117638c8590c83eed3139f640f",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": {
+              "campaignDigest": "7f36b71185d0dc2c3a039d3589e6cfd0a4ab91280302a1043788f7090f4d4c5e",
+              "taskDigest": "3b9af70782da92d1ed43be1a903f0ad324f5e0117638c8590c83eed3139f640f",
+              "taskId": "0934a4d8",
+              "arm": "RAW_MODEL",
+              "armSourceDigest": "623180b8b0d65e54c24a3e8cb7267461553d979363c77e4095b1cefb6f8b5189",
+              "attempt": 1,
+              "artifactDigest": "f9f17f5180941a1c5a3aa7121990a784c71e83d337640c04e57cb93dbc25730b",
+              "evaluationRunId": "nyx-7d272480f51d304647eb254ebc03d99a85ebd293b75c17cb"
+            },
+            "internalCandidateAttempts": 1,
+            "outcome": "REJECTED",
+            "failure": "FUNCTIONAL_FAILURE",
+            "evaluation": {
+              "state": "FAIL",
+              "correct": 0,
+              "total": 1,
+              "quality": "NOT_APPLICABLE",
+              "metric": "ARC_EXACT_TWO_PREDICTIONS_PER_TEST_OUTPUT",
+              "evidenceDigest": "77b7b5bdedb6e1b61c99096432356cb8b0aa8b28959726dd39d358c1f14da84a",
+              "confidence": null
+            },
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 1,
+              "httpAttempts": 1,
+              "reportedTokens": 9534,
+              "unknownUsageCalls": 0,
+              "toolCalls": 0,
+              "toolWorkUnits": 0,
+              "wallClockMs": 9537,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": {
+              "logicalCalls": 0,
+              "physicalCalls": 0,
+              "httpAttempts": 0,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 0,
+              "toolCalls": 1,
+              "toolWorkUnits": 1,
+              "wallClockMs": 0,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 9540,
+            "confidence": 0.3,
+            "requestDigests": [
+              "28b0e9b18c47c61e31e668412fea6d548471ab47e16f7d7f035f53d34ff1f52b"
+            ],
+            "responseDigests": [
+              "c894b0b0d210d6b91a81f43c2eb4408cef56c5d89e8ef8ce0af2761f07eac824"
+            ]
+          }
+        ]
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "taskDigest": "3b9af70782da92d1ed43be1a903f0ad324f5e0117638c8590c83eed3139f640f",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 2,
+              "toolCalls": 1,
+              "toolWorkUnits": 5,
+              "wallClockMs": 150024,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 150025,
+            "confidence": null,
+            "requestDigests": [
+              "4601346e5decdc7827fd4e225d4f5631bded514ac1b717150145f93b0c23bc31"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "taskDigest": "3b9af70782da92d1ed43be1a903f0ad324f5e0117638c8590c83eed3139f640f",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "SYNTAX_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 29150,
+              "unknownUsageCalls": 0,
+              "toolCalls": 1,
+              "toolWorkUnits": 5,
+              "wallClockMs": 98128,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 98129,
+            "confidence": null,
+            "requestDigests": [
+              "59e250b772450809372ed877ececbb94a460b4541b5fcc777ef5abf9ebe36d20",
+              "e97ad78abeae840ba7e657dd7a2b7e3aa469bf28ea9d5a55860e57cd68f63f1f"
+            ],
+            "responseDigests": [
+              "5fb920e04c3370307bf48083a0f9a9aae0ea01f768bc2122a26f58c3181d0e9b",
+              "14ac2416204c75609b54f1a8cc93914a67cf03c4c8e13900757dcb5a705c46ce"
+            ]
+          }
+        ]
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "taskDigest": "3b9af70782da92d1ed43be1a903f0ad324f5e0117638c8590c83eed3139f640f",
+        "tier": "VALIDATION",
+        "state": "BLOCKED_ENVIRONMENT",
+        "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+        "attempts": []
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "taskDigest": "270a7af676472ece6dda9a9d8520160c04faaac4aac7323eb64b8af5aa923abc",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 3,
+              "httpAttempts": 3,
+              "reportedTokens": 7781,
+              "unknownUsageCalls": 2,
+              "toolCalls": 1,
+              "toolWorkUnits": 3,
+              "wallClockMs": 82199,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 82200,
+            "confidence": null,
+            "requestDigests": [
+              "26c7cb5a9046bc1a68ff536f521c6bf79d7c9676551bb7c93e36f5c231d8e4b0",
+              "41fad9ea9adca680752ac8b8dd47a0d6e7aa7e72aa11ba7deeffa0ca24185d2e"
+            ],
+            "responseDigests": [
+              "3d81450e11ef02b8385e57eff7e8bcd76180059c56e3f481776f238c27411345"
+            ]
+          }
+        ]
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "taskDigest": "270a7af676472ece6dda9a9d8520160c04faaac4aac7323eb64b8af5aa923abc",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "PROVIDER_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 2,
+              "toolCalls": 1,
+              "toolWorkUnits": 3,
+              "wallClockMs": 150010,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 150010,
+            "confidence": null,
+            "requestDigests": [
+              "9959b2c4b58de64b9c23574e6eb44b3fc898b7e81f611c84bd4380d7ac36f110"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "taskDigest": "270a7af676472ece6dda9a9d8520160c04faaac4aac7323eb64b8af5aa923abc",
+        "tier": "VALIDATION",
+        "state": "BLOCKED_ENVIRONMENT",
+        "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+        "attempts": []
+      },
+      {
+        "arm": "RAW_MODEL",
+        "taskDigest": "270a7af676472ece6dda9a9d8520160c04faaac4aac7323eb64b8af5aa923abc",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "PROVIDER_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 1,
+              "httpAttempts": 1,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 1,
+              "toolCalls": 0,
+              "toolWorkUnits": 0,
+              "wallClockMs": 124994,
+              "providerFailures": 1,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 124994,
+            "confidence": null,
+            "requestDigests": [
+              "2113df5ea85985a031a3a355c7539e84248f90a59dcbcfdf7a716cc6e81eab65"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "taskDigest": "5d321ef19cfec1c4a537ef1cd3df2e46b468a6efdb35b5ddc4ec47a6499cfdb6",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "PROVIDER_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 8455,
+              "unknownUsageCalls": 1,
+              "toolCalls": 1,
+              "toolWorkUnits": 4,
+              "wallClockMs": 150029,
+              "providerFailures": 1,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 150030,
+            "confidence": null,
+            "requestDigests": [
+              "523f499abbcffe511afaca7650a591af539ac2693b38c0731ec72336607cfd75",
+              "7c4877a63601791ff9f75ff799625d18a5a1dfaee71e467d10dec5c67918c9d1"
+            ],
+            "responseDigests": [
+              "7e2ccd4b36724bc8dd67c4afda7578c8ee5b6e9b9f9d1d2c1862fdb817e5edfa"
+            ]
+          }
+        ]
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "taskDigest": "5d321ef19cfec1c4a537ef1cd3df2e46b468a6efdb35b5ddc4ec47a6499cfdb6",
+        "tier": "VALIDATION",
+        "state": "BLOCKED_ENVIRONMENT",
+        "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+        "attempts": []
+      },
+      {
+        "arm": "RAW_MODEL",
+        "taskDigest": "5d321ef19cfec1c4a537ef1cd3df2e46b468a6efdb35b5ddc4ec47a6499cfdb6",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "SCHEMA_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 1,
+              "httpAttempts": 1,
+              "reportedTokens": 2699,
+              "unknownUsageCalls": 0,
+              "toolCalls": 0,
+              "toolWorkUnits": 0,
+              "wallClockMs": 105549,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 105550,
+            "confidence": null,
+            "requestDigests": [
+              "bc718f7ff6dee8a85eba5a25b7757e27a1610163575fc6de1a1590632350483c"
+            ],
+            "responseDigests": [
+              "1ea068b14471cb64fff69da5ca968170958beb31d5bd260bcfe7b9cef28484f5"
+            ]
+          }
+        ]
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "taskDigest": "5d321ef19cfec1c4a537ef1cd3df2e46b468a6efdb35b5ddc4ec47a6499cfdb6",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 2,
+              "toolCalls": 1,
+              "toolWorkUnits": 4,
+              "wallClockMs": 150026,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 150027,
+            "confidence": null,
+            "requestDigests": [
+              "f24460f68b0c5ee676212d41b7737c0d275aa1ff0ee1b0d6ca45d2d2a1fabc06"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "taskDigest": "9ff5f2ef638edaadfb772a730e69be6ce846d3aa44d36d895a0949b81cef36de",
+        "tier": "VALIDATION",
+        "state": "BLOCKED_ENVIRONMENT",
+        "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+        "attempts": []
+      },
+      {
+        "arm": "RAW_MODEL",
+        "taskDigest": "9ff5f2ef638edaadfb772a730e69be6ce846d3aa44d36d895a0949b81cef36de",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": null,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": null,
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 155000,
+            "confidence": null,
+            "requestDigests": [],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "taskDigest": "9ff5f2ef638edaadfb772a730e69be6ce846d3aa44d36d895a0949b81cef36de",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "PROVIDER_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 2,
+              "toolCalls": 1,
+              "toolWorkUnits": 5,
+              "wallClockMs": 60856,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 60857,
+            "confidence": null,
+            "requestDigests": [
+              "d64fbc30e485dabe7c13086666ab2bb0859150d734e4820c9b9f5213435a4353"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "taskDigest": "9ff5f2ef638edaadfb772a730e69be6ce846d3aa44d36d895a0949b81cef36de",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "PROVIDER_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 1,
+              "httpAttempts": 1,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 1,
+              "toolCalls": 1,
+              "toolWorkUnits": 5,
+              "wallClockMs": 124997,
+              "providerFailures": 1,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 124997,
+            "confidence": null,
+            "requestDigests": [
+              "991f1cda4f715f1f48ea012badc9f6638501e5807a1a74eb839e547e7e7734d6"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "RAW_MODEL",
+        "taskDigest": "5ff121f57b50d8047cf056b7513f95936eeecc172c5780dceb66509ac38d404b",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": null,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": null,
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 155001,
+            "confidence": null,
+            "requestDigests": [],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "taskDigest": "5ff121f57b50d8047cf056b7513f95936eeecc172c5780dceb66509ac38d404b",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 2,
+              "toolCalls": 1,
+              "toolWorkUnits": 5,
+              "wallClockMs": 150013,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 150013,
+            "confidence": null,
+            "requestDigests": [
+              "a45e9f0780e036b566ed47c12aaaee0a1f8d89fe070cc842af1466241e48c48d"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "taskDigest": "5ff121f57b50d8047cf056b7513f95936eeecc172c5780dceb66509ac38d404b",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 2,
+              "toolCalls": 1,
+              "toolWorkUnits": 5,
+              "wallClockMs": 150021,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 150021,
+            "confidence": null,
+            "requestDigests": [
+              "5c71adbec943faa1fa70f12c5c8e900b3aabf1a855b35209dce89c6d5ff0ae53"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "taskDigest": "5ff121f57b50d8047cf056b7513f95936eeecc172c5780dceb66509ac38d404b",
+        "tier": "VALIDATION",
+        "state": "BLOCKED_ENVIRONMENT",
+        "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+        "attempts": []
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "taskDigest": "c5f4e3e39b72daf5843c0e36ebd11e8ca884777bff3ebce997c5322d9023633c",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 2,
+              "toolCalls": 1,
+              "toolWorkUnits": 3,
+              "wallClockMs": 150021,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 150022,
+            "confidence": null,
+            "requestDigests": [
+              "d8ca9e5125648f6024f4960f17f5b2462a8c56f85d891f021bb3d4f9c73076c6"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "taskDigest": "c5f4e3e39b72daf5843c0e36ebd11e8ca884777bff3ebce997c5322d9023633c",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 1,
+            "outcome": "FAILED",
+            "failure": "FUNCTIONAL_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 27879,
+              "unknownUsageCalls": 0,
+              "toolCalls": 2,
+              "toolWorkUnits": 6,
+              "wallClockMs": 27849,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 27849,
+            "confidence": null,
+            "requestDigests": [
+              "fdcb456607ec4b299727061e7efd7e0f8dca4913351c70080923845f373b1dc9",
+              "153b967683cfc15129974115fd7cb6994bca7af45409a76ad409c6fee8764ef7"
+            ],
+            "responseDigests": [
+              "0e856ec3546b5ae0ce7a3c65e5885dc4746e749904c72d8b888c11112f34e5c4",
+              "31e7de6ff9a001dff0f6b86766960e4524680b2cb29d5592d489d89b516babc6"
+            ]
+          }
+        ]
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "taskDigest": "c5f4e3e39b72daf5843c0e36ebd11e8ca884777bff3ebce997c5322d9023633c",
+        "tier": "VALIDATION",
+        "state": "BLOCKED_ENVIRONMENT",
+        "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+        "attempts": []
+      },
+      {
+        "arm": "RAW_MODEL",
+        "taskDigest": "c5f4e3e39b72daf5843c0e36ebd11e8ca884777bff3ebce997c5322d9023633c",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": null,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": null,
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 155001,
+            "confidence": null,
+            "requestDigests": [],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "taskDigest": "2e7623b94be6fc0d2b8e91f9c41dfe8baf6beef8a2b54bf873d00f12e4a441c1",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 1,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 3,
+              "httpAttempts": 3,
+              "reportedTokens": 16259,
+              "unknownUsageCalls": 1,
+              "toolCalls": 2,
+              "toolWorkUnits": 10,
+              "wallClockMs": 147932,
+              "providerFailures": 1,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 147933,
+            "confidence": null,
+            "requestDigests": [
+              "1f38fe322bc7f8484a54f763bf36f762f994dc35e996c699569809a848cccf9a",
+              "aad7803431e3edd28cb3f98fad96388f0c81a454f3f5596cff28c3937c4b6306"
+            ],
+            "responseDigests": [
+              "ad457b785f8a338df4020bb9a1a7bdb588c59d176af79433830e275ffb6e7d17",
+              "6a91d4546b65a3d280009c11ce4fcc37aa9b4f1523d91e96a0f3e430125570ad"
+            ]
+          }
+        ]
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "taskDigest": "2e7623b94be6fc0d2b8e91f9c41dfe8baf6beef8a2b54bf873d00f12e4a441c1",
+        "tier": "VALIDATION",
+        "state": "BLOCKED_ENVIRONMENT",
+        "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+        "attempts": []
+      },
+      {
+        "arm": "RAW_MODEL",
+        "taskDigest": "2e7623b94be6fc0d2b8e91f9c41dfe8baf6beef8a2b54bf873d00f12e4a441c1",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": {
+              "campaignDigest": "7f36b71185d0dc2c3a039d3589e6cfd0a4ab91280302a1043788f7090f4d4c5e",
+              "taskDigest": "2e7623b94be6fc0d2b8e91f9c41dfe8baf6beef8a2b54bf873d00f12e4a441c1",
+              "taskId": "16de56c4",
+              "arm": "RAW_MODEL",
+              "armSourceDigest": "623180b8b0d65e54c24a3e8cb7267461553d979363c77e4095b1cefb6f8b5189",
+              "attempt": 1,
+              "artifactDigest": "2a3d31cb50b7d5c6620f292ad89f579e42937c1c72eadf02994b7b97c656afb4",
+              "evaluationRunId": "nyx-3d01ed51aa2918bf0050cb024048d23586d21f25805c805f"
+            },
+            "internalCandidateAttempts": 1,
+            "outcome": "REJECTED",
+            "failure": "FUNCTIONAL_FAILURE",
+            "evaluation": {
+              "state": "FAIL",
+              "correct": 0,
+              "total": 2,
+              "quality": "NOT_APPLICABLE",
+              "metric": "ARC_EXACT_TWO_PREDICTIONS_PER_TEST_OUTPUT",
+              "evidenceDigest": "126dacb2d248a2a6edde93a735fc137d4254bf42b03454100328708dd5248c08",
+              "confidence": null
+            },
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 1,
+              "httpAttempts": 1,
+              "reportedTokens": 4819,
+              "unknownUsageCalls": 0,
+              "toolCalls": 0,
+              "toolWorkUnits": 0,
+              "wallClockMs": 47848,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": {
+              "logicalCalls": 0,
+              "physicalCalls": 0,
+              "httpAttempts": 0,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 0,
+              "toolCalls": 1,
+              "toolWorkUnits": 2,
+              "wallClockMs": 1,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "observedVerifierWallClockMs": 1,
+            "observedWallClockMs": 47850,
+            "confidence": 0.5,
+            "requestDigests": [
+              "44acd715691d74bd193acecff69a9e44258f08f5a5807eadbf8e0f1b58f04079"
+            ],
+            "responseDigests": [
+              "c4cc517274c88c0fbc309fd94aac1ecb7823006627434f8ef6ba4e18f6f97c10"
+            ]
+          }
+        ]
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "taskDigest": "2e7623b94be6fc0d2b8e91f9c41dfe8baf6beef8a2b54bf873d00f12e4a441c1",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 2,
+              "toolCalls": 1,
+              "toolWorkUnits": 5,
+              "wallClockMs": 150011,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 150012,
+            "confidence": null,
+            "requestDigests": [
+              "51856e6afef29ffb7f0226f631722eef251b8f31e644e0ab0ce81cb570e1afdc"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "taskDigest": "dfbef4f515ca0072585bcb71b98b0bfbaabda3e53a5ecb88be09d39da35cee52",
+        "tier": "VALIDATION",
+        "state": "BLOCKED_ENVIRONMENT",
+        "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+        "attempts": []
+      },
+      {
+        "arm": "RAW_MODEL",
+        "taskDigest": "dfbef4f515ca0072585bcb71b98b0bfbaabda3e53a5ecb88be09d39da35cee52",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "PROVIDER_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 2,
+              "toolCalls": 0,
+              "toolWorkUnits": 0,
+              "wallClockMs": 125392,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 125392,
+            "confidence": null,
+            "requestDigests": [
+              "2220ee7930257407b75def893f37fc041a498e8419865a195787bd76ccae4e9f"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "taskDigest": "dfbef4f515ca0072585bcb71b98b0bfbaabda3e53a5ecb88be09d39da35cee52",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "PROVIDER_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 1,
+              "httpAttempts": 1,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 1,
+              "toolCalls": 1,
+              "toolWorkUnits": 4,
+              "wallClockMs": 125014,
+              "providerFailures": 1,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 125014,
+            "confidence": null,
+            "requestDigests": [
+              "6b5bec4217794650d960272619d91c369ca084f139126029938083c190241343"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "taskDigest": "dfbef4f515ca0072585bcb71b98b0bfbaabda3e53a5ecb88be09d39da35cee52",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "PROVIDER_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 0,
+              "physicalCalls": 0,
+              "httpAttempts": 0,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 0,
+              "toolCalls": 1,
+              "toolWorkUnits": 4,
+              "wallClockMs": 64,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 64,
+            "confidence": null,
+            "requestDigests": [
+              "f02016556ed87b84c837ef35814c9e74f94c00bccd2b4cac4298b8892bc95fb4"
+            ],
+            "responseDigests": []
+          }
+        ]
+      }
+    ],
+    "summaries": [
+      {
+        "arm": "RAW_MODEL",
+        "tasks": 8,
+        "executedTasks": 8,
+        "firstAttemptAccepted": 0,
+        "repairedAccepted": 0,
+        "finalAccepted": 0,
+        "qualityAccepted": 0,
+        "qualityNotEvaluated": 0,
+        "falseAcceptances": null,
+        "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+        "repairAttempts": 0,
+        "failureCounts": {
+          "PROVIDER_FAILURE": 2,
+          "TRUNCATION": 0,
+          "SCHEMA_FAILURE": 1,
+          "SYNTAX_FAILURE": 0,
+          "FUNCTIONAL_FAILURE": 2,
+          "HIDDEN_CASE_FAILURE": 0,
+          "QUALITY_REJECTION": 0,
+          "AUTHORIZATION_FAILURE": 0,
+          "MISSING_CAPABILITY": 0,
+          "VERIFIER_FAILURE": 0,
+          "RESOURCE_EXHAUSTION": 3,
+          "INFRASTRUCTURE_FAILURE": 0
+        },
+        "usage": {
+          "logicalCalls": 5,
+          "physicalCalls": 6,
+          "httpAttempts": 6,
+          "reportedTokens": 17052,
+          "unknownUsageCalls": 3,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 413320,
+          "providerFailures": 3,
+          "retries": 1
+        },
+        "verifierUsage": {
+          "logicalCalls": 0,
+          "physicalCalls": 0,
+          "httpAttempts": 0,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 0,
+          "toolCalls": 2,
+          "toolWorkUnits": 3,
+          "wallClockMs": 1,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "unknownVerifierUsage": 0,
+        "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+        "unknownAttemptUsage": 3,
+        "complete": false,
+        "providerStable": false,
+        "calibration": {
+          "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+          "population": 2,
+          "value": 0.16999999999999998
+        },
+        "benchmarkScorePercent": null
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "tasks": 8,
+        "executedTasks": 8,
+        "firstAttemptAccepted": 0,
+        "repairedAccepted": 0,
+        "finalAccepted": 0,
+        "qualityAccepted": 0,
+        "qualityNotEvaluated": 0,
+        "falseAcceptances": null,
+        "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+        "repairAttempts": 0,
+        "failureCounts": {
+          "PROVIDER_FAILURE": 2,
+          "TRUNCATION": 0,
+          "SCHEMA_FAILURE": 0,
+          "SYNTAX_FAILURE": 0,
+          "FUNCTIONAL_FAILURE": 0,
+          "HIDDEN_CASE_FAILURE": 0,
+          "QUALITY_REJECTION": 0,
+          "AUTHORIZATION_FAILURE": 0,
+          "MISSING_CAPABILITY": 0,
+          "VERIFIER_FAILURE": 0,
+          "RESOURCE_EXHAUSTION": 6,
+          "INFRASTRUCTURE_FAILURE": 0
+        },
+        "usage": {
+          "logicalCalls": 9,
+          "physicalCalls": 16,
+          "httpAttempts": 16,
+          "reportedTokens": 7781,
+          "unknownUsageCalls": 15,
+          "toolCalls": 8,
+          "toolWorkUnits": 34,
+          "wallClockMs": 1018164,
+          "providerFailures": 15,
+          "retries": 7
+        },
+        "verifierUsage": {
+          "logicalCalls": 0,
+          "physicalCalls": 0,
+          "httpAttempts": 0,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 0,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "unknownVerifierUsage": 0,
+        "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+        "unknownAttemptUsage": 0,
+        "complete": true,
+        "providerStable": false,
+        "calibration": {
+          "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+          "population": 0,
+          "value": null
+        },
+        "benchmarkScorePercent": null
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "tasks": 8,
+        "executedTasks": 8,
+        "firstAttemptAccepted": 0,
+        "repairedAccepted": 0,
+        "finalAccepted": 0,
+        "qualityAccepted": 0,
+        "qualityNotEvaluated": 0,
+        "falseAcceptances": null,
+        "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+        "repairAttempts": 0,
+        "failureCounts": {
+          "PROVIDER_FAILURE": 4,
+          "TRUNCATION": 0,
+          "SCHEMA_FAILURE": 0,
+          "SYNTAX_FAILURE": 1,
+          "FUNCTIONAL_FAILURE": 1,
+          "HIDDEN_CASE_FAILURE": 0,
+          "QUALITY_REJECTION": 0,
+          "AUTHORIZATION_FAILURE": 0,
+          "MISSING_CAPABILITY": 0,
+          "VERIFIER_FAILURE": 0,
+          "RESOURCE_EXHAUSTION": 2,
+          "INFRASTRUCTURE_FAILURE": 0
+        },
+        "usage": {
+          "logicalCalls": 11,
+          "physicalCalls": 14,
+          "httpAttempts": 14,
+          "reportedTokens": 81743,
+          "unknownUsageCalls": 7,
+          "toolCalls": 10,
+          "toolWorkUnits": 42,
+          "wallClockMs": 849030,
+          "providerFailures": 7,
+          "retries": 3
+        },
+        "verifierUsage": {
+          "logicalCalls": 0,
+          "physicalCalls": 0,
+          "httpAttempts": 0,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 0,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "unknownVerifierUsage": 0,
+        "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+        "unknownAttemptUsage": 0,
+        "complete": true,
+        "providerStable": false,
+        "calibration": {
+          "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+          "population": 0,
+          "value": null
+        },
+        "benchmarkScorePercent": null
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "tasks": 8,
+        "executedTasks": 0,
+        "firstAttemptAccepted": 0,
+        "repairedAccepted": 0,
+        "finalAccepted": 0,
+        "qualityAccepted": 0,
+        "qualityNotEvaluated": 0,
+        "falseAcceptances": null,
+        "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+        "repairAttempts": 0,
+        "failureCounts": {
+          "PROVIDER_FAILURE": 0,
+          "TRUNCATION": 0,
+          "SCHEMA_FAILURE": 0,
+          "SYNTAX_FAILURE": 0,
+          "FUNCTIONAL_FAILURE": 0,
+          "HIDDEN_CASE_FAILURE": 0,
+          "QUALITY_REJECTION": 0,
+          "AUTHORIZATION_FAILURE": 0,
+          "MISSING_CAPABILITY": 0,
+          "VERIFIER_FAILURE": 0,
+          "RESOURCE_EXHAUSTION": 0,
+          "INFRASTRUCTURE_FAILURE": 0
+        },
+        "usage": {
+          "logicalCalls": 0,
+          "physicalCalls": 0,
+          "httpAttempts": 0,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 0,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "verifierUsage": {
+          "logicalCalls": 0,
+          "physicalCalls": 0,
+          "httpAttempts": 0,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 0,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "unknownVerifierUsage": 0,
+        "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+        "unknownAttemptUsage": 0,
+        "complete": false,
+        "providerStable": false,
+        "calibration": {
+          "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+          "population": 0,
+          "value": null
+        },
+        "benchmarkScorePercent": null
+      }
+    ],
+    "matchedRealizedCompute": false,
+    "comparisonScope": "EQUAL_TOOL_ENVELOPE_NON_RAW_ARMS_ONLY",
+    "capabilityGaps": [
+      {
+        "gapId": "NYX-GAP-c85538b866c72e1d256e",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "evidenceDigest": "1c5d56dbeaa4d4a548c3d3d80d51a9fd88e0a1f0a9f9c6c33304a03646eb2461",
+        "taskDigest": "3b9af70782da92d1ed43be1a903f0ad324f5e0117638c8590c83eed3139f640f",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-22c177c79c2a098eaf5a",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "evidenceDigest": "1848b5071d440506aaabaea02836c61b6f16fd20c0566a4dec1ee1ffe7aa5c45",
+        "taskDigest": "3b9af70782da92d1ed43be1a903f0ad324f5e0117638c8590c83eed3139f640f",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-8b5f8e335e73205ec72b",
+        "failureClass": "SYNTAX_FAILURE",
+        "evidenceDigest": "92c1f34ec2f746818cbb67f2937335fbddd1a13d6f1ce834efe66ef8ca982d48",
+        "taskDigest": "3b9af70782da92d1ed43be1a903f0ad324f5e0117638c8590c83eed3139f640f",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-16bd1de302098f090b54",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "evidenceDigest": "d0acc80896856e92259ec9ae38cbb48bf05168708f28d22c8ff9ac67e95ea214",
+        "taskDigest": "270a7af676472ece6dda9a9d8520160c04faaac4aac7323eb64b8af5aa923abc",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-35214e717cd7bfcada66",
+        "failureClass": "PROVIDER_FAILURE",
+        "evidenceDigest": "2428d737060de993b0a1d3ca1cdced7062acbbf792cf51ebf16a517a68d0a1d5",
+        "taskDigest": "270a7af676472ece6dda9a9d8520160c04faaac4aac7323eb64b8af5aa923abc",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-08cfae7709d09e643566",
+        "failureClass": "PROVIDER_FAILURE",
+        "evidenceDigest": "6e8a07a53eee930358173f4aa14c7f64aaa706386d05b83fece1482e7d3d0c2e",
+        "taskDigest": "270a7af676472ece6dda9a9d8520160c04faaac4aac7323eb64b8af5aa923abc",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-a1949ae929b195382e9d",
+        "failureClass": "PROVIDER_FAILURE",
+        "evidenceDigest": "1e9e616f78490378ba48b94bf66d7a16f16930bfd85d8e22702311aa05e2fff0",
+        "taskDigest": "5d321ef19cfec1c4a537ef1cd3df2e46b468a6efdb35b5ddc4ec47a6499cfdb6",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-74797051b1b72e36bbbe",
+        "failureClass": "SCHEMA_FAILURE",
+        "evidenceDigest": "1a002e25ff18a8c3a2f0ce2f3cbc23ac42894953afcfe15c84a850fd7f80b1b5",
+        "taskDigest": "5d321ef19cfec1c4a537ef1cd3df2e46b468a6efdb35b5ddc4ec47a6499cfdb6",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-d1e2c8ba854951abdec3",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "evidenceDigest": "834acc23c979e85ce42d1302ab44e9f8a813646f8563f17aeb6afc0f408b8cad",
+        "taskDigest": "5d321ef19cfec1c4a537ef1cd3df2e46b468a6efdb35b5ddc4ec47a6499cfdb6",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-16364ab621d2bac286cc",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "evidenceDigest": "9198ed028a9eab8f516dd766e28eeeaef9e991ecf03c8fcb5bcb8899536a4abd",
+        "taskDigest": "9ff5f2ef638edaadfb772a730e69be6ce846d3aa44d36d895a0949b81cef36de",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-bab7abb6b0889044b698",
+        "failureClass": "PROVIDER_FAILURE",
+        "evidenceDigest": "e3676f6e577adcadab2f3e9e12dcc3c68df69a71ff810596609c04c7e4a01ddf",
+        "taskDigest": "9ff5f2ef638edaadfb772a730e69be6ce846d3aa44d36d895a0949b81cef36de",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-21c6eab38c351a122313",
+        "failureClass": "PROVIDER_FAILURE",
+        "evidenceDigest": "1f1d787b0692e66d1d0050baa82f26d7a7083b70dcbeb5c288ebc18f90e14a18",
+        "taskDigest": "9ff5f2ef638edaadfb772a730e69be6ce846d3aa44d36d895a0949b81cef36de",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-cbd73d493ac48e1c0b13",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "evidenceDigest": "8535194ef687af38a3c0346b8cda262fc618858090d4c47a08dab6498ee15efe",
+        "taskDigest": "5ff121f57b50d8047cf056b7513f95936eeecc172c5780dceb66509ac38d404b",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-e94a365114de24869f3f",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "evidenceDigest": "9444ccaede57b2a3a2faeb8272a79b89fabf20dc8eb7528a2a714f8f8592572c",
+        "taskDigest": "5ff121f57b50d8047cf056b7513f95936eeecc172c5780dceb66509ac38d404b",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-24714020f2abf85b147f",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "evidenceDigest": "94fce312418f270fbe73b65869638c17157454fd3704da2d0e472d7565589221",
+        "taskDigest": "5ff121f57b50d8047cf056b7513f95936eeecc172c5780dceb66509ac38d404b",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-66b385f1dc6ca5d720a9",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "evidenceDigest": "37ae3ae5cb3b54b8fc1c6f42494caf5759db0325554a845504cdf36a7fe12a04",
+        "taskDigest": "c5f4e3e39b72daf5843c0e36ebd11e8ca884777bff3ebce997c5322d9023633c",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-1b4332581486e380a0cd",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "evidenceDigest": "cedfdb2f7accf773e9c0b88ad319ec6eb8a7122f30197f22fb202b6c8c6c9c25",
+        "taskDigest": "c5f4e3e39b72daf5843c0e36ebd11e8ca884777bff3ebce997c5322d9023633c",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-3ec0ce31d7b6f03896ff",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "evidenceDigest": "8535194ef687af38a3c0346b8cda262fc618858090d4c47a08dab6498ee15efe",
+        "taskDigest": "c5f4e3e39b72daf5843c0e36ebd11e8ca884777bff3ebce997c5322d9023633c",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-fed71e8176238b9a3a35",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "evidenceDigest": "76cad87c71e3e433e59fa8ee0906df097a1fc84c83f44ee5266a1c42a1714d2a",
+        "taskDigest": "2e7623b94be6fc0d2b8e91f9c41dfe8baf6beef8a2b54bf873d00f12e4a441c1",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-a844907f8ef3b5068a7b",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "evidenceDigest": "0f3c6eb4e1ec99e0eec265e6d44b83128a9b98896ff5a9e8049bdab7b0232172",
+        "taskDigest": "2e7623b94be6fc0d2b8e91f9c41dfe8baf6beef8a2b54bf873d00f12e4a441c1",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-436bb8fcfa005b2e72b9",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "evidenceDigest": "a7b74206a2972cd8be67ac799cbc75692a6a95533799f1c8e74a9520b8ab28fd",
+        "taskDigest": "2e7623b94be6fc0d2b8e91f9c41dfe8baf6beef8a2b54bf873d00f12e4a441c1",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-bc9f5c11804f34cda583",
+        "failureClass": "PROVIDER_FAILURE",
+        "evidenceDigest": "b24f2210fade397ad470f50159eea5a397081da58b14e535ebda2a557d856f87",
+        "taskDigest": "dfbef4f515ca0072585bcb71b98b0bfbaabda3e53a5ecb88be09d39da35cee52",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-3a5d78cdf95965e2bda8",
+        "failureClass": "PROVIDER_FAILURE",
+        "evidenceDigest": "5b32c94067a5fe5f172976b9202d4f835374c9e39fb4655fc5212e8cfb39b991",
+        "taskDigest": "dfbef4f515ca0072585bcb71b98b0bfbaabda3e53a5ecb88be09d39da35cee52",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-519f1eb2850c458ff56b",
+        "failureClass": "PROVIDER_FAILURE",
+        "evidenceDigest": "8bb004c72ef4171c8d3ac4106397aea93101c02421a286c243ced4dc63743d2e",
+        "taskDigest": "dfbef4f515ca0072585bcb71b98b0bfbaabda3e53a5ecb88be09d39da35cee52",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      }
+    ],
+    "officialLeaderboardClaim": false,
+    "broadPromotion": false,
+    "grantsAuthority": false,
+    "rawModelComputeParitied": false,
+    "integrity": "TAMPER_EVIDENT_NOT_SIGNED",
+    "observedWallClockMs": 2745534,
+    "exposureHistory": [],
+    "reportDigest": "c82e413955a2e14d47ff31b9da5a49480a181ade1add1c1243dde968d503cf8f"
+  },
+  "integration": [
+    {
+      "inputDigest": "81b38188c5d62658a730cf38952148c6b086d5880b5ee34bab219dbf58e028cb",
+      "arm": "MODEL_EQUIVALENT_TOOLS",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_wall_clock_budget_exhausted",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "81b38188c5d62658a730cf38952148c6b086d5880b5ee34bab219dbf58e028cb",
+      "arm": "CURRENT_NYX",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_cognition_correction_budget_exhausted",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [
+        "SCHEMA_INVALID",
+        "SCHEMA_INVALID"
+      ],
+      "rejectedIntentDiagnostics": [
+        {
+          "reason": "SCHEMA_INVALID",
+          "category": "SOURCE_QUALITY_INVALID",
+          "path": "$.changes[0].replacement",
+          "observedCode": "syntax_error_line_32_column_710",
+          "diagnosticDigest": "412c0eb16c5987b9a523cb68534f9bbb9e7e2733af8621b65d1fb64871333a85"
+        },
+        {
+          "reason": "SCHEMA_INVALID",
+          "category": "SOURCE_QUALITY_INVALID",
+          "path": "$.changes[0].replacement",
+          "observedCode": "syntax_error_line_32_column_90",
+          "diagnosticDigest": "e9119b29515c725bffd24ae384ae5d8149e4d3cb8c986b97cf9ccff2bff126dc"
+        }
+      ],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "2ee36bd848460465bcb071f05c43f7c581c0fddc7c9a6aeb3c30eede8730d695",
+      "arm": "MODEL_EQUIVALENT_TOOLS",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "COGNITION_ERROR",
+      "loopReason": "repair_cognition_nvidia_provider_http_503",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [
+        "SCHEMA_INVALID"
+      ],
+      "rejectedIntentDiagnostics": [
+        {
+          "reason": "SCHEMA_INVALID",
+          "category": "SOURCE_QUALITY_INVALID",
+          "path": "$.changes[0].replacement",
+          "observedCode": "syntax_error_line_32_column_45",
+          "diagnosticDigest": "825dedf5841a5904ed9f150cf2be8868e7bdc8b6c8d9381966501ccf958ae000"
+        }
+      ],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "2ee36bd848460465bcb071f05c43f7c581c0fddc7c9a6aeb3c30eede8730d695",
+      "arm": "CURRENT_NYX",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "WAITING_FOR_CAPACITY",
+      "loopReason": "repair_paused_for_capacity_requires_fresh_authority",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "b5909a557f7972dd0c89fdbceced5f80ea36021e35c4e61ef4a742ae73eab3d2",
+      "arm": "CURRENT_NYX",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "WAITING_FOR_CAPACITY",
+      "loopReason": "repair_paused_for_capacity_requires_fresh_authority",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [
+        "SCHEMA_INVALID"
+      ],
+      "rejectedIntentDiagnostics": [
+        {
+          "reason": "SCHEMA_INVALID",
+          "category": "SOURCE_QUALITY_INVALID",
+          "path": "$.changes[0].replacement",
+          "observedCode": "syntax_error_line_32_column_4097",
+          "diagnosticDigest": "9b6507215b1fc8f34a2ea9cd0c3964be7820549190f3a88c7e025419bfe18c84"
+        }
+      ],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "b5909a557f7972dd0c89fdbceced5f80ea36021e35c4e61ef4a742ae73eab3d2",
+      "arm": "MODEL_EQUIVALENT_TOOLS",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_wall_clock_budget_exhausted",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "47b0f910fcc3683a3108d6931102fc9cbb9fd6d94bc2fb17777473e2bcf51e8e",
+      "arm": "MODEL_EQUIVALENT_TOOLS",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "COGNITION_ERROR",
+      "loopReason": "repair_cognition_nvidia_provider_http_503",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "47b0f910fcc3683a3108d6931102fc9cbb9fd6d94bc2fb17777473e2bcf51e8e",
+      "arm": "CURRENT_NYX",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "WAITING_FOR_CAPACITY",
+      "loopReason": "repair_paused_for_capacity_requires_fresh_authority",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "7c238849470d35e6328fc8f6bb0b5bb3207783c15d5c8c8f7343cd1b87b4f75e",
+      "arm": "MODEL_EQUIVALENT_TOOLS",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_wall_clock_budget_exhausted",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "7c238849470d35e6328fc8f6bb0b5bb3207783c15d5c8c8f7343cd1b87b4f75e",
+      "arm": "CURRENT_NYX",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_wall_clock_budget_exhausted",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "3c39fcb0f7df417a48f1c63fc5954c671afe19e422d5abc87298d1b8b20f7f6f",
+      "arm": "MODEL_EQUIVALENT_TOOLS",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_wall_clock_budget_exhausted",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "3c39fcb0f7df417a48f1c63fc5954c671afe19e422d5abc87298d1b8b20f7f6f",
+      "arm": "CURRENT_NYX",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_model_interaction_budget_exhausted",
+      "repairIterations": 1,
+      "rejectedSourceFailures": [
+        "SCHEMA_INVALID"
+      ],
+      "rejectedIntentDiagnostics": [
+        {
+          "reason": "SCHEMA_INVALID",
+          "category": "SOURCE_QUALITY_INVALID",
+          "path": "$.changes[0].replacement",
+          "observedCode": "syntax_error_line_32_column_32",
+          "diagnosticDigest": "31bc396cad9ded3470190bab9782636b6ec21bed6ddc8263e7302f2ffd6b2d11"
+        }
+      ],
+      "iterationResults": [
+        {
+          "iteration": 1,
+          "functionalPass": false,
+          "qualityDecision": null,
+          "diagnosticDigest": "fed8238249994f4d1e8cbca2aa68de768d78018b34c002e4b6075831d3510112"
+        }
+      ],
+      "omegaExecutionEvidence": [
+        "R3B-EVIDENCE-c6bd726ef7156f302029f3898b6d0e19"
+      ],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 2,
+      "provisionedLifecycles": 2,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "04f2c3b7aed8c16f787c41eb38d771d28bed8c54f4c649596974d8457a24edfd",
+      "arm": "CURRENT_NYX",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_model_interaction_budget_exhausted",
+      "repairIterations": 1,
+      "rejectedSourceFailures": [
+        "SCHEMA_INVALID"
+      ],
+      "rejectedIntentDiagnostics": [
+        {
+          "reason": "SCHEMA_INVALID",
+          "category": "SOURCE_QUALITY_INVALID",
+          "path": "$.changes[0].replacement",
+          "observedCode": "syntax_error_line_32_column_4097",
+          "diagnosticDigest": "9b6507215b1fc8f34a2ea9cd0c3964be7820549190f3a88c7e025419bfe18c84"
+        }
+      ],
+      "iterationResults": [
+        {
+          "iteration": 1,
+          "functionalPass": false,
+          "qualityDecision": null,
+          "diagnosticDigest": "5a95687a8c3a5d50b2e65a14e1861db761732f12df6494e87a8e3b13012e1b0c"
+        }
+      ],
+      "omegaExecutionEvidence": [
+        "R3B-EVIDENCE-61cdddd20e226817b2eb59e131769a21"
+      ],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 2,
+      "provisionedLifecycles": 2,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "04f2c3b7aed8c16f787c41eb38d771d28bed8c54f4c649596974d8457a24edfd",
+      "arm": "MODEL_EQUIVALENT_TOOLS",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_wall_clock_budget_exhausted",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "0265ca0e12c23d27db0ee44aa97e835dd18288f6405cbdcb4b22dfe723355a35",
+      "arm": "MODEL_EQUIVALENT_TOOLS",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "WAITING_FOR_CAPACITY",
+      "loopReason": "repair_paused_for_capacity_requires_fresh_authority",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "0265ca0e12c23d27db0ee44aa97e835dd18288f6405cbdcb4b22dfe723355a35",
+      "arm": "CURRENT_NYX",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "WAITING_FOR_CAPACITY",
+      "loopReason": "repair_paused_for_capacity_requires_fresh_authority",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    }
+  ],
+  "pairs": [
+    {
+      "taskDigest": "3b9af70782da92d1ed43be1a903f0ad324f5e0117638c8590c83eed3139f640f",
+      "currentVersusReferenceMatched": false
+    },
+    {
+      "taskDigest": "270a7af676472ece6dda9a9d8520160c04faaac4aac7323eb64b8af5aa923abc",
+      "currentVersusReferenceMatched": false
+    },
+    {
+      "taskDigest": "5d321ef19cfec1c4a537ef1cd3df2e46b468a6efdb35b5ddc4ec47a6499cfdb6",
+      "currentVersusReferenceMatched": false
+    },
+    {
+      "taskDigest": "9ff5f2ef638edaadfb772a730e69be6ce846d3aa44d36d895a0949b81cef36de",
+      "currentVersusReferenceMatched": false
+    },
+    {
+      "taskDigest": "5ff121f57b50d8047cf056b7513f95936eeecc172c5780dceb66509ac38d404b",
+      "currentVersusReferenceMatched": false
+    },
+    {
+      "taskDigest": "c5f4e3e39b72daf5843c0e36ebd11e8ca884777bff3ebce997c5322d9023633c",
+      "currentVersusReferenceMatched": false
+    },
+    {
+      "taskDigest": "2e7623b94be6fc0d2b8e91f9c41dfe8baf6beef8a2b54bf873d00f12e4a441c1",
+      "currentVersusReferenceMatched": false
+    },
+    {
+      "taskDigest": "dfbef4f515ca0072585bcb71b98b0bfbaabda3e53a5ecb88be09d39da35cee52",
+      "currentVersusReferenceMatched": false
+    }
+  ],
+  "sourceUnchanged": true,
+  "inference": "E4_LIVE_NVIDIA",
+  "verification": "E3_INDEPENDENT_EXACT_GRID_SCORER",
+  "broadPromotion": false,
+  "fullBenchmarkScoreClaim": false,
+  "grantsAuthority": false,
+  "integrationTraceComplete": true,
+  "interpretation": "FROZEN_PUBLIC_EVALUATION_SUBSET_NOT_FULL_BENCHMARK_OR_PROTECTED_SCORE"
+}

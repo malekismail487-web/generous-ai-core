@@ -168,3 +168,28 @@ authorization and the injected GitHub secret. No credential enters the disposabl
 Known usage, HTTP retries, unreported failed-retry work, public verifier invocations and independent
 scorer work are separately recorded. Equal ceilings are not equal realized compute. The absent
 candidate arm and unequal realized costs prohibit broader promotion from this pilot.
+
+### Actual public evaluation baseline — 2026-10-03
+
+Candidate `9649ec6`, run `37125272663`, froze eight actual ARC-AGI-2 public evaluation
+tasks before opening their content. RAW_MODEL, MODEL_EQUIVALENT_TOOLS and CURRENT_NYX
+each produced **zero accepted solutions**. This is not a valid full-benchmark score or
+a clean cognitive comparison: no paired task satisfied provider stability and realized
+compute matching. Only two raw-model artifacts reached exact hidden scoring; NYX's
+two executed candidates failed public examples, and its other observations included
+syntax rejection, capacity pauses, HTTP 503 and exhausted wall-clock budgets.
+
+Reported tokens were 17,052 / 7,781 / 81,743, with 3 / 15 / 7 unknown-usage calls
+respectively. The unknown work is not zero. Recurrent line-32 diagnostics are an observed
+interface symptom, not a proved transport/extraction/truncation cause. No model output
+was accepted by self-declaration. Source preservation, cleanup and integration trace
+completeness passed. Sanitized original evidence: `docs/omega/evidence/nyx-arc-public-9649ec6.json`.
+
+The subsequent source-representation ablation was authored before these results were
+read and uses four separate software domains, not ARC answers or task-specific fixes.
+Two DEVELOPMENT and two VALIDATION tasks compare the already supported TEXT and LINES
+contracts under unchanged cognition, model settings, static admission, private exact
+acceptance and authority. Its test-only reference implementations establish that the
+oracles and bounded execution path work; they are not model solutions and are never
+model inputs. Same-session authorship is disclosed, not independent replication.
+Both live workflows return to manual-only after this bounded execution.

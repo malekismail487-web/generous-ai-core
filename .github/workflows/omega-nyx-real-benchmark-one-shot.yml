@@ -1,9 +1,6 @@
 name: Omega NYX actual ARC public evaluation baseline
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/nyx-arc-benchmark-epoch.ts]
 permissions:
   contents: read
 concurrency:
