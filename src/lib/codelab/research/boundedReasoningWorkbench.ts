@@ -67,6 +67,9 @@ export interface ReasoningToolResult {
   readonly payload: Readonly<Record<string, unknown>> | null;
   readonly workUnits: number;
   readonly elapsedMs: number;
+  /** Present only for quantitative derivations; emitted by the existing evaluator. */
+  readonly executedProgramDigest?: string;
+  readonly loweringVersion?: string | null;
   readonly evidenceClass: "E3";
   readonly acceptanceRequiresIndependentVerifier: true;
   readonly grantsAuthority: false;

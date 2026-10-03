@@ -498,6 +498,30 @@ for(const [i,task] of COMMAND_TRANSFER_TASKS.entries()) {
   check(verifyCommandTransferSubmission(task,{outputs:calculation(task.problem,lowered).payload!.outputs,confidence:1}).accepted,
     `unchanged mathematical semantics pass the sixth population oracle ${task.taskId}`);
 }
+const sixthEvidence=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v6/comparison.json","utf8"));
+check(sixthEvidence.candidate==="8ce9d8621b294ac392b31068e62f29c41b24582a"&&sixthEvidence.complete&&!sixthEvidence.providerStable
+  &&sixthEvidence.summaries[2].accepted===3&&sixthEvidence.summaries[2].firstCallAccepted===2
+  &&sixthEvidence.summaries[2].calls===8&&!sixthEvidence.broadPromotion&&sixthEvidence.matchedRealizedCompute===false
+  &&theoryDigest(sixthEvidence)==="bca41318d024f0a678e6a6d1c7dd1ae04e102346683fc82e2cd5c644aa25491f",
+  "sixth live pilot preserves narrower successes and control-arm disruption without invented compute matching or promotion");
+for(const run of sixthEvidence.results.filter((r:{arm:string})=>r.arm==="REASONING_WITH_WORKBENCH")) {
+  const task=COMMAND_TRANSFER_TASKS.find(t=>t.taskId===run.taskId)!;
+  const replay=BoundedReasoningSession.create(task.problem,{maxWorkUnits:100000,maxElapsedMs:2000,maxRequests:2,expiresAtEpochMs:Date.now()+10000});
+  try {
+    for(const attempt of run.attempts.filter((a:{computation:unknown})=>a.computation!==null)) {
+      const nativeRequest={schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:theoryDigest(task.problem),program:attempt.executedProgram};
+      const computed=replay.analyze(nativeRequest);
+      const {resultDigest,...body}=attempt.computation;
+      check(resultDigest===theoryDigest(body)&&computed.requestDigest===attempt.computation.requestDigest
+        &&computed.workUnits===attempt.computation.workUnits&&computed.executedProgramDigest===attempt.computation.executedProgramDigest
+        &&theoryDigest(computed.payload)===theoryDigest(attempt.computation.payload),
+        `live model-authored mathematics replays its computation and custody ${task.taskId}/${attempt.call}`);
+      const independent=verifyCommandTransferSubmission(task,{outputs:computed.payload!.outputs,confidence:attempt.confidence});
+      check(independent.accepted===(attempt.outcome==="ACCEPTED")&&independent.verificationDigest===attempt.resultDigest,
+        `independent domain oracle reproduces both acceptance AND falsification ${task.taskId}/${attempt.call}`);
+    }
+  } finally {replay.revoke();}
+}
 const fifthNegative=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v5/comparison.json","utf8"));
 check(fifthNegative.candidate==="f87b9dd419321dae0f00fdc86c22d293e7ed965c"&&fifthNegative.complete
   &&fifthNegative.summaries[2].accepted===0&&fifthNegative.summaries[2].protocolOrAuthorizationFailures===15&&!fifthNegative.broadPromotion,
@@ -539,7 +563,7 @@ check(preservedNegative.candidate==="c2a69187cea0280db2f3060326df50ba5e3f38d2"
   &&preservedNegative.matchedRealizedCompute===false&&!preservedNegative.broadPromotion,
   "failed quantitative comparison stays bound to actual candidate, with no broader capability promotion");
 check(theoryDigest(preservedNegative)==="304945fdd03eae04dcf3416eb5998370232753d7af799bbfb8a43953d6c0de64","negative live report remains byte-semantically faithful to immutable E4 job logs");
-for(const report of [preservedNegative,secondNegative,thirdNegative,fourthNegative,fifthNegative]) for(const [path,digest] of Object.entries(report.sourceDigests)) {
+for(const report of [preservedNegative,secondNegative,thirdNegative,fourthNegative,fifthNegative,sixthEvidence]) for(const [path,digest] of Object.entries(report.sourceDigests)) {
   if(typeof path!=="string"||path.includes("..")||!path.endsWith(".ts")||!path.startsWith("src/")&&!path.startsWith("scripts/"))
     throw Error("invalid_archived_source_path");
   check(theoryDigest(execFileSync("git",["show",`${report.candidate}:${path}`],{encoding:"utf8"}))===digest,
