@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/77",
+  "suiteVersion": "omega-institutional-suite/78",
   "criticalSuites": [
+    "OMEGA-BENCHMARK-CAPABILITY-HARNESS",
     "OMEGA-LUMINA-LIVE-BOUNDARY",
     "OMEGA-FINITE-REFUTATION",
     "OMEGA-NYX-WORKBENCH-TRANSFER",
@@ -70,6 +71,7 @@
   ],
   "informationalSuites": [],
   "requiredSuites": [
+    { "suiteId": "OMEGA-BENCHMARK-CAPABILITY-HARNESS", "file": "scripts/omegaBenchmarkCapabilityHarness.test.ts" },
     { "suiteId": "OMEGA-FINITE-REFUTATION", "file": "scripts/omegaFiniteRefutation.test.ts" },
     { "suiteId": "OMEGA-NYX-WORKBENCH-TRANSFER", "file": "scripts/omegaNyxWorkbenchTransfer.test.ts" },
     { "suiteId": "OMEGA-BOUNDED-REASONING-WORKBENCH", "file": "scripts/omegaBoundedReasoningWorkbench.test.ts" },

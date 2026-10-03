@@ -41,6 +41,7 @@ jobs:
           scripts/omegaLuminaLiveBoundary.test.ts
           scripts/omegaBoundedReasoningWorkbench.test.ts
           scripts/omegaQuantitativeConstraintFeedback.test.ts
+          scripts/omegaBenchmarkCapabilityHarness.test.ts scripts/omega/benchmark-cli.ts
           scripts/omega/nyx-quantitative-transfer-live-eval.ts
           scripts/omega/nyx-research-party-live-eval.ts
       - name: Build production bundle without deployment

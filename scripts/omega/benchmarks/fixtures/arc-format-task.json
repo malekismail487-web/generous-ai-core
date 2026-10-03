@@ -1,0 +1,17 @@
+{
+  "family": "ARC_AGI",
+  "taskId": "format-only-not-nyx-evaluation",
+  "tier": "DEVELOPMENT",
+  "source": {
+    "dataset": "INDEPENDENT_DEVELOPMENT_PROTOCOL_FIXTURES_NOT_OFFICIAL_TASKS",
+    "revision": "format-test-v1",
+    "contentDigest": "082425353025231594b5e5e6e7a3cc59b59149602fc020c03269ad09d82e8820",
+    "visibility": "SYNTHETIC",
+    "kind": "DEVELOPMENT_REPRODUCTION",
+    "provenance": "Authored format demonstration; no cognitive-performance claim"
+  },
+  "record": {
+    "train": [{ "input": [[0, 2]], "output": [[2, 0]] }],
+    "test": [{ "input": [[3, 0]], "output": [[0, 3]] }, { "input": [[0, 4]], "output": [[4, 0]] }]
+  }
+}
