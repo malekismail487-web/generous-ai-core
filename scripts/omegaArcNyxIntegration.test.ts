@@ -9,6 +9,7 @@ import { contentHash, R3BenchmarkRepositorySession } from "./omega/benchmarks/r3
 import { runCampaign } from "./omega/benchmarks/campaign";
 import { prepareTask } from "./omega/benchmarks/tasks";
 import type { ArmSpec, CampaignSpec } from "./omega/benchmarks/contracts";
+import { ARC_PUBLIC_EPOCH_SELECTION } from "./omega/nyx-arc-benchmark-epoch";
 
 let passed = 0, failed = 0;
 const check = (value: unknown, label: string) => { if (value) passed++; else { failed++; console.error(`FAIL ${label}`); } };
@@ -174,6 +175,29 @@ for (const [reason, expected] of [["truncated", "TRUNCATION"], ["provider_timeou
   const forbidden = await createArcAdapter({ spec: spec("CURRENT_NYX"), provider: provider(async () => reply(JSON.stringify(outside))),
     candidateCommit: "a".repeat(40), maxOutputTokens: 8192 }).invoke(request());
   check(forbidden.failure === "AUTHORIZATION_FAILURE" && forbidden.artifact === null, "model cannot change verifier to manufacture success");
+}
+{
+  check(ARC_PUBLIC_EPOCH_SELECTION.taskIds.length === 8 && ARC_PUBLIC_EPOCH_SELECTION.population === 120,
+    "actual public evaluation selection is frozen before live inference");
+  check(ARC_PUBLIC_EPOCH_SELECTION.oraclePolicy.includes("EVALUATOR_ONLY")
+    && ARC_PUBLIC_EPOCH_SELECTION.contamination.includes("NOT_SEALED"), "public evaluation cannot masquerade as protected evidence");
+  const messages: string[] = [];
+  const textIntent = JSON.parse(intent(correct)); textIntent.changes[0].replacement = correct;
+  const emitted = await createArcAdapter({spec: spec("CANDIDATE_NYX"), sourceRepresentation: "TEXT",
+    provider: provider(async (_url, init) => {messages.push(String(init?.body)); return reply(JSON.stringify(textIntent));}),
+    candidateCommit: "a".repeat(40), maxOutputTokens: 8192}).invoke(request());
+  check(emitted.failure === null && emitted.usage.logicalCalls === 1, "existing TEXT contract composes with existing executor");
+  check(messages.every(m => m.includes('\\"sourceRepresentation\\":\\"TEXT\\"')),
+    "TEXT comparison explicitly exposes the correct existing schema, not guessed source extraction");
+  const traces: any[] = [];
+  await createArcAdapter({spec: spec("CURRENT_NYX"), provider: provider(async () => reply(intent("export function transform(input) {\n"))),
+    candidateCommit: "a".repeat(40), maxOutputTokens: 8192, onIntegrationEvidence: t => traces.push(t)}).invoke(request());
+  check(traces[0]?.rejectedIntentDiagnostics.some((d: any) => d.category === "SOURCE_QUALITY_INVALID"
+    && d.observedCode.startsWith("syntax_error_line_")), "actual parser locations retained separately from failure class");
+  check(!JSON.stringify(traces[0]).includes("export function"), "sanitized diagnosis records exclude model source and reasoning");
+  rejects(() => createArcAdapter({spec: spec("CANDIDATE_NYX"), sourceRepresentation: "UNSAFE" as never,
+    provider: provider(async () => reply("{}")), candidateCommit: "a".repeat(40), maxOutputTokens: 8192}),
+    "unknown source contract fails closed");
 }
 console.log(`passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-ACTUAL-BENCHMARK-ACQUISITION-001",
+  "observedOn": "2026-10-03",
+  "nyxBaseline": "5a47f13344373d52701f709e9a0a4ab96504c31a",
+  "custody": "LOCAL_EVALUATOR_DOWNLOADS_OUTSIDE_SOURCE_REPOSITORY",
+  "localRoot": "C:/Users/loka3/Documents/Codex/2026-08-20/h/benchmark-data",
+  "observations": [
+    {
+      "family": "ARC_AGI",
+      "dataset": "arcprize/ARC-AGI-2",
+      "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+      "download": "PUBLIC_DATASET_DOWNLOADED",
+      "trainingTasks": 1000,
+      "publicEvaluationTasks": 120,
+      "measurement": "ENUMERATED_DOWNLOADED_JSON_FILENAMES_WITHOUT_OPENING_EVALUATION_CONTENT",
+      "protectedEvaluationDownloaded": false
+    },
+    {
+      "family": "SWE_BENCH",
+      "dataset": "SWE-bench/SWE-bench_Verified",
+      "revision": "78f471bf655a3137b2e8a75af1501690ec009ec3",
+      "file": "data/test-00000-of-00001.parquet",
+      "bytes": 6304616,
+      "sha256": "030cfd7f2a704c4c0226e7f104c725a3b41230b1d3517f9c915ad7ea5be3fa25",
+      "download": "PUBLIC_DATASET_DOWNLOADED_AND_LFS_DIGEST_VERIFIED",
+      "instances": 500,
+      "measurement": "PARQUET_ROW_COUNT_ONLY_NO_ANSWERS_OR_PATCHES_PRINTED",
+      "harnessRevision": "02e7a74ffd0b707aab73d203fe87bdc7c76afc8e",
+      "execution": "BLOCKED_MISSING_NYX_REPOSITORY_ADAPTER_AND_AUTHORIZED_CONTAINER_VERIFIER"
+    },
+    {
+      "family": "TERMINAL_BENCH",
+      "dataset": "laude-institute/terminal-bench-2",
+      "revision": "69671fbaac6d67a7ef0dfec016cc38a64ef7a77c",
+      "download": "PUBLIC_DATASET_DOWNLOADED",
+      "tasks": 89,
+      "measurement": "TASK_DIRECTORIES_CONTAINING_TASK_TOML",
+      "harborHarnessRevision": "fd1521a1da6250d9ed8fc7505caa0b7a72f36c4b",
+      "execution": "BLOCKED_MISSING_NYX_HARBOR_AGENT_AND_AUTHORIZED_ISOLATED_TERMINAL_ADAPTER"
+    },
+    {
+      "family": "HLE",
+      "dataset": "cais/hle",
+      "revision": "5a81a4c7271a2a2a312b9a690f0c2fde837e4c29",
+      "download": "BLOCKED_EXTERNAL_ACCESS_GATE",
+      "observedAnonymousDownloadHttpStatus": 401,
+      "observedErrorClass": "GatedRepo",
+      "harnessDownload": "DOWNLOADED",
+      "harnessRevision": "22ed3074b1e7b134bcbc09028d0ba320839b0655",
+      "operatorRequirement": "Accept the dataset conditions through an authorized Hugging Face account and supply access by approved secret injection, not conversation.",
+      "mirrorOrGateBypassAttempted": false,
+      "execution": "BLOCKED_ACCESS_AND_MISSING_NYX_ANSWER_ADAPTER_AND_INDEPENDENT_JUDGE"
+    },
+    {
+      "family": "FRONTIER_MATH",
+      "download": "PUBLIC_SAMPLE_PAGE_DOWNLOADED_NOT_PROTECTED_BENCHMARK",
+      "url": "https://epoch.ai/frontiermath/tiers-1-4/benchmark-problems",
+      "sha256": "e8d78cae9d564dba74ef1f899664e375c9827f1b2145805df8482128b809f3ad",
+      "execution": "BLOCKED_PROTECTED_TASK_ACCESS_AND_VARIANT_SPECIFIC_VERIFIER_AND_NYX_MATH_ADAPTER",
+      "officialScoreClaim": false
+    }
+  ],
+  "developmentRuntime": "Bundled Python 3.12 with duckdb 1.5.6 installed only in evaluator-side benchmark-data/parquet-tools to count downloaded rows; not NYX authority or a project dependency.",
+  "hostContainerObservation": "DOCKER_COMMAND_NOT_FOUND",
+  "authorityDelta": "NONE",
+  "capabilityImprovementClaim": false,
+  "planCoverage": {
+    "directlyImplemented": ["REAL_BENCHMARK_DATA_ACQUISITION", "FROZEN_CANDIDATE_AND_TASK_POPULATION", "PRIVATE_ORACLE_SEPARATION"],
+    "supporting": ["NO_SELF_CERTIFICATION", "NO_AUTHORITY_WITHOUT_SCOPE", "FIRST_ATTEMPT_VS_REPAIR", "UNKNOWN_COMPUTE_NOT_ZERO"],
+    "deferred": ["UNAVAILABLE_OFFICIAL_FAMILY_ADAPTERS", "PROTECTED_EVALUATION_ACCESS", "CONNECTOME_EXPANSION", "RECURSION", "DEVICE_INTEGRATION"],
+    "conflicts": ["DOWNLOADED_DATA_IS_NOT_EXECUTED_CAPABILITY", "PUBLIC_EVALUATION_IS_NOT_SEALED"],
+    "coverageStatus": "PARTIAL_JUST_IN_TIME"
+  }
+}

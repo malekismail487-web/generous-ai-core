@@ -2055,6 +2055,7 @@
     {
       "name": "GITHUB_RUN_ID",
       "files": [
+        "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-public-witness-cycle.ts",
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
@@ -2065,6 +2066,7 @@
       "name": "GITHUB_SHA",
       "files": [
         "scripts/omega/nvidia-nim-live-smoke.ts",
+        "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
         "scripts/omega/nyx-frontier-workbench-compare.ts",
@@ -2201,6 +2203,7 @@
     {
       "name": "NVIDIA_API_KEY",
       "files": [
+        "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-cli-live-eval.ts",
         "scripts/omega/nyx-cli.ts",
@@ -2229,6 +2232,12 @@
         "scripts/omega/nyx-source-emission-live.ts",
         "scripts/omega/nyx-web-live-eval.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
+      ]
+    },
+    {
+      "name": "NYX_ARC_DATA_ROOT",
+      "files": [
+        "scripts/omega/nyx-arc-benchmark-epoch.ts"
       ]
     },
     {
@@ -2360,6 +2369,7 @@
       "name": "OMEGA_ALLOW_NVIDIA_NETWORK",
       "files": [
         "scripts/omega/nvidia-nim-live-smoke.ts",
+        "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-cli-live-eval.ts",
         "scripts/omega/nyx-cli.ts",
@@ -2466,6 +2476,7 @@
     {
       "name": "RUNNER_TEMP",
       "files": [
+        "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
         "scripts/omega/nyx-frontier-workbench-compare.ts",

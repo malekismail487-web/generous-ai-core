@@ -65,6 +65,31 @@ Independent verifier consumption is recorded separately and included in realized
 No automatic broad promotion exists. Review requires fresh, non-contaminated task populations, independent evaluation, matched controls, replication and actual capability gains. The target of near-100% remains an aspiration, not a score inferred from architecture.
 # Existing NYX execution adapter
 
+## Actual benchmark acquisition and baseline epoch
+
+`docs/omega/evidence/benchmark-acquisition-2026-10-03.json` records actual evaluator-side downloads:
+the full public ARC repository (1,000 training / 120 evaluation tasks), 500 SWE-bench Verified
+instances (Parquet byte digest and decoded row count verified), all 89 Terminal-Bench 2.0 tasks,
+and pinned SWE/Harbor/HLE evaluator sources. Downloads live outside this source repository;
+they are not model input, training data, or capability evidence. HLE's anonymous immutable-file
+request returned HTTP 401 `GatedRepo`; no mirror or access-gate bypass was attempted. FrontierMath's
+public sample page is downloaded, not its protected benchmark or an official score.
+
+`nyx-arc-benchmark-epoch.ts` freezes the first eight sorted public **evaluation** tasks before
+opening their content, then runs raw model, existing minimal-reference equivalent tools, and
+existing current NYX through the unchanged independent exact scorer. It does not restart the
+earlier training pilot, use withheld feedback to repair, or relabel public tasks as SEALED.
+Candidate source and task revision, calls/tokens/work/latency, source preservation, cleanup,
+first-attempt vs public-guided repair and pairwise realized-compute parity are recorded.
+Evaluation failures retire that task from future unbiased comparisons if they influence design.
+General corrections must be reproduced on separate DEVELOPMENT tasks and tested on fresh inputs.
+
+The adapter additionally retains only sanitized rejection codes/locations and diagnostic digests;
+raw generated source, reasoning and credentials are not persisted. An explicitly selected existing
+TEXT-vs-LINES source representation is available for subsequent **development** interface
+diagnosis. It changes neither parser strictness nor admission, verification, or authority, and
+is not automatically promoted or used by the frozen baseline epoch. Defaults remain LINES.
+
 `nyxArcAdapter.ts` composes the existing NYX engineering cognition and R3 bounded repair loop,
 R1 inspection, R2A lifecycle, R2G patch proposals, R3A disposable application, R3B fixed tools,
 and unchanged static candidate admission. It does not introduce a second cognition controller,

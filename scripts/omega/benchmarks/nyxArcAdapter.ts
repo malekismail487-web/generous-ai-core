@@ -103,6 +103,8 @@ export interface ArcIntegrationEvidence {
   readonly iterationResults: readonly { readonly iteration: number; readonly functionalPass: boolean;
     readonly qualityDecision: string | null; readonly diagnosticDigest: string }[];
   readonly rejectedSourceFailures: readonly string[];
+  readonly rejectedIntentDiagnostics: readonly { readonly reason: string; readonly category: string;
+    readonly path: string; readonly observedCode: string; readonly diagnosticDigest: string }[];
   readonly omegaExecutionEvidence: readonly string[];
   readonly candidatePredictionArtifactProduced: boolean;
   readonly sourceUnchanged: boolean;
@@ -113,6 +115,7 @@ export interface ArcIntegrationEvidence {
 }
 export function createArcAdapter(rawConfig: { spec: ArmSpec; provider: NvidiaNimProvider; candidateCommit: string;
   maxOutputTokens: number; publicFeedbackMode?: PublicFeedbackMode; compactPublicData?: boolean;
+  sourceRepresentation?: "TEXT" | "LINES";
   onIntegrationEvidence?: (value: ArcIntegrationEvidence) => void }): BenchmarkAdapter {
   const config = Object.freeze({ ...rawConfig, spec: immutableTheoryValue(armSchema.parse(jsonValue(rawConfig.spec))) });
   if (!/^[a-f0-9]{40}$/.test(config.candidateCommit) || !Number.isInteger(config.maxOutputTokens)
@@ -120,7 +123,9 @@ export function createArcAdapter(rawConfig: { spec: ArmSpec; provider: NvidiaNim
     || (config.compactPublicData !== undefined && typeof config.compactPublicData !== "boolean")) throw Error("arc_adapter_resource_or_candidate_identity");
   if (!config.spec.supportedCapabilities.includes("JSON_GRID_OUTPUT")
     || config.spec.model !== config.provider.profile().model
-    || (config.spec.arm === "CANDIDATE_NYX" && config.publicFeedbackMode !== "COMPACT_WITNESS")
+    || (config.spec.arm === "CANDIDATE_NYX" && config.publicFeedbackMode !== "COMPACT_WITNESS"
+      && config.sourceRepresentation !== "TEXT")
+    || (config.sourceRepresentation !== undefined && !["TEXT", "LINES"].includes(config.sourceRepresentation))
     || (config.publicFeedbackMode !== undefined && !["FULL_DUMP", "COMPACT_WITNESS"].includes(config.publicFeedbackMode)))
     throw Error("arc_adapter_identity_or_unimplemented_candidate");
   const live = config.provider.profile().authorityMode === "EXPLICIT_LIVE_NVIDIA_NIM";
@@ -172,7 +177,7 @@ export function createArcAdapter(rawConfig: { spec: ArmSpec; provider: NvidiaNim
     try {
       const baseline = await session.baseline(); baselineTools = 1;
       const cognition = NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-ARC-EXISTING-COGNITION", provider: config.provider,
-        maxPromptBytes: 48_000, maxOutputTokens: config.maxOutputTokens, sourceRepresentation: "LINES",
+        maxPromptBytes: 48_000, maxOutputTokens: config.maxOutputTokens, sourceRepresentation: config.sourceRepresentation ?? "LINES",
         intentCompilationMode: "SAFE_CANONICALIZATION", repairFeedbackPolicy: "TRANSIENT_REJECTED_SOURCE_WINDOW",
         experimentVariant: config.spec.arm === "MODEL_EQUIVALENT_TOOLS" ? "MINIMAL_REFERENCE" : "CURRENT",
         comparisonInferencePolicy: "CONSTRAINED_JSON" });
@@ -213,6 +218,10 @@ export function createArcAdapter(rawConfig: { spec: ArmSpec; provider: NvidiaNim
     config.onIntegrationEvidence?.({ inputDigest: request.inputDigest, arm: config.spec.arm, inferencePolicy: "CONSTRAINED_JSON",
       loopOutcome: result?.outcome ?? "INFRASTRUCTURE_ERROR", loopReason: result?.reason ?? "infrastructure_failure",
       repairIterations: result?.iterations.length ?? 0, rejectedSourceFailures: result?.cognitionFailures.map(i => i.reason) ?? [],
+      rejectedIntentDiagnostics: result?.cognitionFailures.flatMap(f => f.diagnostics.map(d => ({ reason: f.reason,
+        category: d.category, path: /^\$[.\[\]a-zA-Z0-9_]*$/.test(d.path) ? d.path : "REDACTED_PATH",
+        observedCode: /^[a-zA-Z0-9_]{1,120}$/.test(d.observed) ? d.observed : "REDACTED_NON_CODE",
+        diagnosticDigest: theoryDigest(d) }))) ?? [],
       iterationResults: result?.iterations.map(i => ({ iteration: i.iteration, functionalPass: i.functionallyPassed,
         qualityDecision: i.candidateAdmission?.decision ?? null,
         diagnosticDigest: theoryDigest(i.verifications.map(v => v.observation.diagnostics)) })) ?? [],
