@@ -4407,6 +4407,7 @@
           "scripts/lsePriorityScheduler.test.ts",
           "scripts/lseSessionInternals.test.ts",
           "scripts/o7verdict.ts",
+          "scripts/omega/benchmarks/arrayBoundTransferTasks.ts",
           "scripts/omega/benchmarks/campaign.ts",
           "scripts/omega/benchmarks/contracts.ts",
           "scripts/omega/benchmarks/gaps.ts",

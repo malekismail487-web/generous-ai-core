@@ -106,6 +106,8 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
       type: string; required: string[]; properties: { lines: { items: { type: string; description: string } }; lineEnding: { enum: string[] } }
     } } } } } };
     const wire = schema.properties.changes.items.properties.replacement;
+    check((wire.properties.lines as { maxItems?: number }).maxItems === 4096,
+      "hosted source-array limit is explicit and retains the unchanged local 4096-line bound");
     check(wire.type === "object" && wire.required.join() === "lines,lineEnding" && wire.properties.lines.items.type === "string"
       && wire.properties.lineEnding.enum.join() === "LF,CRLF" && wire.properties.lines.items.description.includes("120"),
     "provider sees a closed line-based source shape and descriptive bound, not an unsupported enforcement guarantee");
@@ -481,9 +483,31 @@ function schemaKeys(value: unknown): string[] {
 {
   const fullKeys = new Set(schemaKeys(NYX_REPAIR_INTENT_JSON_SCHEMA));
   const providerKeys = new Set(schemaKeys(NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA));
-  const locallyEnforcedOnly = ["minimum", "maximum", "minLength", "maxLength", "maxItems", "uniqueItems"];
+  const locallyEnforcedOnly = ["minimum", "maximum", "minLength", "maxLength", "uniqueItems"];
   check(locallyEnforcedOnly.every((key) => fullKeys.has(key) && !providerKeys.has(key)),
     "provider schema omits portability-sensitive bounds while local semantic validation retains them");
+  check(providerKeys.has("maxItems"), "E4-supported array upper bounds survive hosted serialization");
+  const bounded = buildNyxRepairIntentContract(request({maxChanges: 1, maxCounterexamples: 2, maxPatchBytes: 64}), "LINES");
+  const legacy = buildNyxRepairIntentContract(request({maxChanges: 1, maxCounterexamples: 2, maxPatchBytes: 64}), "LINES", false);
+  const fields = bounded.providerSchema.properties as Record<string, any>;
+  check(fields.changes.maxItems === 1 && fields.counterexamples.maxItems === 2
+    && fields.requestedEvidenceRefs.maxItems === 0
+    && fields.changes.items.properties.replacement.properties.lines.maxItems === 65,
+    "hosted nested bounds derive from the exact request, including empty evidence and byte-constrained source");
+  check(JSON.stringify(bounded.schema) === JSON.stringify(legacy.schema)
+    && JSON.stringify(bounded.bounds) === JSON.stringify(legacy.bounds)
+    && !schemaKeys(legacy.providerSchema).includes("maxItems") && !bounded.authorityGranted,
+    "host-only legacy ablation changes only wire grammar, never local semantics, quality or authority");
+  let invalidPolicyRejected = false;
+  try { NyxNemotronEngineeringCognition.create({cognitionId: "INVALID-BOUNDS", provider: provider(transportFor(intent())),
+    maxPromptBytes: 50000, maxOutputTokens: 1024, preserveProviderArrayBounds: "false" as never}); }
+  catch { invalidPolicyRejected = true; }
+  check(invalidPolicyRejected, "malformed hosted-array policy fails closed");
+  const longSource = ["export function add(a: number, b: number) {", ...Array(38).fill(""), "  return a + b;", "}", ""];
+  const longResult = await cognition(transportFor(intent({changes: [{target: "src/math.ts",
+    replacement: {lines: longSource, lineEnding: "LF"}}]})), "LINES").proposeRepair(request());
+  check(longResult.decision === "PROPOSED" && longResult.hypothesis?.changes[0].replacementContent === longSource.join("\n"),
+    "source beyond 32 lines survives reconstruction and unchanged syntax/quality validation (test double, not cognition gain)");
   const providerRoot = NYX_NVIDIA_REPAIR_INTENT_JSON_SCHEMA as {
     required?: unknown; additionalProperties?: unknown; properties?: Record<string, unknown>;
   };

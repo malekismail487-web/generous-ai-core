@@ -116,15 +116,18 @@ export interface ArcIntegrationEvidence {
 export function createArcAdapter(rawConfig: { spec: ArmSpec; provider: NvidiaNimProvider; candidateCommit: string;
   maxOutputTokens: number; publicFeedbackMode?: PublicFeedbackMode; compactPublicData?: boolean;
   sourceRepresentation?: "TEXT" | "LINES";
+  preserveProviderArrayBounds?: boolean;
   onIntegrationEvidence?: (value: ArcIntegrationEvidence) => void }): BenchmarkAdapter {
   const config = Object.freeze({ ...rawConfig, spec: immutableTheoryValue(armSchema.parse(jsonValue(rawConfig.spec))) });
   if (!/^[a-f0-9]{40}$/.test(config.candidateCommit) || !Number.isInteger(config.maxOutputTokens)
     || config.maxOutputTokens < 1 || config.maxOutputTokens > 8192
-    || (config.compactPublicData !== undefined && typeof config.compactPublicData !== "boolean")) throw Error("arc_adapter_resource_or_candidate_identity");
+    || (config.compactPublicData !== undefined && typeof config.compactPublicData !== "boolean")
+    || (config.preserveProviderArrayBounds !== undefined && typeof config.preserveProviderArrayBounds !== "boolean"))
+    throw Error("arc_adapter_resource_or_candidate_identity");
   if (!config.spec.supportedCapabilities.includes("JSON_GRID_OUTPUT")
     || config.spec.model !== config.provider.profile().model
     || (config.spec.arm === "CANDIDATE_NYX" && config.publicFeedbackMode !== "COMPACT_WITNESS"
-      && config.sourceRepresentation !== "TEXT")
+      && config.sourceRepresentation !== "TEXT" && config.preserveProviderArrayBounds !== true)
     || (config.sourceRepresentation !== undefined && !["TEXT", "LINES"].includes(config.sourceRepresentation))
     || (config.publicFeedbackMode !== undefined && !["FULL_DUMP", "COMPACT_WITNESS"].includes(config.publicFeedbackMode)))
     throw Error("arc_adapter_identity_or_unimplemented_candidate");
@@ -180,7 +183,7 @@ export function createArcAdapter(rawConfig: { spec: ArmSpec; provider: NvidiaNim
         maxPromptBytes: 48_000, maxOutputTokens: config.maxOutputTokens, sourceRepresentation: config.sourceRepresentation ?? "LINES",
         intentCompilationMode: "SAFE_CANONICALIZATION", repairFeedbackPolicy: "TRANSIENT_REJECTED_SOURCE_WINDOW",
         experimentVariant: config.spec.arm === "MODEL_EQUIVALENT_TOOLS" ? "MINIMAL_REFERENCE" : "CURRENT",
-        comparisonInferencePolicy: "CONSTRAINED_JSON" });
+        comparisonInferencePolicy: "CONSTRAINED_JSON", preserveProviderArrayBounds: config.preserveProviderArrayBounds });
       const loop = R3BoundedRepairLoop.create({ loopId: `ARC-${request.inputDigest.slice(0, 16)}`, evaluatorVersion: ARC_R3_ADAPTER_VERSION,
         observerIdentity: "OMEGA-ARC-OBSERVER", cognition, candidateBuilder: { builderIdentity: "OMEGA-ARC-EXISTING-R3",
           prepare: async hypothesis => { if (request.signal.aborted) throw Error("arc_outer_aborted"); return session.prepare(hypothesis); } },

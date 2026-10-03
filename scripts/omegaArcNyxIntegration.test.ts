@@ -9,7 +9,8 @@ import { contentHash, R3BenchmarkRepositorySession } from "./omega/benchmarks/r3
 import { runCampaign } from "./omega/benchmarks/campaign";
 import { prepareTask } from "./omega/benchmarks/tasks";
 import type { ArmSpec, CampaignSpec } from "./omega/benchmarks/contracts";
-import { ARC_PUBLIC_EPOCH_SELECTION } from "./omega/nyx-arc-benchmark-epoch";
+import { ARC_PUBLIC_EPOCH_SELECTION, ARC_ARRAY_BOUND_TRANSFER_SELECTION } from "./omega/nyx-arc-benchmark-epoch";
+import { ARRAY_BOUND_TRANSFER_TASKS } from "./omega/benchmarks/arrayBoundTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -184,6 +185,23 @@ for (const [reason, expected] of [["truncated", "TRUNCATION"], ["provider_timeou
     "actual public evaluation selection is frozen before live inference");
   check(ARC_PUBLIC_EPOCH_SELECTION.oraclePolicy.includes("EVALUATOR_ONLY")
     && ARC_PUBLIC_EPOCH_SELECTION.contamination.includes("NOT_SEALED"), "public evaluation cannot masquerade as protected evidence");
+  check(ARC_ARRAY_BOUND_TRANSFER_SELECTION.taskIds.every(id => !ARC_PUBLIC_EPOCH_SELECTION.taskIds.includes(id)),
+    "fresh ARC transfer excludes every task from the observed baseline");
+  for (const preserveProviderArrayBounds of [false, true]) {
+    let wire: any;
+    const bounded = await createArcAdapter({spec: spec(preserveProviderArrayBounds ? "CANDIDATE_NYX" : "CURRENT_NYX"),
+      preserveProviderArrayBounds, provider: provider(async (_url, init) => {
+        wire = JSON.parse(String(init?.body)).response_format.json_schema.schema;
+        return reply(intent(correct));
+      }), candidateCommit: "a".repeat(40), maxOutputTokens: 8192}).invoke(request());
+    check(bounded.failure === null && bounded.usage.logicalCalls === 1
+      && wire.properties.changes.items.properties.replacement.properties.lines.maxItems
+        === (preserveProviderArrayBounds ? 4096 : undefined),
+      "ARC ablation changes only explicit hosted array limits and retains one-call exact execution");
+  }
+  rejects(() => createArcAdapter({spec: spec("CURRENT_NYX"), preserveProviderArrayBounds: "false" as never,
+    provider: provider(async () => reply("{}")), candidateCommit: "a".repeat(40), maxOutputTokens: 8192}),
+    "ARC adapter rejects malformed wire-policy flags");
   const messages: string[] = [];
   const textIntent = JSON.parse(intent(correct)); textIntent.changes[0].replacement = correct;
   const emitted = await createArcAdapter({spec: spec("CANDIDATE_NYX"), sourceRepresentation: "TEXT",
@@ -205,6 +223,27 @@ for (const [reason, expected] of [["truncated", "TRUNCATION"], ["provider_timeou
 // Independent test-only solutions validate the experiment's oracle and real execution path.
 // These sources never enter a model prompt or the downloaded benchmark corpus.
 const representationReferences: Record<string, string> = {
+  "QUOTED-RECORD": `export function transform(input) {
+    const fields=[];let field="";let quoted=false;
+    for(let index=0;index<input.length;index++) {
+      if(input[index]==='"') {
+        if(quoted&&input[index+1]==='"'){field+='"';index++;}
+        else quoted=!quoted;
+      } else if(input[index]===","&&!quoted) {fields.push(field);field="";}
+      else field+=input[index];
+    }
+    fields.push(field);return fields;
+  }`,
+  "LEXICAL-TOPOLOGICAL-ORDER": `export function transform(input) {
+    const remaining=input.nodes.slice().sort();const result=[];
+    while(remaining.length) {
+      let index=0;
+      while(index<remaining.length&&input.edges.some(edge=>edge[1]===remaining[index]&&remaining.includes(edge[0])))index++;
+      if(index===remaining.length)return null;
+      result.push(...remaining.splice(index,1));
+    }
+    return result;
+  }`,
   "INTERVAL-UNION": `export function transform(input) {
     const merged=[];
     for(const interval of input.map(row=>row.slice()).sort((a,b)=>a[0]-b[0])) {
@@ -230,7 +269,7 @@ const representationReferences: Record<string, string> = {
     return lines;
   }`,
 };
-for (const task of SOURCE_REPRESENTATION_TASKS) {
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);

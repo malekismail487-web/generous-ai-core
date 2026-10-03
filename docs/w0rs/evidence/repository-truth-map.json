@@ -2245,6 +2245,13 @@
       ]
     },
     {
+      "name": "NYX_ARRAY_BOUND_COMPARISON",
+      "files": [
+        "scripts/omega/nyx-arc-benchmark-epoch.ts",
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_CONNECTOME_CACHE_ROOT",
       "files": [
         "scripts/omega/verify-biological-connectome-cache.ts"

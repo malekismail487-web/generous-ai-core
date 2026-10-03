@@ -298,14 +298,14 @@ const LOCALLY_ENFORCED_SCHEMA_KEYWORDS = new Set([
   "minimum", "maximum", "minLength", "maxLength", "minItems", "maxItems", "uniqueItems",
 ]);
 
-function providerCompatibleSchema(value: unknown): unknown {
-  if (Array.isArray(value)) return Object.freeze(value.map(providerCompatibleSchema));
+function providerCompatibleSchema(value: unknown, preserveArrayBounds = true): unknown {
+  if (Array.isArray(value)) return Object.freeze(value.map(item => providerCompatibleSchema(item, preserveArrayBounds)));
   if (value === null || typeof value !== "object") return value;
   return Object.freeze(Object.fromEntries(Object.entries(value as Record<string, unknown>)
-    .filter(([key]) => !LOCALLY_ENFORCED_SCHEMA_KEYWORDS.has(key))
+    .filter(([key]) => !LOCALLY_ENFORCED_SCHEMA_KEYWORDS.has(key) || (key === "maxItems" && preserveArrayBounds))
     .map(([key, item]) => [key, key === "properties" && item && typeof item === "object"
-      ? Object.freeze(Object.fromEntries(Object.entries(item).map(([name, schema]) => [name, providerCompatibleSchema(schema)])))
-      : providerCompatibleSchema(item)])));
+      ? Object.freeze(Object.fromEntries(Object.entries(item).map(([name, schema]) => [name, providerCompatibleSchema(schema, preserveArrayBounds)])))
+      : providerCompatibleSchema(item, preserveArrayBounds)])));
 }
 
 /**
@@ -340,7 +340,7 @@ function sourceReplacementSchema(request: NyxRepairCognitionRequest, representat
 }
 
 /** A request-bound description, never an authorization token. */
-export function buildNyxRepairIntentContract(request: NyxRepairCognitionRequest, sourceRepresentation: NyxSourceRepresentation = "TEXT") {
+export function buildNyxRepairIntentContract(request: NyxRepairCognitionRequest, sourceRepresentation: NyxSourceRepresentation = "TEXT", preserveProviderArrayBounds = true) {
   if (!["TEXT", "LINES"].includes(sourceRepresentation)) throw new Error("nyx_source_representation_invalid");
   const bounds = Object.freeze({ ...INTENT_ARRAY_LIMITS, counterexamples: request.maxCounterexamples,
     changes: request.maxChanges, patchBytes: request.maxPatchBytes, textCharacters: request.maxDiagnosisCharacters,
@@ -375,7 +375,7 @@ export function buildNyxRepairIntentContract(request: NyxRepairCognitionRequest,
   const schema = Object.freeze({ ...NYX_REPAIR_INTENT_JSON_SCHEMA, properties: Object.freeze(properties) });
   return Object.freeze({ bounds, allowedActions, requiredFields, admittedEvidenceRefs, requestableEvidenceRefs,
     sourceRepresentation, sourceLinesPolicy: sourceRepresentation === "LINES" ? NYX_SOURCE_LINES_POLICY : null,
-    schema, providerSchema: providerCompatibleSchema(schema) as Readonly<Record<string, unknown>>,
+    schema, providerSchema: providerCompatibleSchema(schema, preserveProviderArrayBounds) as Readonly<Record<string, unknown>>,
     authorityGranted: false as const });
 }
 export const NYX_FORBIDDEN_INFRASTRUCTURE_FIELDS = Object.freeze(["expectedBaseHash", "replacementContentHash",
@@ -445,6 +445,8 @@ export interface NyxNemotronEngineeringCognitionConfig {
   readonly experimentVariant?: NyxCognitionExperimentVariant;
   /** Explicit comparison control. Omission preserves each established variant's inference policy. */
   readonly comparisonInferencePolicy?: "CONSTRAINED_JSON" | "REASONING_JSON";
+  /** Host-only legacy ablation. E4 probes established omitted hosted arrays stop at 32 items. */
+  readonly preserveProviderArrayBounds?: boolean;
   /** Evaluation-only, process-local feedback. Never changes executable authority or acceptance. */
   readonly repairFeedbackPolicy?: NyxRepairFeedbackPolicy;
 }
@@ -640,6 +642,9 @@ export class NyxNemotronEngineeringCognition {
       && !["CONSTRAINED_JSON", "REASONING_JSON"].includes(config.comparisonInferencePolicy)) {
       throw new Error("nyx_comparison_inference_policy_invalid");
     }
+    if (config.preserveProviderArrayBounds !== undefined && typeof config.preserveProviderArrayBounds !== "boolean") {
+      throw new Error("nyx_provider_array_bounds_policy_invalid");
+    }
     if (config.experimentVariant !== undefined && !["CURRENT", "REASONING_ENABLED", "MINIMAL_REFERENCE"].includes(config.experimentVariant)) {
       throw new Error("nyx_experiment_variant_invalid");
     }
@@ -682,7 +687,7 @@ export class NyxNemotronEngineeringCognition {
       && candidateWindow.objectiveDigest === sha256(request.objective) ? candidateWindow : null;
     this.#rejectedSourceWindow = null;
     const qualityFeedback = request.candidateQualityFeedback;
-    const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation);
+    const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation, this.#config.preserveProviderArrayBounds);
     const sourceLanguageContracts = request.files.map((file) => Object.freeze({ target: file.relativePath,
       mutationAllowed: request.allowedMutationPaths.includes(file.relativePath),
       ...nyxSourceLanguageContract(file.relativePath) }));
@@ -957,7 +962,7 @@ export class NyxNemotronEngineeringCognition {
       if (!allowedTop.has(key)) diagnostics.push(diagnostic(infrastructureFields.has(key)
         ? "MODEL_GENERATED_INFRASTRUCTURE_METADATA" : "UNEXPECTED_STRUCTURE", `$.${key}`, "field omitted", "unexpected_field"));
     }
-    const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation);
+    const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation, this.#config.preserveProviderArrayBounds);
     const selectedRequired = NYX_SEMANTIC_ACTIONS.includes(raw.decision as typeof NYX_SEMANTIC_ACTIONS[number])
       ? contract.requiredFields[raw.decision as keyof typeof contract.requiredFields] : ["decision", "diagnosis"];
     for (const key of selectedRequired) {

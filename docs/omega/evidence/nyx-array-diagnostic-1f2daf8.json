@@ -1,0 +1,255 @@
+{
+  "schemaVersion": 1,
+  "candidate": "1f2daf8189e7a5d8aec3ee9b89e28f9aa52fbfcc",
+  "frozen": {
+    "counts": [
+      40,
+      64
+    ],
+    "modes": [
+      "PORTABLE_SCHEMA",
+      "EXPLICIT_BOUNDS",
+      "STRICT_LOCAL"
+    ],
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "maxTokens": 2048,
+    "temperature": 0,
+    "maxLogicalCalls": 6,
+    "perRequestLifetimeMs": 90000,
+    "globalLifetimeMs": 480000,
+    "hypothesis": "Hosted structured generation may impose an implicit array-length limit when bounds are omitted.",
+    "falsification": "Unbounded schema consistently emits the requested longer arrays, or explicit bounds/local parsing do not remedy short output.",
+    "benchmarkQuestionsUsed": false,
+    "grantsAuthority": false,
+    "cognitiveGainClaim": false
+  },
+  "results": [
+    {
+      "count": 40,
+      "mode": "PORTABLE_SCHEMA",
+      "decision": "COMPLETED",
+      "reason": "nvidia_nim_completion_observed",
+      "finishReason": "stop",
+      "inspected": {
+        "schemaValid": true,
+        "observedCount": 32,
+        "prefixCorrect": true,
+        "accepted": false
+      },
+      "accepted": false,
+      "requestDigest": "9396a87fbbd6c9c39a68f53651c79829af3f2fa99ef6dec47a8e1407358d5f7b",
+      "responseDigest": "1104ba3ffa5020d1fd3e6e59d8773168e8ce32d9321e14c4c05452fd5a985d2c",
+      "usage": {
+        "promptTokens": 72,
+        "completionTokens": 128,
+        "totalTokens": 200
+      },
+      "delivery": {
+        "policy": "nvidia-capacity/1",
+        "requestsPerMinute": 40,
+        "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+        "httpAttempts": 1,
+        "rateLimitedResponses": 0,
+        "transientUnavailableResponses": 0,
+        "timedOutAttempts": 0,
+        "capacityWaitMs": 0,
+        "state": "DELIVERED",
+        "notBeforeEpochMs": null,
+        "authorityRenewed": false
+      },
+      "providerFailure": null,
+      "wallClockMs": 1855,
+      "rawContentPersisted": false
+    },
+    {
+      "count": 40,
+      "mode": "EXPLICIT_BOUNDS",
+      "decision": "COMPLETED",
+      "reason": "nvidia_nim_completion_observed",
+      "finishReason": "stop",
+      "inspected": {
+        "schemaValid": true,
+        "observedCount": 40,
+        "prefixCorrect": true,
+        "accepted": true
+      },
+      "accepted": true,
+      "requestDigest": "45ec7a11890a6102442b1458a7cda919044c23ebe92fcd6fe5b41c907a7a7073",
+      "responseDigest": "81ef72886e90a70670fb2e11064c7521a879868a658ea51c343d1c97a9821cf6",
+      "usage": {
+        "promptTokens": 72,
+        "completionTokens": 157,
+        "totalTokens": 229
+      },
+      "delivery": {
+        "policy": "nvidia-capacity/1",
+        "requestsPerMinute": 40,
+        "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+        "httpAttempts": 1,
+        "rateLimitedResponses": 0,
+        "transientUnavailableResponses": 0,
+        "timedOutAttempts": 0,
+        "capacityWaitMs": 0,
+        "state": "DELIVERED",
+        "notBeforeEpochMs": null,
+        "authorityRenewed": false
+      },
+      "providerFailure": null,
+      "wallClockMs": 4796,
+      "rawContentPersisted": false
+    },
+    {
+      "count": 40,
+      "mode": "STRICT_LOCAL",
+      "decision": "COMPLETED",
+      "reason": "nvidia_nim_completion_observed",
+      "finishReason": "stop",
+      "inspected": {
+        "schemaValid": true,
+        "observedCount": 40,
+        "prefixCorrect": true,
+        "accepted": true
+      },
+      "accepted": true,
+      "requestDigest": "398ca2361362b0e1eaf9f72dc5ac3768c80e5c27c6875c0b49f5c2f585c47cf7",
+      "responseDigest": "81ef72886e90a70670fb2e11064c7521a879868a658ea51c343d1c97a9821cf6",
+      "usage": {
+        "promptTokens": 72,
+        "completionTokens": 157,
+        "totalTokens": 229
+      },
+      "delivery": {
+        "policy": "nvidia-capacity/1",
+        "requestsPerMinute": 40,
+        "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+        "httpAttempts": 1,
+        "rateLimitedResponses": 0,
+        "transientUnavailableResponses": 0,
+        "timedOutAttempts": 0,
+        "capacityWaitMs": 0,
+        "state": "DELIVERED",
+        "notBeforeEpochMs": null,
+        "authorityRenewed": false
+      },
+      "providerFailure": null,
+      "wallClockMs": 6016,
+      "rawContentPersisted": false
+    },
+    {
+      "count": 64,
+      "mode": "STRICT_LOCAL",
+      "decision": "COMPLETED",
+      "reason": "nvidia_nim_completion_observed",
+      "finishReason": "stop",
+      "inspected": {
+        "schemaValid": true,
+        "observedCount": 64,
+        "prefixCorrect": true,
+        "accepted": true
+      },
+      "accepted": true,
+      "requestDigest": "7de69e8b94764d5b11305cf952a9032fa51eb6aed3e0edf92dfd8d517728e67d",
+      "responseDigest": "1d3e3713dbaf3e2969587d973afc66d92fd404332d81bb787bf3b91d30c56011",
+      "usage": {
+        "promptTokens": 72,
+        "completionTokens": 260,
+        "totalTokens": 332
+      },
+      "delivery": {
+        "policy": "nvidia-capacity/1",
+        "requestsPerMinute": 40,
+        "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+        "httpAttempts": 1,
+        "rateLimitedResponses": 0,
+        "transientUnavailableResponses": 0,
+        "timedOutAttempts": 0,
+        "capacityWaitMs": 0,
+        "state": "DELIVERED",
+        "notBeforeEpochMs": null,
+        "authorityRenewed": false
+      },
+      "providerFailure": null,
+      "wallClockMs": 7413,
+      "rawContentPersisted": false
+    },
+    {
+      "count": 64,
+      "mode": "EXPLICIT_BOUNDS",
+      "decision": "COMPLETED",
+      "reason": "nvidia_nim_completion_observed",
+      "finishReason": "stop",
+      "inspected": {
+        "schemaValid": true,
+        "observedCount": 64,
+        "prefixCorrect": true,
+        "accepted": true
+      },
+      "accepted": true,
+      "requestDigest": "263a928a3f1211c84063727b82b08b0bddde5aed644d7a43522a6ac2ba908d72",
+      "responseDigest": "c249d7b196de968be46615f2a2e24193c11d33d620a8e0ff0196d635430fbe9c",
+      "usage": {
+        "promptTokens": 72,
+        "completionTokens": 253,
+        "totalTokens": 325
+      },
+      "delivery": {
+        "policy": "nvidia-capacity/1",
+        "requestsPerMinute": 40,
+        "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+        "httpAttempts": 1,
+        "rateLimitedResponses": 0,
+        "transientUnavailableResponses": 0,
+        "timedOutAttempts": 0,
+        "capacityWaitMs": 0,
+        "state": "DELIVERED",
+        "notBeforeEpochMs": null,
+        "authorityRenewed": false
+      },
+      "providerFailure": null,
+      "wallClockMs": 6828,
+      "rawContentPersisted": false
+    },
+    {
+      "count": 64,
+      "mode": "PORTABLE_SCHEMA",
+      "decision": "COMPLETED",
+      "reason": "nvidia_nim_completion_observed",
+      "finishReason": "stop",
+      "inspected": {
+        "schemaValid": true,
+        "observedCount": 32,
+        "prefixCorrect": true,
+        "accepted": false
+      },
+      "accepted": false,
+      "requestDigest": "114a07d39be670245389f30a582453d8fa311583098d7e8c76bde624aa414ce9",
+      "responseDigest": "3f1d4caece23f05c32c211d7be9f574df5bbd7ae7b7e2c7d842728b3a1f9ad32",
+      "usage": {
+        "promptTokens": 72,
+        "completionTokens": 129,
+        "totalTokens": 201
+      },
+      "delivery": {
+        "policy": "nvidia-capacity/1",
+        "requestsPerMinute": 40,
+        "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+        "httpAttempts": 1,
+        "rateLimitedResponses": 0,
+        "transientUnavailableResponses": 0,
+        "timedOutAttempts": 0,
+        "capacityWaitMs": 0,
+        "state": "DELIVERED",
+        "notBeforeEpochMs": null,
+        "authorityRenewed": false
+      },
+      "providerFailure": null,
+      "wallClockMs": 4000,
+      "rawContentPersisted": false
+    }
+  ],
+  "sourceUnchanged": true,
+  "interpretation": "E4_MECHANISTIC_SERIALIZATION_DIAGNOSTIC_NOT_CAPABILITY_COMPARISON",
+  "acceptanceUnchanged": true,
+  "grantsAuthority": false,
+  "reportDigest": "95fb4f3e96dce527fcb0f9bf822d950db6c838b9257c5fd575128487a8d7b13f"
+}
