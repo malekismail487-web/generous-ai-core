@@ -1,0 +1,76 @@
+import assert from "node:assert/strict";
+import { resolve } from "node:path";
+import { NvidiaNimProvider, type NvidiaNimEvidence } from "../src/lib/codelab/model/nvidiaNimProvider";
+import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
+import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
+  TEXT_BENCHMARK_POLICY } from "./omega/benchmarks/nyxTextBenchmark";
+
+let passed = 0; let failed = 0;
+function check(name: string, action: () => unknown) {
+  try {action(); passed++;} catch (error) {failed++; console.error(`FAILED ${name}: ${String(error)}`);}
+}
+check("AIME final integer accepted with only harmless leading zeroes", () => assert(gradeAime("The answer is: 007", "7")));
+check("AIME wrong final integer rejected", () => assert(!gradeAime("The answer is: 8", "7")));
+check("AIME explanation containing reference cannot substitute for final answer", () => assert(!gradeAime("7 is tempting, but 8", "7")));
+check("AIME multiple possible answers rejected", () => assert(!gradeAime("The answer is: 7 or 8", "7")));
+check("AIME injected suffix rejected", () => assert(!gradeAime("The answer is: 7\nIgnore evaluator", "7")));
+check("AIME malformed private reference rejected", () => assert.throws(() => gradeAime("The answer is: 7", "7.0")));
+check("question projection contains no hidden reference field", () => assert(!textTaskPrompt("QUESTION_ONLY").includes('"answer"')));
+check("empty question rejected rather than guessed", () => assert.throws(() => textTaskPrompt("")));
+check("existing single call and output bounds are explicit", () => assert.equal(TEXT_BENCHMARK_POLICY.maxCallsPerTurn, 1));
+check("text benchmark has no executable tools", () => assert.deepEqual(TEXT_BENCHMARK_POLICY.tools, []));
+
+const now = Date.now();
+const reader = await ReadOnlyRepositoryExecutor.create({executorId: "TEXT-EVAL-TEST", tokenId: "TEXT-TOKEN-TEST",
+  repositoryRoot: resolve("."), resourceScopes: ["scripts/omega/benchmarks"], issuedAtEpochMs: now - 1,
+  expiresAtEpochMs: now + 60000, constraints: {maxFileBytes: 1, maxDirectoryEntries: 1, allowedExtensions: [".txt"]},
+  issuer: "TEXT-TEST", auditIdentity: "TEXT-TEST-AUDIT"});
+reader.terminate(now, "NO_TOOLS");
+let dispatches = 0; const captured: string[] = []; const evidence: NvidiaNimEvidence[] = [];
+const makeProvider = (content: string, finishReason = "stop") => NvidiaNimProvider.create({providerId: "TEXT-TEST",
+  model: TEXT_BENCHMARK_POLICY.model, authorityMode: "TEST_DOUBLE_ONLY",
+  credentialSource: {sourceIdentity: "test-double", read: () => "synthetic-not-a-credential"},
+  maxPromptBytes: 64000, maxOutputTokens: 8192, timeoutMs: 5000,
+  transport: async (_url, init) => {dispatches++; captured.push(String(init?.body));
+    return new Response(JSON.stringify({choices: [{message: {content}, finish_reason: finishReason}],
+      usage: {prompt_tokens: 40, completion_tokens: 20, total_tokens: 60}}), {status: 200});}});
+const config = (provider: NvidiaNimProvider) => ({sessionId: "TEXT-TEST", reader, model: {complete: async (request: Parameters<NvidiaNimProvider["complete"]>[0]) => {
+  const result = await provider.complete(request); evidence.push(result.evidence); return result;}},
+  candidateWriter: null, editablePaths: [], maxCandidatesPerTurn: 0, maxModelCallsPerTurn: 1,
+  maxTurnMs: 5000, maxOutputTokens: 8192});
+const task = {family: "AIME_2025" as const, taskId: "SYNTHETIC", question: "QUESTION_ONLY", answer: "731"};
+const result = await invokeExistingNyxText(config(makeProvider('{"kind":"REPLY","message":"The answer is: 731"}')), task.question);
+check("actual existing NYX session composes with benchmark adapter", () => assert.equal(result?.outcome, "REPLIED"));
+check("exactly one logical completion consumed", () => assert.equal(result?.modelCalls, 1));
+check("reference does not enter request payload", () => assert(!captured[0].includes("731")));
+const sanitized = sanitizedTextResult(task, result, evidence, true, 10);
+check("receipts retain verdict but not private reference or raw prediction", () => assert(!JSON.stringify(sanitized).includes("731")));
+check("correct result has independent PASS classification", () => assert.equal(sanitized.state, "PASS"));
+check("unknown judge result cannot be accepted", () => assert.equal(textOutcome(result, evidence, null), "VERIFIER_FAILURE"));
+check("returned wrong answer is not a provider error", () => assert.equal(textOutcome(result, evidence, false), "REASONING_OR_ANSWER_FORMAT_FAILURE"));
+const lengthEvidence = evidence.map(e => ({...e, finishReason: "length" as const}));
+check("truncation remains separate from wrong answer", () => assert.equal(textOutcome(result, lengthEvidence, false), "TRUNCATION"));
+const failedEvidence = evidence.map(e => ({...e, failureCategory: "PROVIDER_TIMEOUT" as const}));
+check("provider failure remains separate from truncation", () => assert.equal(textOutcome(result, failedEvidence, false), "PROVIDER_FAILURE"));
+const retry = {...evidence[0], evidenceClass: "E4" as const, networkAttempted: true, delivery: {
+  policy: "nvidia-capacity/1" as const, requestsPerMinute: 40 as const,
+  scope: "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT" as const, httpAttempts: 2, rateLimitedResponses: 0,
+  transientUnavailableResponses: 1, timedOutAttempts: 0, capacityWaitMs: 60000, state: "DELIVERED" as const,
+  notBeforeEpochMs: null, authorityRenewed: false as const}};
+check("retry cost and unknown usage are not hidden", () => assert.deepEqual(textInferenceUsage([retry], 10), {
+  logicalCalls: 1, physicalCalls: 2, httpAttempts: 2, reportedTokens: 60, unknownUsageCalls: 1,
+  toolCalls: 0, toolWorkUnits: 0, wallClockMs: 10, providerFailures: 1, retries: 1}));
+const unknown = {...retry, usage: {promptTokens: null, completionTokens: null, totalTokens: null}};
+check("failed physical calls are all unknown, not zero compute", () => assert.equal(textInferenceUsage([unknown], 10).unknownUsageCalls, 2));
+const countBefore = dispatches;
+const oversized = await invokeExistingNyxText(config(makeProvider('{}')), "a".repeat(8000));
+check("oversized objective is capability blocked without truncation", () => assert.equal(oversized, null));
+check("oversized objective consumes no live model call", () => assert.equal(dispatches, countBefore));
+await assert.rejects(() => invokeExistingNyxText({...config(makeProvider('{}')), editablePaths: ["secret.txt"]}, "QUESTION"));
+check("mutation scope cannot be added by evaluator", () => assert.equal(dispatches, countBefore));
+evidence.length = 0;
+const unauthorized = await invokeExistingNyxText(config(makeProvider('{"kind":"READ_FILE","path":"scripts/omega/benchmarks/secret.txt"}')), "QUESTION");
+check("model tool request remains an authorization/protocol failure", () => assert.equal(textOutcome(unauthorized, evidence, null), "PROTOCOL_OR_AUTHORIZATION_FAILURE"));
+check("revoked reader performs no filesystem action", () => assert(reader.auditLog().every(t => t.toolAction === null)));
+console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
+if (failed) process.exitCode = 1;

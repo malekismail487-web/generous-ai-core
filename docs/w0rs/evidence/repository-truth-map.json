@@ -2059,6 +2059,7 @@
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-public-witness-cycle.ts",
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
+        "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
     },
@@ -2079,6 +2080,7 @@
         "scripts/omega/nyx-research-party-live-eval.ts",
         "scripts/omega/nyx-source-representation-cycle.ts",
         "scripts/omega/nyx-structured-array-diagnostic.ts",
+        "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
     },
@@ -2216,6 +2218,7 @@
         "scripts/omega/nyx-research-party-live-eval.ts",
         "scripts/omega/nyx-source-representation-cycle.ts",
         "scripts/omega/nyx-structured-array-diagnostic.ts",
+        "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omega/nyx-web-live-eval.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
@@ -2252,6 +2255,12 @@
       ]
     },
     {
+      "name": "NYX_BBEH_ROOT",
+      "files": [
+        "scripts/omega/nyx-text-benchmark-epoch.ts"
+      ]
+    },
+    {
       "name": "NYX_CONNECTOME_CACHE_ROOT",
       "files": [
         "scripts/omega/verify-biological-connectome-cache.ts"
@@ -2267,6 +2276,18 @@
       "name": "NYX_EMISSION_TRIALS",
       "files": [
         "scripts/omega/nyx-source-emission-live.ts"
+      ]
+    },
+    {
+      "name": "NYX_EVALUATOR_PYTHON",
+      "files": [
+        "scripts/omega/nyx-text-benchmark-epoch.ts"
+      ]
+    },
+    {
+      "name": "NYX_EVALUATOR_PYTHONPATH",
+      "files": [
+        "scripts/omega/nyx-text-benchmark-epoch.ts"
       ]
     },
     {
@@ -2395,6 +2416,18 @@
       ]
     },
     {
+      "name": "NYX_TEXT_DATA",
+      "files": [
+        "scripts/omega/nyx-text-benchmark-epoch.ts"
+      ]
+    },
+    {
+      "name": "NYX_TEXT_EPOCH_MODE",
+      "files": [
+        "scripts/omega/nyx-text-benchmark-epoch.ts"
+      ]
+    },
+    {
       "name": "NYX_TRANSFER_PROOF_ABLATION",
       "files": [
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
@@ -2421,6 +2454,7 @@
         "scripts/omega/nyx-source-emission-live.ts",
         "scripts/omega/nyx-source-representation-cycle.ts",
         "scripts/omega/nyx-structured-array-diagnostic.ts",
+        "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omega/nyx-web-live-eval.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
@@ -2501,6 +2535,7 @@
       "name": "PATH",
       "files": [
         "scripts/omega/nyx-desktop-model-live-eval.ts",
+        "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omegaSchedulerChallenge.test.ts"
       ]
     },
@@ -2523,6 +2558,7 @@
         "scripts/omega/nyx-research-party-live-eval.ts",
         "scripts/omega/nyx-source-representation-cycle.ts",
         "scripts/omega/nyx-structured-array-diagnostic.ts",
+        "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omega/nyx-transfer-epoch-compare.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts",
         "scripts/omegaNyxWorkbenchTransfer.test.ts"
@@ -2673,6 +2709,7 @@
     {
       "name": "SYSTEMROOT",
       "files": [
+        "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omegaSchedulerChallenge.test.ts"
       ]
     },

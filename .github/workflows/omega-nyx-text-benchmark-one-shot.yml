@@ -1,0 +1,60 @@
+name: Omega NYX actual AIME and BBEH benchmark epoch
+on:
+  workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-text-benchmark-one-shot.yml]
+permissions:
+  contents: read
+concurrency:
+  group: omega-real-benchmark-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  text-benchmarks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Test no-secret adapter and unchanged NYX chat boundary
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxTextBenchmark.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxChatCli.test.ts
+      - name: Observe container availability without giving NYX container authority
+        run: |
+          docker version --format '{{json .Server.Version}}'
+          docker info --format '{{json .OSType}}'
+          printf 'NYX_CONTAINER_PREFLIGHT existing_repository_adapter=ABSENT existing_harbor_agent=ABSENT nyx_container_authority=NONE\n'
+      - name: Download pinned public math and broad reasoning populations outside candidate
+        run: |
+          python -m pip install --disable-pip-version-check duckdb==1.5.6
+          git clone --filter=blob:none --no-checkout https://github.com/google-deepmind/bbeh.git "$RUNNER_TEMP/bbeh"
+          git -C "$RUNNER_TEMP/bbeh" checkout 80d12ca916b7158f22293fcf3144f4d3d854d4be
+          curl --fail --location --proto '=https' --tlsv1.2 'https://huggingface.co/datasets/MathArena/aime_2025/resolve/c94da77eb22bbd6439e62a323bec18493a421302/data/train-00000-of-00001.parquet' --output "$RUNNER_TEMP/aime-2025.parquet"
+          python scripts/omega/benchmarks/prepare-text-benchmarks.py prepare --aime "$RUNNER_TEMP/aime-2025.parquet" --bbeh "$RUNNER_TEMP/bbeh" --output "$RUNNER_TEMP/nyx-text-data.json"
+      - name: Run frozen first-attempt smoke selection before full population admission
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NYX_TEXT_EPOCH_MODE: SMOKE
+          NYX_TEXT_DATA: ${{ runner.temp }}/nyx-text-data.json
+          NYX_BBEH_ROOT: ${{ runner.temp }}/bbeh
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-text-benchmark-epoch.ts
+      - name: Preserve sanitized benchmark evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-text-benchmark-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-text-benchmark-*.json
+          if-no-files-found: error

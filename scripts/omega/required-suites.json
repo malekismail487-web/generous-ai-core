@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/89",
+  "suiteVersion": "omega-institutional-suite/90",
   "criticalSuites": [
+    "OMEGA-NYX-TEXT-BENCHMARK",
     "OMEGA-PUBLIC-FAILURE-WITNESS",
     "OMEGA-ARC-NYX-INTEGRATION",
     "OMEGA-BENCHMARK-CAPABILITY-HARNESS",
@@ -73,6 +74,7 @@
   ],
   "informationalSuites": [],
   "requiredSuites": [
+    { "suiteId": "OMEGA-NYX-TEXT-BENCHMARK", "file": "scripts/omegaNyxTextBenchmark.test.ts" },
     { "suiteId": "OMEGA-PUBLIC-FAILURE-WITNESS", "file": "scripts/omegaPublicFailureWitness.test.ts" },
     { "suiteId": "OMEGA-ARC-NYX-INTEGRATION", "file": "scripts/omegaArcNyxIntegration.test.ts" },
     { "suiteId": "OMEGA-BENCHMARK-CAPABILITY-HARNESS", "file": "scripts/omegaBenchmarkCapabilityHarness.test.ts" },
