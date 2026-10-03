@@ -1,9 +1,6 @@
 name: Omega NYX existing-R3 ARC development pilot
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/nyx-arc-live-eval.ts]
 permissions:
   contents: read
 concurrency:

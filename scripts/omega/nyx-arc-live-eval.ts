@@ -82,7 +82,7 @@ const report = { schemaVersion: 1, candidate, sourceTreeDigest, selection: ARC_D
   firstTryAccounting: "FIRST_ACCEPTED_CALL_WITH_ONE_CANDIDATE; INTERNAL_REPAIR_REPORTED_SEPARATELY",
   candidateNyxUnavailable: "NO_UNVALIDATED_NEW_MECHANISM_ADDED", matchedRealizedComputeClaim: false,
   broadCapabilityPromotion: false, grantsAuthority: false };
-const path = join(tmpdir(), `nyx-arc-development-${candidate}.json`);
+const path = join(process.env.RUNNER_TEMP || tmpdir(), `nyx-arc-development-${candidate}.json`);
 await writeFile(path, JSON.stringify(report, null, 2));
 console.log(`NYX_ARC_DEVELOPMENT ${JSON.stringify(report)}`);
 if (!sourceUnchanged || integration.some(i => !i.sourceUnchanged || !i.cleanupVerified)) process.exitCode = 1;

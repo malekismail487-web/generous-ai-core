@@ -6,7 +6,7 @@ This is a reproducible **data/evaluation harness**, not a new executor or a new 
 
 Existing Nemotron-backed NYX cognition → existing typed Omega execution → candidate artifact → independent benchmark verifier → this harness's bound, sanitized record → general capability-gap investigation.
 
-`BenchmarkAdapter.invoke` is a **trusted integration seam**. It receives only allowlisted model-facing input, remaining resource limits and sanitized feedback. It does not receive `PreparedTask`, its private scorer, expected answers or authority tokens. A provider-only integration must be named `RAW_MODEL`; it must not be passed off as current NYX. Actual current/candidate NYX adapters must call existing NYX/Omega machinery. They are not yet implemented for these official task formats.
+`BenchmarkAdapter.invoke` is a **trusted integration seam**. It receives only allowlisted model-facing input, remaining resource limits and sanitized feedback. It does not receive `PreparedTask`, its private scorer, expected answers or authority tokens. A provider-only integration must be named `RAW_MODEL`; it must not be passed off as current NYX. Actual current/candidate NYX adapters must call existing NYX/Omega machinery. The ARC development adapter below does so; other official-family execution integrations remain unavailable.
 
 The adapter must enforce remaining limits using the existing provider/tool leases, honor cancellation and obtain usage from actual provider/execution evidence. The harness independently checks returned usage and bounds caller completion, but cannot stop an arbitrary malicious callback from continuing work in another process. Unknown in-flight usage stops retries; it is not zero cost. No arbitrary plugin loading is supported. The callback boundary is process-local trusted composition, not an OS sandbox.
 
@@ -46,7 +46,7 @@ Exact benchmark input reuse, skipped steps, recycled development inputs in trans
 |---|---|---|
 | SWE-bench | Private-test stripping, patch export, exact candidate-bound per-instance report import, unique cache IDs | NYX task/repository adapter; authorized official Docker environment |
 | Terminal-Bench | Instruction-only input, single-step binary Harbor reward import, checksum/trial binding | Real bounded NYX Harbor agent and isolated terminal authority |
-| ARC-AGI-2 | Strict grid input, private test output custody, official-compatible exact two-guess scoring/export | Actual NYX grid-reasoning adapter; official protected run |
+| ARC-AGI-2 | Strict grid input, private test output custody, official-compatible exact two-guess scoring/export, actual bounded NYX development adapter | Official protected run and broader capability evidence |
 | HLE | Question/image input only, response export, independent judge result import | NYX expert-answer/multimodal adapter; authorized independent judge |
 | FrontierMath | Problem-only input, normalized external receipt, honest sample/variant distinction | Authorized protected tasks and variant-specific verifier/NYX integration |
 
@@ -76,6 +76,35 @@ and outer cancellation). Inverting those exact hunks must reproduce the entire f
 Historical evaluated commits and their digests remain immutable; historical scored protocols
 still require their exact frozen sources and do not inherit this new epoch's results.
 No new candidate mechanism is labeled as improved before it earns fresh evidence.
+
+## One bounded public-witness correction cycle
+
+The frozen `764d0b0` pilot is preserved in `docs/omega/evidence/nyx-arc-development-764d0b0.json`.
+No solutions were accepted. Raw output-contract failures were not hidden-case reasoning failures;
+the retained digests do not reveal their exact schema violations. Two current-NYX tasks produced
+two failing public-example candidates each. Other attempts hit provider/clock limits. Historical
+resource-termination labels remain unchanged; new traces separately record each candidate's
+functional/quality outcome. No promotion or official score follows from this pilot.
+
+Separate authored development reproductions showed that full expected-grid dumps can consume
+the existing 1,000-character observation ceiling before actual values appear. The optional
+`COMPACT_WITNESS` rendering preserves a public example index, both first mismatch coordinates,
+expected/actual scalar values, bounded shapes and input-preservation status. It neither changes
+the exact-match predicate nor reads withheld outputs. Candidate values cannot contribute arbitrary
+strings to a witness. Default feedback stays `FULL_DUMP`; no production behavior is promoted.
+
+`nyx-public-witness-cycle.ts` runs one frozen, finite current/candidate ablation on two new
+development rule families and two new transfer rule families. Both arms compose identical
+existing CURRENT cognition and R3 tools. Only public-failure rendering differs. Model, request
+policy, ceilings, static admission and exact independent acceptance remain identical. No official
+or reserved task is used. Same-session task authorship is disclosed, not falsely called independent.
+Known and unknown work, actual token/call/tool consumption, first-call acceptance and internal
+repair are kept separate. A 10% prospectively frozen realized-compute tolerance does not entitle
+unequal or unstable pairs to a causal improvement claim. The experiment may refute the hypothesis.
+
+The prior pilot also exposed late cleanup evidence after an outer deadline. The adapter now
+reserves cleanup time *within* the unchanged outer lease. The new report checks trace completeness.
+The one-shot workflow is restored to manual-only after the cycle; no unbounded failure reruns.
 
 Public examples can guide the internal bounded repair loop; test outputs stay only in the
 independent scorer closure. Verifier stdout predictions are untrusted candidate artifacts,
