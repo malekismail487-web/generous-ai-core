@@ -533,5 +533,29 @@ for(const [index,task] of MODEL_REPAIR_REPLICATION_TASKS.entries()){
       "all fresh replication tasks remain solvable within unchanged execution limits");
   }finally{session.revoke();}
 }
+const transferredModelReport=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-model-repair-v2/comparison.json","utf8"));
+const transferredModelAssessment=assessConstraintFeedbackComparison(transferredModelReport.results,MODEL_REPAIR_REPLICATION_TASKS.map(t=>t.taskId),
+  transferredModelReport.providerStable,"PUBLIC_MODEL_REPAIR");
+check(theoryDigest(transferredModelReport)==="3a8d6f08cf724e3303d53f1cfd8964d5a4621744c746990c61498624197290d9"
+  &&transferredModelReport.candidate==="1ad7db080800a2b63020c3df6286d57ac1d8e1b1"&&transferredModelReport.complete&&!transferredModelReport.providerStable,
+  "fresh transfer preserves real rate-limit interruptions rather than retrospectively declaring a clean run");
+check(transferredModelAssessment.firstProposalMatched&&transferredModelAssessment.exposures.length===1
+  &&transferredModelAssessment.control.accepted===3&&transferredModelAssessment.diagnostic.accepted===4
+  &&transferredModelAssessment.diagnostic.tokens<transferredModelAssessment.control.tokens
+  &&transferredModelAssessment.verdict==="INCONCLUSIVE_PROVIDER_OR_BUDGET"&&!transferredModelAssessment.causalPromotionEligible,
+  "repeated accepted model correction remains encouraging observation, NOT a provider-stable promotion certificate");
+check(transferredModelReport.physicalInferenceTotals.calls===9&&transferredModelReport.physicalInferenceTotals.reportedTokens===20313
+  &&transferredModelReport.physicalInferenceTotals.httpAttempts===11,"actual shared-prefix inference and retry accounting survive archival");
+for(const run of transferredModelReport.results){const task=MODEL_REPAIR_REPLICATION_TASKS.find(t=>t.taskId===run.taskId)!;
+  const session=BoundedReasoningSession.create(task.problem,{maxRequests:2,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+10000});
+  try{for(const a of run.attempts.filter((a:{computation:unknown})=>a.computation!==null)){
+    const replay=session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program:a.executedProgram});
+    const {resultDigest,...body}=a.computation;
+    check(resultDigest===theoryDigest(body)&&replay.status===a.computation.status&&theoryDigest(replay.payload)===theoryDigest(a.computation.payload),
+      "every fresh transfer computation reproduces exact native arithmetic and custody");
+    if(replay.status==="CONSTRUCTED")check(verifyModelRepairReplicationSubmission(task,{outputs:replay.payload!.outputs,confidence:a.confidence}).accepted===(a.outcome==="ACCEPTED"),
+      "independent mathematical oracle reproduces successful repairs and unchanged control rejections");
+  }}finally{session.revoke();}
+}
 console.log(`OMEGA_QUANTITATIVE_CONSTRAINT_FEEDBACK_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if(failed)process.exitCode=1;
