@@ -1,0 +1,620 @@
+{
+  "schemaVersion": 1,
+  "workstream": "NYX-SOURCE-EMISSION-GENERAL-REPAIR-TRANSFER-001",
+  "candidate": "aa8edafce10a8892e2dc0a4841fdedcbfe827e47",
+  "workflow": {
+    "runId": 37141226712,
+    "jobId": 111255909463,
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/37141226712"
+  },
+  "report": {
+    "schemaVersion": 1,
+    "candidate": "aa8edafce10a8892e2dc0a4841fdedcbfe827e47",
+    "frozen": {
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "temperature": 0,
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "maxOutputTokens": 4096,
+      "providerTimeoutMs": 65000,
+      "logicalCallsPerTask": 2,
+      "candidateIterationsPerTask": 2,
+      "toolCallsPerTask": 3,
+      "wallClockMsPerTask": 155000,
+      "globalWallClockMs": 1350000,
+      "maxPatchBytes": 12000,
+      "maxPromptBytes": 48000,
+      "realizedTolerance": 0.1,
+      "changedVariable": "EXISTING_HOSTED_VS_STRICT_LOCAL_DELIVERY_ONLY",
+      "publicFeedback": "IDENTICAL_PUBLIC_TEST_FAILURE_AND_STATIC_ADMISSION",
+      "authority": "EXISTING_R3_ISOLATED_ONLY",
+      "sourceMutations": false,
+      "generalShell": false,
+      "generalNetwork": false,
+      "production": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    "sourceDigests": {
+      "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "dbf5f6f8b3a8bba04ad492b3105b0c6565837406d3e6a4738ed3fcbb6894eabe",
+      "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts": "4f0dbb3d393d6e5c581e029aadd9a5c86372be6c4257b00cdb2e66ee61b167ff",
+      "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "776c9b03c213e08281e5a0404c01f4722dceb87239d2a6a0e51e63a70e597ae7",
+      "scripts/omega/benchmarks/sourceRepresentationTasks.ts": "31ca74ce450ef86a9472c7f2d0935789c0cc199572f66a27054cf22e366a9aca",
+      "scripts/omega/benchmarks/arrayBoundTransferTasks.ts": "8606df3882c3568324f041d25818fec2d8ee28a2063cc5cddf9082f65f0f807c",
+      "scripts/omega/benchmarks/sourceLiteralTransferTasks.ts": "c357173ad8e5d7e871f7552f55f37694399ba7ac5b6ac726be8dcbb88fa427e2"
+    },
+    "tasks": [
+      {
+        "id": "TEXT-PROTOCOL-TOKEN",
+        "tier": "VALIDATION",
+        "domain": "EXACT_TEXT_ENCODING",
+        "inputDigest": "56d23a100a1846f3730b67955ae6b60f3ba41c892c6a22d9899466bf5e77882e",
+        "oracleDigest": "265fc0f246ed4794fb6ece2d87a091a723114fb7a6f3b0b20d5dd7def5a9fa9a",
+        "fixtureDigest": "7fdeccb4dc27008d75011437ec947ed2ac3e12ea523a8319e5e7bbd9ef0372b7"
+      },
+      {
+        "id": "GROUPED-TRANSITION-TRACE",
+        "tier": "VALIDATION",
+        "domain": "TEMPORAL_STATE_AGGREGATION",
+        "inputDigest": "dea1148bb9c59c01c8a4f9cd245366e61e382d9f312b3a68192353ff0635250b",
+        "oracleDigest": "b231943653a2ae237055b88a3dd806d1a063d18326e8699ee1e26142c783fa28",
+        "fixtureDigest": "56705a49ad2ff7163b63f42ef42721a2a1238ff0143cd886a5ac735fd7b2c6f4"
+      }
+    ],
+    "results": [
+      {
+        "id": "TEXT-PROTOCOL-TOKEN",
+        "tier": "VALIDATION",
+        "domain": "EXACT_TEXT_ENCODING",
+        "variant": "HOSTED_BOUNDED",
+        "preserveProviderArrayBounds": true,
+        "representation": "LINES",
+        "accepted": false,
+        "functionalAccepted": false,
+        "qualityAccepted": false,
+        "publicAccepted": false,
+        "score": null,
+        "firstCallAccepted": false,
+        "repairedAccepted": false,
+        "loopOutcome": "COGNITION_ERROR",
+        "loopReason": "repair_cognition_nvidia_provider_http_503",
+        "failureClass": "PROVIDER_FAILURE",
+        "infrastructureFailure": false,
+        "inspections": [],
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 2,
+          "toolCalls": 1,
+          "toolWorkUnits": 8,
+          "wallClockMs": 60978,
+          "providerFailures": 2,
+          "retries": 1
+        },
+        "candidateIterations": 0,
+        "toolUsageComplete": true,
+        "perIteration": [],
+        "failureCodes": [],
+        "requestDigests": [
+          "d7f1aacacf00d2e1bf5eb9e63120e2729cdd906c1aba17b7323a4905b629d6d4"
+        ],
+        "responseDigests": [],
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 1,
+          "provisionedLifecycles": 1
+        },
+        "privateScorerWorkUnits": 0
+      },
+      {
+        "id": "TEXT-PROTOCOL-TOKEN",
+        "tier": "VALIDATION",
+        "domain": "EXACT_TEXT_ENCODING",
+        "variant": "STRICT_LOCAL",
+        "preserveProviderArrayBounds": true,
+        "representation": "LINES",
+        "accepted": true,
+        "functionalAccepted": true,
+        "qualityAccepted": true,
+        "publicAccepted": true,
+        "score": {
+          "accepted": true,
+          "correct": 6,
+          "total": 6,
+          "failure": null
+        },
+        "firstCallAccepted": true,
+        "repairedAccepted": false,
+        "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+        "loopReason": "bounded_repair_functionally_verified",
+        "failureClass": null,
+        "infrastructureFailure": false,
+        "inspections": [
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "5150268bb84637fe90454fd703260f9f1a7027ba5ad2c35f30a64676cea40ebd",
+            "sourceDigest": "bb13f967fcfd5f738e417dc47a2bd7608c4da06a38c57ac594a1f91962c606ff",
+            "sourceBytes": 468,
+            "lineCount": 25,
+            "finalLineLength": 1,
+            "maximumLineLength": 34,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          }
+        ],
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 1,
+          "httpAttempts": 1,
+          "reportedTokens": 4058,
+          "unknownUsageCalls": 0,
+          "toolCalls": 2,
+          "toolWorkUnits": 16,
+          "wallClockMs": 84092,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "candidateIterations": 1,
+        "toolUsageComplete": true,
+        "perIteration": [
+          {
+            "iteration": 1,
+            "publicAccepted": true,
+            "quality": "ADMITTED",
+            "qualityFindings": [],
+            "score": {
+              "accepted": true,
+              "correct": 6,
+              "total": 6,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": true,
+            "accepted": true,
+            "privateScorerWorkUnits": 6
+          }
+        ],
+        "failureCodes": [],
+        "requestDigests": [
+          "92e78449a406459ed0ddb257902865d5adf6baf33b65043cc3b9f0c7ddeb4b49"
+        ],
+        "responseDigests": [
+          "5150268bb84637fe90454fd703260f9f1a7027ba5ad2c35f30a64676cea40ebd"
+        ],
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 2,
+          "provisionedLifecycles": 2
+        },
+        "privateScorerWorkUnits": 6
+      },
+      {
+        "id": "GROUPED-TRANSITION-TRACE",
+        "tier": "VALIDATION",
+        "domain": "TEMPORAL_STATE_AGGREGATION",
+        "variant": "STRICT_LOCAL",
+        "preserveProviderArrayBounds": true,
+        "representation": "LINES",
+        "accepted": false,
+        "functionalAccepted": true,
+        "qualityAccepted": false,
+        "publicAccepted": true,
+        "score": {
+          "accepted": true,
+          "correct": 4,
+          "total": 4,
+          "failure": null
+        },
+        "firstCallAccepted": false,
+        "repairedAccepted": false,
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_iteration_budget_exhausted",
+        "failureClass": "QUALITY_REJECTION",
+        "infrastructureFailure": false,
+        "inspections": [
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "15afff82bc450a5355289fa11fab241a2fd0fc29e089de8e81a6bb7fcc46586f",
+            "sourceDigest": "183486d6088bd05e2fd25fd9b0786bd8c8d1d6ddade129017ef40eb61680ed34",
+            "sourceBytes": 727,
+            "lineCount": 27,
+            "finalLineLength": 1,
+            "maximumLineLength": 74,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          },
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "7c373b95e419c69ed8095f1cf67be3ec9aeeb0afe9809e150ad11466d1b98d9b",
+            "sourceDigest": "7cdbc2fba2bc650e02f3c6d2e1715f2f396f18e3064d07790af4da843454ff66",
+            "sourceBytes": 408,
+            "lineCount": 11,
+            "finalLineLength": 1,
+            "maximumLineLength": 80,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          }
+        ],
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 8955,
+          "unknownUsageCalls": 0,
+          "toolCalls": 3,
+          "toolWorkUnits": 18,
+          "wallClockMs": 34453,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "candidateIterations": 2,
+        "toolUsageComplete": true,
+        "perIteration": [
+          {
+            "iteration": 1,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 8,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 4,
+              "total": 4,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 4
+          },
+          {
+            "iteration": 2,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 5,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 4,
+              "total": 4,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 4
+          }
+        ],
+        "failureCodes": [],
+        "requestDigests": [
+          "4d7c0635200eae5933c12e8f56566dc0555fd8295d3ef73e23d749ad39d8b914",
+          "590a6fdd6447bd756abf2896aea7686521ddded4edd819b3605add76bccea51b"
+        ],
+        "responseDigests": [
+          "15afff82bc450a5355289fa11fab241a2fd0fc29e089de8e81a6bb7fcc46586f",
+          "7c373b95e419c69ed8095f1cf67be3ec9aeeb0afe9809e150ad11466d1b98d9b"
+        ],
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 3,
+          "provisionedLifecycles": 3
+        },
+        "privateScorerWorkUnits": 8
+      },
+      {
+        "id": "GROUPED-TRANSITION-TRACE",
+        "tier": "VALIDATION",
+        "domain": "TEMPORAL_STATE_AGGREGATION",
+        "variant": "HOSTED_BOUNDED",
+        "preserveProviderArrayBounds": true,
+        "representation": "LINES",
+        "accepted": true,
+        "functionalAccepted": true,
+        "qualityAccepted": true,
+        "publicAccepted": true,
+        "score": {
+          "accepted": true,
+          "correct": 4,
+          "total": 4,
+          "failure": null
+        },
+        "firstCallAccepted": false,
+        "repairedAccepted": true,
+        "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+        "loopReason": "bounded_repair_functionally_verified",
+        "failureClass": null,
+        "infrastructureFailure": false,
+        "inspections": [
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "8e84bc702df4e31ffb2e06627125b74f43b4507229369f2b047d5a2da74b3fe5",
+            "sourceDigest": "7b5d1d17ab8b4b15fffa8fb3f5e89d6d3e017fb9e70f5a3feff3108574881aa5",
+            "sourceBytes": 652,
+            "lineCount": 26,
+            "finalLineLength": 1,
+            "maximumLineLength": 76,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          },
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "2e17a6ea192632694facd54e85d4f98936269661c626b0d273d4b7158eba8bb7",
+            "sourceDigest": "f699f91d50d15d28a32d3551824a3dfec9c3f29fdcfacce3473be2f8e14ed455",
+            "sourceBytes": 584,
+            "lineCount": 20,
+            "finalLineLength": 1,
+            "maximumLineLength": 52,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          }
+        ],
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 9156,
+          "unknownUsageCalls": 0,
+          "toolCalls": 3,
+          "toolWorkUnits": 18,
+          "wallClockMs": 35675,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "candidateIterations": 2,
+        "toolUsageComplete": true,
+        "perIteration": [
+          {
+            "iteration": 1,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 8,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 4,
+              "total": 4,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 4
+          },
+          {
+            "iteration": 2,
+            "publicAccepted": true,
+            "quality": "ADMITTED",
+            "qualityFindings": [],
+            "score": {
+              "accepted": true,
+              "correct": 4,
+              "total": 4,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": true,
+            "accepted": true,
+            "privateScorerWorkUnits": 4
+          }
+        ],
+        "failureCodes": [],
+        "requestDigests": [
+          "7723e1f6c3710aac6f05094f30c7ca23e0895b7c8ebf723d8d51960c14e01880",
+          "41f3be1515b854c2dcc01ec2baca9f8deb346a5762e79dd2d8c992e00fa70780"
+        ],
+        "responseDigests": [
+          "8e84bc702df4e31ffb2e06627125b74f43b4507229369f2b047d5a2da74b3fe5",
+          "2e17a6ea192632694facd54e85d4f98936269661c626b0d273d4b7158eba8bb7"
+        ],
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 3,
+          "provisionedLifecycles": 3
+        },
+        "privateScorerWorkUnits": 8
+      }
+    ],
+    "pairs": [
+      {
+        "id": "TEXT-PROTOCOL-TOKEN",
+        "tier": "VALIDATION",
+        "providerStable": false,
+        "matchedRealizedCompute": false,
+        "outcomes": [
+          {
+            "variant": "HOSTED_BOUNDED",
+            "accepted": false,
+            "failureClass": "PROVIDER_FAILURE"
+          },
+          {
+            "variant": "STRICT_LOCAL",
+            "accepted": true,
+            "failureClass": null
+          }
+        ]
+      },
+      {
+        "id": "GROUPED-TRANSITION-TRACE",
+        "tier": "VALIDATION",
+        "providerStable": true,
+        "matchedRealizedCompute": true,
+        "outcomes": [
+          {
+            "variant": "STRICT_LOCAL",
+            "accepted": false,
+            "failureClass": "QUALITY_REJECTION"
+          },
+          {
+            "variant": "HOSTED_BOUNDED",
+            "accepted": true,
+            "failureClass": null
+          }
+        ]
+      }
+    ],
+    "sourceUnchanged": true,
+    "hypothesis": "Existing strict-local delivery preserves source semantics and improves fresh engineering outcomes while all local authority, syntax and quality gates remain unchanged.",
+    "falsification": "No reproducible syntax/correctness improvement across development and fresh transfer at matched realized compute.",
+    "summaries": [
+      {
+        "variant": "HOSTED_BOUNDED",
+        "accepted": 1,
+        "functionallyAccepted": 1,
+        "qualityAccepted": 1,
+        "firstCallAccepted": 0,
+        "repairedAccepted": 1,
+        "reportedTokens": 9156,
+        "unknownUsageCalls": 2
+      },
+      {
+        "variant": "STRICT_LOCAL",
+        "accepted": 1,
+        "functionallyAccepted": 2,
+        "qualityAccepted": 1,
+        "firstCallAccepted": 1,
+        "repairedAccepted": 0,
+        "reportedTokens": 13013,
+        "unknownUsageCalls": 0
+      }
+    ],
+    "evidence": "E4_LIVE_MODEL_AND_E3_LOCAL_OMEGA_AND_PRIVATE_EXACT_SCORER",
+    "authorship": "SAME_SESSION_NOT_INDEPENDENTLY_AUTHORED",
+    "benchmarkTasksUsed": false,
+    "staticAdmissionAndParserUnchanged": true,
+    "rawSourcePersisted": false,
+    "grantsAuthority": false,
+    "broadPromotion": false
+  },
+  "interpretation": {
+    "engineeringAccepted": {
+      "HOSTED_BOUNDED": 1,
+      "STRICT_LOCAL": 1
+    },
+    "functionalAccepted": {
+      "HOSTED_BOUNDED": 1,
+      "STRICT_LOCAL": 2
+    },
+    "cleanComputeMatchedPairs": 1,
+    "cleanPairResult": "HOSTED_REPAIR_ACCEPTED; STRICT_LOCAL_REPAIR_FUNCTIONALLY_CORRECT_BUT_QUALITY_REJECTED",
+    "encodingResult": "STRICT_LOCAL_FIRST_CALL_ACCEPTED; HOSTED_PROVIDER_UNAVAILABLE; NOT_A_MATCHED_CAPABILITY_COMPARISON",
+    "sourceSyntax": "ALL_FIVE_RETURNED_CANDIDATES_SYNTACTICALLY_VALID",
+    "remainingBottleneck": "TRANSLATING_DECLARATION_DELTA_QUALITY_FEEDBACK_INTO_SUFFICIENT_GENERAL_REPAIR",
+    "qualityEvidence": "STRICT_LOCAL_DECLARATIONS_8_TO_5_WITH_LIMIT_4; HOSTED_8_TO_ACCEPTED",
+    "generalCognitiveGain": "NOT_DEMONSTRATED",
+    "deliveryControl": "IMPLEMENTED_AND_TESTED_AS_HOST_OPT_IN_ONLY",
+    "broadPromotion": "NOT_GRANTED",
+    "defaultDeliveryChanged": false,
+    "acceptanceOracleWeakened": false,
+    "authorityIncrease": false,
+    "sourceRepositoryUnchanged": true,
+    "cleanupVerified": true,
+    "limitations": [
+      "Two same-session-authored tasks, not independent institutional replication.",
+      "Expected private outputs withheld; private input arguments are visible to the candidate.",
+      "Source-copy evidence does not prove broad algorithmic reasoning improvement.",
+      "Candidate execution uses existing controlled Node sessions, not a proven hostile-code kernel sandbox.",
+      "Actual SWE/Terminal/HLE/FrontierMath benchmark results are not supplied by this experiment."
+    ]
+  },
+  "verification": {
+    "ciRun": 37141226711,
+    "ciJob": 111255909337,
+    "suites": 103,
+    "checks": 10529,
+    "failedChecks": 0,
+    "typescript": {
+      "version": "5.8.3",
+      "baseline": 0,
+      "current": 0,
+      "new": 0
+    },
+    "build": "PASSED",
+    "secretScan": "PASSED",
+    "scope": "E3_LOCAL_AND_E4_LIVE_DIAGNOSTIC_AND_TWO_TASK_TRANSFER_NOT_BROAD_PROMOTION"
+  },
+  "planCoverage": {
+    "direct": [
+      "REALITY > PREDICTION",
+      "EVIDENCE > CONFIDENCE",
+      "GENERATOR_REQUIRES_DETECTOR",
+      "NO_SELF_CERTIFICATION",
+      "FUNCTIONAL_ACCEPTANCE_DISTINCT_FROM_ENGINEERING_QUALITY"
+    ],
+    "supporting": [
+      "NO_AUTHORITY_WITHOUT_SCOPE",
+      "NO_ACTION_WITHOUT_PROVENANCE",
+      "GENERAL_CORRECTION_NOT_TASK_ID_PATCH",
+      "PRESERVE_FIRST_ATTEMPT_AND_REPAIR_OUTCOMES"
+    ],
+    "deferred": [
+      "FUTURE_PROVIDER_STABLE_TRANSFER",
+      "BROAD_OFFICIAL_BENCHMARK_PROMOTION",
+      "NEW_COGNITIVE_OR_CONNECTOME_LAYERS"
+    ],
+    "conflicts": [],
+    "status": "PARTIAL / JUST-IN-TIME"
+  }
+}
