@@ -1,6 +1,7 @@
 import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult, NvidiaNimEvidence } from "../model/nvidiaNimProvider";
 import { BoundedReasoningSession } from "./boundedReasoningWorkbench";
-import type { QuantitativeProblem } from "./exactQuantitativeDerivation";
+import type { QuantitativeProblem,QuantitativeProgram } from "./exactQuantitativeDerivation";
+import { equationNames,type QuantitativeEquations } from "./quantitativeEquationCompiler";
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
 import { materializeAnalysisArtifactFields } from "./analysisArtifactReference";
 
@@ -12,6 +13,7 @@ export interface QuantitativeAcceptance { readonly accepted: boolean; readonly f
   readonly verificationDigest: string }
 export interface QuantitativeAttempt { readonly call: number; readonly outcome: string; readonly findings: readonly string[];
   readonly proposalDigest: string | null; readonly resultDigest: string | null; readonly confidence: number | null;
+  readonly executedProgram:QuantitativeProgram|QuantitativeEquations|null;
   readonly modelEvidence: NvidiaNimEvidence }
 export interface QuantitativeRun {
   readonly arm: QuantitativeArm; readonly taskId: string; readonly accepted: boolean; readonly outcome: string;
@@ -27,11 +29,13 @@ export function quantitativeExchangeSchema(labels:readonly string[],toolAvailabl
   const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
   const string={type:"string"};const array=(items:unknown)=>({type:"array",items});
   const constant=(value:string|number)=>({type:typeof value==="number"?"integer":"string",enum:[value]});
-  const slots=Array.from({length:64},(_,i)=>`r${i}`).filter(id=>!constantIds.includes(id)).slice(0,32);
+  const {state:slots,expressions}=equationNames(constantIds);
   const registerId={type:"string",enum:slots};const source={type:"string",enum:[...constantIds,...slots]};
-  const program=object({schemaVersion:constant(1),registers:array(object({id:registerId,source:{type:"string",enum:constantIds}})),
-    blocks:array(object({iterations:{type:"integer"},mode:{type:"string",enum:["SEQUENTIAL","SIMULTANEOUS"]},
-      steps:array(object({target:registerId,op:{type:"string",enum:["ADD","SUB","MUL","DIV","MIN","MAX"]},left:source,right:source}))})),
+  const expressionSource={type:"string",enum:[...constantIds,...slots,...expressions]};
+  const program=object({schemaVersion:constant(2),initialState:array(object({slot:registerId,source:{type:"string",enum:constantIds}})),
+    cycles:array(object({iterations:{type:"integer"},phases:array(object({
+      expressions:array(object({id:{type:"string",enum:expressions},op:{type:"string",enum:["ADD","SUB","MUL","DIV","MIN","MAX"]},left:expressionSource,right:expressionSource})),
+      updates:array(object({slot:registerId,source:expressionSource}))}))})),
     outputs:array(object({label:{type:"string",enum:labels},source}))});
   const tool=object({schemaVersion:constant(1),operation:constant("ANALYZE_FINITE_PROBLEM"),problemDigest:constant(problemDigest),program});
   const artifact=object({schemaVersion:constant(1),operation:constant("SUBMIT_ANALYSIS_ARTIFACT"),problemDigest:constant(problemDigest),
@@ -70,14 +74,15 @@ export async function runNyxQuantitativeTask(input: {
   let toolRequests=0;let toolWorkUnits=0;let toolElapsedMs=0;
   const contract={action:"REQUEST_ANALYSIS or SUBMIT",analysisRequest:"null on SUBMIT; otherwise {schemaVersion:1,operation:ANALYZE_FINITE_PROBLEM,problemDigest,program}",
     certificate:"null on REQUEST_ANALYSIS; otherwise {outputs:[{label:string,value:canonical reduced rational string}],confidence:number 0..1}",
-    program:"{schemaVersion:1,registers:[{id,source}],blocks:[{iterations,mode:SEQUENTIAL or SIMULTANEOUS,steps:[{target,op:ADD/SUB/MUL/DIV/MIN/MAX,left,right}]}],outputs:[{label,source}]}",
-    programSemantics:"Only named constants and initialized registers may be read. Register initializers can reference earlier registers. "
-      +"All targets must be registers. Sequential steps read current registers; simultaneous steps read one pre-block-iteration snapshot, with unique targets. "
-      +"For simultaneous multi-operation equations, use temp registers or stages. A block repeats its steps exactly iterations times. "
-      +"Constants are immutable and must NOT be redeclared as registers. Initialize each register from a named constant, such as zero or one; never from literal strings '0' or '1'. "
-      +"Register names MUST use distinct slots from the response schema (r0, r1, ...), not human variable/constant names. "
-      +"Loop iterations must follow the objective, not the maximum allowed by policy. "
-      +"No literal expressions, scripts, functions, shell commands, or additional tools. Outputs are exact reduced rationals, not decimal approximations.",
+    program:"{schemaVersion:2,initialState:[{slot,source}],cycles:[{iterations,phases:[{expressions:[{id,op,left,right}],updates:[{slot,source}]}]}],outputs:[{label,source}]}",
+    programSemantics:"All 16 state slots in the schema exist and start at zero; initialState overrides selected slots from named constants. "
+      +"A phase evaluates immutable expressions in listed dependency order, then commits its distinct slot updates SIMULTANEOUSLY. "
+      +"Expression sources can be constants, state slots, or EARLIER expression IDs in THIS phase. They are not writable state. "
+      +"All phases in a cycle run SEQUENTIALLY and that full phase sequence repeats iterations times. "
+      +"Separate ordered phases when a later equation needs newly updated state. Use multiple expression nodes to build a multi-operation equation, not repeated writes to a slot. "
+      +"Expression IDs are local to each phase and must be distinct. Output sources are constants or state slots, not expression IDs. "
+      +"Constants are immutable. No literal source strings '0'/'1': use named zero/one. Iterations follow the objective, not the policy maximum. "
+      +"Only schema-listed slots/IDs and ADD/SUB/MUL/DIV/MIN/MAX exist. No code, shell, files, or extra tools. Exact reduced rationals only.",
     acceptance:"The tool only evaluates YOUR equations. Correct arithmetic does not prove the model is appropriate. Independent verification judges the original objective."};
   try {
     for(let call=1;call<=limits.maxCalls && now()<expires;call++) {
@@ -101,8 +106,9 @@ export async function runNyxQuantitativeTask(input: {
         inferencePolicy:arm==="CURRENT_DIRECT"?"CONSTRAINED_JSON":"REASONING_JSON",
         ...(arm==="CURRENT_DIRECT"?{}:{reasoningEffort:"MEDIUM" as const}),observedAtEpochMs:now(),deadlineEpochMs:expires});
       let confidence:number|null=null;let proposalDigest:string|null=null;let resultDigest:string|null=null;
+      let executedProgram:QuantitativeProgram|QuantitativeEquations|null=null;
       const record=(state:string,findings:readonly string[])=>{outcome=state;feedback=findings;
-        attempts.push(immutableTheoryValue({call,outcome:state,findings,confidence,proposalDigest,resultDigest,modelEvidence:completion.evidence}));};
+        attempts.push(immutableTheoryValue({call,outcome:state,findings,confidence,proposalDigest,resultDigest,executedProgram,modelEvidence:completion.evidence}));};
       if(now()>=expires){record("LATE_RESPONSE_NOT_ADMITTED",["Original run expiry elapsed; no action was executed."]);break;}
       if(completion.evidence.statusCode===200 && completion.evidence.finishReason==="length"){
         record("TRUNCATION",["Provider output budget was exhausted; token usage is preserved."]);continue;}
@@ -116,6 +122,8 @@ export async function runNyxQuantitativeTask(input: {
         if(!available||value.certificate!==null){record("AUTHORIZATION_REJECTION",["No available computation capability or invalid request envelope."]);continue;}
         try {
           const result=session.analyze(value.analysisRequest);toolRequests++;toolWorkUnits+=result.workUnits;toolElapsedMs+=result.elapsedMs;
+          // Validated bounded action data only; no raw provider reasoning or credential.
+          executedProgram=(value.analysisRequest as {program:QuantitativeProgram|QuantitativeEquations}).program;
           resultDigest=result.resultDigest;observation=immutableTheoryValue({problemDigest:session.problemDigest,
             decision:result.status==="CONSTRUCTED"?"CANDIDATE_CONSTRUCTED_NOT_ACCEPTED":"INSUFFICIENT_EVIDENCE",
             certificateFields:result.status==="CONSTRUCTED"?{outputs:result.payload!.outputs}:null,
@@ -123,7 +131,7 @@ export async function runNyxQuantitativeTask(input: {
           record(result.status==="CONSTRUCTED"?"DERIVATION_RETURNED_NOT_ACCEPTED":"DERIVATION_INSUFFICIENT",[
             "Review the computed quantities against the ORIGINAL objective. Submit a certificate or propose a bounded correction."]);
         } catch(error) {
-          const reason=error instanceof Error&&/^quantitative_program_invalid:[A-Z_]+(?::[0-9]+(?:\.[0-9]+)?)?$/.test(error.message)
+          const reason=error instanceof Error&&/^quantitative_(?:program|equations)_invalid:[A-Z_]+(?::[0-9]+(?:\.[0-9]+)?)?$/.test(error.message)
             ?error.message:error instanceof Error&&error.message==="reasoning_session_budget_exhausted"?"NATIVE_WORK_BUDGET_EXHAUSTED":"REQUEST_SCOPE_OR_LIFETIME_REJECTED";
           record("AUTHORIZATION_OR_IR_REJECTION",[reason,"Request must bind the available problem, use only initialized/authorized names, "
             +"immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."]);

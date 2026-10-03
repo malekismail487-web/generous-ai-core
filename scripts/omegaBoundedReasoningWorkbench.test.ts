@@ -8,6 +8,8 @@ import type { QuantitativeProblem, QuantitativeProgram } from "../src/lib/codela
 import { runNyxQuantitativeTask, quantitativeExchangeSchema } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
 import { FRESH_QUANTITATIVE_TASKS,referenceFreshQuantitativeProgram,verifyFreshQuantitativeSubmission } from "./omega/nyx-quantitative-fresh-fixtures";
 import { SLOT_TRANSFER_TASKS,referenceSlotTransferProgram,verifySlotTransferSubmission } from "./omega/nyx-quantitative-slot-transfer-fixtures";
+import { EQUATION_TRANSFER_TASKS,verifyEquationTransferSubmission } from "./omega/nyx-quantitative-equation-transfer-fixtures";
+import { equationNames,lowerQuantitativeEquations,type QuantitativeEquations } from "../src/lib/codelab/research/quantitativeEquationCompiler";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema,
   materializeFrontierArtifact, frontierArtifactReviewPrompt } from "./omega/nyx-frontier-workbench";
@@ -359,12 +361,12 @@ check(JSON.stringify(controlSchema.properties.action)==='{"type":"string","enum"
   && !JSON.stringify(controlSchema).includes("ANALYZE_FINITE_PROBLEM"),"control provider schema exposes only existing action rather than tempting unavailable tool use");
 const boundedSchema=quantitativeExchangeSchema(["result"],true,false,"fixed",["zero","one","r0"]);
 const generatedProgram=(boundedSchema.properties.analysisRequest as {
-  anyOf:readonly {properties:{program:{properties:{registers:{items:{properties:
-    Record<"id"|"source",{enum:readonly string[]}>}}}}}}[]
+  anyOf:readonly {properties:{program:{properties:{initialState:{items:{properties:
+    Record<"slot"|"source",{enum:readonly string[]}>}}}}}}[]
 }).anyOf[1].properties.program;
-check(!generatedProgram.properties.registers.items.properties.id.enum.includes("r0")
-  &&generatedProgram.properties.registers.items.properties.source.enum.includes("zero")
-  &&!generatedProgram.properties.registers.items.properties.source.enum.includes("0"),
+check(!generatedProgram.properties.initialState.items.properties.slot.enum.includes("r0")
+  &&generatedProgram.properties.initialState.items.properties.source.enum.includes("zero")
+  &&!generatedProgram.properties.initialState.items.properties.source.enum.includes("0"),
   "guided finite slots cannot redeclare a constant or initialize from a nonexistent numeric source");
 const exhaustedCalculation=BoundedReasoningSession.create(numerical,{maxWorkUnits:1,maxElapsedMs:1000,maxRequests:2,expiresAtEpochMs:Date.now()+10000});
 exhaustedCalculation.analyze({...numericRequest,problemDigest:exhaustedCalculation.problemDigest});
@@ -382,6 +384,74 @@ for(const task of SLOT_TRANSFER_TASKS) {
   check(verifySlotTransferSubmission(task,{outputs:result.payload!.outputs,confidence:1}).accepted,
     `same native semantics and oracle transfer to third unseen numeric population ${task.taskId}`);
 }
+// Independent equation-semantic checks, not merely round-tripping compiler output.
+const phaseProblem:QuantitativeProblem={kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[
+  {id:"zero",value:"0"},{id:"a",value:"2"},{id:"b",value:"3"},{id:"one",value:"1"}]};
+const swap:QuantitativeEquations={schemaVersion:2,initialState:[{slot:"r0",source:"a"},{slot:"r1",source:"b"}],
+  cycles:[{iterations:1,phases:[{expressions:[],updates:[{slot:"r0",source:"r1"},{slot:"r1",source:"r0"}]}]}],
+  outputs:[{label:"x",source:"r0"},{label:"y",source:"r1"},{label:"zeroState",source:"r15"}]};
+const equationSession=BoundedReasoningSession.create(phaseProblem,{maxWorkUnits:50000,maxElapsedMs:2000,maxRequests:1,expiresAtEpochMs:Date.now()+10000});
+const equationResult=equationSession.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:equationSession.problemDigest,program:swap});
+check(JSON.stringify(equationResult.payload!.outputs)==='[{"label":"x","value":"3"},{"label":"y","value":"2"},{"label":"zeroState","value":"0"}]',
+  "atomic state-to-state updates snapshot their sources, rather than sequentially corrupting a swap");
+check(equationResult.workUnits>lowerQuantitativeEquations(phaseProblem,swap).registers.length&&!(equationResult as {grantsAuthority:boolean}).grantsAuthority,
+  "lowering consumes the same work budget without granting action or acceptance authority");
+equationSession.revoke();
+for(let a=-4;a<=4;a++)for(let b=-3;b<=3;b++)for(const ordered of [false,true]) {
+  const problem={...phaseProblem,constants:phaseProblem.constants.map(c=>({...c,value:c.id==="a"?String(a):c.id==="b"?String(b):c.value}))};
+  const x={expressions:[{id:"e0",op:"ADD" as const,left:"r0",right:"r1"}],updates:[{slot:"r0",source:"e0"}]};
+  const y={expressions:[{id:"e1",op:"SUB" as const,left:"r0",right:"r1"}],updates:[{slot:"r1",source:"e1"}]};
+  const equations={...swap,cycles:[{iterations:3,phases:ordered?[x,y]:[{expressions:[...x.expressions,...y.expressions],updates:[...x.updates,...y.updates]}]}],
+    outputs:swap.outputs.slice(0,2)};
+  let expectedX=a,expectedY=b;
+  for(let i=0;i<3;i++){const nextX=expectedX+expectedY;const nextY=(ordered?nextX:expectedX)-expectedY;expectedX=nextX;expectedY=nextY;}
+  const result=calculation(problem,lowerQuantitativeEquations(problem,equations));
+  check(JSON.stringify(result.payload!.outputs)===JSON.stringify([{label:"x",value:String(expectedX)},{label:"y",value:String(expectedY)}]),
+    `equation lowering respects independently calculated ${ordered?"ordered":"simultaneous"} state semantics ${a}/${b}`);
+}
+function liftTestProgram(task:typeof cognitionTask,program:QuantitativeProgram):QuantitativeEquations {
+  const {state,expressions}=equationNames(task.problem.constants.map(c=>c.id));
+  const mapping=new Map(program.registers.map((r,i)=>[r.id,state[i]]));
+  const source=(name:string)=>mapping.get(name)??name;
+  const phase=(steps:QuantitativeProgram["blocks"][number]["steps"])=>({
+    expressions:steps.map((s,i)=>({id:expressions[i],op:s.op,left:source(s.left),right:source(s.right)})),
+    updates:steps.map((s,i)=>({slot:source(s.target),source:expressions[i]}))});
+  return {schemaVersion:2,initialState:program.registers.map(r=>({slot:source(r.id),source:source(r.source)})),
+    cycles:program.blocks.map(b=>({iterations:b.iterations,phases:b.mode==="SIMULTANEOUS"?[phase(b.steps)]:b.steps.map(s=>phase([s]))})),
+    outputs:program.outputs.map(o=>({label:o.label,source:source(o.source)}))};
+}
+for(const [i,task] of EQUATION_TRANSFER_TASKS.entries()) {
+  const reference=referenceSlotTransferProgram({...task,taskId:SLOT_TRANSFER_TASKS[i].taskId});
+  const lowered=lowerQuantitativeEquations(task.problem,liftTestProgram(task,reference));
+  check(verifyEquationTransferSubmission(task,{outputs:calculation(task.problem,lowered).payload!.outputs,confidence:1}).accepted,
+    `same independent domain oracle verifies equation lowering on fourth frozen population ${task.taskId}`);
+}
+for(const invalid of [
+  {...swap,schemaVersion:3},
+  {...swap,initialState:[{slot:"outside",source:"a"}]},
+  {...swap,cycles:[{iterations:1025,phases:swap.cycles[0].phases}]},
+  {...swap,cycles:[{iterations:1,phases:Array(9).fill(swap.cycles[0].phases[0])}]},
+  {...swap,cycles:[{iterations:1,phases:[{expressions:[{id:"e0",op:"ADD",left:"e1",right:"one"}],updates:[{slot:"r0",source:"e0"}]}]}]},
+  {...swap,cycles:[{iterations:1,phases:[{expressions:[{id:"e0",op:"SHELL",left:"r0",right:"one"}],updates:[{slot:"r0",source:"e0"}]}]}]},
+  {...swap,cycles:[{iterations:1,phases:[{expressions:[],updates:[{slot:"r0",source:"r1"},{slot:"r0",source:"r0"}]}]}]},
+  {...swap,outputs:[{label:"bad",source:"e0"}]}
+])check(throws(()=>lowerQuantitativeEquations(phaseProblem,invalid)),"equation compiler rejects malformed scope, cycles, authority, and update identity");
+check(throws(()=>lowerQuantitativeEquations({...phaseProblem,constants:phaseProblem.constants.filter(c=>c.id!=="zero")},swap)),
+  "compiler requires an observed zero constant rather than silently expanding the bound problem");
+const equationGetterSession=BoundedReasoningSession.create(phaseProblem,{maxWorkUnits:1,maxElapsedMs:1000,maxRequests:1,expiresAtEpochMs:Date.now()+10000});
+let equationGetterRead=false;
+const getterEquations={...swap};Object.defineProperty(getterEquations,"initialState",{enumerable:true,get(){equationGetterRead=true;return swap.initialState;}});
+check(throws(()=>equationGetterSession.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:equationGetterSession.problemDigest,program:getterEquations}))
+  &&!equationGetterRead,"equation authority entry rejects accessors before the compiler can read them");
+const compilerBudget=equationGetterSession.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:equationGetterSession.problemDigest,program:swap});
+check(compilerBudget.status==="BUDGET_EXHAUSTED"&&compilerBudget.workUnits===1&&compilerBudget.payload===null,
+  "a one-unit budget cannot hide lowering cost or return a partial accepted result");
+equationGetterSession.revoke();
+const thirdNegative=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v3/comparison.json","utf8"));
+check(thirdNegative.candidate==="aa90f8ccf473ba90a17164f4f68f2498f9c4aba0"&&thirdNegative.complete&&!thirdNegative.providerStable
+  &&thirdNegative.summaries[2].accepted===2&&!thirdNegative.broadPromotion
+  &&theoryDigest(thirdNegative)==="fa4bd7c9a2c0496ae3614890500edeef34d769269d5fdef371d6dd17dfcc23b3",
+  "third experiment preserves the two correct outcomes AND provider disruption without selective promotion");
 const secondNegative=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v2/comparison.json","utf8"));
 check(secondNegative.complete&&secondNegative.providerStable&&secondNegative.summaries[2].accepted===1
   &&secondNegative.summaries[2].reportedTokens>secondNegative.summaries[1].reportedTokens&&!secondNegative.broadPromotion,
@@ -396,7 +466,7 @@ check(preservedNegative.candidate==="c2a69187cea0280db2f3060326df50ba5e3f38d2"
   &&preservedNegative.matchedRealizedCompute===false&&!preservedNegative.broadPromotion,
   "failed quantitative comparison stays bound to actual candidate, with no broader capability promotion");
 check(theoryDigest(preservedNegative)==="304945fdd03eae04dcf3416eb5998370232753d7af799bbfb8a43953d6c0de64","negative live report remains byte-semantically faithful to immutable E4 job logs");
-for(const report of [preservedNegative,secondNegative]) for(const [path,digest] of Object.entries(report.sourceDigests)) {
+for(const report of [preservedNegative,secondNegative,thirdNegative]) for(const [path,digest] of Object.entries(report.sourceDigests)) {
   if(typeof path!=="string"||path.includes("..")||!path.endsWith(".ts")||!path.startsWith("src/")&&!path.startsWith("scripts/"))
     throw Error("invalid_archived_source_path");
   check(theoryDigest(execFileSync("git",["show",`${report.candidate}:${path}`],{encoding:"utf8"}))===digest,

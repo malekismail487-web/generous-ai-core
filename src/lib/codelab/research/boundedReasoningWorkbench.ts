@@ -2,10 +2,11 @@ import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
 import type { FiniteRefutation, ColoringRefutationNode } from "./finiteRefutationVerifier";
 import { deriveQuantities, validQuantitativeProblem, validQuantitativeProgram, quantitativeProgramFinding, EXACT_DERIVATION_POLICY,
   type QuantitativeProblem, type QuantitativeProgram } from "./exactQuantitativeDerivation";
+import { lowerQuantitativeEquations,EQUATION_COMPILER_POLICY,type QuantitativeEquations } from "./quantitativeEquationCompiler";
 
 /** Constructive algorithms, not a second model or an acceptance authority. */
 export const NYX_REASONING_WORKBENCH = Object.freeze({
-  version: "nyx-bounded-reasoning-workbench/3",
+  version: "nyx-bounded-reasoning-workbench/4",
   grantsAuthority: false,
   maxInputBytes: 128_000,
   planCoverage: Object.freeze({ status: "PARTIAL_JUST_IN_TIME",
@@ -55,7 +56,7 @@ export interface ReasoningToolRequest {
   readonly problemDigest: string;
 }
 export interface QuantitativeToolRequest extends ReasoningToolRequest {
-  readonly program: QuantitativeProgram;
+  readonly program: QuantitativeProgram | QuantitativeEquations;
 }
 export interface ReasoningToolResult {
   readonly version: string;
@@ -150,8 +151,8 @@ class WorkBudget {
   readonly duration: number;
   readonly expires: number;
   readonly now: () => number;
-  constructor(maximum: number, duration: number, expires: number, now: () => number) {
-    this.maximum = maximum; this.duration = duration; this.expires = expires; this.now = now; this.started = now();
+  constructor(maximum: number, duration: number, expires: number, now: () => number,started=now()) {
+    this.maximum = maximum; this.duration = duration; this.expires = expires; this.now = now; this.started = started;
   }
   tick(): void {
     if (this.units >= this.maximum || this.now() >= this.expires
@@ -366,38 +367,46 @@ export class BoundedReasoningSession {
         && this.#requests < this.#limits.maxRequests && this.#workUnits < this.#limits.maxWorkUnits,
       grantsAuthority: false, outputIsNotAcceptance: true,
       ...(this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" ? { programRequired: true,
-        programPolicy: EXACT_DERIVATION_POLICY } : {}) });
+        programPolicy: EXACT_DERIVATION_POLICY, equationPolicy:EQUATION_COMPILER_POLICY } : {}) });
   }
   revoke(): void { this.#revoked = true; }
   analyze(request: unknown): ReasoningToolResult {
     if (this.#revoked || this.#now() >= this.#limits.expiresAtEpochMs) throw new Error("reasoning_session_unavailable");
     const quantitative = this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION";
+    const operationStarted=quantitative?this.#now():undefined;
     if (!plainData(request) || new TextEncoder().encode(JSON.stringify(request)).byteLength > NYX_REASONING_WORKBENCH.maxInputBytes
       || !keys(request, quantitative ? ["schemaVersion", "operation", "problemDigest", "program"]
         : ["schemaVersion", "operation", "problemDigest"])
       || request.schemaVersion !== 1 || request.operation !== "ANALYZE_FINITE_PROBLEM"
       || request.problemDigest !== this.problemDigest) throw new Error("reasoning_request_not_authorized");
+    let executedProgram:QuantitativeProgram|null=null;
     if (this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION") {
-      const finding=quantitativeProgramFinding(this.#problem,request.program);
+      executedProgram=(request.program as Partial<QuantitativeEquations>)?.schemaVersion===2
+        ?lowerQuantitativeEquations(this.#problem,request.program):request.program as QuantitativeProgram;
+      const finding=quantitativeProgramFinding(this.#problem,executedProgram);
       if(finding)throw new Error(`quantitative_program_invalid:${finding}`);
     }
     if (this.#requests >= this.#limits.maxRequests || this.#workUnits >= this.#limits.maxWorkUnits)
       throw new Error("reasoning_session_budget_exhausted");
     this.#requests += 1;
     const budget = new WorkBudget(this.#limits.maxWorkUnits - this.#workUnits, this.#limits.maxElapsedMs,
-      this.#limits.expiresAtEpochMs, this.#now);
+      this.#limits.expiresAtEpochMs, this.#now,operationStarted);
     let construction: Construction | null = null;
     try {
+      if(executedProgram&&(request.program as Partial<QuantitativeEquations>)?.schemaVersion===2)
+        for(let at=0;at<executedProgram.registers.length+executedProgram.blocks.reduce((n,b)=>n+b.steps.length,0);at++)budget.tick();
       if (this.#problem.kind === "COLORING") construction = colorGraph(this.#problem, budget);
       else if (this.#problem.kind === "REACHABILITY") construction = explore(this.#problem, budget);
       else if (this.#problem.kind === "EXPERIMENT_SELECTION") construction = selectExperiments(this.#problem, budget);
       else if (this.#problem.kind === "HYPOTHESIS_ELIMINATION") construction = eliminate(this.#problem, budget);
-      else if (validQuantitativeProgram(this.#problem, request.program)) construction = deriveQuantities(this.#problem, request.program, budget);
+      else if (executedProgram && validQuantitativeProgram(this.#problem, executedProgram)) construction = deriveQuantities(this.#problem, executedProgram, budget);
     } catch (error) { if (!(error instanceof SearchBudgetExceeded)) throw error; }
     this.#workUnits += budget.units;
     const result = { version: NYX_REASONING_WORKBENCH.version, inputDigest: this.problemDigest,
       requestDigest: theoryDigest(request), status: construction?.status ?? "BUDGET_EXHAUSTED" as const,
       payload: construction?.payload ?? null, workUnits: budget.units, elapsedMs: Math.max(0, this.#now() - budget.started),
+      ...(executedProgram?{executedProgramDigest:theoryDigest(executedProgram),
+        loweringVersion:(request.program as Partial<QuantitativeEquations>)?.schemaVersion===2?EQUATION_COMPILER_POLICY.version:null}:{}),
       evidenceClass: "E3" as const, acceptanceRequiresIndependentVerifier: true as const, grantsAuthority: false as const };
     return immutableTheoryValue({ ...result, resultDigest: theoryDigest(result) });
   }
