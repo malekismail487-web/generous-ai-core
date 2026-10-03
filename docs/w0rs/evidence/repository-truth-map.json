@@ -2371,6 +2371,12 @@
       ]
     },
     {
+      "name": "NYX_SERIALIZATION_DIAGNOSTIC",
+      "files": [
+        "scripts/omega/nyx-structured-array-diagnostic.ts"
+      ]
+    },
+    {
       "name": "NYX_TRANSFER_PROOF_ABLATION",
       "files": [
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"

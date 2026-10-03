@@ -12,7 +12,7 @@ import type { ArmSpec, CampaignSpec } from "./omega/benchmarks/contracts";
 import { ARC_PUBLIC_EPOCH_SELECTION, ARC_ARRAY_BOUND_TRANSFER_SELECTION } from "./omega/nyx-arc-benchmark-epoch";
 import { ARRAY_BOUND_TRANSFER_TASKS } from "./omega/benchmarks/arrayBoundTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact } from "./omega/benchmarks/sourceRepresentationTasks";
-import {inspectDiagnosticArray} from "./omega/nyx-structured-array-diagnostic";
+import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
 
 let passed = 0, failed = 0;
@@ -315,5 +315,32 @@ check(!inspectDiagnosticArray('{"values":[0],"claimedSuccess":true}',1).accepted
   "diagnostic self-certification field cannot replace exact local acceptance");
 check(!inspectDiagnosticArray('{"values":[0,2]}',2).accepted&&!inspectDiagnosticArray('{"values":[0.5]}',1).accepted,
   "integer sequence errors remain rejected");
+for(const probe of SOURCE_LITERAL_PROBES) {
+  const envelope=sourceLiteralEnvelope(probe);const content=JSON.stringify(envelope);
+  const exact=await inspectSourceLiteral(content,"stop",contentHash(content),probe);
+  check(exact.accepted&&exact.inspection.sourceDigest===contentHash(probe.lines.join(probe.lineEnding==="LF"?"\n":"\r\n")),
+    `${probe.id} independent exact source copy and syntax oracle accepts its reference`);
+  check(!(await inspectSourceLiteral(content,"length",contentHash(content),probe)).accepted,
+    `${probe.id} exact-looking content cannot hide provider truncation`);
+  check(!(await inspectSourceLiteral(content,"stop","0".repeat(64),probe)).accepted,
+    `${probe.id} unauthenticated captured bytes cannot claim delivery consistency`);
+  const changed=structuredClone(envelope);changed.changes[0].replacement.lines[1]="  return null;";
+  const drift=JSON.stringify(changed);
+  check(!(await inspectSourceLiteral(drift,"stop",contentHash(drift),probe)).accepted,
+    `${probe.id} valid-looking syntax cannot replace exact copy acceptance`);
+}
+{
+  const probe=SOURCE_LITERAL_PROBES[1];const envelope=sourceLiteralEnvelope(probe);
+  for(const invalid of [{...envelope,claimedSuccess:true},{changes:[...envelope.changes,...envelope.changes]},
+    {changes:[{...envelope.changes[0],target:"../escape.mjs"}]},
+    {changes:[{...envelope.changes[0],replacement:{...envelope.changes[0].replacement,lines:["return (;"]}}]}]) {
+    const content=JSON.stringify(invalid);
+    check(!(await inspectSourceLiteral(content,"stop",contentHash(content),probe)).accepted,
+      "copy diagnostic rejects extra fields, replacement expansion, target escape and invalid source independently");
+  }
+  check(SOURCE_LITERAL_DIAGNOSTIC.maxLogicalCalls===SOURCE_LITERAL_PROBES.length*SOURCE_LITERAL_DIAGNOSTIC.modes.length
+    &&!SOURCE_LITERAL_DIAGNOSTIC.grantsAuthority&&!SOURCE_LITERAL_DIAGNOSTIC.benchmarkQuestionsUsed,
+    "neutral source-copy diagnosis is finite and not benchmark-aware or authority-granting");
+}
 console.log(`passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

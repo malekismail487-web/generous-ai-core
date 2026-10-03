@@ -1,6 +1,9 @@
 name: Omega NYX bounded structured-array mechanism diagnostic
 on:
   workflow_dispatch:
+  push:
+    branches: ["sol/omega-institutional-spine"]
+    paths: ["scripts/omega/nyx-structured-array-diagnostic.ts"]
 permissions:
   contents: read
 concurrency:
@@ -23,15 +26,16 @@ jobs:
       - run: bun install --frozen-lockfile --ignore-scripts
       - name: Verify exact local diagnostic parser and unchanged integration
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaArcNyxIntegration.test.ts
-      - name: Probe existing hosted and strict-local structured generation modes once
+      - name: Probe existing hosted and strict-local source literal copying once
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NYX_SERIALIZATION_DIAGNOSTIC: SOURCE_LITERALS
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-structured-array-diagnostic.ts
       - name: Preserve sanitized diagnostic evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nyx-array-diagnostic-${{ github.sha }}
-          path: ${{ runner.temp }}/nyx-array-diagnostic-*.json
+          name: nyx-source-literal-diagnostic-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-source-literal-diagnostic-*.json
           if-no-files-found: error
