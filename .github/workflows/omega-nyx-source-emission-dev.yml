@@ -2,21 +2,12 @@ name: Omega NYX source-emission development diagnosis
 
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths:
-      - .github/workflows/omega-nyx-source-emission-dev.yml
-      - scripts/omega/nyx-source-emission-diagnostics.ts
-      - scripts/omega/nyx-source-emission-live.ts
-      - scripts/omegaNyxSourceEmissionReliability.test.ts
-      - scripts/omegaR3DNyxNemotronCognition.test.ts
-      - src/lib/codelab/cognition/nyxRepairIntentCompiler.ts
 
 permissions:
   contents: read
 
 concurrency:
-  group: omega-nyx-source-emission-${{ github.ref }}
+  group: omega-real-benchmark-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:

@@ -1,0 +1,462 @@
+{
+  "schemaVersion": 1,
+  "candidate": "f0c5eabe7636aa8b67397dd57d6df77363487f3e",
+  "frozen": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "temperature": 0,
+    "inferencePolicy": "CONSTRAINED_JSON",
+    "maxOutputTokens": 8192,
+    "providerTimeoutMs": 65000,
+    "logicalCallsPerTask": 2,
+    "candidateIterationsPerTask": 2,
+    "toolCallsPerTask": 3,
+    "wallClockMsPerTask": 155000,
+    "globalWallClockMs": 1350000,
+    "maxPatchBytes": 12000,
+    "maxPromptBytes": 48000,
+    "realizedTolerance": 0.1,
+    "changedVariable": "HOSTED_MAX_ITEMS_PRESERVED_VS_OMITTED_ONLY",
+    "publicFeedback": "IDENTICAL_PUBLIC_TEST_FAILURE_AND_STATIC_ADMISSION",
+    "authority": "EXISTING_R3_ISOLATED_ONLY",
+    "sourceMutations": false,
+    "generalShell": false,
+    "generalNetwork": false,
+    "production": false,
+    "hostileCodeSandbox": false,
+    "candidateNetworkIsolation": "NOT_PROVEN"
+  },
+  "sourceDigests": {
+    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "029f221c0ca344621d92ad0ee8135a359063bce8bd867bb00cc94340ea201719",
+    "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts": "4f0dbb3d393d6e5c581e029aadd9a5c86372be6c4257b00cdb2e66ee61b167ff",
+    "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "776c9b03c213e08281e5a0404c01f4722dceb87239d2a6a0e51e63a70e597ae7",
+    "scripts/omega/benchmarks/sourceRepresentationTasks.ts": "892e73b9f170a8bbb1ffad5684c1ac96d4b0fb403c8568273273098766de0a2f",
+    "scripts/omega/benchmarks/arrayBoundTransferTasks.ts": "8606df3882c3568324f041d25818fec2d8ee28a2063cc5cddf9082f65f0f807c"
+  },
+  "tasks": [
+    {
+      "id": "QUOTED-RECORD",
+      "tier": "VALIDATION",
+      "domain": "TEXT_PROTOCOL_PARSING",
+      "inputDigest": "16f7a0dace6fb6fe063d3e30215352e6f7010e74a3a47399b022c966341c1ac3",
+      "oracleDigest": "81e25da856d1197c59a10f2e0d360aa97fe92d2a0addb99f97e60c45149c249a",
+      "fixtureDigest": "6f9ef9da2fe12a6267e58583ee6fef22a9d523424c386d2e8e24b2423e551550"
+    },
+    {
+      "id": "LEXICAL-TOPOLOGICAL-ORDER",
+      "tier": "VALIDATION",
+      "domain": "DEPENDENCY_GRAPH_PLANNING",
+      "inputDigest": "abd988e33400da4bfc46e7ce7d3e727faeb78173f6689b7c2c8d19808c12a587",
+      "oracleDigest": "55a1b33310d7624f60d3209aecfdebdcf706da19312b0594d9346c8286368c79",
+      "fixtureDigest": "454ee9209e7b63dd8a696f22bfc4386be6b1296e145c8f051c33efd1368804e1"
+    }
+  ],
+  "results": [
+    {
+      "id": "QUOTED-RECORD",
+      "tier": "VALIDATION",
+      "domain": "TEXT_PROTOCOL_PARSING",
+      "variant": "LEGACY_OMITTED",
+      "preserveProviderArrayBounds": false,
+      "representation": "LINES",
+      "accepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": false,
+      "score": null,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_wall_clock_budget_exhausted",
+      "failureClass": "RESOURCE_EXHAUSTION",
+      "infrastructureFailure": false,
+      "inspections": [],
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 0,
+        "unknownUsageCalls": 2,
+        "toolCalls": 1,
+        "toolWorkUnits": 6,
+        "wallClockMs": 150010,
+        "providerFailures": 1,
+        "retries": 1
+      },
+      "candidateIterations": 0,
+      "toolUsageComplete": true,
+      "perIteration": [],
+      "failureCodes": [],
+      "requestDigests": [
+        "64d2dfb55eca4e7eca1ec3cc37887cd7840770e00e1f763c95103e8d095e6ffb"
+      ],
+      "responseDigests": [],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1
+      },
+      "privateScorerWorkUnits": 0
+    },
+    {
+      "id": "QUOTED-RECORD",
+      "tier": "VALIDATION",
+      "domain": "TEXT_PROTOCOL_PARSING",
+      "variant": "CORRECTED_BOUNDED",
+      "preserveProviderArrayBounds": true,
+      "representation": "LINES",
+      "accepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": false,
+      "score": null,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_cognition_correction_budget_exhausted",
+      "failureClass": "SYNTAX_FAILURE",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTAX_REJECTED",
+          "responseDigest": "bd6c1d26dcc9293fb0d6b9f10bd51e8b193b3f5e4a05b8ed0e4ac8be685521fb",
+          "sourceDigest": "eeabdc606d335c546fa9a93e2954a200c72e244de52811a950619c5faea81ac8",
+          "sourceBytes": 208,
+          "lineCount": 8,
+          "finalLineLength": 18,
+          "maximumLineLength": 42,
+          "syntaxLine": 8,
+          "syntaxColumn": 19,
+          "syntaxAtFinalLine": true,
+          "syntaxNearSourceEnd": true,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        },
+        {
+          "outcome": "SYNTAX_REJECTED",
+          "responseDigest": "a481a48a6c5faa7b92927c445da36771a5d1f5413e89328c9148fd1379ed459e",
+          "sourceDigest": "32a1b54fe33a7f2451f1172b7748b6a615b4626ac5ee24fd32a79b612b9412e3",
+          "sourceBytes": 206,
+          "lineCount": 8,
+          "finalLineLength": 18,
+          "maximumLineLength": 42,
+          "syntaxLine": 8,
+          "syntaxColumn": 19,
+          "syntaxAtFinalLine": true,
+          "syntaxNearSourceEnd": true,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 8561,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 6,
+        "wallClockMs": 63835,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "candidateIterations": 0,
+      "toolUsageComplete": true,
+      "perIteration": [],
+      "failureCodes": [
+        {
+          "category": "SOURCE_QUALITY_INVALID",
+          "observed": "syntax_error_line_8_column_19",
+          "digest": "a4ab04bc7118dc0237a32070b053b59e47978461db84fe69ed49dfe4bb8d0d33"
+        },
+        {
+          "category": "SOURCE_QUALITY_INVALID",
+          "observed": "syntax_error_line_8_column_19",
+          "digest": "a4ab04bc7118dc0237a32070b053b59e47978461db84fe69ed49dfe4bb8d0d33"
+        }
+      ],
+      "requestDigests": [
+        "9012be386328c6e48f033eb536242f28c339d07bd68915789e00e05886a1c360",
+        "37244dd03c72bdd42c5194d3585c1c38e82a45dbdd7b22983cf063d8f008014a"
+      ],
+      "responseDigests": [
+        "bd6c1d26dcc9293fb0d6b9f10bd51e8b193b3f5e4a05b8ed0e4ac8be685521fb",
+        "a481a48a6c5faa7b92927c445da36771a5d1f5413e89328c9148fd1379ed459e"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1
+      },
+      "privateScorerWorkUnits": 0
+    },
+    {
+      "id": "LEXICAL-TOPOLOGICAL-ORDER",
+      "tier": "VALIDATION",
+      "domain": "DEPENDENCY_GRAPH_PLANNING",
+      "variant": "CORRECTED_BOUNDED",
+      "preserveProviderArrayBounds": true,
+      "representation": "LINES",
+      "accepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": true,
+      "score": null,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_wall_clock_budget_exhausted",
+      "failureClass": "QUALITY_REJECTION",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "2669ca6681cc73782b54320e7273ceb7adfd66998e39f2a44267001656953ea3",
+          "sourceDigest": "abb694290bcbb779a10e4e870dbf086fab2869a55e99a593b9d97cf739e62e57",
+          "sourceBytes": 1146,
+          "lineCount": 48,
+          "finalLineLength": 1,
+          "maximumLineLength": 62,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 4,
+        "httpAttempts": 4,
+        "reportedTokens": 4466,
+        "unknownUsageCalls": 3,
+        "toolCalls": 2,
+        "toolWorkUnits": 12,
+        "wallClockMs": 150011,
+        "providerFailures": 2,
+        "retries": 2
+      },
+      "candidateIterations": 1,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "MAINTAINABILITY",
+              "code": "COMPLEXITY_LIMIT",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 14,
+                "limit": 12
+              }
+            },
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "COMPLEXITY_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 13,
+                "limit": 8
+              }
+            },
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 8,
+                "limit": 4
+              }
+            }
+          ]
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "43d20a5ae6c36b06582696bfaf3ecd6317c220e4bd453d06dc7ea99c69a9af57",
+        "9864271e4197ee603d6f4380e22e47cc94de7090ed7b2a4112f2144b7cf965f7"
+      ],
+      "responseDigests": [
+        "2669ca6681cc73782b54320e7273ceb7adfd66998e39f2a44267001656953ea3"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2
+      },
+      "privateScorerWorkUnits": 0
+    },
+    {
+      "id": "LEXICAL-TOPOLOGICAL-ORDER",
+      "tier": "VALIDATION",
+      "domain": "DEPENDENCY_GRAPH_PLANNING",
+      "variant": "LEGACY_OMITTED",
+      "preserveProviderArrayBounds": false,
+      "representation": "LINES",
+      "accepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": false,
+      "score": null,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_cognition_correction_budget_exhausted",
+      "failureClass": "SYNTAX_FAILURE",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTAX_REJECTED",
+          "responseDigest": "5b185d6839b6387bbbbeb764e3891fb549d4e7e6cbd02d8cae839e3890261b6e",
+          "sourceDigest": "fd9e2feff8b606fdd66f77b0b55f6ca724b508223866e753342ff1d06c991e4f",
+          "sourceBytes": 843,
+          "lineCount": 32,
+          "finalLineLength": 47,
+          "maximumLineLength": 64,
+          "syntaxLine": 32,
+          "syntaxColumn": 48,
+          "syntaxAtFinalLine": true,
+          "syntaxNearSourceEnd": true,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        },
+        {
+          "outcome": "SYNTAX_REJECTED",
+          "responseDigest": "ec20f0542c6ebf1cf84bba70858c24071353dc1a46d6ef15cc3f7488524dffb9",
+          "sourceDigest": "091108ea2cd216e1082b3109f60353b965b057edd61cd7720dd268e6d4ed0192",
+          "sourceBytes": 801,
+          "lineCount": 32,
+          "finalLineLength": 3,
+          "maximumLineLength": 49,
+          "syntaxLine": 32,
+          "syntaxColumn": 4,
+          "syntaxAtFinalLine": true,
+          "syntaxNearSourceEnd": true,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 3,
+        "httpAttempts": 3,
+        "reportedTokens": 9347,
+        "unknownUsageCalls": 1,
+        "toolCalls": 1,
+        "toolWorkUnits": 6,
+        "wallClockMs": 122145,
+        "providerFailures": 1,
+        "retries": 1
+      },
+      "candidateIterations": 0,
+      "toolUsageComplete": true,
+      "perIteration": [],
+      "failureCodes": [
+        {
+          "category": "SOURCE_QUALITY_INVALID",
+          "observed": "syntax_error_line_32_column_48",
+          "digest": "fc751c1dbca6ccca8b82ec4142e8ccecf56344e2a2d8f9737931e96b0d39ac16"
+        },
+        {
+          "category": "SOURCE_QUALITY_INVALID",
+          "observed": "syntax_error_line_32_column_4",
+          "digest": "e7635149205f41bee09ac7af2cb106599f482d2a16e4e3875348ce7386eb9aec"
+        }
+      ],
+      "requestDigests": [
+        "9c28db95ee8787c60d4d658bed833e8b38d057d26eaf3493f54c10eacb18bd1f",
+        "e1f4020319c2bc4dfef09850451818f624e6874f61f0330576ca976cc86e0d36"
+      ],
+      "responseDigests": [
+        "5b185d6839b6387bbbbeb764e3891fb549d4e7e6cbd02d8cae839e3890261b6e",
+        "ec20f0542c6ebf1cf84bba70858c24071353dc1a46d6ef15cc3f7488524dffb9"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1
+      },
+      "privateScorerWorkUnits": 0
+    }
+  ],
+  "pairs": [
+    {
+      "id": "QUOTED-RECORD",
+      "tier": "VALIDATION",
+      "providerStable": false,
+      "matchedRealizedCompute": false,
+      "outcomes": [
+        {
+          "variant": "LEGACY_OMITTED",
+          "accepted": false,
+          "failureClass": "RESOURCE_EXHAUSTION"
+        },
+        {
+          "variant": "CORRECTED_BOUNDED",
+          "accepted": false,
+          "failureClass": "SYNTAX_FAILURE"
+        }
+      ]
+    },
+    {
+      "id": "LEXICAL-TOPOLOGICAL-ORDER",
+      "tier": "VALIDATION",
+      "providerStable": false,
+      "matchedRealizedCompute": false,
+      "outcomes": [
+        {
+          "variant": "CORRECTED_BOUNDED",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        },
+        {
+          "variant": "LEGACY_OMITTED",
+          "accepted": false,
+          "failureClass": "SYNTAX_FAILURE"
+        }
+      ]
+    }
+  ],
+  "sourceUnchanged": true,
+  "hypothesis": "Preserving explicit hosted array bounds removes the reproduced 32-line source ceiling and improves fresh transfer without changing local acceptance.",
+  "falsification": "No reproducible syntax/correctness improvement across development and fresh transfer at matched realized compute.",
+  "summaries": [
+    {
+      "variant": "LEGACY_OMITTED",
+      "accepted": 0,
+      "firstCallAccepted": 0,
+      "repairedAccepted": 0,
+      "reportedTokens": 9347,
+      "unknownUsageCalls": 3
+    },
+    {
+      "variant": "CORRECTED_BOUNDED",
+      "accepted": 0,
+      "firstCallAccepted": 0,
+      "repairedAccepted": 0,
+      "reportedTokens": 13027,
+      "unknownUsageCalls": 3
+    }
+  ],
+  "evidence": "E4_LIVE_MODEL_AND_E3_LOCAL_OMEGA_AND_PRIVATE_EXACT_SCORER",
+  "authorship": "SAME_SESSION_NOT_INDEPENDENTLY_AUTHORED",
+  "benchmarkTasksUsed": false,
+  "staticAdmissionAndParserUnchanged": true,
+  "rawSourcePersisted": false,
+  "grantsAuthority": false,
+  "broadPromotion": false
+}

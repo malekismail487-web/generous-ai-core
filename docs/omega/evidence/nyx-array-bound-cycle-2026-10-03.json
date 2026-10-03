@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-HOSTED-ARRAY-REPAIR-TRANSFER-001",
+  "observedOn": "2026-10-03",
+  "implementationCandidate": "f0c5eabe7636aa8b67397dd57d6df77363487f3e",
+  "diagnostic": {
+    "candidate": "1f2daf8189e7a5d8aec3ee9b89e28f9aa52fbfcc",
+    "runId": 37129295114,
+    "evidence": "nyx-array-diagnostic-1f2daf8.json",
+    "observation": "Unbounded hosted arrays stopped at 32; explicit bounds and strict-local mode emitted exact 40- and 64-element arrays with complete JSON and stop finish."
+  },
+  "correction": "Preserve E4-supported maxItems in hosted wire schema. Keep identical full local schema, parsers, quality gates, scopes, leases and default model/inference policy. Host-only false flag reproduces legacy grammar.",
+  "sourceDelivery": {
+    "runId": 37137188372,
+    "evidence": "nyx-source-delivery-f0c5eab.json",
+    "lineProgramsSyntacticallyValid": 4,
+    "totalLinePrograms": 4,
+    "lineCounts": [
+      40,
+      43,
+      30,
+      39
+    ],
+    "newHeldoutTasks": false,
+    "functionalAcceptanceMeasured": false
+  },
+  "freshTransfer": {
+    "runId": 37137188427,
+    "jobId": 111243997942,
+    "engineeringReport": "nyx-array-bound-engineering-f0c5eab.json",
+    "actualArcReport": "nyx-array-bound-arc-f0c5eab.json",
+    "engineeringTasks": 2,
+    "oldAccepted": 0,
+    "correctedAccepted": 0,
+    "actualArcTasks": 2,
+    "oldAcceptedArc": 0,
+    "correctedAcceptedArc": 0,
+    "correctedArcReachedPublicVerification": 2,
+    "correctedArcFailedPublicExamples": 2,
+    "privateArcOracleReached": 0,
+    "matchedRealizedPairs": 0,
+    "providerInstabilityObserved": true,
+    "interpretation": "SOURCE_DELIVERY_CORRECTION_SUPPORTED; FRESH_FUNCTIONAL_OR_COGNITIVE_GAIN_NOT_DEMONSTRATED; NO_FULL_BENCHMARK_SCORE"
+  },
+  "failuresPreserved": [
+    "New quoted-record source syntax failure at line 8 remains unresolved; not presumed another array cap.",
+    "Corrected graph candidate passed public examples but failed unchanged complexity/declaration limits. Reference proves oracle/quality feasible. Its repair was blocked by provider failures.",
+    "Corrected ARC attempts produced executable candidates but failed public examples; unreached private tests are not hidden-case failures.",
+    "Provider failures and missing token usage prevent clean matched-realized-compute promotion.",
+    "Older source diagnostic auto-trigger overlapped early transfer. Its future trigger is manual-only and shares the benchmark provider lock."
+  ],
+  "verification": {
+    "suites": 103,
+    "passedChecks": 10480,
+    "failedChecks": 0,
+    "typescript": "5.8.3",
+    "typescriptDiagnostics": 0,
+    "trackedSecrets": 0,
+    "build": "PASS",
+    "sourceRepositoryPreserved": true,
+    "ownedSandboxCleanupVerified": true
+  },
+  "security": {
+    "authorityIncrease": false,
+    "sourceMutationByNyx": false,
+    "productionDeployment": false,
+    "generalShell": false,
+    "generalNetwork": false,
+    "credentialPersisted": false,
+    "hostileCodeSandbox": false,
+    "candidateNetworkIsolation": "NOT_PROVEN"
+  },
+  "nextHighestInformationAction": "Diagnose the remaining source-emission failure on non-benchmark development examples, and test public-example reasoning repair on fresh tasks. Do not tune to the exposed ARC evaluation tasks or add new cognitive layers.",
+  "notExecuted": {
+    "SWE_BENCH": "Downloaded 500 Verified instances and official harness. NYX repository adapter and authorized isolated official verifier not implemented.",
+    "TERMINAL_BENCH": "Downloaded 89 tasks and Harbor. NYX Harbor agent/isolated terminal integration not implemented.",
+    "HLE": "Official harness downloaded; task data gated (401/GatedRepo). No gate bypass.",
+    "FRONTIER_MATH": "Public sample page only; protected evaluation unavailable."
+  },
+  "maturity": {
+    "repair": "IMPLEMENTED_AND_VERIFIED_FOR_STATED_SOURCE_DELIVERY_SCOPE",
+    "capabilityPromotion": "NOT_GRANTED",
+    "completeProgram": false,
+    "nearPerfectBenchmarkPerformance": false,
+    "independentlyReplicated": false
+  },
+  "planCoverage": {
+    "directlyImplemented": [
+      "FAILURE_CLASS_SEPARATION",
+      "GENERAL_CONTRACT_REPAIR_NOT_TASK_PATCH",
+      "FRESH_TRANSFER",
+      "ACTUAL_ARC_BENCHMARK_EXECUTION"
+    ],
+    "supporting": [
+      "EVIDENCE_OVER_CONFIDENCE",
+      "GENERATOR_REQUIRES_VALIDATED_DETECTOR",
+      "NO_SELF_CERTIFICATION",
+      "UNCHANGED_ACCEPTANCE",
+      "HONEST_REALIZED_COMPUTE"
+    ],
+    "deferred": [
+      "OFFICIAL_SWE_AND_HARBOR_ADAPTERS",
+      "PROTECTED_BENCHMARK_ACCESS",
+      "COGNITIVE_LAYER_EXPANSION",
+      "RECURSION",
+      "DEVICE_INTEGRATION"
+    ],
+    "conflicts": [
+      "DESIRED_100_PERCENT_IS_NOT_EVIDENCE_OF_SUCCESS",
+      "SOURCE_DELIVERY_IS_NOT_REASONING_GAIN",
+      "UNREACHED_PRIVATE_TEST_IS_NOT_REASONING_FAILURE"
+    ],
+    "coverageStatus": "PARTIAL_JUST_IN_TIME"
+  }
+}

@@ -1,9 +1,6 @@
 name: Omega NYX fresh hosted-array repair transfer
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/benchmarks/arrayBoundTransferTasks.ts]
 permissions:
   contents: read
 concurrency:

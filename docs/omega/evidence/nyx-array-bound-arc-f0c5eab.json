@@ -1,0 +1,790 @@
+{
+  "schemaVersion": 1,
+  "candidate": "f0c5eabe7636aa8b67397dd57d6df77363487f3e",
+  "selection": {
+    "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+    "partition": "data/evaluation",
+    "population": 120,
+    "selection": "NEXT_TWO_LEXICOGRAPHIC_PATHS_NOT_PREVIOUSLY_EXERCISED",
+    "taskIds": [
+      "195c6913",
+      "1ae2feb7"
+    ],
+    "oraclePolicy": "WITHHELD_OUTPUTS_EVALUATOR_ONLY_NO_BENCHMARK_FEEDBACK_RETRIES",
+    "contamination": "PUBLIC_EVALUATION_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"
+  },
+  "modelConfiguration": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "temperature": 0,
+    "inferencePolicy": "CONSTRAINED_JSON",
+    "maxOutputTokens": 8192,
+    "maxProviderPromptBytes": 64000,
+    "timeoutMs": 65000
+  },
+  "authority": {
+    "existingIsolatedR1R2R3": true,
+    "sourceWrites": false,
+    "production": false,
+    "unrestrictedShell": false,
+    "generalNetwork": false,
+    "credentialEnvironmentForwarding": false,
+    "candidateNetworkIsolation": "NOT_PROVEN",
+    "hostileCodeSandbox": false
+  },
+  "tools": {
+    "tool": "EXISTING_R3B_TEST",
+    "maxChangedFiles": 1,
+    "maxPatchBytes": 12000,
+    "timeoutMs": 2000,
+    "publicFeedback": "FULL_DUMP",
+    "sourceRepresentation": "LINES",
+    "dataEncoding": "LOSSLESS_COMPACT_JSON",
+    "acceptance": "UNCHANGED_PUBLIC_EXAMPLES_STATIC_ADMISSION_AND_PRIVATE_EXACT_TWO_GUESS_SCORER"
+  },
+  "changedVariable": "HOSTED_MAX_ITEMS_PRESERVED_VS_OMITTED_ONLY",
+  "campaign": {
+    "schemaVersion": 1,
+    "campaign": {
+      "schemaVersion": 1,
+      "campaignId": "NYX-ARC-ARRAY-BOUND-FRESH-TRANSFER-001",
+      "environmentIdentity": "linux-x64-node-v24.21.0",
+      "executionIdentity": "github-actions-37137188427",
+      "frozenAtEpochMs": 1791045624191,
+      "expiresAtEpochMs": 1791046524191,
+      "taskDigests": [
+        "b2ae1648a18ce975dee21217123dc5e8d7675bf070107240ca241c3fe9e47d10",
+        "74e37598234c4693bd396664b5cc5a40574bd31b0e78fc4232d06b40694f7ef7"
+      ],
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "modelConfigDigest": "ccd6326c3df036a1be45677b7a66ce1307ac6aa4a16c139b50abbf49501d63da",
+      "authorityDigest": "512228fd46fa945c639a0287d881d0ae7c12e67434014dc2e8b2ecd619f1c62f",
+      "toolEnvelopeDigest": "06c19b3325c9df1b2d82afe834bce4d9e1c9593d1b09e18bf57e54aab7cab133",
+      "verifierVersion": "arc-exact-two-predictions/1",
+      "verifierSourceDigest": "6d77bd3f7caf7074570f69bf50ecb87180e5c4094fcdd8a1a7286ff99d34ce1d",
+      "limits": {
+        "maxCallsPerTask": 2,
+        "maxReportedTokensPerTask": 100000,
+        "maxToolCallsPerTask": 3,
+        "maxToolWorkUnitsPerTask": 600,
+        "maxAttemptsPerTask": 1,
+        "maxArtifactBytes": 50000,
+        "maxWallClockMsPerTask": 155000,
+        "maxWallClockMs": 800000
+      },
+      "realizedComputeTolerance": 0.1
+    },
+    "campaignDigest": "3bda8fb8c676b6e2055f103c1a9d62ab7e489ca358813f5e91c439d4c7027506",
+    "arms": [
+      {
+        "arm": "CURRENT_NYX",
+        "version": "nyx-existing-r3-arc/1",
+        "sourceDigest": "092e5b74c2ad764cc06792d49f409ec2b6d5c38f9a68e6924023d8cf136f0fa1",
+        "inferenceMode": "LIVE_PROVIDER_E4",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "modelConfigDigest": "ccd6326c3df036a1be45677b7a66ce1307ac6aa4a16c139b50abbf49501d63da",
+        "authorityDigest": "512228fd46fa945c639a0287d881d0ae7c12e67434014dc2e8b2ecd619f1c62f",
+        "toolEnvelopeDigest": "06c19b3325c9df1b2d82afe834bce4d9e1c9593d1b09e18bf57e54aab7cab133",
+        "supportedCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ]
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "version": "nyx-existing-r3-arc/1",
+        "sourceDigest": "7a2a7e836c5aa14f5641cfa37f2261ea97374527d56769d44e66994cea39ecfe",
+        "inferenceMode": "LIVE_PROVIDER_E4",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "modelConfigDigest": "ccd6326c3df036a1be45677b7a66ce1307ac6aa4a16c139b50abbf49501d63da",
+        "authorityDigest": "512228fd46fa945c639a0287d881d0ae7c12e67434014dc2e8b2ecd619f1c62f",
+        "toolEnvelopeDigest": "06c19b3325c9df1b2d82afe834bce4d9e1c9593d1b09e18bf57e54aab7cab133",
+        "supportedCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ]
+      }
+    ],
+    "tasks": [
+      {
+        "schemaVersion": 1,
+        "taskId": "195c6913",
+        "family": "ARC_AGI",
+        "tier": "VALIDATION",
+        "source": {
+          "dataset": "arcprize/ARC-AGI-2 public evaluation",
+          "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+          "contentDigest": "660d2c198ae978058ee5c06d82c59b226d64fe2425765bc0151f50cb34353e0b",
+          "visibility": "PUBLIC",
+          "kind": "DATASET_TASK",
+          "provenance": "https://github.com/arcprize/ARC-AGI-2/blob/f3283f727488ad98fe575ea6a5ac981e4a188e49/data/evaluation/195c6913.json; public subset, not protected leaderboard evaluation."
+        },
+        "inputDigest": "35a97eeeddda7887ea260f50335816bd741b9c11994b6644c6ecbc26272d8770",
+        "privateOracleDigest": "03df805edf29ebf99f24290900aa305ba0204dcd92cdc32e9ca93ea92293c8ba",
+        "requiredCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ],
+        "taskDigest": "b2ae1648a18ce975dee21217123dc5e8d7675bf070107240ca241c3fe9e47d10"
+      },
+      {
+        "schemaVersion": 1,
+        "taskId": "1ae2feb7",
+        "family": "ARC_AGI",
+        "tier": "VALIDATION",
+        "source": {
+          "dataset": "arcprize/ARC-AGI-2 public evaluation",
+          "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+          "contentDigest": "ca6845121dbfaf72021b69f083cd520045251c2042dab2c8677fb99baec5c849",
+          "visibility": "PUBLIC",
+          "kind": "DATASET_TASK",
+          "provenance": "https://github.com/arcprize/ARC-AGI-2/blob/f3283f727488ad98fe575ea6a5ac981e4a188e49/data/evaluation/1ae2feb7.json; public subset, not protected leaderboard evaluation."
+        },
+        "inputDigest": "7d4198b51a1142d9a0040c174a280d3cfd362f540e8318768da253453aeab139",
+        "privateOracleDigest": "341fe58de11d9f460d894de6224f26e39c298ec48cb17ba9d86cae10c546db06",
+        "requiredCapabilities": [
+          "JSON_GRID_OUTPUT"
+        ],
+        "taskDigest": "74e37598234c4693bd396664b5cc5a40574bd31b0e78fc4232d06b40694f7ef7"
+      }
+    ],
+    "runs": [
+      {
+        "arm": "RAW_MODEL",
+        "taskDigest": "b2ae1648a18ce975dee21217123dc5e8d7675bf070107240ca241c3fe9e47d10",
+        "tier": "VALIDATION",
+        "state": "BLOCKED_ENVIRONMENT",
+        "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+        "attempts": []
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "taskDigest": "b2ae1648a18ce975dee21217123dc5e8d7675bf070107240ca241c3fe9e47d10",
+        "tier": "VALIDATION",
+        "state": "BLOCKED_ENVIRONMENT",
+        "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+        "attempts": []
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "taskDigest": "b2ae1648a18ce975dee21217123dc5e8d7675bf070107240ca241c3fe9e47d10",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "SYNTAX_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 31507,
+              "unknownUsageCalls": 0,
+              "toolCalls": 1,
+              "toolWorkUnits": 5,
+              "wallClockMs": 84668,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 84670,
+            "confidence": null,
+            "requestDigests": [
+              "3b934ede7da4ba012eea3228ecfc1da7c04ed83ebe707408d30c324327c529f6",
+              "235a36703c661a1d80b4efa65af464e034eca525fc09c1f138e71dc932201798"
+            ],
+            "responseDigests": [
+              "d693460549a4ec1a9af32006791a9fd1c5d0468657eb35ca4b3ad428f8036356",
+              "0c193cfcd4fba4338e14655e3e7f3d8b1de1558604f10dfcd5079d05b2bc425f"
+            ]
+          }
+        ]
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "taskDigest": "b2ae1648a18ce975dee21217123dc5e8d7675bf070107240ca241c3fe9e47d10",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 2,
+            "outcome": "FAILED",
+            "failure": "FUNCTIONAL_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 47714,
+              "unknownUsageCalls": 0,
+              "toolCalls": 3,
+              "toolWorkUnits": 15,
+              "wallClockMs": 103023,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 103024,
+            "confidence": null,
+            "requestDigests": [
+              "b84e2dd6c6a60cb6d9b600665720bf48d57fdf93a280396908235fb502d986cb",
+              "8353854a5fa2cf8f0ab09159c89b16004c5f88c3e991e57019eb506ddc86ef0b"
+            ],
+            "responseDigests": [
+              "220b00d87c8c2eceeca5cb4bce4aa777cf9e6c5c96840464d061460888641ba7",
+              "7254f89ba8649230e1c6eb7762f3a33cc663eebd79c816e25ea70f506869077c"
+            ]
+          }
+        ]
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "taskDigest": "74e37598234c4693bd396664b5cc5a40574bd31b0e78fc4232d06b40694f7ef7",
+        "tier": "VALIDATION",
+        "state": "BLOCKED_ENVIRONMENT",
+        "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+        "attempts": []
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "taskDigest": "74e37598234c4693bd396664b5cc5a40574bd31b0e78fc4232d06b40694f7ef7",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 2,
+              "toolCalls": 1,
+              "toolWorkUnits": 6,
+              "wallClockMs": 150009,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 150010,
+            "confidence": null,
+            "requestDigests": [
+              "bf75bbe1a3b261fd59179f01a9b0461a8b20c8c056797b609dc3966fcc8cefdc"
+            ],
+            "responseDigests": []
+          }
+        ]
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "taskDigest": "74e37598234c4693bd396664b5cc5a40574bd31b0e78fc4232d06b40694f7ef7",
+        "tier": "VALIDATION",
+        "state": "EXECUTED",
+        "reason": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 2,
+            "outcome": "FAILED",
+            "failure": "FUNCTIONAL_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 27653,
+              "unknownUsageCalls": 0,
+              "toolCalls": 3,
+              "toolWorkUnits": 18,
+              "wallClockMs": 79120,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 79121,
+            "confidence": null,
+            "requestDigests": [
+              "e860f9156fb98f881fd5601c2c4228408860b934174e702e03442dc277eee0e5",
+              "ebb10562a10fe4c6727a38d00c8f275d07a886397621e437ead2b8bab25b7fff"
+            ],
+            "responseDigests": [
+              "dd07d7e9e0db65386aae5c5d1bc5f8bb4172f53bdb31eaa78a6fde5782be4002",
+              "a9166ddd078e60ca04a07d6b6c277eeea6f01707de53fd0e4bc651ea2bf41e0f"
+            ]
+          }
+        ]
+      },
+      {
+        "arm": "RAW_MODEL",
+        "taskDigest": "74e37598234c4693bd396664b5cc5a40574bd31b0e78fc4232d06b40694f7ef7",
+        "tier": "VALIDATION",
+        "state": "BLOCKED_ENVIRONMENT",
+        "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+        "attempts": []
+      }
+    ],
+    "summaries": [
+      {
+        "arm": "RAW_MODEL",
+        "tasks": 2,
+        "executedTasks": 0,
+        "firstAttemptAccepted": 0,
+        "repairedAccepted": 0,
+        "finalAccepted": 0,
+        "qualityAccepted": 0,
+        "qualityNotEvaluated": 0,
+        "falseAcceptances": null,
+        "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+        "repairAttempts": 0,
+        "failureCounts": {
+          "PROVIDER_FAILURE": 0,
+          "TRUNCATION": 0,
+          "SCHEMA_FAILURE": 0,
+          "SYNTAX_FAILURE": 0,
+          "FUNCTIONAL_FAILURE": 0,
+          "HIDDEN_CASE_FAILURE": 0,
+          "QUALITY_REJECTION": 0,
+          "AUTHORIZATION_FAILURE": 0,
+          "MISSING_CAPABILITY": 0,
+          "VERIFIER_FAILURE": 0,
+          "RESOURCE_EXHAUSTION": 0,
+          "INFRASTRUCTURE_FAILURE": 0
+        },
+        "usage": {
+          "logicalCalls": 0,
+          "physicalCalls": 0,
+          "httpAttempts": 0,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 0,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "verifierUsage": {
+          "logicalCalls": 0,
+          "physicalCalls": 0,
+          "httpAttempts": 0,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 0,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "unknownVerifierUsage": 0,
+        "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+        "unknownAttemptUsage": 0,
+        "complete": false,
+        "providerStable": false,
+        "calibration": {
+          "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+          "population": 0,
+          "value": null
+        },
+        "benchmarkScorePercent": null
+      },
+      {
+        "arm": "MODEL_EQUIVALENT_TOOLS",
+        "tasks": 2,
+        "executedTasks": 0,
+        "firstAttemptAccepted": 0,
+        "repairedAccepted": 0,
+        "finalAccepted": 0,
+        "qualityAccepted": 0,
+        "qualityNotEvaluated": 0,
+        "falseAcceptances": null,
+        "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+        "repairAttempts": 0,
+        "failureCounts": {
+          "PROVIDER_FAILURE": 0,
+          "TRUNCATION": 0,
+          "SCHEMA_FAILURE": 0,
+          "SYNTAX_FAILURE": 0,
+          "FUNCTIONAL_FAILURE": 0,
+          "HIDDEN_CASE_FAILURE": 0,
+          "QUALITY_REJECTION": 0,
+          "AUTHORIZATION_FAILURE": 0,
+          "MISSING_CAPABILITY": 0,
+          "VERIFIER_FAILURE": 0,
+          "RESOURCE_EXHAUSTION": 0,
+          "INFRASTRUCTURE_FAILURE": 0
+        },
+        "usage": {
+          "logicalCalls": 0,
+          "physicalCalls": 0,
+          "httpAttempts": 0,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 0,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "verifierUsage": {
+          "logicalCalls": 0,
+          "physicalCalls": 0,
+          "httpAttempts": 0,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 0,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "unknownVerifierUsage": 0,
+        "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+        "unknownAttemptUsage": 0,
+        "complete": false,
+        "providerStable": false,
+        "calibration": {
+          "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+          "population": 0,
+          "value": null
+        },
+        "benchmarkScorePercent": null
+      },
+      {
+        "arm": "CURRENT_NYX",
+        "tasks": 2,
+        "executedTasks": 2,
+        "firstAttemptAccepted": 0,
+        "repairedAccepted": 0,
+        "finalAccepted": 0,
+        "qualityAccepted": 0,
+        "qualityNotEvaluated": 0,
+        "falseAcceptances": null,
+        "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+        "repairAttempts": 0,
+        "failureCounts": {
+          "PROVIDER_FAILURE": 0,
+          "TRUNCATION": 0,
+          "SCHEMA_FAILURE": 0,
+          "SYNTAX_FAILURE": 1,
+          "FUNCTIONAL_FAILURE": 0,
+          "HIDDEN_CASE_FAILURE": 0,
+          "QUALITY_REJECTION": 0,
+          "AUTHORIZATION_FAILURE": 0,
+          "MISSING_CAPABILITY": 0,
+          "VERIFIER_FAILURE": 0,
+          "RESOURCE_EXHAUSTION": 1,
+          "INFRASTRUCTURE_FAILURE": 0
+        },
+        "usage": {
+          "logicalCalls": 3,
+          "physicalCalls": 4,
+          "httpAttempts": 4,
+          "reportedTokens": 31507,
+          "unknownUsageCalls": 2,
+          "toolCalls": 2,
+          "toolWorkUnits": 11,
+          "wallClockMs": 234677,
+          "providerFailures": 2,
+          "retries": 1
+        },
+        "verifierUsage": {
+          "logicalCalls": 0,
+          "physicalCalls": 0,
+          "httpAttempts": 0,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 0,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "unknownVerifierUsage": 0,
+        "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+        "unknownAttemptUsage": 0,
+        "complete": true,
+        "providerStable": false,
+        "calibration": {
+          "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+          "population": 0,
+          "value": null
+        },
+        "benchmarkScorePercent": null
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "tasks": 2,
+        "executedTasks": 2,
+        "firstAttemptAccepted": 0,
+        "repairedAccepted": 0,
+        "finalAccepted": 0,
+        "qualityAccepted": 0,
+        "qualityNotEvaluated": 0,
+        "falseAcceptances": null,
+        "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+        "repairAttempts": 0,
+        "failureCounts": {
+          "PROVIDER_FAILURE": 0,
+          "TRUNCATION": 0,
+          "SCHEMA_FAILURE": 0,
+          "SYNTAX_FAILURE": 0,
+          "FUNCTIONAL_FAILURE": 2,
+          "HIDDEN_CASE_FAILURE": 0,
+          "QUALITY_REJECTION": 0,
+          "AUTHORIZATION_FAILURE": 0,
+          "MISSING_CAPABILITY": 0,
+          "VERIFIER_FAILURE": 0,
+          "RESOURCE_EXHAUSTION": 0,
+          "INFRASTRUCTURE_FAILURE": 0
+        },
+        "usage": {
+          "logicalCalls": 4,
+          "physicalCalls": 4,
+          "httpAttempts": 4,
+          "reportedTokens": 75367,
+          "unknownUsageCalls": 0,
+          "toolCalls": 6,
+          "toolWorkUnits": 33,
+          "wallClockMs": 182143,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "verifierUsage": {
+          "logicalCalls": 0,
+          "physicalCalls": 0,
+          "httpAttempts": 0,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 0,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "unknownVerifierUsage": 0,
+        "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+        "unknownAttemptUsage": 0,
+        "complete": true,
+        "providerStable": true,
+        "calibration": {
+          "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+          "population": 0,
+          "value": null
+        },
+        "benchmarkScorePercent": null
+      }
+    ],
+    "matchedRealizedCompute": false,
+    "comparisonScope": "EQUAL_TOOL_ENVELOPE_NON_RAW_ARMS_ONLY",
+    "capabilityGaps": [
+      {
+        "gapId": "NYX-GAP-fa274e789deaa9b09917",
+        "failureClass": "SYNTAX_FAILURE",
+        "evidenceDigest": "5dd2a50845e1ba9a8cb5612b325d8f8d2bc31250812c0b93135e173dd7750ace",
+        "taskDigest": "b2ae1648a18ce975dee21217123dc5e8d7675bf070107240ca241c3fe9e47d10",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-c2ec6a02c647143678e1",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "evidenceDigest": "8a052081fbf897110076f63c729e9f50eb625c85cc1cdf4286f8d526511907df",
+        "taskDigest": "b2ae1648a18ce975dee21217123dc5e8d7675bf070107240ca241c3fe9e47d10",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-859eadaee346226ecc47",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "evidenceDigest": "f3d2937e85f54218028ee7412ffbfbddb7dd019ca7900a7e3596ede905d19b53",
+        "taskDigest": "74e37598234c4693bd396664b5cc5a40574bd31b0e78fc4232d06b40694f7ef7",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      },
+      {
+        "gapId": "NYX-GAP-a84e6463ceb8055a604c",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "evidenceDigest": "91ec6a64f94c4cd9604934b4fe14d5aed48d0d739612cb390d9e7160421551d1",
+        "taskDigest": "74e37598234c4693bd396664b5cc5a40574bd31b0e78fc4232d06b40694f7ef7",
+        "tier": "VALIDATION",
+        "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+        "benchmarkReevaluationEligible": false
+      }
+    ],
+    "officialLeaderboardClaim": false,
+    "broadPromotion": false,
+    "grantsAuthority": false,
+    "rawModelComputeParitied": false,
+    "integrity": "TAMPER_EVIDENT_NOT_SIGNED",
+    "observedWallClockMs": 416826,
+    "exposureHistory": [],
+    "reportDigest": "7c8661e0f12e69bab6e348e59a3e5db0c12938a5ec58b27bf25165a790f66d42"
+  },
+  "integration": [
+    {
+      "inputDigest": "35a97eeeddda7887ea260f50335816bd741b9c11994b6644c6ecbc26272d8770",
+      "arm": "CURRENT_NYX",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_cognition_correction_budget_exhausted",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [
+        "SCHEMA_INVALID",
+        "SCHEMA_INVALID"
+      ],
+      "rejectedIntentDiagnostics": [
+        {
+          "reason": "SCHEMA_INVALID",
+          "category": "SOURCE_QUALITY_INVALID",
+          "path": "$.changes[0].replacement",
+          "observedCode": "syntax_error_line_32_column_30",
+          "diagnosticDigest": "ce1bd84cca3a40257a35aa27903ecb0e38f4e8532065622453cad60ef6affd21"
+        },
+        {
+          "reason": "SCHEMA_INVALID",
+          "category": "SOURCE_QUALITY_INVALID",
+          "path": "$.changes[0].replacement",
+          "observedCode": "syntax_error_line_32_column_4097",
+          "diagnosticDigest": "9b6507215b1fc8f34a2ea9cd0c3964be7820549190f3a88c7e025419bfe18c84"
+        }
+      ],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "35a97eeeddda7887ea260f50335816bd741b9c11994b6644c6ecbc26272d8770",
+      "arm": "CANDIDATE_NYX",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "repairIterations": 2,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [
+        {
+          "iteration": 1,
+          "functionalPass": false,
+          "qualityDecision": null,
+          "diagnosticDigest": "343410463fadbdff6a5f91e0abe7cee59b83b8dac2d05e1c79f86c2aba8e6e29"
+        },
+        {
+          "iteration": 2,
+          "functionalPass": false,
+          "qualityDecision": null,
+          "diagnosticDigest": "109a9390db369da81b9f21b90b772c367952db44eea135e8715ee6285a265b66"
+        }
+      ],
+      "omegaExecutionEvidence": [
+        "R3B-EVIDENCE-aec9e008bb4a5b871b42d4eeb58dfbf1",
+        "R3B-EVIDENCE-95e993deedd59fd4c8eb1c924b2f9dee"
+      ],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 3,
+      "provisionedLifecycles": 3,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "7d4198b51a1142d9a0040c174a280d3cfd362f540e8318768da253453aeab139",
+      "arm": "CURRENT_NYX",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_wall_clock_budget_exhausted",
+      "repairIterations": 0,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [],
+      "omegaExecutionEvidence": [],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 1,
+      "provisionedLifecycles": 1,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    {
+      "inputDigest": "7d4198b51a1142d9a0040c174a280d3cfd362f540e8318768da253453aeab139",
+      "arm": "CANDIDATE_NYX",
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "repairIterations": 2,
+      "rejectedSourceFailures": [],
+      "rejectedIntentDiagnostics": [],
+      "iterationResults": [
+        {
+          "iteration": 1,
+          "functionalPass": false,
+          "qualityDecision": null,
+          "diagnosticDigest": "358accda4d1ddd26cfb893c6ce2f93f5a679d5918b6cf1b10de78fb231c4721a"
+        },
+        {
+          "iteration": 2,
+          "functionalPass": false,
+          "qualityDecision": null,
+          "diagnosticDigest": "016074c153e073333df696a08cef650efd3840f42d6c0f2e83eea3c0cbe9736d"
+        }
+      ],
+      "omegaExecutionEvidence": [
+        "R3B-EVIDENCE-e8c4aa43d7c6255b25108048cba33385",
+        "R3B-EVIDENCE-973c3a4f9109317b883b2a2dbc65313f"
+      ],
+      "candidatePredictionArtifactProduced": false,
+      "sourceUnchanged": true,
+      "cleanupVerified": true,
+      "lifecycleTerminations": 3,
+      "provisionedLifecycles": 3,
+      "productionAuthority": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    }
+  ],
+  "pairs": [
+    {
+      "taskDigest": "b2ae1648a18ce975dee21217123dc5e8d7675bf070107240ca241c3fe9e47d10",
+      "currentVersusReferenceMatched": false
+    },
+    {
+      "taskDigest": "74e37598234c4693bd396664b5cc5a40574bd31b0e78fc4232d06b40694f7ef7",
+      "currentVersusReferenceMatched": false
+    }
+  ],
+  "sourceUnchanged": true,
+  "inference": "E4_LIVE_NVIDIA",
+  "verification": "E3_INDEPENDENT_EXACT_GRID_SCORER",
+  "broadPromotion": false,
+  "fullBenchmarkScoreClaim": false,
+  "grantsAuthority": false,
+  "integrationTraceComplete": true,
+  "interpretation": "FROZEN_PUBLIC_EVALUATION_SUBSET_NOT_FULL_BENCHMARK_OR_PROTECTED_SCORE"
+}
