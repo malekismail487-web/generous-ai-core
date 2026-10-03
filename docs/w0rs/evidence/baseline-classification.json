@@ -6703,6 +6703,7 @@
         "firstPartyCodeReferences": [
           "scripts/omega/nvidia-nim-live-smoke.ts",
           "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
+          "scripts/omega/nyx-quantitative-coupled-transfer-fixtures.ts",
           "scripts/omega/nyx-workbench-transfer-live-eval.ts",
           "scripts/omegaBoundedReasoningWorkbench.test.ts",
           "scripts/omegaGroundedEngineering.test.ts",

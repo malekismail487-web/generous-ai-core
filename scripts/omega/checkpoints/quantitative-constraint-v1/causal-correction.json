@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "sourceReport": "comparison.json",
+  "sourceReportDigest": "c2df9f4b69de821b96c3b60db16d0bc17a9ee4505969571ca85f33f120d5e0f7",
+  "sourceCandidate": "2c5e56643fa7bbb6688f00499f595871eaf7b605",
+  "sourceExecutionIdentity": "37086562845",
+  "archivedVerdictUnchanged": "NARROW_PUBLIC_CONSTRAINT_FEEDBACK_ADVANTAGE_REPLICATION_REQUIRED",
+  "correctedVerdict": "OBSERVED_OUTCOME_DIFFERENCE_WITHOUT_CAUSAL_FEEDBACK_EXPOSURE",
+  "observed": {
+    "controlAccepted": 3,
+    "diagnosticAccepted": 4,
+    "diagnosticFirstCallAccepted": 4,
+    "diagnosticCounterexampleExposures": 0
+  },
+  "reason": "The treatment was only delivered after rejection. All diagnostic-arm tasks were accepted on the first call, before any treatment. The first prompts were identical. This run cannot establish a repair mechanism's causal benefit.",
+  "broadPromotion": false,
+  "causalPromotion": false,
+  "followup": "Fresh-parameter paired comparison with identical first live proposals, separate Omega sessions, unchanged oracle, and explicit allocated versus physical inference accounting."
+}

@@ -7,6 +7,10 @@ import { BoundedReasoningSession } from "../src/lib/codelab/research/boundedReas
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { CONSTRAINT_TRANSFER_TASKS, constraintExpectedQuantities, verifyConstraintTransferSubmission } from "./omega/nyx-quantitative-constraint-transfer-fixtures";
 import { COMMAND_TRANSFER_TASKS, verifyCommandTransferSubmission } from "./omega/nyx-quantitative-command-transfer-fixtures";
+import { COUPLED_TRANSFER_TASKS, COUPLED_TRANSFER_CORPUS_DIGEST, coupledExpectedQuantities, verifyCoupledTransferSubmission,
+  createSharedFirstProposal, assessConstraintFeedbackComparison, quantitativeCognitiveIntent,
+  type FeedbackComparisonRun } from "./omega/nyx-quantitative-coupled-transfer-fixtures";
+import type { NvidiaNimCompletionRequest } from "../src/lib/codelab/model/nvidiaNimProvider";
 let passed=0,failed=0;
 function check(v:unknown,label:string){if(v)passed++;else{failed++;console.error(`x ${label}`);}}
 const throws=(f:()=>unknown)=>{try{f();return false;}catch{return true;}};
@@ -123,6 +127,29 @@ for(const [index,task] of CONSTRAINT_TRANSFER_TASKS.entries()) {
   } finally {session.revoke();}
 }
 
+check(COUPLED_TRANSFER_CORPUS_DIGEST!==theoryDigest(CONSTRAINT_TRANSFER_TASKS),"the common-prefix epoch uses fresh, separately frozen parameter tasks");
+for(const [index,task] of COUPLED_TRANSFER_TASKS.entries()) {
+  check(theoryDigest(task.problem)!==theoryDigest(CONSTRAINT_TRANSFER_TASKS[index].problem),"each fresh task differs from the previous live objective");
+  const expected={outputs:coupledExpectedQuantities(task),confidence:1};
+  check(verifyCoupledTransferSubmission(task,expected).accepted
+    &&createQuantitativeConstraintFeedback(theoryDigest(task),task.outputLabels,task.publicConditions).evaluate(expected).status==="SATISFIED_NOT_ACCEPTED",
+    `fresh objective oracle and public requirements agree ${task.taskId}`);
+  check(throws(()=>verifyCoupledTransferSubmission({...task,objective:task.objective+" changed"},expected)),"unfrozen objective cannot borrow a frozen oracle binding");
+  const session=BoundedReasoningSession.create(task.problem,{maxRequests:2,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+10000});
+  try {const result=session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program:programs[index]});
+    check(result.status==="CONSTRUCTED"&&verifyCoupledTransferSubmission(task,{outputs:result.payload!.outputs,confidence:1}).accepted,
+      `test-only generic reference equations fit the SAME native limits for fresh parameters ${task.taskId}`);
+  } finally {session.revoke();}
+}
+
+// Correct the archived comparison's causal interpretation without rewriting its original result.
+const unexposed=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-constraint-v1/comparison.json","utf8"));
+const corrected=assessConstraintFeedbackComparison(unexposed.results,unexposed.pairs.map((p:{taskId:string})=>p.taskId),unexposed.providerStable);
+check(corrected.verdict==="OBSERVED_OUTCOME_DIFFERENCE_WITHOUT_CAUSAL_FEEDBACK_EXPOSURE"
+  &&corrected.exposures.length===0&&!corrected.causalPromotionEligible,"four versus three first-call outcomes cannot prove post-failure feedback benefit");
+check(theoryDigest(unexposed)==="c2df9f4b69de821b96c3b60db16d0bc17a9ee4505969571ca85f33f120d5e0f7",
+  "original live evidence, including its mistaken attribution, remains immutable and distinguishable from the correction");
+
 // Replay real, failed mathematical candidates. No model solution is supplied by this diagnostic.
 const prior=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v6/comparison.json","utf8"));
 const sampling=prior.results.find((r:{taskId:string;arm:string})=>r.taskId==="COMMAND-TRANSFER-4"&&r.arm==="REASONING_WITH_WORKBENCH");
@@ -152,5 +179,58 @@ for(const feedback of [false,true]) {
   check(result.accepted===feedback&&result.calls===2&&!result.authorityIncrease,`scripted wiring delivers actionable external counterexamples within the SAME two calls: ${feedback}`);
   if(result.accepted!==feedback)console.error(JSON.stringify({feedback,outcome:result.outcome,attempts:result.attempts.map(a=>({outcome:a.outcome,findings:a.findings,evidence:a.modelEvidence}))}));
 }
+
+// Common-prefix custody and physical versus allocated inference accounting. E3 ONLY.
+let clock=Date.now();const captured=NvidiaNimProvider.create({providerId:"COUPLED-CUSTODY",model:"nvidia/nemotron-3-ultra-550b-a55b",authorityMode:"TEST_DOUBLE_ONLY",
+  credentialSource:{sourceIdentity:"test-double:coupled",read:()=>"test-only-credential-material"},maxPromptBytes:32000,maxOutputTokens:512,timeoutMs:1000,
+  transport:async()=>new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{role:"assistant",content:"{}"}}],
+    usage:{prompt_tokens:20,completion_tokens:20,total_tokens:40}}),{status:200})});
+const request:NvidiaNimCompletionRequest={schemaVersion:1,requestId:"coupled",messages:[{role:"user",content:"same objective"}],maxTokens:512,
+  temperature:0,responseFormat:"JSON_OBJECT",inferencePolicy:"REASONING_JSON",reasoningEffort:"MEDIUM",observedAtEpochMs:clock,deadlineEpochMs:clock+10000};
+let physical=0;const pair=createSharedFirstProposal(async r=>{physical++;clock+=37;return captured.complete(r);},()=>clock);
+const first=pair.branch(),second=pair.branch();const initial=await first.complete(request);
+check(pair.prefixElapsedMs()===37,"actual prefix time is retained for both task budgets");
+const replay=await second.complete({...request,observedAtEpochMs:clock,deadlineEpochMs:clock+9000});
+check(initial===replay&&physical===1&&first.accounting().physicalTokens===40&&second.accounting().physicalTokens===0,
+  "identical first inference is replayed as a proposal, not billed or described as a second API response");
+check(first.accounting().receipt?.sourceEvidenceId===second.accounting().receipt?.sourceEvidenceId
+  &&first.accounting().receipt?.replayed===false&&second.accounting().receipt?.replayed===true,
+  "both arm receipts preserve exact shared proposal custody and the real source evidence identity");
+await second.complete({...request,requestId:"repair",observedAtEpochMs:clock});
+check(physical===2&&second.accounting().physicalTokens===40,"later repair cognition is independently executed and counted");
+check(throws(()=>pair.branch()),"common-prefix replay cannot grow an unbounded worker or cache population");
+check(quantitativeCognitiveIntent(request)!==quantitativeCognitiveIntent({...request,maxTokens:511})
+  &&quantitativeCognitiveIntent(request)!==quantitativeCognitiveIntent({...request,messages:[{role:"user",content:"changed objective"}]}),
+  "model budget and exact cognitive content participate in prefix equality");
+async function rejected(f:()=>Promise<unknown>){try{await f();return false;}catch{return true;}}
+const mismatch=createSharedFirstProposal(r=>captured.complete(r),()=>clock);await mismatch.branch().complete({...request,observedAtEpochMs:clock});
+check(await rejected(()=>mismatch.branch().complete({...request,requestId:"changed",observedAtEpochMs:clock})),"different cognitive intent cannot reuse a response");
+const expired=createSharedFirstProposal(r=>captured.complete(r),()=>clock);await expired.branch().complete({...request,observedAtEpochMs:clock});
+check(await rejected(()=>expired.branch().complete({...request,observedAtEpochMs:clock,deadlineEpochMs:clock})),"cached inference cannot renew or bypass an expired arm");
+const cancelled=createSharedFirstProposal(r=>captured.complete(r),()=>clock);
+check(await rejected(()=>cancelled.branch().complete({...request,observedAtEpochMs:clock,signal:AbortSignal.abort()})),"cancellation is honored before either replay or inference");
+let release!:()=>void;const pending=createSharedFirstProposal(async r=>{await new Promise<void>(resolve=>release=resolve);return captured.complete(r);},()=>clock);
+const pendingBranch=pending.branch();const pendingResult=pendingBranch.complete({...request,observedAtEpochMs:clock});
+check(throws(()=>pending.branch()),"overlapping branch creation is explicitly rejected rather than racing shared custody");release();await pendingResult;
+
+// Detector tests: no exposure, wrong source, mismatched proposals, and unstable delivery cannot promote.
+const shared=createSharedFirstProposal(r=>makeProvider().complete(r));const scripted:FeedbackComparisonRun[]=[];
+for(const feedback of [false,true]) {
+  const branch=shared.branch();const result=await runNyxQuantitativeTask({arm:"REASONING_WITH_WORKBENCH",taskId:"COUPLED-E3",objective:"Return probability 1/2.",
+    problem:{kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"zero",value:"0"},{id:"one",value:"1"}]},outputLabels:["p"],
+    limits:{maxCalls:2,maxOutputTokens:512,maxTaskMs:10000,expiresAtEpochMs:Date.now()+10000,maxToolRequests:1,maxToolWorkUnits:100,maxToolElapsedMs:100},
+    complete:r=>branch.complete(r),verify:diagnostic.decorate(cert=>({accepted:JSON.stringify(cert)===JSON.stringify(certificate("1/2")),
+      findings:JSON.stringify(cert)===JSON.stringify(certificate("1/2"))?[]:["VALUE_MISMATCH"],verificationDigest:theoryDigest(cert)}),feedback)});
+  scripted.push({...result,comparisonArm:feedback?"CONSTRAINT_FEEDBACK":"GENERIC_FEEDBACK",sharedProposal:branch.accounting().receipt});
+}
+const assessed=assessConstraintFeedbackComparison(scripted,["COUPLED-E3"],true);
+check(assessed.firstProposalMatched&&assessed.exposures.length===1&&assessed.causalPromotionEligible&&!assessed.broadPromotion,
+  "scripted equal-prefix feedback experiment exercises repair and its causal classifier, NOT live capability");
+check(!assessConstraintFeedbackComparison(scripted,["COUPLED-E3"],false).causalPromotionEligible,"provider instability prevents comparison promotion");
+check(!assessConstraintFeedbackComparison(scripted.slice(1),["COUPLED-E3"],true).causalPromotionEligible,"missing controls cannot yield comparative acceptance");
+const changed=scripted.map(r=>r.comparisonArm==="CONSTRAINT_FEEDBACK"?{...r,sharedProposal:{...r.sharedProposal!,intentDigest:binding}}:r);
+check(!assessConstraintFeedbackComparison(changed,["COUPLED-E3"],true).causalPromotionEligible,"different first-request custody cannot pass causal matching");
+const outcomes=scripted.map(r=>r.comparisonArm==="CONSTRAINT_FEEDBACK"?{...r,attempts:r.attempts.map((a,i)=>i? a:{...a,outcome:"ACCEPTED"})}:r);
+check(!assessConstraintFeedbackComparison(outcomes,["COUPLED-E3"],true).causalPromotionEligible,"same response identities with inconsistent first admission are not comparable");
 console.log(`OMEGA_QUANTITATIVE_CONSTRAINT_FEEDBACK_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if(failed)process.exitCode=1;

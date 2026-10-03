@@ -1,0 +1,2372 @@
+{
+  "schemaVersion": 1,
+  "chunkId": "NYX-QUANTITY-COUNTEREXAMPLE-TRANSFER-001",
+  "candidate": "2c5e56643fa7bbb6688f00499f595871eaf7b605",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b",
+  "epoch": {
+    "chunkId": "NYX-QUANTITY-COUNTEREXAMPLE-TRANSFER-001",
+    "version": 7,
+    "maxCallsPerTask": 4,
+    "maxOutputTokensPerCall": 4096,
+    "maxTaskMs": 360000,
+    "maxWallClockMs": 2400000,
+    "maxToolRequests": 2,
+    "maxToolWorkUnits": 100000,
+    "maxToolElapsedMs": 2000,
+    "hypothesis": "Objective-derived exact counterexamples improve mathematical model repair under unchanged call limits.",
+    "supportCriterion": "More independently accepted fresh tasks, or equal acceptance with fewer reported tokens/calls, without an oracle change; replicate before promotion.",
+    "falsificationCriterion": "No acceptance or repair-efficiency advantage, or misleading/inconsistent constraint diagnostics.",
+    "population": "FOUR_FRESH_DOMAIN_TASKS_PAIRED_SAME_NYX_NATIVE_WORKBENCH_DIFFERENT_FEEDBACK_ONLY",
+    "confidenceRequirement": "Four tasks are descriptive only; controls receive identical objectives and authoritative acceptance predicates.",
+    "planCoverage": {
+      "status": "PARTIAL_JUST_IN_TIME",
+      "direct": [
+        "GENERATOR_REQUIRES_DETECTOR",
+        "COUNTEREXAMPLES_RETURN_TO_COGNITION",
+        "PUBLIC_REQUIREMENTS_NOT_HIDDEN_SOLUTIONS",
+        "VERIFIED_CAPABILITY_PER_COMPUTE"
+      ],
+      "supporting": [
+        "NO_SELF_CERTIFICATION",
+        "NO_AUTHORITY_WITHOUT_SCOPE"
+      ],
+      "deferred": [
+        "FULL_CEGIS_COMPLETENESS",
+        "OPEN_ENDED_PROOF",
+        "DEVICE_INTEGRATION"
+      ],
+      "conflicts": [],
+      "superseded": [
+        "MORE_ORCHESTRATION_WITHOUT_REPAIRING_OBSERVED_NUMERICAL_FAILURES"
+      ]
+    },
+    "competingExplanation": "Provider variability or extra prompt tokens, rather than useful constraint interpretation."
+  },
+  "corpusDigest": "06bf224dce5523ad6414437ea98107c568d83637ddf6766dd6050016e6a4bf84",
+  "sourceDigests": {
+    "src/lib/codelab/research/analysisArtifactReference.ts": "a17ee808039141e4086d5c25ab30dc60b4461d56f24ed94bef6fd85dafe7847b",
+    "src/lib/codelab/research/boundedReasoningWorkbench.ts": "7125505025808ab58e36598fe389b2fca18c4d10a9fe5f69ec16225ffaff02be",
+    "src/lib/codelab/research/exactQuantitativeDerivation.ts": "4f847285c15493178c0faa95c91573410ff8b7e3ea20d305c53c4130cba7d7e2",
+    "src/lib/codelab/research/quantitativeConstraintFeedback.ts": "0a4e0550f3f3678391dcfbecf39f8397fa1c437c5e2d02f98a6573797e95ad5b",
+    "scripts/omega/nyx-quantitative-constraint-transfer-fixtures.ts": "ffea4a4ba86163a7603db88c007c0c41c8cde73d7b7decf499501c41bd90b6ec",
+    "src/lib/codelab/research/quantitativeEquationCompiler.ts": "e45d1816cb4a536382d10d860d2362878c9810671797d55577a2f6c245be9885",
+    "src/lib/codelab/research/nyxQuantitativeReasoning.ts": "0e1959af9e67c7f81fb34415ca4ebf7622e63d0fdc826ac7dded51562e4f39ad",
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "a2db31550f181d4605a6c2da04dc2cf508e45a5eac9aed8da3c872911a009623",
+    "src/lib/codelab/model/nvidiaCapacity.ts": "9203a696224854592f026f6bfbf9e13c6619ab39ffc7d7ce0fddc8d7b78f7927",
+    "src/lib/codelab/research/theoryContracts.ts": "4dd491ceacc7c24bfa48680b532c89cbd952a3d3bad59bbf779c572690be2268",
+    "scripts/omega/nyx-quantitative-transfer-fixtures.ts": "c96389c889d2b8b0ff21688773d907eb01b3f3d943c817ea7409080a7d9021ff",
+    "scripts/omega/nyx-quantitative-fresh-fixtures.ts": "45776bcc3879281317b042c203a24011d007546fd2781c4c9abad4f08682f55f",
+    "scripts/omega/nyx-quantitative-slot-transfer-fixtures.ts": "07830fdadb512dc7e31429699487b1d540204857789befac22a1283129c84222",
+    "scripts/omega/nyx-quantitative-equation-transfer-fixtures.ts": "621f1dc465a6a73fb57eaad826c62c01cfbb54d3c664ad3bb9f691343c4dcbd7",
+    "scripts/omega/nyx-quantitative-composed-transfer-fixtures.ts": "d4309c2b9b6d962acd7062325a1690a7753ca5e3b4927968b2a2aaa14349ab37",
+    "scripts/omega/nyx-quantitative-command-transfer-fixtures.ts": "092631a6ded1c8d2413f81bdff1c7360272dc5ead8b12abfea76a6f686c14edf",
+    "scripts/omega/nyx-quantitative-transfer-live-eval.ts": "cab9a3cd09cda62092d1db8d266008c411c1fe46c9d6bcb0fd12cf549986cae9"
+  },
+  "executionIdentity": "37086562845",
+  "environment": {
+    "platform": "linux",
+    "node": "v24.21.0"
+  },
+  "startedAtEpochMs": 1790991229981,
+  "finishedAtEpochMs": 1790991364237,
+  "complete": true,
+  "providerStable": true,
+  "summaries": [
+    {
+      "arm": "GENERIC_FEEDBACK",
+      "executed": 4,
+      "accepted": 3,
+      "firstCallAccepted": 3,
+      "firstSubmissionAccepted": 3,
+      "calls": 7,
+      "reportedTokens": 15339,
+      "unknownUsageCalls": 0,
+      "providerFailures": 0,
+      "recoveredProviderDisruptions": 0,
+      "truncations": 0,
+      "protocolOrAuthorizationFailures": 3,
+      "certificateSchemaRejections": 0,
+      "functionalRejections": 1,
+      "verifierTriggeredRevisions": 1,
+      "repairDepth": [
+        {
+          "taskId": "CONSTRAINT-SENSOR",
+          "rejectedSubmissions": 0
+        },
+        {
+          "taskId": "CONSTRAINT-THREE-COLOR",
+          "rejectedSubmissions": 1
+        },
+        {
+          "taskId": "CONSTRAINT-ENERGY",
+          "rejectedSubmissions": 0
+        },
+        {
+          "taskId": "CONSTRAINT-CAPITAL",
+          "rejectedSubmissions": 0
+        }
+      ],
+      "toolRequests": 4,
+      "toolWorkUnits": 42967,
+      "toolElapsedMs": 16,
+      "elapsedMs": 88179,
+      "constraintWorkUnits": 4652,
+      "constraintViolations": 1,
+      "verificationElapsedMs": 4.10015100000237,
+      "submittedCandidateBrierScore": 0.22565
+    },
+    {
+      "arm": "CONSTRAINT_FEEDBACK",
+      "executed": 4,
+      "accepted": 4,
+      "firstCallAccepted": 4,
+      "firstSubmissionAccepted": 4,
+      "calls": 4,
+      "reportedTokens": 8280,
+      "unknownUsageCalls": 0,
+      "providerFailures": 0,
+      "recoveredProviderDisruptions": 0,
+      "truncations": 0,
+      "protocolOrAuthorizationFailures": 0,
+      "certificateSchemaRejections": 0,
+      "functionalRejections": 0,
+      "verifierTriggeredRevisions": 0,
+      "repairDepth": [
+        {
+          "taskId": "CONSTRAINT-SENSOR",
+          "rejectedSubmissions": 0
+        },
+        {
+          "taskId": "CONSTRAINT-THREE-COLOR",
+          "rejectedSubmissions": 0
+        },
+        {
+          "taskId": "CONSTRAINT-ENERGY",
+          "rejectedSubmissions": 0
+        },
+        {
+          "taskId": "CONSTRAINT-CAPITAL",
+          "rejectedSubmissions": 0
+        }
+      ],
+      "toolRequests": 4,
+      "toolWorkUnits": 42852,
+      "toolElapsedMs": 12,
+      "elapsedMs": 46057,
+      "constraintWorkUnits": 4702,
+      "constraintViolations": 0,
+      "verificationElapsedMs": 3.435422999988077,
+      "submittedCandidateBrierScore": 0.00005000000000000009
+    }
+  ],
+  "results": [
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "taskId": "CONSTRAINT-SENSOR",
+      "accepted": true,
+      "outcome": "ACCEPTED",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "ACCEPTED",
+          "findings": [],
+          "confidence": 1,
+          "proposalDigest": "4215d9ae09bcbbe41b915e16a2a2165eb25d29ca4147f7842014e563495fec00",
+          "resultDigest": "6f79da11858b9f5cc570ce1be5664d29a3439a0845e1e68089937c14a214b5e7",
+          "executedProgram": {
+            "schemaVersion": 2,
+            "initialState": [
+              {
+                "slot": "r0",
+                "source": "prior"
+              },
+              {
+                "slot": "r1",
+                "source": "sensitivityA"
+              },
+              {
+                "slot": "r2",
+                "source": "sensitivityB"
+              },
+              {
+                "slot": "r3",
+                "source": "falseA"
+              },
+              {
+                "slot": "r4",
+                "source": "falseB"
+              },
+              {
+                "slot": "r5",
+                "source": "zero"
+              },
+              {
+                "slot": "r6",
+                "source": "zero"
+              },
+              {
+                "slot": "r7",
+                "source": "zero"
+              },
+              {
+                "slot": "r8",
+                "source": "zero"
+              },
+              {
+                "slot": "r9",
+                "source": "zero"
+              },
+              {
+                "slot": "r10",
+                "source": "zero"
+              },
+              {
+                "slot": "r11",
+                "source": "zero"
+              },
+              {
+                "slot": "r12",
+                "source": "zero"
+              },
+              {
+                "slot": "r13",
+                "source": "zero"
+              },
+              {
+                "slot": "r14",
+                "source": "zero"
+              },
+              {
+                "slot": "r15",
+                "source": "zero"
+              }
+            ],
+            "cycles": [
+              {
+                "iterations": 1,
+                "phases": [
+                  {
+                    "expressions": [
+                      {
+                        "id": "e0",
+                        "op": "MUL",
+                        "left": "r1",
+                        "right": "r2"
+                      },
+                      {
+                        "id": "e1",
+                        "op": "MUL",
+                        "left": "r0",
+                        "right": "e0"
+                      },
+                      {
+                        "id": "e2",
+                        "op": "MUL",
+                        "left": "r3",
+                        "right": "r4"
+                      },
+                      {
+                        "id": "e3",
+                        "op": "SUB",
+                        "left": "one",
+                        "right": "r0"
+                      },
+                      {
+                        "id": "e4",
+                        "op": "MUL",
+                        "left": "e3",
+                        "right": "e2"
+                      },
+                      {
+                        "id": "e5",
+                        "op": "ADD",
+                        "left": "e1",
+                        "right": "e4"
+                      },
+                      {
+                        "id": "e6",
+                        "op": "DIV",
+                        "left": "e1",
+                        "right": "e5"
+                      }
+                    ],
+                    "updates": [
+                      {
+                        "slot": "r5",
+                        "source": "e6"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "label": "posterior",
+                "source": "r5"
+              }
+            ]
+          },
+          "computation": {
+            "version": "nyx-bounded-reasoning-workbench/5",
+            "inputDigest": "50af96d81519d0a73149988e60029a822b8f25f78b6a216938373bba60653c50",
+            "requestDigest": "e91ebfeb935c276fa541ef58c727fc2d5d461f2b5085f527b5854c7afd0ee59e",
+            "status": "CONSTRUCTED",
+            "payload": {
+              "outputs": [
+                {
+                  "label": "posterior",
+                  "value": "279/355"
+                }
+              ],
+              "arithmetic": "EXACT_RATIONAL",
+              "scope": "EXACT_EVALUATION_OF_MODEL_AUTHORED_IR_NOT_VALIDATION_OF_ITS_MATHEMATICAL_MODEL",
+              "mathematicalModelIndependentlyVerified": false
+            },
+            "workUnits": 311,
+            "elapsedMs": 2,
+            "executedProgramDigest": "bfb7a75547d1025cbbfcb67fd3ea98fa6c0546196a5cae731586289c9c779c28",
+            "loweringVersion": "nyx-equation-lowering/1",
+            "evidenceClass": "E3",
+            "acceptanceRequiresIndependentVerifier": true,
+            "grantsAuthority": false,
+            "resultDigest": "135f057c1f5a41d1fafe02d268b211c61ce1590f68fcd20cccddd262136fbc77"
+          },
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-88f8661b16b8057a6163de8daffaa341",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "88f8661b16b8057a6163de8daffaa341cc8b0354ffb868f545b4fb9e160214ed",
+            "responseDigest": "b08b3302735d987d8fe7f7adabcf2695e8751507cc371c51db9bca782f1467cd",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1389,
+              "completionTokens": 657,
+              "totalTokens": 2046
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 31120,
+      "calls": 1,
+      "toolRequests": 1,
+      "toolWorkUnits": 311,
+      "toolElapsedMs": 2,
+      "acceptedCertificate": {
+        "outputs": [
+          {
+            "label": "posterior",
+            "value": "279/355"
+          }
+        ],
+        "confidence": 1
+      },
+      "authorityIncrease": false,
+      "comparisonArm": "GENERIC_FEEDBACK",
+      "constraintAssessments": [
+        {
+          "contractDigest": "b734a7ffab41bf91cd18c9d007a276b25d7d47b90af389cab2331113ed0ad674",
+          "candidateDigest": "6f19dcdef40e13da6e26627cc299a4ab557ca545d75a3aa2fcde03a7f39436f8",
+          "status": "SATISFIED_NOT_ACCEPTED",
+          "violations": [],
+          "reason": null,
+          "workUnits": 90,
+          "grantsAuthority": false,
+          "grantsAcceptance": false,
+          "evidenceDigest": "fe8ad6e498d0f3d5b854575bd73504d32609ead23988f754efea03268607d2fc"
+        }
+      ],
+      "verificationElapsedMs": 1.3056759999999485
+    },
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "taskId": "CONSTRAINT-SENSOR",
+      "accepted": true,
+      "outcome": "ACCEPTED",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "ACCEPTED",
+          "findings": [],
+          "confidence": 1,
+          "proposalDigest": "d3806671315a7ade30174bc1e5db0022b0d48f203b9e5b5bf26912b0df761457",
+          "resultDigest": "6c0d1fbe3700444164a7dc4c2af89695e203d5d60b8b2cf401c879ac5556f368",
+          "executedProgram": {
+            "schemaVersion": 2,
+            "initialState": [
+              {
+                "slot": "r0",
+                "source": "prior"
+              },
+              {
+                "slot": "r1",
+                "source": "sensitivityA"
+              },
+              {
+                "slot": "r2",
+                "source": "sensitivityB"
+              },
+              {
+                "slot": "r3",
+                "source": "falseA"
+              },
+              {
+                "slot": "r4",
+                "source": "falseB"
+              },
+              {
+                "slot": "r5",
+                "source": "one"
+              },
+              {
+                "slot": "r6",
+                "source": "zero"
+              }
+            ],
+            "cycles": [
+              {
+                "iterations": 1,
+                "phases": [
+                  {
+                    "expressions": [
+                      {
+                        "id": "e0",
+                        "op": "MUL",
+                        "left": "r1",
+                        "right": "r2"
+                      },
+                      {
+                        "id": "e1",
+                        "op": "MUL",
+                        "left": "r3",
+                        "right": "r4"
+                      },
+                      {
+                        "id": "e2",
+                        "op": "MUL",
+                        "left": "r0",
+                        "right": "e0"
+                      },
+                      {
+                        "id": "e3",
+                        "op": "SUB",
+                        "left": "r5",
+                        "right": "r0"
+                      },
+                      {
+                        "id": "e4",
+                        "op": "MUL",
+                        "left": "e3",
+                        "right": "e1"
+                      },
+                      {
+                        "id": "e5",
+                        "op": "ADD",
+                        "left": "e2",
+                        "right": "e4"
+                      },
+                      {
+                        "id": "e6",
+                        "op": "DIV",
+                        "left": "e2",
+                        "right": "e5"
+                      }
+                    ],
+                    "updates": [
+                      {
+                        "slot": "r7",
+                        "source": "e6"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "label": "posterior",
+                "source": "r7"
+              }
+            ]
+          },
+          "computation": {
+            "version": "nyx-bounded-reasoning-workbench/5",
+            "inputDigest": "50af96d81519d0a73149988e60029a822b8f25f78b6a216938373bba60653c50",
+            "requestDigest": "97d910b6ce468590f88686d7cc5b058470fce89222d17232261ebaf4e70dc100",
+            "status": "CONSTRUCTED",
+            "payload": {
+              "outputs": [
+                {
+                  "label": "posterior",
+                  "value": "279/355"
+                }
+              ],
+              "arithmetic": "EXACT_RATIONAL",
+              "scope": "EXACT_EVALUATION_OF_MODEL_AUTHORED_IR_NOT_VALIDATION_OF_ITS_MATHEMATICAL_MODEL",
+              "mathematicalModelIndependentlyVerified": false
+            },
+            "workUnits": 311,
+            "elapsedMs": 1,
+            "executedProgramDigest": "f18fc4a53958588614b65b855c1242a40f0d493705646b1c0721068c24a32763",
+            "loweringVersion": "nyx-equation-lowering/1",
+            "evidenceClass": "E3",
+            "acceptanceRequiresIndependentVerifier": true,
+            "grantsAuthority": false,
+            "resultDigest": "6995287ce3b1a1ca70052212e86d659081f65d331cd84308c2518be5cc394dd4"
+          },
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-88f8661b16b8057a6163de8daffaa341",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "88f8661b16b8057a6163de8daffaa341cc8b0354ffb868f545b4fb9e160214ed",
+            "responseDigest": "c1ae4f3c1149d77c459876b44478e1c6cddb9483c3f87adef14908c252a4d99e",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1389,
+              "completionTokens": 530,
+              "totalTokens": 1919
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 9244,
+      "calls": 1,
+      "toolRequests": 1,
+      "toolWorkUnits": 311,
+      "toolElapsedMs": 1,
+      "acceptedCertificate": {
+        "outputs": [
+          {
+            "label": "posterior",
+            "value": "279/355"
+          }
+        ],
+        "confidence": 1
+      },
+      "authorityIncrease": false,
+      "comparisonArm": "CONSTRAINT_FEEDBACK",
+      "constraintAssessments": [
+        {
+          "contractDigest": "b734a7ffab41bf91cd18c9d007a276b25d7d47b90af389cab2331113ed0ad674",
+          "candidateDigest": "6f19dcdef40e13da6e26627cc299a4ab557ca545d75a3aa2fcde03a7f39436f8",
+          "status": "SATISFIED_NOT_ACCEPTED",
+          "violations": [],
+          "reason": null,
+          "workUnits": 90,
+          "grantsAuthority": false,
+          "grantsAcceptance": false,
+          "evidenceDigest": "fe8ad6e498d0f3d5b854575bd73504d32609ead23988f754efea03268607d2fc"
+        }
+      ],
+      "verificationElapsedMs": 0.5913679999939632
+    },
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "taskId": "CONSTRAINT-THREE-COLOR",
+      "accepted": true,
+      "outcome": "ACCEPTED",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "ACCEPTED",
+          "findings": [],
+          "confidence": 0.99,
+          "proposalDigest": "40b08f50fb6c7bad3be91ac13993494c3369ff676e6097bfdb70a4ebcf4b96e7",
+          "resultDigest": "8c72d7bf6420dd17ea8b2ea3a56bdbf07c9a9e1dd334c94ed7a4a8f9801e6991",
+          "executedProgram": {
+            "schemaVersion": 2,
+            "initialState": [
+              {
+                "slot": "r0",
+                "source": "red"
+              },
+              {
+                "slot": "r1",
+                "source": "blue"
+              },
+              {
+                "slot": "r2",
+                "source": "green"
+              },
+              {
+                "slot": "r3",
+                "source": "draw"
+              },
+              {
+                "slot": "r4",
+                "source": "wanted"
+              },
+              {
+                "slot": "r5",
+                "source": "zero"
+              },
+              {
+                "slot": "r6",
+                "source": "zero"
+              },
+              {
+                "slot": "r7",
+                "source": "zero"
+              },
+              {
+                "slot": "r8",
+                "source": "zero"
+              },
+              {
+                "slot": "r9",
+                "source": "zero"
+              },
+              {
+                "slot": "r10",
+                "source": "zero"
+              },
+              {
+                "slot": "r11",
+                "source": "zero"
+              },
+              {
+                "slot": "r12",
+                "source": "zero"
+              },
+              {
+                "slot": "r13",
+                "source": "zero"
+              },
+              {
+                "slot": "r14",
+                "source": "zero"
+              },
+              {
+                "slot": "r15",
+                "source": "zero"
+              }
+            ],
+            "cycles": [
+              {
+                "iterations": 1,
+                "phases": [
+                  {
+                    "expressions": [
+                      {
+                        "id": "e0",
+                        "op": "BINOMIAL",
+                        "left": "r0",
+                        "right": "r4"
+                      },
+                      {
+                        "id": "e1",
+                        "op": "SUB",
+                        "left": "r3",
+                        "right": "r4"
+                      },
+                      {
+                        "id": "e2",
+                        "op": "ADD",
+                        "left": "r1",
+                        "right": "r2"
+                      },
+                      {
+                        "id": "e3",
+                        "op": "BINOMIAL",
+                        "left": "e2",
+                        "right": "e1"
+                      },
+                      {
+                        "id": "e4",
+                        "op": "SUB",
+                        "left": "e2",
+                        "right": "r1"
+                      },
+                      {
+                        "id": "e5",
+                        "op": "BINOMIAL",
+                        "left": "e4",
+                        "right": "e1"
+                      },
+                      {
+                        "id": "e6",
+                        "op": "SUB",
+                        "left": "e3",
+                        "right": "e5"
+                      },
+                      {
+                        "id": "e7",
+                        "op": "MUL",
+                        "left": "e0",
+                        "right": "e6"
+                      },
+                      {
+                        "id": "e8",
+                        "op": "ADD",
+                        "left": "r0",
+                        "right": "r1"
+                      },
+                      {
+                        "id": "e9",
+                        "op": "ADD",
+                        "left": "e8",
+                        "right": "r2"
+                      },
+                      {
+                        "id": "e10",
+                        "op": "BINOMIAL",
+                        "left": "e9",
+                        "right": "r3"
+                      }
+                    ],
+                    "updates": [
+                      {
+                        "slot": "r5",
+                        "source": "e7"
+                      },
+                      {
+                        "slot": "r6",
+                        "source": "e10"
+                      }
+                    ]
+                  },
+                  {
+                    "expressions": [
+                      {
+                        "id": "e0",
+                        "op": "DIV",
+                        "left": "r5",
+                        "right": "r6"
+                      }
+                    ],
+                    "updates": [
+                      {
+                        "slot": "r7",
+                        "source": "e0"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "label": "probability",
+                "source": "r7"
+              }
+            ]
+          },
+          "computation": {
+            "version": "nyx-bounded-reasoning-workbench/5",
+            "inputDigest": "bfa56efef2b4fb8307801b8b816f7b1e00d79c2e5f8bf4cd96631fc836449425",
+            "requestDigest": "89e42b4a7f84d80fc64304c9d77d9d8bdd6eb7266332c469ecb129b29ac474ab",
+            "status": "CONSTRUCTED",
+            "payload": {
+              "outputs": [
+                {
+                  "label": "probability",
+                  "value": "128877/447161"
+                }
+              ],
+              "arithmetic": "EXACT_RATIONAL",
+              "scope": "EXACT_EVALUATION_OF_MODEL_AUTHORED_IR_NOT_VALIDATION_OF_ITS_MATHEMATICAL_MODEL",
+              "mathematicalModelIndependentlyVerified": false
+            },
+            "workUnits": 423,
+            "elapsedMs": 0,
+            "executedProgramDigest": "8a64148994ccf4d5d92b3bee934b0f35a01b613bf6a0fcb1e8ae9609a46fa99a",
+            "loweringVersion": "nyx-equation-lowering/1",
+            "evidenceClass": "E3",
+            "acceptanceRequiresIndependentVerifier": true,
+            "grantsAuthority": false,
+            "resultDigest": "1928b7c510df0234a9acfe3af00c776aa05060fcbfa6138a0f0d43ac911c1a91"
+          },
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-f8fbc4192188a814af2f46127d4903de",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "f8fbc4192188a814af2f46127d4903de64d0c0ca4031689084de83e252be90aa",
+            "responseDigest": "7bbdfd0956e19b184d387d0f9e971edc41213e726f8daaee2c7ad150e48e6459",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1341,
+              "completionTokens": 857,
+              "totalTokens": 2198
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 22554,
+      "calls": 1,
+      "toolRequests": 1,
+      "toolWorkUnits": 423,
+      "toolElapsedMs": 0,
+      "acceptedCertificate": {
+        "outputs": [
+          {
+            "label": "probability",
+            "value": "128877/447161"
+          }
+        ],
+        "confidence": 0.99
+      },
+      "authorityIncrease": false,
+      "comparisonArm": "CONSTRAINT_FEEDBACK",
+      "constraintAssessments": [
+        {
+          "contractDigest": "6a47fae2dfe6354bd19334fd45ad7960462774f77db5cfc94e4ed7342a726309",
+          "candidateDigest": "24e3dc390bae8651398e08461c49e35299b103fbf6dc9d231f3a0fb6ac1b0afd",
+          "status": "SATISFIED_NOT_ACCEPTED",
+          "violations": [],
+          "reason": null,
+          "workUnits": 170,
+          "grantsAuthority": false,
+          "grantsAcceptance": false,
+          "evidenceDigest": "93e80fe28e24823b13d635dcc9c1a0a875efd78bbd5d035a57d6068ea6749a25"
+        }
+      ],
+      "verificationElapsedMs": 0.7207820000039646
+    },
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "taskId": "CONSTRAINT-THREE-COLOR",
+      "accepted": false,
+      "outcome": "AUTHORIZATION_REJECTION",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "findings": [
+            "quantitative_equations_invalid:PHASE_BOUND",
+            "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+          ],
+          "confidence": null,
+          "proposalDigest": "617f9b4c7340f19b2b2c9f7cee33a96dbe6934fa4ac7cb6e5d7cbe85fc241bcf",
+          "resultDigest": null,
+          "executedProgram": null,
+          "computation": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-f8fbc4192188a814af2f46127d4903de",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "f8fbc4192188a814af2f46127d4903de64d0c0ca4031689084de83e252be90aa",
+            "responseDigest": "815f513843cb73b14b6fa943b11ff9ca1d18e85881378bd4d03c87f2f5876434",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1341,
+              "completionTokens": 1021,
+              "totalTokens": 2362
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 2,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "findings": [
+            "EXACT_VALUE_OR_MATHEMATICAL_MODEL_MISMATCH:probability"
+          ],
+          "confidence": 0.95,
+          "proposalDigest": "b507de8d49abf7a3554d46347550ec8772b54a5d1cb6ba24398c70ea6e8caaa9",
+          "resultDigest": "e023fddeffcab635205b2add004c7d470eb8caf630505264c4435820cf9df260",
+          "executedProgram": {
+            "schemaVersion": 2,
+            "initialState": [
+              {
+                "slot": "r0",
+                "source": "red"
+              },
+              {
+                "slot": "r1",
+                "source": "blue"
+              },
+              {
+                "slot": "r2",
+                "source": "green"
+              },
+              {
+                "slot": "r3",
+                "source": "draw"
+              },
+              {
+                "slot": "r4",
+                "source": "wanted"
+              },
+              {
+                "slot": "r5",
+                "source": "zero"
+              },
+              {
+                "slot": "r6",
+                "source": "zero"
+              },
+              {
+                "slot": "r7",
+                "source": "zero"
+              },
+              {
+                "slot": "r8",
+                "source": "zero"
+              },
+              {
+                "slot": "r9",
+                "source": "zero"
+              },
+              {
+                "slot": "r10",
+                "source": "zero"
+              },
+              {
+                "slot": "r11",
+                "source": "zero"
+              },
+              {
+                "slot": "r12",
+                "source": "zero"
+              },
+              {
+                "slot": "r13",
+                "source": "zero"
+              },
+              {
+                "slot": "r14",
+                "source": "zero"
+              },
+              {
+                "slot": "r15",
+                "source": "zero"
+              }
+            ],
+            "cycles": [
+              {
+                "iterations": 1,
+                "phases": [
+                  {
+                    "expressions": [
+                      {
+                        "id": "e0",
+                        "op": "BINOMIAL",
+                        "left": "r0",
+                        "right": "r4"
+                      },
+                      {
+                        "id": "e1",
+                        "op": "SUB",
+                        "left": "r1",
+                        "right": "r5"
+                      },
+                      {
+                        "id": "e2",
+                        "op": "ADD",
+                        "left": "r1",
+                        "right": "r2"
+                      },
+                      {
+                        "id": "e3",
+                        "op": "SUB",
+                        "left": "r3",
+                        "right": "r4"
+                      },
+                      {
+                        "id": "e4",
+                        "op": "BINOMIAL",
+                        "left": "e2",
+                        "right": "e3"
+                      },
+                      {
+                        "id": "e5",
+                        "op": "BINOMIAL",
+                        "left": "r2",
+                        "right": "e3"
+                      },
+                      {
+                        "id": "e6",
+                        "op": "SUB",
+                        "left": "e4",
+                        "right": "e5"
+                      },
+                      {
+                        "id": "e7",
+                        "op": "MUL",
+                        "left": "e0",
+                        "right": "e6"
+                      },
+                      {
+                        "id": "e8",
+                        "op": "BINOMIAL",
+                        "left": "r0",
+                        "right": "r3"
+                      },
+                      {
+                        "id": "e9",
+                        "op": "BINOMIAL",
+                        "left": "r1",
+                        "right": "r3"
+                      },
+                      {
+                        "id": "e10",
+                        "op": "ADD",
+                        "left": "r0",
+                        "right": "r1"
+                      },
+                      {
+                        "id": "e11",
+                        "op": "BINOMIAL",
+                        "left": "e10",
+                        "right": "r3"
+                      },
+                      {
+                        "id": "e12",
+                        "op": "SUB",
+                        "left": "e8",
+                        "right": "e9"
+                      },
+                      {
+                        "id": "e13",
+                        "op": "SUB",
+                        "left": "e12",
+                        "right": "e11"
+                      },
+                      {
+                        "id": "e14",
+                        "op": "DIV",
+                        "left": "e7",
+                        "right": "e13"
+                      }
+                    ],
+                    "updates": [
+                      {
+                        "slot": "r5",
+                        "source": "e0"
+                      },
+                      {
+                        "slot": "r6",
+                        "source": "e6"
+                      },
+                      {
+                        "slot": "r7",
+                        "source": "e7"
+                      },
+                      {
+                        "slot": "r8",
+                        "source": "e13"
+                      },
+                      {
+                        "slot": "r9",
+                        "source": "e14"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "label": "probability",
+                "source": "r9"
+              }
+            ]
+          },
+          "computation": {
+            "version": "nyx-bounded-reasoning-workbench/5",
+            "inputDigest": "bfa56efef2b4fb8307801b8b816f7b1e00d79c2e5f8bf4cd96631fc836449425",
+            "requestDigest": "c4a1f28d09f9c9ad8d8c9748176a74300de1ee70ce6bbe943fcb0e8a0597fcf0",
+            "status": "CONSTRUCTED",
+            "payload": {
+              "outputs": [
+                {
+                  "label": "probability",
+                  "value": "-10144461/263516"
+                }
+              ],
+              "arithmetic": "EXACT_RATIONAL",
+              "scope": "EXACT_EVALUATION_OF_MODEL_AUTHORED_IR_NOT_VALIDATION_OF_ITS_MATHEMATICAL_MODEL",
+              "mathematicalModelIndependentlyVerified": false
+            },
+            "workUnits": 538,
+            "elapsedMs": 1,
+            "executedProgramDigest": "bc8b5957a671493b7e0265940f48ad12816e0e184a85ff647403c79269f1a7fc",
+            "loweringVersion": "nyx-equation-lowering/1",
+            "evidenceClass": "E3",
+            "acceptanceRequiresIndependentVerifier": true,
+            "grantsAuthority": false,
+            "resultDigest": "eb62beb5f47f42360ddc7263084b33329ccbb601e2bb1cf44cf56f99a9bf48df"
+          },
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-a7c7874a24cfa87df6a5c81a91753a74",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "a7c7874a24cfa87df6a5c81a91753a74a4ced3f866bcedac3c107174d51bd8ed",
+            "responseDigest": "f0b8e565b9e9af19af64bfa2fea9c08edf465e033dc0ca2e8f46e9f894f9a648",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1385,
+              "completionTokens": 964,
+              "totalTokens": 2349
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 3,
+          "outcome": "AUTHORIZATION_REJECTION",
+          "findings": [
+            "No available computation capability or invalid request envelope."
+          ],
+          "confidence": null,
+          "proposalDigest": "f0e63c3e0839970f4e068a2fef2db0952c0d5c3fd869bb16cbf7a465ed732e5e",
+          "resultDigest": null,
+          "executedProgram": null,
+          "computation": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-a496adef2bed98bd1813ea7436234789",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "a496adef2bed98bd1813ea74362347894086d170a726aabd6a8171041a3eb98d",
+            "responseDigest": "155c23c8cc79213a683f8817b15090284fc399f8856988700a0552abd78ab243",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 2019,
+              "completionTokens": 197,
+              "totalTokens": 2216
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        },
+        {
+          "call": 4,
+          "outcome": "AUTHORIZATION_REJECTION",
+          "findings": [
+            "No available computation capability or invalid request envelope."
+          ],
+          "confidence": null,
+          "proposalDigest": "f0e63c3e0839970f4e068a2fef2db0952c0d5c3fd869bb16cbf7a465ed732e5e",
+          "resultDigest": null,
+          "executedProgram": null,
+          "computation": null,
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-4c3fa64ec2f235970aaf4f0db900f274",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "4c3fa64ec2f235970aaf4f0db900f274211455fae61a200f6467de1a86072e04",
+            "responseDigest": "155c23c8cc79213a683f8817b15090284fc399f8856988700a0552abd78ab243",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 2010,
+              "completionTokens": 197,
+              "totalTokens": 2207
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 34931,
+      "calls": 4,
+      "toolRequests": 1,
+      "toolWorkUnits": 538,
+      "toolElapsedMs": 1,
+      "acceptedCertificate": null,
+      "authorityIncrease": false,
+      "comparisonArm": "GENERIC_FEEDBACK",
+      "constraintAssessments": [
+        {
+          "contractDigest": "6a47fae2dfe6354bd19334fd45ad7960462774f77db5cfc94e4ed7342a726309",
+          "candidateDigest": "01cd18f0b055e0e6f47419bf7ee8f75b53b59f65fa4085f844cdc0dd06ec509f",
+          "status": "VIOLATED",
+          "violations": [
+            {
+              "conditionId": "probability-nonnegative",
+              "requirementRef": "public-objective:probability-nonnegative",
+              "relation": "GTE",
+              "observed": "-10144461/263516",
+              "requiredBound": "0"
+            }
+          ],
+          "reason": null,
+          "workUnits": 120,
+          "grantsAuthority": false,
+          "grantsAcceptance": false,
+          "evidenceDigest": "bbbd6df62ce2d2c99f505533280ae112bbae4658469d12ce8c0fee87ce96c485"
+        }
+      ],
+      "verificationElapsedMs": 0.8073960000037914
+    },
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "taskId": "CONSTRAINT-ENERGY",
+      "accepted": true,
+      "outcome": "ACCEPTED",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "ACCEPTED",
+          "findings": [],
+          "confidence": 1,
+          "proposalDigest": "a6040297710a283600d54e87cee201799d9585341ae7bf6561c3192986bfd7e3",
+          "resultDigest": "f79aad7e0f2f43c4a415c93c27bc0571460813426d32a3074eeb35fd157884c3",
+          "executedProgram": {
+            "schemaVersion": 2,
+            "initialState": [
+              {
+                "slot": "r0",
+                "source": "x0"
+              },
+              {
+                "slot": "r1",
+                "source": "y0"
+              },
+              {
+                "slot": "r2",
+                "source": "zero"
+              }
+            ],
+            "cycles": [
+              {
+                "iterations": 17,
+                "phases": [
+                  {
+                    "expressions": [
+                      {
+                        "id": "e0",
+                        "op": "MUL",
+                        "left": "transfer",
+                        "right": "r0"
+                      },
+                      {
+                        "id": "e1",
+                        "op": "MUL",
+                        "left": "transfer",
+                        "right": "r1"
+                      },
+                      {
+                        "id": "e2",
+                        "op": "MUL",
+                        "left": "loss",
+                        "right": "r0"
+                      },
+                      {
+                        "id": "e3",
+                        "op": "MUL",
+                        "left": "loss",
+                        "right": "r1"
+                      },
+                      {
+                        "id": "e4",
+                        "op": "ADD",
+                        "left": "e2",
+                        "right": "e3"
+                      },
+                      {
+                        "id": "e5",
+                        "op": "SUB",
+                        "left": "one",
+                        "right": "transfer"
+                      },
+                      {
+                        "id": "e6",
+                        "op": "SUB",
+                        "left": "e5",
+                        "right": "loss"
+                      },
+                      {
+                        "id": "e7",
+                        "op": "MUL",
+                        "left": "e6",
+                        "right": "r0"
+                      },
+                      {
+                        "id": "e8",
+                        "op": "MUL",
+                        "left": "e6",
+                        "right": "r1"
+                      },
+                      {
+                        "id": "e9",
+                        "op": "ADD",
+                        "left": "e7",
+                        "right": "e1"
+                      },
+                      {
+                        "id": "e10",
+                        "op": "ADD",
+                        "left": "e0",
+                        "right": "e8"
+                      },
+                      {
+                        "id": "e11",
+                        "op": "ADD",
+                        "left": "r2",
+                        "right": "e4"
+                      }
+                    ],
+                    "updates": [
+                      {
+                        "slot": "r0",
+                        "source": "e9"
+                      },
+                      {
+                        "slot": "r1",
+                        "source": "e10"
+                      },
+                      {
+                        "slot": "r2",
+                        "source": "e11"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "label": "x",
+                "source": "r0"
+              },
+              {
+                "label": "y",
+                "source": "r1"
+              },
+              {
+                "label": "dissipated",
+                "source": "r2"
+              }
+            ]
+          },
+          "computation": {
+            "version": "nyx-bounded-reasoning-workbench/5",
+            "inputDigest": "eeb6464a333e50ff47ae3bf6af1f205932076791e648dd51e25de6d8c2099d2d",
+            "requestDigest": "20dc3febba6c0f09f25ac5a25a4ff958a2ef3a232864874cd0e914aaf102fbb3",
+            "status": "CONSTRUCTED",
+            "payload": {
+              "outputs": [
+                {
+                  "label": "x",
+                  "value": "3548005977465617963378398159111179935943426048/1615113312653966437995201020553241534588678049"
+                },
+                {
+                  "label": "y",
+                  "value": "3548004380555130326412877628973175305804251136/1615113312653966437995201020553241534588678049"
+                },
+                {
+                  "label": "dissipated",
+                  "value": "1189832986075753064962260547/456487940826035155404146917"
+                }
+              ],
+              "arithmetic": "EXACT_RATIONAL",
+              "scope": "EXACT_EVALUATION_OF_MODEL_AUTHORED_IR_NOT_VALIDATION_OF_ITS_MATHEMATICAL_MODEL",
+              "mathematicalModelIndependentlyVerified": false
+            },
+            "workUnits": 36189,
+            "elapsedMs": 11,
+            "executedProgramDigest": "682de764f9ae16d2eb75e646cec01e7499441e628b27b6db02d18e558cca5662",
+            "loweringVersion": "nyx-equation-lowering/1",
+            "evidenceClass": "E3",
+            "acceptanceRequiresIndependentVerifier": true,
+            "grantsAuthority": false,
+            "resultDigest": "4afbf97cfb420ee494f8b7b997b4875abf489bcd3887324916237327090e9356"
+          },
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-59966fd448865bda67616d1809a0a4ff",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "59966fd448865bda67616d1809a0a4ff247fd018a9488ccf0799a91e5c441f64",
+            "responseDigest": "fed683aa9b88db3232bde85b321422680ef388b27cb540286cceccb3577e4e68",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1517,
+              "completionTokens": 658,
+              "totalTokens": 2175
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 13990,
+      "calls": 1,
+      "toolRequests": 1,
+      "toolWorkUnits": 36189,
+      "toolElapsedMs": 11,
+      "acceptedCertificate": {
+        "outputs": [
+          {
+            "label": "x",
+            "value": "3548005977465617963378398159111179935943426048/1615113312653966437995201020553241534588678049"
+          },
+          {
+            "label": "y",
+            "value": "3548004380555130326412877628973175305804251136/1615113312653966437995201020553241534588678049"
+          },
+          {
+            "label": "dissipated",
+            "value": "1189832986075753064962260547/456487940826035155404146917"
+          }
+        ],
+        "confidence": 1
+      },
+      "authorityIncrease": false,
+      "comparisonArm": "GENERIC_FEEDBACK",
+      "constraintAssessments": [
+        {
+          "contractDigest": "2963ba654e4401ff4403ba147a21345f762afcd2bcb6b17b5a0c2bfbcba4fa54",
+          "candidateDigest": "d6a0319eefaed124fa8e8673a1fe47d00fbb9d7f2b742b2646b3c2b8acb583fc",
+          "status": "SATISFIED_NOT_ACCEPTED",
+          "violations": [],
+          "reason": null,
+          "workUnits": 3740,
+          "grantsAuthority": false,
+          "grantsAcceptance": false,
+          "evidenceDigest": "59b8333d8438dc5b17abaa6cbef5a5ffa23a173fd176a8ff25228184cfb3e749"
+        }
+      ],
+      "verificationElapsedMs": 1.141923000002862
+    },
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "taskId": "CONSTRAINT-ENERGY",
+      "accepted": true,
+      "outcome": "ACCEPTED",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "ACCEPTED",
+          "findings": [],
+          "confidence": 1,
+          "proposalDigest": "6574e64ce10261ae3462c82bf4053f78ffea786dd66797227aac35309e52e43a",
+          "resultDigest": "0117abb3dac68a394bc709625dd4afbf96f18d5f5a643eaa4e9ebdd9bc476c99",
+          "executedProgram": {
+            "schemaVersion": 2,
+            "initialState": [
+              {
+                "slot": "r0",
+                "source": "x0"
+              },
+              {
+                "slot": "r1",
+                "source": "y0"
+              },
+              {
+                "slot": "r2",
+                "source": "zero"
+              }
+            ],
+            "cycles": [
+              {
+                "iterations": 17,
+                "phases": [
+                  {
+                    "expressions": [
+                      {
+                        "id": "e0",
+                        "op": "MUL",
+                        "left": "transfer",
+                        "right": "r1"
+                      },
+                      {
+                        "id": "e1",
+                        "op": "MUL",
+                        "left": "transfer",
+                        "right": "r0"
+                      },
+                      {
+                        "id": "e2",
+                        "op": "MUL",
+                        "left": "loss",
+                        "right": "r0"
+                      },
+                      {
+                        "id": "e3",
+                        "op": "MUL",
+                        "left": "loss",
+                        "right": "r1"
+                      },
+                      {
+                        "id": "e4",
+                        "op": "ADD",
+                        "left": "e2",
+                        "right": "e3"
+                      },
+                      {
+                        "id": "e5",
+                        "op": "SUB",
+                        "left": "one",
+                        "right": "transfer"
+                      },
+                      {
+                        "id": "e6",
+                        "op": "SUB",
+                        "left": "e5",
+                        "right": "loss"
+                      },
+                      {
+                        "id": "e7",
+                        "op": "MUL",
+                        "left": "e6",
+                        "right": "r0"
+                      },
+                      {
+                        "id": "e8",
+                        "op": "MUL",
+                        "left": "e6",
+                        "right": "r1"
+                      },
+                      {
+                        "id": "e9",
+                        "op": "ADD",
+                        "left": "e7",
+                        "right": "e0"
+                      },
+                      {
+                        "id": "e10",
+                        "op": "ADD",
+                        "left": "e8",
+                        "right": "e1"
+                      },
+                      {
+                        "id": "e11",
+                        "op": "ADD",
+                        "left": "r2",
+                        "right": "e4"
+                      }
+                    ],
+                    "updates": [
+                      {
+                        "slot": "r0",
+                        "source": "e9"
+                      },
+                      {
+                        "slot": "r1",
+                        "source": "e10"
+                      },
+                      {
+                        "slot": "r2",
+                        "source": "e11"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "label": "x",
+                "source": "r0"
+              },
+              {
+                "label": "y",
+                "source": "r1"
+              },
+              {
+                "label": "dissipated",
+                "source": "r2"
+              }
+            ]
+          },
+          "computation": {
+            "version": "nyx-bounded-reasoning-workbench/5",
+            "inputDigest": "eeb6464a333e50ff47ae3bf6af1f205932076791e648dd51e25de6d8c2099d2d",
+            "requestDigest": "418a3be9238f1e706e517e9eb737a713b1bf4d3aee3fa8b5e38bf4f5cb5aeab7",
+            "status": "CONSTRUCTED",
+            "payload": {
+              "outputs": [
+                {
+                  "label": "x",
+                  "value": "3548005977465617963378398159111179935943426048/1615113312653966437995201020553241534588678049"
+                },
+                {
+                  "label": "y",
+                  "value": "3548004380555130326412877628973175305804251136/1615113312653966437995201020553241534588678049"
+                },
+                {
+                  "label": "dissipated",
+                  "value": "1189832986075753064962260547/456487940826035155404146917"
+                }
+              ],
+              "arithmetic": "EXACT_RATIONAL",
+              "scope": "EXACT_EVALUATION_OF_MODEL_AUTHORED_IR_NOT_VALIDATION_OF_ITS_MATHEMATICAL_MODEL",
+              "mathematicalModelIndependentlyVerified": false
+            },
+            "workUnits": 36189,
+            "elapsedMs": 9,
+            "executedProgramDigest": "072defb11d24ff612ad6be4db8e5eddb47445fc5c807f5a2ac65d1cfbecab70c",
+            "loweringVersion": "nyx-equation-lowering/1",
+            "evidenceClass": "E3",
+            "acceptanceRequiresIndependentVerifier": true,
+            "grantsAuthority": false,
+            "resultDigest": "ecb58edd346757df26f4050806d49e7f1b13345d3d55d5a4647d01774c737fcb"
+          },
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-59966fd448865bda67616d1809a0a4ff",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "59966fd448865bda67616d1809a0a4ff247fd018a9488ccf0799a91e5c441f64",
+            "responseDigest": "c47847e081c3651073e910044168e93f72a40f5d0e5bf17914f473d82bb6813f",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1517,
+              "completionTokens": 658,
+              "totalTokens": 2175
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 6202,
+      "calls": 1,
+      "toolRequests": 1,
+      "toolWorkUnits": 36189,
+      "toolElapsedMs": 9,
+      "acceptedCertificate": {
+        "outputs": [
+          {
+            "label": "x",
+            "value": "3548005977465617963378398159111179935943426048/1615113312653966437995201020553241534588678049"
+          },
+          {
+            "label": "y",
+            "value": "3548004380555130326412877628973175305804251136/1615113312653966437995201020553241534588678049"
+          },
+          {
+            "label": "dissipated",
+            "value": "1189832986075753064962260547/456487940826035155404146917"
+          }
+        ],
+        "confidence": 1
+      },
+      "authorityIncrease": false,
+      "comparisonArm": "CONSTRAINT_FEEDBACK",
+      "constraintAssessments": [
+        {
+          "contractDigest": "2963ba654e4401ff4403ba147a21345f762afcd2bcb6b17b5a0c2bfbcba4fa54",
+          "candidateDigest": "d6a0319eefaed124fa8e8673a1fe47d00fbb9d7f2b742b2646b3c2b8acb583fc",
+          "status": "SATISFIED_NOT_ACCEPTED",
+          "violations": [],
+          "reason": null,
+          "workUnits": 3740,
+          "grantsAuthority": false,
+          "grantsAcceptance": false,
+          "evidenceDigest": "59b8333d8438dc5b17abaa6cbef5a5ffa23a173fd176a8ff25228184cfb3e749"
+        }
+      ],
+      "verificationElapsedMs": 1.4706889999943087
+    },
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "taskId": "CONSTRAINT-CAPITAL",
+      "accepted": true,
+      "outcome": "ACCEPTED",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "ACCEPTED",
+          "findings": [],
+          "confidence": 0.99,
+          "proposalDigest": "0dae7f52fb8dec40e357526a1c1b6a278467548b2d0b855c17eb7c7eb79e3040",
+          "resultDigest": "28c6ac265aee89a42e3b8a050f6b152d4b5ac0c3a8aed242c242661932ecef8e",
+          "executedProgram": {
+            "schemaVersion": 2,
+            "initialState": [
+              {
+                "slot": "r0",
+                "source": "principal"
+              },
+              {
+                "slot": "r1",
+                "source": "zero"
+              },
+              {
+                "slot": "r2",
+                "source": "zero"
+              }
+            ],
+            "cycles": [
+              {
+                "iterations": 17,
+                "phases": [
+                  {
+                    "expressions": [
+                      {
+                        "id": "e0",
+                        "op": "MUL",
+                        "left": "rate",
+                        "right": "r0"
+                      },
+                      {
+                        "id": "e1",
+                        "op": "ADD",
+                        "left": "r0",
+                        "right": "e0"
+                      },
+                      {
+                        "id": "e2",
+                        "op": "ADD",
+                        "left": "r2",
+                        "right": "e0"
+                      },
+                      {
+                        "id": "e3",
+                        "op": "MIN",
+                        "left": "e1",
+                        "right": "withdrawal"
+                      },
+                      {
+                        "id": "e4",
+                        "op": "SUB",
+                        "left": "e1",
+                        "right": "e3"
+                      },
+                      {
+                        "id": "e5",
+                        "op": "ADD",
+                        "left": "r1",
+                        "right": "e3"
+                      }
+                    ],
+                    "updates": [
+                      {
+                        "slot": "r0",
+                        "source": "e4"
+                      },
+                      {
+                        "slot": "r1",
+                        "source": "e5"
+                      },
+                      {
+                        "slot": "r2",
+                        "source": "e2"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "label": "capital",
+                "source": "r0"
+              },
+              {
+                "label": "paid",
+                "source": "r1"
+              },
+              {
+                "label": "earned",
+                "source": "r2"
+              }
+            ]
+          },
+          "computation": {
+            "version": "nyx-bounded-reasoning-workbench/5",
+            "inputDigest": "eae08bf5a3f0a7e2521aace14e89d767563da26aed2028f46e15aac96c8698e2",
+            "requestDigest": "089ef72df628211ca6c961e60a8acd9be9d4c37b3b3ebbc9a4731d0029a6c782",
+            "status": "CONSTRUCTED",
+            "payload": {
+              "outputs": [
+                {
+                  "label": "capital",
+                  "value": "0"
+                },
+                {
+                  "label": "paid",
+                  "value": "1414101742651870249/239259977361578889"
+                },
+                {
+                  "label": "earned",
+                  "value": "1567529233943036798/1196299886807894445"
+                }
+              ],
+              "arithmetic": "EXACT_RATIONAL",
+              "scope": "EXACT_EVALUATION_OF_MODEL_AUTHORED_IR_NOT_VALIDATION_OF_ITS_MATHEMATICAL_MODEL",
+              "mathematicalModelIndependentlyVerified": false
+            },
+            "workUnits": 5929,
+            "elapsedMs": 2,
+            "executedProgramDigest": "993eae01f713a5b13459bb0601af29cd33208310cdb58bc99ab96c9f265f5535",
+            "loweringVersion": "nyx-equation-lowering/1",
+            "evidenceClass": "E3",
+            "acceptanceRequiresIndependentVerifier": true,
+            "grantsAuthority": false,
+            "resultDigest": "5ae3e0f698484bd78fa3cadeaed5e437949e04b661c76f0052a12455805d3d88"
+          },
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-2a9f8317065138696f2c5cb9b145f713",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "2a9f8317065138696f2c5cb9b145f71372910bbac2ed06cd7f95531fdc91230a",
+            "responseDigest": "4bece481a0822e029b394b5c75a93d570da59c5db47112ab9d610fe438a07acb",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1502,
+              "completionTokens": 486,
+              "totalTokens": 1988
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 8057,
+      "calls": 1,
+      "toolRequests": 1,
+      "toolWorkUnits": 5929,
+      "toolElapsedMs": 2,
+      "acceptedCertificate": {
+        "outputs": [
+          {
+            "label": "capital",
+            "value": "0"
+          },
+          {
+            "label": "paid",
+            "value": "1414101742651870249/239259977361578889"
+          },
+          {
+            "label": "earned",
+            "value": "1567529233943036798/1196299886807894445"
+          }
+        ],
+        "confidence": 0.99
+      },
+      "authorityIncrease": false,
+      "comparisonArm": "CONSTRAINT_FEEDBACK",
+      "constraintAssessments": [
+        {
+          "contractDigest": "50bf5b491ddb8f7cf49cd4e1755ea938782fb8f8706e81d3b53d3d032568dd75",
+          "candidateDigest": "9ed7e80a6b8bc57171653350f17dfee8d70fa8f7873fed6561191a3a120db920",
+          "status": "SATISFIED_NOT_ACCEPTED",
+          "violations": [],
+          "reason": null,
+          "workUnits": 702,
+          "grantsAuthority": false,
+          "grantsAcceptance": false,
+          "evidenceDigest": "75a78885de1c12f7288ca9ed6b5aeb7fcc17f9c548fcfe1e1e5e2f1d8753a73e"
+        }
+      ],
+      "verificationElapsedMs": 0.6525839999958407
+    },
+    {
+      "arm": "REASONING_WITH_WORKBENCH",
+      "taskId": "CONSTRAINT-CAPITAL",
+      "accepted": true,
+      "outcome": "ACCEPTED",
+      "attempts": [
+        {
+          "call": 1,
+          "outcome": "ACCEPTED",
+          "findings": [],
+          "confidence": 0.99,
+          "proposalDigest": "0dae7f52fb8dec40e357526a1c1b6a278467548b2d0b855c17eb7c7eb79e3040",
+          "resultDigest": "ab69ad002fc67842b4d4267f186c0d9a5bf6c1fa82160b91ad6d93b294050b9f",
+          "executedProgram": {
+            "schemaVersion": 2,
+            "initialState": [
+              {
+                "slot": "r0",
+                "source": "principal"
+              },
+              {
+                "slot": "r1",
+                "source": "zero"
+              },
+              {
+                "slot": "r2",
+                "source": "zero"
+              }
+            ],
+            "cycles": [
+              {
+                "iterations": 17,
+                "phases": [
+                  {
+                    "expressions": [
+                      {
+                        "id": "e0",
+                        "op": "MUL",
+                        "left": "rate",
+                        "right": "r0"
+                      },
+                      {
+                        "id": "e1",
+                        "op": "ADD",
+                        "left": "r0",
+                        "right": "e0"
+                      },
+                      {
+                        "id": "e2",
+                        "op": "ADD",
+                        "left": "r2",
+                        "right": "e0"
+                      },
+                      {
+                        "id": "e3",
+                        "op": "MIN",
+                        "left": "e1",
+                        "right": "withdrawal"
+                      },
+                      {
+                        "id": "e4",
+                        "op": "SUB",
+                        "left": "e1",
+                        "right": "e3"
+                      },
+                      {
+                        "id": "e5",
+                        "op": "ADD",
+                        "left": "r1",
+                        "right": "e3"
+                      }
+                    ],
+                    "updates": [
+                      {
+                        "slot": "r0",
+                        "source": "e4"
+                      },
+                      {
+                        "slot": "r1",
+                        "source": "e5"
+                      },
+                      {
+                        "slot": "r2",
+                        "source": "e2"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "label": "capital",
+                "source": "r0"
+              },
+              {
+                "label": "paid",
+                "source": "r1"
+              },
+              {
+                "label": "earned",
+                "source": "r2"
+              }
+            ]
+          },
+          "computation": {
+            "version": "nyx-bounded-reasoning-workbench/5",
+            "inputDigest": "eae08bf5a3f0a7e2521aace14e89d767563da26aed2028f46e15aac96c8698e2",
+            "requestDigest": "089ef72df628211ca6c961e60a8acd9be9d4c37b3b3ebbc9a4731d0029a6c782",
+            "status": "CONSTRUCTED",
+            "payload": {
+              "outputs": [
+                {
+                  "label": "capital",
+                  "value": "0"
+                },
+                {
+                  "label": "paid",
+                  "value": "1414101742651870249/239259977361578889"
+                },
+                {
+                  "label": "earned",
+                  "value": "1567529233943036798/1196299886807894445"
+                }
+              ],
+              "arithmetic": "EXACT_RATIONAL",
+              "scope": "EXACT_EVALUATION_OF_MODEL_AUTHORED_IR_NOT_VALIDATION_OF_ITS_MATHEMATICAL_MODEL",
+              "mathematicalModelIndependentlyVerified": false
+            },
+            "workUnits": 5929,
+            "elapsedMs": 2,
+            "executedProgramDigest": "993eae01f713a5b13459bb0601af29cd33208310cdb58bc99ab96c9f265f5535",
+            "loweringVersion": "nyx-equation-lowering/1",
+            "evidenceClass": "E3",
+            "acceptanceRequiresIndependentVerifier": true,
+            "grantsAuthority": false,
+            "resultDigest": "5ae3e0f698484bd78fa3cadeaed5e437949e04b661c76f0052a12455805d3d88"
+          },
+          "modelEvidence": {
+            "evidenceId": "NVIDIA-NIM-2a9f8317065138696f2c5cb9b145f713",
+            "evidenceClass": "E4",
+            "providerId": "NYX-QUANTITATIVE-TRANSFER",
+            "endpointOrigin": "https://integrate.api.nvidia.com",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "requestDigest": "2a9f8317065138696f2c5cb9b145f71372910bbac2ed06cd7f95531fdc91230a",
+            "responseDigest": "675c2f40028cf46d5680f3627b2534e2ca5d683fc58e6562607d1dc89358a60c",
+            "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+            "credentialPersisted": false,
+            "promptPersisted": false,
+            "networkAttempted": true,
+            "statusCode": 200,
+            "failureCategory": null,
+            "retryability": null,
+            "providerRequestId": null,
+            "finishReason": "stop",
+            "usage": {
+              "promptTokens": 1502,
+              "completionTokens": 482,
+              "totalTokens": 1984
+            },
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        }
+      ],
+      "elapsedMs": 8138,
+      "calls": 1,
+      "toolRequests": 1,
+      "toolWorkUnits": 5929,
+      "toolElapsedMs": 2,
+      "acceptedCertificate": {
+        "outputs": [
+          {
+            "label": "capital",
+            "value": "0"
+          },
+          {
+            "label": "paid",
+            "value": "1414101742651870249/239259977361578889"
+          },
+          {
+            "label": "earned",
+            "value": "1567529233943036798/1196299886807894445"
+          }
+        ],
+        "confidence": 0.99
+      },
+      "authorityIncrease": false,
+      "comparisonArm": "GENERIC_FEEDBACK",
+      "constraintAssessments": [
+        {
+          "contractDigest": "50bf5b491ddb8f7cf49cd4e1755ea938782fb8f8706e81d3b53d3d032568dd75",
+          "candidateDigest": "9ed7e80a6b8bc57171653350f17dfee8d70fa8f7873fed6561191a3a120db920",
+          "status": "SATISFIED_NOT_ACCEPTED",
+          "violations": [],
+          "reason": null,
+          "workUnits": 702,
+          "grantsAuthority": false,
+          "grantsAcceptance": false,
+          "evidenceDigest": "75a78885de1c12f7288ca9ed6b5aeb7fcc17f9c548fcfe1e1e5e2f1d8753a73e"
+        }
+      ],
+      "verificationElapsedMs": 0.8451559999957681
+    }
+  ],
+  "verdict": "NARROW_PUBLIC_CONSTRAINT_FEEDBACK_ADVANTAGE_REPLICATION_REQUIRED",
+  "pairs": [
+    {
+      "taskId": "CONSTRAINT-SENSOR",
+      "outcomes": [
+        {
+          "arm": "GENERIC_FEEDBACK",
+          "result": "ACCEPTED"
+        },
+        {
+          "arm": "CONSTRAINT_FEEDBACK",
+          "result": "ACCEPTED"
+        }
+      ]
+    },
+    {
+      "taskId": "CONSTRAINT-THREE-COLOR",
+      "outcomes": [
+        {
+          "arm": "GENERIC_FEEDBACK",
+          "result": "AUTHORIZATION_REJECTION"
+        },
+        {
+          "arm": "CONSTRAINT_FEEDBACK",
+          "result": "ACCEPTED"
+        }
+      ]
+    },
+    {
+      "taskId": "CONSTRAINT-ENERGY",
+      "outcomes": [
+        {
+          "arm": "GENERIC_FEEDBACK",
+          "result": "ACCEPTED"
+        },
+        {
+          "arm": "CONSTRAINT_FEEDBACK",
+          "result": "ACCEPTED"
+        }
+      ]
+    },
+    {
+      "taskId": "CONSTRAINT-CAPITAL",
+      "outcomes": [
+        {
+          "arm": "GENERIC_FEEDBACK",
+          "result": "ACCEPTED"
+        },
+        {
+          "arm": "CONSTRAINT_FEEDBACK",
+          "result": "ACCEPTED"
+        }
+      ]
+    }
+  ],
+  "identicalModel": true,
+  "identicalTaskSet": true,
+  "identicalOracle": true,
+  "matchedCallAndOutputTokenCeilings": true,
+  "matchedRealizedCompute": false,
+  "nativeWorkMustBeAccountedSeparately": true,
+  "toolAblation": "NONE_BOTH_ARMS_HAVE_IDENTICAL_EXACT_IR",
+  "feedbackAblation": "IDENTICAL_PUBLIC_REQUIREMENTS_AND_ORACLE_DIFFERENT_COUNTEREXAMPLE_DELIVERY_ONLY",
+  "reasoningConfigurationAblation": "NONE_BOTH_ARMS_MEDIUM",
+  "frozenBeforeLive": true,
+  "independentEvidenceClass": "E3_INDEPENDENT_DOMAIN_ALGORITHMS_NOT_EXTERNAL_INSTITUTION",
+  "liveEvidenceClass": "E4",
+  "calibrationScope": "DESCRIPTIVE_DEPENDENT_SUBMISSIONS_FOUR_TASKS_NOT_GENERAL_CALIBRATION",
+  "falseAcceptanceEvidence": "NEGATIVE_ORACLE_CONTROLS_LOCAL_ONLY_NOT_EXTERNALLY_MEASURED",
+  "sourceBefore": "4f8742ddbbc647a9ef3306640bda83387dc030a84ced4abc0863c82725b20a36",
+  "sourceAfter": "4f8742ddbbc647a9ef3306640bda83387dc030a84ced4abc0863c82725b20a36",
+  "sourceRepositoryUnchanged": true,
+  "populationScope": "FRESH_MODEL_UNSEEN_SENSOR_SAMPLING_ENERGY_LEDGER_OBJECTIVES_NOT_OFFICIAL_OR_PRIVATE_INSTITUTIONAL_HOLDOUT",
+  "security": {
+    "credentialPersisted": false,
+    "rawReasoningPersisted": false,
+    "generalNetworkAuthority": false,
+    "shellAuthority": false,
+    "repositoryMutation": false,
+    "productionAuthority": false
+  },
+  "broadPromotion": false
+}
