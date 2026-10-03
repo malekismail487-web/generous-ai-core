@@ -15,7 +15,8 @@ import { PROTOCOL_REPAIR_TASKS,protocolRepairExpectedQuantities,verifyProtocolRe
 import { REPAIR_CONTEXT_TASKS,repairContextExpectedQuantities,verifyRepairContextSubmission } from "./omega/nyx-quantitative-repair-context-fixtures";
 import { PROVIDER_DIAGNOSTIC_TASKS,providerDiagnosticExpectedQuantities,verifyProviderDiagnosticSubmission,
   PROVIDER_DIAGNOSTIC_MODES,providerDiagnosticRequest } from "./omega/nyx-quantitative-provider-diagnostic-fixtures";
-import {MODEL_REPAIR_TASKS,MODEL_REPAIR_CORPUS_DIGEST,modelRepairExpectedQuantities,verifyModelRepairSubmission} from "./omega/nyx-quantitative-model-repair-fixtures";
+import {MODEL_REPAIR_TASKS,MODEL_REPAIR_CORPUS_DIGEST,modelRepairExpectedQuantities,verifyModelRepairSubmission,
+  MODEL_REPAIR_REPLICATION_TASKS,modelRepairReplicationExpectedQuantities,verifyModelRepairReplicationSubmission} from "./omega/nyx-quantitative-model-repair-fixtures";
 let passed=0,failed=0;
 function check(v:unknown,label:string){if(v)passed++;else{failed++;console.error(`x ${label}`);}}
 const throws=(f:()=>unknown)=>{try{f();return false;}catch{return true;}};
@@ -501,5 +502,36 @@ for(const [arm,setting] of [["REASONING_WITH_WORKBENCH","yes"],["CURRENT_DIRECT"
   check(await rejected(()=>runNyxQuantitativeTask({arm,taskId:"MODEL-SETTING",objective:"No inference.",problem:contextProblem,outputLabels:["p"],limits:modelLimits(),
     reformulateAfterRejection:setting as unknown as boolean,complete:()=>{throw Error("invalid_setting_cannot_infer");},verify:()=>{throw Error("invalid_setting_cannot_verify");}})),
     "model-repair option is explicit and unavailable in unsupported arms");
+const modelReport=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-model-repair-v1/comparison.json","utf8"));
+const modelLiveAssessment=assessConstraintFeedbackComparison(modelReport.results,MODEL_REPAIR_TASKS.map(t=>t.taskId),true,"PUBLIC_MODEL_REPAIR");
+check(theoryDigest(modelReport)==="c06929ad57a9bfbcf5b2c83a3c8a0bbeffbf5111113f21fafe7aad1fb4147e29"
+  &&modelReport.candidate==="9e6b8552dba6397f2d31df38f11d896aa7d772bc"&&modelReport.providerStable&&modelReport.complete&&!modelReport.broadPromotion,
+  "first positive live repair result retains exact candidate custody and does not become broad frontier certification");
+check(modelLiveAssessment.firstProposalMatched&&modelLiveAssessment.exposures.length===2&&modelLiveAssessment.causalPromotionEligible
+  &&modelLiveAssessment.control.accepted===2&&modelLiveAssessment.diagnostic.accepted===3
+  &&modelLiveAssessment.diagnostic.tokens<modelLiveAssessment.control.tokens,"independent classifier reproduces observed repair with lower realized model tokens");
+for(const run of modelReport.results){const task=MODEL_REPAIR_TASKS.find(t=>t.taskId===run.taskId)!;
+  const session=BoundedReasoningSession.create(task.problem,{maxRequests:2,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+10000});
+  try{for(const a of run.attempts.filter((a:{computation:unknown})=>a.computation!==null)){
+    const replay=session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program:a.executedProgram});
+    const {resultDigest,...body}=a.computation;
+    check(resultDigest===theoryDigest(body)&&replay.status===a.computation.status&&theoryDigest(replay.payload)===theoryDigest(a.computation.payload),
+      "accepted and failed live mathematical programs replay independently without editing the oracle");
+    if(replay.status==="CONSTRUCTED")check(verifyModelRepairSubmission(task,{outputs:replay.payload!.outputs,confidence:a.confidence}).accepted===(a.outcome==="ACCEPTED"),
+      "corrected probability is accepted for exact mathematical correctness, not because the model reports success");
+  }}finally{session.revoke();}
+}
+for(const [index,task] of MODEL_REPAIR_REPLICATION_TASKS.entries()){
+  check(theoryDigest(task.problem)!==theoryDigest(MODEL_REPAIR_TASKS[index].problem),"replication freezes fresh parameters, not another draw of the first success");
+  const expected={outputs:modelRepairReplicationExpectedQuantities(task),confidence:1};
+  check(verifyModelRepairReplicationSubmission(task,expected).accepted&&createQuantitativeConstraintFeedback(theoryDigest(task),task.outputLabels,task.publicConditions)
+    .evaluate(expected).status==="SATISFIED_NOT_ACCEPTED","fresh transfer retains original independent domain algorithms and necessary conditions");
+  check(throws(()=>modelRepairReplicationExpectedQuantities({...task,objective:task.objective+" changed"})),"replication cannot silently exchange objectives");
+  const session=BoundedReasoningSession.create(task.problem,{maxRequests:2,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+10000});
+  try{const result=session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program:programs[index]});
+    check(result.status==="CONSTRUCTED"&&verifyModelRepairReplicationSubmission(task,{outputs:result.payload!.outputs,confidence:1}).accepted,
+      "all fresh replication tasks remain solvable within unchanged execution limits");
+  }finally{session.revoke();}
+}
 console.log(`OMEGA_QUANTITATIVE_CONSTRAINT_FEEDBACK_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if(failed)process.exitCode=1;

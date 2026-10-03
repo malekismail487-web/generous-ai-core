@@ -31,3 +31,27 @@ export function modelRepairExpectedQuantities(task:ConstraintTransferTask){
 export function verifyModelRepairSubmission(task:ConstraintTransferTask,certificate:unknown){
   return verifyQuantitativeCertificate(task,certificate,()=>modelRepairExpectedQuantities(task));
 }
+// Replication freezes a NEW parameter corpus. No observed solution or task-specific repair
+// rule is copied into cognition; model, mechanism, oracle, and finite limits are unchanged.
+export const MODEL_REPAIR_REPLICATION_EPOCH=Object.freeze({...MODEL_REPAIR_EPOCH,version:13,
+  chunkId:"NYX-PUBLIC-MODEL-REFORMULATION-TRANSFER-001",
+  population:"FRESH_PARAMETER_TRANSFER_SAME_FOUR_DOMAIN_FAMILIES_NOT_INSTITUTIONAL_OR_EXTERNAL_REPLICATION"});
+const replicationValues=[{prior:"23/701",sensitivityA:"19/23",sensitivityB:"29/37",falseA:"11/43",falseB:"7/41"},
+  {red:"43",blue:"41",green:"37",draw:"16",wanted:"7"},
+  {x0:"79/29",y0:"124/29",transfer:"8/37",loss:"5/67"},
+  {principal:"59/19",rate:"29/211",withdrawal:"31/43"}];
+export const MODEL_REPAIR_REPLICATION_TASKS:readonly ConstraintTransferTask[]=immutableTheoryValue(MODEL_REPAIR_TASKS.map((old,index)=>{
+  const publicConditions=old.publicConditions.map(c=>({...c,bound:c.id==="ledger-conserved"?replicationValues[index].principal!:c.bound}));
+  return {...old,taskId:old.taskId.replace("MODEL-","REPLICATE-"),publicConditions,
+    problem:{...old.problem,constants:old.problem.constants.map(c=>({...c,value:(replicationValues[index] as Record<string,string>)[c.id]??c.value}))},
+    objective:old.objective.split(" Public necessary conditions (passing these does NOT establish correctness): ")[0]
+      +` Public necessary conditions (passing these does NOT establish correctness): ${JSON.stringify(publicConditions)}`};
+}));
+export const MODEL_REPAIR_REPLICATION_CORPUS_DIGEST=theoryDigest(MODEL_REPAIR_REPLICATION_TASKS);
+export function modelRepairReplicationExpectedQuantities(task:ConstraintTransferTask){
+  if(!MODEL_REPAIR_REPLICATION_TASKS.some(t=>theoryDigest(t)===theoryDigest(task)))throw Error("unfrozen_model_repair_replication_task");
+  return constraintExpectedQuantities({...task,taskId:task.taskId.replace("REPLICATE-","CONSTRAINT-")});
+}
+export function verifyModelRepairReplicationSubmission(task:ConstraintTransferTask,certificate:unknown){
+  return verifyQuantitativeCertificate(task,certificate,()=>modelRepairReplicationExpectedQuantities(task));
+}

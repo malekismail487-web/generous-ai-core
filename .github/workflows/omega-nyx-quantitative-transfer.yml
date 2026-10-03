@@ -48,6 +48,7 @@ jobs:
           NYX_QUANTITATIVE_REPAIR_CONTEXT: '1'
           NYX_QUANTITATIVE_PROVIDER_DIAGNOSTIC: '1'
           NYX_QUANTITATIVE_MODEL_REPAIR: '1'
+          NYX_QUANTITATIVE_MODEL_REPAIR_REPLICATION: '1'
           NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quantitative-transfer-live-eval.ts

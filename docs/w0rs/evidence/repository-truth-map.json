@@ -2315,6 +2315,12 @@
       ]
     },
     {
+      "name": "NYX_QUANTITATIVE_MODEL_REPAIR_REPLICATION",
+      "files": [
+        "scripts/omega/nyx-quantitative-transfer-live-eval.ts"
+      ]
+    },
+    {
       "name": "NYX_QUANTITATIVE_PROTOCOL_REPAIR",
       "files": [
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts"
