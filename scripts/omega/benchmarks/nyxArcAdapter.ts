@@ -64,7 +64,7 @@ export function extractArcArtifact(stdout: string, count: number) {
   if (predictions.length !== count) throw Error("arc_prediction_count");
   return predictions;
 }
-function inferUsage(evidence: readonly { modelUsage: NvidiaNimEvidence["usage"];
+export function inferUsage(evidence: readonly { modelUsage: NvidiaNimEvidence["usage"];
   delivery?: NvidiaNimEvidence["delivery"]; providerFailureCategory: NvidiaNimEvidence["failureCategory"] }[]): Usage {
   const usage = zeroUsage();
   for (const item of evidence) {

@@ -10,6 +10,7 @@ import { runCampaign } from "./omega/benchmarks/campaign";
 import { prepareTask } from "./omega/benchmarks/tasks";
 import type { ArmSpec, CampaignSpec } from "./omega/benchmarks/contracts";
 import { ARC_PUBLIC_EPOCH_SELECTION } from "./omega/nyx-arc-benchmark-epoch";
+import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact } from "./omega/benchmarks/sourceRepresentationTasks";
 
 let passed = 0, failed = 0;
 const check = (value: unknown, label: string) => { if (value) passed++; else { failed++; console.error(`FAIL ${label}`); } };
@@ -198,6 +199,63 @@ for (const [reason, expected] of [["truncated", "TRUNCATION"], ["provider_timeou
   rejects(() => createArcAdapter({spec: spec("CANDIDATE_NYX"), sourceRepresentation: "UNSAFE" as never,
     provider: provider(async () => reply("{}")), candidateCommit: "a".repeat(40), maxOutputTokens: 8192}),
     "unknown source contract fails closed");
+}
+// Independent test-only solutions validate the experiment's oracle and real execution path.
+// These sources never enter a model prompt or the downloaded benchmark corpus.
+const representationReferences: Record<string, string> = {
+  "INTERVAL-UNION": `export function transform(input) {
+    const ordered=input.map(interval=>interval.slice()).sort((a,b)=>a[0]-b[0]);
+    const merged=[];
+    for(const interval of ordered) {
+      const previous=merged.at(-1);
+      if(previous&&interval[0]<=previous[1])previous[1]=Math.max(previous[1],interval[1]);
+      else merged.push(interval);
+    }
+    return merged;
+  }`,
+  "WEIGHTED-MOMENT": `export function transform(input) {
+    let totalWeight=0;let weightedSum=0;
+    for(const record of input) {totalWeight+=record.weight;weightedSum+=record.value*record.weight;}
+    return totalWeight===0?null:weightedSum/totalWeight;
+  }`,
+  "POLYNOMIAL-EVALUATION": `export function transform(input) {
+    let value=0;
+    for(let index=input.coefficients.length-1;index>=0;index--)value=value*input.x+input.coefficients[index];
+    return value;
+  }`,
+  "CHUNKED-LINE-FRAMING": `export function transform(input) {
+    const stream=input.join("");if(!stream)return [];
+    const lines=stream.split(/\\r?\\n/);if(stream.endsWith("\\n"))lines.pop();
+    return lines;
+  }`,
+};
+for (const task of SOURCE_REPRESENTATION_TASKS) {
+  const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
+  const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
+  check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);
+  check(!scoreRepresentationArtifact(task, marker(rows.map(r => ({...r, inputUnchanged: false})))).accepted,
+    `${task.id} input mutation cannot be certified by matching outputs`);
+  check(!scoreRepresentationArtifact(task, marker(rows.map(r => ({...r, resultDetached: false})))).accepted,
+    `${task.id} output aliasing cannot pass as new independent values`);
+  check(!scoreRepresentationArtifact(task, marker(rows.slice(1))).accepted, `${task.id} missing case cannot pass`);
+  check(!scoreRepresentationArtifact(task, marker(rows) + "\n" + marker(rows)).accepted,
+    `${task.id} ambiguous candidate artifacts fail closed`);
+  check(!representationRepositoryFiles(task)["tools/verify.mjs"].includes(JSON.stringify(task.privateCases)),
+    `${task.id} withheld answer table absent from visible verifier`);
+  const session = await R3BenchmarkRepositorySession.create(representationRepositoryFiles(task), "a".repeat(40), Date.now() + 60000, 12000);
+  const baseline = await session.baseline();
+  check(baseline.observation.state === "TEST_FAIL", `${task.id} real existing Omega execution observes initial failure`);
+  const source=representationReferences[task.id];
+  const prepared=await session.prepare({hypothesisId: "REFERENCE-ONLY", proposalDigest: "REFERENCE-ONLY", verificationToolIds: ["TEST"],
+    changes: [{kind: "MODIFY",relativePath: "src/transform.mjs",expectedBaseHash: contentHash(session.files["src/transform.mjs"]),
+      replacementContent: source,replacementContentHash: contentHash(source)}]} as unknown as Parameters<R3BenchmarkRepositorySession["prepare"]>[0]);
+  const verification=prepared.verifications[0];const execution=await verification.executor.execute(verification.request);
+  check(execution.evidence.stdout.includes("TEST_PASS public-examples")
+    && scoreRepresentationArtifact(task,execution.evidence.stdout).accepted,
+    `${task.id} independent reference passes real bounded execution and private scorer`);
+  const cleanup = await session.close();
+  check(cleanup.sourceUnchanged && cleanup.cleanupVerified && cleanup.lifecycleTerminations === cleanup.provisionedLifecycles,
+    `${task.id} existing owned lifecycle closes without leaked capability or source mutation`);
 }
 console.log(`passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;
