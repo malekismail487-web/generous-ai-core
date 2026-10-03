@@ -443,6 +443,8 @@ export interface NyxNemotronEngineeringCognitionConfig {
   readonly intentCompilationMode?: NyxRepairIntentCompilationMode;
   /** Explicit bounded evaluation switch; omission preserves the established configuration. */
   readonly experimentVariant?: NyxCognitionExperimentVariant;
+  /** Explicit comparison control. Omission preserves each established variant's inference policy. */
+  readonly comparisonInferencePolicy?: "CONSTRAINED_JSON" | "REASONING_JSON";
   /** Evaluation-only, process-local feedback. Never changes executable authority or acceptance. */
   readonly repairFeedbackPolicy?: NyxRepairFeedbackPolicy;
 }
@@ -634,6 +636,10 @@ export class NyxNemotronEngineeringCognition {
 
   static create(config: NyxNemotronEngineeringCognitionConfig): NyxNemotronEngineeringCognition {
     const profile = config.provider.profile();
+    if (config.comparisonInferencePolicy !== undefined
+      && !["CONSTRAINED_JSON", "REASONING_JSON"].includes(config.comparisonInferencePolicy)) {
+      throw new Error("nyx_comparison_inference_policy_invalid");
+    }
     if (config.experimentVariant !== undefined && !["CURRENT", "REASONING_ENABLED", "MINIMAL_REFERENCE"].includes(config.experimentVariant)) {
       throw new Error("nyx_experiment_variant_invalid");
     }
@@ -760,7 +766,8 @@ export class NyxNemotronEngineeringCognition {
         : NYX_REPAIR_SYSTEM_INSTRUCTION },
         { role: "user", content: serializedPrompt }], maxTokens: this.#config.maxOutputTokens, temperature: 0,
       responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema: contract.providerSchema },
-      inferencePolicy: this.#experimentVariant === "CURRENT" ? "CONSTRAINED_JSON" : "REASONING_JSON",
+      inferencePolicy: this.#config.comparisonInferencePolicy
+        ?? (this.#experimentVariant === "CURRENT" ? "CONSTRAINED_JSON" : "REASONING_JSON"),
       observedAtEpochMs: request.observedAtEpochMs, deadlineEpochMs: request.deadlineEpochMs, signal: request.signal });
     if (completion.evidence.statusCode === 200 && completion.finishReason === "length") {
       return this.#result("COGNITION_ERROR", "nyx_cognition_output_truncated", request, null, null,

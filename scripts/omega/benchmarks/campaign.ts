@@ -7,6 +7,8 @@ import { TaskExposureHistory, type PreparedTask } from "./tasks";
 import { gradeExternalReport, type ExternalReport } from "./officialFormats";
 
 const outputSchema = z.object({ artifact: z.unknown(), usage: usageSchema,
+  // Adapter-owned trace measurements, not candidate-supplied acceptance authority.
+  internalCandidateAttempts: z.number().int().nonnegative().max(1000).optional(),
   failure: z.enum(FAILURE_CLASSES).nullable(), confidence: z.number().min(0).max(1).nullable(),
   requestDigests: z.array(z.string().regex(/^[a-f0-9]{64}$/)).max(1000),
   responseDigests: z.array(z.string().regex(/^[a-f0-9]{64}$/)).max(1000),
@@ -25,6 +27,7 @@ export interface TrustedEvaluator {
   readonly evaluate: (task: PreparedTask, artifact: unknown, context: AttemptContext, signal: AbortSignal) => Promise<ExternalReport>;
 }
 export interface AttemptRecord {
+  readonly internalCandidateAttempts: number | null;
   readonly attempt: number;
   readonly context: AttemptContext | null;
   readonly outcome: "ACCEPTED" | "REJECTED" | "NOT_VERIFIED" | "FAILED";
@@ -150,6 +153,7 @@ export async function runCampaign(rawSpec: CampaignSpec, tasks: readonly Prepare
               : phase === "PARSE" || task.scoreArc ? "SCHEMA_FAILURE" : "VERIFIER_FAILURE";
           }
           const record: AttemptRecord = immutableTheoryValue({ attempt, context,
+            internalCandidateAttempts: output?.internalCandidateAttempts ?? null,
             outcome: evaluation?.state === "PASS" && !failure ? "ACCEPTED" : evaluation?.state === "FAIL" ? "REJECTED"
               : evaluation?.state === "INSUFFICIENT_EVIDENCE" ? "NOT_VERIFIED" : "FAILED",
             failure, evaluation, usage: observedUsage, verifierUsage, observedVerifierWallClockMs: verifierElapsedMs,
@@ -174,8 +178,11 @@ export async function runCampaign(rawSpec: CampaignSpec, tasks: readonly Prepare
     const unknownVerifierUsage = attempts.filter(a => a.context && !a.verifierUsage).length;
     const judged = attempts.filter(a => a.evaluation && a.evaluation.state !== "INSUFFICIENT_EVIDENCE" && a.confidence !== null);
     return { arm, tasks: selected.length, executedTasks: selected.filter(r => r.attempts.length).length,
-      firstAttemptAccepted: selected.filter(r => r.attempts[0]?.outcome === "ACCEPTED").length,
-      repairedAccepted: selected.filter(r => r.attempts.length > 1 && r.attempts.at(-1)?.outcome === "ACCEPTED").length,
+      firstAttemptAccepted: selected.filter(r => r.attempts[0]?.outcome === "ACCEPTED"
+        && (r.attempts[0].internalCandidateAttempts ?? 1) === 1 && r.attempts[0].usage?.logicalCalls === 1).length,
+      repairedAccepted: selected.filter(r => r.attempts.at(-1)?.outcome === "ACCEPTED"
+        && (r.attempts.length > 1 || (r.attempts[0].internalCandidateAttempts ?? 1) > 1
+          || (r.attempts[0].usage?.logicalCalls ?? 0) > 1)).length,
       finalAccepted: selected.filter(r => r.attempts.at(-1)?.outcome === "ACCEPTED").length,
       qualityAccepted: selected.filter(r => r.attempts.at(-1)?.evaluation?.quality === "ACCEPT").length,
       qualityNotEvaluated: selected.filter(r => r.attempts.at(-1)?.evaluation?.quality === "NOT_EVALUATED").length,

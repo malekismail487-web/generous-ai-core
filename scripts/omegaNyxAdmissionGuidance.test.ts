@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { arcCorePredecessorSource } from "./omega/nyx-arc-core-refinement";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
@@ -44,11 +45,11 @@ check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected
   digest(execFileSync("git", ["show", `${NYX_GATE_RECOVERY_FROZEN_CORE.commit}:${path}`])) === expected),
   "historical ownership-repair core remains immutable and reproducible");
 check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected]) =>
-  digest(readFileSync(path)) === (path === NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath
+  digest(Buffer.from(arcCorePredecessorSource(path, readFileSync(path, "utf8")))) === (path === NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath
     ? NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.sourceSha256
     : path === NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.cognitionPath
       ? NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.cognitionSourceSha256 : expected)),
-  "current core admits only the exact registered opt-in wire diagnostic revision; all other frozen paths are unchanged");
+  "current core permits only exact registered refinements; inversion reproduces frozen sources without inheriting historical scores");
 const boundedProvider = execFileSync("git", ["show",
   `${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.predecessor}:${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.changedPath}`],
 { encoding: "utf8" });

@@ -42,6 +42,7 @@ jobs:
           scripts/omegaBoundedReasoningWorkbench.test.ts
           scripts/omegaQuantitativeConstraintFeedback.test.ts
           scripts/omegaBenchmarkCapabilityHarness.test.ts scripts/omega/benchmark-cli.ts
+          scripts/omegaArcNyxIntegration.test.ts scripts/omega/nyx-arc-live-eval.ts
           scripts/omega/nyx-quantitative-transfer-live-eval.ts
           scripts/omega/nyx-research-party-live-eval.ts
       - name: Build production bundle without deployment

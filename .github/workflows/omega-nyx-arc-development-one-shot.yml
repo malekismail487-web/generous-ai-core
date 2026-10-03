@@ -1,0 +1,43 @@
+name: Omega NYX existing-R3 ARC development pilot
+on:
+  workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [scripts/omega/nyx-arc-live-eval.ts]
+permissions:
+  contents: read
+concurrency:
+  group: omega-nyx-arc-development-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  arc-development:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen dependencies without lifecycle scripts
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Verify integration and strict scoring without credentials
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaArcNyxIntegration.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBenchmarkCapabilityHarness.test.ts
+      - name: Run one finite public-training comparison
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-arc-live-eval.ts
+      - name: Preserve sanitized public-training evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-arc-development-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-arc-development-*.json
+          if-no-files-found: warn

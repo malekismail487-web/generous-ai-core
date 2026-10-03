@@ -63,3 +63,33 @@ Equivalent-tool controls must share exact model/configuration/authority/tool env
 Independent verifier consumption is recorded separately and included in realized-compute checks. An external judge without usage evidence leaves verifier usage unknown and prevents a full compute-match claim. The native ARC verifier's work unit is tested outputs, not CPU cycles or all hashing overhead. False acceptance remains unknown until a separate audit executes, not a fabricated zero.
 
 No automatic broad promotion exists. Review requires fresh, non-contaminated task populations, independent evaluation, matched controls, replication and actual capability gains. The target of near-100% remains an aspiration, not a score inferred from architecture.
+# Existing NYX execution adapter
+
+`nyxArcAdapter.ts` composes the existing NYX engineering cognition and R3 bounded repair loop,
+R1 inspection, R2A lifecycle, R2G patch proposals, R3A disposable application, R3B fixed tools,
+and unchanged static candidate admission. It does not introduce a second cognition controller,
+sandbox, or verifier. `MODEL_EQUIVALENT_TOOLS` uses the existing minimal-reference prompt,
+explicitly pinned to the same provider inference policy as `CURRENT_NYX`; omission preserves
+the previous policies for all existing consumers. `RAW_MODEL` produces grids without tools.
+`nyx-arc-core-refinement.ts` records the exact two opt-in changes (inference comparison control
+and outer cancellation). Inverting those exact hunks must reproduce the entire frozen predecessor.
+Historical evaluated commits and their digests remain immutable; historical scored protocols
+still require their exact frozen sources and do not inherit this new epoch's results.
+No new candidate mechanism is labeled as improved before it earns fresh evidence.
+
+Public examples can guide the internal bounded repair loop; test outputs stay only in the
+independent scorer closure. Verifier stdout predictions are untrusted candidate artifacts,
+NOT self-certified success. Ambiguous/malformed artifacts fail closed. The report separates
+internal revisions from first-call/first-candidate acceptance. Execution is the established
+process-local Node permission **seatbelt**, not a hostile-code or proven network sandbox.
+Production use and official hostile repository evaluation still require suitable isolation.
+
+`scripts/omega/nyx-arc-live-eval.ts` freezes the first three lexicographically sorted public
+training paths from the pinned ARC repository before opening contents. Upstream Git blob
+identity is checked after only checkout-EOL normalization and removing the one import-added
+final LF. These tasks are DEVELOPMENT, may be pretraining-exposed, and are NOT fresh transfer,
+private benchmark or official leaderboard evidence. Model API calls require explicit network
+authorization and the injected GitHub secret. No credential enters the disposable process.
+Known usage, HTTP retries, unreported failed-retry work, public verifier invocations and independent
+scorer work are separately recorded. Equal ceilings are not equal realized compute. The absent
+candidate arm and unequal realized costs prohibit broader promotion from this pilot.

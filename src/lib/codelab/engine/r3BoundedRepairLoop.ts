@@ -90,6 +90,8 @@ export interface R3RepairBaselineExecution {
 }
 
 export interface R3BoundedRepairRequest {
+  /** Outer experiment cancellation never renews the loop's deadline or grants authority. */
+  readonly signal?: AbortSignal;
   readonly schemaVersion: 1;
   readonly repairRequestId: string;
   readonly objective: string;
@@ -325,6 +327,7 @@ export class R3BoundedRepairLoop {
     for (let cognitionCycle = 1;
       cognitionCycle <= maxModelInteractions && iterations.length < this.#config.maxIterations;
       cognitionCycle += 1) {
+      if (request.signal?.aborted) return finish("EXHAUSTED", "repair_outer_request_aborted", iterations, currentObservation);
       if (Date.now() - started >= this.#config.maxWallClockMs) return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
       let theoryResearchContext: TheoryResearchContext | undefined;
       try { theoryResearchContext = this.#config.theorySession?.context(request.objective,
@@ -342,7 +345,7 @@ export class R3BoundedRepairLoop {
         maxPatchBytes: this.#config.maxPatchBytesPerIteration, maxDiagnosisCharacters: this.#config.maxDiagnosisCharacters,
         maxCounterexamples: 3,
         deadlineEpochMs: started + this.#config.maxWallClockMs,
-        observedAtEpochMs: Math.max(request.observedAtEpochMs, Date.now()) });
+        observedAtEpochMs: Math.max(request.observedAtEpochMs, Date.now()), signal: request.signal });
       lastCognitionEvidence = cognition.evidence;
       if (cognition.evidence.modelEvidenceId !== "NOT_INVOKED" && cognition.evidence.delivery?.httpAttempts !== 0) modelCallCount += 1;
       try { this.#config.theorySession?.assertActive(); }
@@ -350,7 +353,7 @@ export class R3BoundedRepairLoop {
       if (cognition.decision === "WAITING_FOR_CAPACITY") {
         return finish("WAITING_FOR_CAPACITY", "repair_paused_for_capacity_requires_fresh_authority", iterations, currentObservation);
       }
-      if (Date.now() - started >= this.#config.maxWallClockMs) {
+      if (request.signal?.aborted || Date.now() - started >= this.#config.maxWallClockMs) {
         return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
       }
       if (cognition.decision === "COGNITION_ERROR" && cognition.schemaDiagnostics.length > 0
@@ -411,6 +414,7 @@ export class R3BoundedRepairLoop {
       const candidateContexts = expectedCandidateContexts(currentFiles, cognition.hypothesis);
       const verifications: R3RepairVerificationRecord[] = [];
       for (const verification of candidate.verifications) {
+        if (request.signal?.aborted) return finish("EXHAUSTED", "repair_outer_request_aborted", iterations, currentObservation);
         if (Date.now() - started >= this.#config.maxWallClockMs) return finish("EXHAUSTED", "repair_wall_clock_budget_exhausted", iterations, currentObservation);
         try { this.#config.theorySession?.assertActive(); }
         catch { return finish("BLOCKED", "theory_session_revoked_or_expired", iterations, currentObservation); }
