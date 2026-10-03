@@ -1,0 +1,883 @@
+{
+  "schemaVersion": 1,
+  "chunkId": "NYX-MEASURED-QUALITY-REPAIR-001",
+  "candidate": "144baa5de73a971fd9396fc1ec9ecdbffdca679a",
+  "runId": 37148348497,
+  "jobId": 111276809841,
+  "ciRunId": 37148348507,
+  "report": {
+    "schemaVersion": 1,
+    "candidate": "144baa5de73a971fd9396fc1ec9ecdbffdca679a",
+    "frozen": {
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "temperature": 0,
+      "inferencePolicy": "CONSTRAINED_JSON",
+      "maxOutputTokens": 4096,
+      "providerTimeoutMs": 65000,
+      "logicalCallsPerTask": 2,
+      "candidateIterationsPerTask": 2,
+      "toolCallsPerTask": 3,
+      "wallClockMsPerTask": 155000,
+      "globalWallClockMs": 1350000,
+      "maxPatchBytes": 12000,
+      "maxPromptBytes": 48000,
+      "realizedTolerance": 0.1,
+      "changedVariable": "PUBLIC_STATIC_METRICS_VS_SOURCE_LINKED_DETECTOR_EXPLANATION_ONLY",
+      "publicFeedback": "IDENTICAL_PUBLIC_TEST_FAILURE_AND_STATIC_ADMISSION",
+      "authority": "EXISTING_R3_ISOLATED_ONLY",
+      "sourceMutations": false,
+      "generalShell": false,
+      "generalNetwork": false,
+      "production": false,
+      "hostileCodeSandbox": false,
+      "candidateNetworkIsolation": "NOT_PROVEN"
+    },
+    "sourceDigests": {
+      "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "018d4235a6921fde93b705798057e07faa0ad54de96bf2ed5df89a0c00c3c715",
+      "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts": "4f0dbb3d393d6e5c581e029aadd9a5c86372be6c4257b00cdb2e66ee61b167ff",
+      "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "776c9b03c213e08281e5a0404c01f4722dceb87239d2a6a0e51e63a70e597ae7",
+      "scripts/omega/benchmarks/sourceRepresentationTasks.ts": "31ca74ce450ef86a9472c7f2d0935789c0cc199572f66a27054cf22e366a9aca",
+      "scripts/omega/benchmarks/arrayBoundTransferTasks.ts": "8606df3882c3568324f041d25818fec2d8ee28a2063cc5cddf9082f65f0f807c",
+      "scripts/omega/benchmarks/sourceLiteralTransferTasks.ts": "c357173ad8e5d7e871f7552f55f37694399ba7ac5b6ac726be8dcbb88fa427e2",
+      "scripts/omega/benchmarks/measuredQualityTransferTasks.ts": "43b4f950d291cded6cf1a42830941c7bb1a74760b3c084acfe1138f66ef341f3",
+      "src/lib/codelab/cognition/nyxMeasuredQualityGuidance.ts": "4d6e8d8a64ad9ffc35626116884b096aca65468bc510a7f29d9995f756ffcf43",
+      "src/lib/codelab/assurance/engineeringQualityOracle.ts": "df8bcf16596289412c5150cf64f88610849085887f3e506dbd3de6689414889b"
+    },
+    "tasks": [
+      {
+        "id": "KEYED-MEAN-RECONCILIATION",
+        "tier": "DEVELOPMENT",
+        "domain": "DATA_RECONCILIATION",
+        "inputDigest": "714f0cdd9627b1fd733b29f81278c600c23b9ed41c7c256eca3c74cb45b5ce19",
+        "oracleDigest": "88b896dde5af57899927bd642bb57f683171a798196526e33c9a7dc90a9cf944",
+        "fixtureDigest": "e298924d98f7ab88a9c966e493fbd1ffa892fbed52161cc79e546231e8dbc9c2"
+      },
+      {
+        "id": "BOUNDED-COVERAGE-GAPS",
+        "tier": "VALIDATION",
+        "domain": "INTERVAL_COMPLEMENT",
+        "inputDigest": "ac0ca7f8130a383b52a621dbb2a326537590bfa3d74aa0e03ab2feae71dd031f",
+        "oracleDigest": "403e8d79a8e18acc7386e79b8f5021894ef1e491260b2213ff4b6ed34fbe1aff",
+        "fixtureDigest": "b64dec6a0e1a001ab147538c2544c20a8a91228e3fc4d69d7853387d634c1cb6"
+      },
+      {
+        "id": "TRAILING-RMS",
+        "tier": "VALIDATION",
+        "domain": "NUMERICAL_STREAM_STATISTICS",
+        "inputDigest": "f1e0d6a20832ac0ac6b21ed8064e3fbdbfb1041389cb7cb145ea74d770abddca",
+        "oracleDigest": "f8832c5ca8689098578f8220405bf533ae28c49e07ae09a36cd1b2294a62b626",
+        "fixtureDigest": "eb37b1b015869848be31ac1ffc11f682636420b102f3e5a12404e96dce98ce30"
+      }
+    ],
+    "results": [
+      {
+        "id": "KEYED-MEAN-RECONCILIATION",
+        "tier": "DEVELOPMENT",
+        "domain": "DATA_RECONCILIATION",
+        "variant": "PUBLIC_METRICS",
+        "preserveProviderArrayBounds": true,
+        "representation": "LINES",
+        "accepted": true,
+        "functionalAccepted": true,
+        "qualityAccepted": true,
+        "publicAccepted": true,
+        "score": {
+          "accepted": true,
+          "correct": 4,
+          "total": 4,
+          "failure": null
+        },
+        "firstCallAccepted": false,
+        "repairedAccepted": true,
+        "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+        "loopReason": "bounded_repair_functionally_verified",
+        "failureClass": null,
+        "infrastructureFailure": false,
+        "inspections": [
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "2feef5f71e361d8d7aee5e46592be917a52df59dd0a27106f8ac936171e98a17",
+            "sourceDigest": "8a6729453edd51963079f8da64f4cd0ca14d2c766c8790a609fdca6c47d9d345",
+            "sourceBytes": 562,
+            "lineCount": 21,
+            "finalLineLength": 1,
+            "maximumLineLength": 52,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          },
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "ae23a6009726efe23a45025367b6cb6ed09588f50ff4135d7bf0e1b03a4123ab",
+            "sourceDigest": "5185947ef0c8f99f71f3c36487cb9f5b192907f02621918be28dbf7af3a14d16",
+            "sourceBytes": 486,
+            "lineCount": 19,
+            "finalLineLength": 1,
+            "maximumLineLength": 52,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          }
+        ],
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 3,
+          "httpAttempts": 3,
+          "reportedTokens": 8737,
+          "unknownUsageCalls": 1,
+          "toolCalls": 3,
+          "toolWorkUnits": 18,
+          "wallClockMs": 93016,
+          "providerFailures": 1,
+          "retries": 1
+        },
+        "candidateIterations": 2,
+        "toolUsageComplete": true,
+        "perIteration": [
+          {
+            "iteration": 1,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 5,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 4,
+              "total": 4,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 4
+          },
+          {
+            "iteration": 2,
+            "publicAccepted": true,
+            "quality": "ADMITTED",
+            "qualityFindings": [],
+            "score": {
+              "accepted": true,
+              "correct": 4,
+              "total": 4,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": true,
+            "accepted": true,
+            "privateScorerWorkUnits": 4
+          }
+        ],
+        "failureCodes": [],
+        "requestDigests": [
+          "3a7dd9bbc85eaeaf10c814de558ca5cb27c109849380ce56e3fa1b0cd05932f6",
+          "d3fba1fe5c7f328a976fb058d3f7ce654014ddd41dca8a641877ce74f9b3d436"
+        ],
+        "responseDigests": [
+          "2feef5f71e361d8d7aee5e46592be917a52df59dd0a27106f8ac936171e98a17",
+          "ae23a6009726efe23a45025367b6cb6ed09588f50ff4135d7bf0e1b03a4123ab"
+        ],
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 3,
+          "provisionedLifecycles": 3
+        },
+        "privateScorerWorkUnits": 8
+      },
+      {
+        "id": "KEYED-MEAN-RECONCILIATION",
+        "tier": "DEVELOPMENT",
+        "domain": "DATA_RECONCILIATION",
+        "variant": "MEASURED_STRUCTURE",
+        "preserveProviderArrayBounds": true,
+        "representation": "LINES",
+        "accepted": true,
+        "functionalAccepted": true,
+        "qualityAccepted": true,
+        "publicAccepted": true,
+        "score": {
+          "accepted": true,
+          "correct": 4,
+          "total": 4,
+          "failure": null
+        },
+        "firstCallAccepted": false,
+        "repairedAccepted": true,
+        "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+        "loopReason": "bounded_repair_functionally_verified",
+        "failureClass": null,
+        "infrastructureFailure": false,
+        "inspections": [
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "f1f836ea6118e831956bc2976e0a7b3ea7277201ddba06c34bcbddd732aeacb4",
+            "sourceDigest": "8a6729453edd51963079f8da64f4cd0ca14d2c766c8790a609fdca6c47d9d345",
+            "sourceBytes": 562,
+            "lineCount": 21,
+            "finalLineLength": 1,
+            "maximumLineLength": 52,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          },
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "f1166a63c07ef7cc1278496e9f475292969705e80686e8ceda7558ac8f35a444",
+            "sourceDigest": "43f390576a8f848e1c0217faf45ae55423b3cf22f288237483ac421afca2f6fa",
+            "sourceBytes": 537,
+            "lineCount": 19,
+            "finalLineLength": 1,
+            "maximumLineLength": 52,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          }
+        ],
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 3,
+          "httpAttempts": 3,
+          "reportedTokens": 9311,
+          "unknownUsageCalls": 1,
+          "toolCalls": 3,
+          "toolWorkUnits": 18,
+          "wallClockMs": 98128,
+          "providerFailures": 1,
+          "retries": 1
+        },
+        "candidateIterations": 2,
+        "toolUsageComplete": true,
+        "perIteration": [
+          {
+            "iteration": 1,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 5,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 4,
+              "total": 4,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 4
+          },
+          {
+            "iteration": 2,
+            "publicAccepted": true,
+            "quality": "ADMITTED",
+            "qualityFindings": [],
+            "score": {
+              "accepted": true,
+              "correct": 4,
+              "total": 4,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": true,
+            "accepted": true,
+            "privateScorerWorkUnits": 4
+          }
+        ],
+        "failureCodes": [],
+        "requestDigests": [
+          "3b97bbb17133588a8d7dfd47dd19be8aeef52efb8446771cff77ea7aa5be5ee3",
+          "fdc165b7416b005fde81ad3392b530e40b00b4af4816c6f9bee1e229cc9da051"
+        ],
+        "responseDigests": [
+          "f1f836ea6118e831956bc2976e0a7b3ea7277201ddba06c34bcbddd732aeacb4",
+          "f1166a63c07ef7cc1278496e9f475292969705e80686e8ceda7558ac8f35a444"
+        ],
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 3,
+          "provisionedLifecycles": 3
+        },
+        "privateScorerWorkUnits": 8
+      },
+      {
+        "id": "BOUNDED-COVERAGE-GAPS",
+        "tier": "VALIDATION",
+        "domain": "INTERVAL_COMPLEMENT",
+        "variant": "MEASURED_STRUCTURE",
+        "preserveProviderArrayBounds": true,
+        "representation": "LINES",
+        "accepted": false,
+        "functionalAccepted": true,
+        "qualityAccepted": false,
+        "publicAccepted": true,
+        "score": {
+          "accepted": true,
+          "correct": 4,
+          "total": 4,
+          "failure": null
+        },
+        "firstCallAccepted": false,
+        "repairedAccepted": false,
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_iteration_budget_exhausted",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "infrastructureFailure": false,
+        "inspections": [
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "098eb9146551b3b9bdb9a4d739cd8ecc355be0587a7d59f5be32708fe7391914",
+            "sourceDigest": "bd1911d04812a51798949d83d0eb94e13ef59c2528d13a36a8cb97be07059d95",
+            "sourceBytes": 1185,
+            "lineCount": 47,
+            "finalLineLength": 0,
+            "maximumLineLength": 58,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          },
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "bc96d5756873be354ed4308fb674f48ff7027113c1cc7c65d93f964d7ba99f7e",
+            "sourceDigest": "fa79479af8beba599b90bda64e2d7c587fe39306b02520c86de6f0dc6da4d592",
+            "sourceBytes": 670,
+            "lineCount": 27,
+            "finalLineLength": 1,
+            "maximumLineLength": 58,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          }
+        ],
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 10170,
+          "unknownUsageCalls": 0,
+          "toolCalls": 3,
+          "toolWorkUnits": 18,
+          "wallClockMs": 43438,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "candidateIterations": 2,
+        "toolUsageComplete": true,
+        "perIteration": [
+          {
+            "iteration": 1,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "COMPLEXITY_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 9,
+                  "limit": 8
+                }
+              },
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 10,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 4,
+              "total": 4,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 4
+          },
+          {
+            "iteration": 2,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "COMPLEXITY_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 10,
+                  "limit": 8
+                }
+              },
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 8,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 4,
+              "total": 4,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 4
+          }
+        ],
+        "failureCodes": [],
+        "requestDigests": [
+          "55576a61c2a572a288e71a08485e7894cf4b9e821e12db300f6e0493fc689aea",
+          "bbd1044c7d37d53c9bc1ea80ffb8ea97a06845b467ec2a80e582a6a660e9cb28"
+        ],
+        "responseDigests": [
+          "098eb9146551b3b9bdb9a4d739cd8ecc355be0587a7d59f5be32708fe7391914",
+          "bc96d5756873be354ed4308fb674f48ff7027113c1cc7c65d93f964d7ba99f7e"
+        ],
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 3,
+          "provisionedLifecycles": 3
+        },
+        "privateScorerWorkUnits": 8
+      },
+      {
+        "id": "BOUNDED-COVERAGE-GAPS",
+        "tier": "VALIDATION",
+        "domain": "INTERVAL_COMPLEMENT",
+        "variant": "PUBLIC_METRICS",
+        "preserveProviderArrayBounds": true,
+        "representation": "LINES",
+        "accepted": false,
+        "functionalAccepted": false,
+        "qualityAccepted": false,
+        "publicAccepted": false,
+        "score": null,
+        "firstCallAccepted": false,
+        "repairedAccepted": false,
+        "loopOutcome": "COGNITION_ERROR",
+        "loopReason": "repair_cognition_nvidia_provider_http_503",
+        "failureClass": "PROVIDER_FAILURE",
+        "infrastructureFailure": false,
+        "inspections": [],
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 2,
+          "toolCalls": 1,
+          "toolWorkUnits": 6,
+          "wallClockMs": 60650,
+          "providerFailures": 2,
+          "retries": 1
+        },
+        "candidateIterations": 0,
+        "toolUsageComplete": true,
+        "perIteration": [],
+        "failureCodes": [],
+        "requestDigests": [
+          "d11e2147e5c812c50eb566158c9655a57d5d125cf034fa0be3d6974a0bab9bdc"
+        ],
+        "responseDigests": [],
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 1,
+          "provisionedLifecycles": 1
+        },
+        "privateScorerWorkUnits": 0
+      },
+      {
+        "id": "TRAILING-RMS",
+        "tier": "VALIDATION",
+        "domain": "NUMERICAL_STREAM_STATISTICS",
+        "variant": "PUBLIC_METRICS",
+        "preserveProviderArrayBounds": true,
+        "representation": "LINES",
+        "accepted": false,
+        "functionalAccepted": false,
+        "qualityAccepted": false,
+        "publicAccepted": false,
+        "score": null,
+        "firstCallAccepted": false,
+        "repairedAccepted": false,
+        "loopOutcome": "WAITING_FOR_CAPACITY",
+        "loopReason": "repair_paused_for_capacity_requires_fresh_authority",
+        "failureClass": "PROVIDER_FAILURE",
+        "infrastructureFailure": false,
+        "inspections": [],
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 1,
+          "httpAttempts": 1,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 1,
+          "toolCalls": 1,
+          "toolWorkUnits": 6,
+          "wallClockMs": 125002,
+          "providerFailures": 1,
+          "retries": 0
+        },
+        "candidateIterations": 0,
+        "toolUsageComplete": true,
+        "perIteration": [],
+        "failureCodes": [],
+        "requestDigests": [
+          "0ab648fad0095ab62f5bb22d459b57025adb1ab44ebe59cf12b0c0111c4500fa"
+        ],
+        "responseDigests": [],
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 1,
+          "provisionedLifecycles": 1
+        },
+        "privateScorerWorkUnits": 0
+      },
+      {
+        "id": "TRAILING-RMS",
+        "tier": "VALIDATION",
+        "domain": "NUMERICAL_STREAM_STATISTICS",
+        "variant": "MEASURED_STRUCTURE",
+        "preserveProviderArrayBounds": true,
+        "representation": "LINES",
+        "accepted": false,
+        "functionalAccepted": true,
+        "qualityAccepted": false,
+        "publicAccepted": true,
+        "score": {
+          "accepted": true,
+          "correct": 4,
+          "total": 4,
+          "failure": null
+        },
+        "firstCallAccepted": false,
+        "repairedAccepted": false,
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_iteration_budget_exhausted",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "infrastructureFailure": false,
+        "inspections": [
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "92d24c04c9b5cf78b61b787c1b08069a84098c74c4ab53af64b997a3851932c0",
+            "sourceDigest": "4c8f0991306afb5fb79ccf91527218a4863f7059e2908d69eddf346debd8de6a",
+            "sourceBytes": 440,
+            "lineCount": 16,
+            "finalLineLength": 1,
+            "maximumLineLength": 47,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          },
+          {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "7cc38e2dc754a681702422d7210a200456a967bc5b5c03c41ed22687ae0bae60",
+            "sourceDigest": "e21b3056505649e72eeca99818497f8e280d4bcb4677f1fd5d411ac2dc8f3e87",
+            "sourceBytes": 431,
+            "lineCount": 15,
+            "finalLineLength": 1,
+            "maximumLineLength": 60,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          }
+        ],
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 9072,
+          "unknownUsageCalls": 0,
+          "toolCalls": 3,
+          "toolWorkUnits": 18,
+          "wallClockMs": 80657,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "candidateIterations": 2,
+        "toolUsageComplete": true,
+        "perIteration": [
+          {
+            "iteration": 1,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 6,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 4,
+              "total": 4,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 4
+          },
+          {
+            "iteration": 2,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 5,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 4,
+              "total": 4,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 4
+          }
+        ],
+        "failureCodes": [],
+        "requestDigests": [
+          "08c7d2532b3951de09d2cb8ba61c879900151b6d8d6026243d3803dbd50e13a2",
+          "9e79703c53ee1014c42623f73f06f188d593dd06cbf04ef64548605a947e22f8"
+        ],
+        "responseDigests": [
+          "92d24c04c9b5cf78b61b787c1b08069a84098c74c4ab53af64b997a3851932c0",
+          "7cc38e2dc754a681702422d7210a200456a967bc5b5c03c41ed22687ae0bae60"
+        ],
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 3,
+          "provisionedLifecycles": 3
+        },
+        "privateScorerWorkUnits": 8
+      }
+    ],
+    "pairs": [
+      {
+        "id": "KEYED-MEAN-RECONCILIATION",
+        "tier": "DEVELOPMENT",
+        "providerStable": false,
+        "matchedRealizedCompute": false,
+        "outcomes": [
+          {
+            "variant": "PUBLIC_METRICS",
+            "accepted": true,
+            "failureClass": null
+          },
+          {
+            "variant": "MEASURED_STRUCTURE",
+            "accepted": true,
+            "failureClass": null
+          }
+        ]
+      },
+      {
+        "id": "BOUNDED-COVERAGE-GAPS",
+        "tier": "VALIDATION",
+        "providerStable": false,
+        "matchedRealizedCompute": false,
+        "outcomes": [
+          {
+            "variant": "MEASURED_STRUCTURE",
+            "accepted": false,
+            "failureClass": "RESOURCE_EXHAUSTION"
+          },
+          {
+            "variant": "PUBLIC_METRICS",
+            "accepted": false,
+            "failureClass": "PROVIDER_FAILURE"
+          }
+        ]
+      },
+      {
+        "id": "TRAILING-RMS",
+        "tier": "VALIDATION",
+        "providerStable": false,
+        "matchedRealizedCompute": false,
+        "outcomes": [
+          {
+            "variant": "PUBLIC_METRICS",
+            "accepted": false,
+            "failureClass": "PROVIDER_FAILURE"
+          },
+          {
+            "variant": "MEASURED_STRUCTURE",
+            "accepted": false,
+            "failureClass": "RESOURCE_EXHAUSTION"
+          }
+        ]
+      }
+    ],
+    "sourceUnchanged": true,
+    "hypothesis": "Source-linked explanations of existing static measurements improve fresh quality repairs without changing first-attempt prompts, acceptance or model-call limits.",
+    "falsification": "No reproducible gain in quality-accepted repairs or reduced repair cost on fresh tasks at matched realized compute, or any weakened gate.",
+    "summaries": [
+      {
+        "variant": "PUBLIC_METRICS",
+        "accepted": 1,
+        "functionallyAccepted": 1,
+        "qualityAccepted": 1,
+        "firstCallAccepted": 0,
+        "repairedAccepted": 1,
+        "reportedTokens": 8737,
+        "unknownUsageCalls": 4
+      },
+      {
+        "variant": "MEASURED_STRUCTURE",
+        "accepted": 1,
+        "functionallyAccepted": 3,
+        "qualityAccepted": 1,
+        "firstCallAccepted": 0,
+        "repairedAccepted": 1,
+        "reportedTokens": 28553,
+        "unknownUsageCalls": 1
+      }
+    ],
+    "evidence": "E4_LIVE_MODEL_AND_E3_LOCAL_OMEGA_AND_PRIVATE_EXACT_SCORER",
+    "authorship": "SAME_SESSION_NOT_INDEPENDENTLY_AUTHORED",
+    "benchmarkTasksUsed": false,
+    "staticAdmissionAndParserUnchanged": true,
+    "rawSourcePersisted": false,
+    "grantsAuthority": false,
+    "broadPromotion": false
+  },
+  "disposition": "IMPLEMENTED_AND_LOCALLY_VERIFIED_NO_CAPABILITY_PROMOTION",
+  "interpretation": {
+    "accepted": {
+      "PUBLIC_METRICS": 1,
+      "MEASURED_STRUCTURE": 1
+    },
+    "stableMatchedPairs": 0,
+    "reason": "Provider failures prevent a defensible paired gain claim. Aggregate explanations did not produce sufficient quality repairs on two fresh validation tasks.",
+    "rawClassificationCorrection": "Original report labelled the two completed quality-repair exhaustions RESOURCE_EXHAUSTION. Their finite iteration limits were reached well before wall-clock expiry; per-iteration evidence shows QUALITY_REJECTION. Raw receipt preserved unchanged. General evaluator correction follows in a separate candidate.",
+    "nextFalsifiableMechanism": "Bounded source-linked AST declaration sites rather than only aggregate totals. New tasks must be frozen; old tasks and oracles remain unchanged."
+  },
+  "safety": {
+    "sourceUnchanged": true,
+    "cleanupVerified": true,
+    "authorityIncrease": false,
+    "defaultConfigurationChanged": false,
+    "productionAuthority": false,
+    "hostileCodeSandbox": false,
+    "candidateNetworkIsolation": "NOT_PROVEN"
+  },
+  "planCoverage": {
+    "coverageStatus": "PARTIAL / JUST-IN-TIME",
+    "directlyImplemented": [
+      "Validated detector measurements become public actionable repair evidence",
+      "Evaluate cumulative quality against original state",
+      "Separate configuration, provider, functional and quality outcomes"
+    ],
+    "supporting": [
+      "Evidence outranks confidence",
+      "Generator requires detector; detector requires validation",
+      "No self-certification; no authority without scope"
+    ],
+    "deferred": [
+      "Broader benchmark promotion",
+      "New cognitive or biological layers",
+      "Production promotion"
+    ],
+    "conflicts": [
+      "No quality gain may be claimed from equal acceptance counts or unmatched provider conditions"
+    ],
+    "supersededOperationalApproaches": [
+      "Numeric limits alone are not assumed sufficient for structural repair"
+    ]
+  }
+}

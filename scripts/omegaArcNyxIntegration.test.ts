@@ -13,7 +13,8 @@ import { ARC_PUBLIC_EPOCH_SELECTION, ARC_ARRAY_BOUND_TRANSFER_SELECTION } from "
 import { ARRAY_BOUND_TRANSFER_TASKS } from "./omega/benchmarks/arrayBoundTransferTasks";
 import { SOURCE_LITERAL_TRANSFER_TASKS } from "./omega/benchmarks/sourceLiteralTransferTasks";
 import { MEASURED_QUALITY_TRANSFER_TASKS } from "./omega/benchmarks/measuredQualityTransferTasks";
-import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate } from "./omega/benchmarks/sourceRepresentationTasks";
+import { QUALITY_SITE_TRANSFER_TASKS } from "./omega/benchmarks/qualitySiteTransferTasks";
+import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
 
@@ -316,7 +317,26 @@ representationReferences["TRAILING-RMS"] = `export function transform(input) {
   }
   return output;
 }`;
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS]) {
+representationReferences["WEIGHTED-CENTERED-DISPERSION"] = `export function transform(input) {
+  const total = {weight:0,sum:0,deviation:0};
+  for (const {value,weight} of input) {
+    total.weight += weight;
+    total.sum += value * weight;
+  }
+  if (total.weight === 0) return null;
+  const mean = total.sum / total.weight;
+  for (const {value,weight} of input) total.deviation += weight * (value-mean) ** 2;
+  return total.deviation / total.weight;
+}`;
+representationReferences["BALANCED-PARENTHESIS-SPANS"] = `export function transform(input) {
+  const stack = [], pairs = [];
+  for (let index = 0; index < input.length; index++) {
+    if (input[index] === "(") stack.push(index);
+    else if (input[index] === ")") pairs.push({open:stack.pop(),close:index,depth:stack.length+1});
+  }
+  return pairs.sort((a,b) => a.open-b.open);
+}`;
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);
@@ -353,6 +373,25 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
   const cleanup = await session.close();
   check(cleanup.sourceUnchanged && cleanup.cleanupVerified && cleanup.lifecycleTerminations === cleanup.provisionedLifecycles,
     `${task.id} existing owned lifecycle closes without leaked capability or source mutation`);
+}
+{
+  const base={accepted:false,infrastructureFailure:false,reason:"repair_iteration_budget_exhausted",
+    qualityRejected:true,publicFailed:false,privateFailure:null};
+  check(classifyRepresentationFailure(base)==="QUALITY_REJECTION","exhausted quality repairs classified by genuine defect rather than generic resource budget");
+  check(classifyRepresentationFailure({...base,reason:"repair_wall_clock_budget_exhausted"})==="RESOURCE_EXHAUSTION",
+    "actual wall-clock exhaustion remains a separate resource failure");
+  check(classifyRepresentationFailure({...base,reason:"nvidia_provider_http_503"})==="PROVIDER_FAILURE",
+    "failed provider repair is not concealed by a previous quality rejection");
+  check(classifyRepresentationFailure({...base,latestSchemaFailure:{reason:"NON_JSON",diagnostics:[]}})==="SCHEMA_FAILURE",
+    "latest malformed response is not concealed by earlier rejected candidate");
+  check(classifyRepresentationFailure({...base,latestSchemaFailure:{reason:"OUTPUT_TRUNCATED",diagnostics:[]}})==="TRUNCATION",
+    "latest truncation remains separately attributable");
+  check(classifyRepresentationFailure({...base,latestSchemaFailure:{reason:"SCHEMA_INVALID",diagnostics:[{category:"SOURCE_QUALITY_INVALID",observed:"syntax_error_line_8"}]}})==="SYNTAX_FAILURE",
+    "syntax failure not misrepresented as hidden-case reasoning failure");
+  check(classifyRepresentationFailure({...base,qualityRejected:false,privateFailure:"HIDDEN_CASE_FAILURE"})==="HIDDEN_CASE_FAILURE",
+    "private reasoning failure distinct from unavailable or unreached evidence");
+  check(classifyRepresentationFailure({...base,qualityRejected:false})==="INSUFFICIENT_EVIDENCE",
+    "unreached acceptance oracle never manufactured into a model failure");
 }
 check(inspectDiagnosticArray(JSON.stringify({values:Array.from({length:40},(_,i)=>i)}),40).accepted,
   "mechanistic diagnostic accepts only exact longer sequence");

@@ -100,3 +100,25 @@ export function assessRepresentationCandidate(task: RepresentationTask, input: {
     accepted:functionalAccepted&&input.qualityAccepted&&input.loopVerified,
     privateScorerWorkUnits:score===null?0:task.privateCases.length};
 }
+
+/** Outcome accounting only: a finite repair limit is not itself the defect that consumed it. */
+export function classifyRepresentationFailure(input: {
+  accepted: boolean; infrastructureFailure: boolean; reason: string;
+  latestSchemaFailure?: { reason: string; diagnostics: readonly {category:string;observed:string}[] };
+  qualityRejected: boolean; publicFailed: boolean; privateFailure: string|null;
+}) {
+  if(input.accepted)return null;
+  if(input.infrastructureFailure)return "INFRASTRUCTURE_FAILURE";
+  if(/provider|transport|credential|capacity/.test(input.reason))return "PROVIDER_FAILURE";
+  if(/wall_clock|outer_request_aborted/.test(input.reason))return "RESOURCE_EXHAUSTION";
+  const failure=input.latestSchemaFailure;
+  if(failure?.reason==="OUTPUT_TRUNCATED")return "TRUNCATION";
+  if(failure?.diagnostics.some(d=>d.category==="SOURCE_QUALITY_INVALID"&&/^syntax_error_/.test(d.observed)))return "SYNTAX_FAILURE";
+  if(failure?.diagnostics.some(d=>d.category==="SOURCE_QUALITY_INVALID"))return "QUALITY_REJECTION";
+  if(failure?.diagnostics.some(d=>["UNKNOWN_CAPABILITY","INVALID_TARGET_REFERENCE","STALE_TARGET_REFERENCE","UNSUPPORTED_FILE_TARGET"].includes(d.category)))return "AUTHORIZATION_FAILURE";
+  if(failure)return "SCHEMA_FAILURE";
+  if(input.publicFailed)return "FUNCTIONAL_FAILURE";
+  if(input.qualityRejected)return "QUALITY_REJECTION";
+  if(input.privateFailure)return input.privateFailure;
+  return "INSUFFICIENT_EVIDENCE";
+}

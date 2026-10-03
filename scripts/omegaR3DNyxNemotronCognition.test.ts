@@ -725,6 +725,37 @@ function schemaKeys(value: unknown): string[] {
   try{NyxNemotronEngineeringCognition.create({cognitionId:"GUIDANCE-TEST",provider:provider(transportFor(intent())),
     maxPromptBytes:50000,maxOutputTokens:1024,qualityRepairGuidance:"AUTOMATIC_APPROVAL" as never});}catch{unsupportedGuide=true;}
   check(unsupportedGuide,"unknown host guidance mode rejected before inference");
+  const sites=measuredQualityRepairGuidance(measuredRequest,true)!;
+  const siteMeasurement=sites.corrections[0].measurements[0];
+  check(siteMeasurement.declarationSitesComplete&&siteMeasurement.declarationSites?.length===6
+    &&siteMeasurement.declarationSites.reduce((sum,site)=>sum+site.count,0)===siteMeasurement.declarations
+    &&siteMeasurement.declarationSites[0].kind==="FunctionDeclaration"&&siteMeasurement.declarationSites[1].line===2,
+    "development source contribution sites exactly reconstruct existing declaration count and source locations");
+  check(sites.corrections[0].maximumCandidateTotal===guidance.corrections[0].maximumCandidateTotal
+    &&sites.corrections[0].minimumReduction===guidance.corrections[0].minimumReduction&&!sites.authorityGranted,
+    "declaration-site detail cannot relax existing cumulative budgets or grant authority");
+  const callbackSites=measureEngineeringStructure("src/math.ts",callbackSource,true);
+  check(callbackSites.declarationSites?.some(site=>site.kind==="ArrowFunction")
+    &&callbackSites.declarationSites?.every(site=>site.kind!=="VariableDeclarationList")
+    &&callbackSites.declarationSitesComplete,
+    "nested callbacks exposed as counted sites without falsely counting loop bindings");
+  const many=`export function add(a,b) {\n${Array.from({length:70},(_,index)=>`const value${index} = a;`).join("\n")}\nreturn a+b;\n}`;
+  const boundedSites=measureEngineeringStructure("src/math.ts",many,true);
+  check(boundedSites.declarations===71&&boundedSites.declarationSites?.length===48
+    &&boundedSites.declarationSitesComplete===false,
+    "large declaration inventory remains bounded and explicitly incomplete rather than silently claiming full coverage");
+  const multi=measureEngineeringStructure("src/math.ts","export function add(a,b) {const x=a,y=b;return x+y;}",true);
+  check(multi.declarationSites?.find(site=>site.kind==="VariableStatement")?.count===2
+    &&multi.declarationSitesComplete,"multiple declarators contribute individually rather than only one per statement");
+  let detailedPrompt:Record<string,unknown>={};
+  const detailedCognition=NyxNemotronEngineeringCognition.create({cognitionId:"SITE-GUIDANCE-TEST",maxPromptBytes:50000,maxOutputTokens:1024,
+    qualityRepairGuidance:"STRUCTURE_SITES",provider:provider(async(url,init)=>{
+      detailedPrompt=JSON.parse(JSON.parse(String(init?.body)).messages[1].content);return transportFor(intent())(url,init);})});
+  await detailedCognition.proposeRepair(measuredRequest);
+  const deliveredSites=(detailedPrompt.measuredQualityRepair as typeof sites).corrections[0].measurements[0].declarationSites;
+  check(deliveredSites?.length===6&&(detailedPrompt.measuredQualityRepair as typeof sites).version==="nyx-measured-quality-repair/2"
+    &&JSON.stringify(detailedPrompt.constraints)===JSON.stringify(getPrompt(payloads[3]).constraints),
+    "bound public declaration sites reach actual cognition prompt with unchanged constraints and parser");
   const validRevision = await evaluate(intent({ failureInterpretation: "Visible behavior passed but the candidate failed static quality admission." }), {
     observation: passingObservation, priorHypotheses, candidateQualityFeedback: feedback,
   });

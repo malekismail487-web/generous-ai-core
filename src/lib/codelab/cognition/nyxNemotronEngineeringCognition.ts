@@ -451,7 +451,7 @@ export interface NyxNemotronEngineeringCognitionConfig {
   /** Host-only delivery control. Local intent, syntax, scope and quality checks remain mandatory. */
   readonly structuredOutputMode?: "STRICT_LOCAL";
   /** Host-only experiment; default feedback and all acceptance gates remain unchanged. */
-  readonly qualityRepairGuidance?: "MEASURED_STRUCTURE";
+  readonly qualityRepairGuidance?: "MEASURED_STRUCTURE" | "STRUCTURE_SITES";
   /** Evaluation-only, process-local feedback. Never changes executable authority or acceptance. */
   readonly repairFeedbackPolicy?: NyxRepairFeedbackPolicy;
 }
@@ -650,7 +650,7 @@ export class NyxNemotronEngineeringCognition {
     if (config.preserveProviderArrayBounds !== undefined && typeof config.preserveProviderArrayBounds !== "boolean") {
       throw new Error("nyx_provider_array_bounds_policy_invalid");
     }
-    if (config.qualityRepairGuidance !== undefined && config.qualityRepairGuidance !== "MEASURED_STRUCTURE") {
+    if (config.qualityRepairGuidance !== undefined && !["MEASURED_STRUCTURE", "STRUCTURE_SITES"].includes(config.qualityRepairGuidance)) {
       throw new Error("nyx_quality_repair_guidance_invalid");
     }
     if (config.structuredOutputMode !== undefined && config.structuredOutputMode !== "STRICT_LOCAL") {
@@ -726,8 +726,8 @@ export class NyxNemotronEngineeringCognition {
         findings: qualityFeedback.findings } : { kind: "EXECUTION_OBSERVATION", observationId: request.observation.observationId,
         evidenceRef: request.observation.candidateEvidenceId },
       ...(qualityFeedback ? { qualityRepairGoal: "The candidate passed available execution checks but failed public static admission. Preserve passing behavior while correcting every reported requirement, including architecture and input immutability. Replace unnecessary branches and declarations; meet every limit against the original observed repository state. Copy borrowed data before in-place operations rather than silencing checks or merely appending code." } : {}),
-      ...(this.#config.qualityRepairGuidance === "MEASURED_STRUCTURE" && qualityFeedback
-        ? { measuredQualityRepair: measuredQualityRepairGuidance(request) } : {}),
+      ...(this.#config.qualityRepairGuidance && qualityFeedback
+        ? { measuredQualityRepair: measuredQualityRepairGuidance(request, this.#config.qualityRepairGuidance === "STRUCTURE_SITES") } : {}),
       observation: { observationId: request.observation.observationId, state: request.observation.state,
         baselineComparison: request.observation.baselineComparison, candidateAttribution: request.observation.candidateAttribution,
         attributionConfidence: request.observation.attributionConfidence, epistemicState: request.observation.epistemicState,

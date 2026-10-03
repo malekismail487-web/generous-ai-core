@@ -7,12 +7,13 @@ import { R3BoundedRepairLoop } from "../../src/lib/codelab/engine/r3BoundedRepai
 import { NVIDIA_NIM_CHAT_COMPLETIONS_URL, NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { contentHash, R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
-import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, assessRepresentationCandidate } from "./benchmarks/sourceRepresentationTasks";
-import { inferUsage, classifyArcLoopFailure } from "./benchmarks/nyxArcAdapter";
+import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, assessRepresentationCandidate, classifyRepresentationFailure } from "./benchmarks/sourceRepresentationTasks";
+import { inferUsage } from "./benchmarks/nyxArcAdapter";
 import { inspectNyxSourceEmission } from "./nyx-source-emission-diagnostics";
 import { ARRAY_BOUND_TRANSFER_TASKS } from "./benchmarks/arrayBoundTransferTasks";
 import { SOURCE_LITERAL_TRANSFER_TASKS } from "./benchmarks/sourceLiteralTransferTasks";
 import { MEASURED_QUALITY_TRANSFER_TASKS } from "./benchmarks/measuredQualityTransferTasks";
+import { QUALITY_SITE_TRANSFER_TASKS } from "./benchmarks/qualitySiteTransferTasks";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
   throw Error("source_representation_cycle_requires_injected_secret_and_explicit_network");
@@ -25,17 +26,21 @@ const model = "nvidia/nemotron-3-ultra-550b-a55b";
 const boundsComparison = process.env.NYX_ARRAY_BOUND_COMPARISON === "1";
 const localDeliveryComparison=process.env.NYX_STRICT_LOCAL_COMPARISON==="1";
 const qualityGuidanceComparison=process.env.NYX_MEASURED_QUALITY_COMPARISON==="1";
-if([boundsComparison,localDeliveryComparison,qualityGuidanceComparison].filter(Boolean).length>1)throw Error("comparison_variables_must_not_be_combined");
-const variants=qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
-const selectedTasks = qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
-const frozen = {model, temperature: 0, inferencePolicy: "CONSTRAINED_JSON", maxOutputTokens: localDeliveryComparison||qualityGuidanceComparison?4096:8192,
+const qualitySiteComparison=process.env.NYX_QUALITY_SITE_COMPARISON==="1";
+if([boundsComparison,localDeliveryComparison,qualityGuidanceComparison,qualitySiteComparison].filter(Boolean).length>1)throw Error("comparison_variables_must_not_be_combined");
+const variants=qualitySiteComparison?["MEASURED_STRUCTURE","STRUCTURE_SITES"]:qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
+const selectedTasks = qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
+const frozen = {model, temperature: 0, inferencePolicy: "CONSTRAINED_JSON", maxOutputTokens: localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison?4096:8192,
   providerTimeoutMs: 65000, logicalCallsPerTask: 2, candidateIterationsPerTask: 2, toolCallsPerTask: 3,
   wallClockMsPerTask: 155000, globalWallClockMs: 1350000, maxPatchBytes: 12000,
-  maxPromptBytes: 48000, realizedTolerance: 0.1, changedVariable: qualityGuidanceComparison
+  maxPromptBytes: 48000, realizedTolerance: 0.1, changedVariable: qualitySiteComparison
+    ?"AGGREGATE_MEASUREMENTS_VS_BOUNDED_AST_DECLARATION_SITES_ONLY":qualityGuidanceComparison
     ?"PUBLIC_STATIC_METRICS_VS_SOURCE_LINKED_DETECTOR_EXPLANATION_ONLY":localDeliveryComparison
     ?"EXISTING_HOSTED_VS_STRICT_LOCAL_DELIVERY_ONLY":boundsComparison
     ? "HOSTED_MAX_ITEMS_PRESERVED_VS_OMITTED_ONLY" : "EXISTING_TEXT_VS_LINES_SOURCE_REPRESENTATION_ONLY",
   publicFeedback: "IDENTICAL_PUBLIC_TEST_FAILURE_AND_STATIC_ADMISSION", authority: "EXISTING_R3_ISOLATED_ONLY",
+  realizedMatchScope: "REPORTED_MODEL_CALLS_TOKENS_AND_VERIFIER_WORK_NOT_TOTAL_HOST_CPU",
+  hostDiagnosticCost: "INCLUDED_IN_WALL_CLOCK_NOT_SEPARATELY_PROFILED",
   sourceMutations: false, generalShell: false, generalNetwork: false, production: false,
   hostileCodeSandbox: false, candidateNetworkIsolation: "NOT_PROVEN"};
 const sourceDigests = Object.fromEntries(await Promise.all([
@@ -43,6 +48,7 @@ const sourceDigests = Object.fromEntries(await Promise.all([
   "src/lib/codelab/engine/r3BoundedRepairLoop.ts", "scripts/omega/benchmarks/sourceRepresentationTasks.ts",
   "scripts/omega/benchmarks/arrayBoundTransferTasks.ts", "scripts/omega/benchmarks/sourceLiteralTransferTasks.ts",
   "scripts/omega/benchmarks/measuredQualityTransferTasks.ts", "src/lib/codelab/cognition/nyxMeasuredQualityGuidance.ts",
+  "scripts/omega/benchmarks/qualitySiteTransferTasks.ts",
   "src/lib/codelab/assurance/engineeringQualityOracle.ts"
 ].map(async path => [path, contentHash(await readFile(path, "utf8"))])));
 const began = Date.now(); const globalDeadline = began + frozen.globalWallClockMs;
@@ -54,7 +60,7 @@ const results: any[] = [];
 for (const [index, task] of selectedTasks.entries()) {
   // Balanced order, not selected by the model or observed outcome.
   for (const variant of (index % 2 ? variants.slice().reverse() : variants)) {
-    const representation = boundsComparison||localDeliveryComparison||qualityGuidanceComparison ? "LINES" : variant as "TEXT" | "LINES";
+    const representation = boundsComparison||localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison ? "LINES" : variant as "TEXT" | "LINES";
     const preserveProviderArrayBounds = !boundsComparison || variant === "CORRECTED_BOUNDED";
     if (Date.now() >= globalDeadline) {results.push({id: task.id, variant, representation, state: "BLOCKED_GLOBAL_BUDGET"}); continue;}
     const started = Date.now(); const deadline = Math.min(globalDeadline, started + frozen.wallClockMsPerTask);
@@ -85,7 +91,8 @@ for (const [index, task] of selectedTasks.entries()) {
         intentCompilationMode: "SAFE_CANONICALIZATION", repairFeedbackPolicy: "TRANSIENT_REJECTED_SOURCE_WINDOW",
         experimentVariant: "CURRENT", comparisonInferencePolicy: "CONSTRAINED_JSON", preserveProviderArrayBounds,
         ...(variant==="STRICT_LOCAL"?{structuredOutputMode:"STRICT_LOCAL" as const}:{}),
-        ...(variant==="MEASURED_STRUCTURE"?{qualityRepairGuidance:"MEASURED_STRUCTURE" as const}:{})});
+        ...(["MEASURED_STRUCTURE","STRUCTURE_SITES"].includes(variant)
+          ?{qualityRepairGuidance:variant as "MEASURED_STRUCTURE"|"STRUCTURE_SITES"}:{})});
       const loop = R3BoundedRepairLoop.create({loopId: `REPRESENTATION-${task.id}-${representation}`, evaluatorVersion: "source-representation-cycle/1",
         observerIdentity: "OMEGA-REPRESENTATION-OBSERVER", cognition,
         candidateBuilder: {builderIdentity: "OMEGA-REPRESENTATION-EXISTING-R3", prepare: h => session.prepare(h)},
@@ -129,15 +136,10 @@ for (const [index, task] of selectedTasks.entries()) {
     const {score,accepted,functionalAccepted}=assessment;
     const priorFailure = loopResult?.cognitionFailures.at(-1);
     const lastFailure = priorFailure?.cognitionEvidence.evidenceId === loopResult?.lastCognitionEvidence?.evidenceId ? priorFailure : undefined;
-    const terminalFailure = classifyArcLoopFailure(loopResult?.reason ?? "infrastructure_failure");
-    const failureClass = accepted ? null : infrastructureFailure ? "INFRASTRUCTURE_FAILURE"
-      : terminalFailure === "PROVIDER_FAILURE" || terminalFailure === "RESOURCE_EXHAUSTION" ? terminalFailure
-      : (lastFailure?.reason === "OUTPUT_TRUNCATED" ? "TRUNCATION"
-        : lastFailure?.diagnostics.some(d => d.category === "SOURCE_QUALITY_INVALID" && /^syntax_error_/.test(d.observed)) ? "SYNTAX_FAILURE"
-          : lastFailure?.diagnostics.some(d => d.category === "SOURCE_QUALITY_INVALID") ? "QUALITY_REJECTION"
-            : last?.candidateAdmission?.decision === "REJECTED" ? "QUALITY_REJECTION"
-              : last?.functionallyPassed === false ? "FUNCTIONAL_FAILURE"
-                : score?.failure ?? terminalFailure);
+    const failureClass = classifyRepresentationFailure({accepted,infrastructureFailure,
+      reason:loopResult?.reason??"infrastructure_failure",latestSchemaFailure:lastFailure,
+      qualityRejected:last?.candidateAdmission?.decision==="REJECTED",publicFailed:last?.functionallyPassed===false,
+      privateFailure:score?.failure??null});
     const result = {id: task.id, tier: task.tier, domain: task.domain, variant, preserveProviderArrayBounds,
       representation, accepted, functionalAccepted, qualityAccepted, publicAccepted, score,
       firstCallAccepted: accepted && usage.logicalCalls === 1 && loopResult?.iterations.length === 1,
@@ -168,14 +170,16 @@ const pairs = tasks.map(task => {
 });
 const sourceUnchanged = original === theoryDigest(git("ls-files", "-s")) && !git("status", "--porcelain");
 const report = {schemaVersion: 1, candidate, frozen, sourceDigests, tasks, results, pairs, sourceUnchanged,
-  hypothesis: qualityGuidanceComparison
+  hypothesis: qualitySiteComparison
+    ? "Bounded, source-linked declaration sites make structural repair actionable and improve fresh quality admission compared with aggregate guidance alone."
+    :qualityGuidanceComparison
     ? "Source-linked explanations of existing static measurements improve fresh quality repairs without changing first-attempt prompts, acceptance or model-call limits."
     :localDeliveryComparison
     ? "Existing strict-local delivery preserves source semantics and improves fresh engineering outcomes while all local authority, syntax and quality gates remain unchanged."
     :boundsComparison
     ? "Preserving explicit hosted array bounds removes the reproduced 32-line source ceiling and improves fresh transfer without changing local acceptance."
     : "Using existing TEXT rather than LINES reduces interface/source failures across fresh engineering tasks without weakening acceptance or increasing realized compute.",
-  falsification: qualityGuidanceComparison
+  falsification: qualityGuidanceComparison||qualitySiteComparison
     ? "No reproducible gain in quality-accepted repairs or reduced repair cost on fresh tasks at matched realized compute, or any weakened gate."
     : "No reproducible syntax/correctness improvement across development and fresh transfer at matched realized compute.",
   summaries: variants.map(variant => {

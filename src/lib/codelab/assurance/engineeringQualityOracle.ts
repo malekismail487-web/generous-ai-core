@@ -324,10 +324,28 @@ function analyze(path: string, source: string): FileAnalysis {
 }
 
 /** Read-only explanation of the existing detector, not another admission decision. */
-export function measureEngineeringStructure(path: string, source: string) {
+export function measureEngineeringStructure(path: string, source: string, includeDeclarationSites = false) {
   const value = analyze(path, source);
+  const sites: { kind: string; line: number; column: number; count: number }[] = [];
+  if (includeDeclarationSites) {
+    const file = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, scriptKind(path));
+    const visit = (node: ts.Node): void => {
+      const count = ts.isVariableStatement(node) ? node.declarationList.declarations.length
+        : ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node) || ts.isArrowFunction(node)
+          || ts.isMethodDeclaration(node) ? 1 : 0;
+      if (count && sites.length < 48) {
+        const position = file.getLineAndCharacterOfPosition(node.getStart(file));
+        sites.push({ kind: ts.isVariableStatement(node) ? "VariableStatement" : ts.SyntaxKind[node.kind],
+          line: position.line + 1, column: position.character + 1, count });
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(file);
+  }
   return Object.freeze({ parseable: value.parseErrors.length === 0, declarations: value.declarations,
-    complexity: value.complexity, maxNesting: value.maxNesting });
+    complexity: value.complexity, maxNesting: value.maxNesting,
+    ...(includeDeclarationSites ? { declarationSites: Object.freeze(sites.map(site => Object.freeze(site))),
+      declarationSitesComplete: sites.reduce((sum, site) => sum + site.count, 0) === value.declarations } : {}) });
 }
 
 function changedLineEstimate(before: string, after: string): number {

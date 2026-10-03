@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/benchmarks/measuredQualityTransferTasks.ts]
+    paths: [scripts/omega/benchmarks/qualitySiteTransferTasks.ts]
 permissions:
   contents: read
 concurrency:
@@ -29,10 +29,10 @@ jobs:
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaArcNyxIntegration.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBenchmarkCapabilityHarness.test.ts
-      - name: Compare source-linked quality repair feedback on fresh tasks with unchanged private acceptance
+      - name: Compare aggregate and declaration-site repair feedback on new tasks with unchanged private acceptance
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
-          NYX_MEASURED_QUALITY_COMPARISON: '1'
+          NYX_QUALITY_SITE_COMPARISON: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-source-representation-cycle.ts
       - name: Preserve sanitized development and transfer evidence
