@@ -2285,6 +2285,12 @@
       ]
     },
     {
+      "name": "NYX_QUANTITATIVE_CONSTRAINT_FEEDBACK",
+      "files": [
+        "scripts/omega/nyx-quantitative-transfer-live-eval.ts"
+      ]
+    },
+    {
       "name": "NYX_QUANTITATIVE_EQUATION_TRANSFER",
       "files": [
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts"

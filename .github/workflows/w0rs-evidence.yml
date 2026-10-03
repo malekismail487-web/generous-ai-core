@@ -40,6 +40,7 @@ jobs:
           scripts/omegaNyxChatCli.test.ts scripts/omegaNyxLocalWebConsole.test.ts
           scripts/omegaLuminaLiveBoundary.test.ts
           scripts/omegaBoundedReasoningWorkbench.test.ts
+          scripts/omegaQuantitativeConstraintFeedback.test.ts
           scripts/omega/nyx-quantitative-transfer-live-eval.ts
           scripts/omega/nyx-research-party-live-eval.ts
       - name: Build production bundle without deployment

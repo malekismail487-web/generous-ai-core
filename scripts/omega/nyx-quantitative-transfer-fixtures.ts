@@ -96,6 +96,13 @@ export function expectedQuantities(task: QuantitativeTask): readonly {label: str
   return task.outputLabels.map(label=>({label,value:show(result[label])}));
 }
 export function verifyQuantitativeSubmission(task: QuantitativeTask, supplied: unknown) {
+  return verifyQuantitativeCertificate(task,supplied,()=>expectedQuantities(task));
+}
+/** Shared strict certificate semantics; independent domain algorithms supply the expected values.
+ * Neither this callback nor its expected outputs is ever sent to cognition.
+ */
+export function verifyQuantitativeCertificate(task: QuantitativeTask, supplied: unknown,
+  expectedOutputs:()=>readonly {label:string;value:string}[]) {
   const findings: string[] = [];
   let nodes=0;
   function data(value:unknown,ancestors=new Set<object>(),depth=0):boolean {
@@ -122,7 +129,7 @@ export function verifyQuantitativeSubmission(task: QuantitativeTask, supplied: u
     || !Number.isFinite(certificate.confidence) || certificate.confidence < 0 || certificate.confidence > 1
     || !Array.isArray(certificate.outputs) || certificate.outputs.length !== task.outputLabels.length) findings.push("CERTIFICATE_SCHEMA_INVALID");
   else {
-    const expected = new Map(expectedQuantities(task).map(o=>[o.label,o.value]));
+    const expected = new Map(expectedOutputs().map(o=>[o.label,o.value]));
     const seen = new Set<string>();
     for (const item of certificate.outputs) {
       if (!item || typeof item !== "object" || Object.keys(item).sort().join() !== "label,value"
