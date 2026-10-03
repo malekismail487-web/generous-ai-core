@@ -8201,6 +8201,7 @@
           "scripts/omega/nyx-quality-v4-fixtures.ts",
           "scripts/omega/nyx-quality-v5-fixtures.ts",
           "scripts/omega/nyx-quantitative-constraint-transfer-fixtures.ts",
+          "scripts/omega/nyx-quantitative-model-repair-fixtures.ts",
           "scripts/omega/nyx-quantitative-transfer-fixtures.ts",
           "scripts/omega/nyx-r3f-fixtures.ts",
           "scripts/omega/nyx-repair-feedback-transfer.ts",

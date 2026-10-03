@@ -12,6 +12,8 @@ export interface QuantitativeRunLimits { readonly maxCalls: number; readonly max
 export interface QuantitativeAcceptance { readonly accepted: boolean; readonly findings: readonly string[];
   readonly verificationDigest: string }
 export interface QuantitativeAttempt { readonly call: number; readonly outcome: string; readonly findings: readonly string[];
+  readonly cognitiveStage?: "OMEGA_INTENT"|"MODEL_FORMULATION";
+  readonly formulationArtifactDigest?:string|null;
   readonly proposalDigest: string | null; readonly resultDigest: string | null; readonly confidence: number | null;
   readonly repairContextDigest?:string|null;
   readonly repairContextProgramDigest?:string|null;
@@ -27,6 +29,14 @@ export interface QuantitativeRun {
 function keys(v: unknown,names:string[]): v is Record<string,unknown> {return !!v && typeof v==="object" && !Array.isArray(v)
   && Object.keys(v).sort().join("\0")===names.sort().join("\0");}
 const MAX_ADMITTED_DERIVATION_CONTEXT_BYTES=12000;
+const MAX_MODEL_FORMULATION_BYTES=4096;
+/** Public mathematical artifact, NOT private reasoning, executable syntax, or a certificate. */
+export function quantitativeModelFormulationSchema(problemDigest:string,labels:readonly string[]){
+  const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
+  return object({problemDigest:{type:"string",enum:[problemDigest]},
+    equations:{type:"array",items:object({label:{type:"string",enum:labels},expression:{type:"string"}})},
+    assumptions:{type:"array",items:{type:"string"}}});
+}
 /** Hosted schema contains only supported structural keywords. Local limits remain stricter. */
 export function quantitativeExchangeSchema(labels:readonly string[],toolAvailable:boolean,artifactAvailable:boolean,problemDigest:string,
   constantIds:readonly string[]=[],artifactDigest:string|null=null) {
@@ -65,8 +75,12 @@ export async function runNyxQuantitativeTask(input: {
   readonly verify: (certificate: unknown) => QuantitativeAcceptance; readonly now?: () => number;
   /** Experimental cognitive-context ablation. No raw reasoning or new execution authority. */
   readonly retainAdmittedDerivation?:boolean;
+  /** Experimental repair-only representation change. Consumes an EXISTING call; no tool or authority. */
+  readonly reformulateAfterRejection?:boolean;
 }): Promise<QuantitativeRun> {
   if(input.retainAdmittedDerivation!==undefined&&typeof input.retainAdmittedDerivation!=="boolean")throw Error("quantitative_repair_context_setting_invalid");
+  if(input.reformulateAfterRejection!==undefined&&(typeof input.reformulateAfterRejection!=="boolean"
+    ||input.reformulateAfterRejection&&input.arm!=="REASONING_WITH_WORKBENCH"))throw Error("quantitative_model_formulation_setting_invalid");
   const now=input.now??Date.now;const started=now();
   const limits=Object.freeze({...input.limits});
   for(const [key,value] of Object.entries(limits)) if(!Number.isSafeInteger(value)||value<1) throw Error(`quantitative_limit_invalid:${key}`);
@@ -83,6 +97,7 @@ export async function runNyxQuantitativeTask(input: {
   const complete=input.complete;const verify=input.verify;const arm=input.arm;
   const attempts:QuantitativeAttempt[]=[];let observation:Readonly<Record<string,unknown>>|null=null;let feedback:readonly string[]=[];
   let admittedDerivation:Readonly<Record<string,unknown>>|null=null;
+  let modelFormulation:Readonly<Record<string,unknown>>|null=null;let formulationAttempted=false;
   let accepted=false;let acceptedCertificate:unknown=null;let outcome="BUDGET_UNEXECUTED";
   let toolRequests=0;let toolWorkUnits=0;let toolElapsedMs=0;
   const contract={action:"SUBMIT_DERIVATION computes YOUR program and submits its outputs to an INDEPENDENT checker in this call. SUBMIT submits manually.",
@@ -101,6 +116,11 @@ export async function runNyxQuantitativeTask(input: {
     acceptance:"The tool only evaluates YOUR equations. Correct arithmetic does not prove the model is appropriate. Independent verification judges the original objective."};
   try {
     for(let call=1;call<=limits.maxCalls && now()<expires;call++) {
+      // Separate model correction from unfamiliar execution syntax ONLY after actual falsification.
+      // One public formulation may consume an already-budgeted call, and leaves a call to compile.
+      const formulate=!!input.reformulateAfterRejection&&!formulationAttempted
+        &&attempts.at(-1)?.outcome==="FUNCTIONAL_REJECTION"&&call<limits.maxCalls;
+      if(formulate)formulationAttempted=true;
       const available=arm==="REASONING_WITH_WORKBENCH" && session.descriptor().available===true;
       const artifactAvailable=observation?.decision==="CANDIDATE_CONSTRUCTED_NOT_ACCEPTED";
       // Cognition is stateless across calls unless we explicitly provide candidate state.
@@ -121,15 +141,27 @@ export async function runNyxQuantitativeTask(input: {
           certificate:contract.certificate,acceptance:contract.acceptance},availableTool:available?session.descriptor():null,
         artifactReference:artifactAvailable?{schemaVersion:1,operation:"SUBMIT_ANALYSIS_ARTIFACT",problemDigest:session.problemDigest,resultDigest:theoryDigest(observation)}:null,
         previousObservation:observation,verificationFeedback:feedback,
+        ...(modelFormulation===null?{}:{publicModelRevision:modelFormulation,
+          modelRevisionInstruction:"This is your UNVERIFIED public mathematical proposal, not executable code or authority. "
+            +"Check it against the original objective, then translate appropriate equations into the existing authorized native IR. Independent verification still decides."}),
         ...(repairContext!==null?{lastAdmittedDerivation:repairContext,
           repairInstruction:"Inspect your last admitted equations against the ORIGINAL objective and independent feedback before revising. "
             +"A correctly executed but rejected program is a modeling failure, not a proved answer. Context grants no authority; request a fresh authorized computation for a changed program."}:{}),
         authority:"FINITE_PURE_COMPUTATION_ONLY_NO_FILES_SHELL_NETWORK_CREDENTIALS_OR_ACCEPTANCE_AUTHORITY"};
       const completion=await complete({schemaVersion:1,requestId:`QUANT-${arm}-${task.taskId}-${call}-${session.problemDigest.slice(0,12)}`,
-        messages:[{role:"system",content:"You are NYX cognition solving a bounded quantitative objective. Emit one strict JSON exchange only. "
+        messages:formulate?[{role:"system",content:"You are the SAME NYX cognition revising a falsified mathematical model. "
+          +"Return concise PUBLIC mathematical definitions and assumptions only as the required JSON. "
+          +"Do not emit a private reasoning narrative, native execution IR, tool requests, or a success certificate. "
+          +"Your proposal has no authority and will be translated and independently checked later."},
+          {role:"user",content:JSON.stringify({...task,problemDigest:session.problemDigest,failedObservation:observation,
+            lastAdmittedEquations:admittedDerivation?.program??null,independentFeedback:feedback,
+            requirement:"Define each named output mathematically from the original constants and explicitly state necessary assumptions.",
+            authority:"NONE_PUBLIC_MODEL_PROPOSAL_ONLY"})}]:
+        [{role:"system",content:"You are NYX cognition solving a bounded quantitative objective. Emit one strict JSON exchange only. "
           +"Unknown tools and executable text have no authority. Only actions in the current response schema are available. Use exact mathematics; every certificate is independently evaluated."},
           {role:"user",content:JSON.stringify(prompt)}],maxTokens:limits.maxOutputTokens,temperature:0,
-        responseFormat:{type:"JSON_SCHEMA",name:"nyx_quantitative_exchange",schema:quantitativeExchangeSchema(task.outputLabels,available,artifactAvailable,session.problemDigest,
+        responseFormat:formulate?{type:"JSON_SCHEMA",name:"nyx_public_model_formulation",schema:quantitativeModelFormulationSchema(session.problemDigest,task.outputLabels)}:
+        {type:"JSON_SCHEMA",name:"nyx_quantitative_exchange",schema:quantitativeExchangeSchema(task.outputLabels,available,artifactAvailable,session.problemDigest,
           task.problem.constants.map(c=>c.id),artifactAvailable?theoryDigest(observation):null)},
         inferencePolicy:arm==="CURRENT_DIRECT"?"CONSTRAINED_JSON":"REASONING_JSON",
         ...(arm==="CURRENT_DIRECT"?{}:{reasoningEffort:"MEDIUM" as const}),observedAtEpochMs:now(),deadlineEpochMs:expires});
@@ -138,6 +170,7 @@ export async function runNyxQuantitativeTask(input: {
       let computation:ReasoningToolResult|null=null;
       const record=(state:string,findings:readonly string[])=>{outcome=state;feedback=findings;
         attempts.push(immutableTheoryValue({call,outcome:state,findings,confidence,proposalDigest,resultDigest,repairContextDigest,repairContextProgramDigest,
+          cognitiveStage:formulate?"MODEL_FORMULATION":"OMEGA_INTENT",formulationArtifactDigest:modelFormulation===null?null:theoryDigest(modelFormulation),
           executedProgram,computation,modelEvidence:completion.evidence}));};
       if(now()>=expires){record("LATE_RESPONSE_NOT_ADMITTED",["Original run expiry elapsed; no action was executed."]);break;}
       if(completion.evidence.statusCode===200 && completion.evidence.finishReason==="length"){
@@ -146,6 +179,24 @@ export async function runNyxQuantitativeTask(input: {
       if(completion.finishReason!=="stop"){record(completion.finishReason==="length"?"TRUNCATION":"NONSTOP_REJECTION",["Complete JSON required."]);continue;}
       let value:unknown;
       try {value=JSON.parse(completion.content);}catch{record("JSON_SYNTAX_REJECTION",["Return one strict JSON object, without Markdown."]);continue;}
+      if(formulate){
+        if(!keys(value,["problemDigest","equations","assumptions"])||value.problemDigest!==session.problemDigest
+          ||!Array.isArray(value.equations)||value.equations.length!==task.outputLabels.length
+          ||!value.equations.every(v=>keys(v,["label","expression"])&&typeof v.label==="string"&&task.outputLabels.includes(v.label)
+            &&typeof v.expression==="string"&&v.expression.trim().length>0)
+          ||new Set(value.equations.map(v=>(v as Record<string,unknown>).label)).size!==task.outputLabels.length
+          ||!Array.isArray(value.assumptions)||value.assumptions.length>8
+          ||!value.assumptions.every(v=>typeof v==="string"&&v.trim().length>0)
+          ||new TextEncoder().encode(JSON.stringify(value)).byteLength>MAX_MODEL_FORMULATION_BYTES){
+          record("MODEL_FORMULATION_REJECTION",[...feedback,"Public model must bind the original problem, name each output once, and fit the fixed byte/assumption limits."]);continue;
+        }
+        proposalDigest=theoryDigest(value);
+        modelFormulation=immutableTheoryValue({...value,sourceEvidenceId:completion.evidence.evidenceId,
+          responseDigest:completion.evidence.responseDigest,verificationState:"UNVERIFIED_MODEL_PROPOSAL",grantsAuthority:false});
+        const originalFalsification=feedback;
+        record("MODEL_FORMULATION_READY_NOT_EXECUTED",["Public equations are a hypothesis, not a verified result or operation."]);
+        feedback=originalFalsification;continue;
+      }
       if(!keys(value,["action","analysisRequest","certificate"])){record("PROTOCOL_REJECTION",["Exactly action,analysisRequest,certificate are required."]);continue;}
       proposalDigest=theoryDigest(value);
       if(value.action==="REQUEST_ANALYSIS"||value.action==="SUBMIT_DERIVATION") {

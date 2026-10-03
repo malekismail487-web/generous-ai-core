@@ -98,10 +98,10 @@ export interface FeedbackComparisonRun extends QuantitativeRun {
  * An outcome difference is not proof of treatment benefit when no treatment was delivered.
  */
 export function assessConstraintFeedbackComparison(results:readonly FeedbackComparisonRun[],taskIds:readonly string[],providerStable:boolean,
-  intervention:"PUBLIC_CONSTRAINT_FEEDBACK"|"ADMITTED_DERIVATION_CONTEXT"="PUBLIC_CONSTRAINT_FEEDBACK") {
+  intervention:"PUBLIC_CONSTRAINT_FEEDBACK"|"ADMITTED_DERIVATION_CONTEXT"|"PUBLIC_MODEL_REPAIR"="PUBLIC_CONSTRAINT_FEEDBACK") {
   const selected=(arm:string)=>results.filter(r=>r.comparisonArm===arm);
-  const control=selected(intervention==="ADMITTED_DERIVATION_CONTEXT"?"PUBLIC_FEEDBACK_NO_CONTEXT":"GENERIC_FEEDBACK"),
-    diagnostic=selected(intervention==="ADMITTED_DERIVATION_CONTEXT"?"PUBLIC_FEEDBACK_WITH_CONTEXT":"CONSTRAINT_FEEDBACK");
+  const control=selected(intervention==="PUBLIC_MODEL_REPAIR"?"PUBLIC_FEEDBACK_DIRECT_IR":intervention==="ADMITTED_DERIVATION_CONTEXT"?"PUBLIC_FEEDBACK_NO_CONTEXT":"GENERIC_FEEDBACK"),
+    diagnostic=selected(intervention==="PUBLIC_MODEL_REPAIR"?"PUBLIC_FEEDBACK_MODEL_REPAIR":intervention==="ADMITTED_DERIVATION_CONTEXT"?"PUBLIC_FEEDBACK_WITH_CONTEXT":"CONSTRAINT_FEEDBACK");
   const complete=results.length===2*taskIds.length&&taskIds.every(id=>
     control.filter(r=>r.taskId===id).length===1&&diagnostic.filter(r=>r.taskId===id).length===1);
   const firstProposalMatched=complete&&taskIds.every(id=>{
@@ -116,6 +116,15 @@ export function assessConstraintFeedbackComparison(results:readonly FeedbackComp
   });
   const exposures=diagnostic.flatMap(r=>r.attempts.flatMap((a,i)=>{
     const next=r.attempts[i+1];
+    if(intervention==="PUBLIC_MODEL_REPAIR"){
+      const compilation=r.attempts[i+2];
+      return a.outcome==="FUNCTIONAL_REJECTION"&&next?.cognitiveStage==="MODEL_FORMULATION"
+        &&next.outcome==="MODEL_FORMULATION_READY_NOT_EXECUTED"&&next.formulationArtifactDigest!=null
+        &&compilation?.cognitiveStage==="OMEGA_INTENT"&&compilation.formulationArtifactDigest===next.formulationArtifactDigest
+        &&next.modelEvidence.statusCode===200&&next.modelEvidence.networkAttempted
+        &&compilation.modelEvidence.statusCode===200&&compilation.modelEvidence.networkAttempted
+        ?[{taskId:r.taskId,feedbackAfterCall:a.call,formulationCall:next.call,nextCall:compilation.call,repaired:r.accepted}]:[];
+    }
     const delivered=intervention==="ADMITTED_DERIVATION_CONTEXT"?a.executedProgram!=null
       &&next?.repairContextProgramDigest===theoryDigest(a.executedProgram)&&next.repairContextDigest!=null:
         a.findings.some(f=>f.startsWith("PUBLIC_NECESSARY_CONDITION_VIOLATED:"));

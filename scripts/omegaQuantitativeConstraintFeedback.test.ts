@@ -15,6 +15,7 @@ import { PROTOCOL_REPAIR_TASKS,protocolRepairExpectedQuantities,verifyProtocolRe
 import { REPAIR_CONTEXT_TASKS,repairContextExpectedQuantities,verifyRepairContextSubmission } from "./omega/nyx-quantitative-repair-context-fixtures";
 import { PROVIDER_DIAGNOSTIC_TASKS,providerDiagnosticExpectedQuantities,verifyProviderDiagnosticSubmission,
   PROVIDER_DIAGNOSTIC_MODES,providerDiagnosticRequest } from "./omega/nyx-quantitative-provider-diagnostic-fixtures";
+import {MODEL_REPAIR_TASKS,MODEL_REPAIR_CORPUS_DIGEST,modelRepairExpectedQuantities,verifyModelRepairSubmission} from "./omega/nyx-quantitative-model-repair-fixtures";
 let passed=0,failed=0;
 function check(v:unknown,label:string){if(v)passed++;else{failed++;console.error(`x ${label}`);}}
 const throws=(f:()=>unknown)=>{try{f();return false;}catch{return true;}};
@@ -395,5 +396,110 @@ check(new Set(diagnosticPrompts).size===1,"all four diagnostic modes receive ide
 check(quantitativeCognitiveIntent(request)!==quantitativeCognitiveIntent({...request,reasoningControl:"ULTRA_NATIVE"})
   &&quantitativeCognitiveIntent(request)!==quantitativeCognitiveIntent({...request,structuredOutputMode:"STRICT_LOCAL"}),
   "common-prefix replay cannot accidentally treat different wire settings as identical cognition");
+// Fresh repair objectives retain independently implemented oracles and unchanged native bounds.
+check(MODEL_REPAIR_CORPUS_DIGEST!==theoryDigest(PROVIDER_DIAGNOSTIC_TASKS),"model repair does not reuse the last live corpus");
+for(const [index,task] of MODEL_REPAIR_TASKS.entries()){
+  const expected={outputs:modelRepairExpectedQuantities(task),confidence:1};
+  check(theoryDigest(task.problem)!==theoryDigest(PROVIDER_DIAGNOSTIC_TASKS[index].problem),"every repair task freezes new parameters");
+  check(verifyModelRepairSubmission(task,expected).accepted&&createQuantitativeConstraintFeedback(theoryDigest(task),task.outputLabels,task.publicConditions)
+    .evaluate(expected).status==="SATISFIED_NOT_ACCEPTED","new mathematical oracle agrees with public constraints without being supplied to cognition");
+  check(throws(()=>modelRepairExpectedQuantities({...task,objective:task.objective+" changed"})),"frozen objective identity cannot silently drift");
+  const session=BoundedReasoningSession.create(task.problem,{maxRequests:2,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+10000});
+  try{const result=session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program:programs[index]});
+    check(result.status==="CONSTRUCTED"&&verifyModelRepairSubmission(task,{outputs:result.payload!.outputs,confidence:1}).accepted,
+      "test-only generic reference proves fresh objective feasibility without revealing it to the live model");
+  }finally{session.revoke();}
+}
+// Immutable wire diagnostic: configuration failures are not relabeled as reasoning success.
+const wireReport=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-provider-diagnostic-v1/comparison.json","utf8"));
+check(theoryDigest(wireReport)==="86b2662169f694984aa9264ad4ee9d4340ce54f4d1711a69cc546ed3362cf978"
+  &&wireReport.candidate==="1bccd82be94fc65efdae2f9c5170d72b95cfb61f"&&wireReport.complete&&!wireReport.providerStable
+  &&wireReport.verdict==="INCONCLUSIVE_PROVIDER_OR_BUDGET"&&!wireReport.broadPromotion,"all sixteen live wire cells and failed configurations remain immutable");
+check(wireReport.physicalInferenceTotals.calls===16&&wireReport.summaries.slice(2).every((s:{accepted:number;jsonSyntaxRejections:number})=>s.accepted===0&&s.jsonSyntaxRejections===3),
+  "unguided JSON reliability loss remains separate from mathematical rejection");
+for(const run of wireReport.results){
+  const task=PROVIDER_DIAGNOSTIC_TASKS.find(t=>t.taskId===run.taskId)!;
+  const session=BoundedReasoningSession.create(task.problem,{maxRequests:1,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+10000});
+  try{for(const attempt of run.attempts.filter((a:{computation:unknown})=>a.computation!==null)){
+    const replay=session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program:attempt.executedProgram});
+    const {resultDigest,...body}=attempt.computation;
+    check(resultDigest===theoryDigest(body)&&replay.status===attempt.computation.status&&theoryDigest(replay.payload)===theoryDigest(attempt.computation.payload),
+      "real model-generated programs replay acceptance, falsification, AND insufficient work without increasing budgets");
+    if(replay.status==="CONSTRUCTED")check(verifyProviderDiagnosticSubmission(task,{outputs:replay.payload!.outputs,confidence:attempt.confidence}).accepted===(attempt.outcome==="ACCEPTED"),
+      "unmodified oracle independently reproduces live mathematical outcomes");
+    else check(attempt.outcome==="DERIVATION_INSUFFICIENT"&&replay.payload===null&&replay.workUnits===100000,
+      "incorrect runaway energy equations remain an incomplete bounded computation, not a hidden-test failure");
+  }}finally{session.revoke();}
+}
+// Public model repair is cognition in the SAME finite call budget, not an authority mechanism.
+const form=(expression="p = 1")=>({problemDigest:theoryDigest(contextProblem),equations:[{label:"p",expression}],assumptions:[]});
+const modelProgram=(correct:boolean):QuantitativeEquations=>({schemaVersion:2,initialState:[],cycles:[{iterations:1,phases:[{
+  expressions:[expression(0,correct?"DIV":"ADD","one","one")],updates:[{slot:"r0",source:"e0"}]}]}],outputs:[{label:"p",source:"r0"}]});
+const modelIntents=(correct:boolean)=>({action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(contextProblem),program:modelProgram(correct)},certificate:{confidence:0.9}});
+let formulationPrompts=0,revisionPrompts=0;
+const formulationProvider=NvidiaNimProvider.create({providerId:"MODEL-REPAIR-WIRING",model:"nvidia/nemotron-3-ultra-550b-a55b",authorityMode:"TEST_DOUBLE_ONLY",
+  credentialSource:{sourceIdentity:"test-only",read:()=>"synthetic-test-only"},maxPromptBytes:32000,maxOutputTokens:512,timeoutMs:1000,
+  transport:async(_url,init)=>{const body=JSON.parse(String(init?.body)),prompt=JSON.parse(body.messages[1].content);
+    const formulation=body.response_format.json_schema.name==="nyx_public_model_formulation";
+    if(formulation){formulationPrompts++;check(prompt.authority==="NONE_PUBLIC_MODEL_PROPOSAL_ONLY"&&prompt.independentFeedback.includes("VALUE_MISMATCH")
+      &&prompt.lastAdmittedEquations.cycles[0].phases[0].expressions[0].op==="ADD","reformulation receives actual falsification and owned failed IR, not oracle answers");}
+    const revision=prompt.publicModelRevision;
+    const correction=!!revision&&revision.problemDigest===theoryDigest(contextProblem)&&revision.verificationState==="UNVERIFIED_MODEL_PROPOSAL"
+      &&revision.grantsAuthority===false&&prompt.verificationFeedback.includes("VALUE_MISMATCH")&&revision.equations[0].expression==="p = 1";
+    if(correction)revisionPrompts++;
+    const content=formulation?form():prompt.availableTool?modelIntents(correction):{action:"SUBMIT",analysisRequest:null,certificate:certificate("2")};
+    return new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify(content)}}],
+      usage:{prompt_tokens:20,completion_tokens:20,total_tokens:40}}),{status:200});}});
+const modelPair=createSharedFirstProposal(r=>formulationProvider.complete(r));const modelRuns:FeedbackComparisonRun[]=[];
+const modelLimits=()=>({maxCalls:4,maxOutputTokens:512,maxTaskMs:10000,expiresAtEpochMs:Date.now()+10000,maxToolRequests:2,maxToolWorkUnits:1000,maxToolElapsedMs:100});
+const modelVerify=(cert:unknown)=>{const value=(cert as {outputs:{value:string}[]}).outputs[0].value;
+  return {accepted:value==="1",findings:value==="1"?[]:["VALUE_MISMATCH"],verificationDigest:theoryDigest(cert)};};
+for(const reformulateAfterRejection of [false,true]){
+  const branch=modelPair.branch();const result=await runNyxQuantitativeTask({arm:"REASONING_WITH_WORKBENCH",taskId:"MODEL-E3",objective:"Return p=1.",problem:contextProblem,
+    outputLabels:["p"],limits:modelLimits(),reformulateAfterRejection,complete:r=>branch.complete(r),verify:modelVerify});
+  check(result.accepted===reformulateAfterRejection&&result.calls===(reformulateAfterRejection?3:4)&&result.toolRequests===2&&!result.authorityIncrease,
+    "scripted correction separates math representation from execution within the SAME four-call two-tool ceilings");
+  check(!JSON.stringify(result).includes("p = 1"),"public equation text is transient; only bound digests enter evidence");
+  if(reformulateAfterRejection){const f=result.attempts[1];check(f.cognitiveStage==="MODEL_FORMULATION"&&f.outcome==="MODEL_FORMULATION_READY_NOT_EXECUTED"
+    &&f.computation===null&&f.confidence===null&&f.resultDigest===null&&f.formulationArtifactDigest===result.attempts[2].formulationArtifactDigest,
+    "formulation is not a tool result, certificate, or self-acceptance; its provenance survives compilation");}
+  modelRuns.push({...result,sharedProposal:branch.accounting().receipt,comparisonArm:reformulateAfterRejection?"PUBLIC_FEEDBACK_MODEL_REPAIR":"PUBLIC_FEEDBACK_DIRECT_IR"});
+}
+check(formulationPrompts===1&&revisionPrompts===1,"repair-only formulation is exercised once, not added to every task or retried indefinitely");
+const modelAssessment=assessConstraintFeedbackComparison(modelRuns,["MODEL-E3"],true,"PUBLIC_MODEL_REPAIR");
+check(modelAssessment.firstProposalMatched&&modelAssessment.exposures.length===1&&modelAssessment.causalPromotionEligible,
+  "E3 classifier detects actually delivered equal-prefix model repair, NOT live capability evidence");
+check(!assessConstraintFeedbackComparison(modelRuns,["MODEL-E3"],false,"PUBLIC_MODEL_REPAIR").causalPromotionEligible,"provider disruption prevents model-repair promotion");
+const badCustody=modelRuns.map(r=>({...r,attempts:r.attempts.map(a=>a.cognitiveStage==="OMEGA_INTENT"?{...a,formulationArtifactDigest:binding}:a)}));
+check(!assessConstraintFeedbackComparison(badCustody,["MODEL-E3"],true,"PUBLIC_MODEL_REPAIR").causalPromotionEligible,
+  "mismatched public-model custody cannot count as an exposed repair");
+// Strict local validation applies independently of provider guided decoding.
+const malformedForms=[{...form(),extra:true},{...form(),problemDigest:binding},{...form(),equations:[]},
+  {...form(),equations:[{label:1,expression:"p=1"}]},{...form(),equations:[{label:"p",expression:" "}]},
+  {...form(),equations:[{label:"p",expression:"p=1",action:"SHELL"}]},{...form(),assumptions:Array(9).fill("extra")},
+  {...form(),assumptions:[""]},form("x".repeat(4097)),{...form(),equations:[...form().equations,...form().equations]}];
+for(const malformed of malformedForms){let calls=0,verified=0;const testProvider=NvidiaNimProvider.create({providerId:"MODEL-MALFORMED",model:"nvidia/nemotron-3-ultra-550b-a55b",authorityMode:"TEST_DOUBLE_ONLY",
+  credentialSource:{sourceIdentity:"test-only",read:()=>"synthetic-test-only"},maxPromptBytes:32000,maxOutputTokens:512,timeoutMs:1000,
+  transport:async()=>{calls++;return new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify(calls===1?modelIntents(false):calls===2?malformed:
+    {action:"SUBMIT",analysisRequest:null,certificate:certificate("2")})}}],usage:{prompt_tokens:20,completion_tokens:20,total_tokens:40}}),{status:200});}});
+  const result=await runNyxQuantitativeTask({arm:"REASONING_WITH_WORKBENCH",taskId:"MODEL-INVALID",objective:"Return p=1.",problem:contextProblem,outputLabels:["p"],
+    limits:{...modelLimits(),maxCalls:3},reformulateAfterRejection:true,complete:r=>testProvider.complete(r),verify:c=>{verified++;return modelVerify(c);}});
+  check(!result.accepted&&result.attempts[1].outcome==="MODEL_FORMULATION_REJECTION"&&result.calls===3&&result.toolRequests===1&&verified===2,
+    "malformed public model fails closed, spends finite calls, and cannot invoke verification as a certificate");
+}
+let lateClock=Date.now();let lateVerifies=0;let lateCalls=0;
+const lateProvider=NvidiaNimProvider.create({providerId:"MODEL-LATE",model:"nvidia/nemotron-3-ultra-550b-a55b",authorityMode:"TEST_DOUBLE_ONLY",
+  credentialSource:{sourceIdentity:"test-only",read:()=>"synthetic-test-only"},maxPromptBytes:32000,maxOutputTokens:512,timeoutMs:1000,
+  transport:async()=>{lateCalls++;return new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify(lateCalls===1?modelIntents(false):form())}}],
+    usage:{prompt_tokens:20,completion_tokens:20,total_tokens:40}}),{status:200});}});
+const late=await runNyxQuantitativeTask({arm:"REASONING_WITH_WORKBENCH",taskId:"MODEL-LATE",objective:"Return p=1.",problem:contextProblem,outputLabels:["p"],reformulateAfterRejection:true,
+  now:()=>lateClock,limits:{...modelLimits(),expiresAtEpochMs:lateClock+10000},complete:async r=>{const c=await lateProvider.complete(r);if(lateCalls===2)lateClock+=10001;return c;},
+  verify:c=>{lateVerifies++;return modelVerify(c);}});
+check(late.outcome==="LATE_RESPONSE_NOT_ADMITTED"&&late.toolRequests===1&&lateVerifies===1&&!late.accepted,
+  "a late mathematical revision cannot renew a lease or acquire tool/acceptance authority");
+for(const [arm,setting] of [["REASONING_WITH_WORKBENCH","yes"],["CURRENT_DIRECT",true]] as const)
+  check(await rejected(()=>runNyxQuantitativeTask({arm,taskId:"MODEL-SETTING",objective:"No inference.",problem:contextProblem,outputLabels:["p"],limits:modelLimits(),
+    reformulateAfterRejection:setting as unknown as boolean,complete:()=>{throw Error("invalid_setting_cannot_infer");},verify:()=>{throw Error("invalid_setting_cannot_verify");}})),
+    "model-repair option is explicit and unavailable in unsupported arms");
 console.log(`OMEGA_QUANTITATIVE_CONSTRAINT_FEEDBACK_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if(failed)process.exitCode=1;
