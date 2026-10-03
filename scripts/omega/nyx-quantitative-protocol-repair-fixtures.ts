@@ -3,6 +3,9 @@ import { verifyQuantitativeCertificate } from "./nyx-quantitative-transfer-fixtu
 import { constraintExpectedQuantities,type ConstraintTransferTask } from "./nyx-quantitative-constraint-transfer-fixtures";
 import { COUPLED_TRANSFER_EPOCH,COUPLED_TRANSFER_TASKS } from "./nyx-quantitative-coupled-transfer-fixtures";
 
+// Run 37103169070 stopped in dependency preflight before any live model call. Frozen
+// objectives/parameters remain unchanged while its runner installs the existing lockfile.
+
 export const PROTOCOL_REPAIR_EPOCH=Object.freeze({...COUPLED_TRANSFER_EPOCH,version:9,chunkId:"NYX-QUANTITATIVE-TAGGED-INTENT-RECOVERY-001",
   hypothesis:"Action-coherent guided decoding removes interface obstruction while preserving separate mathematical-model failures.",
   supportCriterion:"Fresh frozen objectives yield fewer mixed-envelope rejections under unchanged authority/IR/oracle/call ceilings. Report cognitive repair separately.",

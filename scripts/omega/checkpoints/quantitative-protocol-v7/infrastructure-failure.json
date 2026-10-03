@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "candidate": "95b899f29ab41de478ec351fd3c3154e13383063",
+  "workflowRun": 37103169070,
+  "workflowJob": 111146529564,
+  "state": "BLOCKED_INFRASTRUCTURE_BEFORE_LIVE_EVALUATION",
+  "cause": "MISSING_FROZEN_AJV_TEST_DEPENDENCY_IN_QUANTITATIVE_RUNNER",
+  "liveModelCalls": 0,
+  "modelCapabilityResult": "NOT_EXECUTED",
+  "correction": "INSTALL_EXISTING_FROZEN_LOCKFILE_WITH_LIFECYCLE_SCRIPTS_DISABLED",
+  "frozenTaskCorpusChanged": false,
+  "acceptanceChanged": false,
+  "authorityChanged": false,
+  "credentialPersisted": false
+}

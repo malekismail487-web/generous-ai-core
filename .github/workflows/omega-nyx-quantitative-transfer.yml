@@ -24,6 +24,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen test dependencies without lifecycle scripts
+        run: bun install --frozen-lockfile --ignore-scripts
       - name: Verify the native mechanism and negative oracle controls without credentials
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBoundedReasoningWorkbench.test.ts
