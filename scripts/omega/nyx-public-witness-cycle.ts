@@ -7,7 +7,7 @@ import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { contentHash } from "./benchmarks/r3RepositorySession";
 import { createArcAdapter, type ArcIntegrationEvidence } from "./benchmarks/nyxArcAdapter";
 import { prepareTask } from "./benchmarks/tasks";
-import { runCampaign } from "./benchmarks/campaign";
+import { runCampaign, matchedObservedAttempts } from "./benchmarks/campaign";
 import type { ArmSpec, CampaignSpec } from "./benchmarks/contracts";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
@@ -96,11 +96,7 @@ const pairs = tasks.map(task => {
   const attempts = records.map(r => r.attempts[0]);
   const usages = attempts.map(a => a?.usage);
   const stable = usages.every(u => u && !u.unknownUsageCalls && !u.providerFailures && !u.retries);
-  const matched = stable && attempts.every(a => a?.evaluation && a.verifierUsage && !a.verifierUsage.unknownUsageCalls)
-    && ["physicalCalls", "reportedTokens", "toolWorkUnits"].every(field => {
-    const values = usages.map(u => u![field as "physicalCalls" | "reportedTokens" | "toolWorkUnits"]);
-    return Math.max(...values) - Math.min(...values) <= Math.max(...values, 1) * spec.realizedComputeTolerance;
-  });
+  const matched = attempts.every(Boolean) && matchedObservedAttempts(attempts, spec.realizedComputeTolerance);
   return {taskDigest: task.manifest.taskDigest, tier: task.manifest.tier, matchedRealizedInferenceAndToolCompute: matched,
     stable, outcomes: records.map(r => ({arm: r.arm, state: r.state, ...r.attempts[0]}))};
 });

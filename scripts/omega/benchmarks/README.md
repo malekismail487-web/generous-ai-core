@@ -82,7 +82,9 @@ No new candidate mechanism is labeled as improved before it earns fresh evidence
 The frozen `764d0b0` pilot is preserved in `docs/omega/evidence/nyx-arc-development-764d0b0.json`.
 No solutions were accepted. Raw output-contract failures were not hidden-case reasoning failures;
 the retained digests do not reveal their exact schema violations. Two current-NYX tasks produced
-two failing public-example candidates each. Other attempts hit provider/clock limits. Historical
+two candidates each but exhausted the combined local verification/admission gate. The old trace
+did not retain per-iteration functional and quality outcomes, so their exact cause is unresolved.
+Other attempts hit provider/clock limits. Historical
 resource-termination labels remain unchanged; new traces separately record each candidate's
 functional/quality outcome. No promotion or official score follows from this pilot.
 
@@ -105,6 +107,25 @@ unequal or unstable pairs to a causal improvement claim. The experiment may refu
 The prior pilot also exposed late cleanup evidence after an outer deadline. The adapter now
 reserves cleanup time *within* the unchanged outer lease. The new report checks trace completeness.
 The one-shot workflow is restored to manual-only after the cycle; no unbounded failure reruns.
+
+### Cycle result: no promotion
+
+Frozen candidate `ccf998c`, live run `37122187108`: current NYX accepted 1/4 first try;
+the witness candidate accepted 1/4 only after an existing quality-governor repair. Its first
+candidate on that task already passed public functional checks, so that repair is **not**
+evidence that failure witnesses improved reasoning. Reported tokens: 74,743 vs 88,324;
+physical model attempts: 8 vs 10, with unknown work and provider instability. No overall
+matched-compute gain was demonstrated. Both sides failed to emit syntactically valid source
+on the other transfer task, with 2 calls each and 25,143 vs 25,157 reported tokens. That stable
+matched failure never reached functional or hidden scoring, so it is an emission/interface
+failure rather than a demonstrated hidden-case reasoning failure. The report and a derived
+analysis are preserved in `docs/omega/evidence/nyx-public-witness-ccf998c.json`.
+
+The frozen report's pair metric unnecessarily required scorer execution, excluding a known
+zero-scoring-work syntax failure. Derived analysis corrects only that accounting distinction;
+the raw report, tolerance, task population and every acceptance outcome remain unchanged.
+The script applies that correction to future **manual** runs. The bounded cycle is stopped
+for review. Compact witnesses remain experimental/opt-in; broad capability is not promoted.
 
 Public examples can guide the internal bounded repair loop; test outputs stay only in the
 independent scorer closure. Verifier stdout predictions are untrusted candidate artifacts,

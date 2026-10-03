@@ -1,0 +1,1644 @@
+{
+  "workflowRun": 37122187108,
+  "job": 111200336027,
+  "report": {
+    "schemaVersion": 1,
+    "candidate": "ccf998cca225d0a6ab308dd89ce991a55a93767c",
+    "sourceTreeDigest": "25bae1f94049ed8b070871c46d79e1260adf4e0b878889b6cf77faae4361020e",
+    "campaign": {
+      "schemaVersion": 1,
+      "campaign": {
+        "schemaVersion": 1,
+        "campaignId": "NYX-PUBLIC-FAILURE-WITNESS-CYCLE-001",
+        "environmentIdentity": "linux-x64-node-v24.21.0",
+        "executionIdentity": "github-actions-37122187108",
+        "frozenAtEpochMs": 1791029643977,
+        "expiresAtEpochMs": 1791031143977,
+        "taskDigests": [
+          "ce84b5c20f6cf62e58fcfb1b569bbe6c2df2b6e619b985cce2ffe4b5a034b7ca",
+          "7f6ba011864c0037ac0eedad8e94838a49ede758fda2ad3216f62969b2d353ff",
+          "0487d52a06154a230a9a692d8f25fc144a774e11cd8219c7f38e0e6da3a55649",
+          "25d360991f00717232ae2b1c3e395ac64839e546e258fcdbb2b1ccf584ea1c45"
+        ],
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "modelConfigDigest": "9fcaa9b7592ba0733e1728fea926e3b57bc5e7f2b73b59faf3cc5ff20e50934e",
+        "authorityDigest": "3809db4a4ffee6a895d6834591fea1d5058e1b42fca794347bebc20da07fec17",
+        "toolEnvelopeDigest": "550daf1dfee9352fc1ce2a2b8f364bddab8a1c6ffd74a7d0cb54fa76788e3250",
+        "verifierVersion": "arc-exact-two-predictions/1",
+        "verifierSourceDigest": "6d77bd3f7caf7074570f69bf50ecb87180e5c4094fcdd8a1a7286ff99d34ce1d",
+        "limits": {
+          "maxCallsPerTask": 2,
+          "maxReportedTokensPerTask": 100000,
+          "maxToolCallsPerTask": 3,
+          "maxToolWorkUnitsPerTask": 12,
+          "maxAttemptsPerTask": 1,
+          "maxArtifactBytes": 50000,
+          "maxWallClockMsPerTask": 150000,
+          "maxWallClockMs": 1450000
+        },
+        "realizedComputeTolerance": 0.1
+      },
+      "campaignDigest": "d79272061d84aae4dac33b06621f5d1caf123b529551596e30f72997be2c3314",
+      "arms": [
+        {
+          "arm": "CURRENT_NYX",
+          "version": "nyx-public-witness/1-FULL_DUMP",
+          "sourceDigest": "153194955e68880662c75d7941416b079df0a4ea53b22749506e595560be54c5",
+          "inferenceMode": "LIVE_PROVIDER_E4",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "modelConfigDigest": "9fcaa9b7592ba0733e1728fea926e3b57bc5e7f2b73b59faf3cc5ff20e50934e",
+          "authorityDigest": "3809db4a4ffee6a895d6834591fea1d5058e1b42fca794347bebc20da07fec17",
+          "toolEnvelopeDigest": "550daf1dfee9352fc1ce2a2b8f364bddab8a1c6ffd74a7d0cb54fa76788e3250",
+          "supportedCapabilities": [
+            "JSON_GRID_OUTPUT"
+          ]
+        },
+        {
+          "arm": "CANDIDATE_NYX",
+          "version": "nyx-public-witness/1-COMPACT_WITNESS",
+          "sourceDigest": "80a42babba60a514bd652b75aa8cd28b293124ca6e68bdb630ae730b5328c746",
+          "inferenceMode": "LIVE_PROVIDER_E4",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "modelConfigDigest": "9fcaa9b7592ba0733e1728fea926e3b57bc5e7f2b73b59faf3cc5ff20e50934e",
+          "authorityDigest": "3809db4a4ffee6a895d6834591fea1d5058e1b42fca794347bebc20da07fec17",
+          "toolEnvelopeDigest": "550daf1dfee9352fc1ce2a2b8f364bddab8a1c6ffd74a7d0cb54fa76788e3250",
+          "supportedCapabilities": [
+            "JSON_GRID_OUTPUT"
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "schemaVersion": 1,
+          "taskId": "DEV-HORIZONTAL",
+          "family": "ARC_AGI",
+          "tier": "DEVELOPMENT",
+          "source": {
+            "dataset": "NYX-PUBLIC-WITNESS-CYCLE-AUTHORED",
+            "revision": "1",
+            "contentDigest": "688abb29bac4b2881db3a5e9929bb082b4cf8941bd7dfc1c763fdbac0fc53f94",
+            "visibility": "SYNTHETIC",
+            "kind": "DATASET_TASK",
+            "provenance": "Fresh authored task population, two distinct development and two transfer rule families; same-session author/evaluator correlation, NOT official, sealed, independently authored, or proof of pretraining absence."
+          },
+          "inputDigest": "63207e50a5740725e0fbc95eb4d4996c9f37700cb64059912764b54081a4d800",
+          "privateOracleDigest": "6d0a4875cd4228bfaf5465ef1c09a18d8f75c74e67e1667c7f3127fc5b16f304",
+          "requiredCapabilities": [
+            "JSON_GRID_OUTPUT"
+          ],
+          "taskDigest": "ce84b5c20f6cf62e58fcfb1b569bbe6c2df2b6e619b985cce2ffe4b5a034b7ca"
+        },
+        {
+          "schemaVersion": 1,
+          "taskId": "DEV-COLOR-PERMUTATION",
+          "family": "ARC_AGI",
+          "tier": "DEVELOPMENT",
+          "source": {
+            "dataset": "NYX-PUBLIC-WITNESS-CYCLE-AUTHORED",
+            "revision": "1",
+            "contentDigest": "c6aa21e84ba8d61e87016f598bcf933797dc898ec8622df5d2822a2961b6456d",
+            "visibility": "SYNTHETIC",
+            "kind": "DATASET_TASK",
+            "provenance": "Fresh authored task population, two distinct development and two transfer rule families; same-session author/evaluator correlation, NOT official, sealed, independently authored, or proof of pretraining absence."
+          },
+          "inputDigest": "bb6ebb27d6ae0d4eec135e7121da4ce84c0f3869a6e09c8187d374d7d5856611",
+          "privateOracleDigest": "a09fbe81542457e480ebc712821424eed1c08505c66c397da9343169dbadff7f",
+          "requiredCapabilities": [
+            "JSON_GRID_OUTPUT"
+          ],
+          "taskDigest": "7f6ba011864c0037ac0eedad8e94838a49ede758fda2ad3216f62969b2d353ff"
+        },
+        {
+          "schemaVersion": 1,
+          "taskId": "TRANSFER-SEED-PROPAGATION",
+          "family": "ARC_AGI",
+          "tier": "VALIDATION",
+          "source": {
+            "dataset": "NYX-PUBLIC-WITNESS-CYCLE-AUTHORED",
+            "revision": "1",
+            "contentDigest": "d96360b10d2261280691af132f94e18119946f2d2b3bd4b44ae573c160b267f3",
+            "visibility": "SYNTHETIC",
+            "kind": "DATASET_TASK",
+            "provenance": "Fresh authored task population, two distinct development and two transfer rule families; same-session author/evaluator correlation, NOT official, sealed, independently authored, or proof of pretraining absence."
+          },
+          "inputDigest": "b2b769a733f85342d5fd1efeb9cfee0fc14ea97125486b9292352f7ff20ec71f",
+          "privateOracleDigest": "7d32720a90de9f731ea7ce713edaf42d7ef9d31cc2d0c0222a237d7fbd6c871a",
+          "requiredCapabilities": [
+            "JSON_GRID_OUTPUT"
+          ],
+          "taskDigest": "0487d52a06154a230a9a692d8f25fc144a774e11cd8219c7f38e0e6da3a55649"
+        },
+        {
+          "schemaVersion": 1,
+          "taskId": "TRANSFER-SPATIAL-BOUNDARY",
+          "family": "ARC_AGI",
+          "tier": "VALIDATION",
+          "source": {
+            "dataset": "NYX-PUBLIC-WITNESS-CYCLE-AUTHORED",
+            "revision": "1",
+            "contentDigest": "aa1e72ed640dbf629cb38ef1d93e2cc1819001cb7a9b085416c1c54ee1f2327c",
+            "visibility": "SYNTHETIC",
+            "kind": "DATASET_TASK",
+            "provenance": "Fresh authored task population, two distinct development and two transfer rule families; same-session author/evaluator correlation, NOT official, sealed, independently authored, or proof of pretraining absence."
+          },
+          "inputDigest": "f3dfb3e323cbbdff02a08fb642eda313b00bb0e69f42c78a8ec0d603d960a4cf",
+          "privateOracleDigest": "85b4a8c64467b3d6275bcaf0bee51ab57780cd61bc52f1997ed3a641917e8469",
+          "requiredCapabilities": [
+            "JSON_GRID_OUTPUT"
+          ],
+          "taskDigest": "25d360991f00717232ae2b1c3e395ac64839e546e258fcdbb2b1ccf584ea1c45"
+        }
+      ],
+      "runs": [
+        {
+          "arm": "RAW_MODEL",
+          "taskDigest": "ce84b5c20f6cf62e58fcfb1b569bbe6c2df2b6e619b985cce2ffe4b5a034b7ca",
+          "tier": "DEVELOPMENT",
+          "state": "BLOCKED_ENVIRONMENT",
+          "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+          "attempts": []
+        },
+        {
+          "arm": "MODEL_EQUIVALENT_TOOLS",
+          "taskDigest": "ce84b5c20f6cf62e58fcfb1b569bbe6c2df2b6e619b985cce2ffe4b5a034b7ca",
+          "tier": "DEVELOPMENT",
+          "state": "BLOCKED_ENVIRONMENT",
+          "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+          "attempts": []
+        },
+        {
+          "arm": "CURRENT_NYX",
+          "taskDigest": "ce84b5c20f6cf62e58fcfb1b569bbe6c2df2b6e619b985cce2ffe4b5a034b7ca",
+          "tier": "DEVELOPMENT",
+          "state": "EXECUTED",
+          "reason": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "context": null,
+              "internalCandidateAttempts": 1,
+              "outcome": "FAILED",
+              "failure": "FUNCTIONAL_FAILURE",
+              "evaluation": null,
+              "usage": {
+                "logicalCalls": 2,
+                "physicalCalls": 2,
+                "httpAttempts": 2,
+                "reportedTokens": 25425,
+                "unknownUsageCalls": 0,
+                "toolCalls": 2,
+                "toolWorkUnits": 8,
+                "wallClockMs": 46884,
+                "providerFailures": 0,
+                "retries": 0
+              },
+              "verifierUsage": null,
+              "observedVerifierWallClockMs": 0,
+              "observedWallClockMs": 46884,
+              "confidence": null,
+              "requestDigests": [
+                "6b6a25d0519e7734524daf365674afa630dc72a1b035981cf5f72c17678837cf",
+                "552ddf4064b9d02f302b256a5027ae6474887cf4f9fdbad1d6c81955ddb17c06"
+              ],
+              "responseDigests": [
+                "9ba0fa468f1a9b6e5b643c20b5c549e8d6046dfdc90734f4d6d08bcffd0b9100",
+                "b63e86275db55af39c3b29dabb0d8939300879c0d7a512c136c65f97ae94c977"
+              ]
+            }
+          ]
+        },
+        {
+          "arm": "CANDIDATE_NYX",
+          "taskDigest": "ce84b5c20f6cf62e58fcfb1b569bbe6c2df2b6e619b985cce2ffe4b5a034b7ca",
+          "tier": "DEVELOPMENT",
+          "state": "EXECUTED",
+          "reason": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "context": null,
+              "internalCandidateAttempts": 2,
+              "outcome": "FAILED",
+              "failure": "RESOURCE_EXHAUSTION",
+              "evaluation": null,
+              "usage": {
+                "logicalCalls": 2,
+                "physicalCalls": 3,
+                "httpAttempts": 3,
+                "reportedTokens": 26606,
+                "unknownUsageCalls": 1,
+                "toolCalls": 3,
+                "toolWorkUnits": 12,
+                "wallClockMs": 101546,
+                "providerFailures": 1,
+                "retries": 1
+              },
+              "verifierUsage": null,
+              "observedVerifierWallClockMs": 0,
+              "observedWallClockMs": 101547,
+              "confidence": null,
+              "requestDigests": [
+                "ba914ddf70a9ec0ff45d59ab5a9130b0073b4d1826c5ba3dd8628edb97d7ddc2",
+                "be4924641aa0a164f74ff3e170e7e4b45b10742e3df0621490f7da46cfa21496"
+              ],
+              "responseDigests": [
+                "e537487a33b1c094a37ce554ee99ec1101f1026bae79f2134fb14958b7395d13",
+                "9f99a55e71062efb0fec9fb600f7c0a31104adac0723e15d4145d83af9e9c2f9"
+              ]
+            }
+          ]
+        },
+        {
+          "arm": "MODEL_EQUIVALENT_TOOLS",
+          "taskDigest": "7f6ba011864c0037ac0eedad8e94838a49ede758fda2ad3216f62969b2d353ff",
+          "tier": "DEVELOPMENT",
+          "state": "BLOCKED_ENVIRONMENT",
+          "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+          "attempts": []
+        },
+        {
+          "arm": "CURRENT_NYX",
+          "taskDigest": "7f6ba011864c0037ac0eedad8e94838a49ede758fda2ad3216f62969b2d353ff",
+          "tier": "DEVELOPMENT",
+          "state": "EXECUTED",
+          "reason": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "context": null,
+              "internalCandidateAttempts": 1,
+              "outcome": "FAILED",
+              "failure": "RESOURCE_EXHAUSTION",
+              "evaluation": null,
+              "usage": {
+                "logicalCalls": 2,
+                "physicalCalls": 3,
+                "httpAttempts": 3,
+                "reportedTokens": 12208,
+                "unknownUsageCalls": 2,
+                "toolCalls": 2,
+                "toolWorkUnits": 8,
+                "wallClockMs": 118211,
+                "providerFailures": 2,
+                "retries": 1
+              },
+              "verifierUsage": null,
+              "observedVerifierWallClockMs": 0,
+              "observedWallClockMs": 118211,
+              "confidence": null,
+              "requestDigests": [
+                "08e73fc885227e0840a2c02130bd28ea59075ed3b427917d8a539d89be9a97c1",
+                "fe8b393b06272635a661c138fefbaa1e38efc73a787eb2c5dc2515e52e5390cd"
+              ],
+              "responseDigests": [
+                "34e00fe11d12d3aa8e40c3daf518dba76892134d3172ac873b131d6c3be3b23e"
+              ]
+            }
+          ]
+        },
+        {
+          "arm": "CANDIDATE_NYX",
+          "taskDigest": "7f6ba011864c0037ac0eedad8e94838a49ede758fda2ad3216f62969b2d353ff",
+          "tier": "DEVELOPMENT",
+          "state": "EXECUTED",
+          "reason": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "context": null,
+              "internalCandidateAttempts": 1,
+              "outcome": "FAILED",
+              "failure": "RESOURCE_EXHAUSTION",
+              "evaluation": null,
+              "usage": {
+                "logicalCalls": 2,
+                "physicalCalls": 3,
+                "httpAttempts": 3,
+                "reportedTokens": 12133,
+                "unknownUsageCalls": 2,
+                "toolCalls": 2,
+                "toolWorkUnits": 8,
+                "wallClockMs": 145006,
+                "providerFailures": 2,
+                "retries": 1
+              },
+              "verifierUsage": null,
+              "observedVerifierWallClockMs": 0,
+              "observedWallClockMs": 145006,
+              "confidence": null,
+              "requestDigests": [
+                "3031ece902a56af801e406fc08b0fa4f8f1ad74bcc50ea56ef1767419b9c118a",
+                "411d4e9b53a14f044a0cb8ce6c340dbeb51ccaae7f9c403e9c103698e4658c30"
+              ],
+              "responseDigests": [
+                "468f97192ff72049f1c4f7f6727449254997d79d7f8733563cfe465a83f57be0"
+              ]
+            }
+          ]
+        },
+        {
+          "arm": "RAW_MODEL",
+          "taskDigest": "7f6ba011864c0037ac0eedad8e94838a49ede758fda2ad3216f62969b2d353ff",
+          "tier": "DEVELOPMENT",
+          "state": "BLOCKED_ENVIRONMENT",
+          "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+          "attempts": []
+        },
+        {
+          "arm": "CURRENT_NYX",
+          "taskDigest": "0487d52a06154a230a9a692d8f25fc144a774e11cd8219c7f38e0e6da3a55649",
+          "tier": "VALIDATION",
+          "state": "EXECUTED",
+          "reason": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "context": {
+                "campaignDigest": "d79272061d84aae4dac33b06621f5d1caf123b529551596e30f72997be2c3314",
+                "taskDigest": "0487d52a06154a230a9a692d8f25fc144a774e11cd8219c7f38e0e6da3a55649",
+                "taskId": "TRANSFER-SEED-PROPAGATION",
+                "arm": "CURRENT_NYX",
+                "armSourceDigest": "153194955e68880662c75d7941416b079df0a4ea53b22749506e595560be54c5",
+                "attempt": 1,
+                "artifactDigest": "c71e8bf0740414fc48a923eea57913546bfdebfa5eee42c837be942595baa72d",
+                "evaluationRunId": "nyx-de0056c2682d893f409baa5ed0b2a9a7e4f521bd17d1747d"
+              },
+              "internalCandidateAttempts": 1,
+              "outcome": "ACCEPTED",
+              "failure": null,
+              "evaluation": {
+                "state": "PASS",
+                "correct": 2,
+                "total": 2,
+                "quality": "NOT_APPLICABLE",
+                "metric": "ARC_EXACT_TWO_PREDICTIONS_PER_TEST_OUTPUT",
+                "evidenceDigest": "35e349bb140f0c5192747bc94c8aac0d3d79bc9dbf5d6e0a22683705b18badb8",
+                "confidence": null
+              },
+              "usage": {
+                "logicalCalls": 1,
+                "physicalCalls": 1,
+                "httpAttempts": 1,
+                "reportedTokens": 11967,
+                "unknownUsageCalls": 0,
+                "toolCalls": 2,
+                "toolWorkUnits": 8,
+                "wallClockMs": 80848,
+                "providerFailures": 0,
+                "retries": 0
+              },
+              "verifierUsage": {
+                "logicalCalls": 0,
+                "physicalCalls": 0,
+                "httpAttempts": 0,
+                "reportedTokens": 0,
+                "unknownUsageCalls": 0,
+                "toolCalls": 1,
+                "toolWorkUnits": 2,
+                "wallClockMs": 1,
+                "providerFailures": 0,
+                "retries": 0
+              },
+              "observedVerifierWallClockMs": 1,
+              "observedWallClockMs": 80851,
+              "confidence": null,
+              "requestDigests": [
+                "a9c6821512a0d617971712105120b9853760d19f02713c11902e5e011ca3b4ee"
+              ],
+              "responseDigests": [
+                "263a3004e7c9210d28ff5486940d1b0f335b70eaabab4a7069f22659c4e48a92"
+              ]
+            }
+          ]
+        },
+        {
+          "arm": "CANDIDATE_NYX",
+          "taskDigest": "0487d52a06154a230a9a692d8f25fc144a774e11cd8219c7f38e0e6da3a55649",
+          "tier": "VALIDATION",
+          "state": "EXECUTED",
+          "reason": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "context": {
+                "campaignDigest": "d79272061d84aae4dac33b06621f5d1caf123b529551596e30f72997be2c3314",
+                "taskDigest": "0487d52a06154a230a9a692d8f25fc144a774e11cd8219c7f38e0e6da3a55649",
+                "taskId": "TRANSFER-SEED-PROPAGATION",
+                "arm": "CANDIDATE_NYX",
+                "armSourceDigest": "80a42babba60a514bd652b75aa8cd28b293124ca6e68bdb630ae730b5328c746",
+                "attempt": 1,
+                "artifactDigest": "c71e8bf0740414fc48a923eea57913546bfdebfa5eee42c837be942595baa72d",
+                "evaluationRunId": "nyx-2bdbb5af819fdf61695e834305a6af09a4d4facfdcd5676c"
+              },
+              "internalCandidateAttempts": 2,
+              "outcome": "ACCEPTED",
+              "failure": null,
+              "evaluation": {
+                "state": "PASS",
+                "correct": 2,
+                "total": 2,
+                "quality": "NOT_APPLICABLE",
+                "metric": "ARC_EXACT_TWO_PREDICTIONS_PER_TEST_OUTPUT",
+                "evidenceDigest": "35e349bb140f0c5192747bc94c8aac0d3d79bc9dbf5d6e0a22683705b18badb8",
+                "confidence": null
+              },
+              "usage": {
+                "logicalCalls": 2,
+                "physicalCalls": 2,
+                "httpAttempts": 2,
+                "reportedTokens": 24428,
+                "unknownUsageCalls": 0,
+                "toolCalls": 3,
+                "toolWorkUnits": 12,
+                "wallClockMs": 21503,
+                "providerFailures": 0,
+                "retries": 0
+              },
+              "verifierUsage": {
+                "logicalCalls": 0,
+                "physicalCalls": 0,
+                "httpAttempts": 0,
+                "reportedTokens": 0,
+                "unknownUsageCalls": 0,
+                "toolCalls": 1,
+                "toolWorkUnits": 2,
+                "wallClockMs": 1,
+                "providerFailures": 0,
+                "retries": 0
+              },
+              "observedVerifierWallClockMs": 1,
+              "observedWallClockMs": 21506,
+              "confidence": null,
+              "requestDigests": [
+                "fc94a91a7c9da020872fa7e97fb228c2d4b51728f3b8fbe961bbbb193976f5c4",
+                "8bd18256b9c74cc389f92f7bfb1b06fdb3e0c8fe3f88ad2071b04ab1217f464e"
+              ],
+              "responseDigests": [
+                "9957213ca68ef7cb3e56af1dbf9db3376aae41516e65c69f34c3117de0699f2c",
+                "4a9eaeae29644d3b375f767ea9f394a0ca1ec60e02ef792d1b27395b510e3995"
+              ]
+            }
+          ]
+        },
+        {
+          "arm": "RAW_MODEL",
+          "taskDigest": "0487d52a06154a230a9a692d8f25fc144a774e11cd8219c7f38e0e6da3a55649",
+          "tier": "VALIDATION",
+          "state": "BLOCKED_ENVIRONMENT",
+          "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+          "attempts": []
+        },
+        {
+          "arm": "MODEL_EQUIVALENT_TOOLS",
+          "taskDigest": "0487d52a06154a230a9a692d8f25fc144a774e11cd8219c7f38e0e6da3a55649",
+          "tier": "VALIDATION",
+          "state": "BLOCKED_ENVIRONMENT",
+          "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+          "attempts": []
+        },
+        {
+          "arm": "CANDIDATE_NYX",
+          "taskDigest": "25d360991f00717232ae2b1c3e395ac64839e546e258fcdbb2b1ccf584ea1c45",
+          "tier": "VALIDATION",
+          "state": "EXECUTED",
+          "reason": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "context": null,
+              "internalCandidateAttempts": 0,
+              "outcome": "FAILED",
+              "failure": "SYNTAX_FAILURE",
+              "evaluation": null,
+              "usage": {
+                "logicalCalls": 2,
+                "physicalCalls": 2,
+                "httpAttempts": 2,
+                "reportedTokens": 25157,
+                "unknownUsageCalls": 0,
+                "toolCalls": 1,
+                "toolWorkUnits": 4,
+                "wallClockMs": 25568,
+                "providerFailures": 0,
+                "retries": 0
+              },
+              "verifierUsage": null,
+              "observedVerifierWallClockMs": 0,
+              "observedWallClockMs": 25568,
+              "confidence": null,
+              "requestDigests": [
+                "a84a38654b0b489a86d75941f3688f5f3d1a5a34e7283f6183dd20b72f0c13e4",
+                "68957af83b9df8d1ea570330d3f21d3e6e15c8c851980d83fc944aa7eaa5b1dd"
+              ],
+              "responseDigests": [
+                "5f87cec8436d0a9701952ed31166ddc3a069a03662b990e59a2423b01b08c95e",
+                "be188c6902529b1cd1c865e48ee229ce636cdb3986c667493d0540c8f89ea0a8"
+              ]
+            }
+          ]
+        },
+        {
+          "arm": "RAW_MODEL",
+          "taskDigest": "25d360991f00717232ae2b1c3e395ac64839e546e258fcdbb2b1ccf584ea1c45",
+          "tier": "VALIDATION",
+          "state": "BLOCKED_ENVIRONMENT",
+          "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+          "attempts": []
+        },
+        {
+          "arm": "MODEL_EQUIVALENT_TOOLS",
+          "taskDigest": "25d360991f00717232ae2b1c3e395ac64839e546e258fcdbb2b1ccf584ea1c45",
+          "tier": "VALIDATION",
+          "state": "BLOCKED_ENVIRONMENT",
+          "reason": "ACTUAL_ARM_ADAPTER_NOT_INSTALLED",
+          "attempts": []
+        },
+        {
+          "arm": "CURRENT_NYX",
+          "taskDigest": "25d360991f00717232ae2b1c3e395ac64839e546e258fcdbb2b1ccf584ea1c45",
+          "tier": "VALIDATION",
+          "state": "EXECUTED",
+          "reason": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "context": null,
+              "internalCandidateAttempts": 0,
+              "outcome": "FAILED",
+              "failure": "SYNTAX_FAILURE",
+              "evaluation": null,
+              "usage": {
+                "logicalCalls": 2,
+                "physicalCalls": 2,
+                "httpAttempts": 2,
+                "reportedTokens": 25143,
+                "unknownUsageCalls": 0,
+                "toolCalls": 1,
+                "toolWorkUnits": 4,
+                "wallClockMs": 45690,
+                "providerFailures": 0,
+                "retries": 0
+              },
+              "verifierUsage": null,
+              "observedVerifierWallClockMs": 0,
+              "observedWallClockMs": 45690,
+              "confidence": null,
+              "requestDigests": [
+                "7237aa15be5366383527726026c5995d9c429a2d246859932573cb90c59cadb6",
+                "ad46b0ced3da7dd1888a7664a9ea913da0fc2ba278045648e0073e18d8b240e6"
+              ],
+              "responseDigests": [
+                "64693debf650eb903caf9f6705ad29c43e0e43405b3fd715798ecb44f5765c91",
+                "de5919b8a99da67bfce7943c877be8a5d3715dcdcb37fd09bd26982c090336d7"
+              ]
+            }
+          ]
+        }
+      ],
+      "summaries": [
+        {
+          "arm": "RAW_MODEL",
+          "tasks": 4,
+          "executedTasks": 0,
+          "firstAttemptAccepted": 0,
+          "repairedAccepted": 0,
+          "finalAccepted": 0,
+          "qualityAccepted": 0,
+          "qualityNotEvaluated": 0,
+          "falseAcceptances": null,
+          "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+          "repairAttempts": 0,
+          "failureCounts": {
+            "PROVIDER_FAILURE": 0,
+            "TRUNCATION": 0,
+            "SCHEMA_FAILURE": 0,
+            "SYNTAX_FAILURE": 0,
+            "FUNCTIONAL_FAILURE": 0,
+            "HIDDEN_CASE_FAILURE": 0,
+            "QUALITY_REJECTION": 0,
+            "AUTHORIZATION_FAILURE": 0,
+            "MISSING_CAPABILITY": 0,
+            "VERIFIER_FAILURE": 0,
+            "RESOURCE_EXHAUSTION": 0,
+            "INFRASTRUCTURE_FAILURE": 0
+          },
+          "usage": {
+            "logicalCalls": 0,
+            "physicalCalls": 0,
+            "httpAttempts": 0,
+            "reportedTokens": 0,
+            "unknownUsageCalls": 0,
+            "toolCalls": 0,
+            "toolWorkUnits": 0,
+            "wallClockMs": 0,
+            "providerFailures": 0,
+            "retries": 0
+          },
+          "verifierUsage": {
+            "logicalCalls": 0,
+            "physicalCalls": 0,
+            "httpAttempts": 0,
+            "reportedTokens": 0,
+            "unknownUsageCalls": 0,
+            "toolCalls": 0,
+            "toolWorkUnits": 0,
+            "wallClockMs": 0,
+            "providerFailures": 0,
+            "retries": 0
+          },
+          "unknownVerifierUsage": 0,
+          "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+          "unknownAttemptUsage": 0,
+          "complete": false,
+          "providerStable": false,
+          "calibration": {
+            "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+            "population": 0,
+            "value": null
+          },
+          "benchmarkScorePercent": null
+        },
+        {
+          "arm": "MODEL_EQUIVALENT_TOOLS",
+          "tasks": 4,
+          "executedTasks": 0,
+          "firstAttemptAccepted": 0,
+          "repairedAccepted": 0,
+          "finalAccepted": 0,
+          "qualityAccepted": 0,
+          "qualityNotEvaluated": 0,
+          "falseAcceptances": null,
+          "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+          "repairAttempts": 0,
+          "failureCounts": {
+            "PROVIDER_FAILURE": 0,
+            "TRUNCATION": 0,
+            "SCHEMA_FAILURE": 0,
+            "SYNTAX_FAILURE": 0,
+            "FUNCTIONAL_FAILURE": 0,
+            "HIDDEN_CASE_FAILURE": 0,
+            "QUALITY_REJECTION": 0,
+            "AUTHORIZATION_FAILURE": 0,
+            "MISSING_CAPABILITY": 0,
+            "VERIFIER_FAILURE": 0,
+            "RESOURCE_EXHAUSTION": 0,
+            "INFRASTRUCTURE_FAILURE": 0
+          },
+          "usage": {
+            "logicalCalls": 0,
+            "physicalCalls": 0,
+            "httpAttempts": 0,
+            "reportedTokens": 0,
+            "unknownUsageCalls": 0,
+            "toolCalls": 0,
+            "toolWorkUnits": 0,
+            "wallClockMs": 0,
+            "providerFailures": 0,
+            "retries": 0
+          },
+          "verifierUsage": {
+            "logicalCalls": 0,
+            "physicalCalls": 0,
+            "httpAttempts": 0,
+            "reportedTokens": 0,
+            "unknownUsageCalls": 0,
+            "toolCalls": 0,
+            "toolWorkUnits": 0,
+            "wallClockMs": 0,
+            "providerFailures": 0,
+            "retries": 0
+          },
+          "unknownVerifierUsage": 0,
+          "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+          "unknownAttemptUsage": 0,
+          "complete": false,
+          "providerStable": false,
+          "calibration": {
+            "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+            "population": 0,
+            "value": null
+          },
+          "benchmarkScorePercent": null
+        },
+        {
+          "arm": "CURRENT_NYX",
+          "tasks": 4,
+          "executedTasks": 4,
+          "firstAttemptAccepted": 1,
+          "repairedAccepted": 0,
+          "finalAccepted": 1,
+          "qualityAccepted": 0,
+          "qualityNotEvaluated": 0,
+          "falseAcceptances": null,
+          "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+          "repairAttempts": 0,
+          "failureCounts": {
+            "PROVIDER_FAILURE": 0,
+            "TRUNCATION": 0,
+            "SCHEMA_FAILURE": 0,
+            "SYNTAX_FAILURE": 1,
+            "FUNCTIONAL_FAILURE": 1,
+            "HIDDEN_CASE_FAILURE": 0,
+            "QUALITY_REJECTION": 0,
+            "AUTHORIZATION_FAILURE": 0,
+            "MISSING_CAPABILITY": 0,
+            "VERIFIER_FAILURE": 0,
+            "RESOURCE_EXHAUSTION": 1,
+            "INFRASTRUCTURE_FAILURE": 0
+          },
+          "usage": {
+            "logicalCalls": 7,
+            "physicalCalls": 8,
+            "httpAttempts": 8,
+            "reportedTokens": 74743,
+            "unknownUsageCalls": 2,
+            "toolCalls": 7,
+            "toolWorkUnits": 28,
+            "wallClockMs": 291633,
+            "providerFailures": 2,
+            "retries": 1
+          },
+          "verifierUsage": {
+            "logicalCalls": 0,
+            "physicalCalls": 0,
+            "httpAttempts": 0,
+            "reportedTokens": 0,
+            "unknownUsageCalls": 0,
+            "toolCalls": 1,
+            "toolWorkUnits": 2,
+            "wallClockMs": 1,
+            "providerFailures": 0,
+            "retries": 0
+          },
+          "unknownVerifierUsage": 0,
+          "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+          "unknownAttemptUsage": 0,
+          "complete": true,
+          "providerStable": false,
+          "calibration": {
+            "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+            "population": 0,
+            "value": null
+          },
+          "benchmarkScorePercent": null
+        },
+        {
+          "arm": "CANDIDATE_NYX",
+          "tasks": 4,
+          "executedTasks": 4,
+          "firstAttemptAccepted": 0,
+          "repairedAccepted": 1,
+          "finalAccepted": 1,
+          "qualityAccepted": 0,
+          "qualityNotEvaluated": 0,
+          "falseAcceptances": null,
+          "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+          "repairAttempts": 0,
+          "failureCounts": {
+            "PROVIDER_FAILURE": 0,
+            "TRUNCATION": 0,
+            "SCHEMA_FAILURE": 0,
+            "SYNTAX_FAILURE": 1,
+            "FUNCTIONAL_FAILURE": 0,
+            "HIDDEN_CASE_FAILURE": 0,
+            "QUALITY_REJECTION": 0,
+            "AUTHORIZATION_FAILURE": 0,
+            "MISSING_CAPABILITY": 0,
+            "VERIFIER_FAILURE": 0,
+            "RESOURCE_EXHAUSTION": 2,
+            "INFRASTRUCTURE_FAILURE": 0
+          },
+          "usage": {
+            "logicalCalls": 8,
+            "physicalCalls": 10,
+            "httpAttempts": 10,
+            "reportedTokens": 88324,
+            "unknownUsageCalls": 3,
+            "toolCalls": 9,
+            "toolWorkUnits": 36,
+            "wallClockMs": 293623,
+            "providerFailures": 3,
+            "retries": 2
+          },
+          "verifierUsage": {
+            "logicalCalls": 0,
+            "physicalCalls": 0,
+            "httpAttempts": 0,
+            "reportedTokens": 0,
+            "unknownUsageCalls": 0,
+            "toolCalls": 1,
+            "toolWorkUnits": 2,
+            "wallClockMs": 1,
+            "providerFailures": 0,
+            "retries": 0
+          },
+          "unknownVerifierUsage": 0,
+          "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+          "unknownAttemptUsage": 0,
+          "complete": true,
+          "providerStable": false,
+          "calibration": {
+            "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+            "population": 0,
+            "value": null
+          },
+          "benchmarkScorePercent": null
+        }
+      ],
+      "matchedRealizedCompute": false,
+      "comparisonScope": "EQUAL_TOOL_ENVELOPE_NON_RAW_ARMS_ONLY",
+      "capabilityGaps": [
+        {
+          "gapId": "NYX-GAP-302afb5d419a83657475",
+          "failureClass": "FUNCTIONAL_FAILURE",
+          "evidenceDigest": "4a19f6652c906275cd64dd4de79f2b77e5cd847276bd71b53ad00c6278046824",
+          "taskDigest": "ce84b5c20f6cf62e58fcfb1b569bbe6c2df2b6e619b985cce2ffe4b5a034b7ca",
+          "tier": "DEVELOPMENT",
+          "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+          "benchmarkReevaluationEligible": false
+        },
+        {
+          "gapId": "NYX-GAP-26921a228cfc72a19cc5",
+          "failureClass": "RESOURCE_EXHAUSTION",
+          "evidenceDigest": "a1037217288385700e3c2b2d3fe5e53e4672c2e6fe7d1d09df67b76d3b68aa3d",
+          "taskDigest": "ce84b5c20f6cf62e58fcfb1b569bbe6c2df2b6e619b985cce2ffe4b5a034b7ca",
+          "tier": "DEVELOPMENT",
+          "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+          "benchmarkReevaluationEligible": false
+        },
+        {
+          "gapId": "NYX-GAP-36d15dc39963a0efb630",
+          "failureClass": "RESOURCE_EXHAUSTION",
+          "evidenceDigest": "06bc146a4bc7c7d5c35a408f238dbdc4b291dec70a3cf83efc54ca7fc35596d1",
+          "taskDigest": "7f6ba011864c0037ac0eedad8e94838a49ede758fda2ad3216f62969b2d353ff",
+          "tier": "DEVELOPMENT",
+          "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+          "benchmarkReevaluationEligible": false
+        },
+        {
+          "gapId": "NYX-GAP-9c989db2de0964f494cf",
+          "failureClass": "RESOURCE_EXHAUSTION",
+          "evidenceDigest": "2214ae346d6a7e4ec368cdcd089c2eba0cdf9de0964c3a9e829c718f5c48609f",
+          "taskDigest": "7f6ba011864c0037ac0eedad8e94838a49ede758fda2ad3216f62969b2d353ff",
+          "tier": "DEVELOPMENT",
+          "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+          "benchmarkReevaluationEligible": false
+        },
+        {
+          "gapId": "NYX-GAP-7ff0e2b07fe7aa39f17e",
+          "failureClass": "SYNTAX_FAILURE",
+          "evidenceDigest": "888fa7ac3e85f1e1415b0375c423302a583432e5c9246eb77d0e861f08ff94c6",
+          "taskDigest": "25d360991f00717232ae2b1c3e395ac64839e546e258fcdbb2b1ccf584ea1c45",
+          "tier": "VALIDATION",
+          "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+          "benchmarkReevaluationEligible": false
+        },
+        {
+          "gapId": "NYX-GAP-71d7a941b04f60f19f3d",
+          "failureClass": "SYNTAX_FAILURE",
+          "evidenceDigest": "370b0fb033552c0d31bed066a7d04a5bded684e36d7f1ef4b08c1c05ab87ea81",
+          "taskDigest": "25d360991f00717232ae2b1c3e395ac64839e546e258fcdbb2b1ccf584ea1c45",
+          "tier": "VALIDATION",
+          "state": "OBSERVED_REQUIRES_INDEPENDENT_DEVELOPMENT_REPRODUCTION",
+          "benchmarkReevaluationEligible": false
+        }
+      ],
+      "officialLeaderboardClaim": false,
+      "broadPromotion": false,
+      "grantsAuthority": false,
+      "rawModelComputeParitied": false,
+      "integrity": "TAMPER_EVIDENT_NOT_SIGNED",
+      "observedWallClockMs": 585264,
+      "exposureHistory": [],
+      "reportDigest": "558405344318acd2cda288d3c997f0bae3a8391a30b6cb5aad0ef903e1ca4d65"
+    },
+    "pairs": [
+      {
+        "taskDigest": "ce84b5c20f6cf62e58fcfb1b569bbe6c2df2b6e619b985cce2ffe4b5a034b7ca",
+        "tier": "DEVELOPMENT",
+        "matchedRealizedInferenceAndToolCompute": false,
+        "stable": false,
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "state": "EXECUTED",
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 1,
+            "outcome": "FAILED",
+            "failure": "FUNCTIONAL_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 25425,
+              "unknownUsageCalls": 0,
+              "toolCalls": 2,
+              "toolWorkUnits": 8,
+              "wallClockMs": 46884,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 46884,
+            "confidence": null,
+            "requestDigests": [
+              "6b6a25d0519e7734524daf365674afa630dc72a1b035981cf5f72c17678837cf",
+              "552ddf4064b9d02f302b256a5027ae6474887cf4f9fdbad1d6c81955ddb17c06"
+            ],
+            "responseDigests": [
+              "9ba0fa468f1a9b6e5b643c20b5c549e8d6046dfdc90734f4d6d08bcffd0b9100",
+              "b63e86275db55af39c3b29dabb0d8939300879c0d7a512c136c65f97ae94c977"
+            ]
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "state": "EXECUTED",
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 2,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 3,
+              "httpAttempts": 3,
+              "reportedTokens": 26606,
+              "unknownUsageCalls": 1,
+              "toolCalls": 3,
+              "toolWorkUnits": 12,
+              "wallClockMs": 101546,
+              "providerFailures": 1,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 101547,
+            "confidence": null,
+            "requestDigests": [
+              "ba914ddf70a9ec0ff45d59ab5a9130b0073b4d1826c5ba3dd8628edb97d7ddc2",
+              "be4924641aa0a164f74ff3e170e7e4b45b10742e3df0621490f7da46cfa21496"
+            ],
+            "responseDigests": [
+              "e537487a33b1c094a37ce554ee99ec1101f1026bae79f2134fb14958b7395d13",
+              "9f99a55e71062efb0fec9fb600f7c0a31104adac0723e15d4145d83af9e9c2f9"
+            ]
+          }
+        ]
+      },
+      {
+        "taskDigest": "7f6ba011864c0037ac0eedad8e94838a49ede758fda2ad3216f62969b2d353ff",
+        "tier": "DEVELOPMENT",
+        "matchedRealizedInferenceAndToolCompute": false,
+        "stable": false,
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "state": "EXECUTED",
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 1,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 3,
+              "httpAttempts": 3,
+              "reportedTokens": 12208,
+              "unknownUsageCalls": 2,
+              "toolCalls": 2,
+              "toolWorkUnits": 8,
+              "wallClockMs": 118211,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 118211,
+            "confidence": null,
+            "requestDigests": [
+              "08e73fc885227e0840a2c02130bd28ea59075ed3b427917d8a539d89be9a97c1",
+              "fe8b393b06272635a661c138fefbaa1e38efc73a787eb2c5dc2515e52e5390cd"
+            ],
+            "responseDigests": [
+              "34e00fe11d12d3aa8e40c3daf518dba76892134d3172ac873b131d6c3be3b23e"
+            ]
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "state": "EXECUTED",
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 1,
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 3,
+              "httpAttempts": 3,
+              "reportedTokens": 12133,
+              "unknownUsageCalls": 2,
+              "toolCalls": 2,
+              "toolWorkUnits": 8,
+              "wallClockMs": 145006,
+              "providerFailures": 2,
+              "retries": 1
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 145006,
+            "confidence": null,
+            "requestDigests": [
+              "3031ece902a56af801e406fc08b0fa4f8f1ad74bcc50ea56ef1767419b9c118a",
+              "411d4e9b53a14f044a0cb8ce6c340dbeb51ccaae7f9c403e9c103698e4658c30"
+            ],
+            "responseDigests": [
+              "468f97192ff72049f1c4f7f6727449254997d79d7f8733563cfe465a83f57be0"
+            ]
+          }
+        ]
+      },
+      {
+        "taskDigest": "0487d52a06154a230a9a692d8f25fc144a774e11cd8219c7f38e0e6da3a55649",
+        "tier": "VALIDATION",
+        "matchedRealizedInferenceAndToolCompute": false,
+        "stable": true,
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "state": "EXECUTED",
+            "attempt": 1,
+            "context": {
+              "campaignDigest": "d79272061d84aae4dac33b06621f5d1caf123b529551596e30f72997be2c3314",
+              "taskDigest": "0487d52a06154a230a9a692d8f25fc144a774e11cd8219c7f38e0e6da3a55649",
+              "taskId": "TRANSFER-SEED-PROPAGATION",
+              "arm": "CURRENT_NYX",
+              "armSourceDigest": "153194955e68880662c75d7941416b079df0a4ea53b22749506e595560be54c5",
+              "attempt": 1,
+              "artifactDigest": "c71e8bf0740414fc48a923eea57913546bfdebfa5eee42c837be942595baa72d",
+              "evaluationRunId": "nyx-de0056c2682d893f409baa5ed0b2a9a7e4f521bd17d1747d"
+            },
+            "internalCandidateAttempts": 1,
+            "outcome": "ACCEPTED",
+            "failure": null,
+            "evaluation": {
+              "state": "PASS",
+              "correct": 2,
+              "total": 2,
+              "quality": "NOT_APPLICABLE",
+              "metric": "ARC_EXACT_TWO_PREDICTIONS_PER_TEST_OUTPUT",
+              "evidenceDigest": "35e349bb140f0c5192747bc94c8aac0d3d79bc9dbf5d6e0a22683705b18badb8",
+              "confidence": null
+            },
+            "usage": {
+              "logicalCalls": 1,
+              "physicalCalls": 1,
+              "httpAttempts": 1,
+              "reportedTokens": 11967,
+              "unknownUsageCalls": 0,
+              "toolCalls": 2,
+              "toolWorkUnits": 8,
+              "wallClockMs": 80848,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": {
+              "logicalCalls": 0,
+              "physicalCalls": 0,
+              "httpAttempts": 0,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 0,
+              "toolCalls": 1,
+              "toolWorkUnits": 2,
+              "wallClockMs": 1,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "observedVerifierWallClockMs": 1,
+            "observedWallClockMs": 80851,
+            "confidence": null,
+            "requestDigests": [
+              "a9c6821512a0d617971712105120b9853760d19f02713c11902e5e011ca3b4ee"
+            ],
+            "responseDigests": [
+              "263a3004e7c9210d28ff5486940d1b0f335b70eaabab4a7069f22659c4e48a92"
+            ]
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "state": "EXECUTED",
+            "attempt": 1,
+            "context": {
+              "campaignDigest": "d79272061d84aae4dac33b06621f5d1caf123b529551596e30f72997be2c3314",
+              "taskDigest": "0487d52a06154a230a9a692d8f25fc144a774e11cd8219c7f38e0e6da3a55649",
+              "taskId": "TRANSFER-SEED-PROPAGATION",
+              "arm": "CANDIDATE_NYX",
+              "armSourceDigest": "80a42babba60a514bd652b75aa8cd28b293124ca6e68bdb630ae730b5328c746",
+              "attempt": 1,
+              "artifactDigest": "c71e8bf0740414fc48a923eea57913546bfdebfa5eee42c837be942595baa72d",
+              "evaluationRunId": "nyx-2bdbb5af819fdf61695e834305a6af09a4d4facfdcd5676c"
+            },
+            "internalCandidateAttempts": 2,
+            "outcome": "ACCEPTED",
+            "failure": null,
+            "evaluation": {
+              "state": "PASS",
+              "correct": 2,
+              "total": 2,
+              "quality": "NOT_APPLICABLE",
+              "metric": "ARC_EXACT_TWO_PREDICTIONS_PER_TEST_OUTPUT",
+              "evidenceDigest": "35e349bb140f0c5192747bc94c8aac0d3d79bc9dbf5d6e0a22683705b18badb8",
+              "confidence": null
+            },
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 24428,
+              "unknownUsageCalls": 0,
+              "toolCalls": 3,
+              "toolWorkUnits": 12,
+              "wallClockMs": 21503,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": {
+              "logicalCalls": 0,
+              "physicalCalls": 0,
+              "httpAttempts": 0,
+              "reportedTokens": 0,
+              "unknownUsageCalls": 0,
+              "toolCalls": 1,
+              "toolWorkUnits": 2,
+              "wallClockMs": 1,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "observedVerifierWallClockMs": 1,
+            "observedWallClockMs": 21506,
+            "confidence": null,
+            "requestDigests": [
+              "fc94a91a7c9da020872fa7e97fb228c2d4b51728f3b8fbe961bbbb193976f5c4",
+              "8bd18256b9c74cc389f92f7bfb1b06fdb3e0c8fe3f88ad2071b04ab1217f464e"
+            ],
+            "responseDigests": [
+              "9957213ca68ef7cb3e56af1dbf9db3376aae41516e65c69f34c3117de0699f2c",
+              "4a9eaeae29644d3b375f767ea9f394a0ca1ec60e02ef792d1b27395b510e3995"
+            ]
+          }
+        ]
+      },
+      {
+        "taskDigest": "25d360991f00717232ae2b1c3e395ac64839e546e258fcdbb2b1ccf584ea1c45",
+        "tier": "VALIDATION",
+        "matchedRealizedInferenceAndToolCompute": false,
+        "stable": true,
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "state": "EXECUTED",
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "SYNTAX_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 25143,
+              "unknownUsageCalls": 0,
+              "toolCalls": 1,
+              "toolWorkUnits": 4,
+              "wallClockMs": 45690,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 45690,
+            "confidence": null,
+            "requestDigests": [
+              "7237aa15be5366383527726026c5995d9c429a2d246859932573cb90c59cadb6",
+              "ad46b0ced3da7dd1888a7664a9ea913da0fc2ba278045648e0073e18d8b240e6"
+            ],
+            "responseDigests": [
+              "64693debf650eb903caf9f6705ad29c43e0e43405b3fd715798ecb44f5765c91",
+              "de5919b8a99da67bfce7943c877be8a5d3715dcdcb37fd09bd26982c090336d7"
+            ]
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "state": "EXECUTED",
+            "attempt": 1,
+            "context": null,
+            "internalCandidateAttempts": 0,
+            "outcome": "FAILED",
+            "failure": "SYNTAX_FAILURE",
+            "evaluation": null,
+            "usage": {
+              "logicalCalls": 2,
+              "physicalCalls": 2,
+              "httpAttempts": 2,
+              "reportedTokens": 25157,
+              "unknownUsageCalls": 0,
+              "toolCalls": 1,
+              "toolWorkUnits": 4,
+              "wallClockMs": 25568,
+              "providerFailures": 0,
+              "retries": 0
+            },
+            "verifierUsage": null,
+            "observedVerifierWallClockMs": 0,
+            "observedWallClockMs": 25568,
+            "confidence": null,
+            "requestDigests": [
+              "a84a38654b0b489a86d75941f3688f5f3d1a5a34e7283f6183dd20b72f0c13e4",
+              "68957af83b9df8d1ea570330d3f21d3e6e15c8c851980d83fc944aa7eaa5b1dd"
+            ],
+            "responseDigests": [
+              "5f87cec8436d0a9701952ed31166ddc3a069a03662b990e59a2423b01b08c95e",
+              "be188c6902529b1cd1c865e48ee229ce636cdb3986c667493d0540c8f89ea0a8"
+            ]
+          }
+        ]
+      }
+    ],
+    "integration": [
+      {
+        "inputDigest": "63207e50a5740725e0fbc95eb4d4996c9f37700cb64059912764b54081a4d800",
+        "arm": "CURRENT_NYX",
+        "inferencePolicy": "CONSTRAINED_JSON",
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_model_interaction_budget_exhausted",
+        "repairIterations": 1,
+        "rejectedSourceFailures": [
+          "SCHEMA_INVALID"
+        ],
+        "iterationResults": [
+          {
+            "iteration": 1,
+            "functionalPass": false,
+            "qualityDecision": null,
+            "diagnosticDigest": "4d08062279b12178cbaf0ece2a7b288f815e5d73a3d2336db2df1f9ddd300ca6"
+          }
+        ],
+        "omegaExecutionEvidence": [
+          "R3B-EVIDENCE-32bca4421beee9bd5cda818ab6a3de3c"
+        ],
+        "candidatePredictionArtifactProduced": false,
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2,
+        "productionAuthority": false,
+        "hostileCodeSandbox": false,
+        "candidateNetworkIsolation": "NOT_PROVEN"
+      },
+      {
+        "inputDigest": "63207e50a5740725e0fbc95eb4d4996c9f37700cb64059912764b54081a4d800",
+        "arm": "CANDIDATE_NYX",
+        "inferencePolicy": "CONSTRAINED_JSON",
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_iteration_budget_exhausted",
+        "repairIterations": 2,
+        "rejectedSourceFailures": [],
+        "iterationResults": [
+          {
+            "iteration": 1,
+            "functionalPass": false,
+            "qualityDecision": null,
+            "diagnosticDigest": "f980a36b82e48ec5d951390875f050a696241c46222472fa4993338d716518d0"
+          },
+          {
+            "iteration": 2,
+            "functionalPass": false,
+            "qualityDecision": null,
+            "diagnosticDigest": "32d140d60c0a5957ad18e360fe3db75abea91fb1674889a11f363a665792a453"
+          }
+        ],
+        "omegaExecutionEvidence": [
+          "R3B-EVIDENCE-9b783931fa8e80e7a28c048a690f4eab",
+          "R3B-EVIDENCE-06ac3969ab0a545cf1741ce0aa2bac0c"
+        ],
+        "candidatePredictionArtifactProduced": false,
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3,
+        "productionAuthority": false,
+        "hostileCodeSandbox": false,
+        "candidateNetworkIsolation": "NOT_PROVEN"
+      },
+      {
+        "inputDigest": "bb6ebb27d6ae0d4eec135e7121da4ce84c0f3869a6e09c8187d374d7d5856611",
+        "arm": "CURRENT_NYX",
+        "inferencePolicy": "CONSTRAINED_JSON",
+        "loopOutcome": "WAITING_FOR_CAPACITY",
+        "loopReason": "repair_paused_for_capacity_requires_fresh_authority",
+        "repairIterations": 1,
+        "rejectedSourceFailures": [],
+        "iterationResults": [
+          {
+            "iteration": 1,
+            "functionalPass": false,
+            "qualityDecision": null,
+            "diagnosticDigest": "02c31ba427e7387a48951d762c789fd263a0dba53d34ceacf83bbaa775669a18"
+          }
+        ],
+        "omegaExecutionEvidence": [
+          "R3B-EVIDENCE-aab71bdaa25260acb81df7b14ddd2690"
+        ],
+        "candidatePredictionArtifactProduced": false,
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2,
+        "productionAuthority": false,
+        "hostileCodeSandbox": false,
+        "candidateNetworkIsolation": "NOT_PROVEN"
+      },
+      {
+        "inputDigest": "bb6ebb27d6ae0d4eec135e7121da4ce84c0f3869a6e09c8187d374d7d5856611",
+        "arm": "CANDIDATE_NYX",
+        "inferencePolicy": "CONSTRAINED_JSON",
+        "loopOutcome": "WAITING_FOR_CAPACITY",
+        "loopReason": "repair_paused_for_capacity_requires_fresh_authority",
+        "repairIterations": 1,
+        "rejectedSourceFailures": [],
+        "iterationResults": [
+          {
+            "iteration": 1,
+            "functionalPass": false,
+            "qualityDecision": null,
+            "diagnosticDigest": "fbcfa933acab70f95aceed5dba40cf8915ec0286f0755733c5bea03fe67cc452"
+          }
+        ],
+        "omegaExecutionEvidence": [
+          "R3B-EVIDENCE-fababf5ed951e422d27d0e163ba34888"
+        ],
+        "candidatePredictionArtifactProduced": false,
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2,
+        "productionAuthority": false,
+        "hostileCodeSandbox": false,
+        "candidateNetworkIsolation": "NOT_PROVEN"
+      },
+      {
+        "inputDigest": "b2b769a733f85342d5fd1efeb9cfee0fc14ea97125486b9292352f7ff20ec71f",
+        "arm": "CURRENT_NYX",
+        "inferencePolicy": "CONSTRAINED_JSON",
+        "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+        "loopReason": "bounded_repair_functionally_verified",
+        "repairIterations": 1,
+        "rejectedSourceFailures": [],
+        "iterationResults": [
+          {
+            "iteration": 1,
+            "functionalPass": true,
+            "qualityDecision": "ADMITTED",
+            "diagnosticDigest": "cf1cbb66a638b4860a516671fb74850e6ccf787fe6c4c8d29e9c04efe880bd05"
+          }
+        ],
+        "omegaExecutionEvidence": [
+          "R3B-EVIDENCE-0ea59bff19d9f9112bb4bf558ebc5319"
+        ],
+        "candidatePredictionArtifactProduced": true,
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2,
+        "productionAuthority": false,
+        "hostileCodeSandbox": false,
+        "candidateNetworkIsolation": "NOT_PROVEN"
+      },
+      {
+        "inputDigest": "b2b769a733f85342d5fd1efeb9cfee0fc14ea97125486b9292352f7ff20ec71f",
+        "arm": "CANDIDATE_NYX",
+        "inferencePolicy": "CONSTRAINED_JSON",
+        "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+        "loopReason": "bounded_repair_functionally_verified",
+        "repairIterations": 2,
+        "rejectedSourceFailures": [],
+        "iterationResults": [
+          {
+            "iteration": 1,
+            "functionalPass": true,
+            "qualityDecision": "REJECTED",
+            "diagnosticDigest": "cf1cbb66a638b4860a516671fb74850e6ccf787fe6c4c8d29e9c04efe880bd05"
+          },
+          {
+            "iteration": 2,
+            "functionalPass": true,
+            "qualityDecision": "ADMITTED",
+            "diagnosticDigest": "cf1cbb66a638b4860a516671fb74850e6ccf787fe6c4c8d29e9c04efe880bd05"
+          }
+        ],
+        "omegaExecutionEvidence": [
+          "R3B-EVIDENCE-73208fc9d69c10358c1a4bd583d215e2",
+          "R3B-EVIDENCE-56e1c3c4d5eab7a03559b63ad2c08fda"
+        ],
+        "candidatePredictionArtifactProduced": true,
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3,
+        "productionAuthority": false,
+        "hostileCodeSandbox": false,
+        "candidateNetworkIsolation": "NOT_PROVEN"
+      },
+      {
+        "inputDigest": "f3dfb3e323cbbdff02a08fb642eda313b00bb0e69f42c78a8ec0d603d960a4cf",
+        "arm": "CANDIDATE_NYX",
+        "inferencePolicy": "CONSTRAINED_JSON",
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_cognition_correction_budget_exhausted",
+        "repairIterations": 0,
+        "rejectedSourceFailures": [
+          "SCHEMA_INVALID",
+          "SCHEMA_INVALID"
+        ],
+        "iterationResults": [],
+        "omegaExecutionEvidence": [],
+        "candidatePredictionArtifactProduced": false,
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1,
+        "productionAuthority": false,
+        "hostileCodeSandbox": false,
+        "candidateNetworkIsolation": "NOT_PROVEN"
+      },
+      {
+        "inputDigest": "f3dfb3e323cbbdff02a08fb642eda313b00bb0e69f42c78a8ec0d603d960a4cf",
+        "arm": "CURRENT_NYX",
+        "inferencePolicy": "CONSTRAINED_JSON",
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_cognition_correction_budget_exhausted",
+        "repairIterations": 0,
+        "rejectedSourceFailures": [
+          "SCHEMA_INVALID",
+          "SCHEMA_INVALID"
+        ],
+        "iterationResults": [],
+        "omegaExecutionEvidence": [],
+        "candidatePredictionArtifactProduced": false,
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1,
+        "productionAuthority": false,
+        "hostileCodeSandbox": false,
+        "candidateNetworkIsolation": "NOT_PROVEN"
+      }
+    ],
+    "sourceUnchanged": true,
+    "hypothesis": "Compact public failure witnesses improve bounded verifier-guided repair by preserving actionable mismatches inside existing observation limits.",
+    "falsification": "No reproducible increase in accepted solutions or decrease in repair cost on fresh tasks at matched realized compute.",
+    "acceptanceOracleChanged": false,
+    "inference": "E4_LIVE_NVIDIA",
+    "scorer": "E3_UNCHANGED_EXACT_GRID_ORACLE",
+    "authorIndependence": "SAME_SESSION_NOT_INDEPENDENTLY_AUTHORED",
+    "reservedEvaluationUsed": false,
+    "matchedRealizedCompute": false,
+    "broadPromotion": false,
+    "integrationTraceComplete": true,
+    "verdict": "REVIEW_REQUIRED_NO_AUTOMATIC_PROMOTION",
+    "grantsAuthority": false
+  },
+  "derivedAnalysis": {
+    "schemaVersion": 1,
+    "frozenCandidate": "ccf998cca225d0a6ab308dd89ce991a55a93767c",
+    "frozenCampaignReportDigest": "558405344318acd2cda288d3c997f0bae3a8391a30b6cb5aad0ef903e1ca4d65",
+    "verdict": "NO_CAPABILITY_PROMOTION; MECHANISM_VALUE_NOT_ESTABLISHED",
+    "cycleStoppedForReview": true,
+    "pairs": [
+      {
+        "taskDigest": "ce84b5c20f6cf62e58fcfb1b569bbe6c2df2b6e619b985cce2ffe4b5a034b7ca",
+        "tier": "DEVELOPMENT",
+        "matched": false,
+        "providerStable": false,
+        "independentScorerStatus": [
+          "NOT_REACHED_ZERO_WORK",
+          "NOT_REACHED_ZERO_WORK"
+        ],
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "outcome": "FAILED",
+            "failure": "FUNCTIONAL_FAILURE",
+            "modelCalls": 2,
+            "tokens": 25425,
+            "candidates": 1
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "modelCalls": 2,
+            "tokens": 26606,
+            "candidates": 2
+          }
+        ]
+      },
+      {
+        "taskDigest": "7f6ba011864c0037ac0eedad8e94838a49ede758fda2ad3216f62969b2d353ff",
+        "tier": "DEVELOPMENT",
+        "matched": false,
+        "providerStable": false,
+        "independentScorerStatus": [
+          "NOT_REACHED_ZERO_WORK",
+          "NOT_REACHED_ZERO_WORK"
+        ],
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "modelCalls": 2,
+            "tokens": 12208,
+            "candidates": 1
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "outcome": "FAILED",
+            "failure": "RESOURCE_EXHAUSTION",
+            "modelCalls": 2,
+            "tokens": 12133,
+            "candidates": 1
+          }
+        ]
+      },
+      {
+        "taskDigest": "0487d52a06154a230a9a692d8f25fc144a774e11cd8219c7f38e0e6da3a55649",
+        "tier": "VALIDATION",
+        "matched": false,
+        "providerStable": true,
+        "independentScorerStatus": [
+          "EXECUTED",
+          "EXECUTED"
+        ],
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "outcome": "ACCEPTED",
+            "failure": null,
+            "modelCalls": 1,
+            "tokens": 11967,
+            "candidates": 1
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "outcome": "ACCEPTED",
+            "failure": null,
+            "modelCalls": 2,
+            "tokens": 24428,
+            "candidates": 2
+          }
+        ]
+      },
+      {
+        "taskDigest": "25d360991f00717232ae2b1c3e395ac64839e546e258fcdbb2b1ccf584ea1c45",
+        "tier": "VALIDATION",
+        "matched": true,
+        "providerStable": true,
+        "independentScorerStatus": [
+          "NOT_REACHED_ZERO_WORK",
+          "NOT_REACHED_ZERO_WORK"
+        ],
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "outcome": "FAILED",
+            "failure": "SYNTAX_FAILURE",
+            "modelCalls": 2,
+            "tokens": 25143,
+            "candidates": 0
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "outcome": "FAILED",
+            "failure": "SYNTAX_FAILURE",
+            "modelCalls": 2,
+            "tokens": 25157,
+            "candidates": 0
+          }
+        ]
+      }
+    ],
+    "knownTokenIncreasePercent": 18.170263436040823,
+    "reason": "Equal 1/4 acceptance; candidate required repair for its sole success, where public functional tests already passed and the existing quality governor drove correction. Feedback witnesses did not cause that repair. Provider failures and unknown work prevent global compute matching. Stable matched syntax-failure pair never reached functional/hidden scoring.",
+    "scope": "FOUR_FRESH_AUTHORED_GRID_TASKS_NOT_OFFICIAL_FRONTIER_SCORE",
+    "firstAttempt": "CURRENT 1; CANDIDATE 0",
+    "repaired": "CURRENT 0; CANDIDATE 1",
+    "metricCorrection": "Raw pair match required an executed scorer, erroneously excluding the syntax-failure pair. Derived analysis recognizes zero independently scored work when output failure prevented scoring. Frozen raw report preserved unchanged; thresholds and outcomes unchanged."
+  }
+}

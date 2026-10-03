@@ -50,6 +50,21 @@ export interface TaskRun {
   readonly attempts: readonly AttemptRecord[];
 }
 
+/** Pair accounting only: failure before scoring is known zero scorer work, not unknown. */
+export function matchedObservedAttempts(attempts: readonly AttemptRecord[], tolerance: number): boolean {
+  if (attempts.length !== 2 || !Number.isFinite(tolerance) || tolerance < 0 || tolerance > 0.1) return false;
+  if (attempts.some(a => !a || !usageSchema.safeParse(a.usage).success
+    || a.verifierUsage !== null && !usageSchema.safeParse(a.verifierUsage).success)) return false;
+  if (attempts.some(a => !a.usage || a.usage.physicalCalls < 1 || a.usage.unknownUsageCalls
+    || a.usage.providerFailures || a.usage.retries || (a.context ? !a.verifierUsage
+      || a.verifierUsage.unknownUsageCalls || a.verifierUsage.providerFailures || a.verifierUsage.retries
+      : a.failure === null || a.evaluation !== null || a.verifierUsage !== null))) return false;
+  return (["physicalCalls", "reportedTokens", "toolWorkUnits"] as const).every(key => {
+    const values = attempts.map(a => a.usage![key] + (a.verifierUsage?.[key] ?? 0));
+    return Math.max(...values) - Math.min(...values) <= Math.max(...values, 1) * tolerance;
+  });
+}
+
 class Deadline extends Error {}
 async function bounded<T>(body: (signal: AbortSignal) => Promise<T>, milliseconds: number): Promise<T> {
   if (milliseconds <= 0) throw new Deadline();

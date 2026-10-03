@@ -3,6 +3,8 @@ import { arcRepositoryFiles } from "./omega/benchmarks/nyxArcAdapter";
 import type { NyxRepairHypothesis } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
+import { matchedObservedAttempts, type AttemptRecord } from "./omega/benchmarks/campaign";
+import { zeroUsage } from "./omega/benchmarks/contracts";
 
 let passed = 0, failed = 0;
 const check = (value: unknown, label: string) => { if (value) passed++; else { failed++; console.error(`FAIL ${label}`); } };
@@ -71,5 +73,19 @@ for (const mode of ["FULL_DUMP", "COMPACT_WITNESS"] as const) {
 }
 rejects(() => arcRepositoryFiles(raw, "UNCHECKED" as any), "unknown feedback mode fails closed");
 check(theoryDigest(raw).length === 64, "development input provenance digest available");
+const account = (tokens: number): AttemptRecord => ({attempt: 1, context: null, internalCandidateAttempts: 0,
+  outcome: "FAILED", failure: "SYNTAX_FAILURE", evaluation: null, confidence: null, requestDigests: [], responseDigests: [],
+  usage: {...zeroUsage(), logicalCalls: 2, physicalCalls: 2, httpAttempts: 2, reportedTokens: tokens, toolCalls: 1, toolWorkUnits: 4},
+  verifierUsage: null, observedVerifierWallClockMs: 0, observedWallClockMs: 20});
+check(matchedObservedAttempts([account(25143), account(25157)], 0.1), "stable equal-cost syntax failures match with known zero scorer work");
+check(!matchedObservedAttempts([account(25143), account(25157)], 0), "zero tolerance does not silently change");
+check(!matchedObservedAttempts([account(12000), account(25000)], 0.1), "different realized tokens are not equal budgets");
+const uncertain = account(25000);
+check(!matchedObservedAttempts([account(25000), {...uncertain, usage: {...uncertain.usage!, unknownUsageCalls: 1}}], 0.1), "unreported inference is not zero cost");
+check(!matchedObservedAttempts([account(25000), {...uncertain, usage: {...uncertain.usage!, providerFailures: 1}}], 0.1), "unstable provider pair fails match");
+check(!matchedObservedAttempts([account(25000), {...uncertain, failure: null}], 0.1), "missing scoring on an apparent success is not zero work");
+check(!matchedObservedAttempts([account(25000)], 0.1) && !matchedObservedAttempts([account(25000), account(25000)], 0.2), "population and tolerance fixed");
+check(!matchedObservedAttempts([account(25000), {...uncertain, usage: {...uncertain.usage!, reportedTokens: -1}}], 0.1), "malformed usage fails closed");
+check(!matchedObservedAttempts([account(25000), {...uncertain, verifierUsage: zeroUsage()}], 0.1), "contradictory scoring receipt does not claim zero unexecuted work");
 console.log(`passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;
