@@ -89,3 +89,14 @@ export function scoreRepresentationArtifact(task: RepresentationTask, stdout: st
       failure: correct === task.privateCases.length ? null : "HIDDEN_CASE_FAILURE"};
   } catch {return {accepted: false, correct: 0, total: task.privateCases.length, failure: "ARTIFACT_SCHEMA"};}
 }
+
+/** Evaluator-only accounting; private scores never enter model feedback or authorize a candidate. */
+export function assessRepresentationCandidate(task: RepresentationTask, input: {
+  publicAccepted: boolean; qualityAccepted: boolean; verificationStdout: string|null; loopVerified: boolean;
+}) {
+  const score=input.verificationStdout===null?null:scoreRepresentationArtifact(task,input.verificationStdout);
+  const functionalAccepted=input.publicAccepted&&score?.accepted===true;
+  return {score,functionalAccepted,qualityAccepted:input.qualityAccepted,
+    accepted:functionalAccepted&&input.qualityAccepted&&input.loopVerified,
+    privateScorerWorkUnits:score===null?0:task.privateCases.length};
+}

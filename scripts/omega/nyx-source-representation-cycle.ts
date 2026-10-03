@@ -7,7 +7,7 @@ import { R3BoundedRepairLoop } from "../../src/lib/codelab/engine/r3BoundedRepai
 import { NVIDIA_NIM_CHAT_COMPLETIONS_URL, NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { contentHash, R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
-import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact } from "./benchmarks/sourceRepresentationTasks";
+import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, assessRepresentationCandidate } from "./benchmarks/sourceRepresentationTasks";
 import { inferUsage, classifyArcLoopFailure } from "./benchmarks/nyxArcAdapter";
 import { inspectNyxSourceEmission } from "./nyx-source-emission-diagnostics";
 import { ARRAY_BOUND_TRANSFER_TASKS } from "./benchmarks/arrayBoundTransferTasks";
@@ -107,33 +107,38 @@ for (const [index, task] of selectedTasks.entries()) {
     const last = loopResult?.iterations.at(-1);
     const qualityAccepted = last?.candidateAdmission?.decision === "ADMITTED";
     const publicAccepted = last?.functionallyPassed === true;
-    const score = publicAccepted && qualityAccepted && last
-      ? scoreRepresentationArtifact(task, last.verifications[0].execution.evidence.stdout) : null;
-    const accepted = !!score?.accepted && loopResult?.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED";
+    const perIteration=loopResult?.iterations.map(i=>({iteration:i.iteration,publicAccepted:i.functionallyPassed,
+      quality:i.candidateAdmission?.decision??null,qualityFindings:i.candidateAdmission?.findings??[],
+      ...assessRepresentationCandidate(task,{publicAccepted:i.functionallyPassed===true,
+        qualityAccepted:i.candidateAdmission?.decision==="ADMITTED",
+        verificationStdout:i.verifications[0]?.execution.evidence.stdout??null,
+        loopVerified:i===last&&loopResult.outcome==="FUNCTIONALLY_REPAIRED_VERIFIED"})}))??[];
+    const assessment=perIteration.at(-1)??assessRepresentationCandidate(task,{publicAccepted:false,qualityAccepted:false,
+      verificationStdout:null,loopVerified:false});
+    const {score,accepted,functionalAccepted}=assessment;
     const priorFailure = loopResult?.cognitionFailures.at(-1);
     const lastFailure = priorFailure?.cognitionEvidence.evidenceId === loopResult?.lastCognitionEvidence?.evidenceId ? priorFailure : undefined;
     const failureClass = accepted ? null : infrastructureFailure ? "INFRASTRUCTURE_FAILURE"
-      : score?.failure ?? (lastFailure?.reason === "OUTPUT_TRUNCATED" ? "TRUNCATION"
+      : (lastFailure?.reason === "OUTPUT_TRUNCATED" ? "TRUNCATION"
         : lastFailure?.diagnostics.some(d => d.category === "SOURCE_QUALITY_INVALID" && /^syntax_error_/.test(d.observed)) ? "SYNTAX_FAILURE"
           : lastFailure?.diagnostics.some(d => d.category === "SOURCE_QUALITY_INVALID") ? "QUALITY_REJECTION"
             : last?.candidateAdmission?.decision === "REJECTED" ? "QUALITY_REJECTION"
               : last?.functionallyPassed === false ? "FUNCTIONAL_FAILURE"
-                : classifyArcLoopFailure(loopResult?.reason ?? "infrastructure_failure"));
+                : score?.failure ?? classifyArcLoopFailure(loopResult?.reason ?? "infrastructure_failure"));
     const result = {id: task.id, tier: task.tier, domain: task.domain, variant, preserveProviderArrayBounds,
-      representation, accepted, qualityAccepted, publicAccepted, score,
+      representation, accepted, functionalAccepted, qualityAccepted, publicAccepted, score,
       firstCallAccepted: accepted && usage.logicalCalls === 1 && loopResult?.iterations.length === 1,
       repairedAccepted: accepted && (usage.logicalCalls > 1 || (loopResult?.iterations.length ?? 0) > 1),
       loopOutcome: loopResult?.outcome ?? "INFRASTRUCTURE_FAILURE", loopReason: loopResult?.reason ?? "INTEGRATION_THROW",
       failureClass,
       infrastructureFailure, inspections, usage, candidateIterations: loopResult?.iterations.length ?? 0,
       toolUsageComplete: !infrastructureFailure,
-      perIteration: loopResult?.iterations.map(i => ({iteration: i.iteration, publicAccepted: i.functionallyPassed,
-        quality: i.candidateAdmission?.decision ?? null,qualityFindings:i.candidateAdmission?.findings??[]})) ?? [],
+      perIteration,
       failureCodes: loopResult?.cognitionFailures.flatMap(f => f.diagnostics.map(d => ({category: d.category,
         observed: /^[a-zA-Z0-9_]{1,120}$/.test(d.observed) ? d.observed : "REDACTED_NON_CODE", digest: theoryDigest(d)}))) ?? [],
       requestDigests: evidence.flatMap(e => e.modelRequestDigest ? [e.modelRequestDigest] : []),
       responseDigests: evidence.flatMap(e => e.modelResponseDigest ? [e.modelResponseDigest] : []), cleanup,
-      privateScorerWorkUnits: score ? task.privateCases.length : 0};
+      privateScorerWorkUnits: perIteration.reduce((n,i)=>n+i.privateScorerWorkUnits,0)};
     results.push(result); console.log(`NYX_REPRESENTATION_TASK ${JSON.stringify(result)}`);
   }
 }
@@ -156,7 +161,9 @@ const report = {schemaVersion: 1, candidate, frozen, sourceDigests, tasks, resul
   falsification: "No reproducible syntax/correctness improvement across development and fresh transfer at matched realized compute.",
   summaries: (boundsComparison ? ["LEGACY_OMITTED", "CORRECTED_BOUNDED"] : ["LINES", "TEXT"]).map(variant => {
     const rows = results.filter(r => r.variant === variant);
-    return {variant, accepted: rows.filter(r => r.accepted).length, firstCallAccepted: rows.filter(r => r.firstCallAccepted).length,
+    return {variant, accepted: rows.filter(r => r.accepted).length,
+      functionallyAccepted:rows.filter(r=>r.functionalAccepted).length,qualityAccepted:rows.filter(r=>r.qualityAccepted).length,
+      firstCallAccepted: rows.filter(r => r.firstCallAccepted).length,
       repairedAccepted: rows.filter(r => r.repairedAccepted).length, reportedTokens: rows.reduce((n, r) => n + (r.usage?.reportedTokens ?? 0), 0),
       unknownUsageCalls: rows.reduce((n, r) => n + (r.usage?.unknownUsageCalls ?? 0), 0)};}),
   evidence: "E4_LIVE_MODEL_AND_E3_LOCAL_OMEGA_AND_PRIVATE_EXACT_SCORER",

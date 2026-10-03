@@ -11,8 +11,8 @@ import { prepareTask } from "./omega/benchmarks/tasks";
 import type { ArmSpec, CampaignSpec } from "./omega/benchmarks/contracts";
 import { ARC_PUBLIC_EPOCH_SELECTION, ARC_ARRAY_BOUND_TRANSFER_SELECTION } from "./omega/nyx-arc-benchmark-epoch";
 import { ARRAY_BOUND_TRANSFER_TASKS } from "./omega/benchmarks/arrayBoundTransferTasks";
-import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact } from "./omega/benchmarks/sourceRepresentationTasks";
-import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
+import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate } from "./omega/benchmarks/sourceRepresentationTasks";
+import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
 
 let passed = 0, failed = 0;
@@ -341,6 +341,31 @@ for(const probe of SOURCE_LITERAL_PROBES) {
   check(SOURCE_LITERAL_DIAGNOSTIC.maxLogicalCalls===SOURCE_LITERAL_PROBES.length*SOURCE_LITERAL_DIAGNOSTIC.modes.length
     &&!SOURCE_LITERAL_DIAGNOSTIC.grantsAuthority&&!SOURCE_LITERAL_DIAGNOSTIC.benchmarkQuestionsUsed,
     "neutral source-copy diagnosis is finite and not benchmark-aware or authority-granting");
+  check(sourceLiteralStructureDigest('export const value = "a";')===sourceLiteralStructureDigest("export const value='a';\r\n"),
+    "source diagnostic recognizes harmless literal spelling and whitespace without executing it");
+  check(sourceLiteralStructureDigest('export const value = "\\n";')!==sourceLiteralStructureDigest('export const value = "\\\\n";'),
+    "source diagnostic does not equate escaped newline with literal backslash and n");
+  check(sourceLiteralStructureDigest('export const value = "a";')!==sourceLiteralStructureDigest('export const value = "b";')
+    &&sourceLiteralStructureDigest('export const value = "a";')!==sourceLiteralStructureDigest('export let value = "a";'),
+    "source diagnostic preserves literal values and binding semantics");
+}
+{
+  const task=SOURCE_REPRESENTATION_TASKS[0];
+  const stdout="ENGINEERING_PREDICTIONS "+JSON.stringify(task.privateCases.map(c=>({value:c.expected,inputUnchanged:true,resultDetached:true})));
+  const input={publicAccepted:true,qualityAccepted:true,verificationStdout:stdout,loopVerified:true};
+  check(assessRepresentationCandidate(task,input).accepted,"combined candidate acceptance still requires all original gates");
+  const rejected=assessRepresentationCandidate(task,{...input,qualityAccepted:false});
+  check(rejected.functionalAccepted&&!rejected.accepted&&rejected.score?.accepted&&rejected.privateScorerWorkUnits===task.privateCases.length,
+    "quality-rejected candidate still receives independent functional accounting without admission");
+  check(!assessRepresentationCandidate(task,{...input,publicAccepted:false}).functionalAccepted,
+    "private success cannot override failed public behavior");
+  check(!assessRepresentationCandidate(task,{...input,loopVerified:false}).accepted,
+    "successful scores cannot override an unverified engineering loop");
+  const missing=assessRepresentationCandidate(task,{...input,verificationStdout:null});
+  check(!missing.accepted&&missing.score===null&&missing.privateScorerWorkUnits===0,
+    "unreached deterministic verification is not a hidden-case failure");
+  check(!assessRepresentationCandidate(task,{...input,verificationStdout:"ENGINEERING_PREDICTIONS []"}).accepted,
+    "same exact private oracle rejects malformed prediction count");
 }
 console.log(`passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

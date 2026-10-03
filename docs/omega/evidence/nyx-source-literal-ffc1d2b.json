@@ -1,0 +1,380 @@
+{
+  "schemaVersion": 1,
+  "workstream": "NYX-SOURCE-EMISSION-ERROR-ISOLATION-001",
+  "candidate": "ffc1d2bfc2b00d8e330407fa339bda9123cfc44a",
+  "workflow": {
+    "runId": 37139734305,
+    "jobId": 111251498601,
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/37139734305"
+  },
+  "scope": "LIVE_NVIDIA_NEUTRAL_SOURCE_COPY_ONLY",
+  "report": {
+    "schemaVersion": 1,
+    "candidate": "ffc1d2bfc2b00d8e330407fa339bda9123cfc44a",
+    "frozen": {
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "modes": [
+        "HOSTED_BOUNDED",
+        "STRICT_LOCAL"
+      ],
+      "maxTokens": 2048,
+      "temperature": 0,
+      "maxLogicalCalls": 6,
+      "perRequestLifetimeMs": 90000,
+      "globalLifetimeMs": 480000,
+      "hypothesis": "Hosted structured generation corrupts source literals or escaping even when array bounds are explicit.",
+      "falsification": "Hosted bounded generation copies the neutral escape-rich programs exactly with valid syntax.",
+      "benchmarkQuestionsUsed": false,
+      "grantsAuthority": false,
+      "cognitiveGainClaim": false
+    },
+    "probeDigest": "b1eb24fcfe0bd082a08151e090c8ba1d378afc443243def3f06cfc0d2065b5d7",
+    "results": [
+      {
+        "id": "PLAIN",
+        "mode": "HOSTED_BOUNDED",
+        "decision": "COMPLETED",
+        "reason": "nvidia_nim_completion_observed",
+        "finishReason": "stop",
+        "inspected": {
+          "inspection": {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "ae7423889549475e1ed7575cdd93c773a3c8ef05df1ddc0fcd45c0c79b186a5e",
+            "sourceDigest": "8eb0f29162c17e524cbb282ee5646ee2e8fc88ce65cf959e519124811adda2e0",
+            "sourceBytes": 47,
+            "lineCount": 3,
+            "finalLineLength": 1,
+            "maximumLineLength": 25,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          },
+          "exactEnvelope": true,
+          "accepted": true
+        },
+        "accepted": true,
+        "requestDigest": "a582fa9936e23586b52497a8e1a2d70fff7cc7d1800ff68c42d3677eacda491d",
+        "responseDigest": "ae7423889549475e1ed7575cdd93c773a3c8ef05df1ddc0fcd45c0c79b186a5e",
+        "usage": {
+          "promptTokens": 97,
+          "completionTokens": 47,
+          "totalTokens": 144
+        },
+        "delivery": {
+          "policy": "nvidia-capacity/1",
+          "requestsPerMinute": 40,
+          "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+          "httpAttempts": 1,
+          "rateLimitedResponses": 0,
+          "transientUnavailableResponses": 0,
+          "timedOutAttempts": 0,
+          "capacityWaitMs": 0,
+          "state": "DELIVERED",
+          "notBeforeEpochMs": null,
+          "authorityRenewed": false
+        },
+        "providerFailure": null,
+        "wallClockMs": 1575,
+        "rawContentPersisted": false
+      },
+      {
+        "id": "PLAIN",
+        "mode": "STRICT_LOCAL",
+        "decision": "COMPLETED",
+        "reason": "nvidia_nim_completion_observed",
+        "finishReason": "stop",
+        "inspected": {
+          "inspection": {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "ae7423889549475e1ed7575cdd93c773a3c8ef05df1ddc0fcd45c0c79b186a5e",
+            "sourceDigest": "8eb0f29162c17e524cbb282ee5646ee2e8fc88ce65cf959e519124811adda2e0",
+            "sourceBytes": 47,
+            "lineCount": 3,
+            "finalLineLength": 1,
+            "maximumLineLength": 25,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          },
+          "exactEnvelope": true,
+          "accepted": true
+        },
+        "accepted": true,
+        "requestDigest": "8dadf8d6856b15ed15e34c3e52660f8411e95248ae1a255e8cf18c79f457e80c",
+        "responseDigest": "ae7423889549475e1ed7575cdd93c773a3c8ef05df1ddc0fcd45c0c79b186a5e",
+        "usage": {
+          "promptTokens": 97,
+          "completionTokens": 47,
+          "totalTokens": 144
+        },
+        "delivery": {
+          "policy": "nvidia-capacity/1",
+          "requestsPerMinute": 40,
+          "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+          "httpAttempts": 1,
+          "rateLimitedResponses": 0,
+          "transientUnavailableResponses": 0,
+          "timedOutAttempts": 0,
+          "capacityWaitMs": 0,
+          "state": "DELIVERED",
+          "notBeforeEpochMs": null,
+          "authorityRenewed": false
+        },
+        "providerFailure": null,
+        "wallClockMs": 1028,
+        "rawContentPersisted": false
+      },
+      {
+        "id": "QUOTES_AND_ESCAPES",
+        "mode": "STRICT_LOCAL",
+        "decision": "COMPLETED",
+        "reason": "nvidia_nim_completion_observed",
+        "finishReason": "stop",
+        "inspected": {
+          "inspection": {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "e672a71d55f7a3a1685471e7fd59e33706fad4ba459bd0c5d800d0280138f092",
+            "sourceDigest": "5eb78b94bc170c771ea5ed38485bb20cad52e81946efa378a52fc92a2def94e8",
+            "sourceBytes": 137,
+            "lineCount": 6,
+            "finalLineLength": 1,
+            "maximumLineLength": 36,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          },
+          "exactEnvelope": true,
+          "accepted": true
+        },
+        "accepted": true,
+        "requestDigest": "4305da68a1946e0fe8e31685db05a80155da1ddc894323c965dca355414fb590",
+        "responseDigest": "e672a71d55f7a3a1685471e7fd59e33706fad4ba459bd0c5d800d0280138f092",
+        "usage": {
+          "promptTokens": 126,
+          "completionTokens": 76,
+          "totalTokens": 202
+        },
+        "delivery": {
+          "policy": "nvidia-capacity/1",
+          "requestsPerMinute": 40,
+          "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+          "httpAttempts": 2,
+          "rateLimitedResponses": 0,
+          "transientUnavailableResponses": 1,
+          "timedOutAttempts": 0,
+          "capacityWaitMs": 60471,
+          "state": "DELIVERED",
+          "notBeforeEpochMs": null,
+          "authorityRenewed": false
+        },
+        "providerFailure": null,
+        "wallClockMs": 66368,
+        "rawContentPersisted": false
+      },
+      {
+        "id": "QUOTES_AND_ESCAPES",
+        "mode": "HOSTED_BOUNDED",
+        "decision": "COMPLETED",
+        "reason": "nvidia_nim_completion_observed",
+        "finishReason": "stop",
+        "inspected": {
+          "inspection": {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "85fab8e6112b665b5ff19f4e6a89d693aab1e4ab365d9e046601ba0e0715237f",
+            "sourceDigest": "247f0cbb95ada64480b5cb76ae302dd849ed5e81f17fc16c5c2a1d6073e458f3",
+            "sourceBytes": 137,
+            "lineCount": 6,
+            "finalLineLength": 1,
+            "maximumLineLength": 36,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          },
+          "exactEnvelope": false,
+          "accepted": false
+        },
+        "accepted": false,
+        "requestDigest": "86375eb30d449a32c4946c372113cf17c57a2a2c86d5e4860231c23e4e533189",
+        "responseDigest": "85fab8e6112b665b5ff19f4e6a89d693aab1e4ab365d9e046601ba0e0715237f",
+        "usage": {
+          "promptTokens": 126,
+          "completionTokens": 81,
+          "totalTokens": 207
+        },
+        "delivery": {
+          "policy": "nvidia-capacity/1",
+          "requestsPerMinute": 40,
+          "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+          "httpAttempts": 2,
+          "rateLimitedResponses": 0,
+          "transientUnavailableResponses": 1,
+          "timedOutAttempts": 0,
+          "capacityWaitMs": 60002,
+          "state": "DELIVERED",
+          "notBeforeEpochMs": null,
+          "authorityRenewed": false
+        },
+        "providerFailure": null,
+        "wallClockMs": 62008,
+        "rawContentPersisted": false
+      },
+      {
+        "id": "REGEX_UNICODE_CRLF",
+        "mode": "HOSTED_BOUNDED",
+        "decision": "WAITING_FOR_CAPACITY",
+        "reason": "nvidia_capacity_requires_renewed_run",
+        "finishReason": null,
+        "inspected": {
+          "inspection": {
+            "outcome": "INCOMPLETE_FINISH",
+            "responseDigest": null,
+            "sourceDigest": null,
+            "sourceBytes": null,
+            "lineCount": null,
+            "finalLineLength": null,
+            "maximumLineLength": null,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          },
+          "exactEnvelope": false,
+          "accepted": false
+        },
+        "accepted": false,
+        "requestDigest": "ba3627ce5351985a9581ebae797a6690a2f81d4b47bcab090be43b30b861451e",
+        "responseDigest": null,
+        "usage": {
+          "promptTokens": null,
+          "completionTokens": null,
+          "totalTokens": null
+        },
+        "delivery": {
+          "policy": "nvidia-capacity/1",
+          "requestsPerMinute": 40,
+          "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+          "httpAttempts": 1,
+          "rateLimitedResponses": 0,
+          "transientUnavailableResponses": 0,
+          "timedOutAttempts": 1,
+          "capacityWaitMs": 0,
+          "state": "WAITING_FOR_CAPACITY",
+          "notBeforeEpochMs": 1791047879021,
+          "authorityRenewed": false
+        },
+        "providerFailure": null,
+        "wallClockMs": 45000,
+        "rawContentPersisted": false
+      },
+      {
+        "id": "REGEX_UNICODE_CRLF",
+        "mode": "STRICT_LOCAL",
+        "decision": "COMPLETED",
+        "reason": "nvidia_nim_completion_observed",
+        "finishReason": "stop",
+        "inspected": {
+          "inspection": {
+            "outcome": "SYNTACTICALLY_VALID",
+            "responseDigest": "70aa470cbf525f8e94674e9736a83461960eacdca1a69c0d7f9b56e9744a113f",
+            "sourceDigest": "b2a0dc574ecd890110de2f47a383eae58455e477e62ae1fc65cfd7a36af39857",
+            "sourceBytes": 153,
+            "lineCount": 5,
+            "finalLineLength": 1,
+            "maximumLineLength": 51,
+            "syntaxLine": null,
+            "syntaxColumn": null,
+            "syntaxAtFinalLine": null,
+            "syntaxNearSourceEnd": null,
+            "representation": "LINES",
+            "rawSourcePersisted": false,
+            "authorityGranted": false
+          },
+          "exactEnvelope": true,
+          "accepted": true
+        },
+        "accepted": true,
+        "requestDigest": "0fbb39890c751681109791fc2006be590e1f688ab289bb8e8f3749f1c97e2494",
+        "responseDigest": "70aa470cbf525f8e94674e9736a83461960eacdca1a69c0d7f9b56e9744a113f",
+        "usage": {
+          "promptTokens": 133,
+          "completionTokens": 83,
+          "totalTokens": 216
+        },
+        "delivery": {
+          "policy": "nvidia-capacity/1",
+          "requestsPerMinute": 40,
+          "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+          "httpAttempts": 1,
+          "rateLimitedResponses": 0,
+          "transientUnavailableResponses": 0,
+          "timedOutAttempts": 0,
+          "capacityWaitMs": 60002,
+          "state": "DELIVERED",
+          "notBeforeEpochMs": null,
+          "authorityRenewed": false
+        },
+        "providerFailure": null,
+        "wallClockMs": 74766,
+        "rawContentPersisted": false
+      }
+    ],
+    "sourceUnchanged": true,
+    "interpretation": "E4_MECHANISTIC_SOURCE_COPY_DIAGNOSTIC_NOT_CODE_GENERATION_OR_CAPABILITY_COMPARISON",
+    "acceptanceUnchanged": true,
+    "grantsAuthority": false,
+    "reportDigest": "754a94e1ca4952d02d9f41a81baa786690e2a92fc01ca52a0d59e7b603497930"
+  },
+  "interpretation": {
+    "exactAccepted": 4,
+    "completedButNonExact": 1,
+    "providerUnavailable": 1,
+    "cleanPairedComparisons": [
+      "PLAIN"
+    ],
+    "literalDriftCause": "UNRESOLVED_NOT_PROVEN_CORRUPTION",
+    "semanticDrift": "NOT_MEASURED_IN_THIS_RUN",
+    "codeGenerationClaim": false,
+    "cognitiveImprovementClaim": false,
+    "preservedLimits": true,
+    "noBenchmarkQuestions": true,
+    "noAuthorityIncrease": true,
+    "rawReasoningOrSourcePersisted": false
+  },
+  "planCoverage": {
+    "direct": [
+      "EVIDENCE > CONFIDENCE",
+      "FAILURE_CLASSES_REMAIN_DISTINCT",
+      "GENERATOR_REQUIRES_DETECTOR",
+      "DETECTOR_REQUIRES_VALIDATION"
+    ],
+    "supporting": [
+      "NO_SELF_CERTIFICATION",
+      "NO_ACTION_WITHOUT_PROVENANCE"
+    ],
+    "deferred": [
+      "BROAD_BENCHMARK_PROMOTION",
+      "NEW_COGNITIVE_LAYERS"
+    ],
+    "conflicts": [],
+    "status": "PARTIAL / JUST-IN-TIME"
+  }
+}

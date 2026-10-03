@@ -6,6 +6,7 @@ import {tmpdir} from "node:os";
 import {NvidiaNimProvider,nvidiaNimCredentialFromEnvironment} from "../../src/lib/codelab/model/nvidiaNimProvider";
 import {theoryDigest} from "../../src/lib/codelab/research/theoryContracts";
 import {inspectNyxSourceEmission} from "./nyx-source-emission-diagnostics";
+import ts from "typescript";
 
 /** Public, neutral copy probes. These are not engineering/benchmark solutions. */
 export const SOURCE_LITERAL_PROBES = Object.freeze([
@@ -25,6 +26,17 @@ export const SOURCE_LITERAL_DIAGNOSTIC = Object.freeze({
   benchmarkQuestionsUsed:false,grantsAuthority:false,cognitiveGainClaim:false,
 });
 const probeTarget="src/probe.mjs";
+/** Diagnostic only: ignores trivia and literal spelling, not AST structure or decoded values. */
+export function sourceLiteralStructureDigest(source: string) {
+  const file=ts.createSourceFile(probeTarget,source,ts.ScriptTarget.ES2022,true,ts.ScriptKind.JS);
+  const visit=(node: ts.Node): unknown=>{
+    const children=node.getChildren(file);
+    const text=ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node)||ts.isIdentifier(node)
+      ?node.text:children.length===0?node.getText(file):null;
+    return {kind:node.kind,text,children:children.map(visit)};
+  };
+  return theoryDigest(visit(file));
+}
 export function sourceLiteralEnvelope(probe: (typeof SOURCE_LITERAL_PROBES)[number]) {
   return {changes:[{target:probeTarget,replacement:{lines:[...probe.lines] as string[],lineEnding:probe.lineEnding}}]};
 }
@@ -32,7 +44,7 @@ export async function inspectSourceLiteral(content: string|null,finishReason: st
   probe: (typeof SOURCE_LITERAL_PROBES)[number]) {
   const inspection=await inspectNyxSourceEmission({content,finishReason,providerResponseDigest:responseDigest,
     expectedTarget:probeTarget,representation:"LINES"});
-  let exactEnvelope=false;
+  let exactEnvelope=false;let structuralComparison: "EXACT"|"TRIVIA_OR_LITERAL_SPELLING_ONLY"|"STRUCTURE_OR_LITERAL_VALUE_CHANGED"|"UNAVAILABLE"="UNAVAILABLE";
   try {
     const actual=JSON.parse(content??"");
     const change=actual.changes?.[0];const replacement=change?.replacement;
@@ -43,8 +55,17 @@ export async function inspectSourceLiteral(content: string|null,finishReason: st
       &&Object.keys(replacement).sort().join(",")==="lineEnding,lines"&&replacement.lineEnding===probe.lineEnding
       &&Array.isArray(replacement.lines)&&replacement.lines.length===probe.lines.length
       &&replacement.lines.every((line: unknown,index: number)=>line===probe.lines[index]);
+    if(exactEnvelope)structuralComparison="EXACT";
+    else if(inspection.outcome==="SYNTACTICALLY_VALID"&&replacement&&Array.isArray(replacement.lines)
+      &&replacement.lines.every((line: unknown)=>typeof line==="string")
+      &&(replacement.lineEnding==="LF"||replacement.lineEnding==="CRLF")) {
+      const actualSource=replacement.lines.join(replacement.lineEnding==="LF"?"\n":"\r\n");
+      const expectedSource=probe.lines.join(probe.lineEnding==="LF"?"\n":"\r\n");
+      structuralComparison=sourceLiteralStructureDigest(actualSource)===sourceLiteralStructureDigest(expectedSource)
+        ?"TRIVIA_OR_LITERAL_SPELLING_ONLY":"STRUCTURE_OR_LITERAL_VALUE_CHANGED";
+    }
   } catch { /* Deliberately classify malformed output; never repair it. */ }
-  return {inspection,exactEnvelope,accepted:exactEnvelope&&inspection.outcome==="SYNTACTICALLY_VALID"};
+  return {inspection,exactEnvelope,structuralComparison,accepted:exactEnvelope&&inspection.outcome==="SYNTACTICALLY_VALID"};
 }
 
 export async function runSourceLiteralDiagnostic() {
