@@ -11,6 +11,8 @@ import { prepareTask } from "./omega/benchmarks/tasks";
 import type { ArmSpec, CampaignSpec } from "./omega/benchmarks/contracts";
 import { ARC_PUBLIC_EPOCH_SELECTION } from "./omega/nyx-arc-benchmark-epoch";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact } from "./omega/benchmarks/sourceRepresentationTasks";
+import {inspectDiagnosticArray} from "./omega/nyx-structured-array-diagnostic";
+import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
 
 let passed = 0, failed = 0;
 const check = (value: unknown, label: string) => { if (value) passed++; else { failed++; console.error(`FAIL ${label}`); } };
@@ -204,9 +206,8 @@ for (const [reason, expected] of [["truncated", "TRUNCATION"], ["provider_timeou
 // These sources never enter a model prompt or the downloaded benchmark corpus.
 const representationReferences: Record<string, string> = {
   "INTERVAL-UNION": `export function transform(input) {
-    const ordered=input.map(interval=>interval.slice()).sort((a,b)=>a[0]-b[0]);
     const merged=[];
-    for(const interval of ordered) {
+    for(const interval of input.map(row=>row.slice()).sort((a,b)=>a[0]-b[0])) {
       const previous=merged.at(-1);
       if(previous&&interval[0]<=previous[1])previous[1]=Math.max(previous[1],interval[1]);
       else merged.push(interval);
@@ -246,16 +247,34 @@ for (const task of SOURCE_REPRESENTATION_TASKS) {
   const baseline = await session.baseline();
   check(baseline.observation.state === "TEST_FAIL", `${task.id} real existing Omega execution observes initial failure`);
   const source=representationReferences[task.id];
-  const prepared=await session.prepare({hypothesisId: "REFERENCE-ONLY", proposalDigest: "REFERENCE-ONLY", verificationToolIds: ["TEST"],
-    changes: [{kind: "MODIFY",relativePath: "src/transform.mjs",expectedBaseHash: contentHash(session.files["src/transform.mjs"]),
-      replacementContent: source,replacementContentHash: contentHash(source)}]} as unknown as Parameters<R3BenchmarkRepositorySession["prepare"]>[0]);
-  const verification=prepared.verifications[0];const execution=await verification.executor.execute(verification.request);
-  check(execution.evidence.stdout.includes("TEST_PASS public-examples")
-    && scoreRepresentationArtifact(task,execution.evidence.stdout).accepted,
-    `${task.id} independent reference passes real bounded execution and private scorer`);
+  const referenceIntent=JSON.parse(intent(source));
+  referenceIntent.causalHypothesis="The supplied test-only reference implements the stated domain rule.";
+  referenceIntent.invariant="Preserve inputs and compute the stated result for all valid arguments.";
+  referenceIntent.counterexamples=["Empty input and boundary values"];
+  const cognition=NyxNemotronEngineeringCognition.create({cognitionId:"REFERENCE-ONLY",provider:provider(async()=>reply(JSON.stringify(referenceIntent))),
+    maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION"});
+  const loop=R3BoundedRepairLoop.create({loopId:"REFERENCE-ONLY",evaluatorVersion:"REFERENCE-ONLY",observerIdentity:"REFERENCE-ONLY",
+    cognition,candidateBuilder:{builderIdentity:"REFERENCE-ONLY",prepare:h=>session.prepare(h)},maxIterations:1,maxModelInteractions:1,
+    maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
+  const result=await loop.run({schemaVersion:1,repairRequestId:"REFERENCE-ONLY",objective:task.objective,
+    initialObservation:baseline.observation,initialFiles:baseline.prepared.files,allowedMutationPaths:["src/transform.mjs"],
+    availableEvidence:[],allowedVerificationToolIds:["TEST"],baselineExecutions:[{toolId:"TEST",result:baseline.result}],observedAtEpochMs:Date.now()});
+  if(result.outcome!=="FUNCTIONALLY_REPAIRED_VERIFIED")console.error(JSON.stringify({task:task.id,
+    referenceAdmission:result.iterations.at(-1)?.candidateAdmission?.findings,reason:result.reason}));
+  check(result.outcome==="FUNCTIONALLY_REPAIRED_VERIFIED"
+    && scoreRepresentationArtifact(task,result.iterations.at(-1)?.verifications[0].execution.evidence.stdout??"").accepted,
+    `${task.id} test-only reference passes real bounded execution, unchanged quality admission and private scorer: ${result.reason}`);
   const cleanup = await session.close();
   check(cleanup.sourceUnchanged && cleanup.cleanupVerified && cleanup.lifecycleTerminations === cleanup.provisionedLifecycles,
     `${task.id} existing owned lifecycle closes without leaked capability or source mutation`);
 }
+check(inspectDiagnosticArray(JSON.stringify({values:Array.from({length:40},(_,i)=>i)}),40).accepted,
+  "mechanistic diagnostic accepts only exact longer sequence");
+check(!inspectDiagnosticArray(JSON.stringify({values:Array.from({length:32},(_,i)=>i)}),40).accepted,
+  "complete JSON containing a short array is not successful serialization");
+check(!inspectDiagnosticArray('{"values":[0],"claimedSuccess":true}',1).accepted,
+  "diagnostic self-certification field cannot replace exact local acceptance");
+check(!inspectDiagnosticArray('{"values":[0,2]}',2).accepted&&!inspectDiagnosticArray('{"values":[0.5]}',1).accepted,
+  "integer sequence errors remain rejected");
 console.log(`passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

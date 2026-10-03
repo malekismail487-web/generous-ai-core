@@ -45,6 +45,7 @@ jobs:
           scripts/omegaArcNyxIntegration.test.ts scripts/omega/nyx-arc-live-eval.ts
           scripts/omega/nyx-arc-benchmark-epoch.ts
           scripts/omega/nyx-source-representation-cycle.ts
+          scripts/omega/nyx-structured-array-diagnostic.ts
           scripts/omegaPublicFailureWitness.test.ts scripts/omega/nyx-public-witness-cycle.ts
           scripts/omega/nyx-quantitative-transfer-live-eval.ts
           scripts/omega/nyx-research-party-live-eval.ts

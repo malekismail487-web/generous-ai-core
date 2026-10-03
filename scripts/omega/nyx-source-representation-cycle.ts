@@ -119,7 +119,7 @@ for (const [index, task] of SOURCE_REPRESENTATION_TASKS.entries()) {
       infrastructureFailure, inspections, usage, candidateIterations: loopResult?.iterations.length ?? 0,
       toolUsageComplete: !infrastructureFailure,
       perIteration: loopResult?.iterations.map(i => ({iteration: i.iteration, publicAccepted: i.functionallyPassed,
-        quality: i.candidateAdmission?.decision ?? null})) ?? [],
+        quality: i.candidateAdmission?.decision ?? null,qualityFindings:i.candidateAdmission?.findings??[]})) ?? [],
       failureCodes: loopResult?.cognitionFailures.flatMap(f => f.diagnostics.map(d => ({category: d.category,
         observed: /^[a-zA-Z0-9_]{1,120}$/.test(d.observed) ? d.observed : "REDACTED_NON_CODE", digest: theoryDigest(d)}))) ?? [],
       requestDigests: evidence.flatMap(e => e.modelRequestDigest ? [e.modelRequestDigest] : []),

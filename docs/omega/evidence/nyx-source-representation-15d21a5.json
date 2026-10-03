@@ -1,0 +1,726 @@
+{
+  "schemaVersion": 1,
+  "candidate": "15d21a514b6893ed13bcaaa02b696f969543a541",
+  "frozen": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "temperature": 0,
+    "inferencePolicy": "CONSTRAINED_JSON",
+    "maxOutputTokens": 8192,
+    "providerTimeoutMs": 65000,
+    "logicalCallsPerTask": 2,
+    "candidateIterationsPerTask": 2,
+    "toolCallsPerTask": 3,
+    "wallClockMsPerTask": 155000,
+    "globalWallClockMs": 1350000,
+    "maxPatchBytes": 12000,
+    "maxPromptBytes": 48000,
+    "realizedTolerance": 0.1,
+    "changedVariable": "EXISTING_TEXT_VS_LINES_SOURCE_REPRESENTATION_ONLY",
+    "publicFeedback": "IDENTICAL_PUBLIC_TEST_FAILURE_AND_STATIC_ADMISSION",
+    "authority": "EXISTING_R3_ISOLATED_ONLY",
+    "sourceMutations": false,
+    "generalShell": false,
+    "generalNetwork": false,
+    "production": false,
+    "hostileCodeSandbox": false,
+    "candidateNetworkIsolation": "NOT_PROVEN"
+  },
+  "sourceDigests": {
+    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "81275886a98523c6c0d8f3ff6630b3d41208f9cf678c27345dc32b351b5f6011",
+    "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts": "4f0dbb3d393d6e5c581e029aadd9a5c86372be6c4257b00cdb2e66ee61b167ff",
+    "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "776c9b03c213e08281e5a0404c01f4722dceb87239d2a6a0e51e63a70e597ae7",
+    "scripts/omega/benchmarks/sourceRepresentationTasks.ts": "892e73b9f170a8bbb1ffad5684c1ac96d4b0fb403c8568273273098766de0a2f"
+  },
+  "tasks": [
+    {
+      "id": "INTERVAL-UNION",
+      "tier": "DEVELOPMENT",
+      "domain": "TEMPORAL_SET_OPERATIONS",
+      "inputDigest": "ce00a612418e9db4e50ffb5af5a5b05cdaf660f077649ea7d552876170bfe746",
+      "oracleDigest": "8270bf6601ac03da75c80086cc39dde1a6e016be5b16bb3ec839e2bcda5fe493",
+      "fixtureDigest": "1680d8b87e32a62fe694cfbd3c05832ff234db3642d3b3bac356a5e673665ed7"
+    },
+    {
+      "id": "WEIGHTED-MOMENT",
+      "tier": "DEVELOPMENT",
+      "domain": "QUANTITATIVE_AGGREGATION",
+      "inputDigest": "78b7fdadf64ac2b35fcd3682dfd59cc2e7152ad6a6b3524b6d585f0f92e407f2",
+      "oracleDigest": "ec093ec3c113dd4c922ed45656d60fab0168935c34b2281c5ac48204cfd9435f",
+      "fixtureDigest": "c7d2e507139b5669cbc6cce9c2a8c6c204e9bd9de17c7da2a32076074d0e1910"
+    },
+    {
+      "id": "POLYNOMIAL-EVALUATION",
+      "tier": "VALIDATION",
+      "domain": "ALGEBRAIC_COMPUTATION",
+      "inputDigest": "1a16f27fa63d0b03c65b271ecc40601ffda34568131ffd5b54916b87a43de9f5",
+      "oracleDigest": "603cec2665aecf9cffdd2a06b3675ac15fbc4a727b866755c1012bc85d45a42a",
+      "fixtureDigest": "be1a0e145ee6e710922eeb1128cacd1701716c7926b3bed555f44e2c3e1e7654"
+    },
+    {
+      "id": "CHUNKED-LINE-FRAMING",
+      "tier": "VALIDATION",
+      "domain": "STREAM_PROTOCOL_PROCESSING",
+      "inputDigest": "704770c2a8c9509f3c6ba74bbb1b6e1f6c3d87c56871794178087069839dd76d",
+      "oracleDigest": "89543b4847be74eb834122b38871846b92e71159b6400812f3c1ebce21eb9040",
+      "fixtureDigest": "e1767f2bb9ac9e281799ce79da996ba1ddda2b1bfc4bb86bbc56bce3e8bb90ed"
+    }
+  ],
+  "results": [
+    {
+      "id": "INTERVAL-UNION",
+      "tier": "DEVELOPMENT",
+      "domain": "TEMPORAL_SET_OPERATIONS",
+      "representation": "LINES",
+      "accepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": false,
+      "score": null,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "COGNITION_ERROR",
+      "loopReason": "repair_cognition_nvidia_provider_http_503",
+      "failureClass": "PROVIDER_FAILURE",
+      "infrastructureFailure": false,
+      "inspections": [],
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 0,
+        "unknownUsageCalls": 2,
+        "toolCalls": 1,
+        "toolWorkUnits": 6,
+        "wallClockMs": 61032,
+        "providerFailures": 2,
+        "retries": 1
+      },
+      "candidateIterations": 0,
+      "toolUsageComplete": true,
+      "perIteration": [],
+      "failureCodes": [],
+      "requestDigests": [
+        "78d933d00808db2ece58b0668e8ffcb9183c69aa56ed74f03fd08038e408be1c"
+      ],
+      "responseDigests": [],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1
+      },
+      "privateScorerWorkUnits": 0
+    },
+    {
+      "id": "INTERVAL-UNION",
+      "tier": "DEVELOPMENT",
+      "domain": "TEMPORAL_SET_OPERATIONS",
+      "representation": "TEXT",
+      "accepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": true,
+      "score": null,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "failureClass": "QUALITY_REJECTION",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "6d2153d026ac9adfea7220ddb4e36e678edadc358bbdb74b3b112e817f369354",
+          "sourceDigest": "e033896e44f991729ec6c5ad1c946bab82e5d85fc456cb587a0866834b998ed7",
+          "sourceBytes": 490,
+          "lineCount": 1,
+          "finalLineLength": 490,
+          "maximumLineLength": 490,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "TEXT",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        },
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "f37913c57c8f317419971e660229f923f40735ba38a0e658fb22aaff701ad860",
+          "sourceDigest": "fdb9cbeabbce73dd3b753806efded41b8fdaf06aa68a942e7b74cb0c0780add1",
+          "sourceBytes": 470,
+          "lineCount": 1,
+          "finalLineLength": 470,
+          "maximumLineLength": 470,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "TEXT",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 8089,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 18,
+        "wallClockMs": 93219,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "candidateIterations": 2,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "quality": "REJECTED"
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "quality": "REJECTED"
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "b15aee13bf01dba9e7f54af8b2bb38a56ce5c84c90a5d73fe763d080998d1497",
+        "f5c466a8aa0422b6f3794022fa86f5d23f7d6665a33717effe0f02108fbbe768"
+      ],
+      "responseDigests": [
+        "6d2153d026ac9adfea7220ddb4e36e678edadc358bbdb74b3b112e817f369354",
+        "f37913c57c8f317419971e660229f923f40735ba38a0e658fb22aaff701ad860"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      },
+      "privateScorerWorkUnits": 0
+    },
+    {
+      "id": "WEIGHTED-MOMENT",
+      "tier": "DEVELOPMENT",
+      "domain": "QUANTITATIVE_AGGREGATION",
+      "representation": "TEXT",
+      "accepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "score": {
+        "accepted": true,
+        "correct": 4,
+        "total": 4,
+        "failure": null
+      },
+      "firstCallAccepted": true,
+      "repairedAccepted": false,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "477c42ef3156315bbb61ad31c785f9f291c0362fd82e978b15d06b4333aa6065",
+          "sourceDigest": "46a2bbc8f152d3598c09a3f2e43da34af35a79f5c4f92cd14eadce1aabe4eb2b",
+          "sourceBytes": 394,
+          "lineCount": 1,
+          "finalLineLength": 394,
+          "maximumLineLength": 394,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "TEXT",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 3808,
+        "unknownUsageCalls": 0,
+        "toolCalls": 2,
+        "toolWorkUnits": 12,
+        "wallClockMs": 26224,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "candidateIterations": 1,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "quality": "ADMITTED"
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "f010c34695403de2a72ac0a7a166ddf946efd9010101199e3d6c8b4e5b86c6f3"
+      ],
+      "responseDigests": [
+        "477c42ef3156315bbb61ad31c785f9f291c0362fd82e978b15d06b4333aa6065"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2
+      },
+      "privateScorerWorkUnits": 4
+    },
+    {
+      "id": "WEIGHTED-MOMENT",
+      "tier": "DEVELOPMENT",
+      "domain": "QUANTITATIVE_AGGREGATION",
+      "representation": "LINES",
+      "accepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "score": {
+        "accepted": true,
+        "correct": 4,
+        "total": 4,
+        "failure": null
+      },
+      "firstCallAccepted": true,
+      "repairedAccepted": false,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "a6f883c7bca859f5a7d0c77abb91085f5ab32494d40dfb4cd9df1db47bb13a89",
+          "sourceDigest": "bede9b66379f4337d5c39266301e74f1cbf37ff28b5c87edfa242c11b3f8f98e",
+          "sourceBytes": 416,
+          "lineCount": 23,
+          "finalLineLength": 0,
+          "maximumLineLength": 52,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 3964,
+        "unknownUsageCalls": 1,
+        "toolCalls": 2,
+        "toolWorkUnits": 12,
+        "wallClockMs": 71812,
+        "providerFailures": 1,
+        "retries": 1
+      },
+      "candidateIterations": 1,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "quality": "ADMITTED"
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "4a181faf1fd8932ef703dcc86191db67e43b40f83fcf9c7afcf72609ccb6b8e8"
+      ],
+      "responseDigests": [
+        "a6f883c7bca859f5a7d0c77abb91085f5ab32494d40dfb4cd9df1db47bb13a89"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2
+      },
+      "privateScorerWorkUnits": 4
+    },
+    {
+      "id": "POLYNOMIAL-EVALUATION",
+      "tier": "VALIDATION",
+      "domain": "ALGEBRAIC_COMPUTATION",
+      "representation": "LINES",
+      "accepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "score": {
+        "accepted": true,
+        "correct": 4,
+        "total": 4,
+        "failure": null
+      },
+      "firstCallAccepted": true,
+      "repairedAccepted": false,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "c099b62cb5f575f1d4c8d638d1fcf870626ff27326cea35bda933383846b3bc8",
+          "sourceDigest": "57e76c704ef5b0ca3c86e20ce2e9e5acd9e9cadfffffab19aa9c2b231d2fe126",
+          "sourceBytes": 247,
+          "lineCount": 11,
+          "finalLineLength": 1,
+          "maximumLineLength": 42,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 3877,
+        "unknownUsageCalls": 1,
+        "toolCalls": 2,
+        "toolWorkUnits": 12,
+        "wallClockMs": 85658,
+        "providerFailures": 1,
+        "retries": 1
+      },
+      "candidateIterations": 1,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "quality": "ADMITTED"
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "07f2b3ea709458462e5033c218146a90782582bf3f6e75b536339e641f8e3155"
+      ],
+      "responseDigests": [
+        "c099b62cb5f575f1d4c8d638d1fcf870626ff27326cea35bda933383846b3bc8"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2
+      },
+      "privateScorerWorkUnits": 4
+    },
+    {
+      "id": "POLYNOMIAL-EVALUATION",
+      "tier": "VALIDATION",
+      "domain": "ALGEBRAIC_COMPUTATION",
+      "representation": "TEXT",
+      "accepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "score": {
+        "accepted": true,
+        "correct": 4,
+        "total": 4,
+        "failure": null
+      },
+      "firstCallAccepted": true,
+      "repairedAccepted": false,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "69e30f51b17f5030c5e59ab353867a129d291be6c6ad18320744a7a0d15ffeed",
+          "sourceDigest": "3d26a2b2fca6461e739c54e1099f02668a60b44630a7421ec50721dcbae58ddc",
+          "sourceBytes": 196,
+          "lineCount": 1,
+          "finalLineLength": 196,
+          "maximumLineLength": 196,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "TEXT",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 3870,
+        "unknownUsageCalls": 0,
+        "toolCalls": 2,
+        "toolWorkUnits": 12,
+        "wallClockMs": 14064,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "candidateIterations": 1,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "quality": "ADMITTED"
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "239e915ab35fd69dc7232a97c0185cd70e03b99bc5c32b8bad0791b01a420ab2"
+      ],
+      "responseDigests": [
+        "69e30f51b17f5030c5e59ab353867a129d291be6c6ad18320744a7a0d15ffeed"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2
+      },
+      "privateScorerWorkUnits": 4
+    },
+    {
+      "id": "CHUNKED-LINE-FRAMING",
+      "tier": "VALIDATION",
+      "domain": "STREAM_PROTOCOL_PROCESSING",
+      "representation": "TEXT",
+      "accepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": false,
+      "score": null,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "failureClass": "FUNCTIONAL_FAILURE",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "bc49bb3209d95631d49a4888cd1d461ce84814d0594d45545a5fcafd511992f4",
+          "sourceDigest": "3c30522608788fb0a67cd6f00bcbaeed90387871c987bcece4faabfef7bb926f",
+          "sourceBytes": 673,
+          "lineCount": 1,
+          "finalLineLength": 673,
+          "maximumLineLength": 673,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "TEXT",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        },
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "fc6ca40146f192833cb139cb6b134a885db171e2ce2706c5e30dfed365b3b9af",
+          "sourceDigest": "25828d1dc135d7d55413e110443c8d179b1bdbeeab37be15c6e994d8ddeacca7",
+          "sourceBytes": 734,
+          "lineCount": 1,
+          "finalLineLength": 734,
+          "maximumLineLength": 734,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "TEXT",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 3,
+        "httpAttempts": 3,
+        "reportedTokens": 8335,
+        "unknownUsageCalls": 1,
+        "toolCalls": 3,
+        "toolWorkUnits": 18,
+        "wallClockMs": 103272,
+        "providerFailures": 1,
+        "retries": 1
+      },
+      "candidateIterations": 2,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": false,
+          "quality": null
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": false,
+          "quality": null
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "e93a5f02ea10269b9721da920b1f40b1862171abd600bdfe62308404b94c1cdf",
+        "3b0f1a39ee8b90339662b79eefda0e6da8a31f3666d5154211f1ce0a170948c3"
+      ],
+      "responseDigests": [
+        "bc49bb3209d95631d49a4888cd1d461ce84814d0594d45545a5fcafd511992f4",
+        "fc6ca40146f192833cb139cb6b134a885db171e2ce2706c5e30dfed365b3b9af"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      },
+      "privateScorerWorkUnits": 0
+    },
+    {
+      "id": "CHUNKED-LINE-FRAMING",
+      "tier": "VALIDATION",
+      "domain": "STREAM_PROTOCOL_PROCESSING",
+      "representation": "LINES",
+      "accepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": false,
+      "score": null,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "COGNITION_ERROR",
+      "loopReason": "repair_cognition_nvidia_provider_http_503",
+      "failureClass": "PROVIDER_FAILURE",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTAX_REJECTED",
+          "responseDigest": "d759eb99a723da19294546b287cb682b5dfdaba7da96a7de5e607d8cbf0110b4",
+          "sourceDigest": "b3ab82008c68f8820e0d3c114aa86b4c4860d080766d94c33aa51ec38660edd1",
+          "sourceBytes": 968,
+          "lineCount": 32,
+          "finalLineLength": 30,
+          "maximumLineLength": 49,
+          "syntaxLine": 32,
+          "syntaxColumn": 31,
+          "syntaxAtFinalLine": true,
+          "syntaxNearSourceEnd": true,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 3,
+        "httpAttempts": 3,
+        "reportedTokens": 4228,
+        "unknownUsageCalls": 2,
+        "toolCalls": 1,
+        "toolWorkUnits": 6,
+        "wallClockMs": 92675,
+        "providerFailures": 2,
+        "retries": 1
+      },
+      "candidateIterations": 0,
+      "toolUsageComplete": true,
+      "perIteration": [],
+      "failureCodes": [
+        {
+          "category": "SOURCE_QUALITY_INVALID",
+          "observed": "syntax_error_line_32_column_31",
+          "digest": "98f19032d7f9c43fe81049761a42dc93569c606529d9380c75539072bcf29e6d"
+        }
+      ],
+      "requestDigests": [
+        "b9e76bee8ef74a247d3b9806ee09be1a5d5b6bed082ec5330dd6099eb0969003",
+        "5f3d09d960a401ad340b520ecabd497c4feaaaf17e3d69225ab81e6458bcd54a"
+      ],
+      "responseDigests": [
+        "d759eb99a723da19294546b287cb682b5dfdaba7da96a7de5e607d8cbf0110b4"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1
+      },
+      "privateScorerWorkUnits": 0
+    }
+  ],
+  "pairs": [
+    {
+      "id": "INTERVAL-UNION",
+      "tier": "DEVELOPMENT",
+      "providerStable": false,
+      "matchedRealizedCompute": false,
+      "linesAccepted": false,
+      "textAccepted": false
+    },
+    {
+      "id": "WEIGHTED-MOMENT",
+      "tier": "DEVELOPMENT",
+      "providerStable": false,
+      "matchedRealizedCompute": false,
+      "linesAccepted": true,
+      "textAccepted": true
+    },
+    {
+      "id": "POLYNOMIAL-EVALUATION",
+      "tier": "VALIDATION",
+      "providerStable": false,
+      "matchedRealizedCompute": false,
+      "linesAccepted": true,
+      "textAccepted": true
+    },
+    {
+      "id": "CHUNKED-LINE-FRAMING",
+      "tier": "VALIDATION",
+      "providerStable": false,
+      "matchedRealizedCompute": false,
+      "linesAccepted": false,
+      "textAccepted": false
+    }
+  ],
+  "sourceUnchanged": true,
+  "hypothesis": "Using existing TEXT rather than LINES reduces interface/source failures across fresh engineering tasks without weakening acceptance or increasing realized compute.",
+  "falsification": "No reproducible syntax/correctness improvement across development and fresh transfer at matched realized compute.",
+  "summaries": [
+    {
+      "representation": "LINES",
+      "accepted": 2,
+      "firstCallAccepted": 2,
+      "repairedAccepted": 0,
+      "reportedTokens": 12069,
+      "unknownUsageCalls": 6
+    },
+    {
+      "representation": "TEXT",
+      "accepted": 2,
+      "firstCallAccepted": 2,
+      "repairedAccepted": 0,
+      "reportedTokens": 24102,
+      "unknownUsageCalls": 1
+    }
+  ],
+  "evidence": "E4_LIVE_MODEL_AND_E3_LOCAL_OMEGA_AND_PRIVATE_EXACT_SCORER",
+  "authorship": "SAME_SESSION_NOT_INDEPENDENTLY_AUTHORED",
+  "benchmarkTasksUsed": false,
+  "staticAdmissionAndParserUnchanged": true,
+  "rawSourcePersisted": false,
+  "grantsAuthority": false,
+  "broadPromotion": false
+}
