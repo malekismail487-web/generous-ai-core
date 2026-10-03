@@ -9,12 +9,13 @@ export interface QuantitativeProgram {
   readonly blocks: readonly {
     readonly iterations: number;
     readonly mode: "SEQUENTIAL" | "SIMULTANEOUS";
-    readonly steps: readonly { readonly target: string; readonly op: "ADD" | "SUB" | "MUL" | "DIV" | "MIN" | "MAX";
+    readonly steps: readonly { readonly target: string; readonly op: "ADD" | "SUB" | "MUL" | "DIV" | "MIN" | "MAX" | "BINOMIAL";
       readonly left: string; readonly right: string }[];
   }[];
   readonly outputs: readonly { readonly label: string; readonly source: string }[];
 }
-export const EXACT_DERIVATION_POLICY = Object.freeze({ version: "nyx-exact-derivation/1",
+export const EXACT_DERIVATION_OPERATIONS=Object.freeze(["ADD","SUB","MUL","DIV","MIN","MAX","BINOMIAL"] as const);
+export const EXACT_DERIVATION_POLICY = Object.freeze({ version: "nyx-exact-derivation/2",
   maxConstants: 32, maxRegisters: 32, maxSteps: 64, maxBlocks: 16, maxIterations: 1024,
   maxOutputs: 16, maxIntegerBits: 4096, grantsAuthority: false,
   scope: "EXACT_EVALUATION_OF_MODEL_AUTHORED_IR_NOT_VALIDATION_OF_ITS_MATHEMATICAL_MODEL" });
@@ -57,7 +58,7 @@ export function quantitativeProgramFinding(problem: QuantitativeProblem, value: 
     for (const [column,step] of block.steps.entries()) {
       if (!ownKeys(step, ["target", "op", "left", "right"])) return `STEP_SHAPE:${at}.${column}`;
       if (!id(step.target) || !registers.has(step.target)) return `STEP_TARGET_NOT_MUTABLE_REGISTER:${at}.${column}`;
-      if (!["ADD", "SUB", "MUL", "DIV", "MIN", "MAX"].includes(String(step.op))) return `STEP_OPERATION:${at}.${column}`;
+      if (!(EXACT_DERIVATION_OPERATIONS as readonly string[]).includes(String(step.op))) return `STEP_OPERATION:${at}.${column}`;
       if (!id(step.left) || !available.has(step.left) || !id(step.right) || !available.has(step.right)) return `STEP_SOURCE_NOT_BOUND:${at}.${column}`;
       if (block.mode === "SIMULTANEOUS" && targets.has(step.target)) return `SIMULTANEOUS_TARGET_DUPLICATED:${at}.${column}`;
       targets.add(step.target);
@@ -112,6 +113,15 @@ export function deriveQuantities(problem: QuantitativeProblem, program: Quantita
           case "DIV": next = rational(left.n * right.d, left.d * right.n); break;
           case "MIN": next = left.n * right.d <= right.n * left.d ? left : right; break;
           case "MAX": next = left.n * right.d >= right.n * left.d ? left : right; break;
+          case "BINOMIAL": {
+            if(left.d!==1n||right.d!==1n||left.n<0n||right.n<0n)throw new ArithmeticBoundary("BINOMIAL_REQUIRES_NONNEGATIVE_INTEGERS");
+            if(right.n>left.n){next=rational(0n,1n);break;}
+            const k=right.n<left.n-right.n?right.n:left.n-right.n;
+            if(k>BigInt(EXACT_DERIVATION_POLICY.maxIterations))throw new ArithmeticBoundary("BINOMIAL_ITERATION_BOUND");
+            next=rational(1n,1n);
+            for(let i=1n;i<=k;i++){budget.tick();next=rational(next.n*(left.n-i+1n),next.d*i);}
+            break;
+          }
         }
         values.set(step.target, next);
       }

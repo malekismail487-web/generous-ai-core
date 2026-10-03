@@ -9,6 +9,7 @@ import { runNyxQuantitativeTask, quantitativeExchangeSchema } from "../src/lib/c
 import { FRESH_QUANTITATIVE_TASKS,referenceFreshQuantitativeProgram,verifyFreshQuantitativeSubmission } from "./omega/nyx-quantitative-fresh-fixtures";
 import { SLOT_TRANSFER_TASKS,referenceSlotTransferProgram,verifySlotTransferSubmission } from "./omega/nyx-quantitative-slot-transfer-fixtures";
 import { EQUATION_TRANSFER_TASKS,verifyEquationTransferSubmission } from "./omega/nyx-quantitative-equation-transfer-fixtures";
+import { COMPOSED_TRANSFER_TASKS,verifyComposedTransferSubmission } from "./omega/nyx-quantitative-composed-transfer-fixtures";
 import { equationNames,lowerQuantitativeEquations,type QuantitativeEquations } from "../src/lib/codelab/research/quantitativeEquationCompiler";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema,
@@ -447,6 +448,53 @@ const compilerBudget=equationGetterSession.analyze({schemaVersion:1,operation:"A
 check(compilerBudget.status==="BUDGET_EXHAUSTED"&&compilerBudget.workUnits===1&&compilerBudget.payload===null,
   "a one-unit budget cannot hide lowering cost or return a partial accepted result");
 equationGetterSession.revoke();
+let pascal:bigint[]=[1n];
+for(let n=0;n<=30;n++) {
+  if(n>0)pascal=Array.from({length:n+1},(_,k)=>(pascal[k-1]??0n)+(pascal[k]??0n));
+  for(let k=0;k<=n+2;k++) {
+    const problem:QuantitativeProblem={kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"zero",value:"0"},{id:"n",value:String(n)},{id:"k",value:String(k)}]};
+    const program:QuantitativeProgram={schemaVersion:1,registers:[{id:"result",source:"zero"}],
+      blocks:[{iterations:1,mode:"SEQUENTIAL",steps:[{target:"result",op:"BINOMIAL",left:"n",right:"k"}]}],outputs:[{label:"result",source:"result"}]};
+    check(calculation(problem,program).payload!.outputs[0].value===String(pascal[k]??0n),
+      `multiplicative exact binomial matches independent additive Pascal oracle ${n}/${k}`);
+  }
+}
+for(const [n,k] of [["-1","0"],["5/2","1"],["4096","2048"]]) {
+  const problem:QuantitativeProblem={kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"zero",value:"0"},{id:"n",value:n},{id:"k",value:k}]};
+  const result=calculation(problem,{schemaVersion:1,registers:[{id:"result",source:"zero"}],
+    blocks:[{iterations:1,mode:"SEQUENTIAL",steps:[{target:"result",op:"BINOMIAL",left:"n",right:"k"}]}],outputs:[{label:"result",source:"result"}]});
+  check(result.status==="INSUFFICIENT_EVIDENCE"&&result.payload!.outputs===null,"binomial domain and iteration bounds fail closed without partial output");
+}
+for(const [i,task] of COMPOSED_TRANSFER_TASKS.entries()) {
+  const reference=referenceSlotTransferProgram({...task,taskId:SLOT_TRANSFER_TASKS[i].taskId});
+  const lowered=lowerQuantitativeEquations(task.problem,liftTestProgram(task,reference));
+  check(verifyComposedTransferSubmission(task,{outputs:calculation(task.problem,lowered).payload!.outputs,confidence:1}).accepted,
+    `unweakened domain oracle covers fifth frozen population ${task.taskId}`);
+}
+const compoundRequest={action:"SUBMIT_DERIVATION",analysisRequest:{schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",
+  problemDigest:theoryDigest(cognitionTask.problem),program:liftTestProgram(cognitionTask,referenceQuantitativeProgram(cognitionTask))},certificate:{confidence:0.9}};
+const compound=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_WITH_WORKBENCH",limits:{...limits,maxCalls:1},
+  complete:async()=>({...capturedCompletion,content:JSON.stringify(compoundRequest)}),verify:certificate=>verifyQuantitativeSubmission(cognitionTask,certificate)});
+check(compound.accepted&&compound.calls===1&&compound.toolRequests===1&&compound.attempts[0].executedProgram!==null,
+  "explicit compound intent computes, preserves action evidence, and invokes the SAME external oracle without an acknowledgement model call");
+const deniedCompound=await runNyxQuantitativeTask({...cognitionTask,arm:"CURRENT_DIRECT",limits:{...limits,maxCalls:1},
+  complete:async()=>({...capturedCompletion,content:JSON.stringify(compoundRequest)}),verify:()=>{throw Error("unavailable_action_cannot_reach_oracle");}});
+check(!deniedCompound.accepted&&deniedCompound.toolRequests===0&&deniedCompound.outcome==="AUTHORIZATION_REJECTION",
+  "compound intent does not grant unavailable computation to a control arm");
+const rejectedCompound=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_WITH_WORKBENCH",limits:{...limits,maxCalls:1},
+  complete:async()=>({...capturedCompletion,content:JSON.stringify(compoundRequest)}),verify:()=>({accepted:false,findings:["ADVERSARIAL_ORACLE_REJECTED"],verificationDigest:"fixed-rejection"})});
+check(!rejectedCompound.accepted&&rejectedCompound.outcome==="FUNCTIONAL_REJECTION"&&rejectedCompound.toolRequests===1,
+  "a successfully executed derivation cannot overrule an independent rejection");
+let verifierExceptionObserved=false;
+try {await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_WITH_WORKBENCH",limits:{...limits,maxCalls:1},
+  complete:async()=>({...capturedCompletion,content:JSON.stringify(compoundRequest)}),verify:()=>{throw Error("independent-verifier-unavailable");}});}
+catch(error){verifierExceptionObserved=error instanceof Error&&error.message==="independent-verifier-unavailable";}
+check(verifierExceptionObserved,"independent verifier failure cannot be caught and mislabeled as an authorization/model failure");
+const fourthNegative=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v4/comparison.json","utf8"));
+check(fourthNegative.candidate==="1ed7c07f12b79e9f004d06692e4ea38117e1cf8a"&&fourthNegative.complete&&fourthNegative.providerStable
+  &&fourthNegative.summaries[2].accepted===3&&fourthNegative.summaries[2].protocolOrAuthorizationFailures===0&&!fourthNegative.broadPromotion
+  &&theoryDigest(fourthNegative)==="25cc4908f7e5ab225a9b43d82121fa2d25d7a3376a9a5a14397696db4113c10a",
+  "fourth experiment distinguishes solved interface failures from remaining mathematical and compute-efficiency failures");
 const thirdNegative=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v3/comparison.json","utf8"));
 check(thirdNegative.candidate==="aa90f8ccf473ba90a17164f4f68f2498f9c4aba0"&&thirdNegative.complete&&!thirdNegative.providerStable
   &&thirdNegative.summaries[2].accepted===2&&!thirdNegative.broadPromotion
@@ -466,7 +514,7 @@ check(preservedNegative.candidate==="c2a69187cea0280db2f3060326df50ba5e3f38d2"
   &&preservedNegative.matchedRealizedCompute===false&&!preservedNegative.broadPromotion,
   "failed quantitative comparison stays bound to actual candidate, with no broader capability promotion");
 check(theoryDigest(preservedNegative)==="304945fdd03eae04dcf3416eb5998370232753d7af799bbfb8a43953d6c0de64","negative live report remains byte-semantically faithful to immutable E4 job logs");
-for(const report of [preservedNegative,secondNegative,thirdNegative]) for(const [path,digest] of Object.entries(report.sourceDigests)) {
+for(const report of [preservedNegative,secondNegative,thirdNegative,fourthNegative]) for(const [path,digest] of Object.entries(report.sourceDigests)) {
   if(typeof path!=="string"||path.includes("..")||!path.endsWith(".ts")||!path.startsWith("src/")&&!path.startsWith("scripts/"))
     throw Error("invalid_archived_source_path");
   check(theoryDigest(execFileSync("git",["show",`${report.candidate}:${path}`],{encoding:"utf8"}))===digest,

@@ -1,4 +1,4 @@
-import { quantitativeProgramFinding, type QuantitativeProblem, type QuantitativeProgram } from "./exactQuantitativeDerivation";
+import { quantitativeProgramFinding,EXACT_DERIVATION_OPERATIONS, type QuantitativeProblem, type QuantitativeProgram } from "./exactQuantitativeDerivation";
 
 /** A finite equation language, lowered into the EXISTING exact interpreter. No new executor.
  * Expressions are immutable within each phase; updates commit together after all expressions.
@@ -25,7 +25,7 @@ export function equationNames(constants:readonly string[]) {
 const keys=(v:unknown,names:readonly string[]):v is Record<string,unknown>=>!!v&&typeof v==="object"&&!Array.isArray(v)
   &&Object.keys(v).sort().join("\0")===[...names].sort().join("\0");
 const boundedArray=(v:unknown,max:number,min=0):v is unknown[]=>Array.isArray(v)&&v.length>=min&&v.length<=max;
-const ops=new Set(["ADD","SUB","MUL","DIV","MIN","MAX"]);
+const ops=new Set<string>(EXACT_DERIVATION_OPERATIONS);
 /** Caller rejects accessors/host objects, cycles, and input-byte overflow before entering this compiler. */
 export function lowerQuantitativeEquations(problem:QuantitativeProblem,value:unknown):QuantitativeProgram {
   const fail=(code:string):never=>{throw Error(`quantitative_equations_invalid:${code}`);};

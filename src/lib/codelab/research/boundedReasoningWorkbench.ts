@@ -6,7 +6,7 @@ import { lowerQuantitativeEquations,EQUATION_COMPILER_POLICY,type QuantitativeEq
 
 /** Constructive algorithms, not a second model or an acceptance authority. */
 export const NYX_REASONING_WORKBENCH = Object.freeze({
-  version: "nyx-bounded-reasoning-workbench/4",
+  version: "nyx-bounded-reasoning-workbench/5",
   grantsAuthority: false,
   maxInputBytes: 128_000,
   planCoverage: Object.freeze({ status: "PARTIAL_JUST_IN_TIME",

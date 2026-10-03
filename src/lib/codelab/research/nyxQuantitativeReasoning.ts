@@ -1,6 +1,6 @@
 import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult, NvidiaNimEvidence } from "../model/nvidiaNimProvider";
 import { BoundedReasoningSession } from "./boundedReasoningWorkbench";
-import type { QuantitativeProblem,QuantitativeProgram } from "./exactQuantitativeDerivation";
+import { EXACT_DERIVATION_OPERATIONS,type QuantitativeProblem,type QuantitativeProgram } from "./exactQuantitativeDerivation";
 import { equationNames,type QuantitativeEquations } from "./quantitativeEquationCompiler";
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
 import { materializeAnalysisArtifactFields } from "./analysisArtifactReference";
@@ -34,17 +34,17 @@ export function quantitativeExchangeSchema(labels:readonly string[],toolAvailabl
   const expressionSource={type:"string",enum:[...constantIds,...slots,...expressions]};
   const program=object({schemaVersion:constant(2),initialState:array(object({slot:registerId,source:{type:"string",enum:constantIds}})),
     cycles:array(object({iterations:{type:"integer"},phases:array(object({
-      expressions:array(object({id:{type:"string",enum:expressions},op:{type:"string",enum:["ADD","SUB","MUL","DIV","MIN","MAX"]},left:expressionSource,right:expressionSource})),
+      expressions:array(object({id:{type:"string",enum:expressions},op:{type:"string",enum:EXACT_DERIVATION_OPERATIONS},left:expressionSource,right:expressionSource})),
       updates:array(object({slot:registerId,source:expressionSource}))}))})),
     outputs:array(object({label:{type:"string",enum:labels},source}))});
   const tool=object({schemaVersion:constant(1),operation:constant("ANALYZE_FINITE_PROBLEM"),problemDigest:constant(problemDigest),program});
   const artifact=object({schemaVersion:constant(1),operation:constant("SUBMIT_ANALYSIS_ARTIFACT"),problemDigest:constant(problemDigest),
     resultDigest:artifactDigest===null?string:constant(artifactDigest),confidence:{type:"number"}});
   const certificate=object({outputs:array(object({label:{type:"string",enum:labels},value:string})),confidence:{type:"number"}});
-  return object({action:{type:"string",enum:["SUBMIT",...(toolAvailable?["REQUEST_ANALYSIS"]:[]),
+  return object({action:{type:"string",enum:["SUBMIT",...(toolAvailable?["SUBMIT_DERIVATION","REQUEST_ANALYSIS"]:[]),
     ...(artifactAvailable?["SUBMIT_ANALYSIS_ARTIFACT","DECLINE_ANALYSIS_ARTIFACT"]:[])]},
     analysisRequest:{anyOf:[{type:"null"},...(toolAvailable?[tool]:[]),...(artifactAvailable?[artifact]:[])]},
-    certificate:toolAvailable||artifactAvailable?{anyOf:[{type:"null"},certificate]}:certificate});
+    certificate:toolAvailable||artifactAvailable?{anyOf:[{type:"null"},certificate,...(toolAvailable?[object({confidence:{type:"number"}})]:[])]}:certificate});
 }
 /** Composition of existing NYX inference, Omega computation, and an externally owned oracle.
  * The completion callback is cognition, not an authority mechanism. It never receives the verifier.
@@ -72,8 +72,9 @@ export async function runNyxQuantitativeTask(input: {
   const attempts:QuantitativeAttempt[]=[];let observation:Readonly<Record<string,unknown>>|null=null;let feedback:readonly string[]=[];
   let accepted=false;let acceptedCertificate:unknown=null;let outcome="BUDGET_UNEXECUTED";
   let toolRequests=0;let toolWorkUnits=0;let toolElapsedMs=0;
-  const contract={action:"REQUEST_ANALYSIS or SUBMIT",analysisRequest:"null on SUBMIT; otherwise {schemaVersion:1,operation:ANALYZE_FINITE_PROBLEM,problemDigest,program}",
-    certificate:"null on REQUEST_ANALYSIS; otherwise {outputs:[{label:string,value:canonical reduced rational string}],confidence:number 0..1}",
+  const contract={action:"Prefer SUBMIT_DERIVATION to compute YOUR program and have its outputs independently checked in this call. REQUEST_ANALYSIS computes without submitting; SUBMIT submits manually.",
+    analysisRequest:"null on SUBMIT; otherwise {schemaVersion:1,operation:ANALYZE_FINITE_PROBLEM,problemDigest,program}",
+    certificate:"SUBMIT_DERIVATION requires {confidence:number 0..1}. REQUEST_ANALYSIS requires null. SUBMIT requires {outputs:[{label:string,value:canonical reduced rational string}],confidence:number 0..1}",
     program:"{schemaVersion:2,initialState:[{slot,source}],cycles:[{iterations,phases:[{expressions:[{id,op,left,right}],updates:[{slot,source}]}]}],outputs:[{label,source}]}",
     programSemantics:"All 16 state slots in the schema exist and start at zero; initialState overrides selected slots from named constants. "
       +"A phase evaluates immutable expressions in listed dependency order, then commits its distinct slot updates SIMULTANEOUSLY. "
@@ -82,7 +83,8 @@ export async function runNyxQuantitativeTask(input: {
       +"Separate ordered phases when a later equation needs newly updated state. Use multiple expression nodes to build a multi-operation equation, not repeated writes to a slot. "
       +"Expression IDs are local to each phase and must be distinct. Output sources are constants or state slots, not expression IDs. "
       +"Constants are immutable. No literal source strings '0'/'1': use named zero/one. Iterations follow the objective, not the policy maximum. "
-      +"Only schema-listed slots/IDs and ADD/SUB/MUL/DIV/MIN/MAX exist. No code, shell, files, or extra tools. Exact reduced rationals only.",
+      +"Only schema-listed slots/IDs and ADD/SUB/MUL/DIV/MIN/MAX/BINOMIAL exist. BINOMIAL(n,k) counts unordered k-element subsets of n distinct elements, with nonnegative integer operands; k>n yields zero. "
+      +"No code, shell, files, or extra tools. Exact reduced rationals only.",
     acceptance:"The tool only evaluates YOUR equations. Correct arithmetic does not prove the model is appropriate. Independent verification judges the original objective."};
   try {
     for(let call=1;call<=limits.maxCalls && now()<expires;call++) {
@@ -118,8 +120,13 @@ export async function runNyxQuantitativeTask(input: {
       try {value=JSON.parse(completion.content);}catch{record("JSON_SYNTAX_REJECTION",["Return one strict JSON object, without Markdown."]);continue;}
       if(!keys(value,["action","analysisRequest","certificate"])){record("PROTOCOL_REJECTION",["Exactly action,analysisRequest,certificate are required."]);continue;}
       proposalDigest=theoryDigest(value);
-      if(value.action==="REQUEST_ANALYSIS") {
-        if(!available||value.certificate!==null){record("AUTHORIZATION_REJECTION",["No available computation capability or invalid request envelope."]);continue;}
+      if(value.action==="REQUEST_ANALYSIS"||value.action==="SUBMIT_DERIVATION") {
+        const compound=value.action==="SUBMIT_DERIVATION";
+        const submittedConfidence=compound&&keys(value.certificate,["confidence"])?value.certificate.confidence:null;
+        if(!available||(!compound&&value.certificate!==null)||(compound&&(typeof submittedConfidence!=="number"
+          ||!Number.isFinite(submittedConfidence)||submittedConfidence<0||submittedConfidence>1))){
+          record("AUTHORIZATION_REJECTION",["No available computation capability or invalid request envelope."]);continue;}
+        let derivedCertificate:Readonly<Record<string,unknown>>|null=null;
         try {
           const result=session.analyze(value.analysisRequest);toolRequests++;toolWorkUnits+=result.workUnits;toolElapsedMs+=result.elapsedMs;
           // Validated bounded action data only; no raw provider reasoning or credential.
@@ -128,13 +135,24 @@ export async function runNyxQuantitativeTask(input: {
             decision:result.status==="CONSTRUCTED"?"CANDIDATE_CONSTRUCTED_NOT_ACCEPTED":"INSUFFICIENT_EVIDENCE",
             certificateFields:result.status==="CONSTRUCTED"?{outputs:result.payload!.outputs}:null,
             computation:result,grantsAuthority:false});
-          record(result.status==="CONSTRUCTED"?"DERIVATION_RETURNED_NOT_ACCEPTED":"DERIVATION_INSUFFICIENT",[
+          if(compound&&result.status==="CONSTRUCTED") {
+            const proposal=materializeAnalysisArtifactFields(observation,{schemaVersion:1,operation:"SUBMIT_ANALYSIS_ARTIFACT",
+              problemDigest:session.problemDigest,resultDigest:theoryDigest(observation),confidence:submittedConfidence});
+            derivedCertificate={...proposal.fields,confidence:proposal.confidence};
+          } else record(result.status==="CONSTRUCTED"?"DERIVATION_RETURNED_NOT_ACCEPTED":"DERIVATION_INSUFFICIENT",[
             "Review the computed quantities against the ORIGINAL objective. Submit a certificate or propose a bounded correction."]);
         } catch(error) {
           const reason=error instanceof Error&&/^quantitative_(?:program|equations)_invalid:[A-Z_]+(?::[0-9]+(?:\.[0-9]+)?)?$/.test(error.message)
             ?error.message:error instanceof Error&&error.message==="reasoning_session_budget_exhausted"?"NATIVE_WORK_BUDGET_EXHAUSTED":"REQUEST_SCOPE_OR_LIFETIME_REJECTED";
           record("AUTHORIZATION_OR_IR_REJECTION",[reason,"Request must bind the available problem, use only initialized/authorized names, "
             +"immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."]);
+        }
+        if(derivedCertificate!==null) {
+          // The authoritative callback is OUTSIDE the tool-authorization catch. Its failures
+          // must never be mislabeled as model/IR faults or converted into acceptance.
+          const checked=verify(derivedCertificate);resultDigest=checked.verificationDigest;confidence=Number(derivedCertificate.confidence);
+          accepted=checked.accepted;record(accepted?"ACCEPTED":checked.findings.some(f=>/SCHEMA_INVALID/.test(f))?"CERTIFICATE_SCHEMA_REJECTION":"FUNCTIONAL_REJECTION",checked.findings);
+          if(accepted){acceptedCertificate=immutableTheoryValue(derivedCertificate);break;}
         }
         continue;
       }
