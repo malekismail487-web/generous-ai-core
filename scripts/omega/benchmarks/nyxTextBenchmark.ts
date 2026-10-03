@@ -35,13 +35,12 @@ export function textInferenceUsage(evidence: readonly NvidiaNimEvidence[], elaps
   usage.wallClockMs = elapsedMs;
   for (const item of evidence) {
     const physical = item.delivery?.httpAttempts ?? (item.networkAttempted ? 1 : 0);
+    if (!physical) continue; // Local rejection is recorded separately, never as an invented HTTP attempt.
     usage.logicalCalls++;
-    // Logical rejections count, but they must not be misrepresented as zero-cost live comparisons.
-    usage.physicalCalls += Math.max(1, physical);
-    usage.httpAttempts += Math.max(1, physical);
+    usage.physicalCalls += physical;
+    usage.httpAttempts += physical;
     usage.reportedTokens += item.usage.totalTokens ?? 0;
-    usage.unknownUsageCalls += physical - (item.usage.totalTokens === null ? 0 : 1);
-    if (!physical && item.usage.totalTokens === null) usage.unknownUsageCalls++;
+    usage.unknownUsageCalls += Math.max(0, physical - (item.usage.totalTokens === null ? 0 : 1));
     const failures = (item.delivery?.rateLimitedResponses ?? 0)
       + (item.delivery?.transientUnavailableResponses ?? 0) + (item.delivery?.timedOutAttempts ?? 0);
     usage.providerFailures += Math.max(failures, Number(item.failureCategory !== null));
@@ -79,6 +78,7 @@ export function sanitizedTextResult(task: PrivateTextTask, result: NyxChatTurnRe
     privateOracleDigest: theoryDigest(task.answer), predictionDigest: result?.outcome === "REPLIED"
       ? theoryDigest(result.message) : null, state: textOutcome(result, evidence, correct), correct,
     usage: textInferenceUsage(evidence, elapsedMs),
+    localRejectedCalls: evidence.filter(item => !item.networkAttempted && !item.delivery?.httpAttempts).length,
     modelEvidence: evidence.map(item => ({requestDigest: item.requestDigest, responseDigest: item.responseDigest,
       providerRequestId: item.providerRequestId, statusCode: item.statusCode, finishReason: item.finishReason,
       failureCategory: item.failureCategory, reasoningOutputBytes: item.reasoningOutputBytes ?? null})),

@@ -27,7 +27,7 @@ jobs:
         with:
           bun-version: 1.4.0
       - run: bun install --frozen-lockfile --ignore-scripts
-      - name: Test no-secret adapter and unchanged NYX chat boundary
+      - name: Test no-secret adapter and unchanged NYX chat boundary after canonical-pin correction
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxTextBenchmark.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxChatCli.test.ts

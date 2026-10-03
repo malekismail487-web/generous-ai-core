@@ -2,7 +2,6 @@
 import argparse
 import contextlib
 import hashlib
-import importlib.util
 import io
 import json
 from pathlib import Path
@@ -12,7 +11,7 @@ import sys
 AIME_REVISION = "c94da77eb22bbd6439e62a323bec18493a421302"
 AIME_SHA256 = "9f9066ff48ad2e31f9bf1b1ac6d5e80693195f987985f2859f89dd25ffa51c2d"
 BBEH_REVISION = "80d12ca916b7158f22293fcf3144f4d3d854d4be"
-BBEH_EVALUATOR_SHA256 = "a674139fa8edcf443740cb7efdac48ad6089491dc3f34206a1f298811c03ee55"
+BBEH_EVALUATOR_SHA256 = "4b4f06e5babb015de2ba639bae995a5526182ffb5b5890af54dfcf038580eb34"
 
 
 def pinned_bbeh(root):
@@ -21,8 +20,8 @@ def pinned_bbeh(root):
     dirty = subprocess.check_output(["git", "-C", str(root), "status", "--porcelain"], text=True).strip()
     if head != BBEH_REVISION or dirty:
         raise ValueError("bbeh_revision_or_worktree_changed")
-    evaluator = root / "bbeh/evaluate.py"
-    if hashlib.sha256(evaluator.read_bytes()).hexdigest() != BBEH_EVALUATOR_SHA256:
+    evaluator = subprocess.check_output(["git", "-C", str(root), "show", f"{head}:bbeh/evaluate.py"])
+    if hashlib.sha256(evaluator).hexdigest() != BBEH_EVALUATOR_SHA256:
         raise ValueError("bbeh_evaluator_changed")
     return root, evaluator
 
@@ -72,12 +71,11 @@ def grade(args):
         raise ValueError("grader_request_invalid")
     if sum(len(v.encode()) for v in request.values()) > 20000:
         raise ValueError("grader_request_oversized")
-    module_spec = importlib.util.spec_from_file_location("pinned_bbeh_evaluator", evaluator)
-    module = importlib.util.module_from_spec(module_spec)
+    module = {"__name__": "pinned_bbeh_evaluator"}
     # Upstream contains illustrative prints. They are not inference/evaluation results and stay suppressed.
     with contextlib.redirect_stdout(io.StringIO()):
-        module_spec.loader.exec_module(module)
-        result = module.evaluate_correctness(request["response"], request["reference"])
+        exec(compile(evaluator, "pinned-upstream-bbeh-evaluate.py", "exec"), module)
+        result = module["evaluate_correctness"](request["response"], request["reference"])
     print(json.dumps({"correct": bool(result), "verifierDigest": BBEH_EVALUATOR_SHA256}))
 
 

@@ -23,7 +23,7 @@ export async function runTextBenchmarkEpoch() {
   if (data.schemaVersion !== 1 || data.aimeRevision !== "c94da77eb22bbd6439e62a323bec18493a421302"
     || data.aimeDigest !== "9f9066ff48ad2e31f9bf1b1ac6d5e80693195f987985f2859f89dd25ffa51c2d"
     || data.bbehRevision !== "80d12ca916b7158f22293fcf3144f4d3d854d4be"
-    || data.bbehEvaluatorDigest !== "a674139fa8edcf443740cb7efdac48ad6089491dc3f34206a1f298811c03ee55"
+    || data.bbehEvaluatorDigest !== "4b4f06e5babb015de2ba639bae995a5526182ffb5b5890af54dfcf038580eb34"
     || !Array.isArray(data.tasks) || data.tasks.length !== 490)
     throw Error("text_epoch_data_pin_invalid");
   const tasks = data.tasks as PrivateTextTask[];
@@ -39,7 +39,7 @@ export async function runTextBenchmarkEpoch() {
   const provider = NvidiaNimProvider.create({providerId: "NYX-ACTUAL-TEXT-BENCHMARK",
     model: TEXT_BENCHMARK_POLICY.model, authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM",
     credentialSource: nvidiaNimCredentialFromEnvironment(process.env), maxPromptBytes: 64000,
-    maxOutputTokens: TEXT_BENCHMARK_POLICY.maxOutputTokens, timeoutMs: 175000});
+    maxOutputTokens: TEXT_BENCHMARK_POLICY.maxOutputTokens, timeoutMs: 120000});
   const results: ReturnType<typeof sanitizedTextResult>[] = [];
   const blocked: {taskId: string; reason: string}[] = [];
   let consecutiveProviderFailures = 0;

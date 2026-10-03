@@ -62,6 +62,9 @@ check("retry cost and unknown usage are not hidden", () => assert.deepEqual(text
   toolCalls: 0, toolWorkUnits: 0, wallClockMs: 10, providerFailures: 1, retries: 1}));
 const unknown = {...retry, usage: {promptTokens: null, completionTokens: null, totalTokens: null}};
 check("failed physical calls are all unknown, not zero compute", () => assert.equal(textInferenceUsage([unknown], 10).unknownUsageCalls, 2));
+check("local rejection cannot invent live HTTP attempts", () => assert.equal(textInferenceUsage([
+  {...unknown, networkAttempted: false, delivery: {...unknown.delivery, httpAttempts: 0, timedOutAttempts: 0,
+    transientUnavailableResponses: 0}, failureCategory: null}], 10).physicalCalls, 0));
 const countBefore = dispatches;
 const oversized = await invokeExistingNyxText(config(makeProvider('{}')), "a".repeat(8000));
 check("oversized objective is capability blocked without truncation", () => assert.equal(oversized, null));
