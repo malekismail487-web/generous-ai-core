@@ -12,7 +12,7 @@ import { NYX_GATE_RECOVERY, NYX_GATE_RECOVERY_FROZEN_CORE, NYX_GATE_RECOVERY_TAS
   NYX_GATE_RECOVERY_SERVER_ERROR_REVISION, NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION,
   NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION,
   NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION,
-  NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION } from "./omega/nyx-gate-recovery-fixtures";
+  NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION, NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION } from "./omega/nyx-gate-recovery-fixtures";
 
 let passed = 0;
 const failures: string[] = [];
@@ -45,10 +45,10 @@ check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected
   "historical ownership-repair core remains immutable and reproducible");
 check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected]) =>
   digest(readFileSync(path)) === (path === NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath
-    ? NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.sourceSha256
+    ? NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.sourceSha256
     : path === NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.cognitionPath
       ? NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.cognitionSourceSha256 : expected)),
-  "current ownership-repair core admits only the exact registered response-accounting transport revision");
+  "current core admits only the exact registered opt-in wire diagnostic revision; all other frozen paths are unchanged");
 const boundedProvider = execFileSync("git", ["show",
   `${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.predecessor}:${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.changedPath}`],
 { encoding: "utf8" });
@@ -68,7 +68,8 @@ check(reservationAdditions.every(addition => reservationProvider.split(addition)
 "answer reservation changes only its typed field, digest-bound payload, and fail-closed validation; retries, authority, and evidence remain unchanged");
 const budgetPayloadLine = "      ...(request.reasoningBudgetTokens !== undefined ? { reasoning_budget: request.reasoningBudgetTokens } : {}),\n";
 const templateLocation = "force_nonempty_content: true,\n";
-const currentProvider = readFileSync(NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.changedPath, "utf8");
+const currentProvider = execFileSync("git", ["show",
+  `${NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.predecessor}:${NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.changedPath}`],{encoding:"utf8"});
 const compatibilityProvider = execFileSync("git", ["show",
   `${NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.predecessor}:${NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION.changedPath}`],
 { encoding: "utf8" });
@@ -82,6 +83,18 @@ check(currentProvider.split("  async #attempt(")[0] === compatibilityProvider.sp
     '|| reason === "nvidia_provider_response_finish_reason_invalid" || reason === "nvidia_provider_response_shape_invalid")')
   && currentProvider.split("  #result(")[1] === compatibilityProvider.split("  #result(")[1],
 "response accounting cannot change request payloads, inference settings, retries, budgets, or result authority");
+check(digest(Buffer.from(currentProvider))===NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.sourceSha256,
+  "previous response-accounting source remains independently reproducible at its unchanged historical identity");
+const diagnosticProvider=readFileSync(NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.changedPath,"utf8");
+check(diagnosticProvider.split("  async #attempt(")[1]===currentProvider.split("  async #attempt(")[1],
+  "opt-in wire diagnostic cannot modify transport retries, expiry, parsing, response accounting, credential handling, or result authority");
+check(NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.experimentalOnly
+  &&!NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.defaultRequestPayloadChanged
+  &&!NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.acceptanceOracleChanged
+  &&!NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.authorityIncrease
+  &&!NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.outputCeilingChanged
+  &&!NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.historicalScoresComparable,
+  "wire experiment cannot inherit a previous score or silently change production/acceptance/compute semantics");
 check(!NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.historicalScoresComparable
   && !NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.acceptanceOracleChanged
   && !NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.authorityIncrease

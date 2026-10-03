@@ -40,7 +40,9 @@ export function quantitativeCognitiveIntent(request:NvidiaNimCompletionRequest):
   return theoryDigest({schemaVersion:request.schemaVersion,requestId:request.requestId,messages:request.messages,
     maxTokens:request.maxTokens,temperature:request.temperature,responseFormat:request.responseFormat??null,
     inferencePolicy:request.inferencePolicy??null,reasoningEffort:request.reasoningEffort??null,
-    reasoningBudgetTokens:request.reasoningBudgetTokens??null});
+    reasoningBudgetTokens:request.reasoningBudgetTokens??null,
+    ...(request.reasoningControl!==undefined?{reasoningControl:request.reasoningControl}:{}),
+    ...(request.structuredOutputMode!==undefined?{structuredOutputMode:request.structuredOutputMode}:{})});
 }
 export interface SharedProposalReceipt {
   readonly intentDigest:string;readonly sourceEvidenceId:string;readonly sourceResponseDigest:string|null;

@@ -84,6 +84,18 @@ export const NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION = Object.freeze({
   outputCeilingChanged: false, requestPayloadChanged: false,
 });
 
+// New OPT-IN wire experiment: historical source/score identities above remain immutable.
+// Default settings retain their exact payload; only explicit diagnostic requests differ.
+export const NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION=Object.freeze({
+  chunkId:"NYX-REASONING-WIRE-CONFIGURATION-DIAGNOSTIC-001",predecessor:"1b95fda010a4eec31790472ab84ab5467ff1844d",
+  changedPath:NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath,
+  sourceSha256:"bbb4a870946b2780121ea98d788b604d324afb737501cdfddd8c365893212fd9",
+  changedBehavior:"OPT_IN_NATIVE_ULTRA_CONTROLS_AND_HOSTED_GRAMMAR_ABLATION_STRICT_LOCAL_CONTRACT_UNCHANGED",
+  experimentalOnly:true,defaultRequestPayloadChanged:false,acceptanceOracleChanged:false,authorityIncrease:false,
+  outputCeilingChanged:false,historicalScoresComparable:false,
+  source:"https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-ultra-550b-a55b-infer",
+});
+
 function task(index: number, helperPath: string, helperName: string, helperSource: string,
   goodSource: string, faultySource: string): NyxQualityV5Task {
   const original = NYX_ADMISSION_GUIDANCE_TASKS[index];

@@ -853,6 +853,52 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
     "diagnostic output contains neither synthetic credential nor raw model answer or reasoning");
 }
 
+{
+  // Wire configuration is independently inspectable and fail-closed. It does not grant a tool.
+  const bodies:Record<string,unknown>[]=[];
+  const client=NvidiaNimProvider.create({providerId:"ULTRA-WIRE-DIAGNOSTIC",model:"nvidia/nemotron-3-ultra-550b-a55b",
+    authorityMode:"TEST_DOUBLE_ONLY",credentialSource:{sourceIdentity:"test-only",read:()=>"synthetic-test-only"},
+    maxPromptBytes:4096,maxOutputTokens:128,timeoutMs:1000,transport:async(_url,init)=>{
+      bodies.push(JSON.parse(String(init?.body)));return new Response(JSON.stringify({choices:[{finish_reason:"stop",
+        message:{content:"{}",reasoning_content:"private-diagnostic-thinking"}}],
+        usage:{prompt_tokens:12,completion_tokens:20,total_tokens:32}}),{status:200});
+    }});
+  const base=request({responseFormat:"JSON_OBJECT",inferencePolicy:"REASONING_JSON",reasoningEffort:"MEDIUM"});
+  const digests:string[]=[];
+  for(const reasoningControl of [undefined,"ULTRA_NATIVE"] as const)for(const structuredOutputMode of [undefined,"STRICT_LOCAL"] as const){
+    const result=await client.complete({...base,reasoningControl,structuredOutputMode});const body=bodies.at(-1)!;
+    digests.push(result.evidence.requestDigest);
+    check(result.decision==="COMPLETED"&&!result.executorAuthorityGranted&&result.evidence.usage.totalTokens===32,
+      "all configuration cells preserve finite completion accounting, not executor authority");
+    check(("response_format" in body)===(structuredOutputMode===undefined),"strict-local changes hosted grammar ONLY");
+    check(reasoningControl==="ULTRA_NATIVE"?body.reasoning_effort==="medium"
+      &&JSON.stringify(body.chat_template_kwargs)===JSON.stringify({force_nonempty_content:true}):
+      body.reasoning_effort===undefined&&JSON.stringify(body.chat_template_kwargs)===JSON.stringify({
+        enable_thinking:true,force_nonempty_content:true,medium_effort:true}),"native and legacy settings are separate, not conflicting controls");
+    check(body.max_tokens===base.maxTokens&&body.temperature===base.temperature&&bodies.length===digests.length,
+      "configuration does not grow completion tokens, retries or model calls");
+    check(result.evidence.reasoningOutputBytes===Buffer.byteLength("private-diagnostic-thinking")
+      &&!JSON.stringify(result).includes("private-diagnostic-thinking"),"observed thinking size does not persist raw model reasoning");
+  }
+  check(new Set(digests).size===4,"request custody differentiates all four real wire configurations");
+  const nativeBudget=await client.complete({...base,reasoningControl:"ULTRA_NATIVE",reasoningBudgetTokens:16});
+  const budgetBody=bodies.at(-1)!;
+  check(nativeBudget.decision==="COMPLETED"&&budgetBody.reasoning_budget===16
+    &&!("reasoning_budget" in (budgetBody.chat_template_kwargs as Record<string,unknown>)),"native control uses documented top-level bounded reasoning budget");
+  const direct=await client.complete({...base,inferencePolicy:"CONSTRAINED_JSON",reasoningEffort:undefined,reasoningControl:"ULTRA_NATIVE"});
+  check(direct.decision==="COMPLETED"&&bodies.at(-1)!.reasoning_effort==="none","native constrained mode never implicitly enables thinking");
+  const before=bodies.length;
+  for(const fields of [{reasoningControl:"AUTO"},{reasoningControl:"ULTRA_NATIVE",inferencePolicy:undefined},
+    {structuredOutputMode:"AUTO"},{structuredOutputMode:"STRICT_LOCAL",inferencePolicy:undefined},
+    {structuredOutputMode:"STRICT_LOCAL",responseFormat:undefined}]){
+    const rejected=await client.complete({...base,...fields} as NvidiaNimCompletionRequest);
+    check(rejected.decision==="REJECTED"&&!rejected.evidence.networkAttempted,"unknown or unconstrained diagnostic intent fails before transport");
+  }
+  check(bodies.length===before,"malformed diagnostic intent cannot add silent inference");
+  check((await provider(async()=>{throw Error("must_not_send")}).complete({...base,reasoningEffort:undefined,
+    reasoningControl:"ULTRA_NATIVE"})).decision==="REJECTED","Ultra-native controls cannot migrate to unrelated models");
+}
+
 assert(NVIDIA_NIM_PROVIDER_STATUS.newCapability === "BOUNDED_NVIDIA_NIM_CHAT_COMPLETION", "chunk reports exact model capability gain");
 assert(NVIDIA_NIM_PROVIDER_STATUS.liveNetworkAuthorityGranted === false && !NVIDIA_NIM_PROVIDER_STATUS.productionEligible,
   "provider adapter does not grant live or production authority by construction");

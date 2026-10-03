@@ -73,6 +73,10 @@ export interface NvidiaNimCompletionRequest {
   readonly inferencePolicy?: "CONSTRAINED_JSON" | "REASONING_JSON";
   /** Explicit Ultra template setting, not a hard thinking-token ceiling. */
   readonly reasoningEffort?: "MEDIUM";
+  /** Experimental Ultra API configuration diagnostic. Omission preserves reviewed template wiring. */
+  readonly reasoningControl?: "ULTRA_NATIVE";
+  /** Omit hosted grammar ONLY; the caller's strict schema/parser/authorization remain mandatory. */
+  readonly structuredOutputMode?: "STRICT_LOCAL";
   /** Explicit hosted Ultra reasoning_budget. Nonnegative and strictly below maxTokens; never unlimited. */
   readonly reasoningBudgetTokens?: number;
   readonly observedAtEpochMs: number;
@@ -277,13 +281,18 @@ export class NvidiaNimProvider {
     const responseFormat = responseFormatPayload(request.responseFormat);
     const payload = { model: this.#config.model, messages: request.messages, max_tokens: request.maxTokens,
       temperature: request.temperature, stream: false,
-      ...(responseFormat ? { response_format: responseFormat } : {}),
+      ...(responseFormat && request.structuredOutputMode !== "STRICT_LOCAL" ? { response_format: responseFormat } : {}),
       ...(request.inferencePolicy === "CONSTRAINED_JSON" || request.inferencePolicy === "REASONING_JSON"
-        ? { chat_template_kwargs: { enable_thinking: request.inferencePolicy === "REASONING_JSON", force_nonempty_content: true,
+        ? request.reasoningControl === "ULTRA_NATIVE" ? {
+          reasoning_effort: request.inferencePolicy === "CONSTRAINED_JSON" ? "none" : request.reasoningEffort === "MEDIUM" ? "medium" : "high",
+          chat_template_kwargs: { force_nonempty_content: true },
+          ...(request.reasoningBudgetTokens !== undefined ? { reasoning_budget: request.reasoningBudgetTokens } : {}) }
+        : { chat_template_kwargs: { enable_thinking: request.inferencePolicy === "REASONING_JSON", force_nonempty_content: true,
           ...(request.reasoningBudgetTokens !== undefined ? { reasoning_budget: request.reasoningBudgetTokens } : {}),
           ...(request.reasoningEffort === "MEDIUM" ? { medium_effort: true } : {}) } }
         : {}) };
-    const requestDigest = sha256(canonical({ requestId, ...payload }));
+    const requestDigest = sha256(canonical({ requestId, ...payload,
+      ...(request.structuredOutputMode === "STRICT_LOCAL" ? { strictLocalResponseContract: responseFormat } : {}) }));
     const issues: string[] = [];
     if (request.schemaVersion !== 1 || typeof request.requestId !== "string" || !request.requestId.trim()
       || !Number.isFinite(request.observedAtEpochMs)) issues.push("completion_request_malformed");
@@ -296,6 +305,12 @@ export class NvidiaNimProvider {
     if (request.responseFormat !== undefined && responseFormat === null) issues.push("completion_response_format_invalid");
     if (request.inferencePolicy !== undefined && !["CONSTRAINED_JSON", "REASONING_JSON"].includes(request.inferencePolicy)) issues.push("completion_inference_policy_invalid");
     if (request.inferencePolicy !== undefined && responseFormat === null) issues.push("completion_constrained_json_requires_response_format");
+    if (request.reasoningControl !== undefined && (request.reasoningControl !== "ULTRA_NATIVE"
+      || request.inferencePolicy === undefined || this.#config.model !== "nvidia/nemotron-3-ultra-550b-a55b")) {
+      issues.push("completion_reasoning_control_invalid");
+    }
+    if (request.structuredOutputMode !== undefined && (request.structuredOutputMode !== "STRICT_LOCAL"
+      || request.inferencePolicy === undefined || responseFormat === null)) issues.push("completion_structured_output_mode_invalid");
     if (request.reasoningEffort !== undefined && (request.reasoningEffort !== "MEDIUM"
       || request.inferencePolicy !== "REASONING_JSON"
       || this.#config.model !== "nvidia/nemotron-3-ultra-550b-a55b")) issues.push("completion_reasoning_effort_invalid");

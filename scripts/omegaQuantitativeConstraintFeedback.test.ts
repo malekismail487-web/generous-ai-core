@@ -13,6 +13,8 @@ import { COUPLED_TRANSFER_TASKS, COUPLED_TRANSFER_CORPUS_DIGEST, coupledExpected
 import type { NvidiaNimCompletionRequest } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { PROTOCOL_REPAIR_TASKS,protocolRepairExpectedQuantities,verifyProtocolRepairSubmission } from "./omega/nyx-quantitative-protocol-repair-fixtures";
 import { REPAIR_CONTEXT_TASKS,repairContextExpectedQuantities,verifyRepairContextSubmission } from "./omega/nyx-quantitative-repair-context-fixtures";
+import { PROVIDER_DIAGNOSTIC_TASKS,providerDiagnosticExpectedQuantities,verifyProviderDiagnosticSubmission,
+  PROVIDER_DIAGNOSTIC_MODES,providerDiagnosticRequest } from "./omega/nyx-quantitative-provider-diagnostic-fixtures";
 let passed=0,failed=0;
 function check(v:unknown,label:string){if(v)passed++;else{failed++;console.error(`x ${label}`);}}
 const throws=(f:()=>unknown)=>{try{f();return false;}catch{return true;}};
@@ -168,6 +170,19 @@ for(const [index,task] of REPAIR_CONTEXT_TASKS.entries()) {
   }finally{session.revoke();}
 }
 
+for(const [index,task] of PROVIDER_DIAGNOSTIC_TASKS.entries()) {
+  check(theoryDigest(task.problem)!==theoryDigest(REPAIR_CONTEXT_TASKS[index].problem),"configuration diagnostic freezes genuinely new parameters");
+  const expected={outputs:providerDiagnosticExpectedQuantities(task),confidence:1};
+  check(verifyProviderDiagnosticSubmission(task,expected).accepted
+    &&createQuantitativeConstraintFeedback(theoryDigest(task),task.outputLabels,task.publicConditions).evaluate(expected).status==="SATISFIED_NOT_ACCEPTED",
+    "configuration diagnostic uses unchanged independent oracle and public requirements");
+  const session=BoundedReasoningSession.create(task.problem,{maxRequests:1,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+10000});
+  try{const result=session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program:programs[index]});
+    check(result.status==="CONSTRUCTED"&&verifyProviderDiagnosticSubmission(task,{outputs:result.payload!.outputs,confidence:1}).accepted,
+      "fresh diagnostic objective is solvable in identical native limits; reference program never enters model input");
+  }finally{session.revoke();}
+}
+
 // Correct the archived comparison's causal interpretation without rewriting its original result.
 const unexposed=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-constraint-v1/comparison.json","utf8"));
 const corrected=assessConstraintFeedbackComparison(unexposed.results,unexposed.pairs.map((p:{taskId:string})=>p.taskId),unexposed.providerStable);
@@ -206,6 +221,28 @@ check(theoryDigest(protocolResult)==="c0571d5bae2d1044b54dc6581dfa64c0590b79f83d
   "provider-contaminated trial preserves real failures and successes without manufacturing repair benefit");
 check(protocolResult.results.flatMap((r:{attempts:readonly {findings:readonly string[]}[]})=>r.attempts).every((a:{findings:readonly string[]})=>
   !a.findings.includes("DERIVATION_CERTIFICATE_REQUIRES_ONLY_FINITE_CONFIDENCE_0_TO_1")),"mixed certificate envelopes disappeared, not mathematical-model rejection");
+
+const contextReport=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-repair-context-v1/comparison.json","utf8"));
+check(theoryDigest(contextReport)==="73b8413e67ff97f6f1bebc0adb2decfc428eb9268b0398cb1800d6bda9191788"
+  &&contextReport.candidate==="1b95fda010a4eec31790472ab84ab5467ff1844d"&&!contextReport.providerStable
+  &&contextReport.verdict==="INCONCLUSIVE_PROVIDER_OR_BUDGET"&&!contextReport.broadPromotion,"negative context evidence is immutable, not erased or relabeled as cognitive gain");
+const contextVerdict=assessConstraintFeedbackComparison(contextReport.results,REPAIR_CONTEXT_TASKS.map(t=>t.taskId),false,"ADMITTED_DERIVATION_CONTEXT");
+check(contextVerdict.exposures.length===2&&contextVerdict.firstProposalMatched&&!contextVerdict.causalPromotionEligible,
+  "two genuine context exposures without accepted repairs do not support promotion");
+for(const run of contextReport.results) {
+  const task=REPAIR_CONTEXT_TASKS.find(t=>t.taskId===run.taskId)!;
+  const feedback=createQuantitativeConstraintFeedback(theoryDigest(task),task.outputLabels,task.publicConditions);
+  const session=BoundedReasoningSession.create(task.problem,{maxRequests:2,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+10000});
+  try{for(const attempt of run.attempts.filter((a:{computation:unknown})=>a.computation!==null)){
+    const replay=session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program:attempt.executedProgram});
+    const {resultDigest,...body}=attempt.computation;
+    check(resultDigest===theoryDigest(body)&&theoryDigest(replay.payload)===theoryDigest(attempt.computation.payload)
+      &&replay.executedProgramDigest===attempt.computation.executedProgramDigest,"context-trial model programs replay with exact custody and arithmetic");
+    const verified=feedback.decorate(c=>verifyRepairContextSubmission(task,c),true)({outputs:replay.payload!.outputs,confidence:attempt.confidence});
+    check(verified.accepted===(attempt.outcome==="ACCEPTED")&&verified.verificationDigest===attempt.resultDigest,
+      "context-trial original oracle reproduces both acceptance AND substantive mathematical rejection");
+  }}finally{session.revoke();}
+}
 
 // Replay real, failed mathematical candidates. No model solution is supplied by this diagnostic.
 const prior=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v6/comparison.json","utf8"));
@@ -338,5 +375,25 @@ check(await rejected(()=>runNyxQuantitativeTask({arm:"REASONING_WITH_WORKBENCH",
   limits:{maxCalls:2,maxOutputTokens:512,maxTaskMs:10000,expiresAtEpochMs:Date.now()+10000,maxToolRequests:2,maxToolWorkUnits:1000,maxToolElapsedMs:100},
   complete:()=>{throw Error("malformed_setting_cannot_infer");},verify:()=>{throw Error("malformed_setting_cannot_verify");}})),
   "context configuration must be an explicit boolean, not truthy coercion");
+// Guided decoding is not the security boundary. Strict local parsing applies to EVERY diagnostic cell.
+const diagnosticPrompts:string[]=[];
+for(const mode of PROVIDER_DIAGNOSTIC_MODES){
+  let evaluated=0;let requests=0;
+  const provider=NvidiaNimProvider.create({providerId:"UNGUIDED-NEGATIVE",model:"nvidia/nemotron-3-ultra-550b-a55b",authorityMode:"TEST_DOUBLE_ONLY",
+    credentialSource:{sourceIdentity:"test-only",read:()=>"synthetic-test-only"},maxPromptBytes:32000,maxOutputTokens:512,timeoutMs:1000,
+    transport:async(_url,init)=>{requests++;const body=JSON.parse(String(init?.body));diagnosticPrompts.push(JSON.stringify(body.messages));
+      return new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{content:"not executable JSON"}}],
+        usage:{prompt_tokens:20,completion_tokens:20,total_tokens:40}}),{status:200});}});
+  const result=await runNyxQuantitativeTask({arm:"REASONING_WITH_WORKBENCH",taskId:"WIRE-E3",objective:"Return p=1.",
+    problem:contextProblem,outputLabels:["p"],limits:{maxCalls:1,maxOutputTokens:512,maxTaskMs:10000,expiresAtEpochMs:Date.now()+10000,
+      maxToolRequests:1,maxToolWorkUnits:100,maxToolElapsedMs:100},
+    complete:r=>provider.complete(providerDiagnosticRequest(r,mode)),verify:()=>{evaluated++;throw Error("malformed_cannot_be_verified");}});
+  check(result.outcome==="JSON_SYNTAX_REJECTION"&&!result.accepted&&result.toolRequests===0&&requests===1&&evaluated===0,
+    "invalid untrusted text remains rejected under the SAME local protocol in every diagnostic mode");
+}
+check(new Set(diagnosticPrompts).size===1,"all four diagnostic modes receive identical messages including full semantic schema");
+check(quantitativeCognitiveIntent(request)!==quantitativeCognitiveIntent({...request,reasoningControl:"ULTRA_NATIVE"})
+  &&quantitativeCognitiveIntent(request)!==quantitativeCognitiveIntent({...request,structuredOutputMode:"STRICT_LOCAL"}),
+  "common-prefix replay cannot accidentally treat different wire settings as identical cognition");
 console.log(`OMEGA_QUANTITATIVE_CONSTRAINT_FEEDBACK_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if(failed)process.exitCode=1;
