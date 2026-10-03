@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/nyx-quantitative-coupled-transfer-fixtures.ts]
+    paths: [scripts/omega/nyx-quantitative-protocol-repair-fixtures.ts]
 
 permissions:
   contents: read
@@ -38,6 +38,7 @@ jobs:
           NYX_QUANTITATIVE_COMMAND_TRANSFER: '1'
           NYX_QUANTITATIVE_CONSTRAINT_FEEDBACK: '1'
           NYX_QUANTITATIVE_COUPLED_FEEDBACK: '1'
+          NYX_QUANTITATIVE_PROTOCOL_REPAIR: '1'
           NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-quantitative-transfer-live-eval.ts

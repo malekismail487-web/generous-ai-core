@@ -11,6 +11,7 @@ import { COUPLED_TRANSFER_TASKS, COUPLED_TRANSFER_CORPUS_DIGEST, coupledExpected
   createSharedFirstProposal, assessConstraintFeedbackComparison, quantitativeCognitiveIntent,
   type FeedbackComparisonRun } from "./omega/nyx-quantitative-coupled-transfer-fixtures";
 import type { NvidiaNimCompletionRequest } from "../src/lib/codelab/model/nvidiaNimProvider";
+import { PROTOCOL_REPAIR_TASKS,protocolRepairExpectedQuantities,verifyProtocolRepairSubmission } from "./omega/nyx-quantitative-protocol-repair-fixtures";
 let passed=0,failed=0;
 function check(v:unknown,label:string){if(v)passed++;else{failed++;console.error(`x ${label}`);}}
 const throws=(f:()=>unknown)=>{try{f();return false;}catch{return true;}};
@@ -141,6 +142,18 @@ for(const [index,task] of COUPLED_TRANSFER_TASKS.entries()) {
       `test-only generic reference equations fit the SAME native limits for fresh parameters ${task.taskId}`);
   } finally {session.revoke();}
 }
+for(const [index,task] of PROTOCOL_REPAIR_TASKS.entries()) {
+  check(theoryDigest(task.problem)!==theoryDigest(COUPLED_TRANSFER_TASKS[index].problem),"protocol repair trial is frozen on new parameters, not fitted to the failed sampler");
+  const expected={outputs:protocolRepairExpectedQuantities(task),confidence:1};
+  check(verifyProtocolRepairSubmission(task,expected).accepted
+    &&createQuantitativeConstraintFeedback(theoryDigest(task),task.outputLabels,task.publicConditions).evaluate(expected).status==="SATISFIED_NOT_ACCEPTED",
+    `fresh protocol-repair oracle agrees with public constraints ${task.taskId}`);
+  const session=BoundedReasoningSession.create(task.problem,{maxRequests:2,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+10000});
+  try {const result=session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program:programs[index]});
+    check(result.status==="CONSTRUCTED"&&verifyProtocolRepairSubmission(task,{outputs:result.payload!.outputs,confidence:1}).accepted,
+      `reference exists only in tests and establishes unchanged computational feasibility ${task.taskId}`);
+  } finally {session.revoke();}
+}
 
 // Correct the archived comparison's causal interpretation without rewriting its original result.
 const unexposed=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-constraint-v1/comparison.json","utf8"));
@@ -149,6 +162,29 @@ check(corrected.verdict==="OBSERVED_OUTCOME_DIFFERENCE_WITHOUT_CAUSAL_FEEDBACK_E
   &&corrected.exposures.length===0&&!corrected.causalPromotionEligible,"four versus three first-call outcomes cannot prove post-failure feedback benefit");
 check(theoryDigest(unexposed)==="c2df9f4b69de821b96c3b60db16d0bc17a9ee4505969571ca85f33f120d5e0f7",
   "original live evidence, including its mistaken attribution, remains immutable and distinguishable from the correction");
+const exposed=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-constraint-v2/comparison.json","utf8"));
+const negative=assessConstraintFeedbackComparison(exposed.results,exposed.pairs.map((p:{taskId:string})=>p.taskId),exposed.providerStable);
+check(theoryDigest(exposed)==="0085351a32d9365420f64bc26c115d1b338f3b97062c214763453ce7717ddea0"
+  &&negative.verdict==="NO_COMPUTE_DEFENSIBLE_FEEDBACK_ADVANTAGE"&&negative.firstProposalMatched
+  &&negative.exposures.length===1&&!negative.causalPromotionEligible,"real diagnostic exposure with equal acceptance does not get relabeled as cognitive improvement");
+check(exposed.physicalInferenceTotals.calls===10&&exposed.summaries.reduce((n:number,s:{calls:number})=>n+s.calls,0)===14,
+  "archived live comparison distinguishes ten actual inferences from fourteen prefix-allocated calls");
+for(const run of exposed.results) {
+  const task=COUPLED_TRANSFER_TASKS.find(t=>t.taskId===run.taskId)!;
+  const feedback=createQuantitativeConstraintFeedback(theoryDigest(task),task.outputLabels,task.publicConditions);
+  const session=BoundedReasoningSession.create(task.problem,{maxRequests:2,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+10000});
+  try {for(const attempt of run.attempts.filter((a:{computation:unknown})=>a.computation!==null)) {
+    const replay=session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program:attempt.executedProgram});
+    const {resultDigest,...body}=attempt.computation;
+    check(resultDigest===theoryDigest(body)&&replay.workUnits===attempt.computation.workUnits
+      &&replay.executedProgramDigest===attempt.computation.executedProgramDigest&&theoryDigest(replay.payload)===theoryDigest(attempt.computation.payload),
+      "live proposal arithmetic and custody reproduce independently of reported model confidence");
+    const cert={outputs:replay.payload!.outputs,confidence:attempt.confidence};
+    const verified=feedback.decorate(c=>verifyCoupledTransferSubmission(task,c),run.comparisonArm==="CONSTRAINT_FEEDBACK")(cert);
+    check(verified.accepted===(attempt.outcome==="ACCEPTED")&&verified.verificationDigest===attempt.resultDigest,
+      "external oracle reproduces successful domains AND rejects the same incorrectly formulated sample-space candidate");
+  }}finally{session.revoke();}
+}
 
 // Replay real, failed mathematical candidates. No model solution is supplied by this diagnostic.
 const prior=JSON.parse(readFileSync("scripts/omega/checkpoints/quantitative-protocol-v6/comparison.json","utf8"));

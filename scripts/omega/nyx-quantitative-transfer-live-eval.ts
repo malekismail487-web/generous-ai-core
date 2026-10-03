@@ -15,6 +15,7 @@ import {COMMAND_TRANSFER_EPOCH,COMMAND_TRANSFER_TASKS,COMMAND_TRANSFER_CORPUS_DI
 import {CONSTRAINT_TRANSFER_EPOCH,CONSTRAINT_TRANSFER_TASKS,CONSTRAINT_TRANSFER_CORPUS_DIGEST,verifyConstraintTransferSubmission,type ConstraintTransferTask} from "./nyx-quantitative-constraint-transfer-fixtures";
 import {COUPLED_TRANSFER_EPOCH,COUPLED_TRANSFER_TASKS,COUPLED_TRANSFER_CORPUS_DIGEST,verifyCoupledTransferSubmission,
   createSharedFirstProposal,assessConstraintFeedbackComparison,type SharedProposalReceipt} from "./nyx-quantitative-coupled-transfer-fixtures";
+import {PROTOCOL_REPAIR_EPOCH,PROTOCOL_REPAIR_TASKS,PROTOCOL_REPAIR_CORPUS_DIGEST,verifyProtocolRepairSubmission} from "./nyx-quantitative-protocol-repair-fixtures";
 import {createQuantitativeConstraintFeedback,type QuantitativeConstraintAssessment} from "../../src/lib/codelab/research/quantitativeConstraintFeedback";
 import type {QuantitativeTask} from "./nyx-quantitative-transfer-fixtures";
 
@@ -23,13 +24,14 @@ const slotTransfer=process.env.NYX_QUANTITATIVE_SLOT_TRANSFER==="1";
 const equationTransfer=process.env.NYX_QUANTITATIVE_EQUATION_TRANSFER==="1";
 const composedTransfer=process.env.NYX_QUANTITATIVE_COMPOSED_TRANSFER==="1";
 const commandTransfer=process.env.NYX_QUANTITATIVE_COMMAND_TRANSFER==="1";
-const coupledFeedback=process.env.NYX_QUANTITATIVE_COUPLED_FEEDBACK==="1";
+const protocolRepair=process.env.NYX_QUANTITATIVE_PROTOCOL_REPAIR==="1";
+const coupledFeedback=protocolRepair||process.env.NYX_QUANTITATIVE_COUPLED_FEEDBACK==="1";
 const constraintFeedback=coupledFeedback||process.env.NYX_QUANTITATIVE_CONSTRAINT_FEEDBACK==="1";
-const EPOCH=coupledFeedback?COUPLED_TRANSFER_EPOCH:constraintFeedback?CONSTRAINT_TRANSFER_EPOCH:commandTransfer?COMMAND_TRANSFER_EPOCH:composedTransfer?COMPOSED_TRANSFER_EPOCH:equationTransfer?EQUATION_TRANSFER_EPOCH:slotTransfer?SLOT_TRANSFER_EPOCH:fresh?FRESH_QUANTITATIVE_EPOCH:QUANTITATIVE_EPOCH;
-const TASKS=coupledFeedback?COUPLED_TRANSFER_TASKS:constraintFeedback?CONSTRAINT_TRANSFER_TASKS:commandTransfer?COMMAND_TRANSFER_TASKS:composedTransfer?COMPOSED_TRANSFER_TASKS:equationTransfer?EQUATION_TRANSFER_TASKS:slotTransfer?SLOT_TRANSFER_TASKS:fresh?FRESH_QUANTITATIVE_TASKS:QUANTITATIVE_TASKS;
-const CORPUS_DIGEST=coupledFeedback?COUPLED_TRANSFER_CORPUS_DIGEST:constraintFeedback?CONSTRAINT_TRANSFER_CORPUS_DIGEST:commandTransfer?COMMAND_TRANSFER_CORPUS_DIGEST:composedTransfer?COMPOSED_TRANSFER_CORPUS_DIGEST:equationTransfer?EQUATION_TRANSFER_CORPUS_DIGEST:slotTransfer?SLOT_TRANSFER_CORPUS_DIGEST:fresh?FRESH_QUANTITATIVE_CORPUS_DIGEST:QUANTITATIVE_CORPUS_DIGEST;
+const EPOCH=protocolRepair?PROTOCOL_REPAIR_EPOCH:coupledFeedback?COUPLED_TRANSFER_EPOCH:constraintFeedback?CONSTRAINT_TRANSFER_EPOCH:commandTransfer?COMMAND_TRANSFER_EPOCH:composedTransfer?COMPOSED_TRANSFER_EPOCH:equationTransfer?EQUATION_TRANSFER_EPOCH:slotTransfer?SLOT_TRANSFER_EPOCH:fresh?FRESH_QUANTITATIVE_EPOCH:QUANTITATIVE_EPOCH;
+const TASKS=protocolRepair?PROTOCOL_REPAIR_TASKS:coupledFeedback?COUPLED_TRANSFER_TASKS:constraintFeedback?CONSTRAINT_TRANSFER_TASKS:commandTransfer?COMMAND_TRANSFER_TASKS:composedTransfer?COMPOSED_TRANSFER_TASKS:equationTransfer?EQUATION_TRANSFER_TASKS:slotTransfer?SLOT_TRANSFER_TASKS:fresh?FRESH_QUANTITATIVE_TASKS:QUANTITATIVE_TASKS;
+const CORPUS_DIGEST=protocolRepair?PROTOCOL_REPAIR_CORPUS_DIGEST:coupledFeedback?COUPLED_TRANSFER_CORPUS_DIGEST:constraintFeedback?CONSTRAINT_TRANSFER_CORPUS_DIGEST:commandTransfer?COMMAND_TRANSFER_CORPUS_DIGEST:composedTransfer?COMPOSED_TRANSFER_CORPUS_DIGEST:equationTransfer?EQUATION_TRANSFER_CORPUS_DIGEST:slotTransfer?SLOT_TRANSFER_CORPUS_DIGEST:fresh?FRESH_QUANTITATIVE_CORPUS_DIGEST:QUANTITATIVE_CORPUS_DIGEST;
 const originalVerify=commandTransfer?verifyCommandTransferSubmission:composedTransfer?verifyComposedTransferSubmission:equationTransfer?verifyEquationTransferSubmission:slotTransfer?verifySlotTransferSubmission:fresh?verifyFreshQuantitativeSubmission:verifyQuantitativeSubmission;
-const verify=(task:QuantitativeTask,certificate:unknown)=>coupledFeedback?verifyCoupledTransferSubmission(task as ConstraintTransferTask,certificate)
+const verify=(task:QuantitativeTask,certificate:unknown)=>protocolRepair?verifyProtocolRepairSubmission(task as ConstraintTransferTask,certificate):coupledFeedback?verifyCoupledTransferSubmission(task as ConstraintTransferTask,certificate)
   :constraintFeedback?verifyConstraintTransferSubmission(task as ConstraintTransferTask,certificate):originalVerify(task,certificate);
 
 if(process.env.OMEGA_ALLOW_NVIDIA_NETWORK!=="1"||!process.env.NVIDIA_API_KEY?.trim()) {
@@ -120,6 +122,7 @@ if(sourceAfter!==sourceBefore) throw Error("source_repository_changed_during_eva
 const sources=["src/lib/codelab/research/analysisArtifactReference.ts","src/lib/codelab/research/boundedReasoningWorkbench.ts","src/lib/codelab/research/exactQuantitativeDerivation.ts",
   "src/lib/codelab/research/quantitativeConstraintFeedback.ts","scripts/omega/nyx-quantitative-constraint-transfer-fixtures.ts",
   "scripts/omega/nyx-quantitative-coupled-transfer-fixtures.ts",
+  "scripts/omega/nyx-quantitative-protocol-repair-fixtures.ts",
   "src/lib/codelab/research/quantitativeEquationCompiler.ts",
   "src/lib/codelab/research/nyxQuantitativeReasoning.ts","src/lib/codelab/model/nvidiaNimProvider.ts",
   "src/lib/codelab/model/nvidiaCapacity.ts","src/lib/codelab/research/theoryContracts.ts",

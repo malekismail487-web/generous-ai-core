@@ -42,10 +42,15 @@ export function quantitativeExchangeSchema(labels:readonly string[],toolAvailabl
   const artifact=object({schemaVersion:constant(1),operation:constant("SUBMIT_ANALYSIS_ARTIFACT"),problemDigest:constant(problemDigest),
     resultDigest:artifactDigest===null?string:constant(artifactDigest),confidence:{type:"number"}});
   const certificate=object({outputs:array(object({label:{type:"string",enum:labels},value:string})),confidence:{type:"number"}});
-  return object({action:{type:"string",enum:["SUBMIT",...(toolAvailable?["SUBMIT_DERIVATION"]:[]),
-    ...(artifactAvailable?["SUBMIT_ANALYSIS_ARTIFACT","DECLINE_ANALYSIS_ARTIFACT"]:[])]},
-    analysisRequest:{anyOf:[{type:"null"},...(toolAvailable?[tool]:[]),...(artifactAvailable?[artifact]:[])]},
-    certificate:toolAvailable||artifactAvailable?{anyOf:[{type:"null"},certificate,...(toolAvailable?[object({confidence:{type:"number"}})]:[])]}:certificate});
+  // Tagged union, NOT the Cartesian product of independently valid fields. In particular,
+  // DERIVATION cannot select a full/manual certificate or an artifact request. Guided decoding
+  // should produce a coherent intent; local authority/IR/expiry/acceptance checks remain stricter.
+  const exchange=(action:string,analysisRequest:unknown,certificate:unknown)=>object({action:constant(action),analysisRequest,certificate});
+  const branches=[exchange("SUBMIT",{type:"null"},certificate),
+    ...(toolAvailable?[exchange("SUBMIT_DERIVATION",tool,object({confidence:{type:"number"}}))]:[]),
+    ...(artifactAvailable?[exchange("SUBMIT_ANALYSIS_ARTIFACT",artifact,{type:"null"}),
+      exchange("DECLINE_ANALYSIS_ARTIFACT",{type:"null"},{type:"null"})]:[])];
+  return {type:"object",anyOf:branches};
 }
 /** Composition of existing NYX inference, Omega computation, and an externally owned oracle.
  * The completion callback is cognition, not an authority mechanism. It never receives the verifier.
@@ -125,9 +130,10 @@ export async function runNyxQuantitativeTask(input: {
       if(value.action==="REQUEST_ANALYSIS"||value.action==="SUBMIT_DERIVATION") {
         const compound=value.action==="SUBMIT_DERIVATION";
         const submittedConfidence=compound&&keys(value.certificate,["confidence"])?value.certificate.confidence:null;
-        if(!available||(!compound&&value.certificate!==null)||(compound&&(typeof submittedConfidence!=="number"
+        if(!available){record("AUTHORIZATION_REJECTION",["COMPUTATION_CAPABILITY_UNAVAILABLE"]);continue;}
+        if((!compound&&value.certificate!==null)||(compound&&(typeof submittedConfidence!=="number"
           ||!Number.isFinite(submittedConfidence)||submittedConfidence<0||submittedConfidence>1))){
-          record("AUTHORIZATION_REJECTION",["No available computation capability or invalid request envelope."]);continue;}
+          record("PROTOCOL_REJECTION",[compound?"DERIVATION_CERTIFICATE_REQUIRES_ONLY_FINITE_CONFIDENCE_0_TO_1":"ANALYSIS_CERTIFICATE_MUST_BE_NULL"]);continue;}
         if(compound&&!keys(value.analysisRequest,["problemDigest","program"])) {
           record("PROTOCOL_REJECTION",["SUBMIT_DERIVATION analysisRequest requires EXACTLY problemDigest and program; do not include native header or confidence fields."]);continue;
         }

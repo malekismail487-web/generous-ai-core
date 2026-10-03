@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { createRequire } from "node:module";
 import { BoundedReasoningSession, type ReasoningProblem, type ColoringProblem, type ReachabilityProblem,
   type ExperimentSelectionProblem, type HypothesisEliminationProblem } from "../src/lib/codelab/research/boundedReasoningWorkbench";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
@@ -359,13 +360,12 @@ check(liveComposition.attempts[0].outcome==="PROTOCOL_REJECTION" && !liveComposi
 check(liveComposition.attempts[1].outcome==="DERIVATION_RETURNED_NOT_ACCEPTED" && liveComposition.attempts[1].resultDigest!==null,
   "exact quantitative result carries evidence without being accepted by its generator");
 const controlSchema=quantitativeExchangeSchema(cognitionTask.outputLabels,false,false,theoryDigest(cognitionTask.problem));
-check(JSON.stringify(controlSchema.properties.action)==='{"type":"string","enum":["SUBMIT"]}'
+check(JSON.stringify(controlSchema.anyOf[0].properties.action)==='{"type":"string","enum":["SUBMIT"]}'
   && !JSON.stringify(controlSchema).includes("ANALYZE_FINITE_PROBLEM"),"control provider schema exposes only existing action rather than tempting unavailable tool use");
 const boundedSchema=quantitativeExchangeSchema(["result"],true,false,"fixed",["zero","one","r0"]);
-const generatedProgram=(boundedSchema.properties.analysisRequest as {
-  anyOf:readonly {properties:{program:{properties:{initialState:{items:{properties:
-    Record<"slot"|"source",{enum:readonly string[]}>}}}}}}[]
-}).anyOf[1].properties.program;
+const generatedProgram=(boundedSchema.anyOf[1].properties.analysisRequest as {
+  properties:{program:{properties:{initialState:{items:{properties:Record<"slot"|"source",{enum:readonly string[]}>}}}}}
+}).properties.program;
 check(!generatedProgram.properties.initialState.items.properties.slot.enum.includes("r0")
   &&generatedProgram.properties.initialState.items.properties.source.enum.includes("zero")
   &&!generatedProgram.properties.initialState.items.properties.source.enum.includes("0"),
@@ -474,6 +474,29 @@ for(const [i,task] of COMPOSED_TRANSFER_TASKS.entries()) {
 }
 const compoundRequest={action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(cognitionTask.problem),
   program:liftTestProgram(cognitionTask,referenceQuantitativeProgram(cognitionTask))},certificate:{confidence:0.9}};
+// Validate the GENERATION schema using an independent JSON-Schema implementation already
+// pinned in the repository's frozen dependency graph, not a copy of the local action parser.
+const require=createRequire(import.meta.url);const Ajv=require("ajv");
+const schemaArtifactRequest={schemaVersion:1,operation:"SUBMIT_ANALYSIS_ARTIFACT",problemDigest:theoryDigest(cognitionTask.problem),
+  resultDigest:theoryDigest({artifact:"schema-adversary"}),confidence:0.9};
+const fullCertificate={outputs:expectedQuantities(cognitionTask),confidence:0.9};
+for(const tool of [false,true])for(const artifact of [false,true]) {
+  const admits=new Ajv().compile(quantitativeExchangeSchema(cognitionTask.outputLabels,tool,artifact,theoryDigest(cognitionTask.problem),
+    cognitionTask.problem.constants.map(c=>c.id),schemaArtifactRequest.resultDigest));
+  for(const action of ["SUBMIT","SUBMIT_DERIVATION","SUBMIT_ANALYSIS_ARTIFACT","DECLINE_ANALYSIS_ARTIFACT"])
+    for(const [analysisIndex,analysisRequest] of [null,compoundRequest.analysisRequest,schemaArtifactRequest].entries())
+      for(const [certificateIndex,certificate] of [null,compoundRequest.certificate,fullCertificate].entries()) {
+        const expected=action==="SUBMIT"&&analysisIndex===0&&certificateIndex===2
+          ||action==="SUBMIT_DERIVATION"&&tool&&analysisIndex===1&&certificateIndex===1
+          ||action==="SUBMIT_ANALYSIS_ARTIFACT"&&artifact&&analysisIndex===2&&certificateIndex===0
+          ||action==="DECLINE_ANALYSIS_ARTIFACT"&&artifact&&analysisIndex===0&&certificateIndex===0;
+        check(admits({action,analysisRequest,certificate})===expected,`tagged guided schema admits only coherent available intents ${tool}/${artifact}/${action}/${analysisIndex}/${certificateIndex}`);
+      }
+  for(const illegal of [{...compoundRequest,action:"SHELL"},{...compoundRequest,analysisRequest:{...compoundRequest.analysisRequest,operation:"ANALYZE_FINITE_PROBLEM"}},
+    {...compoundRequest,certificate:{confidence:0.9,outputs:[]}}, {...compoundRequest,additionalAuthority:true}])
+    check(!admits(illegal),"guided schema excludes unknown authority and mixed envelope fields without weakening the executor");
+}
+console.log(`NYX_QUANTITATIVE_SCHEMA_VALIDATOR ajv=${require("ajv/package.json").version}`);
 const compound=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_WITH_WORKBENCH",limits:{...limits,maxCalls:1},
   complete:async()=>({...capturedCompletion,content:JSON.stringify(compoundRequest)}),verify:certificate=>verifyQuantitativeSubmission(cognitionTask,certificate)});
 check(compound.accepted&&compound.calls===1&&compound.toolRequests===1&&compound.attempts[0].executedProgram!==null,
@@ -487,6 +510,14 @@ const malformedCompound=await runNyxQuantitativeTask({...cognitionTask,arm:"REAS
   verify:()=>{throw Error("malformed_compound_cannot_reach_oracle");}});
 check(malformedCompound.outcome==="PROTOCOL_REJECTION"&&malformedCompound.toolRequests===0,
   "adapter refuses extra compound fields instead of silently fixing an unauthorized model request");
+for(const certificate of [null,fullCertificate,{confidence:1.01},{confidence:"0.9"},{confidence:0.9,extra:true}]) {
+  const result=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_WITH_WORKBENCH",limits:{...limits,maxCalls:1},
+    complete:async()=>({...capturedCompletion,content:JSON.stringify({...compoundRequest,certificate})}),
+    verify:()=>{throw Error("malformed_confidence_cannot_reach_oracle");}});
+  check(result.outcome==="PROTOCOL_REJECTION"&&result.toolRequests===0
+    &&result.attempts[0].findings[0]==="DERIVATION_CERTIFICATE_REQUIRES_ONLY_FINITE_CONFIDENCE_0_TO_1",
+    "invalid envelope is explicitly diagnosed, not confused with expired/exhausted computation authority");
+}
 const mismatchedCompound=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_WITH_WORKBENCH",limits:{...limits,maxCalls:1},
   complete:async()=>({...capturedCompletion,content:JSON.stringify({...compoundRequest,analysisRequest:{...compoundRequest.analysisRequest,problemDigest:"different-bound-scope"}})}),
   verify:()=>{throw Error("mismatched_scope_cannot_reach_oracle");}});
