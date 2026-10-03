@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/87",
+  "suiteVersion": "omega-institutional-suite/88",
   "criticalSuites": [
     "OMEGA-PUBLIC-FAILURE-WITNESS",
     "OMEGA-ARC-NYX-INTEGRATION",

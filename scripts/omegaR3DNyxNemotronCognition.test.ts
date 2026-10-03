@@ -1,4 +1,7 @@
 import { createHash } from "node:crypto";
+import { measuredQualityRepairGuidance } from "../src/lib/codelab/cognition/nyxMeasuredQualityGuidance";
+import { measureEngineeringStructure, assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
+import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/model/nvidiaNimProvider";
 import type { EngineeringObservation } from "../src/lib/codelab/observation/r3EngineeringObservation";
 import {
@@ -671,6 +674,57 @@ function schemaKeys(value: unknown): string[] {
     && (revisionPrompt.activeRepairDriver as { findings: Array<{ measurement: { observed: number; limit: number } }> })
       .findings[0].measurement.limit === 8,
   "quality retry receives the bound rejection, numeric excess, and cumulative simplification objective");
+  const crowded = "export function add(a, b) {\n  const first = a;\n  const second = b;\n  const third = first + second;\n  const fourth = third;\n  const fifth = fourth;\n  return fifth;\n}\n";
+  const measuredRequest = request({ observation: passingObservation, priorHypotheses,
+    files: [{relativePath:"src/math.ts",content:crowded,contentSha256:hash(crowded)}],
+    candidateQualityFeedback:{...feedback,findings:[{dimension:"UNNECESSARY_COMPLEXITY",code:"DECLARATION_DELTA",
+      paths:["src/math.ts"],measurement:{observed:5,limit:4}}]} });
+  const guidance=measuredQualityRepairGuidance(measuredRequest)!;
+  check(guidance.corrections[0].currentTotal===6&&guidance.corrections[0].originalTotal===1
+    &&guidance.corrections[0].maximumCandidateTotal===5&&guidance.corrections[0].minimumReduction===1,
+    "measured quality repair derives cumulative budget from original state rather than preceding repair");
+  check(guidance.evidenceRef===qualityEvidenceId&&guidance.corrections[0].measurements[0].sourceDigest===hash(crowded)
+    &&!guidance.hiddenEvidenceUsed&&!guidance.authorityGranted&&!JSON.stringify(guidance).includes(crowded),
+    "quality guidance is bound to public evidence and current source digest without raw source or authority");
+  const callbackSource="export function add(a, b) { const x = [a,b].map(v => v); for (const y of x) { if (y) return y; } return 0; }";
+  check(measureEngineeringStructure("src/math.ts",callbackSource).declarations===3
+    &&measureEngineeringStructure("src/math.ts",callbackSource).complexity===3,
+    "shared detector counts callbacks but not parameters or loop-header bindings exactly");
+  const quality=assessEngineeringQuality({assessmentId:"MEASURED-DEV",evaluatorVersion:"MEASURED-DEV",
+    baselineFiles:{"src/math.ts":"export function add(a,b) { return a+b; }"},candidateFiles:{"src/math.ts":crowded},
+    changedPaths:["src/math.ts"],functionalAcceptance:"PASS",regressionAcceptance:"PASS",
+    policy:{...OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,maxAddedDeclarations:4,allowedChangedPaths:["src/math.ts"],readonlyPaths:[]} });
+  check(quality.dimensions.UNNECESSARY_COMPLEXITY.findings.includes("declaration_delta:5")
+    &&quality.decision==="REJECTED","guidance exactly explains existing rejection without changing admission");
+  for(const findings of [
+    [{dimension:"X",code:"DECLARATION_DELTA",paths:["src/secret.ts"],measurement:{observed:5,limit:4}}],
+    [{dimension:"X",code:"DECLARATION_DELTA",paths:["src/math.ts","src/math.ts"],measurement:{observed:5,limit:4}}],
+    [{dimension:"X",code:"DECLARATION_DELTA",paths:["src/math.ts"],measurement:{observed:9,limit:4}}],
+    [{dimension:"X",code:"DECLARATION_DELTA",paths:["src/math.ts"],measurement:{observed:5,limit:-1}}],
+    [{dimension:"X",code:"MODEL_CONFIDENCE",paths:["src/math.ts"],measurement:{observed:5,limit:4}}],
+  ])check(measuredQualityRepairGuidance({...measuredRequest,candidateQualityFeedback:{...feedback,findings}})===null,
+    "unsupported, out-of-scope, duplicate, inconsistent or malformed measurement cannot fabricate a repair budget");
+  check(measuredQualityRepairGuidance({...measuredRequest,files:[{relativePath:"src/math.ts",content:"export function {",contentSha256:hash("export function {")}]})===null,
+    "unparseable source cannot acquire trustworthy structural repair guidance");
+  const payloads:unknown[]=[];
+  for(const enabled of [false,true]) {
+    const instance=NyxNemotronEngineeringCognition.create({cognitionId:"GUIDANCE-TEST",provider:provider(async(url,init)=>{
+      payloads.push(JSON.parse(String(init?.body)));return transportFor(intent())(url,init);}),
+      maxPromptBytes:50000,maxOutputTokens:1024,...(enabled?{qualityRepairGuidance:"MEASURED_STRUCTURE" as const}:{})});
+    await instance.proposeRepair(request());
+    await instance.proposeRepair(measuredRequest);
+  }
+  check(JSON.stringify(payloads[0])===JSON.stringify(payloads[2]),"quality-guidance ablation leaves first-attempt provider payload identical");
+  const getPrompt=(payload:unknown)=>JSON.parse((payload as {messages:{content:string}[]}).messages[1].content);
+  const {measuredQualityRepair,...withoutGuidance}=getPrompt(payloads[3]);
+  check(measuredQualityRepair.corrections[0].minimumReduction===1
+    &&JSON.stringify(withoutGuidance)===JSON.stringify(getPrompt(payloads[1])),
+    "opt-in quality repair adds only measured public explanation; evidence, constraints and base repair prompt unchanged");
+  check(measuredQualityRepairGuidance(request())===null,"no quality rejection creates no fictitious repair measurement");
+  let unsupportedGuide=false;
+  try{NyxNemotronEngineeringCognition.create({cognitionId:"GUIDANCE-TEST",provider:provider(transportFor(intent())),
+    maxPromptBytes:50000,maxOutputTokens:1024,qualityRepairGuidance:"AUTOMATIC_APPROVAL" as never});}catch{unsupportedGuide=true;}
+  check(unsupportedGuide,"unknown host guidance mode rejected before inference");
   const validRevision = await evaluate(intent({ failureInterpretation: "Visible behavior passed but the candidate failed static quality admission." }), {
     observation: passingObservation, priorHypotheses, candidateQualityFeedback: feedback,
   });

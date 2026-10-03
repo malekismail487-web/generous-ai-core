@@ -323,6 +323,13 @@ function analyze(path: string, source: string): FileAnalysis {
     parameterMutation: detectsParameterMutation(file), globalMutableState, unsafeTypeEscape, unsafeRuntimeAccess });
 }
 
+/** Read-only explanation of the existing detector, not another admission decision. */
+export function measureEngineeringStructure(path: string, source: string) {
+  const value = analyze(path, source);
+  return Object.freeze({ parseable: value.parseErrors.length === 0, declarations: value.declarations,
+    complexity: value.complexity, maxNesting: value.maxNesting });
+}
+
 function changedLineEstimate(before: string, after: string): number {
   const left = before.split(/\r?\n/);
   const right = after.split(/\r?\n/);

@@ -12,6 +12,7 @@ import type { ArmSpec, CampaignSpec } from "./omega/benchmarks/contracts";
 import { ARC_PUBLIC_EPOCH_SELECTION, ARC_ARRAY_BOUND_TRANSFER_SELECTION } from "./omega/nyx-arc-benchmark-epoch";
 import { ARRAY_BOUND_TRANSFER_TASKS } from "./omega/benchmarks/arrayBoundTransferTasks";
 import { SOURCE_LITERAL_TRANSFER_TASKS } from "./omega/benchmarks/sourceLiteralTransferTasks";
+import { MEASURED_QUALITY_TRANSFER_TASKS } from "./omega/benchmarks/measuredQualityTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -24,7 +25,8 @@ const input = { train: [{ input: [[1, 2]], output: [[2, 3]] }, { input: [[3], [0
 const correct = 'export function transform(input) {\n  const output = input.map(row => row.map(color => (color + 1) % 10));\n  return { attempt_1: output, attempt_2: output };\n}\n';
 const bad = 'export function transform(input) {\n  const output = input.map(row => row.map(() => 0));\n  return { attempt_1: output, attempt_2: output };\n}\n';
 const digest = theoryDigest("fixture");
-for (const path of ["src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts", "src/lib/codelab/engine/r3BoundedRepairLoop.ts"]) {
+for (const path of ["src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts", "src/lib/codelab/engine/r3BoundedRepairLoop.ts",
+  "src/lib/codelab/assurance/engineeringQualityOracle.ts"]) {
   const current = await readFile(path, "utf8");
   const baseline = execFileSync("git", ["show", `${NYX_ARC_CORE_REFINEMENT.predecessor}:${path}`], { encoding: "utf8" });
   check(arcCorePredecessorSource(path, current) === baseline, `${path} has exactly the reviewed opt-in refinement`);
@@ -282,7 +284,39 @@ const representationReferences: Record<string, string> = {
     return lines;
   }`,
 };
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS]) {
+representationReferences["KEYED-MEAN-RECONCILIATION"] = `export function transform(input) {
+  const groups = new Map();
+  for (const {key,value} of input) {
+    if (!groups.has(key)) groups.set(key,[0,0]);
+    groups.get(key)[0] += value;
+    groups.get(key)[1] += 1;
+  }
+  return [...groups].sort(([a],[b]) => a < b ? -1 : a > b ? 1 : 0)
+    .map(([key,[sum,count]]) => ({key,mean:sum/count}));
+}`;
+representationReferences["BOUNDED-COVERAGE-GAPS"] = `export function transform(input) {
+  const ordered = input.intervals.slice().sort((a,b) => a[0]-b[0]);
+  const gaps = [];
+  let cursor = input.start;
+  for (const [start,end] of ordered) {
+    if (end <= cursor || start >= input.end || end <= start) continue;
+    if (start > cursor) gaps.push([cursor,Math.min(start,input.end)]);
+    cursor = Math.max(cursor,Math.min(end,input.end));
+  }
+  if (cursor < input.end) gaps.push([cursor,input.end]);
+  return gaps;
+}`;
+representationReferences["TRAILING-RMS"] = `export function transform(input) {
+  const output = [];
+  let squareSum = 0;
+  for (let index = 0; index < input.values.length; index++) {
+    squareSum += input.values[index] * input.values[index];
+    if (index >= input.width) squareSum -= input.values[index-input.width] * input.values[index-input.width];
+    output.push(Math.sqrt(squareSum / Math.min(index+1,input.width)));
+  }
+  return output;
+}`;
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);

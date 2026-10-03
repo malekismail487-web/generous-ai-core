@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { isAbsolute } from "node:path";
+import { measuredQualityRepairGuidance } from "./nyxMeasuredQualityGuidance";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,
   OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS,
   OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES } from "../assurance/candidateEngineeringAdmission";
@@ -449,6 +450,8 @@ export interface NyxNemotronEngineeringCognitionConfig {
   readonly preserveProviderArrayBounds?: boolean;
   /** Host-only delivery control. Local intent, syntax, scope and quality checks remain mandatory. */
   readonly structuredOutputMode?: "STRICT_LOCAL";
+  /** Host-only experiment; default feedback and all acceptance gates remain unchanged. */
+  readonly qualityRepairGuidance?: "MEASURED_STRUCTURE";
   /** Evaluation-only, process-local feedback. Never changes executable authority or acceptance. */
   readonly repairFeedbackPolicy?: NyxRepairFeedbackPolicy;
 }
@@ -647,6 +650,9 @@ export class NyxNemotronEngineeringCognition {
     if (config.preserveProviderArrayBounds !== undefined && typeof config.preserveProviderArrayBounds !== "boolean") {
       throw new Error("nyx_provider_array_bounds_policy_invalid");
     }
+    if (config.qualityRepairGuidance !== undefined && config.qualityRepairGuidance !== "MEASURED_STRUCTURE") {
+      throw new Error("nyx_quality_repair_guidance_invalid");
+    }
     if (config.structuredOutputMode !== undefined && config.structuredOutputMode !== "STRICT_LOCAL") {
       throw new Error("nyx_structured_output_mode_invalid");
     }
@@ -720,6 +726,8 @@ export class NyxNemotronEngineeringCognition {
         findings: qualityFeedback.findings } : { kind: "EXECUTION_OBSERVATION", observationId: request.observation.observationId,
         evidenceRef: request.observation.candidateEvidenceId },
       ...(qualityFeedback ? { qualityRepairGoal: "The candidate passed available execution checks but failed public static admission. Preserve passing behavior while correcting every reported requirement, including architecture and input immutability. Replace unnecessary branches and declarations; meet every limit against the original observed repository state. Copy borrowed data before in-place operations rather than silencing checks or merely appending code." } : {}),
+      ...(this.#config.qualityRepairGuidance === "MEASURED_STRUCTURE" && qualityFeedback
+        ? { measuredQualityRepair: measuredQualityRepairGuidance(request) } : {}),
       observation: { observationId: request.observation.observationId, state: request.observation.state,
         baselineComparison: request.observation.baselineComparison, candidateAttribution: request.observation.candidateAttribution,
         attributionConfidence: request.observation.attributionConfidence, epistemicState: request.observation.epistemicState,

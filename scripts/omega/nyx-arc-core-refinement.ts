@@ -1,14 +1,22 @@
 /** Exact source refinement, not a replacement of any historical scored-source identity. */
 export const NYX_ARC_CORE_REFINEMENT = Object.freeze({
   predecessor: "513845addbe6146a4ad1b08a68176bff1b5f8b24",
-  purpose: "MATCH_INFERENCE_CANCELLATION_ARRAY_BOUNDS_AND_OPT_IN_EXISTING_STRICT_LOCAL_DELIVERY",
+  purpose: "MATCH_INFERENCE_CANCELLATION_ARRAY_BOUNDS_AND_OPT_IN_DELIVERY_AND_MEASURED_QUALITY_GUIDANCE",
   historicalScoresComparable: false, acceptanceOracleChanged: false, authorityIncrease: false,
   defaultInferencePolicyChanged: false,
 });
 const cognitivePath = "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts";
 const loopPath = "src/lib/codelab/engine/r3BoundedRepairLoop.ts";
+const qualityPath = "src/lib/codelab/assurance/engineeringQualityOracle.ts";
 const changes: Record<string, readonly (readonly [string, string, number?])[]> = {
+  [qualityPath]: [
+    ['', '/** Read-only explanation of the existing detector, not another admission decision. */\nexport function measureEngineeringStructure(path: string, source: string) {\n  const value = analyze(path, source);\n  return Object.freeze({ parseable: value.parseErrors.length === 0, declarations: value.declarations,\n    complexity: value.complexity, maxNesting: value.maxNesting });\n}\n\n'],
+  ],
   [cognitivePath]: [
+    ['', 'import { measuredQualityRepairGuidance } from "./nyxMeasuredQualityGuidance";\n'],
+    ['', '  /** Host-only experiment; default feedback and all acceptance gates remain unchanged. */\n  readonly qualityRepairGuidance?: "MEASURED_STRUCTURE";\n'],
+    ['', '    if (config.qualityRepairGuidance !== undefined && config.qualityRepairGuidance !== "MEASURED_STRUCTURE") {\n      throw new Error("nyx_quality_repair_guidance_invalid");\n    }\n'],
+    ['', '      ...(this.#config.qualityRepairGuidance === "MEASURED_STRUCTURE" && qualityFeedback\n        ? { measuredQualityRepair: measuredQualityRepairGuidance(request) } : {}),\n'],
     ['function providerCompatibleSchema(value: unknown): unknown {\n  if (Array.isArray(value)) return Object.freeze(value.map(providerCompatibleSchema));\n',
       'function providerCompatibleSchema(value: unknown, preserveArrayBounds = true): unknown {\n  if (Array.isArray(value)) return Object.freeze(value.map(item => providerCompatibleSchema(item, preserveArrayBounds)));\n'],
     ['    .filter(([key]) => !LOCALLY_ENFORCED_SCHEMA_KEYWORDS.has(key))\n',

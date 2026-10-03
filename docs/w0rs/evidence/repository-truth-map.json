@@ -2288,6 +2288,12 @@
       ]
     },
     {
+      "name": "NYX_MEASURED_QUALITY_COMPARISON",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_QUALITY_SUITE",
       "files": [
         "scripts/omega/nyx-biological-connectome-ablation-live-eval.ts",
