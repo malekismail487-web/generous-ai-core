@@ -19,7 +19,8 @@ function inspection(): any {
     HostConfig: {NetworkMode: "none", PortBindings: {}, Links: null, Binds: null, Privileged: false, ReadonlyRootfs: true,
       PidMode: "", IpcMode: "private", CapAdd: null, Devices: [], DeviceRequests: null, VolumesFrom: null,
       CapDrop: ["ALL"], SecurityOpt: ["no-new-privileges:true"], Memory: 268435456, MemorySwap: 268435456, NanoCpus: 1000000000,
-      PidsLimit: 32, Tmpfs: {"/workspace": "rw,nosuid,nodev,size=67108864", "/tmp": "rw,nosuid,nodev,size=67108864"}},
+      PidsLimit: 32, Tmpfs: {"/workspace": "rw,nosuid,nodev,size=67108864,uid=65534,gid=65534,mode=0700",
+        "/tmp": "rw,nosuid,nodev,size=67108864,uid=65534,gid=65534,mode=0700"}},
     Config: {User: "65534:65534", WorkingDir: "/workspace", Cmd: [...NYX_CONTAINER_SUPERVISOR], Env: ["PATH=/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8"],
       Labels: {"org.lumina.nyx.isolated-owner": identity.owner}}};
 }
@@ -67,6 +68,10 @@ const attacks: [string, (value: any) => void][] = [
   ["unbounded memory", v => {v.HostConfig.Memory = 0;}], ["unbounded CPU", v => {v.HostConfig.NanoCpus = 0;}],
   ["unbounded swap", v => {v.HostConfig.MemorySwap = -1;}], ["arbitrary supervisor", v => {v.Config.Cmd = ['sleep', 'infinity'];}],
   ["unbounded PIDs", v => {v.HostConfig.PidsLimit = -1;}], ["large tmpfs", v => {v.HostConfig.Tmpfs["/tmp"] = "rw,nosuid,nodev,size=999999999";}],
+  ["wrong mount owner", v => {v.HostConfig.Tmpfs["/workspace"] = v.HostConfig.Tmpfs["/workspace"].replace("uid=65534", "uid=0");}],
+  ["world-writable workspace", v => {v.HostConfig.Tmpfs["/workspace"] = v.HostConfig.Tmpfs["/workspace"].replace("mode=0700", "mode=1777");}],
+  ["overriding mount flag", v => {v.HostConfig.Tmpfs["/tmp"] += ",suid";}],
+  ["duplicate size override", v => {v.HostConfig.Tmpfs["/tmp"] += ",size=999999999";}],
   ["extra filesystem", v => {v.HostConfig.Tmpfs["/host"] = "rw,nosuid,nodev,size=67108864";}],
   ["device access", v => {v.HostConfig.Devices = [{PathOnHost: "/dev/sda"}];}],
   ["GPU access", v => {v.HostConfig.DeviceRequests = [{Driver: "nvidia"}];}],

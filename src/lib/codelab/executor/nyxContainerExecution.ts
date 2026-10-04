@@ -11,6 +11,7 @@ export const NYX_CONTAINER_POLICY = Object.freeze({
 /** Namespace PID 1 ignores SIGCHLD so killed/finished children cannot accumulate as unreaped zombies. */
 export const NYX_CONTAINER_SUPERVISOR = Object.freeze(["python", "-I", "-c",
   "import signal,time; signal.signal(signal.SIGCHLD,signal.SIG_IGN); time.sleep(3600)"]);
+export const NYX_CONTAINER_TMPFS_OPTIONS = "rw,nosuid,nodev,size=67108864,uid=65534,gid=65534,mode=0700";
 
 export interface NyxContainerDriver {
   /** Trusted backend, not model output. Must return fresh actual engine inspection. */
@@ -84,9 +85,12 @@ export function validateNyxContainerInspection(raw: unknown, expected: Pick<NyxC
     || !integer(host.PidsLimit, 8, NYX_CONTAINER_POLICY.maxPids)) issues.push("container_resource_limits_invalid");
   const tmpfs = record(host.Tmpfs);
   if (!tmpfs || Object.keys(tmpfs).length !== 2 || Object.keys(tmpfs).some(path => !["/workspace", "/tmp"].includes(path))
-    || Object.values(tmpfs).some(options => typeof options !== "string"
-      || !options.split(",").includes("nosuid") || !options.split(",").includes("nodev")
-      || !options.split(",").includes("size=67108864"))) issues.push("container_tmpfs_policy_invalid");
+    || Object.values(tmpfs).some(options => {
+      if (typeof options !== "string") return true;
+      // Exact option set: duplicate/overriding mount flags must not silently weaken confinement.
+      const actual = options.split(",").sort(), expectedOptions = NYX_CONTAINER_TMPFS_OPTIONS.split(",").sort();
+      return nyxCanonical(actual) !== nyxCanonical(expectedOptions);
+    })) issues.push("container_tmpfs_policy_invalid");
   if (!Array.isArray(value.Mounts) || value.Mounts.some(mount => {
     const item = record(mount);
     return !item || item.Type !== "tmpfs" || !["/workspace", "/tmp"].includes(String(item.Destination));

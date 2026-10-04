@@ -4,7 +4,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { NyxIsolatedContainerHost, NYX_CONTAINER_POLICY, NYX_CONTAINER_SUPERVISOR, validateNyxContainerInspection }
+import { NyxIsolatedContainerHost, NYX_CONTAINER_POLICY, NYX_CONTAINER_SUPERVISOR, NYX_CONTAINER_TMPFS_OPTIONS, validateNyxContainerInspection }
   from "../../src/lib/codelab/executor/nyxContainerExecution";
 import { NyxChatSession } from "../../src/lib/codelab/cli/nyxChatSession";
 import { nyxSha256 } from "../../src/lib/codelab/cli/nyxChatProtocol";
@@ -55,7 +55,7 @@ try {
   const created = await runDocker(["run", "--detach", "--pull=never", "--network=none", "--read-only",
     "--cap-drop=ALL", "--security-opt=no-new-privileges:true", "--user=65534:65534", "--workdir=/workspace",
     "--memory=256m", "--memory-swap=256m", "--cpus=1", "--pids-limit=32", "--ipc=private",
-    "--tmpfs=/workspace:rw,nosuid,nodev,size=67108864", "--tmpfs=/tmp:rw,nosuid,nodev,size=67108864",
+    `--tmpfs=/workspace:${NYX_CONTAINER_TMPFS_OPTIONS}`, `--tmpfs=/tmp:${NYX_CONTAINER_TMPFS_OPTIONS}`,
     "--label", `org.lumina.nyx.isolated-owner=${owner}`, imageId, ...NYX_CONTAINER_SUPERVISOR]);
   const id = created.stdout.trim();
   if (!/^[a-f0-9]{64}$/.test(id)) throw Error("preflight_container_identity_invalid");
@@ -70,6 +70,11 @@ try {
   host = await NyxIsolatedContainerHost.create({authorityMode: "ISOLATED_CANDIDATE_NOT_GRANTED",
     containerId: id, imageId, owner, issuedAtEpochMs: started, expiresAtEpochMs: started + 120000,
     maxCommands: 10, commandMs: 3000, driver});
+  const permissions = await host.execute({kind: "CONTAINER_EXEC", argv: ["python", "-c",
+    "import os,stat; assert os.getuid()==65534; stats=[os.stat(p) for p in ['/workspace','/tmp']]; assert all(s.st_uid==65534 and s.st_gid==65534 and stat.S_IMODE(s.st_mode)==0o700 for s in stats); print('FILESYSTEM_POLICY_VERIFIED')"]}, "FILESYSTEM-POLICY");
+  if (permissions.decision !== "EXECUTED" || permissions.observation?.stdout !== "FILESYSTEM_POLICY_VERIFIED\n")
+    throw Error("preflight_filesystem_ownership_invalid");
+  const modelAuditStart = host.auditLog().length;
   r1 = await ReadOnlyRepositoryExecutor.create({executorId: "PREFLIGHT-R1", tokenId: "PREFLIGHT-R1-TOKEN",
     repositoryRoot: root, resourceScopes: ["."], issuedAtEpochMs: started, expiresAtEpochMs: started + 120000,
     constraints: {maxFileBytes: 1024, maxDirectoryEntries: 1, allowedExtensions: [".txt"]},
@@ -95,8 +100,9 @@ try {
   console.log(`NYX_CONTAINER_LOOP_DIAGNOSTIC ${JSON.stringify({modelCalls: result.modelCalls, outcome: result.outcome,
     events: result.events.map(event => ({eventType: event.eventType, outcome: event.outcome})),
     operations: host.auditLog().map(event => ({decision: event.decision, reason: event.reason})), executionDiagnostics})}`);
-  if (result.modelCalls !== 5 || result.outcome !== "REPLIED" || host.auditLog().filter(e => e.decision === "EXECUTED").length !== 3
-    || host.auditLog().filter(e => e.decision === "UNVERIFIED").length !== 1)
+  if (result.modelCalls !== 5 || result.outcome !== "REPLIED"
+    || host.auditLog().slice(modelAuditStart).filter(e => e.decision === "EXECUTED").length !== 3
+    || host.auditLog().slice(modelAuditStart).filter(e => e.decision === "UNVERIFIED").length !== 1)
     throw Error("preflight_existing_loop_did_not_exercise_failed_check_and_repair");
   const negativeTests = [
     "import os; assert not any(k in {'NVIDIA_API_KEY','GITHUB_TOKEN'} or k.endswith('_TOKEN') or k.endswith('_SECRET') or k.startswith('GITHUB') for k in os.environ); assert not os.path.exists('/var/run/docker.sock')",
@@ -125,7 +131,8 @@ try {
     imageId, imageRepoDigests: images[0].RepoDigests, containerIdentityDigest: nyxSha256(id),
     evidenceClass: "E3", cognition: "TEST_DOUBLE_NOT_LIVE_NEMOTRON", cognitiveGain: false,
     officialBenchmarkTasksExecuted: 0, publicFailureObserved: true, boundedRepairObserved: true,
-    privateAcceptance: "ACCEPT", negativeCapabilitiesPreserved: true, backgroundProcessesFenced: true, revocationConfirmed: true,
+    privateAcceptance: "ACCEPT", filesystemOwnershipVerified: true,
+    negativeCapabilitiesPreserved: true, backgroundProcessesFenced: true, revocationConfirmed: true,
     sourceUnchanged: true, hostAuthority: false, productionAuthority: false, audit: host.auditLog(),
     remainingDependency: "NYX_HARBOR_AGENT_AND_BENCHMARK_SPECIFIC_AUTHORIZED_CONTAINER_PROFILE"};
 } catch (error) {
