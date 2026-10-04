@@ -5,7 +5,7 @@ import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnly
 import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
   TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS,
-  textDiagnosticTransport, textRejectionHint, textCapabilityGap } from "./omega/benchmarks/nyxTextBenchmark";
+  textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -186,6 +186,16 @@ check("schema failure registers existing gap semantics without claiming repair",
   assert.equal(gap.benchmarkReevaluationEligible, false); assert.equal(gap.steps.length, 0);
   assert.equal(gap.status, "OBSERVED");
 });
+const pairRows = [{...sanitized, configuration: "EXISTING_DEFAULT" as const},
+  {...sanitized, configuration: "OBSERVATION_ALIGNED_SCHEMA" as const}];
+check("realized comparison requires bound same-input distinct configurations", () => assert(compareTextPair(pairRows).matchedRealizedCompute));
+check("duplicate configuration cannot establish an ablation", () => assert(!compareTextPair([pairRows[0], pairRows[0]]).boundPair));
+check("different objective cannot masquerade as paired transfer", () =>
+  assert(!compareTextPair([pairRows[0], {...pairRows[1], inputDigest: "a".repeat(64)}]).boundPair));
+check("unknown usage blocks actual-compute matching", () =>
+  assert(!compareTextPair([pairRows[0], {...pairRows[1], usage: {...pairRows[1].usage, unknownUsageCalls: 1}}]).matchedRealizedCompute));
+check("equal call ceiling cannot hide extra realized model tokens", () =>
+  assert(!compareTextPair([pairRows[0], {...pairRows[1], usage: {...pairRows[1].usage, reportedTokens: 600}}]).matchedRealizedCompute));
 const ignoredGrammar = await invokeExistingNyxText({...config(makeProvider('{"kind":"UNKNOWN","message":"The answer is: 731"}')),
   model: {complete: request => makeProvider('{"kind":"UNKNOWN","message":"The answer is: 731"}')
     .complete(textConfiguredRequest(request, "OBSERVATION_ALIGNED_SCHEMA"))}}, "QUESTION");

@@ -258,3 +258,18 @@ export function textCapabilityGap(row: ReturnType<typeof sanitizedTextResult>) {
     failureEvidenceDigest: theoryDigest(row), benchmarkInputDigest: row.inputDigest}));
 }
 
+export function compareTextPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration})[]) {
+  const boundPair = pair.length === 2 && pair[0].inputDigest === pair[1].inputDigest
+    && pair[0].privateOracleDigest === pair[1].privateOracleDigest
+    && new Set(pair.map(row => row.configuration)).size === 2
+    && pair.every(row => ["EXISTING_DEFAULT", "OBSERVATION_ALIGNED_SCHEMA"].includes(row.configuration));
+  const stable = boundPair && pair.every(row => row.usage.unknownUsageCalls === 0 && row.usage.providerFailures === 0
+    && row.usage.retries === 0 && row.usage.physicalCalls > 0);
+  const matchedRealizedCompute = stable && (["logicalCalls", "physicalCalls", "reportedTokens", "toolCalls", "toolWorkUnits"] as const)
+    .every(key => Math.max(...pair.map(row => row.usage[key])) - Math.min(...pair.map(row => row.usage[key]))
+      <= Math.max(...pair.map(row => row.usage[key]), 1) * 0.1);
+  return {configurations: pair.map(row => row.configuration), outcomes: pair.map(row => row.state),
+    usages: pair.map(row => row.usage), boundPair, stable, matchedRealizedCompute,
+    cognitivePromotion: false, interpretation: "INTERFACE_ABLATION_NOT_COGNITIVE_GAIN"};
+}
+

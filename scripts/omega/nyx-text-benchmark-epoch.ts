@@ -8,7 +8,7 @@ import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readO
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextResult,
   TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
-  textDiagnosticTransport, textRejectionHint, textCapabilityGap,
+  textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair,
   type TextInferenceConfiguration, type PrivateTextTask } from "./benchmarks/nyxTextBenchmark";
 import { R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
 
@@ -20,7 +20,7 @@ export async function runTextBenchmarkEpoch() {
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") || git("status", "--porcelain"))
     throw Error("text_epoch_requires_clean_candidate");
   const mode = process.env.NYX_TEXT_EPOCH_MODE || "SMOKE";
-  if (!["SMOKE", "FRESH", "TRANSFER", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "ACTION_SCHEMA", "FULL"].includes(mode)) throw Error("text_epoch_mode_invalid");
+  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "ACTION_SCHEMA", "FULL"].includes(mode)) throw Error("text_epoch_mode_invalid");
   const configuration = process.env.NYX_TEXT_CONFIGURATION || "EXISTING_DEFAULT";
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
   const delivery = process.env.NYX_TEXT_DELIVERY || "DIRECT";
@@ -40,7 +40,12 @@ export async function runTextBenchmarkEpoch() {
     || tasks.some(t => !["AIME_2025", "BBEH_MINI"].includes(t.family)
       || typeof t.question !== "string" || typeof t.answer !== "string")) throw Error("text_epoch_population_invalid");
   const diagnostic = ["DIAGNOSTIC", "REJECTION_DIAGNOSTIC", "ACTION_SCHEMA"].includes(mode);
-  const selection = mode === "ACTION_SCHEMA" ? TEXT_ACTION_SCHEMA_DIAGNOSTICS.flatMap((task, index) =>
+  const transferTasks = [...tasks.filter(t => t.family === "AIME_2025").slice(4, 6),
+    ...tasks.filter(t => t.family === "BBEH_MINI").slice(4, 6)];
+  const selection = mode === "TRANSFER_ABLATION" ? transferTasks.flatMap((task, index) =>
+    (index % 2 ? ["OBSERVATION_ALIGNED_SCHEMA", "EXISTING_DEFAULT"] as const : ["EXISTING_DEFAULT", "OBSERVATION_ALIGNED_SCHEMA"] as const)
+      .map(variant => ({...task, taskId: `${task.taskId}-${variant}`, configuration: variant})))
+    : mode === "ACTION_SCHEMA" ? TEXT_ACTION_SCHEMA_DIAGNOSTICS.flatMap((task, index) =>
     (index ? ["OBSERVATION_ALIGNED_SCHEMA", "EXISTING_DEFAULT"] as const : ["EXISTING_DEFAULT", "OBSERVATION_ALIGNED_SCHEMA"] as const)
       .map(variant => ({...task, taskId: `${task.taskId}-${variant}`, configuration: variant})))
     : mode === "REJECTION_DIAGNOSTIC" ? TEXT_COMPATIBILITY_DIAGNOSTICS.flatMap((task, index) =>
@@ -152,20 +157,14 @@ export async function runTextBenchmarkEpoch() {
       bbehSourceDigest: data.bbehEvaluatorDigest, aime: "EXACT_FINAL_INTEGER_CUSTOM_ADAPTER_NOT_MATHARENA_HARNESS"},
     configuration: mode === "DIAGNOSTIC" ? "COUNTERBALANCED_DEFAULT_VS_BOUNDED_GUIDED_VS_BOUNDED_STRICT_LOCAL"
       : mode === "REJECTION_DIAGNOSTIC" ? "COUNTERBALANCED_DEFAULT_VS_TEMPLATE_BOUNDED"
-      : mode === "ACTION_SCHEMA" ? "COUNTERBALANCED_DEFAULT_VS_OBSERVATION_ALIGNED_SCHEMA" : configuration,
+      : ["ACTION_SCHEMA", "TRANSFER_ABLATION"].includes(mode) ? "COUNTERBALANCED_DEFAULT_VS_OBSERVATION_ALIGNED_SCHEMA" : configuration,
     configurationIsEvaluationOnly: true, productionDefaultsChanged: false,
     inference: "E4_LIVE_NVIDIA", verification: "E3_WITHHELD_REFERENCES_UPSTREAM_BBEH_GRADER",
     results, blocked, families, capabilityGaps: results.map(textCapabilityGap).filter(gap => gap !== null),
-    pairedDevelopmentResults: mode === "ACTION_SCHEMA" ? TEXT_ACTION_SCHEMA_DIAGNOSTICS.map(task => {
-      const pair = results.filter(row => row.inputDigest === theoryDigest(task.question));
-      const stable = pair.length === 2 && pair.every(row => row.usage.unknownUsageCalls === 0 && row.usage.providerFailures === 0);
-      const matchedRealizedCompute = stable && (["physicalCalls", "reportedTokens", "toolWorkUnits"] as const)
-        .every(key => Math.max(...pair.map(row => row.usage[key])) - Math.min(...pair.map(row => row.usage[key]))
-          <= Math.max(...pair.map(row => row.usage[key]), 1) * 0.1);
-      return {inputDigest: theoryDigest(task.question), configurations: pair.map(row => row.configuration),
-        outcomes: pair.map(row => row.state), usages: pair.map(row => row.usage), stable, matchedRealizedCompute,
-        cognitivePromotion: false, interpretation: "INTERFACE_ABLATION_NOT_COGNITIVE_GAIN"};
-    }) : [],
+    pairedDevelopmentResults: mode === "ACTION_SCHEMA" ? TEXT_ACTION_SCHEMA_DIAGNOSTICS.map(task =>
+      ({inputDigest: theoryDigest(task.question), ...compareTextPair(results.filter(row => row.inputDigest === theoryDigest(task.question)))})) : [],
+    pairedTransferResults: mode === "TRANSFER_ABLATION" ? transferTasks.map(task =>
+      ({inputDigest: theoryDigest(task.question), ...compareTextPair(results.filter(row => row.inputDigest === theoryDigest(task.question)))})) : [],
     sourceUnchanged, authorityDelta: "NONE", repairAttempts: 0,
     firstAttemptOnly: true, broadPromotion: false, calibration: "NOT_SUPPORTED_BY_CURRENT_REPLY_PROTOCOL",
     stopReason: !diagnostic && consecutiveProviderFailures >= 2 ? "PROVIDER_DELIVERY_FAILURE_CONSECUTIVE_TASKS"
