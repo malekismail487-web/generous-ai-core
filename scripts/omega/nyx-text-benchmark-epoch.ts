@@ -20,7 +20,7 @@ export async function runTextBenchmarkEpoch() {
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") || git("status", "--porcelain"))
     throw Error("text_epoch_requires_clean_candidate");
   const mode = process.env.NYX_TEXT_EPOCH_MODE || "SMOKE";
-  if (!["SMOKE", "FRESH", "DIAGNOSTIC", "COMPATIBILITY", "FULL"].includes(mode)) throw Error("text_epoch_mode_invalid");
+  if (!["SMOKE", "FRESH", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "FULL"].includes(mode)) throw Error("text_epoch_mode_invalid");
   const configuration = process.env.NYX_TEXT_CONFIGURATION || "EXISTING_DEFAULT";
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
   const delivery = process.env.NYX_TEXT_DELIVERY || "DIRECT";
@@ -39,7 +39,11 @@ export async function runTextBenchmarkEpoch() {
     || new Set(tasks.map(t => t.taskId)).size !== 490
     || tasks.some(t => !["AIME_2025", "BBEH_MINI"].includes(t.family)
       || typeof t.question !== "string" || typeof t.answer !== "string")) throw Error("text_epoch_population_invalid");
-  const selection = mode === "COMPATIBILITY" ? TEXT_COMPATIBILITY_DIAGNOSTICS.map(task =>
+  const diagnostic = ["DIAGNOSTIC", "REJECTION_DIAGNOSTIC"].includes(mode);
+  const selection = mode === "REJECTION_DIAGNOSTIC" ? TEXT_COMPATIBILITY_DIAGNOSTICS.flatMap((task, index) =>
+    (index ? ["TEMPLATE_BOUNDED", "EXISTING_DEFAULT"] as const : ["EXISTING_DEFAULT", "TEMPLATE_BOUNDED"] as const)
+      .map(variant => ({...task, taskId: `${task.taskId}-${variant}`, configuration: variant})))
+    : mode === "COMPATIBILITY" ? TEXT_COMPATIBILITY_DIAGNOSTICS.map(task =>
     ({...task, taskId: `${task.taskId}-TEMPLATE_BOUNDED`, configuration: "TEMPLATE_BOUNDED" as const}))
     : mode === "DIAGNOSTIC" ? TEXT_DELIVERY_DIAGNOSTICS.flatMap((task, index) =>
     [...(index ? [...TEXT_DIAGNOSTIC_CONFIGURATIONS].reverse() : TEXT_DIAGNOSTIC_CONFIGURATIONS)].map(variant =>
@@ -60,7 +64,7 @@ export async function runTextBenchmarkEpoch() {
   const blocked: {taskId: string; reason: string}[] = [];
   let consecutiveProviderFailures = 0;
   for (const task of selection) {
-    if (Date.now() >= deadline || mode !== "DIAGNOSTIC" && consecutiveProviderFailures >= 2) break;
+    if (Date.now() >= deadline || !diagnostic && consecutiveProviderFailures >= 2) break;
     const started = Date.now(); const evidence: NvidiaNimEvidence[] = [];
     const rejectionStart = requestRejections.length;
     const questionFile = `export const question = ${JSON.stringify(task.question)};\n`;
@@ -118,7 +122,7 @@ export async function runTextBenchmarkEpoch() {
     consecutiveProviderFailures = row.state === "PROVIDER_FAILURE" ? consecutiveProviderFailures + 1 : 0;
   }
   const sourceUnchanged = before === git("ls-files", "-s") && !git("status", "--porcelain");
-  const families = (["DIAGNOSTIC", "COMPATIBILITY"].includes(mode) ? ["DEVELOPMENT_DIAGNOSTIC"] : ["AIME_2025", "BBEH_MINI"]).map(family => {
+  const families = (diagnostic || mode === "COMPATIBILITY" ? ["DEVELOPMENT_DIAGNOSTIC"] : ["AIME_2025", "BBEH_MINI"]).map(family => {
     const population = selection.filter(t => t.family === family);
     const rows = results.filter(t => t.family === family);
     const familyBlocked = blocked.filter(t => population.some(p => p.taskId === t.taskId));
@@ -138,12 +142,13 @@ export async function runTextBenchmarkEpoch() {
     populationDigest: theoryDigest(tasks), selectionDigest: theoryDigest(selection),
     selectedTaskIds: selection.map(t => t.taskId), verifier: {bbehRevision: data.bbehRevision,
       bbehSourceDigest: data.bbehEvaluatorDigest, aime: "EXACT_FINAL_INTEGER_CUSTOM_ADAPTER_NOT_MATHARENA_HARNESS"},
-    configuration: mode === "DIAGNOSTIC" ? "COUNTERBALANCED_DEFAULT_VS_BOUNDED_GUIDED_VS_BOUNDED_STRICT_LOCAL" : configuration,
+    configuration: mode === "DIAGNOSTIC" ? "COUNTERBALANCED_DEFAULT_VS_BOUNDED_GUIDED_VS_BOUNDED_STRICT_LOCAL"
+      : mode === "REJECTION_DIAGNOSTIC" ? "COUNTERBALANCED_DEFAULT_VS_TEMPLATE_BOUNDED" : configuration,
     configurationIsEvaluationOnly: true, productionDefaultsChanged: false,
     inference: "E4_LIVE_NVIDIA", verification: "E3_WITHHELD_REFERENCES_UPSTREAM_BBEH_GRADER",
     results, blocked, families, sourceUnchanged, authorityDelta: "NONE", repairAttempts: 0,
     firstAttemptOnly: true, broadPromotion: false, calibration: "NOT_SUPPORTED_BY_CURRENT_REPLY_PROTOCOL",
-    stopReason: mode !== "DIAGNOSTIC" && consecutiveProviderFailures >= 2 ? "PROVIDER_UNAVAILABLE_CONSECUTIVE_TASKS"
+    stopReason: !diagnostic && consecutiveProviderFailures >= 2 ? "PROVIDER_DELIVERY_FAILURE_CONSECUTIVE_TASKS"
       : Date.now() >= deadline ? "FROZEN_WALL_CLOCK_BUDGET" : "SELECTION_EXHAUSTED",
     contamination: "PUBLIC_DATA_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"};
   await writeFile(join(process.env.RUNNER_TEMP || tmpdir(), `nyx-text-benchmark-${candidate}.json`), JSON.stringify(report, null, 2));

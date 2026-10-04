@@ -53,6 +53,19 @@ check("oversized rejection text never becomes diagnostic evidence", () =>
   assert.equal(textRejectionHint("a".repeat(5000)).category, "UNOBSERVED_OVERSIZED"));
 check("malformed rejection remains unknown, not invented", () =>
   assert.equal(textRejectionHint("not JSON").category, "UNOBSERVED_NOT_JSON"));
+check("model mention alone does not establish model unavailability", () =>
+  assert.deepEqual(textRejectionHint('{"error":{"message":"request mentions model"}}').signals, []));
+check("provider model deployment statement becomes a fixed clue, not raw text", () =>
+  assert.deepEqual(textRejectionHint('{"detail":"model is not deployed; PRIVATE_STRING"}').signals, ["MODEL_NOT_DEPLOYED"]));
+check("provider unknown-model statement remains distinguishable from validation", () =>
+  assert.deepEqual(textRejectionHint('{"error":{"message":"model not found"}}').signals, ["MODEL_UNKNOWN"]));
+check("range rejection does not invent a model failure", () =>
+  assert.deepEqual(textRejectionHint('{"detail":"reasoning_budget must be greater than zero"}').signals, ["PARAMETER_RANGE"]));
+check("provider clues never preserve credentials, prompt echoes or arbitrary fields", () => {
+  const hint = textRejectionHint('{"error":{"message":"extra fields not permitted SECRET_ECHO","secret":"PRIVATE_VALUE"}}');
+  assert(hint.signals.includes("EXTRA_FIELDS")); assert(!JSON.stringify(hint).includes("PRIVATE"));
+  assert(!JSON.stringify(hint).includes("SECRET"));
+});
 let diagnosticDispatches = 0; const hints: unknown[] = [];
 const transport = textDiagnosticTransport(hint => hints.push(hint), async () => {
   diagnosticDispatches++; return new Response(JSON.stringify({error: {param: "reasoning_budget", message: "DO_NOT_LOG_THIS"}}), {status: 400});

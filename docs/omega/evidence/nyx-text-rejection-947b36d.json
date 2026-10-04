@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-TEXT-REJECTION-HINTS-947b36d",
+  "source": {
+    "runId": 37215079179,
+    "jobId": 111473828083,
+    "candidate": "947b36d8cd5516c5560c67f68a8eef6d46185401",
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/37215079179"
+  },
+  "originalReport": {
+    "schemaVersion": 1,
+    "identity": "NYX-PUBLIC-TEXT-BENCHMARK-EPOCH-001",
+    "candidate": "947b36d8cd5516c5560c67f68a8eef6d46185401",
+    "mode": "COMPATIBILITY",
+    "executionIdentity": "github-actions-37215079179",
+    "environment": "linux-x64-node-v24.21.0",
+    "policy": {
+      "version": "nyx-existing-chat-text-benchmark/1",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "maxOutputTokens": 8192,
+      "maxCallsPerTurn": 1,
+      "maxTaskMs": 180000,
+      "maxInputCharacters": 8000,
+      "maxOutputCharacters": 8000,
+      "maxArtifactBytes": 50000,
+      "firstAttemptOnly": true,
+      "referenceAnswersVisibleToCognition": false,
+      "tools": [],
+      "sourceWrites": false,
+      "credentialForwarding": false,
+      "generalNetwork": false,
+      "delivery": "DIRECT",
+      "fixtureCleanupRequired": true,
+      "inputTruncationAllowed": false
+    },
+    "populationDigest": "d2d32bdddc66c12eebbc0d8124d4d9fbde943a8a4322a16b1dc608700afbea3e",
+    "selectionDigest": "610967bbd6467ea43eeee336b89c6250d9fefb807ae7928a573b8aac82253b48",
+    "selectedTaskIds": [
+      "TEMPLATE-INVENTORY-TEMPLATE_BOUNDED",
+      "TEMPLATE-DIVISIBILITY-TEMPLATE_BOUNDED"
+    ],
+    "verifier": {
+      "bbehRevision": "80d12ca916b7158f22293fcf3144f4d3d854d4be",
+      "bbehSourceDigest": "4b4f06e5babb015de2ba639bae995a5526182ffb5b5890af54dfcf038580eb34",
+      "aime": "EXACT_FINAL_INTEGER_CUSTOM_ADAPTER_NOT_MATHARENA_HARNESS"
+    },
+    "configuration": "TEMPLATE_BOUNDED",
+    "configurationIsEvaluationOnly": true,
+    "productionDefaultsChanged": false,
+    "inference": "E4_LIVE_NVIDIA",
+    "verification": "E3_WITHHELD_REFERENCES_UPSTREAM_BBEH_GRADER",
+    "results": [
+      {
+        "taskId": "TEMPLATE-INVENTORY-TEMPLATE_BOUNDED",
+        "family": "DEVELOPMENT_DIAGNOSTIC",
+        "inputDigest": "d21f67228c28881b60f473895056ed24fe2e767e47bf53840b72be8817506e0e",
+        "privateOracleDigest": "21cee27a52b79f89fa2ccbfe8436f7fd5285a4f88027d07fc9a591f7a3178e80",
+        "predictionDigest": null,
+        "state": "PROVIDER_FAILURE",
+        "correct": null,
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 1,
+          "httpAttempts": 1,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 1,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 418,
+          "providerFailures": 1,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "97b1cede5e4c7312fbe665e069a7abd8b935148fc74f279d928dafb1e9352637",
+            "responseDigest": null,
+            "providerRequestId": null,
+            "statusCode": 400,
+            "finishReason": null,
+            "failureCategory": "PROVIDER_REQUEST_REJECTED",
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "STOPPED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "eventDigests": [
+          "8cb02fd17f37ad8c98294a8fe4d63a596ab2802b68c7ef512fbaeea0f6b2a14b"
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "TEMPLATE_BOUNDED",
+        "requestRejections": [
+          {
+            "category": "REQUEST_PARAMETER_REJECTION",
+            "parameters": [
+              "model"
+            ],
+            "status": 400
+          }
+        ]
+      },
+      {
+        "taskId": "TEMPLATE-DIVISIBILITY-TEMPLATE_BOUNDED",
+        "family": "DEVELOPMENT_DIAGNOSTIC",
+        "inputDigest": "b655279e285ccfbe2a3959221c9c56f0faf34af7d1ca88628336d8b91729327f",
+        "privateOracleDigest": "ade1a1c2a61af0f279a4978dfddcdb6acd33f5a8b61e62c5fd881e8a88a387bc",
+        "predictionDigest": null,
+        "state": "PROVIDER_FAILURE",
+        "correct": null,
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 1,
+          "httpAttempts": 1,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 1,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 1368,
+          "providerFailures": 1,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "42752b2a5a5a73f8bd22cd3cbeb21912343206cbd1fa6db749c15ef709b20172",
+            "responseDigest": null,
+            "providerRequestId": null,
+            "statusCode": 400,
+            "finishReason": null,
+            "failureCategory": "PROVIDER_REQUEST_REJECTED",
+            "reasoningOutputBytes": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1083,
+              "state": "STOPPED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "eventDigests": [
+          "b0b963e29edea25bb8a9503f7e9fffd1993daa993633926d9b58c723c96e12f0"
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "TEMPLATE_BOUNDED",
+        "requestRejections": [
+          {
+            "category": "REQUEST_PARAMETER_REJECTION",
+            "parameters": [
+              "model"
+            ],
+            "status": 400
+          }
+        ]
+      }
+    ],
+    "blocked": [],
+    "families": [
+      {
+        "family": "DEVELOPMENT_DIAGNOSTIC",
+        "selected": 2,
+        "executed": 2,
+        "correct": 0,
+        "graded": 0,
+        "blockedByCapability": 0,
+        "notExecuted": 0,
+        "fullPopulation": null,
+        "fullBenchmarkScoreClaim": false
+      }
+    ],
+    "sourceUnchanged": true,
+    "authorityDelta": "NONE",
+    "repairAttempts": 0,
+    "firstAttemptOnly": true,
+    "broadPromotion": false,
+    "calibration": "NOT_SUPPORTED_BY_CURRENT_REPLY_PROTOCOL",
+    "stopReason": "PROVIDER_UNAVAILABLE_CONSECUTIVE_TASKS",
+    "contamination": "PUBLIC_DATA_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"
+  },
+  "assessment": {
+    "gradedTasks": 0,
+    "officialScoreClaim": false,
+    "capabilityPromotion": false,
+    "parameterMentionsAreNotCausality": true,
+    "nextAction": "Counterbalanced development-only default/template control and fixed-label rejection signals; no benchmark-answer feedback or authority change."
+  }
+}

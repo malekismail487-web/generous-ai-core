@@ -44,15 +44,27 @@ export const TEXT_COMPATIBILITY_DIAGNOSTICS: readonly PrivateTextTask[] = Object
 
 const REJECTION_PARAMETERS = ["reasoning_budget", "reasoning_effort", "response_format", "chat_template_kwargs",
   "enable_thinking", "medium_effort", "force_nonempty_content", "max_tokens", "model"] as const;
+const REJECTION_SIGNALS = [
+  ["MODEL_UNKNOWN", /(?:unknown|invalid|unsupported|not found|not supported|does not exist)[\s\S]{0,100}model|model[\s\S]{0,100}(?:unknown|invalid|unsupported|not found|not supported|does not exist)/i],
+  ["MODEL_ACCESS_DENIED", /(?:access|permission|entitle|authoriz)[\s\S]{0,100}(?:model|denied|forbidden)/i],
+  ["MODEL_NOT_DEPLOYED", /(?:model|worker|service)[\s\S]{0,100}(?:not deployed|not available|unavailable|not ready|initializ|loading)/i],
+  ["PARAMETER_UNSUPPORTED", /(?:unsupported|not supported|not permitted|not allowed)[\s\S]{0,100}(?:parameter|argument|field|reasoning|response_format|template)/i],
+  ["PARAMETER_RANGE", /(?:out of range|must be|maximum|minimum|greater than|less than|exceed)/i],
+  ["EXTRA_FIELDS", /extra(?: inputs| fields| parameters)?[\s\S]{0,40}(?:not permitted|forbidden|unexpected)/i],
+  ["VALIDATION", /(?:validation|invalid argument|invalid request|bad request)/i],
+  ["CAPACITY", /(?:capacity|overload|rate limit|too many requests|quota|try again|temporar)/i],
+] as const;
 /** Only fixed labels survive. Provider error text, echoed prompts and credentials never enter evidence. */
 export function textRejectionHint(raw: string) {
-  if (Buffer.byteLength(raw) > 4096) return {category: "UNOBSERVED_OVERSIZED", parameters: []};
+  if (Buffer.byteLength(raw) > 4096) return {category: "UNOBSERVED_OVERSIZED", parameters: [], signals: []};
   let error: unknown;
   try { const parsed = JSON.parse(raw); error = parsed?.error ?? parsed?.detail ?? null; }
-  catch { return {category: "UNOBSERVED_NOT_JSON", parameters: []}; }
+  catch { return {category: "UNOBSERVED_NOT_JSON", parameters: [], signals: []}; }
   const diagnostic = JSON.stringify(error) ?? "";
   const parameters = REJECTION_PARAMETERS.filter(parameter => diagnostic.includes(parameter));
-  return {category: parameters.length ? "REQUEST_PARAMETER_REJECTION" : "UNCLASSIFIED_REJECTION", parameters};
+  // Mentions/patterns are provider-stated clues, not independently established root causes.
+  const signals = REJECTION_SIGNALS.filter(([, pattern]) => pattern.test(diagnostic)).map(([label]) => label);
+  return {category: parameters.length ? "REQUEST_PARAMETER_REJECTION" : "UNCLASSIFIED_REJECTION", parameters, signals};
 }
 
 /** Diagnostic decoration of the SAME provider transport, fixed endpoint, deadline and capacity gate. */
@@ -77,7 +89,7 @@ export function textDiagnosticTransport(observe: (hint: ReturnType<typeof textRe
         }
       })(), new Promise((_, reject) => { timer = setTimeout(() => reject(Error("diagnostic_deadline")), 1000); }) ]);
       emit(textRejectionHint(bytes.toString("utf8")));
-    } catch { emit({category: "UNOBSERVED_BOUNDED_READ", parameters: []}); }
+    } catch { emit({category: "UNOBSERVED_BOUNDED_READ", parameters: [], signals: []}); }
     finally {
       if (timer) clearTimeout(timer);
       try { void reader?.cancel().catch(() => undefined); } catch { /* never log a raw cleanup exception */ }
