@@ -45,6 +45,12 @@ try {
   if (!/^[a-f0-9]{64}$/.test(id)) throw Error("preflight_container_identity_invalid");
   containerId = id;
   const started = Date.now();
+  const initialProfile = await driver.inspect(id) as {Config?: {Env?: unknown[]}};
+  const profileIssues = validateNyxContainerInspection(initialProfile, {containerId: id, imageId, owner});
+  console.log(`NYX_CONTAINER_ENGINE_PROFILE ${JSON.stringify({profileIssues,
+    environmentNames: (initialProfile.Config?.Env ?? []).filter(value => typeof value === "string")
+      .map(value => String(value).split("=", 1)[0]).filter(name => /^[A-Z_]{1,40}$/.test(name)).slice(0,16),
+    authorityGranted: false})}`);
   host = await NyxIsolatedContainerHost.create({authorityMode: "ISOLATED_CANDIDATE_NOT_GRANTED",
     containerId: id, imageId, owner, issuedAtEpochMs: started, expiresAtEpochMs: started + 120000,
     maxCommands: 10, commandMs: 3000, driver});
@@ -74,7 +80,7 @@ try {
     || host.auditLog().filter(e => e.decision === "UNVERIFIED").length !== 1)
     throw Error("preflight_existing_loop_did_not_exercise_failed_check_and_repair");
   const negativeTests = [
-    "import os; assert not any('KEY' in k or 'TOKEN' in k or k.startswith('GITHUB') for k in os.environ); assert not os.path.exists('/var/run/docker.sock')",
+    "import os; assert not any(k in {'NVIDIA_API_KEY','GITHUB_TOKEN'} or k.endswith('_TOKEN') or k.endswith('_SECRET') or k.startswith('GITHUB') for k in os.environ); assert not os.path.exists('/var/run/docker.sock')",
     "import socket; s=socket.socket(); s.settimeout(0.5); code=s.connect_ex(('198.51.100.1',443)); s.close(); assert code != 0",
     "from pathlib import Path; failed=False\ntry: Path('/host-write').write_text('escape')\nexcept OSError: failed=True\nassert failed",
     "import subprocess; subprocess.Popen(['sleep','30'],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)",

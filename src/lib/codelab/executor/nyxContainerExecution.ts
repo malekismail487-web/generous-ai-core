@@ -93,10 +93,12 @@ export function validateNyxContainerInspection(raw: unknown, expected: Pick<NyxC
   })) issues.push("container_host_mounts_forbidden");
   if (config.User !== "65534:65534" || config.WorkingDir !== "/workspace") issues.push("container_user_or_workdir_invalid");
   if (nyxCanonical(config.Cmd) !== nyxCanonical(NYX_CONTAINER_SUPERVISOR)) issues.push("container_supervisor_invalid");
-  const allowedEnv = new Set(["PATH", "LANG", "PYTHON_VERSION", "PYTHON_SHA256", "PYTHON_PIP_VERSION",
+  const allowedEnv = new Set(["PATH", "LANG", "GPG_KEY", "PYTHON_VERSION", "PYTHON_SHA256", "PYTHON_PIP_VERSION",
     "PYTHON_SETUPTOOLS_VERSION", "PYTHON_GET_PIP_URL", "PYTHON_GET_PIP_SHA256"]);
   if (!Array.isArray(config.Env) || config.Env.some(item => typeof item !== "string"
-    || !allowedEnv.has(item.split("=", 1)[0]) || nyxContainsSecretLike(item))) issues.push("container_environment_not_allowlisted");
+    || !allowedEnv.has(item.split("=", 1)[0]) || nyxContainsSecretLike(item)
+    // The official Python image stores its PUBLIC release-signing fingerprint, not a private key.
+    || item.startsWith("GPG_KEY=") && !/^GPG_KEY=[A-F0-9]{40}$/.test(item))) issues.push("container_environment_not_allowlisted");
   return Object.freeze(issues);
 }
 

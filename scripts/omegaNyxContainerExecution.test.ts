@@ -44,6 +44,13 @@ for (const invalid of [[], [""], ["-v"], ["x\0"], ["x", 3], Array(25).fill("x"),
 check(parseNyxChatAction(JSON.stringify({...action, containerId: identity.containerId})).action === null,
   "model cannot choose a container or attach extra runtime options");
 check(validateNyxContainerInspection(inspection(), identity).length === 0, "independent fixed engine snapshot accepted");
+{
+  const publicMetadata = inspection(); publicMetadata.Config.Env.push(`GPG_KEY=${'A'.repeat(40)}`);
+  check(validateNyxContainerInspection(publicMetadata, identity).length === 0,
+    "public signing-key fingerprint metadata is not an injected private credential");
+  publicMetadata.Config.Env[2] = "GPG_KEY=private-or-arbitrary-material";
+  check(validateNyxContainerInspection(publicMetadata, identity).length > 0, "arbitrary GPG key material is not allowlisted");
+}
 const attacks: [string, (value: any) => void][] = [
   ["wrong exact ID", v => {v.Id = "d".repeat(64);}], ["wrong image", v => {v.Image = `sha256:${"d".repeat(64)}`;}],
   ["wrong ownership", v => {v.Config.Labels["org.lumina.nyx.isolated-owner"] = "d".repeat(32);}],
