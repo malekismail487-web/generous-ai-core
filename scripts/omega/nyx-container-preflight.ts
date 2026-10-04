@@ -14,7 +14,22 @@ import { NyxDockerDriver } from "./benchmarks/nyxDockerDriver";
 
 const runFile = promisify(execFile);
 const owner = randomBytes(16).toString("hex");
-const driver = new NyxDockerDriver();
+const executionDiagnostics: Record<string, unknown>[] = [];
+class DiagnosticDockerDriver extends NyxDockerDriver {
+  override async exec(id: string, argv: readonly string[], commandMs: number) {
+    try {
+      const output = await super.exec(id, argv, commandMs);
+      executionDiagnostics.push({exitCode: output.exitCode, timedOut: output.timedOut,
+        errorClass: output.stderr.match(/\b(PermissionError|SyntaxError|ModuleNotFoundError|AssertionError|OSError)\b/)?.[1] ?? null});
+      return output;
+    } catch (error) {
+      executionDiagnostics.push({backendFailure: error instanceof Error
+        && /^container_[a-z_]+$/.test(error.message) ? error.message : "container_backend_failure"});
+      throw error;
+    }
+  }
+}
+const driver = new DiagnosticDockerDriver();
 let containerId: string | null = null;
 let host: NyxIsolatedContainerHost | null = null;
 let r1: ReadOnlyRepositoryExecutor | null = null;
@@ -27,6 +42,7 @@ const runDocker = (argv: readonly string[], timeout = 15000) => runFile("docker"
   {shell: false, windowsHide: true, timeout, maxBuffer: 65536,
     env: {PATH: process.env.PATH, SystemRoot: process.env.SystemRoot, DOCKER_CONFIG: "/nonexistent-nyx-docker-config"}});
 let receipt: Record<string, unknown> | null = null;
+let failure: string | null = null;
 try {
   if (process.platform !== "linux" || process.env.OMEGA_ALLOW_ISOLATED_CONTAINER_PREFLIGHT !== "1")
     throw Error("explicit_linux_container_preflight_authorization_required");
@@ -76,6 +92,9 @@ try {
     candidateWriter: null, computerHost: host, editablePaths: [], maxModelCallsPerTurn: 5,
     maxCandidatesPerTurn: 0, maxTurnMs: 30000, maxOutputTokens: 1024}).turn(
     "Create a disposable Python normalizer, run its public check, repair a failure and rerun. No task self-certification.");
+  console.log(`NYX_CONTAINER_LOOP_DIAGNOSTIC ${JSON.stringify({modelCalls: result.modelCalls, outcome: result.outcome,
+    events: result.events.map(event => ({eventType: event.eventType, outcome: event.outcome})),
+    operations: host.auditLog().map(event => ({decision: event.decision, reason: event.reason})), executionDiagnostics})}`);
   if (result.modelCalls !== 5 || result.outcome !== "REPLIED" || host.auditLog().filter(e => e.decision === "EXECUTED").length !== 3
     || host.auditLog().filter(e => e.decision === "UNVERIFIED").length !== 1)
     throw Error("preflight_existing_loop_did_not_exercise_failed_check_and_repair");
@@ -109,6 +128,9 @@ try {
     privateAcceptance: "ACCEPT", negativeCapabilitiesPreserved: true, backgroundProcessesFenced: true, revocationConfirmed: true,
     sourceUnchanged: true, hostAuthority: false, productionAuthority: false, audit: host.auditLog(),
     remainingDependency: "NYX_HARBOR_AGENT_AND_BENCHMARK_SPECIFIC_AUTHORIZED_CONTAINER_PROFILE"};
+} catch (error) {
+  failure = error instanceof Error && /^(preflight_|nyx_container_|explicit_linux_)[a-z_]+$/.test(error.message)
+    ? error.message : "preflight_infrastructure_failure";
 } finally {
   host?.revoke(); r1?.terminate(Date.now(), "PREFLIGHT_FINISHED");
   if (containerId !== null) {
@@ -121,7 +143,12 @@ try {
   }
   await rm(root, {recursive: true}); cleanupVerified = true;
 }
-if (receipt === null || !cleanupVerified) throw Error("preflight_receipt_incomplete");
-const report = {...receipt, cleanupVerified};
+const report = receipt !== null && failure === null && cleanupVerified ? {...receipt, outcome: "PASS", cleanupVerified}
+  : {schemaVersion: 1, identity: "NYX-ISOLATED-CONTAINER-EXECUTION-PREFLIGHT-001", outcome: "FAIL",
+    candidate: process.env.GITHUB_SHA ?? "LOCAL_UNPUBLISHED", executionIdentity: process.env.GITHUB_RUN_ID ?? "LOCAL",
+    evidenceClass: "E3", cognitiveGain: false, officialBenchmarkTasksExecuted: 0,
+    failure: failure ?? "preflight_receipt_incomplete", cleanupVerified, executionDiagnostics,
+    audit: host?.auditLog() ?? [], hostAuthority: false, productionAuthority: false};
 await writeFile(join(process.env.RUNNER_TEMP ?? tmpdir(), "nyx-container-preflight.json"), JSON.stringify(report, null, 2) + "\n", {flag: "wx"});
 console.log(`NYX_CONTAINER_PREFLIGHT ${JSON.stringify(report)}`);
+if (report.outcome !== "PASS") throw Error("preflight_failed_see_sanitized_receipt");

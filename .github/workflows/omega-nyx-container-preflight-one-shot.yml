@@ -24,7 +24,7 @@ jobs:
       - run: bun install --frozen-lockfile --ignore-scripts
       - name: Test typed authority and negative-capability contracts
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxContainerExecution.test.ts
-      - name: Exercise actual engine-profile admission and Docker isolation without a model secret
+      - name: Diagnose actual confined execution and preserve failure plus cleanup evidence
         env:
           OMEGA_ALLOW_ISOLATED_CONTAINER_PREFLIGHT: '1'
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-container-preflight.ts
