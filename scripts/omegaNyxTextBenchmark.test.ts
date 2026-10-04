@@ -106,6 +106,19 @@ const sanitized = sanitizedTextResult(task, result, evidence, true, 10);
 check("receipts retain verdict but not private reference or raw prediction", () => assert(!JSON.stringify(sanitized).includes("731")));
 check("correct result has independent PASS classification", () => assert.equal(sanitized.state, "PASS"));
 check("unknown judge result cannot be accepted", () => assert.equal(textOutcome(result, evidence, null), "VERIFIER_FAILURE"));
+const denied = {...result!, outcome: "REJECTED" as const, events: [{...result!.events[0], eventType: "DENIAL" as const,
+  outcome: "model_output_not_json"}]};
+check("JSON rejection is serialization failure, not inferred unauthorized action", () =>
+  assert.equal(textOutcome(denied, evidence, null), "SCHEMA_FAILURE"));
+check("malformed typed schema remains distinct from authorization", () =>
+  assert.equal(textOutcome({...denied, events: [{...denied.events[0], outcome: "unknown_or_malformed_typed_action"}]}, evidence, null), "SCHEMA_FAILURE"));
+check("sensitive-content denial is not a reasoning score", () =>
+  assert.equal(textOutcome({...denied, events: [{...denied.events[0], outcome: "model_output_credential_pattern"}]}, evidence, null), "SECURITY_POLICY_REJECTION"));
+check("unknown arbitrary outcome never survives sanitized receipt", () => {
+  const receipt = sanitizedTextResult(task, {...denied, events: [{...denied.events[0], outcome: "PRIVATE_UNTRUSTED_VALUE"}]}, evidence, null, 1);
+  assert.equal(receipt.eventOutcomes[0].outcome, "OTHER_RECORDED_OUTCOME");
+  assert(!JSON.stringify(receipt).includes("PRIVATE_UNTRUSTED_VALUE"));
+});
 check("returned wrong answer is not a provider error", () => assert.equal(textOutcome(result, evidence, false), "REASONING_OR_ANSWER_FORMAT_FAILURE"));
 check("well-formed wrong integer is a reasoning failure, not a format defect", () =>
   assert.equal(sanitizedTextResult(task, result, evidence, false, 1).state, "REASONING_FAILURE"));

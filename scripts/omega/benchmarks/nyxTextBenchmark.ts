@@ -150,6 +150,11 @@ export function textOutcome(result: NyxChatTurnResult | null, evidence: readonly
     && ((item.delivery.timedOutAttempts ?? 0) > 0 || (item.delivery.transientUnavailableResponses ?? 0) > 0
       || (item.delivery.rateLimitedResponses ?? 0) > 0))) return "PROVIDER_FAILURE";
   if (evidence.some(item => item.finishReason === "length")) return "TRUNCATION";
+  if (result.events.some(item => item.eventType === "DENIAL"
+    && ["model_output_not_json", "model_output_not_object", "model_output_oversized",
+      "unknown_or_malformed_typed_action"].includes(item.outcome))) return "SCHEMA_FAILURE";
+  if (result.events.some(item => item.eventType === "DENIAL"
+    && ["model_output_credential_pattern", "SENSITIVE_CONTENT_BLOCKED"].includes(item.outcome))) return "SECURITY_POLICY_REJECTION";
   if (result.events.some(item => item.eventType === "DENIAL" || item.eventType === "READ" && item.outcome !== "OBSERVED"
     || item.eventType === "COMPUTER" || item.eventType === "CANDIDATE"))
     return "PROTOCOL_OR_AUTHORIZATION_FAILURE";
@@ -204,6 +209,14 @@ export function sanitizedTextResult(task: PrivateTextTask, result: NyxChatTurnRe
       failureCategory: item.failureCategory, reasoningOutputBytes: item.reasoningOutputBytes ?? null,
       delivery: item.delivery ?? null})),
     eventDigests: result?.events.map(item => theoryDigest(item)) ?? [],
+    eventOutcomes: result?.events.map(item => ({sequence: item.sequence, eventType: item.eventType,
+      outcome: ["COMPLETED", "PROVIDER_ERROR", "WAITING_FOR_CAPACITY", "BLOCKED", "REJECTED", "REPLIED",
+        "OBSERVED", "EXECUTED", "UNVERIFIED", "VERIFIED", "ABSENT", "INACCESSIBLE", "UNKNOWN",
+        "model_output_not_json", "model_output_not_object", "model_output_oversized", "unknown_or_malformed_typed_action",
+        "model_output_credential_pattern", "SENSITIVE_CONTENT_BLOCKED", "candidate_authority_unavailable",
+        "candidate_budget_exhausted", "path_not_editable", "file_not_observed_by_r1", "stale_or_fabricated_base_hash"]
+        .includes(item.outcome) ? item.outcome : "OTHER_RECORDED_OUTCOME",
+      evidenceClass: item.evidenceClass})) ?? [],
     sourceRepositoryMutated: false, broaderAuthorityGranted: false,
   };
 }
