@@ -4,7 +4,7 @@ import { NvidiaNimProvider, type NvidiaNimEvidence } from "../src/lib/codelab/mo
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
 import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
-  TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS } from "./omega/benchmarks/nyxTextBenchmark";
+  TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -34,9 +34,16 @@ check("strict local delivery retains required JSON protocol", () => {
   const configured = textConfiguredRequest(originalRequest, "BOUNDED_STRICT_LOCAL");
   assert.equal(configured.structuredOutputMode, "STRICT_LOCAL"); assert.equal(configured.responseFormat, "JSON_OBJECT");
 });
+check("compatibility correction uses existing template controls rather than native top-level parameters", () => {
+  const configured = textConfiguredRequest(originalRequest, "TEMPLATE_BOUNDED");
+  assert.equal(configured.reasoningControl, undefined); assert.equal(configured.inferencePolicy, "REASONING_JSON");
+  assert.equal(configured.reasoningBudgetTokens, 2048); assert.equal(configured.responseFormat, "JSON_OBJECT");
+});
 check("unknown inference configuration fails closed", () => assert.throws(() => textConfiguredRequest(originalRequest, "UNKNOWN" as never)));
 check("delivery development tasks cannot masquerade as public benchmark population", () =>
   assert(TEXT_DELIVERY_DIAGNOSTICS.every(task => task.family === "DEVELOPMENT_DIAGNOSTIC")));
+check("compatibility repair is tested on separate development inputs", () =>
+  assert(TEXT_COMPATIBILITY_DIAGNOSTICS.every(task => !TEXT_DELIVERY_DIAGNOSTICS.some(prior => prior.question === task.question))));
 
 const now = Date.now();
 const reader = await ReadOnlyRepositoryExecutor.create({executorId: "TEXT-EVAL-TEST", tokenId: "TEXT-TOKEN-TEST",
@@ -66,6 +73,10 @@ check("receipts retain verdict but not private reference or raw prediction", () 
 check("correct result has independent PASS classification", () => assert.equal(sanitized.state, "PASS"));
 check("unknown judge result cannot be accepted", () => assert.equal(textOutcome(result, evidence, null), "VERIFIER_FAILURE"));
 check("returned wrong answer is not a provider error", () => assert.equal(textOutcome(result, evidence, false), "REASONING_OR_ANSWER_FORMAT_FAILURE"));
+check("well-formed wrong integer is a reasoning failure, not a format defect", () =>
+  assert.equal(sanitizedTextResult(task, result, evidence, false, 1).state, "REASONING_FAILURE"));
+check("invalid final integer format remains an interface failure", () =>
+  assert.equal(sanitizedTextResult(task, {...result!, message: "several possible answers"}, evidence, false, 1).state, "ANSWER_FORMAT_FAILURE"));
 const lengthEvidence = evidence.map(e => ({...e, finishReason: "length" as const}));
 check("truncation remains separate from wrong answer", () => assert.equal(textOutcome(result, lengthEvidence, false), "TRUNCATION"));
 const failedEvidence = evidence.map(e => ({...e, failureCategory: "PROVIDER_TIMEOUT" as const}));
@@ -96,6 +107,9 @@ check("revoked reader performs no filesystem action", () => assert(reader.auditL
 const expiredDelivery = {...unknown, failureCategory: null, delivery: {...unknown.delivery, state: "STOPPED" as const}};
 check("capacity-expired delivery remains provider failure even without terminal category", () =>
   assert.equal(textOutcome(result, [expiredDelivery], null), "PROVIDER_FAILURE"));
+check("expired waiting-for-capacity delivery cannot become a schema failure", () =>
+  assert.equal(textOutcome(result, [{...expiredDelivery, delivery: {...expiredDelivery.delivery,
+    state: "WAITING_FOR_CAPACITY" as const}}], null), "PROVIDER_FAILURE"));
 
 const longQuestion = "public bounded objective ".repeat(500);
 const fixture = await R3BenchmarkRepositorySession.create({"src/question.mjs": `export const question = ${JSON.stringify(longQuestion)};\n`},
@@ -127,6 +141,13 @@ try {
   check("task-local read must not be substituted with earlier audit evidence", () => assert.notEqual(noRead?.outcome, "REPLIED"));
   check("missing whole-question observation is not a reasoning score", () =>
     assert.equal(textOutcome(noRead, [], null), "MISSING_REQUIRED_REPOSITORY_ACTION"));
+  let mismatchedCall = 0;
+  const mismatched = await invokeExistingNyxText({...config(makeProvider('{}')), reader: fileReader,
+    maxModelCallsPerTurn: 2, model: {complete: async request => {
+      const response = await makeProvider(actions[mismatchedCall++]).complete(request); return response;
+    }}}, "A different objective", "SCOPED_FILE");
+  check("fresh but wrong question observation cannot prove frozen-task execution", () =>
+    assert.equal(textOutcome(mismatched, [], null), "REPOSITORY_OBSERVATION_BINDING_FAILURE"));
 } finally {
   fileReader.terminate(Date.now(), "TEST_FINISHED");
   const cleanup = await fixture.close();

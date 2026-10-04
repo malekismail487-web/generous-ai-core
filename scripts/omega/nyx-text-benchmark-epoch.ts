@@ -7,7 +7,7 @@ import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment, type NvidiaNimEv
 import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readOnlyExecutor";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextResult,
-  TEXT_DELIVERY_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, textConfiguredRequest,
+  TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
   type TextInferenceConfiguration, type PrivateTextTask } from "./benchmarks/nyxTextBenchmark";
 import { R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
 
@@ -19,7 +19,7 @@ export async function runTextBenchmarkEpoch() {
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") || git("status", "--porcelain"))
     throw Error("text_epoch_requires_clean_candidate");
   const mode = process.env.NYX_TEXT_EPOCH_MODE || "SMOKE";
-  if (!["SMOKE", "FRESH", "DIAGNOSTIC", "FULL"].includes(mode)) throw Error("text_epoch_mode_invalid");
+  if (!["SMOKE", "FRESH", "DIAGNOSTIC", "COMPATIBILITY", "FULL"].includes(mode)) throw Error("text_epoch_mode_invalid");
   const configuration = process.env.NYX_TEXT_CONFIGURATION || "EXISTING_DEFAULT";
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
   const delivery = process.env.NYX_TEXT_DELIVERY || "DIRECT";
@@ -38,8 +38,10 @@ export async function runTextBenchmarkEpoch() {
     || new Set(tasks.map(t => t.taskId)).size !== 490
     || tasks.some(t => !["AIME_2025", "BBEH_MINI"].includes(t.family)
       || typeof t.question !== "string" || typeof t.answer !== "string")) throw Error("text_epoch_population_invalid");
-  const selection = mode === "DIAGNOSTIC" ? TEXT_DELIVERY_DIAGNOSTICS.flatMap((task, index) =>
-    [...(index ? [...TEXT_INFERENCE_CONFIGURATIONS].reverse() : TEXT_INFERENCE_CONFIGURATIONS)].map(variant =>
+  const selection = mode === "COMPATIBILITY" ? TEXT_COMPATIBILITY_DIAGNOSTICS.map(task =>
+    ({...task, taskId: `${task.taskId}-TEMPLATE_BOUNDED`, configuration: "TEMPLATE_BOUNDED" as const}))
+    : mode === "DIAGNOSTIC" ? TEXT_DELIVERY_DIAGNOSTICS.flatMap((task, index) =>
+    [...(index ? [...TEXT_DIAGNOSTIC_CONFIGURATIONS].reverse() : TEXT_DIAGNOSTIC_CONFIGURATIONS)].map(variant =>
       ({...task, taskId: `${task.taskId}-${variant}`, configuration: variant})))
     : (mode === "SMOKE" || mode === "FRESH" ? [...tasks.filter(t => t.family === "AIME_2025").slice(mode === "FRESH" ? 2 : 0, mode === "FRESH" ? 4 : 2),
       ...tasks.filter(t => t.family === "BBEH_MINI").slice(mode === "FRESH" ? 2 : 0, mode === "FRESH" ? 4 : 2)] : tasks)
@@ -110,7 +112,7 @@ export async function runTextBenchmarkEpoch() {
     consecutiveProviderFailures = row.state === "PROVIDER_FAILURE" ? consecutiveProviderFailures + 1 : 0;
   }
   const sourceUnchanged = before === git("ls-files", "-s") && !git("status", "--porcelain");
-  const families = (mode === "DIAGNOSTIC" ? ["DEVELOPMENT_DIAGNOSTIC"] : ["AIME_2025", "BBEH_MINI"]).map(family => {
+  const families = (["DIAGNOSTIC", "COMPATIBILITY"].includes(mode) ? ["DEVELOPMENT_DIAGNOSTIC"] : ["AIME_2025", "BBEH_MINI"]).map(family => {
     const population = selection.filter(t => t.family === family);
     const rows = results.filter(t => t.family === family);
     const familyBlocked = blocked.filter(t => population.some(p => p.taskId === t.taskId));
