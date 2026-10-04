@@ -3,6 +3,7 @@ import { NVIDIA_NIM_CHAT_COMPLETIONS_URL, type NvidiaNimEvidence, type NvidiaNim
 import { NyxChatSession, type NyxChatSessionConfig, type NyxChatTurnResult } from "../../../src/lib/codelab/cli/nyxChatSession";
 import { theoryDigest } from "../../../src/lib/codelab/research/theoryContracts";
 import { usageSchema, zeroUsage, type Usage } from "./contracts";
+import { createCapabilityGap, gapExport } from "./gaps";
 
 export const TEXT_BENCHMARK_POLICY = Object.freeze({
   version: "nyx-existing-chat-text-benchmark/1", model: "nvidia/nemotron-3-ultra-550b-a55b",
@@ -15,13 +16,26 @@ export const TEXT_BENCHMARK_POLICY = Object.freeze({
 export type TextTaskFamily = "AIME_2025" | "BBEH_MINI" | "DEVELOPMENT_DIAGNOSTIC";
 export interface PrivateTextTask { family: TextTaskFamily; taskId: string; question: string; answer: string }
 
-export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL", "TEMPLATE_BOUNDED"] as const;
+export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL", "TEMPLATE_BOUNDED", "OBSERVATION_ALIGNED_SCHEMA"] as const;
 export const TEXT_DIAGNOSTIC_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL"] as const;
 export type TextInferenceConfiguration = typeof TEXT_INFERENCE_CONFIGURATIONS[number];
 /** Evaluation-only configuration ablation. No change to production NYX or its strict local parser. */
-export function textConfiguredRequest(request: NvidiaNimCompletionRequest, configuration: TextInferenceConfiguration) {
+export function textConfiguredRequest(request: NvidiaNimCompletionRequest, configuration: TextInferenceConfiguration,
+  delivery: "DIRECT" | "SCOPED_FILE" = "DIRECT", questionObserved = false): NvidiaNimCompletionRequest {
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration)) throw Error("text_inference_configuration_invalid");
+  if (!["DIRECT", "SCOPED_FILE"].includes(delivery) || typeof questionObserved !== "boolean") throw Error("text_action_schema_state_invalid");
   if (configuration === "EXISTING_DEFAULT") return request;
+  if (configuration === "OBSERVATION_ALIGNED_SCHEMA") {
+    // Hosted generation constraint only: parseNyxChatAction and Omega still independently authorize.
+    // The existing task contract already requires one whole-question read before its final reply.
+    const readRequired = delivery === "SCOPED_FILE" && !questionObserved;
+    const properties = readRequired ? {kind: {type: "string", enum: ["READ_FILE"]},
+      path: {type: "string", enum: ["src/question.mjs"]}} : {kind: {type: "string", enum: ["REPLY"]},
+      message: {type: "string", minLength: 1, maxLength: 8000}};
+    return {...request, responseFormat: {type: "JSON_SCHEMA", name: readRequired ? "nyx_question_read" : "nyx_final_reply",
+      schema: {type: "object", properties, required: readRequired ? ["kind", "path"] : ["kind", "message"],
+        additionalProperties: false}}};
+  }
   return {...request, inferencePolicy: "REASONING_JSON" as const,
     reasoningControl: configuration === "TEMPLATE_BOUNDED" ? undefined : "ULTRA_NATIVE" as const,
     reasoningEffort: "MEDIUM" as const, reasoningBudgetTokens: 2048,
@@ -40,6 +54,13 @@ export const TEXT_COMPATIBILITY_DIAGNOSTICS: readonly PrivateTextTask[] = Object
     question: "A tank contains 41 units. Withdraw 13, add 9, then withdraw 12. How many units remain?", answer: "25"},
   {family: "DEVELOPMENT_DIAGNOSTIC", taskId: "TEMPLATE-DIVISIBILITY",
     question: "A positive integer n is less than 20 and divisible by 4. The integer n+2 is divisible by 5. What is n?", answer: "8"},
+]);
+/** Separate development reproductions; no benchmark inputs, answers or task identities. */
+export const TEXT_ACTION_SCHEMA_DIAGNOSTICS: readonly PrivateTextTask[] = Object.freeze([
+  {family: "DEVELOPMENT_DIAGNOSTIC", taskId: "ACTION-REMAINDER",
+    question: "The integers 1 through 12 are divided into pairs (1,12), (2,11), and so on. Add the product of each pair. What is the remainder when that sum is divided by 7?", answer: "0"},
+  {family: "DEVELOPMENT_DIAGNOSTIC", taskId: "ACTION-SEQUENCE",
+    question: "Six distinct events A, B, C, D, E, F are ordered. F immediately precedes E, E immediately precedes D, and D immediately precedes C. B is before F and A is after C. At what position is D?", answer: "4"},
 ]);
 
 const REJECTION_PARAMETERS = ["reasoning_budget", "reasoning_effort", "response_format", "chat_template_kwargs",
@@ -219,5 +240,21 @@ export function sanitizedTextResult(task: PrivateTextTask, result: NyxChatTurnRe
       evidenceClass: item.evidenceClass})) ?? [],
     sourceRepositoryMutated: false, broaderAuthorityGranted: false,
   };
+}
+
+/** Registers observations in the existing gap contract; not a completed repair/transfer claim. */
+export function textCapabilityGap(row: ReturnType<typeof sanitizedTextResult>) {
+  if (row.state === "PASS") return null;
+  const failureClass = row.state === "PROVIDER_FAILURE" ? "PROVIDER_FAILURE"
+    : row.state === "SCHEMA_FAILURE" || row.state === "ANSWER_FORMAT_FAILURE" ? "SCHEMA_FAILURE"
+    : row.state === "TRUNCATION" ? "TRUNCATION"
+    : row.state === "RESOURCE_EXHAUSTION" ? "RESOURCE_EXHAUSTION"
+    : row.state === "VERIFIER_FAILURE" ? "VERIFIER_FAILURE"
+    : row.state === "PROTOCOL_OR_AUTHORIZATION_FAILURE" || row.state === "SECURITY_POLICY_REJECTION" ? "AUTHORIZATION_FAILURE"
+    : row.state === "INFRASTRUCTURE_FAILURE" ? "INFRASTRUCTURE_FAILURE" : "FUNCTIONAL_FAILURE";
+  return gapExport(createCapabilityGap({gapId: `TEXT-${row.taskId}-${theoryDigest(row).slice(0, 16)}`,
+    failureClass, capabilityClass: `TEXT_${row.state}`, benchmarkTaskDigest: theoryDigest({taskId: row.taskId,
+      family: row.family, inputDigest: row.inputDigest, privateOracleDigest: row.privateOracleDigest}),
+    failureEvidenceDigest: theoryDigest(row), benchmarkInputDigest: row.inputDigest}));
 }
 

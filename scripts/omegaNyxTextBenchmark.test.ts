@@ -4,8 +4,8 @@ import { NvidiaNimProvider, type NvidiaNimEvidence } from "../src/lib/codelab/mo
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
 import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
-  TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS,
-  textDiagnosticTransport, textRejectionHint } from "./omega/benchmarks/nyxTextBenchmark";
+  TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS,
+  textDiagnosticTransport, textRejectionHint, textCapabilityGap } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -41,6 +41,44 @@ check("compatibility correction uses existing template controls rather than nati
   assert.equal(configured.reasoningBudgetTokens, 2048); assert.equal(configured.responseFormat, "JSON_OBJECT");
 });
 check("unknown inference configuration fails closed", () => assert.throws(() => textConfiguredRequest(originalRequest, "UNKNOWN" as never)));
+check("schema correction does not enable rejected reasoning/template settings", () => {
+  const configured = textConfiguredRequest(originalRequest, "OBSERVATION_ALIGNED_SCHEMA", "SCOPED_FILE", false);
+  assert.equal(configured.inferencePolicy, undefined); assert.equal(configured.reasoningControl, undefined);
+  assert.equal(configured.maxTokens, originalRequest.maxTokens); assert.equal(configured.temperature, originalRequest.temperature);
+  assert.strictEqual(configured.messages, originalRequest.messages);
+});
+check("unobserved file requires only the previously authorized read shape", () => {
+  const format = textConfiguredRequest(originalRequest, "OBSERVATION_ALIGNED_SCHEMA", "SCOPED_FILE", false).responseFormat;
+  assert(format && typeof format === "object"); assert.equal(format.type, "JSON_SCHEMA");
+  assert.equal(format.name, "nyx_question_read"); assert.equal(format.schema.additionalProperties, false);
+  assert.deepEqual(format.schema.required, ["kind", "path"]);
+  assert(!JSON.stringify(format).includes("PROPOSE_EDIT")); assert(!JSON.stringify(format).includes("TERMINAL"));
+});
+check("observed and direct tasks use only exact reply shape", () => {
+  for (const delivery of ["DIRECT", "SCOPED_FILE"] as const) {
+    const format = textConfiguredRequest(originalRequest, "OBSERVATION_ALIGNED_SCHEMA", delivery, true).responseFormat;
+    assert(format && typeof format === "object"); assert.equal(format.name, "nyx_final_reply");
+    assert.deepEqual(format.schema.required, ["kind", "message"]); assert.equal(format.schema.additionalProperties, false);
+    assert(!JSON.stringify(format).includes("src/question.mjs"));
+  }
+});
+check("model text cannot become a trusted observation-state boolean", () =>
+  assert.throws(() => textConfiguredRequest(originalRequest, "OBSERVATION_ALIGNED_SCHEMA", "SCOPED_FILE", "observed" as never)));
+check("development schema tasks are disjoint from earlier diagnostics", () =>
+  assert(TEXT_ACTION_SCHEMA_DIAGNOSTICS.every(task => ![...TEXT_DELIVERY_DIAGNOSTICS, ...TEXT_COMPATIBILITY_DIAGNOSTICS]
+    .some(prior => prior.question === task.question))));
+check("development arithmetic oracle is derived independently of model behavior", () => {
+  assert.equal(String(Array.from({length: 6}, (_, i) => (i + 1) * (12 - i)).reduce((a, b) => a + b, 0) % 7),
+    TEXT_ACTION_SCHEMA_DIAGNOSTICS[0].answer);
+});
+check("development ordering oracle is independently enumerated", () => {
+  const permutations = (letters: string[]): string[][] => letters.length === 0 ? [[]]
+    : letters.flatMap((letter, i) => permutations(letters.filter((_, j) => i !== j)).map(tail => [letter, ...tail]));
+  const valid = permutations(["A", "B", "C", "D", "E", "F"]).filter(p => p.indexOf("E") === p.indexOf("F") + 1
+    && p.indexOf("D") === p.indexOf("E") + 1 && p.indexOf("C") === p.indexOf("D") + 1
+    && p.indexOf("B") < p.indexOf("F") && p.indexOf("A") > p.indexOf("C"));
+  assert.equal(valid.length, 1); assert.equal(String(valid[0].indexOf("D") + 1), TEXT_ACTION_SCHEMA_DIAGNOSTICS[1].answer);
+});
 check("delivery development tasks cannot masquerade as public benchmark population", () =>
   assert(TEXT_DELIVERY_DIAGNOSTICS.every(task => task.family === "DEVELOPMENT_DIAGNOSTIC")));
 check("compatibility repair is tested on separate development inputs", () =>
@@ -141,12 +179,24 @@ check("failed physical calls are all unknown, not zero compute", () => assert.eq
 check("local rejection cannot invent live HTTP attempts", () => assert.equal(textInferenceUsage([
   {...unknown, networkAttempted: false, delivery: {...unknown.delivery, httpAttempts: 0, timedOutAttempts: 0,
     transientUnavailableResponses: 0}, failureCategory: null}], 10).physicalCalls, 0));
-const countBefore = dispatches;
+check("a passed task does not create an unresolved capability gap", () => assert.equal(textCapabilityGap(sanitized), null));
+check("schema failure registers existing gap semantics without claiming repair", () => {
+  const gap = textCapabilityGap(sanitizedTextResult(task, denied, evidence, null, 1));
+  assert(gap); assert.equal(gap.failureClass, "SCHEMA_FAILURE"); assert.equal(gap.grantsAuthority, false);
+  assert.equal(gap.benchmarkReevaluationEligible, false); assert.equal(gap.steps.length, 0);
+  assert.equal(gap.status, "OBSERVED");
+});
+const ignoredGrammar = await invokeExistingNyxText({...config(makeProvider('{"kind":"UNKNOWN","message":"The answer is: 731"}')),
+  model: {complete: request => makeProvider('{"kind":"UNKNOWN","message":"The answer is: 731"}')
+    .complete(textConfiguredRequest(request, "OBSERVATION_ALIGNED_SCHEMA"))}}, "QUESTION");
+check("ignored hosted grammar cannot bypass unchanged local action parser", () =>
+  assert.equal(textOutcome(ignoredGrammar, [], null), "SCHEMA_FAILURE"));
+const afterIgnoredGrammar = dispatches;
 const oversized = await invokeExistingNyxText(config(makeProvider('{}')), "a".repeat(8000));
 check("oversized objective is capability blocked without truncation", () => assert.equal(oversized, null));
-check("oversized objective consumes no live model call", () => assert.equal(dispatches, countBefore));
+check("oversized objective consumes no live model call", () => assert.equal(dispatches, afterIgnoredGrammar));
 await assert.rejects(() => invokeExistingNyxText({...config(makeProvider('{}')), editablePaths: ["secret.txt"]}, "QUESTION"));
-check("mutation scope cannot be added by evaluator", () => assert.equal(dispatches, countBefore));
+check("mutation scope cannot be added by evaluator", () => assert.equal(dispatches, afterIgnoredGrammar));
 evidence.length = 0;
 const unauthorized = await invokeExistingNyxText(config(makeProvider('{"kind":"READ_FILE","path":"scripts/omega/benchmarks/secret.txt"}')), "QUESTION");
 check("model tool request remains an authorization/protocol failure", () => assert.equal(textOutcome(unauthorized, evidence, null), "PROTOCOL_OR_AUTHORIZATION_FAILURE"));
