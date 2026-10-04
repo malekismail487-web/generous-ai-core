@@ -96,6 +96,20 @@ export const NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION=Object.freeze({
   source:"https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-ultra-550b-a55b-infer",
 });
 
+/** Opt-in hosted compatibility experiment; all prior scored sources remain pinned. */
+export const NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION = Object.freeze({
+  chunkId: "NYX-HOSTED-NATIVE-COMPATIBILITY-001",
+  predecessor: "80b8fc674dc38b1817fdc6e98e5b10257dcdd62c",
+  changedPath: NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath,
+  sourceSha256: "5ea2e4e79322c3534683eb5d2855c6623bd2540a2b42f6c4b7ddbf7596ca2a5d",
+  changedBehavior: "OPT_IN_HOSTED_NATIVE_FIELDS_WITHOUT_TEMPLATE_KWARGS",
+  experimentalOnly: true, defaultRequestPayloadChanged: false,
+  historicalScoresComparable: false, acceptanceOracleChanged: false,
+  authorityIncrease: false, outputCeilingChanged: false,
+  providerCompatibilityVerified: false,
+  source: NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.source,
+});
+
 function task(index: number, helperPath: string, helperName: string, helperSource: string,
   goodSource: string, faultySource: string): NyxQualityV5Task {
   const original = NYX_ADMISSION_GUIDANCE_TASKS[index];

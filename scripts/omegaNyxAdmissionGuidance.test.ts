@@ -13,7 +13,8 @@ import { NYX_GATE_RECOVERY, NYX_GATE_RECOVERY_FROZEN_CORE, NYX_GATE_RECOVERY_TAS
   NYX_GATE_RECOVERY_SERVER_ERROR_REVISION, NYX_GATE_RECOVERY_BOUNDED_OUTPUT_REVISION,
   NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION,
   NYX_GATE_RECOVERY_ANSWER_COMPATIBILITY_REVISION,
-  NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION, NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION } from "./omega/nyx-gate-recovery-fixtures";
+  NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION, NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION,
+  NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION } from "./omega/nyx-gate-recovery-fixtures";
 
 let passed = 0;
 const failures: string[] = [];
@@ -46,10 +47,41 @@ check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected
   "historical ownership-repair core remains immutable and reproducible");
 check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected]) =>
   digest(Buffer.from(arcCorePredecessorSource(path, readFileSync(path, "utf8")))) === (path === NYX_GATE_RECOVERY_TRANSPORT_REVISION.changedPath
-    ? NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.sourceSha256
+    ? NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.sourceSha256
     : path === NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.cognitionPath
       ? NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.cognitionSourceSha256 : expected)),
   "current core permits only exact registered refinements; inversion reproduces frozen sources without inheriting historical scores");
+const hostedPredecessor = execFileSync("git", ["show",
+  NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.predecessor + ":" + NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.changedPath],
+  { encoding: "utf8" });
+const hostedCurrent = readFileSync(NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.changedPath, "utf8");
+const hostedRefinements = [
+  ['  readonly reasoningControl?: "ULTRA_NATIVE";\n',
+    '  readonly reasoningControl?: "ULTRA_NATIVE" | "ULTRA_HOSTED_NATIVE";\n'],
+  ['        ? request.reasoningControl === "ULTRA_NATIVE" ? {\n',
+    '        ? request.reasoningControl === "ULTRA_NATIVE" || request.reasoningControl === "ULTRA_HOSTED_NATIVE" ? {\n'],
+  ['          chat_template_kwargs: { force_nonempty_content: true },\n',
+    '          ...(request.reasoningControl === "ULTRA_NATIVE" ? {chat_template_kwargs: { force_nonempty_content: true }} : {}),\n'],
+  ['    if (request.reasoningControl !== undefined && (request.reasoningControl !== "ULTRA_NATIVE"\n',
+    '    if (request.reasoningControl !== undefined && (!["ULTRA_NATIVE", "ULTRA_HOSTED_NATIVE"].includes(request.reasoningControl)\n'],
+] as const;
+check(digest(Buffer.from(hostedPredecessor)) === NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.sourceSha256,
+  "hosted compatibility preserves the historical diagnostic source rather than rebaselining it");
+check(hostedRefinements.every(([before]) => hostedPredecessor.split(before).length === 2),
+  "hosted native compatibility binds exactly four unique predecessor locations");
+const reviewedHosted = hostedRefinements.reduce((source, [before, after]) => source.replace(before, after), hostedPredecessor);
+check(hostedCurrent === reviewedHosted && digest(Buffer.from(hostedCurrent)) === NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.sourceSha256,
+  "hosted native revision changes only opt-in configuration and preserves all other provider behavior");
+check(digest(Buffer.from(hostedCurrent + "// unreviewed mutation\n")) !== NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.sourceSha256,
+  "unrelated provider changes cannot inherit hosted compatibility source identity");
+check(NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.experimentalOnly
+  && !NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.providerCompatibilityVerified
+  && !NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.defaultRequestPayloadChanged
+  && !NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.historicalScoresComparable
+  && !NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.acceptanceOracleChanged
+  && !NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.authorityIncrease
+  && !NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.outputCeilingChanged,
+  "hosted compatibility specification cannot certify live compatibility, cognitive gain, defaults, scores or authority");
 const boundedProvider = execFileSync("git", ["show",
   `${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.predecessor}:${NYX_GATE_RECOVERY_ANSWER_RESERVATION_REVISION.changedPath}`],
 { encoding: "utf8" });

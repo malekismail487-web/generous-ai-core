@@ -881,6 +881,21 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
       &&!JSON.stringify(result).includes("private-diagnostic-thinking"),"observed thinking size does not persist raw model reasoning");
   }
   check(new Set(digests).size===4,"request custody differentiates all four real wire configurations");
+  const hosted=await client.complete({...base,reasoningControl:"ULTRA_HOSTED_NATIVE",reasoningBudgetTokens:16});
+  const hostedBody=bodies.at(-1)!;
+  check(hosted.decision==="COMPLETED"&&hostedBody.reasoning_effort==="medium"&&hostedBody.reasoning_budget===16,
+    "hosted native opt-in uses documented top-level reasoning fields");
+  check(!("chat_template_kwargs" in hostedBody)&&JSON.stringify(hostedBody.response_format)===JSON.stringify({type:"json_object"}),
+    "hosted native removes self-host template kwargs, not JSON output constraints");
+  check(hostedBody.max_tokens===base.maxTokens&&hostedBody.temperature===base.temperature&&!hosted.executorAuthorityGranted,
+    "hosted profile cannot grow token ceiling or executor authority");
+  check(!digests.includes(hosted.evidence.requestDigest),"custody digest binds the actual hosted-only wire payload");
+  for(const override of [{inferencePolicy:undefined},{reasoningBudgetTokens:-1},{reasoningBudgetTokens:32}]) {
+    check((await client.complete({...base,reasoningControl:"ULTRA_HOSTED_NATIVE",...override} as NvidiaNimCompletionRequest)).decision==="REJECTED",
+      "hosted compatibility cannot weaken finite reasoning or inference-policy validation");
+  }
+  check((await provider(async()=>{throw Error("must_not_send")}).complete({...base,reasoningEffort:undefined,
+    reasoningControl:"ULTRA_HOSTED_NATIVE"})).decision==="REJECTED","hosted native profile remains exact-model scoped");
   const nativeBudget=await client.complete({...base,reasoningControl:"ULTRA_NATIVE",reasoningBudgetTokens:16});
   const budgetBody=bodies.at(-1)!;
   check(nativeBudget.decision==="COMPLETED"&&budgetBody.reasoning_budget===16

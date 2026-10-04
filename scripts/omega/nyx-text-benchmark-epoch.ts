@@ -7,7 +7,7 @@ import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment, type NvidiaNimEv
 import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readOnlyExecutor";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextResult,
-  TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
+  TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair,
   type TextInferenceConfiguration, type PrivateTextTask } from "./benchmarks/nyxTextBenchmark";
 import { R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
@@ -20,7 +20,7 @@ export async function runTextBenchmarkEpoch() {
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") || git("status", "--porcelain"))
     throw Error("text_epoch_requires_clean_candidate");
   const mode = process.env.NYX_TEXT_EPOCH_MODE || "SMOKE";
-  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "ACTION_SCHEMA", "FULL"].includes(mode)) throw Error("text_epoch_mode_invalid");
+  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "HOSTED_DIAGNOSTIC", "ACTION_SCHEMA", "FULL"].includes(mode)) throw Error("text_epoch_mode_invalid");
   const configuration = process.env.NYX_TEXT_CONFIGURATION || "EXISTING_DEFAULT";
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
   const delivery = process.env.NYX_TEXT_DELIVERY || "DIRECT";
@@ -39,10 +39,13 @@ export async function runTextBenchmarkEpoch() {
     || new Set(tasks.map(t => t.taskId)).size !== 490
     || tasks.some(t => !["AIME_2025", "BBEH_MINI"].includes(t.family)
       || typeof t.question !== "string" || typeof t.answer !== "string")) throw Error("text_epoch_population_invalid");
-  const diagnostic = ["DIAGNOSTIC", "REJECTION_DIAGNOSTIC", "ACTION_SCHEMA"].includes(mode);
+  const diagnostic = ["DIAGNOSTIC", "REJECTION_DIAGNOSTIC", "ACTION_SCHEMA", "HOSTED_DIAGNOSTIC"].includes(mode);
   const transferTasks = [...tasks.filter(t => t.family === "AIME_2025").slice(4, 6),
     ...tasks.filter(t => t.family === "BBEH_MINI").slice(4, 6)];
-  const selection = mode === "TRANSFER_ABLATION" ? transferTasks.flatMap((task, index) =>
+  const selection = mode === "HOSTED_DIAGNOSTIC" ? TEXT_HOSTED_DIAGNOSTICS.flatMap((task, index) =>
+    (index ? ["HOSTED_BOUNDED", "BOUNDED_GUIDED"] as const : ["BOUNDED_GUIDED", "HOSTED_BOUNDED"] as const)
+      .map(variant => ({...task, taskId: `${task.taskId}-${variant}`, configuration: variant})))
+    : mode === "TRANSFER_ABLATION" ? transferTasks.flatMap((task, index) =>
     (index % 2 ? ["OBSERVATION_ALIGNED_SCHEMA", "EXISTING_DEFAULT"] as const : ["EXISTING_DEFAULT", "OBSERVATION_ALIGNED_SCHEMA"] as const)
       .map(variant => ({...task, taskId: `${task.taskId}-${variant}`, configuration: variant})))
     : mode === "ACTION_SCHEMA" ? TEXT_ACTION_SCHEMA_DIAGNOSTICS.flatMap((task, index) =>
@@ -157,6 +160,7 @@ export async function runTextBenchmarkEpoch() {
       bbehSourceDigest: data.bbehEvaluatorDigest, aime: "EXACT_FINAL_INTEGER_CUSTOM_ADAPTER_NOT_MATHARENA_HARNESS"},
     configuration: mode === "DIAGNOSTIC" ? "COUNTERBALANCED_DEFAULT_VS_BOUNDED_GUIDED_VS_BOUNDED_STRICT_LOCAL"
       : mode === "REJECTION_DIAGNOSTIC" ? "COUNTERBALANCED_DEFAULT_VS_TEMPLATE_BOUNDED"
+      : mode === "HOSTED_DIAGNOSTIC" ? "COUNTERBALANCED_NATIVE_TEMPLATE_VS_HOSTED_NATIVE"
       : ["ACTION_SCHEMA", "TRANSFER_ABLATION"].includes(mode) ? "COUNTERBALANCED_DEFAULT_VS_OBSERVATION_ALIGNED_SCHEMA" : configuration,
     configurationIsEvaluationOnly: true, productionDefaultsChanged: false,
     inference: "E4_LIVE_NVIDIA", verification: "E3_WITHHELD_REFERENCES_UPSTREAM_BBEH_GRADER",

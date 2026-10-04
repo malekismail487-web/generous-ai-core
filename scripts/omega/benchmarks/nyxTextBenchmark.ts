@@ -16,7 +16,7 @@ export const TEXT_BENCHMARK_POLICY = Object.freeze({
 export type TextTaskFamily = "AIME_2025" | "BBEH_MINI" | "DEVELOPMENT_DIAGNOSTIC";
 export interface PrivateTextTask { family: TextTaskFamily; taskId: string; question: string; answer: string }
 
-export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL", "TEMPLATE_BOUNDED", "OBSERVATION_ALIGNED_SCHEMA"] as const;
+export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL", "TEMPLATE_BOUNDED", "OBSERVATION_ALIGNED_SCHEMA", "HOSTED_BOUNDED"] as const;
 export const TEXT_DIAGNOSTIC_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL"] as const;
 export type TextInferenceConfiguration = typeof TEXT_INFERENCE_CONFIGURATIONS[number];
 /** Evaluation-only configuration ablation. No change to production NYX or its strict local parser. */
@@ -37,7 +37,8 @@ export function textConfiguredRequest(request: NvidiaNimCompletionRequest, confi
         additionalProperties: false}}};
   }
   return {...request, inferencePolicy: "REASONING_JSON" as const,
-    reasoningControl: configuration === "TEMPLATE_BOUNDED" ? undefined : "ULTRA_NATIVE" as const,
+    reasoningControl: configuration === "TEMPLATE_BOUNDED" ? undefined
+      : configuration === "HOSTED_BOUNDED" ? "ULTRA_HOSTED_NATIVE" as const : "ULTRA_NATIVE" as const,
     reasoningEffort: "MEDIUM" as const, reasoningBudgetTokens: 2048,
     ...(configuration === "BOUNDED_STRICT_LOCAL" ? {structuredOutputMode: "STRICT_LOCAL" as const} : {})};
 }
@@ -61,6 +62,12 @@ export const TEXT_ACTION_SCHEMA_DIAGNOSTICS: readonly PrivateTextTask[] = Object
     question: "The integers 1 through 12 are divided into pairs (1,12), (2,11), and so on. Add the product of each pair. What is the remainder when that sum is divided by 7?", answer: "0"},
   {family: "DEVELOPMENT_DIAGNOSTIC", taskId: "ACTION-SEQUENCE",
     question: "Six distinct events A, B, C, D, E, F are ordered. F immediately precedes E, E immediately precedes D, and D immediately precedes C. B is before F and A is after C. At what position is D?", answer: "4"},
+]);
+export const TEXT_HOSTED_DIAGNOSTICS: readonly PrivateTextTask[] = Object.freeze([
+  {family: "DEVELOPMENT_DIAGNOSTIC", taskId: "HOSTED-INTERVAL",
+    question: "How many integers from 2 through 14 inclusive are not divisible by 3?", answer: "9"},
+  {family: "DEVELOPMENT_DIAGNOSTIC", taskId: "HOSTED-ORDER",
+    question: "Four events U, V, W, X occur in positions 1 through 4. U is before V, X is before U, and W is after V. What is the position of U?", answer: "2"},
 ]);
 
 const REJECTION_PARAMETERS = ["reasoning_budget", "reasoning_effort", "response_format", "chat_template_kwargs",

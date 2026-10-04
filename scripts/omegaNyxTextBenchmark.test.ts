@@ -4,7 +4,7 @@ import { NvidiaNimProvider, type NvidiaNimEvidence } from "../src/lib/codelab/mo
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
 import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
-  TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS,
+  TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
@@ -41,6 +41,17 @@ check("compatibility correction uses existing template controls rather than nati
   assert.equal(configured.reasoningBudgetTokens, 2048); assert.equal(configured.responseFormat, "JSON_OBJECT");
 });
 check("unknown inference configuration fails closed", () => assert.throws(() => textConfiguredRequest(originalRequest, "UNKNOWN" as never)));
+check("hosted/native diagnostic isolates template kwargs instead of changing inference budget", () => {
+  const legacy = textConfiguredRequest(originalRequest, "BOUNDED_GUIDED");
+  const hosted = textConfiguredRequest(originalRequest, "HOSTED_BOUNDED");
+  assert.equal(hosted.reasoningControl, "ULTRA_HOSTED_NATIVE");
+  assert.deepEqual({...hosted, reasoningControl: legacy.reasoningControl}, legacy);
+});
+check("hosted diagnostics contain no reused development objective", () =>
+  assert(TEXT_HOSTED_DIAGNOSTICS.every(task => ![...TEXT_DELIVERY_DIAGNOSTICS, ...TEXT_COMPATIBILITY_DIAGNOSTICS,
+    ...TEXT_ACTION_SCHEMA_DIAGNOSTICS].some(prior => prior.question === task.question))));
+check("hosted interval oracle is independent enumeration", () => assert.equal(String(
+  Array.from({length: 13}, (_, i) => i + 2).filter(value => value % 3 !== 0).length), TEXT_HOSTED_DIAGNOSTICS[0].answer));
 check("schema correction does not enable rejected reasoning/template settings", () => {
   const configured = textConfiguredRequest(originalRequest, "OBSERVATION_ALIGNED_SCHEMA", "SCOPED_FILE", false);
   assert.equal(configured.inferencePolicy, undefined); assert.equal(configured.reasoningControl, undefined);
