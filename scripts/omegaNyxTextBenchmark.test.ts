@@ -5,7 +5,7 @@ import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnly
 import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
   TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
-  textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair } from "./omega/benchmarks/nyxTextBenchmark";
+  textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -41,6 +41,25 @@ check("compatibility correction uses existing template controls rather than nati
   assert.equal(configured.reasoningBudgetTokens, 2048); assert.equal(configured.responseFormat, "JSON_OBJECT");
 });
 check("unknown inference configuration fails closed", () => assert.throws(() => textConfiguredRequest(originalRequest, "UNKNOWN" as never)));
+const windowTasks = (["AIME_2025", "BBEH_MINI"] as const).flatMap(family => Array.from({length: 8}, (_, index) =>
+  ({family, taskId: family + "-" + index, question: "synthetic-window-" + index, answer: String(index)})));
+check("historical transfer window is unchanged without an explicit offset", () =>
+  assert.deepEqual(textTransferSelection(windowTasks).map(task => task.taskId),
+    ["AIME_2025-4", "AIME_2025-5", "BBEH_MINI-4", "BBEH_MINI-5"]));
+check("new transfer window is positional and disjoint from earlier task identities", () => {
+  const historical = textTransferSelection(windowTasks);
+  const fresh = textTransferSelection(windowTasks, 6);
+  assert.deepEqual(fresh.map(task => task.taskId), ["AIME_2025-6", "AIME_2025-7", "BBEH_MINI-6", "BBEH_MINI-7"]);
+  assert(fresh.every(task => !historical.some(previous => previous.taskId === task.taskId)));
+});
+check("transfer selection cannot consult or favor reference answers", () => {
+  const changed = windowTasks.map(task => ({...task, answer: "a different private oracle"}));
+  assert.deepEqual(textTransferSelection(changed, 6).map(task => task.taskId),
+    textTransferSelection(windowTasks, 6).map(task => task.taskId));
+});
+check("invalid or incomplete windows fail closed instead of silently selecting fewer tasks", () => {
+  for (const start of [-1, 1.5, NaN, Infinity, 7, "6" as never]) assert.throws(() => textTransferSelection(windowTasks, start));
+});
 check("hosted/native diagnostic isolates template kwargs instead of changing inference budget", () => {
   const legacy = textConfiguredRequest(originalRequest, "BOUNDED_GUIDED");
   const hosted = textConfiguredRequest(originalRequest, "HOSTED_BOUNDED");

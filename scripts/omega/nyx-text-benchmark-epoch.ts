@@ -8,7 +8,7 @@ import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readO
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextResult,
   TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
-  textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair,
+  textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
   type TextInferenceConfiguration, type PrivateTextTask } from "./benchmarks/nyxTextBenchmark";
 import { R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
 
@@ -25,6 +25,11 @@ export async function runTextBenchmarkEpoch() {
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
   const delivery = process.env.NYX_TEXT_DELIVERY || "DIRECT";
   if (!["DIRECT", "SCOPED_FILE"].includes(delivery)) throw Error("text_epoch_delivery_invalid");
+  // Committed workflow configuration fixes this window before any private answers are loaded.
+  const transferStart = process.env.NYX_TEXT_TRANSFER_START === undefined ? 4 : Number(process.env.NYX_TEXT_TRANSFER_START);
+  if (!Number.isSafeInteger(transferStart) || transferStart < 0
+    || process.env.NYX_TEXT_TRANSFER_START !== undefined && mode !== "TRANSFER_ABLATION")
+    throw Error("text_epoch_transfer_window_invalid");
   if (!process.env.NYX_TEXT_DATA || !process.env.NYX_BBEH_ROOT) throw Error("text_epoch_data_missing");
   const data = JSON.parse(await readFile(resolve(process.env.NYX_TEXT_DATA), "utf8"));
   if (data.schemaVersion !== 1 || data.aimeRevision !== "c94da77eb22bbd6439e62a323bec18493a421302"
@@ -40,8 +45,7 @@ export async function runTextBenchmarkEpoch() {
     || tasks.some(t => !["AIME_2025", "BBEH_MINI"].includes(t.family)
       || typeof t.question !== "string" || typeof t.answer !== "string")) throw Error("text_epoch_population_invalid");
   const diagnostic = ["DIAGNOSTIC", "REJECTION_DIAGNOSTIC", "ACTION_SCHEMA", "HOSTED_DIAGNOSTIC"].includes(mode);
-  const transferTasks = [...tasks.filter(t => t.family === "AIME_2025").slice(4, 6),
-    ...tasks.filter(t => t.family === "BBEH_MINI").slice(4, 6)];
+  const transferTasks = textTransferSelection(tasks, transferStart);
   const selection = mode === "HOSTED_DIAGNOSTIC" ? TEXT_HOSTED_DIAGNOSTICS.flatMap((task, index) =>
     (index ? ["HOSTED_BOUNDED", "BOUNDED_GUIDED"] as const : ["BOUNDED_GUIDED", "HOSTED_BOUNDED"] as const)
       .map(variant => ({...task, taskId: `${task.taskId}-${variant}`, configuration: variant})))
@@ -156,6 +160,8 @@ export async function runTextBenchmarkEpoch() {
       tools: delivery === "DIRECT" ? [] : ["READ_ONLY_DISPOSABLE_QUESTION_FILE"],
       fixtureCleanupRequired: true, inputTruncationAllowed: false},
     populationDigest: theoryDigest(tasks), selectionDigest: theoryDigest(selection),
+    transferWindow: mode === "TRANSFER_ABLATION" ? {start: transferStart, countPerFamily: 2,
+      selection: "POSITIONAL_COMMITTED_BEFORE_OBSERVATION_NOT_CORRECTNESS_SELECTED"} : null,
     selectedTaskIds: selection.map(t => t.taskId), verifier: {bbehRevision: data.bbehRevision,
       bbehSourceDigest: data.bbehEvaluatorDigest, aime: "EXACT_FINAL_INTEGER_CUSTOM_ADAPTER_NOT_MATHARENA_HARNESS"},
     configuration: mode === "DIAGNOSTIC" ? "COUNTERBALANCED_DEFAULT_VS_BOUNDED_GUIDED_VS_BOUNDED_STRICT_LOCAL"

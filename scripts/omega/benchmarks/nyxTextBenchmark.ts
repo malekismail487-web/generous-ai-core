@@ -16,6 +16,14 @@ export const TEXT_BENCHMARK_POLICY = Object.freeze({
 export type TextTaskFamily = "AIME_2025" | "BBEH_MINI" | "DEVELOPMENT_DIAGNOSTIC";
 export interface PrivateTextTask { family: TextTaskFamily; taskId: string; question: string; answer: string }
 
+/** Freeze a positional window, never a correctness-selected task subset. */
+export function textTransferSelection(tasks: readonly PrivateTextTask[], start = 4): PrivateTextTask[] {
+  const families = (["AIME_2025", "BBEH_MINI"] as const).map(family => tasks.filter(task => task.family === family));
+  if (!Number.isSafeInteger(start) || start < 0 || families.some(population => start + 2 > population.length))
+    throw Error("text_transfer_window_invalid");
+  return families.flatMap(population => population.slice(start, start + 2));
+}
+
 export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL", "TEMPLATE_BOUNDED", "OBSERVATION_ALIGNED_SCHEMA", "HOSTED_BOUNDED"] as const;
 export const TEXT_DIAGNOSTIC_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL"] as const;
 export type TextInferenceConfiguration = typeof TEXT_INFERENCE_CONFIGURATIONS[number];
