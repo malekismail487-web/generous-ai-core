@@ -126,6 +126,7 @@ export class NyxScopedComputerHost implements NyxComputerHost {
   }
 
   async execute(action: NyxComputerAction, requestId: string): Promise<NyxComputerResult> {
+    if (action.kind === "CONTAINER_EXEC") return rejected(requestId, "container_capability_unavailable");
     if (action.kind === "TERMINAL_CHECK") return this.#terminalCheck(action.path, requestId);
     if (!this.desktopAvailable || this.#config.desktopPid === null || this.#config.winappPath === null) {
       return rejected(requestId, "desktop_capability_unavailable");

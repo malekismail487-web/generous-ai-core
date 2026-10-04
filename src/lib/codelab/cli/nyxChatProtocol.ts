@@ -6,6 +6,7 @@ export type NyxChatAction =
   | { readonly kind: "PROPOSE_EDIT"; readonly path: string; readonly expectedBaseHash: string;
       readonly replacement: string; readonly rationale: string }
   | { readonly kind: "TERMINAL_CHECK"; readonly path: string }
+  | { readonly kind: "CONTAINER_EXEC"; readonly argv: readonly string[] }
   | { readonly kind: "DESKTOP_INSPECT" }
   | { readonly kind: "DESKTOP_INVOKE"; readonly selector: string; readonly observationDigest: string }
   | { readonly kind: "DESKTOP_SET_VALUE"; readonly selector: string; readonly observationDigest: string;
@@ -71,6 +72,13 @@ export function parseNyxChatAction(raw: string, maxReplacementBytes = 32_768): N
   if (value.kind === "TERMINAL_CHECK" && exactKeys(value, ["kind", "path"]) && nyxSafeRelativePath(value.path)
     && /\.(?:mjs|cjs|js)$/.test(value.path)) {
     return { action: { kind: "TERMINAL_CHECK", path: value.path }, reason: "accepted" };
+  }
+  if (value.kind === "CONTAINER_EXEC" && exactKeys(value, ["kind", "argv"])
+    && Array.isArray(value.argv) && value.argv.length > 0 && value.argv.length <= 24
+    && value.argv.every(arg => typeof arg === "string" && !arg.includes("\0") && arg.length <= 8000)
+    && value.argv[0].length > 0 && !value.argv[0].startsWith("-")
+    && Buffer.byteLength(JSON.stringify(value.argv), "utf8") <= 16000) {
+    return { action: { kind: "CONTAINER_EXEC", argv: Object.freeze([...value.argv]) }, reason: "accepted" };
   }
   if (value.kind === "DESKTOP_INSPECT" && exactKeys(value, ["kind"])) {
     return { action: { kind: "DESKTOP_INSPECT" }, reason: "accepted" };

@@ -2057,6 +2057,7 @@
       "files": [
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
+        "scripts/omega/nyx-container-preflight.ts",
         "scripts/omega/nyx-public-witness-cycle.ts",
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
@@ -2069,6 +2070,7 @@
         "scripts/omega/nvidia-nim-live-smoke.ts",
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
+        "scripts/omega/nyx-container-preflight.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
         "scripts/omega/nyx-frontier-workbench-compare.ts",
         "scripts/omega/nyx-live-r3e.ts",
@@ -2452,6 +2454,12 @@
       ]
     },
     {
+      "name": "OMEGA_ALLOW_ISOLATED_CONTAINER_PREFLIGHT",
+      "files": [
+        "scripts/omega/nyx-container-preflight.ts"
+      ]
+    },
+    {
       "name": "OMEGA_ALLOW_NVIDIA_NETWORK",
       "files": [
         "scripts/omega/nvidia-nim-live-smoke.ts",
@@ -2552,6 +2560,8 @@
     {
       "name": "PATH",
       "files": [
+        "scripts/omega/benchmarks/nyxDockerDriver.ts",
+        "scripts/omega/nyx-container-preflight.ts",
         "scripts/omega/nyx-desktop-model-live-eval.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omegaSchedulerChallenge.test.ts"
@@ -2568,6 +2578,7 @@
       "files": [
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
+        "scripts/omega/nyx-container-preflight.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
         "scripts/omega/nyx-frontier-workbench-compare.ts",
         "scripts/omega/nyx-public-witness-cycle.ts",
@@ -2585,6 +2596,8 @@
     {
       "name": "S",
       "files": [
+        "scripts/omega/benchmarks/nyxDockerDriver.ts",
+        "scripts/omega/nyx-container-preflight.ts",
         "scripts/omega/nyx-desktop-model-live-eval.ts"
       ]
     },

@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/90",
+  "suiteVersion": "omega-institutional-suite/91",
   "criticalSuites": [
+    "OMEGA-NYX-CONTAINER-EXECUTION",
     "OMEGA-NYX-TEXT-BENCHMARK",
     "OMEGA-PUBLIC-FAILURE-WITNESS",
     "OMEGA-ARC-NYX-INTEGRATION",
@@ -166,6 +167,7 @@
     { "suiteId": "OMEGA-GROUNDED-ENGINEERING", "file": "scripts/omegaGroundedEngineering.test.ts" },
     { "suiteId": "OMEGA-NVIDIA-NIM-PROVIDER", "file": "scripts/omegaNvidiaNimProvider.test.ts" },
     { "suiteId": "OMEGA-NYX-CHAT-CLI", "file": "scripts/omegaNyxChatCli.test.ts" },
+    { "suiteId": "OMEGA-NYX-CONTAINER-EXECUTION", "file": "scripts/omegaNyxContainerExecution.test.ts" },
     { "suiteId": "OMEGA-NYX-LOCAL-WEB-CONSOLE", "file": "scripts/omegaNyxLocalWebConsole.test.ts" },
     { "suiteId": "OMEGA-LUMINA-LIVE-BOUNDARY", "file": "scripts/omegaLuminaLiveBoundary.test.ts" },
     { "suiteId": "OMEGA-VERIFICATION-INTEGRITY", "file": "scripts/omegaVerificationIntegrity.test.ts" },

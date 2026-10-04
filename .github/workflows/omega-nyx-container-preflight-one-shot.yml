@@ -1,0 +1,37 @@
+name: Omega NYX real isolated container prerequisite
+on:
+  workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-container-preflight-one-shot.yml]
+permissions:
+  contents: read
+concurrency:
+  group: omega-isolated-container-preflight-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  isolated-container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Test typed authority and negative-capability contracts
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxContainerExecution.test.ts
+      - name: Exercise actual Docker isolation through the existing NYX loop without a model secret
+        env:
+          OMEGA_ALLOW_ISOLATED_CONTAINER_PREFLIGHT: '1'
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-container-preflight.ts
+      - name: Preserve sanitized prerequisite evidence, not a benchmark score
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-container-prerequisite-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-container-preflight.json
+          if-no-files-found: error
