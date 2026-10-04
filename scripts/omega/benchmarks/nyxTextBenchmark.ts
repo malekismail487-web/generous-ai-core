@@ -1,4 +1,5 @@
-import type { NvidiaNimEvidence, NvidiaNimCompletionRequest } from "../../../src/lib/codelab/model/nvidiaNimProvider";
+import { NVIDIA_NIM_CHAT_COMPLETIONS_URL, type NvidiaNimEvidence, type NvidiaNimCompletionRequest,
+  type NvidiaNimTransport } from "../../../src/lib/codelab/model/nvidiaNimProvider";
 import { NyxChatSession, type NyxChatSessionConfig, type NyxChatTurnResult } from "../../../src/lib/codelab/cli/nyxChatSession";
 import { theoryDigest } from "../../../src/lib/codelab/research/theoryContracts";
 import { usageSchema, zeroUsage, type Usage } from "./contracts";
@@ -40,6 +41,50 @@ export const TEXT_COMPATIBILITY_DIAGNOSTICS: readonly PrivateTextTask[] = Object
   {family: "DEVELOPMENT_DIAGNOSTIC", taskId: "TEMPLATE-DIVISIBILITY",
     question: "A positive integer n is less than 20 and divisible by 4. The integer n+2 is divisible by 5. What is n?", answer: "8"},
 ]);
+
+const REJECTION_PARAMETERS = ["reasoning_budget", "reasoning_effort", "response_format", "chat_template_kwargs",
+  "enable_thinking", "medium_effort", "force_nonempty_content", "max_tokens", "model"] as const;
+/** Only fixed labels survive. Provider error text, echoed prompts and credentials never enter evidence. */
+export function textRejectionHint(raw: string) {
+  if (Buffer.byteLength(raw) > 4096) return {category: "UNOBSERVED_OVERSIZED", parameters: []};
+  let error: unknown;
+  try { const parsed = JSON.parse(raw); error = parsed?.error ?? parsed?.detail ?? null; }
+  catch { return {category: "UNOBSERVED_NOT_JSON", parameters: []}; }
+  const diagnostic = JSON.stringify(error) ?? "";
+  const parameters = REJECTION_PARAMETERS.filter(parameter => diagnostic.includes(parameter));
+  return {category: parameters.length ? "REQUEST_PARAMETER_REJECTION" : "UNCLASSIFIED_REJECTION", parameters};
+}
+
+/** Diagnostic decoration of the SAME provider transport, fixed endpoint, deadline and capacity gate. */
+export function textDiagnosticTransport(observe: (hint: ReturnType<typeof textRejectionHint> & {status: number}) => void,
+  transport: NvidiaNimTransport = fetch): NvidiaNimTransport {
+  return async (input, init) => {
+    if (input !== NVIDIA_NIM_CHAT_COMPLETIONS_URL) throw Error("text_diagnostic_endpoint_denied");
+    const response = await transport(input, init);
+    if (![400, 422].includes(response.status)) return response;
+    const emit = (hint: ReturnType<typeof textRejectionHint>) => {
+      try { observe({...hint, status: response.status}); } catch { /* diagnostics cannot alter the provider result */ }
+    };
+    const reader = response.clone().body?.getReader();
+    let bytes = Buffer.alloc(0); let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      if (!reader) throw Error("no_error_body");
+      await Promise.race([ (async () => {
+        while (true) {
+          const chunk = await reader.read(); if (chunk.done) break;
+          if (bytes.length + chunk.value.byteLength > 4096) throw Error("error_body_bound");
+          bytes = Buffer.concat([bytes, Buffer.from(chunk.value)]);
+        }
+      })(), new Promise((_, reject) => { timer = setTimeout(() => reject(Error("diagnostic_deadline")), 1000); }) ]);
+      emit(textRejectionHint(bytes.toString("utf8")));
+    } catch { emit({category: "UNOBSERVED_BOUNDED_READ", parameters: []}); }
+    finally {
+      if (timer) clearTimeout(timer);
+      try { void reader?.cancel().catch(() => undefined); } catch { /* never log a raw cleanup exception */ }
+    }
+    return response; // No response substitution, additional request, retry, or change to acceptance.
+  };
+}
 
 /** Input projection only. A private reference never enters a chat message or system contract. */
 export function textTaskPrompt(question: string): string {

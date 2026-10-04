@@ -4,7 +4,8 @@ import { NvidiaNimProvider, type NvidiaNimEvidence } from "../src/lib/codelab/mo
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
 import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
-  TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS } from "./omega/benchmarks/nyxTextBenchmark";
+  TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS,
+  textDiagnosticTransport, textRejectionHint } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -44,6 +45,26 @@ check("delivery development tasks cannot masquerade as public benchmark populati
   assert(TEXT_DELIVERY_DIAGNOSTICS.every(task => task.family === "DEVELOPMENT_DIAGNOSTIC")));
 check("compatibility repair is tested on separate development inputs", () =>
   assert(TEXT_COMPATIBILITY_DIAGNOSTICS.every(task => !TEXT_DELIVERY_DIAGNOSTICS.some(prior => prior.question === task.question))));
+check("provider rejection text is reduced to fixed parameter labels only", () => {
+  const hint = textRejectionHint(JSON.stringify({error: {message: "reasoning_budget rejected; PRIVATE_ECHO_NEVER_PERSIST"}}));
+  assert.deepEqual(hint.parameters, ["reasoning_budget"]); assert(!JSON.stringify(hint).includes("PRIVATE_ECHO"));
+});
+check("oversized rejection text never becomes diagnostic evidence", () =>
+  assert.equal(textRejectionHint("a".repeat(5000)).category, "UNOBSERVED_OVERSIZED"));
+check("malformed rejection remains unknown, not invented", () =>
+  assert.equal(textRejectionHint("not JSON").category, "UNOBSERVED_NOT_JSON"));
+let diagnosticDispatches = 0; const hints: unknown[] = [];
+const transport = textDiagnosticTransport(hint => hints.push(hint), async () => {
+  diagnosticDispatches++; return new Response(JSON.stringify({error: {param: "reasoning_budget", message: "DO_NOT_LOG_THIS"}}), {status: 400});
+});
+const rejectionResponse = await transport("https://integrate.api.nvidia.com/v1/chat/completions");
+check("diagnostic decoration does not substitute provider HTTP result", () => assert.equal(rejectionResponse.status, 400));
+check("diagnostic records fixed labels without raw error", () => assert(!JSON.stringify(hints).includes("DO_NOT_LOG_THIS")));
+await assert.rejects(() => transport("https://example.com"));
+check("diagnostic cannot create a second network destination", () => assert.equal(diagnosticDispatches, 1));
+const failedSink = await textDiagnosticTransport(() => { throw Error("sink failed"); }, async () =>
+  new Response('{"error":{"param":"response_format"}}', {status: 400}))("https://integrate.api.nvidia.com/v1/chat/completions");
+check("diagnostic sink failure cannot turn an observed HTTP rejection into transport failure", () => assert.equal(failedSink.status, 400));
 
 const now = Date.now();
 const reader = await ReadOnlyRepositoryExecutor.create({executorId: "TEXT-EVAL-TEST", tokenId: "TEXT-TOKEN-TEST",

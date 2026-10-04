@@ -8,6 +8,7 @@ import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readO
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextResult,
   TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
+  textDiagnosticTransport, textRejectionHint,
   type TextInferenceConfiguration, type PrivateTextTask } from "./benchmarks/nyxTextBenchmark";
 import { R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
 
@@ -48,16 +49,20 @@ export async function runTextBenchmarkEpoch() {
       .map(task => ({...task, configuration: configuration as TextInferenceConfiguration}));
   const before = git("ls-files", "-s"); const began = Date.now();
   const deadline = began + (mode === "FULL" ? 19000000 : mode === "DIAGNOSTIC" ? 1200000 : 900000);
+  const requestRejections: (ReturnType<typeof textRejectionHint> & {status: number})[] = [];
   const provider = NvidiaNimProvider.create({providerId: "NYX-ACTUAL-TEXT-BENCHMARK",
     model: TEXT_BENCHMARK_POLICY.model, authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM",
     credentialSource: nvidiaNimCredentialFromEnvironment(process.env), maxPromptBytes: 64000,
-    maxOutputTokens: TEXT_BENCHMARK_POLICY.maxOutputTokens, timeoutMs: 120000});
-  const results: (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration})[] = [];
+    maxOutputTokens: TEXT_BENCHMARK_POLICY.maxOutputTokens, timeoutMs: 120000,
+    transport: textDiagnosticTransport(hint => requestRejections.push(hint))});
+  const results: (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration,
+    requestRejections: typeof requestRejections})[] = [];
   const blocked: {taskId: string; reason: string}[] = [];
   let consecutiveProviderFailures = 0;
   for (const task of selection) {
     if (Date.now() >= deadline || mode !== "DIAGNOSTIC" && consecutiveProviderFailures >= 2) break;
     const started = Date.now(); const evidence: NvidiaNimEvidence[] = [];
+    const rejectionStart = requestRejections.length;
     const questionFile = `export const question = ${JSON.stringify(task.question)};\n`;
     if (delivery === "SCOPED_FILE" && Buffer.byteLength(questionFile) > 64000) {
       blocked.push({taskId: task.taskId, reason: "UNCHANGED_SCOPED_FILE_CAPABILITY_LIMIT"}); continue;
@@ -105,7 +110,8 @@ export async function runTextBenchmarkEpoch() {
     if (reader?.auditLog().some(t => t.toolAction !== null && (!repository
       || t.request.resourcePath !== "src/question.mjs" || t.request.action !== "READ_FILE")))
       throw Error("text_epoch_unexpected_repository_action");
-    const row = {...sanitizedTextResult(task, result, evidence, correct, Date.now() - started), configuration: task.configuration};
+    const row = {...sanitizedTextResult(task, result, evidence, correct, Date.now() - started), configuration: task.configuration,
+      requestRejections: requestRejections.slice(rejectionStart)};
     row.usage.toolCalls = reader?.auditLog().filter(t => t.toolAction !== null).length ?? 0;
     row.usage.toolWorkUnits = row.usage.toolCalls * Buffer.byteLength(questionFile);
     results.push(row); console.log(`NYX_TEXT_TASK ${JSON.stringify(row)}`);
