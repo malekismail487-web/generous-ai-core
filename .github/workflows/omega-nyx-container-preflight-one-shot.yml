@@ -1,9 +1,6 @@
 name: Omega NYX real isolated container prerequisite
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-container-preflight-one-shot.yml]
 permissions:
   contents: read
 concurrency:
