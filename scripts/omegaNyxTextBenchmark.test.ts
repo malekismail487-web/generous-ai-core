@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { NvidiaNimProvider, type NvidiaNimEvidence } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
+import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
-  TEXT_BENCHMARK_POLICY } from "./omega/benchmarks/nyxTextBenchmark";
+  TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -19,6 +20,23 @@ check("question projection contains no hidden reference field", () => assert(!te
 check("empty question rejected rather than guessed", () => assert.throws(() => textTaskPrompt("")));
 check("existing single call and output bounds are explicit", () => assert.equal(TEXT_BENCHMARK_POLICY.maxCallsPerTurn, 1));
 check("text benchmark has no executable tools", () => assert.deepEqual(TEXT_BENCHMARK_POLICY.tools, []));
+const originalRequest = {schemaVersion: 1 as const, requestId: "CONFIG-TEST", messages: [{role: "user" as const, content: "question"}],
+  maxTokens: 8192, temperature: 0.2, responseFormat: "JSON_OBJECT" as const, observedAtEpochMs: Date.now()};
+check("existing defaults are not silently changed by evaluation", () =>
+  assert.strictEqual(textConfiguredRequest(originalRequest, "EXISTING_DEFAULT"), originalRequest));
+check("bounded reasoning leaves max tokens, model prompt and deadline untouched", () => {
+  const configured = textConfiguredRequest(originalRequest, "BOUNDED_GUIDED");
+  assert.equal(configured.reasoningBudgetTokens, 2048); assert.equal(configured.reasoningEffort, "MEDIUM");
+  assert.equal(configured.maxTokens, originalRequest.maxTokens); assert.strictEqual(configured.messages, originalRequest.messages);
+  assert.equal(configured.responseFormat, originalRequest.responseFormat);
+});
+check("strict local delivery retains required JSON protocol", () => {
+  const configured = textConfiguredRequest(originalRequest, "BOUNDED_STRICT_LOCAL");
+  assert.equal(configured.structuredOutputMode, "STRICT_LOCAL"); assert.equal(configured.responseFormat, "JSON_OBJECT");
+});
+check("unknown inference configuration fails closed", () => assert.throws(() => textConfiguredRequest(originalRequest, "UNKNOWN" as never)));
+check("delivery development tasks cannot masquerade as public benchmark population", () =>
+  assert(TEXT_DELIVERY_DIAGNOSTICS.every(task => task.family === "DEVELOPMENT_DIAGNOSTIC")));
 
 const now = Date.now();
 const reader = await ReadOnlyRepositoryExecutor.create({executorId: "TEXT-EVAL-TEST", tokenId: "TEXT-TOKEN-TEST",
@@ -75,5 +93,44 @@ evidence.length = 0;
 const unauthorized = await invokeExistingNyxText(config(makeProvider('{"kind":"READ_FILE","path":"scripts/omega/benchmarks/secret.txt"}')), "QUESTION");
 check("model tool request remains an authorization/protocol failure", () => assert.equal(textOutcome(unauthorized, evidence, null), "PROTOCOL_OR_AUTHORIZATION_FAILURE"));
 check("revoked reader performs no filesystem action", () => assert(reader.auditLog().every(t => t.toolAction === null)));
+const expiredDelivery = {...unknown, failureCategory: null, delivery: {...unknown.delivery, state: "STOPPED" as const}};
+check("capacity-expired delivery remains provider failure even without terminal category", () =>
+  assert.equal(textOutcome(result, [expiredDelivery], null), "PROVIDER_FAILURE"));
+
+const longQuestion = "public bounded objective ".repeat(500);
+const fixture = await R3BenchmarkRepositorySession.create({"src/question.mjs": `export const question = ${JSON.stringify(longQuestion)};\n`},
+  "a".repeat(40), Date.now() + 60000, 1);
+const fileReader = await ReadOnlyRepositoryExecutor.create({executorId: "TEXT-FILE-TEST", tokenId: "TEXT-FILE-TOKEN",
+  repositoryRoot: fixture.sourceRoot, resourceScopes: ["src/question.mjs"], issuedAtEpochMs: now - 1,
+  expiresAtEpochMs: Date.now() + 60000, constraints: {maxFileBytes: 64000, maxDirectoryEntries: 1, allowedExtensions: [".mjs"]},
+  issuer: "TEXT-TEST", auditIdentity: "TEXT-FILE-AUDIT"});
+try {
+  let at = 0; const actions = [JSON.stringify({kind: "READ_FILE", path: "src/question.mjs"}),
+    JSON.stringify({kind: "REPLY", message: "The answer is: 731"})];
+  const fileProvider = NvidiaNimProvider.create({providerId: "TEXT-FILE-TEST", model: TEXT_BENCHMARK_POLICY.model,
+    authorityMode: "TEST_DOUBLE_ONLY", credentialSource: {sourceIdentity: "test-double", read: () => "synthetic-not-a-credential"},
+    maxPromptBytes: 64000, maxOutputTokens: 8192, timeoutMs: 5000, transport: async (_url, init) => {
+      const body = JSON.parse(String(init?.body));
+      if (at === 1) assert(body.messages.some((m: {content: string}) => m.content.includes(longQuestion)));
+      assert(!JSON.stringify(body).includes("731"));
+      return new Response(JSON.stringify({choices: [{message: {content: actions[at++]}, finish_reason: "stop"}],
+        usage: {prompt_tokens: 40, completion_tokens: 20, total_tokens: 60}}), {status: 200});}});
+  const fileResult = await invokeExistingNyxText({...config(fileProvider), sessionId: "TEXT-FILE-TEST", reader: fileReader,
+    maxModelCallsPerTurn: 2}, longQuestion, "SCOPED_FILE");
+  check("long problem is observed intact through existing scoped R1", () => assert.equal(fileResult?.outcome, "REPLIED"));
+  check("file delivery consumes two honestly counted calls", () => assert.equal(fileResult?.modelCalls, 2));
+  check("whole-question R1 evidence is available", () => assert.equal(fileReader.auditLog().filter(t => t.toolAction !== null).length, 1));
+  check("authorized file read is not a forbidden-tool regression", () => assert.equal(textOutcome(fileResult, [], true), "PASS"));
+  const noRead = await invokeExistingNyxText({...config(makeProvider('{"kind":"REPLY","message":"The answer is: 7"}')),
+    sessionId: "TEXT-NO-READ", reader: fileReader, maxModelCallsPerTurn: 2}, "QUESTION", "SCOPED_FILE");
+  // A previous session's observation must not satisfy a new task's requirement.
+  check("task-local read must not be substituted with earlier audit evidence", () => assert.notEqual(noRead?.outcome, "REPLIED"));
+  check("missing whole-question observation is not a reasoning score", () =>
+    assert.equal(textOutcome(noRead, [], null), "MISSING_REQUIRED_REPOSITORY_ACTION"));
+} finally {
+  fileReader.terminate(Date.now(), "TEST_FINISHED");
+  const cleanup = await fixture.close();
+  check("file delivery owned fixture cleanup verified", () => assert(cleanup.cleanupVerified && cleanup.sourceUnchanged));
+}
 console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

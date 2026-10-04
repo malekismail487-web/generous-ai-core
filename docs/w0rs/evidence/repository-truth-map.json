@@ -2416,7 +2416,19 @@
       ]
     },
     {
+      "name": "NYX_TEXT_CONFIGURATION",
+      "files": [
+        "scripts/omega/nyx-text-benchmark-epoch.ts"
+      ]
+    },
+    {
       "name": "NYX_TEXT_DATA",
+      "files": [
+        "scripts/omega/nyx-text-benchmark-epoch.ts"
+      ]
+    },
+    {
+      "name": "NYX_TEXT_DELIVERY",
       "files": [
         "scripts/omega/nyx-text-benchmark-epoch.ts"
       ]

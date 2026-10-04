@@ -27,7 +27,7 @@ jobs:
         with:
           bun-version: 1.4.0
       - run: bun install --frozen-lockfile --ignore-scripts
-      - name: Test no-secret adapter and unchanged NYX chat boundary after canonical-pin correction
+      - name: Test intact scoped delivery and unchanged strict NYX chat boundary
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxTextBenchmark.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxChatCli.test.ts
@@ -43,11 +43,11 @@ jobs:
           git -C "$RUNNER_TEMP/bbeh" checkout 80d12ca916b7158f22293fcf3144f4d3d854d4be
           curl --fail --location --proto '=https' --tlsv1.2 'https://huggingface.co/datasets/MathArena/aime_2025/resolve/c94da77eb22bbd6439e62a323bec18493a421302/data/train-00000-of-00001.parquet' --output "$RUNNER_TEMP/aime-2025.parquet"
           python scripts/omega/benchmarks/prepare-text-benchmarks.py prepare --aime "$RUNNER_TEMP/aime-2025.parquet" --bbeh "$RUNNER_TEMP/bbeh" --output "$RUNNER_TEMP/nyx-text-data.json"
-      - name: Run frozen first-attempt smoke selection before full population admission
+      - name: Diagnose default versus bounded inference on non-benchmark development tasks
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NYX_TEXT_EPOCH_MODE: SMOKE
+          NYX_TEXT_EPOCH_MODE: DIAGNOSTIC
           NYX_TEXT_DATA: ${{ runner.temp }}/nyx-text-data.json
           NYX_BBEH_ROOT: ${{ runner.temp }}/bbeh
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-text-benchmark-epoch.ts

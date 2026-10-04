@@ -1,0 +1,251 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-ACTUAL-TEXT-SMOKE-fbd4c0b",
+  "source": {
+    "candidate": "fbd4c0b58aafb82faf3e6af2625ff660271a38c7",
+    "runId": 37152263646,
+    "jobId": 111288391374,
+    "workflowConclusion": "SUCCESS_IS_HARNESS_COMPLETION_NOT_BENCHMARK_ACCEPTANCE",
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/37152263646"
+  },
+  "originalReport": {
+    "schemaVersion": 1,
+    "identity": "NYX-PUBLIC-TEXT-BENCHMARK-EPOCH-001",
+    "candidate": "fbd4c0b58aafb82faf3e6af2625ff660271a38c7",
+    "mode": "SMOKE",
+    "executionIdentity": "github-actions-37152263646",
+    "environment": "linux-x64-node-v24.21.0",
+    "policy": {
+      "version": "nyx-existing-chat-text-benchmark/1",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "maxOutputTokens": 8192,
+      "maxCallsPerTurn": 1,
+      "maxTaskMs": 180000,
+      "maxInputCharacters": 8000,
+      "maxOutputCharacters": 8000,
+      "maxArtifactBytes": 50000,
+      "firstAttemptOnly": true,
+      "referenceAnswersVisibleToCognition": false,
+      "tools": [],
+      "sourceWrites": false,
+      "credentialForwarding": false,
+      "generalNetwork": false
+    },
+    "populationDigest": "d2d32bdddc66c12eebbc0d8124d4d9fbde943a8a4322a16b1dc608700afbea3e",
+    "selectionDigest": "91d8d0f2b91dcde72534a18ee61e4917d4e802f57d06017e33a79370f82b74f4",
+    "selectedTaskIds": [
+      "AIME-2025-1",
+      "AIME-2025-2",
+      "BBEH-MINI-000",
+      "BBEH-MINI-001"
+    ],
+    "verifier": {
+      "bbehRevision": "80d12ca916b7158f22293fcf3144f4d3d854d4be",
+      "bbehSourceDigest": "4b4f06e5babb015de2ba639bae995a5526182ffb5b5890af54dfcf038580eb34",
+      "aime": "EXACT_FINAL_INTEGER_CUSTOM_ADAPTER_NOT_MATHARENA_HARNESS"
+    },
+    "configuration": "EXISTING_NYX_CHAT_DEFAULT_0_2_JSON_OBJECT_NO_COGNITIVE_CHANGES",
+    "inference": "E4_LIVE_NVIDIA",
+    "verification": "E3_WITHHELD_REFERENCES_UPSTREAM_BBEH_GRADER",
+    "results": [
+      {
+        "taskId": "AIME-2025-1",
+        "family": "AIME_2025",
+        "inputDigest": "7f691ce3372f09bb06cecca6765af15109bfbe51dce98863121e098e3bdbb88f",
+        "privateOracleDigest": "12b8c0944c94778c6c9884cafe1f8a143f12c6daf2f4e4a19a9dc1e97df882c3",
+        "predictionDigest": "976de31060891221a98064d8e8008a4f6225d32027d360d0d9ee1d33b617bec7",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 1,
+          "httpAttempts": 1,
+          "reportedTokens": 848,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 12222,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "55d137f958d7f1ab2a63f8f3232afedff43ce93cc245ff79c9156fee6a0181b0",
+            "responseDigest": "5641e50cb5d5acfa06d9e2c8f10680b336633f97afb1443b7c54d6e20d3ee2dc",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 939
+          }
+        ],
+        "eventDigests": [
+          "0675396c2b70991fb1d2fbed850f16781d098bce7a397119e06f487bb1904d66",
+          "112e462507d3cc6c2af8208a001354bc693d5e80d2f250812097b8c7cc49b29c"
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "AIME-2025-2",
+        "family": "AIME_2025",
+        "inputDigest": "0bf1628788226c8afd3606841c4c99a48d9f61cfb639f7431b7905a1f50b7362",
+        "privateOracleDigest": "09325e1d9dff5fd9386a2d3c6b8f13cbac0a5bce719933c984650f416027286e",
+        "predictionDigest": null,
+        "state": "SCHEMA_FAILURE",
+        "correct": null,
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 1,
+          "httpAttempts": 1,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 1,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 120005,
+          "providerFailures": 1,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "0b14ec1c31a3111fdfb0b2e61c6addc0fbe8bdce1611a7b5ad81703ef6724920",
+            "responseDigest": null,
+            "providerRequestId": null,
+            "statusCode": null,
+            "finishReason": null,
+            "failureCategory": null,
+            "reasoningOutputBytes": null
+          }
+        ],
+        "eventDigests": [
+          "fc0e3a8b234f297a10fb37b1fdcc83ed91344b036728efb44cc26baab0fd979c"
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "BBEH-MINI-000",
+        "family": "BBEH_MINI",
+        "inputDigest": "4a6bcb85d43f32d52e66afff1f4adf0a937c6845683baf8191f4605cd619102c",
+        "privateOracleDigest": "c7ffe38ec3cf3f1765c6d5c5d914e0c15d303ca55cb2c5ec4eb126c17d43b44a",
+        "predictionDigest": null,
+        "state": "SCHEMA_FAILURE",
+        "correct": null,
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 1,
+          "httpAttempts": 1,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 1,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 180002,
+          "providerFailures": 1,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "7ad5a75576f258dad17382cf13e2aba098ae9906d3389d24186a98efc8d21244",
+            "responseDigest": null,
+            "providerRequestId": null,
+            "statusCode": null,
+            "finishReason": null,
+            "failureCategory": null,
+            "reasoningOutputBytes": null
+          }
+        ],
+        "eventDigests": [
+          "f92730cadd0481d97c3432323de2cee55d0a4b24c2b7db846be61a4530c0e430"
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "BBEH-MINI-001",
+        "family": "BBEH_MINI",
+        "inputDigest": "64a9505a109efc1974f2302b3947284173bc81b308ac3de1d2c7fe934e490ed7",
+        "privateOracleDigest": "92e9e7e5922d26e17e48f0869ab25cc99499fdab722c065de8e0965c96c68e86",
+        "predictionDigest": null,
+        "state": "SCHEMA_FAILURE",
+        "correct": null,
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 1,
+          "httpAttempts": 1,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 1,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 180001,
+          "providerFailures": 1,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "fbf5dd2677f35cf5d18c9bb36d37ce1f403531e3952fd779ef9dbeda69a4d94b",
+            "responseDigest": null,
+            "providerRequestId": null,
+            "statusCode": null,
+            "finishReason": null,
+            "failureCategory": null,
+            "reasoningOutputBytes": null
+          }
+        ],
+        "eventDigests": [
+          "9912c3a6017a0d395d07e73207d81c91ebd00432c03761ea357d883871749691"
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      }
+    ],
+    "blocked": [],
+    "families": [
+      {
+        "family": "AIME_2025",
+        "selected": 2,
+        "executed": 2,
+        "correct": 1,
+        "graded": 1,
+        "blockedByCapability": 0,
+        "notExecuted": 0,
+        "fullPopulation": 30,
+        "fullBenchmarkScoreClaim": false
+      },
+      {
+        "family": "BBEH_MINI",
+        "selected": 2,
+        "executed": 2,
+        "correct": 0,
+        "graded": 0,
+        "blockedByCapability": 0,
+        "notExecuted": 0,
+        "fullPopulation": 460,
+        "fullBenchmarkScoreClaim": false
+      }
+    ],
+    "sourceUnchanged": true,
+    "authorityDelta": "NONE",
+    "repairAttempts": 0,
+    "firstAttemptOnly": true,
+    "broadPromotion": false,
+    "calibration": "NOT_SUPPORTED_BY_CURRENT_REPLY_PROTOCOL",
+    "stopReason": "SELECTION_EXHAUSTED",
+    "contamination": "PUBLIC_DATA_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"
+  },
+  "correctedInterpretation": {
+    "originalReportModified": false,
+    "adapterDefect": "Provider capacity/deadline termination erased terminal failureCategory. Delivery counters establish timed-out attempts; three rows were wrongly labeled SCHEMA_FAILURE.",
+    "providerFailures": 3,
+    "gradedAime": 1,
+    "correctAime": 1,
+    "gradedBbeh": 0,
+    "officialScoreClaim": false,
+    "configurationPromotion": false,
+    "failedCallTokens": "UNKNOWN_NOT_ZERO",
+    "remediation": "Classify STOPPED delivery with observed timeout/capacity counters separately from schema and reasoning. Freeze a separate development configuration diagnostic; do not tune against reserved benchmark answers."
+  }
+}
