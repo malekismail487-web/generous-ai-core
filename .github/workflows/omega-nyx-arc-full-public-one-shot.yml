@@ -1,8 +1,5 @@
 name: Omega NYX entire ARC public population baseline
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-arc-full-public-one-shot.yml]
   workflow_dispatch:
 permissions:
   contents: read

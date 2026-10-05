@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/93",
+  "suiteVersion": "omega-institutional-suite/94",
   "criticalSuites": [
+    "OMEGA-STORAGE-PREREQUISITE",
     "OMEGA-BENCHMARK-POPULATION",
     "OMEGA-NYX-HARBOR-BRIDGE",
     "OMEGA-NYX-CONTAINER-EXECUTION",
@@ -172,6 +173,7 @@
     { "suiteId": "OMEGA-NYX-CONTAINER-EXECUTION", "file": "scripts/omegaNyxContainerExecution.test.ts" },
     { "suiteId": "OMEGA-NYX-HARBOR-BRIDGE", "file": "scripts/omegaNyxHarborBridge.test.ts" },
     { "suiteId": "OMEGA-BENCHMARK-POPULATION", "file": "scripts/omegaBenchmarkPopulation.test.ts" },
+    { "suiteId": "OMEGA-STORAGE-PREREQUISITE", "file": "scripts/omegaStoragePrerequisite.test.ts" },
     { "suiteId": "OMEGA-NYX-LOCAL-WEB-CONSOLE", "file": "scripts/omegaNyxLocalWebConsole.test.ts" },
     { "suiteId": "OMEGA-LUMINA-LIVE-BOUNDARY", "file": "scripts/omegaLuminaLiveBoundary.test.ts" },
     { "suiteId": "OMEGA-VERIFICATION-INTEGRITY", "file": "scripts/omegaVerificationIntegrity.test.ts" },

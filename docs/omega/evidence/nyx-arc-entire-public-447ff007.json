@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-ARC-ENTIRE-PUBLIC-447FF007-RECEIPT",
+  "candidate": "447ff007bc752d4b62a5208acf9dce6f3925ba30",
+  "runId": 37328106053,
+  "jobId": 111823921060,
+  "artifactId": 11352289939,
+  "reportDigest": "5848df3547892c0c6694f2a1557475a8a1ba8c9d72382fe230c0d6651009b552",
+  "evidence": {
+    "inference": "E4_LIVE_NVIDIA",
+    "execution": "E3_EXISTING_R3_LOCAL_EXECUTION",
+    "scoring": "NOT_REACHED",
+    "providerFailuresReported": 3
+  },
+  "selection": {
+    "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+    "partition": "data/evaluation",
+    "population": 120,
+    "selection": "ENTIRE_PINNED_PUBLIC_EVALUATION_POPULATION_NO_CONTENT_FILTERING",
+    "oraclePolicy": "WITHHELD_OUTPUTS_EVALUATOR_ONLY_NO_BENCHMARK_FEEDBACK_RETRIES",
+    "contamination": "PUBLIC_EVALUATION_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"
+  },
+  "currentSystemPopulation": {
+    "requested": 120,
+    "executed": 2,
+    "independentlyGraded": 0,
+    "accepted": 0
+  },
+  "current": {
+    "arm": "CURRENT_NYX",
+    "tasks": 120,
+    "executedTasks": 2,
+    "firstAttemptAccepted": 0,
+    "repairedAccepted": 0,
+    "finalAccepted": 0,
+    "qualityAccepted": 0,
+    "qualityNotEvaluated": 0,
+    "falseAcceptances": null,
+    "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+    "repairAttempts": 0,
+    "failureCounts": {
+      "PROVIDER_FAILURE": 1,
+      "TRUNCATION": 0,
+      "SCHEMA_FAILURE": 0,
+      "SYNTAX_FAILURE": 0,
+      "FUNCTIONAL_FAILURE": 0,
+      "HIDDEN_CASE_FAILURE": 0,
+      "QUALITY_REJECTION": 0,
+      "AUTHORIZATION_FAILURE": 0,
+      "MISSING_CAPABILITY": 0,
+      "VERIFIER_FAILURE": 0,
+      "RESOURCE_EXHAUSTION": 1,
+      "INFRASTRUCTURE_FAILURE": 0
+    },
+    "usage": {
+      "logicalCalls": 4,
+      "physicalCalls": 5,
+      "httpAttempts": 5,
+      "reportedTokens": 23654,
+      "unknownUsageCalls": 3,
+      "toolCalls": 4,
+      "toolWorkUnits": 16,
+      "wallClockMs": 244264,
+      "providerFailures": 3,
+      "retries": 1
+    },
+    "verifierUsage": {
+      "logicalCalls": 0,
+      "physicalCalls": 0,
+      "httpAttempts": 0,
+      "reportedTokens": 0,
+      "unknownUsageCalls": 0,
+      "toolCalls": 0,
+      "toolWorkUnits": 0,
+      "wallClockMs": 0,
+      "providerFailures": 0,
+      "retries": 0
+    },
+    "unknownVerifierUsage": 0,
+    "verifierWorkUnitForLocalArc": "TEST_OUTPUT_CHECKS_NOT_CPU_CYCLES",
+    "unknownAttemptUsage": 0,
+    "complete": false,
+    "providerStable": false,
+    "calibration": {
+      "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+      "population": 0,
+      "value": null
+    },
+    "benchmarkScorePercent": null
+  },
+  "providerFailureCircuit": {
+    "stopAfter": 2,
+    "consecutiveProviderFailures": 2,
+    "open": true
+  },
+  "integration": {
+    "sourceUnchanged": true,
+    "cleanupVerified": true,
+    "integrationTraceComplete": true,
+    "firstPublicCandidatesTested": 2,
+    "publicExamplesPassed": 0,
+    "repairPausedForCapacity": 2,
+    "primaryResourceExhaustionReason": "PHYSICAL_CALLS_3_EXCEED_FROZEN_LIMIT_2",
+    "publicDiagnostics": "HASH_ONLY_IN_ORIGINAL_TRACE_NO_HIDDEN_ANSWERS_OR_STORED_CANDIDATE_SOURCE",
+    "originalFailuresPreserved": true
+  },
+  "assessment": {
+    "officialBenchmarkScore": null,
+    "cognitiveGain": false,
+    "fullCampaignCompleted": false,
+    "notExecuted": 118,
+    "conclusion": "INCOMPLETE_PROVIDER_AFFECTED_NOT_ZERO_COGNITIVE_SCORE",
+    "unchangedRerunAuthorized": false,
+    "authorityDelta": "NONE",
+    "remaining": "PROVIDER_STABLE_DELIVERY_AND_UNEXECUTED_PUBLIC_POPULATION"
+  }
+}

@@ -1,0 +1,34 @@
+name: Omega NYX official-task storage prerequisite
+on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-storage-preflight-one-shot.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  storage-prerequisite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Verify fixed diagnostic and preserved candidate-authority boundary
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaStoragePrerequisite.test.ts
+      - name: Test bounded writable-layer support without NYX or credentials
+        env:
+          OMEGA_ALLOW_STORAGE_QUOTA_PREFLIGHT: '1'
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-docker-storage-preflight.ts
+      - name: Preserve environment evidence regardless of availability
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-storage-prerequisite-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-storage-preflight-*.json
+          if-no-files-found: error

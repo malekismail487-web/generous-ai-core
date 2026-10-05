@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "identity": "FRONTIERMATH-ERDOS-PUBLIC-ACQUISITION-001",
+  "benchmark": "FrontierMath Erdős",
+  "source": "https://github.com/epoch-research/LeanOpenProblems",
+  "methodology": "https://epoch.ai/benchmarks/frontiermath-erdos",
+  "revision": "1d784d33f071f4e5e3a1f800cc3f8144f55aaec1",
+  "acquisition": "COMPLETE_PUBLIC_REPOSITORY_CHECKED_OUT_AT_EXACT_REVISION_OUTSIDE_NYX_CANDIDATE",
+  "license": "MIT with retained third-party FormalConjectures Apache-2.0 notices",
+  "population": {
+    "formalStatements": 68,
+    "erdosSubset": 50,
+    "autoformalizedSubset": 18,
+    "selection": "PINNED_BLOOM_SELECTION_MANIFESTS_NOT_CORRECTNESS_SELECTED"
+  },
+  "verificationRequirement": "UPSTREAM_COMPARATOR_IN_SEPARATE_PRISTINE_LEAN_CONTAINER_EXACT_STATEMENT_KERNEL_REPLAY_AND_ALLOWED_AXIOMS",
+  "officialEnvironment": "OFFLINE_LEAN_MATHLIB_AGENT_AND_SEPARATE_COMPARATOR_OPTIONAL_OFFLINE_LITERATURE",
+  "repositoryConfig": {
+    "path": "configs/bloom68.yaml",
+    "perTaskWorkingTimeSeconds": 129600,
+    "perTaskCostLimitUsd": 300,
+    "memoryGiB": 200,
+    "websiteTimeBudget": "72 hours; differs from pinned repository's 36-hour configuration, not silently reconciled"
+  },
+  "execution": "NOT_EXECUTED",
+  "modelCalls": 0,
+  "independentlyGraded": 0,
+  "score": null,
+  "blockers": [
+    "EXPLICITLY_ADMITTED_LEAN_AGENT_AND_INDEPENDENT_COMPARATOR_ENVIRONMENT_NOT_IMPLEMENTED",
+    "PUBLISHED_REFERENCE_CONFIGURATION_EXCEEDS_CURRENT_BOUNDED_RUNNER_RESOURCES",
+    "PROVIDER_STABLE_COGNITION_NOT_ESTABLISHED"
+  ],
+  "candidateInputRestriction": "ISOLATED_STATEMENTS_ONLY_NO_SOURCES_MANIFEST_EXTRAS_OR_KNOWN_SIBLING_PROOFS",
+  "taskStatementsOrSolutionsInspected": false,
+  "originalProtectedFrontierMathAccess": "UNCHANGED_UNRESOLVED",
+  "isSubstituteForProtectedFrontierMath": false,
+  "officialLeaderboardClaim": false,
+  "cognitiveGain": false,
+  "grantsAuthority": false
+}
