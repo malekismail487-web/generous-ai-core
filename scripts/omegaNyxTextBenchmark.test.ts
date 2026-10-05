@@ -5,7 +5,8 @@ import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnly
 import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
   TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
-  textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection } from "./omega/benchmarks/nyxTextBenchmark";
+  textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
+  textWholePopulation, textPopulationIsFullyGraded } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -59,6 +60,39 @@ check("transfer selection cannot consult or favor reference answers", () => {
 });
 check("invalid or incomplete windows fail closed instead of silently selecting fewer tasks", () => {
   for (const start of [-1, 1.5, NaN, Infinity, 7, "6" as never]) assert.throws(() => textTransferSelection(windowTasks, start));
+});
+const wholeTasks = (["AIME_2025", "BBEH_MINI"] as const).flatMap(family => Array.from({length: family === "AIME_2025" ? 30 : 460},
+  (_, index) => ({family, taskId: `${family}-${index}`, question: "synthetic full-population objective", answer: String(index)})));
+check("full AIME selection retains every ordered task without narrowing the corpus", () => {
+  const selected = textWholePopulation(wholeTasks, "AIME_2025");
+  assert.deepEqual(selected.map(task => task.taskId), Array.from({length: 30}, (_, index) => `AIME_2025-${index}`));
+  assert(Object.isFrozen(selected)); assert.equal(wholeTasks.length, 490);
+});
+check("full BBEH population remains independently selectable and cannot disappear", () =>
+  assert.equal(textWholePopulation(wholeTasks, "BBEH_MINI").length, 460));
+check("whole-population selection cannot inspect questions or reference answers", () => {
+  const protectedTasks = wholeTasks.map(task => ({family: task.family, taskId: task.taskId,
+    get question(): string {throw Error("question inspected before selection");},
+    get answer(): string {throw Error("private oracle inspected by selector");}}));
+  assert.equal(textWholePopulation(protectedTasks, "AIME_2025").length, 30);
+});
+check("missing, duplicate or unsupported whole populations fail closed", () => {
+  assert.throws(() => textWholePopulation(wholeTasks.slice(1), "AIME_2025"));
+  assert.throws(() => textWholePopulation([...wholeTasks.slice(1), wholeTasks[1]], "AIME_2025"));
+  assert.throws(() => textWholePopulation(wholeTasks, "DEVELOPMENT_DIAGNOSTIC" as never));
+});
+check("full-score eligibility requires every task executed and independently graded", () => {
+  assert(textPopulationIsFullyGraded("AIME_2025", 30, 30, 30));
+  assert(textPopulationIsFullyGraded("BBEH_MINI", 460, 460, 460));
+  assert(!textPopulationIsFullyGraded("AIME_2025", 30, 29, 29));
+  assert(!textPopulationIsFullyGraded("AIME_2025", 30, 30, 29));
+});
+check("zero or subset counts cannot falsely certify an omitted benchmark family", () => {
+  for (const family of ["AIME_2025", "BBEH_MINI", "DEVELOPMENT_DIAGNOSTIC"] as const)
+    assert(!textPopulationIsFullyGraded(family, 0, 0, 0));
+  assert(!textPopulationIsFullyGraded("AIME_2025", 2, 2, 2));
+  assert(!textPopulationIsFullyGraded("AIME_2025", 31, 31, 31));
+  assert(!textPopulationIsFullyGraded("AIME_2025", 30, 30, NaN));
 });
 check("hosted/native diagnostic isolates template kwargs instead of changing inference budget", () => {
   const legacy = textConfiguredRequest(originalRequest, "BOUNDED_GUIDED");

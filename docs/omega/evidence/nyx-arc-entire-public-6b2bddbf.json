@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-ARC-ENTIRE-PUBLIC-6B2BDDBF-RECEIPT",
+  "candidate": "6b2bddbfe86732e5b60a12507fdc5582bd4640cf",
+  "runId": 37341579394,
+  "jobId": 111869691137,
+  "artifactId": 11358592586,
+  "artifactDigest": "sha256:5722f23e46ef3d50712e56846b922cbe0511c19e6fcdadc0661a1181424c487b",
+  "reportDigest": "07d0efdabaac91fdb366638ce8f187c9566d5e87b0f292278c7de753b39163ab",
+  "campaignReportDigest": "9c4e31f223487761164f03c7b901f73c55cefb4428a0f9b8c389bca61e95d405",
+  "selection": {
+    "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+    "partition": "data/evaluation",
+    "requested": 120,
+    "selection": "ENTIRE_PINNED_PUBLIC_EVALUATION_POPULATION_NO_CONTENT_FILTERING",
+    "oraclePolicy": "WITHHELD_OUTPUTS_EVALUATOR_ONLY_NO_BENCHMARK_FEEDBACK_RETRIES",
+    "contamination": "PUBLIC_EVALUATION_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"
+  },
+  "observed": {
+    "executedTasks": 2,
+    "independentlyGraded": 0,
+    "firstAttemptAccepted": 0,
+    "repairedAccepted": 0,
+    "finalAccepted": 0,
+    "notExecuted": 118,
+    "falseAcceptances": null,
+    "falseAcceptanceAudit": "NOT_EXECUTED",
+    "failureCounts": {
+      "PROVIDER_FAILURE": 1,
+      "RESOURCE_EXHAUSTION": 1
+    },
+    "usage": {
+      "logicalCalls": 3,
+      "physicalCalls": 4,
+      "httpAttempts": 4,
+      "reportedTokens": 8683,
+      "unknownUsageCalls": 3,
+      "toolCalls": 3,
+      "toolWorkUnits": 11,
+      "wallClockMs": 173811,
+      "providerFailures": 3,
+      "retries": 1
+    },
+    "tasks": [
+      {
+        "taskDigest": "77b353db4dfef7f7441377d201e2a79eab641f73b9d03e17d72af397d9601ecc",
+        "physicalCalls": 2,
+        "logicalCalls": 1,
+        "failure": "PROVIDER_FAILURE",
+        "loopReason": "repair_cognition_nvidia_provider_http_503",
+        "candidateIterations": 0,
+        "independentlyGraded": false,
+        "cleanupVerified": true,
+        "sourceUnchanged": true
+      },
+      {
+        "taskDigest": "d03342801d6aa1b4f29c61beb2d4e9d714778baa6162a42b8f46ccd28291aad5",
+        "physicalCalls": 2,
+        "logicalCalls": 2,
+        "failure": "RESOURCE_EXHAUSTION",
+        "loopReason": "repair_cognition_nvidia_http_attempt_budget_exhausted",
+        "candidateIterations": 1,
+        "publicCandidateFunctionalPass": false,
+        "publicDiagnosticDigest": "f3b977e1fb6b27ce17e1ee3d2a2d73359f997c382b62ca6a002404f601c26715",
+        "candidatePredictionArtifactProduced": false,
+        "independentlyGraded": false,
+        "cleanupVerified": true,
+        "sourceUnchanged": true
+      }
+    ]
+  },
+  "physicalBudgetVerification": {
+    "perTaskPhysicalLimit": 2,
+    "maximumObservedPerTaskPhysicalCalls": 2,
+    "physicalOverruns": 0,
+    "includesProviderRetries": true,
+    "successfulAllowanceRenewal": false,
+    "acceptanceOracleChanged": false,
+    "evidenceClass": "E4_LIVE_PROVIDER_DISPATCH_WITH_E3_LOCAL_ACCOUNTING",
+    "supports": "REQUEST_LIMIT_PRESERVED_IN_THIS_LIVE_RUN",
+    "doesNotSupport": "PROVIDER_STABILITY_OR_COGNITIVE_IMPROVEMENT"
+  },
+  "verificationAtCandidate": {
+    "ciRunId": 37341579350,
+    "ciJobId": 111869693003,
+    "ciResult": "SUCCESS",
+    "suites": 108,
+    "passedChecks": 10896,
+    "failedSuites": 0,
+    "typescriptVersion": "5.8.3",
+    "typescriptBaseline": 0,
+    "typescriptCurrent": 0,
+    "typescriptNew": 0,
+    "productionBuild": "PASS",
+    "packageSmoke": "PASS",
+    "secretScan": "PASS"
+  },
+  "assessment": {
+    "workflowSuccessIsBenchmarkSuccess": false,
+    "providerStable": false,
+    "providerFailureCircuitOpen": true,
+    "fullCampaignCompleted": false,
+    "officialBenchmarkScore": null,
+    "cognitiveGain": false,
+    "remainingPublicFailureCause": "NOT_IDENTIFIABLE_FROM_DIAGNOSTIC_HASH_ALONE",
+    "hiddenCaseFailureEstablished": false,
+    "authorityDelta": "NONE",
+    "sourceUnchanged": true,
+    "cleanupVerified": true,
+    "unchangedAutomaticRerun": false,
+    "original447ff007FailurePreserved": true,
+    "classification": "LIVE_LIMIT_REPAIR_CONFIRMED_CAMPAIGN_STILL_PROVIDER_AFFECTED_AND_UNGRADED"
+  },
+  "planCoverage": {
+    "directlyImplemented": ["HONEST_PHYSICAL_COMPUTE_ACCOUNTING", "PRESERVE_NEGATIVE_EVIDENCE"],
+    "supporting": ["EVIDENCE_OVER_CONFIDENCE", "NO_SELF_CERTIFICATION", "NO_IMPLICIT_RESOURCE_RENEWAL"],
+    "deferred": ["COGNITIVE_PROMOTION", "COMPLETE_BENCHMARK_SCORE", "RECURSION", "DEVICE_INTEGRATION"],
+    "conflicts": [],
+    "coverageStatus": "PARTIAL_JUST_IN_TIME"
+  }
+}

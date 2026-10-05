@@ -203,3 +203,14 @@ limits; cancellation, expiry and transport failure cannot refund or renew attemp
 Budget denial is resource exhaustion, not a model reasoning or provider failure.
 Successful last-budget responses remain eligible for the unchanged independent oracle.
 This is a delivery correction, not a cognitive promotion or a benchmark score.
+
+### Entire public AIME population
+
+`FULL_AIME` selects all 30 tasks from the unchanged pinned 490-task AIME/BBEH data
+artifact, before consulting correctness. It uses current NYX's existing scoped-question
+read/reply path and unchanged per-task calls, tokens, deadlines, parser and exact-answer
+oracle. A 110-minute workflow accommodates the 30 existing 180-second task leases;
+it does not extend a task lease or renew exhausted inference. The two-task provider-failure
+circuit remains intact. Partial, ungraded and omitted families cannot claim a full score.
+BBEH's 460-task population remains required separately. This current-system baseline
+is not a matched-compute comparison, protected evaluation or cognitive promotion.

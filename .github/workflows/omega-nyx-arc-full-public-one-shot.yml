@@ -1,9 +1,6 @@
 name: Omega NYX entire ARC public population baseline
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [src/lib/codelab/model/nvidiaNimProvider.ts]
 permissions:
   contents: read
 concurrency:

@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, rename, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment, type NvidiaNimEvidence } from
@@ -9,6 +9,7 @@ import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextResult,
   TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
+  textWholePopulation, textPopulationIsFullyGraded,
   type TextInferenceConfiguration, type PrivateTextTask } from "./benchmarks/nyxTextBenchmark";
 import { R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
 
@@ -20,7 +21,7 @@ export async function runTextBenchmarkEpoch() {
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") || git("status", "--porcelain"))
     throw Error("text_epoch_requires_clean_candidate");
   const mode = process.env.NYX_TEXT_EPOCH_MODE || "SMOKE";
-  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "HOSTED_DIAGNOSTIC", "ACTION_SCHEMA", "FULL"].includes(mode)) throw Error("text_epoch_mode_invalid");
+  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "HOSTED_DIAGNOSTIC", "ACTION_SCHEMA", "FULL", "FULL_AIME"].includes(mode)) throw Error("text_epoch_mode_invalid");
   const configuration = process.env.NYX_TEXT_CONFIGURATION || "EXISTING_DEFAULT";
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
   const delivery = process.env.NYX_TEXT_DELIVERY || "DIRECT";
@@ -63,11 +64,13 @@ export async function runTextBenchmarkEpoch() {
     : mode === "DIAGNOSTIC" ? TEXT_DELIVERY_DIAGNOSTICS.flatMap((task, index) =>
     [...(index ? [...TEXT_DIAGNOSTIC_CONFIGURATIONS].reverse() : TEXT_DIAGNOSTIC_CONFIGURATIONS)].map(variant =>
       ({...task, taskId: `${task.taskId}-${variant}`, configuration: variant})))
-    : (["SMOKE", "FRESH", "TRANSFER"].includes(mode) ? [...tasks.filter(t => t.family === "AIME_2025").slice(mode === "TRANSFER" ? 4 : mode === "FRESH" ? 2 : 0, mode === "TRANSFER" ? 6 : mode === "FRESH" ? 4 : 2),
+    : (mode === "FULL_AIME" ? textWholePopulation(tasks, "AIME_2025")
+      : ["SMOKE", "FRESH", "TRANSFER"].includes(mode) ? [...tasks.filter(t => t.family === "AIME_2025").slice(mode === "TRANSFER" ? 4 : mode === "FRESH" ? 2 : 0, mode === "TRANSFER" ? 6 : mode === "FRESH" ? 4 : 2),
       ...tasks.filter(t => t.family === "BBEH_MINI").slice(mode === "TRANSFER" ? 4 : mode === "FRESH" ? 2 : 0, mode === "TRANSFER" ? 6 : mode === "FRESH" ? 4 : 2)] : tasks)
       .map(task => ({...task, configuration: configuration as TextInferenceConfiguration}));
   const before = git("ls-files", "-s"); const began = Date.now();
-  const deadline = began + (mode === "FULL" ? 19000000 : mode === "DIAGNOSTIC" ? 1200000 : 900000);
+  const deadline = began + (mode === "FULL_AIME" ? 30 * TEXT_BENCHMARK_POLICY.maxTaskMs + 60000
+    : mode === "FULL" ? 19000000 : mode === "DIAGNOSTIC" ? 1200000 : 900000);
   const requestRejections: (ReturnType<typeof textRejectionHint> & {status: number})[] = [];
   const provider = NvidiaNimProvider.create({providerId: "NYX-ACTUAL-TEXT-BENCHMARK",
     model: TEXT_BENCHMARK_POLICY.model, authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM",
@@ -77,6 +80,16 @@ export async function runTextBenchmarkEpoch() {
   const results: (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration,
     requestRejections: typeof requestRejections})[] = [];
   const blocked: {taskId: string; reason: string}[] = [];
+  const populationDigest = theoryDigest(tasks); const selectionDigest = theoryDigest(selection);
+  const checkpoint = async () => {
+    const path = join(process.env.RUNNER_TEMP || tmpdir(), `nyx-text-progress-${candidate}.json`);
+    await writeFile(`${path}.pending`, JSON.stringify({schemaVersion: 1, candidate, mode,
+      executionIdentity: `github-actions-${process.env.GITHUB_RUN_ID || "authorized-local"}`,
+      populationDigest, selectionDigest, selectedTaskIds: selection.map(task => task.taskId),
+      results, blocked, completeness: "PARTIAL_PROGRESS_NOT_FINAL_REPORT", grantsAuthority: false}));
+    await rename(`${path}.pending`, path);
+  };
+  await checkpoint(); // Freeze the whole selection even if the first provider call never returns.
   let consecutiveProviderFailures = 0;
   for (const task of selection) {
     if (Date.now() >= deadline || !diagnostic && consecutiveProviderFailures >= 2) break;
@@ -85,7 +98,7 @@ export async function runTextBenchmarkEpoch() {
     const rejectionStart = requestRejections.length;
     const questionFile = `export const question = ${JSON.stringify(task.question)};\n`;
     if (delivery === "SCOPED_FILE" && Buffer.byteLength(questionFile) > 64000) {
-      blocked.push({taskId: task.taskId, reason: "UNCHANGED_SCOPED_FILE_CAPABILITY_LIMIT"}); continue;
+      blocked.push({taskId: task.taskId, reason: "UNCHANGED_SCOPED_FILE_CAPABILITY_LIMIT"}); await checkpoint(); continue;
     }
     const repository = delivery === "SCOPED_FILE" ? await R3BenchmarkRepositorySession.create(
       {"src/question.mjs": questionFile}, candidate, Math.min(deadline, started + TEXT_BENCHMARK_POLICY.maxTaskMs), 1) : null;
@@ -110,7 +123,7 @@ export async function runTextBenchmarkEpoch() {
         candidateWriter: null, editablePaths: [], maxCandidatesPerTurn: 0, maxModelCallsPerTurn: repository ? 2 : 1,
         maxTurnMs: Math.min(TEXT_BENCHMARK_POLICY.maxTaskMs, deadline - Date.now()),
         maxOutputTokens: TEXT_BENCHMARK_POLICY.maxOutputTokens}, task.question, delivery as "DIRECT" | "SCOPED_FILE");
-      if (!result) {blocked.push({taskId: task.taskId, reason: "UNCHANGED_CHAT_INPUT_CAPABILITY_LIMIT"}); continue;}
+      if (!result) {blocked.push({taskId: task.taskId, reason: "UNCHANGED_CHAT_INPUT_CAPABILITY_LIMIT"}); await checkpoint(); continue;}
       if (result.outcome === "REPLIED") {
         if (task.family !== "BBEH_MINI") correct = gradeAime(result.message, task.answer);
         else {
@@ -140,6 +153,7 @@ export async function runTextBenchmarkEpoch() {
     row.usage.toolCalls = reader?.auditLog().filter(t => t.toolAction !== null).length ?? 0;
     row.usage.toolWorkUnits = row.usage.toolCalls * Buffer.byteLength(questionFile);
     results.push(row); console.log(`NYX_TEXT_TASK ${JSON.stringify(row)}`);
+    await checkpoint();
     consecutiveProviderFailures = row.state === "PROVIDER_FAILURE" ? consecutiveProviderFailures + 1 : 0;
   }
   const sourceUnchanged = before === git("ls-files", "-s") && !git("status", "--porcelain");
@@ -151,8 +165,9 @@ export async function runTextBenchmarkEpoch() {
       correct: rows.filter(r => r.correct === true).length, graded: rows.filter(r => r.correct !== null).length,
       blockedByCapability: familyBlocked.length, notExecuted: population.length - rows.length - familyBlocked.length,
       fullPopulation: family === "AIME_2025" ? 30 : family === "BBEH_MINI" ? 460 : null,
-      fullBenchmarkScoreClaim: mode === "FULL" && rows.length === population.length
-        && rows.every(r => r.correct !== null)};
+      fullBenchmarkScoreClaim: ["FULL", "FULL_AIME"].includes(mode)
+        && textPopulationIsFullyGraded(family as PrivateTextTask["family"], population.length,
+          rows.length, rows.filter(r => r.correct !== null).length)};
   });
   const report = {schemaVersion: 1, identity: "NYX-PUBLIC-TEXT-BENCHMARK-EPOCH-001", candidate, mode,
     executionIdentity: `github-actions-${process.env.GITHUB_RUN_ID || "authorized-local"}`,
@@ -160,7 +175,7 @@ export async function runTextBenchmarkEpoch() {
     policy: {...TEXT_BENCHMARK_POLICY, delivery, maxCallsPerTurn: delivery === "DIRECT" ? 1 : 2,
       tools: delivery === "DIRECT" ? [] : ["READ_ONLY_DISPOSABLE_QUESTION_FILE"],
       fixtureCleanupRequired: true, inputTruncationAllowed: false},
-    populationDigest: theoryDigest(tasks), selectionDigest: theoryDigest(selection),
+    populationDigest, selectionDigest,
     transferWindow: mode === "TRANSFER_ABLATION" ? {start: transferStart, countPerFamily: 2,
       selection: "POSITIONAL_COMMITTED_BEFORE_OBSERVATION_NOT_CORRECTNESS_SELECTED"} : null,
     selectedTaskIds: selection.map(t => t.taskId), verifier: {bbehRevision: data.bbehRevision,

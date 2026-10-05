@@ -16,6 +16,22 @@ export const TEXT_BENCHMARK_POLICY = Object.freeze({
 export type TextTaskFamily = "AIME_2025" | "BBEH_MINI" | "DEVELOPMENT_DIAGNOSTIC";
 export interface PrivateTextTask { family: TextTaskFamily; taskId: string; question: string; answer: string }
 
+/** Whole pinned populations only. Selection cannot inspect questions or private references. */
+export function textWholePopulation(tasks: readonly PrivateTextTask[], family: "AIME_2025" | "BBEH_MINI") {
+  if (!["AIME_2025", "BBEH_MINI"].includes(family) || tasks.length !== 490
+    || tasks.filter(task => task.family === "AIME_2025").length !== 30
+    || tasks.filter(task => task.family === "BBEH_MINI").length !== 460
+    || new Set(tasks.map(task => task.taskId)).size !== 490)
+    throw Error("text_whole_population_invalid");
+  return Object.freeze(tasks.filter(task => task.family === family));
+}
+
+/** Empty, partial, unexecuted and ungraded selections never establish a full score. */
+export function textPopulationIsFullyGraded(family: TextTaskFamily, selected: number, executed: number, graded: number) {
+  const expected = family === "AIME_2025" ? 30 : family === "BBEH_MINI" ? 460 : null;
+  return expected !== null && [selected, executed, graded].every(count => Number.isSafeInteger(count) && count === expected);
+}
+
 /** Freeze a positional window, never a correctness-selected task subset. */
 export function textTransferSelection(tasks: readonly PrivateTextTask[], start = 4): PrivateTextTask[] {
   const families = (["AIME_2025", "BBEH_MINI"] as const).map(family => tasks.filter(task => task.family === family));
