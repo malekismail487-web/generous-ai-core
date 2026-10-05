@@ -2215,6 +2215,7 @@
         "scripts/omega/nyx-cli.ts",
         "scripts/omega/nyx-desktop-model-live-eval.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
+        "scripts/omega/nyx-harbor-entrypoint.ts",
         "scripts/omega/nyx-public-witness-cycle.ts",
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
@@ -2470,6 +2471,7 @@
         "scripts/omega/nyx-contract-compliance.ts",
         "scripts/omega/nyx-desktop-model-live-eval.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
+        "scripts/omega/nyx-harbor-entrypoint.ts",
         "scripts/omega/nyx-live-r3e.ts",
         "scripts/omega/nyx-public-witness-cycle.ts",
         "scripts/omega/nyx-quality-holdout-live-eval.ts",
@@ -2483,6 +2485,12 @@
         "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omega/nyx-web-live-eval.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
+      ]
+    },
+    {
+      "name": "OMEGA_ALLOW_NYX_HARBOR_BRIDGE",
+      "files": [
+        "scripts/omega/nyx-harbor-entrypoint.ts"
       ]
     },
     {
@@ -2563,6 +2571,7 @@
         "scripts/omega/benchmarks/nyxDockerDriver.ts",
         "scripts/omega/nyx-container-preflight.ts",
         "scripts/omega/nyx-desktop-model-live-eval.ts",
+        "scripts/omega/nyx-harbor-entrypoint.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omegaSchedulerChallenge.test.ts"
       ]
@@ -2740,6 +2749,7 @@
     {
       "name": "SYSTEMROOT",
       "files": [
+        "scripts/omega/nyx-harbor-entrypoint.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omegaSchedulerChallenge.test.ts"
       ]

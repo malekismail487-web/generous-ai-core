@@ -1,0 +1,38 @@
+name: Omega NYX pinned Harbor interface validation
+on:
+  workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-harbor-interface-one-shot.yml]
+permissions:
+  contents: read
+concurrency:
+  group: omega-nyx-harbor-interface-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  pinned-interface:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - uses: astral-sh/setup-uv@v6
+      - name: Install exact upstream runtime without cloud/dev extras
+        run: |
+          git clone --no-checkout https://github.com/harbor-framework/harbor.git "$RUNNER_TEMP/nyx-harbor-upstream"
+          git -C "$RUNNER_TEMP/nyx-harbor-upstream" checkout --detach fd1521a1da6250d9ed8fc7505caa0b7a72f36c4b
+          test "$(git -C "$RUNNER_TEMP/nyx-harbor-upstream" rev-parse HEAD)" = fd1521a1da6250d9ed8fc7505caa0b7a72f36c4b
+          uv sync --project "$RUNNER_TEMP/nyx-harbor-upstream" --python 3.12 --no-dev --no-default-groups --frozen
+      - name: Test actual Harbor SDK and bounded host bridge without model credentials
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          uv run --project "$RUNNER_TEMP/nyx-harbor-upstream" --no-dev --no-default-groups --frozen python -m unittest scripts.omega.benchmarks.test_nyx_harbor_agent -v
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxHarborBridge.test.ts
+          printf 'NYX_HARBOR_INTERFACE_SCOPE actual_sdk=true docker_io=TEST_DOUBLE live_model=false official_tasks=0 cognitive_gain=false\n'
