@@ -225,3 +225,15 @@ The next counterbalanced transfer uses positional offset 8 (AIME 9/10, BBEH 008/
 not those observed failures. It compares only the already implemented default and
 observation-aligned schema with identical authority, oracle and per-task limits.
 No cognitive promotion is justified by the circuit repair or a provider-unstable pair.
+
+The offset-8 transfer at `4943841b` is frozen in
+`docs/omega/evidence/nyx-text-transfer-4943841b.json`. The first infrastructure attempt
+never acquired a runner; only that failed job was retried at the identical commit.
+Four of eight planned attempts executed. The schema arm produced one independently
+graded correct unseen AIME answer; the other three attempted solutions timed out.
+No BBEH attempt executed. Neither math pair was stable or actual-compute matched,
+so no comparative cognitive gain or full score is established. All four question
+observations succeeded. The next general diagnostic concerns a per-attempt transport
+timeout inside a still-unexpired task lease; this does not authorize lease renewal,
+more calls, more tokens or a weaker oracle. The automatic push trigger is removed;
+manual dispatch and exact-job retries remain available.

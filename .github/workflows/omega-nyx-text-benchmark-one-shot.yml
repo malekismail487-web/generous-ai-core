@@ -1,9 +1,6 @@
 name: Omega NYX actual AIME and BBEH benchmark epoch
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/benchmarks/nyxTextBenchmark.ts]
 permissions:
   contents: read
 concurrency:
