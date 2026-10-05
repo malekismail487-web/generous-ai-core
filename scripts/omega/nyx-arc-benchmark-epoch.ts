@@ -1,12 +1,12 @@
 import { execFileSync } from "node:child_process";
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { readFile, readdir, rename, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { prepareTask } from "./benchmarks/tasks";
 import { createArcAdapter, type ArcIntegrationEvidence } from "./benchmarks/nyxArcAdapter";
-import { runCampaign, matchedObservedAttempts } from "./benchmarks/campaign";
+import { runCampaign, matchedObservedAttempts, type TaskRun } from "./benchmarks/campaign";
 import { contentHash } from "./benchmarks/r3RepositorySession";
 import type { ArmSpec, CampaignSpec } from "./benchmarks/contracts";
 
@@ -20,10 +20,25 @@ export const ARC_PUBLIC_EPOCH_SELECTION = Object.freeze({ revision: "f3283f72748
 export const ARC_ARRAY_BOUND_TRANSFER_SELECTION = Object.freeze({...ARC_PUBLIC_EPOCH_SELECTION,
   selection: "NEXT_TWO_LEXICOGRAPHIC_PATHS_NOT_PREVIOUSLY_EXERCISED", taskIds: ["195c6913", "1ae2feb7"]});
 
-export async function runArcBenchmarkEpoch(mode: "BASELINE" | "ARRAY_BOUND_TRANSFER" = "BASELINE") {
-  if (!["BASELINE", "ARRAY_BOUND_TRANSFER"].includes(mode)) throw Error("arc_epoch_mode_invalid");
+export type ArcEpochMode = "BASELINE" | "ARRAY_BOUND_TRANSFER" | "FULL_PUBLIC";
+export function selectArcEpoch(mode: ArcEpochMode, rawNames: readonly string[]) {
+  if (!["BASELINE", "ARRAY_BOUND_TRANSFER", "FULL_PUBLIC"].includes(mode)) throw Error("arc_epoch_mode_invalid");
+  const names = [...rawNames].sort();
+  if (names.length !== ARC_PUBLIC_EPOCH_SELECTION.population || new Set(names).size !== names.length
+    || names.some(name => !/^[a-f0-9]{8}\.json$/.test(name))) throw Error("arc_epoch_population_invalid");
+  if (mode === "FULL_PUBLIC") return Object.freeze({...ARC_PUBLIC_EPOCH_SELECTION,
+    selection: "ENTIRE_PINNED_PUBLIC_EVALUATION_POPULATION_NO_CONTENT_FILTERING",
+    taskIds: Object.freeze(names.map(name => name.slice(0, -5)))});
   const transfer = mode === "ARRAY_BOUND_TRANSFER";
   const selection = transfer ? ARC_ARRAY_BOUND_TRANSFER_SELECTION : ARC_PUBLIC_EPOCH_SELECTION;
+  if (theoryDigest(names.slice(transfer ? 8 : 0, transfer ? 10 : 8).map(n => n.slice(0, -5))) !== theoryDigest(selection.taskIds))
+    throw Error("arc_epoch_frozen_selection_changed");
+  return selection;
+}
+
+export async function runArcBenchmarkEpoch(mode: ArcEpochMode = "BASELINE") {
+  const transfer = mode === "ARRAY_BOUND_TRANSFER";
+  const full = mode === "FULL_PUBLIC";
   if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
     throw Error("arc_epoch_requires_explicit_network_and_injected_secret");
   const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -32,12 +47,10 @@ export async function runArcBenchmarkEpoch(mode: "BASELINE" | "ARRAY_BOUND_TRANS
     throw Error("arc_epoch_requires_clean_frozen_candidate");
   const root = resolve(process.env.NYX_ARC_DATA_ROOT || "");
   if (!process.env.NYX_ARC_DATA_ROOT || execFileSync("git", ["-C", root, "rev-parse", "HEAD"], { encoding: "utf8" }).trim()
-    !== selection.revision || execFileSync("git", ["-C", root, "status", "--porcelain"], { encoding: "utf8" }).trim())
+    !== ARC_PUBLIC_EPOCH_SELECTION.revision || execFileSync("git", ["-C", root, "status", "--porcelain"], { encoding: "utf8" }).trim())
     throw Error("arc_epoch_dataset_revision_or_dirty_tree");
-  const names = (await readdir(join(root, selection.partition))).filter(n => n.endsWith(".json")).sort();
-  if (names.length !== selection.population
-    || theoryDigest(names.slice(transfer ? 8 : 0, transfer ? 10 : 8).map(n => n.slice(0, -5))) !== theoryDigest(selection.taskIds))
-    throw Error("arc_epoch_frozen_selection_changed");
+  const names = (await readdir(join(root, ARC_PUBLIC_EPOCH_SELECTION.partition))).filter(n => n.endsWith(".json")).sort();
+  const selection = selectArcEpoch(mode, names);
   const sourceBefore = theoryDigest(git("ls-files", "-s"));
   const sources = git("ls-files", "--", "src/lib/codelab", "scripts/omega/benchmarks").split("\n")
     .filter(p => p.endsWith(".ts")).sort();
@@ -46,9 +59,10 @@ export async function runArcBenchmarkEpoch(mode: "BASELINE" | "ARRAY_BOUND_TRANS
   const tasks = selection.taskIds.map(taskId => {
     const path = `${selection.partition}/${taskId}.json`;
     const raw = JSON.parse(execFileSync("git", ["-C", root, "show", `${selection.revision}:${path}`], {encoding: "utf8"}));
-    return prepareTask("ARC_AGI", taskId, "VALIDATION", {dataset: "arcprize/ARC-AGI-2 public evaluation",
+    const previouslyExposed = [...ARC_PUBLIC_EPOCH_SELECTION.taskIds, ...ARC_ARRAY_BOUND_TRANSFER_SELECTION.taskIds].includes(taskId);
+    return prepareTask("ARC_AGI", taskId, full && previouslyExposed ? "DEVELOPMENT" : "VALIDATION", {dataset: "arcprize/ARC-AGI-2 public evaluation",
       revision: selection.revision, contentDigest: theoryDigest(raw), visibility: "PUBLIC", kind: "DATASET_TASK",
-      provenance: `https://github.com/arcprize/ARC-AGI-2/blob/${selection.revision}/${path}; public subset, not protected leaderboard evaluation.`}, raw);
+      provenance: `https://github.com/arcprize/ARC-AGI-2/blob/${selection.revision}/${path}; public evaluation, not protected leaderboard evaluation.`}, raw);
   });
   const began = Date.now(); const model = "nvidia/nemotron-3-ultra-550b-a55b";
   const modelConfiguration = {model, temperature: 0, inferencePolicy: "CONSTRAINED_JSON", maxOutputTokens: 8192,
@@ -58,21 +72,25 @@ export async function runArcBenchmarkEpoch(mode: "BASELINE" | "ARRAY_BOUND_TRANS
   const tools = {tool: "EXISTING_R3B_TEST", maxChangedFiles: 1, maxPatchBytes: 12000, timeoutMs: 2000,
     publicFeedback: "FULL_DUMP", sourceRepresentation: "LINES", dataEncoding: "LOSSLESS_COMPACT_JSON",
     acceptance: "UNCHANGED_PUBLIC_EXAMPLES_STATIC_ADMISSION_AND_PRIVATE_EXACT_TWO_GUESS_SCORER"};
-  const spec: CampaignSpec = {schemaVersion: 1, campaignId: transfer ? "NYX-ARC-ARRAY-BOUND-FRESH-TRANSFER-001" : "NYX-ARC-PUBLIC-EVALUATION-BASELINE-001",
+  const spec: CampaignSpec = {schemaVersion: 1, campaignId: full ? "NYX-ARC-ENTIRE-PUBLIC-POPULATION-CURRENT-001"
+    : transfer ? "NYX-ARC-ARRAY-BOUND-FRESH-TRANSFER-001" : "NYX-ARC-PUBLIC-EVALUATION-BASELINE-001",
     environmentIdentity: `${process.platform}-${process.arch}-node-${process.version}`,
     executionIdentity: `github-actions-${process.env.GITHUB_RUN_ID || "authorized-local"}`,
-    frozenAtEpochMs: began, expiresAtEpochMs: began + (transfer ? 900000 : 2900000), taskDigests: tasks.map(t => t.manifest.taskDigest), model,
+    frozenAtEpochMs: began, expiresAtEpochMs: began + (full ? 19500000 : transfer ? 900000 : 2900000), taskDigests: tasks.map(t => t.manifest.taskDigest), model,
     modelConfigDigest: theoryDigest(modelConfiguration), authorityDigest: theoryDigest(authority), toolEnvelopeDigest: theoryDigest(tools),
     verifierVersion: "arc-exact-two-predictions/1", verifierSourceDigest: contentHash(await readFile("scripts/omega/benchmarks/tasks.ts", "utf8")),
     limits: {maxCallsPerTask: 2, maxReportedTokensPerTask: 100000, maxToolCallsPerTask: 3, maxToolWorkUnitsPerTask: 600,
-      maxAttemptsPerTask: 1, maxArtifactBytes: 50000, maxWallClockMsPerTask: 155000, maxWallClockMs: transfer ? 800000 : 2800000},
+      maxAttemptsPerTask: 1, maxArtifactBytes: 50000, maxWallClockMsPerTask: 155000,
+      maxWallClockMs: full ? 19000000 : transfer ? 800000 : 2800000},
     realizedComputeTolerance: 0.1};
   const provider = NvidiaNimProvider.create({providerId: "NYX-ARC-PUBLIC-BASELINE", model,
     authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
     maxPromptBytes: modelConfiguration.maxProviderPromptBytes, maxOutputTokens: modelConfiguration.maxOutputTokens,
     timeoutMs: modelConfiguration.timeoutMs});
   const integration: ArcIntegrationEvidence[] = [];
-  const arms: ArmSpec["arm"][] = transfer ? ["CURRENT_NYX", "CANDIDATE_NYX"] : ["RAW_MODEL", "MODEL_EQUIVALENT_TOOLS", "CURRENT_NYX"];
+  // Full current-system baseline, not a compute-matched candidate comparison.
+  const arms: ArmSpec["arm"][] = full ? ["CURRENT_NYX"] : transfer ? ["CURRENT_NYX", "CANDIDATE_NYX"]
+    : ["RAW_MODEL", "MODEL_EQUIVALENT_TOOLS", "CURRENT_NYX"];
   const adapters = arms.map(arm => {
     const armSpec: ArmSpec = {arm, version: "nyx-existing-r3-arc/1", sourceDigest: theoryDigest({sourceDigest, arm}),
       inferenceMode: "LIVE_PROVIDER_E4", model, modelConfigDigest: spec.modelConfigDigest, authorityDigest: spec.authorityDigest,
@@ -84,7 +102,27 @@ export async function runArcBenchmarkEpoch(mode: "BASELINE" | "ARRAY_BOUND_TRANS
         integration.push(trace); console.log(`NYX_ARC_PUBLIC_TRACE ${JSON.stringify(trace)}`);
       }});
   });
-  const campaign = await runCampaign(spec, tasks, adapters, null);
+  const progress: TaskRun[] = [];
+  const outputRoot = process.env.RUNNER_TEMP || tmpdir();
+  const checkpoint = async () => {
+    const path = join(outputRoot, `nyx-arc-progress-${candidate}.json`);
+    await writeFile(`${path}.pending`, JSON.stringify({schemaVersion: 1, candidate, campaignDigest: theoryDigest(spec),
+      selection, tasks: tasks.map(t => t.manifest), runs: progress,
+      completeness: "PARTIAL_PROGRESS_NOT_FINAL_REPORT", grantsAuthority: false}));
+    await rename(`${path}.pending`, path);
+  };
+  // Freeze the entire requested population before the first model call, including if that call crashes.
+  await checkpoint();
+  const campaign = await runCampaign(spec, tasks, adapters, null, undefined, Date.now, {
+    ...(full ? {maxConsecutiveProviderFailures: 2} : {}),
+    onRun: async run => {
+      progress.push(run);
+      // Explicitly partial: interrupted checkpoints cannot certify a finished campaign.
+      await checkpoint();
+      if (run.arm === "CURRENT_NYX") console.log(`NYX_ARC_TASK_PROGRESS ${JSON.stringify({taskDigest: run.taskDigest,
+        state: run.state, reason: run.reason, attempts: run.attempts.map(a => ({outcome: a.outcome, failure: a.failure,
+          evaluated: a.evaluation !== null, usage: a.usage, internalCandidateAttempts: a.internalCandidateAttempts}))})}`);
+    }});
   const pairs = tasks.map(task => ({taskDigest: task.manifest.taskDigest,
     currentVersusReferenceMatched: matchedObservedAttempts(campaign.runs.filter(r => r.taskDigest === task.manifest.taskDigest
       && ["CURRENT_NYX", transfer ? "CANDIDATE_NYX" : "MODEL_EQUIVALENT_TOOLS"].includes(r.arm)).flatMap(r => r.attempts), spec.realizedComputeTolerance)}));
@@ -93,13 +131,26 @@ export async function runArcBenchmarkEpoch(mode: "BASELINE" | "ARRAY_BOUND_TRANS
     changedVariable: transfer ? "HOSTED_MAX_ITEMS_PRESERVED_VS_OMITTED_ONLY" : "BASELINE_ARMS",
     campaign, integration, pairs, sourceUnchanged, inference: "E4_LIVE_NVIDIA", verification: "E3_INDEPENDENT_EXACT_GRID_SCORER",
     broadPromotion: false, fullBenchmarkScoreClaim: false, grantsAuthority: false,
+    fullPublicPopulationRequested: full, protectedBenchmarkScoreClaim: false,
+    currentSystemPopulation: {requested: tasks.length,
+      executed: campaign.runs.filter(r => r.arm === "CURRENT_NYX" && r.attempts.length).length,
+      independentlyGraded: campaign.runs.filter(r => r.arm === "CURRENT_NYX"
+        && r.attempts.some(a => a.evaluation && a.evaluation.state !== "INSUFFICIENT_EVIDENCE")).length,
+      accepted: campaign.summaries.find(s => s.arm === "CURRENT_NYX")!.finalAccepted},
     integrationTraceComplete: integration.length === campaign.runs.filter(r => r.attempts.length && r.arm !== "RAW_MODEL").length,
-    interpretation: "FROZEN_PUBLIC_EVALUATION_SUBSET_NOT_FULL_BENCHMARK_OR_PROTECTED_SCORE"};
-  await writeFile(join(process.env.RUNNER_TEMP || tmpdir(), `nyx-arc-public-${candidate}.json`), JSON.stringify(report, null, 2));
-  console.log(`NYX_ARC_PUBLIC_EPOCH ${JSON.stringify(report)}`);
+    interpretation: full ? "ENTIRE_PUBLIC_POPULATION_CURRENT_BASELINE_NO_COGNITIVE_PROMOTION_OR_PROTECTED_SCORE"
+      : "FROZEN_PUBLIC_EVALUATION_SUBSET_NOT_FULL_BENCHMARK_OR_PROTECTED_SCORE"};
+  await writeFile(join(outputRoot, `nyx-arc-public-${candidate}.json`), JSON.stringify(report, null, 2));
+  if (full) console.log(`NYX_ARC_PUBLIC_EPOCH_SUMMARY ${JSON.stringify({candidate, selection,
+    reportDigest: theoryDigest(report), currentSystemPopulation: report.currentSystemPopulation,
+    current: campaign.summaries.find(s => s.arm === "CURRENT_NYX"), providerFailureCircuit: campaign.providerFailureCircuit,
+    sourceUnchanged, integrationTraceComplete: report.integrationTraceComplete, broadPromotion: false,
+    officialLeaderboardClaim: false, fullBenchmarkScoreClaim: false, grantsAuthority: false})}`);
+  else console.log(`NYX_ARC_PUBLIC_EPOCH ${JSON.stringify(report)}`);
   if (!sourceUnchanged || !report.integrationTraceComplete || integration.some(t => !t.cleanupVerified || !t.sourceUnchanged))
     process.exitCode = 1;
   return report;
 }
 if (process.argv[1]?.replace(/\\/g, "/").endsWith("/nyx-arc-benchmark-epoch.ts"))
-  await runArcBenchmarkEpoch(process.env.NYX_ARRAY_BOUND_COMPARISON === "1" ? "ARRAY_BOUND_TRANSFER" : "BASELINE");
+  await runArcBenchmarkEpoch(process.env.NYX_ARC_FULL_PUBLIC === "1" ? "FULL_PUBLIC"
+    : process.env.NYX_ARRAY_BOUND_COMPARISON === "1" ? "ARRAY_BOUND_TRANSFER" : "BASELINE");

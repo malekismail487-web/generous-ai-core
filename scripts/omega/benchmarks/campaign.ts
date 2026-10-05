@@ -41,6 +41,12 @@ export interface AttemptRecord {
   readonly requestDigests: readonly string[];
   readonly responseDigests: readonly string[];
 }
+export interface CampaignObservation {
+  /** Stops subsequent requests, never changes an attempted candidate's verdict. */
+  readonly maxConsecutiveProviderFailures?: number;
+  /** Sanitized immutable records only: no candidate artifacts or hidden answers. */
+  readonly onRun?: (run: TaskRun) => void | Promise<void>;
+}
 export interface TaskRun {
   readonly arm: Arm;
   readonly taskDigest: string;
@@ -84,7 +90,11 @@ function withinUsage(usage: Usage, limits: CampaignSpec["limits"]): boolean {
 /** Data-only experiment coordinator. It holds neither filesystem/terminal authority nor model credentials. */
 export async function runCampaign(rawSpec: CampaignSpec, tasks: readonly PreparedTask[],
   adapters: readonly BenchmarkAdapter[], evaluator: TrustedEvaluator | null,
-  exposure = new TaskExposureHistory(), now: () => number = Date.now) {
+  exposure = new TaskExposureHistory(), now: () => number = Date.now, observation: CampaignObservation = {}) {
+  const stopAfter = observation.maxConsecutiveProviderFailures ?? null;
+  if (stopAfter !== null && (!Number.isInteger(stopAfter) || stopAfter < 1 || stopAfter > 10))
+    throw Error("benchmark_provider_circuit_threshold");
+  let consecutiveProviderFailures = 0;
   const spec = immutableTheoryValue(campaignSchema.parse(jsonValue(rawSpec)));
   if (spec.frozenAtEpochMs > now() || now() >= spec.expiresAtEpochMs) throw Error("benchmark_campaign_expired_or_not_frozen");
   if (theoryDigest(tasks.map(task => task.manifest.taskDigest)) !== theoryDigest(spec.taskDigests))
@@ -116,6 +126,9 @@ export async function runCampaign(rawSpec: CampaignSpec, tasks: readonly Prepare
       else if (task.manifest.requiredCapabilities.some(capability => !armSpec.supportedCapabilities.includes(capability))) {
         state = "BLOCKED_AUTHORITY"; reason = "REQUIRED_CAPABILITY_UNAVAILABLE";
       } else if (!task.scoreArc && !evaluator) { state = "BLOCKED_ENVIRONMENT"; reason = "INDEPENDENT_VERIFIER_UNAVAILABLE"; }
+      else if (stopAfter !== null && consecutiveProviderFailures >= stopAfter) {
+        state = "BLOCKED_ENVIRONMENT"; reason = "PROVIDER_FAILURE_CIRCUIT_OPEN";
+      }
       else if (now() >= deadline) { state = "BLOCKED_ENVIRONMENT"; reason = "CAMPAIGN_DEADLINE"; }
       const attempts: AttemptRecord[] = [];
       if (state === "EXECUTED") {
@@ -182,7 +195,12 @@ export async function runCampaign(rawSpec: CampaignSpec, tasks: readonly Prepare
             : { state: failure!, quality: "NOT_EVALUATED", metric: "NO_FUNCTIONAL_ORACLE_REACHED" };
         }
       }
-      runs.push(immutableTheoryValue({ arm, taskDigest: task.manifest.taskDigest, tier: task.manifest.tier, state, reason, attempts }));
+      const record = immutableTheoryValue({ arm, taskDigest: task.manifest.taskDigest, tier: task.manifest.tier, state, reason, attempts });
+      runs.push(record);
+      if (attempts.some(a => a.failure === "PROVIDER_FAILURE" || (a.usage?.providerFailures ?? 0) > 0))
+        consecutiveProviderFailures++;
+      else if (attempts.some(a => (a.usage?.physicalCalls ?? 0) > 0)) consecutiveProviderFailures = 0;
+      await observation.onRun?.(record);
     }
   }
   const summaries = ARMS.map(arm => {
@@ -230,6 +248,8 @@ export async function runCampaign(rawSpec: CampaignSpec, tasks: readonly Prepare
       return Math.max(...values) - Math.min(...values) <= Math.max(...values, 1) * spec.realizedComputeTolerance;
     });
   const body = { schemaVersion: 1, campaign: spec, campaignDigest: theoryDigest(spec), arms: armSpecs,
+    providerFailureCircuit: { stopAfter, consecutiveProviderFailures,
+      open: stopAfter !== null && consecutiveProviderFailures >= stopAfter },
     tasks: tasks.map(t => t.manifest), runs, summaries, matchedRealizedCompute: matched,
     comparisonScope: "EQUAL_TOOL_ENVELOPE_NON_RAW_ARMS_ONLY",
     capabilityGaps: runs.flatMap(run => run.attempts.filter(a => a.failure).map(a => ({

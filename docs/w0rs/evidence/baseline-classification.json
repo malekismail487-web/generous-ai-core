@@ -4495,6 +4495,7 @@
           "scripts/omegaAuthorityGraph.test.ts",
           "scripts/omegaBaselineDiffAssurance.test.ts",
           "scripts/omegaBenchmarkCapabilityHarness.test.ts",
+          "scripts/omegaBenchmarkPopulation.test.ts",
           "scripts/omegaBiologicalArchitecturePortfolio.test.ts",
           "scripts/omegaBoundedReasoningWorkbench.test.ts",
           "scripts/omegaCandidateEngineeringAdmission.test.ts",

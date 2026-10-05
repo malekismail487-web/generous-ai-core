@@ -2251,6 +2251,12 @@
       ]
     },
     {
+      "name": "NYX_ARC_FULL_PUBLIC",
+      "files": [
+        "scripts/omega/nyx-arc-benchmark-epoch.ts"
+      ]
+    },
+    {
       "name": "NYX_ARRAY_BOUND_COMPARISON",
       "files": [
         "scripts/omega/nyx-arc-benchmark-epoch.ts",

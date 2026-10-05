@@ -1,0 +1,51 @@
+name: Omega NYX entire ARC public population baseline
+on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-arc-full-public-one-shot.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: omega-real-benchmark-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  full-public-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Check strict population, adapter, authority and oracle contracts without secrets
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBenchmarkPopulation.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaArcNyxIntegration.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBenchmarkCapabilityHarness.test.ts
+      - name: Acquire exact pinned official public task population outside the candidate
+        run: |
+          git clone --filter=blob:none --no-checkout https://github.com/arcprize/ARC-AGI-2.git "$RUNNER_TEMP/arc-agi-2"
+          git -C "$RUNNER_TEMP/arc-agi-2" checkout f3283f727488ad98fe575ea6a5ac981e4a188e49
+      - name: Exercise actual current NYX on all 120 public tasks under frozen per-task limits
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NYX_ARC_DATA_ROOT: ${{ runner.temp }}/arc-agi-2
+          NYX_ARC_FULL_PUBLIC: '1'
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-arc-benchmark-epoch.ts
+      - name: Preserve sanitized full report and explicitly partial interruption checkpoint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-arc-entire-public-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/nyx-arc-public-*.json
+            ${{ runner.temp }}/nyx-arc-progress-*.json
+          if-no-files-found: error
