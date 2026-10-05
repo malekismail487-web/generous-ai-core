@@ -6,7 +6,7 @@ import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySes
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
   TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
-  textWholePopulation, textPopulationIsFullyGraded } from "./omega/benchmarks/nyxTextBenchmark";
+  textWholePopulation, textPopulationIsFullyGraded, textDeliveryBlocked } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -76,6 +76,9 @@ check("whole-population selection cannot inspect questions or reference answers"
     get answer(): string {throw Error("private oracle inspected by selector");}}));
   assert.equal(textWholePopulation(protectedTasks, "AIME_2025").length, 30);
 });
+check("next committed transfer offset selects unseen positions in both full populations", () =>
+  assert.deepEqual(textTransferSelection(wholeTasks, 8).map(task => task.taskId),
+    ["AIME_2025-8", "AIME_2025-9", "BBEH_MINI-8", "BBEH_MINI-9"]));
 check("missing, duplicate or unsupported whole populations fail closed", () => {
   assert.throws(() => textWholePopulation(wholeTasks.slice(1), "AIME_2025"));
   assert.throws(() => textWholePopulation([...wholeTasks.slice(1), wholeTasks[1]], "AIME_2025"));
@@ -246,6 +249,33 @@ check("local physical budget exhaustion is not provider, schema, or reasoning fa
     "RESOURCE_EXHAUSTION"));
 check("successful final dispatch is still eligible for independent answer grading", () =>
   assert.equal(textOutcome(result, [{...retry, delivery: {...retry.delivery, httpAttemptBudget: {...budgetEvidence, dispatchDenied: false}}}], true), "PASS"));
+const compoundBlocked = sanitizedTextResult(task, denied,
+  [{...unknown, delivery: {...unknown.delivery, state: "STOPPED", httpAttemptBudget: budgetEvidence}}], null, 1);
+check("resource exhaustion cannot hide the provider failure that prevented grading", () => {
+  assert.equal(compoundBlocked.state, "RESOURCE_EXHAUSTION");
+  assert.equal(compoundBlocked.correct, null); assert(compoundBlocked.usage.providerFailures > 0);
+  assert(textDeliveryBlocked(compoundBlocked));
+});
+check("two compound delivery failures open the same bounded circuit despite different final labels", () => {
+  let streak = 0;
+  for (const row of [compoundBlocked, {...compoundBlocked, state: "SCHEMA_FAILURE"}])
+    streak = textDeliveryBlocked(row) ? streak + 1 : 0;
+  assert.equal(streak, 2);
+});
+check("a completed correct answer with recovered retry does not count as blocked delivery", () =>
+  assert(!textDeliveryBlocked({...compoundBlocked, state: "PASS", correct: true})));
+check("a graded wrong answer remains a measured failure rather than an outage", () =>
+  assert(!textDeliveryBlocked({...compoundBlocked, state: "REASONING_FAILURE", correct: false})));
+check("ordinary exhausted authority without provider failure cannot invent an outage", () =>
+  assert(!textDeliveryBlocked({...compoundBlocked, usage: {...compoundBlocked.usage, providerFailures: 0}})));
+check("an observed primary provider failure still stops when detailed cost is unknown", () =>
+  assert(textDeliveryBlocked({...compoundBlocked, state: "PROVIDER_FAILURE", usage: {...compoundBlocked.usage, providerFailures: 0}})));
+check("a genuine non-provider task outcome resets consecutive outage tracking", () => {
+  let streak = 1;
+  const row = {...compoundBlocked, state: "SCHEMA_FAILURE", usage: {...compoundBlocked.usage, providerFailures: 0}};
+  streak = textDeliveryBlocked(row) ? streak + 1 : 0;
+  assert.equal(streak, 0);
+});
 check("failed physical calls are all unknown, not zero compute", () => assert.equal(textInferenceUsage([unknown], 10).unknownUsageCalls, 2));
 check("local rejection cannot invent live HTTP attempts", () => assert.equal(textInferenceUsage([
   {...unknown, networkAttempted: false, delivery: {...unknown.delivery, httpAttempts: 0, timedOutAttempts: 0,

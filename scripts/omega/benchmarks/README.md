@@ -214,3 +214,14 @@ it does not extend a task lease or renew exhausted inference. The two-task provi
 circuit remains intact. Partial, ungraded and omitted families cannot claim a full score.
 BBEH's 460-task population remains required separately. This current-system baseline
 is not a matched-compute comparison, protected evaluation or cognitive promotion.
+
+The text outage circuit considers observed provider failures on ungraded tasks even
+when the final failure label is resource exhaustion or schema failure. It preserves
+that primary classification and all costs. A recovered retry followed by a graded
+answer, correct or incorrect, does not count as blocked delivery. This does not change
+the frozen `dd9e7705` AIME campaign. Its full-population receipt preserves 7 attempts,
+zero graded answers and 23 unexecuted tasks; the score is unknown, not zero percent.
+The next counterbalanced transfer uses positional offset 8 (AIME 9/10, BBEH 008/009),
+not those observed failures. It compares only the already implemented default and
+observation-aligned schema with identical authority, oracle and per-task limits.
+No cognitive promotion is justified by the circuit repair or a provider-unstable pair.

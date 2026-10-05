@@ -274,6 +274,11 @@ export function sanitizedTextResult(task: PrivateTextTask, result: NyxChatTurnRe
   };
 }
 
+/** A final resource/schema label cannot erase observed provider failure that prevented grading. */
+export function textDeliveryBlocked(row: Pick<ReturnType<typeof sanitizedTextResult>, "state" | "correct" | "usage">) {
+  return row.correct === null && (row.state === "PROVIDER_FAILURE" || row.usage.providerFailures > 0);
+}
+
 /** Registers observations in the existing gap contract; not a completed repair/transfer claim. */
 export function textCapabilityGap(row: ReturnType<typeof sanitizedTextResult>) {
   if (row.state === "PASS") return null;

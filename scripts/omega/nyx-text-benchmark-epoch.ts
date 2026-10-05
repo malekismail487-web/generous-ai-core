@@ -9,7 +9,7 @@ import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextResult,
   TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
-  textWholePopulation, textPopulationIsFullyGraded,
+  textWholePopulation, textPopulationIsFullyGraded, textDeliveryBlocked,
   type TextInferenceConfiguration, type PrivateTextTask } from "./benchmarks/nyxTextBenchmark";
 import { R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
 
@@ -154,7 +154,7 @@ export async function runTextBenchmarkEpoch() {
     row.usage.toolWorkUnits = row.usage.toolCalls * Buffer.byteLength(questionFile);
     results.push(row); console.log(`NYX_TEXT_TASK ${JSON.stringify(row)}`);
     await checkpoint();
-    consecutiveProviderFailures = row.state === "PROVIDER_FAILURE" ? consecutiveProviderFailures + 1 : 0;
+    consecutiveProviderFailures = textDeliveryBlocked(row) ? consecutiveProviderFailures + 1 : 0;
   }
   const sourceUnchanged = before === git("ls-files", "-s") && !git("status", "--porcelain");
   const families = (diagnostic || mode === "COMPATIBILITY" ? ["DEVELOPMENT_DIAGNOSTIC"] : ["AIME_2025", "BBEH_MINI"]).map(family => {

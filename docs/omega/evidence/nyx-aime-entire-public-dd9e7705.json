@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-AIME-ENTIRE-PUBLIC-DD9E7705-RECEIPT",
+  "candidate": "dd9e7705492a147a9d37791a6d20cfcef339b9cb",
+  "runId": 37344603074,
+  "jobId": 111879904176,
+  "artifactId": 11360821127,
+  "artifactDigest": "sha256:3055f677e31c59f2552327d1f971e5257287c015ce36fa9978980e82dd5b7a97",
+  "reportDigest": "e17e94e4728c9175c830364a4d6baaf38a07a679b6166bacc3d9fe1fba5538d5",
+  "selectionDigest": "4a2129c8ee9ffeee835dc66315ee203110f5dbb30777f5183b1cda57d757f515",
+  "evidence": {
+    "inference": "E4_LIVE_NVIDIA",
+    "observation": "E3_SCOPED_R1",
+    "independentGrading": "NOT_REACHED"
+  },
+  "scope": {
+    "family": "AIME_2025",
+    "revision": "c94da77eb22bbd6439e62a323bec18493a421302",
+    "requested": 30,
+    "executed": 7,
+    "independentlyGraded": 0,
+    "firstAttemptAccepted": 0,
+    "repairedAccepted": 0,
+    "notExecuted": 23,
+    "scorePercent": null,
+    "oracle": "EXACT_FINAL_INTEGER_CUSTOM_ADAPTER_NOT_MATHARENA_HARNESS",
+    "contamination": "PUBLIC_DATA_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"
+  },
+  "configuration": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "profile": "EXISTING_DEFAULT",
+    "delivery": "SCOPED_FILE",
+    "physicalCallsPerTask": 2,
+    "logicalCallsPerTask": 2,
+    "maxOutputTokens": 8192,
+    "maxTaskMs": 180000,
+    "firstAttemptOnly": true
+  },
+  "failureCounts": {
+    "RESOURCE_EXHAUSTION": 3,
+    "SCHEMA_FAILURE": 2,
+    "PROVIDER_FAILURE": 2
+  },
+  "usage": {
+    "logicalCalls": 10,
+    "physicalCalls": 14,
+    "httpAttempts": 14,
+    "reportedTokens": 2957,
+    "unknownUsageCalls": 7,
+    "toolCalls": 2,
+    "toolWorkUnits": 1916,
+    "wallClockMs": 407871,
+    "providerFailures": 7,
+    "retries": 4
+  },
+  "observations": {
+    "sourceUnchanged": true,
+    "stopReason": "PROVIDER_DELIVERY_FAILURE_CONSECUTIVE_TASKS",
+    "modelCallsExceededPhysicalLimit": false,
+    "stableDeliveredButProtocolFailed": [
+      "AIME-2025-3",
+      "AIME-2025-5"
+    ],
+    "stableProtocolFailureClasses": [
+      "UNKNOWN_OR_MALFORMED_TYPED_ACTION",
+      "NON_JSON_REPLY",
+      "LATE_QUESTION_READ_WITHOUT_FINAL_REPLY"
+    ],
+    "mathematicalReasoningFailuresEstablished": false,
+    "hiddenCaseFailuresEstablished": false,
+    "compoundProviderAndBudgetFailures": 3,
+    "predecessorCircuitMissedCompoundDeliveryFailures": true
+  },
+  "capabilityGaps": [
+    {
+      "schemaVersion": 1,
+      "gapId": "TEXT-AIME-2025-1-b91347c4f2a62394",
+      "failureClass": "RESOURCE_EXHAUSTION",
+      "capabilityClass": "TEXT_RESOURCE_EXHAUSTION",
+      "benchmarkTaskDigest": "40e14f12ca0a7979c0641e47fefe4f5ce54e7f0a6212a63116d6d3185719239c",
+      "failureEvidenceDigest": "b91347c4f2a6239464c3a45463fb8278b57de525958e6c37007dc72e5c0b9947",
+      "benchmarkInputDigest": "7f691ce3372f09bb06cecca6765af15109bfbe51dce98863121e098e3bdbb88f",
+      "steps": [],
+      "grantsAuthority": false,
+      "benchmarkReevaluationEligible": false,
+      "status": "OBSERVED",
+      "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+      "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+      "semanticIndependenceProvedByDigests": false,
+      "recordDigest": "0a9896aacd1ba6ddd5bf0e56761a26ca29ed8378676ab00b71ead575cef62b1c"
+    },
+    {
+      "schemaVersion": 1,
+      "gapId": "TEXT-AIME-2025-2-dd57ae6fb819f8da",
+      "failureClass": "RESOURCE_EXHAUSTION",
+      "capabilityClass": "TEXT_RESOURCE_EXHAUSTION",
+      "benchmarkTaskDigest": "ed63dd7988140f6abd0b00a41c1ec1dfe28049f9ea629358fde563286c2ed73d",
+      "failureEvidenceDigest": "dd57ae6fb819f8da0f5c48aced04f2f03fbbb8d7fbe94e4c68d51989f32eaa61",
+      "benchmarkInputDigest": "0bf1628788226c8afd3606841c4c99a48d9f61cfb639f7431b7905a1f50b7362",
+      "steps": [],
+      "grantsAuthority": false,
+      "benchmarkReevaluationEligible": false,
+      "status": "OBSERVED",
+      "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+      "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+      "semanticIndependenceProvedByDigests": false,
+      "recordDigest": "4b7961fbb3ae555414c25869e851e9083a225c63121133b086ff06767bb65fca"
+    },
+    {
+      "schemaVersion": 1,
+      "gapId": "TEXT-AIME-2025-3-ba86080dfd9ba89c",
+      "failureClass": "SCHEMA_FAILURE",
+      "capabilityClass": "TEXT_SCHEMA_FAILURE",
+      "benchmarkTaskDigest": "3d11c027e411de898033c8e84ee71a24d64ddd2ea47a0777b77ff4b36481284f",
+      "failureEvidenceDigest": "ba86080dfd9ba89cdabbfbdc0a31e41741915a40284d0ce7798ba46403e129aa",
+      "benchmarkInputDigest": "6a62199472ce725830b7279d267a4a879a356ec5168bdcec1387af511748f3a3",
+      "steps": [],
+      "grantsAuthority": false,
+      "benchmarkReevaluationEligible": false,
+      "status": "OBSERVED",
+      "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+      "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+      "semanticIndependenceProvedByDigests": false,
+      "recordDigest": "37ba488c3aede29592cc714719a694b1121306fca15fe161ee3409d30652afee"
+    },
+    {
+      "schemaVersion": 1,
+      "gapId": "TEXT-AIME-2025-4-f2e87ab679cc7ab7",
+      "failureClass": "RESOURCE_EXHAUSTION",
+      "capabilityClass": "TEXT_RESOURCE_EXHAUSTION",
+      "benchmarkTaskDigest": "87a53b7014ddeb122bca8f992ba8f06df4bc0a863b85f5e462b67327f48ccdd3",
+      "failureEvidenceDigest": "f2e87ab679cc7ab7d9ac4c7171aaa5d647164ad03a9c3dfb74d226ce5236ae1b",
+      "benchmarkInputDigest": "842cf867b59d0fc6b48f5381493827c82b232b7cefb804f63b4c87a6646aefde",
+      "steps": [],
+      "grantsAuthority": false,
+      "benchmarkReevaluationEligible": false,
+      "status": "OBSERVED",
+      "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+      "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+      "semanticIndependenceProvedByDigests": false,
+      "recordDigest": "164dfef8a5d14d72f550c1b9f138d08123001ec252090f6c50e4d39645393b77"
+    },
+    {
+      "schemaVersion": 1,
+      "gapId": "TEXT-AIME-2025-5-92a4d00b91dfeae2",
+      "failureClass": "SCHEMA_FAILURE",
+      "capabilityClass": "TEXT_SCHEMA_FAILURE",
+      "benchmarkTaskDigest": "1f03e9e5b9aaf74e246f916b46f2041f86311eef0cc2f7b6f90547e237ea4f52",
+      "failureEvidenceDigest": "92a4d00b91dfeae2ddaff8322516fb2fa0bdbdfad765e269a08a30877ea500e5",
+      "benchmarkInputDigest": "c794f7d579f4a6bfd225bd50b83ac31b09da938b71b1647b07d99eca1c671a20",
+      "steps": [],
+      "grantsAuthority": false,
+      "benchmarkReevaluationEligible": false,
+      "status": "OBSERVED",
+      "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+      "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+      "semanticIndependenceProvedByDigests": false,
+      "recordDigest": "6eaec1558a74120623b660c5b44a419af7c96102a19b587e1a81b6c07c672fbb"
+    },
+    {
+      "schemaVersion": 1,
+      "gapId": "TEXT-AIME-2025-6-7e973432adfdaef1",
+      "failureClass": "PROVIDER_FAILURE",
+      "capabilityClass": "TEXT_PROVIDER_FAILURE",
+      "benchmarkTaskDigest": "d8dfcdaef9323d4b2da79e93c75ff129a0aec89293a4103e02faac1814de38a2",
+      "failureEvidenceDigest": "7e973432adfdaef15d665b3a4560f073f2452e56a95c70edc685852687f0a667",
+      "benchmarkInputDigest": "e82a2c0f0c63f1042db160fe207ecd498ac8c474767163b7cc4a36bf623d7d08",
+      "steps": [],
+      "grantsAuthority": false,
+      "benchmarkReevaluationEligible": false,
+      "status": "OBSERVED",
+      "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+      "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+      "semanticIndependenceProvedByDigests": false,
+      "recordDigest": "d8fe60e106683155b2f758e9eaa5240e8a27f4daca59cb0aa716aad3e9547571"
+    },
+    {
+      "schemaVersion": 1,
+      "gapId": "TEXT-AIME-2025-7-c83f53f5ac4af5df",
+      "failureClass": "PROVIDER_FAILURE",
+      "capabilityClass": "TEXT_PROVIDER_FAILURE",
+      "benchmarkTaskDigest": "e1cbc992ff4b402435e1109a063bc45ecbd7445075c7f8ad69615c32402fcc8f",
+      "failureEvidenceDigest": "c83f53f5ac4af5df1b20183431b0dbf710f250bb94eb808df2ab83b0ffdde598",
+      "benchmarkInputDigest": "f07f821102338fde299f3b236cdf71097887cd58dc88eda7d5f8d06613f6caf8",
+      "steps": [],
+      "grantsAuthority": false,
+      "benchmarkReevaluationEligible": false,
+      "status": "OBSERVED",
+      "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+      "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+      "semanticIndependenceProvedByDigests": false,
+      "recordDigest": "b2e565ec3a4427d7e6aff2c74004c550ab99c1cc617107d47796a600fcc3462b"
+    }
+  ],
+  "assessment": {
+    "workflowSuccessIsBenchmarkSuccess": false,
+    "fullBenchmarkScoreClaim": false,
+    "cognitiveGain": false,
+    "providerStable": false,
+    "matchedCognitiveComparison": false,
+    "remainingAime": 23,
+    "remainingBbeh": 460,
+    "authorityDelta": "NONE",
+    "primaryCorrectionDirection": "EXISTING_OBSERVATION_ALIGNED_SCHEMA_REQUIRES_FRESH_MATCHED_TRANSFER",
+    "circuitCorrection": "COUNT_UNGRADED_OBSERVED_PROVIDER_FAILURES_WITHOUT_CHANGING_PRIMARY_FAILURE_CLASS",
+    "originalFirstAttemptsPreserved": true
+  },
+  "planCoverage": {
+    "directlyImplemented": [
+      "ACTUAL_BENCHMARK_EXECUTION",
+      "PRESERVE_NEGATIVE_EVIDENCE",
+      "SEPARATE_INTERFACE_FAILURE_FROM_REASONING_FAILURE"
+    ],
+    "supporting": [
+      "EVIDENCE_OVER_CONFIDENCE",
+      "NO_SELF_CERTIFICATION",
+      "HONEST_COMPUTE_ACCOUNTING"
+    ],
+    "deferred": [
+      "COGNITIVE_PROMOTION",
+      "FULL_BENCHMARK_SCORES",
+      "RECURSION",
+      "DEVICE_INTEGRATION"
+    ],
+    "conflicts": [],
+    "coverageStatus": "PARTIAL_JUST_IN_TIME"
+  }
+}
