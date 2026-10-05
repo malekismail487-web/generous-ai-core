@@ -1,8 +1,5 @@
 name: Omega NYX official-task storage prerequisite
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-storage-preflight-one-shot.yml]
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "runId": 37335595592,
+  "jobId": 111849439976,
+  "receipt": {
+    "schemaVersion": 1,
+    "identity": "NYX-OFFICIAL-TASK-WRITABLE-LAYER-PREREQUISITE-001",
+    "candidate": "e0c7ecd616d4b2add519070e89a0327cd12fc0a2",
+    "executionIdentity": "github-actions-37335595592",
+    "evidenceClass": "E3",
+    "state": "BLOCKED_ENVIRONMENT",
+    "reason": "STORAGE_QUOTA_UNSUPPORTED",
+    "storageEnvironment": {
+      "driver": "overlay2",
+      "driverStatus": [
+        [
+          "Backing Filesystem",
+          "extfs"
+        ],
+        [
+          "Supports d_type",
+          "true"
+        ],
+        [
+          "Using metacopy",
+          "false"
+        ],
+        [
+          "Native Overlay Diff",
+          "false"
+        ],
+        [
+          "userxattr",
+          "false"
+        ]
+      ],
+      "serverVersion": "28.0.4"
+    },
+    "proof": null,
+    "imageId": "sha256:414a398990af718f018ff9c23cea0e7489b7986eb54f2b1d7cc874c99ebc7364",
+    "containerIdentityDigest": null,
+    "cleanupVerified": true,
+    "nyxCapabilityGranted": false,
+    "modelCalls": 0,
+    "benchmarkTasksExecuted": 0,
+    "automaticFallback": false,
+    "productionAuthority": false,
+    "limitation": "QUOTA_DIAGNOSTIC_ONLY_NOT_A_COMPLETE_BENCHMARK_ENVIRONMENT_OR_KERNEL_ESCAPE_PROOF"
+  },
+  "assessment": {
+    "result": "BLOCKED_ENVIRONMENT_NOT_PASS",
+    "supportsOrdinaryOfficialWritableProfile": false,
+    "remainingRequirements": "AUTHORIZED_QUOTA_ENFORCING_TASK_ENVIRONMENT_PLUS_EXPLICIT_PROFILE_ADMISSION",
+    "minimumExternalAction": "Provide an approved Linux benchmark runner with empirically enforceable writable-layer quotas; do not change the existing runner or remove the quota boundary automatically.",
+    "partialTmpfsAlternative": "NOT_YET_DEMONSTRATED_FOR_THE_ENTIRE_REQUESTED_OFFICIAL_TASK_POPULATION",
+    "cognitiveGain": false
+  }
+}
