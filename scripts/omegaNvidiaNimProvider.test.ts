@@ -914,6 +914,110 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
     reasoningControl:"ULTRA_NATIVE"})).decision==="REJECTED","Ultra-native controls cannot migrate to unrelated models");
 }
 
+// General development-only dispatch tests: no task IDs, benchmark answers, or real network.
+{
+  for (const limit of [0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    try { provider(async () => success()).withHttpAttemptBudget(limit); check(false, "invalid dispatch budget rejects"); }
+    catch (error) { check(String(error).includes("nvidia_http_attempt_budget_invalid"), "invalid dispatch budget rejects"); }
+  }
+  const clock = new ManualClock(); let calls = 0, reads = 0; const bodies: string[] = [];
+  const base = capacityProvider(new NvidiaCapacityCoordinator(clock), async (_url, init) => {
+    bodies.push(String(init?.body)); calls++;
+    return calls === 1 ? new Response(null, {status: 503}) : success();
+  }, () => {reads++; return "synthetic-development-credential";});
+  const bounded = base.withHttpAttemptBudget(2);
+  const first = await drive(bounded.complete(request()), clock);
+  const second = await drive(bounded.complete(request({requestId: "NEXT-LOGICAL-CALL"})), clock);
+  check(first.decision === "COMPLETED" && first.evidence.delivery?.httpAttempts === 2,
+    "transient retry consumes the same task budget, not an additional logical allowance");
+  check(second.reason === "nvidia_http_attempt_budget_exhausted" && calls === 2 && reads === 2,
+    "next logical completion is blocked before credential read and a third dispatch");
+  check(second.evidence.delivery?.httpAttempts === 0 && !second.evidence.networkAttempted
+    && second.evidence.usage.totalTokens === null && second.evidence.failureCategory === null,
+    "local exhaustion is neither fabricated provider failure nor zero-token inference");
+  check(first.evidence.delivery?.httpAttemptBudget?.exhausted && !first.evidence.delivery.httpAttemptBudget.dispatchDenied
+    && second.evidence.delivery?.httpAttemptBudget?.dispatchDenied,
+    "successful final dispatch is distinguished from a later denied dispatch");
+  check(Object.isFrozen(second.evidence.delivery?.httpAttemptBudget) && !second.executorAuthorityGranted
+    && !second.evidence.delivery?.httpAttemptBudget?.renewed,
+    "dispatch evidence is frozen and cannot renew executor authority or compute");
+  check(new Set(bodies).size === 1 && bodies.every(body => !/httpAttemptBudget|remainingAttempts|synthetic-development-credential/.test(body)),
+    "retry uses exact payload without leaking budget mechanics or credentials into cognition");
+  check(clock.jobs.length === 0, "exhausted retry budget leaves no delayed reactivation");
+  const nextTask = await drive(base.withHttpAttemptBudget(2).complete(request()), clock);
+  check(nextTask.decision === "COMPLETED" && calls === 3,
+    "separate host-issued task scopes do not accidentally share a campaign-wide budget");
+  console.log(`NYX_HTTP_BUDGET_DEVELOPMENT ${JSON.stringify({logicalRequests: 2, physicalLimit: 2,
+    physicalDispatchesBeforeNextTask: 2, deniedRequests: 1, liveModelCalls: 0, cognitiveGain: false})}`);
+}
+{
+  for (const status of [429, 503]) {
+    const clock = new ManualClock(); let calls = 0; const events: NvidiaNimCapacityProgress[] = [];
+    const client = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => {
+      calls++; return new Response(null, {status});
+    }, undefined, event => {events.push(event);}).withHttpAttemptBudget(1);
+    const result = await drive(client.complete(request()), clock);
+    check(calls === 1 && result.reason === "nvidia_http_attempt_budget_exhausted" && result.evidence.statusCode === status,
+      "rate-limit and outage retries cannot exceed frozen physical dispatch count");
+    check(result.evidence.delivery?.httpAttempts === 1 && result.evidence.delivery.httpAttemptBudget?.dispatched === 1
+      && result.evidence.delivery.httpAttemptBudget.dispatchDenied && result.evidence.usage.totalTokens === null,
+      "budget rejection retains observed HTTP failure and unknown compute");
+    check(clock.jobs.length === 0 && events.at(-1)?.state === "STOPPED" && !events.at(-1)?.automaticResume,
+      "exhaustion never waits or advertises a retry that has no remaining budget");
+  }
+}
+{
+  let calls = 0;
+  const parent = provider(async () => {calls++; return success();}).withHttpAttemptBudget(2);
+  const left = parent.withHttpAttemptBudget(1), right = parent.withHttpAttemptBudget(2);
+  await left.complete(request()); await right.complete(request());
+  const denied = await right.withHttpAttemptBudget(100).complete(request());
+  check(calls === 2 && denied.reason === "nvidia_http_attempt_budget_exhausted",
+    "nested and sibling provider scopes share ancestor debits; a new child cannot refill them");
+  check(denied.evidence.delivery?.httpAttemptBudget?.dispatched === 0
+    && denied.evidence.delivery.httpAttemptBudget.remainingAttempts === 0,
+    "child evidence distinguishes its own attempts from inherited exhaustion");
+  const outcomes = await Promise.all(Array.from({length: 8}, () =>
+    provider(async () => success()).withHttpAttemptBudget(1).complete(request())));
+  check(outcomes.every(result => result.decision === "COMPLETED"), "unrelated test scopes remain independent");
+  let concurrentCalls = 0;
+  const concurrent = provider(async () => {concurrentCalls++; await new Promise(resolve => setImmediate(resolve)); return success();})
+    .withHttpAttemptBudget(2);
+  const parallel = await Promise.all(Array.from({length: 8}, () => concurrent.complete(request())));
+  check(concurrentCalls === 2 && parallel.filter(result => result.decision === "COMPLETED").length === 2,
+    "parallel completions atomically debit the last allowed dispatches");
+  check(parallel.filter(result => result.reason === "nvidia_http_attempt_budget_exhausted").length === 6,
+    "concurrent excess requests fail as local budget denial, not transport corruption");
+}
+{
+  let calls = 0;
+  const client = provider(async () => {calls++; throw Error("untrusted-transport-error");}).withHttpAttemptBudget(1);
+  const failed = await client.complete(request()), denied = await client.complete(request());
+  check(calls === 1 && failed.evidence.networkAttempted && failed.evidence.usage.totalTokens === null,
+    "a dispatched transport failure consumes compute budget even without a response");
+  check(denied.reason === "nvidia_http_attempt_budget_exhausted" && !denied.evidence.networkAttempted,
+    "transport failure does not refund an unknowable provider attempt");
+  const invalid = provider(async () => {calls++; return success();}).withHttpAttemptBudget(1);
+  const malformed = await invalid.complete(request({maxTokens: -1}));
+  const valid = await invalid.complete(request());
+  check(malformed.decision === "REJECTED" && valid.decision === "COMPLETED",
+    "strict request validation remains unchanged and does not debit an unsent request");
+  const cancelled = new AbortController(); cancelled.abort();
+  const cancelClient = provider(async () => {calls++; return success();}).withHttpAttemptBudget(1);
+  const before = calls;
+  const cancelResult = await cancelClient.complete(request({signal: cancelled.signal}));
+  check(calls === before && cancelResult.reason === "nvidia_provider_cancelled"
+    && cancelResult.evidence.delivery?.httpAttemptBudget?.dispatched === 0,
+    "cancellation before dispatch cannot spend or renew a budget");
+  const clock = new ManualClock(); let delayedCalls = 0;
+  const expired = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => {delayedCalls++; return success();},
+    () => {clock.time += 2000; return "synthetic-development-credential";}).withHttpAttemptBudget(1);
+  const expiredResult = await drive(expired.complete(request({deadlineEpochMs: NOW + 1000})), clock);
+  check(delayedCalls === 0 && expiredResult.reason === "nvidia_completion_run_expired"
+    && expiredResult.evidence.delivery?.httpAttemptBudget?.dispatched === 0,
+    "expiry between credential read and dispatch cannot consume or authorize a request");
+}
+
 assert(NVIDIA_NIM_PROVIDER_STATUS.newCapability === "BOUNDED_NVIDIA_NIM_CHAT_COMPLETION", "chunk reports exact model capability gain");
 assert(NVIDIA_NIM_PROVIDER_STATUS.liveNetworkAuthorityGranted === false && !NVIDIA_NIM_PROVIDER_STATUS.productionEligible,
   "provider adapter does not grant live or production authority by construction");

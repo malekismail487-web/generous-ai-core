@@ -193,3 +193,13 @@ acceptance and authority. Its test-only reference implementations establish that
 oracles and bounded execution path work; they are not model solutions and are never
 model inputs. Same-session authorship is disclosed, not independent replication.
 Both live workflows return to manual-only after this bounded execution.
+
+### Physical request limits
+
+ARC, text evaluation and the Harbor entrypoint use the existing NVIDIA provider's
+`withHttpAttemptBudget` to create a host-owned per-task scope. Logical calls and internal
+retries debit that same scope before HTTP dispatch. Nested scopes retain all ancestor
+limits; cancellation, expiry and transport failure cannot refund or renew attempts.
+Budget denial is resource exhaustion, not a model reasoning or provider failure.
+Successful last-budget responses remain eligible for the unchanged independent oracle.
+This is a delivery correction, not a cognitive promotion or a benchmark score.

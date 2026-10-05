@@ -182,6 +182,7 @@ export function textInferenceUsage(evidence: readonly NvidiaNimEvidence[], elaps
 export function textOutcome(result: NyxChatTurnResult | null, evidence: readonly NvidiaNimEvidence[],
   correct: boolean | null): string {
   if (!result) return "INFRASTRUCTURE_FAILURE";
+  if (evidence.some(item => item.delivery?.httpAttemptBudget?.dispatchDenied)) return "RESOURCE_EXHAUSTION";
   if (evidence.some(item => item.failureCategory || item.delivery && item.delivery.state !== "DELIVERED"
     && ((item.delivery.timedOutAttempts ?? 0) > 0 || (item.delivery.transientUnavailableResponses ?? 0) > 0
       || (item.delivery.rateLimitedResponses ?? 0) > 0))) return "PROVIDER_FAILURE";

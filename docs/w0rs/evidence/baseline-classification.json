@@ -8223,6 +8223,7 @@
           "scripts/omega/benchmarks/sourceLiteralTransferTasks.ts",
           "scripts/omega/benchmarks/tasks.ts",
           "scripts/omega/nyx-admission-guidance-fixtures.ts",
+          "scripts/omega/nyx-arc-core-refinement.ts",
           "scripts/omega/nyx-biological-connectome-ablation.ts",
           "scripts/omega/nyx-cli.ts",
           "scripts/omega/nyx-context-experiment.ts",

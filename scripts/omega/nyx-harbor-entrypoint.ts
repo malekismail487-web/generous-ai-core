@@ -23,7 +23,8 @@ try {
   const model = NvidiaNimProvider.create({providerId: "NYX-HARBOR-NEMOTRON-COGNITION",
     model: NYX_HARBOR_BRIDGE_POLICY.model, authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM",
     credentialSource: nvidiaNimCredentialFromEnvironment(process.env), maxPromptBytes: 64000,
-    maxOutputTokens: NYX_HARBOR_BRIDGE_POLICY.maxOutputTokens, timeoutMs: 120000});
+    maxOutputTokens: NYX_HARBOR_BRIDGE_POLICY.maxOutputTokens, timeoutMs: 120000})
+    .withHttpAttemptBudget(NYX_HARBOR_BRIDGE_POLICY.maxModelCalls);
   const result = await runNyxHarborCandidate(request, {model, driver: new NyxDockerDriver()});
   if (request.candidate !== git("rev-parse", "HEAD") || sourceIndexBefore !== nyxSha256(git("ls-files", "-s"))
     || git("status", "--porcelain")) throw Error("harbor_authoritative_source_changed");

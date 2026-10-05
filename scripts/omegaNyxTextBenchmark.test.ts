@@ -205,6 +205,13 @@ check("retry cost and unknown usage are not hidden", () => assert.deepEqual(text
   logicalCalls: 1, physicalCalls: 2, httpAttempts: 2, reportedTokens: 60, unknownUsageCalls: 1,
   toolCalls: 0, toolWorkUnits: 0, wallClockMs: 10, providerFailures: 1, retries: 1}));
 const unknown = {...retry, usage: {promptTokens: null, completionTokens: null, totalTokens: null}};
+const budgetEvidence = {scope: "HOST_OWNED_RUN_INCLUDING_RETRIES" as const, limit: 2, dispatched: 2,
+  remainingAttempts: 0, exhausted: true, dispatchDenied: true, renewed: false as const};
+check("local physical budget exhaustion is not provider, schema, or reasoning failure", () =>
+  assert.equal(textOutcome(denied, [{...unknown, delivery: {...unknown.delivery, state: "STOPPED", httpAttemptBudget: budgetEvidence}}], null),
+    "RESOURCE_EXHAUSTION"));
+check("successful final dispatch is still eligible for independent answer grading", () =>
+  assert.equal(textOutcome(result, [{...retry, delivery: {...retry.delivery, httpAttemptBudget: {...budgetEvidence, dispatchDenied: false}}}], true), "PASS"));
 check("failed physical calls are all unknown, not zero compute", () => assert.equal(textInferenceUsage([unknown], 10).unknownUsageCalls, 2));
 check("local rejection cannot invent live HTTP attempts", () => assert.equal(textInferenceUsage([
   {...unknown, networkAttempted: false, delivery: {...unknown.delivery, httpAttempts: 0, timedOutAttempts: 0,

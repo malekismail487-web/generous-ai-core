@@ -81,6 +81,7 @@ export async function runTextBenchmarkEpoch() {
   for (const task of selection) {
     if (Date.now() >= deadline || !diagnostic && consecutiveProviderFailures >= 2) break;
     const started = Date.now(); const evidence: NvidiaNimEvidence[] = [];
+    const taskProvider = provider.withHttpAttemptBudget(delivery === "SCOPED_FILE" ? 2 : 1);
     const rejectionStart = requestRejections.length;
     const questionFile = `export const question = ${JSON.stringify(task.question)};\n`;
     if (delivery === "SCOPED_FILE" && Buffer.byteLength(questionFile) > 64000) {
@@ -103,7 +104,7 @@ export async function runTextBenchmarkEpoch() {
           const questionObserved = reader!.auditLog().some(t => t.request.action === "READ_FILE"
             && t.request.resourcePath === "src/question.mjs" && t.authorization.allowed
             && t.toolAction !== null && t.observation.content === questionFile);
-          const response = await provider.complete(textConfiguredRequest(request, task.configuration,
+          const response = await taskProvider.complete(textConfiguredRequest(request, task.configuration,
             delivery as "DIRECT" | "SCOPED_FILE", questionObserved));
           evidence.push(response.evidence); return response;}},
         candidateWriter: null, editablePaths: [], maxCandidatesPerTurn: 0, maxModelCallsPerTurn: repository ? 2 : 1,

@@ -17,6 +17,7 @@ import { QUALITY_SITE_TRANSFER_TASKS } from "./omega/benchmarks/qualitySiteTrans
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
+import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapacity";
 
 let passed = 0, failed = 0;
 const check = (value: unknown, label: string) => { if (value) passed++; else { failed++; console.error(`FAIL ${label}`); } };
@@ -26,6 +27,15 @@ const input = { train: [{ input: [[1, 2]], output: [[2, 3]] }, { input: [[3], [0
 const correct = 'export function transform(input) {\n  const output = input.map(row => row.map(color => (color + 1) % 10));\n  return { attempt_1: output, attempt_2: output };\n}\n';
 const bad = 'export function transform(input) {\n  const output = input.map(row => row.map(() => 0));\n  return { attempt_1: output, attempt_2: output };\n}\n';
 const digest = theoryDigest("fixture");
+{
+  const path = "src/lib/codelab/model/nvidiaNimProvider.ts";
+  const current = await readFile(path, "utf8");
+  const prior = execFileSync("git", ["show", `dcf290fbafacb21c73f569005b9cfc68889f183b:${path}`], {encoding: "utf8"});
+  check(arcCorePredecessorSource(path, current) === prior,
+    "dispatch correction has a new source identity; exact inversion reproduces the pinned provider");
+  check(arcCorePredecessorSource(path, current + "// unrelated mutation\n") !== prior,
+    "unrelated provider edits cannot inherit the dispatch correction or historical identity");
+}
 for (const path of ["src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts", "src/lib/codelab/engine/r3BoundedRepairLoop.ts",
   "src/lib/codelab/assurance/engineeringQualityOracle.ts"]) {
   const current = await readFile(path, "utf8");
@@ -54,6 +64,31 @@ const intent = (source: string) => JSON.stringify({ decision: "PROPOSE_EDIT", di
   changes: [{ target: "src/transform.mjs", replacement: { lines: source.split("\n"), lineEnding: "LF" } }], confidence: 0.8 });
 const request = (signal = new AbortController().signal) => ({ input, inputDigest: theoryDigest(input), attempt: 1,
   feedback: null, remaining: limits, signal });
+
+{
+  let time = Date.now(), dispatches = 0;
+  const p = NvidiaNimProvider.create({providerId: "ARC-GENERAL-DELIVERY-TEST", model: spec("CURRENT_NYX").model,
+    authorityMode: "TEST_DOUBLE_ONLY", credentialSource: {sourceIdentity: "development-only", read: () => "synthetic-not-a-real-credential"},
+    maxPromptBytes: 64000, maxOutputTokens: 8192, timeoutMs: 1000,
+    testCapacity: new NvidiaCapacityCoordinator({now: () => time, sleep: async ms => {time += ms;}}),
+    transport: async () => {
+      dispatches++;
+      return dispatches === 1 ? new Response(null, {status: 503}) : reply(intent(dispatches === 2 ? bad : correct));
+    }});
+  const traces: Record<string, unknown>[] = [];
+  const adapter = createArcAdapter({spec: spec("CURRENT_NYX"), provider: p, candidateCommit: "a".repeat(40), maxOutputTokens: 8192,
+    onIntegrationEvidence: trace => traces.push(trace as unknown as Record<string, unknown>)});
+  const output = await adapter.invoke({...request(), remaining: {...limits, maxWallClockMsPerTask: 180000}});
+  check(dispatches === 2 && output.usage.physicalCalls === 2 && output.failure === "RESOURCE_EXHAUSTION",
+    "provider retry and subsequent repair share one physical budget before dispatch");
+  check(output.artifact === null && output.internalCandidateAttempts === 1 && traces[0]?.cleanupVerified && traces[0]?.sourceUnchanged,
+    "failed candidate remains failed; local budget rejection cannot bypass acceptance or cleanup");
+  check(output.usage.unknownUsageCalls === 1 && output.usage.providerFailures === 1 && output.usage.retries === 1,
+    "unknown retry compute and actual provider failure survive local budget rejection");
+  const next = await adapter.invoke({...request(), remaining: {...limits, maxWallClockMsPerTask: 180000}});
+  check(next.failure === null && next.usage.physicalCalls === 1 && dispatches === 3,
+    "a separate task gets its own frozen allowance, not the previous task's depleted budget");
+}
 
 for (const arm of ["RAW_MODEL", "MODEL_EQUIVALENT_TOOLS", "CURRENT_NYX"] as const) {
   let calls = 0; const policies: unknown[] = []; const prompts: string[] = [];

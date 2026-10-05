@@ -54,7 +54,8 @@ check(Object.entries(NYX_GATE_RECOVERY_FROZEN_CORE.files).every(([path, expected
 const hostedPredecessor = execFileSync("git", ["show",
   NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.predecessor + ":" + NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.changedPath],
   { encoding: "utf8" });
-const hostedCurrent = readFileSync(NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.changedPath, "utf8");
+const hostedCurrent = arcCorePredecessorSource(NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.changedPath,
+  readFileSync(NYX_GATE_RECOVERY_HOSTED_NATIVE_REVISION.changedPath, "utf8"));
 const hostedRefinements = [
   ['  readonly reasoningControl?: "ULTRA_NATIVE";\n',
     '  readonly reasoningControl?: "ULTRA_NATIVE" | "ULTRA_HOSTED_NATIVE";\n'],
@@ -118,7 +119,8 @@ check(currentProvider.split("  async #attempt(")[0] === compatibilityProvider.sp
 "response accounting cannot change request payloads, inference settings, retries, budgets, or result authority");
 check(digest(Buffer.from(currentProvider))===NYX_GATE_RECOVERY_RESPONSE_ACCOUNTING_REVISION.sourceSha256,
   "previous response-accounting source remains independently reproducible at its unchanged historical identity");
-const diagnosticProvider=readFileSync(NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.changedPath,"utf8");
+const diagnosticProvider=arcCorePredecessorSource(NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.changedPath,
+  readFileSync(NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.changedPath,"utf8"));
 check(diagnosticProvider.split("  async #attempt(")[1]===currentProvider.split("  async #attempt(")[1],
   "opt-in wire diagnostic cannot modify transport retries, expiry, parsing, response accounting, credential handling, or result authority");
 check(NYX_GATE_RECOVERY_WIRE_DIAGNOSTIC_REVISION.experimentalOnly

@@ -139,6 +139,16 @@ export interface NvidiaNimDeliveryEvidence {
   readonly state: "DELIVERED" | "WAITING_FOR_CAPACITY" | "STOPPED";
   readonly notBeforeEpochMs: number | null;
   readonly authorityRenewed: false;
+  /** Host-owned dispatch budget shared by logical calls and retries, never supplied to the model. */
+  readonly httpAttemptBudget?: {
+    readonly scope: "HOST_OWNED_RUN_INCLUDING_RETRIES";
+    readonly limit: number;
+    readonly dispatched: number;
+    readonly remainingAttempts: number;
+    readonly exhausted: boolean;
+    readonly dispatchDenied: boolean;
+    readonly renewed: false;
+  };
 }
 
 export interface NvidiaNimCompletionResult {
@@ -223,6 +233,7 @@ function failureDiagnostics(reason: string, statusCode: number | null): {
   readonly category: NvidiaNimProviderFailureCategory | null;
   readonly retryability: NvidiaNimRetryability | null;
 } {
+  if (reason === "nvidia_http_attempt_budget_exhausted") return { category: null, retryability: "NO" };
   if (reason === "nvidia_provider_timeout") return { category: "PROVIDER_TIMEOUT", retryability: "YES" };
   if (reason === "nvidia_provider_cancelled") return { category: "PROVIDER_CANCELLED", retryability: "NO" };
   if (reason === "nvidia_provider_transport_failure") return { category: "PROVIDER_TRANSPORT_ERROR", retryability: "UNKNOWN" };
@@ -251,11 +262,14 @@ export class NvidiaNimProvider {
   readonly #config: NvidiaNimProviderConfig;
   readonly #transport: NvidiaNimTransport | null;
   readonly #capacity: NvidiaCapacityCoordinator | null;
+  readonly #httpAttemptBudgets: readonly { readonly limit: number; dispatched: number }[];
 
-  private constructor(config: NvidiaNimProviderConfig, transport: NvidiaNimTransport | null) {
+  private constructor(config: NvidiaNimProviderConfig, transport: NvidiaNimTransport | null,
+    budgets: readonly { readonly limit: number; dispatched: number }[] = []) {
     this.#config = Object.freeze({ ...config, credentialSource: Object.freeze({ ...config.credentialSource }) });
     this.#transport = transport;
     this.#capacity = config.authorityMode === "EXPLICIT_LIVE_NVIDIA_NIM" ? liveNvidiaCapacity : config.testCapacity ?? null;
+    this.#httpAttemptBudgets = Object.freeze([...budgets]);
   }
 
   static create(config: NvidiaNimProviderConfig): NvidiaNimProvider {
@@ -274,6 +288,23 @@ export class NvidiaNimProvider {
 
   profile(): typeof NVIDIA_NIM_PROVIDER_STATUS & { readonly authorityMode: NvidiaNimProviderConfig["authorityMode"]; readonly model: string } {
     return Object.freeze({ ...NVIDIA_NIM_PROVIDER_STATUS, authorityMode: this.#config.authorityMode, model: this.#config.model });
+  }
+
+  /** A trusted host creates one scope per task/run. Nested scopes cannot refill their ancestor. */
+  withHttpAttemptBudget(limit: number): NvidiaNimProvider {
+    if (!Number.isSafeInteger(limit) || limit < 1) throw new Error("nvidia_http_attempt_budget_invalid");
+    return new NvidiaNimProvider(this.#config, this.#transport, [...this.#httpAttemptBudgets, { limit, dispatched: 0 }]);
+  }
+
+  #remainingHttpAttempts(): number {
+    return Math.min(Infinity, ...this.#httpAttemptBudgets.map(budget => budget.limit - budget.dispatched));
+  }
+
+  #takeHttpAttempt(): boolean {
+    // No await between admission and debit: concurrent completions cannot spend the same last attempt.
+    if (this.#remainingHttpAttempts() < 1) return false;
+    for (const budget of this.#httpAttemptBudgets) budget.dispatched++;
+    return true;
   }
 
   async complete(request: NvidiaNimCompletionRequest): Promise<NvidiaNimCompletionResult> {
@@ -341,7 +372,7 @@ export class NvidiaNimProvider {
       const event: NvidiaNimCapacityProgress = Object.freeze({ state, requestDigest, observedAtEpochMs, retryAtEpochMs,
         secondsUntilRetry: retryAtEpochMs === null ? null : Math.max(0, Math.ceil((retryAtEpochMs - observedAtEpochMs) / 1000)),
         automaticResume: state === "WAITING_FOR_CAPACITY" && retryAtEpochMs !== null
-          && retryAtEpochMs < deadline && !signal.aborted,
+          && retryAtEpochMs < deadline && !signal.aborted && this.#remainingHttpAttempts() > 0,
         httpAttempts, rateLimitedResponses, transientUnavailableResponses, timedOutAttempts,
         taskCompletionClaimed: false, authorityRenewed: false });
       try {
@@ -356,11 +387,16 @@ export class NvidiaNimProvider {
       } catch { /* a failed status sink cannot alter delivery or expose its exception */ }
     };
     const finish = (result: NvidiaNimCompletionResult, notBeforeEpochMs: number | null = null): NvidiaNimCompletionResult => {
+      const budget = this.#httpAttemptBudgets.at(-1);
       const delivery: NvidiaNimDeliveryEvidence = Object.freeze({ policy: "nvidia-capacity/1", requestsPerMinute: 40,
         scope: "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT", httpAttempts, rateLimitedResponses,
         transientUnavailableResponses, timedOutAttempts, capacityWaitMs,
         state: result.decision === "COMPLETED" ? "DELIVERED" : result.decision === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY" : "STOPPED",
-        notBeforeEpochMs, authorityRenewed: false });
+        notBeforeEpochMs, authorityRenewed: false,
+        ...(budget ? { httpAttemptBudget: Object.freeze({ scope: "HOST_OWNED_RUN_INCLUDING_RETRIES" as const,
+          limit: budget.limit, dispatched: budget.dispatched, remainingAttempts: this.#remainingHttpAttempts(),
+          exhausted: this.#remainingHttpAttempts() === 0,
+          dispatchDenied: result.reason === "nvidia_http_attempt_budget_exhausted", renewed: false as const }) } : {}) });
       if (waitVisible) progress(result.decision === "COMPLETED" ? "COMPLETED" : "STOPPED", notBeforeEpochMs);
       return Object.freeze({ ...result, evidence: Object.freeze({ ...result.evidence, delivery }) });
     };
@@ -371,6 +407,9 @@ export class NvidiaNimProvider {
     while (true) {
       if (signal.aborted) return stopped(true);
       if (now() >= deadline) return stopped(false);
+      if (this.#remainingHttpAttempts() < 1) return finish(this.#result("BLOCKED", "nvidia_http_attempt_budget_exhausted",
+        null, null, requestDigest, null, previous?.evidence.statusCode ?? null, emptyUsage(), httpAttempts > 0,
+        previous?.evidence.providerRequestId ?? null));
       if (this.#capacity) {
         const admission = await this.#capacity.acquire(deadline, signal, (update) => {
           if (update.reason !== "PROVIDER_COOLDOWN" && !waitVisible) return;
@@ -384,6 +423,9 @@ export class NvidiaNimProvider {
       if (signal.aborted) return stopped(true);
       if (now() >= deadline) return stopped(false);
       if (waiting) {
+        if (this.#remainingHttpAttempts() < 1) return finish(this.#result("BLOCKED", "nvidia_http_attempt_budget_exhausted",
+          null, null, requestDigest, null, previous?.evidence.statusCode ?? null, emptyUsage(), httpAttempts > 0,
+          previous?.evidence.providerRequestId ?? null));
         progress("RESUMING"); waiting = false;
         if (signal.aborted) return stopped(true);
         if (now() >= deadline) return stopped(false);
@@ -420,6 +462,8 @@ export class NvidiaNimProvider {
   }
 
   async #attempt(body: string, requestDigest: string, signal: AbortSignal, deadlineEpochMs: number): Promise<NvidiaNimCompletionResult> {
+    if (this.#remainingHttpAttempts() < 1) return this.#result("BLOCKED", "nvidia_http_attempt_budget_exhausted",
+      null, null, requestDigest, null, null, emptyUsage(), false);
     let credential: string | undefined;
     try { credential = this.#config.credentialSource.read(); }
     catch { return this.#result("BLOCKED", "nvidia_api_credential_unavailable", null, null, requestDigest, null, null, emptyUsage(), false); }
@@ -447,7 +491,14 @@ export class NvidiaNimProvider {
         .then(value => { cleanup(); resolve(value); }, error => { cleanup(); reject(error); });
     });
     try {
+      let dispatchDeniedReason: string | null = null;
       const response = await bounded(() => {
+        if ((this.#capacity?.clock.now() ?? Date.now()) >= deadlineEpochMs) {
+          dispatchDeniedReason = "nvidia_completion_run_expired"; return Promise.resolve(null);
+        }
+        if (!this.#takeHttpAttempt()) {
+          dispatchDeniedReason = "nvidia_http_attempt_budget_exhausted"; return Promise.resolve(null);
+        }
         this.#capacity?.recordDispatch(); networkAttempted = true;
         return this.#transport!(NVIDIA_NIM_CHAT_COMPLETIONS_URL, {
           method: "POST",
@@ -456,6 +507,8 @@ export class NvidiaNimProvider {
           signal: controller.signal,
         });
       });
+      if (response === null) return this.#result("BLOCKED", dispatchDeniedReason!, null, null,
+        requestDigest, null, null, emptyUsage(), false);
       const providerRequestId = safeProviderRequestId(response.headers.get("x-request-id") ?? response.headers.get("request-id"));
       if (!response.ok) {
         // Respect server recovery timing for transient outages as well as 429.

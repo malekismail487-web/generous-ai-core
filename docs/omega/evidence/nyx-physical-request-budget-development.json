@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-PHYSICAL-REQUEST-BUDGET-001",
+  "candidateBinding": "CONTAINING_COMMIT_AND_FRESH_WORKFLOW_HEAD",
+  "predecessor": "dcf290fbafacb21c73f569005b9cfc68889f183b",
+  "causalObservation": {
+    "candidate": "447ff007bc752d4b62a5208acf9dce6f3925ba30",
+    "runId": 37328106053,
+    "frozenPhysicalLimit": 2,
+    "observedPhysicalAttempts": 3,
+    "oracleAcceptedOverrun": false,
+    "originalEvidencePreserved": true
+  },
+  "developmentReproduction": {
+    "environment": "WINDOWS_NODE24_TEST_DOUBLE_MANUAL_CLOCK",
+    "logicalCalls": 2,
+    "controlObservedPhysicalAttempts": 3,
+    "candidateObservedPhysicalAttempts": 2,
+    "candidateNextLogicalCall": "BLOCKED_BEFORE_CREDENTIAL_READ_AND_HTTP_DISPATCH",
+    "input": "SYNTHETIC_DELIVERY_SENTINEL_NO_BENCHMARK_QUESTION",
+    "liveModelCalls": 0,
+    "benchmarkTasks": 0,
+    "matchedRealizedModelCompute": "NOT_A_LIVE_COGNITIVE_COMPARISON",
+    "physicalAttemptCountsDiffer": true
+  },
+  "verification": {
+    "evidenceClass": "E3",
+    "providerChecks": 238,
+    "arcIntegrationChecks": 236,
+    "textIntegrationChecks": 86,
+    "newCases": [
+      "retry consumes same budget as subsequent logical calls",
+      "429 and 503 cannot create an unbudgeted retry",
+      "parallel completions atomically debit shared attempts",
+      "nested and sibling scopes cannot refill an ancestor",
+      "successful final dispatch is not a denied dispatch",
+      "failed transport cannot refund unknown compute",
+      "malformed, cancelled and expired unsent requests cannot invent compute",
+      "separate host-issued task scopes do not share one campaign-wide allowance",
+      "failed candidate remains unaccepted and source/cleanup evidence survives",
+      "exact historical provider source remains reproducible without score inheritance"
+    ],
+    "liveProviderStability": "NOT_ESTABLISHED",
+    "cognitiveGain": false,
+    "fullBenchmarkScore": null
+  },
+  "capabilityGap": {
+    "schemaVersion": 1,
+    "gapId": "NYX-PHYSICAL-REQUEST-BUDGET-001",
+    "failureClass": "RESOURCE_EXHAUSTION",
+    "capabilityClass": "PHYSICAL_REQUEST_BUDGET_INCLUDING_PROVIDER_RETRIES",
+    "benchmarkTaskDigest": "77b353db4dfef7f7441377d201e2a79eab641f73b9d03e17d72af397d9601ecc",
+    "failureEvidenceDigest": "5848df3547892c0c6694f2a1557475a8a1ba8c9d72382fe230c0d6651009b552",
+    "benchmarkInputDigest": "81b38188c5d62658a730cf38952148c6b086d5880b5ee34bab219dbf58e028cb",
+    "steps": [],
+    "grantsAuthority": false,
+    "benchmarkReevaluationEligible": false,
+    "status": "OBSERVED",
+    "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+    "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+    "semanticIndependenceProvedByDigests": false,
+    "recordDigest": "a1eaf54804bbeef13af11fb31899f4da44d47dece6b823bd7381ba225fb89df6"
+  },
+  "classification": "DELIVERY_INTEGRITY_REPAIR_NOT_COGNITIVE_PROMOTION",
+  "authorityDelta": "NONE",
+  "acceptanceOracleChanged": false,
+  "planCoverage": {
+    "directlyImplemented": ["HONEST_PHYSICAL_COMPUTE_ACCOUNTING", "BOUNDED_RETRIES", "NO_IMPLICIT_RESOURCE_RENEWAL"],
+    "supporting": ["EVIDENCE_OVER_CONFIDENCE", "NO_SELF_CERTIFICATION", "SOURCE_IDENTITY_PROVENANCE"],
+    "deferred": ["COGNITIVE_PROMOTION", "CONNECTOME_EXPANSION", "RECURSION", "DEVICE_INTEGRATION"],
+    "conflicts": ["LOGICAL_CALL_LIMIT_ALONE_DID_NOT_ENFORCE_PHYSICAL_REQUEST_LIMIT"],
+    "coverageStatus": "PARTIAL_JUST_IN_TIME"
+  }
+}
