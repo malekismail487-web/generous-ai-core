@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-HARBOR-EXISTING-SUBSTRATE-INTERFACE-001",
+  "candidate": "1ea3357bf7511d3c5cd974107e9f4970a6595112",
+  "upstreamHarborCommit": "fd1521a1da6250d9ed8fc7505caa0b7a72f36c4b",
+  "runId": "37322739162",
+  "jobId": "111805656185",
+  "evidenceClass": "E3",
+  "observedResult": "PASS",
+  "actualHarborSdkImported": true,
+  "actualAgentFactoryAndSourcePinChecked": true,
+  "sdkInterfaceTestsPassed": 9,
+  "nyxBridgeChecksPassed": 27,
+  "environment": "GITHUB_ACTIONS_UBUNTU",
+  "observedPythonInstallVersion": "3.12.3",
+  "observedPythonTestVersion": "3.13.16",
+  "runtimeSelectionCorrection": "Future manual runs explicitly select Python 3.12; this receipt does not claim those runs occurred",
+  "dockerIo": "TEST_DOUBLE",
+  "modelIo": "TEST_DOUBLE_OR_NOT_EXECUTED",
+  "liveModelCalls": 0,
+  "officialBenchmarkTasksExecuted": 0,
+  "officialBenchmarkScore": null,
+  "cognitiveGain": false,
+  "hostAndProductionAuthorityGranted": false,
+  "preservedChecks": [
+    "unknown agent options reject rather than silently changing budgets or authority",
+    "exact container, candidate and task identity binding",
+    "unknown model token usage remains null",
+    "model replies do not certify task success",
+    "credential is not included in request payload or Docker environment",
+    "cancellation kills host client and observes termination of exact task container",
+    "unconfirmed termination is an explicit failure",
+    "oversized instructions reject instead of truncating benchmark input",
+    "host output bounds enforced while reading"
+  ],
+  "limitations": [
+    "Windows Application Control blocked the local Python interpreter and dependency installation; no bypass attempted",
+    "actual task-container lifecycle in this SDK bridge has not yet been exercised",
+    "ordinary official task profiles are not automatically admitted by the private-offline Omega profile",
+    "full benchmark populations and live reasoning improvements remain unresolved"
+  ]
+}

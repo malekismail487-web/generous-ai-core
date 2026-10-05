@@ -1,9 +1,6 @@
 name: Omega NYX pinned Harbor interface validation
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-harbor-interface-one-shot.yml]
 permissions:
   contents: read
 concurrency:
@@ -33,6 +30,6 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
-          uv run --project "$RUNNER_TEMP/nyx-harbor-upstream" --no-dev --no-default-groups --frozen python -m unittest scripts.omega.benchmarks.test_nyx_harbor_agent -v
+          uv run --project "$RUNNER_TEMP/nyx-harbor-upstream" --python 3.12 --no-dev --no-default-groups --frozen python -m unittest scripts.omega.benchmarks.test_nyx_harbor_agent -v
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxHarborBridge.test.ts
           printf 'NYX_HARBOR_INTERFACE_SCOPE actual_sdk=true docker_io=TEST_DOUBLE live_model=false official_tasks=0 cognitive_gain=false\n'
