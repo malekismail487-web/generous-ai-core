@@ -1018,6 +1018,107 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
     "expiry between credential read and dispatch cannot consume or authorize a request");
 }
 
+// Independent transport reproduction: no benchmark question, answer, live model or secret.
+// The delayed response is controlled by this evaluator, not by provider helper functions.
+{
+  const outcomes: { timeoutMs: number; decision: string; elapsedMs: number; leaseRemainingMs: number }[] = [];
+  for (const timeoutMs of [100, 500]) {
+    const began = Date.now(), deadline = began + 900;
+    let dispatches = 0;
+    const client = provider(async () => {
+      dispatches++;
+      await new Promise<void>(resolve => setTimeout(resolve, 200));
+      return new Response(JSON.stringify({choices: [{message: {content: "DEVELOPMENT_DELIVERY"}, finish_reason: "stop"}],
+        usage: {prompt_tokens: 6, completion_tokens: 2, total_tokens: 8}}), {status: 200});
+    }, "synthetic-development-credential", timeoutMs).withHttpAttemptBudget(1);
+    const result = await client.complete(request({deadlineEpochMs: deadline}));
+    outcomes.push({timeoutMs, decision: result.decision, elapsedMs: Date.now() - began, leaseRemainingMs: deadline - Date.now()});
+    check(dispatches === 1 && result.evidence.delivery?.httpAttemptBudget?.dispatched === 1,
+      "independent delayed-response reproduction uses exactly one physical request in either control");
+    check(timeoutMs === 100 ? result.evidence.failureCategory === "PROVIDER_TIMEOUT" && Date.now() < deadline
+      : result.decision === "COMPLETED" && result.content === "DEVELOPMENT_DELIVERY" && Date.now() < deadline,
+    "per-attempt timeout can reject a controlled response while the same finite task lease remains valid");
+  }
+  console.log(`NYX_TIMEOUT_DEVELOPMENT ${JSON.stringify({outcomes, liveModelCalls: 0, cognitiveGain: false,
+    inference: "CONTROLLED_TRANSPORT_ONLY_NOT_PROOF_OF_LIVE_PROVIDER_COMPLETION"})}`);
+}
+
+// Matched independent transport controls for the opt-in final-attempt policy.
+// Longer waiting is delivery reliability, not extra inference allowance or cognitive improvement.
+{
+  const make = (transport: NvidiaNimTransport, finalAttemptTimeoutMs?: number,
+    read = () => "synthetic-development-credential") => NvidiaNimProvider.create({
+    providerId: "DEVELOPMENT-FINAL-ATTEMPT", model: "nvidia/development-model", authorityMode: "TEST_DOUBLE_ONLY",
+    credentialSource: {sourceIdentity: "synthetic:final-attempt", read}, maxPromptBytes: 4096,
+    maxOutputTokens: 128, timeoutMs: 100, finalAttemptTimeoutMs, transport});
+  const outcomes: {phase: string; profile: string; decision: string; physicalCalls: number; elapsedMs: number}[] = [];
+  for (const phase of ["FETCH", "BODY"] as const) for (const profile of ["FIXED", "FINAL_LEASE"] as const) {
+    const began = Date.now(), deadline = began + 900;
+    let calls = 0;
+    const raw = {choices: [{message: {content: "DEVELOPMENT_FINAL"}, finish_reason: "stop"}],
+      usage: {prompt_tokens: 6, completion_tokens: 2, total_tokens: 8}};
+    const delay = () => new Promise<void>(resolve => setTimeout(resolve, 200));
+    const client = make(async () => {
+      calls++;
+      if (phase === "FETCH") { await delay(); return new Response(JSON.stringify(raw), {status: 200}); }
+      return {ok: true, status: 200, headers: new Headers(), json: async () => { await delay(); return raw; }} as Response;
+    }, profile === "FINAL_LEASE" ? 500 : undefined).withHttpAttemptBudget(1);
+    const result = await client.complete(request({deadlineEpochMs: deadline}));
+    const refused = await client.complete(request({deadlineEpochMs: deadline}));
+    outcomes.push({phase, profile, decision: result.decision, physicalCalls: calls, elapsedMs: Date.now() - began});
+    check(profile === "FIXED" ? result.evidence.failureCategory === "PROVIDER_TIMEOUT"
+      : result.decision === "COMPLETED" && result.content === "DEVELOPMENT_FINAL",
+    `${phase}: opt-in final attempt delivers a controlled response without changing the default cutoff`);
+    check(calls === 1 && refused.reason === "nvidia_http_attempt_budget_exhausted"
+      && result.evidence.delivery?.authorityRenewed === false,
+    `${phase}/${profile}: completion, timeout and repeat cannot refill the shared physical allowance`);
+    check(profile === "FIXED" ? result.evidence.delivery?.attemptTimeout === undefined
+      : result.evidence.delivery?.attemptTimeout?.callerDeadlineEpochMs === deadline
+        && result.evidence.delivery.attemptTimeout.finalAttemptUsed,
+    `${phase}/${profile}: evidence identifies the explicit profile and unchanged caller expiry`);
+  }
+  let reads = 0, calls = 0;
+  const read = () => { reads++; return "synthetic-development-credential"; };
+  const unowned = make(async () => {calls++; return success();}, 500, read);
+  const noBudget = await unowned.complete(request({deadlineEpochMs: Date.now() + 900}));
+  const noDeadline = await unowned.withHttpAttemptBudget(1).complete(request());
+  check(noBudget.decision === "REJECTED" && noDeadline.decision === "REJECTED" && reads === 0 && calls === 0,
+    "extended final attempt requires both host-owned shared allowance and finite caller expiry before credential access");
+  const first = make(async () => { await new Promise<void>(resolve => setTimeout(resolve, 200)); return success(); }, 500)
+    .withHttpAttemptBudget(2);
+  const firstResult = await first.complete(request({deadlineEpochMs: Date.now() + 900}));
+  check(firstResult.evidence.failureCategory === "PROVIDER_TIMEOUT"
+    && firstResult.evidence.delivery?.attemptTimeout?.finalAttemptUsed === false,
+    "non-final physical attempt retains the original timeout even in the experimental profile");
+  const deadline = Date.now() + 100;
+  const late = make(async () => { await new Promise<void>(resolve => setTimeout(resolve, 200)); return success(); }, 500)
+    .withHttpAttemptBudget(1);
+  const lateResult = await late.complete(request({deadlineEpochMs: deadline}));
+  check(lateResult.decision !== "COMPLETED" && lateResult.content === null && lateResult.evidence.responseDigest === null,
+    "extended final attempt cannot accept output after the original shorter task deadline");
+  const controller = new AbortController();
+  const cancelled = make(async () => { await new Promise<void>(resolve => setTimeout(resolve, 200)); return success(); }, 500)
+    .withHttpAttemptBudget(1);
+  const timer = setTimeout(() => controller.abort(), 25);
+  try {
+    const result = await cancelled.complete(request({deadlineEpochMs: Date.now() + 900, signal: controller.signal}));
+    check(result.evidence.failureCategory === "PROVIDER_CANCELLED" && result.content === null,
+      "caller cancellation still fences transport that ignores abort under the extended final profile");
+  } finally { clearTimeout(timer); }
+  for (const finalMs of [99, 180001, NaN, 100.5]) {
+    let rejected = false;
+    try { make(async () => success(), finalMs); } catch { rejected = true; }
+    check(rejected, "malformed, shorter or over-ceiling final-attempt policy is rejected");
+  }
+  let oldCapPreserved = false;
+  try { NvidiaNimProvider.create({providerId: "DEFAULT-CAP", model: "nvidia/development-model", authorityMode: "TEST_DOUBLE_ONLY",
+    credentialSource: {sourceIdentity: "synthetic:default-cap", read}, maxPromptBytes: 4096, maxOutputTokens: 128,
+    timeoutMs: 120001, transport: async () => success()}); } catch { oldCapPreserved = true; }
+  check(oldCapPreserved, "ordinary provider timeout ceiling remains 120 seconds; experimental profile is not the default");
+  console.log(`NYX_FINAL_ATTEMPT_DEVELOPMENT ${JSON.stringify({outcomes, liveModelCalls: 0, cognitiveGain: false,
+    productionDefaultsChanged: false, callerLeaseRenewed: false, inference: "SYNTHETIC_TRANSPORT_NOT_LIVE_TRANSFER"})}`);
+}
+
 assert(NVIDIA_NIM_PROVIDER_STATUS.newCapability === "BOUNDED_NVIDIA_NIM_CHAT_COMPLETION", "chunk reports exact model capability gain");
 assert(NVIDIA_NIM_PROVIDER_STATUS.liveNetworkAuthorityGranted === false && !NVIDIA_NIM_PROVIDER_STATUS.productionEligible,
   "provider adapter does not grant live or production authority by construction");

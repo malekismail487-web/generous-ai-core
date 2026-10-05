@@ -62,9 +62,47 @@ const changes: Record<string, readonly (readonly [string, string, number?])[]> =
     ['\n', '\n        if (request.signal?.aborted) return finish("EXHAUSTED", "repair_outer_request_aborted", iterations, currentObservation);\n'],
   ],
 };
+const finalAttemptRefinement: readonly (readonly [string, string])[] = [
+  [
+    "  readonly maxOutputTokens: number;\n  readonly timeoutMs: number;\n  readonly transport?: NvidiaNimTransport;\n  /** Deterministic delivery testing only. Live instances always share the process-local gate. */\n",
+    "  readonly maxOutputTokens: number;\n  readonly timeoutMs: number;\n  /** Host-only experiment: the last shared-budget attempt may wait longer, but never beyond the caller's existing lease. */\n  readonly finalAttemptTimeoutMs?: number;\n  readonly transport?: NvidiaNimTransport;\n  /** Deterministic delivery testing only. Live instances always share the process-local gate. */\n"
+  ],
+  [
+    "  readonly notBeforeEpochMs: number | null;\n  readonly authorityRenewed: false;\n  /** Host-owned dispatch budget shared by logical calls and retries, never supplied to the model. */\n  readonly httpAttemptBudget?: {\n",
+    "  readonly notBeforeEpochMs: number | null;\n  readonly authorityRenewed: false;\n  /** Explicit host delivery profile; the original absolute deadline is not renewed. */\n  readonly attemptTimeout?: {\n    readonly configuredMs: number;\n    readonly finalAttemptMs: number;\n    readonly callerDeadlineEpochMs: number;\n    readonly finalAttemptUsed: boolean;\n    readonly authorityRenewed: false;\n  };\n  /** Host-owned dispatch budget shared by logical calls and retries, never supplied to the model. */\n  readonly httpAttemptBudget?: {\n"
+  ],
+  [
+    "      || !Number.isInteger(config.maxOutputTokens) || config.maxOutputTokens < 1 || config.maxOutputTokens > 32_768\n      || !Number.isInteger(config.timeoutMs) || config.timeoutMs < 100 || config.timeoutMs > 120_000) throw new Error(\"provider_resource_policy_invalid\");\n    if (config.authorityMode === \"TEST_DOUBLE_ONLY\" && !config.transport) throw new Error(\"test_double_transport_required\");\n    if (config.authorityMode !== \"TEST_DOUBLE_ONLY\" && config.authorityMode !== \"EXPLICIT_LIVE_NVIDIA_NIM\") throw new Error(\"provider_authority_mode_invalid\");\n",
+    "      || !Number.isInteger(config.maxOutputTokens) || config.maxOutputTokens < 1 || config.maxOutputTokens > 32_768\n      || !Number.isInteger(config.timeoutMs) || config.timeoutMs < 100 || config.timeoutMs > 120_000) throw new Error(\"provider_resource_policy_invalid\");\n    if (config.finalAttemptTimeoutMs !== undefined && (!Number.isSafeInteger(config.finalAttemptTimeoutMs)\n      || config.finalAttemptTimeoutMs < config.timeoutMs || config.finalAttemptTimeoutMs > 180_000)) {\n      throw new Error(\"provider_final_attempt_timeout_invalid\");\n    }\n    if (config.authorityMode === \"TEST_DOUBLE_ONLY\" && !config.transport) throw new Error(\"test_double_transport_required\");\n    if (config.authorityMode !== \"TEST_DOUBLE_ONLY\" && config.authorityMode !== \"EXPLICIT_LIVE_NVIDIA_NIM\") throw new Error(\"provider_authority_mode_invalid\");\n"
+  ],
+  [
+    "      issues.push(\"completion_deadline_invalid\");\n    }\n    if (!validMessages(request.messages)) issues.push(\"completion_messages_invalid\");\n    if (!Number.isInteger(request.maxTokens) || request.maxTokens < 1 || request.maxTokens > this.#config.maxOutputTokens) issues.push(\"completion_token_bound_exceeded\");\n",
+    "      issues.push(\"completion_deadline_invalid\");\n    }\n    if (this.#config.finalAttemptTimeoutMs !== undefined\n      && (request.deadlineEpochMs === undefined || this.#httpAttemptBudgets.length === 0)) {\n      issues.push(\"completion_final_attempt_requires_owned_budget_and_deadline\");\n    }\n    if (!validMessages(request.messages)) issues.push(\"completion_messages_invalid\");\n    if (!Number.isInteger(request.maxTokens) || request.maxTokens < 1 || request.maxTokens > this.#config.maxOutputTokens) issues.push(\"completion_token_bound_exceeded\");\n"
+  ],
+  [
+    "    let timedOutAttempts = 0;\n    let capacityWaitMs = 0;\n    let previous: NvidiaNimCompletionResult | null = null;\n    let waitVisible = false;\n",
+    "    let timedOutAttempts = 0;\n    let capacityWaitMs = 0;\n    let finalAttemptTimeoutUsed = false;\n    let previous: NvidiaNimCompletionResult | null = null;\n    let waitVisible = false;\n"
+  ],
+  [
+    "        state: result.decision === \"COMPLETED\" ? \"DELIVERED\" : result.decision === \"WAITING_FOR_CAPACITY\" ? \"WAITING_FOR_CAPACITY\" : \"STOPPED\",\n        notBeforeEpochMs, authorityRenewed: false,\n        ...(budget ? { httpAttemptBudget: Object.freeze({ scope: \"HOST_OWNED_RUN_INCLUDING_RETRIES\" as const,\n          limit: budget.limit, dispatched: budget.dispatched, remainingAttempts: this.#remainingHttpAttempts(),\n",
+    "        state: result.decision === \"COMPLETED\" ? \"DELIVERED\" : result.decision === \"WAITING_FOR_CAPACITY\" ? \"WAITING_FOR_CAPACITY\" : \"STOPPED\",\n        notBeforeEpochMs, authorityRenewed: false,\n        ...(this.#config.finalAttemptTimeoutMs !== undefined ? { attemptTimeout: Object.freeze({\n          configuredMs: this.#config.timeoutMs, finalAttemptMs: this.#config.finalAttemptTimeoutMs,\n          callerDeadlineEpochMs: request.deadlineEpochMs!, finalAttemptUsed: finalAttemptTimeoutUsed,\n          authorityRenewed: false as const }) } : {}),\n        ...(budget ? { httpAttemptBudget: Object.freeze({ scope: \"HOST_OWNED_RUN_INCLUDING_RETRIES\" as const,\n          limit: budget.limit, dispatched: budget.dispatched, remainingAttempts: this.#remainingHttpAttempts(),\n"
+  ],
+  [
+    "        if (now() >= deadline) return stopped(false);\n      }\n      previous = await this.#attempt(body, requestDigest, signal, deadline);\n      if (previous.evidence.networkAttempted) httpAttempts += 1;\n",
+    "        if (now() >= deadline) return stopped(false);\n      }\n      if (this.#config.finalAttemptTimeoutMs !== undefined && this.#remainingHttpAttempts() === 1) finalAttemptTimeoutUsed = true;\n      previous = await this.#attempt(body, requestDigest, signal, deadline);\n      if (previous.evidence.networkAttempted) httpAttempts += 1;\n"
+  ],
+  [
+    "    let timeoutTriggered = false;\n    let networkAttempted = false;\n    const timeout = setTimeout(() => { timeoutTriggered = true; controller.abort(); }, Math.min(this.#config.timeoutMs, remainingMs));\n    const bounded = <T>(operation: () => Promise<T>): Promise<T> => new Promise((resolve, reject) => {\n      const aborted = () => { cleanup(); reject(new DOMException(\"Provider request aborted\", \"AbortError\")); };\n",
+    "    let timeoutTriggered = false;\n    let networkAttempted = false;\n    const attemptTimeoutMs = this.#remainingHttpAttempts() === 1\n      ? this.#config.finalAttemptTimeoutMs ?? this.#config.timeoutMs : this.#config.timeoutMs;\n    const timeout = setTimeout(() => { timeoutTriggered = true; controller.abort(); }, Math.min(attemptTimeoutMs, remainingMs));\n    const bounded = <T>(operation: () => Promise<T>): Promise<T> => new Promise((resolve, reject) => {\n      const aborted = () => { cleanup(); reject(new DOMException(\"Provider request aborted\", \"AbortError\")); };\n"
+  ]
+];
 /** Invert only the declared exact hunks. Hash/compare the WHOLE result with the frozen predecessor. */
 export function arcCorePredecessorSource(path: string, current: string): string {
   if (!changes[path]) return current;
+  if (path === "src/lib/codelab/model/nvidiaNimProvider.ts") for (const [before, after] of finalAttemptRefinement) {
+    if (current.split(after).length !== 2) throw Error("arc_final_attempt_refinement_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   for (const [before, after, expectedCount = 1] of changes[path]) {
     if (current.split(after).length !== expectedCount + 1) throw Error("arc_core_refinement_hunk_mismatch");
     current = current.split(after).join(before);

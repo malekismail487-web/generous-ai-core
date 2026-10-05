@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-FINAL-ATTEMPT-DEVELOPMENT-001",
+  "referenceCandidate": "5b7264ab55e0af0a31a362a143b4617c47dc1208",
+  "evidenceClass": "E3",
+  "sourceObservation": {
+    "receipt": "docs/omega/evidence/nyx-text-transfer-4943841b.json",
+    "attempted": 4,
+    "independentlyCorrect": 1,
+    "providerTimeouts": 3,
+    "perAttemptTimeoutMs": 120000,
+    "taskLeaseMs": 180000,
+    "liveCompletionBeyondTimeoutEstablished": false
+  },
+  "independentReproduction": {
+    "benchmarkQuestionsUsed": false,
+    "liveModelCalls": 0,
+    "taskLeaseMs": 900,
+    "controlledResponseDelayMs": 200,
+    "fixedTimeoutMs": 100,
+    "largerConfiguredControlMs": 500,
+    "fixedDecision": "PROVIDER_ERROR",
+    "fixedElapsedMs": 113,
+    "fixedLeaseRemainingMs": 787,
+    "configuredControlDecision": "COMPLETED",
+    "configuredControlElapsedMs": 203,
+    "configuredControlLeaseRemainingMs": 697,
+    "physicalRequestsPerControl": 1
+  },
+  "matchedTransportAblation": {
+    "taskLeaseMs": 900,
+    "responseDelayMs": 200,
+    "fixedTimeoutMs": 100,
+    "experimentalFinalAttemptCeilingMs": 500,
+    "sameResponseAndRequestLimits": true,
+    "controls": [
+      {"phase": "FETCH", "profile": "FIXED", "decision": "PROVIDER_ERROR", "physicalCalls": 1, "elapsedMs": 110},
+      {"phase": "FETCH", "profile": "FINAL_LEASE", "decision": "COMPLETED", "physicalCalls": 1, "elapsedMs": 202},
+      {"phase": "BODY", "profile": "FIXED", "decision": "PROVIDER_ERROR", "physicalCalls": 1, "elapsedMs": 108},
+      {"phase": "BODY", "profile": "FINAL_LEASE", "decision": "COMPLETED", "physicalCalls": 1, "elapsedMs": 206}
+    ],
+    "cognitiveGain": false,
+    "interpretation": "CONTROLLED_TRANSPORT_DELIVERY_NOT_LIVE_MODEL_PERFORMANCE"
+  },
+  "safeguards": {
+    "ordinaryProviderTimeoutCeilingMs": 120000,
+    "experimentalFinalAttemptCeilingMs": 180000,
+    "defaultProfileChanged": false,
+    "hostOwnedSharedRequestBudgetRequired": true,
+    "finiteCallerExpiryRequired": true,
+    "originalAbsoluteTaskDeadlinePreserved": true,
+    "earlierCallerDeadlinePreserved": true,
+    "onlyLastRemainingPhysicalAttemptMayUseExtension": true,
+    "cancelledLateOutputRejected": true,
+    "unbudgetedRequestsRejectedBeforeCredentialAccess": true,
+    "repeatRequestCannotRefillAllowance": true,
+    "newModelCallsOrTokensGranted": false,
+    "authorityDelta": "NONE"
+  },
+  "freshTransfer": {
+    "mode": "TIMEOUT_TRANSFER_ABLATION",
+    "positionalStart": 10,
+    "families": ["AIME_2025", "BBEH_MINI"],
+    "tasksPerFamily": 2,
+    "plannedPairedAttempts": 8,
+    "configurationOnBothSides": "OBSERVATION_ALIGNED_SCHEMA",
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "logicalAndPhysicalCallsPerTask": 2,
+    "maxOutputTokens": 8192,
+    "originalTaskLeaseMs": 180000,
+    "acceptanceOracleChanged": false,
+    "counterbalanced": true,
+    "result": "NOT_YET_EXECUTED",
+    "cognitivePromotion": false,
+    "unknownProviderUsagePrecludesMatchedComputeClaim": true
+  },
+  "planCoverage": {
+    "status": "PARTIAL / JUST-IN-TIME",
+    "directlyImplemented": ["EVIDENCE > CONFIDENCE", "NO AUTHORITY WITHOUT SCOPE", "NO ACTION WITHOUT PROVENANCE", "GENERAL DEVELOPMENT REPRODUCTION BEFORE FRESH TRANSFER"],
+    "supporting": ["HOST-OWNED RESOURCE LEASES", "CRITICAL FALSIFICATION OUTRANKS POSITIVE VOTES", "INTERNAL COMPLEXITY MUST PAY RENT"],
+    "deferred": ["COGNITIVE PROMOTION", "FULL BENCHMARK SCORES", "RECURSION", "DEVICE INTEGRATION"],
+    "conflicts": [],
+    "supersededOperationalApproaches": [],
+    "originalFailureEvidencePreserved": true
+  }
+}

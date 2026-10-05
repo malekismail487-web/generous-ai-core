@@ -6736,6 +6736,7 @@
         "firstPartyCodeReferences": [
           "scripts/omega/benchmarks/nyxArcAdapter.ts",
           "scripts/omega/nvidia-nim-live-smoke.ts",
+          "scripts/omega/nyx-arc-core-refinement.ts",
           "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
           "scripts/omega/nyx-quantitative-coupled-transfer-fixtures.ts",
           "scripts/omega/nyx-quantitative-provider-diagnostic-fixtures.ts",
@@ -7377,9 +7378,11 @@
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
         "firstPartyCodeReferences": [
+          "scripts/omega/benchmarks/nyxTextBenchmark.ts",
           "scripts/omegaBiologicalArchitecturePortfolio.test.ts",
           "scripts/omegaLuminaLiveBoundary.test.ts",
           "scripts/omegaNyxConnectomeCognitionAdapter.test.ts",
+          "scripts/omegaNyxTextBenchmark.test.ts",
           "scripts/orchestraO2.test.ts",
           "src/components/SubjectsSection.tsx",
           "src/components/admin/BudgetOptimizationReport.tsx",

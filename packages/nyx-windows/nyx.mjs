@@ -3087,6 +3087,9 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
     if (!config.providerId.trim() || !/^[a-z0-9][a-z0-9._/-]{2,127}$/i.test(config.model)) throw new Error("provider_identity_or_model_invalid");
     if (!config.credentialSource.sourceIdentity.trim() || typeof config.credentialSource.read !== "function") throw new Error("credential_source_invalid");
     if (!Number.isInteger(config.maxPromptBytes) || config.maxPromptBytes < 1 || !Number.isInteger(config.maxOutputTokens) || config.maxOutputTokens < 1 || config.maxOutputTokens > 32768 || !Number.isInteger(config.timeoutMs) || config.timeoutMs < 100 || config.timeoutMs > 12e4) throw new Error("provider_resource_policy_invalid");
+    if (config.finalAttemptTimeoutMs !== void 0 && (!Number.isSafeInteger(config.finalAttemptTimeoutMs) || config.finalAttemptTimeoutMs < config.timeoutMs || config.finalAttemptTimeoutMs > 18e4)) {
+      throw new Error("provider_final_attempt_timeout_invalid");
+    }
     if (config.authorityMode === "TEST_DOUBLE_ONLY" && !config.transport) throw new Error("test_double_transport_required");
     if (config.authorityMode !== "TEST_DOUBLE_ONLY" && config.authorityMode !== "EXPLICIT_LIVE_NVIDIA_NIM") throw new Error("provider_authority_mode_invalid");
     if (config.testCapacity && (config.authorityMode !== "TEST_DOUBLE_ONLY" || !(config.testCapacity instanceof NvidiaCapacityCoordinator))) {
@@ -3141,6 +3144,9 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
     if (request.deadlineEpochMs !== void 0 && (!Number.isSafeInteger(request.deadlineEpochMs) || request.deadlineEpochMs < 0)) {
       issues.push("completion_deadline_invalid");
     }
+    if (this.#config.finalAttemptTimeoutMs !== void 0 && (request.deadlineEpochMs === void 0 || this.#httpAttemptBudgets.length === 0)) {
+      issues.push("completion_final_attempt_requires_owned_budget_and_deadline");
+    }
     if (!validMessages(request.messages)) issues.push("completion_messages_invalid");
     if (!Number.isInteger(request.maxTokens) || request.maxTokens < 1 || request.maxTokens > this.#config.maxOutputTokens) issues.push("completion_token_bound_exceeded");
     if (typeof request.temperature !== "number" || !Number.isFinite(request.temperature) || request.temperature < 0 || request.temperature > 1) issues.push("completion_temperature_invalid");
@@ -3164,6 +3170,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
     let transientUnavailableResponses = 0;
     let timedOutAttempts = 0;
     let capacityWaitMs = 0;
+    let finalAttemptTimeoutUsed = false;
     let previous = null;
     let waitVisible = false;
     let waiting = false;
@@ -3212,6 +3219,13 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
         state: result.decision === "COMPLETED" ? "DELIVERED" : result.decision === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY" : "STOPPED",
         notBeforeEpochMs,
         authorityRenewed: false,
+        ...this.#config.finalAttemptTimeoutMs !== void 0 ? { attemptTimeout: Object.freeze({
+          configuredMs: this.#config.timeoutMs,
+          finalAttemptMs: this.#config.finalAttemptTimeoutMs,
+          callerDeadlineEpochMs: request.deadlineEpochMs,
+          finalAttemptUsed: finalAttemptTimeoutUsed,
+          authorityRenewed: false
+        }) } : {},
         ...budget ? { httpAttemptBudget: Object.freeze({
           scope: "HOST_OWNED_RUN_INCLUDING_RETRIES",
           limit: budget.limit,
@@ -3282,6 +3296,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
         if (signal.aborted) return stopped(true);
         if (now() >= deadline) return stopped(false);
       }
+      if (this.#config.finalAttemptTimeoutMs !== void 0 && this.#remainingHttpAttempts() === 1) finalAttemptTimeoutUsed = true;
       previous = await this.#attempt(body, requestDigest, signal, deadline);
       if (previous.evidence.networkAttempted) httpAttempts += 1;
       if (previous.evidence.statusCode === 429) rateLimitedResponses += 1;
@@ -3374,10 +3389,11 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
     }
     let timeoutTriggered = false;
     let networkAttempted = false;
+    const attemptTimeoutMs = this.#remainingHttpAttempts() === 1 ? this.#config.finalAttemptTimeoutMs ?? this.#config.timeoutMs : this.#config.timeoutMs;
     const timeout = setTimeout(() => {
       timeoutTriggered = true;
       controller.abort();
-    }, Math.min(this.#config.timeoutMs, remainingMs));
+    }, Math.min(attemptTimeoutMs, remainingMs));
     const bounded = (operation) => new Promise((resolve7, reject) => {
       const aborted = () => {
         cleanup();

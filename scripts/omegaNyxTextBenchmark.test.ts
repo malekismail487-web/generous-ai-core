@@ -6,7 +6,8 @@ import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySes
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
   TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
-  textWholePopulation, textPopulationIsFullyGraded, textDeliveryBlocked } from "./omega/benchmarks/nyxTextBenchmark";
+  textWholePopulation, textPopulationIsFullyGraded, textDeliveryBlocked, textTimeoutTransferSelection,
+  compareTextTimeoutPair, textBoundedTaskRequest } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -361,5 +362,48 @@ try {
   const cleanup = await fixture.close();
   check("file delivery owned fixture cleanup verified", () => assert(cleanup.cleanupVerified && cleanup.sourceUnchanged));
 }
+check("timeout transfer counterbalances a fresh positional window with identical inference configuration", () => {
+  const tasks = textTimeoutTransferSelection(wholeTasks, 10);
+  assert.equal(tasks.length, 8);
+  assert.deepEqual(tasks.slice(0, 4).map(task => task.timeoutProfile),
+    ["FIXED_ATTEMPT", "FINAL_CALLER_LEASE", "FINAL_CALLER_LEASE", "FIXED_ATTEMPT"]);
+  assert(tasks.every(task => task.configuration === "OBSERVATION_ALIGNED_SCHEMA"));
+  assert.deepEqual(tasks.map(task => task.taskId),
+    ["AIME_2025-10-FIXED_ATTEMPT", "AIME_2025-10-FINAL_CALLER_LEASE", "AIME_2025-11-FINAL_CALLER_LEASE", "AIME_2025-11-FIXED_ATTEMPT",
+      "BBEH_MINI-10-FIXED_ATTEMPT", "BBEH_MINI-10-FINAL_CALLER_LEASE", "BBEH_MINI-11-FINAL_CALLER_LEASE", "BBEH_MINI-11-FIXED_ATTEMPT"]);
+});
+check("setup cannot move model deadline beyond the pre-provision task lease", () => {
+  const configured = textBoundedTaskRequest({...originalRequest, deadlineEpochMs: 9000}, 8000);
+  assert.equal(configured.deadlineEpochMs, 8000);
+  assert.strictEqual(configured.messages, originalRequest.messages); assert.equal(configured.maxTokens, originalRequest.maxTokens);
+});
+check("an earlier or expired model deadline is never renewed", () =>
+  assert.equal(textBoundedTaskRequest({...originalRequest, deadlineEpochMs: 1000}, 8000).deadlineEpochMs, 1000));
+check("missing caller deadline receives only the already frozen task expiry", () =>
+  assert.equal(textBoundedTaskRequest(originalRequest, 8000).deadlineEpochMs, 8000));
+check("malformed task or model expiry fails closed", () => {
+  assert.throws(() => textBoundedTaskRequest(originalRequest, NaN));
+  assert.throws(() => textBoundedTaskRequest({...originalRequest, deadlineEpochMs: Infinity}, 8000));
+});
+check("timeout transfer cannot choose tasks using answers or correctness", () => {
+  const changed = wholeTasks.map(task => ({...task, answer: "changed private oracle", question: "different content"}));
+  assert.deepEqual(textTimeoutTransferSelection(changed, 10).map(task => task.taskId),
+    textTimeoutTransferSelection(wholeTasks, 10).map(task => task.taskId));
+});
+check("timeout transfer retains positional bounds", () => {
+  for (const start of [-1, NaN, 29]) assert.throws(() => textTimeoutTransferSelection(wholeTasks, start));
+});
+const timeoutRows = pairRows.map((row, index) => ({...row, configuration: "OBSERVATION_ALIGNED_SCHEMA" as const,
+  timeoutProfile: index ? "FINAL_CALLER_LEASE" as const : "FIXED_ATTEMPT" as const}));
+check("timeout comparison requires unchanged task/oracle/configuration and distinct delivery profiles", () =>
+  assert(compareTextTimeoutPair(timeoutRows).matchedRealizedCompute));
+check("duplicate timeout profiles cannot establish an ablation", () =>
+  assert(!compareTextTimeoutPair([timeoutRows[0], timeoutRows[0]]).boundPair));
+check("timeout comparison cannot combine inference and timeout changes", () =>
+  assert(!compareTextTimeoutPair([timeoutRows[0], {...timeoutRows[1], configuration: "EXISTING_DEFAULT"}]).boundPair));
+check("unknown timeout compute prevents matched-cognitive comparison", () =>
+  assert(!compareTextTimeoutPair([timeoutRows[0], {...timeoutRows[1], usage: {...timeoutRows[1].usage, unknownUsageCalls: 1}}]).matchedRealizedCompute));
+check("timeout reliability comparison never promotes cognition automatically", () =>
+  assert.equal(compareTextTimeoutPair(timeoutRows).cognitivePromotion, false));
 console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

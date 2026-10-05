@@ -36,6 +36,8 @@ export interface NvidiaNimProviderConfig {
   readonly maxPromptBytes: number;
   readonly maxOutputTokens: number;
   readonly timeoutMs: number;
+  /** Host-only experiment: the last shared-budget attempt may wait longer, but never beyond the caller's existing lease. */
+  readonly finalAttemptTimeoutMs?: number;
   readonly transport?: NvidiaNimTransport;
   /** Deterministic delivery testing only. Live instances always share the process-local gate. */
   readonly testCapacity?: NvidiaCapacityCoordinator;
@@ -139,6 +141,14 @@ export interface NvidiaNimDeliveryEvidence {
   readonly state: "DELIVERED" | "WAITING_FOR_CAPACITY" | "STOPPED";
   readonly notBeforeEpochMs: number | null;
   readonly authorityRenewed: false;
+  /** Explicit host delivery profile; the original absolute deadline is not renewed. */
+  readonly attemptTimeout?: {
+    readonly configuredMs: number;
+    readonly finalAttemptMs: number;
+    readonly callerDeadlineEpochMs: number;
+    readonly finalAttemptUsed: boolean;
+    readonly authorityRenewed: false;
+  };
   /** Host-owned dispatch budget shared by logical calls and retries, never supplied to the model. */
   readonly httpAttemptBudget?: {
     readonly scope: "HOST_OWNED_RUN_INCLUDING_RETRIES";
@@ -278,6 +288,10 @@ export class NvidiaNimProvider {
     if (!Number.isInteger(config.maxPromptBytes) || config.maxPromptBytes < 1
       || !Number.isInteger(config.maxOutputTokens) || config.maxOutputTokens < 1 || config.maxOutputTokens > 32_768
       || !Number.isInteger(config.timeoutMs) || config.timeoutMs < 100 || config.timeoutMs > 120_000) throw new Error("provider_resource_policy_invalid");
+    if (config.finalAttemptTimeoutMs !== undefined && (!Number.isSafeInteger(config.finalAttemptTimeoutMs)
+      || config.finalAttemptTimeoutMs < config.timeoutMs || config.finalAttemptTimeoutMs > 180_000)) {
+      throw new Error("provider_final_attempt_timeout_invalid");
+    }
     if (config.authorityMode === "TEST_DOUBLE_ONLY" && !config.transport) throw new Error("test_double_transport_required");
     if (config.authorityMode !== "TEST_DOUBLE_ONLY" && config.authorityMode !== "EXPLICIT_LIVE_NVIDIA_NIM") throw new Error("provider_authority_mode_invalid");
     if (config.testCapacity && (config.authorityMode !== "TEST_DOUBLE_ONLY" || !(config.testCapacity instanceof NvidiaCapacityCoordinator))) {
@@ -330,6 +344,10 @@ export class NvidiaNimProvider {
     if (request.deadlineEpochMs !== undefined && (!Number.isSafeInteger(request.deadlineEpochMs) || request.deadlineEpochMs < 0)) {
       issues.push("completion_deadline_invalid");
     }
+    if (this.#config.finalAttemptTimeoutMs !== undefined
+      && (request.deadlineEpochMs === undefined || this.#httpAttemptBudgets.length === 0)) {
+      issues.push("completion_final_attempt_requires_owned_budget_and_deadline");
+    }
     if (!validMessages(request.messages)) issues.push("completion_messages_invalid");
     if (!Number.isInteger(request.maxTokens) || request.maxTokens < 1 || request.maxTokens > this.#config.maxOutputTokens) issues.push("completion_token_bound_exceeded");
     if (typeof request.temperature !== "number" || !Number.isFinite(request.temperature) || request.temperature < 0 || request.temperature > 1) issues.push("completion_temperature_invalid");
@@ -361,6 +379,7 @@ export class NvidiaNimProvider {
     let transientUnavailableResponses = 0;
     let timedOutAttempts = 0;
     let capacityWaitMs = 0;
+    let finalAttemptTimeoutUsed = false;
     let previous: NvidiaNimCompletionResult | null = null;
     let waitVisible = false;
     let waiting = false;
@@ -393,6 +412,10 @@ export class NvidiaNimProvider {
         transientUnavailableResponses, timedOutAttempts, capacityWaitMs,
         state: result.decision === "COMPLETED" ? "DELIVERED" : result.decision === "WAITING_FOR_CAPACITY" ? "WAITING_FOR_CAPACITY" : "STOPPED",
         notBeforeEpochMs, authorityRenewed: false,
+        ...(this.#config.finalAttemptTimeoutMs !== undefined ? { attemptTimeout: Object.freeze({
+          configuredMs: this.#config.timeoutMs, finalAttemptMs: this.#config.finalAttemptTimeoutMs,
+          callerDeadlineEpochMs: request.deadlineEpochMs!, finalAttemptUsed: finalAttemptTimeoutUsed,
+          authorityRenewed: false as const }) } : {}),
         ...(budget ? { httpAttemptBudget: Object.freeze({ scope: "HOST_OWNED_RUN_INCLUDING_RETRIES" as const,
           limit: budget.limit, dispatched: budget.dispatched, remainingAttempts: this.#remainingHttpAttempts(),
           exhausted: this.#remainingHttpAttempts() === 0,
@@ -430,6 +453,7 @@ export class NvidiaNimProvider {
         if (signal.aborted) return stopped(true);
         if (now() >= deadline) return stopped(false);
       }
+      if (this.#config.finalAttemptTimeoutMs !== undefined && this.#remainingHttpAttempts() === 1) finalAttemptTimeoutUsed = true;
       previous = await this.#attempt(body, requestDigest, signal, deadline);
       if (previous.evidence.networkAttempted) httpAttempts += 1;
       if (previous.evidence.statusCode === 429) rateLimitedResponses += 1;
@@ -481,7 +505,9 @@ export class NvidiaNimProvider {
       null, null, requestDigest, null, null, emptyUsage(), false); }
     let timeoutTriggered = false;
     let networkAttempted = false;
-    const timeout = setTimeout(() => { timeoutTriggered = true; controller.abort(); }, Math.min(this.#config.timeoutMs, remainingMs));
+    const attemptTimeoutMs = this.#remainingHttpAttempts() === 1
+      ? this.#config.finalAttemptTimeoutMs ?? this.#config.timeoutMs : this.#config.timeoutMs;
+    const timeout = setTimeout(() => { timeoutTriggered = true; controller.abort(); }, Math.min(attemptTimeoutMs, remainingMs));
     const bounded = <T>(operation: () => Promise<T>): Promise<T> => new Promise((resolve, reject) => {
       const aborted = () => { cleanup(); reject(new DOMException("Provider request aborted", "AbortError")); };
       const cleanup = () => controller.signal.removeEventListener("abort", aborted);

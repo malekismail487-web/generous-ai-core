@@ -1,6 +1,9 @@
 name: Omega NYX actual AIME and BBEH benchmark epoch
 on:
   workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [scripts/omega/benchmarks/nyxTextBenchmark.ts]
 permissions:
   contents: read
 concurrency:
@@ -35,12 +38,12 @@ jobs:
           git -C "$RUNNER_TEMP/bbeh" checkout 80d12ca916b7158f22293fcf3144f4d3d854d4be
           curl --fail --location --proto '=https' --tlsv1.2 'https://huggingface.co/datasets/MathArena/aime_2025/resolve/c94da77eb22bbd6439e62a323bec18493a421302/data/train-00000-of-00001.parquet' --output "$RUNNER_TEMP/aime-2025.parquet"
           python scripts/omega/benchmarks/prepare-text-benchmarks.py prepare --aime "$RUNNER_TEMP/aime-2025.parquet" --bbeh "$RUNNER_TEMP/bbeh" --output "$RUNNER_TEMP/nyx-text-data.json"
-      - name: Compare existing default and observation-aligned schema on the next frozen unseen window
+      - name: Compare transport cutoffs with identical observation schema on a frozen fresh window
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NYX_TEXT_EPOCH_MODE: TRANSFER_ABLATION
-          NYX_TEXT_TRANSFER_START: '8'
+          NYX_TEXT_EPOCH_MODE: TIMEOUT_TRANSFER_ABLATION
+          NYX_TEXT_TRANSFER_START: '10'
           NYX_TEXT_CONFIGURATION: OBSERVATION_ALIGNED_SCHEMA
           NYX_TEXT_DELIVERY: SCOPED_FILE
           NYX_TEXT_DATA: ${{ runner.temp }}/nyx-text-data.json

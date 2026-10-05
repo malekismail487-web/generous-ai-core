@@ -43,6 +43,21 @@ export function textTransferSelection(tasks: readonly PrivateTextTask[], start =
 export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL", "TEMPLATE_BOUNDED", "OBSERVATION_ALIGNED_SCHEMA", "HOSTED_BOUNDED"] as const;
 export const TEXT_DIAGNOSTIC_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL"] as const;
 export type TextInferenceConfiguration = typeof TEXT_INFERENCE_CONFIGURATIONS[number];
+export type TextTimeoutProfile = "FIXED_ATTEMPT" | "FINAL_CALLER_LEASE";
+/** Setup/turn scheduling cannot renew the task lease frozen before repository provisioning. */
+export function textBoundedTaskRequest(request: NvidiaNimCompletionRequest, taskDeadlineEpochMs: number): NvidiaNimCompletionRequest {
+  if (!Number.isSafeInteger(taskDeadlineEpochMs) || taskDeadlineEpochMs < 0
+    || request.deadlineEpochMs !== undefined && (!Number.isSafeInteger(request.deadlineEpochMs) || request.deadlineEpochMs < 0))
+    throw Error("text_task_lease_invalid");
+  return {...request, deadlineEpochMs: Math.min(request.deadlineEpochMs ?? taskDeadlineEpochMs, taskDeadlineEpochMs)};
+}
+/** Host delivery ablation only; inference configuration, task lease and oracle stay identical. */
+export function textTimeoutTransferSelection(tasks: readonly PrivateTextTask[], start: number) {
+  return textTransferSelection(tasks, start).flatMap((task, index) =>
+    (index % 2 ? ["FINAL_CALLER_LEASE", "FIXED_ATTEMPT"] as const : ["FIXED_ATTEMPT", "FINAL_CALLER_LEASE"] as const)
+      .map(timeoutProfile => ({...task, taskId: `${task.taskId}-${timeoutProfile}`,
+        configuration: "OBSERVATION_ALIGNED_SCHEMA" as const, timeoutProfile})));
+}
 /** Evaluation-only configuration ablation. No change to production NYX or its strict local parser. */
 export function textConfiguredRequest(request: NvidiaNimCompletionRequest, configuration: TextInferenceConfiguration,
   delivery: "DIRECT" | "SCOPED_FILE" = "DIRECT", questionObserved = false): NvidiaNimCompletionRequest {
@@ -308,5 +323,22 @@ export function compareTextPair(pair: readonly (ReturnType<typeof sanitizedTextR
   return {configurations: pair.map(row => row.configuration), outcomes: pair.map(row => row.state),
     usages: pair.map(row => row.usage), boundPair, stable, matchedRealizedCompute,
     cognitivePromotion: false, interpretation: "INTERFACE_ABLATION_NOT_COGNITIVE_GAIN"};
+}
+
+export function compareTextTimeoutPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {
+  configuration: TextInferenceConfiguration; timeoutProfile?: TextTimeoutProfile })[]) {
+  const boundPair = pair.length === 2 && pair[0].inputDigest === pair[1].inputDigest
+    && pair[0].privateOracleDigest === pair[1].privateOracleDigest
+    && pair.every(row => row.configuration === "OBSERVATION_ALIGNED_SCHEMA")
+    && new Set(pair.map(row => row.timeoutProfile)).size === 2
+    && pair.every(row => row.timeoutProfile === "FIXED_ATTEMPT" || row.timeoutProfile === "FINAL_CALLER_LEASE");
+  const stable = boundPair && pair.every(row => row.usage.unknownUsageCalls === 0 && row.usage.providerFailures === 0
+    && row.usage.retries === 0 && row.usage.physicalCalls > 0);
+  const matchedRealizedCompute = stable && (["logicalCalls", "physicalCalls", "reportedTokens", "toolCalls", "toolWorkUnits"] as const)
+    .every(key => Math.max(...pair.map(row => row.usage[key])) - Math.min(...pair.map(row => row.usage[key]))
+      <= Math.max(...pair.map(row => row.usage[key]), 1) * 0.1);
+  return {profiles: pair.map(row => row.timeoutProfile), outcomes: pair.map(row => row.state),
+    usages: pair.map(row => row.usage), boundPair, stable, matchedRealizedCompute,
+    cognitivePromotion: false, interpretation: "DELIVERY_TIMEOUT_ABLATION_NOT_COGNITIVE_GAIN"};
 }
 

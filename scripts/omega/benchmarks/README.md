@@ -237,3 +237,16 @@ observations succeeded. The next general diagnostic concerns a per-attempt trans
 timeout inside a still-unexpired task lease; this does not authorize lease renewal,
 more calls, more tokens or a weaker oracle. The automatic push trigger is removed;
 manual dispatch and exact-job retries remain available.
+
+The next delivery hypothesis is opt-in last-attempt timeout alignment. Independent
+synthetic fetch/body controls reproduce premature per-attempt rejection while a
+finite task lease remains valid. Ordinary provider timeout remains capped at 120
+seconds. The explicit experimental final-attempt ceiling is 180 seconds, requires
+both a host-owned shared request allowance and a caller deadline, and is always
+clipped to that original deadline. Setup cannot renew the pre-provision task lease.
+No additional calls, tokens, retry allowance, model parameters, tools or authority
+are granted. This is delivery support, not demonstrated cognitive improvement.
+`TIMEOUT_TRANSFER_ABLATION` freezes positional offset 10 with identical existing
+observation-aligned schema on both sides; only the transport timeout profile differs.
+Unknown usage or unstable delivery prevents a matched-compute claim. Remove the
+narrow push trigger after this one-shot is frozen; manual dispatch remains available.
