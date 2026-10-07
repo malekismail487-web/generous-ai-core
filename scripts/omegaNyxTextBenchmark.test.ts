@@ -647,7 +647,7 @@ check("shared recovery rejects invalid profiles and cannot overwrite a transport
     {recoveryProfile: "BOUNDED_RECOVERY" as const}], "BOUNDED_RECOVERY"));
 });
 async function scopedRecoveryReproduction(profile: "FIXED_REQUESTS" | "BOUNDED_RECOVERY",
-  options: {failuresBeforeRead?: number; configuration?: "SESSION_NATIVE_PHASE_CONTRACT" | "SESSION_ACTION_CONTRACT";
+  options: {failuresBeforeRead?: number; configuration?: "SESSION_NATIVE_PHASE_CONTRACT" | "SESSION_ACTION_CONTRACT" | "SESSION_SUPER_PHASE_CONTRACT";
     evaluationModel?: string;
     transientRecovery?: "WITHIN_SHARED_BUDGET"} = {}) {
   const began = Date.now(), expires = began + 180000;
@@ -718,6 +718,44 @@ check("Super selection retains source integrity, lease and forbidden-authority g
   assert(!superScoped.row.sourceRepositoryMutated && !superScoped.row.broaderAuthorityGranted);
   assert(superScoped.observations.every(row => row.delivery?.authorityRenewed === false));
   assert.equal(TEXT_BENCHMARK_POLICY.model, "nvidia/nemotron-3-ultra-550b-a55b");
+});
+const superPhaseScoped = await scopedRecoveryReproduction("BOUNDED_RECOVERY", {failuresBeforeRead: 0,
+  configuration: "SESSION_SUPER_PHASE_CONTRACT", evaluationModel: "nvidia/nemotron-3-super-120b-a12b"});
+check("Super phase correction composes with the real scoped executor and unchanged independent final grader", () => {
+  assert.equal(superPhaseScoped.row.state, "PASS"); assert.equal(superPhaseScoped.reads, 1);
+  assert.equal(superPhaseScoped.row.usage.logicalCalls, 2); assert.equal(superPhaseScoped.row.usage.physicalCalls, 2);
+  const [read, answer] = superPhaseScoped.bodies.map(body => JSON.parse(body));
+  assert.equal(read.reasoning_effort, "none"); assert.equal(read.reasoning_budget, undefined);
+  assert.equal(answer.reasoning_effort, "high"); assert.equal(answer.reasoning_budget, 6144);
+  assert.equal(answer.max_tokens, 8192); assert.equal(answer.response_format.type, "json_schema");
+  assert(superPhaseScoped.bodies.every(body => !body.includes("731") && !body.includes("force_nonempty_content")));
+  assert(!superPhaseScoped.row.sourceRepositoryMutated && !superPhaseScoped.row.broaderAuthorityGranted);
+  assert(superPhaseScoped.observations.every(row => row.delivery?.authorityRenewed === false));
+});
+check("Super phase correction preserves schema, messages, temperature and exact original lease", () => {
+  for (const observed of [false, true]) {
+    const base = {...originalRequest, deadlineEpochMs: Date.now() + 180000};
+    const configured = textConfiguredRequest(base, "SESSION_SUPER_PHASE_CONTRACT", "SCOPED_FILE", observed);
+    assert.strictEqual(configured.messages, base.messages); assert.strictEqual(configured.responseFormat, base.responseFormat);
+    assert.equal(configured.deadlineEpochMs, base.deadlineEpochMs); assert.equal(configured.temperature, base.temperature);
+    assert.equal(configured.maxTokens, 8192); assert.equal(configured.reasoningBudgetTokens, observed ? 6144 : undefined);
+    assert.equal(configured.reasoningControl, "SUPER_HOSTED_NATIVE"); assert.equal(configured.reasoningEffort, undefined);
+  }
+  assert.equal(textConfiguredRequest(originalRequest, "SESSION_SUPER_PHASE_CONTRACT").reasoningBudgetTokens, 6144);
+  assert.throws(() => textConfiguredRequest({...originalRequest, maxTokens: 1}, "SESSION_SUPER_PHASE_CONTRACT"));
+});
+check("Super diagnostic uses identical existing development tasks with counterbalanced unmodified control", () => {
+  const selection = textSessionContractSelection("SESSION_SUPER_PHASE_CONTRACT");
+  assert.deepEqual(selection.map(row => row.question), textSessionContractSelection().map(row => row.question));
+  assert.deepEqual(selection.map(row => row.configuration), ["SESSION_ACTION_CONTRACT", "SESSION_SUPER_PHASE_CONTRACT",
+    "SESSION_SUPER_PHASE_CONTRACT", "SESSION_ACTION_CONTRACT"]);
+  assert.deepEqual(textSessionActionContract("SESSION_SUPER_PHASE_CONTRACT", "SCOPED_FILE"),
+    textSessionActionContract("SESSION_ACTION_CONTRACT", "SCOPED_FILE"));
+  const pair = pairRows.map((row, index) => ({...row,
+    configuration: index ? "SESSION_SUPER_PHASE_CONTRACT" as const : "SESSION_ACTION_CONTRACT" as const}));
+  assert(compareTextContractPair(pair, "SESSION_SUPER_PHASE_CONTRACT").boundPair);
+  assert(!compareTextContractPair(pair).boundPair);
+  assert(!compareTextContractPair(pair, "SESSION_SUPER_PHASE_CONTRACT").cognitivePromotion);
 });
 check("two physical attempts reproduce a recovered read followed by blocked final answer", () => {
   assert.equal(scopedFixed.row.state, "RESOURCE_EXHAUSTION"); assert.equal(scopedFixed.row.correct, null);

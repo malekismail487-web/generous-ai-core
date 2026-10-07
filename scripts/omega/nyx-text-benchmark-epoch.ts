@@ -36,9 +36,12 @@ export async function runTextBenchmarkEpoch() {
     || !["FULL", "FULL_AIME", "FULL_BBEH"].includes(mode))) throw Error("text_capacity_scheduling_invalid");
   const preflight = mode === "DELIVERY_PREFLIGHT";
   const contractDiagnostic = mode === "CONTRACT_DIAGNOSTIC";
-  const contractCandidate = configuration === "SESSION_NATIVE_PHASE_CONTRACT" ? configuration : "SESSION_ACTION_CONTRACT";
-  if (contractDiagnostic && !["SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT"].includes(configuration))
+  const contractCandidate = configuration === "SESSION_NATIVE_PHASE_CONTRACT" || configuration === "SESSION_SUPER_PHASE_CONTRACT"
+    ? configuration : "SESSION_ACTION_CONTRACT";
+  if (contractDiagnostic && !["SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT", "SESSION_SUPER_PHASE_CONTRACT"].includes(configuration))
     throw Error("text_contract_diagnostic_candidate_invalid");
+  if (configuration === "SESSION_SUPER_PHASE_CONTRACT" && evaluationModel !== "nvidia/nemotron-3-super-120b-a12b")
+    throw Error("text_super_configuration_requires_explicit_super_model");
   const transientRecovery = process.env.NYX_TEXT_TRANSIENT_RECOVERY;
   if (transientRecovery !== undefined && (transientRecovery !== "WITHIN_SHARED_BUDGET"
     || process.env.NYX_TEXT_RECOVERY_PROFILE !== "BOUNDED_RECOVERY")) throw Error("text_transient_recovery_profile_invalid");
@@ -243,8 +246,9 @@ export async function runTextBenchmarkEpoch() {
       selection: "POSITIONAL_COMMITTED_BEFORE_OBSERVATION_NOT_CORRECTNESS_SELECTED"} : null,
     selectedTaskIds: selection.map(t => t.taskId), verifier: {bbehRevision: data?.bbehRevision ?? null,
       bbehSourceDigest: data?.bbehEvaluatorDigest ?? null, aime: "EXACT_FINAL_INTEGER_CUSTOM_ADAPTER_NOT_MATHARENA_HARNESS"},
-    configuration: contractDiagnostic ? (contractCandidate === "SESSION_NATIVE_PHASE_CONTRACT"
-      ? "COUNTERBALANCED_SESSION_CONTRACT_VS_NATIVE_PHASE_CONTROLS" : "COUNTERBALANCED_SCHEMA_ONLY_VS_SESSION_ACTION_CONTRACT")
+    configuration: contractDiagnostic ? (contractCandidate === "SESSION_SUPER_PHASE_CONTRACT"
+      ? "COUNTERBALANCED_SESSION_CONTRACT_VS_SUPER_PHASE_CONTROLS" : contractCandidate === "SESSION_NATIVE_PHASE_CONTRACT"
+        ? "COUNTERBALANCED_SESSION_CONTRACT_VS_NATIVE_PHASE_CONTROLS" : "COUNTERBALANCED_SCHEMA_ONLY_VS_SESSION_ACTION_CONTRACT")
       : mode === "RECOVERY_TRANSFER_ABLATION" ? "IDENTICAL_DIRECT_SCHEMA_FIXED_VS_BOUNDED_RECOVERY"
       : mode === "TIMEOUT_TRANSFER_ABLATION" ? "IDENTICAL_OBSERVATION_SCHEMA_FIXED_VS_FINAL_CALLER_LEASE"
       : mode === "DIAGNOSTIC" ? "COUNTERBALANCED_DEFAULT_VS_BOUNDED_GUIDED_VS_BOUNDED_STRICT_LOCAL"

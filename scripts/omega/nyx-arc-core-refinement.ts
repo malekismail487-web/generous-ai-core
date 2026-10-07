@@ -109,9 +109,21 @@ const boundedRecoveryRefinement: readonly (readonly [string, string])[] = [
   ["", "    let contentShape: NvidiaNimEvidence[\"contentShape\"] = null;\n    if (typeof content === \"string\") {\n      let json: NonNullable<NvidiaNimEvidence[\"contentShape\"]>[\"json\"] = \"INVALID\";\n      try {\n        const value: unknown = JSON.parse(content);\n        json = Array.isArray(value) ? \"ARRAY\" : value !== null && typeof value === \"object\" ? \"OBJECT\" : \"SCALAR\";\n      } catch { /* Diagnostic only: never repair/extract malformed output or bypass the caller's parser. */ }\n      contentShape = Object.freeze({json, leadingMarkdownFence: /^\\s*```/.test(content),\n        thinkingDelimiterPresent: /<\\/?think>/.test(content)});\n    }\n"],
   ["      providerRequestId: safeProviderRequestId(providerRequestId), finishReason, usage, reasoningOutputBytes });\n", "      providerRequestId: safeProviderRequestId(providerRequestId), finishReason, usage, reasoningOutputBytes, contentShape });\n"],
 ];
+// Explicit Super-only opt-in; exact inversion preserves the existing frozen-source assurance checks.
+const superHostedRefinement: readonly (readonly [string, string])[] = [
+  ["  /** Experimental Ultra API configuration diagnostic. Omission preserves reviewed template wiring. */\n  readonly reasoningControl?: \"ULTRA_NATIVE\" | \"ULTRA_HOSTED_NATIVE\";\n", "  /** Exact-model opt-in. Omission preserves reviewed defaults; controls never grant executor authority. */\n  readonly reasoningControl?: \"ULTRA_NATIVE\" | \"ULTRA_HOSTED_NATIVE\" | \"SUPER_HOSTED_NATIVE\";\n"],
+  ["  /** Explicit hosted Ultra reasoning_budget. Nonnegative and strictly below maxTokens; never unlimited. */\n", "  /** Explicit reasoning_budget. Super requires SUPER_HOSTED_NATIVE. Always finite and below maxTokens. */\n"],
+  ["        ? request.reasoningControl === \"ULTRA_NATIVE\" || request.reasoningControl === \"ULTRA_HOSTED_NATIVE\" ? {\n", "        ? request.reasoningControl === \"ULTRA_NATIVE\" || request.reasoningControl === \"ULTRA_HOSTED_NATIVE\"\n          || request.reasoningControl === \"SUPER_HOSTED_NATIVE\" ? {\n"],
+  ["    if (request.reasoningControl !== undefined && (![\"ULTRA_NATIVE\", \"ULTRA_HOSTED_NATIVE\"].includes(request.reasoningControl)\n      || request.inferencePolicy === undefined || this.#config.model !== \"nvidia/nemotron-3-ultra-550b-a55b\")) {\n", "    const supportedReasoningControl = request.reasoningControl === \"SUPER_HOSTED_NATIVE\"\n      ? this.#config.model === \"nvidia/nemotron-3-super-120b-a12b\"\n      : [\"ULTRA_NATIVE\", \"ULTRA_HOSTED_NATIVE\"].includes(request.reasoningControl ?? \"\")\n        && this.#config.model === \"nvidia/nemotron-3-ultra-550b-a55b\";\n    if (request.reasoningControl !== undefined && (!supportedReasoningControl || request.inferencePolicy === undefined)) {\n"],
+  ["      || this.#config.model !== \"nvidia/nemotron-3-ultra-550b-a55b\")) issues.push(\"completion_reasoning_budget_invalid\");\n", "      || !(this.#config.model === \"nvidia/nemotron-3-ultra-550b-a55b\"\n        || this.#config.model === \"nvidia/nemotron-3-super-120b-a12b\"\n          && request.reasoningControl === \"SUPER_HOSTED_NATIVE\"))) issues.push(\"completion_reasoning_budget_invalid\");\n"],
+];
 /** Invert only the declared exact hunks. Hash/compare the WHOLE result with the frozen predecessor. */
 export function arcCorePredecessorSource(path: string, current: string): string {
   if (!changes[path]) return current;
+  if (path === "src/lib/codelab/model/nvidiaNimProvider.ts") for (const [before, after] of superHostedRefinement) {
+    if (current.split(after).length !== 2) throw Error("arc_super_hosted_refinement_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === "src/lib/codelab/model/nvidiaNimProvider.ts") for (const [before, after] of boundedRecoveryRefinement) {
     if (current.split(after).length !== 2) throw Error("arc_bounded_recovery_refinement_hunk_mismatch");
     current = current.split(after).join(before);

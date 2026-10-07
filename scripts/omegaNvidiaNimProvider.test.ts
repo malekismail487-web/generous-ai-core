@@ -971,6 +971,54 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
     reasoningControl:"ULTRA_NATIVE"})).decision==="REJECTED","Ultra-native controls cannot migrate to unrelated models");
 }
 
+{
+  const bodies: Record<string, unknown>[] = []; let reads = 0;
+  const create = (model: string, truncated = false) => NvidiaNimProvider.create({providerId: "SUPER-NATIVE-DEVELOPMENT",
+    model, authorityMode: "TEST_DOUBLE_ONLY", credentialSource: {sourceIdentity: "test-double", read: () => {
+      reads++; return "synthetic-not-a-credential";
+    }}, maxPromptBytes: 4096, maxOutputTokens: 128, timeoutMs: 1000, transport: async (_url, init) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return new Response(JSON.stringify({choices: [{finish_reason: truncated ? "length" : "stop",
+        message: {content: truncated ? null : "{}", reasoning_content: "private-trace-must-not-be-extracted"}}],
+        usage: {prompt_tokens: 12, completion_tokens: 32, total_tokens: 44}}), {status: 200});
+    }});
+  const superClient = create("nvidia/nemotron-3-super-120b-a12b");
+  const base = request({responseFormat: "JSON_OBJECT", inferencePolicy: "REASONING_JSON",
+    reasoningControl: "SUPER_HOSTED_NATIVE", reasoningBudgetTokens: 24});
+  const answer = await superClient.complete(base), body = bodies.at(-1)!;
+  check(answer.decision === "COMPLETED" && body.reasoning_budget === 24 && body.reasoning_effort === "high",
+    "Super exact-model opt-in sends documented top-level bounded reasoning controls");
+  check(body.max_tokens === 32 && body.temperature === 0 && !("chat_template_kwargs" in body)
+    && JSON.stringify(body.response_format) === JSON.stringify({type: "json_object"}),
+    "Super controls preserve output ceiling and JSON grammar without conflicting or trace-relabeling kwargs");
+  const read = await superClient.complete({...base, inferencePolicy: "CONSTRAINED_JSON", reasoningBudgetTokens: undefined});
+  check(read.decision === "COMPLETED" && bodies.at(-1)!.reasoning_effort === "none"
+    && bodies.at(-1)!.reasoning_budget === undefined, "Super read phase disables thinking without extra inference");
+  check(answer.evidence.requestDigest !== read.evidence.requestDigest && !answer.executorAuthorityGranted
+    && !JSON.stringify(answer).includes("private-trace-must-not-be-extracted"),
+    "Super evidence binds controls, retains usage and cannot confer authority or disclose private reasoning");
+  const before = bodies.length, readsBefore = reads;
+  for (const override of [{reasoningControl: undefined}, {reasoningControl: "ULTRA_HOSTED_NATIVE"},
+    {reasoningControl: "AUTO"}, {inferencePolicy: undefined}, {responseFormat: undefined},
+    {reasoningEffort: "MEDIUM"}, {reasoningBudgetTokens: -1}, {reasoningBudgetTokens: 32},
+    {reasoningBudgetTokens: Infinity}, {reasoningBudgetTokens: 1.5},
+    {inferencePolicy: "CONSTRAINED_JSON"}]) {
+    const invalid = await superClient.complete({...base, ...override} as NvidiaNimCompletionRequest);
+    check(invalid.decision === "REJECTED" && !invalid.evidence.networkAttempted,
+      "malformed, unlimited, incompatible or implicit Super controls reject before credential access");
+  }
+  for (const model of ["nvidia/nemotron-3-ultra-550b-a55b", "openai/gpt-oss-20b"])
+    check((await create(model).complete(base)).decision === "REJECTED", "Super controls cannot migrate to another model");
+  check(bodies.length === before && reads === readsBefore, "invalid Super requests perform no credential read or transport");
+  const unchanged = await superClient.complete(request({responseFormat: "JSON_OBJECT"}));
+  check(unchanged.decision === "COMPLETED" && bodies.at(-1)!.reasoning_effort === undefined
+    && bodies.at(-1)!.reasoning_budget === undefined, "omitted Super controls preserve historical defaults for valid comparisons");
+  const truncated = await create("nvidia/nemotron-3-super-120b-a12b", true).complete(base);
+  check(truncated.decision === "PROVIDER_ERROR" && truncated.evidence.finishReason === "length"
+    && truncated.content === null && !JSON.stringify(truncated).includes("private-trace-must-not-be-extracted"),
+    "bounded reasoning remains ungraded if provider still exhausts output; no reasoning-to-answer fallback");
+}
+
 // General development-only dispatch tests: no task IDs, benchmark answers, or real network.
 {
   for (const limit of [0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {

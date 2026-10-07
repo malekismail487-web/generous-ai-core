@@ -688,3 +688,41 @@ The independent BBEH Mini job has begun at the same frozen `1c0bc4f8` candidate;
 its result remains pending, not inferred from AIME. Automatic push replay is now
 removed without interrupting that already-started job. Production defaults,
 authority, credential custody and all original acceptance checks remain unchanged.
+
+## Super final-answer budget correction (2026-10-07)
+
+The completed AIME report exposed ten HTTP-200, length-terminated responses with
+reasoning but no final content. Super's historical requests specified 8,192 total
+output tokens but no thinking budget. NVIDIA's hosted Super reference documents a
+default reasoning budget of 16,384. This is a configuration failure hypothesis,
+not evidence that the two delivered wrong integers were transport failures.
+
+`SUPER_HOSTED_NATIVE` is an explicit exact-model provider opt-in. The existing
+text harness's `SESSION_SUPER_PHASE_CONTRACT` uses `reasoning_effort=none` for the
+required authorized read and `high` with `reasoning_budget=6144` for the answer,
+within the unchanged 8,192-token ceiling. It preserves schema, strict parsing,
+finish-reason rejection, lease, authority, oracle and usage accounting. It never
+extracts a final answer from private reasoning. Ultra and omitted Super controls
+remain unchanged. Historical scored candidates retain their original identities;
+only exact declared source hunks can be inverted by the existing assurance check.
+
+The bounded live diagnostic compares this opt-in against unmodified Super on the
+two pre-existing development objectives in counterbalanced order. These are not
+held-out benchmark results. Equal ceilings are not necessarily equal realized
+compute. The completion watch is paused; BBEH cancellation is operator-requested.
+The one-shot workflow first force-cancels only run `37665577413` if needed, using a
+separate trusted job's short-lived GitHub token, never model authority. Its live
+diagnostic receives only the existing NVIDIA secret. Neither operation deploys.
+
+Official benchmark prerequisites remain distinct: the Windows host has no Docker,
+the previously measured Linux runner lacks enforceable writable-layer quotas
+(`nyx-storage-prerequisite-e0c7ecd.json`), and protected FrontierMath access is
+unresolved. The public Erdős acquisition is a different, unexecuted variant.
+Astra's published comparison uses Terminal-Bench 4.0 and FrontierMath Tier 4 v2,
+not our downloaded Terminal-Bench 2.0 set. These cannot be relabeled comparable.
+
+Ω plan coverage: directly implements bounded inference and strict evidence-backed
+configuration; supports no self-certification, unchanged authority and unknown
+usage accounting; defers cognitive promotion, quota environment provisioning,
+protected evaluation, recursion and connectome expansion. Coverage remains
+PARTIAL / JUST-IN-TIME. No task-specific answer repair is introduced.

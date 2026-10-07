@@ -75,11 +75,11 @@ export interface NvidiaNimCompletionRequest {
   readonly inferencePolicy?: "CONSTRAINED_JSON" | "REASONING_JSON";
   /** Explicit Ultra template setting, not a hard thinking-token ceiling. */
   readonly reasoningEffort?: "MEDIUM";
-  /** Experimental Ultra API configuration diagnostic. Omission preserves reviewed template wiring. */
-  readonly reasoningControl?: "ULTRA_NATIVE" | "ULTRA_HOSTED_NATIVE";
+  /** Exact-model opt-in. Omission preserves reviewed defaults; controls never grant executor authority. */
+  readonly reasoningControl?: "ULTRA_NATIVE" | "ULTRA_HOSTED_NATIVE" | "SUPER_HOSTED_NATIVE";
   /** Omit hosted grammar ONLY; the caller's strict schema/parser/authorization remain mandatory. */
   readonly structuredOutputMode?: "STRICT_LOCAL";
-  /** Explicit hosted Ultra reasoning_budget. Nonnegative and strictly below maxTokens; never unlimited. */
+  /** Explicit reasoning_budget. Super requires SUPER_HOSTED_NATIVE. Always finite and below maxTokens. */
   readonly reasoningBudgetTokens?: number;
   readonly observedAtEpochMs: number;
   /** Caller-owned run expiry; capacity waiting cannot renew it. Never supplied to the model. */
@@ -337,7 +337,8 @@ export class NvidiaNimProvider {
       temperature: request.temperature, stream: false,
       ...(responseFormat && request.structuredOutputMode !== "STRICT_LOCAL" ? { response_format: responseFormat } : {}),
       ...(request.inferencePolicy === "CONSTRAINED_JSON" || request.inferencePolicy === "REASONING_JSON"
-        ? request.reasoningControl === "ULTRA_NATIVE" || request.reasoningControl === "ULTRA_HOSTED_NATIVE" ? {
+        ? request.reasoningControl === "ULTRA_NATIVE" || request.reasoningControl === "ULTRA_HOSTED_NATIVE"
+          || request.reasoningControl === "SUPER_HOSTED_NATIVE" ? {
           reasoning_effort: request.inferencePolicy === "CONSTRAINED_JSON" ? "none" : request.reasoningEffort === "MEDIUM" ? "medium" : "high",
           ...(request.reasoningControl === "ULTRA_NATIVE" ? {chat_template_kwargs: { force_nonempty_content: true }} : {}),
           ...(request.reasoningBudgetTokens !== undefined ? { reasoning_budget: request.reasoningBudgetTokens } : {}) }
@@ -365,8 +366,11 @@ export class NvidiaNimProvider {
     if (request.responseFormat !== undefined && responseFormat === null) issues.push("completion_response_format_invalid");
     if (request.inferencePolicy !== undefined && !["CONSTRAINED_JSON", "REASONING_JSON"].includes(request.inferencePolicy)) issues.push("completion_inference_policy_invalid");
     if (request.inferencePolicy !== undefined && responseFormat === null) issues.push("completion_constrained_json_requires_response_format");
-    if (request.reasoningControl !== undefined && (!["ULTRA_NATIVE", "ULTRA_HOSTED_NATIVE"].includes(request.reasoningControl)
-      || request.inferencePolicy === undefined || this.#config.model !== "nvidia/nemotron-3-ultra-550b-a55b")) {
+    const supportedReasoningControl = request.reasoningControl === "SUPER_HOSTED_NATIVE"
+      ? this.#config.model === "nvidia/nemotron-3-super-120b-a12b"
+      : ["ULTRA_NATIVE", "ULTRA_HOSTED_NATIVE"].includes(request.reasoningControl ?? "")
+        && this.#config.model === "nvidia/nemotron-3-ultra-550b-a55b";
+    if (request.reasoningControl !== undefined && (!supportedReasoningControl || request.inferencePolicy === undefined)) {
       issues.push("completion_reasoning_control_invalid");
     }
     if (request.structuredOutputMode !== undefined && (request.structuredOutputMode !== "STRICT_LOCAL"
@@ -377,7 +381,9 @@ export class NvidiaNimProvider {
     if (request.reasoningBudgetTokens !== undefined && (!Number.isSafeInteger(request.reasoningBudgetTokens)
       || request.reasoningBudgetTokens < 0 || request.reasoningBudgetTokens >= request.maxTokens
       || request.inferencePolicy !== "REASONING_JSON"
-      || this.#config.model !== "nvidia/nemotron-3-ultra-550b-a55b")) issues.push("completion_reasoning_budget_invalid");
+      || !(this.#config.model === "nvidia/nemotron-3-ultra-550b-a55b"
+        || this.#config.model === "nvidia/nemotron-3-super-120b-a12b"
+          && request.reasoningControl === "SUPER_HOSTED_NATIVE"))) issues.push("completion_reasoning_budget_invalid");
     if (Buffer.byteLength(canonical(request.messages), "utf8") > this.#config.maxPromptBytes) issues.push("completion_prompt_bound_exceeded");
     if (issues.length > 0) return this.#result("REJECTED", [...new Set(issues)].join(","), null, null, requestDigest, null, null, emptyUsage(), false);
     // Serialize once: queued requests and retries cannot silently pick up caller mutations.
