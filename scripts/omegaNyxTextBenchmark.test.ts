@@ -7,7 +7,7 @@ import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySes
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
   TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
-  textWholePopulation, textPopulationIsFullyGraded, textDeliveryBlocked, textTimeoutTransferSelection,
+  textWholePopulation, textPopulationIsFullyGraded, textFullRunIncomplete, textDeliveryBlocked, textTimeoutTransferSelection,
   compareTextTimeoutPair, textBoundedTaskRequest, textFullFamilySelection,
   textHttpAttemptAllowance, textRecoveryTransferSelection, compareTextRecoveryPair,
   textDeliveryPreflightSelection, textDeliveryPreflightReady, textSharedRecoverySelection,
@@ -118,6 +118,27 @@ check("zero or subset counts cannot falsely certify an omitted benchmark family"
   assert(!textPopulationIsFullyGraded("AIME_2025", 2, 2, 2));
   assert(!textPopulationIsFullyGraded("AIME_2025", 31, 31, 31));
   assert(!textPopulationIsFullyGraded("AIME_2025", 30, 30, NaN));
+});
+const completeFamilies = [{family: "AIME_2025", selected: 30, executed: 30, graded: 30},
+  {family: "BBEH_MINI", selected: 460, executed: 460, graded: 460}];
+check("full execution completeness does not require correct answers or a minimum score", () => {
+  assert(!textFullRunIncomplete("FULL", completeFamilies));
+  assert(!textFullRunIncomplete("FULL_AIME", completeFamilies.slice(0, 1)));
+  assert(!textFullRunIncomplete("FULL_BBEH", completeFamilies.slice(1)));
+});
+check("full execution with provider-blocked or ungraded tasks is incomplete", () => {
+  assert(textFullRunIncomplete("FULL_AIME", [{...completeFamilies[0], executed: 2, graded: 0}]));
+  assert(textFullRunIncomplete("FULL_BBEH", [{...completeFamilies[1], graded: 459}]));
+  assert(textFullRunIncomplete("FULL", [completeFamilies[0], {...completeFamilies[1], selected: 0, executed: 0, graded: 0}]));
+});
+check("missing or duplicate family reports cannot make full execution successful", () => {
+  assert(textFullRunIncomplete("FULL_AIME", []));
+  assert(textFullRunIncomplete("FULL", completeFamilies.slice(0, 1)));
+  assert(textFullRunIncomplete("FULL_BBEH", [completeFamilies[1], completeFamilies[1]]));
+});
+check("partial development modes keep their existing completion semantics", () => {
+  assert(!textFullRunIncomplete("CONTRACT_DIAGNOSTIC", []));
+  assert(!textFullRunIncomplete("TRANSFER_ABLATION", completeFamilies.map(row => ({...row, executed: 2, graded: 0}))));
 });
 check("hosted/native diagnostic isolates template kwargs instead of changing inference budget", () => {
   const legacy = textConfiguredRequest(originalRequest, "BOUNDED_GUIDED");

@@ -39,6 +39,20 @@ export function textPopulationIsFullyGraded(family: TextTaskFamily, selected: nu
   return expected !== null && [selected, executed, graded].every(count => Number.isSafeInteger(count) && count === expected);
 }
 
+/** A captured partial report is not a completed full-population execution. Wrong
+ * graded answers remain valid measurements; this checks completeness, not score. */
+export function textFullRunIncomplete(mode: string, families: readonly {
+  family: string; selected: number; executed: number; graded: number;
+}[]) {
+  const required = mode === "FULL" ? ["AIME_2025", "BBEH_MINI"] as const
+    : mode === "FULL_AIME" ? ["AIME_2025"] as const : mode === "FULL_BBEH" ? ["BBEH_MINI"] as const : [];
+  return required.some(family => {
+    const rows = families.filter(row => row.family === family);
+    return rows.length !== 1 || !textPopulationIsFullyGraded(family,
+      rows[0].selected, rows[0].executed, rows[0].graded);
+  });
+}
+
 /** Freeze a positional window, never a correctness-selected task subset. */
 export function textTransferSelection(tasks: readonly PrivateTextTask[], start = 4): PrivateTextTask[] {
   const families = (["AIME_2025", "BBEH_MINI"] as const).map(family => tasks.filter(task => task.family === family));

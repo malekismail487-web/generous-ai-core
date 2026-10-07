@@ -9,7 +9,7 @@ import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextResult,
   TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
-  textFullFamilySelection, textPopulationIsFullyGraded, textDeliveryBlocked, textTimeoutTransferSelection, compareTextTimeoutPair, textBoundedTaskRequest,
+  textFullFamilySelection, textPopulationIsFullyGraded, textFullRunIncomplete, textDeliveryBlocked, textTimeoutTransferSelection, compareTextTimeoutPair, textBoundedTaskRequest,
   textHttpAttemptAllowance, textRecoveryTransferSelection, compareTextRecoveryPair,
   textDeliveryPreflightSelection, textDeliveryPreflightReady, textSharedRecoverySelection,
   textSessionActionContract, textSessionContractSelection, TEXT_SESSION_CONTRACT_DIAGNOSTICS, compareTextContractPair, textContractDiagnosticReady,
@@ -287,7 +287,7 @@ export async function runTextBenchmarkEpoch() {
       : "PUBLIC_DATA_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"};
   await writeFile(join(process.env.RUNNER_TEMP || tmpdir(), `nyx-text-benchmark-${candidate}.json`), JSON.stringify(report, null, 2));
   console.log(`NYX_TEXT_EPOCH ${JSON.stringify(report)}`);
-  if (!sourceUnchanged || preflight && !textDeliveryPreflightReady(results)
+  if (!sourceUnchanged || textFullRunIncomplete(mode, families) || preflight && !textDeliveryPreflightReady(results)
     || contractDiagnostic && !textContractDiagnosticReady(results, contractCandidate)) process.exitCode = 1;
   return report;
 }

@@ -502,3 +502,34 @@ It neither resolves the earlier HTTP 400 cause nor establishes a reasoning failu
 Automatic replay is disabled. Further live configuration isolation and benchmark
 evaluation require stable authorized NVIDIA serving; no new key requirement, quota
 cause, successful recovery or cognitive advantage is inferred from these responses.
+
+### Authorized full public text campaign — 2026-10-07
+
+Malek authorized actual benchmark execution from `0aa274e1`. The existing one-shot
+workflow now freezes `FULL_AIME` (all 30 pinned problems), then `FULL_BBEH` (all
+460 pinned Mini problems) if the first family completes. Both use the existing
+`SESSION_ACTION_CONTRACT` candidate, scoped whole-question read, fixed Ultra model,
+8,192 output-token ceiling, two logical calls, four shared physical attempts,
+original 180-second task lease, opt-in bounded transient recovery and unchanged
+graders. Unsupported native controls are not used. No production default changes.
+
+Full-population execution now exits nonzero if required tasks are unexecuted or
+ungraded; a complete low score remains valid evidence, not a harness failure. This
+reuses the existing completeness predicate. The two-consecutive-delivery-failure
+circuit remains intact. The second family does not repeatedly probe an outage
+that prevented the first from completing. Existing epoch limits remain 91 minutes
+for AIME and 19,000,000 ms for BBEH; CI timeouts only cover setup and those existing
+limits, never renew an individual task's authority or expiry.
+
+This is a frozen-version public rerun, not fresh held-out transfer or an official
+leaderboard harness. Prior public exposure and unknown training contamination
+remain explicit. Reference answers stay in evaluator custody outside the source
+repository; only sanitized evidence is uploaded. First attempts are retained;
+any later general correction needs separate development reproduction and fresh
+transfer, not answer-guided retries of this population. Automatic push dispatch is
+removed after the authorized one-shot is captured.
+
+Ω coverage remains PARTIAL / JUST-IN-TIME: directly applies real execution,
+complete-population accounting and no self-certification; supports scope, provenance,
+leases and private-oracle separation; defers protected/container-dependent families
+and cognitive promotion. No additional reasoning layer or authority is introduced.
