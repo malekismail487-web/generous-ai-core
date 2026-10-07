@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-TERMINAL-BENCH-4-SOURCE-ACQUISITION-2026-10-07",
+  "source": {
+    "repository": "https://github.com/harbor-framework/terminal-bench",
+    "release": "v4.0.0",
+    "releaseUrl": "https://github.com/harbor-framework/terminal-bench/releases/tag/v4.0.0",
+    "candidate": "452bf305c6daa62fc59061d22133a7cbc7c1572e",
+    "tree": "bc72fde12dfc3cf4eb193e821d8be593661ec244",
+    "localPath": "C:/Users/loka3/Documents/Codex/2026-08-20/h/benchmark-data/terminal-bench-4",
+    "cleanDetachedCheckout": true,
+    "manifestDigest": "fdae9c4ea384a6c069297e1c3ca5f966bde9c67777b35a66ade6268941b03f53",
+    "manifestDigestDefinition": "SHA256(JSON.stringify(sorted [task directory, SHA256(LF-normalized task.toml)] pairs))"
+  },
+  "scope": {
+    "releaseSourceDownloaded": true,
+    "taskStatementsRead": false,
+    "solutionsRead": false,
+    "taskManifestMetadataInspected": true,
+    "prebuiltReleaseArchiveDownloaded": false,
+    "hubPackageAndImageEquivalenceVerified": false,
+    "officialTasksExecuted": 0,
+    "modelCalls": 0,
+    "score": null
+  },
+  "environmentRequirements": {
+    "tasks": 66,
+    "agentTimeouts": {
+      "28800.0": 66
+    },
+    "environmentValues": {
+      "cpus": [
+        2,
+        4,
+        8,
+        16
+      ],
+      "memory_mb": [
+        4096,
+        8192,
+        16384,
+        32768
+      ],
+      "storage_mb": [
+        4096,
+        5120,
+        10240,
+        15000,
+        15360,
+        18000,
+        20480,
+        30720,
+        51200,
+        1024000
+      ],
+      "gpus": [
+        null,
+        0,
+        1
+      ]
+    },
+    "gpuPositive": 3,
+    "gpuUnspecified": 8,
+    "multiContainerComposeFiles": 11,
+    "metadataParser": "Python standard-library tomllib; integer/float fields parsed as TOML, not inferred from task counts.",
+    "fullPopulationProfileAdmission": "NOT_GRANTED"
+  },
+  "assessment": {
+    "result": "ACQUIRED_SOURCE_ONLY_BLOCKED_ENVIRONMENT",
+    "blockers": [
+      "Windows host has no available Docker engine.",
+      "Historical Linux runner quota preflight returned STORAGE_QUOTA_UNSUPPORTED; no fresh successful quota proof is available.",
+      "The current narrow private-offline NYX container profile and Harbor bridge are not admitted or verified for TB4 resources, GPU and multi-container tasks."
+    ],
+    "quotaReceipt": "docs/omega/evidence/nyx-storage-prerequisite-e0c7ecd.json",
+    "minimumExternalAction": "Provide an approved isolated Linux benchmark runner with empirically enforceable writable-storage quotas, and explicitly approve task-scoped TB4 resource/container profiles; preserve no host, credential or production authority.",
+    "benchmarkVersionEquivalence": "Terminal-Bench 2.0 results cannot be relabeled Terminal-Bench 4.0 results.",
+    "cognitivePromotion": false
+  },
+  "frontierMath": {
+    "requestedVersion": "Tier 4 v2",
+    "state": "BLOCKED_ACCESS",
+    "protectedTasksAndVerifiersAvailable": false,
+    "publicErdosVariantEquivalent": false,
+    "officialTasksExecuted": 0,
+    "score": null,
+    "minimumExternalAction": "Obtain authorized FrontierMath Tier 4 v2 task/verifier access from Epoch AI.",
+    "reference": "https://epoch.ai/benchmarks/frontiermath-tier-4-v2"
+  },
+  "planCoverage": {
+    "status": "PARTIAL / JUST-IN-TIME",
+    "directlyImplemented": [
+      "Pinned benchmark acquisition",
+      "Explicit environment capability reporting"
+    ],
+    "supporting": [
+      "No authority without scope",
+      "Benchmarks require authentic tasks and graders",
+      "Evidence outranks prediction"
+    ],
+    "deferred": [
+      "Official Terminal-Bench 4.0 execution",
+      "Protected FrontierMath evaluation"
+    ],
+    "conflicts": []
+  }
+}

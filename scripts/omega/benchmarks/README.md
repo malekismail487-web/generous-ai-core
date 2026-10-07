@@ -710,9 +710,10 @@ The bounded live diagnostic compares this opt-in against unmodified Super on the
 two pre-existing development objectives in counterbalanced order. These are not
 held-out benchmark results. Equal ceilings are not necessarily equal realized
 compute. The completion watch is paused; BBEH cancellation is operator-requested.
-The one-shot workflow first force-cancels only run `37665577413` if needed, using a
-separate trusted job's short-lived GitHub token, never model authority. Its live
-diagnostic receives only the existing NVIDIA secret. Neither operation deploys.
+The completed one-shot workflow force-cancelled only run `37665577413`, using a
+separate trusted job's short-lived GitHub token, never model authority. That job
+and its `actions:write` permission are now removed. The diagnostic is manual-only
+and receives only the existing NVIDIA secret; it grants no deployment authority.
 
 Official benchmark prerequisites remain distinct: the Windows host has no Docker,
 the previously measured Linux runner lacks enforceable writable-layer quotas
@@ -726,3 +727,43 @@ configuration; supports no self-certification, unchanged authority and unknown
 usage accounting; defers cognitive promotion, quota environment provisioning,
 protected evaluation, recursion and connectome expansion. Coverage remains
 PARTIAL / JUST-IN-TIME. No task-specific answer repair is introduced.
+
+### Fresh observations and requested benchmark transition
+
+Candidate `dc59c2a5e92ebfb287d90a62dc3c6946c43b113c`, run `37674937014`, completed
+the two-objective counterbalanced development ablation. Unmodified Super and
+the phase-controlled configuration each passed 2/2. Control used 2,501 reported
+tokens and 9,007ms summed task latency; the candidate used 2,063 and 9,369ms.
+There were eight logical/physical/HTTP calls total, no retries, provider failures
+or truncations, and no unknown-usage calls. One pair did not satisfy realized
+token matching. This is live E4 interface evidence plus deterministic E3 grading,
+not an accuracy gain, a latency gain, or proof that hard-task truncation is solved.
+See [verified artifact receipt](../../../docs/omega/evidence/nyx-super-phase-controls-dc59c2a5.json).
+Linux CI `37674937107` passed 108 suites / 11,121 checks, TypeScript 5.8.3 zero,
+secret scan, package smoke and production build. Windows Device Guard was not
+bypassed when it blocked the local build launcher.
+
+BBEH is confirmed **cancelled**, not suspended/resumable. Its terminal log has
+60 task records from 460 selected: 11 correct, 13 wrong-or-answer-format,
+34 ungraded truncations and two ungraded provider failures. Four hundred selected
+tasks have no terminal record; exact unexecuted/in-flight counts and their usage
+are unknown. No final report/artifact survived cancellation, so this is not a
+complete benchmark score or final cleanup proof. The watch remains paused.
+See [partial cancellation receipt](../../../docs/omega/evidence/nyx-super-bbeh-cancelled-1c0bc4f8.json).
+Original AIME, Ultra and earlier Super evidence is unchanged.
+
+The official Terminal-Bench **v4.0.0 release source** is now downloaded outside
+the candidate repository at pinned revision
+`452bf305c6daa62fc59061d22133a7cbc7c1572e`. Only manifest/environment metadata was
+inspected, not questions or solutions. Its 66 task manifests specify eight-hour
+agent timeouts, 4–32GiB RAM and up to 1,024,000MiB storage; 11 have multi-container
+compose definitions and three explicitly request GPUs (eight omit that field).
+This is source acquisition, not Hub/prebuilt-image equivalence or execution.
+See [acquisition and environment receipt](../../../docs/omega/evidence/terminal-bench-4-source-acquisition-2026-10-07.json).
+Actual scoring requires an approved isolated Linux runner with enforceable storage
+quotas and explicit task-scoped resource/container admission. No quota, lease,
+grader, model default or authority boundary has been relaxed to obtain a score.
+
+Protected FrontierMath Tier 4 v2 tasks/verifiers are unavailable; authorized Epoch
+AI access is required. Public samples and the public Erdős acquisition are not
+equivalent. No Terminal-Bench 4.0 or protected FrontierMath score is claimed.

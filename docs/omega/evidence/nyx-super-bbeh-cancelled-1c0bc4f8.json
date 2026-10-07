@@ -1,0 +1,2373 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-SUPER-BBEH-CANCELLED-1C0BC4F8-RECEIPT",
+  "source": {
+    "candidate": "1c0bc4f8e798364974429bcc7bb364db796493ef",
+    "runId": 37665577413,
+    "jobId": 112953290974,
+    "status": "completed",
+    "conclusion": "cancelled",
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "configuration": "SESSION_ACTION_CONTRACT",
+    "datasetRevision": "80d12ca916b7158f22293fcf3144f4d3d854d4be",
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/37665577413/job/112953290974",
+    "terminalLogsRetrieved": true,
+    "finalReportAvailable": false,
+    "finalArtifactAvailable": false,
+    "archiveSha256": null
+  },
+  "cancellation": {
+    "requestedByOperator": true,
+    "normalCancellation": "ACKNOWLEDGED_BUT_JOB_CONTINUED_WITH_ALWAYS_CONDITION",
+    "forceCancellationVerified": true,
+    "confirmationRunId": 37674937014,
+    "confirmationJobId": 112975917828,
+    "confirmationTimestamp": "2026-10-07T19:30:20.0681788Z",
+    "completionWatch": "PAUSED",
+    "watchIdentity": "capture-bbeh-completion-evidence",
+    "newBenchmarkLaunched": false
+  },
+  "population": {
+    "selected": 460,
+    "terminalTaskRecords": 60,
+    "graded": 24,
+    "correct": 11,
+    "wrongOrAnswerFormat": 13,
+    "ungraded": 36,
+    "truncated": 34,
+    "providerFailure": 2,
+    "selectedWithoutTerminalRecord": 400,
+    "unexecutedExactCount": null,
+    "inFlightAtCancellation": "UNKNOWN",
+    "completeBenchmarkScore": false
+  },
+  "accounting": {
+    "scope": "OBSERVED_TERMINAL_TASK_RECORDS_ONLY_LOWER_BOUND",
+    "logicalCalls": 120,
+    "physicalCalls": 121,
+    "httpAttempts": 121,
+    "reportedTokens": 455823,
+    "unknownUsageCalls": 3,
+    "toolCalls": 60,
+    "wallClockMs": 2979874,
+    "retries": 1,
+    "cancelledInFlightCallsTokensAndLatency": "UNKNOWN",
+    "unknownTokenUsageRecordedCalls": 3
+  },
+  "classification": {
+    "truncation": 34,
+    "reasoningOrAnswerFormatFailureUnresolved": 13,
+    "providerFailure": 2,
+    "reasoningFailureSeparateCount": null,
+    "answerFormatFailureSeparateCount": null,
+    "schemaAndAuthorization": "No separately labeled terminal category among the 60 records; do not infer absence of all possible failures.",
+    "infrastructure": "Operator cancellation is a stop condition, not a wrong answer on the 400 unrecorded tasks."
+  },
+  "taskRecords": [
+    {
+      "taskId": "BBEH-MINI-000",
+      "inputDigest": "4a6bcb85d43f32d52e66afff1f4adf0a937c6845683baf8191f4605cd619102c",
+      "privateOracleDigest": "c7ffe38ec3cf3f1765c6d5c5d914e0c15d303ca55cb2c5ec4eb126c17d43b44a",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10817,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 6629,
+        "wallClockMs": 54209,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "aa52fceea551e8ed748ac7677c63477bf8c1b39b0bb45e2fb8457915fda846f7",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "866d54d416b6f34c5ffb9c1680bb7ecdf0a20b7f1ff95082a3ea02f58a42702d",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-001",
+      "inputDigest": "64a9505a109efc1974f2302b3947284173bc81b308ac3de1d2c7fe934e490ed7",
+      "privateOracleDigest": "92e9e7e5922d26e17e48f0869ab25cc99499fdab722c065de8e0965c96c68e86",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10980,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 5465,
+        "wallClockMs": 88919,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "3d7bb83b2f3873f7984506bf9d6f73327c64f348b1fc7dc288b8f90f7de2022e",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "6cc37cd3722278f92ca4b97857703c6a214ebde236b2be1636daf8c173d74a0d",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-002",
+      "inputDigest": "f08cfc2feef10624e7736b203e734a3d723c3b4d1af1209b1b587ce5ab088492",
+      "privateOracleDigest": "0234a350f4d56ae45c5ece57b08c54496f372bc570bd83a465fb6d2d85531479",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10458,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 2720,
+        "wallClockMs": 85597,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "f4c2e7d1262adbff0e182f984685a271e0f5f3650aab52277e443c23ad9550eb",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "75fe5e525b952553f2950ffe66357d9e5917a4aaa9efd02a3f1b33de52fe2200",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-003",
+      "inputDigest": "e12a3e9fb94b53f43b20a3836871a91a60d76c2e9acbec3421e6926d677fda1f",
+      "privateOracleDigest": "b27acb0e08939147a4a2e6b821769b412e69d7381d4c58a0a2cb8c70b4fddfec",
+      "predictionDigest": "686823c20b612e1fb3e9b602f7fe9074982088a728a024d2f4f9b804bf027eb5",
+      "state": "PASS",
+      "correct": true,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 3446,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 2076,
+        "wallClockMs": 18645,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "b25f3adce3f3ff546353dcf03fbf40240e238db8068d6ec8dab95391227a723c",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "d8ca8c8cc5dec74474bc99a49a71429abd8cc43b6ab95b8b4fbbc54ba64df118",
+          "responseDigest": "332bbb9517de2379e83be0a94aadd1617c51c89fdfa03db952ecd6029b7df168",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-004",
+      "inputDigest": "d182b00680ef21e9ec98b4fdf0e74f2958e15569a9418c10942c38947fb52599",
+      "privateOracleDigest": "2bf175f9655e7bb7357b9f0a7c6051465a5ae701104ffe741b98e852c0e4d460",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10781,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 6068,
+        "wallClockMs": 62188,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "3587574f142314717699da0cfbf541295b9bf1d2dc769929a9ba539f7ac13c79",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "9d279f30a01d723e227c30e6c995593d678f8d43b8bc081c67d63a17aab562b5",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-005",
+      "inputDigest": "2e4ea1df4fc1f90b0c8d9473395a93a1b4c2cf5d4a7433ab2421051a22c65103",
+      "privateOracleDigest": "d10a4bc9e0c1fa4e8f3d7ce2512b8756e47ca5fa451f373c39a1431bb88db49f",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10507,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 2755,
+        "wallClockMs": 69012,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "db8a72968b00815145796089b015c41cff995eeb6bf43c0ab090f56b306fb2c4",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "83585ad208188cd12b3425c0580fdeb9bf17ad81d7c0e2b30f6511934fef10bd",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-006",
+      "inputDigest": "410aa8dae38401cfd48c6dcc0799f3fe86c1220043289b7dc27da8a757bbb614",
+      "privateOracleDigest": "7d950b707bc34d277f56ec1f2e4fbe7f118cc82ad4be23fa7f18fa42bcf38493",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10020,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1200,
+        "wallClockMs": 121813,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "29589fb110e124fbd74504c04577fa12f70455f6267131519ff943d423dcbda2",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "89da2f6491192575a59cf6a52e243231a99b9e62df73c1b2dec9a2bef0de5f23",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-007",
+      "inputDigest": "e5d4730c748c566bab0609716e30d00ac63de6042bcfff818db0a4482726e001",
+      "privateOracleDigest": "fd247be11944ef36b3f5683b649159dda92984dfee001c7572d24f73ec6ad8ac",
+      "predictionDigest": null,
+      "state": "PROVIDER_FAILURE",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 782,
+        "unknownUsageCalls": 1,
+        "toolCalls": 1,
+        "toolWorkUnits": 12443,
+        "wallClockMs": 124750,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "7021664bdd61fe1121a015ef9140db18ca7ae06b67aab9cf68776c5f32aa0620",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "74f82a936295e6ec2e74f74a7e8c27ce15ad42086dce3ced0dc4862bb54ad419",
+          "responseDigest": null,
+          "statusCode": null,
+          "finishReason": null,
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-008",
+      "inputDigest": "2643ec6f49bb3e971e97717d6fd76b478aefcf81ff240af6df6b31350db16fea",
+      "privateOracleDigest": "a68a06601fa2bf08cd5942503ec50c74fd461935a7a2de0c9193b7760058421d",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 9992,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 3195,
+        "wallClockMs": 54909,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "d97dcc99fc5e4fee90d30af4f3be1047264534032ef317e075856686cf6d7466",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "27307eaf2e7c812f5b945210b3620fa6dd097c36fe80c9a6079640d08dc33f64",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-009",
+      "inputDigest": "fbd2c36756fe7592e02d5ef113669a6f98b082df452705b0480246b6fcd5bd78",
+      "privateOracleDigest": "22686e9ac9a61eb481881b74ca3abe2b7796b16653c305e190f97c4964a4002c",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 12492,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 10181,
+        "wallClockMs": 55666,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "2b7603c74a10ebb438ccd57d958d1cbd0e4778d419c2d451ce59cdc05afe394d",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "4a37576075b5effb285b7f4b43ef4668670512cd768789414f55e9c8f87bf4f0",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-010",
+      "inputDigest": "25a55e24c5ddc01cc1e3452b7c91de6338fb35db51bdfc412a864294954d0552",
+      "privateOracleDigest": "cb52232e4bf29588623c77e3ab28e5797694354b744f093860fa86df949184cf",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10589,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 2162,
+        "wallClockMs": 56714,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "97994ff73dd557e3ead042bf2a496027063bb4eda4332b5ea652867e4468c2a0",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "cc92a21f1fe91d2cf9b932b83f95847f6a26bd0447ccda0c576f9d8255ace1d4",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-011",
+      "inputDigest": "dc8d0e88a677774cd7444e4cf7108a5483c47f328363dbe994b40242df46efd0",
+      "privateOracleDigest": "cb52232e4bf29588623c77e3ab28e5797694354b744f093860fa86df949184cf",
+      "predictionDigest": "a22bbdf3783cdb9a72a702d661fae5b5572a4860a047d5beec9b653750ae29bd",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 2512,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1239,
+        "wallClockMs": 9431,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "e4f054a33bdddcd9269f9d68da522cd9f55304f08460582f577932c37949cf19",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "030ddd8156beab69697f6bdd6f463f9dff31bbe9bcca9e43c32fb39cc9d39b16",
+          "responseDigest": "7b849773d2698f18df3da900b2235bdf95edd191b49d7fdb529c6d80326183dd",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-012",
+      "inputDigest": "977e2a5cc24c60e10b832051b7b5deee26080b7b006f33852fabac1d3d58a3da",
+      "privateOracleDigest": "184fda5c980b9d9cb375f42a528817c6235fbd4f79775a8018fae5afcbdf2a63",
+      "predictionDigest": "be55390a104be26f1b96892febbc679faeca1aac09830d2c32058124ce56466b",
+      "state": "PASS",
+      "correct": true,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 1435,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 318,
+        "wallClockMs": 4620,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "d360b26c83b504ea85dfb00ac4946fcae2c8ef3677516b1bfa5f3ac24261a947",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "5897fa340544a9c59b84b6779798674d88b1ecde48a40b5c16467b741d7ffac2",
+          "responseDigest": "c9ee900b5515356f9eeb67fe64d25e80956eaa5e999294b2f9f768f896b65f67",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-013",
+      "inputDigest": "6b822ec6bbed52b244cb8f145c68a0523d49671ebcbf4c3d0c7851ad1f56668a",
+      "privateOracleDigest": "559a760ced6e3048c5c10a20679f97e173bcfef3929617cb35ce67a1bb89f364",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10495,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 3085,
+        "wallClockMs": 55851,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "898e8f8f59f395fe843d6681f40606c4de897ca730dbade5dddc2d057aa4d72a",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "1cc7f7c26d4667808a754f745453cdaa04dee752e1cc3bc3beb88b9fa51f53b8",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-014",
+      "inputDigest": "8606cfc1ee0d89f9e35f0e6149dbb9d4d3043d87b598c0560a96c0300fb88623",
+      "privateOracleDigest": "a0bca9d1fe2c6fd2e863175acc6bd08da1afa2056268696db8fa2a48df3059d7",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 9579,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 848,
+        "wallClockMs": 62257,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "80d469ac2d85c5bd53d0009f593b6b081c9b957c8a7c1961e44a0ad21c91774f",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "0b0b81b17ecf816ea8f25d73f6a99049227ee720239437e4ee859c3a76ff1a77",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-015",
+      "inputDigest": "741474c121a932795bfd6da597902813f7797a9b3dc44756bef41c7a256a0f28",
+      "privateOracleDigest": "b4976829e8c7b620ed661e5e6ec38e9171f1653263b41bae4cf5adcff55e9d80",
+      "predictionDigest": "d8fddeddba6c8ddbc73d5a577bc09da68d11770b926ff7be491aa4c9d333808a",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 1616,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 955,
+        "wallClockMs": 8410,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "87440ae3f741c278e865abddda71c2d9eeb931527fbc5553382c616a1e8742d0",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "ee1a545b1e6dfd60c4047210449c5f02e276c786bfcf666ca70eb4f37a30494f",
+          "responseDigest": "239f1174deac877e944729e49f9952eb38e76e492ef7684c7d62dc32809dc41b",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-016",
+      "inputDigest": "fd3baf99a9e446a92777e7d41e6e5f98185ae542a127e01c872eb27660ad9fec",
+      "privateOracleDigest": "6e3afe7aaf831fe5cbb3cca5e1be05d962d849091366c2cceca09e1ebdccaffd",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 9760,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1041,
+        "wallClockMs": 69925,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "45a9547b3237d3cdea5d90284fdc347447f2c9304fe69a5edd37bd527bfd0723",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "f4edd2ae383c30e5736db28621e195a56fc147bf6ae994399610d312095e5805",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-017",
+      "inputDigest": "2ea1141d477b72d412485d993bd9de39031fa36f62afe04e54458b7d72f59bba",
+      "privateOracleDigest": "b4976829e8c7b620ed661e5e6ec38e9171f1653263b41bae4cf5adcff55e9d80",
+      "predictionDigest": "f17e47930c91e56d0eadcf752bcfcf483179faf0bf26cb9e5f45d8c5a7ca92ea",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 2053,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 946,
+        "wallClockMs": 7780,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "a78cbd1d30917e0b2b4c0232c703e191f8620b77850500a4846e6dc6d13e723c",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "bea17795f5bf18783d977c2c613444a1203b08e9fb3ff9006d57c62ad73342a5",
+          "responseDigest": "c43ecf81fa77ffed3e76e83bc1c69488fe35b26238c25361d12fd66c91089f20",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-018",
+      "inputDigest": "de3ad74a587f8d7760fd9a70eac73fe40f4827a6519764d64ee8c6e7afe54d89",
+      "privateOracleDigest": "f00fbcc95f6cf5c5509dbd36d941dd084cc0530cf9bf50ca9550811986aff8f8",
+      "predictionDigest": "f8b8997e79c97876b1fa8f0a4e9ca5e5ef105256391d48a486ba58f1937492ed",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 2604,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1966,
+        "wallClockMs": 12313,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "92a29e908e208e9c59c9af097c9c0d83501863e5a039fe6e9cf2be2ba95d5f26",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "9c1d23aed5d97a8f610841cb5679d59601191ebbd94e6b6fc8a89b8e071d260a",
+          "responseDigest": "c36b76ca485a1271b2ed580d861683fe9c1da598eeb596d227dcfed2742d00e3",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-019",
+      "inputDigest": "3f32ebe4f4dd60ab3f0a52c500332c3e97eab97dc00b4c205fc043ddf100cb0f",
+      "privateOracleDigest": "6b597f331905f5cd634674b11cbd26afbbcd87278cb17c4d73c586d70ceed229",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 12515,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 12400,
+        "wallClockMs": 68002,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "ef4fb682519c2de33f1f6d1ea62146bb8279d95dd238a50718943a60856203b4",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "a739aa09a358c2f09de397219796a0b8c125342e18a297748f57543ca1312f97",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-020",
+      "inputDigest": "338e749bd9d9514b6a4ca033a79c3c963db936c9c0ccec1fcf28dc6c4a19fd4a",
+      "privateOracleDigest": "af37a39f9689b0e1274628fc198b5e13160c707b25d95b35eb11b0cae8e2fc12",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 11505,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 3274,
+        "wallClockMs": 60550,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "78403f2ceaff0cfe44837899a41515fe593312db792dc6c4dd61c26ddc06e56c",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "d80d3d984a6d9d67fcb9ef9288103ca6c13e0f010284b2e4c3ff620f38eab36e",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-021",
+      "inputDigest": "23e0d4008e716fed30711069eb7ade0b984b163dd30b2667a8fba1562d8ff4b1",
+      "privateOracleDigest": "b16781f85251cf7a5bab973eb0927776b89a75f8def28c649ae65e01b3db5e28",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10350,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 5405,
+        "wallClockMs": 66505,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "120cd0e3bc0aef25d1072d15da4c5cb719de5aeb42d2573605dedfdadd3dae0f",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "084ae4bc38b2b6a3addc2ae2e6a0ccf1567590c29cb11ed9bb1df4035f7ea043",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-022",
+      "inputDigest": "b62cc8b563af89e849a823bd62659fc971534e667f4772ec565e56b11b50d89d",
+      "privateOracleDigest": "e4605871d40822acf6b7b9523d5083fe885871ca96d148bd2b0d61a446bce56f",
+      "predictionDigest": "e4605871d40822acf6b7b9523d5083fe885871ca96d148bd2b0d61a446bce56f",
+      "state": "PASS",
+      "correct": true,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 9153,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 2129,
+        "wallClockMs": 81594,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "c4da0ae302537dbc49441c4a7bb0624838695aa4f6285208e7d247f11ab2855f",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "6ca13fe1a21c22f6690f6a84fd7546e308e0012f45191fabfd2bb6f41ebad9cf",
+          "responseDigest": "db05093735ebd75af9746fbcde4b2690a404a55044b7f75bd4907d6e30b24251",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-023",
+      "inputDigest": "e87a74a931fd78fce10aee1c5a02004be13e0beb9cb2f78fd31fb981d8e2f637",
+      "privateOracleDigest": "936d2f126456cbc58d22fefc8ceb2d616999bf9d77689365fe468b5289f2b1ca",
+      "predictionDigest": "4ab6f0028ba7d4ea66d5d4093285433facdc93d2b977cb8eac2bd5b5a712953a",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 9780,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 9655,
+        "wallClockMs": 72617,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "93a25e8baa5a3efe2ecb78d9bb08736c965cd1b887711ddb5ec4a8f3dd87f923",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "11e2cc75beeae29529050919ad205207c97304cc3ace5dc14427534a0ddcb2ea",
+          "responseDigest": "2e45007df91801c022ed63f8cf366972625678a20054673ca392931a7914379d",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-024",
+      "inputDigest": "58ac0037999e85d06bc35e4db38e10b04b6673c070e0f39bb6bc1860b948cdbd",
+      "privateOracleDigest": "b4976829e8c7b620ed661e5e6ec38e9171f1653263b41bae4cf5adcff55e9d80",
+      "predictionDigest": "e8d989d471470b88390947709c9fe55e7c1047ec389acfe5136fbcea1f911ac9",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 2023,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 986,
+        "wallClockMs": 12771,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "b982bafbd03115fa7e5ce5438e16cc3fec331ce8a0279bebf3abdcf843709941",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "9dfad2cc857c4128577f2b4ba838ed9ba90e4e0dc063d467554d0fc8da984159",
+          "responseDigest": "3b5d4bfb25a8a44facb8097c22cda518012f30b76635e0421521b79ffb1828dd",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-025",
+      "inputDigest": "e105e929ae368a45675ffc33c8afa133b2bd3e9953d31f40950c20c147a49adc",
+      "privateOracleDigest": "266aa5886067fbbc1a3a39fe432fc5bbf561abc90e4b8a322215ac17df6ce012",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10835,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 6190,
+        "wallClockMs": 61594,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "b91200a2f2d2a7f66e271c823131fc7be3560980a23934a599400928e6ad8951",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "fca63966353ccb60bbd34306a015ae09b476da93dfd7019dca8a1baa2cbf0a13",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-026",
+      "inputDigest": "ac39aca0836b74f100af975c0f5ce95ddfc935dc6f2bc2a6755bddb9bd25ca87",
+      "privateOracleDigest": "6b597f331905f5cd634674b11cbd26afbbcd87278cb17c4d73c586d70ceed229",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 13093,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 13395,
+        "wallClockMs": 65637,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "e1159f7d1387fc984cc3158ac083c9f98e37ccb6091e7e704ffb81c45921abaf",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "acb242cb8cbcff689a145181b2e71fb621bd5b03ef33b70f661269304dda4ec1",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-027",
+      "inputDigest": "38ebce27ae59a5c7281e1cd1008ff3a75d646035fe2eb73fbb99f7ace1dc0fa9",
+      "privateOracleDigest": "fd247be11944ef36b3f5683b649159dda92984dfee001c7572d24f73ec6ad8ac",
+      "predictionDigest": "84bac9b232429908f7b521e966d3b2b36a1ee88b8cd9b95f7885727454a4e6a0",
+      "state": "PASS",
+      "correct": true,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 2728,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 844,
+        "wallClockMs": 20242,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "d3564a379fdf9c61c48718cad517351e526e0549c7ff623c639df890d9fe0580",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "0a5757c915ad53a1c72baf4d7f860f4452c68bc778677ba30ff593ee60b213b0",
+          "responseDigest": "6ac98ba382260360bfe65c2978b3f6e39746bf4eecaa8e724bdcaeb017486227",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-028",
+      "inputDigest": "386c53c9330e1e7dbc13ec76192b5ec03db865e77b358733155785675d37cf71",
+      "privateOracleDigest": "35a6ab3b2f77a5f704ba2a9b9aecd591c916ec2372badbc24b77ed03b0fc7931",
+      "predictionDigest": "5b6e70406486b4690b442e4b76553b1cf855d37ad05b7ccafbdd23da0e0d54f6",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 2388,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1747,
+        "wallClockMs": 13368,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "64a81efebe74422586bd3868a4980ac43ae1f6ad5029d1ce82237cf18d8022e4",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "14a045c95ed8669ef61eaa259f68b4945dc12aed77f14e7ddec31588f53df88d",
+          "responseDigest": "9badbf863e2fa557f04b74bbca5c7c4d7a24a05df5b3b093a542beae386f228b",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-029",
+      "inputDigest": "3ab26e6f197a09c8a15b457292a08005c82a2b8b8a857b84b1d965ae9330d985",
+      "privateOracleDigest": "0e6d9afa6ad21fef7a2c77d7ee5711e6f48085d1c23a2ed05f5caf037b827722",
+      "predictionDigest": "ed099bca34778f6587add879e215a02a4ce277c2c64759ac3ed4034383af8e7a",
+      "state": "PASS",
+      "correct": true,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 3873,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1549,
+        "wallClockMs": 19803,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "29e861d16138ee1a9428d3f3ca9e5c5bdca8bc8a2b355754dd7ccc85c9468b7a",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "40537a793764e6ff7e637b2b35a8dba239e983e9b6bf873bf4bb217325bafd25",
+          "responseDigest": "4cf1b57204f83ef8417486f76a5c5e0e464109f639300cbe75276f980b66d545",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-030",
+      "inputDigest": "d1a311c05cbf95fdad7ad924ecb1b8f11d1dd528666e72a4441222cc88def82d",
+      "privateOracleDigest": "95c9216d4c85e57bed4431af904d200e20be3823b70d5b213d8873b38dac4678",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 9781,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1142,
+        "wallClockMs": 74099,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "c877d547d6cdae5473b2a8025ccb641a651a67fac1001056c24623d3472ca45a",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "fea33b53c24f92b5a2fc178e010f9fcb3110c1c385b627a75a27681c89f94673",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-031",
+      "inputDigest": "cc9f0e7404e6d996261f15794bfa8036ca4d5629154e3e3879f393dd6d0bba65",
+      "privateOracleDigest": "b31c0683e6f80fb2ad4ce100e1ddd25857e31bbfed3c22714ef023102a4f1247",
+      "predictionDigest": "84bac9b232429908f7b521e966d3b2b36a1ee88b8cd9b95f7885727454a4e6a0",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 1706,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 783,
+        "wallClockMs": 7110,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "30d06e1cf028f5d9d84bcf9e85d2d9f85b8eed3c4390d4f1b80c29dd35db0fb1",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "07ef4c4695b417742da642529a4e4df9f899c20d1cf458ffb5bcbc96861a528c",
+          "responseDigest": "6ac98ba382260360bfe65c2978b3f6e39746bf4eecaa8e724bdcaeb017486227",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-032",
+      "inputDigest": "40d3e5000ffa624a4f0ce29a0225cccd7cdb14b6ecd1cdeadebe22efd12aaa46",
+      "privateOracleDigest": "66804d12743756eb85fb3115e558e09a95661b3d0f176ac5318ac90dd6fe7811",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 11115,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 6205,
+        "wallClockMs": 55655,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "577e6aab9fb815e61de462fa371a86f10b50e5efbe03b12e6cd22a3a2c8c021b",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "4527b5d5bf96958412aeb7868d5877b212364370d8e3666d140f2b328afd9623",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-033",
+      "inputDigest": "10ee5021d36231789ff6e3e1d58d753d469b8b12538923906b7d5c64c5ac721c",
+      "privateOracleDigest": "d70fa833049650282117fa7e55b50493999275cede078f8510385ee695b33758",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 9807,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1176,
+        "wallClockMs": 79304,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "f8f4ba7adbe9693ce31dda8b64d4e0d9cfddb5f0da5d92f1051981b1e0dd25f1",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "f2d813e5b160b1971c0e8d32647c6175898e494709400fdd1e9b9ef3654e3a49",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-034",
+      "inputDigest": "56eda5b40bd77845c71840b07a57fcbf6d7bc36bd41e84ad9ec7ce4073facd0d",
+      "privateOracleDigest": "faa2513e9baf4601e81a9eed41fcc31d74e077c02425904c2cb7292a1e354232",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 9626,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1120,
+        "wallClockMs": 62948,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "3562c07dab3ba287a265a0ad41e46d3c5ed1b9134d057309b75ba88d04bff6d0",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "c46435970f67e18655c26ea289dcf7d2aadc8f1ca2c88d0657f9fbcd3dc2cf84",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-035",
+      "inputDigest": "3978efbc2c248f574267be4198a6a3309306bba5bd21b695317d469ec27a9b3d",
+      "privateOracleDigest": "c03847da2304a1d4a409353e04326c810b8b7c9debff46fca9e7bf28e3dacf91",
+      "predictionDigest": "e704215a201d088e6345e678cdd7724417a8d1332f50de1d054c13bd1e032c0b",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 2240,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 2080,
+        "wallClockMs": 7834,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "39a73f2ef63844f6c31e20beff1033bb17216a02c6d821bffbdbab6976db5ae2",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "da39fbf1b209ca3f3a2ff3c9dcf0841ded07efe479d93552edc689e398592e89",
+          "responseDigest": "20a90b765baad1d9928f0e9ff4f910e4808a438ecbd0ee45994547c0c9a93d42",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-036",
+      "inputDigest": "a063f348ec553fcfd2bc163aacf5e1279df90cf5e57975d7bb586568ba5b5190",
+      "privateOracleDigest": "1c815c0b748ceec6f927dd8a12e4dd2bf818047894040d0c1b870247820d2821",
+      "predictionDigest": "2c3b20f219cce5907a64f68617c4d0d3f5c0cbf9bab0c5d53c4273d340b9ddfc",
+      "state": "PASS",
+      "correct": true,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 3345,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1081,
+        "wallClockMs": 40271,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "b6931a29b0243b00de01922a9f314aa25c1e1a8c582208e4bf87aa3380306785",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "b26d5bab383697ab4679941749697c52873a0fdc9f1c66757554fb627f0d404e",
+          "responseDigest": "d94392bbf12662828f0a3610cf30869bef6a4d2e7a194032385c0ffa8b3613df",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-037",
+      "inputDigest": "dc04df81e1eada6f3331a5705bd604e5c0ea499718bfe2e04e885d8d9389c398",
+      "privateOracleDigest": "e23f8f39182c82127c1bef3cbfd9b54e30e1df4916da81dcfc2a801c23f3bf01",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 3,
+        "httpAttempts": 3,
+        "reportedTokens": 10460,
+        "unknownUsageCalls": 1,
+        "toolCalls": 1,
+        "toolWorkUnits": 5973,
+        "wallClockMs": 145685,
+        "providerFailures": 1,
+        "retries": 1
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "4d3f079f261fdf0ce1dcd9e99d291e3952f0914a8246de64344ac3d7f5c510de",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "af6fa1fad579697e60955ed7426690e7b6b080769c16f4eab274bcf6359ef7ad",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-038",
+      "inputDigest": "ccc358c78efcedf50cf86acfc23fcae58cb0718995deb724d11a91026870596a",
+      "privateOracleDigest": "559a760ced6e3048c5c10a20679f97e173bcfef3929617cb35ce67a1bb89f364",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10463,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 2554,
+        "wallClockMs": 59741,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "56c10cd48399d5b9731a7dfbc8d0e7d07403735b2b8525e72edfc2ffc44efa07",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "85f689fb69c30665dd0e047f25ef82b85320acfae65e66d5b8e34732ac8f2e14",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-039",
+      "inputDigest": "0ed30f05f99778339bd04d6e28f880ffb3bc18a915e8397ab267141d4b052b4e",
+      "privateOracleDigest": "ba7d5620448ca294d5169ce79c123f091068ce55e058790433fe33313c8fbbfc",
+      "predictionDigest": "ff1bc14da82b6e692bba71bf23b2592867db26fd89af3af50eece3a11d402813",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 1958,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1345,
+        "wallClockMs": 6245,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "7b7a90d348250159b7df67b956cec8408ee88c7cbe31d2b1f5e5f495192b2f8a",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "de790937f30b4a50b6d410c8c5179951856bed4b8853342aa22a026fbdff8654",
+          "responseDigest": "d3a34f0422f268a0bf9c207b4f39c45a14710800e7bedb39627c15437487f1e3",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-040",
+      "inputDigest": "192072aaa5c47efe97dc39bd0ea520e58407535108b4a2194c9dd2ee920822ff",
+      "privateOracleDigest": "66804d12743756eb85fb3115e558e09a95661b3d0f176ac5318ac90dd6fe7811",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10161,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 4034,
+        "wallClockMs": 54907,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "340145a59d7ad8b9b49e78227b21a323e6622e7332b5428750d82ceef95160b5",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "727a9b466a51218320b2e3cc11c94dc0f8435a20e1307bcfe0b5efad51e4aa8d",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-041",
+      "inputDigest": "443a7cdd17a11f80b18155361ea6a1dde48b0c3f40141acf7c7fa2f892d04a4e",
+      "privateOracleDigest": "b3e10c8666b7335f9cd36434ab22a11e1f1b2283241f8d95e0d9b3b161eec9df",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10394,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 2222,
+        "wallClockMs": 47194,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "7a034bb88afdee27092b9a19ef6360e077f23d654777b3e16a6d49cab25ca719",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "a28fa686f988d8eb61b28fb6fea7ac00ab19dfaeabaf904c2bda70d9e714aaad",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-042",
+      "inputDigest": "bda6655712c22e0ccc5137a52bd0e851766b1188d6302476b45c84511970d99d",
+      "privateOracleDigest": "f326bd84707ed76597becb832280595d1a5aaceb0905dc40e3553ebb861bde80",
+      "predictionDigest": "fbfe18a74ca73e06e04ff31b289119a6bdf919f0057c9b2a6a36730368ac1295",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 3922,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 2874,
+        "wallClockMs": 20793,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "379e5f2a85508d454a0ca61f85a5f2043cc19480ec1c6ae00bc0f8d1ff4e52d0",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "ec7216168ca58a96690285af4ee8394ddb51d4dfff3ea01b30932a1d537b5913",
+          "responseDigest": "e3ccf065fbc036bd195c81f570341e17775789f54cc1d45d19430c2e213f3913",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-043",
+      "inputDigest": "c533d01c844959109f2f75b4db0f4255d2145eb98e92daf8b213583863b6d92b",
+      "privateOracleDigest": "93d8abeadb6467d22c42ad3260fb338ef1bb4c43d82704c2a865c44aa4ab18fc",
+      "predictionDigest": null,
+      "state": "PROVIDER_FAILURE",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 716,
+        "unknownUsageCalls": 1,
+        "toolCalls": 1,
+        "toolWorkUnits": 4499,
+        "wallClockMs": 122819,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "feab096518f0daef298bff3b107709ee4c2e83834ddc1d24f4fbec776d882b11",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "ef9eec0f05f9be19ad340ccae7df0ac3effaa93176b7dca609b5c860b30f5eb2",
+          "responseDigest": null,
+          "statusCode": null,
+          "finishReason": null,
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-044",
+      "inputDigest": "6795d3cc54fdc8b21a15944e260062cc3cc65e6dcba2155941207fcee72afb3b",
+      "privateOracleDigest": "cc11310c456c3690d5a74c23aa31cc25b4e74cdae146c71e54ad9dbc1d109fde",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 13045,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 14223,
+        "wallClockMs": 72663,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "91ba2303272f1ade4b25c771a932dbfb6d9efddfef26f91e6672ca062eb68871",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "9aa9a19c03fa43646f8138710eb8d952fe1e4f66862f5444e1a6ea1fe9b7d3b2",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-045",
+      "inputDigest": "ec224c4aee5609fcb30aa71079565900b31ca4d13f789fc0a3878dfeb984137f",
+      "privateOracleDigest": "5e3aec27e9921e0fa5243dc75a927ff87f67a90a1f2b63e864260d14370f2170",
+      "predictionDigest": "4733bd4a04b4397a4a6c6ca7b5c80a995f5668b6ac468236efdbc58330b08fb1",
+      "state": "PASS",
+      "correct": true,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 6278,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 8566,
+        "wallClockMs": 30390,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "72f496f2d35b2dcf2dda5e246c9b87ed6683d92d90b45a7babf560ca307f3f38",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "d79654e2398774a79a26241560669ff1520b5d3e1338f67e8729bf67cb6cb3f7",
+          "responseDigest": "7d73cd0accea6cd78519a71912d9f9b4a23bf3a9be104d636b8d6a6a945c8acb",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-046",
+      "inputDigest": "8a6fddd5398ee0db8b16da02d1e20db2d4688a4b33059cb800770aa41b76e9fa",
+      "privateOracleDigest": "cb52232e4bf29588623c77e3ab28e5797694354b744f093860fa86df949184cf",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10644,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 3233,
+        "wallClockMs": 60905,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "a0513222864b3a23e770350c9f0e8afe979f152b79b02aabaa2a0ad7060423e0",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "76b73cf1dd1153b967f7cf9adf8e9efe8e67df79c2069b40a4288da24cb07a42",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-047",
+      "inputDigest": "8e1c98023460bed543ec60e4d9b06dd0bb9111ca47ca867748dfe9692681dfb8",
+      "privateOracleDigest": "0e4bf8aa7acc25b1fc387c16d216b64fead7967c6b3da01e0faf1dc286463fb8",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 12577,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 13544,
+        "wallClockMs": 52180,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "4107c9cac5d2f70a479ddd6c61cff7e4099fc902a0397b1f1b2f5716ee290c9d",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "ad6c5b29fde0fe22790431ff5a4a3f72dc68581c52d25263e114de1b9b021f07",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-048",
+      "inputDigest": "4e68b779e37fda8009f45e344d9fddeb294c03d0e0f4a97199086bce1e345d3b",
+      "privateOracleDigest": "fc5dd203f17b69aa527546edceeb205e07de0164cdae5518299cd83a372c260e",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 12259,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 9583,
+        "wallClockMs": 48574,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "b78a46646fae20feb95cd4d0ee6332e291589fbb61fb33268d2a00fd5644b0a2",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "1919569dac373cda9d2bdcfabd6d22b4f18ff498e078f9ed1ddbaaa5f6de4066",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-049",
+      "inputDigest": "8b5bfecd28aec0a1d19be2206e0af7c59f9ed8c60fa6d343526f5b78dfb9fc31",
+      "privateOracleDigest": "17eed2c0e7c9788d0b46fafdf328b3e955aa0a22132c16cde72aa4f32dcd5282",
+      "predictionDigest": "9809aba1981c96784fbb903fa3ca89b5fa78bcff281c5130461201b55e7a2c0b",
+      "state": "PASS",
+      "correct": true,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 7988,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 2849,
+        "wallClockMs": 40608,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "cf9d3f3147ece004c999cd39852209127bd9895fbed19489e7f093807963b944",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "308d22bbdbc9a5d0ca008497c522d585ad29ce3f94bfe704d83ea0eec8344648",
+          "responseDigest": "fcf13d02fba4f84c4a13e81a02454f3be7d14d44676f066b3a752ea5fd93b478",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-050",
+      "inputDigest": "bdb77721357b6e26507fe95566b497f3897f61d910a68f764e886cff0e58aea2",
+      "privateOracleDigest": "7f711ce0eaff4165a530b8645449fd0ce4411abbf46a9950be601b95d1ddf3a9",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10736,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 3265,
+        "wallClockMs": 58333,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "f8b5034cbc64cdf529f01f60004e24233ac5892098bd903e0463886c61f4c968",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "7a84aa02244c78cc2b5f0ca1b91fe7fd3f02a91c94dd2cc1c48fc1489ce7aa74",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-051",
+      "inputDigest": "3afad2d4c216b89ed7e67a3c0b153f70f6359bdaa524fb783267b5340979bdad",
+      "privateOracleDigest": "bf55a5ff0e8f37e3f862c60b89ee63b9a40185115ac484547fb2e4def49a71dc",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 9853,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 2893,
+        "wallClockMs": 45880,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "f6fdae2d4c3dccd215e430024cac7296a311b49378f6f8fb55328fca28184c93",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "68a26816e7745c80caa2b46f2829b0a24ae0ba221939eaa123cbe8a1e43d315c",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-052",
+      "inputDigest": "3a2fede657483829e5c2c7d6eb8e042c3c0ca589baad00aeeb78feb9264a83d4",
+      "privateOracleDigest": "062695ddadfc220207e146a413b2acc836cdc89305d58b76b4d02761a27d1ba2",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 12690,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 4614,
+        "wallClockMs": 58107,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "77f09dbbd8227a6d4495994137ef504ca38ca29c5cc08c283028a69353a94d86",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "b52882100253705acc2e3f39f702561ac0ae1690f2407f561d5ca8bc73e11f65",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-053",
+      "inputDigest": "ad58f6435a07c6bdecc806d199c018ee222a49e774d2e567e2ad4fd3439ce5e5",
+      "privateOracleDigest": "b3e10c8666b7335f9cd36434ab22a11e1f1b2283241f8d95e0d9b3b161eec9df",
+      "predictionDigest": "c80384fddf94461e8d16114959d952ad5a4b6d3476f4b7d5b5bc4d8b0bc65439",
+      "state": "PASS",
+      "correct": true,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 2326,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 945,
+        "wallClockMs": 10857,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "ecf763cd4d44f5aaec479c1ce9e416ab82c1bf9d54e2fa4b8957d7bb4b9c3f08",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "22f9080ac652f0eb39207a27e7b2f7a57d4a23881dc786129947486cd1455fa5",
+          "responseDigest": "deaf947e1a3b8d99c7beae05f5349f4608a09d1c8cab77583cd9447d2f4ccfcc",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-054",
+      "inputDigest": "aa48e7fc6de71b3c8d533b28ea0b502ff590d4d21dc3b0ecfdabab9a06574d12",
+      "privateOracleDigest": "6bd7059c903476f240eb249844d2c06218c878f36a9f0874513ac3627d5e4e52",
+      "predictionDigest": "a57af218ac36de18dd008dc9b743bb09f151dd767536103019cd353d8efe430d",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 1666,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 922,
+        "wallClockMs": 5972,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "583455e0cba9c34a202ccdac01f7f1625e6deb78cf04916d557a3a143cd25928",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "6599ce2f2079868971a0f6b00217f67b3a9e06ca1b54d16900a6df04bf045317",
+          "responseDigest": "df8437fb205a25eea8848fdec128c6f394fe06dc7728844cf758c4ea98e98516",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-055",
+      "inputDigest": "70d718af58fce53c7cda8035102d669ca4f2ed4eeb83bf8ac1780ba7d4cc38ca",
+      "privateOracleDigest": "227e17028606036382a0ab632f1dcad36a6b5fdfe6809bcadae7ae41f19bdd94",
+      "predictionDigest": "d8c6953a4001be2cc0bdaa360da9133ee23e679f47895fff3c9d04fe6d67460c",
+      "state": "PASS",
+      "correct": true,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 2243,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1574,
+        "wallClockMs": 17268,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "0c5da9711cf73272b2c00d43c357a41cc6050b189b3c35c6de37ab24d5c14d71",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "b92b00585a41bff60aa6b4b7e81d6fc0a234cccae9f74ab7848cf9d23006ae98",
+          "responseDigest": "cdb2ee830c56d39aca3c3c0fb842ba1f9e09824f8997d2375f81aa9a310091f3",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-056",
+      "inputDigest": "c7f3c814a443ea319b242e763f7d10cdfb99dbd636a238e7da7ba7930ea8d535",
+      "privateOracleDigest": "740047844f688bdf15a8a539e5cd1fc875a4f1ad66b106a47f38f5c861837c08",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 9739,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 2750,
+        "wallClockMs": 47618,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "08525984de62784d41c7c130a3d29a06af451d0add2d34a7c3a6e8f9dc1f1636",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "31d54f2bfb683b8d0c38e3c6ca56cff3eb98efab19491a9f23ce5113db06fcdd",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-057",
+      "inputDigest": "4e75b6541184acdd6b8e7c4b81c100b4c931170e66f0a23b335029b79fb5156b",
+      "privateOracleDigest": "f53d3b0bcadffc918a6e0f3cdab2fd7efe92375f830b0103dec4018ef6c08973",
+      "predictionDigest": "cd982ac0127382062044e2b951baae4d87576b90c8e2c9ef455ba5a3eebf307a",
+      "state": "REASONING_OR_ANSWER_FORMAT_FAILURE",
+      "correct": false,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 2332,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1262,
+        "wallClockMs": 13868,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "107e16ca4999eeba9d9a821069215cbcbb74b3790841c1c0ca9df8bf5c49ba8f",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "329c1fe070997f2862c4adea9114a2909a18a14d988ede36f8808f7a2b2ef104",
+          "responseDigest": "83459a005b4d69bafa2e5b8cb1f5d108dd971660d523613ce3cb576bff98bae4",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-058",
+      "inputDigest": "4ee05a9e0bc9802f420a51bda36856cdfca1835364bbb7ba54a3ae8b6931749f",
+      "privateOracleDigest": "e096839d72d90fa8647c54b9affbbaf68199fe1062b21bbb1fc6079795b1030c",
+      "predictionDigest": null,
+      "state": "TRUNCATION",
+      "correct": null,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 12681,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 16103,
+        "wallClockMs": 47031,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "87d8ee922aca3335448e2157374f48fc214fd15bd6b40493aa7136c7f7e97ad1",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "6d557a27e3a663714bdc1f326709a0662130f7cd21769bcbcb3545a1bfb751c4",
+          "responseDigest": null,
+          "statusCode": 200,
+          "finishReason": "length",
+          "failureCategory": "PROVIDER_RESPONSE_SCHEMA_ERROR"
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    },
+    {
+      "taskId": "BBEH-MINI-059",
+      "inputDigest": "5457548f60722e6c4bfe127dbbf1c31ffbe041b0dd22a2dc6ec04cbb0b669fba",
+      "privateOracleDigest": "0e4bf8aa7acc25b1fc387c16d216b64fead7967c6b3da01e0faf1dc286463fb8",
+      "predictionDigest": "d8fddeddba6c8ddbc73d5a577bc09da68d11770b926ff7be491aa4c9d333808a",
+      "state": "PASS",
+      "correct": true,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 3911,
+        "unknownUsageCalls": 0,
+        "toolCalls": 1,
+        "toolWorkUnits": 1096,
+        "wallClockMs": 19323,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "modelEvents": [
+        {
+          "requestDigest": "2baec72d397c7bd9dd880903bd2b204632d353b4cca85cf3a1e588f9fbcd5b7e",
+          "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        },
+        {
+          "requestDigest": "81ebe513ae3eb5a94e9c4311e2ade97f6c0cfef5f9c3ebc34e7a9e5d673a5187",
+          "responseDigest": "239f1174deac877e944729e49f9952eb38e76e492ef7684c7d62dc32809dc41b",
+          "statusCode": 200,
+          "finishReason": "stop",
+          "failureCategory": null
+        }
+      ],
+      "sourceRepositoryMutated": false,
+      "broaderAuthorityGranted": false
+    }
+  ],
+  "assessment": {
+    "result": "INCOMPLETE_OPERATOR_CANCELLED_NOT_A_COMPLETE_BENCHMARK_SCORE",
+    "cognitivePromotion": false,
+    "observedTaskSourceMutation": false,
+    "observedBroaderAuthority": false,
+    "finalCleanupAndWholeCampaignSourceIntegrity": "NO_FINAL_REPORT_AVAILABLE",
+    "legacyEvidencePreserved": "The existing AIME receipt is unchanged: 30 attempted; 16 correct, 2 wrong integers, 1 answer-format failure, 10 ungraded truncations, 1 ungraded timeout.",
+    "originalUltraAndEarlierSuperEvidence": "PRESERVED"
+  },
+  "planCoverage": {
+    "status": "PARTIAL / JUST-IN-TIME",
+    "directlyImplemented": [
+      "Operator stop control",
+      "Honest partial benchmark accounting"
+    ],
+    "supporting": [
+      "Blocked, failed and passed remain distinct",
+      "Preserve negative evidence",
+      "No self-certification"
+    ],
+    "deferred": [
+      "Complete BBEH campaign"
+    ],
+    "conflicts": []
+  }
+}
