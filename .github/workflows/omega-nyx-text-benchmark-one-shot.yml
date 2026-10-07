@@ -1,6 +1,9 @@
 name: Omega NYX bounded text benchmark delivery
 on:
   workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-text-benchmark-one-shot.yml]
 permissions:
   contents: read
 concurrency:
@@ -25,14 +28,15 @@ jobs:
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxTextBenchmark.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxChatCli.test.ts
-      - name: Compare schema-only and session-owned phases on new development objectives without benchmark data
+      - name: Compare unchanged session contract with explicit Ultra phase controls on development objectives
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           NYX_TEXT_EPOCH_MODE: CONTRACT_DIAGNOSTIC
-          NYX_TEXT_CONFIGURATION: SESSION_ACTION_CONTRACT
+          NYX_TEXT_CONFIGURATION: SESSION_NATIVE_PHASE_CONTRACT
           NYX_TEXT_DELIVERY: SCOPED_FILE
           NYX_TEXT_RECOVERY_PROFILE: BOUNDED_RECOVERY
+          NYX_TEXT_TRANSIENT_RECOVERY: WITHIN_SHARED_BUDGET
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-text-benchmark-epoch.ts
       - name: Preserve sanitized benchmark evidence only
         if: always()

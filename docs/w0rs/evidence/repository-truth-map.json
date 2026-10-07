@@ -2463,6 +2463,12 @@
       ]
     },
     {
+      "name": "NYX_TEXT_TRANSIENT_RECOVERY",
+      "files": [
+        "scripts/omega/nyx-text-benchmark-epoch.ts"
+      ]
+    },
+    {
       "name": "NYX_TRANSFER_PROOF_ABLATION",
       "files": [
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"

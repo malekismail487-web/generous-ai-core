@@ -96,9 +96,26 @@ const finalAttemptRefinement: readonly (readonly [string, string])[] = [
     "    let timeoutTriggered = false;\n    let networkAttempted = false;\n    const attemptTimeoutMs = this.#remainingHttpAttempts() === 1\n      ? this.#config.finalAttemptTimeoutMs ?? this.#config.timeoutMs : this.#config.timeoutMs;\n    const timeout = setTimeout(() => { timeoutTriggered = true; controller.abort(); }, Math.min(attemptTimeoutMs, remainingMs));\n    const bounded = <T>(operation: () => Promise<T>): Promise<T> => new Promise((resolve, reject) => {\n      const aborted = () => { cleanup(); reject(new DOMException(\"Provider request aborted\", \"AbortError\")); };\n"
   ]
 ];
+const boundedRecoveryRefinement: readonly (readonly [string, string])[] = [
+  ["", "  /** Shape only; no generated text, extracted JSON, reasoning or secret fragments. */\n  readonly contentShape?: { readonly json: \"OBJECT\" | \"ARRAY\" | \"SCALAR\" | \"INVALID\";\n    readonly leadingMarkdownFence: boolean; readonly thinkingDelimiterPresent: boolean } | null;\n"],
+  ["", "    readonly transientRecovery?: \"WITHIN_SHARED_BUDGET\";\n"],
+  ["  readonly #httpAttemptBudgets: readonly { readonly limit: number; dispatched: number }[];\n", "  readonly #httpAttemptBudgets: readonly { readonly limit: number; dispatched: number;\n    readonly transientRecovery?: \"WITHIN_SHARED_BUDGET\" }[];\n"],
+  ["    budgets: readonly { readonly limit: number; dispatched: number }[] = []) {\n", "    budgets: readonly { readonly limit: number; dispatched: number;\n      readonly transientRecovery?: \"WITHIN_SHARED_BUDGET\" }[] = []) {\n"],
+  ["  withHttpAttemptBudget(limit: number): NvidiaNimProvider {\n", "  withHttpAttemptBudget(limit: number, transientRecovery?: \"WITHIN_SHARED_BUDGET\"): NvidiaNimProvider {\n"],
+  ["    return new NvidiaNimProvider(this.#config, this.#transport, [...this.#httpAttemptBudgets, { limit, dispatched: 0 }]);\n", "    if (transientRecovery !== undefined && transientRecovery !== \"WITHIN_SHARED_BUDGET\")\n      throw new Error(\"nvidia_http_attempt_recovery_invalid\");\n    return new NvidiaNimProvider(this.#config, this.#transport,\n      [...this.#httpAttemptBudgets, { limit, dispatched: 0, ...(transientRecovery ? {transientRecovery} : {}) }]);\n"],
+  ["", "    if (this.#httpAttemptBudgets.some(budget => budget.transientRecovery) && request.deadlineEpochMs === undefined)\n      issues.push(\"completion_budget_recovery_requires_caller_deadline\");\n"],
+  ["          dispatchDenied: result.reason === \"nvidia_http_attempt_budget_exhausted\", renewed: false as const }) } : {}) });\n", "          dispatchDenied: result.reason === \"nvidia_http_attempt_budget_exhausted\", renewed: false as const,\n          ...(this.#httpAttemptBudgets.some(scope => scope.transientRecovery)\n            ? {transientRecovery: \"WITHIN_SHARED_BUDGET\" as const} : {}) }) } : {}) });\n"],
+  ["          && transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries) {\n", "          && (transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries\n            || this.#httpAttemptBudgets.some(budget => budget.transientRecovery)\n              && this.#remainingHttpAttempts() > 0)) {\n"],
+  ["", "    let contentShape: NvidiaNimEvidence[\"contentShape\"] = null;\n    if (typeof content === \"string\") {\n      let json: NonNullable<NvidiaNimEvidence[\"contentShape\"]>[\"json\"] = \"INVALID\";\n      try {\n        const value: unknown = JSON.parse(content);\n        json = Array.isArray(value) ? \"ARRAY\" : value !== null && typeof value === \"object\" ? \"OBJECT\" : \"SCALAR\";\n      } catch { /* Diagnostic only: never repair/extract malformed output or bypass the caller's parser. */ }\n      contentShape = Object.freeze({json, leadingMarkdownFence: /^\\s*```/.test(content),\n        thinkingDelimiterPresent: /<\\/?think>/.test(content)});\n    }\n"],
+  ["      providerRequestId: safeProviderRequestId(providerRequestId), finishReason, usage, reasoningOutputBytes });\n", "      providerRequestId: safeProviderRequestId(providerRequestId), finishReason, usage, reasoningOutputBytes, contentShape });\n"],
+];
 /** Invert only the declared exact hunks. Hash/compare the WHOLE result with the frozen predecessor. */
 export function arcCorePredecessorSource(path: string, current: string): string {
   if (!changes[path]) return current;
+  if (path === "src/lib/codelab/model/nvidiaNimProvider.ts") for (const [before, after] of boundedRecoveryRefinement) {
+    if (current.split(after).length !== 2) throw Error("arc_bounded_recovery_refinement_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === "src/lib/codelab/model/nvidiaNimProvider.ts") for (const [before, after] of finalAttemptRefinement) {
     if (current.split(after).length !== 2) throw Error("arc_final_attempt_refinement_hunk_mismatch");
     current = current.split(after).join(before);

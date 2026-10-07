@@ -2,6 +2,39 @@
 
 This is a reproducible **data/evaluation harness**, not a new executor or a new model. It does not claim a cognitive improvement, an official leaderboard score, or near-perfect readiness. Its format tests are development fixtures, never NYX performance evidence.
 
+### Bounded transient recovery and explicit Ultra phase controls
+
+An opt-in `WITHIN_SHARED_BUDGET` provider profile can use still-owned HTTP
+attempts after more than one transient error. It requires an explicit caller
+deadline, retains every ancestor dispatch limit, honors the existing cooldown,
+and cannot refill the task budget or extend its lease. Historical fixed-retry
+behavior remains the default. Development fault schedules exercise two 503s
+followed by delivery, persistent outage, cancellation and nested limits. This
+repairs premature termination, not NVIDIA service availability.
+
+`SESSION_NATIVE_PHASE_CONTRACT` reuses the existing session-owned read/reply
+contract, parser and R1 executor. Only generation controls differ: Ultra's
+documented native `reasoning_effort=none` for the required read intent and
+`medium` with a 2,048-token reasoning budget for the answer. The 8,192 output-token
+ceiling, two logical calls, four shared physical attempts, original 180-second
+lease, question observation and independent oracle remain unchanged. Reference:
+[NVIDIA Ultra API](https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-ultra-550b-a55b-infer).
+
+The data-free diagnostic compares this candidate with the unchanged session
+contract on the same two **repeated development objectives**, counterbalanced
+and with identical transport recovery. It is not fresh held-out transfer.
+Sanitized evidence adds JSON-kind/fence/thinking-delimiter flags without retaining,
+extracting or repairing raw output. Failed readiness now exits nonzero even when
+evidence capture succeeds. Four correct graded read/answer attempts with stable
+known usage are required; a workflow artifact alone is never a readiness pass.
+Actual compute matching remains measured, not inferred from equal ceilings.
+
+Ω plan coverage: directly implements evidence-linked failure classification,
+bounded recovery and typed action confinement; supports provenance, adversarial
+verification and compute accounting; defers new cognition, production promotion
+and other benchmark-family admission. No authority delta or conflict with the
+R1/lease/strict-parser constraints is intended. Coverage remains PARTIAL / JUST-IN-TIME.
+
 ## Session-owned action phases (development candidate)
 
 The successful deliveries in the offset-16 comparison exposed a generic protocol

@@ -47,7 +47,7 @@ export function textTransferSelection(tasks: readonly PrivateTextTask[], start =
   return families.flatMap(population => population.slice(start, start + 2));
 }
 
-export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL", "TEMPLATE_BOUNDED", "OBSERVATION_ALIGNED_SCHEMA", "HOSTED_BOUNDED", "SESSION_ACTION_CONTRACT"] as const;
+export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL", "TEMPLATE_BOUNDED", "OBSERVATION_ALIGNED_SCHEMA", "HOSTED_BOUNDED", "SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT"] as const;
 export const TEXT_DIAGNOSTIC_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL"] as const;
 export type TextInferenceConfiguration = typeof TEXT_INFERENCE_CONFIGURATIONS[number];
 export type TextTimeoutProfile = "FIXED_ATTEMPT" | "FINAL_CALLER_LEASE";
@@ -95,6 +95,15 @@ export function textConfiguredRequest(request: NvidiaNimCompletionRequest, confi
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration)) throw Error("text_inference_configuration_invalid");
   if (!["DIRECT", "SCOPED_FILE"].includes(delivery) || typeof questionObserved !== "boolean") throw Error("text_action_schema_state_invalid");
   if (configuration === "EXISTING_DEFAULT" || configuration === "SESSION_ACTION_CONTRACT") return request;
+  if (configuration === "SESSION_NATIVE_PHASE_CONTRACT") {
+    const readRequired = delivery === "SCOPED_FILE" && !questionObserved;
+    // Documented Ultra controls: deterministic read intent needs no reasoning trace;
+    // the answer keeps reasoning enabled with a finite budget, not an extraction fallback.
+    return {...request, inferencePolicy: readRequired ? "CONSTRAINED_JSON" : "REASONING_JSON",
+      reasoningControl: "ULTRA_HOSTED_NATIVE",
+      ...(readRequired ? {reasoningEffort: undefined, reasoningBudgetTokens: undefined}
+        : {reasoningEffort: "MEDIUM" as const, reasoningBudgetTokens: 2048})};
+  }
   if (configuration === "OBSERVATION_ALIGNED_SCHEMA") {
     // Hosted generation constraint only: parseNyxChatAction and Omega still independently authorize.
     // The existing task contract already requires one whole-question read before its final reply.
@@ -118,7 +127,7 @@ export function textSessionActionContract(configuration: TextInferenceConfigurat
   delivery: "DIRECT" | "SCOPED_FILE"): NyxChatActionContract | undefined {
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration) || !["DIRECT", "SCOPED_FILE"].includes(delivery))
     throw Error("text_session_action_contract_invalid");
-  if (configuration !== "SESSION_ACTION_CONTRACT") return undefined;
+  if (!["SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT"].includes(configuration)) return undefined;
   return delivery === "DIRECT" ? {kind: "REPLY_ONLY"} : {kind: "READ_THEN_REPLY", path: "src/question.mjs"};
 }
 
@@ -129,11 +138,34 @@ export const TEXT_SESSION_CONTRACT_DIAGNOSTICS: readonly PrivateTextTask[] = Obj
   {family: "DEVELOPMENT_DIAGNOSTIC", taskId: "CONTRACT-DEPENDENCIES",
     question: "Job A starts at time 0 and takes 5 minutes. Jobs B and C start after A finishes and take 7 and 4 minutes respectively. Job D starts after both B and C finish and takes 3 minutes. Jobs can overlap when their dependencies permit. At what time does D finish?", answer: "15"},
 ]);
-export function textSessionContractSelection() {
-  return TEXT_SESSION_CONTRACT_DIAGNOSTICS.flatMap((task, index) =>
-    (index ? ["SESSION_ACTION_CONTRACT", "OBSERVATION_ALIGNED_SCHEMA"] as const
-      : ["OBSERVATION_ALIGNED_SCHEMA", "SESSION_ACTION_CONTRACT"] as const).map(configuration =>
-        ({...task, taskId: `${task.taskId}-${configuration}`, configuration, recoveryProfile: "BOUNDED_RECOVERY" as const})));
+export function textSessionContractSelection(candidate: "SESSION_ACTION_CONTRACT" | "SESSION_NATIVE_PHASE_CONTRACT" = "SESSION_ACTION_CONTRACT") {
+  if (!["SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT"].includes(candidate)) throw Error("text_contract_candidate_invalid");
+  const control = candidate === "SESSION_NATIVE_PHASE_CONTRACT" ? "SESSION_ACTION_CONTRACT" : "OBSERVATION_ALIGNED_SCHEMA";
+  return TEXT_SESSION_CONTRACT_DIAGNOSTICS.flatMap((task, index) => {
+    const configurations: readonly TextInferenceConfiguration[] = index ? [candidate, control] : [control, candidate];
+    return configurations.map(configuration =>
+      ({...task, taskId: `${task.taskId}-${configuration}`, configuration, recoveryProfile: "BOUNDED_RECOVERY" as const}));
+  });
+}
+
+/** Current availability, not model self-certification or a capability promotion. */
+export function textContractDiagnosticReady(rows: readonly (ReturnType<typeof sanitizedTextResult> & {
+  configuration: TextInferenceConfiguration; recoveryProfile?: TextRecoveryProfile;
+})[], candidate: "SESSION_ACTION_CONTRACT" | "SESSION_NATIVE_PHASE_CONTRACT" = "SESSION_ACTION_CONTRACT") {
+  const expected = textSessionContractSelection(candidate);
+  return rows.length === expected.length && expected.every(task => {
+    const matches = rows.filter(row => row.taskId === task.taskId);
+    if (matches.length !== 1) return false;
+    const row = matches[0];
+    return row.family === "DEVELOPMENT_DIAGNOSTIC" && row.inputDigest === theoryDigest(task.question)
+      && row.privateOracleDigest === theoryDigest(task.answer) && row.configuration === task.configuration
+      && row.recoveryProfile === task.recoveryProfile && row.correct === true && row.state === "PASS"
+      && row.usage.logicalCalls === 2 && row.usage.physicalCalls === 2 && row.usage.toolCalls === 1
+      && row.usage.providerFailures === 0 && row.usage.retries === 0 && row.usage.unknownUsageCalls === 0
+      && !row.sourceRepositoryMutated && !row.broaderAuthorityGranted
+      && row.eventOutcomes.filter(event => event.eventType === "READ" && event.outcome === "OBSERVED").length === 1
+      && !row.eventOutcomes.some(event => event.eventType === "DENIAL");
+  });
 }
 
 /** Frozen before live diagnosis; unrelated to reserved benchmark questions or reference answers. */
@@ -358,6 +390,7 @@ export function sanitizedTextResult(task: PrivateTextTask, result: NyxChatTurnRe
     modelEvidence: evidence.map(item => ({requestDigest: item.requestDigest, responseDigest: item.responseDigest,
       providerRequestId: item.providerRequestId, statusCode: item.statusCode, finishReason: item.finishReason,
       failureCategory: item.failureCategory, reasoningOutputBytes: item.reasoningOutputBytes ?? null,
+      contentShape: item.contentShape ?? null,
       delivery: item.delivery ?? null})),
     eventDigests: result?.events.map(item => theoryDigest(item)) ?? [],
     eventOutcomes: result?.events.map(item => ({sequence: item.sequence, eventType: item.eventType,
@@ -414,8 +447,11 @@ export function compareTextPair(pair: readonly (ReturnType<typeof sanitizedTextR
   return compareTextConfigurationPair(pair, ["EXISTING_DEFAULT", "OBSERVATION_ALIGNED_SCHEMA"]);
 }
 
-export function compareTextContractPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration})[]) {
-  return compareTextConfigurationPair(pair, ["OBSERVATION_ALIGNED_SCHEMA", "SESSION_ACTION_CONTRACT"]);
+export function compareTextContractPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration})[],
+  candidate: "SESSION_ACTION_CONTRACT" | "SESSION_NATIVE_PHASE_CONTRACT" = "SESSION_ACTION_CONTRACT") {
+  if (!["SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT"].includes(candidate)) throw Error("text_contract_candidate_invalid");
+  return compareTextConfigurationPair(pair, candidate === "SESSION_NATIVE_PHASE_CONTRACT"
+    ? ["SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT"] : ["OBSERVATION_ALIGNED_SCHEMA", "SESSION_ACTION_CONTRACT"]);
 }
 
 export function compareTextTimeoutPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {

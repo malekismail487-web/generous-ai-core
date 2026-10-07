@@ -3154,9 +3154,15 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
     return Object.freeze({ ...NVIDIA_NIM_PROVIDER_STATUS, authorityMode: this.#config.authorityMode, model: this.#config.model });
   }
   /** A trusted host creates one scope per task/run. Nested scopes cannot refill their ancestor. */
-  withHttpAttemptBudget(limit) {
+  withHttpAttemptBudget(limit, transientRecovery) {
     if (!Number.isSafeInteger(limit) || limit < 1) throw new Error("nvidia_http_attempt_budget_invalid");
-    return new _NvidiaNimProvider(this.#config, this.#transport, [...this.#httpAttemptBudgets, { limit, dispatched: 0 }]);
+    if (transientRecovery !== void 0 && transientRecovery !== "WITHIN_SHARED_BUDGET")
+      throw new Error("nvidia_http_attempt_recovery_invalid");
+    return new _NvidiaNimProvider(
+      this.#config,
+      this.#transport,
+      [...this.#httpAttemptBudgets, { limit, dispatched: 0, ...transientRecovery ? { transientRecovery } : {} }]
+    );
   }
   #remainingHttpAttempts() {
     return Math.min(Infinity, ...this.#httpAttemptBudgets.map((budget) => budget.limit - budget.dispatched));
@@ -3197,6 +3203,8 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
     if (request.deadlineEpochMs !== void 0 && (!Number.isSafeInteger(request.deadlineEpochMs) || request.deadlineEpochMs < 0)) {
       issues.push("completion_deadline_invalid");
     }
+    if (this.#httpAttemptBudgets.some((budget) => budget.transientRecovery) && request.deadlineEpochMs === void 0)
+      issues.push("completion_budget_recovery_requires_caller_deadline");
     if (this.#config.finalAttemptTimeoutMs !== void 0 && (request.deadlineEpochMs === void 0 || this.#httpAttemptBudgets.length === 0)) {
       issues.push("completion_final_attempt_requires_owned_budget_and_deadline");
     }
@@ -3286,7 +3294,8 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
           remainingAttempts: this.#remainingHttpAttempts(),
           exhausted: this.#remainingHttpAttempts() === 0,
           dispatchDenied: result.reason === "nvidia_http_attempt_budget_exhausted",
-          renewed: false
+          renewed: false,
+          ...this.#httpAttemptBudgets.some((scope) => scope.transientRecovery) ? { transientRecovery: "WITHIN_SHARED_BUDGET" } : {}
         }) } : {}
       });
       if (waitVisible) progress(result.decision === "COMPLETED" ? "COMPLETED" : "STOPPED", notBeforeEpochMs);
@@ -3359,7 +3368,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
       }
       if ([500, 502, 503, 504].includes(previous.evidence.statusCode ?? 0)) {
         transientUnavailableResponses += 1;
-        if (this.#capacity && transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries) {
+        if (this.#capacity && (transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries || this.#httpAttemptBudgets.some((budget) => budget.transientRecovery) && this.#remainingHttpAttempts() > 0)) {
           waitVisible = true;
           continue;
         }
@@ -3618,6 +3627,20 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
   #result(decision, reason, content, finishReason, requestDigest, responseDigest, statusCode, usage, networkAttempted, providerRequestId = null, reasoningOutputBytes = null) {
     const evidenceClass = this.#config.authorityMode === "EXPLICIT_LIVE_NVIDIA_NIM" && networkAttempted ? "E4" : "E3";
     const diagnostics = failureDiagnostics(reason, statusCode);
+    let contentShape = null;
+    if (typeof content === "string") {
+      let json = "INVALID";
+      try {
+        const value = JSON.parse(content);
+        json = Array.isArray(value) ? "ARRAY" : value !== null && typeof value === "object" ? "OBJECT" : "SCALAR";
+      } catch {
+      }
+      contentShape = Object.freeze({
+        json,
+        leadingMarkdownFence: /^\s*```/.test(content),
+        thinkingDelimiterPresent: /<\/?think>/.test(content)
+      });
+    }
     const evidence2 = Object.freeze({
       evidenceId: `NVIDIA-NIM-${requestDigest.slice(0, 32)}`,
       evidenceClass,
@@ -3636,7 +3659,8 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
       providerRequestId: safeProviderRequestId(providerRequestId),
       finishReason,
       usage,
-      reasoningOutputBytes
+      reasoningOutputBytes,
+      contentShape
     });
     return Object.freeze({ decision, reason, content, finishReason, evidence: evidence2, executorAuthorityGranted: false });
   }

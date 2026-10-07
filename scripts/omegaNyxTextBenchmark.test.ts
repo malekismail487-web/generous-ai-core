@@ -11,7 +11,9 @@ import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsa
   compareTextTimeoutPair, textBoundedTaskRequest, textFullFamilySelection,
   textHttpAttemptAllowance, textRecoveryTransferSelection, compareTextRecoveryPair,
   textDeliveryPreflightSelection, textDeliveryPreflightReady, textSharedRecoverySelection,
-  textSessionActionContract, textSessionContractSelection, TEXT_SESSION_CONTRACT_DIAGNOSTICS, compareTextContractPair } from "./omega/benchmarks/nyxTextBenchmark";
+  textSessionActionContract, textSessionContractSelection, TEXT_SESSION_CONTRACT_DIAGNOSTICS, compareTextContractPair,
+  textContractDiagnosticReady } from "./omega/benchmarks/nyxTextBenchmark";
+import { nyxChatContractFormat } from "../src/lib/codelab/cli/nyxChatProtocol";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -554,7 +556,9 @@ check("shared recovery rejects invalid profiles and cannot overwrite a transport
   assert.throws(() => textSharedRecoverySelection([{recoveryProfile: "FIXED_REQUESTS" as const},
     {recoveryProfile: "BOUNDED_RECOVERY" as const}], "BOUNDED_RECOVERY"));
 });
-async function scopedRecoveryReproduction(profile: "FIXED_REQUESTS" | "BOUNDED_RECOVERY") {
+async function scopedRecoveryReproduction(profile: "FIXED_REQUESTS" | "BOUNDED_RECOVERY",
+  options: {failuresBeforeRead?: number; configuration?: "SESSION_NATIVE_PHASE_CONTRACT";
+    transientRecovery?: "WITHIN_SHARED_BUDGET"} = {}) {
   const began = Date.now(), expires = began + 180000;
   let virtualNow = began, physical = 0;
   const observations: NvidiaNimEvidence[] = [], bodies: string[] = [];
@@ -572,18 +576,19 @@ async function scopedRecoveryReproduction(profile: "FIXED_REQUESTS" | "BOUNDED_R
       sleep: async (ms, signal) => {signal.throwIfAborted(); virtualNow += ms;}}),
     transport: async (_url, init) => {
       bodies.push(String(init?.body));
-      if (++physical === 1) return new Response(null, {status: 503});
-      const content = physical === 2 ? '{"kind":"READ_FILE","path":"src/question.mjs"}'
+      if (++physical <= (options.failuresBeforeRead ?? 1)) return new Response(null, {status: 503});
+      const content = physical === (options.failuresBeforeRead ?? 1) + 1 ? '{"kind":"READ_FILE","path":"src/question.mjs"}'
         : '{"kind":"REPLY","message":"The answer is: 731"}';
       return new Response(JSON.stringify({choices: [{message: {content}, finish_reason: "stop"}],
         usage: {prompt_tokens: 40, completion_tokens: 20, total_tokens: 60}}), {status: 200});
-    }}).withHttpAttemptBudget(textHttpAttemptAllowance("SCOPED_FILE", profile));
+    }}).withHttpAttemptBudget(textHttpAttemptAllowance("SCOPED_FILE", profile), options.transientRecovery);
   try {
     const outcome = await invokeExistingNyxText({...config(provider), sessionId: `SCOPED-RECOVERY-${profile}`,
       reader: scopedReader, maxModelCallsPerTurn: 2, maxTurnMs: expires - Date.now(),
+      actionContract: textSessionActionContract(options.configuration ?? "OBSERVATION_ALIGNED_SCHEMA", "SCOPED_FILE"),
       model: {complete: async request => {
         const response = await provider.complete(textBoundedTaskRequest(textConfiguredRequest(request,
-          "OBSERVATION_ALIGNED_SCHEMA", "SCOPED_FILE", scopedReader.auditLog().some(row => row.toolAction !== null)), expires));
+          options.configuration ?? "OBSERVATION_ALIGNED_SCHEMA", "SCOPED_FILE", scopedReader.auditLog().some(row => row.toolAction !== null)), expires));
         observations.push(response.evidence); return response;
       }}}, "Independent delivery exercise", "SCOPED_FILE");
     const correct = outcome?.outcome === "REPLIED" ? gradeAime(outcome.message, "731") : null;
@@ -697,6 +702,96 @@ check("phase denials remain visible and cannot be counted as a tool operation or
   assert.equal(denied.correct, null); assert.equal(denied.state, "PROTOCOL_OR_AUTHORIZATION_FAILURE");
   assert.equal(denied.eventOutcomes[0].outcome, "action_not_permitted_in_current_phase");
   assert.equal(denied.usage.toolCalls, 0);
+});
+check("native phase controls leave the original prompt schema tokens and lease untouched", () => {
+  const contract = {kind: "READ_THEN_REPLY" as const, path: "src/question.mjs"};
+  for (const observed of [false, true]) {
+    const base = {...originalRequest, responseFormat: nyxChatContractFormat(contract, observed), deadlineEpochMs: Date.now() + 180000};
+    const configured = textConfiguredRequest(base, "SESSION_NATIVE_PHASE_CONTRACT", "SCOPED_FILE", observed);
+    assert.strictEqual(configured.messages, base.messages); assert.strictEqual(configured.responseFormat, base.responseFormat);
+    assert.equal(configured.deadlineEpochMs, base.deadlineEpochMs); assert.equal(configured.maxTokens, base.maxTokens);
+    assert.equal(configured.reasoningControl, "ULTRA_HOSTED_NATIVE");
+    assert.equal(configured.inferencePolicy, observed ? "REASONING_JSON" : "CONSTRAINED_JSON");
+    assert.equal(configured.reasoningEffort, observed ? "MEDIUM" : undefined);
+    assert.equal(configured.reasoningBudgetTokens, observed ? 2048 : undefined);
+  }
+});
+check("direct reply keeps finite reasoning rather than inheriting read-only phase settings", () => {
+  const configured = textConfiguredRequest(originalRequest, "SESSION_NATIVE_PHASE_CONTRACT", "DIRECT", false);
+  assert.equal(configured.inferencePolicy, "REASONING_JSON"); assert.equal(configured.reasoningBudgetTokens, 2048);
+  assert.deepEqual(textSessionActionContract("SESSION_NATIVE_PHASE_CONTRACT", "SCOPED_FILE"),
+    textSessionActionContract("SESSION_ACTION_CONTRACT", "SCOPED_FILE"));
+});
+const nativeSelection = textSessionContractSelection("SESSION_NATIVE_PHASE_CONTRACT");
+check("native configuration ablation changes only phase inference controls, not development objectives", () => {
+  assert.deepEqual(nativeSelection.map(row => row.configuration), ["SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT",
+    "SESSION_NATIVE_PHASE_CONTRACT", "SESSION_ACTION_CONTRACT"]);
+  assert.deepEqual(nativeSelection.map(row => row.question), textSessionContractSelection().map(row => row.question));
+  assert(nativeSelection.every(row => row.recoveryProfile === "BOUNDED_RECOVERY"));
+  assert.throws(() => textSessionContractSelection("UNKNOWN" as never));
+});
+const nativePair = pairRows.map((row, index) => ({...row,
+  configuration: index ? "SESSION_NATIVE_PHASE_CONTRACT" as const : "SESSION_ACTION_CONTRACT" as const}));
+check("native comparison preserves historical pair identities and rejects substitutions", () => {
+  assert(compareTextContractPair(nativePair, "SESSION_NATIVE_PHASE_CONTRACT").boundPair);
+  assert(!compareTextContractPair(nativePair).boundPair);
+  assert(!compareTextContractPair(contractPair, "SESSION_NATIVE_PHASE_CONTRACT").boundPair);
+  assert.throws(() => compareTextContractPair(nativePair, "UNKNOWN" as never));
+});
+const nativeReadyRows = nativeSelection.map(task => ({...sanitizedTextResult(task, result, [], true, 1),
+  configuration: task.configuration, recoveryProfile: task.recoveryProfile,
+  usage: {...pairRows[0].usage, logicalCalls: 2, physicalCalls: 2, httpAttempts: 2, providerFailures: 0,
+    retries: 0, unknownUsageCalls: 0, toolCalls: 1},
+  eventOutcomes: [{sequence: 1, eventType: "READ" as const, outcome: "OBSERVED", evidenceClass: "E3" as const}]}));
+check("complete stable contract diagnostic can pass but cannot promote cognition", () => {
+  assert(textContractDiagnosticReady(nativeReadyRows, "SESSION_NATIVE_PHASE_CONTRACT"));
+  assert(!compareTextContractPair(nativePair, "SESSION_NATIVE_PHASE_CONTRACT").cognitivePromotion);
+});
+check("partial duplicated unknown or recovered contract delivery fails readiness", () => {
+  for (const rows of [[], nativeReadyRows.slice(0, 3), [...nativeReadyRows.slice(0, 3), nativeReadyRows[0]]])
+    assert(!textContractDiagnosticReady(rows, "SESSION_NATIVE_PHASE_CONTRACT"));
+  for (const delta of [{physicalCalls: 3}, {providerFailures: 1}, {retries: 1}, {unknownUsageCalls: 1}, {toolCalls: 0}])
+    assert(!textContractDiagnosticReady([{...nativeReadyRows[0], usage: {...nativeReadyRows[0].usage, ...delta}},
+      ...nativeReadyRows.slice(1)], "SESSION_NATIVE_PHASE_CONTRACT"));
+});
+check("wrong ungraded mismatched or denied answers cannot be hidden by a successful workflow", () => {
+  for (const delta of [{correct: false}, {correct: null}, {state: "SCHEMA_FAILURE"}, {eventOutcomes: []},
+    {inputDigest: "f".repeat(64)}, {privateOracleDigest: "a".repeat(64)}, {configuration: "EXISTING_DEFAULT" as const}])
+    assert(!textContractDiagnosticReady([{...nativeReadyRows[0], ...delta}, ...nativeReadyRows.slice(1)], "SESSION_NATIVE_PHASE_CONTRACT"));
+});
+check("output-shape evidence cannot become raw response retention or a successful answer", () => {
+  const row = sanitizedTextResult(task, denied, [{...evidence[0], contentShape: {json: "INVALID", leadingMarkdownFence: true,
+    thinkingDelimiterPresent: false}}], null, 1);
+  assert.equal(row.state, "SCHEMA_FAILURE"); assert.equal(row.correct, null);
+  assert.deepEqual(row.modelEvidence[0].contentShape, {json: "INVALID", leadingMarkdownFence: true, thinkingDelimiterPresent: false});
+  assert(!JSON.stringify(row).includes("731"));
+});
+const twoErrorControl = await scopedRecoveryReproduction("BOUNDED_RECOVERY", {failuresBeforeRead: 2,
+  configuration: "SESSION_NATIVE_PHASE_CONTRACT"});
+const twoErrorRecovered = await scopedRecoveryReproduction("BOUNDED_RECOVERY", {failuresBeforeRead: 2,
+  configuration: "SESSION_NATIVE_PHASE_CONTRACT", transientRecovery: "WITHIN_SHARED_BUDGET"});
+check("general two-error recovery actually completes the shared session R1 read and independently graded answer", () => {
+  assert.equal(twoErrorControl.row.state, "PROVIDER_FAILURE"); assert.equal(twoErrorControl.reads, 0);
+  assert.equal(twoErrorRecovered.row.state, "PASS"); assert.equal(twoErrorRecovered.row.correct, true);
+  assert.equal(twoErrorRecovered.reads, 1); assert.equal(twoErrorRecovered.outcome?.modelCalls, 2);
+  assert.equal(twoErrorRecovered.row.usage.physicalCalls, 4); assert.equal(twoErrorRecovered.row.usage.providerFailures, 2);
+  assert.equal(twoErrorRecovered.row.usage.unknownUsageCalls, 2);
+});
+check("native phase transport sends identical read retries then bounded answer reasoning without reference leakage", () => {
+  const bodies = twoErrorRecovered.bodies;
+  assert.equal(bodies[0], bodies[1]); assert.equal(bodies[1], bodies[2]);
+  const read = JSON.parse(bodies[2]), answer = JSON.parse(bodies[3]);
+  assert.equal(read.reasoning_effort, "none"); assert.equal(answer.reasoning_effort, "medium");
+  assert.equal(answer.reasoning_budget, 2048); assert.equal(read.max_tokens, 8192); assert.equal(answer.max_tokens, 8192);
+  assert.equal(read.response_format.json_schema.schema.properties.kind.enum[0], "READ_FILE");
+  assert.equal(answer.response_format.json_schema.schema.properties.kind.enum[0], "REPLY");
+  assert(bodies.every(body => !body.includes("731")));
+});
+check("recovered success still cannot assert stable delivery or new executor authority", () => {
+  assert(!twoErrorRecovered.row.sourceRepositoryMutated && !twoErrorRecovered.row.broaderAuthorityGranted);
+  assert(twoErrorRecovered.observations.every(evidence => evidence.delivery?.authorityRenewed === false));
+  assert(!textContractDiagnosticReady([{...nativeReadyRows[0], usage: twoErrorRecovered.row.usage},
+    ...nativeReadyRows.slice(1)], "SESSION_NATIVE_PHASE_CONTRACT"));
 });
 console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

@@ -1119,6 +1119,85 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
     productionDefaultsChanged: false, callerLeaseRenewed: false, inference: "SYNTHETIC_TRANSPORT_NOT_LIVE_TRANSFER"})}`);
 }
 
+// Reproduce two consecutive transient failures while the original task still owns
+// unused dispatches. No live endpoint, benchmark solution or credential is involved.
+{
+  for (const recovery of [undefined, "WITHIN_SHARED_BUDGET"] as const) {
+    const clock = new ManualClock(); let calls = 0; const bodies: string[] = [];
+    const bounded = capacityProvider(new NvidiaCapacityCoordinator(clock), async (_url, init) => {
+      bodies.push(String(init?.body)); calls++;
+      return calls <= 2 ? new Response(null, {status: 503}) : success();
+    }).withHttpAttemptBudget(4, recovery);
+    const first = await drive(bounded.complete(request({deadlineEpochMs: NOW + 180000})), clock);
+    check(recovery ? first.decision === "COMPLETED" && calls === 3 : first.decision === "PROVIDER_ERROR" && calls === 2,
+      "explicit budget recovery survives a two-error schedule; default fixed retry behavior is preserved");
+    check(bodies.every(body => body === bodies[0]), "transient recovery retries exactly the frozen request, not a new reasoning prompt");
+    check(first.evidence.delivery?.transientUnavailableResponses === 2
+      && first.evidence.delivery.httpAttemptBudget?.dispatched === (recovery ? 3 : 2),
+      "all unsuccessful physical attempts remain accounted even when recovery succeeds");
+    if (recovery) {
+      const next = await drive(bounded.complete(request({requestId: "AFTER-RECOVERY", deadlineEpochMs: NOW + 180000})), clock);
+      check(next.decision === "COMPLETED" && calls === 4, "the remaining dispatch can deliver the next logical phase under the original lease");
+      const denied = await drive(bounded.complete(request({deadlineEpochMs: NOW + 180000})), clock);
+      check(denied.reason === "nvidia_http_attempt_budget_exhausted" && calls === 4,
+        "recovery cannot refill the shared task budget after a successful next phase");
+    }
+  }
+}
+{
+  for (const limit of [1, 2, 4]) {
+    const clock = new ManualClock(); let calls = 0;
+    const bounded = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => {
+      calls++; return new Response(null, {status: 503});
+    }).withHttpAttemptBudget(limit, "WITHIN_SHARED_BUDGET");
+    const result = await drive(bounded.complete(request({deadlineEpochMs: NOW + 180000})), clock);
+    check(result.decision !== "COMPLETED" && calls <= limit && clock.time <= NOW + 180000,
+      "persistent outage is bounded by both dispatch count and original lifetime, never retried until success");
+    check(result.evidence.delivery?.transientUnavailableResponses === calls
+      && result.evidence.delivery.httpAttemptBudget?.limit === limit,
+      "persistent failure preserves the true attempt count and declared bound");
+  }
+  let calls = 0, reads = 0;
+  const missingLease = provider(async () => {calls++; return success();}).withHttpAttemptBudget(4, "WITHIN_SHARED_BUDGET");
+  check((await missingLease.complete(request())).reason === "completion_budget_recovery_requires_caller_deadline" && calls === 0,
+    "budget-owned recovery cannot infer or renew an absent caller lease");
+  try { missingLease.withHttpAttemptBudget(4, "UNBOUNDED" as never); check(false, "unknown recovery policy rejected"); }
+  catch (error) {check(String(error).includes("nvidia_http_attempt_recovery_invalid"), "unknown recovery policy rejected");}
+  const clock = new ManualClock(); const controller = new AbortController();
+  const cancelled = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => new Response(null, {status: 503}),
+    () => {reads++; return "synthetic-development-credential";}, event => {
+      if (event.state === "WAITING_FOR_CAPACITY") controller.abort();
+    }).withHttpAttemptBudget(4, "WITHIN_SHARED_BUDGET");
+  const result = await drive(cancelled.complete(request({signal: controller.signal, deadlineEpochMs: NOW + 180000})), clock);
+  check(result.decision === "BLOCKED" && reads === 1 && result.evidence.delivery?.httpAttempts === 1,
+    "cancellation revokes opted-in recovery before another credential read or HTTP dispatch");
+}
+{
+  const clock = new ManualClock(); let calls = 0;
+  const nested = capacityProvider(new NvidiaCapacityCoordinator(clock), async () => {
+    calls++; return calls < 3 ? new Response(null, {status: 503}) : success();
+  }).withHttpAttemptBudget(3).withHttpAttemptBudget(4, "WITHIN_SHARED_BUDGET");
+  check((await drive(nested.complete(request({deadlineEpochMs: NOW + 180000})), clock)).decision === "COMPLETED",
+    "budget recovery composes with a stricter ancestor dispatch limit");
+  const blocked = await drive(nested.complete(request({deadlineEpochMs: NOW + 180000})), clock);
+  check(blocked.reason === "nvidia_http_attempt_budget_exhausted" && calls === 3,
+    "a child recovery scope cannot refill or exceed its ancestor budget");
+}
+{
+  const outputs = ['{"kind":"REPLY","message":"private-generated-value"}', '["private-generated-value"]',
+    '"private-generated-value"', '```json\n{"kind":"REPLY"}\n```', '<think>private-reasoning</think>not-json'];
+  const expected = ["OBJECT", "ARRAY", "SCALAR", "INVALID", "INVALID"];
+  for (const [index, output] of outputs.entries()) {
+    const result = await provider(async () => new Response(JSON.stringify({choices: [{message: {content: output}, finish_reason: "stop"}]}),
+      {status: 200})).complete(request());
+    const shape = result.evidence.contentShape;
+    check(shape?.json === expected[index] && shape.leadingMarkdownFence === (index === 3)
+      && shape.thinkingDelimiterPresent === (index === 4), "output-shape diagnostics separate syntax, fencing and thinking delimiters");
+    check(result.content === output && !JSON.stringify(result.evidence).includes("private-") && Object.isFrozen(shape),
+      "shape diagnosis cannot extract, repair, persist, or authorize generated text");
+  }
+}
+
 assert(NVIDIA_NIM_PROVIDER_STATUS.newCapability === "BOUNDED_NVIDIA_NIM_CHAT_COMPLETION", "chunk reports exact model capability gain");
 assert(NVIDIA_NIM_PROVIDER_STATUS.liveNetworkAuthorityGranted === false && !NVIDIA_NIM_PROVIDER_STATUS.productionEligible,
   "provider adapter does not grant live or production authority by construction");
