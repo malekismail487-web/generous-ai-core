@@ -475,3 +475,20 @@ All three physical calls have unknown token usage. Recovery dispatch is verified
 but improved live delivery, matched compute, reasoning improvement and a benchmark
 score are not established. The outage circuit remains intact and automatic replay
 is removed. Another unchanged retry is not a correction for sustained unavailability.
+### Native request isolation after bounded-recovery evaluation
+
+The `c3919bca` contract run is preserved losslessly in
+`docs/omega/evidence/nyx-session-native-phase-c3919bca.json`, reconciled with both
+the terminal report and independently hash-checked artifact. Recovery reached a
+real authorized read after two 503s, but the subsequent answer encountered another
+503. The native-control arm read successfully, then received HTTP 400. Its fixed
+`model`/`VALIDATION` clues do **not** identify a rejected parameter. Neither arm
+was graded; readiness, configuration promotion and cognitive promotion remain false.
+
+The existing live smoke runner's opt-in `HOSTED_NATIVE_ISOLATION` profile compares
+native medium plus 2,048 thinking tokens, native medium without that reservation,
+and template medium on identical synthetic input/schema and an 8,192-token ceiling.
+It permits at most three physical requests, one per arm, under finite original
+deadlines, stops on an outage, retains failures, and exits nonzero if any arm is
+missing or unsuccessful. No parser, acceptance oracle, production default or
+authority changes. This isolates configuration acceptance, not reasoning quality.

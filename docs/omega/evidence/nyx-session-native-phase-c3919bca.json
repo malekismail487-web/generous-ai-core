@@ -1,0 +1,485 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-SESSION-NATIVE-PHASE-c3919bca",
+  "source": {
+    "runId": 37629557774,
+    "jobId": 112819943954,
+    "candidate": "c3919bcabccb9fce0db19df8e3eb243d84f4031b",
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/37629557774",
+    "artifactId": 11485538804,
+    "archiveSha256": "68e2c01832096a0da0d0e24ab139df675ffafce2b2f06f6f296a6185691e29ff",
+    "originalReportReconciledWithJobLog": true
+  },
+  "originalReport": {
+    "schemaVersion": 1,
+    "identity": "NYX-SESSION-ACTION-CONTRACT-DEVELOPMENT-001",
+    "candidate": "c3919bcabccb9fce0db19df8e3eb243d84f4031b",
+    "mode": "CONTRACT_DIAGNOSTIC",
+    "executionIdentity": "github-actions-37629557774",
+    "environment": "linux-x64-node-v24.21.0",
+    "policy": {
+      "version": "nyx-existing-chat-text-benchmark/1",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "maxOutputTokens": 8192,
+      "maxCallsPerTurn": 2,
+      "maxTaskMs": 180000,
+      "maxInputCharacters": 8000,
+      "maxOutputCharacters": 8000,
+      "maxArtifactBytes": 50000,
+      "firstAttemptOnly": true,
+      "referenceAnswersVisibleToCognition": false,
+      "tools": [
+        "READ_ONLY_DISPOSABLE_QUESTION_FILE"
+      ],
+      "sourceWrites": false,
+      "credentialForwarding": false,
+      "generalNetwork": false,
+      "delivery": "SCOPED_FILE",
+      "fixtureCleanupRequired": true,
+      "inputTruncationAllowed": false
+    },
+    "populationDigest": "b3055f0566a66a5878f6b9c65bb8a83e8fd3264bf94e9fc0bd9f22c628d1a3d9",
+    "selectionDigest": "9e581b4cfe9047dee8fc5d49a95f47eb41db9c41d3ffa2fffce309250ca349dd",
+    "transferWindow": null,
+    "selectedTaskIds": [
+      "CONTRACT-READINGS-SESSION_ACTION_CONTRACT",
+      "CONTRACT-READINGS-SESSION_NATIVE_PHASE_CONTRACT",
+      "CONTRACT-DEPENDENCIES-SESSION_NATIVE_PHASE_CONTRACT",
+      "CONTRACT-DEPENDENCIES-SESSION_ACTION_CONTRACT"
+    ],
+    "verifier": {
+      "bbehRevision": null,
+      "bbehSourceDigest": null,
+      "aime": "EXACT_FINAL_INTEGER_CUSTOM_ADAPTER_NOT_MATHARENA_HARNESS"
+    },
+    "configuration": "COUNTERBALANCED_SESSION_CONTRACT_VS_NATIVE_PHASE_CONTROLS",
+    "configurationIsEvaluationOnly": true,
+    "productionDefaultsChanged": false,
+    "transientUnavailableRecovery": "WITHIN_SHARED_BUDGET",
+    "contractReadiness": {
+      "result": "NOT_READY",
+      "cognitivePromotion": false,
+      "scope": "REPEATED_DEVELOPMENT_READ_THEN_REPLY_NOT_SUSTAINED_AVAILABILITY"
+    },
+    "sharedDeliveryRecovery": {
+      "profile": "BOUNDED_RECOVERY",
+      "identicalAcrossArms": true,
+      "logicalCallsPerTask": 2,
+      "physicalCallsPerTask": 4,
+      "originalTaskLeaseMs": 180000,
+      "additionalReasoningTurns": false,
+      "unknownRetryComputePreserved": true,
+      "productionDefaultsChanged": false
+    },
+    "deliveryRecoveryProfiles": null,
+    "deliveryTimeoutProfiles": null,
+    "inference": "E4_LIVE_NVIDIA",
+    "verification": "E3_DEVELOPMENT_EXACT_INTEGER_NOT_BENCHMARK",
+    "deliveryPreflight": null,
+    "results": [
+      {
+        "taskId": "CONTRACT-READINGS-SESSION_ACTION_CONTRACT",
+        "family": "DEVELOPMENT_DIAGNOSTIC",
+        "inputDigest": "e7a4659f5ccb6d4ec646de65c136fdf65affb45f4c350185af93ff1c02cdae0a",
+        "privateOracleDigest": "986b79d4b69dffb1d19836f47b27073d95bf55201b3385aceb7e0687a21d8667",
+        "predictionDigest": null,
+        "state": "RESOURCE_EXHAUSTION",
+        "correct": null,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 4,
+          "httpAttempts": 4,
+          "reportedTokens": 357,
+          "unknownUsageCalls": 3,
+          "toolCalls": 1,
+          "toolWorkUnits": 163,
+          "wallClockMs": 122501,
+          "providerFailures": 3,
+          "retries": 2
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "bf51044baf61014ca1a62eb50df36e6ef4a0b4e7d8ff36fbefae0c1931c400fd",
+            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 152,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 3,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 2,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 119999,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 3,
+                "remainingAttempts": 1,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "0fd2e1c9baf05c0ba84f6227cee1cc43474b2472de2aebc774c50f83f3912068",
+            "responseDigest": null,
+            "providerRequestId": null,
+            "statusCode": 503,
+            "finishReason": null,
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 1,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 216,
+              "state": "STOPPED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 4,
+                "remainingAttempts": 0,
+                "exhausted": true,
+                "dispatchDenied": true,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "6195f7217cf9f771e414aaa2ce8b31e3e182bde2ab3210c917e886545c082bbb",
+          "bf6db15039ddabe1e3e8f1eeb1d89efc3089b768e26d939924018da1160dc952",
+          "bed49cdc96009dc5292dba65b8967f0b1425a4cd1de8539af01c16bb35949e10"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "BLOCKED",
+            "evidenceClass": "E4"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_ACTION_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "CONTRACT-READINGS-SESSION_NATIVE_PHASE_CONTRACT",
+        "family": "DEVELOPMENT_DIAGNOSTIC",
+        "inputDigest": "e7a4659f5ccb6d4ec646de65c136fdf65affb45f4c350185af93ff1c02cdae0a",
+        "privateOracleDigest": "986b79d4b69dffb1d19836f47b27073d95bf55201b3385aceb7e0687a21d8667",
+        "predictionDigest": null,
+        "state": "PROVIDER_FAILURE",
+        "correct": null,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 3,
+          "httpAttempts": 3,
+          "reportedTokens": 317,
+          "unknownUsageCalls": 2,
+          "toolCalls": 1,
+          "toolWorkUnits": 163,
+          "wallClockMs": 123107,
+          "providerFailures": 2,
+          "retries": 1
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "2ad739c0749a6b12786c7357d7584e4587e6a3afb54014f9e3a490f5410d253b",
+            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 2,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 1,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 119992,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "2fbdea6c50da0e9f81e26871bc12f344c04c134f637f1c50800e351309a0c539",
+            "responseDigest": null,
+            "providerRequestId": null,
+            "statusCode": 400,
+            "finishReason": null,
+            "failureCategory": "PROVIDER_REQUEST_REJECTED",
+            "reasoningOutputBytes": null,
+            "contentShape": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "STOPPED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 3,
+                "remainingAttempts": 1,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "9352f8d2db3ed732bd95a4539881d874815a60445bcf4d2e0a290ec2c6b2cc9f",
+          "bf6db15039ddabe1e3e8f1eeb1d89efc3089b768e26d939924018da1160dc952",
+          "369eb7c475f5d3fe4441df7679f7c25bbe33d2bb1df0eb271ece097583ac56d5"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "PROVIDER_ERROR",
+            "evidenceClass": "E4"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_NATIVE_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": [
+          {
+            "category": "REQUEST_PARAMETER_REJECTION",
+            "parameters": [
+              "model"
+            ],
+            "signals": [
+              "VALIDATION"
+            ],
+            "status": 400
+          }
+        ]
+      }
+    ],
+    "blocked": [],
+    "families": [
+      {
+        "family": "DEVELOPMENT_DIAGNOSTIC",
+        "selected": 4,
+        "executed": 2,
+        "correct": 0,
+        "graded": 0,
+        "blockedByCapability": 0,
+        "notExecuted": 2,
+        "fullPopulation": null,
+        "fullBenchmarkScoreClaim": false
+      }
+    ],
+    "capabilityGaps": [
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-CONTRACT-READINGS-SESSION_ACTION_CONTRACT-4ac4885f1a8992da",
+        "failureClass": "RESOURCE_EXHAUSTION",
+        "capabilityClass": "TEXT_RESOURCE_EXHAUSTION",
+        "benchmarkTaskDigest": "ab0269563137e7bd8ef78fa78f6f937e1c51fbe0e006357390f318fb98ad6963",
+        "failureEvidenceDigest": "4ac4885f1a8992da29614aa2bbb613cbc8fa5b75d14a88d4389e957d172bc7cc",
+        "benchmarkInputDigest": "e7a4659f5ccb6d4ec646de65c136fdf65affb45f4c350185af93ff1c02cdae0a",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "f994d5d46aa7336b77b3f394ef2961f6210199fa73131000a80ed700e2212743"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-CONTRACT-READINGS-SESSION_NATIVE_PHASE_CONTRACT-dd091f1fb99e6c3e",
+        "failureClass": "PROVIDER_FAILURE",
+        "capabilityClass": "TEXT_PROVIDER_FAILURE",
+        "benchmarkTaskDigest": "e06734504dfcbb9d899f67a3b3dbfc20f9b3d60275602f804818b5b38e959d87",
+        "failureEvidenceDigest": "dd091f1fb99e6c3e54107a5f59616f9ba9f1e8c47e1a061f3e17fe050ac13445",
+        "benchmarkInputDigest": "e7a4659f5ccb6d4ec646de65c136fdf65affb45f4c350185af93ff1c02cdae0a",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "a918e04b24995fab39180ca4a71a6c4c0205da6abb629e983b4d580f6ed47799"
+      }
+    ],
+    "pairedDevelopmentResults": [
+      {
+        "inputDigest": "e7a4659f5ccb6d4ec646de65c136fdf65affb45f4c350185af93ff1c02cdae0a",
+        "configurations": [
+          "SESSION_ACTION_CONTRACT",
+          "SESSION_NATIVE_PHASE_CONTRACT"
+        ],
+        "outcomes": [
+          "RESOURCE_EXHAUSTION",
+          "PROVIDER_FAILURE"
+        ],
+        "usages": [
+          {
+            "logicalCalls": 2,
+            "physicalCalls": 4,
+            "httpAttempts": 4,
+            "reportedTokens": 357,
+            "unknownUsageCalls": 3,
+            "toolCalls": 1,
+            "toolWorkUnits": 163,
+            "wallClockMs": 122501,
+            "providerFailures": 3,
+            "retries": 2
+          },
+          {
+            "logicalCalls": 2,
+            "physicalCalls": 3,
+            "httpAttempts": 3,
+            "reportedTokens": 317,
+            "unknownUsageCalls": 2,
+            "toolCalls": 1,
+            "toolWorkUnits": 163,
+            "wallClockMs": 123107,
+            "providerFailures": 2,
+            "retries": 1
+          }
+        ],
+        "boundPair": true,
+        "stable": false,
+        "matchedRealizedCompute": false,
+        "cognitivePromotion": false,
+        "interpretation": "INTERFACE_ABLATION_NOT_COGNITIVE_GAIN"
+      },
+      {
+        "inputDigest": "ad09f6c9aafbd70a6d8f9104fa95eef5555e0b62250412dd41fa2137da928b20",
+        "configurations": [],
+        "outcomes": [],
+        "usages": [],
+        "boundPair": false,
+        "stable": false,
+        "matchedRealizedCompute": false,
+        "cognitivePromotion": false,
+        "interpretation": "INTERFACE_ABLATION_NOT_COGNITIVE_GAIN"
+      }
+    ],
+    "pairedTransferResults": [],
+    "pairedTimeoutResults": [],
+    "pairedRecoveryResults": [],
+    "sourceUnchanged": true,
+    "authorityDelta": "NONE",
+    "repairAttempts": 0,
+    "firstAttemptOnly": true,
+    "broadPromotion": false,
+    "calibration": "NOT_SUPPORTED_BY_CURRENT_REPLY_PROTOCOL",
+    "stopReason": "PROVIDER_DELIVERY_FAILURE_CONSECUTIVE_TASKS",
+    "contamination": "DEVELOPMENT_OBJECTIVES_NOT_HELD_OUT"
+  },
+  "interpretation": {
+    "boundedRecoveryReachedAuthorizedReadAfterTwo503s": true,
+    "nativeReadControlCompleted": true,
+    "nativeAnswerControlStatus": 400,
+    "exactRejectedParameter": "UNKNOWN",
+    "stableReadiness": false,
+    "configurationPromotion": false,
+    "cognitivePromotion": false,
+    "fullBenchmarkScore": false,
+    "planCoverage": {
+      "status": "PARTIAL / JUST-IN-TIME",
+      "direct": [
+        "PRESERVE_ABSOLUTE_LEASE",
+        "HONEST_RETRY_COMPUTE",
+        "CONFIGURATION_IS_NOT_CAPABILITY",
+        "NO_ACTION_WITHOUT_PROVENANCE"
+      ],
+      "supporting": [
+        "STRICT_TYPED_AUTHORIZATION",
+        "INDEPENDENT_GRADING"
+      ],
+      "deferred": [
+        "GENERAL_COGNITIVE_PROMOTION",
+        "ADDITIONAL_COGNITIVE_LAYERS"
+      ],
+      "conflicts": []
+    }
+  }
+}

@@ -28,16 +28,13 @@ jobs:
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxTextBenchmark.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxChatCli.test.ts
-      - name: Compare unchanged session contract with explicit Ultra phase controls on development objectives
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
+      - name: Isolate native budget versus effort versus template controls on identical synthetic input
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NYX_TEXT_EPOCH_MODE: CONTRACT_DIAGNOSTIC
-          NYX_TEXT_CONFIGURATION: SESSION_NATIVE_PHASE_CONTRACT
-          NYX_TEXT_DELIVERY: SCOPED_FILE
-          NYX_TEXT_RECOVERY_PROFILE: BOUNDED_RECOVERY
-          NYX_TEXT_TRANSIENT_RECOVERY: WITHIN_SHARED_BUDGET
-        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-text-benchmark-epoch.ts
+          OMEGA_NVIDIA_REQUEST_COMPATIBILITY: HOSTED_NATIVE_ISOLATION
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nvidia-nim-live-smoke.ts
       - name: Preserve sanitized benchmark evidence only
         if: always()
         uses: actions/upload-artifact@v4
@@ -46,4 +43,5 @@ jobs:
           path: |
             ${{ runner.temp }}/nyx-text-benchmark-*.json
             ${{ runner.temp }}/nyx-text-progress-*.json
+            ${{ runner.temp }}/nyx-request-compatibility-*.json
           if-no-files-found: error

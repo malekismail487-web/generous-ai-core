@@ -854,6 +854,62 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
 }
 
 {
+  for (const scenario of ["BUDGET_REJECTED", "ALL_VALID", "OUTAGE"] as const) {
+    let output = ""; let exitCode = 0;
+    try {
+      output = execFileSync(process.execPath, ["--experimental-strip-types", "--import",
+        "./scripts/w0rs/register-typescript-loader.mjs", "--input-type=module", "--eval", `
+        let calls=0; let first=null;
+        globalThis.fetch=async (url, init)=>{
+          if(url!==${JSON.stringify(NVIDIA_NIM_CHAT_COMPLETIONS_URL)}) throw Error('wrong_endpoint');
+          const body=JSON.parse(init.body); calls++;
+          if(calls>3||body.max_tokens!==8192||body.temperature!==0||body.stream!==false)
+            throw Error('diagnostic_budget_changed');
+          const invariant=JSON.stringify({model:body.model,messages:body.messages,response_format:body.response_format});
+          if(first===null) first=invariant; else if(first!==invariant) throw Error('diagnostic_input_changed');
+          if(calls<3 && (body.reasoning_effort!=='medium'||body.chat_template_kwargs!==undefined))
+            throw Error('native_control_changed');
+          if(calls===1 ? body.reasoning_budget!==2048 : body.reasoning_budget!==undefined)
+            throw Error('budget_isolation_changed');
+          if(calls===3 && (body.reasoning_effort!==undefined||!body.chat_template_kwargs.enable_thinking
+            ||!body.chat_template_kwargs.medium_effort)) throw Error('template_control_changed');
+          if(${JSON.stringify(scenario)}==='OUTAGE') return new Response('{}',{status:503});
+          if(calls===1 && ${JSON.stringify(scenario)}==='BUDGET_REJECTED')
+            return new Response(JSON.stringify({error:{message:'reasoning_budget validation PRIVATE_ECHO'}}),{status:400});
+          return new Response(JSON.stringify({choices:[{message:{content:'{"ready":true}'},finish_reason:'stop'}],
+            usage:{prompt_tokens:10,completion_tokens:5,total_tokens:15}}),{status:200});
+        };
+        await import('./scripts/omega/nvidia-nim-live-smoke.ts');
+      `], {encoding: "utf8", timeout: 10_000, env: {...process.env,
+        OMEGA_ALLOW_NVIDIA_NETWORK: "1", OMEGA_NVIDIA_REQUEST_COMPATIBILITY: "HOSTED_NATIVE_ISOLATION",
+        RUNNER_TEMP: "", NVIDIA_NIM_MODEL: "nvidia/nemotron-3-ultra-550b-a55b",
+        NVIDIA_API_KEY: "synthetic-diagnostic-only"}});
+    } catch (error) {
+      const child = error as {stdout?: string; status?: number};
+      if (typeof child.stdout !== "string" || typeof child.status !== "number") throw error;
+      output = child.stdout; exitCode = child.status;
+    }
+    const line = output.split("\n").find(item => item.startsWith("NVIDIA_REQUEST_COMPATIBILITY_REPORT "))!;
+    const report = JSON.parse(line.slice("NVIDIA_REQUEST_COMPATIBILITY_REPORT ".length));
+    check(exitCode === (scenario === "ALL_VALID" ? 0 : 1),
+      "native diagnostic cannot exit successfully with rejected or unexecuted configurations");
+    check(report.records.length === (scenario === "OUTAGE" ? 1 : 3)
+      && report.maximumModelCalls === 3 && report.physicalAttemptLimitPerArm === 1
+      && report.records.every((row: {evidence: NvidiaNimEvidence}) => row.evidence.delivery?.httpAttempts === 1),
+    "native isolation fixes prompt/schema/total tokens and spends at most one physical request per arm");
+    check(!report.capabilityPromotion && !report.authorityIncrease && !report.rawContentPersisted
+      && !output.includes("synthetic-diagnostic-only") && !output.includes("PRIVATE_ECHO"),
+    "native isolation is sanitized configuration evidence, never task capability or authority");
+    if (scenario === "BUDGET_REJECTED") {
+      check(report.records.map((row: {evidence: NvidiaNimEvidence}) => row.evidence.statusCode).join() === "400,200,200"
+        && report.records[0].requestRejections[0].parameters.join() === "reasoning_budget"
+        && report.records.slice(1).every((row: {exactSyntheticAnswer: boolean}) => row.exactSyntheticAnswer),
+      "focused isolation preserves failed budget control while distinguishing valid effort and template controls");
+    }
+  }
+}
+
+{
   // Wire configuration is independently inspectable and fail-closed. It does not grant a tool.
   const bodies:Record<string,unknown>[]=[];
   const client=NvidiaNimProvider.create({providerId:"ULTRA-WIRE-DIAGNOSTIC",model:"nvidia/nemotron-3-ultra-550b-a55b",

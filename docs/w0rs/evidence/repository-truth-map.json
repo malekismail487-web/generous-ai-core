@@ -2612,6 +2612,7 @@
     {
       "name": "RUNNER_TEMP",
       "files": [
+        "scripts/omega/nvidia-nim-live-smoke.ts",
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-container-preflight.ts",
