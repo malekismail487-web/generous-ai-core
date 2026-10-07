@@ -1,6 +1,14 @@
-name: Omega NYX Super corrected delivery classification evaluation
+name: Omega NYX Super phase-budget full mathematics evaluation
 on:
   workflow_dispatch:
+    inputs:
+      run_bbeh:
+        description: Explicitly authorize the separate long BBEH campaign
+        type: boolean
+        default: false
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-text-benchmark-one-shot.yml]
 permissions:
   contents: read
 concurrency:
@@ -43,7 +51,7 @@ jobs:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           NYX_TEXT_EPOCH_MODE: FULL_AIME
-          NYX_TEXT_CONFIGURATION: SESSION_ACTION_CONTRACT
+          NYX_TEXT_CONFIGURATION: SESSION_SUPER_PHASE_CONTRACT
           NYX_TEXT_DELIVERY: SCOPED_FILE
           NYX_TEXT_RECOVERY_PROFILE: BOUNDED_RECOVERY
           NYX_TEXT_TRANSIENT_RECOVERY: WITHIN_SHARED_BUDGET
@@ -81,7 +89,7 @@ jobs:
           if-no-files-found: error
   full-bbeh:
     needs: full-aime
-    if: ${{ always() && needs.full-aime.outputs.continue_bbeh == 'true' }}
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && inputs.run_bbeh && needs.full-aime.outputs.continue_bbeh == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 330
     steps:
@@ -110,7 +118,7 @@ jobs:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           NYX_TEXT_EPOCH_MODE: FULL_BBEH
-          NYX_TEXT_CONFIGURATION: SESSION_ACTION_CONTRACT
+          NYX_TEXT_CONFIGURATION: SESSION_SUPER_PHASE_CONTRACT
           NYX_TEXT_DELIVERY: SCOPED_FILE
           NYX_TEXT_RECOVERY_PROFILE: BOUNDED_RECOVERY
           NYX_TEXT_TRANSIENT_RECOVERY: WITHIN_SHARED_BUDGET
