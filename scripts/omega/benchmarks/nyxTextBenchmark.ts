@@ -62,6 +62,19 @@ export function textFullRunIncomplete(mode: string, families: readonly {
   });
 }
 
+/** Independent-family execution may continue after every selected task was
+ * attempted without a transport halt. This is NOT score completeness: truncated
+ * or malformed answers remain ungraded under textFullRunIncomplete. */
+export function textFamilyExecutionExhausted(mode: string, stopReason: string, sourceUnchanged: boolean,
+  families: readonly {family: string; selected: number; executed: number; blockedByCapability: number; notExecuted: number}[]) {
+  const family = mode === "FULL_AIME" ? "AIME_2025" : mode === "FULL_BBEH" ? "BBEH_MINI" : null;
+  if (!family || stopReason !== "SELECTION_EXHAUSTED" || sourceUnchanged !== true) return false;
+  const expected = family === "AIME_2025" ? 30 : 460;
+  const rows = families.filter(row => row.family === family);
+  return rows.length === 1 && rows[0].selected === expected && rows[0].executed === expected
+    && rows[0].blockedByCapability === 0 && rows[0].notExecuted === 0;
+}
+
 /** Freeze a positional window, never a correctness-selected task subset. */
 export function textTransferSelection(tasks: readonly PrivateTextTask[], start = 4): PrivateTextTask[] {
   const families = (["AIME_2025", "BBEH_MINI"] as const).map(family => tasks.filter(task => task.family === family));
@@ -429,9 +442,16 @@ export function sanitizedTextResult(task: PrivateTextTask, result: NyxChatTurnRe
   };
 }
 
-/** A final resource/schema label cannot erase observed provider failure that prevented grading. */
-export function textDeliveryBlocked(row: Pick<ReturnType<typeof sanitizedTextResult>, "state" | "correct" | "usage">) {
-  return row.correct === null && (row.state === "PROVIDER_FAILURE" || row.usage.providerFailures > 0);
+/** A final resource/schema label cannot erase an observed outage. Conversely an
+ * HTTP-200 token-limit response is not an outage merely because missing content
+ * increments the adapter's generic failure counter. Keep its ungraded truncation. */
+export function textDeliveryBlocked(row: Pick<ReturnType<typeof sanitizedTextResult>, "state" | "correct" | "usage" | "modelEvidence">) {
+  const terminal = row.modelEvidence.at(-1);
+  const returnedTokenLimit = row.state === "TRUNCATION" && terminal?.statusCode === 200
+    && terminal.finishReason === "length"
+    && (terminal.failureCategory === null || terminal.failureCategory === "PROVIDER_RESPONSE_SCHEMA_ERROR");
+  return row.correct === null && !returnedTokenLimit
+    && (row.state === "PROVIDER_FAILURE" || row.usage.providerFailures > 0);
 }
 
 /** Registers observations in the existing gap contract; not a completed repair/transfer claim. */

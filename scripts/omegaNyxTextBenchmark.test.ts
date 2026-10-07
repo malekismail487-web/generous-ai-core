@@ -7,7 +7,7 @@ import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySes
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
   TEXT_BENCHMARK_POLICY, textEvaluationModel, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
-  textWholePopulation, textPopulationIsFullyGraded, textFullRunIncomplete, textDeliveryBlocked, textTimeoutTransferSelection,
+  textWholePopulation, textPopulationIsFullyGraded, textFullRunIncomplete, textFamilyExecutionExhausted, textDeliveryBlocked, textTimeoutTransferSelection,
   compareTextTimeoutPair, textBoundedTaskRequest, textFullFamilySelection,
   textHttpAttemptAllowance, textRecoveryTransferSelection, compareTextRecoveryPair,
   textDeliveryPreflightSelection, textDeliveryPreflightReady, textSharedRecoverySelection,
@@ -135,6 +135,26 @@ check("zero or subset counts cannot falsely certify an omitted benchmark family"
 });
 const completeFamilies = [{family: "AIME_2025", selected: 30, executed: 30, graded: 30},
   {family: "BBEH_MINI", selected: 460, executed: 460, graded: 460}];
+const exhaustedAime = {...completeFamilies[0], graded: 0, blockedByCapability: 0, notExecuted: 0};
+check("attempting all tasks permits independent-family execution, not a complete score claim", () => {
+  assert(textFamilyExecutionExhausted("FULL_AIME", "SELECTION_EXHAUSTED", true, [exhaustedAime]));
+  assert(textFullRunIncomplete("FULL_AIME", [exhaustedAime]));
+});
+check("transport halt, expired epoch or changed source cannot admit next family", () => {
+  for (const reason of ["PROVIDER_DELIVERY_FAILURE_CONSECUTIVE_TASKS", "CAPACITY_NOT_READY_WITHIN_EPOCH", "FROZEN_WALL_CLOCK_BUDGET"])
+    assert(!textFamilyExecutionExhausted("FULL_AIME", reason, true, [exhaustedAime]));
+  assert(!textFamilyExecutionExhausted("FULL_AIME", "SELECTION_EXHAUSTED", false, [exhaustedAime]));
+});
+check("partial, blocked or malformed population counts cannot admit next family", () => {
+  for (const delta of [{selected: 29}, {executed: 29}, {executed: 31}, {executed: NaN},
+    {blockedByCapability: 1}, {notExecuted: 1}])
+    assert(!textFamilyExecutionExhausted("FULL_AIME", "SELECTION_EXHAUSTED", true, [{...exhaustedAime, ...delta}]));
+});
+check("missing, duplicated or unknown families cannot invent execution completion", () => {
+  for (const rows of [[], [exhaustedAime, exhaustedAime], [{...exhaustedAime, family: "BBEH_MINI"}]])
+    assert(!textFamilyExecutionExhausted("FULL_AIME", "SELECTION_EXHAUSTED", true, rows));
+  assert(!textFamilyExecutionExhausted("SMOKE", "SELECTION_EXHAUSTED", true, [exhaustedAime]));
+});
 check("full execution completeness does not require correct answers or a minimum score", () => {
   assert(!textFullRunIncomplete("FULL", completeFamilies));
   assert(!textFullRunIncomplete("FULL_AIME", completeFamilies.slice(0, 1)));
@@ -332,6 +352,41 @@ check("a genuine non-provider task outcome resets consecutive outage tracking", 
   const row = {...compoundBlocked, state: "SCHEMA_FAILURE", usage: {...compoundBlocked.usage, providerFailures: 0}};
   streak = textDeliveryBlocked(row) ? streak + 1 : 0;
   assert.equal(streak, 0);
+});
+// Independent synthetic transport exercise; no benchmark question or answer.
+const tokenLimitEvidence = {...retry, statusCode: 200, finishReason: "length" as const,
+  failureCategory: "PROVIDER_RESPONSE_SCHEMA_ERROR" as const,
+  delivery: {...retry.delivery, httpAttempts: 1, transientUnavailableResponses: 0,
+    capacityWaitMs: 0, state: "STOPPED" as const}};
+const tokenLimited = sanitizedTextResult(task, denied, [tokenLimitEvidence], null, 10);
+check("returned token-limit failure is ungraded truncation, not blocked provider delivery", () => {
+  assert.equal(tokenLimited.state, "TRUNCATION"); assert.equal(tokenLimited.correct, null);
+  assert.equal(tokenLimited.usage.providerFailures, 1); // Preserve raw adapter accounting.
+  assert(!textDeliveryBlocked(tokenLimited));
+  assert.equal(textCapabilityGap(tokenLimited)?.failureClass, "TRUNCATION");
+});
+check("a recovered earlier 503 cannot convert subsequent returned truncation into outage", () => {
+  const recoveredThenLimited = sanitizedTextResult(task, denied, [retry, tokenLimitEvidence], null, 10);
+  assert(recoveredThenLimited.usage.providerFailures > 0);
+  assert(!textDeliveryBlocked(recoveredThenLimited));
+});
+check("a timeout after earlier truncation still counts as actual blocked delivery", () => {
+  const laterTimeout = sanitizedTextResult(task, denied,
+    [tokenLimitEvidence, {...unknown, statusCode: null, finishReason: null, failureCategory: "PROVIDER_TIMEOUT"}], null, 10);
+  assert(textDeliveryBlocked(laterTimeout));
+});
+check("missing terminal evidence cannot invent a delivered token-limit response", () =>
+  assert(textDeliveryBlocked({...tokenLimited, modelEvidence: []})));
+check("two returned truncations do not open outage circuit; two true outages still do", () => {
+  let streak = 0; const observations = [];
+  for (const row of [compoundBlocked, tokenLimited, tokenLimited, compoundBlocked, compoundBlocked]) {
+    streak = textDeliveryBlocked(row) ? streak + 1 : 0; observations.push(streak);
+  }
+  assert.deepEqual(observations, [1, 0, 0, 1, 2]);
+});
+check("schema failure without token-limit termination is not silently forgiven", () => {
+  assert(textDeliveryBlocked({...tokenLimited, state: "PROVIDER_FAILURE",
+    modelEvidence: [{...tokenLimited.modelEvidence[0], finishReason: "stop"}]}));
 });
 check("failed physical calls are all unknown, not zero compute", () => assert.equal(textInferenceUsage([unknown], 10).unknownUsageCalls, 2));
 check("local rejection cannot invent live HTTP attempts", () => assert.equal(textInferenceUsage([

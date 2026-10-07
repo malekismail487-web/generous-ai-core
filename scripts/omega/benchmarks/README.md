@@ -630,3 +630,39 @@ removed after this separately authorized campaign's terminal evidence is capture
 Ω Plan Coverage remains PARTIAL / JUST-IN-TIME: applies measured model/integration
 diagnosis, independent grading, resource limits and provenance; preserves execution
 boundaries; defers model routing, cognitive expansion and broad superiority claims.
+
+The first Super campaign `06b836ff` (37642599890) returned 20 HTTP-200 responses,
+read ten complete questions and independently graded seven answers: six correct,
+one invalid final-answer format. Three other answers ended at the existing token
+ceiling without final content and remain ungraded truncations. Twenty AIME tasks
+were unexecuted; BBEH was dependency-skipped. This is not a full AIME score and
+does not establish cognitive superiority or sustained provider stability.
+Reported usage was 56,477 tokens, 20 logical/physical calls, zero unknown-usage
+calls and zero transport retries. All original evidence is archive-hash checked,
+log-reconciled and preserved in `docs/omega/evidence/nyx-super-first-06b836ff.json`.
+
+This run exposed a general harness defect: the outage circuit counted delivered
+HTTP-200 token-limit failures because the adapter's generic `providerFailures`
+counter also includes missing-content schema errors. The original stop label is
+preserved, not rewritten as an outage claim. A narrowly scoped correction excludes
+only an observed terminal HTTP-200 `length` response from outage tracking, while
+retaining the ungraded truncation, raw failure accounting, original strict parser,
+grader, token/call/lease/epoch limits and two-consecutive-actual-outage circuit.
+Missing terminal evidence is not assumed to prove delivery. A later timeout still
+counts as blocked transport even if an earlier response truncated.
+
+Independent synthetic development cases exercise returned truncations, recovered
+503 then truncation, truncation followed by timeout, missing evidence and genuine
+consecutive outages. The corrected Super public rerun changes only this host-side
+classification, not prompts, model settings, acceptance or task selection. Earlier
+attempts remain distinct; replay is not fresh transfer or realized-compute matching.
+No benchmark answer is used to repair the system. No reasoning improvement is
+inferred from this supporting evaluation correction.
+
+The same correction separates independent-family execution from score completeness.
+BBEH may execute after all 30 AIME tasks were attempted, with source integrity and
+`SELECTION_EXHAUSTED`, even if token limits left AIME answers ungraded. The AIME
+job still fails its unchanged full-score completeness check; no missing answer
+becomes a pass or a zero-cost result. Partial execution, capability blocks, changed
+source, malformed/missing reports, a real outage halt or expired epoch do not
+admit BBEH. This removes an artificial cross-family dependency, not a scoring gate.

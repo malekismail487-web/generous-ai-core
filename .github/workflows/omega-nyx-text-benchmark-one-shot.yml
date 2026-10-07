@@ -1,4 +1,4 @@
-name: Omega NYX authorized Nemotron Super public evaluation
+name: Omega NYX Super corrected delivery classification evaluation
 on:
   push:
     branches: [sol/omega-institutional-spine]
@@ -13,6 +13,8 @@ jobs:
   full-aime:
     runs-on: ubuntu-latest
     timeout-minutes: 110
+    outputs:
+      continue_bbeh: ${{ steps.aime-execution.outputs.continue_bbeh }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -53,6 +55,24 @@ jobs:
           NYX_TEXT_DATA: ${{ runner.temp }}/nyx-text-data.json
           NYX_BBEH_ROOT: ${{ runner.temp }}/bbeh
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-text-benchmark-epoch.ts
+      - name: Distinguish full task execution from score completeness before next family
+        id: aime-execution
+        if: always()
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs --input-type=module <<'NODE'
+          import {readFileSync, appendFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          import {textFamilyExecutionExhausted} from './scripts/omega/benchmarks/nyxTextBenchmark.ts';
+          let proceed = false;
+          try {
+            const r = JSON.parse(readFileSync(join(process.env.RUNNER_TEMP, `nyx-text-benchmark-${process.env.GITHUB_SHA}.json`), 'utf8'));
+            proceed = r.schemaVersion === 1 && r.candidate === process.env.GITHUB_SHA
+              && r.policy.model === 'nvidia/nemotron-3-super-120b-a12b'
+              && textFamilyExecutionExhausted(r.mode, r.stopReason, r.sourceUnchanged, r.families);
+          } catch { /* Missing or malformed evidence fails closed. */ }
+          appendFileSync(process.env.GITHUB_OUTPUT, `continue_bbeh=${proceed}\n`);
+          console.log(`BBEH_EXECUTION_CONTINUATION=${proceed}; AIME_SCORE_COMPLETENESS_UNCHANGED`);
+          NODE
       - name: Preserve sanitized benchmark evidence only
         if: always()
         uses: actions/upload-artifact@v4
@@ -64,6 +84,7 @@ jobs:
           if-no-files-found: error
   full-bbeh:
     needs: full-aime
+    if: ${{ always() && needs.full-aime.outputs.continue_bbeh == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 330
     steps:
