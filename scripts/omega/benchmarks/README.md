@@ -533,3 +533,22 @@ removed after the authorized one-shot is captured.
 complete-population accounting and no self-certification; supports scope, provenance,
 leases and private-oracle separation; defers protected/container-dependent families
 and cognitive promotion. No additional reasoning layer or authority is introduced.
+
+The full campaign at `ce926d2f` (37636458975) is terminal and incomplete. AIME
+selected 30 tasks, executed three, independently graded one correct, and left two
+provider-blocked/ungraded plus 27 unexecuted. All three performed the required
+authorized whole-question read. The first answer recovered after a 503 and bounded
+cooldown. The next two answer requests encountered timeout/unavailability; the
+two-consecutive-failure circuit stopped execution. BBEH Mini's dependent job was
+skipped, not scored. One correct answer is not a full-population accuracy result.
+
+The independently archive-hash-checked, log-reconciled original report is preserved
+in `docs/omega/evidence/nyx-full-aime-ce926d2f.json`. Six logical / nine physical
+calls reported 1,994 tokens with five unknown-usage calls, four observed 503s and
+one timeout. Original task leases, shared attempt limits, strict grading and
+authority boundaries stayed intact. No wrong answer or syntax/schema failure was
+observed in this tiny sample; absence of a returned answer is not a reasoning
+failure. Stable delivery, configuration superiority and cognitive improvement
+remain unestablished. No 429 or new-key requirement was demonstrated. Automatic
+push replay is removed; completing this campaign requires stable authorized
+same-model serving, not weaker acceptance or repeated unchanged outage probes.

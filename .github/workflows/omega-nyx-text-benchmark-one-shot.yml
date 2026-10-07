@@ -1,9 +1,6 @@
 name: Omega NYX full public AIME and BBEH evaluation
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-text-benchmark-one-shot.yml]
 permissions:
   contents: read
 concurrency:
