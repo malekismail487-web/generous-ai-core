@@ -1,0 +1,4767 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-SUPER-FULL-AIME-PHASE-7D69A2CE-RECEIPT",
+  "source": {
+    "candidate": "7d69a2ce877a03c6c01a941958f7ba2cd8f3c189",
+    "runId": 37678057740,
+    "jobId": 112986569692,
+    "artifactId": 11508772679,
+    "artifactName": "nyx-super-full-aime-7d69a2ce877a03c6c01a941958f7ba2cd8f3c189",
+    "archiveSha256": "09b0c729e8237a623d38a20959fe82c135234da8bb7c7ffe1f1b8e71c8567f71",
+    "archiveSizeBytes": 34438,
+    "archiveVerified": true,
+    "originalReportReconciledWithJobLog": true,
+    "progressReconciledWithFinalReport": true,
+    "canonicalOriginalReportSha256": "f57d0d428c5d4effd95248948c2b224d0a78be513228356750349760ac288b8a",
+    "canonicalDefinition": "SHA256 of Python json.dumps(sort_keys=True,separators=(',',':'),ensure_ascii=False), UTF-8.",
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/37678057740"
+  },
+  "originalReport": {
+    "schemaVersion": 1,
+    "identity": "NYX-PUBLIC-TEXT-BENCHMARK-EPOCH-001",
+    "candidate": "7d69a2ce877a03c6c01a941958f7ba2cd8f3c189",
+    "mode": "FULL_AIME",
+    "executionIdentity": "github-actions-37678057740",
+    "environment": "linux-x64-node-v24.21.0",
+    "policy": {
+      "version": "nyx-existing-chat-text-benchmark/1",
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "maxOutputTokens": 8192,
+      "maxCallsPerTurn": 2,
+      "maxTaskMs": 180000,
+      "maxInputCharacters": 8000,
+      "maxOutputCharacters": 8000,
+      "maxArtifactBytes": 50000,
+      "firstAttemptOnly": true,
+      "referenceAnswersVisibleToCognition": false,
+      "tools": [
+        "READ_ONLY_DISPOSABLE_QUESTION_FILE"
+      ],
+      "sourceWrites": false,
+      "credentialForwarding": false,
+      "generalNetwork": false,
+      "delivery": "SCOPED_FILE",
+      "fixtureCleanupRequired": true,
+      "inputTruncationAllowed": false
+    },
+    "populationDigest": "d2d32bdddc66c12eebbc0d8124d4d9fbde943a8a4322a16b1dc608700afbea3e",
+    "selectionDigest": "f895258a4bb15a3fe621407b31a5f12e0c49ba75f75eab2aac7f9035adf12600",
+    "transferWindow": null,
+    "selectedTaskIds": [
+      "AIME-2025-1",
+      "AIME-2025-2",
+      "AIME-2025-3",
+      "AIME-2025-4",
+      "AIME-2025-5",
+      "AIME-2025-6",
+      "AIME-2025-7",
+      "AIME-2025-8",
+      "AIME-2025-9",
+      "AIME-2025-10",
+      "AIME-2025-11",
+      "AIME-2025-12",
+      "AIME-2025-13",
+      "AIME-2025-14",
+      "AIME-2025-15",
+      "AIME-2025-16",
+      "AIME-2025-17",
+      "AIME-2025-18",
+      "AIME-2025-19",
+      "AIME-2025-20",
+      "AIME-2025-21",
+      "AIME-2025-22",
+      "AIME-2025-23",
+      "AIME-2025-24",
+      "AIME-2025-25",
+      "AIME-2025-26",
+      "AIME-2025-27",
+      "AIME-2025-28",
+      "AIME-2025-29",
+      "AIME-2025-30"
+    ],
+    "verifier": {
+      "bbehRevision": "80d12ca916b7158f22293fcf3144f4d3d854d4be",
+      "bbehSourceDigest": "4b4f06e5babb015de2ba639bae995a5526182ffb5b5890af54dfcf038580eb34",
+      "aime": "EXACT_FINAL_INTEGER_CUSTOM_ADAPTER_NOT_MATHARENA_HARNESS"
+    },
+    "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+    "configurationIsEvaluationOnly": true,
+    "productionDefaultsChanged": false,
+    "modelSelection": {
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "defaultModel": "nvidia/nemotron-3-ultra-550b-a55b",
+      "evaluationOnlyOverride": true,
+      "automaticFallback": false
+    },
+    "transientUnavailableRecovery": "WITHIN_SHARED_BUDGET",
+    "capacityScheduling": "BEFORE_TASK_LEASE",
+    "capacityQueue": [
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-1",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-2",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-3",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-4",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-5",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-6",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-7",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-8",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-9",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-10",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-11",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-12",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-13",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-14",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-15",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-16",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-17",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-18",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-19",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-20",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-21",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-22",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-23",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-24",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-25",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-26",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-27",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-28",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-29",
+        "executorLeaseCreated": false
+      },
+      {
+        "state": "READY",
+        "waitedMs": 0,
+        "notBeforeEpochMs": null,
+        "beforeTaskId": "AIME-2025-30",
+        "executorLeaseCreated": false
+      }
+    ],
+    "epochWallClockMs": 1032420,
+    "contractReadiness": null,
+    "sharedDeliveryRecovery": {
+      "profile": "BOUNDED_RECOVERY",
+      "identicalAcrossArms": true,
+      "logicalCallsPerTask": 2,
+      "physicalCallsPerTask": 4,
+      "originalTaskLeaseMs": 180000,
+      "additionalReasoningTurns": false,
+      "unknownRetryComputePreserved": true,
+      "productionDefaultsChanged": false
+    },
+    "deliveryRecoveryProfiles": null,
+    "deliveryTimeoutProfiles": null,
+    "inference": "E4_LIVE_NVIDIA",
+    "verification": "E3_WITHHELD_REFERENCES_UPSTREAM_BBEH_GRADER",
+    "deliveryPreflight": null,
+    "results": [
+      {
+        "taskId": "AIME-2025-1",
+        "family": "AIME_2025",
+        "inputDigest": "7f691ce3372f09bb06cecca6765af15109bfbe51dce98863121e098e3bdbb88f",
+        "privateOracleDigest": "12b8c0944c94778c6c9884cafe1f8a143f12c6daf2f4e4a19a9dc1e97df882c3",
+        "predictionDigest": "976de31060891221a98064d8e8008a4f6225d32027d360d0d9ee1d33b617bec7",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 1342,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 108,
+          "wallClockMs": 5167,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "14a19baccdfab3b1c3af584bd31309012246f42e4ca7bd09c4915c0adf5ef87a",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "16fe05735bd8ee0871564efd667b302a1014444b4a9d0c0021a9912206cbe58b",
+            "responseDigest": "3dc41c5d35e935a62253c39ba22a323530c7bf9bcefac29d1da25c36f43fdbe9",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 1246,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 783,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "db423108518340674f80d984476b04530d4fdf80ba0e30a1eca613cabc49d8ee",
+          "dda712d25ba7c77efa59fae4cd95178910edc6ae758074086c91c8ef5dc5c642",
+          "52d5fff630824251ab0f34479ec4290262b14f93af358b3d942c674ef0b9bb6e",
+          "ad16552933036a118fdda3189538ed727f5a94b4cea817ded878858a39902aa3"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-2",
+        "family": "AIME_2025",
+        "inputDigest": "0bf1628788226c8afd3606841c4c99a48d9f61cfb639f7431b7905a1f50b7362",
+        "privateOracleDigest": "09325e1d9dff5fd9386a2d3c6b8f13cbac0a5bce719933c984650f416027286e",
+        "predictionDigest": "971c1aef9fa3407471249d6687972fc77ecfad1771d2c90dfcb5247011bffb84",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 4389,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 1664,
+          "wallClockMs": 22309,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "5a792324e6e0b228924d081902e359278ecf5877d9e10e4ac855820a6e1bbd8c",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "15c85654abd316977079add771d52880b31ab0bfe0bf42c5b03882a993a70287",
+            "responseDigest": "1d4a8a2d50a1bb14773c61cd5fbf337d77afda9150ada1a85af40b460643a3e5",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 6072,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1184,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "59adbe31cf8f90952acccf35b53670c54f8aae23cff69bb6a2193aee755e8e65",
+          "aad46c71f82859bf6ae98fed36c550ad89e507a28b77808403f2a4331b7395c5",
+          "08672c348dc00b30ff695e6714c7905e4487df4acdb27e938143b1ef42f251c0",
+          "abb998017026f15c92350cc477efe66a1ed829e1e3bc6af0682584238cceb340"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-3",
+        "family": "AIME_2025",
+        "inputDigest": "6a62199472ce725830b7279d267a4a879a356ec5168bdcec1387af511748f3a3",
+        "privateOracleDigest": "17eed2c0e7c9788d0b46fafdf328b3e955aa0a22132c16cde72aa4f32dcd5282",
+        "predictionDigest": "9809aba1981c96784fbb903fa3ca89b5fa78bcff281c5130461201b55e7a2c0b",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 2122,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 546,
+          "wallClockMs": 8965,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "47b19289cb44fcd1917419e3870667467f01cbfa573903b4f2823f6bf7376a21",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "6c3c49286c61b6506735fd18fc57e900de650ba712182c4c6280b6ad9f205000",
+            "responseDigest": "fcf13d02fba4f84c4a13e81a02454f3be7d14d44676f066b3a752ea5fd93b478",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 2662,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1090,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "40ad229acfa395f6d94c3e8d2eae11b3c1acc29666908b1b7bce314e69fea11a",
+          "88958ddeee8848fee6acd6d2f32deea3cd4866866aadba61f93f2794c480e274",
+          "a970465e3be9a66f0e2e58a21582d831761d5af95fbc1213e0fc6cdd948afa25",
+          "deef2b5cb29935c457f8c5d32f6d0a847967daaed077a4c5382f028e7aaac188"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-4",
+        "family": "AIME_2025",
+        "inputDigest": "842cf867b59d0fc6b48f5381493827c82b232b7cefb804f63b4c87a6646aefde",
+        "privateOracleDigest": "168578b517bbc0eff98cee9a91d5837e3da156479220ed042926495897248387",
+        "predictionDigest": "fb114be24e36ea6bb5c5315d1e5e3a381cbacf64aae113f4b52061b9b045c970",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 2501,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 171,
+          "wallClockMs": 12133,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "ca4b49111b704ca44acda22c52458c87ddc599c9ee1d74d52019298f7b9e2af1",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "3813799193aad615768debd932869b69645813289e61c5e34c079f5063ecf028",
+            "responseDigest": "b90e3dec7065c390fc40a76bbb491c8c4fc4b9502f19fae281754afc93ed794d",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 3876,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 992,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "22f0f5d59a64fa5d8fb4d26e233bc42051669e74ff663f6fa857e50c4fd07daf",
+          "27af3d7b2fe5557dd4a138835c4a3dcdf18ca1f6d0475610e98bbdff7b7ad559",
+          "2f7933563392297f1e1f4e6ccb26fa064aa1b684927d6aeccd07f02d4e3a7241",
+          "53995af8d828f530f637f5385fe280b53bee401ac0d482537a9ff432356da950"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-5",
+        "family": "AIME_2025",
+        "inputDigest": "c794f7d579f4a6bfd225bd50b83ac31b09da938b71b1647b07d99eca1c671a20",
+        "privateOracleDigest": "1993afc7f50fe9af108a1354f54bde512e306f3310611b7832d2b5092dc2ac82",
+        "predictionDigest": "e9fd2be62790f41b0531fada8ccf54d3795ecb04ae9b99494e364f33b8e39580",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 5185,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 252,
+          "wallClockMs": 26999,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "73a99c5a551b60ef1dcd8fe0e245f8332cacc0b56eee7fc2958d410f2038020d",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "d132f9435be4900f27712b7d0160dbef6e52f805c7a4fca921cbe3b987cc526d",
+            "responseDigest": "c96abc6d4cae03557884b3ada030c07099b38b38fb7a31f9a2f6d01e49b7dc65",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 10555,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1199,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "112427a0c7b6c9a0741d5c529dbdbeb0d706c9fa4d6c368807510c8613c6a430",
+          "1501b0345517c7614170146d9d523a09ec6be8f561c6764bd38a764bb5c2bf4e",
+          "75f55955a2af6ee878c53d6f10f462d5bf02375a99f3f719961d850a7c91f33e",
+          "9de15d6d0136b3dd45f637bb954c08d45a1710b88fe0345d8b9fa11120b89163"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-6",
+        "family": "AIME_2025",
+        "inputDigest": "e82a2c0f0c63f1042db160fe207ecd498ac8c474767163b7cc4a36bf623d7d08",
+        "privateOracleDigest": "83fb9cb8e5c16596c5f48bc1300f1a69bec321899aeef3c05046ff90302ac248",
+        "predictionDigest": "6bcfd690dacb3f44122e907fff077e0d03f9519d0a6c1f9d7b5425d81c3ee968",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 2014,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 280,
+          "wallClockMs": 10721,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "7f66ee10e327214e9a19597e6533d39f74a253a338ac73be1b31fbc6233db5af",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "e8bb919799eb1f067735b86df7bfabbcfa878ece916066af5e290b31399ded31",
+            "responseDigest": "c8be8d19e443394a9ecf859a062c7a3015702e98ff340012744c4ad65daef831",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 3444,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1202,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "b93ed6e77c0df7f861d5fd6ccda49e08ab91c8bbd1bce622695b362d85204547",
+          "2e98b3c93b670b08b98b4ea2fefb434b73235077cbe575af3ea52e5b74e9622c",
+          "1ac2065439dd33cbca02e7773da20d044cf4760e84ada5a0101ab088af337fe8",
+          "f35a12133782105066122529ba7585edf5898dac9286ab56daa7730236b86f83"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-7",
+        "family": "AIME_2025",
+        "inputDigest": "f07f821102338fde299f3b236cdf71097887cd58dc88eda7d5f8d06613f6caf8",
+        "privateOracleDigest": "088adab37ddcac2839c87a98d8b235c9a7f265c3c3b84dce6045a0e4bbd5a45b",
+        "predictionDigest": "fe4295922bad89247aa3c3d3fd27f7dd0abcda40ec1d8fc8418efe3ada0fe680",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7086,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 521,
+          "wallClockMs": 54296,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "24f11356166914c9f951a2ef467285870bd6e98fa6b3bdabf5148eae9a61e28e",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "558c8b43073d093427b77d49c01840613fa87f6cdd914abc2f20026821076979",
+            "responseDigest": "c050e18b9eb75ab633eaf1b51c13aa38ea47fd4697cd3a3ca74feeaa6dddd8de",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 26562,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1194,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "9984516cb6f83e4277f271701dfdedb77c2fca60dd7d58342153690803606b14",
+          "ca954e0ab60ebef50c43dc4995a018ec68902937e15060b3b68729c640116591",
+          "bd52de4b81054ae9c7e8d679a9d6805747c7cd83726a3d925eec8e9ce74aae67",
+          "62e0aa5c50404309f30c3f7203048a62f7d5c51566030ad950908c86c7cdb744"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-8",
+        "family": "AIME_2025",
+        "inputDigest": "784a9e3b6f5bc3296bf6bf9f6c096ce5eb660399b66292c41d3e17fa56517a50",
+        "privateOracleDigest": "af37a2e6dfb5c301bc0402bb93b09d4ffd9275a12d95bf4b6130a820196a0359",
+        "predictionDigest": "c98f6cbdf4d8dc0193dcb54d50ea0195f6ce67255dbde619c4a697f1b861e8e9",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 2048,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 347,
+          "wallClockMs": 9332,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "e8f10ac8fec4dac9a555eb1924092f37e682193b0ef4384d279ad4ca61304d42",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "d2a31695fa3f7e607cdf77ee6345a963b41623897de12d9bdbfe60593d34d5be",
+            "responseDigest": "389780ce2a3093a185a7701ec6028d1393ae45308594c5c0bf4c22aefa734260",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 2551,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1192,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "7797ccf51f5f62569f97bbc9c48dabfa83ce3a49da41b557cd947c458acd2f45",
+          "176a9dd9c53724684aba7ba068b1c1456e803738fd75cfd258b4645dc1bec90a",
+          "7fa4c10d7357532705526ccaff6a92d03fef52082bc3e72033d9b61fda0084ba",
+          "fc6514c6660a8f98ea3ecf637a454c3ac1c9f6294dac467decabe584252265b5"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-9",
+        "family": "AIME_2025",
+        "inputDigest": "dbc7794c818c4465a89f1b8cdb130ae4e540945d10b02151b32d5fdd9e92fd85",
+        "privateOracleDigest": "c8d8f2e29fb181ffb8e4d234ede6633fb9529c69b8ef280605002e44764be39c",
+        "predictionDigest": "4fbad391010ad8d4ad2c2f0830870f3ff9a2f222e209450783756135ac05d17d",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7039,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 369,
+          "wallClockMs": 36548,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "4e9f01c01ab713deef363c70b683e6cd0aaf155f5db7d4f6fa9a2efb0612cf6a",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "cd72381009788c1e12a76c91e3c1d71b987b89206b68e5428b58ae51f45745f9",
+            "responseDigest": "b6032d908b64ddc3b5334d1a4ec44bfc57b01f64dbdf062f7f1310d00d4d4146",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 11748,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 912,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "c564b99b0cacd02c1f41b7094be94fe7b54b51288352eef4ab7c0a6121e71011",
+          "f31144193e0ca73821e7a066ce17efcba4c0421dce4b5d8b6b5c7f1de3398947",
+          "0ef2a210f050d5c8675cf98f7c176b86cd9fd2150c5c59939fd7d84778db34da",
+          "9d40e313cb5496003d336a04bf31b0a8ab65bc0870c1a5d92d21b03fd62fb279"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-10",
+        "family": "AIME_2025",
+        "inputDigest": "f8a86c014b9113ee19e05e1250f4f708cab2de0d3c313d5b45779b6f7920e626",
+        "privateOracleDigest": "3a1ed30a0a052eac0fba65f39d259efdc7d587ef00c36a9f30cf21256cb50f4b",
+        "predictionDigest": "8607d3967973a4bf302985ba82e92c17b9b1d3c7a2937dcbe316ee012cf4a96a",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7268,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 811,
+          "wallClockMs": 53083,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "68fb008eed1cce7642fcaf2faee91405b6aa03673c8a66b8766f06fbe91f5139",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "d919d414be3ae4b3a219bca854dd6500cba36799c3e6a1d432344fcae7846863",
+            "responseDigest": "a73866be93a6175e9e6873a49ba31f0ee3102d0e19f35befe25bf3520fe28412",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 22884,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1198,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "8aeb00d3bb86168323179c3385cba0a6926261e123323d040977d1fa0a201f2e",
+          "cc621ec64b3ab849ea7ae09f0a66457265589fbcb8d8bab96033feec03cdccf1",
+          "c0f4b7cb803c84879158dedd88179f37c4ff92e65b72273880ea7887e31798e7",
+          "d2520d916a37bc6231a774b9c7696ae38ac983c61d8f40795c0a2770253602a1"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-11",
+        "family": "AIME_2025",
+        "inputDigest": "6749b034a65d9a4680b53e9477ed090734e52f23e66b5dc7e9d6e1e4d32f44ac",
+        "privateOracleDigest": "2453bb209731b60335d6d7880940ac295b5a6697fcdc3dad62f955e69243f2d0",
+        "predictionDigest": "e2bc1e59efd0577b6c5879f49a9048cf9d10dcc41c167d6874f9f197d7f71931",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7506,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 1388,
+          "wallClockMs": 42153,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "0fcaf625f0bf58ee76b4bc89572c5d32e59f0d53b4e1bf256bb990d05d6a1ec2",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "3545ea843762981b88aa7b71eefa48719b2062def6889d0a7940c98eab2a55d5",
+            "responseDigest": "672aafc989303726aeb0e6b554c06667f34fcd6dafe1d454ce9f8c05b9f61395",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 14663,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1212,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "12e412784345596499a4582703ab2423fb52f42caaa86f4cdaf4a679fb8dcabb",
+          "f4902ad0fb02653ea4387754e924da9d6b9c7bbc4058ec5988dd29bd195afc6c",
+          "fbaf34b16a7b6cc64b4589d6278a41672b4d0f6e8a3ce86afd0a7065073aebe4",
+          "ea1859246753164278f279535199e40ecf4298328272187a15a6e3647ef891a5"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-12",
+        "family": "AIME_2025",
+        "inputDigest": "3f77db7ff23a5b035bf3442b005a6f5c03968f5c11b714aae3a7d2e6730e5b05",
+        "privateOracleDigest": "240da2dbdc17826d49e8d26e1d61a5fa54898be18a80e4a3e6538320a75ee394",
+        "predictionDigest": "e90ea40babbb90b519990d01c8b14260a14f64c00955f9d2a2f1b4cace3565c3",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7055,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 440,
+          "wallClockMs": 59939,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "19f3e21d0df902dfbdb3a69add0b6cee716916a1d6640af2efc47351e6a5c93b",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "569c8acc9ee446cc04628bbc8b63fdd2766d352a4983582a16aeb3413419300d",
+            "responseDigest": "75fcaadc97f7297f4632d4b897f170a4b03eb40f2806b422eb890d2fd31ce164",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 15977,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1188,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "dd8f6d90b6835ecafd1f7aeea00c82056f7d37df6a0c2fe8e11befcc2c405a99",
+          "0546e6b4ad739b4cc4b695af3618e05dc64bc08db41c37def1645c6b4eeb92e2",
+          "61b075a85285cf6c3c951825bc18e121ac511109aaddb864221a98af79ffae09",
+          "9dc97f6ead94fce7f8b81b1b84307525965c423033a08791a6d5e52d7d194e5f"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-13",
+        "family": "AIME_2025",
+        "inputDigest": "01043d3d8b1c5d293421c1f453244d8134478ddcfdda263ab64d7943193c6e7f",
+        "privateOracleDigest": "739f6e65ce92f92a9fbe890fb7edf3fab5a24f1cb63636db5ce9f99874af6acd",
+        "predictionDigest": "1fc11dbe0ba22760defcda74bb446be1ea4ea22433aa5522d84709609445283c",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7010,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 421,
+          "wallClockMs": 64517,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "e5b8efd97573d6464af90fd798c17dec03b43efd79dd4415fc047cc5a6fb1eed",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "feaa4f683e0705c1498ac0248c971bee3915b9b5c3113c27c8d03f96082e0bc2",
+            "responseDigest": "a417a7357621edaf863f72d0eae163a15f1b320ac5339321977dca4f7e64ec0e",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 26223,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1169,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "7a104c3e74684f6b89e519becfd97c02cbbb11f5cd89f749b77f0d0e0729aa91",
+          "9e23322741edbf219cae9bf2a7bb423f2cf6095d02034cfcaed881bf327fd72d",
+          "ecfc733c3679432b005fdd3805d96df4cdb8a987017c249c6b54934e2459b1f7",
+          "b0ac932bd03bfd91a4dc445146471d0bb96dd8c58541c730cfef61e4c2798fbb"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-14",
+        "family": "AIME_2025",
+        "inputDigest": "ccbcca45aa6d9ef519017ed84a267b0a1258b0e18bde2c633249ec38245b199b",
+        "privateOracleDigest": "68fec0473e988a1ef1c13c4f9b9a15cc67de203de8be796ce82ae4fd7b158e64",
+        "predictionDigest": "1d7380719c522bfb609e4b62f0ab900401e371dc6fa8e539eae66469fa455d3e",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7069,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 389,
+          "wallClockMs": 53119,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "c8d87dc969b142b9a6a7455cdcf133e32afd7d0d4a2aa34495697a6cda107ba9",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "0b7390e479904de8b5707beb476b2e3494c6fc176ef15fbf13da97b5510c961e",
+            "responseDigest": "730a7008ed2c3916651253a6fc1082ac77c2caf184fdebac19f461629cd42a2a",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 13042,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1164,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "0416525e41002ffe0e6beb6ffe670d36a08c4cb7c0df9380ee154e397f5610fa",
+          "08b37ca70f1ebe08f9dd16c9c36e48596f9689d40f116c467b49160f7eeb59c9",
+          "a9422e1a976caf4f25da917f0b4c77420f14996336eb47202201407d38c44ea6",
+          "f5c43c3fc335962d3726c4076d904e066c45bd22dd75f532f9a04e57fcb80f6b"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-15",
+        "family": "AIME_2025",
+        "inputDigest": "89c3a716f009c352d503fa5123afd3bebcb808df6c42ed0ae63080fb2a38ef0c",
+        "privateOracleDigest": "554be8b62a156f877af5b02fdfbd1de6a577718c3114bf04157ccfdc8c1a3cf1",
+        "predictionDigest": "988292b51ad8079eb32a9485af470b7218fd80a93a3a60aedc5052971ec0283c",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7016,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 231,
+          "wallClockMs": 54883,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "89a7351987548fe12fae4897d0b964aa9bbf71961962c411489e06c21319edb2",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "2aea4fe5c3e025781cdea5f43001fbb18eb38f54608213249966dfd0f15eab75",
+            "responseDigest": "3552023dcf430a614d32c4997bfa9829a2a972588f066387992420488f60ae67",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 17566,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 626,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "5c755ea6ebb5dae2b541bf9755661f306de46703cb96c655e90c341b7aae9694",
+          "811af7081b50236c7811e0b7b90f720c0318ece493c34420f340a95d1a86eb98",
+          "4b187df70f958455e1a9b6a395444ea020f84620c7228e3add678d34561decb8",
+          "bd77348e7fd7d50a4499d1b08ec8e026436eb6c4dc87190bfaca8e631ad2a8a9"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-16",
+        "family": "AIME_2025",
+        "inputDigest": "62c72e647473730ceb02cee0e0a721e415682f4ec20577ee0b35461cdc582ac2",
+        "privateOracleDigest": "8be1d7aa28b037ecb0d22875802575e9a36460b322be19928f97b494296b0d69",
+        "predictionDigest": "afb54f70ecd92c0351ed178b0efd81e871af23a3bc2e0b6d28b6f8de45ae8bfb",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 2171,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 269,
+          "wallClockMs": 14636,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "793abda5e6a9307ea13784b16e3885f68181967fb053dc416c0e4f32688f5d52",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "1e778a6739b72f909e6383a552fc3d1048b037ab314b95b511c02b90c5b9be12",
+            "responseDigest": "46cb56edab456aee67e5349744c33cc38c30d9fdee06f11d1c9fd228fe7c139b",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 2683,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1132,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "c6dad7a2d5db9e4c45a860880b8585f1f9af648dc0b4b9b0bb18db1fda7ec2cd",
+          "666c5e3cccc10711ea2a7610d35e82069cc7707f1932beb3798fdb72bde6cc26",
+          "87a276376ff6553a1dbcab16b5b73ada9bc6e03e80ad5e012c94a81494338f48",
+          "14842cb7182d84d2607c6e5ca12db4f266ab83bbc96d2c1a8fa063a5a6c56553"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-17",
+        "family": "AIME_2025",
+        "inputDigest": "bd5ad2e79c19254173a51bffc2a20a6f1b79e61a4696ce160c87b82cac9f971c",
+        "privateOracleDigest": "d9013b3ac73b75f465113bd31318fcc1e6cdc69f4e5f09ac7c178700b6df7fd4",
+        "predictionDigest": "fb19021b9936e757a1680aa7c13998e93e9e8657178b2848429a18a5881db6c1",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 1599,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 122,
+          "wallClockMs": 7760,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "1ac47d0798c9cbc8b6eede0f2b7ce037410b727f6d41155a5c7562279dab48f1",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "047ac67f3b71da7c891f4d9b8bb2813e9ada5898e7c4407ebe1454e78a99bddf",
+            "responseDigest": "bade80d768c1c4e3df7dc975369cffd12cf37bad75ed8e80377dfdbc40f15ae6",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 1711,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1079,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "a10f4e56ee60dde6a1ff8ce875a13e3ba2584224bcfc06bef7d16b37781ddbaa",
+          "2ac3adc8ac27a2708962269bc98e11b753de8067eaa85e6ed08ca02ea56c5b70",
+          "aad0771faae60a5534c06dba249b58cbb5d942b3a25eca5736195954e01a395e",
+          "380837114c8d37822f6305a923c953fa721adbff95c3b431be91f6b8a7917831"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-18",
+        "family": "AIME_2025",
+        "inputDigest": "4fe213556f87553e7b509454df0edefa7beb6a5aec3116a14939552ac9160bcd",
+        "privateOracleDigest": "7df2c0defdd4d9aa281c757d21ea6b826b6bf2d57945749463cb066cde34e2b1",
+        "predictionDigest": "13dc7b97419c5dbe5d27c2eec6545dc19b7b6a14b0ee7380ace8136aca8c8464",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 5028,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 816,
+          "wallClockMs": 32541,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "69dd7a99954eb190d8e7e787be75701bc26301c8dcab1e434a505845d9af22b2",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "1adeec1cf07ab8cfca64fe04ba7de327b0ee44c0cc25bf4efffd87f92d00d94e",
+            "responseDigest": "cff1824f67dd2732d665c1e1628bde7787a85f5561cc339e3dfa484855816f40",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 9715,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1184,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "d6f5d2ab7b490088557c1825a640d06223f20f5f20d2fcd992e3dc138abf6455",
+          "1b9e92a9a2966a41b1052ced1eedb20e8eee4c346417c4cf5b155c1297698122",
+          "3557e08b63df76257e0d7508f396d5830a9a9711417389e38535806596d27014",
+          "87f2310767432432a3a98f3eaf7dc877a025f455abf35c2af4fa643ac187544b"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-19",
+        "family": "AIME_2025",
+        "inputDigest": "2c6b1c03d54b5392d2e1acea53d2767db0a673ea0eeac60c8d401b6acf6ecbef",
+        "privateOracleDigest": "78cee6c1e2eb2e74f8a3eb06342910344c22b2c264a3e21cbe03a6cc70868e7e",
+        "predictionDigest": "bb22fe0c344d40db1c6389949191c6597ad7c97062dc5454f35b0f5314368598",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 2970,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 451,
+          "wallClockMs": 25149,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "3d13746cc387ed78f2179952226520d1b3fef51b6cbc0a66bd84909cd14ebf38",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "b5d4151915b292050a9248c28e587bbc3ef78be776c8e06d2d7b9b74934568ae",
+            "responseDigest": "7225636e7b0e5db2e742ebc64980d1d1268452525b40c26df810402fa9e2a6b1",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 3879,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1175,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "5ea881961b301980145f3c233a81a580e35a720b1697ff763284a75c5b48d6cc",
+          "9aaeedc4a050443ef4ccd5b37882f5aaf7d4058a8be5ab654ec3577c5120fd64",
+          "10c6be17e85caa4a63b1f8a5d5577f445dacd5dc0c17bdec174775d12e483c28",
+          "3056602295d31eafd217a5904d92396425f0782400da554deda4ee1000e389d3"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-20",
+        "family": "AIME_2025",
+        "inputDigest": "f00bb644a589baae754fac2b38e565b1c30b5b09bb0305ca0edc16346e571708",
+        "privateOracleDigest": "2d2065d66945fac661a377743645dd8783b2d88e7e4247c9d62b22dc57eecf77",
+        "predictionDigest": "7e6769c6e3ed7ca3e911c6e7dbe9ca6ac54cc6cee092a6b387bb4b39c9f43337",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7661,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 1668,
+          "wallClockMs": 60057,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "51e9c544cd2571a7f5f2cc80f83fe59c8e32b1884a4e286c8b1ac4a470d64f63",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "442d9892e0eaf1d8a04e4ce79f8a2815c8b12c48808be41f8670398c3a47550f",
+            "responseDigest": "b158746db0bbe9f9b8bc8ec3a0de391263f534e98bff1ab80ad091593361e91d",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 23498,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1108,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "641f9febe0ad277342c1a9ec1500856483039678975411cf825e34deda381a9e",
+          "a123c5256766284fa29ade0a58b10262f660f616845a47d9affe0114534686a4",
+          "6bf120b7828d5999b65eefa5bf83d372e9624ae109a22d884fd7517652f784de",
+          "ed7c9965d3fc6dee37892e4171ee8fd348118c9d80c5fa8bf02d0318853e1b70"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-21",
+        "family": "AIME_2025",
+        "inputDigest": "85174b3af7aaf383067b7e477741a53353e256eff2af3763a211c2cec5fcb5e0",
+        "privateOracleDigest": "c31ddc9868808bae83cb0cc3dbbb9717c2f49cca247da73ef72929cd5e753f47",
+        "predictionDigest": "66afc95c22561d3c176725ecbdc8a8cd2c2a1e950481c5b1269ca39346f1b487",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 5722,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 2036,
+          "wallClockMs": 34985,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "9bf613a3ac28f882817ca65f64ee9eb1d81f996e5c15f69a94fff3e3dfcd0880",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "3c60b018ccff0876f2cd534a2b903b1336989630ddc16bc3864a700d7d5ecfe4",
+            "responseDigest": "c739f9ccd3d72ebc53ce34e788372c8579d53a1fa6dedffe99cdb74d5165398f",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 10320,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1159,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "776677f4f21d37db99eefeaef13866cabf9bfaddabda6e9308cee7f81887fb24",
+          "186155d8b22673a652c527301e1a1dd0f07b2fa0c2159d68482237422d20cd7f",
+          "f83493315e1b8b38f7c5ee726340f8d66e459ffc26581ffd9bb9a81aee22cb0c",
+          "64d91a39d2004855b9ba30b5d76727007d2cf85e6670f9dc574e954b0e50e23c"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-22",
+        "family": "AIME_2025",
+        "inputDigest": "384165e343e96826a02feeed8f301bcd6efa0f940a501f37604dddecdacce020",
+        "privateOracleDigest": "489d0c86a2b35ee2040879020f7b9bc7e1c4cfbd2b29910dbd6ecaa55b2db7d9",
+        "predictionDigest": "b11825d20ae06b0e0b1b27089e2984a2c80b6e26c648e30782f24c2aca8ba80a",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 2884,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 341,
+          "wallClockMs": 16845,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "9056cb21d882db07885541ced06c6b8018163cad208abb81f9cd79a083876a37",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "8dc2a2d94809c15c82305530372eb232edabfe7f0ae9550f88f495703df0fd57",
+            "responseDigest": "6407e516532c0491ffd50d19dac5dc8cf85bc494bebffa1306f96c35ff3124dc",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 5000,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1072,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "f64ccb0d93a8b9f956335cde40dca36d4629f79280b21ce9f4b1d3f917f1505d",
+          "fefd439e54b75576b9307922c893b252d613f73f75d6500bca8830d2c71ee970",
+          "8d9e6027f8fd636fef0e59f6e7a5c9a0cdb7cf8448fd51aa6953682c3b2d085a",
+          "5ebbc86e9d852fa1ea396177540ae583a65abd6d466e1af6f245482ecee36f5e"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-23",
+        "family": "AIME_2025",
+        "inputDigest": "71f5968d871db2e9774b2f1bbe0de1ec3d0ea1f66739d3a1acc869afed7770f7",
+        "privateOracleDigest": "f15841a653626bac764d5418d58c297c6043df6bb49b54f4746177023736a0d7",
+        "predictionDigest": "bb686c9ad4a0b8b8e8797773293defbde5cfd5c1805f9621c036eab84791980b",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 3596,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 1057,
+          "wallClockMs": 43846,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "84b958554828be34684fa903aa158e6c74e3cb254d122f6a83860d0a972c0470",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "1bdb7f68c2fbc19d4aa0010ae613a3c24a9d7bf0eede07d7e58b978bb6362b85",
+            "responseDigest": "a7ea54ab6c6b739349a3122d3b7aaea48bc2543862fb25c1babcb84c37201ba3",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 6120,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1184,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "f3d2f363b542bc4e919e88f5ddb8bc90109f1f5d6f23e1af95c530309f224f8c",
+          "bac491e02081f4a56c0829201ddeb0b3d44def75e98c5c094230f72d8ca2fb7a",
+          "6b5f69c1fafbe822313b97590f6aa9ffb9d62f3349ec3140ad740c49cbde3614",
+          "f41aef9b4a7c15c39dcaaab1dba9eedffd9e8e18690cc3df7ec4ccbb292b84fc"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-24",
+        "family": "AIME_2025",
+        "inputDigest": "d83fc8d768afd675d31c5006d707bbb9885cd7ef63f82b690d7261c7b8c3477d",
+        "privateOracleDigest": "3392a29a04bbb2690c27f1fc479556e7521b701d6c8921bbe4d4e8d684058779",
+        "predictionDigest": "df6d2e5e299acd1d27d69c1be6dae92f784013ac70ed25c377d8de0aef41d693",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7032,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 252,
+          "wallClockMs": 47468,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "2a85e2f3066422e4bf6c469854397c60d1556c2042874788f005ac1b0636bdd7",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "b4d4e8a56372ba9f71be971129d43b840926583ad17b773a83f686b151da1c5e",
+            "responseDigest": "ec5f6d4c4a1e8adc0e1fceab2f0fb624deebab4f77a77424f3513b0d5028c7fd",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 17107,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1076,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "8eafa2cf1f3bfa3ddd1c321cdee1dfb117db06cfc521688522657c445db4e013",
+          "f9a6a62640b2ed9ff7e876bdd5b714affca4f2d8146464190a5431c3539b0717",
+          "2f9c5f269f4c25d7d5263e4b80b5ba75418f5d3c004f96a7f958c11295951ddd",
+          "da9afa2e2b735754bd0678bb1561c718d0a3b797c584123ecbc3617e2e245888"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-25",
+        "family": "AIME_2025",
+        "inputDigest": "e11a0b66397a7f0701ed54ca79bee01b85f2e953451eb0365191ed96b2062e3b",
+        "privateOracleDigest": "060ee576f9a88170c27164c1daff77244aa0dc61adc6b7eade20dc116c11fa36",
+        "predictionDigest": "5d2c215fa1c786d652f7312728b1f9da74a1a39e82eb5aed453b3b011c3ec4b8",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 4424,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 287,
+          "wallClockMs": 29289,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "771e5afce886d6178c3126fec9815a29867d9ea43fafa4fdd6d851adaa7c29df",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "7d128155379a5ec348fca9789925339e0ef2152ec42743f6847213a10fedc329",
+            "responseDigest": "274fe98cd773c2470b44dc6bfbdbac271b44c5f9ad0fc67cb8de41cbf08b2429",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 11638,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1124,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "6a5819f892202671bff89e734973def9a62da8ef2ab5136d155d9f0d0a1acce7",
+          "f78befe107a1fcaa9283922a38e609020662fff04f5f3a55195136f747f72df0",
+          "bde4edfaf368c579f96e57cfaca2a1d8e77807809d16ec77853d88c3518c5862",
+          "71ccdb3c3a5f336d3da0d97a33f796c798618dc64c7727631945380020b36448"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-26",
+        "family": "AIME_2025",
+        "inputDigest": "f40a4c42030272c83c4a09f6e5bf3fe0da5cb0c93b0ed55f3d90d5705ccd7a70",
+        "privateOracleDigest": "418bc4ae668cfd8afac8320ea4352a98f6ed5b5b747531e4e2e4b7fb2ebb44c4",
+        "predictionDigest": "d125304082531766469b933f9c70f27efc592819b7bb82b6d7f22314da81c984",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 4461,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 223,
+          "wallClockMs": 35209,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "1cc8bfb09e994631af0dab396560e2cc7d9d2cff13c1cb7f4c7e540958411426",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "105933869c453c318694a89fdaefae3f3a7785b1ef02e656ecfc7d25c0e22164",
+            "responseDigest": "4e968836a7951a2b494c1aac001217a5f14cb0456f25db5ddf567374362dc60e",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 11449,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1204,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "477597651ee0af0095d2635caf5ab2fbcafa30c538567cf219fdcc6d5119dffe",
+          "9d496a9b24698b1bb90552f6ce2cdd9214b5aba8813ec1e49a80c483a8ac62fc",
+          "765689d2341a454276e4dee5a6c53d72e66d14f6dda3bf2e8910d042dce8d9c4",
+          "99823ef8c205414cbba3510779885e672b63b7965a786d839a656c035279dd10"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-27",
+        "family": "AIME_2025",
+        "inputDigest": "3fb5ff17c8ac6d0b398e95227b316f448d00caadd77dfc22464713872e592934",
+        "privateOracleDigest": "49f65dc5d4333e3ed1ba4c9bbea03134a985509541efa8a4955542d50dea45f0",
+        "predictionDigest": "02f31f4753feaeb497df7880fca98a6458be9701314c5fe7831c2d3e26844bcd",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 3980,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 686,
+          "wallClockMs": 25328,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "35567610ef3b6a41adf4796f769dedb1830d9b0007194f27eafddcb6de0d3761",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "12a5009c7e7fea77c6cde808c1cc9213f398cc8a0fa0154291d37c12eb93f9e4",
+            "responseDigest": "454fea4cc95158fd025a403428839500c6afed81361d1effc20a227f2d2ad2c7",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 6373,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1198,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "e13f9b9ad9442b9ac6a0d5457a49fb65b797e46f995c486c457df63538296008",
+          "741c42704a4b796657ce801229bca89c14bfc3298748016062c630b2a9a6676f",
+          "87fc93f46cf0481da4d8483bae842a93915ee81faa05bc5a32cde15d6a0b3abf",
+          "fb8b6254563e2b85723e5067fe4eb8bca6b3cbc586de4b57f4b05002ac10235b"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-28",
+        "family": "AIME_2025",
+        "inputDigest": "86f3e6ddde6428104491603f4e6fdf419a95f459a1242c64bef02b873b162a1d",
+        "privateOracleDigest": "7979226e1dfe00c9835ec02fe93e688319dc22092b2436c78110e1e4793854cd",
+        "predictionDigest": "ed9bcb74256fbafe86dabfc28fcdb77d01148268e2259f0b88d47a4c876a2aef",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7085,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 380,
+          "wallClockMs": 45516,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "9f7bf8bf3bbb43d15e193cd0057f2f3baa6d1601bcdec076237542aa3086b6d0",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "2bcba4bad9cba0ae44a44e49c1f191fd72d61caeccdc4cc93d87b6cb390ca074",
+            "responseDigest": "f22116600904fe23c80ae2c228bc7d802235ebe802dd3c354faf4c068c89c972",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 12351,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1201,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "ed9c5f5329c47ead15edd0b5d9be189e064a11ba36278c62e34c792417ddd2e8",
+          "b57d6934795c22b52bfa321adee4b9820818ef872156c2a9e22b0c328c915f9a",
+          "105e54fb5c08a61171a6c9b0ea7329e45279f457a09743103cb55e691c0e411c",
+          "d8cf7f490fc204ff74f06c22bd15e56952e10821254dc473489f18efea348dbd"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-29",
+        "family": "AIME_2025",
+        "inputDigest": "5218ba3cfb104b828982ce74e09b81a4ff4572cf5efe1df1c167219cf84b2641",
+        "privateOracleDigest": "02d2613e1de52fcb8e01c844f95d30216f9059d529146e617377630f60bf2f36",
+        "predictionDigest": "be3ad8aaec51c513f79668a1730d4f9b9963015e3ab322ceee7a6ffb1242bb1a",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7040,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 319,
+          "wallClockMs": 47934,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "5dbdb23d969926de2f03c874678bb4ed2f402afe8336cd882c64d5da8c7032bc",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "cc3951e663bf1b89d68a0d7caff092f15e50719a93f55e36e903165978507dfa",
+            "responseDigest": "a07dde3956c58c252c669d98b57064557107d6ebf54c6e02040f808781256ca3",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 15156,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 1049,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "61c8d4f14e9101eea286bdd7a6cda174ae9035b1d7a5da01f52e10534b216eca",
+          "e1cbc5c9e95486569c17f23805cfa7d177c181d8556e67b6d0a4a4e4718d2050",
+          "9e6eb27dd01c3a47c6d627e40add5d107a06a80f751669edae5ce4c8123a1004",
+          "e33b8b2c312f324fe5f5f6dd8c8b2de6da7ea4b859ae463fe3b0d85a945027d8"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      },
+      {
+        "taskId": "AIME-2025-30",
+        "family": "AIME_2025",
+        "inputDigest": "12457caaa7ab760ff87f3e878780eb9a0dd496c90035e34d66a468ae12a1a13a",
+        "privateOracleDigest": "f2d46e44a6c393926dcc0a7e4b75badde76a2d4168279e9ed9dccb40959d2080",
+        "predictionDigest": "10039d02074b98fa6e84868cf90a3ef9a119efddda08abbb8caebf7320d355be",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7021,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 307,
+          "wallClockMs": 51565,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "a8af14c502d351ccbbf1a5b90de24daee5f79901fef407f843dbdd3b753d2bdb",
+            "responseDigest": "5c635c98283484db37c806e8a2300be92a5162ee9a5adb6204f773aa0a2a9b52",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "0d8f797d973aebb3ef363a15b21c586a702c53735283ab3cce3a7f04567f93fe",
+            "responseDigest": "7d07cc114dc3d6a4efb22854878008bdc5c7a794eadc9dab36b5d2a31f322c1b",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 16118,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventDigests": [
+          "23efeb8059b2727772f9b17abcb011c9538138a91fad0c5036e5d018ee0c8b4a",
+          "177f810eb967a35261c5b85a67495290e61b762077ff894836675456e7da4b4d",
+          "9565dc304829eb36ab83261e147f094b53698a3ba29668a9d6897d1141b57165",
+          "815e57cd8da7f35c775349280d8bd31d02b666430f52632dc41d535ac9c2ff81"
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "recoveryProfile": "BOUNDED_RECOVERY",
+        "requestRejections": []
+      }
+    ],
+    "blocked": [],
+    "families": [
+      {
+        "family": "AIME_2025",
+        "selected": 30,
+        "executed": 30,
+        "correct": 16,
+        "graded": 30,
+        "blockedByCapability": 0,
+        "notExecuted": 0,
+        "fullPopulation": 30,
+        "fullBenchmarkScoreClaim": true
+      },
+      {
+        "family": "BBEH_MINI",
+        "selected": 0,
+        "executed": 0,
+        "correct": 0,
+        "graded": 0,
+        "blockedByCapability": 0,
+        "notExecuted": 0,
+        "fullPopulation": 460,
+        "fullBenchmarkScoreClaim": false
+      }
+    ],
+    "capabilityGaps": [
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-7-f21bd20d5c22d390",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "e1cbc992ff4b402435e1109a063bc45ecbd7445075c7f8ad69615c32402fcc8f",
+        "failureEvidenceDigest": "f21bd20d5c22d3906ecf2c299100d7d548fbbe467758a24a20c3cd331a75caef",
+        "benchmarkInputDigest": "f07f821102338fde299f3b236cdf71097887cd58dc88eda7d5f8d06613f6caf8",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "5f5e9e4bf282a8a8b8ee09ac730da66be0ef71c4def91b5f8aa9bd09f12038dc"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-9-d265aa9cdd134b19",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "5076c5614643e1ebeaacd6a5b898071b4a396b980e183b80d763946f0c4e6c2e",
+        "failureEvidenceDigest": "d265aa9cdd134b192d99862f513d2368e5323a423ddccd310eed8636c0a2e190",
+        "benchmarkInputDigest": "dbc7794c818c4465a89f1b8cdb130ae4e540945d10b02151b32d5fdd9e92fd85",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "e04b916e94725c2845a90e3aaa167710a17d23c06a398597ce155f4238fdc317"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-10-c5f7e1ab76b32ee3",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "8134b80b5b36ae613855b4c12b073037d4ceec18267efa54a8ad946965e373da",
+        "failureEvidenceDigest": "c5f7e1ab76b32ee394f033947fe74678d2648b819215a766477cc8c3961d6023",
+        "benchmarkInputDigest": "f8a86c014b9113ee19e05e1250f4f708cab2de0d3c313d5b45779b6f7920e626",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "9229cce3b96aaf45f51c9d21227dbedf2cc2e18c24f9b5e78240fac3f154af35"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-11-644ee1a5aee22ffd",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "23a9e5acca26050fd096f0dc464e90e8bf4229da5978e1a31dedf3c41ed26f8f",
+        "failureEvidenceDigest": "644ee1a5aee22ffdd4110d4ea1ff63584b12567f3da4dacf4d0af8b66edc3b90",
+        "benchmarkInputDigest": "6749b034a65d9a4680b53e9477ed090734e52f23e66b5dc7e9d6e1e4d32f44ac",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "da07da9c4250ee0326e5b04d206f33d741274e717d1e07435bd38c385bf0f1f7"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-12-098fbe2d83ad55f0",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "0d5506664466186ce54caa37053a698efa1745c329b42785dc29ff224200425a",
+        "failureEvidenceDigest": "098fbe2d83ad55f02246f4b5f03d9009aedbd5eb32d61cde54374170bab48618",
+        "benchmarkInputDigest": "3f77db7ff23a5b035bf3442b005a6f5c03968f5c11b714aae3a7d2e6730e5b05",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "03d7c005a280e78147bb04f54f25cf2a8263963f661b93361d62ac63095198e8"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-13-87b580a8b08dd66e",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "3252769377628a9f3182f7f12945e4164f25ba3ca47ad3c3350a21c954bb2811",
+        "failureEvidenceDigest": "87b580a8b08dd66ebfce78d00c4b2bb6f356da9e4dc7d1c4b318802551e82016",
+        "benchmarkInputDigest": "01043d3d8b1c5d293421c1f453244d8134478ddcfdda263ab64d7943193c6e7f",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "225d495fee44195666e80670e20204991e7b6dafc60d62041cb2914eb8282297"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-14-840f4bbe3c8a8570",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "c52065ce6f3bb2c24d85eb4a72b1af535d69e37ae603f9e3701cf29fa43d98dd",
+        "failureEvidenceDigest": "840f4bbe3c8a8570156449fea401d57f241755ce0a49c95b9a18464663d3a107",
+        "benchmarkInputDigest": "ccbcca45aa6d9ef519017ed84a267b0a1258b0e18bde2c633249ec38245b199b",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "a79e3e5216b65140282a2cb67ecc95768c6608bc64e8657cb27dcd2ad24f0637"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-15-cf4bfbc6c8fa0e1f",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "dbf952c643f1d344131bf55f7ea4793c62a3570eddcacd96c457fd36f7bc5c58",
+        "failureEvidenceDigest": "cf4bfbc6c8fa0e1f068a5294316adeb110f469e6b71b78901eb0b4ad4072d58e",
+        "benchmarkInputDigest": "89c3a716f009c352d503fa5123afd3bebcb808df6c42ed0ae63080fb2a38ef0c",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "ea74c7138eb65f02e1e53c78ea8dc15ffd3ff4ee4d064c1c242184f310471641"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-20-e238ccd72336f824",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "132cbd09bbc29bb73dc10243c45a7c83a80133b6c003b48d8ac61cb533599156",
+        "failureEvidenceDigest": "e238ccd72336f824f0b7ffe085c03a6e47e018743fe4883d911892f81bf4ac22",
+        "benchmarkInputDigest": "f00bb644a589baae754fac2b38e565b1c30b5b09bb0305ca0edc16346e571708",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "bfef75f48a2167ee45ea4c785ca0c292141adef411998d478717b4e65f3ed4cf"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-23-e72a306ebb213e6f",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "d8c47723dd8ec3d0ac87019f59c3be134c07506829ec04a355ef7cae4bfce9e9",
+        "failureEvidenceDigest": "e72a306ebb213e6f4edc9076c1adc0cc3f9a3e81c6f57c3e6c08ec80dda5ce14",
+        "benchmarkInputDigest": "71f5968d871db2e9774b2f1bbe0de1ec3d0ea1f66739d3a1acc869afed7770f7",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "41b4960685a5c2e82d0bb698dbdfa75467f1e61ccd8f884102d2b3d89b3f3d4f"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-24-553d6997f81ffbe7",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "2487f5ffff117bef69f1253c8fc66d7ad3da0d4d4d2c963f84d6d8b83ab2b1d2",
+        "failureEvidenceDigest": "553d6997f81ffbe72a94dba302fea8840fbb833780746641fa7b56f5b4dc0f83",
+        "benchmarkInputDigest": "d83fc8d768afd675d31c5006d707bbb9885cd7ef63f82b690d7261c7b8c3477d",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "71d34ffea37b96fc748352154d1497333c31d5afa3e20e847e22e2c9072539f6"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-28-e42e77c44583aa78",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "6a56a1dbd348536ef85cea06c74d4458c1a30c5c8e49862c874c2b792e17d5d0",
+        "failureEvidenceDigest": "e42e77c44583aa788b0a1f99f4661375daedf83eb91005cd54678a9859af7c1b",
+        "benchmarkInputDigest": "86f3e6ddde6428104491603f4e6fdf419a95f459a1242c64bef02b873b162a1d",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "f7cca64e8ba2653baccf982d4867739c8f69401719dcec42aa21bb605fea9a52"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-29-b658ff06e67de890",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "61b2108b4d5b76befd6eea621ca4b41de45e61858bc97db704118f1d6bda2262",
+        "failureEvidenceDigest": "b658ff06e67de890a3d5fa15c00765cbf1b9c4392dd05919839679ba72b3cbf0",
+        "benchmarkInputDigest": "5218ba3cfb104b828982ce74e09b81a4ff4572cf5efe1df1c167219cf84b2641",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "9ab3ff1065279caea6ff36473b8d74f947aa15b823a6becb98c144f36a3ba7fe"
+      },
+      {
+        "schemaVersion": 1,
+        "gapId": "TEXT-AIME-2025-30-06cb3d50e8cad818",
+        "failureClass": "FUNCTIONAL_FAILURE",
+        "capabilityClass": "TEXT_REASONING_FAILURE",
+        "benchmarkTaskDigest": "8ab74ac4e9662972698bf099489445115a07c304656e18636b27f72912630fa4",
+        "failureEvidenceDigest": "06cb3d50e8cad818bf243a40528f016405003858f56866472b2242bd40baa6c3",
+        "benchmarkInputDigest": "12457caaa7ab760ff87f3e878780eb9a0dd496c90035e34d66a468ae12a1a13a",
+        "steps": [],
+        "grantsAuthority": false,
+        "benchmarkReevaluationEligible": false,
+        "status": "OBSERVED",
+        "corpusCoverage": "PARTIAL_JUST_IN_TIME",
+        "custody": "CALLER_ATTESTED_NOT_AUTHENTICATED",
+        "semanticIndependenceProvedByDigests": false,
+        "recordDigest": "ec225f4443064feebdafd293e794dc7418e5b7750cf63005c019155b1fbedfaf"
+      }
+    ],
+    "pairedDevelopmentResults": [],
+    "pairedTransferResults": [],
+    "pairedTimeoutResults": [],
+    "pairedRecoveryResults": [],
+    "sourceUnchanged": true,
+    "authorityDelta": "NONE",
+    "repairAttempts": 0,
+    "firstAttemptOnly": true,
+    "broadPromotion": false,
+    "calibration": "NOT_SUPPORTED_BY_CURRENT_REPLY_PROTOCOL",
+    "stopReason": "SELECTION_EXHAUSTED",
+    "contamination": "PUBLIC_DATA_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"
+  },
+  "totals": {
+    "selected": 30,
+    "attempted": 30,
+    "graded": 30,
+    "correct": 16,
+    "wrongWellFormedIntegers": 14,
+    "answerFormatFailures": 0,
+    "truncations": 0,
+    "providerFailureTasks": 0,
+    "schemaFailureTasks": 0,
+    "authorizationFailureTasks": 0,
+    "ungraded": 0,
+    "unexecuted": 0,
+    "accuracyPercent": 53.333333333333336,
+    "usage": {
+      "logicalCalls": 60,
+      "physicalCalls": 60,
+      "httpAttempts": 60,
+      "reportedTokens": 149324,
+      "unknownUsageCalls": 0,
+      "toolCalls": 30,
+      "toolWorkUnits": 17152,
+      "wallClockMs": 1032292,
+      "providerFailures": 0,
+      "retries": 0
+    }
+  },
+  "interpretation": {
+    "inference": "E4_LIVE_NVIDIA",
+    "grading": "E3_CUSTOM_EXACT_FINAL_INTEGER_NOT_MATHARENA_INFERENCE_HARNESS",
+    "firstAttemptOnly": true,
+    "repairAttempts": 0,
+    "sourceUnchanged": true,
+    "completeCampaign": true,
+    "broadCognitivePromotion": false,
+    "modelWeightsRevision": "NOT_DISCLOSED_BY_PROVIDER",
+    "conclusion": "Complete AIME measurement and improved delivered/graded coverage. Correct count unchanged from the earlier 16-correct campaign; no measured accuracy gain. Wrong final integers now reach the oracle instead of being masked by transport/schema/truncation.",
+    "contamination": "PUBLIC_DATA_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"
+  },
+  "comparison": {
+    "previousCandidate": "1c0bc4f8e798364974429bcc7bb364db796493ef",
+    "previousReceipt": "docs/omega/evidence/nyx-super-corrected-aime-1c0bc4f8.json",
+    "samePopulationDigest": true,
+    "selectionDigestEqual": false,
+    "selectionDifference": "Inference configuration changed; tasks and positional identities preserved.",
+    "previous": {
+      "attempted": 30,
+      "correct": 16,
+      "wrongIntegers": 2,
+      "answerFormatFailures": 1,
+      "ungradedTruncations": 10,
+      "ungradedProviderTimeouts": 1,
+      "reportedTokens": 165079,
+      "unknownUsageCalls": 1
+    },
+    "current": {
+      "attempted": 30,
+      "correct": 16,
+      "wrongIntegers": 14,
+      "answerFormatFailures": 0,
+      "ungradedTruncations": 0,
+      "ungradedProviderTimeouts": 0,
+      "reportedTokens": 149324,
+      "unknownUsageCalls": 0
+    },
+    "pairedTransitions": {
+      "PASS_TO_PASS": 13,
+      "REASONING_FAILURE_TO_PASS": 1,
+      "TRUNCATION_TO_PASS": 1,
+      "TRUNCATION_TO_REASONING_FAILURE": 9,
+      "REASONING_FAILURE_TO_REASONING_FAILURE": 1,
+      "PASS_TO_REASONING_FAILURE": 3,
+      "ANSWER_FORMAT_FAILURE_TO_PASS": 1,
+      "PROVIDER_FAILURE_TO_REASONING_FAILURE": 1
+    },
+    "causalGainEstablished": false,
+    "matchedRealizedComputeClaim": false,
+    "limitations": [
+      "Historical comparison, not randomized repeated paired trial.",
+      "Previous physical-call usage has an unknown-usage observation.",
+      "Public rerun is not fresh blind generalization."
+    ]
+  },
+  "bbeh": {
+    "state": "SKIPPED",
+    "jobId": 112994185606,
+    "automaticRestart": false,
+    "completionWatch": "PAUSED"
+  },
+  "planCoverage": {
+    "direct": [
+      "Strict outcome separation",
+      "Complete public benchmark execution",
+      "Reality over prediction",
+      "No self-certification"
+    ],
+    "supporting": [
+      "Finite leases",
+      "Reference custody",
+      "Honest realized compute",
+      "Source integrity"
+    ],
+    "deferred": [
+      "Reasoning-layer promotion",
+      "Separate development fixes followed by fresh evaluation",
+      "Protected benchmark access"
+    ],
+    "conflicts": [],
+    "coverage": "PARTIAL / JUST-IN-TIME"
+  }
+}

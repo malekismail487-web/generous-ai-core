@@ -802,3 +802,26 @@ Local verification: 108 suites / 11,141 checks passed, five synthetic Python
 projection tests passed, and TypeScript 5.8.3 remains zero. These verify the adapter
 and preserved boundaries, not NYX reasoning performance. GPQA must actually
 finish and be independently graded before a result is claimed.
+
+### Full AIME phase-control campaign completed
+
+Run `37678057740`, candidate `7d69a2ce877a03c6c01a941958f7ba2cd8f3c189`,
+completed all 30 selected first attempts: **16 correct / 30 graded (53.33%)**,
+14 well-formed wrong integers, zero truncations, zero provider-failure tasks,
+zero schema/answer-format failures and no unexecuted tasks. It used 60 logical/
+physical calls, 149,324 reported tokens, zero unknown-usage calls, no retries and
+1,032,420ms campaign time. Source integrity and disposable cleanup passed.
+The artifact SHA256 and all 30 terminal rows were reconciled with the final
+report and progress checkpoint; see the [full sanitized receipt](../../../docs/omega/evidence/nyx-super-full-aime-phase-7d69a2ce.json).
+
+This is a usable complete measurement, **not a measured accuracy improvement**:
+the previous campaign also had 16 correct, but 11 ungraded deliveries. Thirteen
+old passes repeated, three became wrong, and three old non-passes became correct.
+The task population is unchanged; this public rerun is not fresh blind transfer
+or a randomized matched-realized-compute comparison. Remaining wrong answers
+are not reclassified as transport faults. BBEH was skipped, as requested.
+
+Full GPQA run `37680476853` is a separate frozen 198-task campaign at candidate
+`da4bb54650aa30971c51c471a263b52aed578ab4`; no final result is available yet.
+Both one-shot push triggers are retired after their single dispatch, preserving
+manual execution without replay on later evidence commits.

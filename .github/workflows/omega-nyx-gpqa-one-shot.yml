@@ -1,9 +1,6 @@
 name: Omega NYX full GPQA Diamond evaluation
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-gpqa-one-shot.yml]
 permissions:
   contents: read
 # Share the existing live campaign slot: never compete with the active AIME run
