@@ -4,6 +4,7 @@ import {
   NvidiaNimProvider,
   nvidiaNimCredentialFromEnvironment,
   type NvidiaNimCompletionRequest,
+  type NvidiaNimEvidence,
   type NvidiaNimTransport,
   type NvidiaNimCapacityProgress,
 } from "../src/lib/codelab/model/nvidiaNimProvider";

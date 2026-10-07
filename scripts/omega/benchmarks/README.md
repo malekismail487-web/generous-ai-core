@@ -475,6 +475,7 @@ All three physical calls have unknown token usage. Recovery dispatch is verified
 but improved live delivery, matched compute, reasoning improvement and a benchmark
 score are not established. The outage circuit remains intact and automatic replay
 is removed. Another unchanged retry is not a correction for sustained unavailability.
+
 ### Native request isolation after bounded-recovery evaluation
 
 The `c3919bca` contract run is preserved losslessly in
@@ -492,3 +493,12 @@ It permits at most three physical requests, one per arm, under finite original
 deadlines, stops on an outage, retains failures, and exits nonzero if any arm is
 missing or unsuccessful. No parser, acceptance oracle, production default or
 authority changes. This isolates configuration acceptance, not reasoning quality.
+
+That focused run at `928e1691` (37631839599) stopped on its first physical request:
+HTTP 503, zero returned answers, unknown token usage, two configurations unexecuted.
+The artifact and terminal report agree byte-for-byte after archive hash validation;
+the receipt is `docs/omega/evidence/nyx-native-compatibility-928e1691.json`.
+It neither resolves the earlier HTTP 400 cause nor establishes a reasoning failure.
+Automatic replay is disabled. Further live configuration isolation and benchmark
+evaluation require stable authorized NVIDIA serving; no new key requirement, quota
+cause, successful recovery or cognitive advantage is inferred from these responses.

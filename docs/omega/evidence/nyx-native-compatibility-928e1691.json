@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-NATIVE-COMPATIBILITY-928E1691-RECEIPT",
+  "source": {
+    "candidate": "928e16916291262eb3d9ec3cf888cebea8bdeb41",
+    "runId": 37631839599,
+    "jobId": 112827830204,
+    "artifactId": 11487420541,
+    "archiveSha256": "8051a07c8a0d71ea11653b7587627b145cd3a6e637ac38122692a4918011ac49",
+    "archiveVerified": true,
+    "originalReportReconciledWithJobLog": true,
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/37631839599"
+  },
+  "originalReport": {
+    "schemaVersion": 1,
+    "candidateCommit": "928e16916291262eb3d9ec3cf888cebea8bdeb41",
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "records": [
+      {
+        "variant": "HOSTED_NATIVE_BUDGET",
+        "decision": "BLOCKED",
+        "reason": "nvidia_http_attempt_budget_exhausted",
+        "evidence": {
+          "evidenceId": "NVIDIA-NIM-1ba1643520f6ca313c797fc4afb31ee4",
+          "evidenceClass": "E4",
+          "providerId": "NVIDIA-NIM-REQUEST-COMPATIBILITY",
+          "endpointOrigin": "https://integrate.api.nvidia.com",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "requestDigest": "1ba1643520f6ca313c797fc4afb31ee482f132e2009c9b5a1375c592ce8f1071",
+          "responseDigest": null,
+          "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+          "credentialPersisted": false,
+          "promptPersisted": false,
+          "networkAttempted": true,
+          "statusCode": 503,
+          "failureCategory": null,
+          "retryability": "NO",
+          "providerRequestId": null,
+          "finishReason": null,
+          "usage": {
+            "promptTokens": null,
+            "completionTokens": null,
+            "totalTokens": null
+          },
+          "reasoningOutputBytes": null,
+          "contentShape": null,
+          "delivery": {
+            "policy": "nvidia-capacity/1",
+            "requestsPerMinute": 40,
+            "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+            "httpAttempts": 1,
+            "rateLimitedResponses": 0,
+            "transientUnavailableResponses": 1,
+            "timedOutAttempts": 0,
+            "capacityWaitMs": 0,
+            "state": "STOPPED",
+            "notBeforeEpochMs": null,
+            "authorityRenewed": false,
+            "httpAttemptBudget": {
+              "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+              "limit": 1,
+              "dispatched": 1,
+              "remainingAttempts": 0,
+              "exhausted": true,
+              "dispatchDenied": true,
+              "renewed": false
+            }
+          }
+        },
+        "requestRejections": [],
+        "exactSyntheticAnswer": false,
+        "elapsedMs": 381,
+        "grantsAuthority": false
+      }
+    ],
+    "maximumModelCalls": 3,
+    "maxOutputTokensPerCall": 8192,
+    "authorityIncrease": false,
+    "rawContentPersisted": false,
+    "capabilityPromotion": false,
+    "compatibilityProfile": "HOSTED_NATIVE_ISOLATION",
+    "physicalAttemptLimitPerArm": 1,
+    "scope": "CONFIGURATION_DIAGNOSIS_NOT_TASK_SUCCESS"
+  },
+  "interpretation": {
+    "state": "BLOCKED_EXTERNAL",
+    "reason": "NVIDIA_HTTP_503_BEFORE_CONFIGURATION_COMPARISON",
+    "selectedConfigurations": 3,
+    "executedConfigurations": 1,
+    "unexecutedConfigurations": 2,
+    "physicalRequests": 1,
+    "unknownUsageCalls": 1,
+    "independentlyGradedTasks": 0,
+    "previousHTTP400RootCause": "UNRESOLVED_DIAGNOSTIC_BLOCKED_BY_503",
+    "newCredentialRequired": "NOT_ESTABLISHED",
+    "rateLimitCause": "NOT_ESTABLISHED",
+    "configurationPromotion": false,
+    "cognitivePromotion": false,
+    "fullBenchmarkScore": false,
+    "automaticReplay": false,
+    "authorityIncrease": false,
+    "planCoverage": {
+      "status": "PARTIAL / JUST-IN-TIME",
+      "direct": [
+        "CONFIGURATION_IS_NOT_CAPABILITY",
+        "TRANSPORT_FAILURE_IS_NOT_REASONING_FAILURE",
+        "FINITE_DIAGNOSIS",
+        "HONEST_COMPUTE_ACCOUNTING"
+      ],
+      "supporting": [
+        "FIXED_ENDPOINT",
+        "STRICT_LOCAL_AUTHORIZATION"
+      ],
+      "deferred": [
+        "MODEL_CONFIGURATION_PROMOTION",
+        "FULL_BENCHMARK_EVALUATION"
+      ],
+      "conflicts": []
+    }
+  }
+}

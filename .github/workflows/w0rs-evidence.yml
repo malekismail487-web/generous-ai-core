@@ -36,6 +36,8 @@ jobs:
           node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext
           --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck
           scripts/omegaNvidiaNimProvider.test.ts scripts/omegaResearchParty.test.ts
+          scripts/omegaNyxTextBenchmark.test.ts scripts/omega/nvidia-nim-live-smoke.ts
+          scripts/omega/nyx-text-benchmark-epoch.ts
           scripts/omegaResearchExecutableTransfer.test.ts scripts/omegaNyxAdmissionGuidance.test.ts
           scripts/omegaNyxChatCli.test.ts scripts/omegaNyxLocalWebConsole.test.ts
           scripts/omegaLuminaLiveBoundary.test.ts
