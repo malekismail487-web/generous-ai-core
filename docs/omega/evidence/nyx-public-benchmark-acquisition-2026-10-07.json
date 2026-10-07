@@ -57,6 +57,37 @@
       "fablePublishedOSWorld20Equivalent": false
     },
     {
+      "benchmark": "OSWorld 2.0 August 2026 source",
+      "repository": "https://github.com/xlang-ai/OSWorld-V2",
+      "release": "v2026.08.08",
+      "path": "osworld-2.0-20260808",
+      "commit": "d578d2d4e0dc82b43e270fdaa7fa89d9708cd154",
+      "tree": "2c8d3b74876f44a050c94103a10e54ca68c1ef22",
+      "cleanCheckout": true,
+      "status": "TAGGED_HARNESS_SOURCE_ACQUIRED_NOT_EXECUTED",
+      "blocker": "Full task/assets equivalence and approved isolated desktop VM environment remain unverified; no live-account or user-desktop authority granted.",
+      "separateFromOSWorld21": true,
+      "questionsAndSolutionsInspected": false
+    },
+    {
+      "benchmark": "DeepSWE public source",
+      "repository": "https://github.com/datacurve-ai/deep-swe",
+      "path": "deep-swe",
+      "commit": "0b9fabbb63b9104d678fe965e1632f2dd9eaa2ea",
+      "tree": "ac0b50d102a97f07f962354a6a67e22d09d83a79",
+      "cleanCheckout": true,
+      "taskManifests": 113,
+      "manifestsWithVerifierCollection": 113,
+      "manifestDigest": "aa6deaf290d9066edb546fc24eb41f491bed6fd83294d24f77f51dbd212c55fd",
+      "manifestDigestDefinition": "SHA256 of compact Python JSON of path/sha256 objects sorted by task.toml path; hashes raw checked-out bytes.",
+      "declaredAgentTimeoutSeconds": 10800,
+      "declaredEnvironment": {"cpus": 2, "memoryMiB": 8192, "storageMiB": 20480},
+      "status": "PINNED_SOURCE_ACQUIRED_NOT_EXECUTED",
+      "releaseImageDigestEquivalenceVerified": false,
+      "blocker": "Approved quota-enforcing isolated containers, separate pristine verifier environment and admitted NYX tool bridge are unavailable.",
+      "questionsAndSolutionsInspected": false
+    },
+    {
       "benchmark": "Chartography",
       "repository": "https://github.com/surge-ai/chartography",
       "path": "chartography",
