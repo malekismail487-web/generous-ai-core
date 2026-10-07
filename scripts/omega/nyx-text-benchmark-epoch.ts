@@ -9,7 +9,7 @@ import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextResult,
   TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
-  textWholePopulation, textPopulationIsFullyGraded, textDeliveryBlocked, textTimeoutTransferSelection, compareTextTimeoutPair, textBoundedTaskRequest,
+  textFullFamilySelection, textPopulationIsFullyGraded, textDeliveryBlocked, textTimeoutTransferSelection, compareTextTimeoutPair, textBoundedTaskRequest,
   type TextInferenceConfiguration, type TextTimeoutProfile, type PrivateTextTask } from "./benchmarks/nyxTextBenchmark";
 import { R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
 
@@ -21,7 +21,7 @@ export async function runTextBenchmarkEpoch() {
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") || git("status", "--porcelain"))
     throw Error("text_epoch_requires_clean_candidate");
   const mode = process.env.NYX_TEXT_EPOCH_MODE || "SMOKE";
-  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "HOSTED_DIAGNOSTIC", "ACTION_SCHEMA", "FULL", "FULL_AIME"].includes(mode)) throw Error("text_epoch_mode_invalid");
+  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "HOSTED_DIAGNOSTIC", "ACTION_SCHEMA", "FULL", "FULL_AIME", "FULL_BBEH"].includes(mode)) throw Error("text_epoch_mode_invalid");
   const configuration = process.env.NYX_TEXT_CONFIGURATION || "EXISTING_DEFAULT";
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
   const delivery = process.env.NYX_TEXT_DELIVERY || "DIRECT";
@@ -68,13 +68,13 @@ export async function runTextBenchmarkEpoch() {
     : mode === "DIAGNOSTIC" ? TEXT_DELIVERY_DIAGNOSTICS.flatMap((task, index) =>
     [...(index ? [...TEXT_DIAGNOSTIC_CONFIGURATIONS].reverse() : TEXT_DIAGNOSTIC_CONFIGURATIONS)].map(variant =>
       ({...task, taskId: `${task.taskId}-${variant}`, configuration: variant})))
-    : (mode === "FULL_AIME" ? textWholePopulation(tasks, "AIME_2025")
+    : (mode === "FULL_AIME" || mode === "FULL_BBEH" ? textFullFamilySelection(tasks, mode)
       : ["SMOKE", "FRESH", "TRANSFER"].includes(mode) ? [...tasks.filter(t => t.family === "AIME_2025").slice(mode === "TRANSFER" ? 4 : mode === "FRESH" ? 2 : 0, mode === "TRANSFER" ? 6 : mode === "FRESH" ? 4 : 2),
       ...tasks.filter(t => t.family === "BBEH_MINI").slice(mode === "TRANSFER" ? 4 : mode === "FRESH" ? 2 : 0, mode === "TRANSFER" ? 6 : mode === "FRESH" ? 4 : 2)] : tasks)
       .map(task => ({...task, configuration: configuration as TextInferenceConfiguration}));
   const before = git("ls-files", "-s"); const began = Date.now();
   const deadline = began + (mode === "FULL_AIME" ? 30 * TEXT_BENCHMARK_POLICY.maxTaskMs + 60000
-    : mode === "FULL" ? 19000000 : mode === "DIAGNOSTIC" ? 1200000 : 900000);
+    : mode === "FULL" || mode === "FULL_BBEH" ? 19000000 : mode === "DIAGNOSTIC" ? 1200000 : 900000);
   const requestRejections: (ReturnType<typeof textRejectionHint> & {status: number})[] = [];
   const makeProvider = (profile: TextTimeoutProfile) => NvidiaNimProvider.create({providerId: `NYX-ACTUAL-TEXT-BENCHMARK-${profile}`,
     model: TEXT_BENCHMARK_POLICY.model, authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM",
@@ -177,7 +177,7 @@ export async function runTextBenchmarkEpoch() {
       correct: rows.filter(r => r.correct === true).length, graded: rows.filter(r => r.correct !== null).length,
       blockedByCapability: familyBlocked.length, notExecuted: population.length - rows.length - familyBlocked.length,
       fullPopulation: family === "AIME_2025" ? 30 : family === "BBEH_MINI" ? 460 : null,
-      fullBenchmarkScoreClaim: ["FULL", "FULL_AIME"].includes(mode)
+      fullBenchmarkScoreClaim: ["FULL", "FULL_AIME", "FULL_BBEH"].includes(mode)
         && textPopulationIsFullyGraded(family as PrivateTextTask["family"], population.length,
           rows.length, rows.filter(r => r.correct !== null).length)};
   });

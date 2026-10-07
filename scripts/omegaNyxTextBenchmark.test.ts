@@ -7,7 +7,7 @@ import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsa
   TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
   textWholePopulation, textPopulationIsFullyGraded, textDeliveryBlocked, textTimeoutTransferSelection,
-  compareTextTimeoutPair, textBoundedTaskRequest } from "./omega/benchmarks/nyxTextBenchmark";
+  compareTextTimeoutPair, textBoundedTaskRequest, textFullFamilySelection } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -71,6 +71,21 @@ check("full AIME selection retains every ordered task without narrowing the corp
 });
 check("full BBEH population remains independently selectable and cannot disappear", () =>
   assert.equal(textWholePopulation(wholeTasks, "BBEH_MINI").length, 460));
+check("FULL_BBEH retains every pinned task in order and excludes unrelated AIME tasks", () => {
+  const selected = textFullFamilySelection(wholeTasks, "FULL_BBEH");
+  assert.deepEqual(selected.map(task => task.taskId), Array.from({length: 460}, (_, index) => `BBEH_MINI-${index}`));
+  assert(Object.isFrozen(selected)); assert.equal(wholeTasks.length, 490);
+});
+check("FULL_AIME compatibility is preserved by full-family dispatch", () =>
+  assert.deepEqual(textFullFamilySelection(wholeTasks, "FULL_AIME"), textWholePopulation(wholeTasks, "AIME_2025")));
+check("unknown full-family modes cannot silently choose a smaller campaign", () =>
+  assert.throws(() => textFullFamilySelection(wholeTasks, "FULL_UNKNOWN" as never)));
+check("BBEH whole-family selection never reads questions or reference answers", () => {
+  const guarded = wholeTasks.map(task => ({family: task.family, taskId: task.taskId,
+    get question(): string {throw Error("question inspected by selector");},
+    get answer(): string {throw Error("private answer inspected by selector");}}));
+  assert.equal(textFullFamilySelection(guarded, "FULL_BBEH").length, 460);
+});
 check("whole-population selection cannot inspect questions or reference answers", () => {
   const protectedTasks = wholeTasks.map(task => ({family: task.family, taskId: task.taskId,
     get question(): string {throw Error("question inspected before selection");},

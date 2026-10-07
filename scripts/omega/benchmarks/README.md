@@ -250,3 +250,23 @@ are granted. This is delivery support, not demonstrated cognitive improvement.
 observation-aligned schema on both sides; only the transport timeout profile differs.
 Unknown usage or unstable delivery prevents a matched-compute claim. Remove the
 narrow push trigger after this one-shot is frozen; manual dispatch remains available.
+
+The offset-10 timeout transfer is preserved in
+`docs/omega/evidence/nyx-final-attempt-transfer-44a61202.json`. Two of eight planned
+attempts executed, neither was graded, and six were not executed. The fixed arm
+timed out. The experimental arm first emitted non-JSON output, then received HTTP
+503 before its longer cutoff could establish any benefit. The hypothesis remains
+inconclusive and unpromoted; neither a reasoning failure nor a cognitive gain is
+established. Both physical allowances held and source state remained unchanged.
+
+`FULL_BBEH` next selects all 460 pinned public BBEH Mini tasks, without correctness
+selection. It uses the existing default NYX direct-text chat protocol (not the full
+repository-engineering agent), one logical/physical request per task, 8,192 output
+tokens, original 180-second leases, strict local reply parsing and the unchanged
+upstream grader. The existing two-failure delivery circuit remains. The bounded
+epoch is 19,000,000 ms with a 330-minute workflow; this reserves no unlimited task
+authority and guarantees no completed score. Atomic partial checkpoints and the
+all-selected/executed/graded rule preserve interruption and incompleteness honestly.
+Some public tasks have been observed before, so this is a whole-population baseline,
+not a fresh-transfer or sealed result. No cognitive promotion is claimed by adding
+the execution mode. The narrow push trigger must be removed when it is frozen.

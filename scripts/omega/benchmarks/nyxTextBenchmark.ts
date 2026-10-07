@@ -26,6 +26,12 @@ export function textWholePopulation(tasks: readonly PrivateTextTask[], family: "
   return Object.freeze(tasks.filter(task => task.family === family));
 }
 
+/** Explicit full-family campaigns; never fall back to a smoke or correctness-selected subset. */
+export function textFullFamilySelection(tasks: readonly PrivateTextTask[], mode: "FULL_AIME" | "FULL_BBEH") {
+  if (mode !== "FULL_AIME" && mode !== "FULL_BBEH") throw Error("text_full_family_mode_invalid");
+  return textWholePopulation(tasks, mode === "FULL_AIME" ? "AIME_2025" : "BBEH_MINI");
+}
+
 /** Empty, partial, unexecuted and ungraded selections never establish a full score. */
 export function textPopulationIsFullyGraded(family: TextTaskFamily, selected: number, executed: number, graded: number) {
   const expected = family === "AIME_2025" ? 30 : family === "BBEH_MINI" ? 460 : null;
